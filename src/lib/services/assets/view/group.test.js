@@ -161,7 +161,7 @@ describe('assets/view/group', () => {
 
       expect(getRegexMock).toHaveBeenCalledWith('photo|video');
       expect(result).toEqual({
-        Other: [mockAssets[3]], // document.pdf doesn't match regex
+        Other: [mockAssets[3]], // document.pdf doesn’t match regex
         photo: [mockAssets[0], mockAssets[1]], // photo1.jpg, photo2.png
         video: [mockAssets[2]], // video1.mp4
       });
@@ -311,7 +311,7 @@ describe('assets/view/group', () => {
 
       expect(result).toEqual({
         1024: [mockAssets[0], mockAssets[2]], // 1024000 and 10240000 both contain "1024"
-        Other: [mockAssets[1], mockAssets[3]], // 2048000 and 512000 don't contain "1024"
+        Other: [mockAssets[1], mockAssets[3]], // 2048000 and 512000 don’t contain "1024"
       });
     });
 
@@ -324,7 +324,7 @@ describe('assets/view/group', () => {
 
       expect(result).toEqual({
         1024: [mockAssets[0], mockAssets[2]], // Both sizes contain "1024"
-        Other: [mockAssets[1], mockAssets[3]], // Other sizes don't contain "1024"
+        Other: [mockAssets[1], mockAssets[3]], // Other sizes don’t contain "1024"
       });
     });
   });

@@ -1387,7 +1387,7 @@ en:
 fr:
   title: Mon article
   date: 2025-01-01
-  body: C'est le corps de mon article.
+  body: C’est le corps de mon article.
 ---
 ```
 

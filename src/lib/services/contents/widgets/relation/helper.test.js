@@ -674,7 +674,7 @@ describe('Test getOptions()', async () => {
                 slug: 'special-chars',
                 name: {
                   first: 'João & María',
-                  last: "O'Brien-Smith",
+                  last: 'O’Brien-Smith',
                 },
                 bio: 'Designer with "quotes" and <tags>',
               }),
