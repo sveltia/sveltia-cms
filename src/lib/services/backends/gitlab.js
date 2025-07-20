@@ -128,6 +128,11 @@ const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 /** @type {ApiEndpointConfig} */
 const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
 /**
+ * Variables to be used in GraphQL queries.
+ * @type {Record<string, any>}
+ */
+const graphqlVars = {};
+/**
  * Send a request to GitLab REST/GraphQL API.
  * @param {string} path Endpoint.
  * @param {FetchApiOptions} [options] Fetch options.
@@ -146,15 +151,11 @@ const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, a
  * @see https://docs.gitlab.com/api/graphql/
  */
 const fetchGraphQL = async (query, variables = {}) => {
-  const { owner, repo, branch } = repository;
-
-  if (query.includes('$fullPath')) {
-    variables.fullPath ??= `${owner}/${repo}`;
-  }
-
-  if (query.includes('$branch')) {
-    variables.branch ??= branch;
-  }
+  Object.entries(graphqlVars).forEach(([key, value]) => {
+    if (query.includes(`$${key}`)) {
+      variables[key] ??= value;
+    }
+  });
 
   return /** @type {Promise<Record<string, any>>} */ (
     fetchAPI('/graphql', { body: { query, variables } })
@@ -211,7 +212,8 @@ const init = () => {
   const { owner, repo } =
     /** @type {string} */ (projectPath).match(/(?<owner>.+)\/(?<repo>[^/]+)$/)?.groups ?? {};
 
-  const baseURL = `${restApiOrigin}/${owner}/${repo}`;
+  const repoPath = `${owner}/${repo}`;
+  const baseURL = `${restApiOrigin}/${repoPath}`;
 
   Object.assign(
     repository,
@@ -222,7 +224,7 @@ const init = () => {
       repo,
       branch,
       baseURL,
-      databaseName: `${backendName}:${owner}/${repo}`,
+      databaseName: `${backendName}:${repoPath}`,
       isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),
     getBaseURLs(baseURL, branch),
@@ -240,6 +242,11 @@ const init = () => {
       graphqlBaseURL: `${graphqlApiOrigin}/api`,
     }),
   );
+
+  Object.assign(graphqlVars, {
+    fullPath: repoPath,
+    branch,
+  });
 
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
@@ -383,6 +390,7 @@ const fetchDefaultBranchName = async () => {
   }
 
   Object.assign(repository, { branch }, getBaseURLs(baseURL, branch));
+  Object.assign(graphqlVars, { branch });
 
   return branch;
 };

@@ -63,14 +63,15 @@ const DEFAULT_API_ROOT = 'https://api.github.com';
 const DEFAULT_AUTH_ROOT = 'https://api.netlify.com';
 const DEFAULT_AUTH_PATH = 'auth';
 const DEFAULT_ORIGIN = 'https://github.com';
-/**
- * Common variables used in GraphQL queries.
- */
-const COMMON_VARIABLES = ['owner', 'repo', 'branch'];
 /** @type {RepositoryInfo} */
 const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 /** @type {ApiEndpointConfig} */
 const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
+/**
+ * Variables to be used in GraphQL queries.
+ * @type {Record<string, any>}
+ */
+const graphqlVars = {};
 /**
  * Send a request to GitHub REST/GraphQL API.
  * @param {string} path Endpoint.
@@ -90,9 +91,9 @@ const fetchAPI = async (path, options = {}) => fetchAPIWithAuth(path, options, a
  * @see https://docs.github.com/en/graphql
  */
 const fetchGraphQL = async (query, variables = {}) => {
-  COMMON_VARIABLES.forEach((key) => {
+  Object.entries(graphqlVars).forEach(([key, value]) => {
     if (query.includes(`$${key}`)) {
-      variables[key] ??= /** @type {Record<string, any>} */ (repository)[key];
+      variables[key] ??= value;
     }
   });
 
@@ -142,7 +143,8 @@ const init = () => {
   const isSelfHosted = restApiRoot !== DEFAULT_API_ROOT;
   const origin = isSelfHosted ? restApiOrigin : DEFAULT_ORIGIN;
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
-  const baseURL = `${origin}/${owner}/${repo}`;
+  const repoPath = `${owner}/${repo}`;
+  const baseURL = `${origin}/${repoPath}`;
 
   Object.assign(
     repository,
@@ -153,7 +155,7 @@ const init = () => {
       repo,
       branch,
       baseURL,
-      databaseName: `${backendName}:${owner}/${repo}`,
+      databaseName: `${backendName}:${repoPath}`,
       isSelfHosted,
     }),
     getBaseURLs(baseURL, branch),
@@ -170,6 +172,8 @@ const init = () => {
       graphqlBaseURL: isSelfHosted ? `${graphqlApiOrigin}/api` : graphqlApiOrigin,
     }),
   );
+
+  Object.assign(graphqlVars, { owner, repo, branch });
 
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
@@ -291,6 +295,7 @@ const fetchDefaultBranchName = async () => {
   }
 
   Object.assign(repository, { branch }, getBaseURLs(baseURL, branch));
+  Object.assign(graphqlVars, { branch });
 
   return branch;
 };
