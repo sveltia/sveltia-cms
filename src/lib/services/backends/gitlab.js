@@ -4,6 +4,7 @@ import { encodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
+import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/gitlab/status';
 import {
   API_CONFIG_INFO_PLACEHOLDER,
   REPOSITORY_INFO_PLACEHOLDER,
@@ -21,7 +22,6 @@ import { dataLoadedProgress } from '$lib/services/contents';
 import { user } from '$lib/services/user';
 import { prefs } from '$lib/services/user/prefs';
 import { getGitHash } from '$lib/services/utils/file';
-import { sendRequest } from '$lib/services/utils/networking';
 
 /**
  * @import {
@@ -29,7 +29,6 @@ import { sendRequest } from '$lib/services/utils/networking';
  * Asset,
  * AuthTokens,
  * BackendService,
- * BackendServiceStatus,
  * BaseFileListItem,
  * BaseFileListItemProps,
  * CommitOptions,
@@ -121,8 +120,6 @@ import { sendRequest } from '$lib/services/utils/networking';
 
 const backendName = 'gitlab';
 const label = 'GitLab';
-const STATUS_DASHBOARD_URL = 'https://status.gitlab.com/';
-const STATUS_CHECK_URL = 'https://status-api.hostedstatus.com/1.0/status/5b36dc6502d06804c08349f7';
 const DEFAULT_API_ROOT = 'https://gitlab.com/api/v4';
 const DEFAULT_AUTH_ROOT = 'https://gitlab.com';
 const DEFAULT_AUTH_PATH = 'oauth/authorize';
@@ -130,40 +127,6 @@ const DEFAULT_AUTH_PATH = 'oauth/authorize';
 const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 /** @type {ApiEndpointConfig} */
 const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
-
-/**
- * Check the GitLab service status.
- * @returns {Promise<BackendServiceStatus>} Current status.
- * @see https://kb.status.io/developers/public-status-api/
- */
-const checkStatus = async () => {
-  try {
-    const {
-      result: {
-        status_overall: { status_code: status },
-      },
-    } = /** @type {{ result: { status_overall: { status_code: number } } }} */ (
-      await sendRequest(STATUS_CHECK_URL)
-    );
-
-    if (status === 100) {
-      return 'none';
-    }
-
-    if ([200, 300, 400].includes(status)) {
-      return 'minor';
-    }
-
-    if ([500, 600].includes(status)) {
-      return 'major';
-    }
-  } catch {
-    //
-  }
-
-  return 'unknown';
-};
-
 /**
  * Send a request to GitLab REST/GraphQL API.
  * @param {string} path Endpoint.

@@ -4,6 +4,7 @@ import { stripSlashes } from '@sveltia/utils/string';
 import mime from 'mime';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
+import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/github/status';
 import {
   API_CONFIG_INFO_PLACEHOLDER,
   REPOSITORY_INFO_PLACEHOLDER,
@@ -16,7 +17,6 @@ import { siteConfig } from '$lib/services/config';
 import { dataLoadedProgress } from '$lib/services/contents';
 import { user } from '$lib/services/user';
 import { prefs } from '$lib/services/user/prefs';
-import { sendRequest } from '$lib/services/utils/networking';
 
 /**
  * @import {
@@ -24,7 +24,6 @@ import { sendRequest } from '$lib/services/utils/networking';
  * Asset,
  * AuthTokens,
  * BackendService,
- * BackendServiceStatus,
  * BaseFileListItem,
  * BaseFileListItemProps,
  * CommitOptions,
@@ -60,8 +59,6 @@ import { sendRequest } from '$lib/services/utils/networking';
 
 const backendName = 'github';
 const label = 'GitHub';
-const STATUS_DASHBOARD_URL = 'https://www.githubstatus.com/';
-const STATUS_CHECK_URL = 'https://www.githubstatus.com/api/v2/status.json';
 const DEFAULT_API_ROOT = 'https://api.github.com';
 const DEFAULT_AUTH_ROOT = 'https://api.netlify.com';
 const DEFAULT_AUTH_PATH = 'auth';
@@ -74,36 +71,6 @@ const COMMON_VARIABLES = ['owner', 'repo', 'branch'];
 const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 /** @type {ApiEndpointConfig} */
 const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
-
-/**
- * Check the GitHub service status.
- * @returns {Promise<BackendServiceStatus>} Current status.
- * @see https://www.githubstatus.com/api
- */
-const checkStatus = async () => {
-  try {
-    const {
-      status: { indicator },
-    } = /** @type {{ status: { indicator: string }}} */ (await sendRequest(STATUS_CHECK_URL));
-
-    if (indicator === 'none') {
-      return 'none';
-    }
-
-    if (indicator === 'minor') {
-      return 'minor';
-    }
-
-    if (indicator === 'major' || indicator === 'critical') {
-      return 'major';
-    }
-  } catch {
-    //
-  }
-
-  return 'unknown';
-};
-
 /**
  * Send a request to GitHub REST/GraphQL API.
  * @param {string} path Endpoint.
