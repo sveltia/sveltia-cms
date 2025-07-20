@@ -83,6 +83,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
   - [Changing the input type of a DateTime field](#changing-the-input-type-of-a-datetime-field)
   - [Rendering soft line breaks as hard line breaks in Markdown](#rendering-soft-line-breaks-as-hard-line-breaks-in-markdown)
   - [Controlling data output](#controlling-data-output)
+  - [Understanding exceptions in data output](#understanding-exceptions-in-data-output)
   - [Disabling automatic deployments](#disabling-automatic-deployments)
   - [Setting up Content Security Policy](#setting-up-content-security-policy)
   - [Showing the CMS version](#showing-the-cms-version)
@@ -1350,6 +1351,83 @@ output:
     quote: none # or single or double
     indent_size: 2
 ```
+
+### Understanding exceptions in data output
+
+Content is generally saved as key-value pairs in a file, where the key is the field name and the value is the field value. However, there are some exceptions you should be aware of.
+
+If the format is front matter, the `body` field is saved outside of the front matter block, as briefly explained in the [Decap CMS documentation](https://decapcms.org/docs/configuration-options/):
+
+```yaml
+---
+title: My Post
+date: 2025-01-01
+---
+This is the body of my post.
+```
+
+instead of
+
+```yaml
+---
+title: My Post
+date: 2025-01-01
+body: This is the body of my post.
+---
+```
+
+However, this doesn’t apply when i18n is enabled with the `single_file` structure. In this case, the `body` field is saved part of key-value pairs under each locale in the front matter block:
+
+```yaml
+---
+en:
+  title: My Post
+  date: 2025-01-01
+  body: This is the body of my post.
+fr:
+  title: Mon article
+  date: 2025-01-01
+  body: C'est le corps de mon article.
+---
+```
+
+There are two exceptional cases for the List widget:
+
+1. When the `field` (singular) option is used, the `name` property is omitted from the output. It will be saved as a simple list of values:
+   ```yaml
+   images:
+     - https://example.com/image1.jpg
+     - https://example.com/image2.jpg
+   ```
+   instead of an array of objects:
+   ```yaml
+   images:
+     - name: https://example.com/image1.jpg
+     - name: https://example.com/image2.jpg
+   ```
+   This is not mentioned in the [Decap CMS documentation](https://decapcms.org/docs/widgets/#list), but it’s a known behaviour. If you expect the latter, you can use the `fields` (plural) option to define a single field:
+   ```yaml
+   - name: images
+     label: Images
+     widget: list
+     fields:
+       - { name: image, label: Image, widget: image }
+   ```
+1. When the [`root` option](#editing-data-files-with-a-top-level-list) is set to `true`, the List field is saved as a top-level list without a field name:
+   ```yaml
+   - name: John Doe
+     id: 12345
+   - name: Jane Smith
+     id: 67890
+   ```
+   instead of
+   ```yaml
+   members:
+     - name: John Doe
+       id: 12345
+     - name: Jane Smith
+       id: 67890
+   ```
 
 ### Disabling automatic deployments
 
