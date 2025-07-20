@@ -98,7 +98,7 @@ const FETCH_FILE_LIST_QUERY = `
  * @see https://docs.gitlab.com/api/graphql/reference/index.html#repositorytree
  * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
  */
-const fetchFileList = async () => {
+export const fetchFileList = async () => {
   /** @type {{ type: string, path: string, sha: string }[]} */
   const blobs = [];
   let cursor = '';
@@ -155,7 +155,7 @@ const FETCH_BLOBS_QUERY = `
  * @see https://forum.gitlab.com/t/graphql-api-read-raw-file/35389
  * @see https://docs.gitlab.com/api/graphql/#limits
  */
-const fetchBlobs = async (allPaths) => {
+export const fetchBlobs = async (allPaths) => {
   const paths = [...allPaths];
   /** @type {BlobItem[]} */
   const blobs = [];
@@ -217,7 +217,7 @@ const getFetchCommitsInnerQuery = (path, index) => `
  * @param {string[]} allPaths List of all file paths to fetch.
  * @returns {Promise<GitLabCommit[]>} Fetched commit information for each file.
  */
-const fetchCommits = async (allPaths) => {
+export const fetchCommits = async (allPaths) => {
   const paths = [...allPaths];
   /** @type {GitLabCommit[]} */
   const commits = [];
@@ -255,7 +255,7 @@ const fetchCommits = async (allPaths) => {
  * @param {GitLabCommit[]} commits Commit information for each file.
  * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
  */
-const parseFileContents = async (fetchingFiles, blobs, commits) => {
+export const parseFileContents = async (fetchingFiles, blobs, commits) => {
   const entries = fetchingFiles.map(({ path, sha }, index) => {
     const { size, rawTextBlob } = blobs[index];
     const commit = commits[index];
@@ -294,7 +294,7 @@ const parseFileContents = async (fetchingFiles, blobs, commits) => {
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
-const fetchFileContents = async (fetchingFiles) => {
+export const fetchFileContents = async (fetchingFiles) => {
   const allPaths = fetchingFiles.map(({ path }) => path);
   const blobs = await fetchBlobs(allPaths);
   // Fetch commit info only when there aren’t many files, because it’s costly
