@@ -6,14 +6,18 @@ import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import { signIn, signOut } from '$lib/services/backends/gitlab/auth';
 import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/gitlab/constants';
+import {
+  repository,
+  getBaseURLs,
+  checkRepositoryAccess,
+  fetchDefaultBranchName,
+} from '$lib/services/backends/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/gitlab/status';
-import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/shared';
 import { apiConfig, fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/shared/api';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
 import { siteConfig } from '$lib/services/config';
 import { dataLoadedProgress } from '$lib/services/contents';
-import { user } from '$lib/services/user';
 import { prefs } from '$lib/services/user/prefs';
 import { getGitHash } from '$lib/services/utils/file';
 
@@ -101,21 +105,6 @@ import { getGitHash } from '$lib/services/utils/file';
 const DEFAULT_API_ROOT = 'https://gitlab.com/api/v4';
 const DEFAULT_AUTH_ROOT = 'https://gitlab.com';
 const DEFAULT_AUTH_PATH = 'oauth/authorize';
-/** @type {RepositoryInfo} */
-const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
-
-/**
- * Generate base URLs for accessing the repository’s resources.
- * @param {string} baseURL The name of the repository.
- * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
- * the site configuration.
- * @returns {{ treeBaseURL: string, blobBaseURL: string }} An object containing the tree base URL
- * for browsing files, and the blob base URL for accessing file contents.
- */
-const getBaseURLs = (baseURL, branch) => ({
-  treeBaseURL: branch ? `${baseURL}/-/tree/${branch}` : baseURL,
-  blobBaseURL: branch ? `${baseURL}/-/blob/${branch}` : '',
-});
 
 /**
  * Initialize the GitLab backend.
@@ -196,72 +185,6 @@ const init = () => {
   }
 
   return repository;
-};
-
-/**
- * Check if the user has access to the current repository.
- * @throws {Error} If the user is not a collaborator of the repository.
- * @see https://docs.gitlab.com/api/members.html#get-a-member-of-a-group-or-project-including-inherited-and-invited-members
- */
-const checkRepositoryAccess = async () => {
-  const { owner, repo } = repository;
-  const userId = /** @type {number} */ (get(user)?.id);
-
-  const { ok } = /** @type {Response} */ (
-    await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/members/all/${userId}`, {
-      headers: { Accept: 'application/json' },
-      responseType: 'raw',
-    })
-  );
-
-  if (!ok) {
-    throw new Error('Not a collaborator of the repository', {
-      cause: new Error(get(_)('repository_no_access', { values: { repo } })),
-    });
-  }
-};
-
-const FETCH_DEFAULT_BRANCH_NAME_QUERY = `
-  query($fullPath: String!) {
-    project(fullPath: $fullPath) {
-      repository {
-        rootRef
-      }
-    }
-  }
-`;
-
-/**
- * Fetch the repository’s default branch name, which is typically `master` or `main`.
- * @returns {Promise<string>} Branch name.
- * @throws {Error} When the repository could not be found, or when the repository is empty.
- * @see https://docs.gitlab.com/api/graphql/reference/#repository
- */
-const fetchDefaultBranchName = async () => {
-  const { repo, baseURL = '' } = repository;
-
-  const result = /** @type {{ project: { repository?: { rootRef: string } } }} */ (
-    await fetchGraphQL(FETCH_DEFAULT_BRANCH_NAME_QUERY)
-  );
-
-  if (!result.project) {
-    throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(get(_)('repository_not_found', { values: { repo } })),
-    });
-  }
-
-  const { rootRef: branch } = result.project.repository ?? {};
-
-  if (!branch) {
-    throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(get(_)('repository_empty', { values: { repo } })),
-    });
-  }
-
-  Object.assign(repository, { branch }, getBaseURLs(baseURL, branch));
-  Object.assign(graphqlVars, { branch });
-
-  return branch;
 };
 
 const FETCH_LAST_COMMIT_QUERY = `

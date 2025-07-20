@@ -6,7 +6,12 @@ import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import { signIn, signOut } from '$lib/services/backends/gitea/auth';
 import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/gitea/constants';
-import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/shared';
+import {
+  repository,
+  getBaseURLs,
+  checkRepositoryAccess,
+  fetchDefaultBranchName,
+} from '$lib/services/backends/gitea/repository';
 import { apiConfig, fetchAPI } from '$lib/services/backends/shared/api';
 import { createCommitMessage } from '$lib/services/backends/shared/commits';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
@@ -51,8 +56,6 @@ import { prefs } from '$lib/services/user/prefs';
 const DEFAULT_API_ROOT = 'https://gitea.com/api/v1';
 const DEFAULT_AUTH_ROOT = 'https://gitea.com';
 const DEFAULT_AUTH_PATH = 'login/oauth/authorize';
-/** @type {RepositoryInfo} */
-const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 /**
  * Minimum supported Gitea version. We require at least 1.24 to use the new `file-contents` API
  * endpoint.
@@ -71,21 +74,6 @@ const MIN_FORGEJO_VERSION = 12;
  * @type {boolean}
  */
 let isForgejo = false;
-/** @type {Record<string, any> | null} */
-let repositoryResponseCache = null;
-
-/**
- * Generate base URLs for accessing the repository’s resources.
- * @param {string} baseURL The name of the repository.
- * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
- * the site configuration.
- * @returns {{ treeBaseURL: string, blobBaseURL: string }} An object containing the tree base URL
- * for browsing files, and the blob base URL for accessing file contents.
- */
-const getBaseURLs = (baseURL, branch) => ({
-  treeBaseURL: branch ? `${baseURL}/src/branch/${branch}` : baseURL,
-  blobBaseURL: branch ? `${baseURL}/src/branch/${branch}` : '',
-});
 
 /**
  * Initialize the Gitea/Forgejo backend.
@@ -173,78 +161,6 @@ const checkInstanceVersion = async () => {
           values: { name, version: minVersion },
         }),
       ),
-    });
-  }
-};
-
-/**
- * Get the repository information.
- * @returns {Promise<Record<string, any>>} Repository information.
- * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
- */
-const getRepositoryInfo = async () => {
-  const { owner, repo } = repository;
-
-  return /** @type {Promise<Record<string, any>>} */ (fetchAPI(`/repos/${owner}/${repo}`));
-};
-
-/**
- * Check if the user has access to the current repository.
- * @throws {Error} If the user is not a collaborator of the repository.
- * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
- */
-const checkRepositoryAccess = async () => {
-  const { repo } = repository;
-
-  try {
-    // Cache the repository response to avoid multiple API calls
-    repositoryResponseCache ??= await getRepositoryInfo();
-
-    const { permissions } = repositoryResponseCache;
-
-    if (!permissions?.pull) {
-      throw new Error('Not a collaborator of the repository', {
-        cause: new Error(get(_)('repository_no_access', { values: { repo } })),
-      });
-    }
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('Not a collaborator')) {
-      throw error;
-    }
-
-    throw new Error('Failed to check repository access', {
-      cause: new Error(get(_)('repository_not_found', { values: { repo } })),
-    });
-  }
-};
-
-/**
- * Fetch the repository’s default branch name, which is typically `master` or `main`.
- * @returns {Promise<string>} Branch name.
- * @throws {Error} When the repository could not be found, or when the repository is empty.
- * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
- */
-const fetchDefaultBranchName = async () => {
-  const { repo, baseURL = '' } = repository;
-
-  try {
-    // Cache the repository response to avoid multiple API calls
-    repositoryResponseCache ??= await getRepositoryInfo();
-
-    const { default_branch: branch } = repositoryResponseCache;
-
-    if (!branch) {
-      throw new Error('Failed to retrieve the default branch name.', {
-        cause: new Error(get(_)('repository_empty', { values: { repo } })),
-      });
-    }
-
-    Object.assign(repository, { branch }, getBaseURLs(baseURL, branch));
-
-    return branch;
-  } catch {
-    throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(get(_)('repository_not_found', { values: { repo } })),
     });
   }
 };
