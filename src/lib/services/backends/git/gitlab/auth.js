@@ -1,11 +1,11 @@
 import { get } from 'svelte/store';
-import { BACKEND_NAME } from '$lib/services/backends/gitlab/constants';
-import { apiConfig, fetchAPI } from '$lib/services/backends/shared/api';
+import { BACKEND_NAME } from '$lib/services/backends/git/gitlab/constants';
+import { apiConfig, fetchAPI } from '$lib/services/backends/git/shared/api';
 import {
   handleClientSideAuthPopup,
   initClientSideAuth,
   initServerSideAuth,
-} from '$lib/services/backends/shared/auth';
+} from '$lib/services/backends/git/shared/auth';
 import { siteConfig } from '$lib/services/config';
 import { user } from '$lib/services/user';
 

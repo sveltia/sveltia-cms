@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
-import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/shared';
-import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/shared/api';
+import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
+import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user';
 
 /**

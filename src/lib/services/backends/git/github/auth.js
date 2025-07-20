@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
-import { BACKEND_NAME } from '$lib/services/backends/github/constants';
-import { apiConfig, fetchAPI } from '$lib/services/backends/shared/api';
-import { initServerSideAuth } from '$lib/services/backends/shared/auth';
+import { BACKEND_NAME } from '$lib/services/backends/git/github/constants';
+import { apiConfig, fetchAPI } from '$lib/services/backends/git/shared/api';
+import { initServerSideAuth } from '$lib/services/backends/git/shared/auth';
 import { siteConfig } from '$lib/services/config';
 
 /**

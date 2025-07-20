@@ -1,9 +1,9 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
-import { repository } from '$lib/services/backends/gitea/repository';
-import { fetchAPI } from '$lib/services/backends/shared/api';
-import { createCommitMessage } from '$lib/services/backends/shared/commits';
+import { repository } from '$lib/services/backends/git/gitea/repository';
+import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { user } from '$lib/services/user';
 
 /**

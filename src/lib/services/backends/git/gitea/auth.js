@@ -1,7 +1,10 @@
 import { get } from 'svelte/store';
-import { BACKEND_NAME } from '$lib/services/backends/gitea/constants';
-import { apiConfig, fetchAPI } from '$lib/services/backends/shared/api';
-import { handleClientSideAuthPopup, initClientSideAuth } from '$lib/services/backends/shared/auth';
+import { BACKEND_NAME } from '$lib/services/backends/git/gitea/constants';
+import { apiConfig, fetchAPI } from '$lib/services/backends/git/shared/api';
+import {
+  handleClientSideAuthPopup,
+  initClientSideAuth,
+} from '$lib/services/backends/git/shared/auth';
 import { user } from '$lib/services/user';
 
 /**

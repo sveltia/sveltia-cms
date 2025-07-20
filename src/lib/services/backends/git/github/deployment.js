@@ -1,5 +1,5 @@
-import { repository } from '$lib/services/backends/github/repository';
-import { fetchAPI } from '$lib/services/backends/shared/api';
+import { repository } from '$lib/services/backends/git/github/repository';
+import { fetchAPI } from '$lib/services/backends/git/shared/api';
 
 /**
  * Manually trigger a deployment with GitHub Actions by dispatching the `repository_dispatch` event.

@@ -6,7 +6,7 @@
   import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
-  import { inAuthPopup } from '$lib/services/backends/shared/auth';
+  import { inAuthPopup } from '$lib/services/backends/git/shared/auth';
   import { siteConfig, siteConfigError } from '$lib/services/config';
   import { dataLoaded, dataLoadedProgress } from '$lib/services/contents';
   import { user } from '$lib/services/user';

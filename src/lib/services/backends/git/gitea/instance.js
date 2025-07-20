@@ -1,8 +1,8 @@
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
-import { MIN_FORGEJO_VERSION, MIN_GITEA_VERSION } from '$lib/services/backends/gitea/constants';
-import { repository } from '$lib/services/backends/gitea/repository';
-import { fetchAPI } from '$lib/services/backends/shared/api';
+import { MIN_FORGEJO_VERSION, MIN_GITEA_VERSION } from '$lib/services/backends/git/gitea/constants';
+import { repository } from '$lib/services/backends/git/gitea/repository';
+import { fetchAPI } from '$lib/services/backends/git/shared/api';
 
 /**
  * Flag to indicate if the backend is Forgejo. This is used to determine which API endpoints to use,

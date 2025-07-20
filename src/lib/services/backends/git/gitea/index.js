@@ -1,20 +1,17 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
-import { signIn, signOut } from '$lib/services/backends/github/auth';
-import { commitChanges } from '$lib/services/backends/github/commits';
+import { signIn, signOut } from '$lib/services/backends/git/gitea/auth';
+import { commitChanges } from '$lib/services/backends/git/gitea/commits';
 import {
   BACKEND_LABEL,
   BACKEND_NAME,
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
-  DEFAULT_ORIGIN,
-} from '$lib/services/backends/github/constants';
-import { triggerDeployment } from '$lib/services/backends/github/deployment';
-import { fetchBlob, fetchFiles } from '$lib/services/backends/github/files';
-import { repository, getBaseURLs } from '$lib/services/backends/github/repository';
-import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/github/status';
-import { apiConfig, graphqlVars } from '$lib/services/backends/shared/api';
+} from '$lib/services/backends/git/gitea/constants';
+import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitea/files';
+import { repository, getBaseURLs } from '$lib/services/backends/git/gitea/repository';
+import { apiConfig } from '$lib/services/backends/git/shared/api';
 import { siteConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/user/prefs';
 
@@ -23,9 +20,9 @@ import { prefs } from '$lib/services/user/prefs';
  */
 
 /**
- * Initialize the GitHub backend.
+ * Initialize the Gitea/Forgejo backend.
  * @returns {RepositoryInfo | undefined} Repository info, or nothing when the configured backend is
- * not GitHub.
+ * not Gitea/Forgejo.
  */
 const init = () => {
   const { backend } = get(siteConfig) ?? {};
@@ -39,19 +36,15 @@ const init = () => {
     branch,
     base_url: authRoot = DEFAULT_AUTH_ROOT,
     auth_endpoint: authPath = DEFAULT_AUTH_PATH,
+    app_id: clientId = '',
     api_root: restApiRoot = DEFAULT_API_ROOT,
-    graphql_api_root: graphqlApiRoot = restApiRoot,
   } = backend;
 
   const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
   // Developers may misconfigure custom API roots, so we use the origin to redefine them
   const restApiOrigin = new URL(restApiRoot).origin;
-  const graphqlApiOrigin = new URL(graphqlApiRoot).origin;
-  const isSelfHosted = restApiRoot !== DEFAULT_API_ROOT;
-  const origin = isSelfHosted ? restApiOrigin : DEFAULT_ORIGIN;
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
-  const repoPath = `${owner}/${repo}`;
-  const baseURL = `${origin}/${repoPath}`;
+  const baseURL = `${restApiOrigin}/${owner}/${repo}`;
 
   Object.assign(
     repository,
@@ -62,8 +55,8 @@ const init = () => {
       repo,
       branch,
       baseURL,
-      databaseName: `${BACKEND_NAME}:${repoPath}`,
-      isSelfHosted,
+      databaseName: `${BACKEND_NAME}:${owner}/${repo}`,
+      isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),
     getBaseURLs(baseURL, branch),
   );
@@ -71,16 +64,13 @@ const init = () => {
   Object.assign(
     apiConfig,
     /** @type {ApiEndpointConfig} */ ({
-      clientId: '', // @todo Implement OAuth token renewal
+      clientId,
       authURL,
       tokenURL: authURL.replace('/authorize', '/access_token'),
       origin: restApiOrigin,
-      restBaseURL: isSelfHosted ? `${restApiOrigin}/api/v3` : restApiOrigin,
-      graphqlBaseURL: isSelfHosted ? `${graphqlApiOrigin}/api` : graphqlApiOrigin,
+      restBaseURL: `${restApiOrigin}/api/v1`,
     }),
   );
-
-  Object.assign(graphqlVars, { owner, repo, branch });
 
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
@@ -98,13 +88,10 @@ export default {
   name: BACKEND_NAME,
   label: BACKEND_LABEL,
   repository,
-  statusDashboardURL: STATUS_DASHBOARD_URL,
-  checkStatus,
   init,
   signIn,
   signOut,
   fetchFiles,
   fetchBlob,
   commitChanges,
-  triggerDeployment,
 };

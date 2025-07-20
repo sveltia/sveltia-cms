@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
-import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/shared';
-import { fetchAPI } from '$lib/services/backends/shared/api';
+import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
 
 /**
  * @import { RepositoryInfo } from '$lib/types/private';

@@ -1,18 +1,18 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
-import { signIn, signOut } from '$lib/services/backends/gitlab/auth';
-import { commitChanges } from '$lib/services/backends/gitlab/commits';
+import { signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
+import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import {
   BACKEND_LABEL,
   BACKEND_NAME,
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
-} from '$lib/services/backends/gitlab/constants';
-import { fetchBlob, fetchFiles } from '$lib/services/backends/gitlab/files';
-import { repository, getBaseURLs } from '$lib/services/backends/gitlab/repository';
-import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/gitlab/status';
-import { apiConfig, graphqlVars } from '$lib/services/backends/shared/api';
+} from '$lib/services/backends/git/gitlab/constants';
+import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
+import { repository, getBaseURLs } from '$lib/services/backends/git/gitlab/repository';
+import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
+import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 import { siteConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/user/prefs';
 

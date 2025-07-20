@@ -1,6 +1,6 @@
 import { focusedAsset } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
-import { saveChanges } from '$lib/services/common/save';
+import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 
 /**

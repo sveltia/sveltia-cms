@@ -1,15 +1,15 @@
 /* eslint-disable no-await-in-loop */
 
 import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
-import { fetchLastCommit } from '$lib/services/backends/gitea/commits';
-import { checkInstanceVersion, instance } from '$lib/services/backends/gitea/instance';
+import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
+import { checkInstanceVersion, instance } from '$lib/services/backends/git/gitea/instance';
 import {
   repository,
   checkRepositoryAccess,
   fetchDefaultBranchName,
-} from '$lib/services/backends/gitea/repository';
-import { fetchAPI } from '$lib/services/backends/shared/api';
-import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
+} from '$lib/services/backends/git/gitea/repository';
+import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { dataLoadedProgress } from '$lib/services/contents';
 
 /**

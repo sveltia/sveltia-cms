@@ -359,6 +359,15 @@
  */
 
 /**
+ * @typedef {object} BaseFileList
+ * @property {BaseEntryListItem[]} entryFiles Entry file list.
+ * @property {BaseAssetListItem[]} assetFiles Asset file list.
+ * @property {BaseConfigListItem[]} configFiles Config file list.
+ * @property {BaseFileListItem[]} allFiles All the file list combined.
+ * @property {number} count Number of `allFiles`.
+ */
+
+/**
  * @typedef {object} I18nFileStructureMap
  * @property {boolean} i18nSingleFile Whether the i18n structure is a single file.
  * @property {boolean} i18nMultiFile Whether the i18n structure is multiple files.
