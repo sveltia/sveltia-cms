@@ -1,38 +1,22 @@
 /* eslint-disable no-await-in-loop */
 
-import { encodeBase64, getPathInfo } from '@sveltia/utils/file';
-import { stripSlashes } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
-import { signIn, signOut } from '$lib/services/backends/gitlab/auth';
-import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/gitlab/constants';
+import { getPathInfo } from '@sveltia/utils/file';
+import { fetchLastCommit } from '$lib/services/backends/gitlab/commits';
 import {
   repository,
-  getBaseURLs,
   checkRepositoryAccess,
   fetchDefaultBranchName,
 } from '$lib/services/backends/gitlab/repository';
-import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/gitlab/status';
-import { apiConfig, fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/shared/api';
-import { createCommitMessage } from '$lib/services/backends/shared/commits';
+import { fetchAPI, fetchGraphQL } from '$lib/services/backends/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/shared/fetch';
-import { siteConfig } from '$lib/services/config';
 import { dataLoadedProgress } from '$lib/services/contents';
-import { prefs } from '$lib/services/user/prefs';
-import { getGitHash } from '$lib/services/utils/file';
 
 /**
  * @import {
- * ApiEndpointConfig,
  * Asset,
- * BackendService,
  * BaseFileListItem,
  * BaseFileListItemProps,
- * CommitOptions,
- * CommitResults,
- * FileChange,
  * RepositoryContentsMap,
- * RepositoryInfo,
  * } from '$lib/types/private';
  */
 
@@ -48,16 +32,6 @@ import { getGitHash } from '$lib/services/utils/file';
  * @property {string} authorName Commit author’s full name.
  * @property {string} authorEmail Commit author’s email.
  * @property {string} committedDate Committed date.
- */
-
-/**
- * @typedef {object} FetchLastCommitResponse
- * @property {object} project Project information.
- * @property {object} project.repository Repository information.
- * @property {object} project.repository.tree Tree information.
- * @property {object} project.repository.tree.lastCommit Last commit information.
- * @property {string} project.repository.tree.lastCommit.sha Commit SHA-1 hash.
- * @property {string} project.repository.tree.lastCommit.message Commit message.
  */
 
 /**
@@ -95,144 +69,6 @@ import { getGitHash } from '$lib/services/utils/file';
  * @property {Record<string, { lastCommit: GitLabCommit }>} project.repository Mapping of file paths
  * to their last commit information.
  */
-
-/**
- * @typedef {object} CommitResponse
- * @property {string} id Commit SHA-1 hash.
- * @property {string} committed_date Commit date in ISO 8601 format.
- */
-
-const DEFAULT_API_ROOT = 'https://gitlab.com/api/v4';
-const DEFAULT_AUTH_ROOT = 'https://gitlab.com';
-const DEFAULT_AUTH_PATH = 'oauth/authorize';
-
-/**
- * Initialize the GitLab backend.
- * @returns {RepositoryInfo | undefined} Repository info, or nothing when the configured backend is
- * not GitLab.
- */
-const init = () => {
-  const { backend } = get(siteConfig) ?? {};
-
-  if (backend?.name !== BACKEND_NAME) {
-    return undefined;
-  }
-
-  const {
-    repo: projectPath,
-    branch,
-    base_url: authRoot = DEFAULT_AUTH_ROOT,
-    auth_endpoint: authPath = DEFAULT_AUTH_PATH,
-    app_id: clientId = '',
-    api_root: restApiRoot = DEFAULT_API_ROOT,
-    graphql_api_root: graphqlApiRoot = restApiRoot,
-  } = backend;
-
-  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
-  // Developers may misconfigure custom API roots, so we use the origin to redefine them
-  const restApiOrigin = new URL(restApiRoot).origin;
-  const graphqlApiOrigin = new URL(graphqlApiRoot).origin;
-
-  /**
-   * In GitLab terminology, an owner is called a namespace, and a repository is called a project. A
-   * namespace can contain a group and a subgroup concatenated with a `/` so we cannot simply use
-   * `split('/')` here. A project name should not contain a `/`.
-   * @see https://docs.gitlab.com/user/namespace/
-   * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/80055
-   */
-  const { owner, repo } =
-    /** @type {string} */ (projectPath).match(/(?<owner>.+)\/(?<repo>[^/]+)$/)?.groups ?? {};
-
-  const repoPath = `${owner}/${repo}`;
-  const baseURL = `${restApiOrigin}/${repoPath}`;
-
-  Object.assign(
-    repository,
-    /** @type {RepositoryInfo} */ ({
-      service: BACKEND_NAME,
-      label: BACKEND_LABEL,
-      owner,
-      repo,
-      branch,
-      baseURL,
-      databaseName: `${BACKEND_NAME}:${repoPath}`,
-      isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
-    }),
-    getBaseURLs(baseURL, branch),
-  );
-
-  Object.assign(
-    apiConfig,
-    /** @type {ApiEndpointConfig} */ ({
-      clientId,
-      authURL,
-      tokenURL: authURL.replace('/authorize', '/token'),
-      authScheme: 'Bearer',
-      origin: restApiOrigin,
-      restBaseURL: `${restApiOrigin}/api/v4`,
-      graphqlBaseURL: `${graphqlApiOrigin}/api`,
-    }),
-  );
-
-  Object.assign(graphqlVars, {
-    fullPath: repoPath,
-    branch,
-  });
-
-  if (get(prefs).devModeEnabled) {
-    // eslint-disable-next-line no-console
-    console.info('repositoryInfo', repository);
-  }
-
-  return repository;
-};
-
-const FETCH_LAST_COMMIT_QUERY = `
-  query($fullPath: String!, $branch: String!) {
-    project(fullPath: $fullPath) {
-      repository {
-        tree(ref: $branch) {
-          lastCommit {
-            sha
-            message
-          }
-        }
-      }
-    }
-  }
-`;
-
-/**
- * Fetch the last commit on the repository.
- * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
- * @throws {Error} When the branch could not be found.
- * @see https://docs.gitlab.com/api/graphql/reference/#tree
- */
-const fetchLastCommit = async () => {
-  const { repo, branch } = repository;
-
-  const result = /** @type {FetchLastCommitResponse} */ (
-    await fetchGraphQL(FETCH_LAST_COMMIT_QUERY)
-  );
-
-  if (!result.project) {
-    throw new Error('Failed to retrieve the last commit hash.', {
-      cause: new Error(get(_)('repository_not_found', { values: { repo } })),
-    });
-  }
-
-  const { lastCommit } = result.project.repository.tree ?? {};
-
-  if (!lastCommit) {
-    throw new Error('Failed to retrieve the last commit hash.', {
-      cause: new Error(get(_)('branch_not_found', { values: { repo, branch } })),
-    });
-  }
-
-  const { sha: hash, message } = lastCommit;
-
-  return { hash, message };
-};
 
 const FETCH_FILE_LIST_QUERY = `
   query($fullPath: String!, $branch: String!, $cursor: String!) {
@@ -471,7 +307,7 @@ const fetchFileContents = async (fetchingFiles) => {
  * Fetch file list from the backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
  */
-const fetchFiles = async () => {
+export const fetchFiles = async () => {
   await checkRepositoryAccess();
 
   await fetchAndParseFiles({
@@ -490,7 +326,7 @@ const fetchFiles = async () => {
  * @returns {Promise<Blob>} Blob data.
  * @see https://docs.gitlab.com/api/repository_files/#get-raw-file-from-repository
  */
-const fetchBlob = async (asset) => {
+export const fetchBlob = async (asset) => {
   const { owner, repo, branch = '' } = repository;
   const { path } = asset;
 
@@ -501,71 +337,4 @@ const fetchBlob = async (asset) => {
       { responseType: 'blob' },
     )
   );
-};
-
-/**
- * Save entries or assets remotely. Note that the `commitCreate` GraphQL mutation is broken and
- * images cannot be uploaded properly, so we use the REST API instead.
- * @param {FileChange[]} changes File changes to be saved.
- * @param {CommitOptions} options Commit options.
- * @returns {Promise<CommitResults>} Commit results, including the commit SHA and updated file SHAs.
- * @see https://docs.gitlab.com/api/commits.html#create-a-commit-with-multiple-files-and-actions
- * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/31102
- * @see https://docs.gitlab.com/api/graphql/reference/#mutationcommitcreate
- * @see https://forum.gitlab.com/t/how-to-commit-a-image-via-gitlab-commit-api/26632/4
- */
-const commitChanges = async (changes, options) => {
-  const { owner, repo, branch } = repository;
-
-  const actions = await Promise.all(
-    changes.map(async ({ action, path, previousPath, data = '' }) => ({
-      action,
-      content: typeof data === 'string' ? data : await encodeBase64(data),
-      encoding: typeof data === 'string' ? 'text' : 'base64',
-      file_path: path,
-      previous_path: previousPath,
-    })),
-  );
-
-  const { id: sha, committed_date: committedDate } = /** @type {CommitResponse} */ (
-    await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`, {
-      method: 'POST',
-      body: {
-        branch,
-        commit_message: createCommitMessage(changes, options),
-        actions,
-      },
-    })
-  );
-
-  // Calculate the SHA-1 hash for each file because the GitLab REST API does not return file SHAs
-  const entries = await Promise.all(
-    changes.map(async ({ path, data }) =>
-      data === undefined ? null : [path, { sha: await getGitHash(data) }],
-    ),
-  );
-
-  return {
-    sha,
-    date: new Date(committedDate),
-    files: Object.fromEntries(entries.filter((entry) => !!entry)),
-  };
-};
-
-/**
- * @type {BackendService}
- */
-export default {
-  isGit: true,
-  name: BACKEND_NAME,
-  label: BACKEND_LABEL,
-  repository,
-  statusDashboardURL: STATUS_DASHBOARD_URL,
-  checkStatus,
-  init,
-  signIn,
-  signOut,
-  fetchFiles,
-  fetchBlob,
-  commitChanges,
 };
