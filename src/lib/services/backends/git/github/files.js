@@ -25,7 +25,7 @@ import { dataLoadedProgress } from '$lib/services/contents';
  * @param {string} [lastHash] The last commit’s SHA-1 hash.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
  */
-const fetchFileList = async (lastHash) => {
+export const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
 
   const result =
@@ -44,7 +44,7 @@ const fetchFileList = async (lastHash) => {
  * @param {number} startIndex Start index.
  * @returns {string} Query string.
  */
-const getFileContentsQuery = (chunk, startIndex) => {
+export const getFileContentsQuery = (chunk, startIndex) => {
   const innerQuery = chunk
     .map(({ type, path, sha }, i) => {
       const str = [];
@@ -99,7 +99,7 @@ const getFileContentsQuery = (chunk, startIndex) => {
  * @param {Record<string, any>} results Results from the API.
  * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
  */
-const parseFileContents = async (fetchingFiles, results) => {
+export const parseFileContents = async (fetchingFiles, results) => {
   const entries = fetchingFiles.map(({ path, sha, size }, index) => {
     const {
       author: { name, email, user: _user },
@@ -133,7 +133,7 @@ const parseFileContents = async (fetchingFiles, results) => {
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
-const fetchFileContents = async (fetchingFiles) => {
+export const fetchFileContents = async (fetchingFiles) => {
   const fetchingFileList = structuredClone(fetchingFiles);
   /** @type {any[][]} */
   const chunks = [];
