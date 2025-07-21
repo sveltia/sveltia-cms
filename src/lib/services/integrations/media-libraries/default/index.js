@@ -1,7 +1,5 @@
 import { isObject } from '@sveltia/utils/object';
-import { get } from 'svelte/store';
-import { siteConfig } from '$lib/services/config';
-import { allStockAssetProviders } from '$lib/services/integrations/media-libraries';
+import { getMediaLibraryOptions } from '$lib/services/integrations/media-libraries';
 import {
   RASTER_IMAGE_CONVERSION_FORMATS,
   RASTER_IMAGE_EXTENSION_REGEX,
@@ -15,54 +13,9 @@ import { optimizeSVG, transformImage } from '$lib/services/utils/media/image/tra
  * FileField,
  * FileTransformations,
  * ImageField,
- * MediaLibraryName,
  * RasterImageTransformationOptions,
- * StockAssetMediaLibrary,
- * StockAssetProviderName,
  * } from '$lib/types/public';
  */
-
-/**
- * Get any media library options. Support both new and legacy options at the field level and global.
- * @param {object} [options] Options.
- * @param {MediaLibraryName} [options.libraryName] Library name.
- * @param {FileField | ImageField} [options.fieldConfig] Field configuration.
- * @returns {Record<string, any>} Options.
- */
-export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {
-  const _siteConfig = get(siteConfig);
-
-  // Priority 1: fieldConfig.media_libraries
-  if (fieldConfig?.media_libraries?.[libraryName]) {
-    return fieldConfig.media_libraries[libraryName];
-  }
-
-  // Priority 2: fieldConfig.media_library (legacy)
-  if (fieldConfig?.media_library) {
-    const siteLibName = _siteConfig?.media_library?.name ?? 'default';
-    const fieldLib = fieldConfig.media_library;
-    const fieldLibName = fieldLib.name;
-
-    if (
-      siteLibName === libraryName &&
-      (fieldLibName === libraryName || fieldLibName === undefined)
-    ) {
-      return fieldLib;
-    }
-  }
-
-  // Priority 3: siteConfig.media_libraries
-  if (_siteConfig?.media_libraries?.[libraryName]) {
-    return _siteConfig.media_libraries[libraryName];
-  }
-
-  // Priority 4: siteConfig.media_library (legacy)
-  if (_siteConfig?.media_library?.name === libraryName) {
-    return _siteConfig.media_library;
-  }
-
-  return {};
-};
 
 /**
  * Get normalized default media library options.
@@ -86,26 +39,6 @@ export const getDefaultMediaLibraryOptions = ({ fieldConfig } = {}) => {
       slugify_filename: typeof slugify === 'boolean' ? slugify : false,
       transformations: isObject(transformations) ? transformations : undefined,
     },
-  };
-};
-
-/**
- * Get normalized stock photo/video media library options.
- * @param {object} [options] Options.
- * @param {FileField | ImageField} [options.fieldConfig] Field configuration.
- * @returns {StockAssetMediaLibrary} Options.
- */
-export const getStockAssetMediaLibraryOptions = ({ fieldConfig } = {}) => {
-  const options = getMediaLibraryOptions({ libraryName: 'stock_assets', fieldConfig });
-
-  const allProviderNames = /** @type {StockAssetProviderName[]} */ (
-    Object.keys(allStockAssetProviders)
-  );
-
-  const { providers } = options;
-
-  return {
-    providers: Array.isArray(providers) ? providers : allProviderNames,
   };
 };
 

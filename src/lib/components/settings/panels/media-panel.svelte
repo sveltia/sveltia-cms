@@ -2,8 +2,8 @@
   import { TextInput } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
-  import { getStockAssetMediaLibraryOptions } from '$lib/services/assets/media-library';
   import { allStockAssetProviders } from '$lib/services/integrations/media-libraries';
+  import { getStockAssetMediaLibraryOptions } from '$lib/services/integrations/media-libraries/stock';
   import { prefs } from '$lib/services/user/prefs';
 
   /**

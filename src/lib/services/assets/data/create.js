@@ -2,11 +2,11 @@ import { get } from 'svelte/store';
 import { allAssets, focusedAsset, getAssetsByDirName, overlaidAsset } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { getAssetKind } from '$lib/services/assets/kinds';
-import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-library';
 import { backend } from '$lib/services/backends';
 import { saveChanges } from '$lib/services/backends/save';
 import { siteConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
+import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
 import { formatFileName } from '$lib/services/utils/file';
 
 /**

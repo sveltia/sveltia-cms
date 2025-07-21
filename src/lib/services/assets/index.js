@@ -9,12 +9,15 @@ import {
   globalAssetFolder,
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
-import { getDefaultMediaLibraryOptions, transformFile } from '$lib/services/assets/media-library';
 import { fillTemplate } from '$lib/services/common/template';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
+import {
+  getDefaultMediaLibraryOptions,
+  transformFile,
+} from '$lib/services/integrations/media-libraries/default';
 import { createPath, decodeFilePath, resolvePath } from '$lib/services/utils/file';
 
 /**

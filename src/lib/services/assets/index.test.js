@@ -19,7 +19,7 @@ vi.mock('@sveltia/utils/file');
 vi.mock('@sveltia/utils/string');
 vi.mock('fast-deep-equal');
 vi.mock('flat');
-vi.mock('$lib/services/assets/media-library');
+vi.mock('$lib/services/integrations/media-libraries/default');
 vi.mock('$lib/services/common/slug');
 vi.mock('$lib/services/contents/collection');
 vi.mock('$lib/services/contents/collection/files');
@@ -91,21 +91,21 @@ describe('assets/index', () => {
 
   describe('processedAssets derived store', () => {
     /**
-     * @type {import('vitest').MockedFunction<
-     * typeof import('$lib/services/assets/media-library').getDefaultMediaLibraryOptions
+     * @type {import('vitest').MockedFunction<typeof
+     * import('$lib/services/integrations/media-libraries/default').getDefaultMediaLibraryOptions
      * >}
      */
     let getDefaultMediaLibraryOptionsMock;
     /**
      * @type {import('vitest').MockedFunction<
-     * typeof import('$lib/services/assets/media-library').transformFile
+     * typeof import('$lib/services/integrations/media-libraries/default').transformFile
      * >}
      */
     let transformFileMock;
 
     beforeEach(async () => {
       const { getDefaultMediaLibraryOptions, transformFile } = await import(
-        '$lib/services/assets/media-library'
+        '$lib/services/integrations/media-libraries/default'
       );
 
       getDefaultMediaLibraryOptionsMock = vi.mocked(getDefaultMediaLibraryOptions);

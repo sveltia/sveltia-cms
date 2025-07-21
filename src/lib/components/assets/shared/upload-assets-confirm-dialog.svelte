@@ -4,8 +4,8 @@
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { processedAssets, uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data/create';
-  import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-library';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
+  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { formatSize } from '$lib/services/utils/file';
 
   /** @type {File[]} */

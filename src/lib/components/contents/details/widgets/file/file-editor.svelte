@@ -18,8 +18,11 @@
   import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
   import { getAssetPublicURL, getMediaFieldURL } from '$lib/services/assets/info';
   import { getMediaKind } from '$lib/services/assets/kinds';
-  import { getDefaultMediaLibraryOptions, transformFile } from '$lib/services/assets/media-library';
   import { entryDraft } from '$lib/services/contents/draft';
+  import {
+    getDefaultMediaLibraryOptions,
+    transformFile,
+  } from '$lib/services/integrations/media-libraries/default';
   import { hasMouse } from '$lib/services/user/env';
   import { createPath, formatSize, getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';

@@ -22,12 +22,12 @@
   import { allAssets } from '$lib/services/assets';
   import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
   import { getAssetKind } from '$lib/services/assets/kinds';
-  import { getStockAssetMediaLibraryOptions } from '$lib/services/assets/media-library';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import {
     allCloudStorageServices,
     allStockAssetProviders,
   } from '$lib/services/integrations/media-libraries';
+  import { getStockAssetMediaLibraryOptions } from '$lib/services/integrations/media-libraries/stock';
   import { normalize } from '$lib/services/search/util';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';

@@ -4,13 +4,13 @@ import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { get } from 'svelte/store';
 import { globalAssetFolder } from '$lib/services/assets/folders';
-import { getDefaultMediaLibraryOptions } from '$lib/services/assets/media-library';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { formatEntryFile } from '$lib/services/contents/file/format';
+import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
 
 /**
  * @import {
