@@ -29,19 +29,39 @@ import { optimizeSVG, transformImage } from '$lib/services/utils/media/image/tra
  * @param {FileField | ImageField} [options.fieldConfig] Field configuration.
  * @returns {Record<string, any>} Options.
  */
-const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {
+export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {
   const _siteConfig = get(siteConfig);
 
-  return (
-    fieldConfig?.media_libraries?.[libraryName] ??
-    (fieldConfig?.media_library?.name === libraryName ||
-    _siteConfig?.media_library?.name === libraryName
-      ? fieldConfig?.media_library
-      : undefined) ??
-    _siteConfig?.media_libraries?.[libraryName] ??
-    (_siteConfig?.media_library?.name === libraryName ? _siteConfig.media_library : undefined) ??
-    {}
-  );
+  // Priority 1: fieldConfig.media_libraries
+  if (fieldConfig?.media_libraries?.[libraryName]) {
+    return fieldConfig.media_libraries[libraryName];
+  }
+
+  // Priority 2: fieldConfig.media_library (legacy)
+  if (fieldConfig?.media_library) {
+    const siteLibName = _siteConfig?.media_library?.name ?? 'default';
+    const fieldLib = fieldConfig.media_library;
+    const fieldLibName = fieldLib.name;
+
+    if (
+      siteLibName === libraryName &&
+      (fieldLibName === libraryName || fieldLibName === undefined)
+    ) {
+      return fieldLib;
+    }
+  }
+
+  // Priority 3: siteConfig.media_libraries
+  if (_siteConfig?.media_libraries?.[libraryName]) {
+    return _siteConfig.media_libraries[libraryName];
+  }
+
+  // Priority 4: siteConfig.media_library (legacy)
+  if (_siteConfig?.media_library?.name === libraryName) {
+    return _siteConfig.media_library;
+  }
+
+  return {};
 };
 
 /**
