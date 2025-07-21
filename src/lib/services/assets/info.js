@@ -37,7 +37,7 @@ const requestedAssetPaths = new Set();
  * @returns {Promise<Blob>} Blob.
  */
 export const getAssetBlob = async (asset, retryCount = 0) => {
-  const { file, blobURL, name } = asset;
+  const { file, blobURL, name, path } = asset;
 
   if (blobURL) {
     return fetch(blobURL).then((r) => r.blob());
@@ -51,12 +51,12 @@ export const getAssetBlob = async (asset, retryCount = 0) => {
   } else {
     // If the blob is already being requested, wait for it to prevent multiple requests. If the
     // `blobURL` is still not available after 25 retries, or 5 seconds, fetch the file directly.
-    if (requestedAssetPaths.has(asset.path) && retryCount <= 25) {
+    if (requestedAssetPaths.has(path) && retryCount <= 25) {
       await sleep(200);
       return getAssetBlob(asset, retryCount + 1);
     }
 
-    requestedAssetPaths.add(asset.path);
+    requestedAssetPaths.add(path);
 
     const _blob = await get(backend)?.fetchBlob?.(asset);
 
@@ -71,7 +71,7 @@ export const getAssetBlob = async (asset, retryCount = 0) => {
   // Cache the URL
   asset.blobURL = URL.createObjectURL(blob);
 
-  requestedAssetPaths.delete(asset.path);
+  requestedAssetPaths.delete(path);
 
   return blob;
 };
