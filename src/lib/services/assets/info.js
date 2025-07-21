@@ -28,7 +28,7 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * Set of asset paths that are currently being requested. This is used to prevent multiple requests
  * for the same asset when the same asset is used in multiple places.
  */
-const requestingAssetPaths = new Set();
+const requestedAssetPaths = new Set();
 
 /**
  * Get the blob for the given asset.
@@ -50,12 +50,12 @@ export const getAssetBlob = async (asset, retryCount = 0) => {
     blob = file;
   } else {
     // If the blob is already being requested, wait for it to prevent multiple requests
-    if (requestingAssetPaths.has(asset.path) && retryCount < 10) {
+    if (requestedAssetPaths.has(asset.path) && retryCount < 10) {
       await sleep(200);
       return getAssetBlob(asset, retryCount + 1);
     }
 
-    requestingAssetPaths.add(asset.path);
+    requestedAssetPaths.add(asset.path);
 
     const _blob = await get(backend)?.fetchBlob?.(asset);
 
@@ -70,7 +70,7 @@ export const getAssetBlob = async (asset, retryCount = 0) => {
   // Cache the URL
   asset.blobURL = URL.createObjectURL(blob);
 
-  requestingAssetPaths.delete(asset.path);
+  requestedAssetPaths.delete(asset.path);
 
   return blob;
 };
