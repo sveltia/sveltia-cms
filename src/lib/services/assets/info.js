@@ -1,4 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
+import { sleep } from '@sveltia/utils/misc';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp } from '@sveltia/utils/string';
 import mime from 'mime';
@@ -24,11 +25,18 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  */
 
 /**
+ * Set of asset paths that are currently being requested. This is used to prevent multiple requests
+ * for the same asset when the same asset is used in multiple places.
+ */
+const requestingAssetPaths = new Set();
+
+/**
  * Get the blob for the given asset.
  * @param {Asset} asset Asset.
+ * @param {number} [retryCount] Retry count.
  * @returns {Promise<Blob>} Blob.
  */
-export const getAssetBlob = async (asset) => {
+export const getAssetBlob = async (asset, retryCount = 0) => {
   const { file, blobURL, name } = asset;
 
   if (blobURL) {
@@ -41,6 +49,14 @@ export const getAssetBlob = async (asset) => {
   if (file) {
     blob = file;
   } else {
+    // If the blob is already being requested, wait for it to prevent multiple requests
+    if (requestingAssetPaths.has(asset.path) && retryCount < 10) {
+      await sleep(200);
+      return getAssetBlob(asset, retryCount + 1);
+    }
+
+    requestingAssetPaths.add(asset.path);
+
     const _blob = await get(backend)?.fetchBlob?.(asset);
 
     if (!_blob) {
@@ -53,6 +69,8 @@ export const getAssetBlob = async (asset) => {
 
   // Cache the URL
   asset.blobURL = URL.createObjectURL(blob);
+
+  requestingAssetPaths.delete(asset.path);
 
   return blob;
 };
