@@ -49,8 +49,9 @@ export const getAssetBlob = async (asset, retryCount = 0) => {
   if (file) {
     blob = file;
   } else {
-    // If the blob is already being requested, wait for it to prevent multiple requests
-    if (requestedAssetPaths.has(asset.path) && retryCount < 10) {
+    // If the blob is already being requested, wait for it to prevent multiple requests. If the
+    // `blobURL` is still not available after 25 retries, or 5 seconds, fetch the file directly.
+    if (requestedAssetPaths.has(asset.path) && retryCount <= 25) {
       await sleep(200);
       return getAssetBlob(asset, retryCount + 1);
     }
