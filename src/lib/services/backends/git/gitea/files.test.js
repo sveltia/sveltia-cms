@@ -457,7 +457,7 @@ describe('Gitea Files Service', () => {
       const result = await fetchBlob(mockAsset);
 
       expect(fetchAPI).toHaveBeenCalledWith(
-        '/repos/test-owner/test-repo/media/main/images%2Fphoto.jpg',
+        '/repos/test-owner/test-repo/media/main/images/photo.jpg',
         { responseType: 'blob' },
       );
       expect(result).toBe(mockBlob);
@@ -482,7 +482,7 @@ describe('Gitea Files Service', () => {
       await fetchBlob(mockAsset);
 
       expect(fetchAPI).toHaveBeenCalledWith(
-        '/repos/test-owner/test-repo/media/main/images%2Fphoto%20with%20spaces%20%26%20symbols.jpg',
+        '/repos/test-owner/test-repo/media/main/images/photo%20with%20spaces%20&%20symbols.jpg',
         { responseType: 'blob' },
       );
     });

@@ -186,7 +186,9 @@ export const fetchBlob = async (asset) => {
   const { path } = asset;
 
   return /** @type {Promise<Blob>} */ (
-    fetchAPI(`/repos/${owner}/${repo}/media/${branch}/${encodeURIComponent(path)}`, {
+    // Use `encodeURI` instead of `encodeURIComponent` because slashes in the path should not be
+    // encoded but spaces and other characters should be.
+    fetchAPI(`/repos/${owner}/${repo}/media/${branch}/${encodeURI(path)}`, {
       responseType: 'blob',
     })
   );
