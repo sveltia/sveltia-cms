@@ -9,7 +9,7 @@ import { extractExifData } from '$lib/services/utils/media/image/exif';
  * @param {string} src Source URL of the image.
  * @returns {Promise<{ dimensions: MediaDimensions }>} Dimensions (width/height) and duration.
  */
-const getImageSourceInfo = (src) => {
+export const getImageSourceInfo = (src) => {
   const element = new Image();
 
   return new Promise((resolve) => {
@@ -32,7 +32,7 @@ const getImageSourceInfo = (src) => {
  * @returns {Promise<{ dimensions?: MediaDimensions, duration: number }>} Dimensions and duration of
  * the media.
  */
-const getMediaSourceInfo = async (src, kind) => {
+export const getMediaSourceInfo = async (src, kind) => {
   const element = /** @type {HTMLMediaElement} */ (document.createElement(kind));
 
   return new Promise((resolve) => {
@@ -64,7 +64,7 @@ const getMediaSourceInfo = async (src, kind) => {
  * @returns {Promise<{ dimensions?: MediaDimensions, duration?: number }>} Dimensions (width/height)
  * and duration.
  */
-const getSourceInfo = async (src, kind) => {
+export const getSourceInfo = async (src, kind) => {
   if (kind === 'image') {
     return getImageSourceInfo(src);
   }

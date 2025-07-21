@@ -1,5 +1,48 @@
-import { describe, expect, test } from 'vitest';
-import { encodeFilePath, formatFileName, getBlob, getGitHash } from '$lib/services/utils/file';
+import { describe, expect, test, vi } from 'vitest';
+import {
+  encodeFilePath,
+  formatFileName,
+  formatSize,
+  resolvePath,
+  getBlob,
+  getGitHash,
+} from '$lib/services/utils/file';
+
+// Mock svelte/store
+vi.mock('svelte/store', () => ({
+  get: vi.fn((store) => {
+    if (typeof store === 'function') {
+      return store();
+    }
+
+    return 'en';
+  }),
+  writable: vi.fn(() => ({
+    subscribe: vi.fn(),
+    set: vi.fn(),
+    update: vi.fn(),
+  })),
+  readable: vi.fn(() => ({
+    subscribe: vi.fn(),
+  })),
+  derived: vi.fn(() => ({
+    subscribe: vi.fn(),
+  })),
+}));
+
+// Mock i18n dependencies
+vi.mock('svelte-i18n', () => ({
+  /**
+   * Locale store.
+   * @returns {string} Current locale.
+   */
+  locale: () => 'en',
+  /**
+   * Translation function store.
+   * @returns {Function} Translation function.
+   */
+  _: () => vi.fn((key, options) => `${key}(${options?.values?.size || ''})`),
+}));
 
 describe('Test encodeFilePath()', () => {
   test('Encode', () => {
@@ -305,7 +348,7 @@ describe('Test getGitHash()', () => {
     expect(hash1).not.toBe(hash2);
   });
 
-  test('Same content produces same hash', async () => {
+  test('Same content produces the same hash', async () => {
     // Ensure same content always produces the same hash
     const content = 'test content';
     const hash1 = await getGitHash(content);
@@ -343,5 +386,74 @@ describe('Test getGitHash()', () => {
     expect(result).toHaveLength(40);
     // Should produce the same hash as the Blob version
     expect(result).toBe('613754cfaf74a7a2d86984231479d5671731f18a');
+  });
+});
+
+describe('Test formatSize()', () => {
+  test('should format file sizes correctly', () => {
+    // The formatSize function returns i18n translated strings, not just numbers
+    // Test bytes
+    expect(formatSize(500)).toBe('file_size_units.b(500)');
+    expect(formatSize(999)).toBe('file_size_units.b(999)');
+
+    // Test kilobytes
+    expect(formatSize(1000)).toBe('file_size_units.kb(1)');
+    expect(formatSize(1500)).toBe('file_size_units.kb(1.5)');
+    expect(formatSize(999999)).toBe('file_size_units.kb(1,000)');
+
+    // Test megabytes
+    expect(formatSize(1000000)).toBe('file_size_units.mb(1)');
+    expect(formatSize(1500000)).toBe('file_size_units.mb(1.5)');
+    expect(formatSize(999999999)).toBe('file_size_units.mb(1,000)');
+
+    // Test gigabytes
+    expect(formatSize(1000000000)).toBe('file_size_units.gb(1)');
+    expect(formatSize(1500000000)).toBe('file_size_units.gb(1.5)');
+    expect(formatSize(999999999999)).toBe('file_size_units.gb(1,000)');
+
+    // Test terabytes
+    expect(formatSize(1000000000000)).toBe('file_size_units.tb(1)');
+    expect(formatSize(1500000000000)).toBe('file_size_units.tb(1.5)');
+  });
+
+  test('should handle edge cases', () => {
+    expect(formatSize(0)).toBe('file_size_units.b(0)');
+    expect(formatSize(1)).toBe('file_size_units.b(1)');
+  });
+});
+
+describe('Test resolvePath()', () => {
+  test('should resolve basic paths without dots', () => {
+    expect(resolvePath('folder/file.txt')).toBe('folder/file.txt');
+    expect(resolvePath('a/b/c/file.txt')).toBe('a/b/c/file.txt');
+  });
+
+  test('should resolve paths with current directory dots', () => {
+    expect(resolvePath('folder/./file.txt')).toBe('folder/file.txt');
+    expect(resolvePath('./folder/file.txt')).toBe('./folder/file.txt');
+    expect(resolvePath('a/./b/./c/file.txt')).toBe('a/b/c/file.txt');
+  });
+
+  test('should resolve paths with parent directory dots', () => {
+    expect(resolvePath('folder/../file.txt')).toBe('file.txt');
+    expect(resolvePath('a/b/../c/file.txt')).toBe('a/c/file.txt');
+    expect(resolvePath('a/b/c/../../file.txt')).toBe('a/file.txt');
+  });
+
+  test('should handle complex path resolution', () => {
+    expect(resolvePath('a/b/../c/./d/../file.txt')).toBe('a/c/file.txt');
+    expect(resolvePath('folder/subfolder/../../other/file.txt')).toBe('other/file.txt');
+  });
+
+  test('should handle leading dots', () => {
+    expect(resolvePath('../file.txt')).toBe('../file.txt');
+    expect(resolvePath('./file.txt')).toBe('./file.txt');
+    expect(resolvePath('../folder/file.txt')).toBe('../folder/file.txt');
+  });
+
+  test('should handle empty segments', () => {
+    // createPath filters out empty segments, so // becomes single /
+    expect(resolvePath('folder//file.txt')).toBe('folder/file.txt');
+    expect(resolvePath('//folder/file.txt')).toBe('folder/file.txt'); // Leading empty segments are filtered
   });
 });

@@ -11,7 +11,7 @@ const encodingSupportMap = {};
  * @returns {Promise<boolean>} Result.
  * @see https://bugs.webkit.org/show_bug.cgi?id=183257
  */
-const checkIfEncodingIsSupported = async (format) => {
+export const checkIfEncodingIsSupported = async (format) => {
   if (format in encodingSupportMap) {
     return encodingSupportMap[format];
   }

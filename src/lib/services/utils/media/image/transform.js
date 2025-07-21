@@ -14,7 +14,7 @@ import { resizeCanvas } from '$lib/services/utils/media/image/resize';
  * @returns {Promise<{ source: CanvasImageSource, naturalWidth: number, naturalHeight: number }>}
  * Image element and its natural dimensions.
  */
-const createImageSource = async ({ blob }) => {
+export const createImageSource = async ({ blob }) => {
   const blobURL = URL.createObjectURL(blob);
   const image = new Image();
 
@@ -44,7 +44,7 @@ const createImageSource = async ({ blob }) => {
  * @returns {Promise<{ source: CanvasImageSource, naturalWidth: number, naturalHeight: number }>}
  * Video element and its natural dimensions.
  */
-const createVideoSource = async ({ blob }) => {
+export const createVideoSource = async ({ blob }) => {
   const blobURL = URL.createObjectURL(blob);
   const video = document.createElement('video');
 
@@ -84,7 +84,7 @@ const createVideoSource = async ({ blob }) => {
  * @returns {Promise<{ source: CanvasImageSource, naturalWidth: number, naturalHeight: number }>}
  * Canvas image source and its natural dimensions.
  */
-const createSource = async (blob) => {
+export const createSource = async (blob) => {
   if (blob.type.startsWith('video/')) {
     return createVideoSource({ blob });
   }
