@@ -134,7 +134,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 235+ issues, or 485+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
+  - So far, 235+ issues, or 490+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — Almost there!
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -167,7 +167,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
   - For a smoother experience, we even go beyond responsive design with optimized navigation, [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions), larger buttons, and other tweaks. However, there are still rough edges, and we are working to fully optimize the app for small screens and touch devices.
   - If you’re already signed in on your desktop, open the Account menu in the top right corner of the CMS, click Sign In with Mobile, and scan the QR code for passwordless sign-in. Your settings will be automatically copied.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
-- Other crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204]
+- Other crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204][^260]
 - We build [our own UI component library](https://github.com/sveltia/sveltia-ui), including custom dialogs, to ensure optimal usability without compromising accessibility.[^196][^205][^206][^207][^208][^209][^210]
 - Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled.
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available.[^31] Then update to the latest version with a single click.[^66]
@@ -1616,7 +1616,8 @@ Due late 2025
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
   - [Multiple file selection with the File and Image widgets](https://github.com/sveltia/sveltia-cms/issues/10)[^239]
   - [Git LFS support for the GitHub backend](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
-  - Advanced Relation fields[^242], including cascade updates/deletes[^243] and [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
+  - Advanced Relation fields[^242], including cascade updates/deletes[^243]
+    - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - Several Cloudinary and Uploadcare media library issues, including selection of existing files[^247]
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
   - [RTL localization support](https://github.com/sveltia/sveltia-cms/issues/385)[^245]
@@ -1642,8 +1643,11 @@ Due early 2026
 - Tackling many of the remaining Netlify/Decap CMS issues, including:
   - MDX support[^122]
   - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
+  - [Saving drafts without editorial workflow](https://github.com/sveltia/sveltia-cms/discussions/440)[^261]
   - [Tables in Markdown](https://github.com/sveltia/sveltia-cms/issues/455)[^256]
   - [Config editor](https://github.com/sveltia/sveltia-cms/discussions/452)[^10]
+  - [Theming](https://github.com/sveltia/sveltia-cms/issues/29)[^262]
+  - [Reusable field groups](https://github.com/sveltia/sveltia-cms/discussions/463)[^263]
   - Offline support[^238]
   - and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
   - (some of them may be included in v2.0)
@@ -2199,3 +2203,11 @@ This software is provided “as is” without any express or implied warranty. W
 [^258]: Netlify/Decap CMS [#663](https://github.com/decaporg/decap-cms/issues/663), [#6729](https://github.com/decaporg/decap-cms/discussions/6729), [#7466](https://github.com/decaporg/decap-cms/discussions/7466), [#7545](https://github.com/decaporg/decap-cms/issues/7545)
 
 [^259]: Netlify/Decap CMS [#7546](https://github.com/decaporg/decap-cms/issues/7546)
+
+[^260]: Netlify/Decap CMS [#5867](https://github.com/decaporg/decap-cms/issues/5867), [#6159](https://github.com/decaporg/decap-cms/issues/6159), [#7016](https://github.com/decaporg/decap-cms/issues/7016), [#7306](https://github.com/decaporg/decap-cms/issues/7306), [#7554](https://github.com/decaporg/decap-cms/issues/7554)
+
+[^261]: Netlify/Decap CMS [#942](https://github.com/decaporg/decap-cms/issues/942)
+
+[^262]: Netlify/Decap CMS [#1727](https://github.com/decaporg/decap-cms/issues/1727)
+
+[^263]: Netlify/Decap CMS [#1342](https://github.com/decaporg/decap-cms/issues/1342)
