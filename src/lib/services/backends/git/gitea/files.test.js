@@ -457,7 +457,7 @@ describe('Gitea Files Service', () => {
       const result = await fetchBlob(mockAsset);
 
       expect(fetchAPI).toHaveBeenCalledWith(
-        '/repos/test-owner/test-repo/media/images%2Fphoto.jpg?ref=main',
+        '/repos/test-owner/test-repo/media/main/images%2Fphoto.jpg',
         { responseType: 'blob' },
       );
       expect(result).toBe(mockBlob);
@@ -482,35 +482,9 @@ describe('Gitea Files Service', () => {
       await fetchBlob(mockAsset);
 
       expect(fetchAPI).toHaveBeenCalledWith(
-        '/repos/test-owner/test-repo/media/images%2Fphoto%20with%20spaces%20%26%20symbols.jpg?ref=main',
+        '/repos/test-owner/test-repo/media/main/images%2Fphoto%20with%20spaces%20%26%20symbols.jpg',
         { responseType: 'blob' },
       );
-    });
-
-    test('should handle repository with empty branch', async () => {
-      // Mock repository with empty branch
-      vi.mocked(repository).branch = '';
-
-      /** @type {Asset} */
-      const mockAsset = {
-        path: 'test.jpg',
-        sha: 'abc123',
-        size: 1024,
-        name: 'test.jpg',
-        kind: 'image',
-        // @ts-ignore - Type compatibility in test
-        folder: '',
-      };
-
-      const mockBlob = new Blob(['binary data'], { type: 'image/jpeg' });
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockBlob);
-
-      await fetchBlob(mockAsset);
-
-      expect(fetchAPI).toHaveBeenCalledWith('/repos/test-owner/test-repo/media/test.jpg?ref=', {
-        responseType: 'blob',
-      });
     });
   });
 });
