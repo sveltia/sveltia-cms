@@ -1,9 +1,10 @@
-import {
-  allStockAssetProviders,
-  getMediaLibraryOptions,
-} from '$lib/services/integrations/media-libraries';
+import { getMediaLibraryOptions } from '$lib/services/integrations/media-libraries';
+import pexels from './pexels';
+import pixabay from './pixabay';
+import unsplash from './unsplash';
 
 /**
+ * @import { MediaLibraryService } from '$lib/types/private';
  * @import {
  * FileField,
  * ImageField,
@@ -11,6 +12,16 @@ import {
  * StockAssetProviderName,
  * } from '$lib/types/public';
  */
+
+/**
+ * List of all the supported stock asset providers.
+ * @type {Record<StockAssetProviderName, MediaLibraryService>}
+ */
+export const allStockAssetProviders = {
+  pexels,
+  pixabay,
+  unsplash,
+};
 
 /**
  * Get normalized stock photo/video media library options.

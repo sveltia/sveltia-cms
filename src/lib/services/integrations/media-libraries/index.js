@@ -1,35 +1,9 @@
 import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
-import pexels from './stock/pexels';
-import pixabay from './stock/pixabay';
-import unsplash from './stock/unsplash';
 
 /**
- * @import { MediaLibraryService } from '$lib/types/private';
- * @import {
- * FileField,
- * ImageField,
- * MediaLibraryName,
- * StockAssetProviderName,
- * } from '$lib/types/public';
+ * @import { FileField, ImageField, MediaLibraryName } from '$lib/types/public';
  */
-
-/**
- * List of all the supported cloud storage services.
- * @type {Record<string, MediaLibraryService>}
- */
-export const allCloudStorageServices = {
-  //
-};
-/**
- * List of all the supported stock asset providers.
- * @type {Record<StockAssetProviderName, MediaLibraryService>}
- */
-export const allStockAssetProviders = {
-  pexels,
-  pixabay,
-  unsplash,
-};
 
 /**
  * Get any media library options. Support both new and legacy options at the field level and global.

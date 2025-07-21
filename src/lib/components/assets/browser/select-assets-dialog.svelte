@@ -23,11 +23,11 @@
   import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
   import { getAssetKind } from '$lib/services/assets/kinds';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
+  import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import {
-    allCloudStorageServices,
     allStockAssetProviders,
-  } from '$lib/services/integrations/media-libraries';
-  import { getStockAssetMediaLibraryOptions } from '$lib/services/integrations/media-libraries/stock';
+    getStockAssetMediaLibraryOptions,
+  } from '$lib/services/integrations/media-libraries/stock';
   import { normalize } from '$lib/services/search/util';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
