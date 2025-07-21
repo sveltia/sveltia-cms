@@ -179,14 +179,14 @@ export const fetchFiles = async () => {
  * Fetch an asset as a Blob via the API.
  * @param {Asset} asset Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
- * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetRawFile
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetRawFileOrLFS
  */
 export const fetchBlob = async (asset) => {
   const { owner, repo, branch = '' } = repository;
   const { path } = asset;
 
   return /** @type {Promise<Blob>} */ (
-    fetchAPI(`/repos/${owner}/${repo}/media/${encodeURIComponent(path)}?ref=${branch}`, {
+    fetchAPI(`/repos/${owner}/${repo}/media/${branch}/${path}`, {
       responseType: 'blob',
     })
   );
