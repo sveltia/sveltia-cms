@@ -1615,7 +1615,6 @@ Due late 2025
 - Tackling some more Netlify/Decap CMS issues:
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
   - [Multiple file selection with the File and Image widgets](https://github.com/sveltia/sveltia-cms/issues/10)[^239]
-  - [Git LFS support for the GitHub backend](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
   - Advanced Relation fields[^242], including cascade updates/deletes[^243]
     - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - Several Cloudinary and Uploadcare media library issues, including selection of existing files[^247]
@@ -1623,7 +1622,6 @@ Due late 2025
   - [RTL localization support](https://github.com/sveltia/sveltia-cms/issues/385)[^245]
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
-  - and a few more bugs
 - Migration from Moment.js to Day.js
 - Accessibility audit
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
@@ -1657,6 +1655,7 @@ Due early 2026
   - Post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166]
   - Scheduled posts[^167]
   - Credential management for service API keys, deploy hook URL, etc.
+  - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244] (due to a [CORS issue](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS/Errors))
 - [Preact+HTM support](https://github.com/sveltia/sveltia-cms/discussions/153) for custom widgets, editor components and preview templates
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
