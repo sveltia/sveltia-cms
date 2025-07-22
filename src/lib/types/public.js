@@ -751,8 +751,8 @@
  * `false`, users will be able to disable the output of non-default locales through the UI. See our
  * [README](https://github.com/sveltia/sveltia-cms#disabling-non-default-locale-content) for
  * details.
- * @property {{ key: string, value: string }} [canonical_slug] Property name and value template used
- * to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
+ * @property {{ key?: string, value?: string }} [canonical_slug] Property name and value template
+ * used to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
  * localized files when entry slugs are localized. The default property name is `translationKey`
  * used in Hugo’s multilingual support, and the default value is the default locale’s slug. See our
  * [README](https://github.com/sveltia/sveltia-cms#localizing-entry-slugs) for details.
