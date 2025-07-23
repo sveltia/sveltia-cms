@@ -134,7 +134,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 235+ issues, or 490+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
+  - So far, 235+ issues, or 4905 if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — Almost there!
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -218,6 +218,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 - Avoids vulnerabilities in dependencies through constant updates, Dependabot alerts, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unpatched for a long time.[^33]
 - Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface.[^158]
+- Thanks to pnpm, Svelte, Vite and GitHub Actions, our release process is fast, reliable and transparent. It makes it easy to verify the integrity of published code and assets while avoiding errors that can occur with manual build steps.[^264]
 - We have enabled [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/).
 - We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration.[^108]
 - The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive.[^34]
@@ -1376,6 +1377,12 @@ body: This is the body of my post.
 ---
 ```
 
+If there is only the `body` field, the front matter block is omitted altogether:
+
+```yaml
+This is the body of my post.
+```
+
 However, this doesn’t apply when i18n is enabled with the `single_file` structure. In this case, the `body` field is saved part of key-value pairs under each locale in the front matter block:
 
 ```yaml
@@ -2210,3 +2217,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^262]: Netlify/Decap CMS [#1727](https://github.com/decaporg/decap-cms/issues/1727)
 
 [^263]: Netlify/Decap CMS [#1342](https://github.com/decaporg/decap-cms/issues/1342)
+
+[^264]: Netlify/Decap CMS [#7557](https://github.com/decaporg/decap-cms/issues/7557)
