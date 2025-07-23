@@ -1663,6 +1663,7 @@ Due early 2026
   - Scheduled posts[^167]
   - Credential management for service API keys, deploy hook URL, etc.
   - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244] (due to a [CORS issue](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS/Errors))
+- [local repository workflow](#working-with-a-local-git-repository) improvements: Git mode and File System Observer support
 - [Preact+HTM support](https://github.com/sveltia/sveltia-cms/discussions/153) for custom widgets, editor components and preview templates
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
