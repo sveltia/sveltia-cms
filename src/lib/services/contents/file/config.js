@@ -200,7 +200,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
   const basePath = _isEntryCollection ? stripSlashes(/** @type {string} */ (folder)) : undefined;
   const indexFileName = _isEntryCollection ? getIndexFile(rawCollection)?.name : undefined;
 
-  if (yamlQuote !== undefined && !yamlQuoteWarnedOnce) {
+  if (yamlQuote !== undefined && !yamlQuoteWarnedOnce && !import.meta.env.VITEST) {
     yamlQuoteWarnedOnce = true;
     // eslint-disable-next-line no-console
     console.warn(
