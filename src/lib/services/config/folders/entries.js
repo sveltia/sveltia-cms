@@ -19,7 +19,7 @@ import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
  * @param {CollectionFile} args.file Collection file.
  * @returns {Record<InternalLocaleCode, string>} Map of file paths for each locale.
  */
-const getFilePathMap = ({ collection, file }) => {
+export const getFilePathMap = ({ collection, file }) => {
   const path = stripSlashes(file.file);
 
   if (!path.includes('{{locale}}')) {
@@ -39,7 +39,7 @@ const getFilePathMap = ({ collection, file }) => {
  * @param {CollectionFile} file Collection file.
  * @returns {EntryFolderInfo | undefined} Collection file folder information.
  */
-const getCollectionFileFolder = (collection, file) => {
+export const getCollectionFileFolder = (collection, file) => {
   if (!isValidCollectionFile(file)) {
     return undefined;
   }
@@ -57,7 +57,7 @@ const getCollectionFileFolder = (collection, file) => {
  * @param {EntryFolderInfo} b Another entry folder.
  * @returns {number} Comparison result.
  */
-const compareFilePath = (a, b) =>
+export const compareFilePath = (a, b) =>
   compare(Object.values(a.filePathMap ?? {})[0], Object.values(b.filePathMap ?? {})[0]);
 
 /**
@@ -65,7 +65,7 @@ const compareFilePath = (a, b) =>
  * @param {InternalSiteConfig} config Site configuration.
  * @returns {EntryFolderInfo[]} Entry folders.
  */
-const getEntryCollectionFolders = ({ collections }) =>
+export const getEntryCollectionFolders = ({ collections }) =>
   getValidCollections({ collections, type: 'entry', visible: true })
     .map((collection) => {
       const { name: collectionName, folder } = collection;
@@ -94,7 +94,7 @@ const getEntryCollectionFolders = ({ collections }) =>
  * @param {InternalSiteConfig} config Site configuration.
  * @returns {EntryFolderInfo[]} Entry folders.
  */
-const getFileCollectionFolders = ({ collections }) =>
+export const getFileCollectionFolders = ({ collections }) =>
   getValidCollections({ collections, type: 'file', visible: true })
     .map((collection) =>
       (collection.files ?? []).map((file) => getCollectionFileFolder(collection, file)),
@@ -108,7 +108,7 @@ const getFileCollectionFolders = ({ collections }) =>
  * @param {InternalSiteConfig} config Site configuration.
  * @returns {EntryFolderInfo[]} Entry folders.
  */
-const getSingletonCollectionFolders = ({ singletons }) => {
+export const getSingletonCollectionFolders = ({ singletons }) => {
   const files = Array.isArray(singletons) ? getValidCollectionFiles(singletons) : [];
 
   if (!files.length) {

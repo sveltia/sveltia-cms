@@ -54,7 +54,7 @@ export const siteConfigError = writable();
  * @see https://decapcms.org/docs/configuration-options/
  * @todo Add more validations.
  */
-const validate = (config) => {
+export const validate = (config) => {
   if (!config.collections?.length) {
     throw new Error(get(_)('config.error.no_collection'));
   }

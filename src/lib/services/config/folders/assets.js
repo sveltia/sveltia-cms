@@ -41,7 +41,7 @@ const assetFolders = [];
  * @param {string} context.globalPublicFolder Normalized global `public_folder` option.
  * @returns {string} Replaced folder path with a leading slash so it won’t be treated as relative.
  */
-const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =>
+export const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =>
   folder
     .trim()
     .replace('{{media_folder}}', `/${globalMediaFolder}`)
@@ -53,7 +53,7 @@ const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =>
  * @param {NormalizeAssetFolderArgs} args Arguments.
  * @returns {AssetFolderInfo} Normalized asset folder information.
  */
-const normalizeAssetFolder = ({
+export const normalizeAssetFolder = ({
   collectionName,
   fileName,
   mediaFolder,
@@ -87,7 +87,7 @@ const normalizeAssetFolder = ({
  * asset folder.
  * @param {NormalizeAssetFolderArgs} args Arguments for {@link normalizeAssetFolder}.
  */
-const addFolderIfNeeded = (args) => {
+export const addFolderIfNeeded = (args) => {
   if (args.mediaFolder === undefined) {
     return;
   }
@@ -114,7 +114,7 @@ const addFolderIfNeeded = (args) => {
  * dividers.
  * @param {GlobalFolders} args.globalFolders Global folders information.
  */
-const iterateFiles = ({ collectionName, files, globalFolders }) => {
+export const iterateFiles = ({ collectionName, files, globalFolders }) => {
   getValidCollectionFiles(files).forEach((file) => {
     const {
       name: fileName,
@@ -141,6 +141,9 @@ const iterateFiles = ({ collectionName, files, globalFolders }) => {
  * @returns {AssetFolderInfo[]} Asset folders.
  */
 export const getAllAssetFolders = (config) => {
+  // Clear any previous results
+  assetFolders.length = 0;
+
   const {
     media_folder: _globalMediaFolder,
     public_folder: _globalPublicFolder,
