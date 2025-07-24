@@ -217,14 +217,13 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 ### Better security
 
 - Avoids vulnerabilities in dependencies through constant updates, Dependabot alerts, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unpatched for a long time.[^33]
-- Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface.[^158]
-- Thanks to pnpm, Svelte, Vite and GitHub Actions, our release process is fast, reliable and transparent. It makes it easy to verify the integrity of published code and assets while avoiding errors that can occur with manual build steps.[^264]
-- We have enabled [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/).
+- Thanks to pnpm, Svelte, Vite, GitHub Actions and [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/), our release process is fast, reliable and transparent. This setup makes it easy to verify the integrity of published code and assets. It also helps us avoid errors that can occur with manual build steps.[^264]
 - We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration.[^108]
 - The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive.[^34]
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
 - Sveltia CMS has a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) requirement that forces the site content, including the CMS configuration file, to be served over HTTPS.
 - GitHub commits are automatically GPG-signed and [marked as verified](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).[^144]
+- Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface.[^158]
 
 ### Better installation
 
@@ -844,11 +843,11 @@ Here are the workflow steps and tips:
 1. Use `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/) to see if the produced changes look good.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
-Note that, as with Netlify/Decap CMS, the local repository support in Sveltia CMS doesn’t perform any Git operations. You’ll have to manually fetch, pull, commit and push all changes using a Git client. In the future, we’ll figure out if there’s a way to commit in a browser, because the proxy server actually has the undocumented, experimental `git` mode that creates commits to a local repository.[^131] ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/31))
-
-You will also need to reload the CMS after making changes to the configuration file or retrieving remote updates. We plan to eliminate this manual work with the newly available [File System Observer API](https://developer.chrome.com/blog/file-system-observer).
-
 If you have migrated from Netlify/Decap CMS and are happy with the local repository workflow of Sveltia CMS, you can remove the `local_backend` property from your configuration and uninstall the proxy server. If you have configured a custom port number with the `.env` file, you can remove it as well.
+
+Note that, as with Netlify/Decap CMS, the local repository support in Sveltia CMS doesn’t perform any Git operations. You have to manually fetch, pull, commit and push all changes using a Git client. Additionally, you’ll need to reload the CMS after modifying the configuration file or retrieving remote updates.
+
+In the future, it will probably be possible to commit changes locally. The proxy server actually has an experimental, undocumented Git mode that allows it.[^131] ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/31)) We also plan to use the newly available [File System Observer API](https://developer.chrome.com/blog/file-system-observer) to eliminate manual reloads.
 
 ### Enabling local development in Brave
 
@@ -1663,7 +1662,7 @@ Due early 2026
   - Scheduled posts[^167]
   - Credential management for service API keys, deploy hook URL, etc.
   - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244] (due to a [CORS issue](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS/Errors))
-- [local repository workflow](#working-with-a-local-git-repository) improvements: Git mode and File System Observer support
+- [Local repository workflow](#working-with-a-local-git-repository) improvements: Git mode and File System Observer support
 - [Preact+HTM support](https://github.com/sveltia/sveltia-cms/discussions/153) for custom widgets, editor components and preview templates
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
