@@ -27,7 +27,7 @@ export const unauthenticated = writable(true);
  * Log an authentication error on the UI and in the browser console.
  * @param {Error} ex Exception.
  */
-const logError = (ex) => {
+export const logError = (ex) => {
   let message =
     /** @type {{ message: string }} */ (ex.cause)?.message || get(_)('unexpected_error');
 
