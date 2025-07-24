@@ -47,7 +47,6 @@ describe('searchEntries basic functionality', () => {
 
   it('should return empty array when no terms provided', () => {
     const entries = [createEntry('entry1'), createEntry('entry2')];
-
     const result = searchEntries({ entries, terms: '' });
 
     expect(result).toEqual([]);
@@ -55,7 +54,6 @@ describe('searchEntries basic functionality', () => {
 
   it('should return empty array when terms are only whitespace', () => {
     const entries = [createEntry('entry1'), createEntry('entry2')];
-
     const result = searchEntries({ entries, terms: '   ' });
 
     expect(result).toEqual([]);

@@ -44,7 +44,6 @@ describe('searchAssets integration', () => {
 
   it('should return empty array when no terms provided', () => {
     const assets = [createAsset('image1.jpg'), createAsset('image2.png')];
-
     const result = searchAssets({ assets, terms: '' });
 
     expect(result).toEqual([]);
@@ -52,7 +51,6 @@ describe('searchAssets integration', () => {
 
   it('should return empty array when terms are only whitespace', () => {
     const assets = [createAsset('image1.jpg'), createAsset('image2.png')];
-
     const result = searchAssets({ assets, terms: '   ' });
 
     expect(result).toEqual([]);
