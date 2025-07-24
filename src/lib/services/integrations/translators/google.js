@@ -47,7 +47,7 @@ const SUPPORTED_LANGUAGES = [
  * @param {string} locale Locale code, e.g., 'en', 'fr-FR', 'zh-CN'.
  * @returns {string | undefined} Normalized language code, e.g., 'en', 'fr-FR', 'zh-CN'.
  */
-const normalizeLanguage = (locale) => {
+export const normalizeLanguage = (locale) => {
   const normalizedLocale = locale.replace(
     /^([a-z]{2,3})[-_]([a-z]{2,4})$/i,
     (_match, lang, region) => `${lang.toLowerCase()}-${region.toUpperCase()}`,

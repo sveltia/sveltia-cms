@@ -96,7 +96,7 @@ const TARGET_LANGUAGES = [
  * @param {string} locale Locale code.
  * @returns {string | undefined} Supported language.
  */
-const getSourceLanguage = (locale) => {
+export const getSourceLanguage = (locale) => {
   const [language] = locale.toUpperCase().split('-');
 
   if (SOURCE_LANGUAGES.includes(language)) {
@@ -111,7 +111,7 @@ const getSourceLanguage = (locale) => {
  * @param {string} locale Locale code.
  * @returns {string | undefined} Supported language.
  */
-const getTargetLanguage = (locale) => {
+export const getTargetLanguage = (locale) => {
   let language = locale.toUpperCase();
 
   if (TARGET_LANGUAGES.includes(language)) {
