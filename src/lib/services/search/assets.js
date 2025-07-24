@@ -15,7 +15,7 @@ import { hasMatch, normalize } from '$lib/services/search/util';
  * @param {string} args.terms Search terms.
  * @returns {Asset[]} Search results.
  */
-const searchAssets = ({ assets, terms }) => {
+export const searchAssets = ({ assets, terms }) => {
   terms = normalize(terms);
 
   if (!assets.length || !terms) {

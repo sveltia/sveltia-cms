@@ -19,7 +19,7 @@ import { hasMatch, normalize } from '$lib/services/search/util';
  * @param {string} args.terms Search terms.
  * @returns {number} Points scored for the entry based on matches.
  */
-const scanEntry = ({ entry, terms }) => {
+export const scanEntry = ({ entry, terms }) => {
   // Count the number of matches, weighting the collection name and title
   let points = 0;
   const collections = getAssociatedCollections(entry);
@@ -65,7 +65,7 @@ const scanEntry = ({ entry, terms }) => {
  * @param {string} args.terms Search terms.
  * @returns {Entry[]} Search results sorted by relevance.
  */
-const searchEntries = ({ entries, terms }) => {
+export const searchEntries = ({ entries, terms }) => {
   terms = normalize(terms);
 
   if (!entries.length || !terms) {
