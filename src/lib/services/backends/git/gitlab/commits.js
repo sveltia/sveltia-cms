@@ -27,7 +27,7 @@ import { getGitHash } from '$lib/services/utils/file';
  */
 
 const FETCH_LAST_COMMIT_QUERY = `
-  query($fullPath: String!, $branch: String!) {
+  query($fullPath: ID!, $branch: String!) {
     project(fullPath: $fullPath) {
       repository {
         tree(ref: $branch) {

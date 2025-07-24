@@ -48,7 +48,7 @@ export const checkRepositoryAccess = async () => {
 };
 
 const FETCH_DEFAULT_BRANCH_NAME_QUERY = `
-  query($fullPath: String!) {
+  query($fullPath: ID!) {
     project(fullPath: $fullPath) {
       repository {
         rootRef

@@ -71,7 +71,7 @@ import { dataLoadedProgress } from '$lib/services/contents';
  */
 
 const FETCH_FILE_LIST_QUERY = `
-  query($fullPath: String!, $branch: String!, $cursor: String!) {
+  query($fullPath: ID!, $branch: String!, $cursor: String!) {
     project(fullPath: $fullPath) {
       repository {
         tree(ref: $branch, recursive: true) {
@@ -129,7 +129,7 @@ export const fetchFileList = async () => {
 };
 
 const FETCH_BLOBS_QUERY = `
-  query($fullPath: String!, $branch: String!, $paths: [String!]!) {
+  query($fullPath: ID!, $branch: String!, $paths: [String!]!) {
     project(fullPath: $fullPath) {
       repository {
         blobs(ref: $branch, paths: $paths) {
@@ -227,7 +227,7 @@ export const fetchCommits = async (allPaths) => {
     const currentPaths = paths.splice(0, 13);
 
     const query = `
-      query($fullPath: String!, $branch: String!) {
+      query($fullPath: ID!, $branch: String!) {
         project(fullPath: $fullPath) {
           repository {
             ${currentPaths.map(getFetchCommitsInnerQuery).join('')}

@@ -66,7 +66,7 @@ describe('GitLab commits service', () => {
       const result = await fetchLastCommit();
 
       expect(fetchGraphQL).toHaveBeenCalledWith(
-        expect.stringContaining('query($fullPath: String!, $branch: String!)'),
+        expect.stringContaining('query($fullPath: ID!, $branch: String!)'),
       );
       expect(result).toEqual({
         hash: 'abc123',

@@ -84,11 +84,11 @@ describe('GitLab files service', () => {
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(2);
       expect(fetchGraphQL).toHaveBeenCalledWith(
-        expect.stringContaining('query($fullPath: String!, $branch: String!, $cursor: String!)'),
+        expect.stringContaining('query($fullPath: ID!, $branch: String!, $cursor: String!)'),
         { cursor: '' },
       );
       expect(fetchGraphQL).toHaveBeenCalledWith(
-        expect.stringContaining('query($fullPath: String!, $branch: String!, $cursor: String!)'),
+        expect.stringContaining('query($fullPath: ID!, $branch: String!, $cursor: String!)'),
         { cursor: 'cursor1' },
       );
 
@@ -267,7 +267,7 @@ describe('GitLab files service', () => {
       const result = await fetchFileContents(files);
 
       expect(fetchGraphQL).toHaveBeenCalledWith(
-        expect.stringContaining('query($fullPath: String!, $branch: String!, $paths: [String!]!)'),
+        expect.stringContaining('query($fullPath: ID!, $branch: String!, $paths: [String!]!)'),
         { paths: ['file1.md'] },
       );
 
