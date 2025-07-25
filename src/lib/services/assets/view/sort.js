@@ -11,7 +11,7 @@ import { compare } from '@sveltia/utils/string';
  * `commit_date`, or `name`.
  * @returns {any} Value.
  */
-const getValue = (asset, key) => {
+export const getValue = (asset, key) => {
   const { commitAuthor: { name, login, email } = {}, commitDate } = asset;
 
   if (key === 'commit_author') {

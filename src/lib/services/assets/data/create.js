@@ -20,7 +20,7 @@ import { formatFileName } from '$lib/services/utils/file';
  * representing the files to be uploaded, each containing the action type, name, path, and file
  * object.
  */
-const createFileList = (uploadingAssets) => {
+export const createFileList = (uploadingAssets) => {
   const { files, folder, originalAsset } = uploadingAssets;
   const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
 
@@ -53,7 +53,7 @@ const createFileList = (uploadingAssets) => {
  * @param {object} args Arguments.
  * @param {number} args.count The number of files that were updated.
  */
-const updatedStores = ({ count }) => {
+export const updatedStores = ({ count }) => {
   const _focusedAsset = get(focusedAsset);
   const _overlaidAsset = get(overlaidAsset);
 

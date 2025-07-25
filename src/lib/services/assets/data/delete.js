@@ -12,7 +12,7 @@ import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/da
  * @param {object} args Arguments.
  * @param {Asset[]} args.assets List of assets that have been deleted.
  */
-const updateStores = ({ assets }) => {
+export const updateStores = ({ assets }) => {
   // Clear asset info in the sidebar
   focusedAsset.update((_focusedAsset) =>
     assets.some(({ path }) => _focusedAsset?.path === path) ? undefined : _focusedAsset,

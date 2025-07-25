@@ -129,7 +129,7 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
  * @param {InternalI18nOptions} context._i18n I18n options for the collection or collection file.
  * @returns {Asset | undefined} Found asset.
  */
-const getAsset = ({ path, entry, _i18n }) => {
+export const getAsset = ({ path, entry, _i18n }) => {
   const { locales } = entry;
   const { defaultLocale } = _i18n;
   const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
@@ -153,7 +153,7 @@ const getAsset = ({ path, entry, _i18n }) => {
  * path. Can be `undefined` when editing a new draft.
  * @returns {Asset | undefined} Corresponding asset.
  */
-const getAssetByRelativePath = ({ path, entry }) => {
+export const getAssetByRelativePath = ({ path, entry }) => {
   if (!entry) {
     return undefined;
   }
@@ -185,7 +185,7 @@ const getAssetByRelativePath = ({ path, entry }) => {
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @returns {Asset | undefined} Corresponding asset.
  */
-const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
+export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
   const exactMatch = get(allAssets).find((asset) => asset.path === stripSlashes(path));
 
   if (exactMatch) {

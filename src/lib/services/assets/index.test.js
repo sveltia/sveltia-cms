@@ -12,6 +12,9 @@ import {
   getAssetByPath,
   getAssetsByFolder,
   getAssetsByDirName,
+  getAsset,
+  getAssetByRelativePath,
+  getAssetByAbsolutePath,
 } from './index';
 
 // Mock all dependencies
@@ -36,6 +39,7 @@ vi.mock('$lib/services/assets/folders', async () => {
     globalAssetFolder: writable({}),
     selectedAssetFolder: writable(),
     targetAssetFolder: writable({}),
+    getAssetFolder: vi.fn(),
   };
 });
 
@@ -579,6 +583,374 @@ describe('assets/index', () => {
 
       // focusedAsset should be reset to undefined
       expect(get(focusedAsset)).toBe(undefined);
+    });
+  });
+
+  describe('getAsset', () => {
+    it('should find asset by resolved path', async () => {
+      const { resolvePath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/images/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/images',
+          publicPath: '/images',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        subPath: 'my-post.md',
+        locales: {
+          en: {
+            path: 'content/posts/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post' },
+          },
+        },
+      });
+
+      const mockI18n = /** @type {any} */ ({
+        defaultLocale: 'en',
+        i18nEnabled: true,
+        allLocales: ['en'],
+        initialLocales: ['en'],
+        structure: 'multiple-files',
+        canonicalSlug: { key: 'slug', value: '{{slug}}' },
+        omitDefaultLocaleFromFileName: false,
+        structureMap: {},
+      });
+
+      vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAsset({
+        path: 'images/photo.jpg',
+        entry: mockEntry,
+        _i18n: mockI18n,
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(resolvePath).toHaveBeenCalledWith('content/posts/images/photo.jpg');
+    });
+
+    it('should return undefined when entry has no content', () => {
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        subPath: 'my-post.md',
+        locales: {
+          en: {
+            path: 'content/posts/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: undefined,
+          },
+        },
+      });
+
+      const mockI18n = /** @type {any} */ ({
+        defaultLocale: 'en',
+        i18nEnabled: true,
+        allLocales: ['en'],
+        initialLocales: ['en'],
+        structure: 'multiple-files',
+        canonicalSlug: { key: 'slug', value: '{{slug}}' },
+        omitDefaultLocaleFromFileName: false,
+        structureMap: {},
+      });
+
+      const result = getAsset({
+        path: 'images/photo.jpg',
+        entry: mockEntry,
+        _i18n: mockI18n,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should handle missing default locale by using first available', async () => {
+      const { resolvePath } = await import('$lib/services/utils/file');
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'mi-post',
+        slug: 'mi-post',
+        subPath: 'mi-post.md',
+        locales: {
+          es: {
+            path: 'content/posts/mi-post.md',
+            sha: 'sha123',
+            slug: 'mi-post',
+            content: { title: 'Mi Post' },
+          },
+        },
+      });
+
+      const mockI18n = /** @type {any} */ ({
+        defaultLocale: 'en',
+        i18nEnabled: true,
+        allLocales: ['en', 'es'],
+        initialLocales: ['en', 'es'],
+        structure: 'multiple-files',
+        canonicalSlug: { key: 'slug', value: '{{slug}}' },
+        omitDefaultLocaleFromFileName: false,
+        structureMap: {},
+      });
+
+      vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
+      allAssets.set([]);
+
+      getAsset({
+        path: 'images/photo.jpg',
+        entry: mockEntry,
+        _i18n: mockI18n,
+      });
+
+      expect(resolvePath).toHaveBeenCalledWith('content/posts/images/photo.jpg');
+    });
+  });
+
+  describe('getAssetByRelativePath', () => {
+    it('should return undefined when no entry provided', () => {
+      const result = getAssetByRelativePath({
+        path: 'images/photo.jpg',
+        entry: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should find asset from associated collections', async () => {
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        subPath: 'my-post.md',
+        locales: {
+          en: {
+            path: 'content/posts/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        _i18n: {
+          defaultLocale: 'en',
+          i18nEnabled: true,
+          allLocales: ['en'],
+          initialLocales: ['en'],
+          structure: 'multiple-files',
+          canonicalSlug: { key: 'slug', value: '{{slug}}' },
+          omitDefaultLocaleFromFileName: false,
+          structureMap: {},
+        },
+      });
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      allAssets.set([]); // Simulate no exact match found
+
+      const result = getAssetByRelativePath({
+        path: 'images/photo.jpg',
+        entry: mockEntry,
+      });
+
+      expect(getAssociatedCollections).toHaveBeenCalledWith(mockEntry);
+      expect(result).toBeUndefined(); // Since no assets found
+    });
+
+    it('should fall back to exact match at root folder', async () => {
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+
+      const mockAsset = {
+        path: 'photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: '',
+          publicPath: '',
+          collectionName: undefined,
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        subPath: 'my-post.md',
+        locales: {
+          en: {
+            path: 'content/posts/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        _i18n: {
+          defaultLocale: 'en',
+          i18nEnabled: true,
+          allLocales: ['en'],
+          initialLocales: ['en'],
+          structure: 'multiple-files',
+          canonicalSlug: { key: 'slug', value: '{{slug}}' },
+          omitDefaultLocaleFromFileName: false,
+          structureMap: {},
+        },
+      });
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+
+      // Set up assets so that fallback exact match finds the asset
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByRelativePath({
+        path: 'photo.jpg',
+        entry: mockEntry,
+      });
+
+      expect(result).toEqual(mockAsset);
+    });
+  });
+
+  describe('getAssetByAbsolutePath', () => {
+    it('should return exact match when found', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+
+      const mockAsset = {
+        path: '/assets/images/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'assets/images',
+          publicPath: '/assets/images',
+          collectionName: undefined,
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      vi.mocked(stripSlashes).mockReturnValue('/assets/images/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/assets/images/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAsset);
+    });
+
+    it('should search in collection folders when no exact match', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+      const mockAsset = {
+        path: 'content/posts/images/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/images',
+          publicPath: '/posts/images',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'content/posts/images',
+        publicPath: '/posts/images',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      vi.mocked(stripSlashes).mockReturnValue('/posts/images/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/posts/images',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
+
+      const { createPath } = await import('$lib/services/utils/file');
+
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+
+      // Set up assets so the asset can be found
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/posts/images/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(getAssetFolder).toHaveBeenCalledWith({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+    });
+
+    it('should return undefined when no asset found', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+      vi.mocked(stripSlashes).mockReturnValue('/nonexistent/photo.jpg');
+      allAssets.set([]);
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/nonexistent',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValue(undefined);
+
+      const result = getAssetByAbsolutePath({
+        path: '/nonexistent/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toBeUndefined();
     });
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { sortAssets } from './sort';
+import { sortAssets, getValue } from './sort';
 
 // Mock dependencies
 vi.mock('@sveltia/utils/string', () => ({
@@ -359,6 +359,256 @@ describe('assets/view/sort', () => {
       const result = sortAssets(assetsWithoutAuthor, { key: 'commit_author', order: 'ascending' });
 
       expect(result).toEqual(assetsWithoutAuthor);
+    });
+  });
+
+  describe('getValue', () => {
+    it('should return commit author name when key is commit_author', () => {
+      /** @type {import('$lib/types/private').Asset} */
+      const asset = {
+        commitAuthor: { name: 'John Doe', login: 'johndoe', email: 'john@example.com' },
+        name: 'test.jpg',
+        path: '/images/test.jpg',
+        sha: 'sha123',
+        size: 1024,
+        kind: 'image',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = getValue(asset, 'commit_author');
+
+      expect(result).toBe('John Doe');
+    });
+
+    it('should return commit author login when name is not available', () => {
+      /** @type {import('$lib/types/private').Asset} */
+      const asset = {
+        commitAuthor: /** @type {any} */ ({ login: 'johndoe', email: 'john@example.com' }),
+        name: 'test.jpg',
+        path: '/images/test.jpg',
+        sha: 'sha123',
+        size: 1024,
+        kind: 'image',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = getValue(asset, 'commit_author');
+
+      expect(result).toBe('johndoe');
+    });
+
+    it('should return commit author email when name and login are not available', () => {
+      /** @type {import('$lib/types/private').Asset} */
+      const asset = {
+        commitAuthor: /** @type {any} */ ({ email: 'john@example.com' }),
+        name: 'test.jpg',
+        path: '/images/test.jpg',
+        sha: 'sha123',
+        size: 1024,
+        kind: 'image',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = getValue(asset, 'commit_author');
+
+      expect(result).toBe('john@example.com');
+    });
+
+    it('should return undefined when commit author is not available', () => {
+      /** @type {import('$lib/types/private').Asset} */
+      const asset = {
+        name: 'test.jpg',
+        path: '/images/test.jpg',
+        sha: 'sha123',
+        size: 1024,
+        kind: 'image',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = getValue(asset, 'commit_author');
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return commit date when key is commit_date', () => {
+      const commitDate = new Date('2023-01-01');
+
+      /** @type {import('$lib/types/private').Asset} */
+      const asset = {
+        commitDate,
+        name: 'test.jpg',
+        path: '/images/test.jpg',
+        sha: 'sha123',
+        size: 1024,
+        kind: 'image',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = getValue(asset, 'commit_date');
+
+      expect(result).toBe(commitDate);
+    });
+
+    it('should return filename without extension when key is name', () => {
+      /** @type {import('$lib/types/private').Asset} */
+      const asset = {
+        name: 'hero-image.png',
+        path: '/images/hero-image.png',
+        sha: 'sha123',
+        size: 1024,
+        kind: 'image',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = getValue(asset, 'name');
+
+      expect(result).toBe('hero-image');
+    });
+
+    it('should handle names with multiple dots correctly', () => {
+      /** @type {import('$lib/types/private').Asset} */
+      const asset = {
+        name: 'my.file.name.tar.gz',
+        path: '/files/my.file.name.tar.gz',
+        sha: 'sha123',
+        size: 1024,
+        kind: 'document',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/files',
+          publicPath: '/files',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = getValue(asset, 'name');
+
+      expect(result).toBe('my');
+    });
+
+    it('should handle names without extension', () => {
+      /** @type {import('$lib/types/private').Asset} */
+      const asset = {
+        name: 'filename',
+        path: '/files/filename',
+        sha: 'sha123',
+        size: 1024,
+        kind: 'document',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/files',
+          publicPath: '/files',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = getValue(asset, 'name');
+
+      expect(result).toBe('filename');
+    });
+
+    it('should return asset property value for other keys', () => {
+      /** @type {import('$lib/types/private').Asset} */
+      const asset = {
+        name: 'test.jpg',
+        path: '/images/test.jpg',
+        size: 1024,
+        kind: 'image',
+        sha: 'abc123',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      expect(getValue(asset, 'size')).toBe(1024);
+      expect(getValue(asset, 'kind')).toBe('image');
+      expect(getValue(asset, 'sha')).toBe('abc123');
+    });
+
+    it('should return empty string for undefined properties', () => {
+      /** @type {import('$lib/types/private').Asset} */
+      const asset = {
+        name: 'test.jpg',
+        path: '/images/test.jpg',
+        sha: 'sha123',
+        size: 1024,
+        kind: 'image',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = getValue(asset, 'nonexistent');
+
+      expect(result).toBe('');
+    });
+
+    it('should handle null values', () => {
+      /** @type {any} */ // Using any to allow null size for testing edge case
+      const asset = {
+        name: 'test.jpg',
+        path: '/images/test.jpg',
+        size: null,
+        sha: 'sha123',
+        kind: 'image',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = getValue(asset, 'size');
+
+      expect(result).toBe('');
     });
   });
 });

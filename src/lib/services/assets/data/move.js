@@ -33,7 +33,7 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  * @param {Entry} args.entry Entry to get base properties for.
  * @returns {Partial<EntryDraft>} Base properties for the entry draft.
  */
-const getDraftBaseProps = ({ entry }) => {
+export const getDraftBaseProps = ({ entry }) => {
   const { locales } = entry;
 
   const originalLocales = Object.fromEntries(
@@ -72,7 +72,7 @@ const getDraftBaseProps = ({ entry }) => {
  * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
  * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
  */
-const addSavingEntryData = async ({ draftProps, indexFile, savingEntries, changes }) => {
+export const addSavingEntryData = async ({ draftProps, indexFile, savingEntries, changes }) => {
   const { collection, collectionFile } = draftProps;
   const { fields: regularFields = [] } = collectionFile ?? collection;
 
@@ -98,7 +98,7 @@ const addSavingEntryData = async ({ draftProps, indexFile, savingEntries, change
  * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
  * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
  */
-const collectEntryChanges = async ({ _siteConfig, entry, savingEntries, changes }) => {
+export const collectEntryChanges = async ({ _siteConfig, entry, savingEntries, changes }) => {
   const draftBaseProps = getDraftBaseProps({ entry });
 
   await Promise.all(
@@ -141,7 +141,7 @@ const collectEntryChanges = async ({ _siteConfig, entry, savingEntries, changes 
  * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
  * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
  */
-const collectEntryChangesFromAsset = async ({
+export const collectEntryChangesFromAsset = async ({
   _siteConfig,
   _globalAssetFolder,
   newPath,
@@ -182,7 +182,7 @@ const collectEntryChangesFromAsset = async ({
  * @param {'move' | 'rename'} args.action The action performed, either 'move' or 'rename'.
  * @param {MovingAsset[]} args.movedAssets The assets that have been moved or renamed.
  */
-const updateStores = ({ action, movedAssets }) => {
+export const updateStores = ({ action, movedAssets }) => {
   const _allAssets = get(allAssets);
   const focusedAssetPath = get(focusedAsset)?.path;
   const _focusedAsset = movedAssets.find((a) => a.asset.path === focusedAssetPath);
