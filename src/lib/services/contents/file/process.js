@@ -38,12 +38,48 @@ export const isIndexFile = (path) => /\/_index(?:\.[\w-]+)?\.md$/.test(path);
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
  */
-const getSlug = ({ subPath, subPathTemplate }) => {
+export const getSlug = ({ subPath, subPathTemplate }) => {
   if (subPathTemplate?.includes('{{slug}}')) {
-    const [, slug] =
-      subPath.match(
-        new RegExp(`^${escapeRegExp(subPathTemplate).replace('\\{\\{slug\\}\\}', '(.+)')}$`),
-      ) ?? [];
+    // Build regex by replacing placeholders with patterns
+    let regexPattern = '';
+    let remaining = subPathTemplate;
+
+    // Process template character by character, handling placeholders specially
+    while (remaining.length > 0) {
+      const nextPlaceholder = remaining.indexOf('{{');
+
+      if (nextPlaceholder === -1) {
+        // No more placeholders, escape remaining literal text
+        regexPattern += escapeRegExp(remaining);
+        break;
+      }
+
+      // Add escaped literal text before placeholder
+      if (nextPlaceholder > 0) {
+        regexPattern += escapeRegExp(remaining.substring(0, nextPlaceholder));
+      }
+
+      // Find end of placeholder
+      const placeholderEnd = remaining.indexOf('}}', nextPlaceholder);
+
+      if (placeholderEnd === -1) {
+        // Malformed template, treat as literal
+        regexPattern += escapeRegExp(remaining);
+        break;
+      }
+
+      const placeholder = remaining.substring(nextPlaceholder, placeholderEnd + 2);
+
+      if (placeholder === '{{slug}}') {
+        regexPattern += '(.+)';
+      } else {
+        regexPattern += '[^/]+';
+      }
+
+      remaining = remaining.substring(placeholderEnd + 2);
+    }
+
+    const [, slug] = subPath.match(new RegExp(`^${regexPattern}$`)) ?? [];
 
     if (slug) {
       return slug;
@@ -59,7 +95,7 @@ const getSlug = ({ subPath, subPathTemplate }) => {
  * @param {Error[]} errors List of parse errors.
  * @returns {Promise<RawEntryContent | undefined>} Parsed content or undefined if parsing failed.
  */
-const parseFileContent = async (file, errors) => {
+export const parseFileContent = async (file, errors) => {
   try {
     return await parseEntryFile(file);
   } catch (/** @type {any} */ ex) {
@@ -77,7 +113,7 @@ const parseFileContent = async (file, errors) => {
  * @param {boolean} i18nSingleFile Whether i18n single file structure is used.
  * @returns {RawEntryContent | undefined} Transformed content or undefined if invalid.
  */
-const transformRawContent = (rawContent, fields, i18nSingleFile) => {
+export const transformRawContent = (rawContent, fields, i18nSingleFile) => {
   // Handle a special case: top-level list field
   if (hasRootListField(fields)) {
     const fieldName = fields[0].name;
@@ -111,7 +147,17 @@ const transformRawContent = (rawContent, fields, i18nSingleFile) => {
  * @param {string} extension File extension.
  * @returns {boolean} True if the file should be skipped.
  */
-const shouldSkipIndexFile = (path, fileName, collection, subPathTemplate, extension) => {
+export const shouldSkipIndexFile = (path, fileName, collection, subPathTemplate, extension) => {
+  // Special constraint: if template ends with _index and file follows _index pattern,
+  // only .md files are allowed (Hugo constraint)
+  if (
+    subPathTemplate?.split('/').pop() === '_index' &&
+    /\/_index(?:\.[\w-]+)?\.[\w]+$/.test(path) &&
+    extension !== 'md'
+  ) {
+    return true;
+  }
+
   if (!isIndexFile(path)) {
     return false;
   }
@@ -138,7 +184,13 @@ const shouldSkipIndexFile = (path, fileName, collection, subPathTemplate, extens
  * @param {boolean} isMultiFileStructure Whether using multi-file i18n structure.
  * @returns {{ subPath: string | undefined, locale: InternalLocaleCode | undefined }} Path info.
  */
-const extractPathInfo = (file, fileName, fullPathRegEx, defaultLocale, isMultiFileStructure) => {
+export const extractPathInfo = (
+  file,
+  fileName,
+  fullPathRegEx,
+  defaultLocale,
+  isMultiFileStructure,
+) => {
   const {
     path,
     folder: { filePathMap },
@@ -161,7 +213,13 @@ const extractPathInfo = (file, fileName, fullPathRegEx, defaultLocale, isMultiFi
 
   // If the `omit_default_locale_from_filename` i18n option is enabled, the matching comes with
   // the `locale` group being `undefined` for the default locale, so we need a fallback for it
-  const { subPath, locale = defaultLocale } = path.match(fullPathRegEx)?.groups ?? {};
+  const match = path.match(fullPathRegEx);
+
+  if (!match?.groups) {
+    return { subPath: undefined, locale: undefined };
+  }
+
+  const { subPath, locale = defaultLocale } = match.groups;
 
   return { subPath, locale };
 };
@@ -175,7 +233,14 @@ const extractPathInfo = (file, fileName, fullPathRegEx, defaultLocale, isMultiFi
  * @param {string} subPath Sub path.
  * @param {string | undefined} subPathTemplate Sub path template.
  */
-const processNonI18nEntry = (entry, rawContent, path, fileName, subPath, subPathTemplate) => {
+export const processNonI18nEntry = (
+  entry,
+  rawContent,
+  path,
+  fileName,
+  subPath,
+  subPathTemplate,
+) => {
   const slug = fileName || getSlug({ subPath, subPathTemplate });
 
   entry.slug = slug;
@@ -192,7 +257,7 @@ const processNonI18nEntry = (entry, rawContent, path, fileName, subPath, subPath
  * @param {string | undefined} subPathTemplate Sub path template.
  * @param {InternalLocaleCode[]} allLocales All available locales.
  */
-const processI18nSingleFileEntry = (
+export const processI18nSingleFileEntry = (
   entry,
   rawContent,
   path,
@@ -226,7 +291,7 @@ const processI18nSingleFileEntry = (
  * @param {Entry[]} entries Existing entries array.
  * @returns {boolean} True if entry was added to existing entry, false if new entry should be added.
  */
-const processI18nMultiFileEntry = (
+export const processI18nMultiFileEntry = (
   entry,
   rawContent,
   path,
@@ -281,7 +346,7 @@ const processI18nMultiFileEntry = (
  * @param {Entry[]} args.entries List of prepared entries.
  * @param {Error[]} args.errors List of parse errors.
  */
-const prepareEntry = async ({ file, entries, errors }) => {
+export const prepareEntry = async ({ file, entries, errors }) => {
   const rawContent = await parseFileContent(file, errors);
 
   if (!rawContent) {

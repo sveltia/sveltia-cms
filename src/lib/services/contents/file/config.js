@@ -22,7 +22,7 @@ export const customFileFormats = {};
  * @returns {FileExtension} Determined extension.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */
-const detectFileExtension = ({ extension, format }) => {
+export const detectFileExtension = ({ extension, format }) => {
   const customExtension = format ? customFileFormats[format]?.extension : undefined;
 
   if (customExtension) {
@@ -56,7 +56,7 @@ const detectFileExtension = ({ extension, format }) => {
  * @returns {FileFormat} Determined format.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */
-const detectFileFormat = ({ extension, format }) => {
+export const detectFileFormat = ({ extension, format }) => {
   if (format) {
     return format; // supported or custom format
   }
@@ -92,7 +92,14 @@ const detectFileFormat = ({ extension, format }) => {
  * @param {InternalI18nOptions} args._i18n I18n configuration.
  * @returns {RegExp} Regular expression.
  */
-const getEntryPathRegEx = ({ extension, format, basePath, subPath, indexFileName, _i18n }) => {
+export const getEntryPathRegEx = ({
+  extension,
+  format,
+  basePath,
+  subPath,
+  indexFileName,
+  _i18n,
+}) => {
   const {
     allLocales,
     defaultLocale,

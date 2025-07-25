@@ -1,9 +1,346 @@
 import { describe, expect, test } from 'vitest';
-import { getFileConfig } from '$lib/services/contents/file/config';
+import {
+  customFileFormats,
+  detectFileExtension,
+  detectFileFormat,
+  getEntryPathRegEx,
+  getFrontMatterDelimiters,
+  getFileConfig,
+} from '$lib/services/contents/file/config';
 
 /**
  * @import { InternalI18nOptions } from '$lib/types/private';
  */
+
+describe('Test detectFileExtension()', () => {
+  test('returns custom extension from format', () => {
+    // Mock custom file format
+    customFileFormats.custom = { extension: 'custom' };
+
+    expect(detectFileExtension({ format: /** @type {any} */ ('custom') })).toBe('custom');
+
+    // Clean up
+    delete customFileFormats.custom;
+  });
+
+  test('returns provided extension', () => {
+    expect(detectFileExtension({ extension: 'txt' })).toBe('txt');
+  });
+
+  test('returns yml for yaml format', () => {
+    expect(detectFileExtension({ format: 'yaml' })).toBe('yml');
+    expect(detectFileExtension({ format: 'yml' })).toBe('yml');
+  });
+
+  test('returns toml for toml format', () => {
+    expect(detectFileExtension({ format: 'toml' })).toBe('toml');
+  });
+
+  test('returns json for json format', () => {
+    expect(detectFileExtension({ format: 'json' })).toBe('json');
+  });
+
+  test('returns md as default', () => {
+    expect(detectFileExtension({})).toBe('md');
+    expect(detectFileExtension({ format: /** @type {any} */ ('unknown') })).toBe('md');
+  });
+
+  test('prioritizes custom extension over provided extension', () => {
+    customFileFormats.custom = { extension: 'custom' };
+
+    expect(detectFileExtension({ extension: 'txt', format: /** @type {any} */ ('custom') })).toBe(
+      'custom',
+    );
+
+    // Clean up
+    delete customFileFormats.custom;
+  });
+
+  test('prioritizes provided extension over format', () => {
+    expect(detectFileExtension({ extension: 'txt', format: 'yaml' })).toBe('txt');
+  });
+});
+
+describe('Test detectFileFormat()', () => {
+  test('returns provided format', () => {
+    expect(detectFileFormat({ extension: 'md', format: 'json' })).toBe('json');
+    expect(
+      detectFileFormat({ extension: 'md', format: /** @type {any} */ ('custom-format') }),
+    ).toBe('custom-format');
+  });
+
+  test('detects yaml from extension', () => {
+    expect(detectFileFormat({ extension: 'yaml' })).toBe('yaml');
+    expect(detectFileFormat({ extension: 'yml' })).toBe('yaml');
+  });
+
+  test('detects toml from extension', () => {
+    expect(detectFileFormat({ extension: 'toml' })).toBe('toml');
+  });
+
+  test('detects json from extension', () => {
+    expect(detectFileFormat({ extension: 'json' })).toBe('json');
+  });
+
+  test('detects frontmatter from markdown extensions', () => {
+    const markdownExtensions = ['md', 'mkd', 'mkdn', 'mdwn', 'mdown', 'markdown'];
+
+    markdownExtensions.forEach((ext) => {
+      expect(detectFileFormat({ extension: ext })).toBe('frontmatter');
+    });
+  });
+
+  test('returns yaml-frontmatter as default', () => {
+    expect(detectFileFormat({ extension: 'txt' })).toBe('yaml-frontmatter');
+    expect(detectFileFormat({ extension: 'unknown' })).toBe('yaml-frontmatter');
+  });
+});
+
+describe('Test getEntryPathRegEx()', () => {
+  const baseI18nOptions = {
+    i18nEnabled: false,
+    allLocales: ['en', 'fr'],
+    initialLocales: ['en', 'fr'],
+    defaultLocale: 'en',
+    structure: /** @type {const} */ ('single_file'),
+    omitDefaultLocaleFromFileName: false,
+    canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+  };
+
+  test('generates regex without i18n', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/posts',
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?)\\.md$');
+    expect('content/posts/my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
+  });
+
+  test('generates regex with subPath template', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/posts',
+      subPath: '{{year}}/{{slug}}',
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?\\/[^/]+?)\\.md$');
+    expect('content/posts/2023/my-post.md'.match(regex)?.groups?.subPath).toBe('2023/my-post');
+  });
+
+  test('generates regex with index file name', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/posts',
+      subPath: '{{slug}}/index',
+      indexFileName: '_index',
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?\\/index|_index)\\.md$');
+    expect('content/posts/my-post/index.md'.match(regex)?.groups?.subPath).toBe('my-post/index');
+    expect('content/posts/_index.md'.match(regex)?.groups?.subPath).toBe('_index');
+  });
+
+  test('generates regex with multi-file i18n', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/posts',
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?)\\.(?<locale>en|fr)\\.md$');
+    expect('content/posts/my-post.en.md'.match(regex)?.groups?.locale).toBe('en');
+    expect('content/posts/my-post.fr.md'.match(regex)?.groups?.locale).toBe('fr');
+  });
+
+  test('generates regex with omitDefaultLocaleFromFileName', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      omitDefaultLocaleFromFileName: true,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/posts',
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?)(?:\\.(?<locale>fr))?\\.md$');
+    expect('content/posts/my-post.md'.match(regex)?.groups?.locale).toBeUndefined();
+    expect('content/posts/my-post.fr.md'.match(regex)?.groups?.locale).toBe('fr');
+  });
+
+  test('generates regex with multi-folder i18n', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: true,
+        i18nRootMultiFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/posts',
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^content\\/posts\\/(?<locale>en|fr)\\/(?<subPath>[^/]+?)\\.md$');
+    expect('content/posts/en/my-post.md'.match(regex)?.groups?.locale).toBe('en');
+    expect('content/posts/fr/my-post.md'.match(regex)?.groups?.locale).toBe('fr');
+  });
+
+  test('generates regex with root multi-folder i18n', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: true,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/posts',
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^(?<locale>en|fr)\\/content\\/posts\\/(?<subPath>[^/]+?)\\.md$');
+    expect('en/content/posts/my-post.md'.match(regex)?.groups?.locale).toBe('en');
+    expect('fr/content/posts/my-post.md'.match(regex)?.groups?.locale).toBe('fr');
+  });
+
+  test('handles empty basePath', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: '',
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^(?<subPath>[^/]+?)\\.md$');
+    expect('my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
+  });
+});
+
+describe('Test getFrontMatterDelimiters()', () => {
+  test('returns custom string delimiter as pair', () => {
+    expect(getFrontMatterDelimiters({ format: 'frontmatter', delimiter: '###' })).toEqual([
+      '###',
+      '###',
+    ]);
+  });
+
+  test('returns custom array delimiter', () => {
+    expect(getFrontMatterDelimiters({ format: 'frontmatter', delimiter: ['<<<', '>>>'] })).toEqual([
+      '<<<',
+      '>>>',
+    ]);
+  });
+
+  test('returns JSON delimiters for json-frontmatter', () => {
+    expect(getFrontMatterDelimiters({ format: 'json-frontmatter' })).toEqual(['{', '}']);
+  });
+
+  test('returns TOML delimiters for toml-frontmatter', () => {
+    expect(getFrontMatterDelimiters({ format: 'toml-frontmatter' })).toEqual(['+++', '+++']);
+  });
+
+  test('returns YAML delimiters for yaml-frontmatter', () => {
+    expect(getFrontMatterDelimiters({ format: 'yaml-frontmatter' })).toEqual(['---', '---']);
+  });
+
+  test('returns undefined for unknown format', () => {
+    expect(getFrontMatterDelimiters({ format: /** @type {any} */ ('unknown') })).toBeUndefined();
+  });
+
+  test('handles empty string delimiter', () => {
+    expect(getFrontMatterDelimiters({ format: 'frontmatter', delimiter: '' })).toBeUndefined();
+  });
+
+  test('handles whitespace-only delimiter', () => {
+    expect(getFrontMatterDelimiters({ format: 'frontmatter', delimiter: '   ' })).toBeUndefined();
+  });
+
+  test('handles array with wrong length', () => {
+    expect(
+      getFrontMatterDelimiters({ format: 'frontmatter', delimiter: ['only-one'] }),
+    ).toBeUndefined();
+    expect(
+      getFrontMatterDelimiters({ format: 'frontmatter', delimiter: ['one', 'two', 'three'] }),
+    ).toBeUndefined();
+  });
+});
 
 describe('Test getFileConfig()', () => {
   const rawFolderCollection = {
