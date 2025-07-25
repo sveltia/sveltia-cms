@@ -1,6 +1,11 @@
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi, beforeEach } from 'vitest';
-import { getEntryPreviewURL } from '$lib/services/contents/entry/index';
+import {
+  getEntryPreviewURL,
+  getAssociatedCollections,
+  extractDateTime,
+  getEntryRepoBlobURL,
+} from '$lib/services/contents/entry/index';
 
 /**
  * @import { Entry, InternalCollection, InternalCollectionFile, } from '$lib/types/private';
@@ -10,6 +15,15 @@ import { getEntryPreviewURL } from '$lib/services/contents/entry/index';
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/contents/collection/index-file');
 vi.mock('$lib/services/common/template');
+vi.mock('$lib/services/contents');
+vi.mock('$lib/services/contents/collection');
+vi.mock('$lib/services/backends', () => ({
+  backend: writable({
+    repository: {
+      blobBaseURL: 'https://github.com/user/repo/blob/main',
+    },
+  }),
+}));
 
 describe('Test getEntryPreviewURL()', () => {
   beforeEach(() => {
@@ -598,5 +612,261 @@ describe('Test getEntryPreviewURL()', () => {
     const result = getEntryPreviewURL(mockEntry, 'en', mockCollection);
 
     expect(result).toBe('https://example.com/posts/test-entry');
+  });
+});
+
+describe('Test getAssociatedCollections()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('should return collections for entry path', async () => {
+    const mockEntry = {
+      id: 'test-entry',
+      slug: 'test-entry',
+      subPath: 'test-entry',
+      locales: {
+        en: {
+          slug: 'test-entry',
+          path: 'content/posts/test-entry.md',
+          content: { title: 'Test Entry' },
+        },
+      },
+    };
+
+    // Mock the dependencies
+    const { getEntryFoldersByPath } = await import('$lib/services/contents');
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    vi.mocked(getEntryFoldersByPath).mockReturnValue([
+      { collectionName: 'posts' },
+      { collectionName: 'blog' },
+    ]);
+
+    /** @type {import('$lib/types/private').InternalCollection} */
+    const mockCollection = {
+      name: 'posts',
+      _type: /** @type {'entry'} */ ('entry'),
+      folder: 'content/posts',
+      fields: [],
+      _file: {
+        extension: 'md',
+        format: 'yaml-frontmatter',
+        basePath: 'content/posts',
+      },
+      _i18n: {
+        i18nEnabled: false,
+        saveAllLocales: false,
+        allLocales: ['en'],
+        initialLocales: ['en'],
+        defaultLocale: 'en',
+        structure: 'single_file',
+        structureMap: {
+          i18nSingleFile: true,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+        omitDefaultLocaleFromFileName: false,
+      },
+      _thumbnailFieldNames: [],
+    };
+
+    // blog collection doesn't exist
+    vi.mocked(getCollection).mockReturnValueOnce(mockCollection).mockReturnValueOnce(undefined);
+
+    const result = getAssociatedCollections(mockEntry);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(mockCollection);
+    expect(getEntryFoldersByPath).toHaveBeenCalledWith('content/posts/test-entry.md');
+  });
+
+  test('should return empty array when no collections found', async () => {
+    const mockEntry = {
+      id: 'test-entry',
+      slug: 'test-entry',
+      subPath: 'test-entry',
+      locales: {
+        en: {
+          slug: 'test-entry',
+          path: 'content/posts/test-entry.md',
+          content: { title: 'Test Entry' },
+        },
+      },
+    };
+
+    const { getEntryFoldersByPath } = await import('$lib/services/contents');
+
+    vi.mocked(getEntryFoldersByPath).mockReturnValue([]);
+
+    const result = getAssociatedCollections(mockEntry);
+
+    expect(result).toEqual([]);
+  });
+});
+
+describe('Test extractDateTime()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('should extract datetime from specified field', () => {
+    const fields = [
+      { name: 'title', widget: 'string' },
+      { name: 'publishDate', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ssZ' },
+    ];
+
+    const content = {
+      title: 'Test Entry',
+      publishDate: '2024-01-15T10:30:00Z',
+    };
+
+    const result = extractDateTime({
+      dateFieldName: 'publishDate',
+      fields,
+      content,
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        year: '2024',
+        month: '01',
+        day: '15',
+        minute: '30',
+        second: '00',
+      }),
+    );
+  });
+
+  test('should extract datetime from first datetime field when no field name specified', () => {
+    const fields = [
+      { name: 'title', widget: 'string' },
+      { name: 'date', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ssZ' },
+      { name: 'publishDate', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ssZ' },
+    ];
+
+    const content = {
+      title: 'Test Entry',
+      date: '2024-01-15T10:30:00Z',
+      publishDate: '2024-02-20T15:45:00Z',
+    };
+
+    const result = extractDateTime({
+      fields,
+      content,
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        year: '2024',
+        month: '01',
+        day: '15',
+      }),
+    );
+  });
+
+  test('should return undefined when field not found', () => {
+    const fields = [{ name: 'title', widget: 'string' }];
+
+    const content = {
+      title: 'Test Entry',
+    };
+
+    const result = extractDateTime({
+      dateFieldName: 'nonExistentDate',
+      fields,
+      content,
+    });
+
+    expect(result).toBeUndefined();
+  });
+
+  test('should return undefined when field value is empty', () => {
+    const fields = [{ name: 'date', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ssZ' }];
+
+    const content = {
+      date: '',
+    };
+
+    const result = extractDateTime({
+      fields,
+      content,
+    });
+
+    expect(result).toBeUndefined();
+  });
+
+  test('should handle UTC datetime fields', () => {
+    const fields = [
+      { name: 'date', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ssZ', picker_utc: true },
+    ];
+
+    const content = {
+      date: '2024-01-15T10:30:00Z',
+    };
+
+    const result = extractDateTime({
+      fields,
+      content,
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        year: '2024',
+        month: '01',
+        day: '15',
+        hour: '10',
+        minute: '30',
+        second: '00',
+      }),
+    );
+  });
+});
+
+describe('Test getEntryRepoBlobURL()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('should return repository blob URL', () => {
+    const mockEntry = {
+      id: 'test-entry',
+      slug: 'test-entry',
+      subPath: 'test-entry',
+      locales: {
+        en: {
+          slug: 'test-entry',
+          path: 'content/posts/test-entry.md',
+          content: { title: 'Test Entry' },
+        },
+      },
+    };
+
+    const result = getEntryRepoBlobURL(mockEntry, 'en');
+
+    expect(result).toBe(
+      'https://github.com/user/repo/blob/main/content/posts/test-entry.md?plain=1',
+    );
+  });
+
+  test('should handle missing locale gracefully', () => {
+    const mockEntry = {
+      id: 'test-entry',
+      slug: 'test-entry',
+      subPath: 'test-entry',
+      locales: {
+        en: {
+          slug: 'test-entry',
+          path: 'content/posts/test-entry.md',
+          content: { title: 'Test Entry' },
+        },
+      },
+    };
+
+    const result = getEntryRepoBlobURL(mockEntry, 'fr');
+
+    expect(result).toBe('https://github.com/user/repo/blob/main/undefined?plain=1');
   });
 });

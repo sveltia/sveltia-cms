@@ -47,7 +47,7 @@ import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fie
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @returns {string} Parsed string.
  */
-const sanitizeEntrySummary = (str, { allowMarkdown = false } = {}) => {
+export const sanitizeEntrySummary = (str, { allowMarkdown = false } = {}) => {
   str = /** @type {string} */ (parseInline(str));
   str = sanitize(str, { ALLOWED_TAGS: allowMarkdown ? ['strong', 'em', 'code'] : [] });
   str = parseEntities(str);
@@ -93,7 +93,7 @@ export const getEntrySummaryFromContent = (
  * @param {ReplacerSubContext} context Context.
  * @returns {string | Date | undefined} Replaced value or `undefined` if the tag is not recognized.
  */
-const replaceSub = (tag, context) => {
+export const replaceSub = (tag, context) => {
   const { slug, entryPath, basePath, commitDate, commitAuthor } = context;
 
   if (tag === 'slug') {
@@ -129,7 +129,7 @@ const replaceSub = (tag, context) => {
  * @param {ReplaceContext} context Context.
  * @returns {string} Replaced string.
  */
-const replace = (placeholder, context) => {
+export const replace = (placeholder, context) => {
   const { content: valueMap, collectionName, replaceSubContext, defaultLocale } = context;
   const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
   const keyPath = tag.replace(/^fields\./, '');

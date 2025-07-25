@@ -43,7 +43,7 @@ export const getAssociatedCollections = (entry) =>
  * @param {FlattenedEntryContent} args.content Entry content.
  * @returns {Record<string, string> | undefined} Date and time parts.
  */
-const extractDateTime = ({ dateFieldName, fields, content }) => {
+export const extractDateTime = ({ dateFieldName, fields, content }) => {
   const fieldConfig = dateFieldName
     ? fields.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
     : fields.find(({ widget }) => widget === 'datetime');
