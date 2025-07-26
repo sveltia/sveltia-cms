@@ -79,29 +79,26 @@
       .map((name) => BUTTON_NAME_MAP[name])
       .filter(Boolean),
   );
-  const builtinComponentDefs = $derived(
+  const components = $derived(
     _editorComponents
       .map((name) => {
-        // Exclude `code-block` implemented as a block type, as well as custom components
-        if (name === 'code-block' || name in customComponents) {
-          return undefined;
+        if (name in customComponents) {
+          return customComponents[name];
         }
 
-        // Use a different component definition for linked images
-        if (name === 'image' && linkedImagesEnabled) {
-          return 'linked-image';
+        if (name === 'image') {
+          // Use a different component definition for linked images
+          return getComponentDef(linkedImagesEnabled ? 'linked-image' : 'image');
         }
 
-        return name;
+        // Exclude `code-block` implemented as a block type as well as unknown components
+        return undefined;
       })
-      .map((name) => (name ? getComponentDef(name) : undefined))
-      .filter((definition) => !!definition),
-  );
-  const customComponentDefs = $derived(Object.values(customComponents));
-  const components = $derived(
-    [...builtinComponentDefs, ...customComponentDefs].map(
-      (def) => /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
-    ),
+      .filter((def) => !!def)
+      .map(
+        (def) =>
+          /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
+      ),
   );
   const imageComponent = $derived(components.find(({ id }) => id === 'image'));
 
