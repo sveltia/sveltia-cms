@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 
 import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
-import { flushSync, mount, tick } from 'svelte';
+import { flushSync, mount, tick, unmount } from 'svelte';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import Component from '$lib/components/contents/details/widgets/markdown/component.svelte';
@@ -194,6 +194,8 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
       let wrapper;
       /** @type {LexicalEditor | null} */
       let editor = null;
+      /** @type {Component} */
+      let component;
 
       /**
        * Custom `Change` event handler.
@@ -210,12 +212,13 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
           }
 
           if (type === 'remove') {
+            unmount(component);
             this.remove();
           }
         });
       };
 
-      const component = mount(Component, {
+      component = mount(Component, {
         target: document.createElement('div'),
         props: {
           componentId: id,
