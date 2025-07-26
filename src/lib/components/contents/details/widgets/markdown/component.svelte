@@ -1,14 +1,16 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
-  import { generateElementId } from '@sveltia/utils/element';
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
+  import { flatten, unflatten } from 'flat';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
+  import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import { editors } from '$lib/components/contents/details/widgets';
+  import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { InternalLocaleCode } from '$lib/types/private';
+   * @import { DraftValueStoreKey, InternalLocaleCode, RawEntryContent } from '$lib/types/private';
    * @import { Field, FieldKeyPath } from '$lib/types/public';
    */
 
@@ -38,11 +40,36 @@
   let locale = $state('');
   /** @type {FieldKeyPath} */
   let keyPath = $state('');
-  /** @type {Record<string, any>} */
-  const inputValues = $state({});
 
   // @todo Support nested object/list
   const unsupportedWidgets = ['list', 'object'];
+
+  /**
+   * Key to store the current values in the {@link entryDraft}. Usually `currentValues`, but we use
+   * `extraValues` here to store additional values for a Markdown editor component.
+   * @type {DraftValueStoreKey}
+   */
+  const valueStoreKey = 'extraValues';
+
+  /**
+   * Current values for the editor component. These Values are stored in the {@link entryDraft}
+   * under the `extraValues` key, with the key path prefixed with the parent field’s key path, e.g.
+   * `body::image`.
+   * @type {RawEntryContent | undefined}
+   */
+  const currentValues = $derived.by(() => {
+    if (!($entryDraft && locale && keyPath)) {
+      return undefined;
+    }
+
+    return unflatten(
+      Object.fromEntries(
+        Object.entries($state.snapshot($entryDraft[valueStoreKey][locale] ?? {}))
+          .filter(([key]) => key.startsWith(`${keyPath}::`))
+          .map(([key, value]) => [key.replace(`${keyPath}::`, ''), value]),
+      ),
+    );
+  });
 
   /**
    * Get the wrapper element.
@@ -62,23 +89,24 @@
   });
 
   $effect(() => {
-    void [values];
+    void [values, locale, keyPath];
 
     untrack(() => {
-      if (!equal(values, $state.snapshot(inputValues))) {
-        Object.assign(inputValues, values);
+      if ($entryDraft && locale && keyPath && !equal(values, currentValues)) {
+        Object.assign(
+          $entryDraft[valueStoreKey][locale],
+          Object.fromEntries(
+            Object.entries(flatten(values)).map(([key, value]) => [`${keyPath}::${key}`, value]),
+          ),
+        );
       }
     });
   });
 
   $effect(() => {
-    const _inputValues = $state.snapshot(inputValues);
-
-    untrack(() => {
-      if (!equal(values, _inputValues)) {
-        onChange(new CustomEvent('update', { detail: _inputValues }));
-      }
-    });
+    if (currentValues) {
+      onChange(new CustomEvent('update', { detail: currentValues }));
+    }
   });
 </script>
 
@@ -91,6 +119,10 @@
   tabindex="0"
   aria-label={label}
   data-component-id={componentId}
+  onkeydowncapture={(event) => {
+    // Allow to select all in any `TextInput` within the component below using Ctrl+A
+    event.stopPropagation();
+  }}
   onkeydown={(event) => {
     if (
       !(/** @type {HTMLElement} */ (event.target).matches('button, input, textarea')) &&
@@ -123,35 +155,15 @@
     {#each fields as fieldConfig (fieldConfig.name)}
       {#await sleep() then}
         <!-- @todo Support `default` option -->
-        {@const { name: fieldName, label: fieldLabel = fieldName, widget = 'string' } = fieldConfig}
+        {@const { name: fieldName, widget = 'string' } = fieldConfig}
         {#if widget in editors && !unsupportedWidgets.includes(widget)}
-          {@const SvelteComponent = editors[widget]}
-          <section
-            role="group"
-            class="field"
-            aria-label={$_('x_field', { values: { field: fieldLabel } })}
-            data-widget={widget}
-            data-key-path="{keyPath}:{fieldName}"
-            onkeydowncapture={(event) => {
-              // Allow to select all in any `TextInput` within the component below using Ctrl+A
-              event.stopPropagation();
-            }}
-          >
-            <header role="none">
-              <h4 role="none">{fieldLabel}</h4>
-            </header>
-            <div role="none" class="widget-wrapper">
-              <SvelteComponent
-                {locale}
-                keyPath="{keyPath}:{fieldName}"
-                fieldId={generateElementId('field')}
-                {fieldLabel}
-                {fieldConfig}
-                context="markdown-editor-component"
-                bind:currentValue={inputValues[fieldName]}
-              />
-            </div>
-          </section>
+          <FieldEditor
+            {locale}
+            keyPath="{keyPath}::{fieldName}"
+            {fieldConfig}
+            context="markdown-editor-component"
+            {valueStoreKey}
+          />
         {/if}
       {/await}
     {/each}
@@ -192,37 +204,29 @@
         height: 16px;
       }
     }
-  }
 
-  section {
-    margin: 0;
-    border-top: 1px solid var(--sui-secondary-border-color);
-    padding: var(--field-editor-padding);
+    // Make the input fields compact within the built-in image component
+    &:is([data-component-id='image'], [data-component-id='linked-image']) {
+      :global {
+        @media (768px <= width) {
+          [data-widget] {
+            border-width: 0;
+          }
 
-    h4 {
-      margin-bottom: 8px !important;
-      font-size: var(--sui-font-size-small);
-      font-weight: 600;
-      color: var(--sui-secondary-foreground-color);
-    }
+          [data-widget='string'] {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-block: 0 16px;
 
-    &[data-widget='string'] {
-      @media (768px <= width) {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+            h4 {
+              margin-bottom: 0 !important;
+            }
 
-        :is([data-component-id='image'], [data-component-id='linked-image']) & {
-          border-width: 0;
-          padding-block: 0 16px;
-        }
-
-        h4 {
-          margin-bottom: 0 !important;
-        }
-
-        .widget-wrapper {
-          flex: auto;
+            .widget-wrapper {
+              flex: auto;
+            }
+          }
         }
       }
     }

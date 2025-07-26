@@ -6,7 +6,7 @@
 <script>
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { untrack } from 'svelte';
+  import { getContext, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -18,7 +18,7 @@
 
   /**
    * @import { Writable } from 'svelte/store';
-   * @import { EntryDraft, WidgetEditorProps } from '$lib/types/private';
+   * @import { EntryDraft, FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
    * @import { KeyValueField } from '$lib/types/public';
    */
 
@@ -27,6 +27,9 @@
    * @property {KeyValueField} fieldConfig Field configuration.
    * @property {Record<string, string> | undefined} currentValue Field value.
    */
+
+  /** @type {FieldEditorContext} */
+  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -74,9 +77,9 @@
       edited = updatedPairs.map(() => false);
     }
 
-    if (!pairs.length && $entryDraft.currentValues[locale][keyPath] !== null) {
+    if (!pairs.length && $entryDraft[valueStoreKey][locale][keyPath] !== null) {
       // Enable validation
-      $entryDraft.currentValues[locale][keyPath] = null;
+      $entryDraft[valueStoreKey][locale][keyPath] = null;
     }
   };
 
@@ -88,7 +91,7 @@
       return;
     }
 
-    Object.entries($entryDraft.currentValues).forEach(([_locale, content]) => {
+    Object.entries($entryDraft[valueStoreKey]).forEach(([_locale, content]) => {
       if (_locale === locale || i18n === 'duplicate') {
         // Remove `null` added for validation
         delete content[keyPath];
@@ -130,7 +133,7 @@
   };
 
   $effect(() => {
-    void [$state.snapshot($entryDraft?.currentValues[locale])];
+    void [$state.snapshot($entryDraft?.[valueStoreKey][locale])];
 
     untrack(() => {
       updatePairs();

@@ -5,11 +5,11 @@
 -->
 <script>
   import { CodeEditor } from '@sveltia/ui';
-  import { untrack } from 'svelte';
+  import { getContext, untrack } from 'svelte';
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
    * @import { CodeField } from '$lib/types/public';
    */
 
@@ -18,6 +18,9 @@
    * @property {CodeField} fieldConfig Field configuration.
    * @property {string | {} | undefined} currentValue Field value.
    */
+
+  /** @type {FieldEditorContext} */
+  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -42,7 +45,7 @@
     output_code_only: outputCodeOnly = false,
     keys: outputKeys = { code: 'code', lang: 'lang' },
   } = $derived(fieldConfig);
-  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
+  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
   const codeKeyPath = $derived(`${keyPath}.${outputKeys.code}`);
   const langKeyPath = $derived(`${keyPath}.${outputKeys.lang}`);
 
@@ -86,11 +89,11 @@
       currentValue = {};
 
       if (valueMap[codeKeyPath] !== code) {
-        $entryDraft.currentValues[locale][codeKeyPath] = code;
+        $entryDraft[valueStoreKey][locale][codeKeyPath] = code;
       }
 
       if (valueMap[langKeyPath] !== lang) {
-        $entryDraft.currentValues[locale][langKeyPath] = lang;
+        $entryDraft[valueStoreKey][locale][langKeyPath] = lang;
       }
     }
   };
