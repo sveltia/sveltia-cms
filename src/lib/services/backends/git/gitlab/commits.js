@@ -1,6 +1,7 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
+
 import { repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';

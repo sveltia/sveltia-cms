@@ -1,11 +1,12 @@
 import { get } from 'svelte/store';
-import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
+  canCreateIndexFile,
   getIndexFile,
   isCollectionIndexFile,
-  canCreateIndexFile,
 } from '$lib/services/contents/collection/index-file';
 
 // Mock dependencies

@@ -2,6 +2,7 @@
   import { TextInput } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
+
   import {
     allStockAssetProviders,
     getStockAssetMediaLibraryOptions,

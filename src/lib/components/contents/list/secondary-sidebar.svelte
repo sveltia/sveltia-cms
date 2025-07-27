@@ -2,6 +2,7 @@
   import { Group } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
+
   import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { goto } from '$lib/services/app/navigation';

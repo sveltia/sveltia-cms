@@ -1,4 +1,5 @@
 import { escapeRegExp } from '@sveltia/utils/string';
+
 import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**

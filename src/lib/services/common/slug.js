@@ -1,6 +1,7 @@
 import transliterate from '@sindresorhus/transliterate';
 import { generateUUID } from '@sveltia/utils/crypto';
 import { get } from 'svelte/store';
+
 import { siteConfig } from '$lib/services/config';
 
 /**

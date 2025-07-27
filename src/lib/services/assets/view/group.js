@@ -1,6 +1,7 @@
 import { compare } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
+
 import { getRegex } from '$lib/services/utils/misc';
 
 /**

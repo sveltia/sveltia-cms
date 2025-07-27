@@ -1,6 +1,8 @@
 import { get } from 'svelte/store';
 import { describe, expect, it } from 'vitest';
+
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
+
 import { assetUpdatesToast } from './index.js';
 
 describe('assets/data/index', () => {

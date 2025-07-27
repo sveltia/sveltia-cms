@@ -1,5 +1,6 @@
 import { derived, get } from 'svelte/store';
 import { _, locale as appLocale } from 'svelte-i18n';
+
 import { allAssets } from '$lib/services/assets';
 
 /**

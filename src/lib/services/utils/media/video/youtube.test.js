@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
-import { isYouTubeVideoURL, getYouTubeEmbedURL } from './youtube';
+
+import { getYouTubeEmbedURL, isYouTubeVideoURL } from './youtube';
 
 // Mock the isURL utility
 vi.mock('@sveltia/utils/string', () => ({

@@ -8,6 +8,7 @@
   import equal from 'fast-deep-equal';
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import {

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+
 import { formatDuration } from './index';
 
 describe('formatDuration', () => {

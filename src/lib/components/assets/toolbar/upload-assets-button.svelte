@@ -1,6 +1,7 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
 

@@ -1,5 +1,6 @@
 <script>
   import { Switch } from '@sveltia/ui';
+
   import { prefs } from '$lib/services/user/prefs';
 
   /**

@@ -1,13 +1,14 @@
 import mime from 'mime';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-  MEDIA_KINDS,
   ASSET_KINDS,
-  DOC_EXTENSION_REGEX,
-  isMediaKind,
   canPreviewAsset,
-  getMediaKind,
+  DOC_EXTENSION_REGEX,
   getAssetKind,
+  getMediaKind,
+  isMediaKind,
+  MEDIA_KINDS,
 } from './kinds';
 
 // Mock dependencies

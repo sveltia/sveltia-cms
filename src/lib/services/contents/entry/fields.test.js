@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { getCollection, isEntryCollection } from '$lib/services/contents/collection';
 import {
   fieldConfigCacheMap,

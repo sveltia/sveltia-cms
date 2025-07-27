@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/github/status';
 
 // Mock dependencies

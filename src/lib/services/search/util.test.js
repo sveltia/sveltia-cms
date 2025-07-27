@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { normalize, hasMatch } from './util';
+import { describe, expect, it } from 'vitest';
+
+import { hasMatch, normalize } from './util';
 
 describe('normalize', () => {
   it('should normalize basic strings', () => {

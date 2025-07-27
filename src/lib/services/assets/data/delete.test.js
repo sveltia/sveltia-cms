@@ -1,5 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { updateStores, deleteAssets } from './delete.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { deleteAssets, updateStores } from './delete.js';
 
 // Mock dependencies
 vi.mock('$lib/services/assets', () => ({

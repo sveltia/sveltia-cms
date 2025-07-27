@@ -1,6 +1,7 @@
 <script>
   import { Group } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import PageContainer from '$lib/components/common/page-container.svelte';
 </script>
 

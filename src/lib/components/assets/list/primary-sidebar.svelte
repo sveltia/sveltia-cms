@@ -3,6 +3,7 @@
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { allAssets, getAssetsByFolder } from '$lib/services/assets';

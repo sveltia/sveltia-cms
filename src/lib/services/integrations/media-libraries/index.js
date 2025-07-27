@@ -1,4 +1,5 @@
 import { get } from 'svelte/store';
+
 import { siteConfig } from '$lib/services/config';
 
 /**

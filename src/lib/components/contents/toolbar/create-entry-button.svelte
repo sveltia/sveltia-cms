@@ -1,6 +1,7 @@
 <script>
   import { Button, Icon, Menu, MenuItem, SplitButton } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import { goto } from '$lib/services/app/navigation';
   import { allEntries } from '$lib/services/contents';
   import { selectedCollection } from '$lib/services/contents/collection';

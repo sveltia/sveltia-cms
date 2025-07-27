@@ -1,5 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { createFileList, updatedStores, saveAssets } from './create.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createFileList, saveAssets, updatedStores } from './create.js';
 
 // Mock dependencies
 vi.mock('$lib/services/assets', () => ({

@@ -1,13 +1,14 @@
 import { get } from 'svelte/store';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
   allAssetFolders,
+  canCreateAsset,
+  getAssetFolder,
+  getAssetFoldersByPath,
   globalAssetFolder,
   selectedAssetFolder,
   targetAssetFolder,
-  getAssetFolder,
-  getAssetFoldersByPath,
-  canCreateAsset,
 } from './folders';
 
 // Mock dependencies

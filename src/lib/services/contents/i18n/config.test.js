@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
+
 import { DEFAULT_I18N_CONFIG, normalizeI18nConfig } from './config';
 
 /**

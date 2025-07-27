@@ -5,6 +5,7 @@
   import { marked } from 'marked';
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import Toolbar from '$lib/components/assets/details/toolbar.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';

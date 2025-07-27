@@ -1,6 +1,7 @@
 <script>
   import { TextInput } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import PrefSwitch from '$lib/components/settings/controls/pref-switch.svelte';
   import { siteConfig } from '$lib/services/config';
   import { prefs } from '$lib/services/user/prefs';

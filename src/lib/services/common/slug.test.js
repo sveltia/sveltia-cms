@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
+
 import { slugify } from '$lib/services/common/slug';
 
 vi.mock('$lib/services/config');

@@ -12,6 +12,7 @@
   import { isObject } from '@sveltia/utils/object';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import { loadModule } from '$lib/services/app/dependencies';
   import { sendRequest } from '$lib/services/utils/networking';
   import { toFixed } from '$lib/services/utils/number';

@@ -1,6 +1,7 @@
 <script>
   import { MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { version } from '$lib/services/app';
   import { prefs } from '$lib/services/user/prefs';
 </script>

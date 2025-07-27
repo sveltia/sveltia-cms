@@ -1,4 +1,5 @@
 import { derived, writable } from 'svelte/store';
+
 import { backend } from '$lib/services/backends';
 import { user } from '$lib/services/user';
 import { hasMouse, isLargeScreen } from '$lib/services/user/env';

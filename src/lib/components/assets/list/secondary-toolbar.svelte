@@ -1,6 +1,7 @@
 <script>
   import { Button, Divider, Icon, Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import FilterMenu from '$lib/components/common/page-toolbar/filter-menu.svelte';
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';

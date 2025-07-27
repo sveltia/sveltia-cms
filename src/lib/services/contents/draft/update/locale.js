@@ -1,6 +1,7 @@
 import { toRaw } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
+
 import { entryDraft } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';

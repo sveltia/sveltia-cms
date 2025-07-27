@@ -3,6 +3,7 @@
   import { waitForVisibility } from '@sveltia/utils/element';
   import { flushSync } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets/info';
 
   /**

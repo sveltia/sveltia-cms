@@ -1,6 +1,7 @@
 <script>
   import { Icon, Option } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { announcedPageStatus, goto } from '$lib/services/app/navigation';
 
   /**

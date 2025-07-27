@@ -3,6 +3,7 @@
   import equal from 'fast-deep-equal';
   import { writable } from 'svelte/store';
   import { _ } from 'svelte-i18n';
+
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';

@@ -1,6 +1,7 @@
 <script>
   import { Alert, ConfirmationDialog, Toast } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import { backupToastState, restoreDialogState } from '$lib/services/contents/draft/backup';
   import { showContentOverlay } from '$lib/services/contents/editor';
 

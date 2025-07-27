@@ -1,12 +1,13 @@
 // @ts-nocheck
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-  getDraftBaseProps,
   addSavingEntryData,
   collectEntryChanges,
   collectEntryChangesFromAsset,
-  updateStores,
+  getDraftBaseProps,
   moveAssets,
+  updateStores,
 } from './move.js';
 
 // Mock dependencies

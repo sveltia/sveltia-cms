@@ -2,6 +2,7 @@
   import { EmptyState, Group, InfiniteScroll } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
+
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryResultItem from '$lib/components/search/entry-result-item.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';

@@ -1,6 +1,7 @@
 <script>
   import { ConfirmationDialog } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { getAssetFolder } from '$lib/services/assets/folders';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { deleteEntries } from '$lib/services/contents/collection/data/delete';

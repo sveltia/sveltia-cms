@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
+
 import { resolveAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
 
 vi.mock('$lib/services/assets');

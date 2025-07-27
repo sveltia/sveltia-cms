@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
+  addFolderIfNeeded,
   getAllAssetFolders,
+  iterateFiles,
   normalizeAssetFolder,
   replaceTags,
-  addFolderIfNeeded,
-  iterateFiles,
 } from './assets.js';
 
 // Mock external dependencies

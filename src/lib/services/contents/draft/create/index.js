@@ -1,4 +1,5 @@
 import { get } from 'svelte/store';
+
 import { siteConfig } from '$lib/services/config';
 import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { entryDraft } from '$lib/services/contents/draft';

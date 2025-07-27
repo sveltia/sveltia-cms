@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
+
 import {
-  FULL_DATE_TIME_REGEX,
-  DATE_REGEX,
-  TIME_SUFFIX_REGEX,
   DATE_FORMAT_OPTIONS,
-  TIME_FORMAT_OPTIONS,
+  DATE_REGEX,
   DATE_TIME_FORMAT_OPTIONS,
+  FULL_DATE_TIME_REGEX,
+  TIME_FORMAT_OPTIONS,
+  TIME_SUFFIX_REGEX,
 } from './date';
 
 describe('Date utility regexes', () => {

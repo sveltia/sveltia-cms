@@ -2,6 +2,7 @@ import { toRaw } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import * as TOML from 'smol-toml';
 import YAML from 'yaml';
+
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/contents/file/config';

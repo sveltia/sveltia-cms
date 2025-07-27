@@ -1,5 +1,6 @@
 <script>
   import { Checkbox, GridCell, GridRow, TruncatedText } from '@sveltia/ui';
+
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { focusedAsset, selectedAssets } from '$lib/services/assets';

@@ -1,5 +1,6 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { commitChanges, fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';

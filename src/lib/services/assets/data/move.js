@@ -1,5 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { get } from 'svelte/store';
+
 import { allAssets, focusedAsset, overlaidAsset } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';

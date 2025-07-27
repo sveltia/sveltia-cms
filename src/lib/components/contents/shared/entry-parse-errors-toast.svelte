@@ -1,6 +1,7 @@
 <script>
   import { Alert, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { entryParseErrors } from '$lib/services/contents';
 
   let showParseErrorToast = $state(!!$entryParseErrors.length);

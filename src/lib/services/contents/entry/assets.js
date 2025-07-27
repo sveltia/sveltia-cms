@@ -1,6 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
+
 import { allAssets, getAssetByPath } from '$lib/services/assets';
 import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { getMediaFieldURL } from '$lib/services/assets/info';

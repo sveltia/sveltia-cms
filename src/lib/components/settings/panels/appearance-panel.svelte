@@ -1,6 +1,7 @@
 <script>
   import { SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { prefs } from '$lib/services/user/prefs';
 
   /**

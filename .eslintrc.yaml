@@ -31,11 +31,14 @@ rules:
   import/no-mutable-exports: off
   import/no-unresolved: off
   import/prefer-default-export: off
+  # https://github.com/import-js/eslint-plugin-import/issues/1670#issuecomment-1018833148
   import/order:
     - error
     - groups:
         - builtin
         - external
+        - object
+        - type
         - internal
         - parent
         - sibling
@@ -46,10 +49,17 @@ rules:
           position: after
       pathGroupsExcludedImportTypes:
         - builtin
-      newlines-between: never
+      newlines-between: always
       alphabetize:
         order: asc
         caseInsensitive: true
+  sort-imports:
+    - error
+    - allowSeparatedGroups: true
+      ignoreCase: true
+      ignoreDeclarationSort: true
+      ignoreMemberSort: false
+      memberSyntaxSortOrder: [none, all, multiple, single]
   unused-imports/no-unused-imports: error
   jsdoc/no-undefined-types: off
   jsdoc/require-jsdoc:

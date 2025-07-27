@@ -13,11 +13,12 @@
     $insertNodes as insertNodes,
   } from 'lexical';
   import { untrack } from 'svelte';
+
   import {
+    BUILTIN_COMPONENTS,
     BUTTON_NAME_MAP,
     customComponents,
     DEFAULT_BUTTONS,
-    BUILTIN_COMPONENTS,
     DEFAULT_MODES,
     NODE_NAME_MAP,
   } from '$lib/services/contents/widgets/markdown';
@@ -30,6 +31,7 @@
     SUPPORTED_IMAGE_TYPES,
     VECTOR_IMAGE_EXTENSION_REGEX,
   } from '$lib/services/utils/media/image';
+
   /**
    * @import { WidgetEditorProps } from '$lib/types/private';
    * @import { MarkdownField } from '$lib/types/public';

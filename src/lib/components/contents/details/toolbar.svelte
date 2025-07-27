@@ -15,6 +15,7 @@
     TruncatedText,
   } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';

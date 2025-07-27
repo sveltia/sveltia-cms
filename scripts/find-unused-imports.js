@@ -20,7 +20,7 @@
  * node scripts/find-unused-imports.js --fix     # Remove unused imports automatically.
  */
 
-import { readFile, readdir, stat, writeFile } from 'fs/promises';
+import { readdir, readFile, stat, writeFile } from 'fs/promises';
 import { extname, join, relative } from 'path';
 import { fileURLToPath } from 'url';
 

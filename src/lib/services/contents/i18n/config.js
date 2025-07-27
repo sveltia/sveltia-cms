@@ -1,5 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
+
 import { siteConfig } from '$lib/services/config';
 import { isSingletonCollection } from '$lib/services/contents/collection';
 

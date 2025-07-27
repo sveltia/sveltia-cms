@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { allTranslationServices, translator } from './index.js';
 
 // Mock the individual translator services

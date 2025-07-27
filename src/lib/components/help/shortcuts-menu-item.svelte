@@ -1,6 +1,7 @@
 <script>
   import { MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import ShortcutsDialog from '$lib/components/help/shortcuts-dialog.svelte';
   import { hasMouse } from '$lib/services/user/env';
 

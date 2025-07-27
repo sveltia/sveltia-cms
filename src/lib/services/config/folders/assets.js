@@ -1,5 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { compare, stripSlashes } from '@sveltia/utils/string';
+
 import { getValidCollections } from '$lib/services/contents/collection';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/files';
 

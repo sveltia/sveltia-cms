@@ -10,6 +10,7 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';

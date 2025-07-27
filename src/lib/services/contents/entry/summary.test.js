@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
+
 import {
   getEntrySummary,
-  sanitizeEntrySummary,
   getEntrySummaryFromContent,
-  replaceSub,
   replace,
+  replaceSub,
+  sanitizeEntrySummary,
 } from '$lib/services/contents/entry/summary';
 
 /**

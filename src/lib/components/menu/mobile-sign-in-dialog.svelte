@@ -2,6 +2,7 @@
   import { Dialog } from '@sveltia/ui';
   import QRCode from 'qrcode';
   import { _ } from 'svelte-i18n';
+
   import { showMobileSignInDialog } from '$lib/services/app/onboarding';
   import { user } from '$lib/services/user';
   import { prefs } from '$lib/services/user/prefs';

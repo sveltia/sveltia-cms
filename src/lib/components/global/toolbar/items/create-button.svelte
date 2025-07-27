@@ -2,6 +2,7 @@
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
+
   import { goto } from '$lib/services/app/navigation';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { getValidCollections } from '$lib/services/contents/collection';

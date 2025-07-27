@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { get } from 'svelte/store';
-import { describe, it, expect, afterEach } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+
 import { GIT_CONFIG_FILE_REGEX, gitConfigFiles, lfsFileExtensions } from './config';
 
 describe('git/shared/config', () => {

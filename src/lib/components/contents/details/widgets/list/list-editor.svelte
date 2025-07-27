@@ -20,6 +20,7 @@
   import { unflatten } from 'flat';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';

@@ -1,14 +1,15 @@
 import { get } from 'svelte/store';
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { getCollection, getValidCollections } from '$lib/services/contents/collection';
 import {
-  isValidCollectionFile,
-  getValidCollectionFiles,
   getCollectionFile,
-  getCollectionFileLabel,
-  getCollectionFilesByEntry,
   getCollectionFileEntry,
   getCollectionFileIndex,
+  getCollectionFileLabel,
+  getCollectionFilesByEntry,
+  getValidCollectionFiles,
+  isValidCollectionFile,
 } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 

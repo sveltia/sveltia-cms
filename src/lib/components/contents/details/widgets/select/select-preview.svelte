@@ -5,6 +5,7 @@
 -->
 <script>
   import { isObjectArray } from '@sveltia/utils/array';
+
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**

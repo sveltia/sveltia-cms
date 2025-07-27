@@ -1,6 +1,7 @@
 <script>
   import { Button, Icon, Menu, MenuButton } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { copyFromLocale } from '$lib/services/contents/draft/update/copy';

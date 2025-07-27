@@ -1,6 +1,7 @@
 import equal from 'fast-deep-equal';
 import { derived, get, writable } from 'svelte/store';
 import { locale as appLocale } from 'svelte-i18n';
+
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';

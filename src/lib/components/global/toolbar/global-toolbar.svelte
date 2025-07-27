@@ -1,6 +1,7 @@
 <script>
   import { Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import AccountButton from '$lib/components/global/toolbar/items/account-button.svelte';
   import CreateButton from '$lib/components/global/toolbar/items/create-button.svelte';
   import HelpButton from '$lib/components/global/toolbar/items/help-button.svelte';

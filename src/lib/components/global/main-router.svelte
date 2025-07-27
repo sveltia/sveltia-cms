@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+
   import AssetsPage from '$lib/components/assets/assets-page.svelte';
   import UploadAssetsConfirmDialog from '$lib/components/assets/shared/upload-assets-confirm-dialog.svelte';
   import UploadAssetsDialog from '$lib/components/assets/shared/upload-assets-dialog.svelte';

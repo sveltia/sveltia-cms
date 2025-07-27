@@ -1,6 +1,7 @@
 import { init as initI18n } from 'svelte-i18n';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { DEV_SITE_URL, siteConfig, siteConfigVersion, siteConfigError, validate } from './index.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { DEV_SITE_URL, siteConfig, siteConfigError, siteConfigVersion, validate } from './index.js';
 
 // Mock external dependencies
 vi.mock('@sveltia/utils/crypto', () => ({

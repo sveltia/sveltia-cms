@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Mock dependencies with vi.hoisted to ensure proper hoisting
 const getMock = vi.hoisted(() => vi.fn());

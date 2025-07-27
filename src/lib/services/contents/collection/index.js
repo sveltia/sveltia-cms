@@ -1,6 +1,7 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { _ } from 'svelte-i18n';
+
 import { siteConfig } from '$lib/services/config';
 import {
   getValidCollectionFiles,

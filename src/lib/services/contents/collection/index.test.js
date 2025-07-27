@@ -1,13 +1,14 @@
 import { get } from 'svelte/store';
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import {
+  getCollectionIndex,
+  getFirstCollection,
+  getValidCollections,
   isEntryCollection,
   isFileCollection,
   isSingletonCollection,
   isValidCollection,
-  getValidCollections,
-  getFirstCollection,
-  getCollectionIndex,
 } from '$lib/services/contents/collection';
 
 // Mock dependencies

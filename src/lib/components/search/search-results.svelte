@@ -1,5 +1,6 @@
 <script>
   import { _ } from 'svelte-i18n';
+
   import AssetResults from '$lib/components/search/asset-results.svelte';
   import EntryResults from '$lib/components/search/entry-results.svelte';
   import { searchMode } from '$lib/services/search';

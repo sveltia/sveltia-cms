@@ -1,11 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-  getAllEntryFolders,
-  getFilePathMap,
-  getCollectionFileFolder,
   compareFilePath,
+  getAllEntryFolders,
+  getCollectionFileFolder,
   getEntryCollectionFolders,
   getFileCollectionFolders,
+  getFilePathMap,
   getSingletonCollectionFolders,
 } from './entries.js';
 

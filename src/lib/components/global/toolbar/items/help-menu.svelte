@@ -1,6 +1,7 @@
 <script>
   import { Divider, Menu, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import ReleaseNotesMenuItem from '$lib/components/help/release-notes-menu-item.svelte';
   import ShortcutsMenuItem from '$lib/components/help/shortcuts-menu-item.svelte';
 

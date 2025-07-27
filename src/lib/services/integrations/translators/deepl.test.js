@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import deeplTranslator, { getSourceLanguage, getTargetLanguage } from './deepl.js';
 
 // Mock fetch globally

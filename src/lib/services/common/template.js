@@ -1,6 +1,7 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { truncate } from '@sveltia/utils/string';
+
 import { slugify } from '$lib/services/common/slug';
 import {
   applyTransformations,

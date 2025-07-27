@@ -1,8 +1,9 @@
 // @ts-nocheck
 import { LocalStorage } from '@sveltia/utils/storage';
 import { get } from 'svelte/store';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { inAuthPopup, openPopup, createAuthSecrets, sendMessage } from './auth';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createAuthSecrets, inAuthPopup, openPopup, sendMessage } from './auth';
 
 vi.mock('@sveltia/utils/crypto', () => ({
   generateRandomId: vi.fn(() => 'random-id'),

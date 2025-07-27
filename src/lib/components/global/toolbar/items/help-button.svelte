@@ -1,6 +1,7 @@
 <script>
   import { Icon, MenuButton } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import HelpMenu from '$lib/components/global/toolbar/items/help-menu.svelte';
   import ShortcutsDialog from '$lib/components/help/shortcuts-dialog.svelte';
 

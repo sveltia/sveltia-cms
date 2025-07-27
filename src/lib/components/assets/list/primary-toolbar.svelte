@@ -1,6 +1,7 @@
 <script>
   import { FloatingActionButtonWrapper, Toolbar } from '@sveltia/ui';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import CopyAssetsButton from '$lib/components/assets/toolbar/copy-assets-button.svelte';
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
   import DownloadAssetsButton from '$lib/components/assets/toolbar/download-assets-button.svelte';

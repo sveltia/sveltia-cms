@@ -1,6 +1,7 @@
 <script>
   import { Button } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { openProductionSite } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
 </script>

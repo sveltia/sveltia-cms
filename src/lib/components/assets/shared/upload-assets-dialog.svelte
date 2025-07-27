@@ -2,6 +2,7 @@
   import { Dialog, FilePicker } from '@sveltia/ui';
   import mime from 'mime';
   import { _ } from 'svelte-i18n';
+
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { uploadingAssets } from '$lib/services/assets';
   import { targetAssetFolder } from '$lib/services/assets/folders';

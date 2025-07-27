@@ -1,6 +1,7 @@
 <script>
   import { Option, Select } from '@sveltia/ui';
   import { _, locale as appLocale, locales as appLocales } from 'svelte-i18n';
+
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { prefs } from '$lib/services/user/prefs';
 

@@ -1,5 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 import { flatten } from 'flat';
+
 import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
 import { isFieldRequired } from '$lib/services/contents/entry/fields';
 

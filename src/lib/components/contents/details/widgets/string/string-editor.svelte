@@ -6,6 +6,7 @@
 <script>
   import { TextInput } from '@sveltia/ui';
   import { getContext, untrack } from 'svelte';
+
   import CharacterCounter from '$lib/components/contents/details/widgets/string/character-counter.svelte';
 
   /**

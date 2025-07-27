@@ -1,6 +1,7 @@
 import { compare } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
+
 import { currentView } from '$lib/services/contents/collection/view';
 import { getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getRegex } from '$lib/services/utils/misc';

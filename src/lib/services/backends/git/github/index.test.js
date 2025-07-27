@@ -1,5 +1,6 @@
 import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import githubBackend, { init } from '$lib/services/backends/git/github';
 import {
   BACKEND_LABEL,

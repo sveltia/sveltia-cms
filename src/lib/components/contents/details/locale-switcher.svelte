@@ -2,6 +2,7 @@
   import { Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { writable } from 'svelte/store';
   import { _ } from 'svelte-i18n';
+
   import { entryDraft } from '$lib/services/contents/draft';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';

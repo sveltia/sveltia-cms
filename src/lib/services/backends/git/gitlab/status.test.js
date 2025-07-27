@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { checkStatus } from '$lib/services/backends/git/gitlab/status';
 import { sendRequest } from '$lib/services/utils/networking';
 

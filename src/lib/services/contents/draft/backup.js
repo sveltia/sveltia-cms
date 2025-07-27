@@ -2,6 +2,7 @@ import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { get, writable } from 'svelte/store';
+
 import { backend } from '$lib/services/backends';
 import { siteConfigVersion } from '$lib/services/config';
 import { entryDraft, entryDraftModified, i18nAutoDupEnabled } from '$lib/services/contents/draft';

@@ -6,6 +6,7 @@
 <script>
   import { isObject } from '@sveltia/utils/object';
   import { compare } from '@sveltia/utils/string';
+
   import SelectMultiple from '$lib/components/contents/details/widgets/select/select-multiple.svelte';
   import SelectSingle from '$lib/components/contents/details/widgets/select/select-single.svelte';
 

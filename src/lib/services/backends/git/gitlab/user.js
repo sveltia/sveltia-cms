@@ -1,4 +1,5 @@
 import { get } from 'svelte/store';
+
 import { BACKEND_NAME } from '$lib/services/backends/git/gitlab/constants';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { user } from '$lib/services/user';

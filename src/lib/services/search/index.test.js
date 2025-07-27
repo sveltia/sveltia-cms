@@ -1,5 +1,6 @@
 import { get } from 'svelte/store';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { searchMode, searchTerms } from './index';
 
 describe('search stores', () => {

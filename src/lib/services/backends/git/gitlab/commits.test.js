@@ -1,6 +1,7 @@
 import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { fetchLastCommit, commitChanges } from '$lib/services/backends/git/gitlab/commits';
+
+import { commitChanges, fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { getGitHash } from '$lib/services/utils/file';

@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
+
 import {
-  BACKEND_NAME,
   BACKEND_LABEL,
+  BACKEND_NAME,
   DEFAULT_API_ROOT,
-  DEFAULT_AUTH_ROOT,
   DEFAULT_AUTH_PATH,
+  DEFAULT_AUTH_ROOT,
 } from '$lib/services/backends/git/gitlab/constants';
 
 describe('GitLab constants', () => {

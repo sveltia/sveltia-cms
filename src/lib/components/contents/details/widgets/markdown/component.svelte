@@ -5,6 +5,7 @@
   import equal from 'fast-deep-equal';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import { editors } from '$lib/components/contents/details/widgets';
 
   /**

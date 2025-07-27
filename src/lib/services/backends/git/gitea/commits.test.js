@@ -1,5 +1,6 @@
-import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
-import { fetchLastCommit, commitChanges } from './commits.js';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { commitChanges, fetchLastCommit } from './commits.js';
 
 /**
  * @import { CommitAction, CommitOptions, CommitType, FileChange } from '$lib/types/private';

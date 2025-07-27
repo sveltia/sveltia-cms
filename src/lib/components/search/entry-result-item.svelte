@@ -2,6 +2,7 @@
   import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { locale as appLocale } from 'svelte-i18n';
+
   import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getCollectionLabel } from '$lib/services/contents/collection';

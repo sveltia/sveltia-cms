@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { searchEntries, scanEntry } from './entries';
+import { describe, expect, it } from 'vitest';
+
+import { scanEntry, searchEntries } from './entries';
 
 /**
  * @import { Entry } from '$lib/types/private';

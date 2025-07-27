@@ -1,4 +1,5 @@
 import { derived } from 'svelte/store';
+
 import { allAssets } from '$lib/services/assets';
 import { searchTerms } from '$lib/services/search';
 import { hasMatch, normalize } from '$lib/services/search/util';

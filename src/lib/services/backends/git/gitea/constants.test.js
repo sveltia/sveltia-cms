@@ -1,12 +1,13 @@
 import { describe, expect, test } from 'vitest';
+
 import {
-  BACKEND_NAME,
   BACKEND_LABEL,
+  BACKEND_NAME,
   DEFAULT_API_ROOT,
-  DEFAULT_AUTH_ROOT,
   DEFAULT_AUTH_PATH,
-  MIN_GITEA_VERSION,
+  DEFAULT_AUTH_ROOT,
   MIN_FORGEJO_VERSION,
+  MIN_GITEA_VERSION,
 } from '$lib/services/backends/git/gitea/constants';
 
 describe('Gitea constants', () => {

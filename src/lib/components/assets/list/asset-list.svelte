@@ -2,6 +2,7 @@
   import { EmptyState, GridBody, InfiniteScroll } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
+
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';

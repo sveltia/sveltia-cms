@@ -3,6 +3,7 @@ import { isObject } from '@sveltia/utils/object';
 import equal from 'fast-deep-equal';
 import { derived, get } from 'svelte/store';
 import { _, locale as appLocale } from 'svelte-i18n';
+
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { currentView } from '$lib/services/contents/collection/view';

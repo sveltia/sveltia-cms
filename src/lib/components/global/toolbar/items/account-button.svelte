@@ -1,6 +1,7 @@
 <script>
   import { Icon, MenuButton } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import AccountMenu from '$lib/components/global/toolbar/items/account-menu.svelte';
   import { user } from '$lib/services/user';
 

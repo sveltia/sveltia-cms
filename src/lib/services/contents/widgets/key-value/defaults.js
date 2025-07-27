@@ -1,4 +1,5 @@
 import { isObject } from '@sveltia/utils/object';
+
 import { isFieldRequired } from '$lib/services/contents/entry/fields';
 
 /**

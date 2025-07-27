@@ -1,4 +1,5 @@
 import { get } from 'svelte/store';
+
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';

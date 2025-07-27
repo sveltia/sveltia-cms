@@ -1,6 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten, unflatten } from 'flat';
 import { get } from 'svelte/store';
+
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
 /**

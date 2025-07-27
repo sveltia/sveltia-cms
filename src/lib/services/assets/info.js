@@ -4,6 +4,7 @@ import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp } from '@sveltia/utils/string';
 import mime from 'mime';
 import { get } from 'svelte/store';
+
 import { getAssetByPath } from '$lib/services/assets';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';

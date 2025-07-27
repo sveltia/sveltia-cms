@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import {
   fetchBlob,
@@ -9,9 +10,9 @@ import {
   parseFileContents,
 } from '$lib/services/backends/git/github/files';
 import {
-  repository,
   checkRepositoryAccess,
   fetchDefaultBranchName,
+  repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';

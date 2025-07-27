@@ -1,4 +1,5 @@
 import ExifReader from 'exifreader';
+
 import { toFixed } from '$lib/services/utils/number';
 
 /**

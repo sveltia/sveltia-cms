@@ -1,6 +1,7 @@
 <script>
   import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
   import { locale as appLocale } from 'svelte-i18n';
+
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';

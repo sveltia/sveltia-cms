@@ -1,12 +1,13 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/git/gitlab/constants';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
 import gitlabBackend, { init } from '$lib/services/backends/git/gitlab/index';
-import { repository, getBaseURLs } from '$lib/services/backends/git/gitlab/repository';
+import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 

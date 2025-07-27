@@ -2,6 +2,7 @@
   import { Button, Infobar } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import { version as userVersion } from '$lib/services/app';
 
   const checkInterval = 60 * 60 * 1000; // 1 hour

@@ -1,5 +1,6 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
+
 import { signIn, signOut } from '$lib/services/backends/git/gitea/auth';
 import { commitChanges } from '$lib/services/backends/git/gitea/commits';
 import {
@@ -10,7 +11,7 @@ import {
   DEFAULT_AUTH_ROOT,
 } from '$lib/services/backends/git/gitea/constants';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitea/files';
-import { repository, getBaseURLs } from '$lib/services/backends/git/gitea/repository';
+import { getBaseURLs, repository } from '$lib/services/backends/git/gitea/repository';
 import { apiConfig } from '$lib/services/backends/git/shared/api';
 import { siteConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/user/prefs';

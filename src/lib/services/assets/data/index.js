@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 
 /**

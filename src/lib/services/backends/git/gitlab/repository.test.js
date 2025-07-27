@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import {
-  repository,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
+  repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 

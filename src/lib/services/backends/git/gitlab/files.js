@@ -1,11 +1,12 @@
 /* eslint-disable no-await-in-loop */
 
 import { getPathInfo } from '@sveltia/utils/file';
+
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
-  repository,
   checkRepositoryAccess,
   fetchDefaultBranchName,
+  repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';

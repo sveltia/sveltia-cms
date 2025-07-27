@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
+
 import { copyProperty } from '$lib/services/contents/draft/save/serialize';
 
 vi.mock('$lib/services/assets');

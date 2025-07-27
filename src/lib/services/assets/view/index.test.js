@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { showAssetOverlay, showUploadAssetsDialog, getFolderLabelByCollection } from './index.js';
+
+import { getFolderLabelByCollection, showAssetOverlay, showUploadAssetsDialog } from './index.js';
 
 // Mock dependencies
 vi.mock('svelte-i18n', () => ({

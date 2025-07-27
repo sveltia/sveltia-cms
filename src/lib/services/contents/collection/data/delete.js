@@ -1,4 +1,5 @@
 import { get } from 'svelte/store';
+
 import { allAssets } from '$lib/services/assets';
 import { saveChanges } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';

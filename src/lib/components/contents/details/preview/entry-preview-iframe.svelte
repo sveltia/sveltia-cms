@@ -6,6 +6,7 @@
   import { sanitize } from 'isomorphic-dompurify';
   import { mount } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import Placeholder from '$lib/components/common/placeholder.svelte';
 
   /**

@@ -1,6 +1,7 @@
 import { sleep } from '@sveltia/utils/misc';
 import { flushSync } from 'svelte';
 import { derived, get, writable } from 'svelte/store';
+
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { siteConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';

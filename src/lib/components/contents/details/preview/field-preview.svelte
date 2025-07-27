@@ -1,5 +1,6 @@
 <script>
   import { escapeRegExp } from '@sveltia/utils/string';
+
   import { previews } from '$lib/components/contents/details/widgets';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/editor/expanders';

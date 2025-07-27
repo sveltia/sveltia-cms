@@ -1,6 +1,7 @@
 <script>
   import { Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { getField } from '$lib/services/contents/entry/fields';
 
   /**

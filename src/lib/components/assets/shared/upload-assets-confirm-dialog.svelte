@@ -1,6 +1,7 @@
 <script>
   import { Alert, ConfirmationDialog } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { processedAssets, uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data/create';

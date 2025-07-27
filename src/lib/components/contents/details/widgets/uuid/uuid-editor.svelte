@@ -6,6 +6,7 @@
 <script>
   import { TextInput } from '@sveltia/ui';
   import { onMount } from 'svelte';
+
   import { entryDraft } from '$lib/services/contents/draft';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { getInitialValue } from '$lib/services/contents/widgets/uuid/helper';

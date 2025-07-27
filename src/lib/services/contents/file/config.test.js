@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
+
 import {
   customFileFormats,
   detectFileExtension,
   detectFileFormat,
   getEntryPathRegEx,
-  getFrontMatterDelimiters,
   getFileConfig,
+  getFrontMatterDelimiters,
 } from '$lib/services/contents/file/config';
 
 /**

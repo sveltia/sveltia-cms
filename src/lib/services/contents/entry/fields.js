@@ -1,4 +1,5 @@
 import { escapeRegExp } from '@sveltia/utils/string';
+
 import {
   applyTransformations,
   DATE_TRANSFORMATION_REGEX,

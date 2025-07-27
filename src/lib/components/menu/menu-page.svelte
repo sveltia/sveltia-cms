@@ -1,6 +1,7 @@
 <script>
   import { Spacer, Toolbar } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import AccountMenu from '$lib/components/global/toolbar/items/account-menu.svelte';

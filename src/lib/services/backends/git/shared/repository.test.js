@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import { REPOSITORY_INFO_PLACEHOLDER } from './repository';
 
 describe('git/shared/repository', () => {

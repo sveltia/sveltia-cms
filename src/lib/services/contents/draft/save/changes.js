@@ -3,6 +3,7 @@ import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { get } from 'svelte/store';
+
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';
 import { siteConfig } from '$lib/services/config';

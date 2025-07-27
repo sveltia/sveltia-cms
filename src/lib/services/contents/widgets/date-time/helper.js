@@ -1,5 +1,6 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import moment from 'moment';
+
 import { getCanonicalLocale } from '$lib/services/contents/i18n';
 import {
   DATE_FORMAT_OPTIONS,

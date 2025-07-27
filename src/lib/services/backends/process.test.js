@@ -1,7 +1,9 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { getEntryFoldersByPath } from '$lib/services/contents';
 import { isIndexFile } from '$lib/services/contents/file/process';
+
 import { createFileList } from './process.js';
 
 /**

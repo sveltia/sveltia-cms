@@ -2,6 +2,7 @@
   import { Divider, Icon, Listbox, Option, OptionGroup } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import SingletonOption from '$lib/components/contents/list/singleton-option.svelte';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { goto } from '$lib/services/app/navigation';

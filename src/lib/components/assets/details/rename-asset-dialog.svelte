@@ -2,6 +2,7 @@
   import { Dialog, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
+
   import { goto, parseLocation } from '$lib/services/app/navigation';
   import { getAssetsByDirName, renamingAsset } from '$lib/services/assets';
   import { moveAssets } from '$lib/services/assets/data/move';

@@ -6,6 +6,7 @@ import { unique } from '@sveltia/utils/array';
 import { getPathInfo, readAsText } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
+
 import { allAssets } from '$lib/services/assets';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { parseAssetFiles } from '$lib/services/assets/parser';

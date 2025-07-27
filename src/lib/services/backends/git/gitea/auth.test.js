@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { BACKEND_NAME } from '$lib/services/backends/git/gitea/constants';
 import { getUserProfile } from '$lib/services/backends/git/gitea/user';
 import { apiConfig } from '$lib/services/backends/git/shared/api';
@@ -8,6 +9,7 @@ import {
   handleClientSideAuthPopup,
   initClientSideAuth,
 } from '$lib/services/backends/git/shared/auth';
+
 import { signIn, signOut } from './auth.js';
 
 /**

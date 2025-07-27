@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+
 import { getRegex } from './misc';
 
 describe('Test getRegex()', () => {

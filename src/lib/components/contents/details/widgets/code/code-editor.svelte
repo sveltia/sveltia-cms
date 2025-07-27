@@ -6,6 +6,7 @@
 <script>
   import { CodeEditor } from '@sveltia/ui';
   import { untrack } from 'svelte';
+
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**

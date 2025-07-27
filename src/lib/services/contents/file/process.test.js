@@ -1,16 +1,17 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import {
-  isIndexFile,
-  getSlug,
-  parseFileContent,
-  transformRawContent,
-  shouldSkipIndexFile,
   extractPathInfo,
-  processNonI18nEntry,
-  processI18nSingleFileEntry,
-  processI18nMultiFileEntry,
-  prepareEntry,
+  getSlug,
+  isIndexFile,
+  parseFileContent,
   prepareEntries,
+  prepareEntry,
+  processI18nMultiFileEntry,
+  processI18nSingleFileEntry,
+  processNonI18nEntry,
+  shouldSkipIndexFile,
+  transformRawContent,
 } from '$lib/services/contents/file/process';
 
 /**

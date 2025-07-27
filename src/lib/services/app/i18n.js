@@ -2,6 +2,7 @@ import { initLocales } from '@sveltia/ui';
 import { getPathInfo } from '@sveltia/utils/file';
 import { get } from 'svelte/store';
 import { addMessages, getLocaleFromNavigator } from 'svelte-i18n';
+
 import { prefs } from '$lib/services/user/prefs';
 
 /**

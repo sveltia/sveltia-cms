@@ -1,5 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
+
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getLocalePath } from '$lib/services/contents/i18n';

@@ -3,6 +3,7 @@ import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { flatten } from 'flat';
 import { derived, get, writable } from 'svelte/store';
+
 import {
   allAssetFolders,
   getAssetFolder,

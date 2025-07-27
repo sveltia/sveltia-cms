@@ -1,5 +1,6 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest';
-import { instance, checkInstanceVersion } from './instance.js';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { checkInstanceVersion, instance } from './instance.js';
 
 // Mock dependencies with vi.hoisted to ensure proper hoisting
 const getMock = vi.hoisted(() => vi.fn());

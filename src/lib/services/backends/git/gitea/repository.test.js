@@ -1,11 +1,13 @@
-import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
+
 import {
-  repository,
-  getBaseURLs,
   checkRepositoryAccess,
   fetchDefaultBranchName,
+  getBaseURLs,
   getRepositoryInfo,
+  repository,
   resetRepositoryInfoCache,
 } from './repository.js';
 

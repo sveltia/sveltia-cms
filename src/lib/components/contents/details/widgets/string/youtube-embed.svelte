@@ -2,6 +2,7 @@
   import { waitForVisibility } from '@sveltia/utils/element';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import { getYouTubeEmbedURL } from '$lib/services/utils/media/video/youtube';
 
   /**

@@ -1,6 +1,7 @@
 <script>
   import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { goto, selectedPageName } from '$lib/services/app/navigation';
   import { selectedAssetFolder } from '$lib/services/assets/folders';
   import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';

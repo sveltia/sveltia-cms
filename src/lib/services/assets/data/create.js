@@ -1,4 +1,5 @@
 import { get } from 'svelte/store';
+
 import { allAssets, focusedAsset, getAssetsByDirName, overlaidAsset } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { getAssetKind } from '$lib/services/assets/kinds';

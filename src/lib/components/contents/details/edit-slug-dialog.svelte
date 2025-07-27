@@ -2,6 +2,7 @@
   import { Alert, Dialog, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
+
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getLocaleLabel } from '$lib/services/contents/i18n';

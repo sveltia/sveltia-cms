@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { getUserProfile } from '$lib/services/backends/git/github/user';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 

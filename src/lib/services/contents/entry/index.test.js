@@ -1,9 +1,10 @@
 import { writable } from 'svelte/store';
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import {
-  getEntryPreviewURL,
-  getAssociatedCollections,
   extractDateTime,
+  getAssociatedCollections,
+  getEntryPreviewURL,
   getEntryRepoBlobURL,
 } from '$lib/services/contents/entry/index';
 

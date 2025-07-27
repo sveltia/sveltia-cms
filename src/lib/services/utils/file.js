@@ -4,6 +4,7 @@ import { compare, escapeRegExp } from '@sveltia/utils/string';
 import sanitize from 'sanitize-filename';
 import { get } from 'svelte/store';
 import { _, locale as appLocale } from 'svelte-i18n';
+
 import { slugify } from '$lib/services/common/slug';
 
 /**

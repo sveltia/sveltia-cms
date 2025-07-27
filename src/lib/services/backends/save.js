@@ -1,5 +1,6 @@
 import { IndexedDB } from '@sveltia/utils/storage';
 import { get } from 'svelte/store';
+
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';

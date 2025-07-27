@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import { existsSync } from 'fs';
 import { cp, mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
+
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { sveltePreprocess } from 'svelte-preprocess';
 import { createGenerator } from 'ts-json-schema-generator';

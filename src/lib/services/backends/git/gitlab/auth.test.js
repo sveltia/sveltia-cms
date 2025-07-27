@@ -1,5 +1,6 @@
 import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
 import { getUserProfile } from '$lib/services/backends/git/gitlab/user';
 import {

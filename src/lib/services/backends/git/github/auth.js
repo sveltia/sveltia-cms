@@ -1,4 +1,5 @@
 import { get } from 'svelte/store';
+
 import { BACKEND_NAME } from '$lib/services/backends/git/github/constants';
 import { getUserProfile } from '$lib/services/backends/git/github/user';
 import { apiConfig } from '$lib/services/backends/git/shared/api';

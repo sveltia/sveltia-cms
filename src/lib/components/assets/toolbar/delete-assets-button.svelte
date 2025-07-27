@@ -1,6 +1,7 @@
 <script>
   import { Button, ConfirmationDialog, MenuItem } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { deleteAssets } from '$lib/services/assets/data/delete';
 
   /**

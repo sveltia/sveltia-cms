@@ -1,5 +1,6 @@
 import equal from 'fast-deep-equal';
 import { derived, get, writable } from 'svelte/store';
+
 import { prefs } from '$lib/services/user/prefs';
 
 /**

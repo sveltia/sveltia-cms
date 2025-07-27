@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { refreshAccessToken, apiConfig, graphqlVars } from './api';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { apiConfig, graphqlVars, refreshAccessToken } from './api';
 
 // Mock svelte-i18n
 vi.mock('svelte-i18n', () => ({

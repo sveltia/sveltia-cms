@@ -5,6 +5,7 @@
 -->
 <script>
   import { isURL } from '@sveltia/utils/string';
+
   import YouTubeEmbed from '$lib/components/contents/details/widgets/string/youtube-embed.svelte';
   import { isYouTubeVideoURL } from '$lib/services/utils/media/video/youtube';
 

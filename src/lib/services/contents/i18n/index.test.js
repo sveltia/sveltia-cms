@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+
 import { getCanonicalLocale, getLocalePath } from '$lib/services/contents/i18n';
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 

@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
+
 import { formatSummary } from './helper';
 
 vi.mock('$lib/services/config');

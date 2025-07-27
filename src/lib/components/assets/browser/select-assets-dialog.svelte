@@ -16,6 +16,7 @@
   import { getPathInfo } from '@sveltia/utils/file';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
+
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';

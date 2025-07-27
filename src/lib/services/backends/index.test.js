@@ -1,12 +1,13 @@
 import { get } from 'svelte/store';
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import {
   allBackendServices,
-  validBackendNames,
-  gitBackendServices,
-  backendName,
   backend,
+  backendName,
+  gitBackendServices,
   isLastCommitPublished,
+  validBackendNames,
 } from './index.js';
 
 describe('Backend Services Index', () => {

@@ -1,20 +1,21 @@
 import { get } from 'svelte/store';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
   allAssets,
-  selectedAssets,
-  focusedAsset,
-  overlaidAsset,
-  uploadingAssets,
   editingAsset,
-  renamingAsset,
-  processedAssets,
-  getAssetByPath,
-  getAssetsByFolder,
-  getAssetsByDirName,
+  focusedAsset,
   getAsset,
-  getAssetByRelativePath,
   getAssetByAbsolutePath,
+  getAssetByPath,
+  getAssetByRelativePath,
+  getAssetsByDirName,
+  getAssetsByFolder,
+  overlaidAsset,
+  processedAssets,
+  renamingAsset,
+  selectedAssets,
+  uploadingAssets,
 } from './index';
 
 // Mock all dependencies

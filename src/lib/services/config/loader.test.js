@@ -1,8 +1,9 @@
 // @ts-nocheck - Disable TypeScript checking for test file due to complex mocking
 /* eslint-disable jsdoc/require-jsdoc, jsdoc/require-description, jsdoc/require-returns */
 
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getConfigPath, fetchSiteConfig } from './loader';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { fetchSiteConfig, getConfigPath } from './loader';
 
 // Mock dependencies
 global.fetch = vi.fn();

@@ -1,11 +1,12 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { sleep } from '@sveltia/utils/misc';
 import mime from 'mime';
+
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import {
-  repository,
   checkRepositoryAccess,
   fetchDefaultBranchName,
+  repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';

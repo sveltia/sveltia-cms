@@ -11,6 +11,7 @@
   import DOMPurify from 'isomorphic-dompurify';
   import { flushSync } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';

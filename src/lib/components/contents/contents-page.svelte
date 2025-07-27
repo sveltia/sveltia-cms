@@ -2,6 +2,7 @@
   import { Alert, Toast } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import ContentDetailsOverlay from '$lib/components/contents/details/content-details-overlay.svelte';

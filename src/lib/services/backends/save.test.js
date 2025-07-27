@@ -1,10 +1,12 @@
 import { get } from 'svelte/store';
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';
 import { user } from '$lib/services/user';
-import { getCommitAuthor, updateCache, updateStores, saveChanges } from './save.js';
+
+import { getCommitAuthor, saveChanges, updateCache, updateStores } from './save.js';
 
 /**
  * @import {

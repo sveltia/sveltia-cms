@@ -3,6 +3,7 @@
   import { getPathInfo } from '@sveltia/utils/file';
   import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import Image from '$lib/components/assets/shared/image.svelte';
   import { formatSize } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';

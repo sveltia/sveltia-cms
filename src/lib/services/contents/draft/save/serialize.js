@@ -3,6 +3,7 @@ import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
+
 import { siteConfig } from '$lib/services/config';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';

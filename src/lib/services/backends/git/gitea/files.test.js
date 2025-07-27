@@ -1,23 +1,25 @@
 // @vitest-environment jsdom
 
 import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
 import { checkInstanceVersion, instance } from '$lib/services/backends/git/gitea/instance';
 import {
-  repository,
   checkRepositoryAccess,
   fetchDefaultBranchName,
+  repository,
 } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { dataLoadedProgress } from '$lib/services/contents';
+
 import {
-  fetchFiles,
   fetchBlob,
-  fetchFileList,
-  parseFileContents,
   fetchFileContents,
+  fetchFileList,
+  fetchFiles,
+  parseFileContents,
 } from './files.js';
 
 /**

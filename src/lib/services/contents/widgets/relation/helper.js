@@ -1,5 +1,6 @@
 import { unique } from '@sveltia/utils/array';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
+
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';

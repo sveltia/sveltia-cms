@@ -4,6 +4,7 @@
   import { sleep } from '@sveltia/utils/misc';
   import mime from 'mime';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import StaticMap from '$lib/components/common/static-map.svelte';
   import { goto } from '$lib/services/app/navigation';

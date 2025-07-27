@@ -1,6 +1,7 @@
 <script>
   import { Alert, Button, Toast } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
   import { backend, isLastCommitPublished } from '$lib/services/backends';
   import { siteConfig } from '$lib/services/config';
   import { prefs } from '$lib/services/user/prefs';

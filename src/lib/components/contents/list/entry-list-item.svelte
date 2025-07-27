@@ -1,6 +1,7 @@
 <script>
   import { Checkbox, GridCell, GridRow, Icon, TruncatedText } from '@sveltia/ui';
   import { locale as appLocale } from 'svelte-i18n';
+
   import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';

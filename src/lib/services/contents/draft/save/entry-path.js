@@ -1,4 +1,5 @@
 import { stripSlashes } from '@sveltia/utils/string';
+
 import { fillTemplate } from '$lib/services/common/template';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getLocalePath } from '$lib/services/contents/i18n';

@@ -1,5 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
+
 import { allAssets } from '$lib/services/assets';
 import { parseAssetFiles } from '$lib/services/assets/parser';
 import { isLastCommitPublished } from '$lib/services/backends';

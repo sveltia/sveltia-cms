@@ -3,6 +3,7 @@
   import { scanFiles } from '@sveltia/utils/file';
   import { onMount } from 'svelte';
   import { _, locale as appLocale } from 'svelte-i18n';
+
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { getListFormatter } from '$lib/services/contents/i18n';
   import { hasMouse } from '$lib/services/user/env';

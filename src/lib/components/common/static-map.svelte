@@ -6,6 +6,7 @@
 <script>
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+
   import { getUnpkgURL, loadModule } from '$lib/services/app/dependencies';
 
   /**

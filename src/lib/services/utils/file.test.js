@@ -1,11 +1,12 @@
 import { describe, expect, test, vi } from 'vitest';
+
 import {
   encodeFilePath,
   formatFileName,
   formatSize,
-  resolvePath,
   getBlob,
   getGitHash,
+  resolvePath,
 } from '$lib/services/utils/file';
 
 // Mock svelte/store
