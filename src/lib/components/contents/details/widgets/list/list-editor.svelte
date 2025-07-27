@@ -18,7 +18,7 @@
   import { sleep } from '@sveltia/utils/misc';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
-  import { getContext, onMount, untrack } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
@@ -35,7 +35,7 @@
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**
-   * @import { EntryDraft, FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { EntryDraft, WidgetEditorProps } from '$lib/types/private';
    * @import { ListField } from '$lib/types/public';
    */
 
@@ -44,9 +44,6 @@
    * @property {ListField} fieldConfig Field configuration.
    * @property {string[]} currentValue Field value.
    */
-
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -96,7 +93,7 @@
   const fileName = $derived($entryDraft?.fileName);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const isDuplicateField = $derived(locale !== defaultLocale && i18n === 'duplicate');
-  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
+  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
   /** @type {Record<string, any>[]} */
@@ -152,20 +149,19 @@
   const updateSimpleList = () => {
     const normalizedValue = inputValue.split(/\n/g);
 
-    Object.keys($entryDraft?.[valueStoreKey] ?? {}).forEach((_locale) => {
+    Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
       if (i18n !== 'duplicate' && _locale !== locale) {
         return;
       }
 
-      Object.keys($entryDraft?.[valueStoreKey][_locale] ?? {}).forEach((_keyPath) => {
+      Object.keys($entryDraft?.currentValues[_locale] ?? {}).forEach((_keyPath) => {
         if (_keyPath.match(`^${escapeRegExp(keyPath)}\\.\\d+$`)) {
-          delete $entryDraft?.[valueStoreKey][_locale][_keyPath];
+          delete $entryDraft?.currentValues[_locale][_keyPath];
         }
       });
 
       normalizedValue.forEach((val, index) => {
-        /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][`${keyPath}.${index}`] =
-          val;
+        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][`${keyPath}.${index}`] = val;
       });
     });
   };
@@ -176,7 +172,7 @@
    * See {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
-    Object.keys($entryDraft?.[valueStoreKey] ?? {}).forEach((_locale) => {
+    Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
       if (!(i18n !== 'duplicate' && _locale !== locale)) {
         updateListField(_locale, keyPath, manipulate);
       }

@@ -1,6 +1,4 @@
 /**
- * @import { Component } from 'svelte';
- * @import { Writable } from 'svelte/store';
  * @import {
  * BackendName,
  * Collection,
@@ -577,8 +575,6 @@
  * containing all the original field values.
  * @property {LocaleContentMap} currentValues Key is a locale code, value is a flattened, proxified
  * object containing all the current field values while editing.
- * @property {LocaleContentMap} extraValues Key is a locale code, value is a flattened object
- * containing field values in Markdown editor components.
  * @property {EntryFileMap} files Files to be uploaded.
  * @property {LocaleValidityMap} validities Key is a locale code, value is a flattened object
  * containing validation results of all the current field values while editing.
@@ -815,21 +811,6 @@
  * @property {string} extension File extension.
  * @property {FileParser} [parser] Parser method.
  * @property {FileFormatter} [formatter] Formatter method.
- */
-
-/**
- * Key to store the current values in the {@link EntryDraft}. Usually `currentValues`, but can be
- * `extraValues` to store extra values for a Markdown editor component.
- * @typedef {'currentValues' | 'extraValues'} DraftValueStoreKey
- */
-
-/**
- * Context for a field editor.
- * @typedef {object} FieldEditorContext
- * @property {DraftValueStoreKey} valueStoreKey Key to store the current values in the
- * {@link entryDraft}.
- * @property {Writable<Component>} [extraHint] Component to render an extra hint in the field
- * editor.
  */
 
 /**

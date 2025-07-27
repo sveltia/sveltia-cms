@@ -5,13 +5,13 @@
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
-  import { getContext, untrack } from 'svelte';
+  import { untrack } from 'svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
-   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { WidgetEditorProps } from '$lib/types/private';
    * @import { ComputeField } from '$lib/types/public';
    */
 
@@ -20,9 +20,6 @@
    * @property {ComputeField} fieldConfig Field configuration.
    * @property {string | number | undefined} currentValue Field value.
    */
-
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -42,7 +39,7 @@
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
-  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
+  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
   const listFormatter = $derived(getListFormatter(locale));
 
   /**

@@ -9,7 +9,7 @@
   import CharacterCounter from '$lib/components/contents/details/widgets/string/character-counter.svelte';
 
   /**
-   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { WidgetEditorProps } from '$lib/types/private';
    * @import { StringField } from '$lib/types/public';
    */
 
@@ -18,9 +18,6 @@
    * @property {StringField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
-
-  /** @type {FieldEditorContext} */
-  const { extraHint } = getContext('field-editor') ?? {};
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -38,6 +35,8 @@
   let inputValue = $state('');
 
   const { type = 'text', prefix = '', suffix = '' } = $derived(fieldConfig);
+
+  const { extraHint } = getContext('field-editor') ?? {};
 
   /**
    * Update {@link inputValue} based on {@link currentValue}. Remove the suffix/prefix if needed.

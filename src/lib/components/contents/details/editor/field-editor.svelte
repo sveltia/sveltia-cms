@@ -19,12 +19,7 @@
   /**
    * @import { Component } from 'svelte';
    * @import { Writable } from 'svelte/store';
-   * @import {
-   * DraftValueStoreKey,
-   * FieldEditorContext,
-   * InternalLocaleCode,
-   * WidgetContext,
-   * } from '$lib/types/private';
+   * @import { InternalLocaleCode, WidgetContext } from '$lib/types/private';
    * @import {
    * BooleanField,
    * Field,
@@ -44,8 +39,6 @@
    * @property {FieldKeyPath} keyPath Field key path.
    * @property {Field} fieldConfig Field configuration.
    * @property {WidgetContext} [context] Where the widget is rendered.
-   * @property {DraftValueStoreKey} [valueStoreKey] Key to store the current values in the
-   * {@link entryDraft}.
    */
 
   /** @type {Props} */
@@ -55,7 +48,6 @@
     keyPath,
     fieldConfig,
     context = undefined,
-    valueStoreKey = 'currentValues',
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -75,7 +67,7 @@
   /** @type {Writable<Component>} */
   const extraHint = writable();
 
-  setContext('field-editor', /** @type {FieldEditorContext} */ ({ extraHint, valueStoreKey }));
+  setContext('field-editor', { extraHint });
 
   const {
     name: fieldName,
@@ -146,11 +138,11 @@
   // Multiple values are flattened in the value map object
   const currentValue = $derived(
     isList
-      ? Object.entries($state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {}))
+      ? Object.entries($state.snapshot($entryDraft?.currentValues[locale] ?? {}))
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
           .map(([, val]) => val)
           .filter((val) => val !== undefined)
-      : $state.snapshot($entryDraft?.[valueStoreKey][locale])?.[keyPath],
+      : $state.snapshot($entryDraft?.currentValues[locale])?.[keyPath],
   );
   const originalValue = $derived(
     isList
@@ -183,43 +175,38 @@
   >
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{fieldLabel}</h4>
-      {#if context === 'markdown-editor-component'}
-        <!-- @todo Support `required` option -->
-        <Spacer flex />
-      {:else}
-        {#if !readonly && required}
-          <div class="required" aria-label={$_('required')}>*</div>
-        {/if}
-        <Spacer flex />
-        {#if canCopy && ['markdown', 'string', 'text', 'list', 'object'].includes(widgetName)}
-          <TranslateButton size="small" {locale} {otherLocales} {keyPath} />
-        {/if}
-        {#if canCopy || canRevert}
-          <MenuButton
-            variant="ghost"
-            size="small"
-            iconic
-            popupPosition="bottom-right"
-            aria-label={$_('show_field_options')}
-          >
-            {#snippet popup()}
-              <Menu aria-label={$_('field_options')}>
-                {#if canCopy}
-                  <CopyMenuItems {locale} {otherLocales} {keyPath} />
-                {/if}
-                {#if canRevert}
-                  <MenuItem
-                    label={$_('revert_changes')}
-                    disabled={equal(currentValue, originalValue)}
-                    onclick={() => {
-                      revertChanges({ locale, keyPath });
-                    }}
-                  />
-                {/if}
-              </Menu>
-            {/snippet}
-          </MenuButton>
-        {/if}
+      {#if !readonly && required}
+        <div class="required" aria-label={$_('required')}>*</div>
+      {/if}
+      <Spacer flex />
+      {#if canCopy && ['markdown', 'string', 'text', 'list', 'object'].includes(widgetName)}
+        <TranslateButton size="small" {locale} {otherLocales} {keyPath} />
+      {/if}
+      {#if canCopy || canRevert}
+        <MenuButton
+          variant="ghost"
+          size="small"
+          iconic
+          popupPosition="bottom-right"
+          aria-label={$_('show_field_options')}
+        >
+          {#snippet popup()}
+            <Menu aria-label={$_('field_options')}>
+              {#if canCopy}
+                <CopyMenuItems {locale} {otherLocales} {keyPath} />
+              {/if}
+              {#if canRevert}
+                <MenuItem
+                  label={$_('revert_changes')}
+                  disabled={equal(currentValue, originalValue)}
+                  onclick={() => {
+                    revertChanges({ locale, keyPath });
+                  }}
+                />
+              {/if}
+            </Menu>
+          {/snippet}
+        </MenuButton>
       {/if}
     </header>
     {#if !readonly && comment}
@@ -301,7 +288,7 @@
           {fieldId}
           {fieldLabel}
           {fieldConfig}
-          bind:currentValue={$entryDraft[valueStoreKey][locale][keyPath]}
+          bind:currentValue={$entryDraft.currentValues[locale][keyPath]}
           {readonly}
           {required}
           {invalid}
