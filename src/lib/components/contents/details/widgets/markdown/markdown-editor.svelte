@@ -17,7 +17,7 @@
     BUTTON_NAME_MAP,
     customComponents,
     DEFAULT_BUTTONS,
-    DEFAULT_COMPONENTS,
+    BUILTIN_COMPONENTS,
     DEFAULT_MODES,
     NODE_NAME_MAP,
   } from '$lib/services/contents/widgets/markdown';
@@ -66,7 +66,7 @@
     buttons: _buttons = [...DEFAULT_BUTTONS],
     editor_components:
       // Include all built-in and custom components by default
-      _editorComponents = [...DEFAULT_COMPONENTS, ...Object.keys(customComponents)],
+      _editorComponents = [...BUILTIN_COMPONENTS, ...Object.keys(customComponents)],
     linked_images: linkedImagesEnabled = true,
     minimal = false,
   } = $derived(fieldConfig);

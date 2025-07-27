@@ -66,10 +66,11 @@ export const BUTTON_NAME_MAP = {
 };
 
 /**
- * The default `editor_components` property options.
+ * Built-in editor component names. `code-block` is actually a button, but it is included here for
+ * consistency with the Netlify/Decap CMS API.
  * @type {RichTextEditorComponentName[]}
  */
-export const DEFAULT_COMPONENTS = ['code-block', 'image'];
+export const BUILTIN_COMPONENTS = ['code-block', 'image'];
 
 /**
  * Custom components registered using `CMS.registerEditorComponent`.
