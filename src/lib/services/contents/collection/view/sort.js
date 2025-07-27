@@ -17,7 +17,7 @@ import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
  * includes `title`, `summary`, and `description`, which are commonly used in entry collections.
  * @type {string[]}
  */
-const markdownFieldKeys = ['title', 'summary', 'description'];
+export const markdownFieldKeys = ['title', 'summary', 'description'];
 
 /**
  * Sort the given entries.

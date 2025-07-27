@@ -21,7 +21,7 @@ export const entryListSettings = writable();
  * Initialize {@link entryListSettings} and relevant subscribers.
  * @param {BackendService} _backend Backend service.
  */
-const initSettings = async ({ repository }) => {
+export const initSettings = async ({ repository }) => {
   const { databaseName } = repository ?? {};
   const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
   const storageKey = 'contents-view';

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -6,6 +8,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import {
   canCreateIndexFile,
   getIndexFile,
+  getLocalizedLabel,
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/index-file';
 
@@ -549,5 +552,41 @@ describe('canCreateIndexFile()', () => {
 
     expect(result).toBe(false); // Should still return false since index file exists
     expect(vi.mocked(getEntriesByCollection)).toHaveBeenCalledWith('test-collection');
+  });
+});
+
+describe('getLocalizedLabel()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('returns localized label when svelte-i18n is available', () => {
+    vi.mocked(get).mockReturnValue(() => 'Index File');
+
+    const result = getLocalizedLabel();
+
+    expect(result).toBe('Index File');
+    expect(get).toHaveBeenCalled();
+  });
+
+  test('returns fallback label when svelte-i18n throws error', () => {
+    vi.mocked(get).mockImplementation(() => {
+      throw new Error('svelte-i18n not initialized');
+    });
+
+    const result = getLocalizedLabel();
+
+    expect(result).toBe('Index File');
+  });
+
+  test('returns translated label for different languages', () => {
+    vi.mocked(get).mockReturnValue((key) => {
+      if (key === 'index_file') return 'Archivo Índice';
+      return key;
+    });
+
+    const result = getLocalizedLabel();
+
+    expect(result).toBe('Archivo Índice');
   });
 });

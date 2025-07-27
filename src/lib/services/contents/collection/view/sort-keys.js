@@ -22,13 +22,13 @@ import { getField } from '$lib/services/contents/entry/fields';
  * field, which is used by Sveltia CMS to infer the entry title.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
  */
-const DEFAULT_SORT_KEYS = ['title', 'name', 'date', 'author', 'description'];
+export const DEFAULT_SORT_KEYS = ['title', 'name', 'date', 'author', 'description'];
 
 /**
  * Map of special sort keys and their types.
  * @type {Record<string, StringConstructor | DateConstructor>}
  */
-const SPECIAL_SORT_KEY_TYPES = {
+export const SPECIAL_SORT_KEY_TYPES = {
   slug: String,
   commit_author: String,
   commit_date: Date,
@@ -38,13 +38,15 @@ const SPECIAL_SORT_KEY_TYPES = {
  * List of special sort keys.
  * @type {string[]}
  */
-const SPECIAL_SORT_KEYS = Object.keys(SPECIAL_SORT_KEY_TYPES);
+export const SPECIAL_SORT_KEYS = Object.keys(SPECIAL_SORT_KEY_TYPES);
+
 /**
  * Check if the given value is a valid array of strings.
  * @param {unknown} arr Value to check.
  * @returns {boolean} Whether the value is a valid array of strings.
  */
-const isValidArray = (arr) => Array.isArray(arr) && arr.every((item) => typeof item === 'string');
+export const isValidArray = (arr) =>
+  Array.isArray(arr) && arr.every((item) => typeof item === 'string');
 
 /**
  * Parse custom sortable fields configuration.
@@ -52,7 +54,7 @@ const isValidArray = (arr) => Array.isArray(arr) && arr.every((item) => typeof i
  * @returns {{ keys: string[], defaultKey?: string, defaultOrder?: SortOrder }} Parsed sortable
  * fields configuration.
  */
-const parseCustomSortableFields = (customSortableFields) => {
+export const parseCustomSortableFields = (customSortableFields) => {
   // Netlify/Decap CMS compatibility: if `sortable_fields` is an array, it should be treated as a
   // list of field keys
   if (isValidArray(customSortableFields)) {
@@ -95,10 +97,13 @@ const parseCustomSortableFields = (customSortableFields) => {
  * @returns {{ keys: string[], defaultKey?: string, defaultOrder?: SortOrder }} Parsed sortable
  * fields configuration.
  */
-const getDefaultSortKeys = (customIdField) => {
+export const getDefaultSortKeys = (customIdField) => {
   if (customIdField) {
+    // Filter out the custom ID field from DEFAULT_SORT_KEYS to avoid duplicates
+    const filteredDefaultKeys = DEFAULT_SORT_KEYS.filter((key) => key !== customIdField);
+
     return {
-      keys: [customIdField, ...DEFAULT_SORT_KEYS],
+      keys: [customIdField, ...filteredDefaultKeys],
       defaultKey: customIdField,
     };
   }
@@ -201,7 +206,7 @@ export const getSortKeyType = ({ key, fieldConfig }) => {
  * keys: `slug`, `commit_author` and `commit_date`.
  * @returns {string} Label. For a nested field, it would be something like `Name – English`.
  */
-const getSortKeyLabel = ({ collection, key }) => {
+export const getSortKeyLabel = ({ collection, key }) => {
   if ([...SPECIAL_SORT_KEYS, 'name'].includes(key)) {
     return get(_)(`sort_keys.${key}`);
   }

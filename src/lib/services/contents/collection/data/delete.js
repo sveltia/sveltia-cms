@@ -19,7 +19,7 @@ import {
  * @param {string[]} args.ids List of entry IDs.
  * @param {string[]} args.assetPaths List of associated asset paths.
  */
-const updateStores = ({ ids, assetPaths }) => {
+export const updateStores = ({ ids, assetPaths }) => {
   const _allEntries = get(allEntries);
 
   allEntries.set(_allEntries.filter((file) => !ids.includes(file.id)));

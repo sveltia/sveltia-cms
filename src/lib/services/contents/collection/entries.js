@@ -24,7 +24,7 @@ import { getRegex } from '$lib/services/utils/misc';
 /**
  * Regular expression to match `![alt](src "title")`.
  */
-const MARKDOWN_IMAGE_REGEX = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
+export const MARKDOWN_IMAGE_REGEX = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
 
 /**
  * @type {Writable<Entry[]>}
@@ -109,7 +109,7 @@ export const canCreateEntry = (collection) => {
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File collection only.
  * @returns {Promise<boolean>} Result.
  */
-const hasAsset = async ({
+export const hasAsset = async ({
   assetURL,
   newURL,
   collectionName,

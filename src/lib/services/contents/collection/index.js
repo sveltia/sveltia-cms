@@ -126,7 +126,7 @@ export const getFirstCollection = () => getValidCollections({ visible: true })[0
  * @param {Collection} rawCollection Raw collection definition.
  * @returns {FieldKeyPath[]} Key path list.
  */
-const getThumbnailFieldNames = (rawCollection) => {
+export const getThumbnailFieldNames = (rawCollection) => {
   const { folder, fields, thumbnail } = rawCollection;
 
   if (!folder) {
@@ -158,7 +158,7 @@ const getThumbnailFieldNames = (rawCollection) => {
  * @param {InternalI18nOptions} _i18n I18n options of the collection.
  * @returns {EntryCollection} Parsed entry collection with additional properties.
  */
-const parseEntryCollection = (rawCollection, _i18n) => ({
+export const parseEntryCollection = (rawCollection, _i18n) => ({
   ...rawCollection,
   _i18n,
   _type: 'entry',
@@ -173,7 +173,7 @@ const parseEntryCollection = (rawCollection, _i18n) => ({
  * @param {CollectionFile[]} files List of files in the collection.
  * @returns {FileCollection} Parsed file/singleton collection with additional properties.
  */
-const parseFileCollection = (rawCollection, _i18n, files) => ({
+export const parseFileCollection = (rawCollection, _i18n, files) => ({
   ...rawCollection,
   _i18n,
   _type: isSingletonCollection(rawCollection) ? 'singleton' : 'file',

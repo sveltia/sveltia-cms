@@ -14,7 +14,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
  * not initialized during automated tests.
  * @returns {string} Localized label for the index file.
  */
-const getLocalizedLabel = () => {
+export const getLocalizedLabel = () => {
   try {
     return get(_)('index_file');
   } catch {
