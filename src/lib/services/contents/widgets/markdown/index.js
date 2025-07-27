@@ -66,8 +66,8 @@ export const BUTTON_NAME_MAP = {
 };
 
 /**
- * Built-in editor component names. `code-block` is actually a button, but it is included here for
- * consistency with the Netlify/Decap CMS API.
+ * Built-in editor component names. `code-block` is a button in Sveltia CMS, but it’s included here
+ * for consistency with the Netlify/Decap CMS API.
  * @type {RichTextEditorComponentName[]}
  */
 export const BUILTIN_COMPONENTS = ['code-block', 'image'];
