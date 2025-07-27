@@ -64,7 +64,9 @@
     // Widget-specific options
     modes: _modes = [...DEFAULT_MODES],
     buttons: _buttons = [...DEFAULT_BUTTONS],
-    editor_components: _editorComponents = [...DEFAULT_COMPONENTS],
+    editor_components:
+      // Include all built-in and custom components by default
+      _editorComponents = [...DEFAULT_COMPONENTS, ...Object.keys(customComponents)],
     linked_images: linkedImagesEnabled = true,
     minimal = false,
   } = $derived(fieldConfig);
