@@ -72,13 +72,7 @@
   });
 
   $effect(() => {
-    const _inputValues = $state.snapshot(inputValues);
-
-    untrack(() => {
-      if (!equal(values, _inputValues)) {
-        onChange(new CustomEvent('update', { detail: _inputValues }));
-      }
-    });
+    onChange(new CustomEvent('update', { detail: $state.snapshot(inputValues) }));
   });
 </script>
 
@@ -146,6 +140,8 @@
                 keyPath="{keyPath}:{fieldName}"
                 fieldId={generateElementId('field')}
                 {fieldLabel}
+                required={fieldConfig.required ?? true}
+                readonly={fieldConfig.readonly ?? false}
                 {fieldConfig}
                 context="markdown-editor-component"
                 bind:currentValue={inputValues[fieldName]}
