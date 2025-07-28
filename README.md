@@ -21,7 +21,7 @@ The free, open source alternative/successor to Netlify/Decap CMS is now in publi
 - [Motivation](#motivation)
   - [Our advantage](#our-advantage)
   - [Our goals](#our-goals)
-- [Development status](#development-status)
+- [Project status](#project-status)
 - [Differentiators](#differentiators)
   - [Better UX](#better-ux)
   - [Better performance](#better-performance)
@@ -126,7 +126,7 @@ While Sveltia CMS was created to replace legacy Netlify CMS instances, it can al
 - Extending its capabilities as digital asset management (DAM) software
 - Showcasing the power of Svelte and UX engineering
 
-## Development status
+## Project status
 
 Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in late 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
 
