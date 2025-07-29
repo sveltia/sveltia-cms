@@ -107,6 +107,7 @@ describe('auth service', () => {
         'sign_in_error.not_project_root': 'Not project root error',
         'sign_in_error.picker_dismissed': 'Picker dismissed',
         'sign_in_error.authentication_aborted': 'Authentication aborted',
+        'sign_in_error.invalid_token': 'The provided token is invalid',
       };
 
       return translations[key] || key;
@@ -115,6 +116,17 @@ describe('auth service', () => {
 
     // Import the module after mocks are set up
     authModule = await import('./auth.js');
+  });
+
+  describe('resetError', () => {
+    it('should reset signInError to initial state', () => {
+      authModule.resetError();
+
+      expect(authModule.signInError.set).toHaveBeenCalledWith({
+        message: '',
+        context: 'authentication',
+      });
+    });
   });
 
   describe('logError', () => {
@@ -127,7 +139,7 @@ describe('auth service', () => {
 
       expect(authModule.signInError.set).toHaveBeenCalledWith({
         message: 'Cause message',
-        canRetry: false,
+        context: 'authentication',
       });
     });
 
@@ -141,7 +153,7 @@ describe('auth service', () => {
 
       expect(authModule.signInError.set).toHaveBeenCalledWith({
         message: 'Not project root error',
-        canRetry: true,
+        context: 'authentication',
       });
     });
 
@@ -160,7 +172,7 @@ describe('auth service', () => {
 
       expect(authModule.signInError.set).toHaveBeenCalledWith({
         message: 'Picker dismissed error',
-        canRetry: true,
+        context: 'authentication',
       });
     });
 
@@ -179,7 +191,7 @@ describe('auth service', () => {
 
       expect(authModule.signInError.set).toHaveBeenCalledWith({
         message: 'Authentication aborted error',
-        canRetry: true,
+        context: 'authentication',
       });
     });
 
@@ -192,7 +204,20 @@ describe('auth service', () => {
 
       expect(authModule.signInError.set).toHaveBeenCalledWith({
         message: 'Unexpected error',
-        canRetry: false,
+        context: 'authentication',
+      });
+    });
+
+    it('should set custom context when provided', () => {
+      const error = new Error('Test error');
+
+      error.cause = { message: 'Data fetch error' };
+
+      authModule.logError(error, 'dataFetch');
+
+      expect(authModule.signInError.set).toHaveBeenCalledWith({
+        message: 'Data fetch error',
+        context: 'dataFetch',
       });
     });
   });
@@ -371,6 +396,30 @@ describe('auth service', () => {
 
       expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
       expect(authModule.signInError.set).toHaveBeenCalled();
+    });
+
+    it('should handle PAT token authentication failure', async () => {
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackend) return mockBackend;
+        if (store === mockGetLocaleText) return mockGetLocaleText;
+        if (store && typeof store.subscribe === 'function') return mockSiteConfig;
+
+        return mockBackend;
+      });
+
+      const signInError = new Error('Unauthorized');
+
+      signInError.cause = { status: 401 };
+      mockBackend.signIn.mockRejectedValue(signInError);
+      mockGetLocaleText.mockReturnValue('The provided token is invalid');
+
+      await authModule.signInManually('github', 'invalid-pat-token');
+
+      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      expect(authModule.signInError.set).toHaveBeenCalledWith({
+        message: 'The provided token is invalid',
+        context: 'authentication',
+      });
     });
 
     it('should return early if no backend', async () => {

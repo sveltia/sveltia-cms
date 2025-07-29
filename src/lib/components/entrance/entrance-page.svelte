@@ -37,7 +37,7 @@
       </div>
     {:else if !$siteConfig || !$prefs}
       <div role="alert" class="message">{$_('loading_site_config')}</div>
-    {:else if $signInError.message && !$signInError.canRetry}
+    {:else if $signInError.message && $signInError.context === 'dataFetch'}
       <div role="alert">
         <div role="none" class="message">{$_('loading_site_data_error')}</div>
         <div role="none" class="error">

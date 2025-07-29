@@ -1,5 +1,5 @@
 <script>
-  import { Button, Menu, MenuItem, PromptDialog, SplitButton } from '@sveltia/ui';
+  import { Button, Icon, Menu, MenuItem, PromptDialog, SplitButton } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -109,8 +109,9 @@
       {/if}
     {/if}
   {/if}
-  {#if $signInError.message && $signInError.canRetry}
-    <div role="alert">
+  {#if $signInError.message && $signInError.context === 'authentication'}
+    <div role="alert" class="error">
+      <Icon name="error" />
       {$signInError.message}
     </div>
   {/if}
@@ -153,6 +154,16 @@
           flex: auto;
         }
       }
+    }
+  }
+
+  [role='alert'] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &.error {
+      color: var(--sui-error-foreground-color);
     }
   }
 </style>

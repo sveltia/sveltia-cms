@@ -16,27 +16,39 @@ import { prefs } from '$lib/services/user/prefs';
  */
 
 /**
- * @type {Writable<{ message: string, canRetry: boolean }>}
+ * Context of the sign-in error.
+ * @typedef {'authentication' | 'dataFetch'} SignInErrorContext
  */
-export const signInError = writable({ message: '', canRetry: false });
+
+/**
+ * Sign-in error store.
+ * @type {Writable<{ message: string, context: SignInErrorContext }>}
+ */
+export const signInError = writable({ message: '', context: 'authentication' });
+
 /**
  * @type {Writable<boolean>}
  */
 export const unauthenticated = writable(true);
 
 /**
+ * Reset the sign-in error store.
+ */
+export const resetError = () => {
+  signInError.set({ message: '', context: 'authentication' });
+};
+
+/**
  * Log an authentication error on the UI and in the browser console.
  * @param {Error} ex Exception.
+ * @param {SignInErrorContext} [context] Context of the error.
  */
-export const logError = (ex) => {
+export const logError = (ex, context = 'authentication') => {
   let message =
     /** @type {{ message: string }} */ (ex.cause)?.message || get(_)('unexpected_error');
 
-  let canRetry = false;
-
   if (ex.name === 'NotFoundError') {
     message = get(_)('sign_in_error.not_project_root');
-    canRetry = true;
   }
 
   if (ex.name === 'AbortError') {
@@ -45,12 +57,11 @@ export const logError = (ex) => {
         ? 'sign_in_error.picker_dismissed'
         : 'sign_in_error.authentication_aborted',
     );
-    canRetry = true;
   }
 
-  signInError.set({ message, canRetry });
+  signInError.set({ message, context });
   // eslint-disable-next-line no-console
-  console.error(ex.message, ex.cause);
+  console.error(ex.name, ex.message, ex.cause);
 };
 
 /**
@@ -58,6 +69,8 @@ export const logError = (ex) => {
  * backend is Git-based and user’s auth token is found.
  */
 export const signInAutomatically = async () => {
+  resetError();
+
   // Find cached user info, including a compatible Netlify/Decap CMS user object
   const userCache =
     (await LocalStorage.get('sveltia-cms.user')) ||
@@ -123,6 +136,8 @@ export const signInAutomatically = async () => {
 
     const { token, refreshToken } = _user;
 
+    unauthenticated.set(false);
+
     try {
       _user = await _backend.signIn({ token, refreshToken, auto: true });
     } catch {
@@ -148,8 +163,6 @@ export const signInAutomatically = async () => {
 
   try {
     await _backend.fetchFiles();
-    // Reset error
-    signInError.set({ message: '', canRetry: false });
   } catch (/** @type {any} */ ex) {
     // The API request may fail if the cached token has been expired or revoked. Then let the user
     // sign in again. 404 Not Found is also considered an authentication error.
@@ -157,7 +170,7 @@ export const signInAutomatically = async () => {
     if ([401, 403, 404].includes(ex.cause?.status)) {
       unauthenticated.set(true);
     } else {
-      logError(ex);
+      logError(ex, 'dataFetch');
     }
   }
 };
@@ -168,6 +181,7 @@ export const signInAutomatically = async () => {
  * @param {string} [token] Personal Access Token (PAT) to be used for authentication.
  */
 export const signInManually = async (_backendName, token) => {
+  resetError();
   backendName.set(_backendName);
 
   const _backend = get(backend);
@@ -178,11 +192,22 @@ export const signInManually = async (_backendName, token) => {
 
   let _user;
 
+  unauthenticated.set(false);
+
   try {
     _user = await _backend.signIn({ token, auto: false });
   } catch (/** @type {any} */ ex) {
     unauthenticated.set(true);
-    logError(ex);
+
+    if (!!token && ex.cause?.status === 401) {
+      // If the user is signing in using a personal access token (PAT) and the token is invalid,
+      // display a specific error message.
+      logError(
+        new Error('Invalid token', { cause: { message: get(_)('sign_in_error.invalid_token') } }),
+      );
+    } else {
+      logError(ex);
+    }
 
     return;
   }
@@ -197,10 +222,8 @@ export const signInManually = async (_backendName, token) => {
 
   try {
     await _backend.fetchFiles();
-    // Reset error
-    signInError.set({ message: '', canRetry: false });
   } catch (/** @type {any} */ ex) {
-    logError(ex);
+    logError(ex, 'dataFetch');
   }
 };
 

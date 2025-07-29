@@ -94,6 +94,7 @@ export const strings = {
     authentication_aborted: 'Authentication aborted. Please try again.',
     // Errors defined in Sveltia CMS Authenticator
     // https://github.com/sveltia/sveltia-cms-auth/blob/main/src/index.js
+    invalid_token: 'The provided token is invalid. Please check and try again.',
     UNSUPPORTED_BACKEND: 'Your Git backend is not supported by the authenticator.',
     UNSUPPORTED_DOMAIN: 'Your domain is not allowed to use the authenticator.',
     MISCONFIGURED_CLIENT: 'OAuth app client ID or secret is not configured.',
