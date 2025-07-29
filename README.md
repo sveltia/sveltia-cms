@@ -1655,13 +1655,15 @@ Due early 2026
   - Offline support[^238]
   - and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
   - (some of them may be included in v2.0)
-- **Sveltia CMS Additions**: edge functions providing features that cannot be implemented client-side:
+- **Sveltia CMS Additions**: edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
   - User management (Netlify Identity alternative) with roles[^23]
   - Sign-in without a Git service account (Git Gateway alternative)
   - Post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166]
   - Scheduled posts[^167]
   - Credential management for service API keys, deploy hook URL, etc.
-  - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244] (due to a [CORS issue](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS/Errors))
+  - Proxy for services that don’t support [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS):
+    - [DeepL](https://github.com/sveltia/sveltia-cms/issues/437)
+    - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
 - [Local repository workflow](#working-with-a-local-git-repository) improvements: Git mode and File System Observer support
 - [Preact+HTM support](https://github.com/sveltia/sveltia-cms/discussions/153) for custom widgets, editor components and preview templates
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
