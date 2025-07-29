@@ -1664,7 +1664,7 @@ Due early 2026
   - Proxy for services that don’t support [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS):
     - [DeepL](https://github.com/sveltia/sveltia-cms/issues/437)
     - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
-- [Local repository workflow](#working-with-a-local-git-repository) improvements: Git mode and File System Observer support
+- [Local repository workflow](#working-with-a-local-git-repository) improvements: Git mode[^131] and File System Observer support
 - [Preact+HTM support](https://github.com/sveltia/sveltia-cms/discussions/153) for custom widgets, editor components and preview templates
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.

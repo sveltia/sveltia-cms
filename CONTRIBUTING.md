@@ -10,7 +10,7 @@ You can also [request new features](https://github.com/sveltia/sveltia-cms/issue
 
 ## Code contributions
 
-Due to limited review resources and ongoing technical upgrades across the codebase, pull requests will not be accepted for the time being, except for trivial changes such as fixing a typo, style, etc. Please file issues instead. We plan to create contributor documents after the 1.0 release.
+Due to limited review resources and ongoing technical upgrades across the codebase, pull requests will not be accepted for the time being, except for trivial changes such as fixing a typo, style, etc. Please file issues instead. We plan to create contributor documents after the 2.0 release.
 
 ## Localizations
 
