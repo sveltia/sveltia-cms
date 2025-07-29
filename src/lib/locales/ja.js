@@ -92,9 +92,9 @@ export const strings = {
       '選択されたフォルダーはレポジトリのルートディレクトリではありません。再度お試しください。',
     picker_dismissed: 'レポジトリのルートディレクトリを選択できませんでした。再度お試しください。',
     authentication_aborted: '認証が中断されました。再度お試しください。',
+    invalid_token: '入力されたトークンが無効です。確認して再度お試しください。',
     // Errors defined in Sveltia CMS Authenticator
     // https://github.com/sveltia/sveltia-cms-auth/blob/main/src/index.js
-    invalid_token: '入力されたトークンが無効です。確認して再度お試しください。',
     UNSUPPORTED_BACKEND: 'この認証アプリはお使いの Git バックエンドに対応していません。',
     UNSUPPORTED_DOMAIN: 'この認証アプリではお使いのドメインの使用は許可されていません。',
     MISCONFIGURED_CLIENT: 'OAuth アプリのクライアント ID またはシークレットが設定されていません。',

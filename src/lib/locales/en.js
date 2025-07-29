@@ -92,9 +92,9 @@ export const strings = {
       'The folder you have selected is not a repository root directory. Please try again.',
     picker_dismissed: 'A repository root directory could not be selected. Please try again.',
     authentication_aborted: 'Authentication aborted. Please try again.',
+    invalid_token: 'The provided token is invalid. Please check and try again.',
     // Errors defined in Sveltia CMS Authenticator
     // https://github.com/sveltia/sveltia-cms-auth/blob/main/src/index.js
-    invalid_token: 'The provided token is invalid. Please check and try again.',
     UNSUPPORTED_BACKEND: 'Your Git backend is not supported by the authenticator.',
     UNSUPPORTED_DOMAIN: 'Your domain is not allowed to use the authenticator.',
     MISCONFIGURED_CLIENT: 'OAuth app client ID or secret is not configured.',
