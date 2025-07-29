@@ -6,7 +6,7 @@
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
-  import { editors } from '$lib/components/contents/details/widgets';
+  import { getEditorComponent } from '$lib/services/contents/widgets/markdown/component-helper';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';
@@ -41,9 +41,6 @@
   let keyPath = $state('');
   /** @type {Record<string, any>} */
   const inputValues = $state({});
-
-  // @todo Support nested object/list
-  const unsupportedWidgets = ['list', 'object'];
 
   /**
    * Get the wrapper element.
@@ -119,8 +116,8 @@
       {#await sleep() then}
         <!-- @todo Support `default` option -->
         {@const { name: fieldName, label: fieldLabel = fieldName, widget = 'string' } = fieldConfig}
-        {#if widget in editors && !unsupportedWidgets.includes(widget)}
-          {@const SvelteComponent = editors[widget]}
+        {@const Editor = getEditorComponent(fieldConfig)}
+        {#if Editor}
           <section
             role="group"
             class="field"
@@ -136,7 +133,7 @@
               <h4 role="none">{fieldLabel}</h4>
             </header>
             <div role="none" class="widget-wrapper">
-              <SvelteComponent
+              <Editor
                 {locale}
                 keyPath="{keyPath}:{fieldName}"
                 fieldId={generateElementId('field')}
