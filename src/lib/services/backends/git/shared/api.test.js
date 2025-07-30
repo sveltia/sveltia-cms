@@ -47,7 +47,6 @@ describe('api.js', () => {
       expect(apiConfig).toHaveProperty('authURL');
       expect(apiConfig).toHaveProperty('tokenURL');
       expect(apiConfig).toHaveProperty('authScheme');
-      expect(apiConfig).toHaveProperty('origin');
       expect(apiConfig).toHaveProperty('restBaseURL');
       expect(apiConfig).toHaveProperty('graphqlBaseURL');
     });
@@ -56,7 +55,6 @@ describe('api.js', () => {
       expect(apiConfig.clientId).toBe('');
       expect(apiConfig.authURL).toBe('');
       expect(apiConfig.tokenURL).toBe('');
-      expect(apiConfig.origin).toBe('');
       expect(apiConfig.restBaseURL).toBe('');
       expect(apiConfig.graphqlBaseURL).toBe('');
     });
@@ -139,10 +137,223 @@ describe('api.js', () => {
   });
 
   describe('fetchAPI', () => {
+    beforeEach(() => {
+      // Set up API config for tests
+      Object.assign(apiConfig, {
+        clientId: 'test-client-id',
+        tokenURL: 'https://api.github.com/oauth/token',
+        restBaseURL: 'https://api.github.com',
+        graphqlBaseURL: 'https://api.github.com/graphql',
+        authScheme: 'token',
+      });
+    });
+
     it('should be available as an export', async () => {
       const { fetchAPI } = await import('./api');
 
       expect(typeof fetchAPI).toBe('function');
+    });
+
+    it('should use REST base URL when isGraphQL is false', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const mockUser = { token: 'test-token', refreshToken: 'test-refresh-token' };
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockReturnValue(mockUser);
+
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint', { isGraphQL: false });
+
+      expect(sendRequest).toHaveBeenCalledWith(
+        'https://api.github.com/test-endpoint',
+        {
+          method: 'GET',
+          headers: { Authorization: 'token test-token' },
+          body: null,
+        },
+        {
+          responseType: 'json',
+          refreshAccessToken: expect.any(Function),
+        },
+      );
+    });
+
+    it('should use GraphQL base URL when isGraphQL is true', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const mockUser = { token: 'test-token', refreshToken: 'test-refresh-token' };
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockReturnValue(mockUser);
+
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint', { isGraphQL: true });
+
+      expect(sendRequest).toHaveBeenCalledWith(
+        'https://api.github.com/graphql/test-endpoint',
+        {
+          method: 'GET',
+          headers: { Authorization: 'token test-token' },
+          body: null,
+        },
+        {
+          responseType: 'json',
+          refreshAccessToken: expect.any(Function),
+        },
+      );
+    });
+
+    it('should default to REST base URL when isGraphQL is not specified', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const mockUser = { token: 'test-token', refreshToken: 'test-refresh-token' };
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockReturnValue(mockUser);
+
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint');
+
+      expect(sendRequest).toHaveBeenCalledWith(
+        'https://api.github.com/test-endpoint',
+        {
+          method: 'GET',
+          headers: { Authorization: 'token test-token' },
+          body: null,
+        },
+        {
+          responseType: 'json',
+          refreshAccessToken: expect.any(Function),
+        },
+      );
+    });
+
+    it('should combine isGraphQL with other options correctly', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const mockUser = { token: 'test-token', refreshToken: 'test-refresh-token' };
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockReturnValue(mockUser);
+
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      const requestBody = { query: 'test query' };
+      const customHeaders = { 'X-Custom-Header': 'custom-value' };
+
+      await fetchAPI('/graphql', {
+        method: 'POST',
+        headers: customHeaders,
+        body: requestBody,
+        isGraphQL: true,
+        responseType: 'text',
+      });
+
+      expect(sendRequest).toHaveBeenCalledWith(
+        'https://api.github.com/graphql/graphql',
+        {
+          method: 'POST',
+          headers: {
+            'X-Custom-Header': 'custom-value',
+            Authorization: 'token test-token',
+          },
+          body: requestBody,
+        },
+        {
+          responseType: 'text',
+          refreshAccessToken: expect.any(Function),
+        },
+      );
+    });
+
+    it('should use provided token and refreshToken over user store values', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const mockUser = { token: 'store-token', refreshToken: 'store-refresh-token' };
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockReturnValue(mockUser);
+
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint', {
+        token: 'custom-token',
+        refreshToken: 'custom-refresh-token',
+        isGraphQL: true,
+      });
+
+      expect(sendRequest).toHaveBeenCalledWith(
+        'https://api.github.com/graphql/test-endpoint',
+        {
+          method: 'GET',
+          headers: { Authorization: 'token custom-token' },
+          body: null,
+        },
+        {
+          responseType: 'json',
+          refreshAccessToken: expect.any(Function),
+        },
+      );
+    });
+
+    it('should not provide refreshAccessToken when no refresh token is available', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const mockUser = { token: 'test-token' }; // No refreshToken
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockReturnValue(mockUser);
+
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint', { isGraphQL: false });
+
+      expect(sendRequest).toHaveBeenCalledWith(
+        'https://api.github.com/test-endpoint',
+        {
+          method: 'GET',
+          headers: { Authorization: 'token test-token' },
+          body: null,
+        },
+        {
+          responseType: 'json',
+          refreshAccessToken: undefined,
+        },
+      );
+    });
+
+    it('should handle different auth schemes with isGraphQL option', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+
+      // Update config to use bearer auth scheme
+      Object.assign(apiConfig, { authScheme: 'Bearer' });
+
+      const mockUser = { token: 'test-token', refreshToken: 'test-refresh-token' };
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockReturnValue(mockUser);
+
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint', { isGraphQL: true });
+
+      expect(sendRequest).toHaveBeenCalledWith(
+        'https://api.github.com/graphql/test-endpoint',
+        {
+          method: 'GET',
+          headers: { Authorization: 'Bearer test-token' },
+          body: null,
+        },
+        {
+          responseType: 'json',
+          refreshAccessToken: expect.any(Function),
+        },
+      );
     });
   });
 

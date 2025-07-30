@@ -77,7 +77,7 @@
  * @property {string} owner Owner name, which could be either an organization or individual user.
  * @property {string} repo Repository name.
  * @property {string} [branch] Branch name, e.g. `master` or `main`.
- * @property {string} [baseURL] The repository’s web-accessible URL that can be linked from the CMS
+ * @property {string} [repoURL] The repository’s web-accessible URL that can be linked from the CMS
  * UI to the backend service. Git backends only.
  * @property {string} [treeBaseURL] Repository’s tree base URL with a branch name. It’s the same as
  * `baseURL` when the default branch is used. Git backends only.
@@ -95,7 +95,6 @@
  * @property {string} authURL OAuth authorization URL.
  * @property {string} tokenURL OAuth token URL.
  * @property {string} [authScheme] Authorization scheme. Default is `token`.
- * @property {string} origin API origin URL, e.g. `https://github.com`.
  * @property {string} restBaseURL REST API endpoint, e.g. `/api/v3`.
  * @property {string} [graphqlBaseURL] GraphQL API endpoint, e.g. `/api/graphql`.
  */
@@ -106,6 +105,7 @@
  * @property {string} [method] HTTP method. The default is `GET`.
  * @property {Record<string, string>} [headers] HTTP headers. The default is an empty object.
  * @property {any} [body] HTTP body. The default is `null`.
+ * @property {boolean} [isGraphQL] Whether the request is a GraphQL request. The default is `false`.
  * @property {'json' | 'text' | 'blob' | 'raw'} [responseType] Response type. The default is `json`,
  * while `raw` returns the `Response` object as is.
  * @property {string} [token] OAuth access token. If not provided, it will be taken from the `user`

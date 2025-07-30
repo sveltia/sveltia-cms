@@ -8,7 +8,6 @@ import {
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
-  DEFAULT_ORIGIN,
 } from '$lib/services/backends/git/github/constants';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
@@ -123,7 +122,7 @@ describe('GitHub backend service', () => {
           owner: 'owner',
           repo: 'repo',
           branch: 'main',
-          baseURL: `${DEFAULT_ORIGIN}/owner/repo`,
+          repoURL: 'https://github.com/owner/repo',
           databaseName: `${BACKEND_NAME}:owner/repo`,
           isSelfHosted: false,
         }),
@@ -136,9 +135,8 @@ describe('GitHub backend service', () => {
           clientId: '',
           authURL: `${DEFAULT_AUTH_ROOT}/${DEFAULT_AUTH_PATH}`,
           tokenURL: `${DEFAULT_AUTH_ROOT}/${DEFAULT_AUTH_PATH}`,
-          origin: new URL(DEFAULT_API_ROOT).origin,
           restBaseURL: DEFAULT_API_ROOT,
-          graphqlBaseURL: DEFAULT_API_ROOT,
+          graphqlBaseURL: `${DEFAULT_API_ROOT}/graphql`,
         }),
       );
 
@@ -154,8 +152,8 @@ describe('GitHub backend service', () => {
     test('initializes with custom configuration', () => {
       const customAuthRoot = 'https://custom-auth.example.com';
       const customAuthPath = 'custom/auth';
-      const customApiRoot = 'https://api.custom.com';
-      const customGraphqlRoot = 'https://graphql.custom.com';
+      const customApiRoot = 'https://github.example.com/api/v3';
+      const customGraphqlRoot = 'https://github.example.com/api/graphql';
 
       const mockSiteConfig = {
         backend: {
@@ -183,7 +181,7 @@ describe('GitHub backend service', () => {
           owner: 'owner',
           repo: 'repo',
           branch: 'develop',
-          baseURL: 'https://api.custom.com/owner/repo',
+          repoURL: 'https://github.example.com/owner/repo',
           databaseName: `${BACKEND_NAME}:owner/repo`,
           isSelfHosted: true,
         }),
@@ -196,9 +194,8 @@ describe('GitHub backend service', () => {
           clientId: '',
           authURL: `${customAuthRoot}/${customAuthPath}`,
           tokenURL: `${customAuthRoot}/${customAuthPath}`,
-          origin: 'https://api.custom.com',
-          restBaseURL: 'https://api.custom.com/api/v3',
-          graphqlBaseURL: 'https://graphql.custom.com/api',
+          restBaseURL: 'https://github.example.com/api/v3',
+          graphqlBaseURL: 'https://github.example.com/api/graphql',
         }),
       );
 

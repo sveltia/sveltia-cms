@@ -30,7 +30,7 @@ vi.mock('$lib/services/backends/git/shared/api', () => ({
 describe('Gitea Repository Service', () => {
   const mockRepo = 'test-repo';
   const mockOwner = 'test-owner';
-  const mockBaseURL = 'https://gitea.example.com/test-owner/test-repo';
+  const mockRepoURL = 'https://gitea.example.com/test-owner/test-repo';
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,7 +58,7 @@ describe('Gitea Repository Service', () => {
       ...REPOSITORY_INFO_PLACEHOLDER,
       owner: mockOwner,
       repo: mockRepo,
-      baseURL: mockBaseURL,
+      repoURL: mockRepoURL,
     });
   });
 
@@ -69,9 +69,9 @@ describe('Gitea Repository Service', () => {
 
   describe('getBaseURLs', () => {
     test('should generate correct URLs with branch', () => {
-      const baseURL = 'https://gitea.example.com/owner/repo';
+      const repoURL = 'https://gitea.example.com/owner/repo';
       const branch = 'main';
-      const result = getBaseURLs(baseURL, branch);
+      const result = getBaseURLs(repoURL, branch);
 
       expect(result).toEqual({
         treeBaseURL: 'https://gitea.example.com/owner/repo/src/branch/main',
@@ -80,8 +80,8 @@ describe('Gitea Repository Service', () => {
     });
 
     test('should generate correct URLs without branch', () => {
-      const baseURL = 'https://gitea.example.com/owner/repo';
-      const result = getBaseURLs(baseURL);
+      const repoURL = 'https://gitea.example.com/owner/repo';
+      const result = getBaseURLs(repoURL);
 
       expect(result).toEqual({
         treeBaseURL: 'https://gitea.example.com/owner/repo',
@@ -89,7 +89,7 @@ describe('Gitea Repository Service', () => {
       });
     });
 
-    test('should handle empty baseURL', () => {
+    test('should handle empty repoURL', () => {
       const result = getBaseURLs('', 'main');
 
       expect(result).toEqual({
@@ -163,8 +163,8 @@ describe('Gitea Repository Service', () => {
       expect(result).toBe('main');
       expect(fetchAPIMock).toHaveBeenCalledWith(`/repos/${mockOwner}/${mockRepo}`);
       expect(repository.branch).toBe('main');
-      expect(repository.treeBaseURL).toBe(`${mockBaseURL}/src/branch/main`);
-      expect(repository.blobBaseURL).toBe(`${mockBaseURL}/src/branch/main`);
+      expect(repository.treeBaseURL).toBe(`${mockRepoURL}/src/branch/main`);
+      expect(repository.blobBaseURL).toBe(`${mockRepoURL}/src/branch/main`);
     });
 
     test('should handle empty repository with no default branch', async () => {
@@ -197,8 +197,8 @@ describe('Gitea Repository Service', () => {
       );
     });
 
-    test('should update repository with URLs when baseURL is empty', async () => {
-      repository.baseURL = '';
+    test('should update repository with URLs when repoURL is empty', async () => {
+      repository.repoURL = '';
 
       const mockRepoInfo = {
         default_branch: 'develop',

@@ -14,6 +14,7 @@ import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
+import { getRepoURL } from '$lib/services/backends/git/shared/repository';
 import { siteConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/user/prefs';
 
@@ -39,14 +40,11 @@ export const init = () => {
     base_url: authRoot = DEFAULT_AUTH_ROOT,
     auth_endpoint: authPath = DEFAULT_AUTH_PATH,
     app_id: clientId = '',
+    // https://HOSTNAME/api/v1 or https://HOSTNAME/PATH/api/v1
     api_root: restApiRoot = DEFAULT_API_ROOT,
-    graphql_api_root: graphqlApiRoot = restApiRoot,
+    // https://HOSTNAME/api/graphql or https://HOSTNAME/PATH/api/graphql
+    graphql_api_root: graphqlApiRoot = restApiRoot.replace(/\/api\/.+$/, '/api/graphql'),
   } = backend;
-
-  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
-  // Developers may misconfigure custom API roots, so we use the origin to redefine them
-  const restApiOrigin = new URL(restApiRoot).origin;
-  const graphqlApiOrigin = new URL(graphqlApiRoot).origin;
 
   /**
    * In GitLab terminology, an owner is called a namespace, and a repository is called a project. A
@@ -59,7 +57,8 @@ export const init = () => {
     /** @type {string} */ (projectPath).match(/(?<owner>.+)\/(?<repo>[^/]+)$/)?.groups ?? {};
 
   const repoPath = `${owner}/${repo}`;
-  const baseURL = `${restApiOrigin}/${repoPath}`;
+  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
+  const repoURL = getRepoURL(restApiRoot, repoPath);
 
   Object.assign(
     repository,
@@ -69,11 +68,11 @@ export const init = () => {
       owner,
       repo,
       branch,
-      baseURL,
+      repoURL,
       databaseName: `${BACKEND_NAME}:${repoPath}`,
       isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),
-    getBaseURLs(baseURL, branch),
+    getBaseURLs(repoURL, branch),
   );
 
   Object.assign(
@@ -83,9 +82,8 @@ export const init = () => {
       authURL,
       tokenURL: authURL.replace('/authorize', '/token'),
       authScheme: 'Bearer',
-      origin: restApiOrigin,
-      restBaseURL: `${restApiOrigin}/api/v4`,
-      graphqlBaseURL: `${graphqlApiOrigin}/api`,
+      restBaseURL: stripSlashes(restApiRoot),
+      graphqlBaseURL: stripSlashes(graphqlApiRoot),
     }),
   );
 

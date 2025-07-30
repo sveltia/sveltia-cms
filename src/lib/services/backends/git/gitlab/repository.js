@@ -14,15 +14,15 @@ export const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 
 /**
  * Generate base URLs for accessing the repository’s resources.
- * @param {string} baseURL The name of the repository.
+ * @param {string} repoURL The base URL of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
  * the site configuration.
  * @returns {{ treeBaseURL: string, blobBaseURL: string }} An object containing the tree base URL
  * for browsing files, and the blob base URL for accessing file contents.
  */
-export const getBaseURLs = (baseURL, branch) => ({
-  treeBaseURL: branch ? `${baseURL}/-/tree/${branch}` : baseURL,
-  blobBaseURL: branch ? `${baseURL}/-/blob/${branch}` : '',
+export const getBaseURLs = (repoURL, branch) => ({
+  treeBaseURL: branch ? `${repoURL}/-/tree/${branch}` : repoURL,
+  blobBaseURL: branch ? `${repoURL}/-/blob/${branch}` : '',
 });
 
 /**
@@ -65,7 +65,7 @@ const FETCH_DEFAULT_BRANCH_NAME_QUERY = `
  * @see https://docs.gitlab.com/api/graphql/reference/#repository
  */
 export const fetchDefaultBranchName = async () => {
-  const { repo, baseURL = '' } = repository;
+  const { repo, repoURL = '' } = repository;
 
   const result = /** @type {{ project: { repository?: { rootRef: string } } }} */ (
     await fetchGraphQL(FETCH_DEFAULT_BRANCH_NAME_QUERY)
@@ -85,7 +85,7 @@ export const fetchDefaultBranchName = async () => {
     });
   }
 
-  Object.assign(repository, { branch }, getBaseURLs(baseURL, branch));
+  Object.assign(repository, { branch }, getBaseURLs(repoURL, branch));
   Object.assign(graphqlVars, { branch });
 
   return branch;

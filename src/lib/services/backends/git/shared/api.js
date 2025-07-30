@@ -17,7 +17,6 @@ const API_CONFIG_INFO_PLACEHOLDER = {
   authURL: '',
   tokenURL: '',
   authScheme: 'token',
-  origin: '',
   restBaseURL: '',
   graphqlBaseURL: '',
 };
@@ -96,6 +95,7 @@ export const fetchAPI = async (
     method = 'GET',
     headers = {},
     body = null,
+    isGraphQL = false,
     responseType = 'json',
     token = undefined,
     refreshToken = undefined,
@@ -103,7 +103,6 @@ export const fetchAPI = async (
 ) => {
   const { clientId, tokenURL, restBaseURL, graphqlBaseURL, authScheme = 'token' } = apiConfig;
   const _user = get(user);
-  const isGraphQL = path === '/graphql';
   const baseURL = isGraphQL ? graphqlBaseURL : restBaseURL;
 
   token ??= _user?.token;
@@ -146,7 +145,7 @@ export const fetchGraphQL = async (query, variables = {}) => {
 
   // Extract `data` from the response
   const { data } = await /** @type {Promise<{ data: Record<string, any> }>} */ (
-    fetchAPI('/graphql', { method: 'POST', body: { query, variables } })
+    fetchAPI('', { method: 'POST', body: { query, variables }, isGraphQL: true })
   );
 
   return data;

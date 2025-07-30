@@ -53,22 +53,22 @@ describe('GitHub repository service', () => {
 
   describe('getBaseURLs', () => {
     test('returns correct URLs for repository with branch', () => {
-      const baseURL = 'https://github.com/owner/repo';
+      const repoURL = 'https://github.com/owner/repo';
       const branch = 'main';
-      const result = getBaseURLs(baseURL, branch);
+      const result = getBaseURLs(repoURL, branch);
 
       expect(result).toEqual({
-        treeBaseURL: `${baseURL}/tree/${branch}`,
-        blobBaseURL: `${baseURL}/blob/${branch}`,
+        treeBaseURL: `${repoURL}/tree/${branch}`,
+        blobBaseURL: `${repoURL}/blob/${branch}`,
       });
     });
 
     test('handles undefined branch', () => {
-      const baseURL = 'https://github.com/owner/repo';
-      const result = getBaseURLs(baseURL, undefined);
+      const repoURL = 'https://github.com/owner/repo';
+      const result = getBaseURLs(repoURL, undefined);
 
       expect(result).toEqual({
-        treeBaseURL: baseURL,
+        treeBaseURL: repoURL,
         blobBaseURL: '',
       });
     });
@@ -114,7 +114,7 @@ describe('GitHub repository service', () => {
       Object.assign(repository, {
         owner: 'test-owner',
         repo: 'test-repo',
-        baseURL: 'https://github.com/test-owner/test-repo',
+        repoURL: 'https://github.com/test-owner/test-repo',
       });
 
       const mockResponse = {

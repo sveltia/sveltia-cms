@@ -29,15 +29,15 @@ export const resetRepositoryInfoCache = () => {
 
 /**
  * Generate base URLs for accessing the repository’s resources.
- * @param {string} baseURL The name of the repository.
+ * @param {string} repoURL The base URL of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
  * the site configuration.
  * @returns {{ treeBaseURL: string, blobBaseURL: string }} An object containing the tree base URL
  * for browsing files, and the blob base URL for accessing file contents.
  */
-export const getBaseURLs = (baseURL, branch) => ({
-  treeBaseURL: branch ? `${baseURL}/src/branch/${branch}` : baseURL,
-  blobBaseURL: branch ? `${baseURL}/src/branch/${branch}` : '',
+export const getBaseURLs = (repoURL, branch) => ({
+  treeBaseURL: branch ? `${repoURL}/src/branch/${branch}` : repoURL,
+  blobBaseURL: branch ? `${repoURL}/src/branch/${branch}` : '',
 });
 
 /**
@@ -89,7 +89,7 @@ export const checkRepositoryAccess = async () => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
 export const fetchDefaultBranchName = async () => {
-  const { repo, baseURL = '' } = repository;
+  const { repo, repoURL = '' } = repository;
 
   try {
     const { default_branch: branch } = await getRepositoryInfo();
@@ -100,7 +100,7 @@ export const fetchDefaultBranchName = async () => {
       });
     }
 
-    Object.assign(repository, { branch }, getBaseURLs(baseURL, branch));
+    Object.assign(repository, { branch }, getBaseURLs(repoURL, branch));
 
     return branch;
   } catch {

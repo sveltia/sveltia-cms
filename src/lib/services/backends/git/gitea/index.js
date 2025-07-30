@@ -13,6 +13,7 @@ import {
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitea/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitea/repository';
 import { apiConfig } from '$lib/services/backends/git/shared/api';
+import { getRepoURL } from '$lib/services/backends/git/shared/repository';
 import { siteConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/user/prefs';
 
@@ -38,14 +39,14 @@ export const init = () => {
     base_url: authRoot = DEFAULT_AUTH_ROOT,
     auth_endpoint: authPath = DEFAULT_AUTH_PATH,
     app_id: clientId = '',
+    // https://HOSTNAME/api/v1 or https://HOSTNAME/PATH/api/v1
     api_root: restApiRoot = DEFAULT_API_ROOT,
   } = backend;
 
-  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
-  // Developers may misconfigure custom API roots, so we use the origin to redefine them
-  const restApiOrigin = new URL(restApiRoot).origin;
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
-  const baseURL = `${restApiOrigin}/${owner}/${repo}`;
+  const repoPath = `${owner}/${repo}`;
+  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
+  const repoURL = getRepoURL(restApiRoot, repoPath);
 
   Object.assign(
     repository,
@@ -55,11 +56,11 @@ export const init = () => {
       owner,
       repo,
       branch,
-      baseURL,
-      databaseName: `${BACKEND_NAME}:${owner}/${repo}`,
+      repoURL,
+      databaseName: `${BACKEND_NAME}:${repoPath}`,
       isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),
-    getBaseURLs(baseURL, branch),
+    getBaseURLs(repoURL, branch),
   );
 
   Object.assign(
@@ -68,8 +69,7 @@ export const init = () => {
       clientId,
       authURL,
       tokenURL: authURL.replace('/authorize', '/access_token'),
-      origin: restApiOrigin,
-      restBaseURL: `${restApiOrigin}/api/v1`,
+      restBaseURL: stripSlashes(restApiRoot),
     }),
   );
 

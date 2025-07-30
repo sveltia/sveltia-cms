@@ -6,7 +6,6 @@ import {
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
-  DEFAULT_ORIGIN,
 } from '$lib/services/backends/git/github/constants';
 
 describe('GitHub constants', () => {
@@ -28,9 +27,5 @@ describe('GitHub constants', () => {
 
   test('exports correct default auth path', () => {
     expect(DEFAULT_AUTH_PATH).toBe('auth');
-  });
-
-  test('exports correct default origin', () => {
-    expect(DEFAULT_ORIGIN).toBe('https://github.com');
   });
 });

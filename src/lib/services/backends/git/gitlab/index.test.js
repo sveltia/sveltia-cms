@@ -92,7 +92,7 @@ describe('GitLab backend service', () => {
           owner: 'owner',
           repo: 'repo',
           branch: 'main',
-          baseURL: 'https://gitlab.com/owner/repo',
+          repoURL: 'https://gitlab.com/owner/repo',
           databaseName: 'gitlab:owner/repo',
           isSelfHosted: false,
         }),
@@ -104,9 +104,8 @@ describe('GitLab backend service', () => {
           authURL: 'https://gitlab.com/oauth/authorize',
           tokenURL: 'https://gitlab.com/oauth/token',
           authScheme: 'Bearer',
-          origin: 'https://gitlab.com',
           restBaseURL: 'https://gitlab.com/api/v4',
-          graphqlBaseURL: 'https://gitlab.com/api',
+          graphqlBaseURL: 'https://gitlab.com/api/graphql',
         }),
       );
 
@@ -142,7 +141,7 @@ describe('GitLab backend service', () => {
           owner: 'group/subgroup',
           repo: 'project',
           branch: 'develop',
-          baseURL: 'https://custom-gitlab.com/group/subgroup/project',
+          repoURL: 'https://custom-gitlab.com/group/subgroup/project',
           databaseName: 'gitlab:group/subgroup/project',
           isSelfHosted: true,
         }),
@@ -154,9 +153,8 @@ describe('GitLab backend service', () => {
           authURL: 'https://custom-gitlab.com/oauth/custom',
           tokenURL: 'https://custom-gitlab.com/oauth/custom', // No '/authorize' to replace
           authScheme: 'Bearer',
-          origin: 'https://custom-gitlab.com',
           restBaseURL: 'https://custom-gitlab.com/api/v4',
-          graphqlBaseURL: 'https://custom-gitlab.com/api',
+          graphqlBaseURL: 'https://custom-gitlab.com/api/graphql',
         }),
       );
 

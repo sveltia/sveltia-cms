@@ -1,6 +1,10 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
+import {
+  normalizeGraphQLBaseURL,
+  normalizeRestBaseURL,
+} from '$lib/services/backends/git/github/api';
 import { signIn, signOut } from '$lib/services/backends/git/github/auth';
 import { commitChanges } from '$lib/services/backends/git/github/commits';
 import {
@@ -9,13 +13,13 @@ import {
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
-  DEFAULT_ORIGIN,
 } from '$lib/services/backends/git/github/constants';
 import { triggerDeployment } from '$lib/services/backends/git/github/deployment';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/github/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/github/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/github/status';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
+import { getRepoURL } from '$lib/services/backends/git/shared/repository';
 import { siteConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/user/prefs';
 
@@ -40,19 +44,16 @@ export const init = () => {
     branch,
     base_url: authRoot = DEFAULT_AUTH_ROOT,
     auth_endpoint: authPath = DEFAULT_AUTH_PATH,
+    // GitHub Enterprise Server: https://HOSTNAME/api/v3
     api_root: restApiRoot = DEFAULT_API_ROOT,
+    // GitHub Enterprise Server: https://HOSTNAME/api/graphql
     graphql_api_root: graphqlApiRoot = restApiRoot,
   } = backend;
 
-  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
-  // Developers may misconfigure custom API roots, so we use the origin to redefine them
-  const restApiOrigin = new URL(restApiRoot).origin;
-  const graphqlApiOrigin = new URL(graphqlApiRoot).origin;
-  const isSelfHosted = restApiRoot !== DEFAULT_API_ROOT;
-  const origin = isSelfHosted ? restApiOrigin : DEFAULT_ORIGIN;
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
   const repoPath = `${owner}/${repo}`;
-  const baseURL = `${origin}/${repoPath}`;
+  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
+  const repoURL = getRepoURL(restApiRoot, repoPath);
 
   Object.assign(
     repository,
@@ -62,11 +63,11 @@ export const init = () => {
       owner,
       repo,
       branch,
-      baseURL,
+      repoURL,
       databaseName: `${BACKEND_NAME}:${repoPath}`,
-      isSelfHosted,
+      isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),
-    getBaseURLs(baseURL, branch),
+    getBaseURLs(repoURL, branch),
   );
 
   Object.assign(
@@ -75,9 +76,8 @@ export const init = () => {
       clientId: '', // @todo Implement OAuth token renewal
       authURL,
       tokenURL: authURL.replace('/authorize', '/access_token'),
-      origin: restApiOrigin,
-      restBaseURL: isSelfHosted ? `${restApiOrigin}/api/v3` : restApiOrigin,
-      graphqlBaseURL: isSelfHosted ? `${graphqlApiOrigin}/api` : graphqlApiOrigin,
+      restBaseURL: normalizeRestBaseURL(restApiRoot),
+      graphqlBaseURL: normalizeGraphQLBaseURL(graphqlApiRoot),
     }),
   );
 
