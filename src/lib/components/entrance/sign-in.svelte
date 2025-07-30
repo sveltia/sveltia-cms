@@ -26,6 +26,11 @@
   const repositoryName = $derived($siteConfig?.backend?.repo?.split('/')?.[1]);
   const isTestRepo = $derived(configuredBackendName === 'test-repo');
 
+  /**
+   * Show sign-in options for Git-based backends or a single button for the Test backend.
+   */
+  const ButtonComponent = $derived(isTestRepo ? Button : SplitButton);
+
   onMount(() => {
     const { hostname } = window.location;
 
@@ -48,7 +53,7 @@
       {$_('config.error.unsupported_backend', { values: { name: configuredBackendName } })}
     </div>
   {:else}
-    <SplitButton
+    <ButtonComponent
       variant="primary"
       popupPosition="bottom-right"
       label={isTestRepo
@@ -74,7 +79,7 @@
           />
         </Menu>
       {/snippet}
-    </SplitButton>
+    </ButtonComponent>
     {#if isLocalHost && !isTestRepo}
       <Button
         variant="primary"
