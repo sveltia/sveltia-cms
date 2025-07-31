@@ -6,7 +6,7 @@
 /**
  * Get the default value map for a Number field.
  * @param {GetDefaultValueMapFuncArgs} args Arguments.
- * @returns {Record<FieldKeyPath, number | string>} Default value map.
+ * @returns {Record<FieldKeyPath, number | string | null>} Default value map.
  */
 export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
   const { default: defaultValue, value_type: valueType = 'int' } = /** @type {NumberField} */ (
@@ -17,7 +17,11 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
   const isString = typeof value === 'string';
 
   if (value === undefined) {
-    return {};
+    if (valueType === 'int' || valueType === 'float') {
+      return { [keyPath]: null };
+    }
+
+    return { [keyPath]: '' };
   }
 
   if (valueType === 'int') {

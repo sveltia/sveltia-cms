@@ -70,7 +70,7 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({ e: 2.71828 });
     });
 
-    test('should return empty object when default is undefined', () => {
+    test('should return null when default is undefined for int type', () => {
       /** @type {NumberField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -80,7 +80,47 @@ describe('Test getDefaultValueMap()', () => {
       const keyPath = 'count';
       const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
 
-      expect(result).toEqual({});
+      expect(result).toEqual({ count: null });
+    });
+
+    test('should return null when default is undefined for float type', () => {
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        value_type: 'float',
+      };
+
+      const keyPath = 'ratio';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({ ratio: null });
+    });
+
+    test('should return empty string when default is undefined for custom value_type', () => {
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        value_type: 'custom',
+      };
+
+      const keyPath = 'value';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({ value: '' });
+    });
+
+    test('should return null when default is undefined and no value_type specified (defaults to int)', () => {
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        // No value_type specified, defaults to 'int'
+        // No default value specified
+      };
+
+      const keyPath = 'value';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({ value: null });
     });
 
     test('should return empty object when int parsing fails', () => {
@@ -289,6 +329,66 @@ describe('Test getDefaultValueMap()', () => {
       });
 
       expect(result).toEqual({ value: 'dynamic-value' });
+    });
+
+    test('should return null when dynamicValue is undefined and no default exists for int type', () => {
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        // No default value
+        value_type: 'int',
+      };
+
+      const keyPath = 'count';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: undefined, // Explicitly undefined
+      });
+
+      expect(result).toEqual({ count: null });
+    });
+
+    test('should return null when dynamicValue is undefined and no default exists for float type', () => {
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        // No default value
+        value_type: 'float',
+      };
+
+      const keyPath = 'ratio';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: undefined, // Explicitly undefined
+      });
+
+      expect(result).toEqual({ ratio: null });
+    });
+
+    test('should return empty string when dynamicValue is undefined and no default exists for custom value_type', () => {
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        // No default value
+        value_type: 'custom',
+      };
+
+      const keyPath = 'value';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        dynamicValue: undefined, // Explicitly undefined
+      });
+
+      expect(result).toEqual({ value: '' });
     });
   });
 });
