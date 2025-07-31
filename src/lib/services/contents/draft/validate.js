@@ -84,9 +84,15 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
         // Simple list field
         return undefined;
       }
-    } else {
-      // `select` or `relation` field with `multiple: true`, same as a simple list field
-      return undefined;
+    }
+
+    if (widgetName === 'select' || widgetName === 'relation') {
+      const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
+
+      if (multiple) {
+        // `select` or `relation` field with `multiple: true`, same as a simple list field
+        return undefined;
+      }
     }
   }
 
