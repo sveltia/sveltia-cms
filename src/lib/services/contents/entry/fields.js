@@ -238,7 +238,8 @@ export const getFieldDisplayValue = ({
     value = applyTransformations({ fieldConfig, value, transformations });
   }
 
-  return value ? String(value) : '';
+  // Return an empty string if the value is null or undefined
+  return String(value ?? '');
 };
 
 /**

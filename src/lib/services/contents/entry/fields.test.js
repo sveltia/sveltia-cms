@@ -4,6 +4,7 @@ import { getCollection, isEntryCollection } from '$lib/services/contents/collect
 import {
   fieldConfigCacheMap,
   getField,
+  getFieldDisplayValue,
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
 
@@ -1125,5 +1126,340 @@ describe('Test isFieldRequired()', () => {
     expect(isFieldRequired({ fieldConfig: { name, required: ['ja'] }, locale })).toBe(false);
     expect(isFieldRequired({ fieldConfig: { name, required: ['en', 'ja'] }, locale })).toBe(true);
     expect(isFieldRequired({ fieldConfig: { name, required: [] }, locale })).toBe(false);
+  });
+});
+
+describe('Test getFieldDisplayValue()', () => {
+  const mockCollection = {
+    name: 'posts',
+    folder: 'content/posts',
+    _type: 'entry',
+    fields: [
+      { name: 'title', widget: 'string' },
+      { name: 'body', widget: 'markdown' },
+      { name: 'published', widget: 'boolean' },
+      { name: 'publishDate', widget: 'datetime', format: 'YYYY-MM-DD' },
+      {
+        name: 'author',
+        widget: 'relation',
+        collection: 'authors',
+        value_field: 'name',
+        display_fields: ['name', 'email'],
+      },
+      {
+        name: 'category',
+        widget: 'select',
+        options: [
+          { label: 'Blog', value: 'blog' },
+          { label: 'News', value: 'news' },
+        ],
+      },
+      {
+        name: 'simpleTags',
+        widget: 'list',
+        // No field, fields, or types - this makes it a simple list
+      },
+      {
+        name: 'tags',
+        widget: 'list',
+        field: { name: 'tag', widget: 'string' },
+      },
+      {
+        name: 'images',
+        widget: 'list',
+        fields: [
+          { name: 'src', widget: 'image' },
+          { name: 'alt', widget: 'string' },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    fieldConfigCacheMap.clear();
+    vi.clearAllMocks();
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(mockCollection);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    fieldConfigCacheMap.clear();
+  });
+
+  describe('Basic value handling', () => {
+    test('should return string representation of primitive values', () => {
+      const valueMap = {
+        title: 'Hello World',
+        published: true,
+        count: 42,
+        rating: 4.5,
+      };
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'title',
+          locale: 'en',
+        }),
+      ).toBe('Hello World');
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'published',
+          locale: 'en',
+        }),
+      ).toBe('true');
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'count',
+          locale: 'en',
+        }),
+      ).toBe('42');
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'rating',
+          locale: 'en',
+        }),
+      ).toBe('4.5');
+    });
+
+    test('should return empty string for null and undefined values', () => {
+      const valueMap = {
+        nullValue: null,
+        // undefinedValue is not set
+      };
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'nullValue',
+          locale: 'en',
+        }),
+      ).toBe('');
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'undefinedValue',
+          locale: 'en',
+        }),
+      ).toBe('');
+    });
+
+    test('should return empty string for false boolean value', () => {
+      const valueMap = {
+        published: false,
+      };
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'published',
+          locale: 'en',
+        }),
+      ).toBe('false');
+    });
+
+    test('should return empty string for zero value', () => {
+      const valueMap = {
+        count: 0,
+      };
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'count',
+          locale: 'en',
+        }),
+      ).toBe('0');
+    });
+
+    test('should return empty string for empty string value', () => {
+      const valueMap = {
+        title: '',
+      };
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'title',
+          locale: 'en',
+        }),
+      ).toBe('');
+    });
+  });
+
+  describe('Array value handling', () => {
+    test('should format array values using list formatter', () => {
+      const valueMap = {
+        someArray: ['javascript', 'web development', 'tutorial'],
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'someArray',
+        locale: 'en',
+      });
+
+      // List formatter typically joins with commas and "and"
+      expect(result).toContain('javascript');
+      expect(result).toContain('web development');
+      expect(result).toContain('tutorial');
+    });
+
+    test('should return empty string for empty array', () => {
+      const valueMap = {
+        someArray: [],
+      };
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'someArray',
+          locale: 'en',
+        }),
+      ).toBe('');
+    });
+  });
+
+  describe('List widget handling', () => {
+    test('should format simple list values', () => {
+      const valueMap = {
+        'simpleTags.0': 'javascript',
+        'simpleTags.1': 'web development',
+        'simpleTags.2': 'tutorial',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'simpleTags',
+        locale: 'en',
+      });
+
+      expect(result).toContain('javascript');
+      expect(result).toContain('web development');
+      expect(result).toContain('tutorial');
+    });
+
+    test('should ignore complex list widgets (with fields or types)', () => {
+      const valueMap = {
+        'images.0.src': 'image1.jpg',
+        'images.0.alt': 'First image',
+        'images.1.src': 'image2.jpg',
+        'images.1.alt': 'Second image',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'images',
+        locale: 'en',
+      });
+
+      // Complex list widgets should not be formatted as simple lists
+      expect(result).toBe('');
+    });
+
+    test('should format list widgets with field property', () => {
+      const valueMap = {
+        'tags.0': 'javascript',
+        'tags.1': 'web development',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'tags',
+        locale: 'en',
+      });
+
+      // List widgets with field property should be formatted as simple lists
+      expect(result).toContain('javascript');
+      expect(result).toContain('web development');
+    });
+  });
+
+  describe('Transformations', () => {
+    test('should apply transformations when provided', () => {
+      const valueMap = {
+        title: 'hello world',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'title',
+        locale: 'en',
+        transformations: ['upper'],
+      });
+
+      expect(result).toBe('HELLO WORLD');
+    });
+
+    test('should return empty string when field is undefined and transformations are applied', () => {
+      const valueMap = {};
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'nonexistent',
+        locale: 'en',
+        transformations: ['upper'],
+      });
+
+      expect(result).toBe('');
+    });
+  });
+
+  describe('Edge cases', () => {
+    test('should handle non-existent collection', () => {
+      mockGetCollection.mockReturnValue(undefined);
+
+      const valueMap = {
+        title: 'Hello World',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'nonexistent',
+        valueMap,
+        keyPath: 'title',
+        locale: 'en',
+      });
+
+      expect(result).toBe('Hello World');
+    });
+
+    test('should handle non-existent field config', () => {
+      const valueMap = {
+        unknownField: 'some value',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'unknownField',
+        locale: 'en',
+      });
+
+      expect(result).toBe('some value');
+    });
   });
 });
