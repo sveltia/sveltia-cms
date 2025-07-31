@@ -679,9 +679,9 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 
 ### Installation & setup
 
-Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Skip the [Choosing a Backend](https://decapcms.org/docs/choosing-a-backend/) page and choose the [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/) or [Gitea/Forgejo](https://decapcms.org/docs/gitea-backend/) backend instead. Then migrate to Sveltia CMS as described below.
+Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Skip the [Choosing a Backend](https://decapcms.org/docs/choosing-a-backend/) page and configure the [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/) or [Gitea/Forgejo](https://decapcms.org/docs/gitea-backend/) backend instead. Then [migrate](#migration) to Sveltia CMS as described below.
 
-Or try one of the starter kits for popular frameworks created by community members:
+Or try one of the starter kits for popular frameworks created by community:
 
 - Astro
   - [astros](https://github.com/zankhq/astros) by [@zanhk](https://github.com/zanhk)
@@ -694,7 +694,7 @@ Or try one of the starter kits for popular frameworks created by community membe
 
 The Netlify/Decap CMS website has more [templates](https://decapcms.org/docs/start-with-a-template/) and [examples](https://decapcms.org/docs/examples/). You can probably use one of them and switch to Sveltia CMS. (Note: These third-party resources are not necessarily reviewed by the Sveltia CMS team.)
 
-Unfortunately, we are unable to provide free installation and setup support at this time. As the product evolves, we’ll provide a built-in configuration editor, comprehensive documentation and official starter kits to make it easier for everyone to get started with Sveltia CMS.
+Unfortunately, **we are unable to provide free installation and setup support** at this time. As the product evolves, we’ll provide a built-in configuration editor, comprehensive documentation and official starter kits to make it easier for everyone to get started with Sveltia CMS.
 
 ### Migration
 
