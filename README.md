@@ -722,7 +722,7 @@ From Decap CMS:
 
 Next, let’s [test Sveltia CMS on your local machine](#working-with-a-local-git-repository). If everything looks good, push the change to your repository.
 
-You can now open `https://[hostname]/admin/` as usual to start editing. There is even no authentication process if you’re already signed in with GitHub or GitLab on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
+You can now open `https://[hostname]/admin/` as usual to start editing. There is even no authentication process if you’re already signed in with a backend on Netlify/Decap CMS because Sveltia CMS uses your auth token stored in the browser. Simple enough!
 
 #### Editing the configuration file
 
@@ -740,7 +740,7 @@ Once you have migrated from the Git Gateway and Netlify Identity combo, you can 
 -<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 ```
 
-If you want to stay with Netlify Identity, unfortunately you can’t migrate to Sveltia CMS right now. We plan to develop an alternative to Git Gateway and Netlify Identity Widget in the future.
+If you want to stay with Git Gateway and Netlify Identity, unfortunately you can’t migrate to Sveltia CMS right now. We plan to develop an alternative solution [in the future](#roadmap).
 
 ### Installing with npm
 
@@ -838,9 +838,9 @@ Here are the workflow steps and tips:
    - If you get an error saying “not a repository root directory”, make sure you’ve turned the folder into a repository with either a CUI ([`git init`](https://github.com/git-guides/git-init)) or GUI, and the hidden `.git` folder exists.
    - If you’re using Windows Subsystem for Linux (WSL), you may get an error saying “Can’t open this folder because it contains system files.” This is due to a limitation in the browser, and you can try some workarounds mentioned in [this issue](https://github.com/coder/code-server/issues/4646) and [this thread](https://github.com/sveltia/sveltia-cms/discussions/101).
 1. Edit your content using the CMS. All changes are made to local files.
+1. Use `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/) to see if the produced changes look good.
 1. Open the dev site at `http://localhost:[port]/` to check the rendered pages.
    - Depending on your framework, you may need to manually rebuild your site to reflect the changes you have made.
-1. Use `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/) to see if the produced changes look good.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
 If you have migrated from Netlify/Decap CMS and are happy with the local repository workflow of Sveltia CMS, you can remove the `local_backend` property from your configuration and uninstall the proxy server. If you have configured a custom port number with the `.env` file, you can remove it as well.
@@ -1621,8 +1621,6 @@ Due late 2025
 - Tackling some more Netlify/Decap CMS issues:
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
   - [Multiple file selection with the File and Image widgets](https://github.com/sveltia/sveltia-cms/issues/10)[^239]
-  - Advanced Relation fields[^242], including cascade updates/deletes[^243]
-    - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - Several Cloudinary and Uploadcare media library issues, including selection of existing files[^247]
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
   - [RTL localization support](https://github.com/sveltia/sveltia-cms/issues/385)[^245]
@@ -1654,6 +1652,8 @@ Due early 2026
   - [Reusable field groups](https://github.com/sveltia/sveltia-cms/discussions/463)[^263]
   - Offline support[^238]
   - and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
+  - Advanced Relation fields[^242], including cascade updates/deletes[^243]
+    - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - (some of them may be included in v2.0)
 - **Sveltia CMS Additions**: edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
   - User management (Netlify Identity alternative) with roles[^23]
