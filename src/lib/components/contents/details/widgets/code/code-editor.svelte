@@ -5,6 +5,7 @@
 -->
 <script>
   import { CodeEditor } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { untrack } from 'svelte';
 
   import { entryDraft } from '$lib/services/contents/draft';
@@ -113,14 +114,22 @@
   });
 </script>
 
-<CodeEditor
-  bind:code
-  bind:lang
-  {showLanguageSwitcher}
-  flex
-  {readonly}
-  {required}
-  {invalid}
-  aria-labelledby="{fieldId}-label"
-  aria-errormessage="{fieldId}-error"
-/>
+{#await sleep() then}
+  <!--
+    Reset the editor when the configuration changes. It happens when fields are reordered or removed
+    in a variable type list field. @see https://github.com/sveltia/sveltia-cms/issues/480
+  -->
+  {#key JSON.stringify(fieldConfig)}
+    <CodeEditor
+      bind:code
+      bind:lang
+      {showLanguageSwitcher}
+      flex
+      {readonly}
+      {required}
+      {invalid}
+      aria-labelledby="{fieldId}-label"
+      aria-errormessage="{fieldId}-error"
+    />
+  {/key}
+{/await}
