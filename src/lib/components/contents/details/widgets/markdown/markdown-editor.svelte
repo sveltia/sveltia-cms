@@ -332,27 +332,33 @@
 
 <div role="none" class="wrapper" class:minimal>
   {#await sleep() then}
-    <TextEditor
-      lang={locale}
-      {modes}
-      {buttons}
-      {components}
-      bind:value={inputValue}
-      flex
-      {readonly}
-      {required}
-      {invalid}
-      aria-labelledby="{fieldId}-label"
-      aria-errormessage="{fieldId}-error"
-      autoResize={true}
-      onpastecapture={(/** @type {ClipboardEvent} */ event) => {
-        // Use `capture` to handle the event before Lexical does
-        onPaste(event);
-      }}
-      ondrop={(/** @type {DragEvent} */ event) => {
-        onDrop(event);
-      }}
-    />
+    <!--
+      Reset the editor when the configuration changes. It happens when fields are reordered or
+      removed in a variable type list field. @see https://github.com/sveltia/sveltia-cms/issues/480
+    -->
+    {#key JSON.stringify(fieldConfig)}
+      <TextEditor
+        lang={locale}
+        {modes}
+        {buttons}
+        {components}
+        bind:value={inputValue}
+        flex
+        {readonly}
+        {required}
+        {invalid}
+        aria-labelledby="{fieldId}-label"
+        aria-errormessage="{fieldId}-error"
+        autoResize={true}
+        onpastecapture={(/** @type {ClipboardEvent} */ event) => {
+          // Use `capture` to handle the event before Lexical does
+          onPaste(event);
+        }}
+        ondrop={(/** @type {DragEvent} */ event) => {
+          onDrop(event);
+        }}
+      />
+    {/key}
   {/await}
 </div>
 
