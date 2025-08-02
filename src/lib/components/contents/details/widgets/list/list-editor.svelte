@@ -209,6 +209,10 @@
         newItem[typeKey] = type;
       }
 
+      // Add a random ID to the new item to ensure it is unique. This is necessary for the `key`
+      // attribute in the `each` block.
+      newItem.__sc_item_id = crypto.randomUUID();
+
       valueList.splice(index, 0, newItem);
       expanderStateList.splice(index, 0, true);
     });
@@ -234,6 +238,10 @@
    */
   const moveUpItem = (index) => {
     updateComplexList(({ valueList, expanderStateList }) => {
+      // Ensure the IDs are unique before swapping
+      valueList[index].__sc_item_id ??= crypto.randomUUID();
+      valueList[index - 1].__sc_item_id ??= crypto.randomUUID();
+
       [valueList[index], valueList[index - 1]] = [valueList[index - 1], valueList[index]];
       [expanderStateList[index], expanderStateList[index - 1]] = [
         expanderStateList[index - 1],
@@ -248,6 +256,10 @@
    */
   const moveDownItem = (index) => {
     updateComplexList(({ valueList, expanderStateList }) => {
+      // Ensure the IDs are unique before swapping
+      valueList[index].__sc_item_id ??= crypto.randomUUID();
+      valueList[index + 1].__sc_item_id ??= crypto.randomUUID();
+
       [valueList[index], valueList[index + 1]] = [valueList[index + 1], valueList[index]];
       [expanderStateList[index], expanderStateList[index + 1]] = [
         expanderStateList[index + 1],
@@ -345,7 +357,7 @@
       class="item-list"
       class:collapsed={!parentExpanded}
     >
-      {#each items as item, index}
+      {#each items as item, index (item.__sc_item_id ?? index)}
         {#await sleep() then}
           {@const expandedKeyPath = `${keyPath}.${index}`}
           {@const expanded = $entryDraft?.expanderStates?._[expandedKeyPath] ?? true}

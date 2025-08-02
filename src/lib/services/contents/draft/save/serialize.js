@@ -43,6 +43,12 @@ export const copyProperty = ({
   isTomlOutput,
   omitEmptyOptionalFields,
 }) => {
+  // Skip internal UUIDs added to list items
+  if (key.endsWith('.__sc_item_id')) {
+    delete unsortedMap[key];
+    return;
+  }
+
   let value = unsortedMap[key];
 
   // Use native date for TOML if a custom format is not defined

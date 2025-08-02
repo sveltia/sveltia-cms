@@ -80,4 +80,58 @@ describe('Test copyProperty()', () => {
     // Here `variables.X` are not included but that’s fine; it’s done is `finalizeContent`
     expect(copy(true)).toEqual({ title: 'My Post', variables: {} });
   });
+
+  test('skips internal UUIDs added to list items', () => {
+    /** @type {FlattenedEntryContent} */
+    const sortedMap = {};
+
+    /** @type {FlattenedEntryContent} */
+    const unsortedMap = {
+      title: 'My Post',
+      'organizers.0.__sc_item_id': 'uuid-123',
+      'organizers.0.name': 'John Doe',
+      'organizers.1.__sc_item_id': 'uuid-456',
+      'organizers.1.name': 'Jane Smith',
+      'program.speakers.0.__sc_item_id': 'uuid-789',
+      'program.speakers.0.bio': 'Speaker bio',
+    };
+
+    const args = {
+      locale: 'en',
+      unsortedMap,
+      sortedMap,
+      isTomlOutput: false,
+      omitEmptyOptionalFields: false,
+    };
+
+    // Test copying properties that should be kept
+    copyProperty({ ...args, key: 'title' });
+    copyProperty({ ...args, key: 'organizers.0.name' });
+    copyProperty({ ...args, key: 'organizers.1.name' });
+    copyProperty({ ...args, key: 'program.speakers.0.bio' });
+
+    // Test copying properties that should be skipped (internal UUIDs)
+    copyProperty({ ...args, key: 'organizers.0.__sc_item_id' });
+    copyProperty({ ...args, key: 'organizers.1.__sc_item_id' });
+    copyProperty({ ...args, key: 'program.speakers.0.__sc_item_id' });
+
+    // Check that UUID keys are not in the sorted map
+    expect(sortedMap).toEqual({
+      title: 'My Post',
+      'organizers.0.name': 'John Doe',
+      'organizers.1.name': 'Jane Smith',
+      'program.speakers.0.bio': 'Speaker bio',
+    });
+
+    // Check that UUID keys are removed from the unsorted map
+    expect(unsortedMap).not.toHaveProperty('organizers.0.__sc_item_id');
+    expect(unsortedMap).not.toHaveProperty('organizers.1.__sc_item_id');
+    expect(unsortedMap).not.toHaveProperty('program.speakers.0.__sc_item_id');
+
+    // Check that non-UUID keys are still removed from unsorted map after copying
+    expect(unsortedMap).not.toHaveProperty('title');
+    expect(unsortedMap).not.toHaveProperty('organizers.0.name');
+    expect(unsortedMap).not.toHaveProperty('organizers.1.name');
+    expect(unsortedMap).not.toHaveProperty('program.speakers.0.bio');
+  });
 });

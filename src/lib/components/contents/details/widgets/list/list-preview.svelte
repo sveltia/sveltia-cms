@@ -58,8 +58,7 @@
 </script>
 
 {#if hasSubFields}
-  <!-- eslint-disable-next-line no-unused-vars -->
-  {#each items as item, index}
+  {#each items as item, index (item.__sc_item_id ?? index)}
     {#await sleep() then}
       {@const subFieldName = Array.isArray(types)
         ? $entryDraft?.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
