@@ -11,6 +11,7 @@ import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary
  * @import {
  * Entry,
  * FlattenedEntryContent,
+ * GetFieldArgs,
  * InternalCollection,
  * InternalLocaleCode,
  * } from '$lib/types/private';
@@ -301,10 +302,7 @@ const createSimpleOption = ({ templates, allFieldNames, context, fallbackContext
 /**
  * Analyze list field configurations and group them by base field name.
  * @param {string[]} allFieldNames All field names.
- * @param {object} getFieldArgs Arguments for getField function.
- * @param {string} getFieldArgs.collectionName Collection name.
- * @param {string} [getFieldArgs.fileName] File name.
- * @param {boolean} getFieldArgs.isIndexFile Whether the file is an index file.
+ * @param {GetFieldArgs} getFieldArgs Arguments for getField function.
  * @returns {Map<string, [string, any][]>} Grouped list field configurations.
  */
 const analyzeListFields = (allFieldNames, getFieldArgs) => {
@@ -596,7 +594,8 @@ const processEntry = ({
 }) => {
   const { slug, locales } = refEntry;
   const isIndexFile = isCollectionIndexFile(collection, refEntry);
-  const getFieldArgs = { collectionName, fileName, isIndexFile };
+  /** @type {GetFieldArgs} */
+  const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath: '' };
 
   /**
    * Wrapper for {@link getFieldDisplayValue}.

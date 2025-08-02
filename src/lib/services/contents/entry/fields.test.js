@@ -5,6 +5,7 @@ import {
   fieldConfigCacheMap,
   getField,
   getFieldDisplayValue,
+  getVisibleFieldDisplayValue,
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
 
@@ -12,6 +13,13 @@ import {
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
   isEntryCollection: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/i18n', () => ({
+  getCanonicalLocale: vi.fn((locale) => locale),
+  getListFormatter: vi.fn(() => ({
+    format: vi.fn((items) => items.join(', ')),
+  })),
 }));
 
 const mockGetCollection = vi.mocked(getCollection);
@@ -1172,6 +1180,11 @@ describe('Test getFieldDisplayValue()', () => {
           { name: 'alt', widget: 'string' },
         ],
       },
+      // Number widget fields for testing
+      { name: 'intNumber', widget: 'number', value_type: 'int' },
+      { name: 'floatNumber', widget: 'number', value_type: 'float' },
+      { name: 'defaultNumber', widget: 'number' }, // Defaults to 'int'
+      { name: 'customTypeNumber', widget: 'number', value_type: 'custom' },
     ],
   };
 
@@ -1461,5 +1474,454 @@ describe('Test getFieldDisplayValue()', () => {
 
       expect(result).toBe('some value');
     });
+  });
+
+  describe('Number widget handling', () => {
+    beforeEach(() => {
+      // Mock Intl.NumberFormat to return predictable values for testing
+      vi.spyOn(Intl, 'NumberFormat').mockImplementation((locale) => ({
+        format: vi.fn((number) => {
+          // Simple mock that adds locale-specific formatting
+          if (locale === 'en' || locale === 'en-US') {
+            return number.toLocaleString('en-US');
+          }
+
+          return number.toString();
+        }),
+        resolvedOptions: vi.fn(),
+        formatToParts: vi.fn(),
+        formatRange: vi.fn(),
+        formatRangeToParts: vi.fn(),
+      }));
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    test('should format integer numbers using Intl.NumberFormat', () => {
+      const valueMap = {
+        intNumber: 1234,
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'intNumber',
+        locale: 'en',
+      });
+
+      expect(result).toBe('1,234');
+      expect(Intl.NumberFormat).toHaveBeenCalledWith('en');
+    });
+
+    test('should format float numbers using Intl.NumberFormat', () => {
+      const valueMap = {
+        floatNumber: 1234.56,
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'floatNumber',
+        locale: 'en',
+      });
+
+      expect(result).toBe('1,234.56');
+      expect(Intl.NumberFormat).toHaveBeenCalledWith('en');
+    });
+
+    test('should format numbers when value_type defaults to int', () => {
+      const valueMap = {
+        defaultNumber: 5678,
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'defaultNumber',
+        locale: 'en',
+      });
+
+      expect(result).toBe('5,678');
+      expect(Intl.NumberFormat).toHaveBeenCalledWith('en');
+    });
+
+    test('should not format numbers for custom value_type', () => {
+      const valueMap = {
+        customTypeNumber: 9999,
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'customTypeNumber',
+        locale: 'en',
+      });
+
+      // Should return the raw number as string since value_type is not 'int' or 'float'
+      expect(result).toBe('9999');
+      expect(Intl.NumberFormat).not.toHaveBeenCalled();
+    });
+
+    test('should handle string numbers for int type', () => {
+      const valueMap = {
+        intNumber: '2345',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'intNumber',
+        locale: 'en',
+      });
+
+      expect(result).toBe('2,345');
+      expect(Intl.NumberFormat).toHaveBeenCalledWith('en');
+    });
+
+    test('should handle string numbers for float type', () => {
+      const valueMap = {
+        floatNumber: '2345.67',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'floatNumber',
+        locale: 'en',
+      });
+
+      expect(result).toBe('2,345.67');
+      expect(Intl.NumberFormat).toHaveBeenCalledWith('en');
+    });
+
+    test('should handle zero values for number fields', () => {
+      const valueMap = {
+        intNumber: 0,
+        floatNumber: 0.0,
+      };
+
+      const intResult = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'intNumber',
+        locale: 'en',
+      });
+
+      const floatResult = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'floatNumber',
+        locale: 'en',
+      });
+
+      expect(intResult).toBe('0');
+      expect(floatResult).toBe('0');
+    });
+
+    test('should handle negative numbers', () => {
+      const valueMap = {
+        intNumber: -1234,
+        floatNumber: -1234.56,
+      };
+
+      const intResult = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'intNumber',
+        locale: 'en',
+      });
+
+      const floatResult = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'floatNumber',
+        locale: 'en',
+      });
+
+      expect(intResult).toBe('-1,234');
+      expect(floatResult).toBe('-1,234.56');
+    });
+
+    test('should handle different locales', () => {
+      const valueMap = {
+        intNumber: 1234,
+      };
+
+      // Test with Japanese locale
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'intNumber',
+        locale: 'ja',
+      });
+
+      expect(result).toBe('1234'); // Our mock returns toString() for non-en locales
+      expect(Intl.NumberFormat).toHaveBeenCalledWith('ja');
+    });
+
+    test('should handle invalid number values gracefully', () => {
+      const valueMap = {
+        intNumber: NaN,
+        floatNumber: Infinity,
+        defaultNumber: 'invalid',
+      };
+
+      const nanResult = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'intNumber',
+        locale: 'en',
+      });
+
+      const infinityResult = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'floatNumber',
+        locale: 'en',
+      });
+
+      const invalidResult = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'defaultNumber',
+        locale: 'en',
+      });
+
+      // These would be handled by Number() constructor and Intl.NumberFormat
+      expect(nanResult).toBe('NaN');
+      expect(infinityResult).toBe('∞'); // toLocaleString returns ∞ for Infinity
+      expect(invalidResult).toBe('NaN');
+    });
+  });
+});
+
+describe('Test getVisibleFieldDisplayValue()', () => {
+  // Mock collection for testing getVisibleFieldDisplayValue
+  const testMockCollection = {
+    name: 'posts',
+    folder: 'content/posts',
+    _type: 'entry',
+    fields: [
+      {
+        name: 'item',
+        widget: 'list',
+        fields: [
+          { name: 'title', widget: 'string' },
+          { name: 'name', widget: 'string' },
+          { name: 'description', widget: 'text' },
+          { name: 'count', widget: 'number' },
+          { name: 'hidden_field', widget: 'hidden' },
+          { name: 'visible_field', widget: 'string' },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    fieldConfigCacheMap.clear();
+    vi.clearAllMocks();
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(testMockCollection);
+    mockIsEntryCollection.mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    fieldConfigCacheMap.clear();
+  });
+
+  test('should return title field value when available', () => {
+    const valueMap = {
+      'item.0.title': 'Test Title',
+      'item.0.name': 'Test Name',
+      'item.0.description': 'Test Description',
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
+    });
+
+    expect(result).toBe('Test Title');
+  });
+
+  test('should return name field value when title is not available', () => {
+    const valueMap = {
+      'item.0.name': 'Test Name',
+      'item.0.description': 'Test Description',
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
+    });
+
+    expect(result).toBe('Test Name');
+  });
+
+  test('should return first available field when title and name are not available', () => {
+    const valueMap = {
+      'item.0.description': 'Test Description',
+      'item.0.count': 42,
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
+    });
+
+    expect(result).toBe('Test Description');
+  });
+
+  test('should skip hidden fields', () => {
+    const valueMap = {
+      'item.0.hidden_field': 'Hidden Value',
+      'item.0.visible_field': 'Visible Value',
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
+    });
+
+    expect(result).toBe('Visible Value');
+  });
+
+  test('should skip empty string values', () => {
+    const valueMap = {
+      'item.0.title': '',
+      'item.0.name': '   ', // whitespace only
+      'item.0.description': 'Valid Description',
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
+    });
+
+    expect(result).toBe('Valid Description');
+  });
+
+  test('should accept numeric values', () => {
+    const valueMap = {
+      'item.0.count': 0, // zero should be valid
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
+    });
+
+    expect(result).toBe('0');
+  });
+
+  test('should skip fields that do not match the key path regex', () => {
+    const valueMap = {
+      'item.1.title': 'Other Item Title', // different item
+      'item.0.description': 'Current Item Description',
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
+    });
+
+    expect(result).toBe('Current Item Description');
+  });
+
+  test('should return empty string when no visible fields have values', () => {
+    const valueMap = {
+      'item.0.title': '',
+      'item.0.name': null,
+      'item.0.description': undefined,
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
+    });
+
+    expect(result).toBe('');
+  });
+
+  test('should return empty string when no fields match the regex', () => {
+    const valueMap = {
+      'other.field': 'Some Value',
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
+    });
+
+    expect(result).toBe('');
+  });
+
+  test('should prioritize title over name and other fields', () => {
+    const valueMap = {
+      'item.0.description': 'Description',
+      'item.0.name': 'Name',
+      'item.0.title': 'Title',
+      'item.0.count': 5,
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
+    });
+
+    expect(result).toBe('Title');
+  });
+
+  test('should handle undefined field configuration gracefully', () => {
+    // Mock getField to return undefined for certain paths
+    mockGetCollection.mockReturnValue(undefined);
+
+    const valueMap = {
+      'item.0.unknown_field': 'Unknown Value',
+    };
+
+    const result = getVisibleFieldDisplayValue({
+      valueMap,
+      locale: 'en',
+      keyPath: 'item.0',
+      keyPathRegex: /^item\.0\./,
+      getFieldArgs: { collectionName: 'unknown_collection', keyPath: '', valueMap },
+    });
+
+    // When field config is not found, the function should return empty string
+    expect(result).toBe('');
   });
 });

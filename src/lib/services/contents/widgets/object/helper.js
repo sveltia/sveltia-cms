@@ -1,7 +1,12 @@
-import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { escapeRegExp } from '@sveltia/utils/string';
+
+import {
+  getFieldDisplayValue,
+  getVisibleFieldDisplayValue,
+} from '$lib/services/contents/entry/fields';
 
 /**
- * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
+ * @import { FlattenedEntryContent, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
@@ -27,22 +32,17 @@ export const formatSummary = ({
   locale,
   summaryTemplate,
 }) => {
-  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
+  /** @type {GetFieldArgs} */
+  const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap, isIndexFile };
 
   if (!summaryTemplate) {
-    return (
-      (typeof valueMap[`${keyPath}.title`] === 'string' && valueMap[`${keyPath}.title`].trim()) ||
-      (typeof valueMap[`${keyPath}.name`] === 'string' && valueMap[`${keyPath}.name`].trim()) ||
-      // Use the first visible string-type field value, if available
-      Object.entries(valueMap).find(
-        ([key, value]) =>
-          key.startsWith(`${keyPath}.`) &&
-          typeof value === 'string' &&
-          !!value.trim() &&
-          getField({ ...getFieldArgs, keyPath: key })?.widget !== 'hidden',
-      )?.[1] ||
-      ''
-    );
+    return getVisibleFieldDisplayValue({
+      valueMap,
+      locale,
+      keyPath,
+      keyPathRegex: new RegExp(`^${escapeRegExp(keyPath)}\\.`),
+      getFieldArgs,
+    });
   }
 
   return summaryTemplate.replaceAll(/{{(.+?)}}/g, (_match, /** @type {string} */ placeholder) => {

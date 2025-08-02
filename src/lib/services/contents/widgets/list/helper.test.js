@@ -131,10 +131,10 @@ describe('Test formatSummary() — comprehensive tests', () => {
             valueMap: {
               'images.0.title': '',
               'images.0.name': '',
-              'images.0.number_value': 123,
+              'images.0.number_value': 1234,
             },
           }),
-        ).toEqual('');
+        ).toEqual('1,234');
       });
     });
 
@@ -278,14 +278,14 @@ describe('Test formatSummary() — comprehensive tests', () => {
         ).toEqual('Second Item');
       });
 
-      test('should handle missing collection configuration', () => {
+      test('should return empty string when collection configuration is missing', () => {
         expect(
           formatSummary({
             ...baseArgs,
             collectionName: 'nonexistent',
             valueMap: basicValueMap,
           }),
-        ).toEqual('hello.jpg');
+        ).toEqual('');
       });
 
       test('should handle file collections', () => {

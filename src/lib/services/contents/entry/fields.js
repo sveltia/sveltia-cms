@@ -7,7 +7,7 @@ import {
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
-import { getListFormatter } from '$lib/services/contents/i18n';
+import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
 import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
@@ -24,6 +24,7 @@ import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
  * Field,
  * FieldKeyPath,
  * ListField,
+ * NumberField,
  * RelationField,
  * SelectField,
  * } from '$lib/types/public';
@@ -155,7 +156,7 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
- * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
+ * @param {FlattenedEntryContent} [args.valueMap] Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
  * @param {InternalLocaleCode} args.locale Locale.
  * @param {string[]} [args.transformations] String transformations.
@@ -166,7 +167,7 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
 export const getFieldDisplayValue = ({
   collectionName,
   fileName,
-  valueMap,
+  valueMap = {},
   keyPath,
   locale,
   transformations,
@@ -230,6 +231,14 @@ export const getFieldDisplayValue = ({
     }
   }
 
+  if (fieldConfig?.widget === 'number') {
+    const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
+
+    if (valueType === 'int' || valueType === 'float') {
+      value = Intl.NumberFormat(getCanonicalLocale(locale)).format(Number(value));
+    }
+  }
+
   if (Array.isArray(value)) {
     value = getListFormatter(locale).format(value);
   }
@@ -240,6 +249,52 @@ export const getFieldDisplayValue = ({
 
   // Return an empty string if the value is null or undefined
   return String(value ?? '');
+};
+
+/**
+ * Get the display value of the first visible field that has a non-empty value.
+ * @param {object} args Arguments.
+ * @param {FlattenedEntryContent} args.valueMap Entry content.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for `getField`.
+ * @param {RegExp} args.keyPathRegex Regular expression to match the key path prefix.
+ * @returns {string} Display value of the first visible field that has a non-empty value. If no such
+ * field is found, returns an empty string.
+ */
+export const getVisibleFieldDisplayValue = ({
+  valueMap,
+  locale,
+  keyPath,
+  keyPathRegex,
+  getFieldArgs,
+}) => {
+  // Find the first visible item key path that has a non-empty value
+  const visibleItemKeyPath = [`${keyPath}.title`, `${keyPath}.name`, ...Object.keys(valueMap)].find(
+    (_keyPath) => {
+      const value = valueMap[_keyPath];
+
+      if (
+        !keyPathRegex.test(_keyPath) ||
+        !(
+          (typeof value === 'string' && value.trim()) ||
+          (typeof value === 'number' && !Number.isNaN(value))
+        )
+      ) {
+        return false;
+      }
+
+      const fieldConfig = getField({ ...getFieldArgs, keyPath: _keyPath });
+
+      return !!fieldConfig && fieldConfig.widget !== 'hidden';
+    },
+  );
+
+  if (visibleItemKeyPath) {
+    return getFieldDisplayValue({ ...getFieldArgs, keyPath: visibleItemKeyPath, locale });
+  }
+
+  return '';
 };
 
 /**

@@ -116,7 +116,7 @@ describe('Test formatSummary() — comprehensive tests', async () => {
       ).toEqual('Valid Author');
     });
 
-    test('should ignore non-string values for fallback', () => {
+    test('should ignore non-string, non-numeric values for fallback', () => {
       expect(
         formatSummary({
           ...baseArgs,
@@ -128,10 +128,10 @@ describe('Test formatSummary() — comprehensive tests', async () => {
             'metadata.author': 'String Value',
           },
         }),
-      ).toEqual('String Value');
+      ).toEqual('5');
     });
 
-    test('should handle nested key paths', () => {
+    test('should return empty string for nested key paths without field configuration', () => {
       expect(
         formatSummary({
           ...baseArgs,
@@ -141,7 +141,7 @@ describe('Test formatSummary() — comprehensive tests', async () => {
             'content.metadata.description': 'Nested Description',
           },
         }),
-      ).toEqual('Nested Title');
+      ).toEqual('');
     });
   });
 
@@ -300,14 +300,14 @@ describe('Test formatSummary() — comprehensive tests', async () => {
   });
 
   describe('edge cases and error handling', () => {
-    test('should handle missing collection configuration', () => {
+    test('should return empty string when collection configuration is missing', () => {
       expect(
         formatSummary({
           ...baseArgs,
           collectionName: 'nonexistent',
           valueMap: basicValueMap,
         }),
-      ).toEqual('A comprehensive test description');
+      ).toEqual('');
     });
 
     test('should handle file collections', () => {

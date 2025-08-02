@@ -13,7 +13,7 @@ import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary
 import { renameIfNeeded } from '$lib/services/utils/file';
 
 /**
- * @import { EntryCollection, FillTemplateOptions } from '$lib/types/private';
+ * @import { EntryCollection, FillTemplateOptions, GetFieldArgs } from '$lib/types/private';
  */
 
 /**
@@ -25,10 +25,7 @@ import { renameIfNeeded } from '$lib/services/utils/file';
 /**
  * @typedef {object} ReplaceContext
  * @property {FillTemplateOptions & ReplaceSubContext} replaceSubContext Context for `replaceSub`.
- * @property {object} getFieldArgs Arguments for `getField`.
- * @property {string} getFieldArgs.collectionName Collection name.
- * @property {object} getFieldArgs.valueMap Value map for the collection.
- * @property {boolean} getFieldArgs.isIndexFile Whether the slug is for an index file.
+ * @property {GetFieldArgs} getFieldArgs Arguments for `getField`.
  */
 
 const DATE_TIME_FIELDS = ['year', 'month', 'day', 'hour', 'minute', 'second'];
@@ -305,7 +302,7 @@ export const fillTemplate = (template, options) => {
   /** @type {ReplaceContext} */
   const context = {
     replaceSubContext: { ...options, identifierField, basePath },
-    getFieldArgs: { collectionName, valueMap, isIndexFile },
+    getFieldArgs: { collectionName, keyPath: '', valueMap, isIndexFile },
   };
 
   // Use a negative lookahead assertion to support a template tag for the `default` transformation

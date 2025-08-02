@@ -1,9 +1,13 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
-import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import {
+  getField,
+  getFieldDisplayValue,
+  getVisibleFieldDisplayValue,
+} from '$lib/services/contents/entry/fields';
 
 /**
- * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
+ * @import { FlattenedEntryContent, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
  * @import { Field, FieldKeyPath, ListField } from '$lib/types/public';
  */
 
@@ -44,62 +48,28 @@ export const formatSummary = ({
   hasSingleSubField,
   index,
 }) => {
-  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
+  /** @type {GetFieldArgs} */
+  const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap, isIndexFile };
+  const keyPathWithIndex = `${keyPath}.${index}`;
 
   if (!summaryTemplate) {
     if (hasSingleSubField) {
-      return valueMap[`${keyPath}.${index}`];
+      return valueMap[keyPathWithIndex];
     }
 
-    const prefixRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.${index}[\\b\\.]`);
-
-    const item = Object.fromEntries(
-      Object.entries(valueMap)
-        .filter(([key]) => prefixRegex.test(key))
-        .map(([key, value]) => [key.replace(prefixRegex, ''), value]),
-    );
-
-    /**
-     * Check if a field is visible and has valid content.
-     * @param {string} fieldName Field name.
-     * @returns {string | null} Field value or `null`.
-     */
-    const getVisibleFieldValue = (fieldName) => {
-      const fieldValue = item[fieldName];
-
-      if (typeof fieldValue !== 'string' || !fieldValue.trim()) {
-        return null;
-      }
-
-      const fieldPath = `${keyPath}.${index}.${fieldName}`;
-      const fieldConfig = getField({ ...getFieldArgs, keyPath: fieldPath });
-
-      return fieldConfig?.widget !== 'hidden' ? fieldValue : null;
-    };
-
-    return (
-      getVisibleFieldValue('title') ||
-      getVisibleFieldValue('name') ||
-      // Use the first visible string-type field value, if available
-      Object.entries(valueMap).find(([key, value]) => {
-        if (!prefixRegex.test(key) || typeof value !== 'string' || !value.trim()) {
-          return false;
-        }
-
-        const fieldConfig = getField({ ...getFieldArgs, keyPath: key });
-
-        // If we can get field config, check if it’s hidden
-        // If we can’t get field config, assume it’s not hidden and allow it
-        return fieldConfig ? fieldConfig.widget !== 'hidden' : true;
-      })?.[1] ||
-      ''
-    );
+    return getVisibleFieldDisplayValue({
+      valueMap,
+      locale,
+      keyPath: keyPathWithIndex,
+      keyPathRegex: new RegExp(`^${escapeRegExp(keyPath)}\\.${index}[\\b\\.]`),
+      getFieldArgs,
+    });
   }
 
   return summaryTemplate.replaceAll(/{{(.+?)}}/g, (_match, /** @type {string} */ placeholder) => {
     const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
     const fieldName = tag.replace(/^fields\./, '');
-    const _keyPath = `${keyPath}.${index}.${fieldName}`;
+    const _keyPath = `${keyPathWithIndex}.${fieldName}`;
 
     if (hasSingleSubField) {
       // For single-field lists, check if the requested field name matches the actual field name
@@ -113,7 +83,7 @@ export const formatSummary = ({
 
     return getFieldDisplayValue({
       ...getFieldArgs,
-      keyPath: hasSingleSubField ? `${keyPath}.${index}` : _keyPath,
+      keyPath: hasSingleSubField ? keyPathWithIndex : _keyPath,
       locale,
       transformations,
     });
