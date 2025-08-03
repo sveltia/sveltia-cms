@@ -323,4 +323,188 @@ describe('Test slugify()', () => {
     expect(slugify('   ', { fallback: true })).toMatch(/[0-9a-f]{12}/); // Fallback should still work
     expect(slugify('   ', { fallback: false })).toBe(''); // No fallback
   });
+
+  test('trim replacement characters option', async () => {
+    // @ts-ignore
+    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+
+    // Test with trim enabled (default behavior)
+    // @ts-ignore
+    siteConfigMock.set({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        trim: true,
+      },
+    });
+
+    expect(slugify('-Hello World-')).toBe('hello-world'); // Leading and trailing hyphens trimmed
+    expect(slugify('---Hello---World---')).toBe('hello-world'); // Multiple consecutive hyphens trimmed
+    expect(slugify('-', { fallback: false })).toBe(''); // Only replacement characters, should be empty after trim
+    expect(slugify('---', { fallback: false })).toBe(''); // Multiple replacement characters only
+    expect(slugify('Hello-')).toBe('hello'); // Trailing hyphen trimmed
+    expect(slugify('-World')).toBe('world'); // Leading hyphen trimmed
+
+    // Test with trim disabled
+    // @ts-ignore
+    siteConfigMock.set({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        trim: false,
+      },
+    });
+
+    expect(slugify('-Hello World-')).toBe('-hello-world-'); // Leading and trailing hyphens preserved
+    expect(slugify('---Hello---World---')).toBe('-hello-world-'); // Consecutive hyphens consolidated but not trimmed
+    expect(slugify('-', { fallback: false })).toBe('-'); // Single replacement character preserved
+    expect(slugify('---', { fallback: false })).toBe('-'); // Multiple replacement characters consolidated but not trimmed
+    expect(slugify('Hello-')).toBe('hello-'); // Trailing hyphen preserved
+    expect(slugify('-World')).toBe('-world'); // Leading hyphen preserved
+  });
+
+  test('trim option with custom replacement characters', async () => {
+    // @ts-ignore
+    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+
+    // Test with underscore replacement and trim enabled
+    // @ts-ignore
+    siteConfigMock.set({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '_',
+        trim: true,
+      },
+    });
+
+    expect(slugify('_Hello World_')).toBe('hello_world'); // Leading and trailing underscores trimmed
+    expect(slugify('___Hello___World___')).toBe('hello_world'); // Multiple consecutive underscores trimmed
+    expect(slugify('_', { fallback: false })).toBe(''); // Only replacement characters, should be empty after trim
+    expect(slugify('Hello_')).toBe('hello'); // Trailing underscore trimmed
+    expect(slugify('_World')).toBe('world'); // Leading underscore trimmed
+
+    // Test with underscore replacement and trim disabled
+    // @ts-ignore
+    siteConfigMock.set({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '_',
+        trim: false,
+      },
+    });
+
+    expect(slugify('_Hello World_')).toBe('_hello_world_'); // Leading and trailing underscores preserved
+    expect(slugify('___Hello___World___')).toBe('_hello_world_'); // Consecutive underscores consolidated but not trimmed
+    expect(slugify('_', { fallback: false })).toBe('_'); // Single replacement character preserved
+    expect(slugify('Hello_')).toBe('hello_'); // Trailing underscore preserved
+    expect(slugify('_World')).toBe('_world'); // Leading underscore preserved
+  });
+
+  test('trim option with special replacement characters', async () => {
+    // @ts-ignore
+    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+
+    // Test with dot replacement character (needs escaping in regex)
+    // @ts-ignore
+    siteConfigMock.set({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '.',
+        trim: true,
+      },
+    });
+
+    expect(slugify('.Hello World.')).toBe('hello.world'); // Leading and trailing dots trimmed
+    expect(slugify('...Hello...World...')).toBe('hello.world'); // Multiple consecutive dots trimmed
+    expect(slugify('.', { fallback: false })).toBe(''); // Only replacement characters, should be empty after trim
+
+    // Test with dot replacement and trim disabled
+    // @ts-ignore
+    siteConfigMock.set({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '.',
+        trim: false,
+      },
+    });
+
+    expect(slugify('.Hello World.')).toBe('.hello.world.'); // Leading and trailing dots preserved
+    expect(slugify('...Hello...World...')).toBe('.hello.world.'); // Consecutive dots consolidated but not trimmed
+  });
+
+  test('trim option with empty replacement character', async () => {
+    // @ts-ignore
+    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+
+    // When replacement is empty, trim option should have no effect
+    // @ts-ignore
+    siteConfigMock.set({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '',
+        trim: true,
+      },
+    });
+
+    expect(slugify('Hello World')).toBe('helloworld'); // No replacement character to trim
+    expect(slugify(' Hello World ')).toBe('helloworld'); // Spaces removed, no replacement to trim
+
+    // @ts-ignore
+    siteConfigMock.set({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '',
+        trim: false,
+      },
+    });
+
+    expect(slugify('Hello World')).toBe('helloworld'); // Same result regardless of trim option
+    expect(slugify(' Hello World ')).toBe('helloworld'); // Same result regardless of trim option
+  });
+
+  test('trim option with fallback behavior', async () => {
+    // @ts-ignore
+    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+
+    // Test that fallback works correctly with trim enabled
+    // @ts-ignore
+    siteConfigMock.set({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        trim: true,
+      },
+    });
+
+    // With only replacement chars and trim enabled, result is empty and fallback to UUID
+    expect(slugify('-', { fallback: true })).toMatch(/[0-9a-f]{12}/);
+    expect(slugify('---', { fallback: true })).toMatch(/[0-9a-f]{12}/);
+    expect(slugify('-', { fallback: false })).toBe('');
+    expect(slugify('---', { fallback: false })).toBe('');
+
+    // Test with trim disabled - replacement characters should be preserved, no fallback needed
+    // @ts-ignore
+    siteConfigMock.set({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        trim: false,
+      },
+    });
+
+    expect(slugify('-', { fallback: true })).toBe('-'); // No fallback needed since result is not empty
+    expect(slugify('---', { fallback: true })).toBe('-'); // Consecutive chars consolidated but not trimmed
+    expect(slugify('-', { fallback: false })).toBe('-'); // Same result regardless of fallback
+    expect(slugify('---', { fallback: false })).toBe('-'); // Same result regardless of fallback
+  });
 });

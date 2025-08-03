@@ -1098,6 +1098,8 @@
  * @property {'unicode' | 'ascii'} [encoding] Encoding option. Default: `unicode`.
  * @property {boolean} [clean_accents] Whether to remove accents. Default: `false`.
  * @property {string} [sanitize_replacement] String to replace sanitized characters. Default: `-`.
+ * @property {boolean} [trim] Whether to trim leading and trailing replacement characters. Default:
+ * `true`.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  */
 

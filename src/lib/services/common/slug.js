@@ -24,6 +24,7 @@ export const slugify = (string, { fallback = true } = {}) => {
       encoding = 'unicode',
       clean_accents: cleanAccents = false,
       sanitize_replacement: sanitizeReplacement = '-',
+      trim: trimReplacement = true,
     } = {},
   } = /** @type {InternalSiteConfig} */ (get(siteConfig)) ?? {};
 
@@ -57,9 +58,9 @@ export const slugify = (string, { fallback = true } = {}) => {
     slug = slug.replace(consecutivePattern, sanitizeReplacement);
 
     // Trim replacement characters from the beginning and end
-    const trimPattern = new RegExp(`^${escapedReplacement}+|${escapedReplacement}+$`, 'g');
-
-    slug = slug.replace(trimPattern, '');
+    if (trimReplacement) {
+      slug = slug.replace(new RegExp(`^${escapedReplacement}+|${escapedReplacement}+$`, 'g'), '');
+    }
   }
 
   if (!slug && fallback) {
