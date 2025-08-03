@@ -15,12 +15,12 @@
     TextArea,
     TruncatedText,
   } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
@@ -358,7 +358,7 @@
       class:collapsed={!parentExpanded}
     >
       {#each items as item, index (item.__sc_item_id ?? index)}
-        {#await sleep() then}
+        <VisibilityObserver>
           {@const expandedKeyPath = `${keyPath}.${index}`}
           {@const expanded = $entryDraft?.expanderStates?._[expandedKeyPath] ?? true}
           {@const typeConfig = hasVariableTypes
@@ -473,7 +473,7 @@
             <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
               {#if expanded}
                 {#each subFields as subField (subField.name)}
-                  {#await sleep() then}
+                  <VisibilityObserver>
                     <FieldEditor
                       keyPath={hasSingleSubField
                         ? `${keyPath}.${index}`
@@ -482,7 +482,7 @@
                       fieldConfig={subField}
                       context={hasSingleSubField ? 'single-field-list-widget' : undefined}
                     />
-                  {/await}
+                  </VisibilityObserver>
                 {/each}
               {:else}
                 <div role="none" class="summary">
@@ -493,7 +493,7 @@
               {/if}
             </div>
           </div>
-        {/await}
+        </VisibilityObserver>
       {/each}
     </div>
     {#if allowAdd && !addToTop && items.length}

@@ -4,8 +4,7 @@
   @see https://decapcms.org/docs/widgets/#object
 -->
 <script>
-  import { sleep } from '@sveltia/utils/misc';
-
+  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import Subsection from '$lib/components/contents/details/widgets/object/subsection.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -54,13 +53,13 @@
 {#if hasValues}
   <Subsection {label}>
     {#each subFields as subField (subField.name)}
-      {#await sleep() then}
+      <VisibilityObserver>
         <FieldPreview
           keyPath={[keyPath, subField.name].join('.')}
           {locale}
           fieldConfig={subField}
         />
-      {/await}
+      </VisibilityObserver>
     {/each}
   </Subsection>
 {/if}

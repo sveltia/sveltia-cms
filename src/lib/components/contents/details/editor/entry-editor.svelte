@@ -1,6 +1,5 @@
 <script>
-  import { sleep } from '@sveltia/utils/misc';
-
+  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
 
@@ -23,8 +22,10 @@
   const fields = $derived($entryDraft?.fields ?? []);
 </script>
 
-{#each fields as fieldConfig (fieldConfig.name)}
-  {#await sleep() then}
-    <FieldEditor keyPath={fieldConfig.name} {locale} {fieldConfig} />
-  {/await}
-{/each}
+<VisibilityObserver>
+  {#each fields as fieldConfig (fieldConfig.name)}
+    <VisibilityObserver>
+      <FieldEditor keyPath={fieldConfig.name} {locale} {fieldConfig} />
+    </VisibilityObserver>
+  {/each}
+</VisibilityObserver>

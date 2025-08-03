@@ -6,11 +6,11 @@
 <script>
   import { Button, Checkbox, Icon, TruncatedText } from '@sveltia/ui';
   import { waitForVisibility } from '@sveltia/utils/element';
-  import { sleep } from '@sveltia/utils/misc';
   import { toRaw } from '@sveltia/utils/object';
   import { onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
@@ -232,13 +232,13 @@
       {#await waitForVisibility(wrapper) then}
         {#if parentExpanded}
           {#each subFields as subField (subField.name)}
-            {#await sleep() then}
+            <VisibilityObserver>
               <FieldEditor
                 keyPath={[keyPath, subField.name].join('.')}
                 {locale}
                 fieldConfig={subField}
               />
-            {/await}
+            </VisibilityObserver>
           {/each}
         {:else}
           {@const formattedSummary = _formatSummary()}

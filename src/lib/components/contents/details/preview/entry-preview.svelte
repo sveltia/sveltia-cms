@@ -1,7 +1,7 @@
 <script>
-  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
 
+  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import EntryPreviewIframe from '$lib/components/contents/details/preview/entry-preview-iframe.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -35,19 +35,21 @@
 
 {#snippet children()}
   {#each fields as fieldConfig (fieldConfig.name)}
-    {#await sleep() then}
+    <VisibilityObserver>
       <FieldPreview keyPath={fieldConfig.name} {locale} {fieldConfig} />
-    {/await}
+    </VisibilityObserver>
   {/each}
 {/snippet}
 
-{#if styleURL}
-  <EntryPreviewIframe {locale} {styleURL} {children} />
-{:else}
-  <div role="document" aria-label={$_('content_preview')}>
-    {@render children()}
-  </div>
-{/if}
+<VisibilityObserver>
+  {#if styleURL}
+    <EntryPreviewIframe {locale} {styleURL} {children} />
+  {:else}
+    <div role="document" aria-label={$_('content_preview')}>
+      {@render children()}
+    </div>
+  {/if}
+</VisibilityObserver>
 
 <style lang="scss">
   div {

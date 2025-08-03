@@ -4,10 +4,10 @@
   @see https://decapcms.org/docs/widgets/#list
 -->
 <script>
-  import { sleep } from '@sveltia/utils/misc';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
 
+  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import Subsection from '$lib/components/contents/details/widgets/object/subsection.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -59,7 +59,7 @@
 
 {#if hasSubFields}
   {#each items as item, index (item.__sc_item_id ?? index)}
-    {#await sleep() then}
+    <VisibilityObserver>
       {@const subFieldName = Array.isArray(types)
         ? $entryDraft?.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
         : undefined}
@@ -70,16 +70,16 @@
         : (fields ?? (field ? [field] : []))}
       <Subsection {label}>
         {#each subFields as subField (subField.name)}
-          {#await sleep() then}
+          <VisibilityObserver>
             <FieldPreview
               keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
               {locale}
               fieldConfig={subField}
             />
-          {/await}
+          </VisibilityObserver>
         {/each}
       </Subsection>
-    {/await}
+    </VisibilityObserver>
   {/each}
 {:else if Array.isArray(currentValue) && currentValue.length}
   <ul lang={locale} dir="auto">

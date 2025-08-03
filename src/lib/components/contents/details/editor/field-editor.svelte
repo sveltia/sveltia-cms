@@ -4,7 +4,7 @@
   import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
-  import { setContext } from 'svelte';
+  import { setContext, untrack } from 'svelte';
   import { writable } from 'svelte/store';
   import { _ } from 'svelte-i18n';
 
@@ -161,6 +161,46 @@
       widgetName === 'compute',
   );
   const invalid = $derived(validity?.valid === false);
+
+  /**
+   * Store for the current value of the field. We use this to sync with the draft store because a
+   * direct binding with `$entryDraft.currentValues[locale][keyPath]` degrades performance.
+   * @type {any}
+   */
+  let currentValueCache = $state();
+
+  /**
+   * Timer for updating the draft store after a delay to avoid frequent updates while typing.
+   * @type {number}
+   */
+  let updateTimer = 0;
+
+  $effect(() => {
+    if ($entryDraft) {
+      const _currentValue = $entryDraft.currentValues[locale][keyPath];
+
+      untrack(() => {
+        window.setTimeout(() => {
+          if (currentValueCache !== _currentValue) {
+            currentValueCache = _currentValue;
+          }
+        }, 0);
+      });
+    }
+  });
+
+  $effect(() => {
+    void currentValueCache;
+
+    untrack(() => {
+      window.clearTimeout(updateTimer);
+      updateTimer = window.setTimeout(() => {
+        if ($entryDraft && $entryDraft.currentValues[locale][keyPath] !== currentValueCache) {
+          $entryDraft.currentValues[locale][keyPath] = currentValueCache;
+        }
+      }, 200);
+    });
+  });
 </script>
 
 {#if $entryDraft && canEdit && widgetName !== 'hidden'}
@@ -289,7 +329,7 @@
           {fieldId}
           {fieldLabel}
           {fieldConfig}
-          bind:currentValue={$entryDraft.currentValues[locale][keyPath]}
+          bind:currentValue={currentValueCache}
           {readonly}
           {required}
           {invalid}
