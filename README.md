@@ -339,6 +339,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - If a collection only has the Markdown `body` field, an entry slug will be generated from a header in the `body`, if exists. This supports a typical VitePress setup.
   - Entry slug template tags support [transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags.[^29]
   - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed.[^52]
+  - The [global `slug` option](https://decapcms.org/docs/configuration-options/#slug-type) accepts the `trim` option to remove leading and trailing replacement characters, such as hyphens, from an entry slug. The default value is `true`. Set to `false` to keep them.
   - The maximum number of characters for an entry slug can be set with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms.[^25]
   - Setting the collection `path` doesn’t affect the entry slugs stored with the Relation widget.[^137]
   - Entry slugs are [localizable](#localizing-entry-slugs).[^80]
