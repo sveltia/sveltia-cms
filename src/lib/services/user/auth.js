@@ -32,6 +32,11 @@ export const signInError = writable({ message: '', context: 'authentication' });
 export const unauthenticated = writable(true);
 
 /**
+ * @type {Writable<boolean>}
+ */
+export const signingIn = writable(false);
+
+/**
  * Reset the sign-in error store.
  */
 export const resetError = () => {
@@ -136,7 +141,7 @@ export const signInAutomatically = async () => {
 
     const { token, refreshToken } = _user;
 
-    unauthenticated.set(false);
+    signingIn.set(true);
 
     try {
       _user = await _backend.signIn({ token, refreshToken, auto: true });
@@ -147,6 +152,7 @@ export const signInAutomatically = async () => {
     }
   }
 
+  signingIn.set(false);
   unauthenticated.set(!_user);
 
   if (!_user || !_backend) {
@@ -192,11 +198,12 @@ export const signInManually = async (_backendName, token) => {
 
   let _user;
 
-  unauthenticated.set(false);
+  signingIn.set(true);
 
   try {
     _user = await _backend.signIn({ token, auto: false });
   } catch (/** @type {any} */ ex) {
+    signingIn.set(false);
     unauthenticated.set(true);
 
     if (!!token && ex.cause?.status === 401) {
@@ -212,6 +219,7 @@ export const signInManually = async (_backendName, token) => {
     return;
   }
 
+  signingIn.set(false);
   unauthenticated.set(!_user);
 
   if (!_user) {

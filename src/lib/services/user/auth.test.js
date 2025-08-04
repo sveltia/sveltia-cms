@@ -116,6 +116,11 @@ describe('auth service', () => {
 
     // Import the module after mocks are set up
     authModule = await import('./auth.js');
+
+    // Spy on the exported stores rather than reassigning them
+    vi.spyOn(authModule.signInError, 'set');
+    vi.spyOn(authModule.unauthenticated, 'set');
+    vi.spyOn(authModule.signingIn, 'set');
   });
 
   describe('resetError', () => {
@@ -229,9 +234,36 @@ describe('auth service', () => {
       await authModule.signInAutomatically();
 
       expect(mockBackend.signIn).not.toHaveBeenCalled();
+      // Should not call unauthenticated.set because function returns early
+      expect(authModule.unauthenticated.set).not.toHaveBeenCalled();
     });
 
-    it('should sign in with cached user data', async () => {
+    it('should check multiple cache sources', async () => {
+      mockLocalStorage.get
+        .mockResolvedValueOnce(null) // sveltia-cms.user
+        .mockResolvedValueOnce(null) // decap-cms-user
+        .mockResolvedValueOnce({ token: 'netlify-token', backendName: 'github' }); // netlify-cms-user
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockGetLocaleText) return mockGetLocaleText;
+
+        return mockSiteConfig;
+      });
+      mockBackend.signIn.mockResolvedValue({ token: 'netlify-token' });
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInAutomatically();
+
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('sveltia-cms.user');
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('decap-cms-user');
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('netlify-cms-user');
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
+    });
+
+    it('should sign in with cached user data and set signingIn state', async () => {
       const cachedUser = {
         token: 'test-token',
         backendName: 'github',
@@ -254,11 +286,16 @@ describe('auth service', () => {
 
       await authModule.signInAutomatically();
 
+      expect(mockUser.set).toHaveBeenCalledWith(cachedUser); // Set before sign-in
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
       expect(mockBackend.signIn).toHaveBeenCalledWith({
         token: 'test-token',
         refreshToken: undefined,
         auto: true,
       });
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
+      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(false);
+      expect(mockUser.set).toHaveBeenCalledWith(cachedUser); // Set after sign-in
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
     });
 
@@ -288,15 +325,17 @@ describe('auth service', () => {
       await authModule.signInAutomatically();
 
       expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
       expect(mockBackend.signIn).toHaveBeenCalledWith({
         token: 'qr-token',
         refreshToken: undefined,
         auto: true,
       });
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
       expect(mockPrefs.update).toHaveBeenCalled();
     });
 
-    it('should handle sign in failure', async () => {
+    it('should handle sign in failure gracefully', async () => {
       const cachedUser = { token: 'test-token', backendName: 'github' };
 
       mockLocalStorage.get.mockResolvedValue(cachedUser);
@@ -311,6 +350,10 @@ describe('auth service', () => {
 
       await authModule.signInAutomatically();
 
+      expect(mockUser.set).toHaveBeenCalledWith(cachedUser); // Set before sign-in
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
+      expect(mockUser.set).toHaveBeenCalledWith(undefined); // Reset after failure
       expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
     });
 
@@ -362,7 +405,7 @@ describe('auth service', () => {
   });
 
   describe('signInManually', () => {
-    it('should sign in with provided credentials', async () => {
+    it('should sign in with provided credentials and set signingIn state', async () => {
       const user = { token: 'manual-token' };
 
       mockGet.mockReturnValue(mockBackend);
@@ -371,15 +414,18 @@ describe('auth service', () => {
 
       await authModule.signInManually('github', 'manual-token');
 
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
       expect(mockBackend.signIn).toHaveBeenCalledWith({
         token: 'manual-token',
         auto: false,
       });
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
+      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(false);
       expect(mockUser.set).toHaveBeenCalledWith(user);
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
     });
 
-    it('should handle sign in failure', async () => {
+    it('should handle sign in failure and set signingIn state', async () => {
       mockGet.mockImplementation((store) => {
         if (store === mockBackend) return mockBackend;
         if (store === mockGetLocaleText) return mockGetLocaleText;
@@ -394,6 +440,8 @@ describe('auth service', () => {
 
       await authModule.signInManually('github', 'invalid-token');
 
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
       expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
       expect(authModule.signInError.set).toHaveBeenCalled();
     });
@@ -415,6 +463,8 @@ describe('auth service', () => {
 
       await authModule.signInManually('github', 'invalid-pat-token');
 
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
       expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
       expect(authModule.signInError.set).toHaveBeenCalledWith({
         message: 'The provided token is invalid',
@@ -428,17 +478,17 @@ describe('auth service', () => {
       await authModule.signInManually('github', 'token');
 
       expect(mockBackend.signIn).not.toHaveBeenCalled();
+      expect(authModule.signingIn.set).not.toHaveBeenCalled();
     });
 
     it('should handle fetch files failure', async () => {
       const user = { token: 'manual-token' };
 
       mockGet.mockImplementation((store) => {
-        if (store === mockBackend) return mockBackend;
+        if (store === mockBackendStore) return mockBackend;
         if (store === mockGetLocaleText) return mockGetLocaleText;
-        if (store && typeof store.subscribe === 'function') return mockSiteConfig;
 
-        return mockBackend;
+        return mockSiteConfig;
       });
       mockBackend.signIn.mockResolvedValue(user);
 
@@ -448,6 +498,11 @@ describe('auth service', () => {
 
       await authModule.signInManually('github', 'manual-token');
 
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
+      // User is still authenticated even if fetchFiles fails
+      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(false);
+      expect(mockUser.set).toHaveBeenCalledWith(user);
       expect(authModule.signInError.set).toHaveBeenCalled();
     });
   });
@@ -461,6 +516,7 @@ describe('auth service', () => {
 
       expect(mockBackend.signOut).toHaveBeenCalled();
       expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
+      expect(mockBackendName.set).toHaveBeenCalledWith(undefined);
       expect(mockUser.set).toHaveBeenCalledWith(undefined);
       expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
       expect(mockDataLoaded.set).toHaveBeenCalledWith(false);

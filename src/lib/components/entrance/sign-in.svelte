@@ -9,8 +9,8 @@
   import {
     signInAutomatically,
     signInError,
+    signingIn,
     signInManually,
-    unauthenticated,
   } from '$lib/services/user/auth';
 
   let isLocalHost = $state(false);
@@ -46,7 +46,7 @@
 </script>
 
 <div role="none" class="buttons">
-  {#if !$unauthenticated}
+  {#if $signingIn}
     <div role="alert" class="message">{$_('signing_in')}</div>
   {:else if !configuredBackend}
     <div role="alert">
