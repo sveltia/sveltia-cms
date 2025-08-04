@@ -14,7 +14,6 @@
     Toolbar,
     TruncatedText,
   } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
@@ -119,9 +118,6 @@
     if (!collection) {
       return;
     }
-
-    // Wait a bit for updates in the field editor
-    await sleep(250);
 
     try {
       const savedEntry = await saveEntry({ skipCI });
