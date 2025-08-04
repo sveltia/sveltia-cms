@@ -132,7 +132,7 @@ Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
-- Ensuring substantial [compatibility with Netlify/Decap CMS](#compatibility)
+- Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 240+ issues, or 500+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
   - Target:
@@ -566,7 +566,9 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 - The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists.[^109]
 - A custom logo defined with the `logo_url` property is displayed on the global application header and the browser tab (favicon).[^134] A smaller logo is also correctly positioned on the authentication page.[^135]
 - [`CMS.registerCustomFormat()`](https://decapcms.org/docs/custom-formatters/) supports async parser/formatter functions.[^149]
-- The component definition for [`CMS.registerEditorComponent()`](https://decapcms.org/docs/custom-widgets/#registereditorcomponent) accepts the `icon` property. Developers can specify a Material Symbols icon name just like [custom collection icons](#using-a-custom-icon-for-a-collection).
+- Enhancements to [`CMS.registerEditorComponent()`](https://decapcms.org/docs/custom-widgets/#registereditorcomponent):
+  - A component definition accepts the `icon` property. Developers can specify a Material Symbols icon name just like [custom collection icons](#using-a-custom-icon-for-a-collection).
+  - The `fromBlock` function can be omitted if the `pattern` regex contains [named capturing groups](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) for the values.
 
 ### Better localization
 
@@ -616,7 +618,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - LineString and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
-- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, widgets with complex values (Code with `output_code_only:false`, Hidden, KeyValue, List, Object, Select/Relation with `multiple:true`), as well as the `default` field option, [multiline components](https://github.com/sveltia/sveltia-cms/issues/410) and [inline components](https://github.com/sveltia/sveltia-cms/issues/460)
+- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, widgets with complex values (Code with `output_code_only: false`, Hidden, KeyValue, List, Object, Select/Relation with `multiple: true`), as well as the `default` field option, [multiline components](https://github.com/sveltia/sveltia-cms/issues/410) and [inline components](https://github.com/sveltia/sveltia-cms/issues/460)
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
@@ -1620,10 +1622,8 @@ Due late 2025
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
-  - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
   - [Multiple file selection with the File and Image widgets](https://github.com/sveltia/sveltia-cms/issues/10)[^239]
   - Several Cloudinary and Uploadcare media library issues, including selection of existing files[^247]
-  - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
   - [RTL localization support](https://github.com/sveltia/sveltia-cms/issues/385)[^245]
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
@@ -1639,13 +1639,19 @@ Due late 2025
 Due early 2026
 
 - Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections
+- Tackling even more Netlify/Decap CMS issues:
+  - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
+  - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
+  - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
+  - Advanced Relation fields[^242], including cascade updates/deletes[^243] and quick item additions[^266]
+    - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
+  - (some of them may be included in v1.0)
 - End-user documentation
 
 ### Future
 
-- Tackling many of the remaining Netlify/Decap CMS issues, including:
+- Tackling many of the remaining Netlify/Decap CMS issues:
   - MDX support[^122]
-  - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
   - [Saving drafts without editorial workflow](https://github.com/sveltia/sveltia-cms/discussions/440)[^261]
   - [Tables in Markdown](https://github.com/sveltia/sveltia-cms/issues/455)[^256]
   - [Config editor](https://github.com/sveltia/sveltia-cms/discussions/452)[^10]
@@ -1653,8 +1659,6 @@ Due early 2026
   - [Reusable field groups](https://github.com/sveltia/sveltia-cms/discussions/463)[^263]
   - Offline support[^238]
   - and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
-  - Advanced Relation fields[^242], including cascade updates/deletes[^243]
-    - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - (some of them may be included in v2.0)
 - **Sveltia CMS Additions**: edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
   - User management (Netlify Identity alternative) with roles[^23]
@@ -1663,7 +1667,7 @@ Due early 2026
   - Scheduled posts[^167]
   - Credential management for service API keys, deploy hook URL, etc.
   - Proxy for services that don’t support [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS):
-    - [DeepL](https://github.com/sveltia/sveltia-cms/issues/437)
+    - [DeepL Translate](https://github.com/sveltia/sveltia-cms/issues/437)
     - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
 - [Local repository workflow](#working-with-a-local-git-repository) improvements: Git mode[^131] and File System Observer support
 - [Preact+HTM support](https://github.com/sveltia/sveltia-cms/discussions/153) for custom widgets, editor components and preview templates
@@ -2224,3 +2228,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^264]: Netlify/Decap CMS [#7557](https://github.com/decaporg/decap-cms/issues/7557)
 
 [^265]: Netlify/Decap CMS [#7550](https://github.com/decaporg/decap-cms/issues/7550), [#7562](https://github.com/decaporg/decap-cms/issues/7562)
+
+[^266]: Netlify/Decap CMS [#3821](https://github.com/decaporg/decap-cms/issues/3821), [#4369](https://github.com/decaporg/decap-cms/issues/4369)
