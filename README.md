@@ -2,7 +2,9 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility.
 
-The free, open source alternative/successor to Netlify/Decap CMS is now in public beta, turbocharged with great UX, performance, i18n support and so many more enhancements.
+The free, open source alternative to Netlify/Decap CMS is now in public beta, turbocharged with great UX, performance, i18n support and so many more enhancements.
+
+Welcome to the only Netlify CMS successor you can trust!
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -166,6 +168,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Users can easily manage content on-the-go with mobile and tablet support.[^18][^215]
   - For a smoother experience, we even go beyond responsive design with optimized navigation, [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions), larger buttons, and other tweaks. However, there are still rough edges, and we are working to fully optimize the app for small screens and touch devices.
   - If you’re already signed in on your desktop, open the Account menu in the top right corner of the CMS, click Sign In with Mobile, and scan the QR code for passwordless sign-in. Your settings will be automatically copied.
+- Sveltia CMS loads all entries at startup. We don’t support backends that cannot retrieve multiple entries at once. This deliberate design choice improves performance and UX by enabling instant full-text searches, fast and powerful relation fields, and linking between assets and entries.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - Other crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204][^260][^265]
 - We build [our own UI component library](https://github.com/sveltia/sveltia-ui), including custom dialogs, to ensure optimal usability without compromising accessibility.[^196][^205][^206][^207][^208][^209][^210]
@@ -199,7 +202,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Uploading files can be done with drag and drop.[^20]
 - Users can upload multiple files at once to the Asset Library.
 - Users can delete multiple entries and assets at once.
-- Instant full-text search with results sorted by relevance helps you find entries faster.
+- Instant full-text search with results sorted by relevance helps you find entries faster. In Netlify/Decap CMS, you often won’t get the results you expect.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
 
 ### Better accessibility
@@ -1221,7 +1224,7 @@ media_libraries:
 
 ### Editing site deployment configuration files
 
-Sveltia CMS allows users to edit files without extensions. Examples include `_headers` and `_redirects`, which are used by some static site hosting providers, such as [Netlify](https://docs.netlify.com/routing/redirects/), [GitLab Pages](https://docs.gitlab.com/user/project/pages/redirects/) and [Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/redirects/). Since the `body` field is saved without the field name when using the default `yaml-frontmatter` format, you can use the following configuration to edit these files in the Content Editor:
+Sveltia CMS allows users to edit files without extensions. Examples include `_headers` and `_redirects`, which are used by some static site hosting providers, such as [Netlify](https://docs.netlify.com/routing/redirects/), [GitLab Pages](https://docs.gitlab.com/user/project/pages/redirects/) and [Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/redirects/). Since the `body` field is [saved without the field name](#understanding-exceptions-in-data-output) when using the default `yaml-frontmatter` format, you can use the following configuration to edit these files in the Content Editor:
 
 ```yaml
 collections:
