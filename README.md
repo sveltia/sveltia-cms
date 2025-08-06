@@ -572,6 +572,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 - Enhancements to [`CMS.registerEditorComponent()`](https://decapcms.org/docs/custom-widgets/#registereditorcomponent):
   - A component definition accepts the `icon` property. Developers can specify a Material Symbols icon name just like [custom collection icons](#using-a-custom-icon-for-a-collection).
   - The `fromBlock` function can be omitted if the `pattern` regex contains [named capturing groups](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) for the values.
+  - Inline components are supported.[^267]
 
 ### Better localization
 
@@ -621,7 +622,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - LineString and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
-- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, widgets with complex values (Code with `output_code_only: false`, Hidden, KeyValue, List, Object, Select/Relation with `multiple: true`), as well as the `default` field option, [multiline components](https://github.com/sveltia/sveltia-cms/issues/410) and [inline components](https://github.com/sveltia/sveltia-cms/issues/460)
+- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, widgets with complex values (Code with `output_code_only: false`, Hidden, KeyValue, List, Object, Select/Relation with `multiple: true`), the `default` field option and [multiline components](https://github.com/sveltia/sveltia-cms/issues/410)
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
@@ -2233,3 +2234,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^265]: Netlify/Decap CMS [#7550](https://github.com/decaporg/decap-cms/issues/7550), [#7562](https://github.com/decaporg/decap-cms/issues/7562)
 
 [^266]: Netlify/Decap CMS [#3821](https://github.com/decaporg/decap-cms/issues/3821), [#4369](https://github.com/decaporg/decap-cms/issues/4369)
+
+[^267]: Netlify/Decap CMS [#5065](https://github.com/decaporg/decap-cms/issues/5065) — The issue was closed, but it’s still not working as expected in Decap CMS.
