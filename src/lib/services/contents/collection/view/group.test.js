@@ -85,6 +85,121 @@ describe('groupEntries', () => {
     expect(result).toEqual([{ name: '*', entries }]);
   });
 
+  test('should return ungrouped entries when conditions is null', () => {
+    // @ts-ignore - Mock data for testing
+    const entries = [
+      {
+        id: 'entry1',
+        sha: 'sha1',
+        slug: 'slug1',
+        subPath: '',
+        locales: { en: { path: 'path1', slug: 'slug1', content: {} } },
+      },
+      {
+        id: 'entry2',
+        sha: 'sha2',
+        slug: 'slug2',
+        subPath: '',
+        locales: { en: { path: 'path2', slug: 'slug2', content: {} } },
+      },
+    ];
+
+    // @ts-ignore - Mock data for testing
+    const collection = {
+      _type: 'entry',
+      _file: { format: 'frontmatter', extension: 'md', formatOptions: {} },
+      _i18n: {
+        i18nEnabled: false,
+        structure: 'single_file',
+        allLocales: ['en'],
+        initialLocales: ['en'],
+        defaultLocale: 'en',
+        locales: ['en'],
+        canonicalSlug: {},
+      },
+      name: 'posts',
+      label: 'Posts',
+      folder: 'content/posts',
+    };
+
+    // @ts-ignore - Mock data for testing
+    const result = groupEntries(entries, collection, null);
+
+    expect(result).toEqual([{ name: '*', entries }]);
+  });
+
+  test('should return ungrouped entries when conditions is undefined', () => {
+    // @ts-ignore - Mock data for testing
+    const entries = [
+      {
+        id: 'entry1',
+        sha: 'sha1',
+        slug: 'slug1',
+        subPath: '',
+        locales: { en: { path: 'path1', slug: 'slug1', content: {} } },
+      },
+    ];
+
+    // @ts-ignore - Mock data for testing
+    const collection = {
+      _type: 'entry',
+      _file: { format: 'frontmatter', extension: 'md', formatOptions: {} },
+      _i18n: {
+        i18nEnabled: false,
+        structure: 'single_file',
+        allLocales: ['en'],
+        initialLocales: ['en'],
+        defaultLocale: 'en',
+        locales: ['en'],
+        canonicalSlug: {},
+      },
+      name: 'posts',
+      label: 'Posts',
+      folder: 'content/posts',
+    };
+
+    // @ts-ignore - Mock data for testing
+    const result = groupEntries(entries, collection, undefined);
+
+    expect(result).toEqual([{ name: '*', entries }]);
+  });
+
+  test('should return ungrouped entries when conditions has empty field', () => {
+    // @ts-ignore - Mock data for testing
+    const entries = [
+      {
+        id: 'entry1',
+        sha: 'sha1',
+        slug: 'slug1',
+        subPath: '',
+        locales: { en: { path: 'path1', slug: 'slug1', content: {} } },
+      },
+    ];
+
+    // @ts-ignore - Mock data for testing
+    const collection = {
+      _type: 'entry',
+      _file: { format: 'frontmatter', extension: 'md', formatOptions: {} },
+      _i18n: {
+        i18nEnabled: false,
+        structure: 'single_file',
+        allLocales: ['en'],
+        initialLocales: ['en'],
+        defaultLocale: 'en',
+        locales: ['en'],
+        canonicalSlug: {},
+      },
+      name: 'posts',
+      label: 'Posts',
+      folder: 'content/posts',
+    };
+
+    // @ts-ignore - Mock data for testing
+    const result = groupEntries(entries, collection, { field: '', pattern: undefined });
+
+    expect(result).toEqual([{ name: '*', entries }]);
+  });
+
   test('should group entries by field', () => {
     // @ts-ignore - Mock data for testing
     const entries = [

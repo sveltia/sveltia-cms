@@ -50,16 +50,14 @@ export const parseGroupConfig = (filters) => {
  * Group the given entries.
  * @param {Entry[]} entries Entry list.
  * @param {InternalCollection} collection Collection that the entries belong to.
- * @param {GroupingConditions} [conditions] Grouping conditions.
+ * @param {GroupingConditions | null | undefined} conditions Grouping conditions.
  * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
  * a name and an entry list. When ungrouped, there will still be one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  */
-export const groupEntries = (
-  entries,
-  collection,
-  { field, pattern } = { field: '', pattern: undefined },
-) => {
+export const groupEntries = (entries, collection, conditions) => {
+  const { field, pattern } = conditions ?? { field: '', pattern: undefined };
+
   if (!field) {
     return entries.length ? [{ name: '*', entries }] : [];
   }
@@ -123,6 +121,6 @@ export const viewGroups = derived([selectedCollection], ([_collection], set) => 
 
   currentView.update((_view) => ({
     ..._view,
-    group: _view.group ?? defaultGroup,
+    group: _view.group === undefined ? defaultGroup : _view.group,
   }));
 });

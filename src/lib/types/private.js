@@ -765,7 +765,7 @@
  * @property {SortingConditions} [sort] Sorting conditions.
  * @property {FilteringConditions} [filter] Filtering conditions. Deprecated in favour of `filters`.
  * @property {FilteringConditions[]} [filters] One or more filtering conditions.
- * @property {GroupingConditions} [group] Grouping conditions.
+ * @property {GroupingConditions | null} [group] Grouping conditions.
  * @property {boolean} [showMedia] Whether to show the Media pane.
  */
 

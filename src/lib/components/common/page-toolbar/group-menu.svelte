@@ -40,7 +40,7 @@
         onSelect={() => {
           currentView.update((view) => ({
             ...view,
-            group: undefined,
+            group: null,
           }));
         }}
       />
