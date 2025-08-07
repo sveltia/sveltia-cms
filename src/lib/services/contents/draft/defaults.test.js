@@ -69,7 +69,7 @@ vi.mock('$lib/services/contents/widgets/select/defaults', () => ({
 }));
 
 describe('Test populateDefaultValue()', () => {
-  test('should skip compute widget', () => {
+  test('should set empty string for compute widget', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -77,6 +77,7 @@ describe('Test populateDefaultValue()', () => {
     const fieldConfig = {
       name: 'computed_field',
       widget: 'compute',
+      value: '{{title}}-{{date}}',
       default: 'should be ignored',
     };
 
@@ -88,7 +89,34 @@ describe('Test populateDefaultValue()', () => {
       dynamicValues: {},
     });
 
-    expect(content).toEqual({});
+    expect(content).toEqual({
+      computed_field: '',
+    });
+  });
+
+  test('should ignore dynamic values and default for compute widget', () => {
+    /** @type {FlattenedEntryContent} */
+    const content = {};
+
+    /** @type {Field} */
+    const fieldConfig = {
+      name: 'computed_field',
+      widget: 'compute',
+      value: '{{author}}-{{year}}',
+      default: 'default value',
+    };
+
+    populateDefaultValue({
+      content,
+      keyPath: 'computed_field',
+      fieldConfig,
+      locale: 'en',
+      dynamicValues: { computed_field: 'dynamic value' },
+    });
+
+    expect(content).toEqual({
+      computed_field: '',
+    });
   });
 
   test('should use dynamic value when available and not array-like', () => {
@@ -539,7 +567,7 @@ describe('Test getDefaultValues()', () => {
     });
   });
 
-  test('should skip compute widgets', () => {
+  test('should handle compute widgets', () => {
     /** @type {Field[]} */
     const fields = [
       {
@@ -550,6 +578,7 @@ describe('Test getDefaultValues()', () => {
       {
         name: 'computed_field',
         widget: 'compute',
+        value: '{{title}}-{{slug}}',
         default: 'Should be ignored',
       },
       {
@@ -563,6 +592,7 @@ describe('Test getDefaultValues()', () => {
 
     expect(result).toEqual({
       title: 'Default Title',
+      computed_field: '',
       description: 'Default Description',
     });
   });

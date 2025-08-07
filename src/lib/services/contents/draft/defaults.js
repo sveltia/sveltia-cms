@@ -50,8 +50,11 @@ const GET_DEFAULT_VALUE_MAP_FUNCTIONS = {
 export const populateDefaultValue = ({ content, keyPath, fieldConfig, locale, dynamicValues }) => {
   const { widget: widgetName = 'string', default: defaultValue } = fieldConfig;
 
-  // Skip the `compute` widget, because it doesn’t have the `default` option
+  // The `compute` widget doesn’t have the `default` option, so we just set an empty string,
+  // otherwise the field won’t work properly
   if (widgetName === 'compute') {
+    content[keyPath] = '';
+
     return;
   }
 
