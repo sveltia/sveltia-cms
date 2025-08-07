@@ -348,7 +348,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Entry slugs are [localizable](#localizing-entry-slugs).[^80]
 - Entry listing
   - The [default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified.[^172]
-  - The default filtering and grouping can also be specified in the same way as with [Static CMS](https://staticjscms.netlify.app/docs/decap-migration-guide#view-filters).[^269]
+  - The default filter and group can also be specified in the same way as with [Static CMS](https://staticjscms.netlify.app/docs/collection-overview#view-filters).[^269]
   - Sorting entries by a DateTime field works as expected.[^110]
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
   - The `sortable_fields` option accepts a special `slug` value to allow sorting by entry slugs.
