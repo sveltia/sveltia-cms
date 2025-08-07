@@ -14,10 +14,10 @@ import { getRegex } from '$lib/services/utils/misc';
  */
 
 /**
- * Parse view filters configuration. This supports both an array, which is compatible with
+ * Parse view groups configuration. This supports both an array, which is compatible with
  * Netlify/Decap CMS, and an object, which is compatible with Static CMS.
- * @param {ViewGroup[] | ViewGroups | undefined} filters View filters configuration.
- * @returns {{ options: ViewGroup[], default?: GroupingConditions }} Parsed view filters.
+ * @param {ViewGroup[] | ViewGroups | undefined} filters View groups configuration.
+ * @returns {{ options: ViewGroup[], default?: GroupingConditions }} Parsed view groups.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-groups
  */
