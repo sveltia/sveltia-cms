@@ -864,7 +864,7 @@
 /**
  * View group.
  * @typedef {object} ViewGroup
- * @property {string} [name] Unique identifier for the filter.
+ * @property {string} [name] Unique identifier for the group.
  * @property {string} label Label.
  * @property {FieldKeyPath} field Field name.
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
