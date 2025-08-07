@@ -199,7 +199,9 @@
               {#if canRevert}
                 <MenuItem
                   label={$_('revert_changes')}
-                  disabled={equal(currentValue, originalValue)}
+                  disabled={equal(currentValue, originalValue) ||
+                    // Disable reversion in list items until we figure out how to handle reordering
+                    /\.\d+\./.test(keyPath)}
                   onclick={() => {
                     revertChanges({ locale, keyPath });
                   }}
