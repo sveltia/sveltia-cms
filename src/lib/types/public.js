@@ -846,6 +846,7 @@
 /**
  * View filter.
  * @typedef {object} ViewFilter
+ * @property {string} [name] Unique identifier for the filter.
  * @property {string} label Label.
  * @property {FieldKeyPath} field Field name.
  * @property {string | RegExp | boolean} pattern Regular expression matching pattern or exact value.
@@ -853,12 +854,30 @@
  */
 
 /**
+ * A collection’s advanced filter definition, which is compatible with Static CMS.
+ * @typedef {object} ViewFilters
+ * @property {ViewFilter[]} filters A list of view filters.
+ * @property {string} [default] Default filter name.
+ * @see https://staticjscms.netlify.app/docs/collection-overview#view-filters
+ */
+
+/**
  * View group.
  * @typedef {object} ViewGroup
+ * @property {string} [name] Unique identifier for the filter.
  * @property {string} label Label.
  * @property {FieldKeyPath} field Field name.
- * @property {string | RegExp | boolean} pattern Regular expression matching pattern or exact value.
+ * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
+ * value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
+ */
+
+/**
+ * A collection’s advanced group definition, which is compatible with Static CMS.
+ * @typedef {object} ViewGroups
+ * @property {ViewGroup[]} groups A list of view groups.
+ * @property {string} [default] Default group name.
+ * @see https://staticjscms.netlify.app/docs/collection-overview#view-groups
  */
 
 /**
@@ -979,10 +998,10 @@
  * commit author and commit date are also included by default. See our
  * [README](https://github.com/sveltia/sveltia-cms#specifying-default-sort-field-and-direction) for
  * details.
- * @property {ViewFilter[]} [view_filters] View filters to be used in the entry list. Entry
- * collection only.
- * @property {ViewGroup[]} [view_groups] View groups to be used in the entry list. Entry collection
- * only.
+ * @property {ViewFilter[] | ViewFilters} [view_filters] View filters to be used in the entry list.
+ * Entry collection only.
+ * @property {ViewGroup[] | ViewGroups} [view_groups] View groups to be used in the entry list.
+ * Entry collection only.
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
  * @property {string} [preview_path] Preview URL path template.
  * @property {string} [preview_path_date_field] Date field name used for `preview_path`.

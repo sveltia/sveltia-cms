@@ -11,6 +11,8 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
+  import { viewFilters } from '$lib/services/contents/collection/view/filter';
+  import { viewGroups } from '$lib/services/contents/collection/view/group';
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
@@ -45,20 +47,20 @@
       {collectionName}
       aria-controls="entry-list"
     />
-    {#if entryCollection.view_filters?.length}
+    {#if $viewFilters?.length}
       <FilterMenu
         disabled={!hasMultipleEntries}
         {currentView}
-        filters={entryCollection.view_filters}
+        filters={$viewFilters}
         multiple={true}
         aria-controls="entry-list"
       />
     {/if}
-    {#if entryCollection.view_groups?.length}
+    {#if $viewGroups?.length}
       <GroupMenu
         disabled={!hasMultipleEntries}
         {currentView}
-        groups={entryCollection.view_groups}
+        groups={$viewGroups}
         aria-controls="entry-list"
       />
     {/if}

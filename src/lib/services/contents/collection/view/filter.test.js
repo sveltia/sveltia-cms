@@ -1,14 +1,46 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { filterEntries } from './filter';
+import { filterEntries, parseFilterConfig } from './filter';
 
 /**
  * @import { Entry, FilteringConditions, InternalCollection } from '$lib/types/private';
  */
 
 // Mock dependencies
-vi.mock('$lib/services/contents/entry/fields');
-vi.mock('$lib/services/utils/misc');
+vi.mock('svelte/store', () => ({
+  derived: vi.fn(() => ({
+    subscribe: vi.fn(() => vi.fn()),
+  })),
+  get: vi.fn(() => ({})),
+  writable: vi.fn(() => ({ subscribe: vi.fn() })),
+}));
+
+vi.mock('$lib/services/assets/view', () => ({
+  currentView: {
+    subscribe: vi.fn(() => vi.fn()),
+    set: vi.fn(),
+  },
+}));
+
+vi.mock('$lib/services/contents/collection', () => ({
+  selectedCollection: {
+    subscribe: vi.fn(() => vi.fn()),
+  },
+}));
+
+vi.mock('$lib/services/contents/collection/view/settings', () => ({
+  entryListSettings: {
+    subscribe: vi.fn(() => vi.fn()),
+  },
+}));
+
+vi.mock('$lib/services/contents/entry/fields', () => ({
+  getPropertyValue: vi.fn(),
+}));
+
+vi.mock('$lib/services/utils/misc', () => ({
+  getRegex: vi.fn(),
+}));
 
 describe('Test filterEntries()', async () => {
   const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
@@ -333,3 +365,126 @@ describe('Test filterEntries()', async () => {
     expect(result).toHaveLength(3);
   });
 });
+
+describe('Test parseFilterConfig()', () => {
+  test('returns empty options for undefined input', () => {
+    const result = parseFilterConfig(undefined);
+
+    expect(result).toEqual({ options: [] });
+  });
+
+  test('returns empty options for null input', () => {
+    const result = parseFilterConfig(/** @type {any} */ (null));
+
+    expect(result).toEqual({ options: [] });
+  });
+
+  test('returns empty options for empty array', () => {
+    const result = parseFilterConfig([]);
+
+    expect(result).toEqual({ options: [] });
+  });
+
+  test('parses array format (Netlify/Decap CMS compatible)', () => {
+    const filters = [
+      { field: 'status', pattern: 'published', label: 'Published' },
+      { field: 'category', pattern: 'tech', label: 'Tech' },
+    ];
+
+    const result = parseFilterConfig(filters);
+
+    expect(result).toEqual({ options: filters });
+  });
+
+  test('parses object format without default (Static CMS compatible)', () => {
+    const filters = {
+      filters: [
+        { field: 'status', pattern: 'published', label: 'Published' },
+        { field: 'category', pattern: 'tech', label: 'Tech' },
+      ],
+    };
+
+    const result = parseFilterConfig(filters);
+
+    expect(result).toEqual({
+      options: filters.filters,
+      default: undefined,
+    });
+  });
+
+  test('parses object format with default (Static CMS compatible)', () => {
+    const filters = {
+      filters: [
+        { name: 'published', field: 'status', pattern: 'published', label: 'Published' },
+        { name: 'tech', field: 'category', pattern: 'tech', label: 'Tech' },
+      ],
+      default: 'published',
+    };
+
+    const result = parseFilterConfig(filters);
+
+    expect(result).toEqual({
+      options: filters.filters,
+      default: { field: 'status', pattern: 'published' },
+    });
+  });
+
+  test('handles object format with invalid default name', () => {
+    const filters = {
+      filters: [
+        { name: 'published', field: 'status', pattern: 'published', label: 'Published' },
+        { name: 'tech', field: 'category', pattern: 'tech', label: 'Tech' },
+      ],
+      default: 'nonexistent',
+    };
+
+    const result = parseFilterConfig(filters);
+
+    expect(result).toEqual({
+      options: filters.filters,
+      default: undefined,
+    });
+  });
+
+  test('returns empty options for object with empty filters array', () => {
+    const filters = {
+      filters: [],
+      default: 'published',
+    };
+
+    const result = parseFilterConfig(filters);
+
+    expect(result).toEqual({ options: [] });
+  });
+
+  test('returns empty options for object with undefined filters', () => {
+    const filters = /** @type {any} */ ({
+      default: 'published',
+    });
+
+    const result = parseFilterConfig(filters);
+
+    expect(result).toEqual({ options: [] });
+  });
+
+  test('returns empty options for object with non-array filters', () => {
+    const filters = /** @type {any} */ ({
+      filters: 'not an array',
+      default: 'published',
+    });
+
+    const result = parseFilterConfig(filters);
+
+    expect(result).toEqual({ options: [] });
+  });
+
+  test('returns empty options for non-object, non-array input', () => {
+    const result = parseFilterConfig(/** @type {any} */ ('invalid'));
+
+    expect(result).toEqual({ options: [] });
+  });
+});
+
+// Note: The viewFilters store is a derived Svelte store that requires complex mocking
+// to test properly. The core logic is tested through parseFilterConfig and filterEntries functions.
+// Store reactivity would typically be tested in integration tests.

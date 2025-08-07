@@ -1,14 +1,50 @@
+import { isObject } from '@sveltia/utils/object';
 import { compare } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
+import { derived, get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
+import { selectedCollection } from '$lib/services/contents/collection';
 import { currentView } from '$lib/services/contents/collection/view';
 import { getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Entry, GroupingConditions, InternalCollection } from '$lib/types/private';
+ * @import { ViewGroup, ViewGroups } from '$lib/types/public';
  */
+
+/**
+ * Parse view filters configuration. This supports both an array, which is compatible with
+ * Netlify/Decap CMS, and an object, which is compatible with Static CMS.
+ * @param {ViewGroup[] | ViewGroups | undefined} filters View filters configuration.
+ * @returns {{ options: ViewGroup[], default?: GroupingConditions }} Parsed view filters.
+ * @see https://decapcms.org/docs/configuration-options/#view_groups
+ * @see https://staticjscms.netlify.app/docs/collection-overview#view-groups
+ */
+export const parseGroupConfig = (filters) => {
+  if (Array.isArray(filters)) {
+    return { options: filters };
+  }
+
+  if (isObject(filters)) {
+    const { groups: options, default: defaultGroupName } = /** @type {ViewGroups} */ (filters);
+
+    if (Array.isArray(options)) {
+      const defaultGroup = defaultGroupName
+        ? options.find(({ name }) => name === defaultGroupName)
+        : undefined;
+
+      return {
+        options,
+        default: defaultGroup
+          ? { field: defaultGroup.field, pattern: defaultGroup.pattern }
+          : undefined,
+      };
+    }
+  }
+
+  return { options: [] };
+};
 
 /**
  * Group the given entries.
@@ -68,3 +104,25 @@ export const groupEntries = (
 
   return sortedGroups;
 };
+
+/**
+ * View groups for the selected entry collection.
+ * @type {import('svelte/store').Readable<ViewGroup[]>}
+ */
+export const viewGroups = derived([selectedCollection], ([_collection], set) => {
+  // Disable sorting for file/singleton collection
+  if (!_collection?.folder) {
+    set([]);
+
+    return;
+  }
+
+  const { options, default: defaultGroup } = parseGroupConfig(_collection.view_groups);
+
+  set(options);
+
+  currentView.update((_view) => ({
+    ..._view,
+    group: _view.group ?? defaultGroup,
+  }));
+});

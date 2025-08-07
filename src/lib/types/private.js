@@ -739,7 +739,7 @@
 /**
  * Entry/Asset filtering conditions.
  * @typedef {object} FilteringConditions
- * @property {string} field Target field name.
+ * @property {FieldKeyPath} field Target field name.
  * @property {string | RegExp | boolean} pattern Regular expression matching pattern or exact value.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  */
@@ -747,7 +747,7 @@
 /**
  * Entry/Asset grouping conditions.
  * @typedef {object} GroupingConditions
- * @property {string} field Target field name.
+ * @property {FieldKeyPath} field Target field name.
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
