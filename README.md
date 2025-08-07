@@ -347,7 +347,8 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Setting the collection `path` doesn’t affect the entry slugs stored with the Relation widget.[^137]
   - Entry slugs are [localizable](#localizing-entry-slugs).[^80]
 - Entry listing
-  - [Default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified.[^172]
+  - The [default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified.[^172]
+  - The default filtering and grouping can also be specified in the same way as with [Static CMS](https://staticjscms.netlify.app/docs/decap-migration-guide#view-filters).[^269]
   - Sorting entries by a DateTime field works as expected.[^110]
   - Entry grouping and sorting can work together. For example, it’s possible to group by year and then sort by year if configured properly.
   - The `sortable_fields` option accepts a special `slug` value to allow sorting by entry slugs.
@@ -642,7 +643,7 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
 
 - Configuration options
   - Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
-  - The `default` option for sortable fields is [implemented in Sveltia CMS](#specifying-default-sort-field-and-direction).
+  - The [`sortable_fields`](#specifying-default-sort-field-and-direction), `view_filters` and `view_groups` options with the new `default` option are supported in Sveltia CMS.
   - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented before GA. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
   - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
   - The `yaml` global option will not be supported, as Sveltia CMS doesn’t expose the underlying `yaml` library options for forward compatibility reasons. However, we do have some [data output options](#controlling-data-output), including YAML indentation and quotes.
@@ -2239,3 +2240,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^267]: Netlify/Decap CMS [#5065](https://github.com/decaporg/decap-cms/issues/5065) — The issue was closed, but it’s still not working as expected in Decap CMS.
 
 [^268]: Netlify/Decap CMS [#4945](https://github.com/decaporg/decap-cms/issues/4945)
+
+[^269]: Netlify/Decap CMS [#7568](https://github.com/decaporg/decap-cms/issues/7568)
