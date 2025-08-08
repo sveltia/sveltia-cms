@@ -135,6 +135,7 @@ Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
+- Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, 245+ issues, or 510+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
   - Target:
@@ -642,9 +643,10 @@ Found a compatibility issue or other missing feature? [Let us know](https://gith
 
 Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/StaticJsCMS/static-cms), a now-defunct fork of Netlify CMS. Since Static CMS was archived some time ago, we don’t plan to implement additional compatibility beyond what’s listed below. However, we may still adopt some of their features that we find useful.
 
+Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) while Sveltia CMS mostly follows Netlify/Decap CMS, so you should review your configuration carefully.
+
 - Configuration options
-  - Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/decap-migration-guide) to view filters/groups, List widget, etc. while Sveltia CMS follows Netlify/Decap CMS, so you should review your configuration carefully.
-  - The [`sortable_fields`](#specifying-default-sort-field-and-direction), `view_filters` and `view_groups` options with the new `default` option are supported in Sveltia CMS.
+  - Sveltia CMS supports the [`sortable_fields`](#specifying-default-sort-field-and-direction), `view_filters` and `view_groups` options with the new `default` option. We still support the legacy Netlify/Decap CMS format as well, so you can use [either format](https://staticjscms.netlify.app/docs/decap-migration-guide#sortable-fields) for these options.
   - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented before GA. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
   - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
   - The `yaml` global option will not be supported, as Sveltia CMS doesn’t expose the underlying `yaml` library options for forward compatibility reasons. However, we do have some [data output options](#controlling-data-output), including YAML indentation and quotes.
@@ -652,10 +654,11 @@ Sveltia CMS provides partial compatibility with [Static CMS](https://github.com/
   - The `enforce_required_non_default` i18n option will not be supported. Sveitia CMS enforces required fields in all locales by default. However, the `save_all_locales` or `initial_locales` i18n option allows users to [disable non-default locales](#disabling-non-default-locale-content) if needed. Developers can also specify a subset of locales with the `required` field option, e.g. `required: [en]`.
 - Widgets
   - The date/time format options for the DateTime widget are **not compatible** since Static CMS [switched to date-fns](https://staticjscms.netlify.app/docs/decap-migration-guide#dates) while Sveltia CMS continues to use Moment.js (and will soon switch to Day.js). Update your formats accordingly.
-  - The KeyValue widget is implemented in Sveltia CMS with the same options.
-  - The UUID widget is also implemented, but with different options.
+  - The [KeyValue widget](#new-widgets) is implemented in Sveltia CMS with the same options.
+  - The [UUID widget](#new-widgets) is also implemented, but with different options.
   - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS, respectively. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
   - The `multiple` option for the File and Image widgets will be implemented in Sveltia CMS before GA. ([#10](https://github.com/sveltia/sveltia-cms/issues/10))
+  - The [breaking change to the List widget](https://staticjscms.netlify.app/docs/decap-migration-guide#list-widget) doesn’t apply to Sveltia CMS. You must use the `field` (singular) option to produce a single subfield with [no `name` output](#understanding-exceptions-in-data-output).
 - Customization
   - `CMS.registerIcon()` will not be supported, as Sveltia CMS includes the Material Symbols font for [custom collection icons](#using-a-custom-icon-for-a-collection) that doesn’t require manual registration.
 
