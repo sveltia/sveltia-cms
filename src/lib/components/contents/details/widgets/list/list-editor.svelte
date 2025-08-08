@@ -71,6 +71,7 @@
     i18n,
     // Widget-specific options
     allow_add: allowAdd = true,
+    allow_remove: allowRemove = true,
     collapsed,
     summary,
     minimize_collapsed: minimizeCollapsed = false,
@@ -457,17 +458,19 @@
                     </Menu>
                   {/snippet}
                 </MenuButton>
-                <Button
-                  variant="ghost"
-                  size="small"
-                  iconic
-                  aria-label={$_('remove')}
-                  onclick={() => removeItem(index)}
-                >
-                  {#snippet startIcon()}
-                    <Icon name="close" />
-                  {/snippet}
-                </Button>
+                {#if allowRemove}
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    iconic
+                    aria-label={$_('remove')}
+                    onclick={() => removeItem(index)}
+                  >
+                    {#snippet startIcon()}
+                      <Icon name="close" />
+                    {/snippet}
+                  </Button>
+                {/if}
               {/snippet}
             </ObjectHeader>
             <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">

@@ -465,7 +465,10 @@
  * @property {string[] | Record<string, any>[] | Record<string, any>} [default] Default value. The
  * format depends on how the field is configured, with or without `field`, `fields` or `types`. See
  * the document for details.
- * @property {boolean} [allow_add] Whether to allow users to add new values. Default: `true`.
+ * @property {boolean} [allow_add] Whether to allow users to add new items to the list. Default:
+ * `true`.
+ * @property {boolean} [allow_remove] Whether to allow users to remove items from the list. Default:
+ * `true`.
  * @property {boolean} [add_to_top] Whether to add new items to the top of the list instead of the
  * bottom. Default: `false`.
  * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
