@@ -172,7 +172,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - Other crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204][^260]
 - We build [our own UI component library](https://github.com/sveltia/sveltia-ui), including custom dialogs, to ensure optimal usability without compromising accessibility.[^196][^205][^206][^207][^208][^209][^210]
-- Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled.
+- Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled, which enables certain features and displays the CMS version number.[^270]
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available.[^31] Then update to the latest version with a single click.[^66]
 <!-- - The in-app Help menu provides all links to useful resources, including release notes, feedback and support. -->
 
@@ -1648,6 +1648,7 @@ Due early 2026
 - Tackling even more Netlify/Decap CMS issues:
   - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
+  - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
   - Advanced Relation fields[^242], including cascade updates/deletes[^243] and quick item additions[^266]
     - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
@@ -2037,7 +2038,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^166]: Netlify/Decap CMS [#277](https://github.com/decaporg/decap-cms/issues/277)
 
-[^167]: Netlify/Decap CMS [#263](https://github.com/decaporg/decap-cms/issues/263)
+[^167]: Netlify/Decap CMS [#263](https://github.com/decaporg/decap-cms/issues/263), [#2034](https://github.com/decaporg/decap-cms/issues/2034)
 
 [^168]: Netlify/Decap CMS [#1948](https://github.com/decaporg/decap-cms/issues/1948)
 
@@ -2169,9 +2170,9 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^232]: Netlify/Decap CMS [#7457](https://github.com/decaporg/decap-cms/issues/7457)
 
-[^233]: Netlify/Decap CMS [#535](https://github.com/decaporg/decap-cms/issues/535), [#1284](https://github.com/decaporg/decap-cms/issues/1284), [#3846](https://github.com/decaporg/decap-cms/issues/3846)
+[^233]: Netlify/Decap CMS [#427](https://github.com/decaporg/decap-cms/issues/427), [#535](https://github.com/decaporg/decap-cms/issues/535), [#1284](https://github.com/decaporg/decap-cms/issues/1284), [#3846](https://github.com/decaporg/decap-cms/issues/3846)
 
-[^234]: Netlify/Decap CMS [#2019](https://github.com/decaporg/decap-cms/issues/2019) — Rather than relying on a third-party library, we built our own asset browser that integrates more seamlessly with the rest of the CMS.
+[^234]: Netlify/Decap CMS [#2243](https://github.com/decaporg/decap-cms/issues/2243), [#4965](https://github.com/decaporg/decap-cms/issues/4965) — Rather than relying on a third-party library, we built our own asset browser that integrates more seamlessly with the rest of the CMS.
 
 [^235]: Netlify/Decap CMS [#6905](https://github.com/decaporg/decap-cms/discussions/6905) — We use Lexical created by Facebook (Meta).
 
@@ -2242,3 +2243,7 @@ This software is provided “as is” without any express or implied warranty. W
 [^268]: Netlify/Decap CMS [#4945](https://github.com/decaporg/decap-cms/issues/4945)
 
 [^269]: Netlify/Decap CMS [#7568](https://github.com/decaporg/decap-cms/issues/7568)
+
+[^270]: Netlify/Decap CMS [#292](https://github.com/decaporg/decap-cms/issues/292) — It cannot be found in the current version of Decap CMS.
+
+[^271]: Netlify/Decap CMS [#1046](https://github.com/decaporg/decap-cms/issues/1046)
