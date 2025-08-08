@@ -449,6 +449,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Users can preview variable types without having to register a preview template.[^42]
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
+  - The `allow_remove` option can be used to prevent users from removing items in a List field.[^272]
 - Map
   - A search bar enables users to quickly locate a specific place on the map.[^252]
   - With the [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), users can get their current location with one click.
@@ -2247,3 +2248,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^270]: Netlify/Decap CMS [#292](https://github.com/decaporg/decap-cms/issues/292) — It cannot be found in the current version of Decap CMS.
 
 [^271]: Netlify/Decap CMS [#1046](https://github.com/decaporg/decap-cms/issues/1046)
+
+[^272]: Netlify/Decap CMS [#4702](https://github.com/decaporg/decap-cms/issues/4702)
