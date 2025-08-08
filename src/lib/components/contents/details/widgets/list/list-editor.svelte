@@ -405,59 +405,61 @@
                 </Button>
               {/snippet}
               {#snippet endContent()}
-                <MenuButton
-                  variant="ghost"
-                  size="small"
-                  iconic
-                  popupPosition="bottom-right"
-                  aria-label={$_('list_item_options')}
-                  disabled={isDuplicateField}
-                >
-                  {#snippet popup()}
-                    <Menu aria-label={$_('translation_options')}>
-                      <MenuItem
-                        label={$_('duplicate')}
-                        disabled={hasMaxItems}
-                        onclick={() => addItem({ index: index + 1, dupIndex: index })}
-                      />
-                      {#if hasVariableTypes}
-                        <MenuItem label={$_('add_item_above')} disabled={hasMaxItems}>
-                          <!-- eslint-disable-next-line no-shadow -->
-                          {#snippet items()}
-                            {#each types ?? [] as { name, label: itemLabel } (name)}
-                              <MenuItem
-                                label={itemLabel || name}
-                                onclick={() => addItem({ index, type: name })}
-                              />
-                            {/each}
-                          {/snippet}
-                        </MenuItem>
-                        <MenuItem label={$_('add_item_below')} disabled={hasMaxItems}>
-                          <!-- eslint-disable-next-line no-shadow -->
-                          {#snippet items()}
-                            {#each types ?? [] as { name, label: itemLabel } (name)}
-                              <MenuItem
-                                label={itemLabel || name}
-                                onclick={() => addItem({ index: index + 1, type: name })}
-                              />
-                            {/each}
-                          {/snippet}
-                        </MenuItem>
-                      {:else}
+                {#if allowAdd}
+                  <MenuButton
+                    variant="ghost"
+                    size="small"
+                    iconic
+                    popupPosition="bottom-right"
+                    aria-label={$_('list_item_options')}
+                    disabled={isDuplicateField}
+                  >
+                    {#snippet popup()}
+                      <Menu aria-label={$_('translation_options')}>
                         <MenuItem
-                          label={$_('add_item_above')}
+                          label={$_('duplicate')}
                           disabled={hasMaxItems}
-                          onclick={() => addItem({ index })}
+                          onclick={() => addItem({ index: index + 1, dupIndex: index })}
                         />
-                        <MenuItem
-                          label={$_('add_item_below')}
-                          disabled={hasMaxItems}
-                          onclick={() => addItem({ index: index + 1 })}
-                        />
-                      {/if}
-                    </Menu>
-                  {/snippet}
-                </MenuButton>
+                        {#if hasVariableTypes}
+                          <MenuItem label={$_('add_item_above')} disabled={hasMaxItems}>
+                            <!-- eslint-disable-next-line no-shadow -->
+                            {#snippet items()}
+                              {#each types ?? [] as { name, label: itemLabel } (name)}
+                                <MenuItem
+                                  label={itemLabel || name}
+                                  onclick={() => addItem({ index, type: name })}
+                                />
+                              {/each}
+                            {/snippet}
+                          </MenuItem>
+                          <MenuItem label={$_('add_item_below')} disabled={hasMaxItems}>
+                            <!-- eslint-disable-next-line no-shadow -->
+                            {#snippet items()}
+                              {#each types ?? [] as { name, label: itemLabel } (name)}
+                                <MenuItem
+                                  label={itemLabel || name}
+                                  onclick={() => addItem({ index: index + 1, type: name })}
+                                />
+                              {/each}
+                            {/snippet}
+                          </MenuItem>
+                        {:else}
+                          <MenuItem
+                            label={$_('add_item_above')}
+                            disabled={hasMaxItems}
+                            onclick={() => addItem({ index })}
+                          />
+                          <MenuItem
+                            label={$_('add_item_below')}
+                            disabled={hasMaxItems}
+                            onclick={() => addItem({ index: index + 1 })}
+                          />
+                        {/if}
+                      </Menu>
+                    {/snippet}
+                  </MenuButton>
+                {/if}
                 {#if allowRemove}
                   <Button
                     variant="ghost"
