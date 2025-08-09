@@ -213,10 +213,14 @@
       height: var(--icon-size, 32px);
     }
 
-    &.tile,
-    &.icon {
+    &:is(.tile, .icon) {
       overflow: hidden;
       aspect-ratio: 1 / 1;
+
+      img {
+        // Prevent the image from being dragged
+        pointer-events: none;
+      }
     }
 
     .blur {
