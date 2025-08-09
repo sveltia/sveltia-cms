@@ -46,7 +46,7 @@
    * SelectAssetsView,
    * SelectedResource,
    * } from '$lib/types/private';
-   * @import { FileField, ImageField, StockAssetProviderName } from '$lib/types/public';
+   * @import { MediaField, StockAssetProviderName } from '$lib/types/public';
    */
 
   /**
@@ -56,7 +56,7 @@
    * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
    * @property {Writable<EntryDraft | null | undefined>} [entryDraft] Associated entry draft.
-   * @property {FileField | ImageField} [fieldConfig] Field configuration.
+   * @property {MediaField} [fieldConfig] Field configuration.
    * @property {(resource: SelectedResource) => void} [onSelect] Custom `Select` event handler that
    * will be called when the dialog is closed with the Insert button.
    */

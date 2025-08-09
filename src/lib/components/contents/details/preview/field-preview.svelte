@@ -5,10 +5,11 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/editor/expanders';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';
-   * @import { Field, FieldKeyPath, RelationField, SelectField } from '$lib/types/public';
+   * @import { Field, FieldKeyPath, MultiValueField } from '$lib/types/public';
    */
 
   /**
@@ -34,11 +35,10 @@
     preview = true,
     i18n = false,
   } = $derived(fieldConfig);
-  const hasMultiple = $derived(['relation', 'select'].includes(widgetName));
-  const multiple = $derived(
-    hasMultiple ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple : undefined,
+  const { multiple = false } = $derived(
+    /** @type {MultiValueField} */ (MULTI_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}),
   );
-  const isList = $derived(widgetName === 'list' || (hasMultiple && multiple));
+  const isList = $derived(widgetName === 'list' || multiple);
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
   const collectionName = $derived($entryDraft?.collectionName ?? '');

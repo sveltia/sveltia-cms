@@ -2,6 +2,8 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
+import { MULTI_VALUE_WIDGETS, SIMPLE_VALUE_WIDGETS } from '$lib/services/contents/widgets';
+
 import { getEditorComponent, isWidgetSupported } from './component-helper';
 
 // Mock the editors module
@@ -31,32 +33,19 @@ vi.mock('$lib/components/contents/details/widgets', () => ({
 describe('component-helper', () => {
   describe('isWidgetSupported', () => {
     describe('simple value widgets', () => {
-      const simpleValueWidgets = [
-        'boolean',
-        'color',
-        'compute',
-        'datetime',
-        'map',
-        'markdown',
-        'number',
-        'string',
-        'text',
-        'uuid',
-      ];
-
-      it.each(simpleValueWidgets)('should support %s widget', (widget) => {
+      it.each(SIMPLE_VALUE_WIDGETS)('should support %s widget', (widget) => {
         const fieldConfig = { widget };
 
         expect(isWidgetSupported(fieldConfig)).toBe(true);
       });
 
-      it.each(simpleValueWidgets)('should support %s widget with multiple=false', (widget) => {
+      it.each(SIMPLE_VALUE_WIDGETS)('should support %s widget with multiple=false', (widget) => {
         const fieldConfig = { widget, multiple: false };
 
         expect(isWidgetSupported(fieldConfig)).toBe(true);
       });
 
-      it.each(simpleValueWidgets)('should support %s widget with multiple=true', (widget) => {
+      it.each(SIMPLE_VALUE_WIDGETS)('should support %s widget with multiple=true', (widget) => {
         const fieldConfig = { widget, multiple: true };
 
         expect(isWidgetSupported(fieldConfig)).toBe(true);
@@ -64,15 +53,13 @@ describe('component-helper', () => {
     });
 
     describe('multi-value widgets', () => {
-      const multiValueWidgets = ['file', 'image', 'relation', 'select'];
-
-      it.each(multiValueWidgets)('should support %s widget when multiple=false', (widget) => {
+      it.each(MULTI_VALUE_WIDGETS)('should support %s widget when multiple=false', (widget) => {
         const fieldConfig = { widget, multiple: false };
 
         expect(isWidgetSupported(fieldConfig)).toBe(true);
       });
 
-      it.each(multiValueWidgets)(
+      it.each(MULTI_VALUE_WIDGETS)(
         'should support %s widget when multiple is undefined',
         (widget) => {
           const fieldConfig = { widget };
@@ -81,7 +68,7 @@ describe('component-helper', () => {
         },
       );
 
-      it.each(multiValueWidgets)('should not support %s widget when multiple=true', (widget) => {
+      it.each(MULTI_VALUE_WIDGETS)('should not support %s widget when multiple=true', (widget) => {
         const fieldConfig = { widget, multiple: true };
 
         expect(isWidgetSupported(fieldConfig)).toBe(false);
@@ -266,20 +253,7 @@ describe('component-helper', () => {
     });
 
     describe('all supported simple value widgets', () => {
-      const simpleValueWidgets = [
-        'boolean',
-        'color',
-        'compute',
-        'datetime',
-        'map',
-        'markdown',
-        'number',
-        'string',
-        'text',
-        'uuid',
-      ];
-
-      it.each(simpleValueWidgets)('should return component for %s widget', (widget) => {
+      it.each(SIMPLE_VALUE_WIDGETS)('should return component for %s widget', (widget) => {
         const fieldConfig = { widget };
         const component = getEditorComponent(fieldConfig);
         const widgetName = widget.charAt(0).toUpperCase() + widget.slice(1).toLowerCase();
@@ -290,9 +264,7 @@ describe('component-helper', () => {
     });
 
     describe('all supported multi-value widgets', () => {
-      const multiValueWidgets = ['file', 'image', 'relation', 'select'];
-
-      it.each(multiValueWidgets)(
+      it.each(MULTI_VALUE_WIDGETS)(
         'should return component for %s widget with multiple=false',
         (widget) => {
           const fieldConfig = { widget, multiple: false };

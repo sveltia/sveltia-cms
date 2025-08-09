@@ -704,6 +704,21 @@
  */
 
 /**
+ * Media field types.
+ * @typedef {FileField | ImageField} MediaField
+ */
+
+/**
+ * Field types that have the `multiple` option.
+ * @typedef {MediaField | RelationField | SelectField} MultiValueField
+ */
+
+/**
+ * Field types that have the `min` and `max` options.
+ * @typedef {MultiValueField | ListField | NumberField} MinMaxValueField
+ */
+
+/**
  * Name of a built-in widget. Sveltia CMS supports all the built-in widgets provided by Decap CMS as
  * well as some new widgets.
  * @typedef {'boolean' | 'code' | 'color' | 'compute' | 'datetime' | 'file' | 'hidden' | 'image' |

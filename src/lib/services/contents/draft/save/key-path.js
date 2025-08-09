@@ -1,11 +1,12 @@
+import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
+
 /**
  * @import {
  * Field,
  * FieldKeyPath,
  * ListField,
+ * MultiValueField,
  * ObjectField,
- * RelationField,
- * SelectField,
  * } from '$lib/types/public';
  */
 
@@ -64,8 +65,8 @@ const parseField = ({ field, keyPath, keyPathList }) => {
     }
   }
 
-  if (widget === 'select' || widget === 'relation') {
-    const { multiple = false } = /** @type {SelectField | RelationField} */ (field);
+  if (widget && MULTI_VALUE_WIDGETS.includes(widget)) {
+    const { multiple = false } = /** @type {MultiValueField} */ (field);
 
     keyPathList.push(multiple ? `${keyPath}.*` : keyPath);
   }

@@ -16,6 +16,7 @@
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { isFieldRequired } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { MIN_MAX_VALUE_WIDGETS, MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 
   /**
    * @import { Component } from 'svelte';
@@ -26,9 +27,9 @@
    * Field,
    * FieldKeyPath,
    * ListField,
+   * MinMaxValueField,
+   * MultiValueField,
    * NumberField,
-   * RelationField,
-   * SelectField,
    * StringField,
    * TextField,
    * } from '$lib/types/public';
@@ -87,8 +88,11 @@
     types,
   } = /** @type {ListField} */ ($derived(fieldConfig));
   const hasSubFields = $derived(!!subField || !!subFields || !!types);
-  const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
-    $derived(fieldConfig)
+  const { multiple = false } = $derived(
+    /** @type {MultiValueField} */ (MULTI_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}),
+  );
+  const { min = 0, max = Infinity } = $derived(
+    /** @type {MinMaxValueField} */ (MIN_MAX_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}),
   );
   const type = $derived(
     // prettier-ignore
@@ -117,14 +121,10 @@
       : undefined,
   );
   const hasExtraLabels = $derived(!!(prefix || suffix || beforeInputLabel || afterInputLabel));
-  const hasMultiple = $derived(['relation', 'select'].includes(widgetName));
-  const multiple = $derived(
-    hasMultiple ? /** @type {RelationField | SelectField} */ (fieldConfig).multiple : undefined,
-  );
   const canAddMultiValue = $derived(
     (widgetName === 'list' && hasSubFields) || multiple || widgetName === 'keyvalue',
   );
-  const isList = $derived(widgetName === 'list' || (hasMultiple && multiple));
+  const isList = $derived(widgetName === 'list' || multiple);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalValues = $derived($entryDraft?.originalValues);

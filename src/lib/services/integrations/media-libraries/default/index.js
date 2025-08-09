@@ -11,9 +11,8 @@ import { optimizeSVG, transformImage } from '$lib/services/utils/media/image/tra
 /**
  * @import {
  * DefaultMediaLibraryConfig,
- * FileField,
  * FileTransformations,
- * ImageField,
+ * MediaField,
  * RasterImageTransformationOptions,
  * } from '$lib/types/public';
  */
@@ -21,7 +20,7 @@ import { optimizeSVG, transformImage } from '$lib/services/utils/media/image/tra
 /**
  * Get normalized default media library options.
  * @param {object} [options] Options.
- * @param {FileField | ImageField} [options.fieldConfig] Field configuration.
+ * @param {MediaField} [options.fieldConfig] Field configuration.
  * @returns {{ config: DefaultMediaLibraryConfig }} Options.
  */
 export const getDefaultMediaLibraryOptions = ({ fieldConfig } = {}) => {

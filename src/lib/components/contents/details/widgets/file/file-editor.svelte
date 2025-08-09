@@ -36,12 +36,12 @@
    * SelectedResource,
    * WidgetEditorProps,
    * } from '$lib/types/private';
-   * @import { FileField, ImageField } from '$lib/types/public';
+   * @import { MediaField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {FileField | ImageField} fieldConfig Field configuration.
+   * @property {MediaField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 

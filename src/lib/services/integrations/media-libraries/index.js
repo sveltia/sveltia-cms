@@ -3,14 +3,14 @@ import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 
 /**
- * @import { FileField, ImageField, MediaLibraryName } from '$lib/types/public';
+ * @import { MediaField, MediaLibraryName } from '$lib/types/public';
  */
 
 /**
  * Get any media library options. Support both new and legacy options at the field level and global.
  * @param {object} [options] Options.
  * @param {MediaLibraryName} [options.libraryName] Library name.
- * @param {FileField | ImageField} [options.fieldConfig] Field configuration.
+ * @param {MediaField} [options.fieldConfig] Field configuration.
  * @returns {Record<string, any>} Options.
  */
 export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {

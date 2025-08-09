@@ -8,6 +8,7 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
+import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
 import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
@@ -24,6 +25,7 @@ import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
  * Field,
  * FieldKeyPath,
  * ListField,
+ * MultiValueField,
  * NumberField,
  * RelationField,
  * SelectField,
@@ -86,10 +88,10 @@ export const getField = ({
       const keyPathArraySub = keyPathArray.slice(0, index);
       const { widget = 'text' } = field;
 
-      // Handle Select and Relation widgets with numeric keys, e.g. `authors.0`
-      if (isNumericKey && ['select', 'relation'].includes(widget)) {
-        // For single Select/Relation, numeric access is not allowed
-        if (!(/** @type {SelectField | RelationField} */ (field).multiple)) {
+      // Handle multi-value widgets with numeric keys, e.g. `authors.0`
+      if (isNumericKey && MULTI_VALUE_WIDGETS.includes(widget)) {
+        // For single value field, numeric access is not allowed
+        if (!(/** @type {MultiValueField} */ (field).multiple)) {
           field = undefined;
         }
 

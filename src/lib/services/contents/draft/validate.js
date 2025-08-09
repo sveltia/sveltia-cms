@@ -3,6 +3,11 @@ import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
+import {
+  MEDIA_WIDGETS,
+  MIN_MAX_VALUE_WIDGETS,
+  MULTI_VALUE_WIDGETS,
+} from '$lib/services/contents/widgets';
 import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
 import { validateStringField } from '$lib/services/contents/widgets/string/validate';
 import { getRegex } from '$lib/services/utils/misc';
@@ -14,9 +19,9 @@ import { getRegex } from '$lib/services/utils/misc';
  * CodeField,
  * ListField,
  * LocaleCode,
+ * MinMaxValueField,
+ * MultiValueField,
  * NumberField,
- * RelationField,
- * SelectField,
  * StringField,
  * TextField,
  * } from '$lib/types/public';
@@ -59,6 +64,15 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
   }
 
   const { widget: widgetName = 'string', i18n = false, pattern: validation } = fieldConfig;
+
+  const { multiple = false } = /** @type {MultiValueField} */ (
+    MULTI_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}
+  );
+
+  const { min = 0, max = Infinity } = /** @type {MinMaxValueField} */ (
+    MIN_MAX_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}
+  );
+
   const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
 
   // Skip validation on non-editable fields
@@ -86,24 +100,14 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
       }
     }
 
-    if (widgetName === 'select' || widgetName === 'relation') {
-      const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
-
-      if (multiple) {
-        // `select` or `relation` field with `multiple: true`, same as a simple list field
-        return undefined;
-      }
+    if (multiple) {
+      // Same as a simple list field
+      return undefined;
     }
   }
 
   const valueEntries = Object.entries(valueMap);
   const required = isFieldRequired({ fieldConfig, locale });
-  const { multiple = false } = /** @type {RelationField | SelectField} */ (fieldConfig);
-  const isMultiSelection = ['select', 'relation'].includes(widgetName) && multiple;
-
-  const { min, max } = /** @type {ListField | NumberField | RelationField | SelectField} */ (
-    fieldConfig
-  );
 
   /** @type {EntryValidityState} */
   const validity = {
@@ -116,7 +120,7 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
     typeMismatch: false,
   };
 
-  if (widgetName === 'list' || isMultiSelection) {
+  if (widgetName === 'list' || multiple) {
     // Given that values for an array field are flatten into `field.0`, `field.1` ... `field.N`,
     // we should validate only once against all these values
     if (keyPath in validities[locale]) {
@@ -197,7 +201,7 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
   }
 
   if (
-    ['file', 'image'].includes(widgetName) &&
+    MEDIA_WIDGETS.includes(widgetName) &&
     typeof value === 'string' &&
     value.startsWith('blob:')
   ) {
@@ -205,9 +209,7 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
     value = files[value]?.file?.name;
   }
 
-  if (
-    !(['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(widgetName) || isMultiSelection)
-  ) {
+  if (!(['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(widgetName) || multiple)) {
     if (typeof value === 'string') {
       value = value.trim();
     }

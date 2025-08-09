@@ -6,12 +6,7 @@ import unsplash from './unsplash';
 
 /**
  * @import { MediaLibraryService } from '$lib/types/private';
- * @import {
- * FileField,
- * ImageField,
- * StockAssetMediaLibrary,
- * StockAssetProviderName,
- * } from '$lib/types/public';
+ * @import { MediaField, StockAssetMediaLibrary, StockAssetProviderName } from '$lib/types/public';
  */
 
 /**
@@ -27,7 +22,7 @@ export const allStockAssetProviders = {
 /**
  * Get normalized stock photo/video media library options.
  * @param {object} [options] Options.
- * @param {FileField | ImageField} [options.fieldConfig] Field configuration.
+ * @param {MediaField} [options.fieldConfig] Field configuration.
  * @returns {StockAssetMediaLibrary} Options.
  */
 export const getStockAssetMediaLibraryOptions = ({ fieldConfig } = {}) => {
