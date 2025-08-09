@@ -94,7 +94,8 @@ Welcome to the only Netlify CMS successor you can trust!
 - [Roadmap](#roadmap)
   - [v1.0](#v10)
   - [v2.0](#v20)
-  - [Future](#future)
+  - [v3.0](#v30)
+  - [TBD](#tbd)
 - [Trivia](#trivia)
 - [Related links](#related-links)
   - [As seen on](#as-seen-on)
@@ -1369,7 +1370,7 @@ output:
 
 Content is generally saved as key-value pairs in a file, where the key is the field name and the value is the field value. However, there are some exceptions you should be aware of.
 
-If the format is front matter, the `body` field is saved outside of the front matter block, as briefly explained in the [Decap CMS documentation](https://decapcms.org/docs/configuration-options/):
+If the format is front matter, the `body` field is saved outside of the front matter block, as briefly explained in the [Decap CMS documentation](https://decapcms.org/docs/configuration-options/#extension-and-format):
 
 ```yaml
 ---
@@ -1421,10 +1422,10 @@ There are two exceptional cases for the List widget:
    instead of an array of objects:
    ```yaml
    images:
-     - name: https://example.com/image1.jpg
-     - name: https://example.com/image2.jpg
+     - image: https://example.com/image1.jpg
+     - image: https://example.com/image2.jpg
    ```
-   This is not mentioned in the [Decap CMS documentation](https://decapcms.org/docs/widgets/#list), but it’s a known behaviour. If you expect the latter, you can use the `fields` (plural) option to define a single field:
+   This is not mentioned in the [Decap CMS document](https://decapcms.org/docs/widgets/#list), but it’s a known behaviour. If you expect the latter, you can use the `fields` (plural) option to define a single field:
    ```yaml
    - name: images
      label: Images
@@ -1652,16 +1653,18 @@ Due early 2026
 - Tackling even more Netlify/Decap CMS issues:
   - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
-  - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
-  - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
-  - Advanced Relation fields[^242], including cascade updates/deletes[^243] and quick item additions[^266]
-    - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
-  - (some of them may be included in v1.0)
 - End-user documentation
 
-### Future
+### v3.0
 
-- Tackling many of the remaining Netlify/Decap CMS issues:
+- **Sveltia CMS Additions**: Edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
+  - User management (Netlify Identity alternative) with roles[^23]
+  - Sign-in without a Git service account (Git Gateway alternative)
+- Contributor documentation
+
+### TBD
+
+- Tackling most of the remaining Netlify/Decap CMS issues (some may be included in v2.0 or v3.0):
   - MDX support[^122]
   - [Saving drafts without editorial workflow](https://github.com/sveltia/sveltia-cms/discussions/440)[^261]
   - [Tables in Markdown](https://github.com/sveltia/sveltia-cms/issues/455)[^256]
@@ -1669,11 +1672,12 @@ Due early 2026
   - [Theming](https://github.com/sveltia/sveltia-cms/issues/29)[^262]
   - [Reusable field groups](https://github.com/sveltia/sveltia-cms/discussions/463)[^263]
   - Offline support[^238]
+  - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
+  - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
+  - Advanced Relation fields[^242], including cascade updates/deletes[^243] and quick item additions[^266]
+    - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
-  - (some of them may be included in v2.0)
-- **Sveltia CMS Additions**: edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
-  - User management (Netlify Identity alternative) with roles[^23]
-  - Sign-in without a Git service account (Git Gateway alternative)
+- Enhancements to Sveltia CMS Additions (some may be included in v3.0):
   - Post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166]
   - Scheduled posts[^167]
   - Credential management for service API keys, deploy hook URL, etc.
@@ -1687,9 +1691,8 @@ Due early 2026
 - AI integrations for image generation, content writing, translation, etc.
 - Search enhancements
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
-- Marketplace for custom widgets, etc.
+- Marketplace for custom widgets, etc.[^273]
 - Official starter templates for the most popular frameworks, including SvelteKit and Next.js
-- Contributor documentation
 - and so much more!
 
 ## Trivia
@@ -2253,3 +2256,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^271]: Netlify/Decap CMS [#1046](https://github.com/decaporg/decap-cms/issues/1046)
 
 [^272]: Netlify/Decap CMS [#4702](https://github.com/decaporg/decap-cms/issues/4702)
+
+[^273]: Netlify/Decap CMS [#919](https://github.com/decaporg/decap-cms/issues/919), [#936](https://github.com/decaporg/decap-cms/issues/936), [#1286](https://github.com/netlify/netlify-cms/issues/1286), [#1288](https://github.com/decaporg/decap-cms/issues/1288), [#1400](https://github.com/decaporg/decap-cms/issues/1400)
