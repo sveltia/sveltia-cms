@@ -1649,7 +1649,7 @@ Due late 2025
 
 Due early 2026
 
-- Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections
+- Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections, while addressing a number of bugs in their implementations
 - Tackling even more Netlify/Decap CMS issues:
   - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
@@ -1665,18 +1665,19 @@ Due early 2026
 ### TBD
 
 - Tackling most of the remaining Netlify/Decap CMS issues (some may be included in v2.0 or v3.0):
-  - MDX support[^122]
-  - [Saving drafts without editorial workflow](https://github.com/sveltia/sveltia-cms/discussions/440)[^261]
-  - [Tables in Markdown](https://github.com/sveltia/sveltia-cms/issues/455)[^256]
-  - [Config editor](https://github.com/sveltia/sveltia-cms/discussions/452)[^10]
-  - [Theming](https://github.com/sveltia/sveltia-cms/issues/29)[^262]
-  - [Reusable field groups](https://github.com/sveltia/sveltia-cms/discussions/463)[^263]
-  - Offline support[^238]
+  - [Top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including:
+    - MDX support[^122]
+    - [Saving drafts without editorial workflow](https://github.com/sveltia/sveltia-cms/discussions/440)[^261]
+    - [Tables in Markdown](https://github.com/sveltia/sveltia-cms/issues/455)[^256]
+    - [Config editor](https://github.com/sveltia/sveltia-cms/discussions/452)[^10]
+    - [Theming](https://github.com/sveltia/sveltia-cms/issues/29)[^262]
+    - [Reusable field groups](https://github.com/sveltia/sveltia-cms/discussions/463)[^263]
+    - Offline support[^238]
   - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
   - Advanced Relation fields[^242], including cascade updates/deletes[^243] and quick item additions[^266]
     - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
-  - and other [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc)
+  - and many more (100+ issues and discussions)
 - Enhancements to Sveltia CMS Additions (some may be included in v3.0):
   - Post locking (like [WordPress](https://codex.wordpress.org/Post_Locking))[^166]
   - Scheduled posts[^167]
@@ -1689,7 +1690,10 @@ Due early 2026
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - AI integrations for image generation, content writing, translation, etc.
-- Search enhancements
+- Search enhancements:
+  - Customizable search fields[^274]
+  - Advanced search options
+  - [Fuzzy search](https://www.fusejs.io/)
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - Marketplace for custom widgets, etc.[^273]
 - Official starter templates for the most popular frameworks, including SvelteKit and Next.js
@@ -2257,4 +2261,6 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^272]: Netlify/Decap CMS [#4702](https://github.com/decaporg/decap-cms/issues/4702)
 
-[^273]: Netlify/Decap CMS [#919](https://github.com/decaporg/decap-cms/issues/919), [#936](https://github.com/decaporg/decap-cms/issues/936), [#1286](https://github.com/netlify/netlify-cms/issues/1286), [#1288](https://github.com/decaporg/decap-cms/issues/1288), [#1400](https://github.com/decaporg/decap-cms/issues/1400)
+[^273]: Netlify/Decap CMS [#919](https://github.com/decaporg/decap-cms/issues/919), [#936](https://github.com/decaporg/decap-cms/issues/936), [#1286](https://github.com/decaporg/decap-cms/issues/1286), [#1288](https://github.com/decaporg/decap-cms/issues/1288), [#1400](https://github.com/decaporg/decap-cms/issues/1400)
+
+[^274]: Netlify/Decap CMS [#549](https://github.com/decaporg/decap-cms/issues/549)
