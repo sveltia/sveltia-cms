@@ -9,6 +9,7 @@ import {
   MULTI_VALUE_WIDGETS,
 } from '$lib/services/contents/widgets';
 import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
+import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
 import { validateStringField } from '$lib/services/contents/widgets/string/validate';
 import { getRegex } from '$lib/services/utils/misc';
 
@@ -319,9 +320,7 @@ const validateList = ({ fieldConfig, validateArgs }) => {
   const { widget: widgetName = 'string' } = fieldConfig;
 
   if (widgetName === 'list') {
-    const { field, fields, types } = /** @type {ListField} */ (fieldConfig);
-
-    if (!field && !fields && !types) {
+    if (!getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields) {
       // Simple list field, so we don’t need to validate items
       return { validated, validateItems: false };
     }

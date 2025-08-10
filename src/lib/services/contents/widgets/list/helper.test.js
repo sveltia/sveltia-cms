@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
-import { formatSummary } from './helper';
+import { formatSummary, getListFieldInfo } from './helper';
 
 vi.mock('$lib/services/config');
 
@@ -492,6 +492,121 @@ describe('Test formatSummary() — comprehensive tests', () => {
           }),
         ).toEqual('nested.jpg');
       });
+    });
+  });
+});
+
+describe('Test getListFieldInfo()', () => {
+  test('field with single sub-field (field option)', () => {
+    /** @type {import('$lib/types/public').ListField} */
+    const fieldConfig = {
+      name: 'items',
+      widget: 'list',
+      field: { name: 'item', widget: 'string' },
+    };
+
+    const result = getListFieldInfo(fieldConfig);
+
+    expect(result).toEqual({
+      hasSingleSubField: true,
+      hasMultiSubFields: false,
+      hasVariableTypes: false,
+      hasSubFields: true,
+    });
+  });
+
+  test('field with multiple sub-fields (fields option)', () => {
+    /** @type {import('$lib/types/public').ListField} */
+    const fieldConfig = {
+      name: 'items',
+      widget: 'list',
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'description', widget: 'text' },
+      ],
+    };
+
+    const result = getListFieldInfo(fieldConfig);
+
+    expect(result).toEqual({
+      hasSingleSubField: false,
+      hasMultiSubFields: true,
+      hasVariableTypes: false,
+      hasSubFields: true,
+    });
+  });
+
+  test('field with variable types (types option)', () => {
+    /** @type {import('$lib/types/public').ListField} */
+    const fieldConfig = {
+      name: 'items',
+      widget: 'list',
+      types: [
+        { name: 'image', fields: [{ name: 'src', widget: 'image' }] },
+        { name: 'text', fields: [{ name: 'content', widget: 'text' }] },
+      ],
+    };
+
+    const result = getListFieldInfo(fieldConfig);
+
+    expect(result).toEqual({
+      hasSingleSubField: false,
+      hasMultiSubFields: false,
+      hasVariableTypes: true,
+      hasSubFields: true,
+    });
+  });
+
+  test('field with no sub-fields', () => {
+    /** @type {import('$lib/types/public').ListField} */
+    const fieldConfig = {
+      name: 'items',
+      widget: 'list',
+    };
+
+    const result = getListFieldInfo(fieldConfig);
+
+    expect(result).toEqual({
+      hasSingleSubField: false,
+      hasMultiSubFields: false,
+      hasVariableTypes: false,
+      hasSubFields: false,
+    });
+  });
+
+  test('field with empty fields array (should be truthy)', () => {
+    /** @type {import('$lib/types/public').ListField} */
+    const fieldConfig = {
+      name: 'items',
+      widget: 'list',
+      fields: [],
+    };
+
+    const result = getListFieldInfo(fieldConfig);
+
+    expect(result).toEqual({
+      hasSingleSubField: false,
+      hasMultiSubFields: true,
+      hasVariableTypes: false,
+      hasSubFields: true,
+    });
+  });
+
+  test('field with empty types array (should be truthy)', () => {
+    /** @type {import('$lib/types/public').ListField} */
+    const fieldConfig = {
+      name: 'items',
+      widget: 'list',
+      types: [],
+    };
+
+    const result = getListFieldInfo(fieldConfig);
+
+    expect(result).toEqual({
+      hasSingleSubField: false,
+      hasMultiSubFields: false,
+      hasVariableTypes: true,
+      hasSubFields: true,
     });
   });
 });

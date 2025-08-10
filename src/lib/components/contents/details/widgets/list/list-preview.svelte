@@ -11,6 +11,7 @@
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import Subsection from '$lib/components/contents/details/widgets/object/subsection.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
 
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
@@ -41,7 +42,7 @@
     types,
     typeKey = 'type',
   } = $derived(fieldConfig);
-  const hasSubFields = $derived(!!(field ?? fields ?? types));
+  const { hasSubFields } = $derived(getListFieldInfo(fieldConfig));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`));
   const items = $derived(
     unflatten(

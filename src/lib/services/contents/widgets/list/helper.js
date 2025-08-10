@@ -12,6 +12,32 @@ import {
  */
 
 /**
+ * @typedef {object} ListFieldInfo
+ * @property {boolean} hasSingleSubField Whether the List field has the `field` (singular) option.
+ * @property {boolean} hasMultiSubFields Whether the List field has the `fields` (plural) option.
+ * @property {boolean} hasVariableTypes Whether the List field has the variable `types` option.
+ * @property {boolean} hasSubFields Whether the List field has sub-fields.
+ */
+
+/**
+ * Get information about the List field type.
+ * @param {ListField} field Field.
+ * @returns {ListFieldInfo} Field type information.
+ */
+export const getListFieldInfo = ({ field, fields, types }) => {
+  const hasSingleSubField = !!field;
+  const hasMultiSubFields = !!fields;
+  const hasVariableTypes = !!types;
+
+  return {
+    hasSingleSubField,
+    hasMultiSubFields,
+    hasVariableTypes,
+    hasSubFields: hasSingleSubField || hasMultiSubFields || hasVariableTypes,
+  };
+};
+
+/**
  * Check if the given fields contain a single List widget with the `root` option enabled.
  * @param {Field[]} fields Field list.
  * @returns {boolean} Result.

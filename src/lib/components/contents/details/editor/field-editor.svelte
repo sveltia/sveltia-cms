@@ -17,6 +17,7 @@
   import { isFieldRequired } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { MIN_MAX_VALUE_WIDGETS, MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
+  import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
 
   /**
    * @import { Component } from 'svelte';
@@ -82,12 +83,11 @@
     readonly: readonlyOption = false,
   } = $derived(fieldConfig);
   const required = $derived(isFieldRequired({ fieldConfig, locale }));
-  const {
-    field: subField,
-    fields: subFields,
-    types,
-  } = /** @type {ListField} */ ($derived(fieldConfig));
-  const hasSubFields = $derived(!!subField || !!subFields || !!types);
+  const { hasSubFields } = $derived(
+    widgetName === 'list'
+      ? getListFieldInfo(/** @type {ListField} */ (fieldConfig))
+      : { hasSubFields: false },
+  );
   const { multiple = false } = $derived(
     /** @type {MultiValueField} */ (MULTI_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}),
   );

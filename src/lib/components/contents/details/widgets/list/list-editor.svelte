@@ -32,7 +32,7 @@
     syncExpanderStates,
   } from '$lib/services/contents/editor/expanders';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { formatSummary } from '$lib/services/contents/widgets/list/helper';
+  import { formatSummary, getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**
@@ -83,10 +83,9 @@
     types,
     typeKey = 'type',
   } = $derived(fieldConfig);
-  const hasSingleSubField = $derived(!!field);
-  const hasMultiSubFields = $derived(Array.isArray(fields));
-  const hasVariableTypes = $derived(Array.isArray(types));
-  const hasSubFields = $derived(hasSingleSubField || hasMultiSubFields || hasVariableTypes);
+  const { hasSingleSubField, hasVariableTypes, hasSubFields } = $derived(
+    getListFieldInfo(fieldConfig),
+  );
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`));
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
