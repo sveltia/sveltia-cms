@@ -14,9 +14,16 @@ import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { EntryDraft, EntryValidityState, FlattenedEntryContent } from '$lib/types/private';
+ * @import {
+ * EntryDraft,
+ * EntryValidityState,
+ * FlattenedEntryContent,
+ * GetFieldArgs,
+ * LocaleValidityMap,
+ * } from '$lib/types/private';
  * @import {
  * CodeField,
+ * Field,
  * ListField,
  * LocaleCode,
  * MinMaxValueField,
@@ -26,6 +33,36 @@ import { getRegex } from '$lib/services/utils/misc';
  * TextField,
  * } from '$lib/types/public';
  */
+
+/**
+ * @typedef {object} ValidateFieldArgs
+ * @property {EntryDraft} draft Entry draft.
+ * @property {LocaleValidityMap} validities Validity state.
+ * @property {LocaleCode} locale Current locale.
+ * @property {string} keyPath Field key path.
+ * @property {FlattenedEntryContent} valueMap Entry values.
+ * @property {any} value Field value.
+ */
+
+/**
+ * Regular expression to match the list key path, e.g. `field.0`, `field.1`, etc.
+ * @type {RegExp}
+ */
+const LIST_KEY_PATH_REGEX = /\.\d+$/;
+
+/**
+ * Default validity state for a field.
+ * @type {EntryValidityState}
+ */
+const DEFAULT_VALIDITY = {
+  valueMissing: false,
+  tooShort: false,
+  tooLong: false,
+  rangeUnderflow: false,
+  rangeOverflow: false,
+  patternMismatch: false,
+  typeMismatch: false,
+};
 
 const validityProxyHandler = {
   /**
@@ -46,18 +83,15 @@ const validityProxyHandler = {
  * @param {string} args.keyPath Field key path.
  * @param {any} args.value Field value.
  * @returns {EntryValidityState | undefined} Field validity.
+ * @todo Refactor this function to reduce complexity and improve readability.
  */
-const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
-  const { collection, collectionName, collectionFile, files, validities, isIndexFile } = draft;
+const validateAnyField = ({ draft, locale, valueMap, keyPath, value }) => {
+  const { collection, collectionName, fileName, collectionFile, files, validities, isIndexFile } =
+    draft;
 
-  const getFieldArgs = {
-    collectionName,
-    fileName: collectionFile?.name,
-    valueMap,
-    isIndexFile,
-  };
-
-  const fieldConfig = getField({ ...getFieldArgs, keyPath });
+  /** @type {GetFieldArgs} */
+  const getFieldArgs = { collectionName, fileName, valueMap, keyPath, isIndexFile };
+  const fieldConfig = getField({ ...getFieldArgs });
 
   if (!fieldConfig) {
     return undefined;
@@ -83,42 +117,10 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
     return undefined;
   }
 
-  // Validate a list itself before the items
-  if (/\.\d+$/.test(keyPath)) {
-    const listKeyPath = keyPath.replace(/\.\d+$/, '');
-
-    if (!(listKeyPath in validities[locale])) {
-      validateField({ keyPath: listKeyPath, value: undefined, draft, locale, valueMap });
-    }
-
-    if (widgetName === 'list') {
-      const { field, fields, types } = /** @type {ListField} */ (fieldConfig);
-
-      if (!field && !fields && !types) {
-        // Simple list field
-        return undefined;
-      }
-    }
-
-    if (multiple) {
-      // Same as a simple list field
-      return undefined;
-    }
-  }
-
   const valueEntries = Object.entries(valueMap);
   const required = isFieldRequired({ fieldConfig, locale });
-
   /** @type {EntryValidityState} */
-  const validity = {
-    valueMissing: false,
-    tooShort: false,
-    tooLong: false,
-    rangeUnderflow: false,
-    rangeOverflow: false,
-    patternMismatch: false,
-    typeMismatch: false,
-  };
+  const validity = { ...DEFAULT_VALIDITY };
 
   if (widgetName === 'list' || multiple) {
     // Given that values for an array field are flatten into `field.0`, `field.1` ... `field.N`,
@@ -279,6 +281,65 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
 };
 
 /**
+ * Validate a single field and update the validity state.
+ * @param {ValidateFieldArgs} args Arguments.
+ * @returns {boolean} Whether the field is valid.
+ */
+const validateField = (args) => {
+  const { locale, keyPath, validities } = args;
+  const validity = validateAnyField(args);
+  let validated = true;
+
+  if (validity) {
+    validities[locale][keyPath] = validity;
+
+    if (!validity.valid) {
+      validated = false;
+    }
+  }
+
+  return validated;
+};
+
+/**
+ * Validate an array-type field.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {ValidateFieldArgs} args.validateArgs Arguments for field validation.
+ * @returns {{ validated: boolean, validateItems: boolean }} Validation result.
+ */
+const validateList = ({ fieldConfig, validateArgs }) => {
+  const { validities, locale, keyPath } = validateArgs;
+  let validated = true;
+
+  if (!(keyPath in validities[locale])) {
+    validated = validateField(validateArgs);
+  }
+
+  const { widget: widgetName = 'string' } = fieldConfig;
+
+  if (widgetName === 'list') {
+    const { field, fields, types } = /** @type {ListField} */ (fieldConfig);
+
+    if (!field && !fields && !types) {
+      // Simple list field, so we don’t need to validate items
+      return { validated, validateItems: false };
+    }
+  }
+
+  const { multiple = false } = /** @type {MultiValueField} */ (
+    MULTI_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}
+  );
+
+  if (multiple) {
+    // Same as a simple list field, so we don’t need to validate items
+    return { validated, validateItems: false };
+  }
+
+  return { validated, validateItems: true };
+};
+
+/**
  * Validate the current entry draft, update the validity for all the fields, and return the final
  * results as a boolean. Mimic the native `ValidityState` API.
  * @returns {boolean} Whether the draft is valid.
@@ -286,7 +347,11 @@ const validateField = ({ draft, locale, valueMap, keyPath, value }) => {
  */
 export const validateEntry = () => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
-  const { currentValues, currentLocales, validities } = draft;
+  const { collectionName, fileName, isIndexFile, currentValues, currentLocales } = draft;
+  /** @type {LocaleValidityMap} */
+  const validities = {};
+  /** @type {GetFieldArgs} */
+  const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath: '', valueMap: {} };
   let validated = true;
 
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
@@ -301,18 +366,40 @@ export const validateEntry = () => {
       return;
     }
 
+    const validateArgs = { draft, locale, valueMap, validities };
+
     // Reset the state first
     validities[locale] = {};
 
     valueEntries.forEach(([keyPath, value]) => {
-      const validity = validateField({ draft, locale, valueMap, keyPath, value });
+      const fieldConfig = getField({ ...getFieldArgs, keyPath, valueMap });
 
-      if (validity) {
-        validities[locale][keyPath] = validity;
+      if (!fieldConfig) {
+        return;
+      }
 
-        if (!validity.valid) {
+      // Validate a list itself before the items
+      if (LIST_KEY_PATH_REGEX.test(keyPath)) {
+        const { validated: listValidated, validateItems } = validateList({
+          fieldConfig,
+          validateArgs: {
+            ...validateArgs,
+            keyPath: keyPath.replace(LIST_KEY_PATH_REGEX, ''),
+            value: '',
+          },
+        });
+
+        if (!listValidated) {
           validated = false;
         }
+
+        if (!validateItems) {
+          return;
+        }
+      }
+
+      if (!validateField({ ...validateArgs, keyPath, value })) {
+        validated = false;
       }
     });
   });
