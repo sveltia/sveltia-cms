@@ -14,7 +14,7 @@
 
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
   // @ts-ignore Dividers can be included in the collection list
-  const collections = $derived($siteConfig?.collections.filter(({ hide }) => !hide) ?? []);
+  const collections = $derived($siteConfig?.collections?.filter(({ hide }) => !hide) ?? []);
   const singletons = $derived($siteConfig?.singletons ?? []);
 </script>
 
@@ -29,55 +29,86 @@
     />
   {/if}
   <Listbox aria-label={$_('collection_list')} aria-controls="collection-container">
-    <OptionGroup label={$_('collections')}>
-      {#each collections as collection, index (collection.name ?? index)}
-        {#await sleep() then}
-          {#if !('divider' in collection)}
-            {@const { name, label, icon, files } = collection}
-            <Option
-              label={label || name}
-              selected={$isSmallScreen ? false : $selectedCollection?.name === name}
-              onSelect={() => {
-                goto(`/collections/${name}`, { transitionType: 'forwards' });
-              }}
-            >
-              {#snippet startIcon()}
-                <Icon name={icon || 'bookmark_manager'} />
-              {/snippet}
-              {#snippet endIcon()}
-                {#key $allEntries}
-                  {@const count = (files ?? getEntriesByCollection(name)).length}
-                  <span
-                    class="count"
-                    aria-label="({$_(
-                      count > 1 ? 'many_entries' : count === 1 ? 'one_entry' : 'no_entries',
-                      { values: { count } },
-                    )})"
-                  >
-                    {numberFormatter.format(count)}
-                  </span>
-                {/key}
-              {/snippet}
-            </Option>
-          {:else if collection.divider}
-            <Divider />
-          {/if}
-        {/await}
-      {/each}
-    </OptionGroup>
-    {#if singletons.length}
-      <!-- Use the user-friendly “Files” label instead of “Singletons” -->
-      <OptionGroup label={$_('files')}>
-        {#each singletons as file, index (file.name ?? index)}
+    {#if collections.length}
+      <OptionGroup label={$_('collections')}>
+        {#each collections as collection, index (collection.name ?? index)}
           {#await sleep() then}
-            {#if !('divider' in file)}
-              <SingletonOption {file} />
-            {:else if file.divider}
+            {#if !('divider' in collection)}
+              {@const { name, label, icon, files } = collection}
+              <Option
+                label={label || name}
+                selected={$isSmallScreen ? false : $selectedCollection?.name === name}
+                onSelect={() => {
+                  goto(`/collections/${name}`, { transitionType: 'forwards' });
+                }}
+              >
+                {#snippet startIcon()}
+                  <Icon name={icon || 'bookmark_manager'} />
+                {/snippet}
+                {#snippet endIcon()}
+                  {#key $allEntries}
+                    {@const count = (files ?? getEntriesByCollection(name)).length}
+                    <span
+                      class="count"
+                      aria-label="({$_(
+                        count > 1 ? 'many_entries' : count === 1 ? 'one_entry' : 'no_entries',
+                        { values: { count } },
+                      )})"
+                    >
+                      {numberFormatter.format(count)}
+                    </span>
+                  {/key}
+                {/snippet}
+              </Option>
+            {:else if collection.divider}
               <Divider />
             {/if}
           {/await}
         {/each}
       </OptionGroup>
+    {/if}
+    {#if singletons.length}
+      {#if $isSmallScreen || collections.length}
+        <!-- Use the user-friendly “Files” label instead of “Singletons” -->
+        <OptionGroup label={$_('files')}>
+          {#each singletons as file, index (file.name ?? index)}
+            {#await sleep() then}
+              {#if !('divider' in file)}
+                <SingletonOption {file} />
+              {:else if file.divider}
+                <Divider />
+              {/if}
+            {/await}
+          {/each}
+        </OptionGroup>
+      {:else}
+        <!-- Show the singletons just like a file collection -->
+        {@const count = singletons.length}
+        <OptionGroup label={$_('collections')}>
+          <Option
+            label={$_('files')}
+            selected={$selectedCollection?.name === '_singletons'}
+            onSelect={() => {
+              goto('/collections/_singletons', { transitionType: 'forwards' });
+            }}
+          >
+            {#snippet startIcon()}
+              <Icon name={'bookmark_manager'} />
+            {/snippet}
+            {#snippet endIcon()}
+              <span
+                class="count"
+                aria-label="({$_(
+                  count > 1 ? 'many_entries' : count === 1 ? 'one_entry' : 'no_entries',
+                  { values: { count } },
+                )})"
+              >
+                {numberFormatter.format(count)}
+              </span>
+            {/snippet}
+          </Option>
+        </OptionGroup>
+      {/if}
     {/if}
   </Listbox>
 </div>

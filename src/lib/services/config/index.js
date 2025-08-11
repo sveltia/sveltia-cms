@@ -56,7 +56,7 @@ export const siteConfigError = writable();
  * @todo Add more validations.
  */
 export const validate = (config) => {
-  if (!config.collections?.length) {
+  if (!Array.isArray(config.collections) && !Array.isArray(config.singletons)) {
     throw new Error(get(_)('config.error.no_collection'));
   }
 
@@ -161,7 +161,7 @@ export const initSiteConfig = async (manualConfig) => {
     config._baseURL = isURL(config._siteURL) ? new URL(config._siteURL).origin : '';
 
     // Handle root collection folder variants, particularly for VitePress
-    config.collections.forEach((collection) => {
+    config.collections?.forEach((collection) => {
       if ('folder' in collection && (collection.folder === '.' || collection.folder === '/')) {
         collection.folder = '';
       }

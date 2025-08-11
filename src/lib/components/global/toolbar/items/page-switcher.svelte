@@ -4,7 +4,6 @@
 
   import { goto, selectedPageName } from '$lib/services/app/navigation';
   import { selectedAssetFolder } from '$lib/services/assets/folders';
-  import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const pages = $derived([
@@ -12,9 +11,7 @@
       key: 'collections',
       label: $_('contents'),
       icon: 'library_books',
-      link: $isSmallScreen
-        ? '/collections'
-        : `/collections/${$selectedCollection?.name ?? getFirstCollection()?.name}`,
+      link: '/collections',
     },
     {
       key: 'assets',

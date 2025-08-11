@@ -22,6 +22,8 @@
     getCollection,
     getCollectionLabel,
     getFirstCollection,
+    getSingletonCollection,
+    getValidCollections,
     selectedCollection,
   } from '$lib/services/contents/collection';
   import { contentUpdatesToast } from '$lib/services/contents/collection/data';
@@ -56,6 +58,11 @@
 
     isIndexPage = false;
 
+    // `/collections/_singletons` should not be used unless there is only the singleton collection
+    if ($selectedCollection?.name === '_singletons' && getValidCollections().length) {
+      $selectedCollection = undefined;
+    }
+
     if (!match?.groups) {
       return; // Different page
     }
@@ -69,8 +76,10 @@
         $announcedPageStatus = $_('viewing_collection_list');
         isIndexPage = true;
       } else {
-        // Redirect to the first collection
-        goto(`/collections/${getFirstCollection()?.name}`);
+        // Redirect to the selected, first or singleton collection
+        const collection = $selectedCollection || getFirstCollection() || getSingletonCollection();
+
+        goto(`/collections/${collection?.name}`, { replaceState: true });
       }
 
       return;

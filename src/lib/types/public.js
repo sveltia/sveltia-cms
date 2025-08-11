@@ -1200,8 +1200,9 @@
  * Default: Sveltia logo.
  * @property {boolean} [show_preview_links] Whether to show site preview links. Default: `true`.
  * @property {SlugOptions} [slug] Entry slug options.
- * @property {(Collection | CollectionDivider)[]} collections Set of collections. The list can also
- * contain dividers, which are used to group collections in the collection list.
+ * @property {(Collection | CollectionDivider)[]} [collections] Set of collections. The list can
+ * also contain dividers, which are used to group collections in the collection list. Either
+ * `collections` or `singletons` option must be defined.
  * @property {(CollectionFile | CollectionDivider)[]} [singletons] Set of singleton files, such as
  * the site configuration file or the homepage file. They are not part of any collection and can be
  * accessed directly through the collection list. The list can also contain dividers. See our

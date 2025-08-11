@@ -3,7 +3,6 @@
   import { _ } from 'svelte-i18n';
 
   import { goBack, goto, parseLocation } from '$lib/services/app/navigation';
-  import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
   import { searchMode, searchTerms } from '$lib/services/search';
 
   /**
@@ -32,7 +31,7 @@
     if (terms) {
       goto(`/search/${terms}`, { replaceState: searching });
     } else if (hadTerms && searching) {
-      goBack(`/collections/${$selectedCollection?.name ?? getFirstCollection()?.name}`);
+      goBack('/collections');
     }
   };
 

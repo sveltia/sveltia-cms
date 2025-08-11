@@ -308,5 +308,5 @@ export const getCollectionIndex = (collectionName) => {
     return 9999999;
   }
 
-  return get(siteConfig)?.collections.findIndex(({ name }) => name === collectionName) ?? -1;
+  return get(siteConfig)?.collections?.findIndex(({ name }) => name === collectionName) ?? -1;
 };

@@ -19,7 +19,6 @@
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
   import { canShowMobileSignInDialog } from '$lib/services/app/onboarding';
   import { showAssetOverlay } from '$lib/services/assets/view';
-  import { getFirstCollection, selectedCollection } from '$lib/services/contents/collection';
   import { showContentOverlay } from '$lib/services/contents/editor';
   import { searchMode } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
@@ -53,11 +52,7 @@
 
     if (!pageName) {
       // Redirect any invalid page to the contents page
-      window.location.replace(
-        $isSmallScreen
-          ? '#/collections'
-          : `#/collections/${$selectedCollection?.name ?? getFirstCollection()?.name}`,
-      );
+      window.location.replace('#/collections');
     } else if ($selectedPageName !== pageName) {
       $selectedPageName = pageName;
     }
