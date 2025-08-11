@@ -469,6 +469,8 @@
  * `true`.
  * @property {boolean} [allow_remove] Whether to allow users to remove items from the list. Default:
  * `true`.
+ * @property {boolean} [allow_reorder] Whether to allow users to reorder items in the list. Default:
+ * `true`.
  * @property {boolean} [add_to_top] Whether to add new items to the top of the list instead of the
  * bottom. Default: `false`.
  * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`

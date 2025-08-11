@@ -54,6 +54,7 @@
     // Widget-specific options
     allow_add: allowAdd = true,
     allow_remove: allowRemove = true,
+    allow_reorder: allowReorder = true,
     collapsed,
     summary,
     minimize_collapsed: minimizeCollapsed = false,
@@ -295,29 +296,31 @@
             : undefined}
         >
           {#snippet centerContent()}
-            <Button
-              size="small"
-              iconic
-              disabled={isDuplicateField || index === 0}
-              aria-label={$_('move_up')}
-              onclick={() => moveDownItem(index - 1)}
-            >
-              {#snippet startIcon()}
-                <Icon name="arrow_upward" />
-              {/snippet}
-            </Button>
-            <Spacer />
-            <Button
-              iconic
-              size="small"
-              disabled={isDuplicateField || index === items.length - 1}
-              aria-label={$_('move_down')}
-              onclick={() => moveDownItem(index)}
-            >
-              {#snippet startIcon()}
-                <Icon name="arrow_downward" />
-              {/snippet}
-            </Button>
+            {#if allowReorder}
+              <Button
+                size="small"
+                iconic
+                disabled={isDuplicateField || index === 0}
+                aria-label={$_('move_up')}
+                onclick={() => moveDownItem(index - 1)}
+              >
+                {#snippet startIcon()}
+                  <Icon name="arrow_upward" />
+                {/snippet}
+              </Button>
+              <Spacer />
+              <Button
+                iconic
+                size="small"
+                disabled={isDuplicateField || index === items.length - 1}
+                aria-label={$_('move_down')}
+                onclick={() => moveDownItem(index)}
+              >
+                {#snippet startIcon()}
+                  <Icon name="arrow_downward" />
+                {/snippet}
+              </Button>
+            {/if}
           {/snippet}
           {#snippet endContent()}
             {#if allowAdd}
