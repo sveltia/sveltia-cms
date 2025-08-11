@@ -138,7 +138,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, 245+ issues, or 515+ if including duplicates, have been effectively solved in Sveltia CMS (Yes, you read it right)
+  - So far, **245+ issues, or 515+ if including duplicates, have been effectively solved in Sveltia CMS** (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — Almost there!
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -574,8 +574,8 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 - The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists.[^109]
 - A custom logo defined with the `logo_url` property is displayed on the global application header and the browser tab (favicon).[^134] A smaller logo is also correctly positioned on the authentication page.[^135]
 - [`CMS.registerCustomFormat()`](https://decapcms.org/docs/custom-formatters/) supports async parser/formatter functions.[^149]
-- Enhancements to [`CMS.registerEditorComponent()`](https://decapcms.org/docs/custom-widgets/#registereditorcomponent):
-  - A component definition accepts the `icon` property. Developers can specify a Material Symbols icon name just like [custom collection icons](#using-a-custom-icon-for-a-collection).
+- Enhancements to [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent):
+  - `CMS.registerEditorComponent()` accepts a component definition with the `icon` property. Developers can specify a Material Symbols icon name just like [custom collection icons](#using-a-custom-icon-for-a-collection).
   - The `fromBlock` function can be omitted if the `pattern` regex contains [named capturing groups](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) for the values.
   - Inline components are supported.[^267]
 
@@ -607,7 +607,7 @@ However, 100% feature parity is never planned, and some features are still missi
   - Note: Some other camel case options, including Color widget options, are not deprecated.
 - The deprecated Date widget: It was removed from Decap CMS 3.0 and Sveltia CMS 0.10. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
 - Some date/time format tokens: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with Day.js, and Sveltia CMS will follow suit soon. Since [Day.js tokens](https://day.js.org/docs/en/display/format) are not 100% compatible with [Moment.js tokens](https://momentjs.com/docs/#/displaying/format/), this could be a breaking change in certain cases.
-- The theme and keymap inline settings for the Code widget, along with support for some languages: We use the [Prism](https://prismjs.com/)-powered code block functionality in Lexical instead of [CodeMirror](https://codemirror.net/). Prism may be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575) in the future.
+- The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality, which is powered by [Prism](https://prismjs.com/) and will soon be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
 - An absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
@@ -861,7 +861,7 @@ If you have migrated from Netlify/Decap CMS and are happy with the local reposit
 
 Note that, as with Netlify/Decap CMS, the local repository support in Sveltia CMS doesn’t perform any Git operations. You have to manually fetch, pull, commit and push all changes using a Git client. Additionally, you’ll need to reload the CMS after modifying the configuration file or retrieving remote updates.
 
-In the future, it will probably be possible to commit changes locally. The proxy server actually has an experimental, undocumented Git mode that allows it.[^131] ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/31)) We also plan to use the newly available [File System Observer API](https://developer.chrome.com/blog/file-system-observer) to eliminate manual reloads.
+In the future, it will probably be possible to commit changes locally. The proxy server actually has an experimental, undocumented Git mode that allows it.[^131] ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/31)) We also plan to use the newly available [File System Observer API](https://developer.chrome.com/blog/file-system-observer) to detect changes and eliminate the need for manual reloads.
 
 ### Enabling local development in Brave
 
@@ -987,7 +987,7 @@ Note that the special index file is placed right under the `folder`, regardless 
 
 ### Using singletons
 
-The singleton collection is an unnamed, non-nested variant of a [file collection](https://decapcms.org/docs/collection-file/) that can be used to manage a set of pre-defined data files. Singleton files appear in the content library’s sidebar under the Files group, and users can open the Content Editor directly without navigating to a file list.
+The singleton collection is an unnamed, non-nested variant of a [file collection](https://decapcms.org/docs/collection-file/) that can be used to manage a set of pre-defined data files. Singleton files appear in the content library’s sidebar under the Files group, and users can open the Content Editor directly without navigating to a file list. (If there are no other collections, the singleton collection appears as a regular file collection on desktop.)
 
 To create this special file collection, add the new `singletons` option, along with an array of file definitions, to the root level of your site configuration.
 
@@ -1653,13 +1653,13 @@ Due early 2026
 - Tackling even more Netlify/Decap CMS issues:
   - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
-- End-user documentation
 
 ### v3.0
 
 - **Sveltia CMS Additions**: Edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
   - User management (Netlify Identity alternative) with roles[^23]
   - Sign-in without a Git service account (Git Gateway alternative)
+- End-user documentation
 - Contributor documentation
 
 ### TBD
@@ -1681,11 +1681,11 @@ Due early 2026
 - Enhancements to Sveltia CMS Additions (some may be included in v3.0):
   - Post locking[^166] (like [WordPress](https://codex.wordpress.org/Post_Locking))
   - Scheduled posts[^167]
-  - Credential management for service API keys, deploy hook URL, etc.
+  - [Credential management](https://github.com/sveltia/sveltia-cms/issues/444) for service API keys, deploy hook URL, etc.
   - Proxy for services that don’t support [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS):
     - [DeepL Translate](https://github.com/sveltia/sveltia-cms/issues/437)
     - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
-- [Local repository workflow](#working-with-a-local-git-repository) improvements: Git mode[^131] and File System Observer support
+- [Local repository workflow](#working-with-a-local-git-repository) improvements: Git mode[^131] and change detection
 - [Preact+HTM support](https://github.com/sveltia/sveltia-cms/discussions/153) for custom widgets, editor components and preview templates
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
