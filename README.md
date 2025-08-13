@@ -12,7 +12,7 @@ Welcome to the only Netlify CMS successor you can trust!
 
 ![Stock photo integration: Pexels, Pixabay, Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3.webp?20250405)<br>
 
-![Full-fledged Asset Library; first-class internationalization support; translation API integration](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250625)<br>
+![Full-fledged Asset Library; first-class internationalization support; Google Cloud Translation and OpenAI integration](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250812)<br>
 
 ![Built-in image optimizer for WebP and SVG; mobile & tablet support](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250409)<br>
 
@@ -115,7 +115,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 
 - [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after making meaningful improvements
 - **Sveltia CMS**: not a fork but a **complete rewrite** or “total reboot”, started in November 2022, first appeared on GitHub in March 2023
-- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, with only occasional releases
+- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, no significant updates
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t use any of their code. This allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system.
 
@@ -289,7 +289,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list when there are less than 5 locales.
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it’s not easy for everyone to recognize `DE` as German, `NL` as Dutch, `ZH` as Chinese, and so on.
 - Content editing
-  - [Integrates a translation service](#translating-entry-fields-with-one-click) to allow translation of text fields from another locale with one click.
+  - [Integrates translation services](#translating-entry-fields-with-one-click) to allow translation of text fields from another locale with one click.
   - The Content Editor supports [RTL scripts](https://en.wikipedia.org/wiki/Right-to-left_script) such as Arabic, Hebrew and Persian.[^146]
   - It’s possible to [disable non-default locale content](#disabling-non-default-locale-content).[^15]
   - Boolean, DateTime, List and Number fields in the entry preview are displayed in a localized format.
@@ -470,6 +470,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Code in a code block in the editor can be copied as expected.[^165]
   - Language-annotated code block doesn’t trigger unsaved changes.[^189]
   - Soft line breaks are [rendered as hard line breaks](#rendering-soft-line-breaks-as-hard-line-breaks-in-markdown) in the Preview Pane.
+  - Uploaded images will not disappear while editing an entry.[^278]
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
 - Object
@@ -1042,15 +1043,21 @@ Standard keyboard shortcuts are also available in the Markdown editor, including
 
 ### Translating entry fields with one click
 
-Sveltia CMS comes with a handy Google Cloud Translation API integration so that you can translate any text field from another locale without leaving the Content Editor. To enable the quick translation feature:
+Sveltia CMS comes with a handy translation API integration so that you can translate any text field from another locale without leaving the Content Editor. Currently, Google’s Cloud Translation and OpenAI’s GPT-3.5 Turbo are supported. To enable the quick translation feature:
 
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
-1. Sign in or sign up for [Google Cloud](https://cloud.google.com/) and create a new project.
-1. Enable the [Cloud Translation API](https://console.cloud.google.com/apis/library/translate.googleapis.com). It’s free up to 500,000 characters per month.
-1. Create a [new API key](https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials) and copy it.
+1. Create a new API key for the translation service of your choice:
+   - Google
+     1. Sign in or sign up for [Google Cloud](https://cloud.google.com/) and create a new project.
+     1. Enable the [Cloud Translation API](https://console.cloud.google.com/apis/library/translate.googleapis.com). It’s free up to 500,000 characters per month.
+     1. Create a [new API key](https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials) and copy it.
+   - OpenAI
+     1. Sign in or sign up for [Open AI](https://platform.openai.com/docs/overview) and create a new project.
+     1. Add a credit balance (minimum $5) to your account.
+     1. Create a [new API key](https://platform.openai.com/api-keys) and copy it.
 1. Open an entry in Sveltia CMS.
 1. Click on the Translation button on the pane header or each field, right next to the 3-dot menu.
-1. Paste your API key when prompted.
+1. Select a translation service from the dropdown menu and paste your API key when prompted.
 1. The field(s) will be automatically translated.
 
 Note that the Translation button on the pane header only translates empty fields, while in-field Translation buttons override any filled text.
@@ -1941,7 +1948,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^112]: Netlify/Decap CMS [#5815](https://github.com/decaporg/decap-cms/issues/5815), [#6522](https://github.com/decaporg/decap-cms/issues/6522), [#6532](https://github.com/decaporg/decap-cms/issues/6532), [#6588](https://github.com/decaporg/decap-cms/issues/6588), [#6617](https://github.com/decaporg/decap-cms/issues/6617), [#6640](https://github.com/decaporg/decap-cms/issues/6640), [#6663](https://github.com/decaporg/decap-cms/issues/6663), [#6695](https://github.com/decaporg/decap-cms/issues/6695), [#6697](https://github.com/decaporg/decap-cms/issues/6697), [#6764](https://github.com/decaporg/decap-cms/issues/6764), [#6765](https://github.com/decaporg/decap-cms/issues/6765), [#6835](https://github.com/decaporg/decap-cms/issues/6835), [#6983](https://github.com/decaporg/decap-cms/issues/6983), [#7205](https://github.com/decaporg/decap-cms/issues/7205), [#7450](https://github.com/decaporg/decap-cms/issues/7450), [#7453](https://github.com/decaporg/decap-cms/issues/7453), [#7572](https://github.com/decaporg/decap-cms/issues/7572)
 
-[^113]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194), [#7244](https://github.com/decaporg/decap-cms/issues/7244), [#7278](https://github.com/decaporg/decap-cms/issues/7278), [#7301](https://github.com/decaporg/decap-cms/issues/7301), [#7342](https://github.com/decaporg/decap-cms/issues/7342), [#7348](https://github.com/decaporg/decap-cms/issues/7348), [#7354](https://github.com/decaporg/decap-cms/issues/7354), [#7376](https://github.com/decaporg/decap-cms/issues/7376), [#7408](https://github.com/decaporg/decap-cms/issues/7408), [#7412](https://github.com/decaporg/decap-cms/issues/7412), [#7413](https://github.com/decaporg/decap-cms/issues/7413), [#7422](https://github.com/decaporg/decap-cms/issues/7422), [#7427](https://github.com/decaporg/decap-cms/issues/7427), [#7434](https://github.com/decaporg/decap-cms/issues/7434), [#7438](https://github.com/decaporg/decap-cms/issues/7438), [#7454](https://github.com/decaporg/decap-cms/issues/7454), [#7464](https://github.com/decaporg/decap-cms/issues/7464), [#7471](https://github.com/decaporg/decap-cms/issues/7471), [#7485](https://github.com/decaporg/decap-cms/issues/7485), [#7499](https://github.com/decaporg/decap-cms/issues/7499), [#7515](https://github.com/decaporg/decap-cms/issues/7515), [#7564](https://github.com/decaporg/decap-cms/issues/7564), [#7571](https://github.com/decaporg/decap-cms/issues/7571) — These `removeChild` crashes are common in React apps, likely caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
+[^113]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194), [#7244](https://github.com/decaporg/decap-cms/issues/7244), [#7278](https://github.com/decaporg/decap-cms/issues/7278), [#7301](https://github.com/decaporg/decap-cms/issues/7301), [#7342](https://github.com/decaporg/decap-cms/issues/7342), [#7348](https://github.com/decaporg/decap-cms/issues/7348), [#7354](https://github.com/decaporg/decap-cms/issues/7354), [#7376](https://github.com/decaporg/decap-cms/issues/7376), [#7408](https://github.com/decaporg/decap-cms/issues/7408), [#7412](https://github.com/decaporg/decap-cms/issues/7412), [#7413](https://github.com/decaporg/decap-cms/issues/7413), [#7422](https://github.com/decaporg/decap-cms/issues/7422), [#7427](https://github.com/decaporg/decap-cms/issues/7427), [#7434](https://github.com/decaporg/decap-cms/issues/7434), [#7438](https://github.com/decaporg/decap-cms/issues/7438), [#7454](https://github.com/decaporg/decap-cms/issues/7454), [#7464](https://github.com/decaporg/decap-cms/issues/7464), [#7471](https://github.com/decaporg/decap-cms/issues/7471), [#7485](https://github.com/decaporg/decap-cms/issues/7485), [#7499](https://github.com/decaporg/decap-cms/issues/7499), [#7515](https://github.com/decaporg/decap-cms/issues/7515), [#7564](https://github.com/decaporg/decap-cms/issues/7564), [#7571](https://github.com/decaporg/decap-cms/issues/7571), [#7574](https://github.com/decaporg/decap-cms/issues/7574) — These `removeChild` crashes are common in React apps, likely caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
 
 [^114]: Netlify/Decap CMS [#5029](https://github.com/decaporg/decap-cms/issues/5029), [#5048](https://github.com/decaporg/decap-cms/issues/5048)
 
@@ -2270,3 +2277,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^276]: Netlify/Decap CMS [#6806](https://github.com/decaporg/decap-cms/discussions/6806)
 
 [^277]: Netlify/Decap CMS [#86](https://github.com/decaporg/decap-cms/issues/86)
+
+[^278]: Netlify/Decap CMS [#7575](https://github.com/decaporg/decap-cms/issues/7575), [#7576](https://github.com/decaporg/decap-cms/issues/7576)
