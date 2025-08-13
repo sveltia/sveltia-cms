@@ -138,7 +138,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **245+ issues, or 515+ if including duplicates, have been effectively solved in Sveltia CMS** (Yes, you read it right)
+  - So far, **245+ issues, or 515+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — Almost there!
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -1052,13 +1052,15 @@ Sveltia CMS comes with a handy translation API integration so that you can trans
      1. Enable the [Cloud Translation API](https://console.cloud.google.com/apis/library/translate.googleapis.com). It’s free up to 500,000 characters per month.
      1. Create a [new API key](https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials) and copy it.
    - OpenAI
-     1. Sign in or sign up for [Open AI](https://platform.openai.com/docs/overview) and create a new project.
+     1. Sign in or sign up for [OpenAI Platform](https://platform.openai.com/docs/overview) and create a new project.
      1. Add a credit balance (minimum $5) to your account.
      1. Create a [new API key](https://platform.openai.com/api-keys) and copy it.
 1. Open an entry in Sveltia CMS.
 1. Click on the Translation button on the pane header or each field, right next to the 3-dot menu.
 1. Select a translation service from the dropdown menu and paste your API key when prompted.
 1. The field(s) will be automatically translated.
+
+You can also provide your API keys in the Settings dialog.
 
 Note that the Translation button on the pane header only translates empty fields, while in-field Translation buttons override any filled text.
 
