@@ -31,6 +31,7 @@ export const prefs = writable({}, (set) => {
       _prefs.underlineLinks ??= true;
       _prefs.beta ??= false;
       _prefs.devModeEnabled ??= false;
+      _prefs.defaultTranslationService ??= 'google';
       set(_prefs);
     } catch {
       prefsError.set({ type: 'permission_denied' });

@@ -100,13 +100,13 @@ const updateToast = (status, message, { count, sourceLocale }) => {
  * @param {CopyingFieldMap} args.copingFieldMap Copied or translated field values.
  */
 const translateFields = async ({ currentValues, options, copingFieldMap }) => {
-  const _translator = get(translator);
+  const { serviceId, markdownSupported, translate } = get(translator);
   const { sourceLocale, targetLocale } = options;
   const count = Object.keys(copingFieldMap).length;
   const countType = count === 1 ? 'one' : 'many';
 
   const apiKey =
-    get(prefs).apiKeys?.[_translator.serviceId] ||
+    get(prefs).apiKeys?.[serviceId] ||
     (await new Promise((resolve) => {
       // The promise will be resolved once the user enters an API key on the dialog
       translatorApiKeyDialogState.set({ show: true, multiple: count > 1, resolve });
@@ -119,11 +119,10 @@ const translateFields = async ({ currentValues, options, copingFieldMap }) => {
   updateToast('info', 'translation.started', { count, sourceLocale });
 
   try {
-    const translatedValues = await _translator.translate(
+    const translatedValues = await translate(
       Object.entries(copingFieldMap).map(([, { value, isMarkdown }]) =>
-        // Convert the value from Markdown to HTML if the field is a markdown field, because the
-        // translator API expects HTML input
-        isMarkdown ? /** @type {string} */ (marked.parse(value)) : value,
+        // Convert the value from Markdown to HTML if needed
+        isMarkdown && !markdownSupported ? /** @type {string} */ (marked.parse(value)) : value,
       ),
       { apiKey, sourceLocale, targetLocale },
     );
@@ -131,11 +130,10 @@ const translateFields = async ({ currentValues, options, copingFieldMap }) => {
     Object.entries(copingFieldMap).forEach(([_keyPath, { isMarkdown }], index) => {
       const value = translatedValues[index];
 
-      // Convert the value back to Markdown if the field is a markdown field
-      currentValues[targetLocale][_keyPath] = isMarkdown
-        ? // @ts-ignore Silence a false type error
-          turndownService.turndown(value)
-        : value;
+      // Convert the value back to Markdown if needed
+      currentValues[targetLocale][_keyPath] =
+        // @ts-ignore Silence a false type error
+        isMarkdown && !markdownSupported ? turndownService.turndown(value) : value;
     });
 
     updateToast('success', `translation.complete.${countType}`, { count, sourceLocale });

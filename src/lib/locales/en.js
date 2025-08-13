@@ -681,10 +681,17 @@ export const strings = {
           switch_label: 'Close the editor with the Escape key',
         },
       },
+    },
+    i18n: {
+      title: 'Internationalization',
+      default_translator: {
+        title: 'Default Translation Service',
+        select_service: 'Select Service',
+      },
       translator: {
-        field_label: '{service} API Key',
+        field_label: '{service} Key',
         description:
-          'Sign up for <a {homeHref}>{service} API</a> and enter <a {apiKeyHref}>your API Key</a> here to enable quick translation of text entry fields.',
+          'Sign up for <a {homeHref}>{service}</a> and enter <a {apiKeyHref}>your API Key</a> here to enable quick translation of text entry fields.',
       },
     },
     media: {

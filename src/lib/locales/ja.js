@@ -685,10 +685,17 @@ export const strings = {
           switch_label: 'Escape キーでエディターを閉じる',
         },
       },
+    },
+    i18n: {
+      title: '国際化',
+      default_translator: {
+        title: 'デフォルト翻訳サービス',
+        select_service: 'サービスを選択',
+      },
       translator: {
-        field_label: '{service} API キー',
+        field_label: '{service} キー',
         description:
-          '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行されたキー</a> をここに入力すると、テキストエントリー項目の素早い翻訳が可能となります。',
+          '<a {homeHref}>{service}</a> にユーザー登録して、<a {apiKeyHref}>発行されたキー</a> をここに入力すると、テキストエントリー項目の素早い翻訳が可能となります。',
       },
     },
     media: {

@@ -1,5 +1,6 @@
 <script>
   import { Alert, Dialog, Icon, Tab, TabList, TabPanel, Toast } from '@sveltia/ui';
+  import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
 
   import { panels } from '$lib/components/settings';
@@ -36,22 +37,24 @@
 >
   <div role="none" class="wrapper">
     <TabList orientation="vertical" aria-label={$_('categories')}>
-      {#each panels as { key, icon } (key)}
-        <Tab
-          label={$_(`prefs.${key}.title`)}
-          selected={key === selectedPanel}
-          aria-controls="prefs-tab-{key}"
-          onSelect={() => {
-            selectedPanel = key;
-          }}
-        >
-          {#snippet startIcon()}
-            <Icon name={icon} />
-          {/snippet}
-        </Tab>
+      {#each get(panels) as { key, icon, enabled = true } (key)}
+        {#if enabled}
+          <Tab
+            label={$_(`prefs.${key}.title`)}
+            selected={key === selectedPanel}
+            aria-controls="prefs-tab-{key}"
+            onSelect={() => {
+              selectedPanel = key;
+            }}
+          >
+            {#snippet startIcon()}
+              <Icon name={icon} />
+            {/snippet}
+          </Tab>
+        {/if}
       {/each}
     </TabList>
-    {#each panels as { key, component: Content } (key)}
+    {#each get(panels) as { key, component: Content } (key)}
       <TabPanel id="prefs-tab-{key}">
         <Content
           onChange={(/** @type {{ message: string }} */ { message }) => {

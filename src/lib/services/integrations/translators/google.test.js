@@ -14,6 +14,7 @@ describe('Google Translator Service', () => {
     it('should have correct service metadata', () => {
       expect(googleTranslator.serviceId).toBe('google');
       expect(googleTranslator.serviceLabel).toBe('Google Cloud Translation');
+      expect(googleTranslator.apiLabel).toBe('Cloud Translation API');
       expect(googleTranslator.developerURL).toBe(
         'https://console.cloud.google.com/apis/library/translate.googleapis.com',
       );
@@ -318,12 +319,18 @@ describe('Google Translator Service', () => {
     it('should export all required properties for TranslationService interface', () => {
       expect(googleTranslator).toHaveProperty('serviceId');
       expect(googleTranslator).toHaveProperty('serviceLabel');
+      expect(googleTranslator).toHaveProperty('apiLabel');
       expect(googleTranslator).toHaveProperty('developerURL');
       expect(googleTranslator).toHaveProperty('apiKeyURL');
       expect(googleTranslator).toHaveProperty('apiKeyPattern');
+      expect(googleTranslator).toHaveProperty('markdownSupported');
       expect(googleTranslator).toHaveProperty('getSourceLanguage');
       expect(googleTranslator).toHaveProperty('getTargetLanguage');
       expect(googleTranslator).toHaveProperty('translate');
+    });
+
+    it('should have correct markdown support flag', () => {
+      expect(googleTranslator.markdownSupported).toBe(false);
     });
 
     it('should have function properties that are callable', () => {

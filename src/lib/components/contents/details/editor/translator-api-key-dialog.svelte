@@ -1,13 +1,14 @@
 <script>
-  import { PromptDialog } from '@sveltia/ui';
+  import { PromptDialog, Spacer } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
+  import TranslatorSelector from '$lib/components/settings/controls/translator-selector.svelte';
   import { showContentOverlay, translatorApiKeyDialogState } from '$lib/services/contents/editor';
   import { translator } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/user/prefs';
 
-  const { serviceId, serviceLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived($translator);
+  const { serviceId, apiLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived($translator);
 
   $effect(() => {
     if (!$showContentOverlay && $translatorApiKeyDialogState.show) {
@@ -37,10 +38,12 @@
     $translatorApiKeyDialogState.resolve?.();
   }}
 >
+  <TranslatorSelector />
+  <Spacer />
   {@html DOMPurify.sanitize(
-    $_('prefs.contents.translator.description', {
+    $_('prefs.i18n.translator.description', {
       values: {
-        service: serviceLabel,
+        service: apiLabel,
         homeHref: `href="${developerURL}"`,
         apiKeyHref: `href="${apiKeyURL}"`,
       },

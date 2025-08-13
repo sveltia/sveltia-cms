@@ -4,6 +4,7 @@
 
 const serviceId = 'google';
 const serviceLabel = 'Google Cloud Translation';
+const apiLabel = 'Cloud Translation API';
 const developerURL = 'https://console.cloud.google.com/apis/library/translate.googleapis.com';
 const apiKeyURL = 'https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials';
 const apiKeyPattern = /AIza[0-9A-Za-z-_]{35}/;
@@ -137,9 +138,11 @@ const translate = async (texts, { sourceLocale, targetLocale, apiKey }) => {
 export default {
   serviceId,
   serviceLabel,
+  apiLabel,
   developerURL,
   apiKeyURL,
   apiKeyPattern,
+  markdownSupported: false,
   getSourceLanguage: normalizeLanguage,
   getTargetLanguage: normalizeLanguage,
   translate,

@@ -67,6 +67,7 @@
  * @property {boolean} [devModeEnabled] Whether to enable the developer mode.
  * @property {string} [deployHookURL] Webhook URL to manually trigger a new deployment on any
  * connected CI/CD provider.
+ * @property {string} [defaultTranslationService] Default translation service ID, e.g. `google`.
  */
 
 /**
@@ -221,9 +222,11 @@
  * @typedef {object} TranslationService
  * @property {string} serviceId Service ID.
  * @property {string} serviceLabel Service label.
+ * @property {string} apiLabel API label.
  * @property {string} developerURL URL of the page that provides the API/developer service.
  * @property {string} apiKeyURL URL of the page that provides an API key.
  * @property {RegExp} apiKeyPattern API key pattern.
+ * @property {boolean} markdownSupported Whether the service supports markdown content.
  * @property {(locale: string) => string | undefined} getSourceLanguage Get a supported source
  * language that matches the given locale code.
  * @property {(locale: string) => string | undefined} getTargetLanguage Get a supported target

@@ -1,9 +1,12 @@
-import { writable } from 'svelte/store';
+import { derived } from 'svelte/store';
+
+import { prefs } from '$lib/services/user/prefs';
 
 import google from './google';
+import openai from './openai';
 
 /**
- * @import { Writable } from 'svelte/store';
+ * @import { Readable } from 'svelte/store';
  * @import { TranslationService } from '$lib/types/private';
  */
 
@@ -13,8 +16,14 @@ import google from './google';
  */
 export const allTranslationServices = {
   google,
+  openai,
 };
+
 /**
- * @type {Writable<TranslationService>}
+ * @type {Readable<TranslationService>}
  */
-export const translator = writable(google);
+export const translator = derived([prefs], ([$prefs]) => {
+  const { defaultTranslationService = 'google' } = $prefs;
+
+  return allTranslationServices[defaultTranslationService] ?? google;
+});

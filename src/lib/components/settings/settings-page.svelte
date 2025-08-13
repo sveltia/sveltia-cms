@@ -1,6 +1,7 @@
 <script>
   import { Alert, Icon, Menu, MenuItem, Spacer, Toast, Toolbar } from '@sveltia/ui';
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
 
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
@@ -35,7 +36,7 @@
 
     const { panelKey } = match.groups;
 
-    selectedPanel = panelKey ? panels.find((panel) => panel.key === panelKey) : undefined;
+    selectedPanel = panelKey ? get(panels).find((panel) => panel.key === panelKey) : undefined;
   };
 
   onMount(() => {
@@ -78,7 +79,7 @@
             </div>
           {:else}
             <Menu aria-label={$_('settings')}>
-              {#each panels as { key, icon } (key)}
+              {#each get(panels) as { key, icon } (key)}
                 <MenuItem
                   label={$_(`prefs.${key}.title`)}
                   onclick={() => goto(`/settings/${key}`, { transitionType: 'forwards' })}

@@ -14,6 +14,7 @@ describe('DeepL Translator Service', () => {
     it('should have correct service metadata', () => {
       expect(deeplTranslator.serviceId).toBe('deepl');
       expect(deeplTranslator.serviceLabel).toBe('DeepL');
+      expect(deeplTranslator.apiLabel).toBe('DeepL API');
       expect(deeplTranslator.developerURL).toBe('https://www.deepl.com/pro-api');
       expect(deeplTranslator.apiKeyURL).toBe('https://www.deepl.com/account/summary');
       expect(deeplTranslator.apiKeyPattern).toBeInstanceOf(RegExp);
@@ -308,12 +309,18 @@ describe('DeepL Translator Service', () => {
     it('should export all required properties for TranslationService interface', () => {
       expect(deeplTranslator).toHaveProperty('serviceId');
       expect(deeplTranslator).toHaveProperty('serviceLabel');
+      expect(deeplTranslator).toHaveProperty('apiLabel');
       expect(deeplTranslator).toHaveProperty('developerURL');
       expect(deeplTranslator).toHaveProperty('apiKeyURL');
       expect(deeplTranslator).toHaveProperty('apiKeyPattern');
+      expect(deeplTranslator).toHaveProperty('markdownSupported');
       expect(deeplTranslator).toHaveProperty('getSourceLanguage');
       expect(deeplTranslator).toHaveProperty('getTargetLanguage');
       expect(deeplTranslator).toHaveProperty('translate');
+    });
+
+    it('should have correct markdown support flag', () => {
+      expect(deeplTranslator.markdownSupported).toBe(false);
     });
 
     it('should have function properties that are callable', () => {

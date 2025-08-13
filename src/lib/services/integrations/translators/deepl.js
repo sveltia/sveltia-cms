@@ -7,6 +7,7 @@
 
 const serviceId = 'deepl';
 const serviceLabel = 'DeepL';
+const apiLabel = 'DeepL API';
 const developerURL = 'https://www.deepl.com/pro-api';
 const apiKeyURL = 'https://www.deepl.com/account/summary';
 const apiKeyPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?::fx)?/;
@@ -186,9 +187,11 @@ const translate = async (texts, { sourceLocale, targetLocale, apiKey }) => {
 export default {
   serviceId,
   serviceLabel,
+  apiLabel,
   developerURL,
   apiKeyURL,
   apiKeyPattern,
+  markdownSupported: false,
   getSourceLanguage,
   getTargetLanguage,
   translate,

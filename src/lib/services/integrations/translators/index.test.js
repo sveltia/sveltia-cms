@@ -7,9 +7,26 @@ vi.mock('./google.js', () => ({
   default: {
     serviceId: 'google',
     serviceLabel: 'Google Cloud Translation',
+    apiLabel: 'Cloud Translation API',
     developerURL: 'https://console.cloud.google.com/apis/library/translate.googleapis.com',
     apiKeyURL: 'https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials',
     apiKeyPattern: /AIza[0-9A-Za-z-_]{35}/,
+    markdownSupported: false,
+    getSourceLanguage: vi.fn(),
+    getTargetLanguage: vi.fn(),
+    translate: vi.fn(),
+  },
+}));
+
+vi.mock('./openai.js', () => ({
+  default: {
+    serviceId: 'openai',
+    serviceLabel: 'OpenAI GPT',
+    apiLabel: 'OpenAI API',
+    developerURL: 'https://platform.openai.com/docs/overview',
+    apiKeyURL: 'https://platform.openai.com/api-keys',
+    apiKeyPattern: /sk-[a-zA-Z0-9-_]{40,}/,
+    markdownSupported: true,
     getSourceLanguage: vi.fn(),
     getTargetLanguage: vi.fn(),
     translate: vi.fn(),
@@ -18,6 +35,7 @@ vi.mock('./google.js', () => ({
 
 // Mock svelte/store
 vi.mock('svelte/store', () => ({
+  derived: vi.fn(() => ({ subscribe: vi.fn() })),
   get: vi.fn(),
   writable: vi.fn(() => ({
     subscribe: vi.fn(),
@@ -43,13 +61,21 @@ describe('Translator Services Index', () => {
       expect(allTranslationServices.google.serviceId).toBe('google');
     });
 
+    it('should include OpenAI translator service', () => {
+      expect(allTranslationServices).toHaveProperty('openai');
+      expect(allTranslationServices.openai).toBeDefined();
+      expect(allTranslationServices.openai.serviceId).toBe('openai');
+    });
+
     it('should have all required properties for each service', () => {
       const requiredProperties = [
         'serviceId',
         'serviceLabel',
+        'apiLabel',
         'developerURL',
         'apiKeyURL',
         'apiKeyPattern',
+        'markdownSupported',
         'getSourceLanguage',
         'getTargetLanguage',
         'translate',
@@ -76,15 +102,21 @@ describe('Translator Services Index', () => {
         expect(typeof service.translate).toBe('function');
       });
     });
+
+    it('should have correct markdown support flags', () => {
+      expect(allTranslationServices.google.markdownSupported).toBe(false);
+      expect(allTranslationServices.openai.markdownSupported).toBe(true);
+    });
   });
 
   describe('translator store', () => {
-    it('should be a writable store', () => {
+    it('should be a derived store', () => {
       expect(translator).toBeDefined();
       expect(typeof translator).toBe('object');
       expect(translator).toHaveProperty('subscribe');
-      expect(translator).toHaveProperty('set');
-      expect(translator).toHaveProperty('update');
+      // Derived stores only have subscribe method, not set/update
+      expect(translator).not.toHaveProperty('set');
+      expect(translator).not.toHaveProperty('update');
     });
 
     it('should default to Google translator', () => {
@@ -113,6 +145,7 @@ describe('Translator Services Index', () => {
         expect(typeof service.developerURL).toBe('string');
         expect(typeof service.apiKeyURL).toBe('string');
         expect(service.apiKeyPattern).toBeInstanceOf(RegExp);
+        expect(typeof service.markdownSupported).toBe('boolean');
 
         // Test service functions
         expect(typeof service.getSourceLanguage).toBe('function');
