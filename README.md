@@ -138,9 +138,9 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **245+ issues, or 515+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **250+ issues, or 520+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
-    - 250 issues, or 500 if including duplicates, by GA — Almost there!
+    - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
     - or every single issue that’s relevant, fixable, and worth dealing with 🔥
   - Issues include everything from feature requests to bug reports and [issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution, as well as [discussions](https://github.com/decaporg/decap-cms/discussions) and stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
@@ -152,7 +152,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![245 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250808)<br>
+![250 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250814)<br>
 
 ## Differentiators
 
@@ -579,6 +579,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - `CMS.registerEditorComponent()` accepts a component definition with the `icon` property. Developers can specify a Material Symbols icon name just like [custom collection icons](#using-a-custom-icon-for-a-collection).
   - The `fromBlock` function can be omitted if the `pattern` regex contains [named capturing groups](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) for the values.
   - Inline components are supported.[^267]
+  - Field validation works as expected.[^279]
 
 ### Better localization
 
@@ -628,7 +629,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - LineString and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
-- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): Support for preview, widgets with complex values (Code with `output_code_only: false`, Hidden, KeyValue, List, Object, Select/Relation with `multiple: true`), the `default` field option and [multiline components](https://github.com/sveltia/sveltia-cms/issues/410)
+- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): preview and multiline components ([#410](https://github.com/sveltia/sveltia-cms/issues/410))
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
@@ -2281,3 +2282,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^277]: Netlify/Decap CMS [#86](https://github.com/decaporg/decap-cms/issues/86)
 
 [^278]: Netlify/Decap CMS [#7575](https://github.com/decaporg/decap-cms/issues/7575), [#7576](https://github.com/decaporg/decap-cms/issues/7576)
+
+[^279]: Netlify/Decap CMS [#4912](https://github.com/decaporg/decap-cms/issues/4912), [#6986](https://github.com/decaporg/decap-cms/issues/6986)
