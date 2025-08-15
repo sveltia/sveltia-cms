@@ -9,7 +9,7 @@
   import { getHash } from '@sveltia/utils/crypto';
   import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
-  import { flushSync } from 'svelte';
+  import { flushSync, getContext } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
@@ -33,6 +33,7 @@
    * Asset,
    * AssetKind,
    * EntryDraft,
+   * FieldEditorContext,
    * SelectedResource,
    * WidgetEditorProps,
    * } from '$lib/types/private';
@@ -45,6 +46,9 @@
    * @property {string | undefined} currentValue Field value.
    */
 
+  /** @type {FieldEditorContext} */
+  const { widgetContext = undefined } = getContext('field-editor') ?? {};
+
   /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
@@ -54,7 +58,6 @@
     required = true,
     readonly = false,
     invalid = false,
-    context = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -94,7 +97,8 @@
   const fileName = $derived($entryDraft?.fileName);
   const showRemoveButton = $derived(
     !required &&
-      (!context || !['markdown-editor-component', 'single-field-list-widget'].includes(context)),
+      (!widgetContext ||
+        !['markdown-editor-component', 'single-field-list-widget'].includes(widgetContext)),
   );
 
   /**

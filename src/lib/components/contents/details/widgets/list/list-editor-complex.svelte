@@ -7,7 +7,7 @@
   import { Button, Icon, Menu, MenuButton, MenuItem, Spacer, TruncatedText } from '@sveltia/ui';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
-  import { onMount } from 'svelte';
+  import { getContext, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
@@ -26,7 +26,7 @@
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
    * @import { ListField } from '$lib/types/public';
    */
 
@@ -35,6 +35,9 @@
    * @property {ListField} fieldConfig Field configuration.
    * @property {string[]} currentValue Field value.
    */
+
+  /** @type {FieldEditorContext} */
+  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -75,7 +78,7 @@
   const fileName = $derived($entryDraft?.fileName);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const isDuplicateField = $derived(locale !== defaultLocale && i18n === 'duplicate');
-  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
+  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
   /** @type {Record<string, any>[]} */
@@ -122,9 +125,9 @@
    * See {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
-    Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
+    Object.keys($entryDraft?.[valueStoreKey] ?? {}).forEach((_locale) => {
       if (!(i18n !== 'duplicate' && _locale !== locale)) {
-        updateListField(_locale, keyPath, manipulate);
+        updateListField({ locale: _locale, valueStoreKey, keyPath, manipulate });
       }
     });
   };

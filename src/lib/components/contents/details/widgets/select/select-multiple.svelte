@@ -1,17 +1,21 @@
 <script>
   import { Checkbox, CheckboxGroup, SelectTags } from '@sveltia/ui';
+  import { getContext } from 'svelte';
 
   import { entryDraft } from '$lib/services/contents/draft';
   import { updateListField } from '$lib/services/contents/draft/update/list';
 
   /**
-   * @import { SelectFieldSelectorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, SelectFieldSelectorProps } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {string[]} currentValue Field value.
    */
+
+  /** @type {FieldEditorContext} */
+  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
   /** @type {SelectFieldSelectorProps & Props} */
   let {
@@ -38,9 +42,9 @@
   const updateList = (manipulate) => {
     // Avoid an error while navigating pages
     if ($entryDraft) {
-      Object.keys($state.snapshot($entryDraft.currentValues) ?? {}).forEach((_locale) => {
+      Object.keys($state.snapshot($entryDraft[valueStoreKey]) ?? {}).forEach((_locale) => {
         if (!(i18n !== 'duplicate' && _locale !== locale)) {
-          updateListField(_locale, keyPath, manipulate);
+          updateListField({ locale: _locale, valueStoreKey, keyPath, manipulate });
         }
       });
     }

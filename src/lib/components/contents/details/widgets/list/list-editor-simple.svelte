@@ -6,12 +6,12 @@
 <script>
   import { TextArea } from '@sveltia/ui';
   import { escapeRegExp } from '@sveltia/utils/string';
-  import { onMount, untrack } from 'svelte';
+  import { getContext, onMount, untrack } from 'svelte';
 
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { EntryDraft, WidgetEditorProps } from '$lib/types/private';
+   * @import { EntryDraft, FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
    * @import { ListField } from '$lib/types/public';
    */
 
@@ -20,6 +20,9 @@
    * @property {ListField} fieldConfig Field configuration.
    * @property {string[]} currentValue Field value.
    */
+
+  /** @type {FieldEditorContext} */
+  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -55,19 +58,20 @@
   const updateSimpleList = () => {
     const normalizedValue = inputValue.split(/\n/g);
 
-    Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
+    Object.keys($entryDraft?.[valueStoreKey] ?? {}).forEach((_locale) => {
       if (i18n !== 'duplicate' && _locale !== locale) {
         return;
       }
 
-      Object.keys($entryDraft?.currentValues[_locale] ?? {}).forEach((_keyPath) => {
+      Object.keys($entryDraft?.[valueStoreKey][_locale] ?? {}).forEach((_keyPath) => {
         if (_keyPath.match(`^${escapeRegExp(keyPath)}\\.\\d+$`)) {
-          delete $entryDraft?.currentValues[_locale][_keyPath];
+          delete $entryDraft?.[valueStoreKey][_locale][_keyPath];
         }
       });
 
       normalizedValue.forEach((val, index) => {
-        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][`${keyPath}.${index}`] = val;
+        /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][`${keyPath}.${index}`] =
+          val;
       });
     });
   };

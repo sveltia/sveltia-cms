@@ -14,9 +14,11 @@
   } from 'lexical';
   import { untrack } from 'svelte';
 
+  import { entryDraft } from '$lib/services/contents/draft';
   import {
     BUILTIN_COMPONENTS,
     BUTTON_NAME_MAP,
+    COMPONENT_NAME_PREFIX_REGEX,
     customComponents,
     DEFAULT_BUTTONS,
     DEFAULT_MODES,
@@ -33,7 +35,7 @@
   } from '$lib/services/utils/media/image';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { EntryDraft, WidgetEditorProps } from '$lib/types/private';
    * @import { MarkdownField } from '$lib/types/public';
    */
 
@@ -60,6 +62,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  /** @type {HTMLElement | undefined} */
+  let wrapper = $state();
   let inputValue = $state('');
 
   const {
@@ -85,19 +89,9 @@
   );
   const components = $derived(
     _editorComponents
-      .map((name) => {
-        if (name in customComponents) {
-          return customComponents[name];
-        }
-
-        if (name === 'image') {
-          // Use a different component definition for linked images
-          return getComponentDef(linkedImagesEnabled ? 'linked-image' : 'image');
-        }
-
-        // Exclude `code-block` implemented as a block type as well as unknown components
-        return undefined;
-      })
+      .map((name) =>
+        getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
+      )
       .filter((def) => !!def)
       .map(
         (def) =>
@@ -294,12 +288,26 @@
   /**
    * Update {@link inputValue} based on {@link currentValue} while avoiding a cycle dependency.
    */
-  const setInputValue = () => {
+  const setInputValue = async () => {
     const newValue = typeof currentValue === 'string' ? currentValue : '';
 
     if (inputValue !== newValue) {
       inputValue = newValue;
     }
+
+    await sleep(500);
+
+    // Remove values that are not present in the editor anymore. Otherwise, they will trigger
+    // validation errors when the entry is saved.
+    Object.keys(/** @type {EntryDraft} */ ($entryDraft).extraValues[locale] ?? {}).forEach(
+      (key) => {
+        const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
+
+        if (prefix && !wrapper?.querySelector(`[data-key-path^="${prefix}"]`)) {
+          delete (/** @type {EntryDraft} */ ($entryDraft).extraValues[locale][key]);
+        }
+      },
+    );
   };
 
   /**
@@ -330,7 +338,7 @@
   });
 </script>
 
-<div role="none" class="wrapper" class:minimal>
+<div role="none" class="wrapper" class:minimal bind:this={wrapper}>
   {#await sleep() then}
     <!--
       Reset the editor when the configuration changes. It happens when fields are reordered or

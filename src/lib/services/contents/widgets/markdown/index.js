@@ -9,6 +9,12 @@
  */
 
 /**
+ * Regular expression to match the component name prefix in the key path, e.g. `body:c12:image:`.
+ * @type {RegExp}
+ */
+export const COMPONENT_NAME_PREFIX_REGEX = /^.+?:\w+:/;
+
+/**
  * The default `modes` property options.
  * @type {RichTextEditorMode[]}
  */

@@ -6,7 +6,7 @@ import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
+ * @import { DraftValueStoreKey, EntryDraft, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
@@ -51,17 +51,24 @@ const getItemList = (obj, keyPath) => {
 
 /**
  * Update the value in a list field.
- * @param {InternalLocaleCode} locale Target locale.
- * @param {FieldKeyPath} keyPath Dot-notated field name.
- * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) =>
- * void } manipulate A function to manipulate the list, which takes one object argument containing
- * the value list, file list and view state list. The typical usage is `list.splice()`.
+ * @param {object} args Arguments.
+ * @param {InternalLocaleCode} args.locale Target locale.
+ * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
+ * @param {FieldKeyPath} args.keyPath Dot-notated field name.
+ * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) => void } args.manipulate A
+ * function to manipulate the list, which takes one object argument containing the value list, file
+ * list and view state list. The typical usage is `list.splice()`.
  */
-export const updateListField = (locale, keyPath, manipulate) => {
+export const updateListField = ({
+  locale,
+  valueStoreKey = 'currentValues',
+  keyPath,
+  manipulate,
+}) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
-  const [valueList, valueListRemainder] = getItemList(draft.currentValues[locale], keyPath);
+  const [valueList, valueListRemainder] = getItemList(draft[valueStoreKey][locale], keyPath);
 
   const [expanderStateList, expanderStateListRemainder] =
     // Manipulation should only happen once with the default locale
@@ -72,7 +79,7 @@ export const updateListField = (locale, keyPath, manipulate) => {
   i18nAutoDupEnabled.set(false);
 
   /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
-    updateObject(_draft.currentValues[locale], {
+    updateObject(_draft[valueStoreKey][locale], {
       ...flatten({ [keyPath]: valueList }),
       ...valueListRemainder,
     });

@@ -4,7 +4,7 @@
   import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
   import { marked } from 'marked';
-  import { setContext } from 'svelte';
+  import { getContext, setContext } from 'svelte';
   import { writable } from 'svelte/store';
   import { _ } from 'svelte-i18n';
 
@@ -22,7 +22,13 @@
   /**
    * @import { Component } from 'svelte';
    * @import { Writable } from 'svelte/store';
-   * @import { InternalLocaleCode, WidgetContext } from '$lib/types/private';
+   * @import {
+   * DraftValueStoreKey,
+   * EntryDraft,
+   * FieldEditorContext,
+   * InternalLocaleCode,
+   * WidgetContext,
+   * } from '$lib/types/private';
    * @import {
    * BooleanField,
    * Field,
@@ -36,12 +42,16 @@
    * } from '$lib/types/public';
    */
 
+  /** @type {FieldEditorContext} */
+  const parent = getContext('field-editor') ?? {};
+
   /**
    * @typedef {object} Props
    * @property {InternalLocaleCode} locale Current pane’s locale.
    * @property {FieldKeyPath} keyPath Field key path.
    * @property {Field} fieldConfig Field configuration.
    * @property {WidgetContext} [context] Where the widget is rendered.
+   * @property {DraftValueStoreKey} [valueStoreKey] Key to store the values in {@link EntryDraft}.
    */
 
   /** @type {Props} */
@@ -50,7 +60,8 @@
     locale,
     keyPath,
     fieldConfig,
-    context = undefined,
+    context: widgetContext = parent.widgetContext ?? undefined,
+    valueStoreKey = parent.valueStoreKey ?? 'currentValues',
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -70,8 +81,12 @@
   /** @type {Writable<Component>} */
   const extraHint = writable();
 
-  setContext('field-editor', { extraHint });
+  setContext(
+    'field-editor',
+    /** @type {FieldEditorContext} */ ({ widgetContext, extraHint, valueStoreKey }),
+  );
 
+  const inEditorComponent = $derived(widgetContext === 'markdown-editor-component');
   const {
     name: fieldName,
     label = '',
@@ -134,16 +149,20 @@
   const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
   const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
-  const canEdit = $derived(locale === defaultLocale || canTranslate || canDuplicate);
+  const canEdit = $derived(
+    inEditorComponent || locale === defaultLocale || canTranslate || canDuplicate,
+  );
+  const canCopy = $derived(!inEditorComponent && canTranslate && otherLocales.length);
+  const canRevert = $derived(!inEditorComponent && !(canDuplicate && locale !== defaultLocale));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
   // Multiple values are flattened in the value map object
   const currentValue = $derived(
     isList
-      ? Object.entries($state.snapshot($entryDraft?.currentValues[locale] ?? {}))
+      ? Object.entries($state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {}))
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
           .map(([, val]) => val)
           .filter((val) => val !== undefined)
-      : $state.snapshot($entryDraft?.currentValues[locale])?.[keyPath],
+      : $state.snapshot($entryDraft?.[valueStoreKey][locale])?.[keyPath],
   );
   const originalValue = $derived(
     isList
@@ -164,8 +183,6 @@
 </script>
 
 {#if $entryDraft && canEdit && widgetName !== 'hidden'}
-  {@const canCopy = canTranslate && otherLocales.length}
-  {@const canRevert = !(canDuplicate && locale !== defaultLocale)}
   <section
     role="group"
     class="field"
@@ -275,7 +292,6 @@
           {readonly}
           {required}
           {invalid}
-          {context}
         />
       {:else}
         {#if beforeInputLabel}
@@ -291,11 +307,10 @@
           {fieldId}
           {fieldLabel}
           {fieldConfig}
-          bind:currentValue={$entryDraft.currentValues[locale][keyPath]}
+          bind:currentValue={$entryDraft[valueStoreKey][locale][keyPath]}
           {readonly}
           {required}
           {invalid}
-          {context}
         />
         {#if suffix}
           <div role="none" class="suffix">{suffix}</div>

@@ -10,6 +10,7 @@ import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/coll
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
+import { getComponentDef } from '$lib/services/contents/widgets/markdown/component';
 import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 
@@ -42,18 +43,21 @@ export const fieldConfigCacheMap = new Map();
  * @param {GetFieldArgs} args Arguments.
  * @returns {Field | undefined} Field configuration.
  */
-export const getField = ({
-  collectionName,
-  fileName = undefined,
-  valueMap = {},
-  keyPath,
-  isIndexFile = false,
-}) => {
-  const cacheKey = JSON.stringify({ collectionName, fileName, valueMap, keyPath, isIndexFile });
+export const getField = (args) => {
+  const cacheKey = JSON.stringify(args);
 
   if (fieldConfigCacheMap.has(cacheKey)) {
     return fieldConfigCacheMap.get(cacheKey);
   }
+
+  const {
+    collectionName,
+    fileName = undefined,
+    componentName = undefined,
+    valueMap = {},
+    keyPath,
+    isIndexFile = false,
+  } = args;
 
   const collection = getCollection(collectionName);
 
@@ -70,7 +74,11 @@ export const getField = ({
 
   const { fields: regularFields = [] } = collectionFile ?? collection;
   const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
-  const fields = indexFile?.fields ?? regularFields;
+
+  const fields = componentName
+    ? (getComponentDef(componentName)?.fields ?? [])
+    : (indexFile?.fields ?? regularFields);
+
   const keyPathArray = keyPath.split('.');
   /** @type {Field | undefined} */
   let field;

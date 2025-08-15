@@ -21,7 +21,7 @@
   let {
     /* eslint-disable prefer-const */
     fieldId,
-    currentValue = $bindable(false),
+    currentValue = $bindable(),
     required = true,
     readonly = false,
     invalid = false,

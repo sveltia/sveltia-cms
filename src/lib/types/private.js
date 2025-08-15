@@ -1,4 +1,6 @@
 /**
+ * @import { Component } from 'svelte';
+ * @import { Writable } from 'svelte/store';
  * @import {
  * BackendName,
  * Collection,
@@ -578,6 +580,8 @@
  * containing all the original field values.
  * @property {LocaleContentMap} currentValues Key is a locale code, value is a flattened, proxified
  * object containing all the current field values while editing.
+ * @property {LocaleContentMap} extraValues Key is a locale code, value is a flattened object
+ * containing field values in Markdown editor components.
  * @property {EntryFileMap} files Files to be uploaded.
  * @property {LocaleValidityMap} validities Key is a locale code, value is a flattened object
  * containing validation results of all the current field values while editing.
@@ -817,8 +821,23 @@
  */
 
 /**
- * Context for a widget, which may change the behavior of the editor/preview.
+ * Key to store the current values in the {@link EntryDraft}. Usually `currentValues`, but can be
+ * `extraValues` to store extra values for a Markdown editor component.
+ * @typedef {'currentValues' | 'extraValues'} DraftValueStoreKey
+ */
+
+/**
+ * Context for a field, which may change the behavior of the editor/preview.
  * @typedef {'markdown-editor-component' | 'single-field-list-widget'} WidgetContext
+ */
+
+/**
+ * Context for a field editor.
+ * @typedef {object} FieldEditorContext
+ * @property {WidgetContext} [widgetContext] Where the field is rendered.
+ * @property {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
+ * @property {Writable<Component>} [extraHint] Component to render an extra hint in the field
+ * editor.
  */
 
 /**
@@ -831,7 +850,6 @@
  * @property {boolean} [required] Whether to mark the field required.
  * @property {boolean} [readonly] Whether to mark the field read-only.
  * @property {boolean} [invalid] Whether to mark the field invalid.
- * @property {WidgetContext} [context] Where the widget is rendered.
  */
 
 /**
@@ -839,7 +857,6 @@
  * @typedef {object} WidgetPreviewProps
  * @property {InternalLocaleCode} locale Current pane’s locale.
  * @property {FieldKeyPath} keyPath Field key path.
- * @property {WidgetContext} [context] Where the widget is rendered.
  */
 
 /**
@@ -939,6 +956,7 @@
  * @typedef {object} GetFieldArgs
  * @property {string} collectionName Collection name.
  * @property {string} [fileName] Collection file name. File/singleton collection only.
+ * @property {string} [componentName] Markdown editor component name.
  * @property {FlattenedEntryContent} [valueMap] Object holding current entry values. This is
  * required when working with list/object widget variable types.
  * @property {FieldKeyPath} keyPath Key path, e.g. `author.name`.

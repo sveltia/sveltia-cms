@@ -4,7 +4,7 @@ import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
+ * @import { DraftValueStoreKey, EntryDraft, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath, KeyValueField } from '$lib/types/public';
  */
 
@@ -12,12 +12,13 @@ import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
  * Get key-value pairs from the draft store.
  * @param {object} args Arguments.
  * @param {Writable<EntryDraft>} args.entryDraft Draft store.
+ * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @param {InternalLocaleCode} args.locale Current pane’s locale.
  * @returns {[string, string][]} Key-value pairs.
  */
-export const getPairs = ({ entryDraft, keyPath, locale }) =>
-  Object.entries(get(entryDraft).currentValues[locale] ?? {})
+export const getPairs = ({ entryDraft, valueStoreKey = 'currentValues', keyPath, locale }) =>
+  Object.entries(get(entryDraft)[valueStoreKey][locale] ?? {})
     .filter(([_keyPath]) => _keyPath.startsWith(`${keyPath}.`))
     .map(([_keyPath, value]) => [_keyPath.replace(`${keyPath}.`, ''), value]);
 

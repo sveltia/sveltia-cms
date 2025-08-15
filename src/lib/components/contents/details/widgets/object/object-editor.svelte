@@ -7,7 +7,7 @@
   import { Button, Checkbox, Icon, TruncatedText } from '@sveltia/ui';
   import { waitForVisibility } from '@sveltia/utils/element';
   import { toRaw } from '@sveltia/utils/object';
-  import { onMount, tick } from 'svelte';
+  import { getContext, onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
@@ -27,7 +27,7 @@
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**
-   * @import { EntryDraft, WidgetEditorProps } from '$lib/types/private';
+   * @import { EntryDraft, FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
    * @import { ObjectField } from '$lib/types/public';
    */
 
@@ -36,6 +36,9 @@
    * @property {ObjectField} fieldConfig Field configuration.
    * @property {object | undefined} currentValue Field value.
    */
+
+  /** @type {FieldEditorContext} */
+  const { widgetContext, valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -69,7 +72,7 @@
   const collectionFile = $derived($entryDraft?.collectionFile);
   const fileName = $derived($entryDraft?.fileName);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
-  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
+  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
   const getFieldArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
   const hasValues = $derived(
     Object.entries(valueMap).some(
@@ -78,7 +81,9 @@
         (value !== null || getField({ ...getFieldArgs, keyPath: _keyPath })?.widget === 'object'),
     ),
   );
-  const canEdit = $derived(locale === defaultLocale || i18n !== false);
+  const canEdit = $derived(
+    widgetContext === 'markdown-editor-component' || locale === defaultLocale || i18n !== false,
+  );
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
   const hasVariableTypes = $derived(Array.isArray(types));
@@ -110,9 +115,9 @@
     $i18nAutoDupEnabled = false;
 
     if (type) {
-      Object.keys($entryDraft?.currentValues ?? {}).forEach((_locale) => {
+      Object.keys($entryDraft?.[valueStoreKey] ?? {}).forEach((_locale) => {
         if (_locale === locale || i18n === 'duplicate') {
-          /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][typeKeyPath] = type;
+          /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][typeKeyPath] = type;
         }
       });
 
@@ -127,16 +132,16 @@
 
     const newValueMap = locale === defaultLocale ? newContent : copyDefaultLocaleValues(newContent);
 
-    Object.entries($entryDraft?.currentValues ?? {}).forEach(([_locale, _valueMap]) => {
+    Object.entries($entryDraft?.[valueStoreKey] ?? {}).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {
         // Apply the new values while keeping the Proxy
-        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale] = Object.assign(
+        /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale] = Object.assign(
           _valueMap,
           toRaw({ ...newValueMap, ..._valueMap }),
         );
 
         // Disable validation
-        delete (/** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][keyPath]);
+        delete (/** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][keyPath]);
       }
     });
 
@@ -149,17 +154,17 @@
   const removeFields = () => {
     $i18nAutoDupEnabled = false;
 
-    Object.entries($entryDraft?.currentValues ?? {}).forEach(([_locale, _valueMap]) => {
+    Object.entries($entryDraft?.[valueStoreKey] ?? {}).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {
         Object.keys(_valueMap).forEach((_keyPath) => {
           if (_keyPath.startsWith(`${keyPath}.`)) {
-            /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][_keyPath] = null;
-            delete $entryDraft?.currentValues[_locale][_keyPath];
+            /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][_keyPath] = null;
+            delete $entryDraft?.[valueStoreKey][_locale][_keyPath];
           }
         });
 
         // Enable validation
-        /** @type {EntryDraft} */ ($entryDraft).currentValues[_locale][keyPath] = null;
+        /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][keyPath] = null;
       }
     });
 

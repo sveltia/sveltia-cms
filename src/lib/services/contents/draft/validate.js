@@ -10,12 +10,14 @@ import {
 } from '$lib/services/contents/widgets';
 import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
 import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
+import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/widgets/markdown';
 import { validateStringField } from '$lib/services/contents/widgets/string/validate';
 import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Writable } from 'svelte/store';
  * @import {
+ * DraftValueStoreKey,
  * EntryDraft,
  * EntryValidityState,
  * FlattenedEntryContent,
@@ -43,6 +45,7 @@ import { getRegex } from '$lib/services/utils/misc';
  * @property {string} keyPath Field key path.
  * @property {FlattenedEntryContent} valueMap Entry values.
  * @property {any} value Field value.
+ * @property {string} [componentName] Markdown editor component name.
  */
 
 /**
@@ -83,15 +86,24 @@ const validityProxyHandler = {
  * @param {FlattenedEntryContent} args.valueMap Entry values.
  * @param {string} args.keyPath Field key path.
  * @param {any} args.value Field value.
+ * @param {string} [args.componentName] Markdown editor component name.
  * @returns {EntryValidityState | undefined} Field validity.
  * @todo Refactor this function to reduce complexity and improve readability.
  */
-const validateAnyField = ({ draft, locale, valueMap, keyPath, value }) => {
+const validateAnyField = ({ draft, locale, valueMap, keyPath, value, componentName }) => {
   const { collection, collectionName, fileName, collectionFile, files, validities, isIndexFile } =
     draft;
 
   /** @type {GetFieldArgs} */
-  const getFieldArgs = { collectionName, fileName, valueMap, keyPath, isIndexFile };
+  const getFieldArgs = {
+    collectionName,
+    fileName,
+    componentName,
+    valueMap,
+    keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+    isIndexFile,
+  };
+
   const fieldConfig = getField({ ...getFieldArgs });
 
   if (!fieldConfig) {
@@ -112,6 +124,7 @@ const validateAnyField = ({ draft, locale, valueMap, keyPath, value }) => {
 
   // Skip validation on non-editable fields
   if (
+    !componentName && // Don’t skip validation if the field is within a Markdown editor component
     locale !== defaultLocale &&
     (!i18nEnabled || i18n === false || i18n === 'none' || i18n === 'duplicate')
   ) {
@@ -162,7 +175,11 @@ const validateAnyField = ({ draft, locale, valueMap, keyPath, value }) => {
     // `field.keyN`, we should validate only once against all these values. The key can be
     // empty, so use `.*` in the regex instead of `.+`
     const _keyPath = /** @type {string} */ (keyPath.match(/(.+?)(?:\.[^.]*)?$/)?.[1]);
-    const parentFieldConfig = getField({ ...getFieldArgs, keyPath: _keyPath });
+
+    const parentFieldConfig = getField({
+      ...getFieldArgs,
+      keyPath: _keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+    });
 
     if (_keyPath in validities[locale] || parentFieldConfig?.widget !== 'keyvalue') {
       return undefined;
@@ -287,19 +304,19 @@ const validateAnyField = ({ draft, locale, valueMap, keyPath, value }) => {
  * @returns {boolean} Whether the field is valid.
  */
 const validateField = (args) => {
-  const { locale, keyPath, validities } = args;
+  const { validities, locale, keyPath } = args;
   const validity = validateAnyField(args);
-  let validated = true;
+  let valid = true;
 
   if (validity) {
     validities[locale][keyPath] = validity;
 
     if (!validity.valid) {
-      validated = false;
+      valid = false;
     }
   }
 
-  return validated;
+  return valid;
 };
 
 /**
@@ -307,14 +324,14 @@ const validateField = (args) => {
  * @param {object} args Arguments.
  * @param {Field} args.fieldConfig Field configuration.
  * @param {ValidateFieldArgs} args.validateArgs Arguments for field validation.
- * @returns {{ validated: boolean, validateItems: boolean }} Validation result.
+ * @returns {{ valid: boolean, validateItems: boolean }} Validation result.
  */
 const validateList = ({ fieldConfig, validateArgs }) => {
   const { validities, locale, keyPath } = validateArgs;
-  let validated = true;
+  let valid = true;
 
   if (!(keyPath in validities[locale])) {
-    validated = validateField(validateArgs);
+    valid = validateField(validateArgs);
   }
 
   const { widget: widgetName = 'string' } = fieldConfig;
@@ -322,7 +339,7 @@ const validateList = ({ fieldConfig, validateArgs }) => {
   if (widgetName === 'list') {
     if (!getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields) {
       // Simple list field, so we don’t need to validate items
-      return { validated, validateItems: false };
+      return { valid, validateItems: false };
     }
   }
 
@@ -332,28 +349,28 @@ const validateList = ({ fieldConfig, validateArgs }) => {
 
   if (multiple) {
     // Same as a simple list field, so we don’t need to validate items
-    return { validated, validateItems: false };
+    return { valid, validateItems: false };
   }
 
-  return { validated, validateItems: true };
+  return { valid, validateItems: true };
 };
 
 /**
- * Validate the current entry draft, update the validity for all the fields, and return the final
- * results as a boolean. Mimic the native `ValidityState` API.
- * @returns {boolean} Whether the draft is valid.
+ * Validate the field values and return the results. Mimic the native `ValidityState` API.
+ * @param {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
+ * @returns {{ valid: boolean, validities: LocaleValidityMap }} Validation results.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
-export const validateEntry = () => {
+export const validateFields = (valueStoreKey) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
-  const { collectionName, fileName, isIndexFile, currentValues, currentLocales } = draft;
+  const { collectionName, fileName, isIndexFile, currentLocales } = draft;
   /** @type {LocaleValidityMap} */
   const validities = {};
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath: '', valueMap: {} };
-  let validated = true;
+  let valid = true;
 
-  Object.entries(currentValues).forEach(([locale, valueMap]) => {
+  Object.entries(draft[valueStoreKey]).forEach(([locale, valueMap]) => {
     const valueEntries = Object.entries(valueMap);
 
     // If the locale is disabled, skip the validation and mark all fields valid
@@ -371,7 +388,15 @@ export const validateEntry = () => {
     validities[locale] = {};
 
     valueEntries.forEach(([keyPath, value]) => {
-      const fieldConfig = getField({ ...getFieldArgs, keyPath, valueMap });
+      const [prefix] = keyPath.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
+      const componentName = prefix ? valueMap[`${prefix}__sc_component_name`] : undefined;
+
+      const fieldConfig = getField({
+        ...getFieldArgs,
+        keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+        valueMap,
+        componentName,
+      });
 
       if (!fieldConfig) {
         return;
@@ -379,17 +404,18 @@ export const validateEntry = () => {
 
       // Validate a list itself before the items
       if (LIST_KEY_PATH_REGEX.test(keyPath)) {
-        const { validated: listValidated, validateItems } = validateList({
+        const { valid: listValid, validateItems } = validateList({
           fieldConfig,
           validateArgs: {
             ...validateArgs,
             keyPath: keyPath.replace(LIST_KEY_PATH_REGEX, ''),
             value: '',
+            componentName,
           },
         });
 
-        if (!listValidated) {
-          validated = false;
+        if (!listValid) {
+          valid = false;
         }
 
         if (!validateItems) {
@@ -397,13 +423,36 @@ export const validateEntry = () => {
         }
       }
 
-      if (!validateField({ ...validateArgs, keyPath, value })) {
-        validated = false;
+      if (!validateField({ ...validateArgs, keyPath, value, componentName })) {
+        valid = false;
       }
     });
   });
 
-  /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({ ..._draft, validities }));
+  return { valid, validities };
+};
 
-  return validated;
+/**
+ * Validate the field values, update the validity for all the fields, and return the final results
+ * as a boolean.
+ * @returns {boolean} Whether the entry draft is valid.
+ */
+export const validateEntry = () => {
+  const { valid: currentValuesValid, validities: currentValuesValidities } =
+    validateFields('currentValues');
+
+  const { valid: extraValuesValid, validities: extraValuesValidities } =
+    validateFields('extraValues');
+
+  /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
+    ..._draft,
+    validities: Object.fromEntries(
+      Object.keys(currentValuesValidities).map((locale) => [
+        locale,
+        { ...currentValuesValidities[locale], ...extraValuesValidities[locale] },
+      ]),
+    ),
+  }));
+
+  return currentValuesValid && extraValuesValid;
 };

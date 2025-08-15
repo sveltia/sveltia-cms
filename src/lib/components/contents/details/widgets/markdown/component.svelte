@@ -1,37 +1,41 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
-  import { generateElementId } from '@sveltia/utils/element';
-  import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
+  import { flatten, unflatten } from 'flat';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
-  import { getEditorComponent } from '$lib/services/contents/widgets/markdown/component-helper';
+  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
+  import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import { entryDraft } from '$lib/services/contents/draft';
+  import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 
   /**
-   * @import { InternalLocaleCode } from '$lib/types/private';
+   * @import { DraftValueStoreKey, InternalLocaleCode, RawEntryContent } from '$lib/types/private';
    * @import { Field, FieldKeyPath } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {string} componentId Editor component ID.
+   * @property {string} componentName Markdown editor component name.
    * @property {string} label Field label.
    * @property {Field[]} fields Subfield definitions.
-   * @property {Record<string, any>} values Value map.
+   * @property {Record<string, any> | undefined} values Value map.
    * @property {(event: CustomEvent) => void} [onChange] Custom `change` event handler.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
-    componentId,
+    componentName,
     label,
     fields,
-    values = {},
+    values,
     onChange = () => undefined,
     /* eslint-enable prefer-const */
   } = $props();
+
+  const randomId = $props.id();
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
@@ -39,14 +43,41 @@
   let locale = $state('');
   /** @type {FieldKeyPath} */
   let keyPath = $state('');
-  /** @type {Record<string, any>} */
-  const inputValues = $state({});
+
+  const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${randomId}:`);
 
   /**
    * Get the wrapper element.
    * @returns {HTMLElement | undefined} Wrapper.
    */
   export const getElement = () => wrapper;
+
+  /**
+   * Key to store the current values in the {@link entryDraft}. Usually `currentValues`, but we use
+   * `extraValues` here to store additional values for a Markdown editor component.
+   * @type {DraftValueStoreKey}
+   */
+  const valueStoreKey = 'extraValues';
+
+  /**
+   * Current values for the editor component. These Values are stored in the {@link entryDraft}
+   * under the `extraValues` key, with the key path prefixed with the parent field’s key path, e.g.
+   * `body:c12:image`.
+   * @type {RawEntryContent | undefined}
+   */
+  const currentValues = $derived.by(() => {
+    if (!($entryDraft && locale && keyPath)) {
+      return undefined;
+    }
+
+    return unflatten(
+      Object.fromEntries(
+        Object.entries($state.snapshot($entryDraft[valueStoreKey][locale] ?? {}))
+          .filter(([key]) => key.startsWith(keyPathPrefix))
+          .map(([key, value]) => [key.replace(keyPathPrefix, ''), value]),
+      ),
+    );
+  });
 
   onMount(() => {
     window.requestAnimationFrame(() => {
@@ -57,20 +88,44 @@
         /** @type {HTMLElement} */ (wrapper?.closest('[data-key-path]'))?.dataset.keyPath
       );
     });
+
+    return () => {
+      // Remove the values from the draft when the component is unmounted
+      if ($entryDraft && valueStoreKey === 'extraValues') {
+        Object.keys($entryDraft[valueStoreKey][locale] ?? {}).forEach((key) => {
+          if (key.startsWith(keyPathPrefix)) {
+            delete $entryDraft[valueStoreKey][locale][key];
+          }
+        });
+      }
+    };
   });
 
   $effect(() => {
-    void [values];
+    void [values, locale, keyPath];
 
     untrack(() => {
-      if (!equal(values, $state.snapshot(inputValues))) {
-        Object.assign(inputValues, values);
+      if ($entryDraft && locale && keyPath) {
+        values ??= unflatten(getDefaultValues(fields, locale)) ?? {};
+        values.__sc_component_name = componentName;
+
+        if (!equal(values, currentValues)) {
+          Object.assign(
+            $entryDraft[valueStoreKey][locale],
+            Object.fromEntries(
+              Object.entries(flatten(values)).map(([key, value]) => [
+                `${keyPathPrefix}${key}`,
+                value,
+              ]),
+            ),
+          );
+        }
       }
     });
   });
 
   $effect(() => {
-    onChange(new CustomEvent('update', { detail: $state.snapshot(inputValues) }));
+    onChange(new CustomEvent('update', { detail: currentValues }));
   });
 </script>
 
@@ -82,7 +137,11 @@
   contenteditable="false"
   tabindex="0"
   aria-label={label}
-  data-component-id={componentId}
+  data-component-name={componentName}
+  onkeydowncapture={(event) => {
+    // Allow to select all in any `TextInput` within the component below using Ctrl+A
+    event.stopPropagation();
+  }}
   onkeydown={(event) => {
     if (
       !(/** @type {HTMLElement} */ (event.target).matches('button, input, textarea')) &&
@@ -113,41 +172,15 @@
   </header>
   {#if locale && keyPath}
     {#each fields as fieldConfig (fieldConfig.name)}
-      {#await sleep() then}
-        <!-- @todo Support `default` option -->
-        {@const { name: fieldName, label: fieldLabel = fieldName, widget = 'string' } = fieldConfig}
-        {@const Editor = getEditorComponent(fieldConfig)}
-        {#if Editor}
-          <section
-            role="group"
-            class="field"
-            aria-label={$_('x_field', { values: { field: fieldLabel } })}
-            data-widget={widget}
-            data-key-path="{keyPath}:{fieldName}"
-            onkeydowncapture={(event) => {
-              // Allow to select all in any `TextInput` within the component below using Ctrl+A
-              event.stopPropagation();
-            }}
-          >
-            <header role="none">
-              <h4 role="none">{fieldLabel}</h4>
-            </header>
-            <div role="none" class="widget-wrapper">
-              <Editor
-                {locale}
-                keyPath="{keyPath}:{fieldName}"
-                fieldId={generateElementId('field')}
-                {fieldLabel}
-                required={fieldConfig.required ?? true}
-                readonly={fieldConfig.readonly ?? false}
-                {fieldConfig}
-                context="markdown-editor-component"
-                bind:currentValue={inputValues[fieldName]}
-              />
-            </div>
-          </section>
-        {/if}
-      {/await}
+      <VisibilityObserver>
+        <FieldEditor
+          {locale}
+          keyPath="{keyPathPrefix}{fieldConfig.name}"
+          {fieldConfig}
+          context="markdown-editor-component"
+          {valueStoreKey}
+        />
+      </VisibilityObserver>
     {/each}
   {/if}
 </div>
@@ -186,37 +219,29 @@
         height: 16px;
       }
     }
-  }
 
-  section {
-    margin: 0;
-    border-top: 1px solid var(--sui-secondary-border-color);
-    padding: var(--field-editor-padding);
+    // Make the input fields compact within the built-in image component
+    &:is([data-component-name='image'], [data-component-name='linked-image']) {
+      :global {
+        @media (768px <= width) {
+          [data-widget] {
+            border-width: 0;
+          }
 
-    h4 {
-      margin-bottom: 8px !important;
-      font-size: var(--sui-font-size-small);
-      font-weight: 600;
-      color: var(--sui-secondary-foreground-color);
-    }
+          [data-widget='string'] {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-block: 0 16px;
 
-    &[data-widget='string'] {
-      @media (768px <= width) {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+            h4 {
+              margin-bottom: 0 !important;
+            }
 
-        :is([data-component-id='image'], [data-component-id='linked-image']) & {
-          border-width: 0;
-          padding-block: 0 16px;
-        }
-
-        h4 {
-          margin-bottom: 0 !important;
-        }
-
-        .widget-wrapper {
-          flex: auto;
+            .widget-wrapper {
+              flex: auto;
+            }
+          }
         }
       }
     }

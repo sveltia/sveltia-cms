@@ -6,6 +6,7 @@ import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
 import Component from '$lib/components/contents/details/widgets/markdown/component.svelte';
+import { customComponents } from '$lib/services/contents/widgets/markdown';
 
 /**
  * @import {
@@ -32,16 +33,21 @@ import Component from '$lib/components/contents/details/widgets/markdown/compone
 
 /**
  * Escape some Markdown characters in the given object’s property values.
- * @param {Record<string, any>} props Object containing original strings.
+ * @param {Record<string, any> | null} props Object containing original strings.
  * @returns {Record<string, string>} Object containing escaped strings.
  */
-const escapeAllChars = (props) =>
-  Object.fromEntries(
+const escapeAllChars = (props) => {
+  if (!props) {
+    return {};
+  }
+
+  return Object.fromEntries(
     Object.entries(props).map(([key, val]) => [
       key,
       typeof val === 'string' ? val.trim().replace(/["()[[\]]/g, '\\$&') : '',
     ]),
   );
+};
 
 /**
  * Get a component definition. This has to be a function due to localized labels.
@@ -49,13 +55,17 @@ const escapeAllChars = (props) =>
  * @returns {EditorComponentDefinition | undefined} Definition.
  */
 export const getComponentDef = (name) => {
+  if (name in customComponents) {
+    return customComponents[name];
+  }
+
   const imageProps = {
     icon: 'image',
     label: get(_)('editor_components.image'),
     fields: [
       { name: 'src', label: get(_)('editor_components.src'), widget: 'image' },
-      { name: 'alt', label: get(_)('editor_components.alt') },
-      { name: 'title', label: get(_)('editor_components.title') },
+      { name: 'alt', label: get(_)('editor_components.alt'), required: false },
+      { name: 'title', label: get(_)('editor_components.title'), required: false },
     ],
   };
 
@@ -81,7 +91,10 @@ export const getComponentDef = (name) => {
     'linked-image': {
       ...imageProps,
       id: 'linked-image',
-      fields: [...imageProps.fields, { name: 'link', label: get(_)('editor_components.link') }],
+      fields: [
+        ...imageProps.fields,
+        { name: 'link', label: get(_)('editor_components.link'), required: false },
+      ],
       pattern: /\[?!\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)(?:\]\((?<link>.*?)\))?/,
       toBlock: (props) => {
         const { src, alt, title, link } = escapeAllChars(props);
@@ -109,7 +122,15 @@ export const getComponentDef = (name) => {
  * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
  * the transformer definition.
  */
-const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock, toPreview }) => {
+const getCustomNodeFeatures = ({
+  id: componentName,
+  label,
+  fields,
+  pattern,
+  fromBlock,
+  toBlock,
+  toPreview,
+}) => {
   const preview = toPreview({});
 
   const tagName =
@@ -125,13 +146,13 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
   class CustomNode extends DecoratorNode {
     /**
      * Field properties.
-     * @type {Record<string, any>}
+     * @type {Record<string, any> | undefined}
      */
     __props;
 
     /**
      * Create a new {@link CustomNode} instance.
-     * @param {Record<string, any>} props Field properties.
+     * @param {Record<string, any>} [props] Field properties.
      * @param {NodeKey} [key] Node key.
      */
     constructor(props, key) {
@@ -144,7 +165,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
      * @returns {string} Type.
      */
     static getType() {
-      return id;
+      return componentName;
     }
 
     /**
@@ -181,7 +202,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
     exportJSON() {
       return {
         ...this.__props,
-        type: id,
+        type: componentName,
         version: 1,
       };
     }
@@ -209,7 +230,11 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
 
         editor?.update(() => {
           if (type === 'update') {
-            this.getWritable().__props = detail;
+            try {
+              this.getWritable().__props = detail;
+            } catch {
+              //
+            }
           }
 
           if (type === 'remove') {
@@ -222,7 +247,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
       component = mount(Component, {
         target: document.createElement('div'),
         props: {
-          componentId: id,
+          componentName,
           label,
           fields,
           values: this.__props,
@@ -285,7 +310,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
         });
       }
 
-      if (id === 'linked-image') {
+      if (componentName === 'linked-image') {
         // Add extra conversion for the built-in image component to support linked images
         Object.assign(conversionMap, {
           /**
@@ -343,15 +368,13 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
    * @param {Record<string, any>} [props] Component properties.
    * @returns {CustomNode} New node.
    */
-  const createNode = (props) =>
-    new CustomNode(props ?? Object.fromEntries(fields.map(({ name }) => [name, ''])));
-
+  const createNode = (props) => new CustomNode(props);
   /**
    * Whether the given node is an instance of {@link CustomNode}.
    * @param {import("lexical").LexicalNode | null | undefined} node Node.
    * @returns {boolean} Result.
    */
-  const isCustomNode = (node) => node instanceof CustomNode && node.getType() === id;
+  const isCustomNode = (node) => node instanceof CustomNode && node.getType() === componentName;
 
   /**
    * Implement a Markdown transformer for {@link CustomNode}.
@@ -367,7 +390,7 @@ const getCustomNodeFeatures = ({ id, label, fields, pattern, fromBlock, toBlock,
      */
     export: (node) => {
       if (isCustomNode(node)) {
-        return toBlock(/** @type {CustomNode} */ (node).__props);
+        return toBlock(/** @type {CustomNode} */ (node).__props ?? {});
       }
 
       return null;
