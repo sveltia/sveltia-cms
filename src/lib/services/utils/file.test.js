@@ -43,6 +43,8 @@ vi.mock('svelte-i18n', () => ({
    * @returns {Function} Translation function.
    */
   _: () => vi.fn((key, options) => `${key}(${options?.values?.size || ''})`),
+  addMessages: vi.fn(),
+  init: vi.fn(),
 }));
 
 describe('Test encodeFilePath()', () => {

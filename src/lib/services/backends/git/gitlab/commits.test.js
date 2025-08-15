@@ -13,6 +13,13 @@ vi.mock('svelte/store', () => ({
   derived: vi.fn(() => ({ subscribe: vi.fn() })),
   readonly: vi.fn(() => ({ subscribe: vi.fn() })),
 }));
+vi.mock('svelte-i18n', () => ({
+  addMessages: vi.fn(),
+  init: vi.fn(),
+  locale: { subscribe: vi.fn() },
+  dictionary: { subscribe: vi.fn() },
+  _: vi.fn(),
+}));
 vi.mock('$lib/services/backends/git/gitlab/repository', () => ({
   repository: {
     repo: 'test-repo',

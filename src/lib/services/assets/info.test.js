@@ -32,6 +32,8 @@ vi.mock('svelte/store', () => ({
 }));
 vi.mock('svelte-i18n', () => ({
   _: vi.fn(),
+  addMessages: vi.fn(),
+  init: vi.fn(),
   locale: { subscribe: vi.fn() },
   $dictionary: { subscribe: vi.fn() },
   dictionary: { subscribe: vi.fn() },
