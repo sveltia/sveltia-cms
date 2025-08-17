@@ -138,7 +138,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **250+ issues, or 520+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **250+ issues, or 530+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -580,6 +580,8 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - The `fromBlock` function can be omitted if the `pattern` regex contains [named capturing groups](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) for the values.
   - Inline components are supported.[^267]
   - Field validation works as expected.[^279]
+  - No error is raised in the browser console saying `Sent invalid data to remark`.[^280]
+  - No error is raised in the browser console saying `this.props.onValidate is not a function`.[^281]
 
 ### Better localization
 
@@ -853,8 +855,9 @@ Here are the workflow steps and tips:
 1. Click “Work with Local Repository” and select the project’s root directory once prompted.
    - If you get an error saying “not a repository root directory”, make sure you’ve turned the folder into a repository with either a CUI ([`git init`](https://github.com/git-guides/git-init)) or GUI, and the hidden `.git` folder exists.
    - If you’re using Windows Subsystem for Linux (WSL), you may get an error saying “Can’t open this folder because it contains system files.” This is due to a limitation in the browser, and you can try some workarounds mentioned in [this issue](https://github.com/coder/code-server/issues/4646) and [this thread](https://github.com/sveltia/sveltia-cms/discussions/101).
-1. Edit your content using the CMS. All changes are made to local files.
+1. Edit your content normally using the CMS. All changes are made to local files.
 1. Use `git diff` or a GUI like [GitHub Desktop](https://desktop.github.com/) to see if the produced changes look good.
+   - GitHub Desktop can be used for any repository, not just GitHub-hosted ones.
 1. Open the dev site at `http://localhost:[port]/` to check the rendered pages.
    - Depending on your framework, you may need to manually rebuild your site to reflect the changes you have made.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
@@ -2283,4 +2286,8 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^278]: Netlify/Decap CMS [#7575](https://github.com/decaporg/decap-cms/issues/7575), [#7576](https://github.com/decaporg/decap-cms/issues/7576)
 
-[^279]: Netlify/Decap CMS [#4912](https://github.com/decaporg/decap-cms/issues/4912), [#6986](https://github.com/decaporg/decap-cms/issues/6986)
+[^279]: Netlify/Decap CMS [#1390](https://github.com/decaporg/decap-cms/issues/1390), [#4912](https://github.com/decaporg/decap-cms/issues/4912), [#6986](https://github.com/decaporg/decap-cms/issues/6986)
+
+[^280]: Netlify/Decap CMS [#3490](https://github.com/decaporg/decap-cms/issues/3490), [#3682](https://github.com/decaporg/decap-cms/issues/3682), [#4669](https://github.com/decaporg/decap-cms/issues/4669), [#4895](https://github.com/decaporg/decap-cms/issues/4895), [#4976](https://github.com/decaporg/decap-cms/issues/4976), [#5766](https://github.com/decaporg/decap-cms/issues/5766), [#6501](https://github.com/decaporg/decap-cms/issues/6501), [#6785](https://github.com/decaporg/decap-cms/issues/6785), [#7315](https://github.com/decaporg/decap-cms/issues/7315)
+
+[^281]: Netlify/Decap CMS [#4892](https://github.com/decaporg/decap-cms/issues/4892) — We cannot reproduce the crash, but we do see the error message in the console.
