@@ -20,7 +20,6 @@ ignorePaths:
   - src/**/*.test.js
 words:
   - analyzing
-  - anymore
   - astrolicious
   - astros
   - brotlied
