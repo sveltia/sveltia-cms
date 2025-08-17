@@ -17,9 +17,10 @@ ignorePaths:
   - pnpm-lock.yaml
   - data/**/*.json
   - package/**
-  - "src/**/*.test.js"
+  - src/**/*.test.js
 words:
   - analyzing
+  - anymore
   - astrolicious
   - astros
   - brotlied
