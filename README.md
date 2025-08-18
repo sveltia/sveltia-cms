@@ -96,6 +96,7 @@ Welcome to the only Netlify CMS successor you can trust!
   - [v2.0](#v20)
   - [v3.0](#v30)
   - [TBD](#tbd)
+  - [Non Goals](#non-goals)
 - [Trivia](#trivia)
 - [Related links](#related-links)
   - [As seen on](#as-seen-on)
@@ -581,7 +582,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Inline components are supported.[^267]
   - Field validation works as expected.[^279]
   - No error is raised in the browser console saying `Sent invalid data to remark`.[^280]
-  - No error is raised in the browser console saying `this.props.onValidate is not a function`.[^281]
+  - No error is raised in the browser console saying `onValidate is not a function`.[^281]
 
 ### Better localization
 
@@ -612,7 +613,7 @@ However, 100% feature parity is never planned, and some features are still missi
   - Note: Some other camel case options, including Color widget options, are not deprecated.
 - The deprecated Date widget: It was removed from Decap CMS 3.0 and Sveltia CMS 0.10. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
 - Some date/time format tokens: [Decap CMS 3.1.1](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.1.1) replaced Moment.js with Day.js, and Sveltia CMS will follow suit soon. Since [Day.js tokens](https://day.js.org/docs/en/display/format) are not 100% compatible with [Moment.js tokens](https://momentjs.com/docs/#/displaying/format/), this could be a breaking change in certain cases.
-- The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality, which is powered by [Prism](https://prismjs.com/) and will soon be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
+- The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality powered by [Prism](https://prismjs.com/), which will soon be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
 - An absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
@@ -1712,6 +1713,10 @@ Due early 2026
 - Marketplace for custom widgets, etc.[^273]
 - Official starter templates for the most popular frameworks, including SvelteKit and Next.js
 - and so much more!
+
+### Non-goals
+
+- Framework-specific integrations, including a WYSIWYG editor. We will only implement integrations that are framework-agnostic and can be used with any static site generator or framework.
 
 ## Trivia
 
