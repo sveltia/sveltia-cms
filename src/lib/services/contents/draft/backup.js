@@ -134,6 +134,7 @@ export const saveBackup = async (draft) => {
  */
 const restoreBackup = ({ backup, collectionName, fileName }) => {
   const { currentLocales, currentSlugs, currentValues, files } = backup;
+  const fileURLs = new Map();
 
   i18nAutoDupEnabled.set(false);
 
@@ -154,14 +155,27 @@ const restoreBackup = ({ backup, collectionName, fileName }) => {
                 cache = { file: cache, folder: undefined };
               }
 
-              if (cache) {
-                // Regenerate a blob URL
-                const newURL = URL.createObjectURL(cache.file);
-
-                valueMap[keyPath] = value.replaceAll(blobURL, newURL);
-                draft.files[newURL] = cache;
+              if (!cache) {
+                return;
               }
+
+              const { file } = cache;
+              let newURL = '';
+
+              if (fileURLs.has(file)) {
+                newURL = fileURLs.get(file);
+              } else {
+                // Regenerate a blob URL
+                newURL = URL.createObjectURL(file);
+
+                draft.files[newURL] = cache;
+                fileURLs.set(file, newURL);
+              }
+
+              value = value.replaceAll(blobURL, newURL);
             });
+
+            valueMap[keyPath] = value;
           }
         });
 
