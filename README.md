@@ -96,7 +96,7 @@ Welcome to the only Netlify CMS successor you can trust!
   - [v2.0](#v20)
   - [v3.0](#v30)
   - [TBD](#tbd)
-  - [Non Goals](#non-goals)
+  - [Non-goals](#non-goals)
 - [Trivia](#trivia)
 - [Related links](#related-links)
   - [As seen on](#as-seen-on)
@@ -601,7 +601,7 @@ However, 100% feature parity is never planned, and some features are still missi
 - **Azure and Bitbucket backends**: For performance reasons. We’ll support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
 - **Git Gateway backend**: Also for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative [in the future](#roadmap).
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support [in the future](#roadmap), most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
-- [Gatsby plugin](https://github.com/decaporg/gatsby-plugin-decap-cms): Given the [decline of Gatsby](https://2024.stateofjs.com/en-US/libraries/meta-frameworks/), we won’t invest time in developing a plugin for it. You can still create `index.html` yourself. We don’t support Netlify Identity Widget. The favicon can be specified with the `logo_url` option. The `robots` meta tag is included by default with Sveltia CMS.
+- [Gatsby plugin](https://github.com/decaporg/gatsby-plugin-decap-cms): Given the [decline of Gatsby](https://2024.stateofjs.com/en-US/libraries/meta-frameworks/), we won’t invest time in developing a plugin for it. You can still create `index.html` yourself. Note: We don’t support Netlify Identity Widget; the favicon can be specified with the `logo_url` option.
 - The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service: Consider other storage providers.
 - Deprecated camel case configuration options: Use snake case instead, according to the current Decap CMS document.
@@ -1716,7 +1716,8 @@ Due early 2026
 
 ### Non-goals
 
-- Framework-specific integrations, including a WYSIWYG editor. We will only implement integrations that are framework-agnostic and can be used with any static site generator or framework.
+- Framework-specific integrations, including a WYSIWYG editor. We will only implement framework-agnostic integrations that can be used with any static site generator or framework. Due to the crowded CMS market and our limited resources, we will focus on core features that are essential for replacing Netlify/Decap CMS.
+- Monetization. We may offer an affordable cloud version in the future since setting up the CMS and retrieving service API keys can be a hassle. However, we will not charge for the core CMS itself. We want to keep it free and open source forever.
 
 ## Trivia
 
