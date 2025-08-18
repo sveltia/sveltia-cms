@@ -108,7 +108,7 @@ Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stal
 
 To achieve radical improvements in UX, performance, i18n and other areas, it was ultimately decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the idea with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
-We loved the simple architecture of Netlify CMS that turned a Git repository into a database with a single page app served from a CDN plus a plain YAML config file. In support of the [Jamstack](https://jamstack.org/) concept, we wanted to revive it, modernize it, and take it to the next level.
+We loved the simple setup of Netlify CMS that turned a Git repository into a database with a single page app served from a CDN plus a plain YAML config file. In support of the [Jamstack](https://jamstack.org/) concept, we wanted to revive it, modernize it, and take it to the next level.
 
 ### Our advantage
 
@@ -1589,6 +1589,11 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://translation.googleapis.com
     ```
+- OpenAI:
+  - `connect-src`
+    ```
+    https://api.openai.com
+    ```
 - YouTube:
   - `frame-src`
     ```
@@ -1716,12 +1721,12 @@ Due early 2026
 
 ### Non-goals
 
-- Framework-specific integrations, including a WYSIWYG editor. We will only implement framework-agnostic integrations that can be used with any static site generator or framework. Due to the crowded CMS market and our limited resources, we will focus on core features that are essential for replacing Netlify/Decap CMS.
-- Monetization. We may offer an affordable cloud version in the future since setting up the CMS and retrieving service API keys can be a hassle. However, we will not charge for the core CMS itself. We want to keep it free and open source forever.
+- Framework-specific integrations, including a WYSIWYG editor. Due to the crowded CMS market and our limited resources, we will focus on framework-agnostic core features that are essential for replacing Netlify/Decap CMS and modernizing the concept.
+- Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS and retrieving service API keys can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
 
 ## Trivia
 
-- The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. And now we are completely rewriting it in Svelte. So this is effectively the second time the application has gone through a framework migration.
+- The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. There was also an [attempt](https://github.com/decaporg/decap-cms/issues/328) to replace React with Preact. And now we are completely rewriting it in Svelte. So this is effectively the third time the application has gone through a framework migration.
 - Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for improved DX, but also for our rapid application development.
 
 ## Related links
