@@ -32,22 +32,38 @@ import { customComponents } from '$lib/services/contents/widgets/markdown';
  */
 
 /**
- * Escape some Markdown characters in the given object’s property values.
- * @param {Record<string, any> | null} props Object containing original strings.
- * @returns {Record<string, string>} Object containing escaped strings.
+ * Regular expression to match Markdown images, including those with spaces and brackets in the src,
+ * e.g. `![alt text](image.jpg "Image title")`. It also matches images with empty alt text, e.g.
+ * `![](image.jpg)`, images with parentheses in the filename, e.g. `![alt](image (1).jpg)`, and
+ * supports escaped characters like `![alt](image\(1\).jpg)` and titles with escaped quotes.
+ * @type {RegExp}
  */
-const escapeAllChars = (props) => {
-  if (!props) {
-    return {};
-  }
+export const IMAGE_REGEX =
+  /!\[(?<alt>(?:[^\]\\]|\\.)*)\]\((?<src>(?:[^"()\\]|\\.|\([^)]*\)|"[^"]*")*?)(?:\s+"(?<title>(?:[^"\\]|\\.)*)")?\)/;
 
-  return Object.fromEntries(
-    Object.entries(props).map(([key, val]) => [
-      key,
-      typeof val === 'string' ? val.trim().replace(/["()[[\]]/g, '\\$&') : '',
-    ]),
-  );
-};
+/**
+ * Regular expression to match Markdown linked images, including those with spaces and brackets in
+ * the src, e.g. `[![alt text](image.jpg "Image title")](link)`. This also matches simple images
+ * without links, e.g. `![alt text](image.jpg)`. It also matches linked images with parentheses in
+ * the filename, e.g. `[![alt](image (1).jpg)](https://example.com)`.
+ * @type {RegExp}
+ */
+export const LINKED_IMAGE_REGEX =
+  /\[!\[(?<alt1>(?:[^\]\\]|\\.)*)\]\((?<src1>(?:[^"()\\]|\\.|\([^)]*\)|"[^"]*")*?)(?:\s+"(?<title1>(?:[^"\\]|\\.)*)")?\)\](?:\((?<link>[^)]*\([^)]*\)[^)]*|[^)]*)\))|!\[(?<alt2>(?:[^\]\\]|\\.)*)\]\((?<src2>(?:[^"()\\]|\\.|\([^)]*\)|"[^"]*")*?)(?:\s+"(?<title2>(?:[^"\\]|\\.)*)")?\)/;
+
+/**
+ * Replace double quotes with single quotes to avoid breaking Markdown syntax.
+ * @param {string} str String to escape.
+ * @returns {string} Escaped string.
+ */
+export const replaceQuotes = (str) => str.replace(/"/g, "'");
+
+/**
+ * Encode double quotes as HTML entities to prevent issues in HTML rendering.
+ * @param {string} str String to escape.
+ * @returns {string} Escaped string.
+ */
+export const encodeQuotes = (str) => str.replace(/"/g, '&quot;');
 
 /**
  * Get a component definition. This has to be a function due to localized labels.
@@ -75,17 +91,20 @@ export const getComponentDef = (name) => {
     image: {
       ...imageProps,
       id: 'image',
-      pattern: /!\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)/,
+      pattern: IMAGE_REGEX,
       toBlock: (props) => {
-        const { src, alt, title } = escapeAllChars(props);
+        const { src = '', alt = '', title = '' } = props;
 
-        return src ? `![${alt}](${src}${title ? ` "${title}"` : ''})` : '';
+        return src ? `![${alt}](${src}${title ? ` "${replaceQuotes(title)}"` : ''})` : '';
       },
       toPreview: (props) => {
-        const { src, alt, title } = escapeAllChars(props);
+        const { src = '', alt = '', title = '' } = props;
 
         // Return `<img>` even if `src` is empty to make sure the `tagName` below works
-        return `<img src="${src}" alt="${alt}" title="${title}">`;
+        return (
+          `<img src="${encodeQuotes(src)}" alt="${encodeQuotes(alt)}" ` +
+          `title="${encodeQuotes(title)}">`
+        );
       },
     },
     'linked-image': {
@@ -95,19 +114,32 @@ export const getComponentDef = (name) => {
         ...imageProps.fields,
         { name: 'link', label: get(_)('editor_components.link'), required: false },
       ],
-      pattern: /\[?!\[(?<alt>.*?)\]\((?<src>.*?)(?: "(?<title>.*?)")?\)(?:\]\((?<link>.*?)\))?/,
+      pattern: LINKED_IMAGE_REGEX,
+      fromBlock: (match) => {
+        const { src1, alt1, title1, src2, alt2, title2, link } = match.groups ?? {};
+
+        return {
+          src: (src1 || src2 || '').trim(),
+          alt: (alt1 || alt2 || '').trim(),
+          title: (title1 || title2 || '').trim(),
+          link: (link || '').trim(),
+        };
+      },
       toBlock: (props) => {
-        const { src, alt, title, link } = escapeAllChars(props);
-        const img = src ? `![${alt}](${src}${title ? ` "${title}"` : ''})` : '';
+        const { src = '', alt = '', title = '', link = '' } = props;
+        const img = src ? `![${alt}](${src}${title ? ` "${replaceQuotes(title)}"` : ''})` : '';
 
         return img && link ? `[${img}](${link})` : img;
       },
       toPreview: (props) => {
-        const { src, alt, title, link } = escapeAllChars(props);
-        const img = `<img src="${src}" alt="${alt}" title="${title}">`;
+        const { src = '', alt = '', title = '', link = '' } = props;
+
+        const img =
+          `<img src="${encodeQuotes(src)}" alt="${encodeQuotes(alt)}" ` +
+          `title="${encodeQuotes(title)}">`;
 
         // Return `<img>` even if `src` is empty to make sure the `tagName` below works
-        return link ? `<a href="${link}">${img}</a>` : img;
+        return link ? `<a href="${encodeQuotes(link)}">${img}</a>` : img;
       },
     },
     /* eslint-enable jsdoc/require-jsdoc */
