@@ -288,26 +288,12 @@
   /**
    * Update {@link inputValue} based on {@link currentValue} while avoiding a cycle dependency.
    */
-  const setInputValue = async () => {
+  const setInputValue = () => {
     const newValue = typeof currentValue === 'string' ? currentValue : '';
 
     if (inputValue !== newValue) {
       inputValue = newValue;
     }
-
-    await sleep(500);
-
-    // Remove values that are not present in the editor anymore. Otherwise, they will trigger
-    // validation errors when the entry is saved.
-    Object.keys(/** @type {EntryDraft} */ ($entryDraft).extraValues[locale] ?? {}).forEach(
-      (key) => {
-        const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
-
-        if (prefix && !wrapper?.querySelector(`[data-key-path^="${prefix}"]`)) {
-          delete (/** @type {EntryDraft} */ ($entryDraft).extraValues[locale][key]);
-        }
-      },
-    );
   };
 
   /**
@@ -318,6 +304,18 @@
 
     if (currentValue !== newValue) {
       currentValue = newValue;
+
+      // Remove values that are not present in the editor anymore. Otherwise, they will trigger
+      // validation errors when the entry is saved.
+      Object.keys(/** @type {EntryDraft} */ ($entryDraft).extraValues[locale] ?? {}).forEach(
+        (key) => {
+          const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
+
+          if (prefix && !wrapper?.querySelector(`[data-key-path^="${prefix}"]`)) {
+            delete (/** @type {EntryDraft} */ ($entryDraft).extraValues[locale][key]);
+          }
+        },
+      );
     }
   };
 
