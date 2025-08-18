@@ -230,6 +230,10 @@
    * Update a couple of properties when {@link currentValue} is updated.
    */
   const updateProps = async () => {
+    if (processing) {
+      return;
+    }
+
     // Restore `file` after a draft backup is restored
     if (currentValue?.startsWith('blob:') && $entryDraft) {
       file = $entryDraft.files[currentValue]?.file;

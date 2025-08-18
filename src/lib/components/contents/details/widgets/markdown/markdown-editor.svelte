@@ -98,7 +98,9 @@
           /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
       ),
   );
-  const imageComponent = $derived(components.find(({ id }) => id === 'image'));
+  const imageComponent = $derived(
+    components.find(({ id }) => id === 'image' || id === 'linked-image'),
+  );
 
   /**
    * Insert images to the editor content.
