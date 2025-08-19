@@ -1698,6 +1698,7 @@ Due early 2026
   - Advanced Relation fields[^242], including cascade updates/deletes[^243] and quick item additions[^266]
     - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - and many more (100+ issues and discussions)
+    - As we mentioned in the [Project status](#project-status) section, we’re planning to solve 400+ issues in total.
 - Enhancements to Sveltia CMS Additions (some may be included in v3.0):
   - Post locking[^166] (like [WordPress](https://codex.wordpress.org/Post_Locking))
   - Scheduled posts[^167]
@@ -1721,8 +1722,8 @@ Due early 2026
 
 ### Non-goals
 
-- Framework-specific integrations, including a WYSIWYG editor. Due to the crowded CMS market and our limited resources, we will focus on framework-agnostic core features that are essential for replacing Netlify/Decap CMS and modernizing the concept.
-- Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS and retrieving service API keys can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
+- Framework-specific integrations, including a WYSIWYG editor. Due to the crowded CMS market and our limited resources, we will focus on framework-agnostic core features that are essential for replacing Netlify/Decap CMS and modernizing the platform.
+- Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
 
 ## Trivia
 
