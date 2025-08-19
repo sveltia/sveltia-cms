@@ -196,7 +196,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 ### Better productivity
 
 - Developers can [work with a local Git repository](#working-with-a-local-git-repository) without any additional configuration or proxy server, resulting in a streamlined workflow and improved performance.[^26]
-  - It also avoids a number of issues, including potential dependency corruption,[^158] a 30 MB file size limit,[^51] an unknown error with `publish_mode`,[^75] and an unused `logo_url`.[^49]
+  - It also avoids a number of issues, including potential security issues,[^158][^282] a 30 MB file size limit,[^51] an unknown error with `publish_mode`,[^75] and an unused `logo_url`.[^49]
   - When you delete an entry or an asset file, the empty folder that contains it is also deleted, so you don’t have to delete it manually.
 - Provides a smoother user experience in the Content Editor:
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed.[^106] The backup can then be reliably restored without unexpected overwriting.[^85]
