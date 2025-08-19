@@ -313,7 +313,7 @@
         (key) => {
           const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
 
-          if (prefix && !wrapper?.querySelector(`[data-key-path^="${prefix}"]`)) {
+          if (prefix && !wrapper?.querySelector(`[data-key-path-prefix="${prefix}"]`)) {
             delete (/** @type {EntryDraft} */ ($entryDraft).extraValues[locale][key]);
           }
         },

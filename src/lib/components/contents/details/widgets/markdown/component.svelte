@@ -137,6 +137,7 @@
   contenteditable="false"
   tabindex="0"
   aria-label={label}
+  data-key-path-prefix={keyPathPrefix}
   data-component-name={componentName}
   onkeydowncapture={(event) => {
     // Allow to select all in any `TextInput` within the component below using Ctrl+A
