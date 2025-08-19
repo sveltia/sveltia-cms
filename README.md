@@ -699,7 +699,7 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 
 ### Installation & setup
 
-Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their documentation](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Skip the [Choosing a Backend](https://decapcms.org/docs/choosing-a-backend/) page and configure the [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/) or [Gitea/Forgejo](https://decapcms.org/docs/gitea-backend/) backend instead. Then [migrate](#migration) to Sveltia CMS as described below.
+Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS users. If you don’t have it yet, follow [their document](https://decapcms.org/docs/basic-steps/) to add it to your site and create a configuration file first. Skip the [Choosing a Backend](https://decapcms.org/docs/choosing-a-backend/) page and configure the [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/) or [Gitea/Forgejo](https://decapcms.org/docs/gitea-backend/) backend instead. Then [migrate](#migration) to Sveltia CMS as described below.
 
 Or try one of the starter kits for popular frameworks created by community:
 
@@ -1385,7 +1385,7 @@ output:
 
 Content is generally saved as key-value pairs in a file, where the key is the field name and the value is the field value. However, there are some exceptions you should be aware of.
 
-If the format is front matter, the `body` field is saved outside of the front matter block, as briefly explained in the [Decap CMS documentation](https://decapcms.org/docs/configuration-options/#extension-and-format):
+If the format is front matter, the `body` field is saved outside of the front matter block, as briefly explained in the [Decap CMS document](https://decapcms.org/docs/configuration-options/#extension-and-format):
 
 ```yaml
 ---
@@ -1670,7 +1670,7 @@ Due late 2025
 Due early 2026
 
 - Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections, while addressing a number of bugs in their implementations
-- Tackling even more Netlify/Decap CMS issues:
+- Tackling even more Netlify/Decap CMS issues to bring the total number of issues solved to 300+:
   - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
 
@@ -1722,7 +1722,7 @@ Due early 2026
 
 ### Non-goals
 
-- Framework-specific integrations, including a WYSIWYG editor. Due to the crowded CMS market and our limited resources, we will focus on framework-agnostic core features that are essential for replacing Netlify/Decap CMS and modernizing the platform.
+- Framework-specific integrations, including a WYSIWYG editor. Due to the crowded CMS market and our limited resources, we will focus on framework-agnostic core features that are essential for succeeding Netlify/Decap CMS and modernizing the platform.
 - Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
 
 ## Trivia
