@@ -229,7 +229,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
 - Sveltia CMS has a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) requirement that forces the site content, including the CMS configuration file, to be served over HTTPS.
 - GitHub commits are automatically GPG-signed and [marked as verified](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).[^144]
-- Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface.[^158]
+- Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface.[^158][^282]
 
 ### Better installation
 
@@ -2304,3 +2304,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^280]: Netlify/Decap CMS [#3490](https://github.com/decaporg/decap-cms/issues/3490), [#3682](https://github.com/decaporg/decap-cms/issues/3682), [#4669](https://github.com/decaporg/decap-cms/issues/4669), [#4895](https://github.com/decaporg/decap-cms/issues/4895), [#4976](https://github.com/decaporg/decap-cms/issues/4976), [#5766](https://github.com/decaporg/decap-cms/issues/5766), [#6501](https://github.com/decaporg/decap-cms/issues/6501), [#6785](https://github.com/decaporg/decap-cms/issues/6785), [#7315](https://github.com/decaporg/decap-cms/issues/7315)
 
 [^281]: Netlify/Decap CMS [#4892](https://github.com/decaporg/decap-cms/issues/4892) — We cannot reproduce the crash, but we do see the error message in the console.
+
+[^282]: Netlify/Decap CMS [#7579](https://github.com/decaporg/decap-cms/pull/7579)
