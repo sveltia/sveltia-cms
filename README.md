@@ -73,6 +73,7 @@ Welcome to the only Netlify CMS successor you can trust!
   - [Including Hugo’s special index file in a folder collection](#including-hugos-special-index-file-in-a-folder-collection)
   - [Using singletons](#using-singletons)
   - [Using keyboard shortcuts](#using-keyboard-shortcuts)
+  - [Controlling entry file paths](#controlling-entry-file-paths)
   - [Translating entry fields with one click](#translating-entry-fields-with-one-click)
   - [Localizing entry slugs](#localizing-entry-slugs)
   - [Disabling non-default locale content](#disabling-non-default-locale-content)
@@ -275,8 +276,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The [i18n limitations](https://decapcms.org/docs/i18n/#limitations) in Netlify/Decap CMS do not apply to Sveltia CMS:
     - File collections support multiple files/folders i18n structures.[^87] To enable it, simply use the `{{locale}}` template tag in the `file` path option, e.g. `content/pages/about.{{locale}}.json` or `content/pages/{{locale}}/about.json`. For backward compatibility, the global `structure` option only applies to folder collections, and the default i18n structure for file collections remains single file.
     - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales.[^7][^68] The `i18n` configuration can normally be used for the subfields.
-  - The new `multiple_folders_i18n_root` i18n structure allows to have locale folders below the project root: `<locale>/<folder>/<slug>.<extension>`.[^182]
-  - The new `omit_default_locale_from_filename` i18n option allows to exclude the default locale from filenames. This option applies to entry collections with the `multiple_files` i18n structure enabled, as well as to file collection items with the `file` path ending with `.{{locale}}.<extension>`, aiming to support [Zola’s multilingual sites](https://www.getzola.org/documentation/content/multilingual/). ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/394))
+  - Gives more control over [entry file paths](#controlling-entry-file-paths):
+    - The new `multiple_folders_i18n_root` i18n structure allows to have locale folders below the project root: `/<locale>/<folder>/<path>.<extension>`.[^182]
+    - The new `omit_default_locale_from_filename` i18n option allows to exclude the default locale from filenames. This option applies to entry collections with the `multiple_files` i18n structure enabled, as well as to file collection items with the `file` path ending with `.{{locale}}.<extension>`, aiming to support [Zola’s multilingual sites](https://www.getzola.org/documentation/content/multilingual/). ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/394))
   - The `required` field option accepts an array of locale codes in addition to a boolean, making the field required for a subset of locales when i18n support is enabled. For example, if only English is required, you could write `required: [en]`. An empty array is equivalent to `required: false`.
   - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure.[^21]
   - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language.[^63]
@@ -1046,6 +1048,56 @@ If you want to reference a singleton file with a Relation field, use `_singleton
 - Cancel entry editing: `Escape`
 
 Standard keyboard shortcuts are also available in the Markdown editor, including `Ctrl+B`/`Command+B` for bold text, `Ctrl+I`/`Command+I` for italics, and `Tab` to indent a list item.
+
+### Controlling entry file paths
+
+A [folder collection](https://decapcms.org/docs/collection-folder/)’s file path is determined by multiple factors: the `i18n`, `folder`, `path`, `slug` and `extension` options. The configuration can be complex, especially with i18n support, so let’s break it down.
+
+- The [`i18n`](https://decapcms.org/docs/i18n/) global or collection option (optional)
+  - It can be configured to add internationalization (i18n) support to your site.
+  - The `structure` and `omit_default_locale_from_filename` options affect the entry file path.
+- The `folder` collection option (required)
+  - It specifies the folder where the collection entries are stored, relative to the repository’s root directory.
+  - It can contain slashes to create a nested folder structure.
+- The [`path`](https://decapcms.org/docs/collection-folder/#folder-collections-path) collection option (optional)
+  - It defaults to `{{slug}}`, which is the `slug` collection option value.
+  - It can contain template tags.
+  - It can also contain slashes to create a nested folder structure.
+- The [`slug`](https://decapcms.org/docs/configuration-options/#slug) collection option (optional)
+  - It defaults to `{{title}}`, which is the entry’s `title` field value’s slugified version.
+  - It can also contain template tags but _cannot_ contain slashes.
+- The [`extension`](https://decapcms.org/docs/configuration-options/#extension-and-format) collection option (optional)
+  - It defaults to `md`.
+
+Looking at the above options, the entry file path can be constructed as follows:
+
+- With i18n disabled:
+  ```yaml
+  /<folder>/<path>.<extension>
+  ```
+- With the `single_file` i18n structure
+  ```yaml
+  /<folder>/<path>.<extension>
+  ```
+- With the `multiple_files` i18n structure:
+  ```yaml
+  /<folder>/<path>.<locale>.<extension>
+  ```
+  When the `omit_default_locale_from_filename` i18n option is set to `true`, the path depends on the locale:
+  ```yaml
+  /<folder>/<path>.<extension> # default locale
+  /<folder>/<path>.<locale>.<extension> # other locales
+  ```
+- With the `multiple_folders` i18n structure:
+  ```yaml
+  /<folder>/<locale>/<path>.<extension>
+  ```
+- With the `multiple_folders_i18n_root` i18n structure:
+  ```yaml
+  /<locale>/<folder>/<path>.<extension>
+  ```
+
+The configuration for a [file collection](https://decapcms.org/docs/collection-file/) and [singleton collection](#using-singletons) is much simpler, as it only requires the `file` option to specify the complete file path, including the folder, filename and extension. It can also include the `{{locale}}` template tag for i18n support.
 
 ### Translating entry fields with one click
 
@@ -1967,7 +2019,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^112]: Netlify/Decap CMS [#5815](https://github.com/decaporg/decap-cms/issues/5815), [#6522](https://github.com/decaporg/decap-cms/issues/6522), [#6532](https://github.com/decaporg/decap-cms/issues/6532), [#6588](https://github.com/decaporg/decap-cms/issues/6588), [#6617](https://github.com/decaporg/decap-cms/issues/6617), [#6640](https://github.com/decaporg/decap-cms/issues/6640), [#6663](https://github.com/decaporg/decap-cms/issues/6663), [#6695](https://github.com/decaporg/decap-cms/issues/6695), [#6697](https://github.com/decaporg/decap-cms/issues/6697), [#6764](https://github.com/decaporg/decap-cms/issues/6764), [#6765](https://github.com/decaporg/decap-cms/issues/6765), [#6835](https://github.com/decaporg/decap-cms/issues/6835), [#6983](https://github.com/decaporg/decap-cms/issues/6983), [#7205](https://github.com/decaporg/decap-cms/issues/7205), [#7450](https://github.com/decaporg/decap-cms/issues/7450), [#7453](https://github.com/decaporg/decap-cms/issues/7453), [#7572](https://github.com/decaporg/decap-cms/issues/7572)
 
-[^113]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194), [#7244](https://github.com/decaporg/decap-cms/issues/7244), [#7278](https://github.com/decaporg/decap-cms/issues/7278), [#7301](https://github.com/decaporg/decap-cms/issues/7301), [#7342](https://github.com/decaporg/decap-cms/issues/7342), [#7348](https://github.com/decaporg/decap-cms/issues/7348), [#7354](https://github.com/decaporg/decap-cms/issues/7354), [#7376](https://github.com/decaporg/decap-cms/issues/7376), [#7408](https://github.com/decaporg/decap-cms/issues/7408), [#7412](https://github.com/decaporg/decap-cms/issues/7412), [#7413](https://github.com/decaporg/decap-cms/issues/7413), [#7422](https://github.com/decaporg/decap-cms/issues/7422), [#7427](https://github.com/decaporg/decap-cms/issues/7427), [#7434](https://github.com/decaporg/decap-cms/issues/7434), [#7438](https://github.com/decaporg/decap-cms/issues/7438), [#7454](https://github.com/decaporg/decap-cms/issues/7454), [#7464](https://github.com/decaporg/decap-cms/issues/7464), [#7471](https://github.com/decaporg/decap-cms/issues/7471), [#7485](https://github.com/decaporg/decap-cms/issues/7485), [#7499](https://github.com/decaporg/decap-cms/issues/7499), [#7515](https://github.com/decaporg/decap-cms/issues/7515), [#7564](https://github.com/decaporg/decap-cms/issues/7564), [#7571](https://github.com/decaporg/decap-cms/issues/7571), [#7574](https://github.com/decaporg/decap-cms/issues/7574) — These `removeChild` crashes are common in React apps, likely caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
+[^113]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194), [#7244](https://github.com/decaporg/decap-cms/issues/7244), [#7278](https://github.com/decaporg/decap-cms/issues/7278), [#7301](https://github.com/decaporg/decap-cms/issues/7301), [#7342](https://github.com/decaporg/decap-cms/issues/7342), [#7348](https://github.com/decaporg/decap-cms/issues/7348), [#7354](https://github.com/decaporg/decap-cms/issues/7354), [#7376](https://github.com/decaporg/decap-cms/issues/7376), [#7408](https://github.com/decaporg/decap-cms/issues/7408), [#7412](https://github.com/decaporg/decap-cms/issues/7412), [#7413](https://github.com/decaporg/decap-cms/issues/7413), [#7422](https://github.com/decaporg/decap-cms/issues/7422), [#7427](https://github.com/decaporg/decap-cms/issues/7427), [#7434](https://github.com/decaporg/decap-cms/issues/7434), [#7438](https://github.com/decaporg/decap-cms/issues/7438), [#7454](https://github.com/decaporg/decap-cms/issues/7454), [#7464](https://github.com/decaporg/decap-cms/issues/7464), [#7471](https://github.com/decaporg/decap-cms/issues/7471), [#7485](https://github.com/decaporg/decap-cms/issues/7485), [#7499](https://github.com/decaporg/decap-cms/issues/7499), [#7515](https://github.com/decaporg/decap-cms/issues/7515), [#7564](https://github.com/decaporg/decap-cms/issues/7564), [#7571](https://github.com/decaporg/decap-cms/issues/7571), [#7574](https://github.com/decaporg/decap-cms/issues/7574), [#7580](https://github.com/decaporg/decap-cms/issues/7580) — These `removeChild` crashes are common in React apps, likely caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
 
 [^114]: Netlify/Decap CMS [#5029](https://github.com/decaporg/decap-cms/issues/5029), [#5048](https://github.com/decaporg/decap-cms/issues/5048)
 
