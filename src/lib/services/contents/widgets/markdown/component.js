@@ -1,5 +1,6 @@
 /* eslint-disable max-classes-per-file */
 
+import { flatten, unflatten } from 'flat';
 import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
 import { flushSync, mount, tick, unmount } from 'svelte';
 import { get } from 'svelte/store';
@@ -149,6 +150,19 @@ export const getComponentDef = (name) => {
 };
 
 /**
+ * Normalize properties by removing internal properties.
+ * @param {Record<string, any>} props Properties to normalize.
+ * @returns {Record<string, any>} Properties excluding those starting with `__sc_`, which are used
+ * for internal purposes.
+ */
+const normalizeProps = (props) =>
+  unflatten(
+    Object.fromEntries(
+      Object.entries(flatten(props)).filter(([key]) => !key.split('.').pop()?.startsWith('__sc_')),
+    ),
+  );
+
+/**
  * Get the {@link CustomNode} class and related features for Lexical.
  * @param {EditorComponentDefinition} componentDef Component definition.
  * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
@@ -233,7 +247,7 @@ const getCustomNodeFeatures = ({
      */
     exportJSON() {
       return {
-        ...this.__props,
+        ...normalizeProps(this.__props ?? {}),
         type: componentName,
         version: 1,
       };
@@ -422,7 +436,7 @@ const getCustomNodeFeatures = ({
      */
     export: (node) => {
       if (isCustomNode(node)) {
-        return toBlock(/** @type {CustomNode} */ (node).__props ?? {});
+        return toBlock(normalizeProps(/** @type {CustomNode} */ (node).__props ?? {}));
       }
 
       return null;
