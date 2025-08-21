@@ -1200,6 +1200,7 @@
  * @property {string} [logo_url] Absolute URL or absolute path to the site logo that will be
  * displayed on the entrance page and the browser’s tab (favicon). A square image works best.
  * Default: Sveltia logo.
+ * @property {string} [logout_redirect_url] URL to redirect users to after logging out.
  * @property {boolean} [show_preview_links] Whether to show site preview links. Default: `true`.
  * @property {SlugOptions} [slug] Entry slug options.
  * @property {(Collection | CollectionDivider)[]} [collections] Set of collections. The list can

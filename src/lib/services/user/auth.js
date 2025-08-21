@@ -249,4 +249,10 @@ export const signOut = async () => {
   user.set(undefined);
   unauthenticated.set(true);
   dataLoaded.set(false);
+
+  const redirectURL = get(siteConfig)?.logout_redirect_url;
+
+  if (redirectURL) {
+    window.location.href = redirectURL;
+  }
 };
