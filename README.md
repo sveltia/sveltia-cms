@@ -585,6 +585,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Field validation works as expected.[^279]
   - No error is raised in the browser console saying `Sent invalid data to remark`.[^280]
   - No error is raised in the browser console saying `onValidate is not a function`.[^281]
+- Developers can specify the URL to redirect users after logging out with the `logout_redirect_url` global option.[^283]
 
 ### Better localization
 
@@ -2358,3 +2359,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^281]: Netlify/Decap CMS [#4892](https://github.com/decaporg/decap-cms/issues/4892) — We cannot reproduce the crash, but we do see the error message in the console.
 
 [^282]: Netlify/Decap CMS [#7579](https://github.com/decaporg/decap-cms/pull/7579)
+
+[^283]: Netlify/Decap CMS [#713](https://github.com/decaporg/decap-cms/issues/713)
