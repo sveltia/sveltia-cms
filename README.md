@@ -140,7 +140,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **250+ issues, or 530+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **250+ issues, or 535+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -1746,10 +1746,12 @@ Due early 2026
     - [Theming](https://github.com/sveltia/sveltia-cms/issues/29)[^262]
     - [Reusable field groups](https://github.com/sveltia/sveltia-cms/discussions/463)[^263]
     - Offline support[^238]
+  - Advanced Relation fields[^242]
+    - Cascade updates/deletes[^243]
+    - [Quick item additions](https://github.com/sveltia/sveltia-cms/issues/493)[^266]
+    - [Reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
-  - Advanced Relation fields[^242], including cascade updates/deletes[^243] and quick item additions[^266]
-    - We’ll also implement [reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - and many more (100+ issues and discussions)
     - As we mentioned in the [Project status](#project-status) section, we’re planning to solve 400+ issues in total.
 - Enhancements to Sveltia CMS Additions (some may be included in v3.0):
