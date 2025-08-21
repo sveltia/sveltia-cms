@@ -636,7 +636,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - LineString and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
-- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): preview and multiline components ([#410](https://github.com/sveltia/sveltia-cms/issues/410))
+- [Custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent): preview and multiline matching ([#410](https://github.com/sveltia/sveltia-cms/issues/410))
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
@@ -645,7 +645,7 @@ Due to the complexity, we have decided to defer the following features to the 2.
 - [Editorial workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open authoring](https://decapcms.org/docs/open-authoring/)
 - [Nested collections](https://decapcms.org/docs/collection-nested/) (beta)
-- Field-specific media folders (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets
+- The `media_folder` and `public_folder` options (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets ([#497](https://github.com/sveltia/sveltia-cms/issues/497))
 
 Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug). Bear in mind that undocumented behaviour can easily be overlooked.
 
@@ -1066,7 +1066,7 @@ A [folder collection](https://decapcms.org/docs/collection-folder/)’s file pat
   - It can also contain slashes to create a nested folder structure.
 - The [`slug`](https://decapcms.org/docs/configuration-options/#slug) collection option (optional)
   - It defaults to `{{title}}`, which is the entry’s `title` field value’s slugified version.
-  - It can also contain template tags but _cannot_ contain slashes.
+  - It can contain template tags but _cannot_ contain slashes.
 - The [`extension`](https://decapcms.org/docs/configuration-options/#extension-and-format) collection option (optional)
   - It defaults to `md`.
 
@@ -1968,7 +1968,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^85]: Netlify/Decap CMS [#5055](https://github.com/decaporg/decap-cms/issues/5055), [#5470](https://github.com/decaporg/decap-cms/issues/5470), [#6956](https://github.com/decaporg/decap-cms/discussions/6956), [#6989](https://github.com/decaporg/decap-cms/issues/6989)
 
-[^86]: Netlify/Decap CMS [#1609](https://github.com/decaporg/decap-cms/issues/1609), [#3557](https://github.com/decaporg/decap-cms/issues/3557), [#5253](https://github.com/decaporg/decap-cms/issues/5253), [#6760](https://github.com/decaporg/decap-cms/discussions/6760), [#6901](https://github.com/decaporg/decap-cms/issues/6901)
+[^86]: Netlify/Decap CMS [#1609](https://github.com/decaporg/decap-cms/issues/1609), [#3557](https://github.com/decaporg/decap-cms/issues/3557), [#5253](https://github.com/decaporg/decap-cms/issues/5253), [#6760](https://github.com/decaporg/decap-cms/discussions/6760), [#6901](https://github.com/decaporg/decap-cms/issues/6901) — Looks like the fix for [#215](https://github.com/decaporg/decap-cms/issues/215) was incomplete or regressed at some point.
 
 [^87]: Netlify/Decap CMS [#5280](https://github.com/decaporg/decap-cms/issues/5280)
 
@@ -2128,7 +2128,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^165]: Netlify/Decap CMS [#7143](https://github.com/decaporg/decap-cms/issues/7143)
 
-[^166]: Netlify/Decap CMS [#277](https://github.com/decaporg/decap-cms/issues/277)
+[^166]: Netlify/Decap CMS [#277](https://github.com/decaporg/decap-cms/issues/277), [#1500](https://github.com/decaporg/decap-cms/issues/1500)
 
 [^167]: Netlify/Decap CMS [#263](https://github.com/decaporg/decap-cms/issues/263), [#2034](https://github.com/decaporg/decap-cms/issues/2034)
 
