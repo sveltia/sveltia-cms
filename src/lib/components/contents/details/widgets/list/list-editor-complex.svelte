@@ -272,7 +272,7 @@
   {/if}
 </div>
 {#if allowAdd && (addToTop || !items.length)}
-  <div role="none" class="toolbar top">
+  <div role="none" class="toolbar top add">
     <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
   </div>
 {/if}
@@ -423,7 +423,7 @@
   {/each}
 </div>
 {#if allowAdd && !addToTop && items.length}
-  <div role="none" class="toolbar bottom">
+  <div role="none" class="toolbar bottom add">
     <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
     <Spacer flex />
   </div>
@@ -433,6 +433,14 @@
   .toolbar {
     display: flex;
     align-items: center;
+
+    &.top.add {
+      margin-block: 8px 16px !important;
+    }
+
+    &.bottom.add {
+      margin-block: 16px 0 !important;
+    }
   }
 
   .item-list {
