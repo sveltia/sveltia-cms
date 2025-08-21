@@ -12,7 +12,7 @@
     getNearestEditorFromDOMNode,
     $insertNodes as insertNodes,
   } from 'lexical';
-  import { untrack } from 'svelte';
+  import { getContext, untrack } from 'svelte';
 
   import { entryDraft } from '$lib/services/contents/draft';
   import {
@@ -35,7 +35,7 @@
   } from '$lib/services/utils/media/image';
 
   /**
-   * @import { EntryDraft, WidgetEditorProps } from '$lib/types/private';
+   * @import { EntryDraft, FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
    * @import { MarkdownField } from '$lib/types/public';
    */
 
@@ -48,6 +48,9 @@
    * @property {MarkdownField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
+
+  /** @type {FieldEditorContext} */
+  const { widgetContext = undefined } = getContext('field-editor') ?? {};
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -65,6 +68,8 @@
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
   let inputValue = $state('');
+
+  let cleanupTimeout = 0;
 
   const {
     // Widget-specific options
@@ -296,6 +301,25 @@
     if (inputValue !== newValue) {
       inputValue = newValue;
     }
+
+    // Skip cleanup when used as a nested component editor
+    if (!$entryDraft || widgetContext === 'markdown-editor-component') {
+      return;
+    }
+
+    window.clearTimeout(cleanupTimeout);
+
+    // Remove values that are not present in the editor anymore. Otherwise, they will trigger
+    // validation errors when the entry is saved.
+    cleanupTimeout = window.setTimeout(() => {
+      Object.keys($entryDraft.extraValues[locale] ?? {}).forEach((key) => {
+        const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
+
+        if (prefix && !wrapper?.querySelector(`[data-key-path-prefix="${prefix}"]`)) {
+          delete $entryDraft.extraValues[locale][key];
+        }
+      });
+    }, 500);
   };
 
   /**
@@ -306,18 +330,6 @@
 
     if (currentValue !== newValue) {
       currentValue = newValue;
-
-      // Remove values that are not present in the editor anymore. Otherwise, they will trigger
-      // validation errors when the entry is saved.
-      Object.keys(/** @type {EntryDraft} */ ($entryDraft).extraValues[locale] ?? {}).forEach(
-        (key) => {
-          const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
-
-          if (prefix && !wrapper?.querySelector(`[data-key-path-prefix="${prefix}"]`)) {
-            delete (/** @type {EntryDraft} */ ($entryDraft).extraValues[locale][key]);
-          }
-        },
-      );
     }
   };
 
