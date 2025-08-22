@@ -2244,7 +2244,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^223]: Netlify/Decap CMS [#7483](https://github.com/decaporg/decap-cms/issues/7483)
 
-[^224]: Netlify/Decap CMS [#7352](https://github.com/decaporg/decap-cms/issues/7352)
+[^224]: Netlify/Decap CMS [#7352](https://github.com/decaporg/decap-cms/issues/7352), [#7581](https://github.com/decaporg/decap-cms/issues/7581)
 
 [^225]: Netlify/Decap CMS [#7401](https://github.com/decaporg/decap-cms/issues/7401)
 
