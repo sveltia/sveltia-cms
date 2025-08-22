@@ -6,3 +6,5 @@ reject:
   # need to investigate an infinite loop and migrate to Shiki
   - lexical
   - "@lexical/*"
+  # blocked by https://github.com/sveltejs/svelte/issues/16640
+  - svelte
