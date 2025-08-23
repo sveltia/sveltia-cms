@@ -9,7 +9,7 @@
   import { getHash } from '@sveltia/utils/crypto';
   import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
-  import { flushSync, getContext } from 'svelte';
+  import { flushSync, getContext, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
@@ -170,8 +170,8 @@
    * @param {SelectedResource} selectedResource Selected resource.
    */
   const onResourceSelect = async (selectedResource) => {
-    processing = true;
     resetSelection();
+    processing = true;
 
     ({ asset, file, url, credit } = selectedResource);
 
@@ -270,7 +270,10 @@
 
   $effect(() => {
     void [currentValue];
-    updateProps();
+
+    untrack(() => {
+      updateProps();
+    });
   });
 </script>
 
