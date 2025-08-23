@@ -19,15 +19,15 @@
     BUILTIN_COMPONENTS,
     BUTTON_NAME_MAP,
     COMPONENT_NAME_PREFIX_REGEX,
-    customComponents,
     DEFAULT_BUTTONS,
     DEFAULT_MODES,
     NODE_NAME_MAP,
   } from '$lib/services/contents/widgets/markdown';
+  import { EditorComponent } from '$lib/services/contents/widgets/markdown/components';
   import {
-    EditorComponent,
+    customComponentRegistry,
     getComponentDef,
-  } from '$lib/services/contents/widgets/markdown/component';
+  } from '$lib/services/contents/widgets/markdown/components/definitions';
   import {
     RASTER_IMAGE_EXTENSION_REGEX,
     SUPPORTED_IMAGE_TYPES,
@@ -35,7 +35,7 @@
   } from '$lib/services/utils/media/image';
 
   /**
-   * @import { EntryDraft, FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
    * @import { MarkdownField } from '$lib/types/public';
    */
 
@@ -77,7 +77,7 @@
     buttons: _buttons = [...DEFAULT_BUTTONS],
     editor_components:
       // Include all built-in and custom components by default
-      _editorComponents = [...BUILTIN_COMPONENTS, ...Object.keys(customComponents)],
+      _editorComponents = [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
     linked_images: linkedImagesEnabled = true,
     minimal = false,
   } = $derived(fieldConfig);

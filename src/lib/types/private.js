@@ -1,4 +1,6 @@
 /**
+ * @import { LexicalNode } from 'lexical';
+ * @import { Transformer } from '@lexical/markdown';
  * @import { Component } from 'svelte';
  * @import { Writable } from 'svelte/store';
  * @import {
@@ -962,6 +964,15 @@
  * @property {FieldKeyPath} keyPath Key path, e.g. `author.name`.
  * @property {boolean} [isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
+ */
+
+/**
+ * Custom Lexical node features.
+ * @typedef {object} CustomNodeFeatures
+ * @property {any} node Lexical node class implementation.
+ * @property {(props?: Record<string, any>) => LexicalNode} createNode Function to create a new node
+ * instance.
+ * @property {Transformer} transformer Node transformer.
  */
 
 export {};

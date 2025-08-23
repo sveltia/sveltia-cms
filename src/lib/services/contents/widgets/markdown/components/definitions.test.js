@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { IMAGE_REGEX, LINKED_IMAGE_REGEX } from './component.js';
+import { IMAGE_REGEX, LINKED_IMAGE_REGEX } from './definitions.js';
 
 describe('Test IMAGE_REGEX', () => {
   test('matches simple image markdown syntax', () => {

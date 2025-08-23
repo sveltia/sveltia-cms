@@ -10,7 +10,7 @@ import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/coll
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
-import { getComponentDef } from '$lib/services/contents/widgets/markdown/component';
+import { getComponentDef } from '$lib/services/contents/widgets/markdown/components/definitions';
 import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 

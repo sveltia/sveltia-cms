@@ -77,9 +77,3 @@ export const BUTTON_NAME_MAP = {
  * @type {RichTextEditorComponentName[]}
  */
 export const BUILTIN_COMPONENTS = ['code-block', 'image'];
-
-/**
- * Custom components registered using `CMS.registerEditorComponent`.
- * @type {Record<string, EditorComponentDefinition>}
- */
-export const customComponents = {};

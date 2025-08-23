@@ -2,7 +2,7 @@ import { mount } from 'svelte';
 
 import { customPreviewStyle } from '$lib/services/contents/editor';
 import { customFileFormats } from '$lib/services/contents/file/config';
-import { customComponents } from '$lib/services/contents/widgets/markdown';
+import { customComponentRegistry } from '$lib/services/contents/widgets/markdown/components/definitions';
 
 import App from './components/app.svelte';
 
@@ -98,7 +98,7 @@ const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
 const registerEditorComponent = (definition) => {
-  customComponents[definition.id] = definition;
+  customComponentRegistry.set(definition.id, definition);
 };
 
 /**
