@@ -208,12 +208,11 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }
 
   // Use `find` to stop scanning folders as soon as the asset is found
   scanningFolders.find((folder) => {
+    const { publicPath, collectionName: _collectionName } = folder;
     let { internalPath } = folder;
 
     // Deal with template tags like `/assets/images/{{slug}}`
     if (internalPath !== undefined && /{{.+?}}/.test(internalPath)) {
-      const { collectionName: _collectionName } = folder;
-
       const collection = _collectionName
         ? getCollection(_collectionName)
         : entry
@@ -235,6 +234,11 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }
         entryFilePath,
         isIndexFile: isCollectionIndexFile(collection, entry),
       });
+    }
+
+    // Handle assets stored in a subfolder of the internal path
+    if (publicPath && internalPath && dirName && dirName.startsWith(publicPath)) {
+      internalPath = dirName.replace(publicPath, internalPath);
     }
 
     const fullPath = createPath([internalPath, baseName]);

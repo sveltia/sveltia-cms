@@ -953,5 +953,226 @@ describe('assets/index', () => {
 
       expect(result).toBeUndefined();
     });
+
+    it('should handle assets in subfolder of internal path when dirName starts with publicPath', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/images/subfolder/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/images',
+          publicPath: '/posts/images',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'content/posts/images',
+        publicPath: '/posts/images',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      // Setup mocks for the subfolder scenario
+      vi.mocked(stripSlashes).mockReturnValue('/posts/images/subfolder/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/posts/images/subfolder',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder)
+        .mockReturnValueOnce(mockFolder) // First call for collection+fileName
+        .mockReturnValueOnce(mockFolder); // Second call for collection only
+
+      // Mock createPath to return the expected internal path with subfolder
+      vi.mocked(createPath).mockReturnValue('content/posts/images/subfolder/photo.jpg');
+
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/posts/images/subfolder/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAsset);
+      // Verify that createPath was called with the modified internal path
+      expect(createPath).toHaveBeenCalledWith(['content/posts/images/subfolder', 'photo.jpg']);
+    });
+
+    it('should not modify internalPath when dirName does not start with publicPath', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/images/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/images',
+          publicPath: '/posts/images',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'content/posts/images',
+        publicPath: '/posts/images',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      // Setup for a different directory that doesn't start with publicPath
+      vi.mocked(stripSlashes).mockReturnValue('/other/directory/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/other/directory',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValueOnce(mockFolder).mockReturnValueOnce(mockFolder);
+
+      // Mock createPath to use original internal path
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/other/directory/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAsset);
+      // Verify that createPath was called with the original internal path (not modified)
+      expect(createPath).toHaveBeenCalledWith(['content/posts/images', 'photo.jpg']);
+    });
+
+    it('should not modify internalPath when any required parameters are missing', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      // Test case 1: no dirName
+      vi.mocked(stripSlashes).mockReturnValue('/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '', // empty dirname
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+
+      const mockFolder = {
+        internalPath: 'content/posts/images',
+        publicPath: '/posts/images',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+
+      const mockAsset = {
+        path: 'content/posts/images/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: mockFolder,
+      };
+
+      allAssets.set([mockAsset]);
+
+      getAssetByAbsolutePath({
+        path: '/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(createPath).toHaveBeenCalledWith(['content/posts/images', 'photo.jpg']);
+
+      // Test case 2: no publicPath
+      vi.clearAllMocks();
+
+      const mockFolderNoPublicPath = {
+        internalPath: 'content/posts/images',
+        publicPath: undefined,
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      vi.mocked(stripSlashes).mockReturnValue('/posts/images/subfolder/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/posts/images/subfolder',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolderNoPublicPath);
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+
+      getAssetByAbsolutePath({
+        path: '/posts/images/subfolder/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(createPath).toHaveBeenCalledWith(['content/posts/images', 'photo.jpg']);
+
+      // Test case 3: no internalPath
+      vi.clearAllMocks();
+
+      const mockFolderNoInternalPath = {
+        internalPath: undefined,
+        publicPath: '/posts/images',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      vi.mocked(stripSlashes).mockReturnValue('/posts/images/subfolder/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/posts/images/subfolder',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolderNoInternalPath);
+      vi.mocked(createPath).mockReturnValue('undefined/photo.jpg');
+
+      getAssetByAbsolutePath({
+        path: '/posts/images/subfolder/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(createPath).toHaveBeenCalledWith([undefined, 'photo.jpg']);
+    });
   });
 });
