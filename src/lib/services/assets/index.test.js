@@ -1463,5 +1463,183 @@ describe('assets/index', () => {
 
       expect(createPath).toHaveBeenCalledWith([undefined, 'photo.jpg']);
     });
+
+    it('should not modify internalPath when dirName starts with publicPath but without trailing slash', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/images/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/images',
+          publicPath: '/posts/images',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'content/posts/images',
+        publicPath: '/posts/images',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      // Test case where dirName is exactly publicPath (no trailing slash)
+      // This should NOT trigger the path modification
+      vi.mocked(stripSlashes).mockReturnValue('/posts/images/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/posts/images', // exact match with publicPath, no trailing slash
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValueOnce(mockFolder).mockReturnValueOnce(mockFolder);
+
+      // Mock createPath to use original internal path (not modified)
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/posts/images/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAsset);
+      // Verify that createPath was called with the original internal path (not modified)
+      // because dirName.startsWith(`${publicPath}/`) should be false when dirName === publicPath
+      expect(createPath).toHaveBeenCalledWith(['content/posts/images', 'photo.jpg']);
+    });
+
+    it('should not modify internalPath when dirName looks similar to publicPath but is different path', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockFolder = {
+        internalPath: 'content/posts/images',
+        publicPath: '/posts/images',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      // Test case where dirName starts with publicPath but is actually a different path
+      // like `/posts/images-backup` - this should NOT trigger the path modification
+      vi.mocked(stripSlashes).mockReturnValue('/posts/images-backup/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/posts/images-backup', // similar but different path
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValueOnce(mockFolder).mockReturnValueOnce(mockFolder);
+
+      // The function will look for an asset at 'content/posts/images/photo.jpg'
+      // but we'll set up our mock asset at a different path so it won't be found
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+
+      // Set up an asset that exists at a different path, so the search will fail
+      const differentMockAsset = {
+        path: 'content/posts/images-backup/photo.jpg', // Different path that won't match
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/images-backup',
+          publicPath: '/posts/images-backup',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      allAssets.set([differentMockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/posts/images-backup/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toBeUndefined();
+      // Verify that createPath was called with the original internal path (not modified)
+      // because `/posts/images-backup` doesn't start with `/posts/images/`
+      // But since no asset exists at that path, the result should be undefined
+      expect(createPath).toHaveBeenCalledWith(['content/posts/images', 'photo.jpg']);
+    });
+
+    it('should modify internalPath when dirName properly starts with publicPath plus slash', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/images/subfolder/deep/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/images',
+          publicPath: '/posts/images',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'content/posts/images',
+        publicPath: '/posts/images',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      // Test case where dirName properly starts with publicPath + '/'
+      // This SHOULD trigger the path modification
+      vi.mocked(stripSlashes).mockReturnValue('/posts/images/subfolder/deep/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/posts/images/subfolder/deep', // properly starts with publicPath + '/'
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValueOnce(mockFolder).mockReturnValueOnce(mockFolder);
+
+      // Mock createPath to return the expected internal path with subfolder
+      vi.mocked(createPath).mockReturnValue('content/posts/images/subfolder/deep/photo.jpg');
+
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/posts/images/subfolder/deep/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAsset);
+      // Verify that createPath was called with the modified internal path
+      // `/posts/images/subfolder/deep` should be replaced with
+      // `content/posts/images/subfolder/deep`
+      expect(createPath).toHaveBeenCalledWith(['content/posts/images/subfolder/deep', 'photo.jpg']);
+    });
   });
 });
