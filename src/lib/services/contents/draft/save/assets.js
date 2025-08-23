@@ -80,6 +80,7 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
       createPath([
         internalPath,
         isMultiFolders || subPath?.includes('/') ? subPathFirstPart : undefined,
+        collection.media_folder, // subfolder, e.g. `images`
       ]),
       fillSlugOptions,
     ),

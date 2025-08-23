@@ -477,4 +477,158 @@ describe('Test resolveAssetFolderPaths()', () => {
       resolvedPublicPath: '/uploads/blog/foo',
     });
   });
+
+  test('collection with media_folder, multiple folders, entry relative', async () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      media_folder: 'images',
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nMultiFolder,
+    };
+
+    await setupAssetFolder(relativeAssetFolder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog/foo/images',
+      resolvedPublicPath: '../foo',
+    });
+  });
+
+  test('collection with media_folder, nested path, multiple folders, entry relative', async () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      media_folder: 'assets/media',
+      _file: { ..._file, subPath: '{{slug}}/index' },
+      _i18n: i18nMultiFolder,
+    };
+
+    await setupAssetFolder(relativeAssetFolder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog/foo/assets/media',
+      resolvedPublicPath: '../../foo',
+    });
+  });
+
+  test('collection with media_folder, multiple files, entry relative', async () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      media_folder: 'uploads',
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nMultiFile,
+    };
+
+    await setupAssetFolder(relativeAssetFolder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog/uploads',
+      resolvedPublicPath: '',
+    });
+  });
+
+  test('collection with media_folder, nested path, multiple files, entry relative', async () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      media_folder: 'media/files',
+      _file: { ..._file, subPath: '{{slug}}/index' },
+      _i18n: i18nMultiFile,
+    };
+
+    await setupAssetFolder(relativeAssetFolder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog/foo/media/files',
+      resolvedPublicPath: '',
+    });
+  });
+
+  test('collection with media_folder, single file, entry relative', async () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      media_folder: 'static',
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nSingleFile,
+    };
+
+    await setupAssetFolder(relativeAssetFolder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog/static',
+      resolvedPublicPath: '',
+    });
+  });
+
+  test('collection with empty media_folder, entry relative', async () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      media_folder: '',
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nMultiFile,
+    };
+
+    await setupAssetFolder(relativeAssetFolder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '',
+    });
+  });
+
+  test('collection with undefined media_folder, entry relative', async () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      media_folder: undefined,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nMultiFile,
+    };
+
+    await setupAssetFolder(relativeAssetFolder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: relativeAssetFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '',
+    });
+  });
 });

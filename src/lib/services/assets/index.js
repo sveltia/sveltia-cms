@@ -27,7 +27,8 @@ import { createPath, decodeFilePath, resolvePath } from '$lib/services/utils/fil
  * Asset,
  * AssetFolderInfo,
  * Entry,
- * InternalI18nOptions,
+ * InternalCollection,
+ * InternalCollectionFile,
  * ProcessedAssets,
  * UploadingAssets,
  * } from '$lib/types/private';
@@ -122,17 +123,23 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
 });
 
 /**
- * Find an asset.
+ * Find an asset by a relative path, using the associated entry and collection to help locate it.
  * @param {object} context Context.
  * @param {string} context.path Saved relative path.
  * @param {Entry} context.entry Associated entry to be used to help locate an asset from a relative
  * path. Can be `undefined` when editing a new draft.
- * @param {InternalI18nOptions} context._i18n I18n options for the collection or collection file.
+ * @param {InternalCollection} context.collection Associated collection.
+ * @param {InternalCollectionFile} [context.file] Associated collection file.
  * @returns {Asset | undefined} Found asset.
  */
-export const getAsset = ({ path, entry, _i18n }) => {
+export const getAssetByRelativePathAndCollection = ({ path, entry, collection, file }) => {
   const { locales } = entry;
-  const { defaultLocale } = _i18n;
+
+  const {
+    media_folder: mediaFolder, // e.g. `images`
+    _i18n: { defaultLocale },
+  } = file ?? collection;
+
   const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
   const { path: entryFilePath, content: entryContent } = locales[locale];
 
@@ -141,7 +148,7 @@ export const getAsset = ({ path, entry, _i18n }) => {
   }
 
   const { entryFolder } = entryFilePath.match(/(?<entryFolder>.+?)(?:\/[^/]+)?$/)?.groups ?? {};
-  const resolvedPath = resolvePath(`${entryFolder}/${path}`);
+  const resolvedPath = resolvePath(createPath([entryFolder, mediaFolder, path]));
 
   return get(allAssets).find((asset) => asset.path === resolvedPath);
 };
@@ -159,14 +166,15 @@ export const getAssetByRelativePath = ({ path, entry }) => {
     return undefined;
   }
 
-  const assets = getAssociatedCollections(entry).map((_collection) => {
-    const collectionFiles = getCollectionFilesByEntry(_collection, entry);
+  const assets = getAssociatedCollections(entry).map((collection) => {
+    const collectionFiles = getCollectionFilesByEntry(collection, entry);
+    const args = { path, entry, collection };
 
     if (collectionFiles.length) {
-      return collectionFiles.map((file) => getAsset({ path, entry, _i18n: file._i18n }));
+      return collectionFiles.map((file) => getAssetByRelativePathAndCollection({ ...args, file }));
     }
 
-    return getAsset({ path, entry, _i18n: _collection._i18n });
+    return getAssetByRelativePathAndCollection({ ...args });
   });
 
   return (
