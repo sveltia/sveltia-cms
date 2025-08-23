@@ -246,5 +246,9 @@
         }
       }
     }
+
+    & + :global(.wrapper) {
+      margin-top: 16px;
+    }
   }
 </style>
