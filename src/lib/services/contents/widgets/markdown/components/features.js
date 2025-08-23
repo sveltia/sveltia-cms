@@ -48,10 +48,14 @@ export const getCustomNodeFeatures = ({
   toPreview,
 }) => {
   const preview = toPreview({});
+  const block = toBlock({});
 
   const tagName =
     typeof preview === 'string'
-      ? preview.trim().match(/^<(?<tagName>[a-z]+)/i)?.groups?.tagName
+      ? (preview.trim().match(/^<(?<tagName>[a-z]+)/i)?.groups?.tagName ??
+        (typeof block === 'string'
+          ? block.trim().match(/^<(?<tagName>[a-z]+)/i)?.groups?.tagName
+          : undefined))
       : undefined;
 
   /**
