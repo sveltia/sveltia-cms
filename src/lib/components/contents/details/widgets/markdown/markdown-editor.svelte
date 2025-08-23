@@ -51,6 +51,7 @@
 
   /** @type {FieldEditorContext} */
   const { widgetContext = undefined } = getContext('field-editor') ?? {};
+  const inEditorComponent = widgetContext === 'markdown-editor-component';
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -92,8 +93,13 @@
       .map((name) => BUTTON_NAME_MAP[name])
       .filter(Boolean),
   );
-  const components = $derived(
-    _editorComponents
+  const components = $derived.by(() => {
+    // Disable nested components
+    if (inEditorComponent) {
+      return [];
+    }
+
+    return _editorComponents
       .map((name) =>
         getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
       )
@@ -101,8 +107,8 @@
       .map(
         (def) =>
           /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
-      ),
-  );
+      );
+  });
   const imageComponent = $derived(
     components.find(({ id }) => id === 'image' || id === 'linked-image'),
   );
@@ -303,7 +309,7 @@
     }
 
     // Skip cleanup when used as a nested component editor
-    if (!$entryDraft || widgetContext === 'markdown-editor-component') {
+    if (!$entryDraft || inEditorComponent) {
       return;
     }
 
