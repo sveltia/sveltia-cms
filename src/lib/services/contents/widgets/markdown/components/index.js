@@ -1,8 +1,19 @@
-import { createCustomNodeFeatures } from '$lib/services/contents/widgets/markdown/components/features';
+import { createCustomNodeClass } from '$lib/services/contents/widgets/markdown/components/custom-node';
+import { createTransformer } from '$lib/services/contents/widgets/markdown/components/transformers';
 
 /**
+ * @import { LexicalNode } from 'lexical';
+ * @import { Transformer } from '@lexical/markdown';
  * @import { EditorComponentDefinition } from '$lib/types/public';
- * @import { CustomNodeFeatures } from '$lib/types/private';
+ */
+
+/**
+ * Custom Lexical node features.
+ * @typedef {object} CustomNodeFeatures
+ * @property {any} node Lexical node class implementation.
+ * @property {(props?: Record<string, any>) => LexicalNode} createNode Function to create a new node
+ * instance.
+ * @property {Transformer} transformer Node transformer.
  */
 
 /**
@@ -11,6 +22,26 @@ import { createCustomNodeFeatures } from '$lib/services/contents/widgets/markdow
  * @type {Map<string, CustomNodeFeatures>}
  */
 const featureCacheMap = new Map();
+
+/**
+ * Dynamically create a custom {@link DecoratorNode} class and related features for the Lexical
+ * editor to enable support for editor components in Markdown.
+ * @param {EditorComponentDefinition} componentDef Component definition passed with the
+ * `CMS.registerEditorComponent()` API.
+ * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
+ * the transformer definition.
+ * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ */
+const createCustomNodeFeatures = (componentDef) => {
+  const CustomNode = createCustomNodeClass(componentDef);
+
+  return {
+    node: CustomNode,
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    createNode: (props) => new CustomNode(props),
+    transformer: createTransformer({ componentDef, CustomNode }),
+  };
+};
 
 /**
  * Text editor component implementation.
