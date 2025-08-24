@@ -58,6 +58,11 @@
    * @type {DraftValueStoreKey}
    */
   const valueStoreKey = 'extraValues';
+  /**
+   * Previous values for the editor component, used to detect changes.
+   * @type {RawEntryContent | undefined}
+   */
+  let previousValues = undefined;
 
   /**
    * Current values for the editor component. These Values are stored in the {@link entryDraft}
@@ -125,7 +130,14 @@
   });
 
   $effect(() => {
-    onChange(new CustomEvent('update', { detail: currentValues }));
+    void [currentValues];
+
+    untrack(() => {
+      if (!equal(previousValues, currentValues)) {
+        onChange(new CustomEvent('update', { detail: currentValues }));
+        previousValues = currentValues;
+      }
+    });
   });
 </script>
 
