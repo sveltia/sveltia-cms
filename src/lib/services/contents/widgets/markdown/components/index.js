@@ -9,7 +9,7 @@ import { createTransformer } from '$lib/services/contents/widgets/markdown/compo
 
 /**
  * Custom Lexical node features.
- * @typedef {object} CustomNodeFeatures
+ * @typedef {object} LexicalNodeFeatures
  * @property {any} node Lexical node class implementation.
  * @property {(props?: Record<string, any>) => LexicalNode} createNode Function to create a new node
  * instance.
@@ -19,7 +19,7 @@ import { createTransformer } from '$lib/services/contents/widgets/markdown/compo
 /**
  * Cache the class and related features to avoid a Lexical error saying “Type ... In node CustomNode
  * does not match registered node CustomNode with the same type”.
- * @type {Map<string, CustomNodeFeatures>}
+ * @type {Map<string, LexicalNodeFeatures>}
  */
 const featureCacheMap = new Map();
 
@@ -28,11 +28,11 @@ const featureCacheMap = new Map();
  * editor to enable support for editor components in Markdown.
  * @param {EditorComponentDefinition} componentDef Component definition passed with the
  * `CMS.registerEditorComponent()` API.
- * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
+ * @returns {LexicalNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
  * the transformer definition.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
-const createLexicalFeatures = (componentDef) => {
+const createLexicalNodeFeatures = (componentDef) => {
   const CustomNode = createCustomNodeClass(componentDef);
 
   return {
@@ -55,7 +55,7 @@ export class EditorComponent {
   constructor(componentDef) {
     const { id } = componentDef;
     const cache = featureCacheMap.get(id);
-    const features = cache ?? createLexicalFeatures(componentDef);
+    const features = cache ?? createLexicalNodeFeatures(componentDef);
 
     if (!cache) {
       featureCacheMap.set(id, features);

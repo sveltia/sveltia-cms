@@ -45,6 +45,66 @@ export const replaceQuotes = (str) => str.replace(/"/g, "'");
  */
 export const encodeQuotes = (str) => str.replace(/"/g, '&quot;');
 
+/** @type {EditorComponentDefinition} */
+const IMAGE_COMPONENT = {
+  /* eslint-disable jsdoc/require-jsdoc */
+  id: 'image',
+  label: 'Image',
+  fields: [], // Defined dynamically in `getComponentDef()` with localized labels
+  pattern: IMAGE_REGEX,
+  toBlock: (props) => {
+    const { src = '', alt = '', title = '' } = props;
+
+    return src ? `![${alt}](${src}${title ? ` "${replaceQuotes(title)}"` : ''})` : '';
+  },
+  toPreview: (props) => {
+    const { src = '', alt = '', title = '' } = props;
+
+    // Return `<img>` even if `src` is empty to make sure the `tagName` below works
+    return (
+      `<img src="${encodeQuotes(src)}" alt="${encodeQuotes(alt)}" ` +
+      `title="${encodeQuotes(title)}">`
+    );
+  },
+  /* eslint-enable jsdoc/require-jsdoc */
+};
+
+/** @type {EditorComponentDefinition} */
+const LINKED_IMAGE_COMPONENT = {
+  /* eslint-disable jsdoc/require-jsdoc */
+  id: 'linked-image',
+  label: 'Image',
+  fields: [], // Defined dynamically in `getComponentDef()` with localized labels
+  pattern: LINKED_IMAGE_REGEX,
+  fromBlock: (match) => {
+    const { src1, alt1, title1, src2, alt2, title2, link } = match.groups ?? {};
+
+    return {
+      src: (src1 || src2 || '').trim(),
+      alt: (alt1 || alt2 || '').trim(),
+      title: (title1 || title2 || '').trim(),
+      link: (link || '').trim(),
+    };
+  },
+  toBlock: (props) => {
+    const { src = '', alt = '', title = '', link = '' } = props;
+    const img = src ? `![${alt}](${src}${title ? ` "${replaceQuotes(title)}"` : ''})` : '';
+
+    return img && link ? `[${img}](${link})` : img;
+  },
+  toPreview: (props) => {
+    const { src = '', alt = '', title = '', link = '' } = props;
+
+    const img =
+      `<img src="${encodeQuotes(src)}" alt="${encodeQuotes(alt)}" ` +
+      `title="${encodeQuotes(title)}">`;
+
+    // Return `<img>` even if `src` is empty to make sure the `tagName` below works
+    return link ? `<a href="${encodeQuotes(link)}">${img}</a>` : img;
+  },
+  /* eslint-enable jsdoc/require-jsdoc */
+};
+
 /**
  * Get a component definition. This has to be a function due to localized labels.
  * @param {string} name Component name.
@@ -55,7 +115,8 @@ export const getComponentDef = (name) => {
     return customComponentRegistry.get(name);
   }
 
-  const imageProps = {
+  // Common props with localized labels
+  const commonImageProps = {
     icon: 'image',
     label: get(_)('editor_components.image'),
     fields: [
@@ -65,64 +126,20 @@ export const getComponentDef = (name) => {
     ],
   };
 
-  /* eslint-disable jsdoc/require-jsdoc */
   /** @type {Record<string, EditorComponentDefinition>} */
   const definitions = {
     image: {
-      ...imageProps,
-      id: 'image',
-      pattern: IMAGE_REGEX,
-      toBlock: (props) => {
-        const { src = '', alt = '', title = '' } = props;
-
-        return src ? `![${alt}](${src}${title ? ` "${replaceQuotes(title)}"` : ''})` : '';
-      },
-      toPreview: (props) => {
-        const { src = '', alt = '', title = '' } = props;
-
-        // Return `<img>` even if `src` is empty to make sure the `tagName` below works
-        return (
-          `<img src="${encodeQuotes(src)}" alt="${encodeQuotes(alt)}" ` +
-          `title="${encodeQuotes(title)}">`
-        );
-      },
+      ...IMAGE_COMPONENT,
+      ...commonImageProps,
     },
     'linked-image': {
-      ...imageProps,
-      id: 'linked-image',
+      ...LINKED_IMAGE_COMPONENT,
+      ...commonImageProps,
       fields: [
-        ...imageProps.fields,
+        ...commonImageProps.fields,
         { name: 'link', label: get(_)('editor_components.link'), required: false },
       ],
-      pattern: LINKED_IMAGE_REGEX,
-      fromBlock: (match) => {
-        const { src1, alt1, title1, src2, alt2, title2, link } = match.groups ?? {};
-
-        return {
-          src: (src1 || src2 || '').trim(),
-          alt: (alt1 || alt2 || '').trim(),
-          title: (title1 || title2 || '').trim(),
-          link: (link || '').trim(),
-        };
-      },
-      toBlock: (props) => {
-        const { src = '', alt = '', title = '', link = '' } = props;
-        const img = src ? `![${alt}](${src}${title ? ` "${replaceQuotes(title)}"` : ''})` : '';
-
-        return img && link ? `[${img}](${link})` : img;
-      },
-      toPreview: (props) => {
-        const { src = '', alt = '', title = '', link = '' } = props;
-
-        const img =
-          `<img src="${encodeQuotes(src)}" alt="${encodeQuotes(alt)}" ` +
-          `title="${encodeQuotes(title)}">`;
-
-        // Return `<img>` even if `src` is empty to make sure the `tagName` below works
-        return link ? `<a href="${encodeQuotes(link)}">${img}</a>` : img;
-      },
     },
-    /* eslint-enable jsdoc/require-jsdoc */
   };
 
   return definitions[name];
