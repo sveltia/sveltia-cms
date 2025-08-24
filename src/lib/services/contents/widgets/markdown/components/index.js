@@ -32,7 +32,7 @@ const featureCacheMap = new Map();
  * the transformer definition.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
-const createCustomNodeFeatures = (componentDef) => {
+const createLexicalFeatures = (componentDef) => {
   const CustomNode = createCustomNodeClass(componentDef);
 
   return {
@@ -55,7 +55,7 @@ export class EditorComponent {
   constructor(componentDef) {
     const { id } = componentDef;
     const cache = featureCacheMap.get(id);
-    const features = cache ?? createCustomNodeFeatures(componentDef);
+    const features = cache ?? createLexicalFeatures(componentDef);
 
     if (!cache) {
       featureCacheMap.set(id, features);
