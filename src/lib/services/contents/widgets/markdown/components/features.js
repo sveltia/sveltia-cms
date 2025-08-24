@@ -1,8 +1,12 @@
-import { flatten, unflatten } from 'flat';
 import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
 import Component from '$lib/components/contents/details/widgets/markdown/component.svelte';
+import { getTransformer } from '$lib/services/contents/widgets/markdown/components/transformers';
+import {
+  isMultiLinePattern,
+  normalizeProps,
+} from '$lib/services/contents/widgets/markdown/components/utils';
 
 /**
  * @import {
@@ -14,23 +18,9 @@ import Component from '$lib/components/contents/details/widgets/markdown/compone
  * NodeKey,
  * SerializedLexicalNode,
  * } from 'lexical';
- * @import { TextMatchTransformer } from '@lexical/markdown';
  * @import { EditorComponentDefinition } from '$lib/types/public';
  * @import { CustomNodeFeatures } from '$lib/types/private';
  */
-
-/**
- * Normalize properties by removing internal properties.
- * @param {Record<string, any>} props Properties to normalize.
- * @returns {Record<string, any>} Properties excluding those starting with `__sc_`, which are used
- * for internal purposes.
- */
-const normalizeProps = (props) =>
-  unflatten(
-    Object.fromEntries(
-      Object.entries(flatten(props)).filter(([key]) => !key.split('.').pop()?.startsWith('__sc_')),
-    ),
-  );
 
 /**
  * Get the {@link CustomNode} class and related features for Lexical.
@@ -38,15 +28,9 @@ const normalizeProps = (props) =>
  * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
  * the transformer definition.
  */
-export const getCustomNodeFeatures = ({
-  id: componentName,
-  label,
-  fields,
-  pattern,
-  fromBlock,
-  toBlock,
-  toPreview,
-}) => {
+export const getCustomNodeFeatures = (componentDef) => {
+  const { id: componentName, label, fields, pattern, toBlock, toPreview } = componentDef;
+  const isMultiLine = isMultiLinePattern(pattern);
   const preview = toPreview({});
   const block = toBlock({});
 
@@ -93,7 +77,7 @@ export const getCustomNodeFeatures = ({
      * @returns {boolean} Result.
      */
     isInline() {
-      return true;
+      return !isMultiLine;
     }
 
     /**
@@ -289,47 +273,10 @@ export const getCustomNodeFeatures = ({
    * @returns {CustomNode} New node.
    */
   const createNode = (props) => new CustomNode(props);
-  /**
-   * Whether the given node is an instance of {@link CustomNode}.
-   * @param {import("lexical").LexicalNode | null | undefined} node Node.
-   * @returns {boolean} Result.
-   */
-  const isCustomNode = (node) => node instanceof CustomNode && node.getType() === componentName;
 
-  /**
-   * Implement a Markdown transformer for {@link CustomNode}.
-   * @type {TextMatchTransformer}
-   * @see https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/plugins/MarkdownTransformers/index.ts#L75-L97
-   */
-  const transformer = {
-    dependencies: [CustomNode],
-    /**
-     * Convert the given node to Markdown.
-     * @param {import("lexical").LexicalNode} node Node.
-     * @returns {string | null} Markdown string.
-     */
-    export: (node) => {
-      if (isCustomNode(node)) {
-        return toBlock(normalizeProps(/** @type {CustomNode} */ (node).__props ?? {}));
-      }
-
-      return null;
-    },
-    importRegExp: pattern,
-    regExp: pattern,
-    /**
-     * Replace the current text node with a new {@link CustomNode}.
-     * @param {import("lexical").TextNode} textNode Parent node.
-     * @param {string[]} match Matching result.
-     */
-    replace: (textNode, match) => {
-      const matchArray = /** @type {RegExpMatchArray} */ (match);
-      const props = fromBlock?.(matchArray) ?? matchArray.groups ?? {};
-
-      textNode.replace(createNode(props));
-    },
-    type: 'text-match',
+  return {
+    node: CustomNode,
+    createNode,
+    transformer: getTransformer({ componentDef, CustomNode, createNode }),
   };
-
-  return { node: CustomNode, createNode, transformer };
 };
