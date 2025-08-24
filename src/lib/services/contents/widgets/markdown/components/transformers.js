@@ -19,8 +19,6 @@ import {
  * @param {EditorComponentDefinition} args.componentDef Component definition passed with the
  * `CMS.registerEditorComponent()` API.
  * @param {any} args.CustomNode Lexical node class implementation.
- * @param {(props?: Record<string, any>) => LexicalNode} args.createNode Function to create a new
- * node instance.
  * @returns {Transformer} Transformer.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  * @see https://lexical.dev/docs/packages/lexical-markdown#transformers
@@ -33,7 +31,7 @@ import {
  * @see https://github.com/facebook/lexical/blob/main/packages/lexical-markdown/src/__tests__/unit/LexicalMarkdown.test.ts#L86-L115
  * @see https://github.com/facebook/lexical/blob/main/packages/lexical-markdown/src/__tests__/unit/LexicalMarkdown.test.ts#L117-L224
  */
-export const createTransformer = ({ componentDef, CustomNode, createNode }) => {
+export const createTransformer = ({ componentDef, CustomNode }) => {
   const { id: componentName, pattern, fromBlock, toBlock } = componentDef;
   const nonGlobalPattern = new RegExp(pattern.source, pattern.flags.replace('g', ''));
   /**
@@ -87,7 +85,7 @@ export const createTransformer = ({ componentDef, CustomNode, createNode }) => {
           return [false, endLineIndex];
         }
 
-        rootNode.append(createNode(getProps(matchArray)));
+        rootNode.append(new CustomNode(getProps(matchArray)));
 
         return [true, endLineIndex];
       },
@@ -104,7 +102,7 @@ export const createTransformer = ({ componentDef, CustomNode, createNode }) => {
     importRegExp: nonGlobalPattern,
     regExp: nonGlobalPattern,
     replace: (textNode, matchArray) => {
-      textNode.replace(createNode(getProps(matchArray)));
+      textNode.replace(new CustomNode(getProps(matchArray)));
     },
     export: exportNode,
     /* eslint-enable jsdoc/require-jsdoc */

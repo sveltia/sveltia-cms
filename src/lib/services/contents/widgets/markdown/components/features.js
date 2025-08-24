@@ -23,15 +23,12 @@ import {
  */
 
 /**
- * Dynamically create the {@link CustomNode} class and related features for the Lexical editor to
- * enable support for editor components in Markdown.
+ * Dynamically create a custom {@link DecoratorNode} class.
  * @param {EditorComponentDefinition} componentDef Component definition passed with the
  * `CMS.registerEditorComponent()` API.
- * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
- * the transformer definition.
- * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ * @returns {any} Custom node class.
  */
-export const createCustomNodeFeatures = (componentDef) => {
+const createCustomNodeClass = (componentDef) => {
   const { id: componentName, label, fields, pattern, toBlock, toPreview } = componentDef;
   const isMultiLine = isMultiLinePattern(pattern);
   const preview = toPreview({});
@@ -47,7 +44,7 @@ export const createCustomNodeFeatures = (componentDef) => {
 
   /**
    * Genetic custom node.
-   * @augments {DecoratorNode<any>}
+   * @augments {DecoratorNode<null>}
    * @see https://lexical.dev/docs/concepts/nodes#extending-decoratornode
    * @see https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/nodes/ImageNode.tsx
    */
@@ -99,8 +96,7 @@ export const createCustomNodeFeatures = (componentDef) => {
      * @returns {CustomNode} New node.
      */
     static importJSON(serializedNode) {
-      // eslint-disable-next-line no-use-before-define
-      return createNode().updateFromJSON(serializedNode);
+      return new CustomNode().updateFromJSON(serializedNode);
     }
 
     /**
@@ -204,8 +200,7 @@ export const createCustomNodeFeatures = (componentDef) => {
            * @returns {DOMConversionOutput} Output.
            */
           conversion: (element) => ({
-            // eslint-disable-next-line no-use-before-define
-            node: createNode(
+            node: new CustomNode(
               Object.fromEntries(
                 fields.map(({ name }) => [
                   name,
@@ -237,8 +232,7 @@ export const createCustomNodeFeatures = (componentDef) => {
                  * @returns {DOMConversionOutput} Output.
                  */
                 conversion: () => ({
-                  // eslint-disable-next-line no-use-before-define
-                  node: createNode({ src, alt, title, link }),
+                  node: new CustomNode({ src, alt, title, link }),
                   // eslint-disable-next-line jsdoc/require-jsdoc
                   after: () => [],
                 }),
@@ -271,16 +265,25 @@ export const createCustomNodeFeatures = (componentDef) => {
     }
   }
 
-  /**
-   * Create a new {@link CustomNode} instance.
-   * @param {Record<string, any>} [props] Component properties.
-   * @returns {CustomNode} New node.
-   */
-  const createNode = (props) => new CustomNode(props);
+  return CustomNode;
+};
+
+/**
+ * Dynamically create a custom {@link DecoratorNode} class and related features for the Lexical
+ * editor to enable support for editor components in Markdown.
+ * @param {EditorComponentDefinition} componentDef Component definition passed with the
+ * `CMS.registerEditorComponent()` API.
+ * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
+ * the transformer definition.
+ * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ */
+export const createCustomNodeFeatures = (componentDef) => {
+  const CustomNode = createCustomNodeClass(componentDef);
 
   return {
     node: CustomNode,
-    createNode,
-    transformer: createTransformer({ componentDef, CustomNode, createNode }),
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    createNode: (props) => new CustomNode(props),
+    transformer: createTransformer({ componentDef, CustomNode }),
   };
 };
