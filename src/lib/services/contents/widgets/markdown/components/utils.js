@@ -6,7 +6,10 @@ import { flatten, unflatten } from 'flat';
  * @returns {boolean} Result.
  */
 export const isMultiLinePattern = (pattern) =>
-  pattern.multiline || pattern.dotAll || pattern.source.includes('[\\S\\s]');
+  pattern.multiline ||
+  pattern.dotAll ||
+  pattern.source.includes('[\\S\\s]') ||
+  pattern.source.includes('[\\s\\S]');
 
 /**
  * Normalize properties by removing internal properties.
