@@ -1,4 +1,4 @@
-import { getCustomNodeFeatures } from '$lib/services/contents/widgets/markdown/components/features';
+import { createCustomNodeFeatures } from '$lib/services/contents/widgets/markdown/components/features';
 
 /**
  * @import { EditorComponentDefinition } from '$lib/types/public';
@@ -18,12 +18,13 @@ const featureCacheMap = new Map();
 export class EditorComponent {
   /**
    * Create an `EditorComponent` instance.
-   * @param {EditorComponentDefinition} componentDef Component definition.
+   * @param {EditorComponentDefinition} componentDef Component definition passed with the
+   * `CMS.registerEditorComponent()` API.
    */
   constructor(componentDef) {
     const { id } = componentDef;
     const cache = featureCacheMap.get(id);
-    const features = cache ?? getCustomNodeFeatures(componentDef);
+    const features = cache ?? createCustomNodeFeatures(componentDef);
 
     if (!cache) {
       featureCacheMap.set(id, features);

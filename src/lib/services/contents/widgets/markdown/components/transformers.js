@@ -14,13 +14,17 @@ import {
  */
 
 /**
- * Get a singleline/inline or multiline transformer for the given component definition.
+ * Create a singleline/inline or multiline transformer for the given component definition.
  * @param {object} args Arguments.
- * @param {EditorComponentDefinition} args.componentDef Component definition.
+ * @param {EditorComponentDefinition} args.componentDef Component definition passed with the
+ * `CMS.registerEditorComponent()` API.
  * @param {any} args.CustomNode Lexical node class implementation.
  * @param {(props?: Record<string, any>) => LexicalNode} args.createNode Function to create a new
  * node instance.
  * @returns {Transformer} Transformer.
+ * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ * @see https://lexical.dev/docs/packages/lexical-markdown#transformers
+ * @see https://lexical.dev/docs/api/modules/lexical_markdown
  * @see https://github.com/sveltia/sveltia-cms/issues/410
  * @see https://github.com/decaporg/decap-cms/issues/1044
  * @see https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/plugins/MarkdownTransformers/index.ts#L75-L97
@@ -29,7 +33,7 @@ import {
  * @see https://github.com/facebook/lexical/blob/main/packages/lexical-markdown/src/__tests__/unit/LexicalMarkdown.test.ts#L86-L115
  * @see https://github.com/facebook/lexical/blob/main/packages/lexical-markdown/src/__tests__/unit/LexicalMarkdown.test.ts#L117-L224
  */
-export const getTransformer = ({ componentDef, CustomNode, createNode }) => {
+export const createTransformer = ({ componentDef, CustomNode, createNode }) => {
   const { id: componentName, pattern, fromBlock, toBlock } = componentDef;
   const nonGlobalPattern = new RegExp(pattern.source, pattern.flags.replace('g', ''));
   /**

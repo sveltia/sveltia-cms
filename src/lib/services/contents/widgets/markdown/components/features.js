@@ -2,7 +2,7 @@ import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
 import Component from '$lib/components/contents/details/widgets/markdown/component.svelte';
-import { getTransformer } from '$lib/services/contents/widgets/markdown/components/transformers';
+import { createTransformer } from '$lib/services/contents/widgets/markdown/components/transformers';
 import {
   isMultiLinePattern,
   normalizeProps,
@@ -23,12 +23,15 @@ import {
  */
 
 /**
- * Get the {@link CustomNode} class and related features for Lexical.
- * @param {EditorComponentDefinition} componentDef Component definition.
+ * Dynamically create the {@link CustomNode} class and related features for the Lexical editor to
+ * enable support for editor components in Markdown.
+ * @param {EditorComponentDefinition} componentDef Component definition passed with the
+ * `CMS.registerEditorComponent()` API.
  * @returns {CustomNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
  * the transformer definition.
+ * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
-export const getCustomNodeFeatures = (componentDef) => {
+export const createCustomNodeFeatures = (componentDef) => {
   const { id: componentName, label, fields, pattern, toBlock, toPreview } = componentDef;
   const isMultiLine = isMultiLinePattern(pattern);
   const preview = toPreview({});
@@ -45,6 +48,7 @@ export const getCustomNodeFeatures = (componentDef) => {
   /**
    * Genetic custom node.
    * @augments {DecoratorNode<any>}
+   * @see https://lexical.dev/docs/concepts/nodes#extending-decoratornode
    * @see https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/nodes/ImageNode.tsx
    */
   class CustomNode extends DecoratorNode {
@@ -277,6 +281,6 @@ export const getCustomNodeFeatures = (componentDef) => {
   return {
     node: CustomNode,
     createNode,
-    transformer: getTransformer({ componentDef, CustomNode, createNode }),
+    transformer: createTransformer({ componentDef, CustomNode, createNode }),
   };
 };
