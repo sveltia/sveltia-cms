@@ -116,10 +116,10 @@ We loved the simple setup of Netlify CMS that turned a Git repository into a dat
 Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successors:
 
 - [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after making meaningful improvements
-- **Sveltia CMS**: not a fork but a **complete rewrite** or “total reboot”, started in November 2022, first appeared on GitHub in March 2023
-- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, no significant updates
+- **Sveltia CMS**: not a fork but a **complete rewrite**, started in November 2022, first appeared on GitHub in March 2023
+- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, no significant improvements made since then
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t use any of their code. This allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system.
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t use any of their code. This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system.
 
 While Sveltia CMS was created to replace legacy Netlify CMS instances, it can also be used as an alternative to other Netlify CMS successors. With its [solid i18n support](#better-i18n-support), we’re hoping our product will eventually be an appearing option for anyone looking for a free headless CMS.
 
@@ -166,7 +166,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 - Created and actively maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design, marketing and problem solving. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - The maintainer tries to respond to bug reports as quickly as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 24 hours.
-- Frequent releases deliver new features and enhancements to users faster. Most of our minor [releases](https://github.com/sveltia/sveltia-cms/releases) address one or more Netlify/Decap CMS issues, giving you even more reasons to switch from the legacy predecessor.
+- Frequent releases deliver new features and enhancements to users faster. Many of our minor [releases](https://github.com/sveltia/sveltia-cms/releases) address one or more Netlify/Decap CMS issues, giving you even more reasons to switch from the legacy predecessor.
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1][^211][^212][^213][^214]
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
 - Users can easily manage content on-the-go with mobile and tablet support.[^18][^215]
@@ -575,9 +575,8 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 
 ### Better customization
 
-- The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists.[^109]
 - A custom logo defined with the `logo_url` property is displayed on the global application header and the browser tab (favicon).[^134] A smaller logo is also correctly positioned on the authentication page.[^135]
-- [`CMS.registerCustomFormat()`](https://decapcms.org/docs/custom-formatters/) supports async parser/formatter functions.[^149]
+- Developers can specify the URL to redirect users after logging out with the `logout_redirect_url` global option.[^283]
 - Enhancements to [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent):
   - `CMS.registerEditorComponent()` accepts a component definition with the `icon` property. Developers can specify a Material Symbols icon name just like [custom collection icons](#using-a-custom-icon-for-a-collection).
   - The `fromBlock` function can be omitted if the `pattern` regex contains [named capturing groups](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) for the values.
@@ -585,7 +584,8 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Field validation works as expected.[^279]
   - No error is raised in the browser console saying `Sent invalid data to remark`.[^280]
   - No error is raised in the browser console saying `onValidate is not a function`.[^281]
-- Developers can specify the URL to redirect users after logging out with the `logout_redirect_url` global option.[^283]
+- Async functions can be used for [custom parsers/formatters](https://decapcms.org/docs/custom-formatters/).[^149]
+- The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists.[^109]
 
 ### Better localization
 
@@ -1765,7 +1765,7 @@ Due early 2026
 - [Preact+HTM support](https://github.com/sveltia/sveltia-cms/discussions/153) for custom widgets, editor components and preview templates
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
-- AI integrations for image generation, content writing, translation, etc.
+- More AI features for image generation, content writing, etc.
 - Search enhancements:
   - Customizable search fields[^274]
   - Advanced search options
@@ -1777,6 +1777,7 @@ Due early 2026
 
 ### Non-goals
 
+- Support for non-Git backends. Sveltia CMS is a Git-based headless CMS and will remain so to avoid feature creep and increased maintenance costs.
 - Framework-specific integrations, including a WYSIWYG editor. Due to the crowded CMS market and our limited resources, we will focus on framework-agnostic core features that are essential for succeeding Netlify/Decap CMS and modernizing the platform.
 - Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
 
