@@ -6,7 +6,6 @@ import { assetUpdatesToast } from '$lib/services/assets/data';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { getAssetBlob, getAssetPublicURL } from '$lib/services/assets/info';
 import { saveChanges } from '$lib/services/backends/save';
-import { siteConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
@@ -94,27 +93,29 @@ export const addSavingEntryData = async ({ draftProps, indexFile, savingEntries,
 /**
  * Collect changes for the given entry.
  * @param {object} args Arguments.
- * @param {InternalSiteConfig} args._siteConfig Site configuration.
  * @param {Entry} args.entry Entry to collect changes for.
  * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
  * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
  */
-export const collectEntryChanges = async ({ _siteConfig, entry, savingEntries, changes }) => {
+export const collectEntryChanges = async ({ entry, savingEntries, changes }) => {
   const draftBaseProps = getDraftBaseProps({ entry });
 
   await Promise.all(
     getAssociatedCollections(entry).map(async (collection) => {
-      const { name: collectionName, editor } = collection;
+      const collectionName = collection.name;
       const isIndexFile = isCollectionIndexFile(collection, entry);
       const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
-
-      const canPreview =
-        indexFile?.editor?.preview ?? editor?.preview ?? _siteConfig?.editor?.preview ?? true;
-
       const collectionFiles = getCollectionFilesByEntry(collection, entry);
       const addDataProps = { indexFile, savingEntries, changes };
+
       /** @type {Partial<EntryDraft>} */
-      const draftProps = { ...draftBaseProps, collection, collectionName, isIndexFile, canPreview };
+      const draftProps = {
+        ...draftBaseProps,
+        collection,
+        collectionName,
+        isIndexFile,
+        canPreview: true,
+      };
 
       if (collectionFiles.length) {
         await Promise.all(
@@ -135,7 +136,6 @@ export const collectEntryChanges = async ({ _siteConfig, entry, savingEntries, c
 /**
  * Collect changes for the given asset and update the entries that use it.
  * @param {object} args Arguments.
- * @param {InternalSiteConfig} args._siteConfig Site configuration.
  * @param {AssetFolderInfo} args._globalAssetFolder Global asset folder.
  * @param {string} args.newPath New path for the asset.
  * @param {Asset} args.asset Asset to collect changes for.
@@ -143,7 +143,6 @@ export const collectEntryChanges = async ({ _siteConfig, entry, savingEntries, c
  * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
  */
 export const collectEntryChangesFromAsset = async ({
-  _siteConfig,
   _globalAssetFolder,
   newPath,
   asset,
@@ -171,9 +170,7 @@ export const collectEntryChangesFromAsset = async ({
   }
 
   await Promise.all(
-    updatingEntries.map(async (entry) =>
-      collectEntryChanges({ _siteConfig, entry, savingEntries, changes }),
-    ),
+    updatingEntries.map(async (entry) => collectEntryChanges({ entry, savingEntries, changes })),
   );
 };
 
@@ -214,7 +211,6 @@ export const updateStores = ({ action, movedAssets }) => {
  * @param {MovingAsset[]} movingAssets Assets to be moved/renamed.
  */
 export const moveAssets = async (action, movingAssets) => {
-  const _siteConfig = /** @type {InternalSiteConfig} */ (get(siteConfig));
   const _globalAssetFolder = get(globalAssetFolder);
   /** @type {FileChange[]} */
   const changes = [];
@@ -239,7 +235,6 @@ export const moveAssets = async (action, movingAssets) => {
       });
 
       await collectEntryChangesFromAsset({
-        _siteConfig,
         _globalAssetFolder,
         newPath,
         asset,
