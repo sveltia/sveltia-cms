@@ -51,6 +51,7 @@ export const getDraftBaseProps = ({ entry }) => {
   return {
     createdAt: Date.now(),
     isNew: false,
+    canPreview: true,
     originalEntry: entry,
     originalLocales,
     currentLocales: structuredClone(originalLocales),
@@ -107,15 +108,8 @@ export const collectEntryChanges = async ({ entry, savingEntries, changes }) => 
       const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
       const collectionFiles = getCollectionFilesByEntry(collection, entry);
       const addDataProps = { indexFile, savingEntries, changes };
-
       /** @type {Partial<EntryDraft>} */
-      const draftProps = {
-        ...draftBaseProps,
-        collection,
-        collectionName,
-        isIndexFile,
-        canPreview: true,
-      };
+      const draftProps = { ...draftBaseProps, collection, collectionName, isIndexFile };
 
       if (collectionFiles.length) {
         await Promise.all(
