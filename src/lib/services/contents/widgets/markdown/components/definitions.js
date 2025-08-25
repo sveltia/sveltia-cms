@@ -23,13 +23,20 @@ export const IMAGE_REGEX =
 
 /**
  * Regular expression to match Markdown linked images, including those with spaces and brackets in
- * the src, e.g. `[![alt text](image.jpg "Image title")](link)`. This also matches simple images
- * without links, e.g. `![alt text](image.jpg)`. It also matches linked images with parentheses in
- * the filename, e.g. `[![alt](image (1).jpg)](https://example.com)`.
+ * the src, e.g. `[![alt text](image.jpg "Image title")](link)`. It also matches linked images with
+ * parentheses in the filename, e.g. `[![alt](image (1).jpg)](https://example.com)`.
  * @type {RegExp}
  */
 export const LINKED_IMAGE_REGEX =
-  /\[!\[(?<alt1>(?:[^\]\\]|\\.)*)\]\((?<src1>(?:[^"()\\]|\\.|\([^)]*\)|"[^"]*")*?)(?:\s+"(?<title1>(?:[^"\\]|\\.)*)")?\)\](?:\((?<link>[^)]*\([^)]*\)[^)]*|[^)]*)\))|!\[(?<alt2>(?:[^\]\\]|\\.)*)\]\((?<src2>(?:[^"()\\]|\\.|\([^)]*\)|"[^"]*")*?)(?:\s+"(?<title2>(?:[^"\\]|\\.)*)")?\)/;
+  /\[!\[(?<alt2>(?:[^\]\\]|\\.)*)\]\((?<src2>(?:[^"()\\]|\\.|\([^)]*\)|"[^"]*")*?)(?:\s+"(?<title2>(?:[^"\\]|\\.)*)")?\)\](?:\((?<link>[^)]*\([^)]*\)[^)]*|[^)]*)\))/;
+
+/**
+ * Regular expression to match either a Markdown image or a linked image.
+ * @type {RegExp}
+ */
+export const IMAGE_OR_LINKED_IMAGE_REGEX = new RegExp(
+  `${IMAGE_REGEX.source}|${LINKED_IMAGE_REGEX.source}`,
+);
 
 /**
  * Replace double quotes with single quotes to avoid breaking Markdown syntax.
@@ -75,14 +82,14 @@ const LINKED_IMAGE_COMPONENT = {
   id: 'linked-image',
   label: 'Image',
   fields: [], // Defined dynamically in `getComponentDef()` with localized labels
-  pattern: LINKED_IMAGE_REGEX,
+  pattern: IMAGE_OR_LINKED_IMAGE_REGEX,
   fromBlock: (match) => {
-    const { src1, alt1, title1, src2, alt2, title2, link } = match.groups ?? {};
+    const { src, alt, title, src2, alt2, title2, link } = match.groups ?? {};
 
     return {
-      src: (src1 || src2 || '').trim(),
-      alt: (alt1 || alt2 || '').trim(),
-      title: (title1 || title2 || '').trim(),
+      src: (src || src2 || '').trim(),
+      alt: (alt || alt2 || '').trim(),
+      title: (title || title2 || '').trim(),
       link: (link || '').trim(),
     };
   },
