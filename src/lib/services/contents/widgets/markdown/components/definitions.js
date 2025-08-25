@@ -52,12 +52,20 @@ export const replaceQuotes = (str) => str.replace(/"/g, "'");
  */
 export const encodeQuotes = (str) => str.replace(/"/g, '&quot;');
 
-/** @type {EditorComponentDefinition} */
+/**
+ * Built-in image component definition. The labels are localized in `getComponentDef()`.
+ * @type {EditorComponentDefinition}
+ * @see https://decapcms.org/docs/widgets/#markdown
+ */
 const IMAGE_COMPONENT = {
   /* eslint-disable jsdoc/require-jsdoc */
   id: 'image',
   label: 'Image',
-  fields: [], // Defined dynamically in `getComponentDef()` with localized labels
+  fields: [
+    { name: 'src', label: 'Source', widget: 'image' },
+    { name: 'alt', label: 'Alt Text', required: false },
+    { name: 'title', label: 'Title', required: false },
+  ],
   pattern: IMAGE_REGEX,
   toBlock: (props) => {
     const { src = '', alt = '', title = '' } = props;
@@ -76,12 +84,15 @@ const IMAGE_COMPONENT = {
   /* eslint-enable jsdoc/require-jsdoc */
 };
 
-/** @type {EditorComponentDefinition} */
+/**
+ * Built-in linked image component definition. The labels are localized in `getComponentDef()`.
+ * @type {EditorComponentDefinition}
+ */
 const LINKED_IMAGE_COMPONENT = {
   /* eslint-disable jsdoc/require-jsdoc */
   id: 'linked-image',
   label: 'Image',
-  fields: [], // Defined dynamically in `getComponentDef()` with localized labels
+  fields: [...IMAGE_COMPONENT.fields, { name: 'link', label: 'Link', required: false }],
   pattern: IMAGE_OR_LINKED_IMAGE_REGEX,
   fromBlock: (match) => {
     const { src, alt, title, src2, alt2, title2, link } = match.groups ?? {};
@@ -137,10 +148,12 @@ export const getComponentDef = (name) => {
   const definitions = {
     image: {
       ...IMAGE_COMPONENT,
+      // Override with localized labels
       ...commonImageProps,
     },
     'linked-image': {
       ...LINKED_IMAGE_COMPONENT,
+      // Override with localized labels
       ...commonImageProps,
       fields: [
         ...commonImageProps.fields,
