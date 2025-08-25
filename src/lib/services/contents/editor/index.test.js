@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // Import the stores and functions to test
 import {
   copyFromLocaleToast,
-  customPreviewStyle,
+  customPreviewStyleRegistry,
   editorLeftPane,
   editorRightPane,
   selectAssetsView,
@@ -30,6 +30,8 @@ describe('editor/index', () => {
     editorLeftPane.set(null);
     editorRightPane.set(null);
     selectAssetsView.set(undefined);
+    // Clear the Set
+    customPreviewStyleRegistry.clear();
   });
 
   describe('showContentOverlay', () => {
@@ -252,22 +254,83 @@ describe('editor/index', () => {
     });
   });
 
-  describe('customPreviewStyle', () => {
-    it('should have href property initialized as empty string', () => {
-      expect(customPreviewStyle).toHaveProperty('href');
-      expect(customPreviewStyle.href).toBe('');
+  describe('customPreviewStyleRegistry', () => {
+    beforeEach(() => {
+      // Clear the Set before each test
+      customPreviewStyleRegistry.clear();
     });
 
-    it('should allow href to be modified', () => {
-      const testHref = 'https://example.com/style.css';
-
-      customPreviewStyle.href = testHref;
-      expect(customPreviewStyle.href).toBe(testHref);
+    it('should be initialized as an empty Set', () => {
+      expect(customPreviewStyleRegistry).toBeInstanceOf(Set);
+      expect(customPreviewStyleRegistry.size).toBe(0);
     });
 
-    it('should be a plain object (not a store)', () => {
+    it('should allow custom preview styles to be added', () => {
+      const styleUrl = 'https://example.com/style.css';
+
+      customPreviewStyleRegistry.add(styleUrl);
+
+      expect(customPreviewStyleRegistry.has(styleUrl)).toBe(true);
+      expect(customPreviewStyleRegistry.size).toBe(1);
+    });
+
+    it('should allow multiple styles to be added', () => {
+      const styleUrl1 = 'https://example.com/style1.css';
+      const styleUrl2 = 'https://example.com/style2.css';
+
+      customPreviewStyleRegistry.add(styleUrl1);
+      customPreviewStyleRegistry.add(styleUrl2);
+
+      expect(customPreviewStyleRegistry.has(styleUrl1)).toBe(true);
+      expect(customPreviewStyleRegistry.has(styleUrl2)).toBe(true);
+      expect(customPreviewStyleRegistry.size).toBe(2);
+    });
+
+    it('should not add duplicate styles', () => {
+      const styleUrl = 'https://example.com/style.css';
+
+      customPreviewStyleRegistry.add(styleUrl);
+      customPreviewStyleRegistry.add(styleUrl); // Adding the same URL again
+
+      expect(customPreviewStyleRegistry.size).toBe(1);
+      expect(customPreviewStyleRegistry.has(styleUrl)).toBe(true);
+    });
+
+    it('should allow styles to be removed', () => {
+      const styleUrl = 'https://example.com/temp.css';
+
+      customPreviewStyleRegistry.add(styleUrl);
+      expect(customPreviewStyleRegistry.size).toBe(1);
+
+      customPreviewStyleRegistry.delete(styleUrl);
+      expect(customPreviewStyleRegistry.size).toBe(0);
+      expect(customPreviewStyleRegistry.has(styleUrl)).toBe(false);
+    });
+
+    it('should be a Set instance (not a store)', () => {
       // Verify it's not a Svelte store by checking it doesn't have subscribe method
-      expect(typeof (/** @type {any} */ (customPreviewStyle).subscribe)).toBe('undefined');
+      expect(typeof (/** @type {any} */ (customPreviewStyleRegistry).subscribe)).toBe('undefined');
+      expect(customPreviewStyleRegistry).toBeInstanceOf(Set);
+    });
+
+    it('should return false when checking for non-existent style', () => {
+      const styleUrl = 'https://example.com/nonexistent.css';
+
+      expect(customPreviewStyleRegistry.has(styleUrl)).toBe(false);
+    });
+
+    it('should support iteration over styles', () => {
+      const styleUrl1 = 'https://example.com/style1.css';
+      const styleUrl2 = 'https://example.com/style2.css';
+
+      customPreviewStyleRegistry.add(styleUrl1);
+      customPreviewStyleRegistry.add(styleUrl2);
+
+      const styles = Array.from(customPreviewStyleRegistry);
+
+      expect(styles).toContain(styleUrl1);
+      expect(styles).toContain(styleUrl2);
+      expect(styles.length).toBe(2);
     });
   });
 

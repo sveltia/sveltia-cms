@@ -1,6 +1,6 @@
 import { mount } from 'svelte';
 
-import { customPreviewStyle } from '$lib/services/contents/editor';
+import { customPreviewStyleRegistry } from '$lib/services/contents/editor';
 import { customFileFormatRegistry } from '$lib/services/contents/file/config';
 import { customComponentRegistry } from '$lib/services/contents/widgets/markdown/components/definitions';
 
@@ -129,9 +129,9 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
     throw new TypeError('The `raw` option for `CMS.registerPreviewStyle()` must be a boolean');
   }
 
-  customPreviewStyle.href = raw
-    ? URL.createObjectURL(new Blob([style], { type: 'text/css' }))
-    : style;
+  const url = raw ? URL.createObjectURL(new Blob([style], { type: 'text/css' })) : style;
+
+  customPreviewStyleRegistry.add(url);
 };
 
 /**

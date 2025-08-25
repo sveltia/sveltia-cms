@@ -17,7 +17,7 @@
   /**
    * @typedef {object} Props
    * @property {InternalLocaleCode} locale Current pane’s locale.
-   * @property {string} styleURL URL of the custom stylesheet to apply in the iframe.
+   * @property {string[]} styleURLs Custom stylesheet URLs to apply in the iframe.
    * @property {Snippet} children Preview content to render inside the iframe.
    */
 
@@ -25,7 +25,7 @@
   let {
     /* eslint-disable prefer-const */
     locale,
-    styleURL,
+    styleURLs,
     children,
     /* eslint-enable prefer-const */
   } = $props();
@@ -45,7 +45,7 @@
     <html lang="${sanitize(locale)}">
     <head>
       <meta charset="UTF-8">
-      <link rel="stylesheet" href="${sanitize(styleURL)}">
+      ${styleURLs.map((url) => `<link rel="stylesheet" href="${sanitize(url)}">`).join('\n')}
     </head>
     <body></body>
     </html>

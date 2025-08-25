@@ -60,8 +60,8 @@ export const editorRightPane = writable(null);
 export const selectAssetsView = writable();
 
 /**
- * Custom entry preview stylesheet registered with the `CMS.registerPreviewStyle()` API.
- * @type {{ href: string }}
+ * Custom entry preview stylesheet URLs registered with the `CMS.registerPreviewStyle()` API.
+ * @type {Set<string>}
  * @see https://decapcms.org/docs/customization/
  */
-export const customPreviewStyle = { href: '' };
+export const customPreviewStyleRegistry = new Set();

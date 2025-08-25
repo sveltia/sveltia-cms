@@ -5,7 +5,7 @@
   import EntryPreviewIframe from '$lib/components/contents/details/preview/entry-preview-iframe.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { customPreviewStyle } from '$lib/services/contents/editor';
+  import { customPreviewStyleRegistry } from '$lib/services/contents/editor';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';
@@ -24,13 +24,6 @@
   } = $props();
 
   const fields = $derived($entryDraft?.fields ?? []);
-
-  /**
-   * Custom stylesheet URL registered with the `CMS.registerPreviewStyle()` API.
-   * @type {string | undefined}
-   * @see https://decapcms.org/docs/customization/
-   */
-  const styleURL = customPreviewStyle.href;
 </script>
 
 {#snippet children()}
@@ -42,8 +35,8 @@
 {/snippet}
 
 <VisibilityObserver>
-  {#if styleURL}
-    <EntryPreviewIframe {locale} {styleURL} {children} />
+  {#if customPreviewStyleRegistry.size}
+    <EntryPreviewIframe {locale} styleURLs={[...customPreviewStyleRegistry]} {children} />
   {:else}
     <div role="document" aria-label={$_('content_preview')}>
       {@render children()}
