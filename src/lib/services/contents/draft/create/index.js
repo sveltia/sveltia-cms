@@ -37,7 +37,7 @@ export const createDraft = ({
   expanderStates,
   isIndexFile = isCollectionIndexFile(collection, originalEntry),
 }) => {
-  const { name: collectionName, editor } = collection;
+  const collectionName = collection.name;
   const fileName = collectionFile?.name;
   const { id, slug, locales } = originalEntry;
   const isNew = id === undefined;
@@ -46,7 +46,11 @@ export const createDraft = ({
   const fields = indexFile?.fields ?? regularFields;
 
   const canPreview =
-    indexFile?.editor?.preview ?? editor?.preview ?? get(siteConfig)?.editor?.preview ?? true;
+    indexFile?.editor?.preview ??
+    collectionFile?.editor?.preview ??
+    collection.editor?.preview ??
+    get(siteConfig)?.editor?.preview ??
+    true;
 
   const {
     allLocales,

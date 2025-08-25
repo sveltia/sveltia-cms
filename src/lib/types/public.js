@@ -810,6 +810,7 @@
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
  * @property {string} [preview_path] Preview URL path template.
  * @property {FieldKeyPath} [preview_path_date_field] Date field name used for `preview_path`.
+ * @property {EditorOptions} [editor] Editor view options.
  * @see https://decapcms.org/docs/collection-file/
  * @see https://decapcms.org/docs/deploy-preview-links/
  * @see https://github.com/sveltia/sveltia-cms#using-singletons
