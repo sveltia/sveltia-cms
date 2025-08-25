@@ -1,6 +1,11 @@
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
+import {
+  encodeQuotes,
+  replaceQuotes,
+} from '$lib/services/contents/widgets/markdown/components/utils';
+
 /**
  * @import { EditorComponentDefinition } from '$lib/types/public';
  */
@@ -37,20 +42,6 @@ export const LINKED_IMAGE_REGEX =
 export const IMAGE_OR_LINKED_IMAGE_REGEX = new RegExp(
   `${IMAGE_REGEX.source}|${LINKED_IMAGE_REGEX.source}`,
 );
-
-/**
- * Replace double quotes with single quotes to avoid breaking Markdown syntax.
- * @param {string} str String to escape.
- * @returns {string} Escaped string.
- */
-export const replaceQuotes = (str) => str.replace(/"/g, "'");
-
-/**
- * Encode double quotes as HTML entities to prevent issues in HTML rendering.
- * @param {string} str String to escape.
- * @returns {string} Escaped string.
- */
-export const encodeQuotes = (str) => str.replace(/"/g, '&quot;');
 
 /**
  * Built-in image component definition. The labels are localized in `getComponentDef()`.

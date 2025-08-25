@@ -23,3 +23,17 @@ export const normalizeProps = (props) =>
       Object.entries(flatten(props)).filter(([key]) => !key.split('.').pop()?.startsWith('__sc_')),
     ),
   );
+
+/**
+ * Replace double quotes with single quotes to avoid breaking Markdown syntax.
+ * @param {string} str String to escape.
+ * @returns {string} Escaped string.
+ */
+export const replaceQuotes = (str) => str.replace(/"/g, "'");
+
+/**
+ * Encode double quotes as HTML entities to prevent issues in HTML rendering.
+ * @param {string} str String to escape.
+ * @returns {string} Escaped string.
+ */
+export const encodeQuotes = (str) => str.replace(/"/g, '&quot;');
