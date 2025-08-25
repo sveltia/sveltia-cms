@@ -32,7 +32,7 @@ vi.mock('svelte/store', () => ({
 
 // Mock custom file formats
 vi.mock('$lib/services/contents/file/config', () => ({
-  customFileFormats: {},
+  customFileFormatRegistry: new Map(),
 }));
 
 const object = {
@@ -606,12 +606,12 @@ describe('Test formatEntryFile()', () => {
   test('uses custom formatter when available', async () => {
     const customFormatter = vi.fn().mockResolvedValue('custom formatted content');
     // Mock the custom file formats
-    const { customFileFormats } = await import('$lib/services/contents/file/config');
+    const { customFileFormatRegistry } = await import('$lib/services/contents/file/config');
 
-    customFileFormats.customFormat = {
+    customFileFormatRegistry.set('customFormat', {
       formatter: customFormatter,
       extension: 'custom',
-    };
+    });
 
     const content = { title: 'Test' };
 
@@ -627,7 +627,7 @@ describe('Test formatEntryFile()', () => {
     expect(result).toBe('custom formatted content\n');
 
     // Clean up
-    delete customFileFormats.customFormat;
+    customFileFormatRegistry.delete('customFormat');
   });
 
   test('handles formatting errors gracefully', async () => {

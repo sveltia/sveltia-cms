@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
-  customFileFormats,
+  customFileFormatRegistry,
   detectFileExtension,
   detectFileFormat,
   getEntryPathRegEx,
@@ -16,12 +16,12 @@ import {
 describe('Test detectFileExtension()', () => {
   test('returns custom extension from format', () => {
     // Mock custom file format
-    customFileFormats.custom = { extension: 'custom' };
+    customFileFormatRegistry.set('custom', { extension: 'custom' });
 
     expect(detectFileExtension({ format: /** @type {any} */ ('custom') })).toBe('custom');
 
     // Clean up
-    delete customFileFormats.custom;
+    customFileFormatRegistry.delete('custom');
   });
 
   test('returns provided extension', () => {
@@ -47,14 +47,14 @@ describe('Test detectFileExtension()', () => {
   });
 
   test('prioritizes custom extension over provided extension', () => {
-    customFileFormats.custom = { extension: 'custom' };
+    customFileFormatRegistry.set('custom', { extension: 'custom' });
 
     expect(detectFileExtension({ extension: 'txt', format: /** @type {any} */ ('custom') })).toBe(
       'custom',
     );
 
     // Clean up
-    delete customFileFormats.custom;
+    customFileFormatRegistry.delete('custom');
   });
 
   test('prioritizes provided extension over format', () => {

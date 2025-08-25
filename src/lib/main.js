@@ -1,7 +1,7 @@
 import { mount } from 'svelte';
 
 import { customPreviewStyle } from '$lib/services/contents/editor';
-import { customFileFormats } from '$lib/services/contents/file/config';
+import { customFileFormatRegistry } from '$lib/services/contents/file/config';
 import { customComponentRegistry } from '$lib/services/contents/widgets/markdown/components/definitions';
 
 import App from './components/app.svelte';
@@ -89,7 +89,7 @@ const init = async ({ config } = {}) => {
  * @see https://decapcms.org/docs/custom-formatters/
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
-  customFileFormats[name] = { extension, parser: fromFile, formatter: toFile };
+  customFileFormatRegistry.set(name, { extension, parser: fromFile, formatter: toFile });
 };
 
 /**

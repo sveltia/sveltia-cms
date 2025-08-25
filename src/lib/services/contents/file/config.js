@@ -11,9 +11,9 @@ import { getLocalePath } from '$lib/services/contents/i18n';
  */
 
 /**
- * @type {Record<string, CustomFileFormat>}
+ * @type {Map<string, CustomFileFormat>}
  */
-export const customFileFormats = {};
+export const customFileFormatRegistry = new Map();
 
 /**
  * Detect a file extension from the given entry file configuration.
@@ -24,7 +24,7 @@ export const customFileFormats = {};
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */
 export const detectFileExtension = ({ extension, format }) => {
-  const customExtension = format ? customFileFormats[format]?.extension : undefined;
+  const customExtension = format ? customFileFormatRegistry.get(format)?.extension : undefined;
 
   if (customExtension) {
     return customExtension;

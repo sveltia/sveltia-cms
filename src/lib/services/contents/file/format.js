@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 import YAML from 'yaml';
 
 import { siteConfig } from '$lib/services/config';
-import { customFileFormats } from '$lib/services/contents/file/config';
+import { customFileFormatRegistry } from '$lib/services/contents/file/config';
 
 /**
  * @import { FileConfig, InternalLocaleCode, RawEntryContent } from '$lib/types/private';
@@ -120,7 +120,7 @@ export const formatFrontMatter = ({ content, _file }) => {
  */
 export const formatEntryFile = async ({ content, _file }) => {
   const { format, yamlQuote = false } = _file;
-  const customFormatter = customFileFormats[format]?.formatter;
+  const customFormatter = customFileFormatRegistry.get(format)?.formatter;
 
   if (customFormatter) {
     return `${(await customFormatter(content)).trim()}\n`;

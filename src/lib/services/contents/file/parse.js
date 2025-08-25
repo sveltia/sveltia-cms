@@ -5,7 +5,10 @@ import YAML from 'yaml';
 
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
-import { customFileFormats, getFrontMatterDelimiters } from '$lib/services/contents/file/config';
+import {
+  customFileFormatRegistry,
+  getFrontMatterDelimiters,
+} from '$lib/services/contents/file/config';
 
 /**
  * @import {
@@ -133,7 +136,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
     _file: { format },
   } = collectionFile ?? /** @type {EntryCollection} */ (collection);
 
-  const customParser = customFileFormats[format]?.parser;
+  const customParser = customFileFormatRegistry.get(format)?.parser;
 
   if (customParser) {
     return customParser(text);

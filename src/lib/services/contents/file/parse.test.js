@@ -19,7 +19,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
 }));
 
 vi.mock('$lib/services/contents/file/config', () => ({
-  customFileFormats: {},
+  customFileFormatRegistry: new Map(),
   getFrontMatterDelimiters: vi.fn(),
 }));
 
@@ -492,7 +492,7 @@ describe('Test parseEntryFile()', () => {
   /** @type {any} */
   let getCollectionFile;
   /** @type {any} */
-  let customFileFormats;
+  let customFileFormatRegistry;
 
   const mockCollection = {
     _file: {
@@ -523,7 +523,7 @@ describe('Test parseEntryFile()', () => {
 
     getCollection = collectionModule.getCollection;
     getCollectionFile = collectionFileModule.getCollectionFile;
-    customFileFormats = fileModule.customFileFormats;
+    customFileFormatRegistry = fileModule.customFileFormatRegistry;
   });
 
   test('parses YAML format', async () => {
@@ -628,7 +628,7 @@ describe('Test parseEntryFile()', () => {
   test('uses custom parser when available', async () => {
     const customParser = vi.fn().mockReturnValue({ custom: 'result' });
 
-    customFileFormats.customFormat = { parser: customParser };
+    customFileFormatRegistry.set('customFormat', { parser: customParser });
 
     getCollection.mockReturnValue({
       _file: { format: 'customFormat' },
