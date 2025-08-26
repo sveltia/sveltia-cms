@@ -2,6 +2,7 @@ import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 
 import { siteConfig } from '$lib/services/config';
+import { warnDeprecation } from '$lib/services/config/deprecations';
 import { isSingletonCollection } from '$lib/services/contents/collection';
 
 /**
@@ -186,6 +187,11 @@ export const normalizeI18nConfig = (collection, file) => {
     canonical_slug: canonicalSlugConfig = { key: undefined, value: undefined },
     omit_default_locale_from_filename: omitDefaultConfig = false,
   } = config ?? {};
+
+  // @todo Remove the option prior to the 1.0 release.
+  if (config?.save_all_locales !== undefined) {
+    warnDeprecation('i18n_save_all_locales');
+  }
 
   const {
     key: canonicalSlugKey = DEFAULT_CANONICAL_SLUG.key,
