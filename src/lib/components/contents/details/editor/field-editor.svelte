@@ -177,7 +177,8 @@
   const readonly = $derived(
     readonlyOption ||
       (i18n === 'duplicate' && locale !== defaultLocale) ||
-      widgetName === 'compute',
+      widgetName === 'compute' ||
+      widgetName === 'uuid',
   );
   const invalid = $derived(validity?.valid === false);
 </script>

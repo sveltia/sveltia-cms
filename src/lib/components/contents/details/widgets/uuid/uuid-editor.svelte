@@ -7,6 +7,7 @@
   import { TextInput } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
+  import { warnDeprecation } from '$lib/services/config/deprecations';
   import { entryDraft } from '$lib/services/contents/draft';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { getInitialValue } from '$lib/services/contents/widgets/uuid/helper';
@@ -30,7 +31,7 @@
     fieldConfig,
     currentValue = $bindable(),
     required = true,
-    readonly = false,
+    readonly = true,
     invalid = false,
     /* eslint-enable prefer-const */
   } = $props();
@@ -47,13 +48,18 @@
         currentValue = getInitialValue(fieldConfig);
       }
     }
+
+    // @todo Remove the option prior to the 1.0 release.
+    if ('read_only' in fieldConfig) {
+      warnDeprecation('uuid_read_only');
+    }
   });
 </script>
 
 <TextInput
   bind:value={currentValue}
   flex
-  readonly={readonly || fieldConfig.read_only !== false}
+  readonly={readonly && fieldConfig.read_only !== false}
   {required}
   {invalid}
   aria-labelledby="{fieldId}-label"

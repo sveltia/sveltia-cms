@@ -5,6 +5,7 @@
  */
 const warnedOnceMap = {
   yaml_quote: false,
+  uuid_read_only: false,
 };
 
 /**
@@ -16,6 +17,9 @@ const warningMessages = {
     'The `yaml_quote` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the global `output.yaml.quote` option instead. ' +
     'https://github.com/sveltia/sveltia-cms#controlling-data-output',
+  uuid_read_only:
+    'The `read_only` option for the UUID widget is deprecated and will be removed in Sveltia CMS ' +
+    '1.0. Use the `readonly` option instead.',
 };
 
 /**
