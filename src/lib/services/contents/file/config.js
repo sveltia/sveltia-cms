@@ -1,6 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
+import { warnDeprecation } from '$lib/services/config/deprecations';
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getLocalePath } from '$lib/services/contents/i18n';
@@ -175,12 +176,6 @@ export const getFrontMatterDelimiters = ({ format, delimiter }) => {
 };
 
 /**
- * Whether the deprecated `yaml_quote` collection option is warned.
- * @todo Remove the option prior to the 1.0 release.
- */
-let yamlQuoteWarnedOnce = false;
-
-/**
  * Get the normalized entry file configuration for the given collection or collection file.
  * @param {object} args Arguments.
  * @param {Collection} args.rawCollection Developer-defined collection.
@@ -208,14 +203,9 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
   const basePath = _isEntryCollection ? stripSlashes(/** @type {string} */ (folder)) : undefined;
   const indexFileName = _isEntryCollection ? getIndexFile(rawCollection)?.name : undefined;
 
-  if (yamlQuote !== undefined && !yamlQuoteWarnedOnce && !import.meta.env.VITEST) {
-    yamlQuoteWarnedOnce = true;
-    // eslint-disable-next-line no-console
-    console.warn(
-      'The yaml_quote collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
-        'Use the global output.yaml.quote option instead. ' +
-        'https://github.com/sveltia/sveltia-cms#controlling-data-output',
-    );
+  // @todo Remove the option prior to the 1.0 release.
+  if (yamlQuote !== undefined) {
+    warnDeprecation('yaml_quote');
   }
 
   return {
