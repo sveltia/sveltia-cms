@@ -688,7 +688,8 @@
  * @property {string} [default] Default value.
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {boolean} [use_b32_encoding] Whether to encode the value with Base32. Default: `false`.
- * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`.
+ * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`. DEPRECATED
+ * in favor of the `readonly` common field property.
  * @see https://github.com/decaporg/decap-cms/pull/6675
  */
 
@@ -770,7 +771,7 @@
  * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales. If
  * `false`, users will be able to disable the output of non-default locales through the UI. See our
  * [README](https://github.com/sveltia/sveltia-cms#disabling-non-default-locale-content) for
- * details.
+ * details. DEPRECATED in favor of the `initial_locales` option.
  * @property {{ key?: string, value?: string }} [canonical_slug] Property name and value template
  * used to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
  * localized files when entry slugs are localized. The default property name is `translationKey`
