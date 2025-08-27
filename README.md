@@ -246,8 +246,9 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 - Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
-- We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other code editors.[^253]
+- We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253]
 - Improved TypeScript support: We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
+- Deprecated options are clearly marked as such in both the JSON schema and the TypeScript type definitions. If you use them in a supported code editor, you should receive a warning.
 
 ### Better backend support
 
@@ -581,8 +582,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - The `fromBlock` function can be omitted if the `pattern` regex contains [named capturing groups](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) for the values.
   - Inline components are supported.[^267]
   - Field validation works as expected.[^279]
-  - No error is raised in the browser console saying `Sent invalid data to remark`.[^280]
-  - No error is raised in the browser console saying `onValidate is not a function`.[^281]
+  - No error is raised in the browser console saying `Sent invalid data to remark`[^280] or `onValidate is not a function`.[^281]
 - Async functions can be used for [custom parsers/formatters](https://decapcms.org/docs/custom-formatters/).[^149]
 - The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists.[^109]
 
@@ -1939,7 +1939,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^72]: Netlify/Decap CMS [#7047](https://github.com/decaporg/decap-cms/issues/7047)
 
-[^73]: Netlify/Decap CMS [#6993](https://github.com/decaporg/decap-cms/issues/6993), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7127](https://github.com/decaporg/decap-cms/issues/7127), [#7128](https://github.com/decaporg/decap-cms/issues/7128), [#7237](https://github.com/decaporg/decap-cms/issues/7237), [#7251](https://github.com/decaporg/decap-cms/issues/7251), [#7361](https://github.com/decaporg/decap-cms/issues/7361), [#7391](https://github.com/decaporg/decap-cms/issues/7391), [#7393](https://github.com/decaporg/decap-cms/issues/7393), [#7470](https://github.com/decaporg/decap-cms/issues/7470), [#7475](https://github.com/decaporg/decap-cms/issues/7475), [#7480](https://github.com/decaporg/decap-cms/issues/7480), [#7503](https://github.com/decaporg/decap-cms/issues/7503), [#7504](https://github.com/decaporg/decap-cms/issues/7504), [#7524](https://github.com/decaporg/decap-cms/issues/7524), [#7531](https://github.com/decaporg/decap-cms/issues/7531), [#7535](https://github.com/decaporg/decap-cms/issues/7535), [#7553](https://github.com/decaporg/decap-cms/issues/7553), [#7561](https://github.com/decaporg/decap-cms/issues/7561)
+[^73]: Netlify/Decap CMS [#6993](https://github.com/decaporg/decap-cms/issues/6993), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7127](https://github.com/decaporg/decap-cms/issues/7127), [#7128](https://github.com/decaporg/decap-cms/issues/7128), [#7237](https://github.com/decaporg/decap-cms/issues/7237), [#7251](https://github.com/decaporg/decap-cms/issues/7251), [#7361](https://github.com/decaporg/decap-cms/issues/7361), [#7391](https://github.com/decaporg/decap-cms/issues/7391), [#7393](https://github.com/decaporg/decap-cms/issues/7393), [#7470](https://github.com/decaporg/decap-cms/issues/7470), [#7475](https://github.com/decaporg/decap-cms/issues/7475), [#7480](https://github.com/decaporg/decap-cms/issues/7480), [#7503](https://github.com/decaporg/decap-cms/issues/7503), [#7504](https://github.com/decaporg/decap-cms/issues/7504), [#7524](https://github.com/decaporg/decap-cms/issues/7524), [#7531](https://github.com/decaporg/decap-cms/issues/7531), [#7535](https://github.com/decaporg/decap-cms/issues/7535), [#7553](https://github.com/decaporg/decap-cms/issues/7553), [#7561](https://github.com/decaporg/decap-cms/issues/7561), [#7584](https://github.com/decaporg/decap-cms/issues/7584)
 
 [^74]: Netlify/Decap CMS [#4209](https://github.com/decaporg/decap-cms/issues/4209)
 
