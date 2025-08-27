@@ -7,7 +7,7 @@ import { createCommitMessage } from './commits';
 const mockSiteConfig = {
   backend: {
     commit_messages: {},
-    automatic_deployments: true,
+    skip_ci: false,
   },
 };
 
@@ -49,7 +49,7 @@ describe('git/shared/commits', () => {
     // Reset mock data
     mockSiteConfig.backend = {
       commit_messages: {},
-      automatic_deployments: true,
+      skip_ci: false,
     };
     mockUser.login = 'test-user';
     mockUser.name = 'Test User';
@@ -123,7 +123,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should add [skip ci] prefix when automatic deployments are disabled', () => {
-      mockSiteConfig.backend.automatic_deployments = false;
+      mockSiteConfig.backend.skip_ci = true;
 
       const message = createCommitMessage(mockChanges, {
         commitType: 'create',
@@ -134,7 +134,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should not add [skip ci] prefix for delete operations', () => {
-      mockSiteConfig.backend.automatic_deployments = false;
+      mockSiteConfig.backend.skip_ci = true;
 
       const message = createCommitMessage(mockChanges, {
         commitType: 'delete',

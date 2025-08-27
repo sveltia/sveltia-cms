@@ -3,13 +3,11 @@
   import { _ } from 'svelte-i18n';
 
   import { backend, isLastCommitPublished } from '$lib/services/backends';
-  import { siteConfig } from '$lib/services/config';
+  import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
   import { prefs } from '$lib/services/user/prefs';
 
-  const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
   const { deployHookURL } = $derived($prefs);
   const triggerDeployment = $derived($backend?.triggerDeployment);
-  const showButton = $derived(!!$backend?.isGit && typeof autoDeployEnabled === 'boolean');
   const canPublish = $derived(
     (!!deployHookURL || typeof triggerDeployment === 'function') && !$isLastCommitPublished,
   );
@@ -46,7 +44,7 @@
   };
 </script>
 
-{#if showButton}
+{#if $skipCIConfigured}
   <Button
     variant="secondary"
     label={$_('publish_changes')}

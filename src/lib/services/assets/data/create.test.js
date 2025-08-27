@@ -99,7 +99,7 @@ vi.mock('$lib/services/backends/save', () => ({
 vi.mock('$lib/services/config', () => ({
   siteConfig: {
     subscribe: vi.fn((callback) => {
-      callback({ backend: { automatic_deployments: false } });
+      callback({ backend: { skip_ci: true } });
       return vi.fn();
     }),
   },

@@ -4,8 +4,8 @@ import { allAssets, focusedAsset, getAssetsByDirName, overlaidAsset } from '$lib
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { backend } from '$lib/services/backends';
+import { skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
-import { siteConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
 import { formatFileName } from '$lib/services/utils/file';
@@ -68,12 +68,10 @@ export const updatedStores = ({ count }) => {
     overlaidAsset.set(get(allAssets).find((a) => a.path === _overlaidAsset.path));
   }
 
-  const autoDeployEnabled = get(siteConfig)?.backend.automatic_deployments;
-
   assetUpdatesToast.set({
     ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
-    published: !!get(backend)?.isGit && autoDeployEnabled === true,
+    published: !!get(backend)?.isGit && !get(skipCIEnabled),
     count,
   });
 };

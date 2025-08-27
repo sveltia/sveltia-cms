@@ -20,8 +20,7 @@
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
   import { getAssetFolder } from '$lib/services/assets/folders';
-  import { backend } from '$lib/services/backends';
-  import { siteConfig } from '$lib/services/config';
+  import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { canCreateEntry } from '$lib/services/contents/collection/entries';
@@ -67,8 +66,6 @@
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
-  const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
-  const showSaveOptions = $derived(!!$backend?.isGit && typeof autoDeployEnabled === 'boolean');
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const collectionName = $derived(collection?.name);
   const fileName = $derived(collectionFile?.name);
@@ -283,7 +280,7 @@
       </Menu>
     {/snippet}
   </MenuButton>
-  {#if showSaveOptions}
+  {#if $skipCIConfigured}
     <SplitButton
       variant="primary"
       label={$_(saving ? 'saving' : 'save')}
@@ -297,9 +294,9 @@
         <!-- Show the opposite option: if automatic deployments are enabled, allow to disable it -->
         <Menu>
           <MenuItem
-            label={$_(autoDeployEnabled ? 'save_without_publishing' : 'save_and_publish')}
+            label={$_($skipCIEnabled ? 'save_and_publish' : 'save_without_publishing')}
             onclick={() => {
-              save({ skipCI: autoDeployEnabled });
+              save({ skipCI: !$skipCIEnabled });
             }}
           />
         </Menu>

@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
 
   import PrefSwitch from '$lib/components/settings/controls/pref-switch.svelte';
-  import { siteConfig } from '$lib/services/config';
+  import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
   import { prefs } from '$lib/services/user/prefs';
 
   /**
@@ -17,8 +17,6 @@
     onChange = undefined,
     /* eslint-enable prefer-const */
   } = $props();
-
-  const autoDeployEnabled = $derived($siteConfig?.backend.automatic_deployments);
 </script>
 
 <section>
@@ -47,7 +45,7 @@
     />
   </div>
 </section>
-{#if typeof autoDeployEnabled === 'boolean'}
+{#if $skipCIConfigured}
   <section>
     <h4>
       {$_('prefs.advanced.deploy_hook.title')}

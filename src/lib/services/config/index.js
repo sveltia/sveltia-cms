@@ -8,6 +8,7 @@ import YAML from 'yaml';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { gitBackendServices, validBackendNames } from '$lib/services/backends';
+import { warnDeprecation } from '$lib/services/config/deprecations';
 import { getAllAssetFolders } from '$lib/services/config/folders/assets';
 import { getAllEntryFolders } from '$lib/services/config/folders/entries';
 import { fetchSiteConfig } from '$lib/services/config/loader';
@@ -90,6 +91,11 @@ export const validate = (config) => {
 
   if (config.backend.auth_type === 'pkce' && !config.backend.app_id) {
     throw new Error(get(_)('config.error.oauth_no_app_id'));
+  }
+
+  // @todo Remove the option prior to the 1.0 release.
+  if (config.backend.automatic_deployments !== undefined) {
+    warnDeprecation('automatic_deployments');
   }
 
   if (config.media_folder === undefined) {

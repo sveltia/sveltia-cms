@@ -39,6 +39,7 @@ export const createCommitMessage = (
   const {
     backend: {
       commit_messages: customCommitMessages = {},
+      skip_ci: skipCIEnabled,
       automatic_deployments: autoDeployEnabled,
     },
   } = /** @type {InternalSiteConfig} */ (get(siteConfig));
@@ -85,7 +86,8 @@ export const createCommitMessage = (
   // https://developers.cloudflare.com/pages/platform/branch-build-controls/#skip-builds
   if (
     !['delete', 'deleteMedia'].includes(commitType) &&
-    (skipCI === undefined ? autoDeployEnabled === false : skipCI === true)
+    // Cannot use the `skipCIEnabled` store here because it leads to an uninitialized store error
+    (skipCI ?? (skipCIEnabled === true || autoDeployEnabled === false))
   ) {
     message = `[skip ci] ${message}`;
   }
