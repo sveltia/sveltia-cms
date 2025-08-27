@@ -1,5 +1,5 @@
 <script>
-  import { Button, Icon, Menu, MenuItem, PromptDialog, SplitButton } from '@sveltia/ui';
+  import { Button, Icon, PromptDialog, Spacer } from '@sveltia/ui';
   import DOMPurify from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -25,11 +25,7 @@
   );
   const repositoryName = $derived($siteConfig?.backend?.repo?.split('/')?.[1]);
   const isTestRepo = $derived(configuredBackendName === 'test-repo');
-
-  /**
-   * Show sign-in options for Git-based backends or a single button for the Test backend.
-   */
-  const ButtonComponent = $derived(isTestRepo ? Button : SplitButton);
+  const showLocalBackendOption = $derived(isLocalHost && !isTestRepo);
 
   onMount(() => {
     const { hostname } = window.location;
@@ -53,34 +49,7 @@
       {$_('config.error.unsupported_backend', { values: { name: configuredBackendName } })}
     </div>
   {:else}
-    <ButtonComponent
-      variant="primary"
-      popupPosition="bottom-right"
-      label={isTestRepo
-        ? $_('work_with_test_repo')
-        : $_('sign_in_with_x', { values: { service: configuredBackend.label } })}
-      onclick={async () => {
-        await signInManually(configuredBackendName);
-      }}
-    >
-      {#snippet popup()}
-        <Menu>
-          <MenuItem
-            label={$_('use_regular_authentication_flow')}
-            onclick={async () => {
-              await signInManually(configuredBackendName);
-            }}
-          />
-          <MenuItem
-            label={$_('use_personal_access_token')}
-            onclick={async () => {
-              showTokenDialog = true;
-            }}
-          />
-        </Menu>
-      {/snippet}
-    </ButtonComponent>
-    {#if isLocalHost && !isTestRepo}
+    {#if showLocalBackendOption}
       <Button
         variant="primary"
         label={$_('work_with_local_repo')}
@@ -112,6 +81,25 @@
           {/if}
         </div>
       {/if}
+      <Spacer />
+    {/if}
+    <Button
+      variant={showLocalBackendOption ? 'secondary' : 'primary'}
+      label={isTestRepo
+        ? $_('work_with_test_repo')
+        : $_('sign_in_with_x', { values: { service: configuredBackend.label } })}
+      onclick={async () => {
+        await signInManually(configuredBackendName);
+      }}
+    />
+    {#if !isTestRepo}
+      <Button
+        variant="secondary"
+        label={$_('sign_in_with_x_using_pat', { values: { service: configuredBackend.label } })}
+        onclick={() => {
+          showTokenDialog = true;
+        }}
+      />
     {/if}
   {/if}
   {#if $signInError.message && $signInError.context === 'authentication'}
@@ -145,19 +133,7 @@
 
     :global {
       .button {
-        width: 240px;
-      }
-
-      .split-button {
-        width: 240px;
-
-        button {
-          width: auto;
-        }
-
-        & > .button:first-child {
-          flex: auto;
-        }
+        width: 280px;
       }
     }
   }
