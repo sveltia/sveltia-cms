@@ -319,7 +319,7 @@
     // Remove values that are not present in the editor anymore. Otherwise, they will trigger
     // validation errors when the entry is saved.
     cleanupTimeout = window.setTimeout(() => {
-      Object.keys($entryDraft.extraValues[locale] ?? {}).forEach((key) => {
+      Object.keys($entryDraft?.extraValues[locale] ?? {}).forEach((key) => {
         const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
 
         if (
