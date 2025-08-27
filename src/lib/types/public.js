@@ -688,8 +688,9 @@
  * @property {string} [default] Default value.
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {boolean} [use_b32_encoding] Whether to encode the value with Base32. Default: `false`.
- * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`. DEPRECATED
- * in favor of the `readonly` common field property.
+ * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`.
+ * DEPRECATED: Use the `readonly` common field option instead, which defaults to `true` for the
+ * UUID widget.
  * @see https://github.com/decaporg/decap-cms/pull/6675
  */
 
@@ -768,10 +769,11 @@
  * non-default locales through the UI. See our
  * [README](https://github.com/sveltia/sveltia-cms#disabling-non-default-locale-content) for
  * details.
- * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales. If
- * `false`, users will be able to disable the output of non-default locales through the UI. See our
- * [README](https://github.com/sveltia/sveltia-cms#disabling-non-default-locale-content) for
- * details. DEPRECATED in favor of the `initial_locales` option.
+ * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales.
+ * Default: `true`.
+ * DEPRECATED: Use the `initial_locales` option instead, which provides more flexibility.
+ * `save_all_locales: false` is equivalent to `initial_locales: all`. See our README
+ * https://github.com/sveltia/sveltia-cms#disabling-non-default-locale-content for details.
  * @property {{ key?: string, value?: string }} [canonical_slug] Property name and value template
  * used to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
  * localized files when entry slugs are localized. The default property name is `translationKey`
@@ -1037,8 +1039,10 @@
  * [README](https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection)
  * for details.
  * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
- * format is used for file output. Default: `false`. DEPRECATED in favor of the global YAML format
- * options.
+ * format is used for file output. Default: `false`.
+ * DEPRECATED: Use the global YAML format options. `yaml_quote: true` is equivalent to `quote:
+ * double`. See our README https://github.com/sveltia/sveltia-cms#controlling-data-output for
+ * details.
  * @property {FieldKeyPath | FieldKeyPath[]} [thumbnail] A field key path to be used to find an
  * entry thumbnail displayed on the entry list. A nested field can be specified using dot notation,
  * e.g. `heroImage.src`. A wildcard in the key path is also supported, e.g. `images.*.src`. Multiple
@@ -1115,10 +1119,11 @@
  * @property {'repo' | 'public_repo'} [auth_scope] Authentication scope for Open Authoring. Git
  * backends only.
  * @property {boolean} [automatic_deployments] Whether to enable or disable automatic deployments
- * with any connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `false`, the
- * `[skip ci]` prefix will be added to commit messages. Git backends only. Default: `undefined`. See
- * our [README](https://github.com/sveltia/sveltia-cms#disabling-automatic-deployments) for details.
- * DEPRECATED in favor of the `skip_ci` option, which takes an opposite boolean value.
+ * with any connected CI/CD provider. Default: `undefined`.
+ * DEPRECATED: Use the new `skip_ci` option instead, which is more intuitive.
+ * `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments:
+ * true` is equivalent to `skip_ci: false`. See our README
+ * https://github.com/sveltia/sveltia-cms#disabling-automatic-deployments for details.
  * @property {boolean} [skip_ci] Whether to enable or disable automatic deployments with any
  * connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `false`, the `[skip ci]`
  * prefix will be added to commit messages. Git backends only. Default: `undefined`. See our

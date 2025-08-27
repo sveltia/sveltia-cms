@@ -9,6 +9,11 @@ import { createGenerator } from 'ts-json-schema-generator';
 import { defineConfig } from 'vite';
 
 /**
+ * Path to the generated public type declaration file.
+ */
+const PUBLIC_TYPE_PATH = 'package/types/public.d.ts';
+
+/**
  * Copy essential package files while modifying the `package.json` content.
  * @returns {import('vite').Plugin} Vite plugin.
  */
@@ -74,6 +79,12 @@ const generateTypes = async () => {
       resolve(undefined);
     });
   });
+
+  const publicType = await readFile(PUBLIC_TYPE_PATH, 'utf-8');
+
+  // Replace `DEPRECATED:` with proper `@deprecated` tag. This is needed because JSDoc comments
+  // cannot have the `@deprecated` tag for each property in a typedef.
+  await writeFile(PUBLIC_TYPE_PATH, publicType.replaceAll('DEPRECATED:', '@deprecated'));
 };
 
 /**
@@ -85,7 +96,7 @@ const generateTypes = async () => {
  */
 const generateSchema = async () => {
   const config = {
-    path: 'package/types/public.d.ts',
+    path: PUBLIC_TYPE_PATH,
     type: 'SiteConfig',
     // `markdownDescription` is a VS Code schema extension
     // https://code.visualstudio.com/docs/languages/json#_json-schemas-and-settings
@@ -98,8 +109,17 @@ const generateSchema = async () => {
     description: 'Sveltia CMS site configuration file',
   };
 
-  // Remove unnecessary line breaks in `markdownDescription` originally present in JSDoc
-  const schemaString = JSON.stringify(schema, null, 2).replace(/\\n/g, ' ').concat('\n');
+  const schemaString = JSON.stringify(schema, null, 2)
+    // Remove unnecessary line breaks in `markdownDescription` originally present in JSDoc
+    .replace(/\\n/g, ' ')
+    // Use the proper boolean `deprecated` property instead of a string and append a separate
+    // message property. `deprecationMessage` is a VS Code schema extension
+    .replace(
+      /^(?<spaces>\s+)"deprecated": "(?<message>.+)"$/gm,
+      '$<spaces>"deprecated": true,\n$<spaces>"deprecationMessage": "$<message>"',
+    )
+    // Add a newline at the end of the file
+    .concat('\n');
 
   await mkdir('package/schema', { recursive: true });
   await writeFile('package/schema/sveltia-cms.json', schemaString);
