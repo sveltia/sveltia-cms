@@ -6,7 +6,7 @@
 const warnedOnceMap = {
   yaml_quote: false,
   uuid_read_only: false,
-  i18n_save_all_locales: false,
+  save_all_locales: false,
 };
 
 /**
@@ -21,9 +21,9 @@ const warningMessages = {
   uuid_read_only:
     'The `read_only` option for the UUID widget is deprecated and will be removed in Sveltia CMS ' +
     '1.0. Use the `readonly` option instead.',
-  i18n_save_all_locales:
-    'The `i18n.save_all_locales` option is deprecated and will be removed in Sveltia CMS 1.0. ' +
-    'Use the `i18n.initial_locales` option instead. ' +
+  save_all_locales:
+    'The `save_all_locales` i18n option is deprecated and will be removed in Sveltia CMS 1.0. ' +
+    'Use the `initial_locales` option instead. ' +
     'https://github.com/sveltia/sveltia-cms#disabling-non-default-locale-content',
 };
 

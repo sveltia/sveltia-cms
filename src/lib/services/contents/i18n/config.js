@@ -190,7 +190,7 @@ export const normalizeI18nConfig = (collection, file) => {
 
   // @todo Remove the option prior to the 1.0 release.
   if (config?.save_all_locales !== undefined) {
-    warnDeprecation('i18n_save_all_locales');
+    warnDeprecation('save_all_locales');
   }
 
   const {
