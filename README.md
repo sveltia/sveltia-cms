@@ -248,7 +248,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
 - We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253]
 - Improved TypeScript support: We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
-- Deprecated options are clearly marked as such in both the JSON schema and the TypeScript type definitions. If you use them in a supported code editor, you should receive a warning.
+- [Deprecated options](#deprecations) are clearly marked as such in both the JSON schema and the TypeScript type definitions. If you use these options in a supported code editor, you should receive a warning.
 
 ### Better backend support
 
