@@ -50,6 +50,7 @@ Welcome to the only Netlify CMS successor you can trust!
   - [Framework support](#framework-support)
   - [Backend support](#backend-support)
   - [Browser support](#browser-support)
+  - [Deprecations](#deprecations)
   - [Other notes](#other-notes)
 - [Getting started](#getting-started)
   - [Installation \& setup](#installation--setup)
