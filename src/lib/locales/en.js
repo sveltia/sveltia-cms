@@ -82,9 +82,9 @@ export const strings = {
   signing_in: 'Signing in…',
   work_with_local_repo: 'Work with Local Repository',
   work_with_local_repo_description:
-    'Click the button to select the root directory of the “{repo}” repository.',
+    'Once prompted, select the root directory of the “{repo}” repository.',
   work_with_local_repo_description_no_repo:
-    'Click the button to select the root directory of your Git repository.',
+    'Once prompted, select the root directory of your Git repository.',
   work_with_test_repo: 'Work with Test Repository',
   sign_in_error: {
     not_project_root:

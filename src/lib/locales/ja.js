@@ -82,9 +82,9 @@ export const strings = {
   signing_in: 'ログイン中…',
   work_with_local_repo: 'ローカルレポジトリで作業',
   work_with_local_repo_description:
-    'ボタンをクリックして「{repo}」レポジトリのルートディレクトリを選択してください。',
+    'ダイアログが表示されたら、「{repo}」レポジトリのルートディレクトリを選択してください。',
   work_with_local_repo_description_no_repo:
-    'ボタンをクリックして Git レポジトリのルートディレクトリを選択してください。',
+    'ダイアログが表示されたら、Git レポジトリのルートディレクトリを選択してください。',
   work_with_test_repo: 'テストレポジトリで作業',
   sign_in_error: {
     not_project_root:
