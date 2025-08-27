@@ -57,6 +57,7 @@
   let {
     /* eslint-disable prefer-const */
     locale,
+    keyPath,
     fieldId,
     fieldConfig,
     currentValue = $bindable(),
@@ -321,7 +322,10 @@
       Object.keys($entryDraft.extraValues[locale] ?? {}).forEach((key) => {
         const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
 
-        if (prefix && !wrapper?.querySelector(`[data-key-path-prefix="${prefix}"]`)) {
+        if (
+          prefix?.startsWith(`${keyPath}:`) &&
+          !wrapper?.querySelector(`[data-key-path-prefix="${prefix}"]`)
+        ) {
           delete $entryDraft.extraValues[locale][key];
         }
       });
