@@ -262,7 +262,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - The GitLab backend supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
 - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
-- Users can sign in directly with a Git-based backend using a personal access token (PAT) instead of going through the regular OAuth flow.[^258] To do so, click the small arrow button next to the Sign In button, and select Use Personal Access Token.
+- Users can sign in directly with a Git-based backend using a personal access token (PAT) instead of going through the regular OAuth flow.[^258]
 - The OAuth access token is automatically renewed when using the GitLab or Gitea/Forgejo backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) that boosts DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
@@ -377,7 +377,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Required fields, not optional fields, are marked for efficient data entry.
 - Users can revert changes to all fields or a specific field.
 - If you revert changes and there are no unsaved changes, the Save button is disabled as expected.[^118]
-- The new `readonly` field option makes the field read-only. This is useful when a `default` value is provided and the field should not be editable by users.[^223]
+- The new `readonly` field option makes the field read-only. This is useful when a `default` value is provided and the field should not be editable by users.[^223] The option defaults to `false` except for the UUID widget, where it defaults to `true`.
 - Fields with validation errors are automatically expanded if they are part of nested, collapsed objects.[^40]
 - A full regular expression, including flags, can be used for the widget `pattern` option.[^82] For example, if you want to allow 280 characters or less in a multiline text field, you could write `/^.{0,280}$/s` (but you can now use the `maxlength` option instead.)
 - A long validation error message is displayed in full, without being hidden behind the field label.[^59]
@@ -412,7 +412,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - A standard time is formatted as `HH:mm:ss` instead of `HH:mm` for framework compatibility.
 - DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML.[^147]
 - Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation and quotes.[^155][^9]
-  - The `yaml_quote` collection option added in [v0.5.10](https://github.com/sveltia/sveltia-cms/releases/tag/v0.5.10) is now deprecated and will be removed in v1.0.0. `yaml_quote: true` is equivalent to `quote: double` in the new YAML format options.
 - Front matter injection is impossible through the `body` field.[^268]
 
 ### Better widgets
@@ -539,7 +538,6 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS supports the proposed `uuid` widget with the following properties:[^12]
     - `prefix`: A string to be prepended to the value. Default: an empty string.
     - `use_b32_encoding`: Whether to encode the value with Base32. Default: `false`.
-    - `read_only`: Whether to make the field read-only. Default: `true`.
 
 ### Better asset management
 
@@ -661,7 +659,7 @@ Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/dec
   - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
   - The `yaml` global option will not be supported, as Sveltia CMS doesn’t expose the underlying `yaml` library options for forward compatibility reasons. However, we do have some [data output options](#controlling-data-output), including YAML indentation and quotes.
 - I18n support
-  - The `enforce_required_non_default` i18n option will not be supported. Sveitia CMS enforces required fields in all locales by default. However, the `save_all_locales` or `initial_locales` i18n option allows users to [disable non-default locales](#disabling-non-default-locale-content) if needed. Developers can also specify a subset of locales with the `required` field option, e.g. `required: [en]`.
+  - The `enforce_required_non_default` i18n option will not be supported. Sveitia CMS enforces required fields in all locales by default. However, the `initial_locales` i18n option allows users to [disable non-default locales](#disabling-non-default-locale-content) if needed. Developers can also specify a subset of locales with the `required` field option, e.g. `required: [en]`.
 - Widgets
   - The date/time format options for the DateTime widget are **not compatible** since Static CMS [switched to date-fns](https://staticjscms.netlify.app/docs/decap-migration-guide#dates) while Sveltia CMS continues to use Moment.js (and will soon switch to Day.js). Update your formats accordingly.
   - The [KeyValue widget](#new-widgets) is implemented in Sveltia CMS with the same options.
@@ -693,10 +691,18 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 - Safari: The Test backend doesn’t save changes locally; [image optimization](#optimizing-images-for-upload) is slower than in other browsers.
 - Firefox Extended Support Release (ESR) and its derivatives, including Tor Browser and Mullvad Browser, are not officially supported, although they may still work.
 
+### Deprecations
+
+These options are deprecated and will be removed in Sveltia CMS v1.0:
+
+- The `automatic_deployments` backend option. Use the new [`skip_ci` option](#disabling-automatic-deployments) instead, which is more intuitive. `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments: true` is equivalent to `skip_ci: false`.
+- The `save_all_locales` i18n option. Use the [`initial_locales` option](#disabling-non-default-locale-content) instead, which provides more flexibility. `save_all_locales: false` is equivalent to `initial_locales: all`.
+- The `yaml_quote` collection option. `yaml_quote: true` is equivalent to `quote: double` in the [new YAML format options](#controlling-data-output).
+- The `read_only` UUID widget option. Use the `readonly` common field option instead, which defaults to `true` for the UUID widget.
+
 ### Other notes
 
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and the content is served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
-- Some options added during the beta period may be changed or removed when the product reaches GA. While we’ll try to minimize breaking changes, please be aware that some of your configuration may need to be updated.
 
 ## Getting started
 
@@ -1185,19 +1191,9 @@ i18n:
 
 ### Disabling non-default locale content
 
-You can disable output of content in selected non-default locales by adding the `save_all_locales` property to the top-level or collection-level `i18n` configuration. Then you’ll find “Disable (locale name)” in the three-dot menu in the top right corner of the Content Editor. This is useful if the translation isn’t ready yet, but you want to publish the default locale content first.
+Developers can specify locales to be enabled by default when users create a new entry draft, using the `initial_locales` i18n option, which accepts a locale list, `default` (default locale only) or `all` (all locales).
 
-With the following configuration, you can disable the French and/or German translation while writing in English.
-
-```yaml
-i18n:
-  structure: multiple_files
-  locales: [en, fr, de]
-  default_locale: en
-  save_all_locales: false # default: true
-```
-
-Alternatively, developers can specify locales to be enabled by default when users create a new entry draft, using the new `initial_locales` option, which accepts a locale list, `default` (default locale only) or `all` (all locales). The default locale is always enabled, even if it’s excluded from `initial_locales`. When this option is used, `save_all_locales` is deemed `false`.
+The default locale is always enabled, even if it’s excluded from `initial_locales`, while other locales can be enabled or disabled by users in the Content Editor through the three-dot menu in the top right corner, if this i18n option is defined.
 
 The following example disables German by default, but users can manually enable it if needed. Users can also disable French, which is enabled by default.
 
@@ -1523,23 +1519,23 @@ You may already have a CI/CD tool set up on your Git repository to automatically
 
 With Sveltia CMS, you can disable automatic deployments by default and manually trigger deployments at your convenience. This is done by adding the `[skip ci]` prefix to commit messages, the convention supported by [GitHub Actions](https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs), [GitLab CI/CD](https://docs.gitlab.com/ee/ci/pipelines/#skip-a-pipeline), [CircleCI](https://circleci.com/docs/skip-build/#skip-jobs), [Travis CI](https://docs.travis-ci.com/user/customizing-the-build/#skipping-a-build), [Netlify](https://docs.netlify.com/site-deploys/manage-deploys/#skip-a-deploy), [Cloudflare Pages](https://developers.cloudflare.com/pages/platform/branch-build-controls/#skip-builds) and others. Here are the steps to use it:
 
-1. Add the new `automatic_deployments` property to your `backend` configuration with a value of `false`:
+1. Add the `skip_ci` property to your `backend` configuration with a value of `true`:
    ```yaml
    backend:
      name: github
      repo: owner/repo
      branch: main
-     automatic_deployments: false
+     skip_ci: true
    ```
 1. Commit and deploy the change to the config file and reload the CMS.
 1. Now, whenever you save an entry or asset, `[skip ci]` is automatically added to each commit message. However, deletions are always committed without the prefix to avoid unexpected data retention on your site.
 1. If you want to deploy a new or updated entry, as well as any other unpublished entries and assets, click an arrow next to the Save button in the Content Editor, then select **Save and Publish**. This will trigger CI/CD by omitting `[skip ci]`.
 
-If you set `automatic_deployments` to `true`, the behaviour is reversed. CI/CD will be triggered by default, while you have an option to **Save without Publishing** that adds `[skip ci]` only to the associated commit.
+If you set `skip_ci` to `false`, the behaviour is reversed. CI/CD will be triggered by default, while you have an option to **Save without Publishing** that adds `[skip ci]` only to the associated commit.
 
 Gotcha: Unpublished entries and assets are not drafts. Once committed to your repository, those changes can be deployed any time another commit is pushed without `[skip ci]`, or when a manual deployment is triggered.
 
-If the `automatic_deployments` property is defined, you can manually trigger a deployment by clicking the **Publish Changes** button on the application header. To use this feature:
+If the `skip_ci` property is defined, you can manually trigger a deployment by clicking the **Publish Changes** button on the application header. To use this feature:
 
 - GitHub Actions:
   1. Without any configuration, Publish Changes will [trigger a `repository_dispatch` event](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) with the `sveltia-cms-publish` event type. Update your build workflow to receive this event:
