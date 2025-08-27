@@ -224,7 +224,8 @@
       <div role="none" class="cols">
         {#if collection}
           {#if $editorLeftPane}
-            {@const { locale, mode } = $editorLeftPane}
+            <!-- Somehow we need a fallback object or we’ll get a property destructuring error -->
+            {@const { locale, mode } = $editorLeftPane ?? {}}
             <Group
               class="pane"
               aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
@@ -247,7 +248,8 @@
             </Group>
           {/if}
           {#if $editorRightPane}
-            {@const { locale, mode } = $editorRightPane}
+            <!-- Ditto -->
+            {@const { locale, mode } = $editorRightPane ?? {}}
             <Group
               aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
                 values: { locale: getLocaleLabel(locale) },
