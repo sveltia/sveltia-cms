@@ -624,14 +624,14 @@ However, 100% feature parity is never planned, and some features are still missi
   - Relation widget: `options_length`
 - The global [`locale`](https://decapcms.org/docs/configuration-options/#locale) option and `CMS.registerLocale()` method: Sveltia CMS automatically detects the user’s preferred language and changes the UI locale as [mentioned above](#better-localization).
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
-- Any other undocumented options/features. Exceptions apply.
+- Any other undocumented features and options. Exceptions apply.
 
 ### Other breaking changes
 
 There are some differences in behaviour between Sveltia CMS and Netlify/Decap CMS that may affect your existing configuration or content.
 
 - In some cases, the [data output](#better-data-output) of Sveltia CMS may differ from that of Netlify/Decap CMS. Notably, Sveltia CMS does not omit empty optional fields by default. If you have data validation in your site generator, this could cause issues.
-- Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and the content is served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/), otherwise the CMS won’t work.
+- Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running your own remote server and serving content over HTTP, the CMS will not work. We recommend obtaining a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 
 [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) if you have encounter any compatibility issues that are not listed here.
 
@@ -1776,8 +1776,10 @@ Due early 2026
 
 ### Non-goals
 
+- Serving 100% of the existing Netlify/Decap CMS user base. While we aim to support most use cases, some users may be unable to migrate to Sveltia CMS due to unsupported features or technical limitations. See the [Compatibility](#compatibility) section for details.
 - Support for non-Git backends. Sveltia CMS is a Git-based headless CMS and will remain so to avoid feature creep and increased maintenance costs.
 - Framework-specific integrations, including a WYSIWYG editor. We will focus on framework-agnostic core features that are essential for succeeding Netlify/Decap CMS and modernizing the platform.
+- Enterprise features. We want to keep Sveltia CMS simple and easy to use for small teams and individual developers.
 - Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
 
 ## Trivia
