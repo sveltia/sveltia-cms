@@ -23,7 +23,7 @@ Welcome to the only Netlify CMS successor you can trust!
 - [Motivation](#motivation)
   - [Our advantage](#our-advantage)
   - [Our goals](#our-goals)
-- [Project status](#project-status)
+- [Project Status](#project-status)
 - [Differentiators](#differentiators)
   - [Better UX](#better-ux)
   - [Better performance](#better-performance)
@@ -45,21 +45,21 @@ Welcome to the only Netlify CMS successor you can trust!
   - [Better localization](#better-localization)
 - [Compatibility](#compatibility)
   - [Features not to be implemented](#features-not-to-be-implemented)
+  - [Other breaking changes](#other-breaking-changes)
   - [Current limitations](#current-limitations)
   - [Compatibility with Static CMS](#compatibility-with-static-cms)
   - [Framework support](#framework-support)
   - [Backend support](#backend-support)
   - [Browser support](#browser-support)
   - [Deprecations](#deprecations)
-  - [Other notes](#other-notes)
-- [Getting started](#getting-started)
+- [Getting Started](#getting-started)
   - [Installation \& setup](#installation--setup)
   - [Migration](#migration)
     - [Editing the configuration file](#editing-the-configuration-file)
     - [Migrating from Git Gateway backend](#migrating-from-git-gateway-backend)
   - [Installing with npm](#installing-with-npm)
   - [Updates](#updates)
-- [Tips \& tricks](#tips--tricks)
+- [Tips \& Tricks](#tips--tricks)
   - [Moving your site from Netlify to another hosting service](#moving-your-site-from-netlify-to-another-hosting-service)
   - [Enabling autocomplete and validation for the configuration file](#enabling-autocomplete-and-validation-for-the-configuration-file)
   - [Providing a JSON configuration file](#providing-a-json-configuration-file)
@@ -91,7 +91,7 @@ Welcome to the only Netlify CMS successor you can trust!
   - [Disabling automatic deployments](#disabling-automatic-deployments)
   - [Setting up Content Security Policy](#setting-up-content-security-policy)
   - [Showing the CMS version](#showing-the-cms-version)
-- [Support \& feedback](#support--feedback)
+- [Support \& Feedback](#support--feedback)
 - [Contributions](#contributions)
 - [Roadmap](#roadmap)
   - [v1.0](#v10)
@@ -100,7 +100,7 @@ Welcome to the only Netlify CMS successor you can trust!
   - [TBD](#tbd)
   - [Non-goals](#non-goals)
 - [Trivia](#trivia)
-- [Related links](#related-links)
+- [Related Links](#related-links)
   - [As seen on](#as-seen-on)
 - [Disclaimer](#disclaimer)
 
@@ -132,7 +132,7 @@ While Sveltia CMS was created to replace legacy Netlify CMS instances, it can al
 - Extending its capabilities as digital asset management (DAM) software
 - Showcasing the power of Svelte and UX engineering
 
-## Project status
+## Project Status
 
 Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in late 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
 
@@ -626,6 +626,15 @@ However, 100% feature parity is never planned, and some features are still missi
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 - Any other undocumented options/features. Exceptions apply.
 
+### Other breaking changes
+
+There are some differences in behaviour between Sveltia CMS and Netlify/Decap CMS that may affect your existing configuration or content.
+
+- In some cases, the [data output](#better-data-output) of Sveltia CMS may differ from that of Netlify/Decap CMS. Notably, Sveltia CMS does not omit empty optional fields by default. If you have data validation in your site generator, this could cause issues.
+- Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and the content is served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/), otherwise the CMS won’t work.
+
+[Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) if you have encounter any compatibility issues that are not listed here.
+
 ### Current limitations
 
 These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due late 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
@@ -645,8 +654,6 @@ Due to the complexity, we have decided to defer the following features to the 2.
 - [Open authoring](https://decapcms.org/docs/open-authoring/)
 - [Nested collections](https://decapcms.org/docs/collection-nested/) (beta)
 - The `media_folder` and `public_folder` options (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets ([#497](https://github.com/sveltia/sveltia-cms/issues/497))
-
-Found a compatibility issue or other missing feature? [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug). Bear in mind that undocumented behaviour can easily be overlooked.
 
 ### Compatibility with Static CMS
 
@@ -701,11 +708,7 @@ These options are deprecated and will be removed in Sveltia CMS v1.0:
 - The `yaml_quote` collection option. `yaml_quote: true` is equivalent to `quote: double` in the [new YAML format options](#controlling-data-output).
 - The `read_only` UUID widget option. Use the `readonly` common field option instead, which defaults to `true` for the UUID widget.
 
-### Other notes
-
-- Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running a remote server yourself and the content is served over HTTP, get a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
-
-## Getting started
+## Getting Started
 
 ### Installation & setup
 
@@ -782,7 +785,7 @@ Updating Sveltia CMS is transparent, unless you include a specific version in th
 
 If you’ve chosen to install with npm, updating the package is your responsibility. We strongly recommend using [`ncu`](https://www.npmjs.com/package/npm-check-updates) or a service like [Dependabot](https://github.blog/2020-06-01-keep-all-your-packages-up-to-date-with-dependabot/) to keep dependencies up to date. Otherwise, you’ll miss important bug fixes and new features. (ProTip: We update our dependencies using `ncu -u && pnpm up` at least once a week.)
 
-## Tips & tricks
+## Tips & Tricks
 
 ### Moving your site from Netlify to another hosting service
 
@@ -1679,7 +1682,7 @@ img-src 'self' blob: data: https://*;
 
 A Release Notes link will now appear under the Account menu with the current application version.
 
-## Support & feedback
+## Support & Feedback
 
 While we don’t have dedicated developer/user support resources, you can post [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. [Feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=ideas) is also welcome, but please check the [Compatibility](#compatibility) and [Roadmap](#roadmap) sections of this README before starting a new discussion — your idea may already be covered.
 
@@ -1695,7 +1698,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ## Roadmap
 
-We have a lot of ideas and plans for Sveltia CMS. Here are some highlights. This includes 150+ more issues of Netlify/Decap CMS that we plan to solve, in addition to the 250+ issues we’ve already solved. In total, we aim to solve 400+ issues, as mentioned in the [Project status](#project-status) section.
+We have a lot of ideas and plans for Sveltia CMS. Here are some highlights. This includes 150+ more issues of Netlify/Decap CMS that we plan to solve, in addition to the 250+ issues we’ve already solved. In total, we aim to solve 400+ issues, as mentioned in the [Project Status](#project-status) section.
 
 ### v1.0
 
@@ -1782,7 +1785,7 @@ Due early 2026
 - The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. There was also an [attempt](https://github.com/decaporg/decap-cms/issues/328) to replace React with Preact. And now we are completely rewriting it in Svelte. So this is effectively the third time the application has gone through a framework migration.
 - Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for improved DX, but also for our rapid application development.
 
-## Related links
+## Related Links
 
 - Introducing Sveltia CMS: a short technical presentation by [@kyoshino](https://github.com/kyoshino) during the _This Week in Svelte_ online meetup on March 31, 2023 — [recording](https://youtu.be/-YjLubiieYs?t=1660) & [slides](https://docs.google.com/presentation/d/1Wi4ty-1AwOp2-zy7LctmzCV4rrdYPfke9NGhO0DdRdM)
 
