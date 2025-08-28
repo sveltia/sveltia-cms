@@ -141,7 +141,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **250+ issues, or 535+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **250+ issues, or 540+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -2349,7 +2349,7 @@ This software is provided “as is” without any express or implied warranty. W
 
 [^277]: Netlify/Decap CMS [#86](https://github.com/decaporg/decap-cms/issues/86)
 
-[^278]: Netlify/Decap CMS [#7575](https://github.com/decaporg/decap-cms/issues/7575), [#7576](https://github.com/decaporg/decap-cms/issues/7576)
+[^278]: Netlify/Decap CMS [#7575](https://github.com/decaporg/decap-cms/issues/7575), [#7576](https://github.com/decaporg/decap-cms/issues/7576), [#7587](https://github.com/decaporg/decap-cms/issues/7587)
 
 [^279]: Netlify/Decap CMS [#1390](https://github.com/decaporg/decap-cms/issues/1390), [#4912](https://github.com/decaporg/decap-cms/issues/4912), [#6986](https://github.com/decaporg/decap-cms/issues/6986)
 
