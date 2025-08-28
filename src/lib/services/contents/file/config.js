@@ -119,7 +119,7 @@ export const getEntryPathRegEx = ({
     ? `(?<subPath>${subPath
         .replace(/\//g, '\\/')
         .replace(/{{.+?}}/g, '[^/]+?')}${indexFileName ? `|${indexFileName}` : ''})`
-    : '(?<subPath>.+?)'; // The slug can contain slashes so we should not use `[^/]+?` here
+    : '(?<subPath>[^/]+?)';
 
   const localeMatcher = `(?<locale>${allLocales.join('|')})`;
 
