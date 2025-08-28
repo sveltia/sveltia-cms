@@ -1125,7 +1125,7 @@
  * true` is equivalent to `skip_ci: false`. See our README
  * https://github.com/sveltia/sveltia-cms#disabling-automatic-deployments for details.
  * @property {boolean} [skip_ci] Whether to enable or disable automatic deployments with any
- * connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `false`, the `[skip ci]`
+ * connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `true`, the `[skip ci]`
  * prefix will be added to commit messages. Git backends only. Default: `undefined`. See our
  * [README](https://github.com/sveltia/sveltia-cms#disabling-automatic-deployments) for details.
  * @see https://decapcms.org/docs/backends-overview/
