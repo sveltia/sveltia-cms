@@ -2,6 +2,7 @@ import { derived } from 'svelte/store';
 
 import { prefs } from '$lib/services/user/prefs';
 
+import anthropic from './anthropic';
 import google from './google';
 import openai from './openai';
 
@@ -16,6 +17,7 @@ import openai from './openai';
  */
 export const allTranslationServices = {
   google,
+  anthropic,
   openai,
 };
 
