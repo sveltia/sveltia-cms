@@ -18,7 +18,7 @@ import { getIndexFile } from '$lib/services/contents/collection/index-file';
  * @returns {FillTemplateOptions} Options.
  */
 export const getFillSlugOptions = ({ draft }) => {
-  const { collection, collectionFile, currentValues, isIndexFile } = draft;
+  const { collection, collectionFile, currentSlugs, currentValues, isIndexFile } = draft;
 
   const {
     _i18n: { defaultLocale },
@@ -27,7 +27,11 @@ export const getFillSlugOptions = ({ draft }) => {
   return {
     // eslint-disable-next-line object-shorthand
     collection: /** @type {EntryCollection} */ (collection),
-    content: currentValues[defaultLocale],
+    content: {
+      ...currentValues[defaultLocale],
+      // Slug candidate for the default locale
+      _slug: currentSlugs?.[defaultLocale] ?? currentSlugs?._,
+    },
     isIndexFile,
   };
 };
@@ -41,7 +45,7 @@ export const getFillSlugOptions = ({ draft }) => {
  * @returns {string} Localized slug.
  */
 const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
-  const { collection, collectionFile, currentSlugs, currentValues, isIndexFile } = draft;
+  const { isNew, collection, collectionFile, currentSlugs, currentValues, isIndexFile } = draft;
 
   const {
     identifier_field: identifierField = 'title',
@@ -52,10 +56,10 @@ const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
     _i18n: { defaultLocale },
   } = collectionFile ?? collection;
 
-  return (
-    currentSlugs?.[locale] ??
-    currentSlugs?._ ??
-    fillTemplate(slugTemplate, {
+  const _slug = currentSlugs?.[locale] ?? currentSlugs?._;
+
+  if (isNew) {
+    return fillTemplate(slugTemplate, {
       collection,
       locale,
       content: {
@@ -64,10 +68,14 @@ const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
         ...Object.fromEntries(
           localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale]?.[keyPath]]),
         ),
+        // Slug candidate for the current locale
+        _slug,
       },
       isIndexFile,
-    })
-  );
+    });
+  }
+
+  return /** @type {string} */ (_slug);
 };
 
 /**
@@ -96,7 +104,7 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
   /**
    * List of key paths that the value will be localized.
    */
-  const localizingKeyPaths = [...slugTemplate.matchAll(/{{(?:fields\.)?(.+?)( \| localize)?}}/g)]
+  const localizingKeyPaths = [...slugTemplate.matchAll(/{{((?:fields\.)?.+?)( \| localize)?}}/g)]
     .filter(([, , localize]) => !!localize)
     .map(([, keyPath]) => keyPath);
 
@@ -160,7 +168,7 @@ const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOp
  * @returns {EntrySlugVariants} Slugs.
  */
 export const getSlugs = ({ draft }) => {
-  const { collection, collectionFile, fileName, currentSlugs, isIndexFile } = draft;
+  const { isNew, collection, collectionFile, fileName, currentSlugs, isIndexFile } = draft;
 
   const {
     identifier_field: identifierField = 'title',
@@ -183,9 +191,9 @@ export const getSlugs = ({ draft }) => {
 
   const defaultLocaleSlug =
     fileName ??
-    currentSlugs?.[defaultLocale] ??
-    currentSlugs?._ ??
-    fillTemplate(slugTemplate, fillSlugOptions);
+    (isNew
+      ? fillTemplate(slugTemplate, fillSlugOptions)
+      : /** @type {string} */ (currentSlugs?.[defaultLocale] ?? currentSlugs?._));
 
   const localizedSlugs = getLocalizedSlugs({ draft, defaultLocaleSlug });
 

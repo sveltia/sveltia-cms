@@ -1,6 +1,7 @@
 <script>
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import SlugEditor from '$lib/components/contents/details/editor/slug-editor.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
@@ -23,6 +24,9 @@
 </script>
 
 <VisibilityObserver>
+  {#if !!$entryDraft?.slugEditor[locale]}
+    <SlugEditor {locale} />
+  {/if}
   {#each fields as fieldConfig (fieldConfig.name)}
     <VisibilityObserver>
       <FieldEditor keyPath={fieldConfig.name} {locale} {fieldConfig} />

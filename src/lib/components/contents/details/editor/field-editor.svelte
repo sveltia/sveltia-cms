@@ -9,6 +9,7 @@
   import { _ } from 'svelte-i18n';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
+  import FieldEditorGroup from '$lib/components/contents/details/editor/field-editor-group.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { editors } from '$lib/components/contents/details/widgets';
@@ -184,7 +185,7 @@
 </script>
 
 {#if $entryDraft && canEdit && widgetName !== 'hidden'}
-  <section
+  <FieldEditorGroup
     role="group"
     class="field"
     aria-label={$_('x_field', { values: { field: fieldLabel } })}
@@ -330,44 +331,10 @@
         <ExtraHint {fieldConfig} {currentValue} />
       </div>
     {/if}
-  </section>
+  </FieldEditorGroup>
 {/if}
 
 <style lang="scss">
-  section {
-    padding: var(--field-editor-padding);
-
-    &:not(:last-child) {
-      border-width: 0 0 1px;
-      border-color: var(--sui-secondary-border-color);
-    }
-
-    & > :global(*) {
-      margin-inline: auto !important;
-      max-width: 768px;
-    }
-  }
-
-  header {
-    display: flex;
-    align-items: center;
-    margin: 0 -8px 8px;
-    height: var(--sui-button-small-height);
-
-    h4 {
-      margin-inline: 8px 0;
-      font-size: var(--sui-font-size-small);
-      font-weight: var(--sui-font-weight-bold);
-      color: var(--sui-secondary-foreground-color);
-    }
-
-    .required {
-      margin: 2px 0 0 2px;
-      color: var(--sui-error-foreground-color);
-      font-size: var(--sui-font-size-large);
-    }
-  }
-
   .widget-wrapper {
     &.has-extra-labels {
       display: flex;

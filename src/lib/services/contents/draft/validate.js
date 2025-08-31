@@ -433,6 +433,30 @@ export const validateFields = (valueStoreKey) => {
 };
 
 /**
+ * Validate the slugs and return the results. At this time, we only check if the slug is empty
+ * when the slug editor is shown. A pattern check can be added later if needed.
+ * @returns {{ valid: boolean, validities: LocaleValidityMap }} Validation results.
+ */
+const validateSlugs = () => {
+  const { currentSlugs, slugEditor } = /** @type {EntryDraft} */ (get(entryDraft));
+  /** @type {LocaleValidityMap} */
+  const validities = {};
+  let valid = true;
+
+  Object.entries(currentSlugs).forEach(([locale, slug]) => {
+    const valueMissing = !!slugEditor[locale] && !slug?.trim();
+
+    if (valueMissing) {
+      valid = false;
+    }
+
+    validities[locale] = { _slug: { valueMissing, valid: !valueMissing } };
+  });
+
+  return { valid, validities };
+};
+
+/**
  * Validate the field values, update the validity for all the fields, and return the final results
  * as a boolean.
  * @returns {boolean} Whether the entry draft is valid.
@@ -444,15 +468,21 @@ export const validateEntry = () => {
   const { valid: extraValuesValid, validities: extraValuesValidities } =
     validateFields('extraValues');
 
+  const { valid: slugsValid, validities: slugsValidities } = validateSlugs();
+
   /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
     ..._draft,
     validities: Object.fromEntries(
       Object.keys(currentValuesValidities).map((locale) => [
         locale,
-        { ...currentValuesValidities[locale], ...extraValuesValidities[locale] },
+        {
+          ...currentValuesValidities[locale],
+          ...extraValuesValidities[locale],
+          ...slugsValidities[locale],
+        },
       ]),
     ),
   }));
 
-  return currentValuesValid && extraValuesValid;
+  return currentValuesValid && extraValuesValid && slugsValid;
 };

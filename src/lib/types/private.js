@@ -587,6 +587,8 @@
  * containing validation results of all the current field values while editing.
  * @property {LocaleExpanderMap} expanderStates Key is a locale code, value is a flattened object
  * containing the expander UI state.
+ * @property {Record<LocaleCode, boolean | 'readonly'>} slugEditor Whether to show the slug editor
+ * for each locale.
  */
 
 /**

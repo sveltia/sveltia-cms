@@ -1012,7 +1012,9 @@
  * @property {string} [slug] Item slug template. Entry collection only. Default: `identifier_field`
  * option value. It’s possible to [localize the
  * slug](https://github.com/sveltia/sveltia-cms#localizing-entry-slugs) or [use a random
- * ID](https://github.com/sveltia/sveltia-cms#using-a-random-id-for-an-entry-slug).
+ * ID](https://github.com/sveltia/sveltia-cms#using-a-random-id-for-an-entry-slug). Also, it’s
+ * possible to show a special slug editor field in initial entry drafts by using `{{fields._slug}}`
+ * (with an underscore prefix) or `{{fields._slug | localize}}` (to localize the slug).
  * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
  * Entry collection only. Default: `Infinity`.
  * @property {string} [summary] Entry summary template. Entry collection only. Default:
@@ -1056,6 +1058,7 @@
  * @see https://github.com/decaporg/decap-cms/issues/6987
  * @see https://github.com/decaporg/decap-cms/issues/7417
  * @see https://github.com/sveltia/sveltia-cms/issues/307
+ * @see https://github.com/sveltia/sveltia-cms/issues/499
  */
 
 /**

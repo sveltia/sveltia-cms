@@ -16,6 +16,55 @@ import { getDefaultValues } from '$lib/services/contents/draft/defaults';
  * } from '$lib/types/private';
  */
 
+const SLUG_EDITOR_TAG = '{{fields._slug}}';
+const LOCALIZED_SLUG_EDITOR_TAG = '{{fields._slug | localize}}';
+
+/**
+ * Get the `slugEditor` property for an entry draft.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection that the entry belongs to.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
+ * only.
+ * @param {any} args.originalEntry Entry to be edited, or a partial {@link Entry} object.
+ * @returns {Record<string, boolean | 'readonly'>} Whether to show the slug editor for each locale.
+ * If the `slug` template contains the `{{fields._slug}}` tag, the slug editor will be enabled for
+ * the default locale and disabled (read-only) for other locales. If the `slug` template contains
+ * the `{{fields._slug | localize}}` tag, the slug editor will be enabled for all locales.
+ * Otherwise, the slug editor will be disabled for all locales. Note that the slug editor will only
+ * be shown for new entries in entry collections.
+ * @see https://github.com/sveltia/sveltia-cms/issues/499
+ */
+const getSlugEditorProp = ({ collection, collectionFile, originalEntry }) => {
+  const {
+    _type,
+    identifier_field: identifierField = 'title',
+    slug: slugTemplate = `{{${identifierField}}}`,
+  } = collection;
+
+  const { id } = originalEntry;
+  const isNew = id === undefined;
+  const { _i18n } = collectionFile ?? collection;
+  const { allLocales, defaultLocale } = _i18n;
+  const canUseSlugEditor = _type === 'entry' && isNew;
+
+  const localizedSlugEditorEnabled =
+    canUseSlugEditor && slugTemplate.includes(LOCALIZED_SLUG_EDITOR_TAG);
+
+  const slugEditorEnabled =
+    canUseSlugEditor && (slugTemplate.includes(SLUG_EDITOR_TAG) || localizedSlugEditorEnabled);
+
+  return Object.fromEntries(
+    allLocales.map((locale) => [
+      locale,
+      slugEditorEnabled
+        ? locale === defaultLocale || localizedSlugEditorEnabled
+          ? true
+          : 'readonly'
+        : false,
+    ]),
+  );
+};
+
 /**
  * Create an entry draft.
  * @param {object} args Arguments.
@@ -113,6 +162,7 @@ export const createDraft = ({
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
     // Any locale-agnostic view states will be put under the `_` key
     expanderStates: expanderStates ?? { _: {} },
+    slugEditor: getSlugEditorProp({ collection, collectionFile, originalEntry }),
   });
 
   restoreBackupIfNeeded({ collectionName, fileName, slug });

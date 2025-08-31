@@ -91,6 +91,7 @@ words:
   - singleline
   - slugification
   - slugified
+  - slugifying
   - smol
   - strikethrough
   - stylelint
