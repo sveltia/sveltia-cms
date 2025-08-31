@@ -12,7 +12,7 @@ Welcome to the only Netlify CMS successor you can trust!
 
 ![Stock photo integration: Pexels, Pixabay, Unsplash](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-3.webp?20250405)<br>
 
-![Full-fledged Asset Library; first-class internationalization support; Google Cloud Translation and OpenAI integration](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250812)<br>
+![Full-fledged Asset Library; first-class internationalization support; Google Cloud Translation, Anthropic and OpenAI integration](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-4.webp?20250831)<br>
 
 ![Built-in image optimizer for WebP and SVG; mobile & tablet support](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-5.webp?20250409)<br>
 
@@ -344,15 +344,18 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
 - Entry slugs
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
+  - Entry slug are editable.[^184]
+    - To allow users to explicitly edit the entry slug in an initial entry draft, add `{{fields._slug}}` to the `slug` collection option. This will display a special slug editor UI that looks like a standard string field, but the value will be used as the entry slug.
+    - Once an entry is saved, users can edit the slug via the 3-dot menu in the Content Editor.
+  - Entry slugs are [localizable](#localizing-entry-slugs).[^80]
+    - Use `{{fields._slug | localize}}` to make the slug field editable and localizable.
   - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values.[^133]
-  - Users can edit entry slugs via the 3-dot menu in the Content Editor.[^184]
   - If a collection only has the Markdown `body` field, an entry slug will be generated from a header in the `body`, if exists. This supports a typical VitePress setup.
   - Entry slug template tags support [transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags.[^29]
   - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed.[^52]
   - The [global `slug` option](https://decapcms.org/docs/configuration-options/#slug-type) accepts the `trim` option to remove leading and trailing replacement characters, such as hyphens, from an entry slug. The default value is `true`. Set to `false` to keep them.
   - The maximum number of characters for an entry slug can be set with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms.[^25]
   - Setting the collection `path` doesn’t affect the entry slugs stored with the Relation widget.[^137]
-  - Entry slugs are [localizable](#localizing-entry-slugs).[^80]
 - Entry listing
   - The [default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified.[^172]
   - The default filter and group can also be specified in the same way as with [Static CMS](https://staticjscms.netlify.app/docs/collection-overview#view-filters).[^269]
@@ -1112,7 +1115,7 @@ The configuration for a [file collection](https://decapcms.org/docs/collection-f
 
 ### Translating entry fields with one click
 
-Sveltia CMS comes with a handy translation API integration so that you can translate any text field from another locale without leaving the Content Editor. Currently, Google’s Cloud Translation and OpenAI’s GPT-3.5 Turbo are supported. To enable the quick translation feature:
+Sveltia CMS comes with a handy translation API integration so that you can translate any text field from another locale without leaving the Content Editor. Currently, Google’s Cloud Translation, Anthropic’s Claude Haiku 3.5 and OpenAI’s GPT-3.5 Turbo are supported. To enable the quick translation feature:
 
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
 1. Create a new API key for the translation service of your choice:
@@ -1120,6 +1123,10 @@ Sveltia CMS comes with a handy translation API integration so that you can trans
      1. Sign in or sign up for [Google Cloud](https://cloud.google.com/) and create a new project.
      1. Enable the [Cloud Translation API](https://console.cloud.google.com/apis/library/translate.googleapis.com). It’s free up to 500,000 characters per month.
      1. Create a [new API key](https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials) and copy it.
+   - Anthropic
+     1. Sign in or sign up for [Anthropic Developer Platform](https://docs.anthropic.com/en/api/overview).
+     1. Add a credit balance (minimum $5) to your account.
+     1. Create a [new API key](https://console.anthropic.com/settings/keys) and copy it.
    - OpenAI
      1. Sign in or sign up for [OpenAI Platform](https://platform.openai.com/docs/overview) and create a new project.
      1. Add a credit balance (minimum $5) to your account.
@@ -1641,6 +1648,11 @@ Then, add the following origins depending on your Git backend and enabled integr
   - `connect-src`
     ```
     https://translation.googleapis.com
+    ```
+- Anthropic:
+  - `connect-src`
+    ```
+    https://api.anthropic.com
     ```
 - OpenAI:
   - `connect-src`
