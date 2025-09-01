@@ -27,6 +27,20 @@
   const isTestRepo = $derived(configuredBackendName === 'test-repo');
   const showLocalBackendOption = $derived(isLocalHost && !isTestRepo);
 
+  /**
+   * Replace `<a>` tag in a localization string, and sanitize the result.
+   * @param {object} args Arguments.
+   * @param {string} args.key Localization key.
+   * @param {Record<string, string>} [args.values] Values for interpolation.
+   * @param {string} args.link Link URL.
+   * @returns {string} Linked and sanitized HTML string.
+   */
+  const getLinkedString = ({ key, values, link }) =>
+    DOMPurify.sanitize($_(key, { values }).replace('<a>', `<a href="${link}" target="_blank">`), {
+      ALLOWED_TAGS: ['a'],
+      ALLOWED_ATTR: ['href', 'target'],
+    });
+
   onMount(() => {
     const { hostname } = window.location;
 
@@ -61,13 +75,10 @@
       {#if !isLocalBackendSupported}
         <div role="alert">
           {#if isBrave}
-            {@html DOMPurify.sanitize(
-              $_('local_backend.disabled').replace(
-                '<a>',
-                '<a href="https://github.com/sveltia/sveltia-cms#enabling-local-development-in-brave" target="_blank">',
-              ),
-              { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target'] },
-            )}
+            {@html getLinkedString({
+              key: 'local_backend.disabled',
+              link: 'https://github.com/sveltia/sveltia-cms#enabling-local-development-in-brave',
+            })}
           {:else}
             {$_('local_backend.unsupported_browser')}
           {/if}
@@ -122,6 +133,13 @@
   }}
 >
   {$_('sign_in_using_pat_description')}
+  {#if configuredBackend?.repository?.newPatURL}
+    {@html getLinkedString({
+      key: 'sign_in_using_pat_link',
+      values: { service: configuredBackend.label },
+      link: configuredBackend.repository.newPatURL,
+    })}
+  {/if}
 </PromptDialog>
 
 <style lang="scss">
@@ -133,7 +151,7 @@
 
     :global {
       .button {
-        width: 280px;
+        width: 320px;
       }
     }
   }

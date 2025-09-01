@@ -16,7 +16,7 @@ import {
 } from '$lib/services/backends/git/github/constants';
 import { triggerDeployment } from '$lib/services/backends/git/github/deployment';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/github/files';
-import { getBaseURLs, repository } from '$lib/services/backends/git/github/repository';
+import { getBaseURLs, getPatURL, repository } from '$lib/services/backends/git/github/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/github/status';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 import { getRepoURL } from '$lib/services/backends/git/shared/repository';
@@ -64,6 +64,7 @@ export const init = () => {
       repo,
       branch,
       repoURL,
+      newPatURL: getPatURL(repoURL),
       databaseName: `${BACKEND_NAME}:${repoPath}`,
       isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),

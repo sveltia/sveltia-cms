@@ -13,6 +13,23 @@ import { user } from '$lib/services/user';
 export const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 
 /**
+ * Get the URL of the page for creating a new Personal Access Token (PAT) on GitLab.
+ * @param {string} repoURL Repository URL, e.g. `https://gitlab.com/owner/repo`.
+ * @returns {string} URL to create a new PAT.
+ * @see https://docs.gitlab.com/user/profile/personal_access_tokens/
+ */
+export const getPatURL = (repoURL) => {
+  const { origin } = new URL(repoURL);
+
+  const params = new URLSearchParams({
+    name: 'Sveltia CMS',
+    scopes: 'api,read_user',
+  });
+
+  return `${origin}/-/user_settings/personal_access_tokens?${params}`;
+};
+
+/**
  * Generate base URLs for accessing the repository’s resources.
  * @param {string} repoURL The base URL of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in

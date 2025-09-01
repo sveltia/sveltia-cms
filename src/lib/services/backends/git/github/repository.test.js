@@ -4,6 +4,7 @@ import {
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
+  getPatURL,
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -71,6 +72,35 @@ describe('GitHub repository service', () => {
         treeBaseURL: repoURL,
         blobBaseURL: '',
       });
+    });
+  });
+
+  describe('getPatURL', () => {
+    test('returns correct GitHub Personal Access Token URL', () => {
+      const repoURL = 'https://github.com/owner/repo';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe(
+        'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
+      );
+    });
+
+    test('handles GitHub Enterprise Server URLs', () => {
+      const repoURL = 'https://github.enterprise.com/owner/repo';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe(
+        'https://github.enterprise.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
+      );
+    });
+
+    test('handles different repository paths', () => {
+      const repoURL = 'https://github.com/different-owner/different-repo';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe(
+        'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
+      );
     });
   });
 

@@ -11,7 +11,7 @@ import {
   DEFAULT_AUTH_ROOT,
 } from '$lib/services/backends/git/gitlab/constants';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
-import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
+import { getBaseURLs, getPatURL, repository } from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 import { getRepoURL } from '$lib/services/backends/git/shared/repository';
@@ -69,6 +69,7 @@ export const init = () => {
       repo,
       branch,
       repoURL,
+      newPatURL: getPatURL(repoURL),
       databaseName: `${BACKEND_NAME}:${repoPath}`,
       isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),

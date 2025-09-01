@@ -6,6 +6,7 @@ import {
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
+  getPatURL,
   getRepositoryInfo,
   repository,
   resetRepositoryInfoCache,
@@ -96,6 +97,43 @@ describe('Gitea Repository Service', () => {
         treeBaseURL: '/src/branch/main',
         blobBaseURL: '/src/branch/main',
       });
+    });
+  });
+
+  describe('getPatURL', () => {
+    test('returns correct Gitea Personal Access Token URL', () => {
+      const repoURL = 'https://gitea.com/owner/repo';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe('https://gitea.com/user/settings/applications');
+    });
+
+    test('handles Forgejo instance URLs', () => {
+      const repoURL = 'https://codeberg.org/owner/repo';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe('https://codeberg.org/user/settings/applications');
+    });
+
+    test('handles self-hosted Gitea instance URLs', () => {
+      const repoURL = 'https://git.example.com/owner/repo';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe('https://git.example.com/user/settings/applications');
+    });
+
+    test('handles different repository paths', () => {
+      const repoURL = 'https://gitea.example.com/different-owner/different-repo';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe('https://gitea.example.com/user/settings/applications');
+    });
+
+    test('handles URLs with ports', () => {
+      const repoURL = 'https://gitea.example.com:3000/owner/repo';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe('https://gitea.example.com:3000/user/settings/applications');
     });
   });
 

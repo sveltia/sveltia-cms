@@ -7,7 +7,7 @@ import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/git/gitlab/constants';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
 import gitlabBackend, { init } from '$lib/services/backends/git/gitlab/index';
-import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
+import { getBaseURLs, getPatURL, repository } from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 
@@ -33,6 +33,7 @@ vi.mock('$lib/services/backends/git/gitlab/files', () => ({
 vi.mock('$lib/services/backends/git/gitlab/repository', () => ({
   repository: {},
   getBaseURLs: vi.fn(),
+  getPatURL: vi.fn(),
 }));
 vi.mock('$lib/services/backends/git/gitlab/status', () => ({
   checkStatus: vi.fn(),
@@ -59,6 +60,9 @@ describe('GitLab backend service', () => {
       treeBaseURL: 'https://gitlab.com/owner/repo/-/tree/main',
       blobBaseURL: 'https://gitlab.com/owner/repo/-/blob/main',
     });
+    vi.mocked(getPatURL).mockReturnValue(
+      'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
+    );
 
     // Reset mocked objects
     Object.keys(repository).forEach((key) => delete (/** @type {any} */ (repository)[key]));
@@ -93,6 +97,8 @@ describe('GitLab backend service', () => {
           repo: 'repo',
           branch: 'main',
           repoURL: 'https://gitlab.com/owner/repo',
+          newPatURL:
+            'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
           databaseName: 'gitlab:owner/repo',
           isSelfHosted: false,
         }),
@@ -142,6 +148,8 @@ describe('GitLab backend service', () => {
           repo: 'project',
           branch: 'develop',
           repoURL: 'https://custom-gitlab.com/group/subgroup/project',
+          newPatURL:
+            'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
           databaseName: 'gitlab:group/subgroup/project',
           isSelfHosted: true,
         }),

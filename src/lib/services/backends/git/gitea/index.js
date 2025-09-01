@@ -11,7 +11,7 @@ import {
   DEFAULT_AUTH_ROOT,
 } from '$lib/services/backends/git/gitea/constants';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitea/files';
-import { getBaseURLs, repository } from '$lib/services/backends/git/gitea/repository';
+import { getBaseURLs, getPatURL, repository } from '$lib/services/backends/git/gitea/repository';
 import { apiConfig } from '$lib/services/backends/git/shared/api';
 import { getRepoURL } from '$lib/services/backends/git/shared/repository';
 import { siteConfig } from '$lib/services/config';
@@ -57,6 +57,7 @@ export const init = () => {
       repo,
       branch,
       repoURL,
+      newPatURL: getPatURL(repoURL),
       databaseName: `${BACKEND_NAME}:${repoPath}`,
       isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),

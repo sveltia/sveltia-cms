@@ -16,6 +16,24 @@ import { user } from '$lib/services/user';
 export const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 
 /**
+ * Get the URL of the page for creating a new Personal Access Token (PAT) on GitHub.
+ * @param {string} repoURL Repository URL, e.g. `https://github.com/owner/repo`.
+ * @returns {string} URL to create a new PAT.
+ * @see https://github.blog/changelog/2025-08-26-template-urls-for-fine-grained-pats-and-updated-permissions-ui/
+ * @see https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+ */
+export const getPatURL = (repoURL) => {
+  const { origin } = new URL(repoURL);
+
+  const params = new URLSearchParams({
+    name: 'Sveltia CMS',
+    contents: 'write',
+  });
+
+  return `${origin}/settings/personal-access-tokens/new?${params}`;
+};
+
+/**
  * Generate base URLs for accessing the repository’s resources.
  * @param {string} repoURL The base URL of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in

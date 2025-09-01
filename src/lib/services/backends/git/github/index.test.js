@@ -9,7 +9,7 @@ import {
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
 } from '$lib/services/backends/git/github/constants';
-import { repository } from '$lib/services/backends/git/github/repository';
+import { getPatURL, repository } from '$lib/services/backends/git/github/repository';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 
 // Mock dependencies
@@ -47,6 +47,7 @@ vi.mock('$lib/services/backends/git/github/files', () => ({
 vi.mock('$lib/services/backends/git/github/repository', () => ({
   repository: {},
   getBaseURLs: vi.fn(() => ({})),
+  getPatURL: vi.fn(),
 }));
 vi.mock('$lib/services/backends/git/github/status', () => ({
   checkStatus: vi.fn(),
@@ -62,6 +63,10 @@ describe('GitHub backend service', () => {
     vi.clearAllMocks();
     // Mock Object.assign used in the init function
     vi.spyOn(Object, 'assign').mockImplementation(() => ({}));
+    // Mock getPatURL
+    vi.mocked(getPatURL).mockReturnValue(
+      'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
+    );
   });
 
   test('exports correct service structure', () => {
@@ -123,6 +128,8 @@ describe('GitHub backend service', () => {
           repo: 'repo',
           branch: 'main',
           repoURL: 'https://github.com/owner/repo',
+          newPatURL:
+            'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
           databaseName: `${BACKEND_NAME}:owner/repo`,
           isSelfHosted: false,
         }),
@@ -182,6 +189,8 @@ describe('GitHub backend service', () => {
           repo: 'repo',
           branch: 'develop',
           repoURL: 'https://github.example.com/owner/repo',
+          newPatURL:
+            'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
           databaseName: `${BACKEND_NAME}:owner/repo`,
           isSelfHosted: true,
         }),
