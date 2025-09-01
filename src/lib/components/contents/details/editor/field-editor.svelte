@@ -186,8 +186,6 @@
 
 {#if $entryDraft && canEdit && widgetName !== 'hidden'}
   <FieldEditorGroup
-    role="group"
-    class="field"
     aria-label={$_('x_field', { values: { field: fieldLabel } })}
     data-widget={widgetName}
     data-key-path={keyPath}
