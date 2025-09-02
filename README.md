@@ -617,7 +617,7 @@ However, 100% feature parity is never planned, and some features are still missi
   - [Relation](https://decapcms.org/docs/widgets/#relation) widget: `displayFields`, `searchFields`, `valueField`
   - Note: Some other camel case options, including Color widget options, are not deprecated.
 - The deprecated Date widget: It was removed from Decap CMS 3.0 and Sveltia CMS 0.10. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
-- The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality powered by [Prism](https://prismjs.com/), which will soon be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
+- The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality powered by [Prism](https://prismjs.com/), which is slated to be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
 - An absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
