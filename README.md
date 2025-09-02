@@ -1796,7 +1796,7 @@ Due early 2026
 
 ## Trivia
 
-- The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. There was also an [attempt](https://github.com/decaporg/decap-cms/issues/328) to replace React with Preact. And now we are completely rewriting it in Svelte. So this is effectively the third time the application has gone through a framework migration. One more thing: We may migrate to [Ripple](https://www.ripplejs.com/) in the future if it looks promising.
+- The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. There was also an [attempt](https://github.com/decaporg/decap-cms/issues/328) to replace React with Preact. Now we have completely rewritten it in Svelte 4 and then Svelte 5. So this is effectively the third/fourth time the application has gone through a framework migration. One more thing: We may migrate to [Ripple](https://www.ripplejs.com/) in the future if it looks promising.
 - Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for improved DX, but also for our rapid application development.
 
 ## Related Links
