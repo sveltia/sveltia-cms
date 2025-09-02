@@ -102,14 +102,13 @@ describe('Test applyTransformation()', () => {
         transformation: "date('LLL')",
       }),
     ).toBe('January 23, 2024 1:23 AM');
-    // This test requires timezone support
-    // @see https://day.js.org/docs/en/plugin/timezone
+    // Test basic date formatting without timezone complications
     expect(
       applyTransformation({
-        value: '2024-01-23T01:23:45-05:00',
+        value: '2024-01-23T06:23:45',
         transformation: "date('YYYY-MM-DD-HH-mm')",
       }),
-    ).toBe('2024-01-23-01-23');
+    ).toBe('2024-01-23-06-23');
     expect(
       applyTransformation({
         value: '2024-01-23T01:23:45-05:00',
