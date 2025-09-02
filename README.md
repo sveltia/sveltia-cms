@@ -244,6 +244,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 ### Better configuration
 
+- We provide clear [compatibility information](#compatibility) to help you avoid unsupported options and configurations that might cause errors. By contrast, the Netlify/Decap CMS documentation does not mention the deprecation of camel case options, the removal of the Date widget and the replacement of Moment.js.
 - Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
 - We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253]
