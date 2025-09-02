@@ -1,5 +1,8 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import moment from 'moment';
+import dayjs from 'dayjs';
+import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
+import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
+import dayjsUTC from 'dayjs/plugin/utc';
 
 import { getCanonicalLocale } from '$lib/services/contents/i18n';
 import {
@@ -13,6 +16,10 @@ import {
  * @import { DateTimeFieldNormalizedProps, InternalLocaleCode } from '$lib/types/private';
  * @import { DateTimeField } from '$lib/types/public';
  */
+
+dayjs.extend(dayjsCustomParseFormat);
+dayjs.extend(dayjsLocalizedFormat);
+dayjs.extend(dayjsUTC);
 
 /**
  * Parse the DateTime field configuration and return as normalized format.
@@ -53,7 +60,7 @@ export const getDate = (currentValue, fieldConfig) => {
 
   try {
     if (format) {
-      return (utc ? moment.utc : moment)(currentValue, format).toDate();
+      return (utc ? dayjs.utc : dayjs)(currentValue, format).toDate();
     }
 
     if (timeOnly) {
@@ -123,9 +130,9 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
 
   try {
     if (format) {
-      const result = (utc ? moment.utc : moment)(inputValue, inputFormat).format(format);
+      const result = (utc ? dayjs.utc : dayjs)(inputValue, inputFormat).format(format);
 
-      // Handle `moment.js` inconsistency where `Z` token might output `+00:00` instead of `Z`
+      // Handle `day.js` inconsistency where `Z` token might output `+00:00` instead of `Z`
       if (format.includes('Z') && result.endsWith('+00:00')) {
         return result.replace('+00:00', 'Z');
       }
@@ -232,7 +239,7 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
   if (format) {
     try {
       // Parse and reformat the value because it could be saved in a wrong format
-      return (utc ? moment.utc : moment)(currentValue, format).format(format);
+      return (utc ? dayjs.utc : dayjs)(currentValue, format).format(format);
     } catch {
       //
     }

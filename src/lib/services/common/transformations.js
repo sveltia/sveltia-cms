@@ -1,5 +1,8 @@
 import { truncate } from '@sveltia/utils/string';
-import moment from 'moment';
+import dayjs from 'dayjs';
+import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
+import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
+import dayjsUTC from 'dayjs/plugin/utc';
 
 import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
 
@@ -29,6 +32,10 @@ import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/he
  * @property {string} max The maximum length of the string.
  * @property {string} [ellipsis] The string to append if truncation occurs.
  */
+
+dayjs.extend(dayjsCustomParseFormat);
+dayjs.extend(dayjsLocalizedFormat);
+dayjs.extend(dayjsUTC);
 
 export const DATE_TRANSFORMATION_REGEX = /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/;
 export const DEFAULT_TRANSFORMATION_REGEX = /^default\('(?<defaultValue>.+?)'\)$/;
@@ -67,7 +74,7 @@ const applyDateTransformation = (value, { format, timeZone }, fieldConfig) => {
     (dateOnly && !!sValue.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
     (dateOnly && !!sValue.match(/T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z$/));
 
-  const date = (useUTC ? moment.utc : moment)(sValue);
+  const date = (useUTC ? dayjs.utc : dayjs)(sValue);
 
   if (date.isValid()) {
     return date.format(format);

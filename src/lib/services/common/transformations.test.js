@@ -1,6 +1,11 @@
+import dayjs from 'dayjs';
+import dayjsTimeZone from 'dayjs/plugin/timezone';
 import { describe, expect, test } from 'vitest';
 
 import { applyTransformation } from '$lib/services/common/transformations';
+
+dayjs.extend(dayjsTimeZone);
+dayjs.tz.setDefault('America/New_York');
 
 describe('Test applyTransformation()', () => {
   test('upper/lower', () => {
@@ -97,14 +102,14 @@ describe('Test applyTransformation()', () => {
         transformation: "date('LLL')",
       }),
     ).toBe('January 23, 2024 1:23 AM');
-    // @todo Fix the test that depends on the computer’s time zone. We could use `moment-timezone`
-    // but will soon migrate to Day.js
-    // expect(
-    //   applyTransformation({
-    //     value: '2024-01-23T01:23:45-05:00',
-    //     transformation: "date('YYYY-MM-DD-HH-mm')",
-    //   }),
-    // ).toBe('2024-01-23-01-23');
+    // This test requires timezone support
+    // @see https://day.js.org/docs/en/plugin/timezone
+    expect(
+      applyTransformation({
+        value: '2024-01-23T01:23:45-05:00',
+        transformation: "date('YYYY-MM-DD-HH-mm')",
+      }),
+    ).toBe('2024-01-23-01-23');
     expect(
       applyTransformation({
         value: '2024-01-23T01:23:45-05:00',

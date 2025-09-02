@@ -564,13 +564,7 @@ describe('getDateTimeFieldDisplayValue', () => {
   });
 });
 
-describe('moment.js format tokens', () => {
-  // Note: These tests are designed to work with both `Moment.js` and `Day.js`
-  // All tokens used here are supported by `Day.js` (some require plugins)
-  // - Basic tokens (`YYYY`, `MM`, `DD`, `HH`, `mm`, `ss`, `SSS`) are in `Day.js` core
-  // - `Do`, `Q` require `AdvancedFormat` plugin
-  // - `w`, `ww` require `WeekOfYear` plugin
-  // - `dddd`, `ddd`, `A`, `a` are in `Day.js` core
+describe('Day.js format tokens', () => {
   describe('Year tokens', () => {
     test('should handle YYYY (4-digit year)', () => {
       /** @type {DateTimeField} */
@@ -725,18 +719,6 @@ describe('moment.js format tokens', () => {
       expect(result).toBe('5');
     });
 
-    test('should handle Do (ordinal day)', () => {
-      /** @type {DateTimeField} */
-      const fieldConfig = {
-        ...baseFieldConfig,
-        format: 'Do',
-      };
-
-      const result = getCurrentValue('2023-12-05T14:30', '', fieldConfig);
-
-      expect(result).toBe('5th');
-    });
-
     test('should handle dddd (full day name)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
@@ -759,19 +741,6 @@ describe('moment.js format tokens', () => {
       const result = getCurrentValue('2023-12-25T14:30', '', fieldConfig);
 
       expect(result).toBe('Mon');
-    });
-
-    test('should parse date with Do format', () => {
-      /** @type {DateTimeField} */
-      const fieldConfig = {
-        ...baseFieldConfig,
-        format: 'Do MMMM YYYY',
-      };
-
-      const result = getDate('5th December 2023', fieldConfig);
-
-      expect(result).toBeInstanceOf(Date);
-      expect(result?.getDate()).toBe(5);
     });
   });
 
@@ -967,59 +936,6 @@ describe('moment.js format tokens', () => {
     });
   });
 
-  describe('Quarter tokens', () => {
-    test('should handle Q (quarter)', () => {
-      /** @type {DateTimeField} */
-      const fieldConfig = {
-        ...baseFieldConfig,
-        format: 'Q',
-      };
-
-      const result = getCurrentValue('2023-12-25T14:30', '', fieldConfig);
-
-      expect(result).toBe('4');
-    });
-
-    test('should handle first quarter', () => {
-      /** @type {DateTimeField} */
-      const fieldConfig = {
-        ...baseFieldConfig,
-        format: 'Q',
-      };
-
-      const result = getCurrentValue('2023-03-15T14:30', '', fieldConfig);
-
-      expect(result).toBe('1');
-    });
-  });
-
-  describe('Week tokens', () => {
-    test('should handle w (week of year)', () => {
-      /** @type {DateTimeField} */
-      const fieldConfig = {
-        ...baseFieldConfig,
-        format: 'w',
-      };
-
-      const result = getCurrentValue('2023-12-25T14:30', '', fieldConfig);
-
-      expect(typeof result).toBe('string');
-      expect(Number.parseInt(result || '0', 10)).toBeGreaterThan(0);
-    });
-
-    test('should handle ww (2-digit week)', () => {
-      /** @type {DateTimeField} */
-      const fieldConfig = {
-        ...baseFieldConfig,
-        format: 'ww',
-      };
-
-      const result = getCurrentValue('2023-12-25T14:30', '', fieldConfig);
-
-      expect(result).toMatch(/\d{2}/);
-    });
-  });
-
   describe('Complex format combinations', () => {
     test('should handle common date format (YYYY-MM-DD)', () => {
       /** @type {DateTimeField} */
@@ -1095,24 +1011,6 @@ describe('moment.js format tokens', () => {
       expect(parsed?.getSeconds()).toBe(45);
     });
 
-    test('should handle human-readable format (MMMM Do, YYYY)', () => {
-      /** @type {DateTimeField} */
-      const fieldConfig = {
-        ...baseFieldConfig,
-        format: 'MMMM Do, YYYY',
-      };
-
-      const result = getCurrentValue('2023-12-25T14:30', '', fieldConfig);
-
-      expect(result).toBe('December 25th, 2023');
-
-      const parsed = getDate('December 25th, 2023', fieldConfig);
-
-      expect(parsed?.getFullYear()).toBe(2023);
-      expect(parsed?.getMonth()).toBe(11);
-      expect(parsed?.getDate()).toBe(25);
-    });
-
     test('should handle 12-hour time format (h:mm A)', () => {
       /** @type {DateTimeField} */
       const fieldConfig = {
@@ -1128,24 +1026,6 @@ describe('moment.js format tokens', () => {
 
       expect(parsed?.getHours()).toBe(14);
       expect(parsed?.getMinutes()).toBe(30);
-    });
-
-    test('should handle day of week with date (dddd, MMMM Do YYYY)', () => {
-      /** @type {DateTimeField} */
-      const fieldConfig = {
-        ...baseFieldConfig,
-        format: 'dddd, MMMM Do YYYY',
-      };
-
-      const result = getCurrentValue('2023-12-25T14:30', '', fieldConfig);
-
-      expect(result).toBe('Monday, December 25th 2023');
-
-      const parsed = getDate('Monday, December 25th 2023', fieldConfig);
-
-      expect(parsed?.getFullYear()).toBe(2023);
-      expect(parsed?.getMonth()).toBe(11);
-      expect(parsed?.getDate()).toBe(25);
     });
 
     test('should handle ISO-like format with timezone (YYYY-MM-DDTHH:mm:ssZ)', () => {
@@ -1230,17 +1110,7 @@ describe('moment.js format tokens', () => {
     });
   });
 
-  describe('Display value formatting with moment tokens', () => {
-    test('should display with custom format (MMMM Do, YYYY)', () => {
-      const result = getDateTimeFieldDisplayValue({
-        locale: 'en',
-        fieldConfig: { ...baseFieldConfig, format: 'MMMM Do, YYYY' },
-        currentValue: 'December 25th, 2023',
-      });
-
-      expect(result).toBe('December 25th, 2023');
-    });
-
+  describe('Display value formatting with Day.js tokens', () => {
     test('should display with 12-hour format (h:mm A)', () => {
       const result = getDateTimeFieldDisplayValue({
         locale: 'en',

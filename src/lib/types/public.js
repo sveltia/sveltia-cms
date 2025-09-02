@@ -385,14 +385,14 @@
  * @property {'datetime'} widget Widget name.
  * @property {string} [default] Default value. Accepts a date/time string that matches the `format`,
  * or `{{now}}` to populate the current date/time. Default: empty string.
- * @property {string} [format] Storage format written in [Moment.js
- * tokens](https://momentjs.com/docs/#/displaying/format/). Default: ISO 8601 format.
- * @property {string | boolean} [date_format] Date storage format written in [Moment.js
- * tokens](https://momentjs.com/docs/#/displaying/format/) if the value is a string and the `format`
+ * @property {string} [format] Storage format written in [Day.js
+ * tokens](https://day.js.org/docs/en/display/format). Default: ISO 8601 format.
+ * @property {string | boolean} [date_format] Date storage format written in [Day.js
+ * tokens](https://day.js.org/docs/en/display/format) if the value is a string and the `format`
  * option is not defined. If `true`, ISO 8601 format is used unless the `format` option is defined.
  * If `false`, date input/output is disabled.
- * @property {string | boolean} [time_format] Time storage format written in [Moment.js
- * tokens](https://momentjs.com/docs/#/displaying/format/) if the value is a string and the `format`
+ * @property {string | boolean} [time_format] Time storage format written in [Day.js
+ * tokens](https://day.js.org/docs/en/display/format) if the value is a string and the `format`
  * option is not defined. If `true`, ISO 8601 format is used unless the `format` option is defined.
  * If `false`, time input/output is disabled.
  * @property {boolean} [picker_utc] Whether to make the date input/output UTC. Default: `false`.

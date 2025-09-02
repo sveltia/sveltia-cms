@@ -1,5 +1,8 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import moment from 'moment';
+import dayjs from 'dayjs';
+import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
+import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
+import dayjsUTC from 'dayjs/plugin/utc';
 import { get } from 'svelte/store';
 
 import { backend } from '$lib/services/backends';
@@ -19,6 +22,10 @@ import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/coll
  * } from '$lib/types/private';
  * @import { DateTimeField, Field } from '$lib/types/public';
  */
+
+dayjs.extend(dayjsCustomParseFormat);
+dayjs.extend(dayjsLocalizedFormat);
+dayjs.extend(dayjsUTC);
 
 /**
  * Regular expression to match date and time template placeholders in entry file path templates.
@@ -58,7 +65,7 @@ export const extractDateTime = ({ dateFieldName, fields, content }) => {
   const { format, picker_utc: utc = false } = /** @type {DateTimeField} */ (fieldConfig);
 
   return getDateTimeParts({
-    date: (utc ? moment.utc : moment)(fieldValue, format).toDate(),
+    date: (utc ? dayjs.utc : dayjs)(fieldValue, format).toDate(),
     timeZone: utc ? 'UTC' : undefined,
   });
 };
