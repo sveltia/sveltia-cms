@@ -78,7 +78,7 @@ export const strings = {
   sign_in_using_pat_title: 'Sign In Using Personal Access Token',
   sign_in_using_pat_description:
     'Enter your token below. It must have read/write access to the repository content.',
-  sign_in_using_pat_link: 'You can generate a token on <a>{service}’s user settings page</a>.',
+  sign_in_using_pat_link: 'You can generate a token on the <a>{service} user settings page</a>.',
   personal_access_token: 'Personal Access Token',
   authorizing: 'Authorizing…',
   signing_in: 'Signing in…',

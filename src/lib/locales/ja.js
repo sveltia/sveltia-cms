@@ -78,7 +78,7 @@ export const strings = {
   sign_in_using_pat_title: '個人用アクセストークンでログイン',
   sign_in_using_pat_description:
     '以下にトークンを入力してください。レポジトリコンテンツへの読み取り・書き込みアクセスが必要です。',
-  sign_in_using_pat_link: '<a>{service} のユーザー設定ページ</a> でトークンを生成できます。',
+  sign_in_using_pat_link: '<a>{service} ユーザー設定ページ</a> でトークンを生成できます。',
   personal_access_token: '個人用アクセストークン',
   authorizing: '認証中…',
   signing_in: 'ログイン中…',
