@@ -5,11 +5,8 @@ import { flatten, unflatten } from 'flat';
  * @param {RegExp} pattern Pattern.
  * @returns {boolean} Result.
  */
-export const isMultiLinePattern = (pattern) =>
-  pattern.multiline ||
-  pattern.dotAll ||
-  pattern.source.includes('[\\S\\s]') ||
-  pattern.source.includes('[\\s\\S]');
+export const isMultiLinePattern = ({ multiline, dotAll, source }) =>
+  multiline || dotAll || source.includes('[\\s\\S]') || source.includes('[\\S\\s]');
 
 /**
  * Normalize properties by removing internal properties.
