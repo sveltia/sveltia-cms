@@ -1,3 +1,5 @@
+import createClass from 'create-react-class';
+import { createElement } from 'react';
 import { mount } from 'svelte';
 
 import { customPreviewStyleRegistry } from '$lib/services/contents/editor';
@@ -204,6 +206,13 @@ export { init };
 
 window.CMS = CMS;
 window.initCMS = init;
+
+// Expose React APIs for custom widgets, custom preview templates and custom editor components
+// @see https://decapcms.org/docs/custom-widgets/
+// @see https://decapcms.org/docs/customization/
+window.createClass = createClass;
+window.createElement = createElement;
+window.h = createElement;
 
 // Automatically initialize the CMS if manual initialization is not requested AND the script is NOT
 // a module; We can’t just use `document.currentScript` for module detection because the earlier

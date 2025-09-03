@@ -3,6 +3,10 @@ interface Window {
   CMS_MANUAL_INIT?: boolean;
   initCMS: Function;
   showDirectoryPicker: Function;
+  // React
+  createClass: Function;
+  createElement: Function;
+  h: Function;
 }
 
 interface Navigator {
