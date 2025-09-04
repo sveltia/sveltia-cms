@@ -44,7 +44,7 @@ export const getYouTubeEmbedURL = (string) => {
     if (params.get('list')) {
       params.delete('v');
       params.set('listType', 'playlist');
-      src += `?${params.toString()}`;
+      src += `?${params}`;
     }
 
     return src;

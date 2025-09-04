@@ -154,7 +154,7 @@ export const initServerSideAuth = async ({ backendName, siteDomain, authURL, sco
 
   return authorize({
     backendName,
-    authURL: `${authURL}?${params.toString()}`,
+    authURL: `${authURL}?${params}`,
   });
 };
 
@@ -209,7 +209,7 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
   await LocalStorage.set('sveltia-cms.auth', {
     csrfToken,
     codeVerifier,
-    realAuthURL: `${authURL}?${params.toString()}`,
+    realAuthURL: `${authURL}?${params}`,
   });
 
   // Store the user info only with the backend name, so the automatic sign-in flow that triggers

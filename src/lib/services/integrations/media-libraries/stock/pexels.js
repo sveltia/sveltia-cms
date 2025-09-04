@@ -78,7 +78,7 @@ const search = async (query, { apiKey }) => {
         }),
       );
 
-      const response = await fetch(`${ENDPOINT}/search?${params.toString()}`, { headers });
+      const response = await fetch(`${ENDPOINT}/search?${params}`, { headers });
 
       if (!response.ok) {
         return Promise.reject();
@@ -102,7 +102,7 @@ const search = async (query, { apiKey }) => {
       }),
     );
 
-    const response = await fetch(`${ENDPOINT}/curated?${params.toString()}`, { headers });
+    const response = await fetch(`${ENDPOINT}/curated?${params}`, { headers });
 
     if (!response.ok) {
       return Promise.reject();

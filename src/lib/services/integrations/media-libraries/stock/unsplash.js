@@ -160,7 +160,7 @@ const search = async (query, { apiKey }) => {
         }),
       );
 
-      const response = await fetch(`${ENDPOINT}/search/photos?${params.toString()}`, { headers });
+      const response = await fetch(`${ENDPOINT}/search/photos?${params}`, { headers });
 
       if (!response.ok) {
         return Promise.reject();
@@ -184,7 +184,7 @@ const search = async (query, { apiKey }) => {
       }),
     );
 
-    const response = await fetch(`${ENDPOINT}/photos?${params.toString()}`, { headers });
+    const response = await fetch(`${ENDPOINT}/photos?${params}`, { headers });
 
     if (!response.ok) {
       return Promise.reject();

@@ -64,7 +64,7 @@ const search = async (query, { apiKey }) => {
     }),
   );
 
-  const response = await fetch(`${ENDPOINT}/?${params.toString()}`);
+  const response = await fetch(`${ENDPOINT}/?${params}`);
 
   if (!response.ok) {
     return Promise.reject();

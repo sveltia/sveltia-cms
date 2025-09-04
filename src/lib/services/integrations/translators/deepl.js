@@ -172,7 +172,7 @@ const translate = async (texts, { sourceLocale, targetLocale, apiKey }) => {
   ]);
 
   const hostname = apiKey.endsWith(':fx') ? 'api-free.deepl.com' : 'api.deepl.com';
-  const url = `https://${hostname}/v2/translate?${params.toString()}`;
+  const url = `https://${hostname}/v2/translate?${params}`;
 
   const { translations } = /** @type {{ translations: { text: string }[] }} */ (
     await fetch(url).then((r) => r.json())
