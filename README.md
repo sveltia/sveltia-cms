@@ -1150,9 +1150,16 @@ Sveltia CMS comes with a handy translation API integration so that you can trans
 
 You can also provide your API keys in the Settings dialog or change the default translation service.
 
-If you don’t want some text to be translated, use the HTML [`translate`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/translate) attribute or [`notranslate`](https://developers.google.com/search/blog/2008/10/helping-you-break-language-barrier) class, e.g. `<div translate="no">...</div>` or `<span class="notranslate">...</span>`. For Anthropic and OpenAI, you can also use the `notranslate` comment to exclude specific parts of Markdown content from translation, e.g. `<!-- notranslate -->...<!-- /notranslate -->`.
-
 Note that the Translation button on the pane header only translates empty fields, while in-field Translation buttons override any filled text.
+
+If you don’t want some text to be translated, use the HTML [`translate`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/translate) attribute or [`notranslate`](https://developers.google.com/search/blog/2008/10/helping-you-break-language-barrier) class. For Anthropic and OpenAI, you can also use the `notranslate` comment to exclude specific parts of Markdown content from translation:
+
+```html
+<div translate="no">...</div>
+<span class="notranslate">...</span>
+<!-- notranslate -->...<!-- /notranslate -->
+{/* notranslate */}...{/* /notranslate */}
+```
 
 Earlier versions of Sveltia CMS included DeepL integration, but it has been disabled [due to an API limitation](https://github.com/sveltia/sveltia-cms/issues/437). More translation services will be added in the future.
 
