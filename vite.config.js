@@ -69,6 +69,7 @@ const copyPackageFiles = () => ({
 /**
  * Generate TypeScript type declaration files from JSDoc comments. This produces `main.d.ts` and
  * `types/public.d.ts`.
+ * @see https://www.typescriptlang.org/docs/handbook/declaration-files/dts-from-js.html
  */
 const generateTypes = async () => {
   const command =
@@ -91,8 +92,9 @@ const generateTypes = async () => {
  * Generate JSON schema for the Sveltia CMS site configuration from TypeScript types. This schema is
  * used to validate the `config.yml` file within VS Code and other tools that support JSON schema
  * validation.
- * @see https://www.schemastore.org/netlify.json
  * @see https://github.com/vega/ts-json-schema-generator
+ * @see https://www.schemastore.org/netlify.json - Legacy Netlify CMS config schema
+ * @see https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json - Our published schema
  */
 const generateSchema = async () => {
   const config = {
