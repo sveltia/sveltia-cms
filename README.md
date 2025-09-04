@@ -807,27 +807,32 @@ You can also generate a personal access token (PAT) on GitHub or GitLab, and use
 
 Sveltia CMS provides a full [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the site configuration. The schema is generated from the source and always up to date with the latest CMS version.
 
-If you use VS Code, you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following to your project’s [VS Code settings file](https://code.visualstudio.com/docs/configure/settings#_settings-json-file) at `.vscode/settings.json`:
+If you use VS Code, you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following line to the top of `config.yml`:
 
-```json
-{
-  "yaml.schemas": {
-    "https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json": ["/static/admin/config.yml"]
-  }
-}
+```yaml
+# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
 ```
 
-If your configuration is in JSON format (see the [next section](#providing-a-json-configuration-file)), no extension is needed. Just add the following to the same VS Code settings file:
+If your configuration is in JSON format (see the [next section](#providing-a-json-configuration-file)), no extension is needed. Just add the following line to the top of `config.json`, within the curly braces:
 
 ```json
-{
-  "json.schemas": [
-    {
-      "fileMatch": ["/static/admin/config.json"],
-      "url": "https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json"
-    }
-  ]
-}
+"$schema": "https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json",
+```
+
+Alternatively, you can add the following to your project’s [VS Code settings file](https://code.visualstudio.com/docs/configure/settings#_settings-json-file) at `.vscode/settings.json`, within the outer curly braces:
+
+```json
+// For YAML config file
+"yaml.schemas": {
+  "https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json": ["/static/admin/config.yml"]
+},
+// For JSON config file
+"json.schemas": [
+  {
+    "fileMatch": ["/static/admin/config.json"],
+    "url": "https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json"
+  }
+],
 ```
 
 The configuration file location varies by framework and project structure, so adjust the path accordingly. For example, if you use Astro, the file is typically located in the `/public/admin/` directory.
