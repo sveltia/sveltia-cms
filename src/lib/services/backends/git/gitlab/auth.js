@@ -15,6 +15,23 @@ import { siteConfig } from '$lib/services/config';
  */
 
 /**
+ * Get the URL of the page for creating a new Personal Access Token (PAT) on GitLab.
+ * @param {string} repoURL Repository URL, e.g. `https://gitlab.com/owner/repo`.
+ * @returns {string} URL to create a new PAT.
+ * @see https://docs.gitlab.com/user/profile/personal_access_tokens/
+ */
+export const getPatURL = (repoURL) => {
+  const { origin } = new URL(repoURL);
+
+  const params = new URLSearchParams({
+    name: 'Sveltia CMS',
+    scopes: 'api,read_user',
+  });
+
+  return `${origin}/-/user_settings/personal_access_tokens?${params}`;
+};
+
+/**
  * Retrieve the repository configuration and sign in with GitLab REST API.
  * @param {SignInOptions} options Options.
  * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or

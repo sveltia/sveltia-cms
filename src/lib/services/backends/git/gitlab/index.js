@@ -1,7 +1,7 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
-import { signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
+import { getPatURL, signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import {
   BACKEND_LABEL,
@@ -11,7 +11,7 @@ import {
   DEFAULT_AUTH_ROOT,
 } from '$lib/services/backends/git/gitlab/constants';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
-import { getBaseURLs, getPatURL, repository } from '$lib/services/backends/git/gitlab/repository';
+import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 import { getRepoURL } from '$lib/services/backends/git/shared/repository';

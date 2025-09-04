@@ -11,6 +11,17 @@ import {
  */
 
 /**
+ * Get the URL of the page for creating a new Personal Access Token (PAT) on Gitea/Forgejo.
+ * @param {string} repoURL Repository URL, e.g. `https://gitea.com/owner/repo`.
+ * @returns {string} URL to create a new PAT.
+ */
+export const getPatURL = (repoURL) => {
+  const { origin } = new URL(repoURL);
+
+  return `${origin}/user/settings/applications`;
+};
+
+/**
  * Retrieve the repository configuration and sign in with the Gitea/Forgejo REST API.
  * @param {SignInOptions} options Options.
  * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or

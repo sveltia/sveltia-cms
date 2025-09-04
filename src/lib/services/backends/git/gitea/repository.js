@@ -28,17 +28,6 @@ export const resetRepositoryInfoCache = () => {
 };
 
 /**
- * Get the URL of the page for creating a new Personal Access Token (PAT) on Gitea/Forgejo.
- * @param {string} repoURL Repository URL, e.g. `https://gitea.com/owner/repo`.
- * @returns {string} URL to create a new PAT.
- */
-export const getPatURL = (repoURL) => {
-  const { origin } = new URL(repoURL);
-
-  return `${origin}/user/settings/applications`;
-};
-
-/**
  * Generate base URLs for accessing the repository’s resources.
  * @param {string} repoURL The base URL of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in

@@ -2,6 +2,7 @@ import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import githubBackend, { init } from '$lib/services/backends/git/github';
+import { getPatURL } from '$lib/services/backends/git/github/auth';
 import {
   BACKEND_LABEL,
   BACKEND_NAME,
@@ -9,7 +10,7 @@ import {
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
 } from '$lib/services/backends/git/github/constants';
-import { getPatURL, repository } from '$lib/services/backends/git/github/repository';
+import { repository } from '$lib/services/backends/git/github/repository';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 
 // Mock dependencies
@@ -31,6 +32,7 @@ vi.mock('svelte-i18n', () => ({
   _: { subscribe: vi.fn() },
 }));
 vi.mock('$lib/services/backends/git/github/auth', () => ({
+  getPatURL: vi.fn(),
   signIn: vi.fn(),
   signOut: vi.fn(),
 }));
@@ -47,7 +49,6 @@ vi.mock('$lib/services/backends/git/github/files', () => ({
 vi.mock('$lib/services/backends/git/github/repository', () => ({
   repository: {},
   getBaseURLs: vi.fn(() => ({})),
-  getPatURL: vi.fn(),
 }));
 vi.mock('$lib/services/backends/git/github/status', () => ({
   checkStatus: vi.fn(),

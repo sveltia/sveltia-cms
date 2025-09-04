@@ -5,7 +5,7 @@ import {
   normalizeGraphQLBaseURL,
   normalizeRestBaseURL,
 } from '$lib/services/backends/git/github/api';
-import { signIn, signOut } from '$lib/services/backends/git/github/auth';
+import { getPatURL, signIn, signOut } from '$lib/services/backends/git/github/auth';
 import { commitChanges } from '$lib/services/backends/git/github/commits';
 import {
   BACKEND_LABEL,
@@ -16,7 +16,7 @@ import {
 } from '$lib/services/backends/git/github/constants';
 import { triggerDeployment } from '$lib/services/backends/git/github/deployment';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/github/files';
-import { getBaseURLs, getPatURL, repository } from '$lib/services/backends/git/github/repository';
+import { getBaseURLs, repository } from '$lib/services/backends/git/github/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/github/status';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 import { getRepoURL } from '$lib/services/backends/git/shared/repository';

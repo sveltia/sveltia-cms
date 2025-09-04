@@ -4,7 +4,6 @@ import {
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
-  getPatURL,
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -75,35 +74,6 @@ describe('GitLab repository service', () => {
         treeBaseURL: repoURL,
         blobBaseURL: '',
       });
-    });
-  });
-
-  describe('getPatURL', () => {
-    test('returns correct GitLab Personal Access Token URL', () => {
-      const repoURL = 'https://gitlab.com/owner/repo';
-      const result = getPatURL(repoURL);
-
-      expect(result).toBe(
-        'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
-      );
-    });
-
-    test('handles GitLab self-hosted instance URLs', () => {
-      const repoURL = 'https://gitlab.example.com/owner/repo';
-      const result = getPatURL(repoURL);
-
-      expect(result).toBe(
-        'https://gitlab.example.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
-      );
-    });
-
-    test('handles different repository paths', () => {
-      const repoURL = 'https://gitlab.com/group/subgroup/project';
-      const result = getPatURL(repoURL);
-
-      expect(result).toBe(
-        'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
-      );
     });
   });
 

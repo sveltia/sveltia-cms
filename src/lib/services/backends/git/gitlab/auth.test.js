@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
+import { getPatURL, signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
 import { getUserProfile } from '$lib/services/backends/git/gitlab/user';
 import {
   handleClientSideAuthPopup,
@@ -44,6 +44,35 @@ describe('GitLab auth service', () => {
         name: '',
       },
       writable: true,
+    });
+  });
+
+  describe('getPatURL', () => {
+    test('returns correct GitLab Personal Access Token URL', () => {
+      const repoURL = 'https://gitlab.com/owner/repo';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe(
+        'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
+      );
+    });
+
+    test('handles GitLab self-hosted instance URLs', () => {
+      const repoURL = 'https://gitlab.example.com/owner/repo';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe(
+        'https://gitlab.example.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
+      );
+    });
+
+    test('handles different repository paths', () => {
+      const repoURL = 'https://gitlab.com/group/subgroup/project';
+      const result = getPatURL(repoURL);
+
+      expect(result).toBe(
+        'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
+      );
     });
   });
 

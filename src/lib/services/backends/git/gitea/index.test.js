@@ -13,6 +13,7 @@ vi.mock('@sveltia/utils/string', () => ({
 }));
 
 vi.mock('$lib/services/backends/git/gitea/auth', () => ({
+  getPatURL: vi.fn(),
   signIn: vi.fn(),
   signOut: vi.fn(),
 }));
@@ -37,7 +38,6 @@ vi.mock('$lib/services/backends/git/gitea/files', () => ({
 vi.mock('$lib/services/backends/git/gitea/repository', () => ({
   repository: {},
   getBaseURLs: vi.fn(() => ({ treeBaseURL: 'tree-url', blobBaseURL: 'blob-url' })),
-  getPatURL: vi.fn(),
 }));
 
 vi.mock('$lib/services/backends/git/shared/api', () => ({
@@ -54,7 +54,7 @@ vi.mock('$lib/services/user/prefs', () => ({
 
 // Import after mocks
 const { init } = await import('./index.js');
-const { getPatURL } = await import('./repository.js');
+const { getPatURL } = await import('./auth.js');
 
 describe('Gitea Index Service', () => {
   beforeEach(() => {
