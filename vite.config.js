@@ -109,6 +109,10 @@ const generateSchema = async () => {
     description: 'Sveltia CMS site configuration file',
   };
 
+  // Allow having the `$schema` property at the top of the config file
+  // https://json-schema.org/understanding-json-schema/keywords
+  schema.definitions.SiteConfig.properties.$schema = { type: 'string', format: 'uri' };
+
   const schemaString = JSON.stringify(schema, null, 2)
     // Remove unnecessary line breaks in `markdownDescription` originally present in JSDoc
     .replace(/\\n/g, ' ')
