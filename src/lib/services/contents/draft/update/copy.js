@@ -38,6 +38,9 @@ const turndownService = new TurndownService({
   codeBlockStyle: 'fenced',
 });
 
+// @ts-ignore Silence a false type error
+turndownService.keep(['span', 'div']);
+
 /**
  * Get a list of fields to be copied or translated from the source locale to the target locale.
  * @param {object} args Arguments.
