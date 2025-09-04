@@ -807,7 +807,7 @@ You can also generate a personal access token (PAT) on GitHub or GitLab, and use
 
 Sveltia CMS provides a full [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the site configuration. The schema is generated from the source and always up to date with the latest CMS version.
 
-If you use VS Code, you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following line to the top of `config.yml`:
+If you use VS Code, you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following comment to the top of `config.yml`:
 
 ```yaml
 # yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
@@ -840,7 +840,7 @@ Alternatively, you can add the following to your project’s [VS Code settings f
 
 The configuration file location varies by framework and project structure, so adjust the path accordingly. For example, if you use Astro, the file is typically located in the `/public/admin/` directory.
 
-If you use another code editor, check its documentation for how to enable JSON schema support for YAML or JSON files. The schema URL is `https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json`.
+If you use another code editor, check its documentation for how to enable JSON schema support for YAML or JSON files.
 
 ### Providing a JSON configuration file
 
