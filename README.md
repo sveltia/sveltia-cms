@@ -826,6 +826,9 @@ Alternatively, you can add the following to your project’s [VS Code settings f
 "yaml.schemas": {
   "https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json": ["/static/admin/config.yml"]
 },
+```
+
+```jsonc
 // For JSON config file
 "json.schemas": [
   {
