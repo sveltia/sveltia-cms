@@ -473,7 +473,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup.[^160] In our editor, bold is 2 asterisks and italic is an underscore.
   - The built-in `image` component can be inserted with a single click.
   - The built-in `image` component allows users to add, edit or remove a link on an image.[^171] To disable this feature, add `linked_images: false` to the Markdown field options.
-  - It’s possible to paste/drop local/remote images into the rich text editor to insert them as expected. Note: Pasting multiple images is [not supported in Firefox](https://bugzilla.mozilla.org/show_bug.cgi?id=864052). In Netlify/Decap CMS, pasting an image may cause the application to crash.
+  - It’s possible to paste/drop local/remote images into the rich text editor to insert them as expected. Note: Pasting multiple images is [not supported in Firefox](https://bugzilla.mozilla.org/show_bug.cgi?id=864052). In Netlify/Decap CMS, pasting an image may cause the application to crash.[^284]
   - The built-in `code-block` component is implemented just like a blockquote. You can simply convert a normal paragraph into a code block instead of adding a component.
   - Code in a code block in the editor can be copied as expected.[^165]
   - Language-annotated code block doesn’t trigger unsaved changes.[^189]
@@ -2400,3 +2400,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^282]: Netlify/Decap CMS [#7579](https://github.com/decaporg/decap-cms/pull/7579)
 
 [^283]: Netlify/Decap CMS [#713](https://github.com/decaporg/decap-cms/issues/713)
+
+[^284]: Netlify/Decap CMS [#7585](https://github.com/decaporg/decap-cms/issues/7585)
