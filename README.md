@@ -1130,7 +1130,15 @@ The configuration for a [file collection](https://decapcms.org/docs/collection-f
 
 ### Translating entry fields with one click
 
-Sveltia CMS comes with a handy translation API integration so that you can translate any text field from another locale without leaving the Content Editor. Currently, Google’s Cloud Translation, Anthropic’s Claude Haiku 3.5 and OpenAI’s GPT-3.5 Turbo are supported. To enable the quick translation feature:
+Sveltia CMS comes with a handy translation API integration so that you can translate any text field from another locale without leaving the Content Editor. Currently, the following services are supported:
+
+- Google’s [Cloud Translation](https://cloud.google.com/translate)
+- Anthropic’s [Claude Haiku 3.5](https://www.anthropic.com/claude/haiku)
+- OpenAI’s [GPT-3.5 Turbo](https://platform.openai.com/docs/models/gpt-3.5-turbo)
+
+Google’s API is very fast and offers a free tier. Other LLMs may produce more natural translations, but they are slower and require a paid plan. Choose the one that best fits your needs.
+
+To enable the quick translation feature:
 
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
 1. Create a new API key for the translation service of your choice:
@@ -1164,7 +1172,7 @@ If you don’t want some text to be translated, use the HTML [`translate`](https
 {/* notranslate */}...{/* /notranslate */}
 ```
 
-Earlier versions of Sveltia CMS included DeepL integration, but it has been disabled [due to an API limitation](https://github.com/sveltia/sveltia-cms/issues/437). More translation services will be added in the future.
+Earlier versions of Sveltia CMS included DeepL integration, but we had to disable it [due to an API limitation](https://github.com/sveltia/sveltia-cms/issues/437). More translation services will be added in the future.
 
 ### Localizing entry slugs
 
@@ -1819,7 +1827,7 @@ Due early 2026
 
 ## Trivia
 
-- The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. There was also an [attempt](https://github.com/decaporg/decap-cms/issues/328) to replace React with Preact. Now we have completely rewritten it in Svelte 4 and then Svelte 5. So this is effectively the third/fourth time the application has gone through a framework migration. One more thing: We may migrate to [Ripple](https://www.ripplejs.com/) in the future if it looks promising.
+- The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. There was also an [attempt](https://github.com/decaporg/decap-cms/issues/328) to replace React with Preact. Now we have completely rebuilt it in Svelte 4 and then in Svelte 5. So this is effectively the third/fourth time the application has gone through a framework migration. One more thing: We may migrate to [Ripple](https://www.ripplejs.com/) in the future if it looks promising.
 - Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for improved DX, but also for our rapid application development.
 
 ## Related Links
