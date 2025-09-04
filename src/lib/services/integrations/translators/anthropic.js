@@ -2,7 +2,7 @@
  * @import { TranslateOptions, TranslationService } from '$lib/types/private';
  */
 
-import { getLocaleLabel } from '$lib/services/contents/i18n';
+import { createTranslationSystemPrompt, createTranslationUserPrompt } from './shared.js';
 
 const serviceId = 'anthropic';
 const serviceLabel = 'Anthropic Claude';
@@ -60,29 +60,10 @@ const translate = async (texts, { sourceLocale, targetLocale, apiKey }) => {
     throw new Error('Target locale is not supported.');
   }
 
-  const sourceLanguageName = getLocaleLabel(sourceLanguage);
-  const targetLanguageName = getLocaleLabel(targetLanguage);
   // Anthropic Messages API endpoint
   const url = 'https://api.anthropic.com/v1/messages';
-
-  const systemPrompt =
-    'You are a professional translator. Translate the given texts from ' +
-    `${sourceLanguageName} to ${targetLanguageName}.
-
-IMPORTANT INSTRUCTIONS:
-- Preserve all markdown formatting (headers, links, bold, italic, code blocks, lists, etc.)
-- Preserve all HTML tags and attributes exactly as they are
-- Maintain the original structure and formatting
-- Do not translate code content within code blocks or inline code
-- Do not translate URLs, email addresses, or technical identifiers
-- Return your response as a valid JSON object with a "translations" array
-- The "translations" array should contain the translated texts in the same order as provided
-
-RESPONSE FORMAT:
-Return a JSON object with this exact structure:
-{"translations": ["translated text 1", "translated text 2", ...]}`;
-
-  const userPrompt = `Translate these texts:\n${JSON.stringify(texts)}`;
+  const systemPrompt = createTranslationSystemPrompt(sourceLanguage, targetLanguage);
+  const userPrompt = createTranslationUserPrompt(texts);
 
   const requestBody = {
     model: 'claude-3-5-haiku-latest',
