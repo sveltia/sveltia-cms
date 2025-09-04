@@ -821,7 +821,7 @@ If your configuration is in JSON format (see the [next section](#providing-a-jso
 
 Alternatively, you can add the following to your project’s [VS Code settings file](https://code.visualstudio.com/docs/configure/settings#_settings-json-file) at `.vscode/settings.json`, within the outer curly braces:
 
-```json
+```jsonc
 // For YAML config file
 "yaml.schemas": {
   "https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json": ["/static/admin/config.yml"]
