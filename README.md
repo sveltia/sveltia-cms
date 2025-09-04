@@ -1148,7 +1148,9 @@ Sveltia CMS comes with a handy translation API integration so that you can trans
 1. Select a translation service from the dropdown menu and paste your API key when prompted.
 1. The field(s) will be automatically translated.
 
-You can also provide your API keys in the Settings dialog.
+You can also provide your API keys in the Settings dialog or change the default translation service.
+
+If you don’t want some text to be translated, use the HTML [`translate`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/translate) attribute or [`notranslate`](https://developers.google.com/search/blog/2008/10/helping-you-break-language-barrier) class, e.g. `<div translate="no">...</div>` or `<span class="notranslate">...</span>`. For Anthropic and OpenAI, you can also use the `notranslate` comment to exclude specific parts of Markdown content from translation, e.g. `<!-- notranslate -->...<!-- /notranslate -->`.
 
 Note that the Translation button on the pane header only translates empty fields, while in-field Translation buttons override any filled text.
 
