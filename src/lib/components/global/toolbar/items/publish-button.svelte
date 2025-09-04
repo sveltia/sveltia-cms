@@ -4,6 +4,7 @@
 
   import { backend, isLastCommitPublished } from '$lib/services/backends';
   import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
+  import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
 
   const { deployHookURL } = $derived($prefs);
@@ -47,6 +48,7 @@
 {#if $skipCIConfigured}
   <Button
     variant="secondary"
+    size={$isSmallScreen ? 'small' : 'medium'}
     label={$_('publish_changes')}
     disabled={!canPublish}
     onclick={() => publish()}

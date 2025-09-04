@@ -4,6 +4,7 @@
   import { _, locale as appLocale } from 'svelte-i18n';
 
   import SingletonOption from '$lib/components/contents/list/singleton-option.svelte';
+  import PublishButton from '$lib/components/global/toolbar/items/publish-button.svelte';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
@@ -20,7 +21,10 @@
 
 <div role="none" class="primary-sidebar">
   {#if $isSmallScreen}
-    <h2>{$_('contents')}</h2>
+    <header>
+      <h2>{$_('contents')}</h2>
+      <PublishButton />
+    </header>
     <QuickSearchBar
       onclick={(event) => {
         event.preventDefault();

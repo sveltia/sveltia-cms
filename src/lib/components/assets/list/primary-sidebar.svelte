@@ -33,7 +33,9 @@
 
 <div role="none" class="primary-sidebar">
   {#if $isSmallScreen}
-    <h2>{$_('assets')}</h2>
+    <header>
+      <h2>{$_('assets')}</h2>
+    </header>
     <QuickSearchBar
       onclick={(event) => {
         event.preventDefault();

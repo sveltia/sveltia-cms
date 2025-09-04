@@ -52,12 +52,18 @@
           background-color: var(--sui-primary-background-color);
         }
 
-        h2 {
+        // Mobile header
+        header {
           display: flex;
           align-items: center;
-          padding: 0 20px;
+          justify-content: space-between;
+          padding: 0 10px;
           height: var(--sui-primary-toolbar-size);
-          font-size: var(--sui-font-size-x-large);
+
+          h2 {
+            padding: 0 10px;
+            font-size: var(--sui-font-size-x-large);
+          }
         }
 
         .sui.search-bar {
