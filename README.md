@@ -1134,7 +1134,7 @@ Sveltia CMS comes with a handy translation API integration so that you can trans
 
 - Google’s [Cloud Translation](https://cloud.google.com/translate)
 - Anthropic’s [Claude Haiku 3.5](https://www.anthropic.com/claude/haiku)
-- OpenAI’s [GPT-3.5 Turbo](https://platform.openai.com/docs/models/gpt-3.5-turbo)
+- OpenAI’s [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini)
 
 Google’s API is very fast and offers a free tier. Other LLMs may produce more natural translations, but they are slower and require a paid plan. Choose the one that best fits your needs.
 
