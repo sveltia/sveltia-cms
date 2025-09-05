@@ -512,7 +512,7 @@ describe('OpenAI Translator Service', () => {
       expect(requestBody.messages[0].content).toContain('markdown formatting');
       expect(requestBody.messages[0].content).toContain('HTML tags');
       expect(requestBody.messages[0].content).toContain('JSON object');
-      expect(requestBody.model).toBe('gpt-3.5-turbo-1106');
+      expect(requestBody.model).toBe('gpt-4o-mini');
       expect(requestBody.temperature).toBe(0.3);
       expect(requestBody.response_format).toEqual({ type: 'json_object' });
     });
