@@ -1847,7 +1847,7 @@ Due early 2026
 
 Sveltia CMS is not a service but a client-side application that runs in your web browser. All content is stored in your Git repository. No content or personal data is sent to any server operated by us.
 
-However, some Git hosting providers, such as GitHub, require server-side authentication. If this applies to you, you will need to use an OAuth application hosted by a third party, such as Netlify or Cloudflare. Alternatively, you can use a personal access token (PAT) instead of OAuth. In both cases, the token is stored in your browser’s local storage, and API requests are made directly between your browser and the Git hosting provider.
+However, GitHub (and GitLab, depending on your configuration) requires server-side authentication. If this applies to you, you will need to use an OAuth application hosted by yourself or a third party, such as Netlify or Cloudflare, to retrieve an access token from GitHub. Alternatively, you can provide a personal access token (PAT) directly on the CMS’s sign-in page. Other Git backends support client-side PKCE authentication. In any case, your token is stored in your browser’s local storage, and API requests are made directly between your browser and the Git hosting provider.
 
 The CMS also integrates with various third-party services, including stock photo providers and translation services. These are “bring your own API key” features that are entirely optional. You provide your own API keys for these services, which are also stored in your browser’s local storage, and API requests are then made directly between your browser and the relevant service providers.
 
