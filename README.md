@@ -1797,6 +1797,7 @@ Due early 2026
     - [Reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
+  - PKCE support for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub
   - and many more (100+ issues and discussions)
 - Enhancements to Sveltia CMS Additions (some may be included in v3.0):
   - Post locking[^166] (like [WordPress](https://codex.wordpress.org/Post_Locking))
@@ -1847,9 +1848,9 @@ Due early 2026
 
 Sveltia CMS is not a service but a client-side application that runs in your web browser. All content is stored in your Git repository. No content or personal data is sent to any server operated by us.
 
-However, GitHub (and GitLab, depending on your configuration) requires server-side authentication. If this applies to you, you will need to use an OAuth application hosted by yourself or a third party, such as Netlify or Cloudflare, to retrieve an access token from GitHub. Alternatively, you can provide a personal access token (PAT) directly on the CMS’s sign-in page. Other Git backends support client-side PKCE authentication. In any case, your token is stored in your browser’s local storage, and API requests are made directly between your browser and the Git hosting provider.
+However, GitHub (and GitLab, depending on your configuration) requires server-side authentication. If this applies to you, you will need to use an OAuth application hosted by yourself or a third party, such as Netlify or Cloudflare, to retrieve an access token from GitHub. Alternatively, you can provide an access token directly on the CMS’s sign-in page. Other Git backends support client-side authentication. In any case, your token is stored in your browser’s local storage, and API requests are made directly between your browser and the Git hosting provider.
 
-The CMS also integrates with various third-party services, including stock photo providers and translation services. These are “bring your own API key” features that are entirely optional. You provide your own API keys for these services, which are also stored in your browser’s local storage, and API requests are then made directly between your browser and the relevant service providers.
+The CMS also integrates with various third-party services, including stock photo providers and translation services. These are “bring your own API key” features that are entirely optional. You provide your own API keys for these services, which are stored in your browser’s local storage, and API requests are then made directly between your browser and the relevant service providers.
 
 As we don’t collect any analytics data either, we don’t have a privacy policy. For third-party services, please refer to their respective privacy policies.
 
@@ -2422,3 +2423,5 @@ This software is provided “as is” without any express or implied warranty. W
 [^283]: Netlify/Decap CMS [#713](https://github.com/decaporg/decap-cms/issues/713)
 
 [^284]: Netlify/Decap CMS [#7585](https://github.com/decaporg/decap-cms/issues/7585)
+
+[^285]: Netlify/Decap CMS [#6597](https://github.com/decaporg/decap-cms/issues/6597)
