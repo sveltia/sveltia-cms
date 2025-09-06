@@ -1,6 +1,3 @@
-import { get } from 'svelte/store';
-import { locale as appLocale } from 'svelte-i18n';
-
 /**
  * @import { InternalI18nOptions, InternalLocaleCode, } from '$lib/types/private';
  * @import { LocaleCode } from '$lib/types/public';
@@ -39,9 +36,7 @@ export const getLocaleLabel = (locale) => {
     return locale;
   }
 
-  const formatter = new Intl.DisplayNames(/** @type {string} */ (get(appLocale)), {
-    type: 'language',
-  });
+  const formatter = new Intl.DisplayNames(canonicalLocale, { type: 'language' });
 
   try {
     return formatter.of(canonicalLocale) ?? locale;
