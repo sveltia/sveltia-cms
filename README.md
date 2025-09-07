@@ -1,10 +1,8 @@
 # Sveltia CMS: Netlify/Decap CMS successor
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. In some simple cases, migration is as easy as a single line of code change, although we are still working on improving compatibility.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, reliable drop-in replacement for Netlify CMS and Decap CMS. While some features are still missing, we have already solved more than 250 issues reported in the Netlify/Decap CMS issue tracker, including many critical bugs.
 
-The free, open source alternative to Netlify/Decap CMS is now in public beta, turbocharged with great UX, performance, i18n support and so many more enhancements.
-
-Welcome to the only Netlify CMS successor you can trust!
+Built from scratch, Sveltia CMS provides an excellent UX, DX, performance and i18n support, as well as numerous other enhancements. The free, open source alternative to Netlify/Decap CMS is now in public beta, and version 1.0 is expected to ship in late 2025.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -174,7 +172,6 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Users can easily manage content on-the-go with mobile and tablet support.[^18][^215]
   - For a smoother experience, we even go beyond responsive design with optimized navigation, floating action buttons, smooth [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions), larger buttons, and other tweaks. We’ll continue to fully optimize the app for small screens and touch devices.
   - If you’re already signed in on your desktop, open the Account menu in the top right corner of the CMS, click Sign In with Mobile, and scan the QR code for passwordless sign-in. Your settings will be automatically copied.
-- Sveltia CMS loads all entries at startup. We don’t support backends that cannot retrieve multiple entries at once. This deliberate design choice improves performance and UX by enabling instant full-text searches, fast and powerful relation fields, and linking between assets and entries.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - Other crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204][^260]
 - We build [our own UI component library](https://github.com/sveltia/sveltia-ui), including custom dialogs, to ensure optimal usability without compromising accessibility.[^277][^196][^205][^206][^207][^208][^209][^210]
@@ -248,9 +245,8 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - We provide clear [compatibility information](#compatibility) to help you avoid unsupported options and configurations that might cause errors. By contrast, the Netlify/Decap CMS documentation does not mention the deprecation of camel case options, the removal of the Date widget and the replacement of Moment.js.
 - Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
-- We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253]
+- We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253] If you use [deprecated options](#deprecations) in a supported code editor, you should receive a warning.
 - Improved TypeScript support: We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
-- [Deprecated options](#deprecations) are clearly marked as such in both the JSON schema and the TypeScript type definitions. If you use these options in a supported code editor, you should receive a warning.
 
 ### Better backend support
 
@@ -632,7 +628,7 @@ The following Netlify/Decap CMS features will not be implemented, primarily due 
 - **Azure and Bitbucket backends**: For performance reasons. We’ll support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
 - **Git Gateway backend**: Also for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative [in the future](#roadmap).
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support [in the future](#roadmap), most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
-- [Gatsby plugin](https://github.com/decaporg/gatsby-plugin-decap-cms): In light of Gatsby’s [decline](https://2024.stateofjs.com/en-US/libraries/meta-frameworks/) and [apparent ending](https://github.com/gatsbyjs/gatsby/discussions/39062), we won’t be investing time in developing a plugin for it. You can still create `index.html` yourself. Note: We don’t support Netlify Identity Widget; the favicon can be specified with the `logo_url` option.
+- [Gatsby plugin](https://github.com/decaporg/gatsby-plugin-decap-cms): In light of Gatsby’s [decline](https://2024.stateofjs.com/en-US/libraries/meta-frameworks/) and [uncertainty](https://github.com/gatsbyjs/gatsby/discussions/39062), we won’t be investing time in developing a plugin for it. You can still create `index.html` yourself. Note: We don’t support Netlify Identity Widget; the favicon can be specified with the `logo_url` option.
 - The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
 - The deprecated Netlify Large Media service: Consider other storage providers.
 - Deprecated camel case configuration options: Use snake case instead, according to the current Decap CMS document.
