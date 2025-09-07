@@ -121,7 +121,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite**, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, no significant improvements made since then
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t use any of their code. This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system.
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t use any part of their code. This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system.
 
 While Sveltia CMS was created to replace legacy Netlify CMS instances, it can also be used as an alternative to other Netlify CMS successors. With its [solid i18n support](#better-i18n-support), we’re hoping our product will eventually be an appearing option for anyone looking for a free headless CMS.
 
@@ -618,7 +618,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
 
-Due to the complexity, we have decided to defer the following features to the 2.0 release due early 2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
+Due to the complexity, we have decided to defer the following features to the 2.0 release due early/mid 2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
 
 - [Editorial workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open authoring](https://decapcms.org/docs/open-authoring/)
@@ -1744,7 +1744,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ## Roadmap
 
-We have a lot of ideas and plans for Sveltia CMS. Here are some highlights. This includes 150+ more issues of Netlify/Decap CMS that we plan to solve, in addition to the 250+ issues we’ve already solved. In total, we aim to solve 400+ issues, as mentioned in the [Project Status](#project-status) section.
+As mentioned in the [Project Status](#project-status) section, we aim to solve 400+ [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) in total over the course of this project. We also have lots of ideas to make Sveltia CMS a great product. Here are some highlights.
 
 ### v1.0
 
@@ -1765,10 +1765,11 @@ Due late 2025
 
 ### v2.0
 
-Due early 2026
+Due early/mid 2026
 
 - Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections, while addressing a number of bugs in their implementations
-- Tackling even more Netlify/Decap CMS issues to bring the total number of issues solved to 300+:
+  - They will probably first be included as beta features in v1.x releases
+- Tackling even more Netlify/Decap CMS issues to bring the total number of issues solved to 300:
   - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
 
@@ -1797,7 +1798,7 @@ Due early 2026
     - [Reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
   - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
-  - PKCE support for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub
+  - PKCE for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub
   - and many more (100+ issues and discussions)
 - Enhancements to Sveltia CMS Additions (some may be included in v3.0):
   - Post locking[^166] (like [WordPress](https://codex.wordpress.org/Post_Locking))
@@ -1827,6 +1828,7 @@ Due early 2026
 - Framework-specific integrations, including a WYSIWYG editor. We will focus on framework-agnostic core features that are essential for succeeding Netlify/Decap CMS and modernizing the platform.
 - Enterprise features. We want to keep Sveltia CMS simple and easy to use for small teams and individual developers.
 - Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
+- Creating the longest README file in the world. 😉
 
 ## Trivia
 
