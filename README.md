@@ -119,7 +119,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite**, started in November 2022, first appeared on GitHub in March 2023
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnant, no significant improvements made since then
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t use any part of their code. This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system.
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t reuse any part of their code. This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system.
 
 While Sveltia CMS was created to replace legacy Netlify CMS instances, it can also be used as an alternative to other Netlify CMS successors. With its [solid i18n support](#better-i18n-support), we’re hoping our product will eventually be an appearing option for anyone looking for a free headless CMS.
 
@@ -164,7 +164,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 ### Better UX
 
-- Created and actively maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design, marketing and problem solving. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
+- Created and actively maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design, marketing, localization and everything in between. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - The maintainer tries to respond to bug reports as quickly as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 24 hours.
 - Frequent releases deliver new features and enhancements to users faster. Many of our minor [releases](https://github.com/sveltia/sveltia-cms/releases) address one or more Netlify/Decap CMS issues, giving you even more reasons to switch from the legacy predecessor.
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1][^211][^212][^213][^214]
@@ -1848,7 +1848,7 @@ Due early/mid 2026
 
 Sveltia CMS is not a service but a client-side application that runs in your web browser. You don’t need an account to use the app, but you do need to authenticate with your Git hosting provider to read and write remote data. All content is stored in your Git repository. No data is sent to any server operated by us.
 
-GitHub (and GitLab, depending on your configuration) requires server-side authentication. If you use the GitHub backend, you will need to use an OAuth application hosted by yourself or a third party, such as Netlify or Cloudflare, to retrieve an access token from GitHub. Alternatively, you can provide an access token directly on the CMS’s sign-in page. Other Git backends support client-side authentication. In any case, your token is stored in your browser’s local storage, and API requests are made directly between your browser and the Git hosting provider.
+GitHub (and GitLab, depending on your configuration) requires server-side authentication. If you choose the GitHub backend, you will need to use an OAuth application hosted by yourself or a third party, such as Netlify or Cloudflare, to retrieve an access token from GitHub. Alternatively, you can provide an access token directly on the CMS’s sign-in page. Other Git backends support client-side authentication. In any case, your token is stored in your browser’s local storage, and API requests are made directly between your browser and the Git hosting provider.
 
 The CMS also integrates with various third-party services, including stock photo providers and translation services. These are “bring your own API key” features that are entirely optional. You provide your own API keys for these services, which are stored in your browser’s local storage, and API requests are then made directly between your browser and the relevant service providers.
 
