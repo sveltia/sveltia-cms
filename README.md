@@ -1,8 +1,8 @@
 # Sveltia CMS: Netlify/Decap CMS successor
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful drop-in replacement for Netlify CMS and Decap CMS. While some features are still missing, we’ve already solved over 250 issues reported in the Netlify/Decap CMS issue tracker, from critical bugs to top feature requests.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful drop-in replacement for Netlify CMS and Decap CMS. While some features are still missing, we’ve already solved over 250 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
 
-Built from scratch, Sveltia CMS provides an excellent UX, DX, performance and i18n support, as well as numerous other enhancements. The free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in late 2025.
+Built from scratch, Sveltia CMS offers an excellent UX, DX, performance and i18n support, as well as numerous other enhancements. We’re committed to continuously improving the platform for developers and content editors alike. This free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in late 2025.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -419,7 +419,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 
 ### Better widgets
 
-Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS. We have improved these widgets significantly while adding some new ones. A few remaining [limitations](#current-limitations) will be addressed before the 1.0 release.
+Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widgets/) available in Netlify/Decap CMS. We have improved these widgets significantly while adding some new ones.
 
 - Boolean
   - A required Boolean field with no default value is saved as `false` by default, without raising a confusing validation error.[^45]
@@ -739,7 +739,7 @@ Unfortunately, **we are unable to provide free installation and setup support** 
 
 ### Migration
 
-Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub, GitLab or Gitea/Forgejo backend and don’t have any unsupported features like custom widgets or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement.
+Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub, GitLab or Gitea/Forgejo backend and don’t have any unsupported features like editorial workflow or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement.
 
 Open `/admin/index.html` locally with an editor like VS Code and replace the CMS `<script>` tag with the new one:
 
