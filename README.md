@@ -80,6 +80,7 @@ Built from scratch, Sveltia CMS offers an excellent UX, DX, performance and i18n
   - [Configuring multiple media libraries](#configuring-multiple-media-libraries)
   - [Optimizing images for upload](#optimizing-images-for-upload)
   - [Disabling stock assets](#disabling-stock-assets)
+  - [Using entry tags for categorization](#using-entry-tags-for-categorization)
   - [Editing site deployment configuration files](#editing-site-deployment-configuration-files)
   - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
   - [Changing the input type of a DateTime field](#changing-the-input-type-of-a-datetime-field)
@@ -1333,6 +1334,89 @@ The Select File/Image dialog includes some stock photo providers for convenience
 media_libraries:
   stock_assets:
     providers: []
+```
+
+### Using entry tags for categorization
+
+If you write blog posts, for example, you may want to categorize them with taxonomies, often called tags, categories, labels or keywords. With Sveltia CMS, there are several ways to implement this feature, depending on your needs.
+
+If you don’t have a predefined list of tags, you can use a simple [List](https://decapcms.org/docs/widgets/#list) field. This configuration will produce a newline-separated text field where users can enter tags freely:
+
+```yaml
+collections:
+  - name: posts
+    label: Blog Posts
+    label_singular: Blog Post
+    folder: content/posts
+    create: true
+    fields:
+      - name: title
+        label: Title
+      - name: tags
+        label: Tags
+        widget: list
+      - name: body
+        label: Body
+        widget: markdown
+```
+
+If you have a small number of predefined tags, you can use a [Select](https://decapcms.org/docs/widgets/#select) field. This configuration will produce a dropdown list where users can select one or more tags:
+
+```yaml
+fields:
+  - name: tags
+    label: Tags
+    widget: select
+    multiple: true
+    options:
+      - { label: Travel, value: travel }
+      - { label: Food, value: food }
+      - { label: Technology, value: technology }
+      - { label: Lifestyle, value: lifestyle }
+```
+
+If you want more flexibility, you can create a separate collection for tags and reference it using a [Relation](https://decapcms.org/docs/widgets/#relation) field from your blog post collection. This approach allows you to:
+
+- Add many tags without bloating the configuration file
+- Manage tags in one place within the CMS
+- Reuse tags across multiple collections
+- Add a description, image and other details to each tag (if you have tag index pages)
+- Localize tags with [i18n support](https://decapcms.org/docs/i18n/) enabled
+
+This configuration will also produce a dropdown list where users can select one or more tags:
+
+```yaml
+fields:
+  - name: tags
+    label: Tags
+    widget: relation
+    multiple: true
+    collection: tags
+    search_fields: [title]
+    display_fields: [title]
+    value_field: '{{slug}}'
+```
+
+And here is an example of the corresponding tag collection:
+
+```yaml
+collections:
+  - name: tags
+    label: Tags
+    label_singular: Tag
+    folder: content/tags
+    create: true
+    fields:
+      - name: title
+        label: Title
+      - name: description
+        label: Description
+        widget: text
+        required: false
+      - name: image
+        label: Image
+        widget: image
+        required: false
 ```
 
 ### Editing site deployment configuration files
