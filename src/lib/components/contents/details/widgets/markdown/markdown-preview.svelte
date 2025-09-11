@@ -35,7 +35,7 @@
   const entry = $derived($entryDraft?.originalEntry);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
-  const { sanitize_preview: sanitize = false } = $derived(fieldConfig);
+  const { sanitize_preview: sanitize = true } = $derived(fieldConfig);
 
   /** @type {import("marked").MarkedOptions} */
   const markedOptions = {
