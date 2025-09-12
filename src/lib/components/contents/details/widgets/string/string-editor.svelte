@@ -64,10 +64,10 @@
    * Update {@link currentValue} based on {@link inputValue}. Add the suffix/prefix if needed.
    */
   const setCurrentValue = () => {
-    let newValue = inputValue.trim();
+    let newValue = inputValue;
 
     // Add affixes only if value is not empty
-    if (newValue && (prefix || suffix)) {
+    if (newValue.trim() && (prefix || suffix)) {
       newValue = `${prefix}${newValue}${suffix}`;
     }
 
