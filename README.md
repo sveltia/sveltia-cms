@@ -233,7 +233,8 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Sveltia CMS has a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) requirement that forces the site content, including the CMS configuration file, to be served over HTTPS.
 - GitHub commits are automatically GPG-signed and [marked as verified](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).[^144]
 - Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface.[^158][^282]
-- We have changed the default value of the `sanitize_preview` option for the [Markdown](https://decapcms.org/docs/widgets/#markdown) widget to `true` to prevent potential XSS attacks via entry previews.
+- The [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) found in Decap CMS does not affect Sveltia CMS, as our entry preview implementation is completely different.
+  - However, the Markdown widget was potentially vulnerable to XSS attacks because the `sanitize_preview` option was set to `false` by default for compatibility with Netlify/Decap CMS. The behaviour is [documented](https://decapcms.org/docs/widgets/#markdown) and is not a bug, but it’s definitely not secure. In [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), we changed the default value to `true`, assuming that most users would prefer security over compatibility.
 
 ### Better installation
 
@@ -1924,6 +1925,7 @@ Due early/mid 2026
 
 - The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. There was also an [attempt](https://github.com/decaporg/decap-cms/issues/328) to replace React with Preact. Now we have completely rebuilt it in Svelte 4 and then in Svelte 5. So this is effectively the third/fourth time the application has gone through a framework migration. One more thing: We may migrate to [Ripple](https://www.ripplejs.com/) in the future if it looks promising.
 - Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for improved DX, but also for our rapid application development.
+- The maintainer looks 25 years younger than his actual age. [Here’s why](https://github.com/kyoshino#fun-facts-about-me).
 
 ## Related Links
 
