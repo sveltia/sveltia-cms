@@ -23,7 +23,11 @@
   bind:open={$translatorApiKeyDialogState.show}
   title={$_($translatorApiKeyDialogState.multiple ? 'translate_fields' : 'translate_field')}
   showOk={false}
-  textboxAttrs={{ spellcheck: false, 'aria-label': $_('api_key') }}
+  textboxAttrs={{
+    spellcheck: false,
+    'aria-label': $_('api_key'),
+    style: 'font-family: var(--sui-font-family-monospace);',
+  }}
   oninput={(event) => {
     const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
 

@@ -52,6 +52,7 @@
           aria-label={$_('prefs.i18n.translator.field_label', {
             values: { service: serviceLabel },
           })}
+          style="font-family: var(--sui-font-family-monospace);"
           onchange={() => {
             onChange?.({
               message: $_(
