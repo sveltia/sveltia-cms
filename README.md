@@ -470,6 +470,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - The map looks good in dark mode.
 - Markdown
   - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS,[^235] including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] extra HTML comments when pasting,[^229] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
+  - For [better security](#better-security), the `sanitize_preview` option defaults to `true` since [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0).
   - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - A Markdown field plays well with a variable type List field.[^202]
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup.[^160] In our editor, bold is 2 asterisks and italic is an underscore.
@@ -1825,7 +1826,7 @@ Planning to build a website with Sveltia CMS? Looking for professional support? 
 
 ## Contributions
 
-See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md). Bug reports are highly encouraged!
+See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md). Bug reports are highly encouraged.
 
 ## Roadmap
 
@@ -1879,10 +1880,14 @@ Due early/mid 2026
     - [Theming](https://github.com/sveltia/sveltia-cms/issues/29)[^262]
     - [Reusable field groups](https://github.com/sveltia/sveltia-cms/discussions/463)[^263]
     - Offline support[^238]
-  - Advanced Relation fields[^242]
-    - Cascade updates/deletes[^243]
-    - [Quick item additions](https://github.com/sveltia/sveltia-cms/issues/493)[^266]
-    - [Reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
+  - Features to turn the CMS into a robust NoSQL database management system:
+    - Advanced Relation fields[^242]
+      - Cascade updates/deletes[^243]
+      - [Quick item additions](https://github.com/sveltia/sveltia-cms/issues/493)[^266]
+      - [Reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
+    - Autoincrement fields[^286]
+    - Unique constraints[^287]
+    - Data integrity checks
   - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
   - PKCE for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub
@@ -1898,10 +1903,6 @@ Due early/mid 2026
   - Customizable search fields[^274]
   - Advanced search options
   - [Fuzzy search](https://www.fusejs.io/)
-- Features to turn Sveltia CMS into a robust NoSQL database management system:
-  - Autoincrement fields[^286]
-  - Unique constraints[^287]
-  - Data integrity checks
 - [Local repository workflow](#working-with-a-local-git-repository) improvements: Git mode[^131] and change detection
 - [Preact+HTM support](https://github.com/sveltia/sveltia-cms/discussions/153) for custom widgets, editor components and preview templates
 - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
