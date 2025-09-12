@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { getCanonicalLocale, getLocalePath } from '$lib/services/contents/i18n';
+import { getCanonicalLocale, getLocaleLabel, getLocalePath } from '$lib/services/contents/i18n';
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
 describe('Test getCanonicalLocale()', () => {
@@ -232,5 +232,124 @@ describe('Test getLocalePath()', () => {
     expect(getLocalePath({ _i18n, locale: '_default', path: 'posts/hello.{{locale}}.md' })).toBe(
       'posts/hello._default.md',
     );
+  });
+});
+
+describe('Test getLocaleLabel()', () => {
+  test('returns locale code for _default locale', () => {
+    expect(getLocaleLabel('_default')).toBe('_default');
+  });
+
+  test('returns formatted locale name in default app locale (native: false)', () => {
+    // With the fallback to 'en', these should work when native is false
+    expect(getLocaleLabel('en')).toBe('English');
+    expect(getLocaleLabel('fr')).toBe('French');
+    expect(getLocaleLabel('es')).toBe('Spanish');
+    expect(getLocaleLabel('de')).toBe('German');
+    expect(getLocaleLabel('ja')).toBe('Japanese');
+    expect(getLocaleLabel('zh')).toBe('Chinese');
+    expect(getLocaleLabel('ko')).toBe('Korean');
+    expect(getLocaleLabel('ar')).toBe('Arabic');
+    expect(getLocaleLabel('ru')).toBe('Russian');
+  });
+
+  test('returns native locale name when native option is true', () => {
+    expect(getLocaleLabel('en', { native: true })).toBe('English');
+    expect(getLocaleLabel('fr', { native: true })).toBe('français');
+    expect(getLocaleLabel('es', { native: true })).toBe('español');
+    expect(getLocaleLabel('de', { native: true })).toBe('Deutsch');
+    expect(getLocaleLabel('ja', { native: true })).toBe('日本語');
+    expect(getLocaleLabel('zh', { native: true })).toBe('中文');
+  });
+
+  test('handles locale variants correctly with native: false', () => {
+    // Test locale variants in English (fallback locale)
+    expect(getLocaleLabel('en-US')).toBe('American English');
+    expect(getLocaleLabel('en-GB')).toBe('British English');
+    expect(getLocaleLabel('fr-CA')).toBe('Canadian French');
+    expect(getLocaleLabel('zh-CN')).toBe('Chinese (China)');
+    expect(getLocaleLabel('zh-TW')).toBe('Chinese (Taiwan)');
+    expect(getLocaleLabel('pt-BR')).toBe('Brazilian Portuguese');
+    expect(getLocaleLabel('es-MX')).toBe('Mexican Spanish');
+  });
+
+  test('handles locale variants correctly with native option', () => {
+    // Testing with actual output values based on system's Intl.DisplayNames behavior
+    const enUSLabel = getLocaleLabel('en-US', { native: true });
+    const enGBLabel = getLocaleLabel('en-GB', { native: true });
+    const frCALabel = getLocaleLabel('fr-CA', { native: true });
+
+    // Verify these return meaningful locale names (not just the code)
+    expect(enUSLabel).not.toBe('en-US');
+    expect(enGBLabel).not.toBe('en-GB');
+    expect(frCALabel).not.toBe('fr-CA');
+
+    // Verify they contain expected keywords (adjusted for actual output)
+    expect(enUSLabel.toLowerCase()).toContain('english');
+    expect(enGBLabel.toLowerCase()).toContain('english');
+    expect(frCALabel.toLowerCase()).toContain('français');
+  });
+
+  test('handles invalid canonical locale gracefully', () => {
+    // Test with a locale that getCanonicalLocale returns undefined for
+    expect(getLocaleLabel('INVALID_LOCALE')).toBe('INVALID_LOCALE');
+    expect(getLocaleLabel('INVALID_LOCALE', { native: false })).toBe('INVALID_LOCALE');
+    expect(getLocaleLabel('INVALID_LOCALE', { native: true })).toBe('INVALID_LOCALE');
+  });
+
+  test('handles various edge cases with native option', () => {
+    // Test that function works with different locale codes when using native option
+    expect(getLocaleLabel('ko', { native: true })).toBe('한국어');
+    expect(getLocaleLabel('ar', { native: true })).toBe('العربية');
+    expect(getLocaleLabel('ru', { native: true })).toBe('русский');
+  });
+
+  test('handles unknown locale codes gracefully', () => {
+    // Test that unknown locales are handled appropriately
+    const unknownResult = getLocaleLabel('xyz-unknown', { native: true });
+    // The function might return the original code or a formatted version
+
+    expect(typeof unknownResult).toBe('string');
+    expect(unknownResult.length).toBeGreaterThan(0);
+
+    // Test with native: false as well
+    const unknownResultNonNative = getLocaleLabel('xyz-unknown', { native: false });
+
+    expect(typeof unknownResultNonNative).toBe('string');
+    expect(unknownResultNonNative.length).toBeGreaterThan(0);
+
+    // Empty string should return empty string
+    expect(getLocaleLabel('', { native: true })).toBe('');
+    expect(getLocaleLabel('', { native: false })).toBe('');
+  });
+
+  test('compares native vs non-native locale labels', () => {
+    // Test that native and non-native versions can be different
+    const frenchNative = getLocaleLabel('fr', { native: true });
+    const frenchEnglish = getLocaleLabel('fr', { native: false });
+
+    expect(frenchNative).toBe('français');
+    expect(frenchEnglish).toBe('French');
+    expect(frenchNative).not.toBe(frenchEnglish);
+
+    // Test with another language
+    const germanNative = getLocaleLabel('de', { native: true });
+    const germanEnglish = getLocaleLabel('de', { native: false });
+
+    expect(germanNative).toBe('Deutsch');
+    expect(germanEnglish).toBe('German');
+    expect(germanNative).not.toBe(germanEnglish);
+  });
+
+  test('handles default parameter correctly', () => {
+    // When no options object is provided, should default to native: false
+    expect(getLocaleLabel('fr')).toBe('French');
+    expect(getLocaleLabel('de')).toBe('German');
+    expect(getLocaleLabel('ja')).toBe('Japanese');
+
+    // When empty options object is provided, should default to native: false
+    expect(getLocaleLabel('fr', {})).toBe('French');
+    expect(getLocaleLabel('de', {})).toBe('German');
+    expect(getLocaleLabel('ja', {})).toBe('Japanese');
   });
 });

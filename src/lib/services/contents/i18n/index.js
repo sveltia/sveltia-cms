@@ -1,3 +1,6 @@
+import { get } from 'svelte/store';
+import { locale as appLocale } from 'svelte-i18n';
+
 /**
  * @import { InternalI18nOptions, InternalLocaleCode, } from '$lib/types/private';
  * @import { LocaleCode } from '$lib/types/public';
@@ -26,17 +29,21 @@ export const getCanonicalLocale = (locale) => {
 /**
  * Translate the given locale code in the application UI locale.
  * @param {InternalLocaleCode} locale Locale code like `en`.
+ * @param {object} options Options.
+ * @param {boolean} [options.native] Whether to return the locale name in its native language. By
+ * default, the locale name is returned in the current application UI language.
  * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
  * locale code as is.
  */
-export const getLocaleLabel = (locale) => {
+export const getLocaleLabel = (locale, { native = false } = {}) => {
   const canonicalLocale = getCanonicalLocale(locale);
 
   if (!canonicalLocale) {
     return locale;
   }
 
-  const formatter = new Intl.DisplayNames(canonicalLocale, { type: 'language' });
+  const displayLocale = native ? canonicalLocale : getCanonicalLocale(get(appLocale) ?? 'en');
+  const formatter = new Intl.DisplayNames(displayLocale, { type: 'language' });
 
   try {
     return formatter.of(canonicalLocale) ?? locale;

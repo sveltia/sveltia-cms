@@ -30,7 +30,12 @@
         }}
       >
         {#each $appLocales as locale}
-          <Option label={getLocaleLabel(locale)} value={locale} selected={locale === $appLocale} />
+          <Option
+            label={getLocaleLabel(locale, { native: true })}
+            value={locale}
+            selected={locale === $appLocale}
+            dir="auto"
+          />
         {/each}
       </Select>
     {/key}
