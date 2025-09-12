@@ -103,6 +103,7 @@ Built from scratch, Sveltia CMS offers an excellent UX, DX, performance and i18n
   - [As seen on](#as-seen-on)
 - [Privacy](#privacy)
 - [Disclaimer](#disclaimer)
+- [Acknowledgements](#acknowledgements)
 
 ## Motivation
 
@@ -110,7 +111,7 @@ Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stal
 
 To achieve radical improvements in UX, performance, i18n and other areas, it was ultimately decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the idea with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
 
-We loved the simple setup of Netlify CMS that turned a Git repository into a database with a single page app served from a CDN plus a plain YAML config file. In support of the [Jamstack](https://jamstack.org/) concept, we wanted to revive it, modernize it, and take it to the next level.
+We loved the simple, unique setup of Netlify CMS that turned a Git repository into a database with a single page app served from a CDN plus a plain YAML config file. In support of the [Jamstack](https://jamstack.org/) concept, we wanted to revive it, modernize it, and take it to the next level.
 
 ### Our advantage
 
@@ -661,7 +662,7 @@ There are some differences in behaviour between Sveltia CMS and Netlify/Decap CM
 - By default, Sveltia CMS does not slugify uploaded filenames, as mentioned in the [asset management](#better-asset-management) section. If your site generator expects hyphenated filenames, you can enable the `slugify_filename` [default media library option](#configuring-multiple-media-libraries).
 - In some cases, the [data output](#better-data-output) of Sveltia CMS may differ from that of Netlify/Decap CMS. Notably, Sveltia CMS does not omit empty optional fields by default. If you have data validation in your site generator, this could cause issues. Use the `omit_empty_optional_fields` [output option](#controlling-data-output) if needed.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running your own remote server and serving content over HTTP, the CMS will not work. We recommend obtaining a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
-- As of Sveltia CMS [v0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), the `sanitize_preview` option for the [Markdown](https://decapcms.org/docs/widgets/#markdown) widget is set to `true` by default to prevent potential XSS attacks via entry previews. We recommend keeping this option enabled unless you fully trust all users of your CMS.
+- As of [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), the `sanitize_preview` option for the [Markdown](https://decapcms.org/docs/widgets/#markdown) widget is set to `true` by default to prevent potential XSS attacks via entry previews. We recommend keeping this option enabled unless you fully trust all users of your CMS.
 
 [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) if you have encounter any compatibility issues that are not listed here.
 
@@ -690,7 +691,7 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 
 ### Deprecations
 
-These options are deprecated and will be removed in Sveltia CMS v1.0:
+These options are deprecated and will be removed in Sveltia CMS 1.0:
 
 - The `automatic_deployments` backend option. Use the new [`skip_ci` option](#disabling-automatic-deployments) instead, which is more intuitive. `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments: true` is equivalent to `skip_ci: false`.
 - The `save_all_locales` i18n option. Use the [`initial_locales` option](#disabling-non-default-locale-content) instead, which provides more flexibility. `save_all_locales: false` is equivalent to `initial_locales: all`.
@@ -705,7 +706,7 @@ Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/dec
 
 - Configuration options
   - Sveltia CMS supports the [`sortable_fields`](#specifying-default-sort-field-and-direction), `view_filters` and `view_groups` options with the new `default` option. We still support the legacy Netlify/Decap CMS format as well, so you can use [either format](https://staticjscms.netlify.app/docs/decap-migration-guide#sortable-fields) for these options.
-  - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. Display of subfolders within a configured folder will be implemented in v2.0. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
+  - Directory navigation in the Asset Library is partially supported in Sveltia CMS. If you define [collection-specific `media_folder`s](#using-a-custom-media-folder-for-a-collection), these folders will be displayed in the Asset Library and Select File/Image dialog. We plan to implement the display of subfolders within a configured folder in Sveltia CMS 2.0. We don’t plan to support the `folder_support` and `display_in_navigation` options for `media_library`; subfolders will be displayed with no configuration. ([#301](https://github.com/sveltia/sveltia-cms/issues/301))
   - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
   - The `yaml` global option will not be supported, as Sveltia CMS doesn’t expose the underlying `yaml` library options for forward compatibility reasons. However, we do have some [data output options](#controlling-data-output), including YAML indentation and quotes.
 - I18n support
@@ -1948,6 +1949,10 @@ As we don’t collect any analytics data either, we don’t have a privacy polic
 ## Disclaimer
 
 This software is provided “as is” without any express or implied warranty. We are not obligated to provide any support for the application. This product is not affiliated with or endorsed by Netlify, Decap CMS or any other integrated services. All product names, logos, and brands are the property of their respective owners.
+
+## Acknowledgements
+
+This project would not have been possible without the open source Netlify CMS project. We are grateful to the maintainers for their hard work over the years. We would also like to thank the Sveltia CMS user community for their valuable feedback and ongoing support, which has helped us to identify issues and improve the product.
 
 [^1]: Netlify/Decap CMS [#2557](https://github.com/decaporg/decap-cms/issues/2557)
 
