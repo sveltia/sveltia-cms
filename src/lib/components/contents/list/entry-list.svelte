@@ -8,7 +8,12 @@
   import EntryListItem from '$lib/components/contents/list/entry-list-item.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { selectedCollection } from '$lib/services/contents/collection';
-  import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
+  import {
+    currentView,
+    entryGroups,
+    listedEntries,
+    sortingEntries,
+  } from '$lib/services/contents/collection/view';
 
   /**
    * @import { Entry, EntryCollection } from '$lib/types/private';
@@ -51,7 +56,9 @@
       </ListingGrid>
     {:else if $listedEntries.length}
       <EmptyState>
-        <span role="none">{$_('no_entries_found')}</span>
+        {#if !$sortingEntries}
+          <span role="none">{$_('no_entries_found')}</span>
+        {/if}
       </EmptyState>
     {:else}
       <EmptyState>
