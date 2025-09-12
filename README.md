@@ -225,6 +225,8 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 ### Better security
 
 - Avoids vulnerabilities in dependencies through constant updates, Dependabot alerts, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unpatched for a long time.[^33]
+- The [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) found in Decap CMS does not affect Sveltia CMS, as our entry preview implementation is completely different.
+  - However, the Markdown widget was potentially vulnerable to XSS attacks because the `sanitize_preview` option was set to `false` by default for compatibility with Netlify/Decap CMS. This behaviour is [documented](https://decapcms.org/docs/widgets/#markdown) and is not a bug, but it’s definitely not secure. In [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), we changed the default value to `true`, assuming that most users would prefer security over compatibility.
 - Thanks to pnpm, Svelte, Vite, GitHub Actions and [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/), our release process is fast, reliable and transparent. This setup makes it easy to verify the integrity of published code and assets. It also helps us avoid errors that can occur with manual build steps.[^264]
 - We have created a [security policy](https://github.com/sveltia/sveltia-cms/blob/main/SECURITY.md).
 - We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration.[^108]
@@ -233,8 +235,6 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Sveltia CMS has a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) requirement that forces the site content, including the CMS configuration file, to be served over HTTPS.
 - GitHub commits are automatically GPG-signed and [marked as verified](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).[^144]
 - Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface.[^158][^282]
-- The [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) found in Decap CMS does not affect Sveltia CMS, as our entry preview implementation is completely different.
-  - However, the Markdown widget was potentially vulnerable to XSS attacks because the `sanitize_preview` option was set to `false` by default for compatibility with Netlify/Decap CMS. This behaviour is [documented](https://decapcms.org/docs/widgets/#markdown) and is not a bug, but it’s definitely not secure. In [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), we changed the default value to `true`, assuming that most users would prefer security over compatibility.
 
 ### Better installation
 
@@ -247,7 +247,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 ### Better configuration
 
-- We provide clear [compatibility information](#compatibility) to help you avoid unsupported options and configurations that might cause errors. By contrast, the Netlify/Decap CMS documentation does not mention the deprecation of camel case options, the removal of the Date widget and the replacement of Moment.js.
+- We provide comprehensive [compatibility information](#compatibility) to help you avoid unsupported options and configurations that might cause errors. By contrast, the Netlify/Decap CMS documentation does not mention the deprecation of camel case options, the removal of the Date widget and the replacement of Moment.js.
 - Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
 - We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253] If you use [deprecated options](#deprecations) in a supported code editor, you should receive a warning.
@@ -2404,7 +2404,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^225]: Netlify/Decap CMS [#7401](https://github.com/decaporg/decap-cms/issues/7401)
 
-[^226]: Netlify/Decap CMS [#7031](https://github.com/decaporg/decap-cms/pull/7031), [#7540](https://github.com/decaporg/decap-cms/issues/7540)
+[^226]: Netlify/Decap CMS [#7031](https://github.com/decaporg/decap-cms/pull/7031), [#7540](https://github.com/decaporg/decap-cms/issues/7540), [#7597](https://github.com/decaporg/decap-cms/discussions/7597)
 
 [^227]: Netlify/Decap CMS [#6794](https://github.com/decaporg/decap-cms/pull/6794)
 
