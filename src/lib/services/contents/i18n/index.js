@@ -29,7 +29,7 @@ export const getCanonicalLocale = (locale) => {
 /**
  * Translate the given locale code in the application UI locale.
  * @param {InternalLocaleCode} locale Locale code like `en`.
- * @param {object} options Options.
+ * @param {object} [options] Options.
  * @param {boolean} [options.native] Whether to return the locale name in its native language. By
  * default, the locale name is returned in the current application UI language.
  * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
