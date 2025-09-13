@@ -162,7 +162,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 
 Netlify/Decap CMS users will definitely be pleased and surprised by the numerous improvements we have made, from the small to the large. Here’s what makes Sveltia CMS different. Look how serious we are!
 
-Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap CMS. Some of the listed bugs may have been fixed in the current version of Decap CMS.
+Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap CMS. Some of the listed issues may have been fixed in the current version of Decap CMS.
 
 ### Better UX
 
@@ -401,7 +401,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - Entering a long value into a field will not cause the field label to disappear.[^254]
 - Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed.
   - This is equivalent to the (misleading) visual editing feature introduced in [Decap CMS 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option.
-  - Our implementation doesn’t cause a module import error[^225] or broken image previews.[^188]
 - The Preview Pane doesn’t cause a scrolling issue.[^136]
 - The Preview Pane doesn’t crash with a Minified React error.[^186]
 - Provides better scroll synchronization between the panes when editing or previewing an entry.[^92]
@@ -664,7 +663,7 @@ There are some differences in behaviour between Sveltia CMS and Netlify/Decap CM
 - By default, Sveltia CMS does not slugify uploaded filenames, as mentioned in the [asset management](#better-asset-management) section. If your site generator expects hyphenated filenames, you can enable the `slugify_filename` [default media library option](#configuring-multiple-media-libraries).
 - In some cases, the [data output](#better-data-output) of Sveltia CMS may differ from that of Netlify/Decap CMS. Notably, Sveltia CMS does not omit empty optional fields by default. If you have data validation in your site generator, this could cause issues. Use the `omit_empty_optional_fields` [output option](#controlling-data-output) if needed.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running your own remote server and serving content over HTTP, the CMS will not work. We recommend obtaining a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
-- As of [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), the `sanitize_preview` option for the [Markdown](https://decapcms.org/docs/widgets/#markdown) widget is set to `true` by default to prevent potential XSS attacks via entry previews. We recommend keeping this option enabled unless you fully trust all users of your CMS.
+- As of [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), the `sanitize_preview` option for the [Markdown](https://decapcms.org/docs/widgets/#markdown) widget is set to `true` by default to prevent potential XSS attacks via entry previews. We recommend keeping this option enabled unless disabling it fixes a broken preview and you fully trust all users of your CMS.
 
 [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) if you have encounter any compatibility issues that are not listed here.
 
@@ -1425,6 +1424,8 @@ collections:
         required: false
 ```
 
+Note that it’s not currently possible to add new tags on the fly while editing a blog post. You have to create them in the tag collection first. This issue will be resolved in the future. ([#493](https://github.com/sveltia/sveltia-cms/issues/493))
+
 ### Editing site deployment configuration files
 
 Sveltia CMS allows users to edit files without extensions. Examples include `_headers` and `_redirects`, which are used by some static site hosting providers, such as [Netlify](https://docs.netlify.com/routing/redirects/), [GitLab Pages](https://docs.gitlab.com/user/project/pages/redirects/) and [Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/redirects/). Since the `body` field is [saved without the field name](#understanding-exceptions-in-data-output) when using the default `yaml-frontmatter` format, you can use the following configuration to edit these files in the Content Editor:
@@ -2177,7 +2178,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^111]: Netlify/Decap CMS [#7190](https://github.com/decaporg/decap-cms/issues/7190), [#7218](https://github.com/decaporg/decap-cms/issues/7218), [#7392](https://github.com/decaporg/decap-cms/issues/7392)
 
-[^112]: Netlify/Decap CMS [#5815](https://github.com/decaporg/decap-cms/issues/5815), [#6522](https://github.com/decaporg/decap-cms/issues/6522), [#6532](https://github.com/decaporg/decap-cms/issues/6532), [#6588](https://github.com/decaporg/decap-cms/issues/6588), [#6617](https://github.com/decaporg/decap-cms/issues/6617), [#6640](https://github.com/decaporg/decap-cms/issues/6640), [#6663](https://github.com/decaporg/decap-cms/issues/6663), [#6695](https://github.com/decaporg/decap-cms/issues/6695), [#6697](https://github.com/decaporg/decap-cms/issues/6697), [#6764](https://github.com/decaporg/decap-cms/issues/6764), [#6765](https://github.com/decaporg/decap-cms/issues/6765), [#6835](https://github.com/decaporg/decap-cms/issues/6835), [#6983](https://github.com/decaporg/decap-cms/issues/6983), [#7205](https://github.com/decaporg/decap-cms/issues/7205), [#7450](https://github.com/decaporg/decap-cms/issues/7450), [#7453](https://github.com/decaporg/decap-cms/issues/7453), [#7572](https://github.com/decaporg/decap-cms/issues/7572)
+[^112]: Netlify/Decap CMS [#5815](https://github.com/decaporg/decap-cms/issues/5815), [#6522](https://github.com/decaporg/decap-cms/issues/6522), [#6532](https://github.com/decaporg/decap-cms/issues/6532), [#6588](https://github.com/decaporg/decap-cms/issues/6588), [#6617](https://github.com/decaporg/decap-cms/issues/6617), [#6640](https://github.com/decaporg/decap-cms/issues/6640), [#6663](https://github.com/decaporg/decap-cms/issues/6663), [#6695](https://github.com/decaporg/decap-cms/issues/6695), [#6697](https://github.com/decaporg/decap-cms/issues/6697), [#6764](https://github.com/decaporg/decap-cms/issues/6764), [#6765](https://github.com/decaporg/decap-cms/issues/6765), [#6835](https://github.com/decaporg/decap-cms/issues/6835), [#6983](https://github.com/decaporg/decap-cms/issues/6983), [#7205](https://github.com/decaporg/decap-cms/issues/7205), [#7450](https://github.com/decaporg/decap-cms/issues/7450), [#7453](https://github.com/decaporg/decap-cms/issues/7453), [#7572](https://github.com/decaporg/decap-cms/issues/7572), [#7602](https://github.com/decaporg/decap-cms/issues/7602)
 
 [^113]: Netlify/Decap CMS [#5656](https://github.com/decaporg/decap-cms/issues/5656), [#5837](https://github.com/decaporg/decap-cms/issues/5837), [#5972](https://github.com/decaporg/decap-cms/issues/5972), [#6476](https://github.com/decaporg/decap-cms/issues/6476), [#6516](https://github.com/decaporg/decap-cms/issues/6516), [#6930](https://github.com/decaporg/decap-cms/issues/6930), [#7080](https://github.com/decaporg/decap-cms/issues/7080), [#7105](https://github.com/decaporg/decap-cms/issues/7105), [#7106](https://github.com/decaporg/decap-cms/issues/7106), [#7119](https://github.com/decaporg/decap-cms/issues/7119), [#7176](https://github.com/decaporg/decap-cms/issues/7176), [#7194](https://github.com/decaporg/decap-cms/issues/7194), [#7244](https://github.com/decaporg/decap-cms/issues/7244), [#7278](https://github.com/decaporg/decap-cms/issues/7278), [#7301](https://github.com/decaporg/decap-cms/issues/7301), [#7342](https://github.com/decaporg/decap-cms/issues/7342), [#7348](https://github.com/decaporg/decap-cms/issues/7348), [#7354](https://github.com/decaporg/decap-cms/issues/7354), [#7376](https://github.com/decaporg/decap-cms/issues/7376), [#7408](https://github.com/decaporg/decap-cms/issues/7408), [#7412](https://github.com/decaporg/decap-cms/issues/7412), [#7413](https://github.com/decaporg/decap-cms/issues/7413), [#7422](https://github.com/decaporg/decap-cms/issues/7422), [#7427](https://github.com/decaporg/decap-cms/issues/7427), [#7434](https://github.com/decaporg/decap-cms/issues/7434), [#7438](https://github.com/decaporg/decap-cms/issues/7438), [#7454](https://github.com/decaporg/decap-cms/issues/7454), [#7464](https://github.com/decaporg/decap-cms/issues/7464), [#7471](https://github.com/decaporg/decap-cms/issues/7471), [#7485](https://github.com/decaporg/decap-cms/issues/7485), [#7499](https://github.com/decaporg/decap-cms/issues/7499), [#7515](https://github.com/decaporg/decap-cms/issues/7515), [#7564](https://github.com/decaporg/decap-cms/issues/7564), [#7571](https://github.com/decaporg/decap-cms/issues/7571), [#7574](https://github.com/decaporg/decap-cms/issues/7574), [#7580](https://github.com/decaporg/decap-cms/issues/7580), [#7583](https://github.com/decaporg/decap-cms/issues/7583), [#7589](https://github.com/decaporg/decap-cms/issues/7589), [#7593](https://github.com/decaporg/decap-cms/issues/7593), [#7595](https://github.com/decaporg/decap-cms/issues/7595), [#7601](https://github.com/decaporg/decap-cms/issues/7601) — These `removeChild` crashes are common in React apps, likely caused by a [browser extension](https://github.com/facebook/react/issues/17256) or [Google Translate](https://github.com/facebook/react/issues/11538).
 
@@ -2329,8 +2330,6 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^187]: Netlify/Decap CMS [#1244](https://github.com/decaporg/decap-cms/issues/1244)
 
-[^188]: Netlify/Decap CMS [#7415](https://github.com/decaporg/decap-cms/issues/7415), [#7421](https://github.com/decaporg/decap-cms/issues/7421)
-
 [^189]: Netlify/Decap CMS [#7431](https://github.com/decaporg/decap-cms/issues/7431)
 
 [^190]: Netlify/Decap CMS [#4987](https://github.com/decaporg/decap-cms/issues/4987)
@@ -2402,8 +2401,6 @@ This project would not have been possible without the open source Netlify CMS pr
 [^223]: Netlify/Decap CMS [#7483](https://github.com/decaporg/decap-cms/issues/7483)
 
 [^224]: Netlify/Decap CMS [#7352](https://github.com/decaporg/decap-cms/issues/7352), [#7581](https://github.com/decaporg/decap-cms/issues/7581)
-
-[^225]: Netlify/Decap CMS [#7401](https://github.com/decaporg/decap-cms/issues/7401)
 
 [^226]: Netlify/Decap CMS [#7031](https://github.com/decaporg/decap-cms/pull/7031), [#7540](https://github.com/decaporg/decap-cms/issues/7540), [#7597](https://github.com/decaporg/decap-cms/discussions/7597)
 
