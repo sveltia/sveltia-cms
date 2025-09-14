@@ -85,7 +85,7 @@
             justify-content: flex-start;
             border-radius: var(--sui-control-medium-border-radius);
             width: 100%;
-            text-align: left;
+            text-align: start;
 
             &:not(:first-child) {
               margin-top: 4px;

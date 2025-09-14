@@ -50,7 +50,8 @@
         }
 
         .required {
-          margin: 2px 0 0 2px;
+          margin-block: 2px 0;
+          margin-inline: 2px 0;
           color: var(--sui-error-foreground-color);
           font-size: var(--sui-font-size-large);
         }

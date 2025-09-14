@@ -160,8 +160,7 @@
 
     :global {
       & > .sui.toolbar {
-        margin-right: auto;
-        margin-left: auto;
+        margin-inline: auto;
         max-width: 800px;
 
         @media (width < 768px) {

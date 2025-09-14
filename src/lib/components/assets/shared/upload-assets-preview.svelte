@@ -121,7 +121,7 @@
       flex-direction: column;
       gap: 4px;
       overflow: hidden;
-      text-align: left;
+      text-align: start;
 
       .meta {
         font-size: var(--sui-font-size-small);

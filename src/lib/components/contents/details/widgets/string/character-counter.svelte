@@ -63,7 +63,7 @@
     color: var(--sui-tertiary-foreground-color) !important;
     font-size: var(--sui-font-size-small);
     line-height: var(--sui-line-height-compact);
-    text-align: right;
+    text-align: end;
   }
 
   .count {

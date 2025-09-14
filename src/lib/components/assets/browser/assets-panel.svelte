@@ -127,7 +127,8 @@
 
           .unsaved {
             position: absolute;
-            inset: 4px 4px auto auto;
+            inset-block-start: 4px;
+            inset-inline-end: 4px;
             z-index: 1;
           }
         }

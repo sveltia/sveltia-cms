@@ -43,7 +43,7 @@
     background-color: var(--sui-primary-background-color);
 
     &:not(:first-child) {
-      border-top-left-radius: 16px;
+      border-start-start-radius: 16px;
     }
 
     :global {
@@ -78,7 +78,7 @@
         background-color: var(--sui-secondary-background-color);
 
         @media (768px <= width) {
-          border-top-left-radius: 16px;
+          border-start-start-radius: 16px;
         }
 
         [role='listbox'] {

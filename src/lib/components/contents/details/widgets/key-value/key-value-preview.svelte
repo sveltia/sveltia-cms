@@ -99,7 +99,7 @@
     background-color: var(--sui-tertiary-background-color);
     font-size: var(--sui-font-size-small);
     font-weight: var(--sui-font-weight-normal);
-    text-align: left;
+    text-align: start;
   }
 
   td {

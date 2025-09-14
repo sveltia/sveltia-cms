@@ -79,7 +79,7 @@
         position: relative;
         overflow: hidden;
         height: auto;
-        text-align: left;
+        text-align: start;
 
         .grid-cell {
           display: block;
@@ -91,7 +91,8 @@
 
         .checkbox {
           position: absolute;
-          inset: 4px auto auto 4px;
+          inset-block-start: 4px;
+          inset-inline-start: 4px;
           z-index: 2;
         }
 
@@ -178,7 +179,7 @@
           }
 
           &.checkbox {
-            padding-left: 8px !important;
+            padding-inline-start: 8px !important;
             width: 44px;
           }
 
@@ -188,7 +189,7 @@
           }
 
           &:first-child {
-            padding-left: 16px;
+            padding-inline-start: 16px;
           }
 
           .label {

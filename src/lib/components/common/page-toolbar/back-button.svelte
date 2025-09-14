@@ -28,6 +28,6 @@
   {onclick}
 >
   {#snippet startIcon()}
-    <Icon name="arrow_back" />
+    <Icon name={document.documentElement.dir === 'rtl' ? 'arrow_forward' : 'arrow_back'} />
   {/snippet}
 </Button>

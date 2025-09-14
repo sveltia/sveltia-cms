@@ -130,7 +130,7 @@
       }
 
       h3 {
-        margin-right: 8px;
+        margin-inline-end: 8px;
         font-size: inherit;
       }
 
