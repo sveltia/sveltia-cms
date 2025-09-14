@@ -25,8 +25,8 @@
   showOk={false}
   textboxAttrs={{
     spellcheck: false,
+    monospace: true,
     'aria-label': $_('api_key'),
-    style: 'font-family: var(--sui-font-family-monospace);',
   }}
   oninput={(event) => {
     const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
