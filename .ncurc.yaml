@@ -3,6 +3,3 @@ reject:
   # https://github.com/airbnb/javascript/issues/2961
   - eslint
   - eslint-plugin-svelte
-  # need to investigate an infinite loop and migrate to Shiki
-  - lexical
-  - "@lexical/*"
