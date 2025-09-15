@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import equal from 'fast-deep-equal';
 import { derived, get, writable } from 'svelte/store';
 import { locale as appLocale } from 'svelte-i18n';
@@ -16,12 +15,6 @@ import { prefs } from '$lib/services/user/prefs';
  * @import { Readable, Writable } from 'svelte/store';
  * @import { Entry, EntryListView, InternalCollection } from '$lib/types/private';
  */
-
-/**
- * Whether the entries are currently being sorted/filtered/grouped.
- * @type {Writable<boolean>}
- */
-export const sortingEntries = writable(false);
 
 /**
  * View settings for the selected entry collection.
@@ -57,7 +50,7 @@ export const entryGroups = derived(
   // Include `appLocale` as a dependency because `sortEntries()` and `groupEntries()` may return
   // localized labels
   [listedEntries, currentView, appLocale],
-  ([_listedEntries, _currentView], set, update) => {
+  ([_listedEntries, _currentView], set) => {
     const newCacheKey = JSON.stringify({ _listedEntries, _currentView });
 
     if (newCacheKey === cacheKey) {
@@ -76,25 +69,19 @@ export const entryGroups = derived(
       return;
     }
 
-    // Process the entries asynchronously to avoid blocking the UI
-    (async () => {
-      sortingEntries.set(true);
-      await sleep();
-
+    if (_currentView.sort) {
       entries = sortEntries(entries, collection, _currentView.sort);
+    }
 
-      if (_currentView.filters) {
-        entries = filterEntries(entries, collection, _currentView.filters);
-      }
+    if (_currentView.filters) {
+      entries = filterEntries(entries, collection, _currentView.filters);
+    }
 
-      const groups = groupEntries(entries, collection, _currentView.group);
+    const groups = groupEntries(entries, collection, _currentView.group);
 
-      if (!equal(get(entryGroups), groups)) {
-        update(() => groups);
-      }
-
-      sortingEntries.set(false);
-    })();
+    if (!equal(get(entryGroups), groups)) {
+      set(groups);
+    }
   },
 );
 

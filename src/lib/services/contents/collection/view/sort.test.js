@@ -119,26 +119,14 @@ describe('sortEntries', () => {
     vi.mocked(getIndexFile).mockReturnValue(null);
   });
 
-  test('should sort by entry summary when no key provided', () => {
-    vi.mocked(getEntrySummary).mockImplementation((collection, entry) => {
-      const summaries = {
-        'entry-1': 'B Summary',
-        'entry-2': 'A Summary',
-        'entry-3': 'C Summary',
-      };
-
-      return summaries[entry.slug] || '';
-    });
-
+  test('should not sort entries when no key provided', () => {
     const result = sortEntries(mockEntries, mockCollection);
 
-    expect(vi.mocked(getEntrySummary)).toHaveBeenCalledWith(mockCollection, expect.any(Object), {
-      useTemplate: true,
-      allowMarkdown: true,
-    });
+    // getEntrySummary should not be called when no key is provided
+    expect(vi.mocked(getEntrySummary)).not.toHaveBeenCalled();
 
-    // Should be sorted by summary: A, B, C
-    expect(result.map((e) => e.slug)).toEqual(['entry-2', 'entry-1', 'entry-3']);
+    // Should return entries in original order
+    expect(result.map((e) => e.slug)).toEqual(['entry-1', 'entry-2', 'entry-3']);
   });
 
   test('should sort by string field in ascending order', () => {

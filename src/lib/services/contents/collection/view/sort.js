@@ -3,7 +3,6 @@ import { compare } from '@sveltia/utils/string';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
-import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getDate } from '$lib/services/contents/widgets/date-time/helper';
 import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
 
@@ -30,20 +29,14 @@ export const markdownFieldKeys = ['title', 'summary', 'description'];
 export const sortEntries = (entries, collection, { key, order } = {}) => {
   const _entries = [...entries];
 
+  if (key === undefined) {
+    return _entries;
+  }
+
   const {
     name: collectionName,
     _i18n: { defaultLocale: locale },
   } = collection;
-
-  if (key === undefined) {
-    const options = { useTemplate: true, allowMarkdown: true };
-
-    return _entries.sort((a, b) =>
-      getEntrySummary(collection, a, options).localeCompare(
-        getEntrySummary(collection, b, options),
-      ),
-    );
-  }
 
   const fieldConfig = getField({ collectionName, keyPath: key });
   const type = getSortKeyType({ key, fieldConfig });
