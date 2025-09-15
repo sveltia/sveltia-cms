@@ -2,7 +2,7 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. While some features are still missing, we’ve already solved over 250 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
 
-Built from scratch, Sveltia CMS offers an excellent UX, DX, performance and i18n support, as well as numerous other enhancements to ensure smooth day-to-day workflows. This free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in late 2025.
+Built from scratch, Sveltia CMS offers an excellent UX, DX, performance, security and internationalization (i18n) support, as well as numerous other enhancements to ensure smooth day-to-day workflows. This free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in late 2025.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -234,7 +234,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - The `same-origin` referrer policy is automatically set with a `<meta>` tag.
 - Sveltia CMS has a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) requirement that forces the site content, including the CMS configuration file, to be served over HTTPS.
 - GitHub commits are automatically GPG-signed and [marked as verified](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).[^144]
-- Our [local repository workflow](#working-with-a-local-git-repository) doesn’t require a proxy server, reducing an attack surface.[^158][^282]
+- Our [local repository workflow](#working-with-a-local-git-repository) does not require a proxy server. This reduces attack surfaces by eliminating the possibility of compromised dependencies[^158] and unauthorized API access.[^282]
 
 ### Better installation
 
