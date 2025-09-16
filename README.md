@@ -2,7 +2,7 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. While some features are still missing, we’ve already solved over 250 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
 
-Built from the ground up, Sveltia CMS offers an excellent UX, DX, performance, security and internationalization (i18n) support. We have made numerous enhancements across the board to ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in late 2025.
+Built from the ground up, Sveltia CMS offers an excellent UX, DX, performance, security and internationalization (i18n) support. Our numerous enhancements across the board ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in late 2025.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -1153,9 +1153,9 @@ To enable the quick translation feature:
      1. Enable the [Cloud Translation API](https://console.cloud.google.com/apis/library/translate.googleapis.com). It’s free up to 500,000 characters per month.
      1. Create a [new API key](https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials) and copy it.
    - Anthropic
-     1. Sign in or sign up for [Anthropic Developer Platform](https://docs.anthropic.com/en/api/overview).
+     1. Sign in or sign up for [Claude Developer Platform](https://docs.claude.com/en/api/overview).
      1. Add a credit balance (minimum $5) to your account.
-     1. Create a [new API key](https://console.anthropic.com/settings/keys) and copy it.
+     1. Create a [new API key](https://platform.claude.com/settings/keys) and copy it.
    - OpenAI
      1. Sign in or sign up for [OpenAI Platform](https://platform.openai.com/docs/overview) and create a new project.
      1. Add a credit balance (minimum $5) to your account.
