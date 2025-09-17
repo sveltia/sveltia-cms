@@ -40,7 +40,7 @@ vi.mock('svelte-i18n', () => ({
   locale: () => 'en',
   /**
    * Translation function store.
-   * @returns {Function} Translation function.
+   * @returns {import('vitest').Mock} Translation function.
    */
   _: () => vi.fn((key, options) => `${key}(${options?.values?.size || ''})`),
   addMessages: vi.fn(),

@@ -109,7 +109,7 @@
 
   /**
    * Execute a copy action.
-   * @param {Function} func Copy function.
+   * @param {() => Promise<void>} func Copy function.
    * @param {string} toastSingular Singular toast label.
    * @param {string} toastPlural Plural toast label.
    */

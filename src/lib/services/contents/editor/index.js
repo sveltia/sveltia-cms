@@ -26,7 +26,7 @@ export const showContentOverlay = writable(false);
 export const showDuplicateToast = writable(false);
 
 /**
- * @type {Writable<{ show: boolean, multiple: boolean, resolve?: Function }>}
+ * @type {Writable<{ show: boolean, multiple: boolean, resolve?: (value?: string) => void }>}
  */
 export const translatorApiKeyDialogState = writable({ show: false, multiple: false });
 

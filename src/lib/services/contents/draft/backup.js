@@ -38,7 +38,7 @@ const BACKUP_TOAST_DEFAULT_STATE = {
 };
 
 /**
- * @type {Writable<{ show: boolean, timestamp?: Date, resolve?: Function }>}
+ * @type {Writable<{ show: boolean, timestamp?: Date, resolve?: (value?: boolean) => void }>}
  */
 export const restoreDialogState = writable({ show: false });
 /**
