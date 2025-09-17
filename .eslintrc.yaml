@@ -62,6 +62,7 @@ rules:
       memberSyntaxSortOrder: [none, all, multiple, single]
   unused-imports/no-unused-imports: error
   jsdoc/no-undefined-types: off
+  jsdoc/reject-any-type: off
   jsdoc/require-jsdoc:
     - warn
     - require:
