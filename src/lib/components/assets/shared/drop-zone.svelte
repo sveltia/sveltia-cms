@@ -60,6 +60,11 @@
    * Reset the file list.
    */
   export const reset = () => {
+    // Prevent an infinite loop
+    if (!files.length) {
+      return;
+    }
+
     files = [];
     onDrop?.({ files });
   };

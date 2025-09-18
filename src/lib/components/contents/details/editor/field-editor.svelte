@@ -15,9 +15,9 @@
   import { editors } from '$lib/components/contents/details/widgets';
   import { entryDraft } from '$lib/services/contents/draft';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
-  import { isFieldRequired } from '$lib/services/contents/entry/fields';
+  import { isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { MIN_MAX_VALUE_WIDGETS, MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
+  import { MIN_MAX_VALUE_WIDGETS } from '$lib/services/contents/widgets';
   import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
 
   /**
@@ -25,7 +25,6 @@
    * @import { Writable } from 'svelte/store';
    * @import {
    * DraftValueStoreKey,
-   * EntryDraft,
    * FieldEditorContext,
    * InternalLocaleCode,
    * WidgetContext,
@@ -36,7 +35,6 @@
    * FieldKeyPath,
    * ListField,
    * MinMaxValueField,
-   * MultiValueField,
    * NumberField,
    * StringField,
    * TextField,
@@ -104,9 +102,7 @@
       ? getListFieldInfo(/** @type {ListField} */ (fieldConfig))
       : { hasSubFields: false },
   );
-  const { multiple = false } = $derived(
-    /** @type {MultiValueField} */ (MULTI_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}),
-  );
+  const multiple = $derived(isFieldMultiple(fieldConfig));
   const { min = 0, max = Infinity } = $derived(
     /** @type {MinMaxValueField} */ (MIN_MAX_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}),
   );

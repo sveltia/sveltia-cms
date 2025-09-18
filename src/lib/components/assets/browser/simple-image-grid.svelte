@@ -10,6 +10,7 @@
    * @typedef {object} Props
    * @property {string} [viewType] View type.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
+   * @property {boolean} [multiple] Whether to allow selecting multiple assets.
    * @property {boolean} [showTitle] Whether to show the file name or title under the image while in
    * grid view.
    * @property {(detail: { value: string }) => void} [onChange] Custom `change` event handler.
@@ -21,6 +22,7 @@
     /* eslint-disable prefer-const */
     viewType = 'grid',
     gridId = undefined,
+    multiple = false,
     showTitle = false,
     onChange = undefined,
     children = undefined,
@@ -32,6 +34,7 @@
   <Listbox
     id={gridId}
     class={viewType}
+    {multiple}
     aria-label={$_('assets_dialog.available_images')}
     onChange={(event) => {
       onChange?.(event.detail);
