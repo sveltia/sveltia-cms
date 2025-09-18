@@ -38,6 +38,7 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toEqual({
         config: {
           max_file_size: Infinity,
+          multiple: false,
           slugify_filename: false,
           transformations: undefined,
         },
@@ -77,6 +78,7 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toEqual({
         config: {
           max_file_size: 500000,
+          multiple: false,
           slugify_filename: true,
           transformations: {
             jpeg: { format: 'webp' },
@@ -112,6 +114,7 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toEqual({
         config: {
           max_file_size: 300000,
+          multiple: false,
           slugify_filename: false,
           transformations: undefined,
         },
@@ -129,6 +132,7 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toEqual({
         config: {
           max_file_size: Infinity,
+          multiple: false,
           slugify_filename: false,
           transformations: undefined,
         },
@@ -155,6 +159,7 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toEqual({
         config: {
           max_file_size: 1024000,
+          multiple: false,
           slugify_filename: true,
           transformations: {
             jpeg: { format: 'webp', quality: 80 },
@@ -180,6 +185,7 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toEqual({
         config: {
           max_file_size: Infinity,
+          multiple: false,
           slugify_filename: false,
           transformations: undefined,
         },
@@ -213,6 +219,7 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toEqual({
         config: {
           max_file_size: Infinity,
+          multiple: false,
           slugify_filename: false,
           transformations: undefined,
         },
@@ -248,6 +255,107 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toEqual({
         config: {
           max_file_size: Infinity,
+          multiple: false,
+          slugify_filename: false,
+          transformations: undefined,
+        },
+      });
+    });
+
+    it('should handle multiple property when explicitly set to true', async () => {
+      const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
+      const getMock = vi.mocked(getMediaLibraryOptions);
+
+      getMock.mockReturnValue({
+        config: {
+          multiple: true,
+          max_file_size: 1000000,
+        },
+      });
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          default: {
+            config: {
+              multiple: true,
+              max_file_size: 1000000,
+            },
+          },
+        },
+      });
+
+      const result = getDefaultMediaLibraryOptions({ fieldConfig });
+
+      expect(result).toEqual({
+        config: {
+          max_file_size: 1000000,
+          multiple: true,
+          slugify_filename: false,
+          transformations: undefined,
+        },
+      });
+    });
+
+    it('should handle multiple property when explicitly set to false', async () => {
+      const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
+      const getMock = vi.mocked(getMediaLibraryOptions);
+
+      getMock.mockReturnValue({
+        config: {
+          multiple: false,
+          slugify_filename: true,
+        },
+      });
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          default: {
+            config: {
+              multiple: false,
+              slugify_filename: true,
+            },
+          },
+        },
+      });
+
+      const result = getDefaultMediaLibraryOptions({ fieldConfig });
+
+      expect(result).toEqual({
+        config: {
+          max_file_size: Infinity,
+          multiple: false,
+          slugify_filename: true,
+          transformations: undefined,
+        },
+      });
+    });
+
+    it('should default multiple to false when not boolean', async () => {
+      const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
+      const getMock = vi.mocked(getMediaLibraryOptions);
+
+      getMock.mockReturnValue({
+        config: {
+          multiple: 'not-boolean',
+        },
+      });
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          default: {
+            config: {
+              multiple: 'not-boolean',
+            },
+          },
+        },
+      });
+
+      const result = getDefaultMediaLibraryOptions({ fieldConfig });
+
+      expect(result).toEqual({
+        config: {
+          max_file_size: Infinity,
+          multiple: false,
           slugify_filename: false,
           transformations: undefined,
         },

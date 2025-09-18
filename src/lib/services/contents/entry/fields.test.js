@@ -6,8 +6,10 @@ import {
   getField,
   getFieldDisplayValue,
   getVisibleFieldDisplayValue,
+  isFieldMultiple,
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
+import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 
 // Mock dependencies
 vi.mock('$lib/services/contents/collection', () => ({
@@ -22,8 +24,18 @@ vi.mock('$lib/services/contents/i18n', () => ({
   })),
 }));
 
+vi.mock('$lib/services/contents/widgets', () => ({
+  MEDIA_WIDGETS: ['file', 'image'],
+  MULTI_VALUE_WIDGETS: ['file', 'image', 'relation', 'select'],
+}));
+
+vi.mock('$lib/services/integrations/media-libraries/shared', () => ({
+  isMultiple: vi.fn(),
+}));
+
 const mockGetCollection = vi.mocked(getCollection);
 const mockIsEntryCollection = vi.mocked(isEntryCollection);
+const mockIsMultiple = vi.mocked(isMultiple);
 
 describe('Test getField()', () => {
   // Comprehensive mock collection that covers all test scenarios
@@ -1112,6 +1124,299 @@ describe('Test getField()', () => {
       });
 
       expect(result).toBeUndefined();
+    });
+  });
+});
+
+describe('Test isFieldMultiple()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('Media widgets', () => {
+    test('should call isMultiple for file widget', () => {
+      const fieldConfig = { name: 'test', widget: 'file', multiple: true };
+
+      mockIsMultiple.mockReturnValue(true);
+
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(mockIsMultiple).toHaveBeenCalledWith(fieldConfig);
+      expect(result).toBe(true);
+    });
+
+    test('should call isMultiple for image widget', () => {
+      const fieldConfig = { name: 'test', widget: 'image', multiple: false };
+
+      mockIsMultiple.mockReturnValue(false);
+
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(mockIsMultiple).toHaveBeenCalledWith(fieldConfig);
+      expect(result).toBe(false);
+    });
+
+    test('should handle when isMultiple returns true for media widgets', () => {
+      const fieldConfig = { name: 'test', widget: 'file' };
+
+      mockIsMultiple.mockReturnValue(true);
+
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(true);
+    });
+
+    test('should handle when isMultiple returns false for media widgets', () => {
+      const fieldConfig = { name: 'test', widget: 'image' };
+
+      mockIsMultiple.mockReturnValue(false);
+
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('Multi-value widgets', () => {
+    test('should return true for relation widget with multiple=true', () => {
+      const fieldConfig = { name: 'test', widget: 'relation', multiple: true };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(true);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for relation widget with multiple=false', () => {
+      const fieldConfig = { name: 'test', widget: 'relation', multiple: false };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for relation widget with multiple=undefined', () => {
+      const fieldConfig = { name: 'test', widget: 'relation' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return true for select widget with multiple=true', () => {
+      const fieldConfig = { name: 'test', widget: 'select', multiple: true };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(true);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for select widget with multiple=false', () => {
+      const fieldConfig = { name: 'test', widget: 'select', multiple: false };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for select widget with multiple=undefined', () => {
+      const fieldConfig = { name: 'test', widget: 'select' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should handle truthy values for multiple property', () => {
+      const fieldConfig = { name: 'test', widget: 'select', multiple: 1 };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(true);
+    });
+
+    test('should handle falsy values for multiple property', () => {
+      const fieldConfig = { name: 'test', widget: 'relation', multiple: 0 };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('Other widgets', () => {
+    test('should return false for string widget', () => {
+      const fieldConfig = { name: 'test', widget: 'string' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for text widget', () => {
+      const fieldConfig = { name: 'test', widget: 'text' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for markdown widget', () => {
+      const fieldConfig = { name: 'test', widget: 'markdown' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for number widget', () => {
+      const fieldConfig = { name: 'test', widget: 'number' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for boolean widget', () => {
+      const fieldConfig = { name: 'test', widget: 'boolean' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for datetime widget', () => {
+      const fieldConfig = { name: 'test', widget: 'datetime' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for list widget', () => {
+      const fieldConfig = { name: 'test', widget: 'list' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should return false for object widget', () => {
+      const fieldConfig = { name: 'test', widget: 'object' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Default widget behavior', () => {
+    test('should default to string widget when widget is undefined', () => {
+      const fieldConfig = {};
+      // @ts-ignore - Testing edge case with incomplete field config
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+
+    test('should handle null widget value', () => {
+      const fieldConfig = { widget: null };
+      // @ts-ignore - Testing edge case with incomplete field config
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+      expect(mockIsMultiple).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Edge cases', () => {
+    test('should handle empty field config', () => {
+      const fieldConfig = {};
+      // @ts-ignore - Testing edge case with incomplete field config
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+    });
+
+    test('should handle media widget that is also multi-value widget', () => {
+      // file and image widgets are in both MEDIA_WIDGETS and MULTI_VALUE_WIDGETS
+      // The function should prioritize MEDIA_WIDGETS (call isMultiple function)
+      const fieldConfig = { name: 'test', widget: 'file', multiple: true };
+
+      mockIsMultiple.mockReturnValue(true);
+
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(mockIsMultiple).toHaveBeenCalledWith(fieldConfig);
+      expect(result).toBe(true);
+    });
+
+    test('should handle widget name with different casing', () => {
+      // The function should work with exact widget names
+      const fieldConfig = { name: 'test', widget: 'SELECT' }; // Different case
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false); // Not in MULTI_VALUE_WIDGETS
+    });
+
+    test('should handle additional properties in field config', () => {
+      const fieldConfig = {
+        name: 'test_field',
+        widget: 'select',
+        multiple: true,
+        options: ['option1', 'option2'],
+        required: true,
+      };
+
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('Type casting edge cases', () => {
+    test('should handle string "true" as truthy for multiple property', () => {
+      const fieldConfig = { name: 'test', widget: 'relation', multiple: 'true' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(true);
+    });
+
+    test('should handle string "false" as truthy for multiple property', () => {
+      const fieldConfig = { name: 'test', widget: 'relation', multiple: 'false' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(true); // Non-empty string is truthy
+    });
+
+    test('should handle empty string as falsy for multiple property', () => {
+      const fieldConfig = { name: 'test', widget: 'relation', multiple: '' };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+    });
+
+    test('should handle null as falsy for multiple property', () => {
+      const fieldConfig = { name: 'test', widget: 'select', multiple: null };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(false);
+    });
+
+    test('should handle array as truthy for multiple property', () => {
+      const fieldConfig = { name: 'test', widget: 'select', multiple: [] };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(true); // Empty array is truthy in JavaScript
+    });
+
+    test('should handle non-empty array as truthy for multiple property', () => {
+      const fieldConfig = { name: 'test', widget: 'select', multiple: [1, 2, 3] };
+      const result = isFieldMultiple(fieldConfig);
+
+      expect(result).toBe(true); // Non-empty array is truthy
     });
   });
 });

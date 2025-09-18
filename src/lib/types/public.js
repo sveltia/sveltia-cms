@@ -99,6 +99,9 @@
 /**
  * Configuration for the default media library.
  * @typedef {object} DefaultMediaLibraryConfig
+ * @property {boolean} [multiple] Whether to allow multiple file selection in the media library.
+ * This option is available for compatibility with the Cloudinary and Uploadcare media libraries,
+ * but you can simply use the `multiple` option for the File/Image widgets instead.
  * @property {number} [max_file_size] Maximum file size in bytes that can be accepted for uploading.
  * @property {boolean} [slugify_filename] Whether to rename an original asset file when saving it,
  * according to the global `slug` option. Default: `false`, meaning that the original file name is
@@ -231,7 +234,14 @@
 /**
  * Media field properties.
  * @typedef {object} MediaFieldProps
- * @property {string} [default] Default value. Accepts a file path or complete URL.
+ * @property {string | string[]} [default] Default value. Accepts a file path or complete URL. If
+ * the `multiple` option is set to `true`, it accepts an array of file paths or URLs.
+ * @property {boolean} [multiple] Whether to allow multiple file selection for the field. Default:
+ * `false`.
+ * @property {number} [min] Minimum number of files that can be selected. Ignored unless the
+ * `multiple` option is set to `true`. Default: `0`.
+ * @property {number} [max] Maximum number of files that can be selected.  Ignored unless the
+ * `multiple` option is set to `true`. Default: `Infinity`.
  * @property {string} [accept] File types that the field should accept. The value would be a
  * comma-separated list of unique file type specifiers, the format used for the HTML
  * [`accept`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept)

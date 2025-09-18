@@ -1,6 +1,7 @@
 import { getDefaultValueMap as getBooleanFieldDefaultValueMap } from '$lib/services/contents/widgets/boolean/defaults';
 import { getDefaultValueMap as getCodeFieldDefaultValueMap } from '$lib/services/contents/widgets/code/defaults';
 import { getDefaultValueMap as getDateTimeFieldDefaultValueMap } from '$lib/services/contents/widgets/date-time/defaults';
+import { getDefaultValueMap as getFileFieldDefaultValueMap } from '$lib/services/contents/widgets/file/defaults';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/widgets/hidden/defaults';
 import { getDefaultValueMap as getKeyValueFieldDefaultValueMap } from '$lib/services/contents/widgets/key-value/defaults';
 import { getDefaultValueMap as getListFieldDefaultValueMap } from '$lib/services/contents/widgets/list/defaults';
@@ -26,7 +27,9 @@ const GET_DEFAULT_VALUE_MAP_FUNCTIONS = {
   boolean: getBooleanFieldDefaultValueMap,
   code: getCodeFieldDefaultValueMap,
   datetime: getDateTimeFieldDefaultValueMap,
+  file: getFileFieldDefaultValueMap,
   hidden: getHiddenFieldDefaultValueMap,
+  image: getFileFieldDefaultValueMap, // alias
   keyvalue: getKeyValueFieldDefaultValueMap,
   list: getListFieldDefaultValueMap,
   markdown: getMarkdownFieldDefaultValueMap,

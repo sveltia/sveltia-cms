@@ -8,11 +8,12 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
-import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
+import { MEDIA_WIDGETS, MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
 import { getComponentDef } from '$lib/services/contents/widgets/markdown/components/definitions';
 import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
+import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 
 /**
  * @import {
@@ -26,6 +27,7 @@ import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
  * Field,
  * FieldKeyPath,
  * ListField,
+ * MediaField,
  * MultiValueField,
  * NumberField,
  * RelationField,
@@ -37,6 +39,25 @@ import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
  * @type {Map<string, Field | undefined>}
  */
 export const fieldConfigCacheMap = new Map();
+
+/**
+ * Check if multi selection is enabled for the given field configuration.
+ * @param {Field} fieldConfig Field configuration.
+ * @returns {boolean} Result.
+ */
+export const isFieldMultiple = (fieldConfig) => {
+  const widgetName = fieldConfig.widget ?? 'string';
+
+  if (MEDIA_WIDGETS.includes(widgetName)) {
+    return isMultiple(/** @type {MediaField} */ (fieldConfig));
+  }
+
+  if (MULTI_VALUE_WIDGETS.includes(widgetName)) {
+    return !!(/** @type {MultiValueField} */ (fieldConfig).multiple);
+  }
+
+  return false;
+};
 
 /**
  * Get a field’s config object that matches the given field name (key path).
@@ -99,7 +120,7 @@ export const getField = (args) => {
       // Handle multi-value widgets with numeric keys, e.g. `authors.0`
       if (isNumericKey && MULTI_VALUE_WIDGETS.includes(widget)) {
         // For single value field, numeric access is not allowed
-        if (!(/** @type {MultiValueField} */ (field).multiple)) {
+        if (!isFieldMultiple(field)) {
           field = undefined;
         }
 

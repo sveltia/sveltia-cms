@@ -36,7 +36,7 @@ vi.mock('$lib/services/integrations/media-libraries/default', () => ({
    * @returns {object} Default options with disabled filename slugification.
    */
   getDefaultMediaLibraryOptions: () => ({
-    config: { slugify_filename: false },
+    config: { multiple: false, slugify_filename: false },
   }),
 }));
 

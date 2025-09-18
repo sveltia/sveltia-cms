@@ -119,6 +119,7 @@ describe('assets/index', () => {
       getDefaultMediaLibraryOptionsMock.mockReturnValue({
         config: {
           max_file_size: 1000000, // 1MB
+          multiple: false,
           transformations: undefined,
         },
       });
@@ -173,6 +174,7 @@ describe('assets/index', () => {
       getDefaultMediaLibraryOptionsMock.mockReturnValue({
         config: {
           max_file_size: 1000000,
+          multiple: false,
           transformations: undefined,
         },
       });
@@ -203,6 +205,7 @@ describe('assets/index', () => {
       getDefaultMediaLibraryOptionsMock.mockReturnValue({
         config: {
           max_file_size: 1000000,
+          multiple: false,
           transformations: undefined,
         },
       });

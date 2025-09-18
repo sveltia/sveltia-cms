@@ -1,3 +1,4 @@
+import { isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 
 /**
@@ -66,9 +67,7 @@ const parseField = ({ field, keyPath, keyPathList }) => {
   }
 
   if (widget && MULTI_VALUE_WIDGETS.includes(widget)) {
-    const { multiple = false } = /** @type {MultiValueField} */ (field);
-
-    keyPathList.push(multiple ? `${keyPath}.*` : keyPath);
+    keyPathList.push(isFieldMultiple(field) ? `${keyPath}.*` : keyPath);
   }
 };
 

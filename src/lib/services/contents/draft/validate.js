@@ -2,12 +2,8 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
-import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
-import {
-  MEDIA_WIDGETS,
-  MIN_MAX_VALUE_WIDGETS,
-  MULTI_VALUE_WIDGETS,
-} from '$lib/services/contents/widgets';
+import { getField, isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
+import { MEDIA_WIDGETS, MIN_MAX_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
 import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/widgets/markdown';
@@ -111,10 +107,7 @@ const validateAnyField = ({ draft, locale, valueMap, keyPath, value, componentNa
   }
 
   const { widget: widgetName = 'string', i18n = false, pattern: validation } = fieldConfig;
-
-  const { multiple = false } = /** @type {MultiValueField} */ (
-    MULTI_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}
-  );
+  const multiple = isFieldMultiple(fieldConfig);
 
   const { min = 0, max = Infinity } = /** @type {MinMaxValueField} */ (
     MIN_MAX_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}
@@ -343,11 +336,7 @@ const validateList = ({ fieldConfig, validateArgs }) => {
     }
   }
 
-  const { multiple = false } = /** @type {MultiValueField} */ (
-    MULTI_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}
-  );
-
-  if (multiple) {
+  if (isFieldMultiple(fieldConfig)) {
     // Same as a simple list field, so we don’t need to validate items
     return { valid, validateItems: false };
   }
