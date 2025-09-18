@@ -26,8 +26,8 @@ Built from the ground up, Sveltia CMS offers an excellent UX, DX, performance, s
   - [Better UX](#better-ux)
   - [Better performance](#better-performance)
   - [Better productivity](#better-productivity)
-  - [Better accessibility](#better-accessibility)
   - [Better security](#better-security)
+  - [Better accessibility](#better-accessibility)
   - [Better installation](#better-installation)
   - [Better configuration](#better-configuration)
   - [Better backend support](#better-backend-support)
@@ -117,9 +117,17 @@ We loved the simple, unique setup of Netlify CMS that turned a Git repository in
 
 Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successors:
 
-- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork, initial commit made in September 2022 — discontinued in September 2024 after making meaningful improvements
-- **Sveltia CMS**: not a fork but a **complete rewrite**, started in November 2022, first appeared on GitHub in March 2023 — actively developed with frequent releases and numerous improvements
-- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version, [announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership — mostly stagnated since then, with no significant progress made, a [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) and high severity dependency vulnerabilities remain unaddressed
+- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork
+  - Initial commit made in September 2022
+  - Discontinued in September 2024 after making meaningful improvements
+- **Sveltia CMS**: not a fork but a **complete rewrite**
+  - Started in November 2022, first appeared on GitHub in March 2023
+  - Actively developed with frequent releases and numerous improvements
+  - Solved more than 250 issues reported in the Netlify/Decap CMS repository
+- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
+  - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership
+  - Mostly stagnated since then, with no significant progress made
+  - A [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t reuse any part of their code. This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system.
 
@@ -211,6 +219,20 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Instant full-text search with results sorted by relevance helps you find entries faster. In Netlify/Decap CMS, you often won’t get the results you expect.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
 
+### Better security
+
+- Avoids vulnerabilities in dependencies through constant updates, Dependabot alerts, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unaddressed for a long time.[^33]
+- The unpatched [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) in Decap CMS does not affect Sveltia CMS, as our entry preview implementation is completely different.
+  - However, the Markdown widget was potentially vulnerable to XSS attacks because the `sanitize_preview` option was set to `false` by default for compatibility with Netlify/Decap CMS. This behaviour is [documented](https://decapcms.org/docs/widgets/#markdown) and is not a bug, but it’s definitely not secure. In [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), we changed the default value to `true`, assuming that most users would prefer security over compatibility.
+- Our [local repository workflow](#working-with-a-local-git-repository) does not require a proxy server. This reduces attack surfaces by eliminating the possibility of compromised dependencies[^158] and unauthorized API access.[^282]
+- Thanks to pnpm, Vite, GitHub Actions and [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/), our release process is fast, reliable and transparent. This setup makes it easy to verify the integrity of published code and assets. It also helps us avoid errors that can occur with manual build steps.[^264]
+- We have created a [security policy](https://github.com/sveltia/sveltia-cms/blob/main/SECURITY.md).
+- We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration.[^108]
+- The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive.[^34]
+- The `same-origin` referrer policy is automatically set with a `<meta>` tag.
+- Sveltia CMS has a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) requirement that forces the site content, including the CMS configuration file, to be served over HTTPS.
+- GitHub commits are automatically GPG-signed and [marked as verified](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).[^144]
+
 ### Better accessibility
 
 - Improved keyboard handling lets you efficiently navigate through UI elements using the Tab, Space, Enter and arrow keys.[^17][^67]
@@ -222,20 +244,6 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Honours your operating system’s [reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) and [reduced transparency](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) settings. Support for [high contrast mode](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast) will be added later.
 - Browser console logs for developers are readable in either light or dark mode.[^116]
 - We’ll continue to test and improve the application to meet [WCAG 2.2](https://w3c.github.io/wcag/guidelines/22/).
-
-### Better security
-
-- Avoids vulnerabilities in dependencies through constant updates, Dependabot alerts, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unpatched for a long time.[^33]
-- The unpatched [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) in Decap CMS does not affect Sveltia CMS, as our entry preview implementation is completely different.
-  - However, the Markdown widget was potentially vulnerable to XSS attacks because the `sanitize_preview` option was set to `false` by default for compatibility with Netlify/Decap CMS. This behaviour is [documented](https://decapcms.org/docs/widgets/#markdown) and is not a bug, but it’s definitely not secure. In [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), we changed the default value to `true`, assuming that most users would prefer security over compatibility.
-- Thanks to pnpm, Vite, GitHub Actions and [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/), our release process is fast, reliable and transparent. This setup makes it easy to verify the integrity of published code and assets. It also helps us avoid errors that can occur with manual build steps.[^264]
-- We have created a [security policy](https://github.com/sveltia/sveltia-cms/blob/main/SECURITY.md).
-- We have documented how to [set up a Content Security Policy](#setting-up-content-security-policy) for the CMS to prevent any unexpected errors or otherwise insecure configuration.[^108]
-- The `unsafe-eval` and `unsafe-inline` keywords are not needed in the `script-src` CSP directive.[^34]
-- The `same-origin` referrer policy is automatically set with a `<meta>` tag.
-- Sveltia CMS has a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) requirement that forces the site content, including the CMS configuration file, to be served over HTTPS.
-- GitHub commits are automatically GPG-signed and [marked as verified](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).[^144]
-- Our [local repository workflow](#working-with-a-local-git-repository) does not require a proxy server. This reduces attack surfaces by eliminating the possibility of compromised dependencies[^158] and unauthorized API access.[^282]
 
 ### Better installation
 
