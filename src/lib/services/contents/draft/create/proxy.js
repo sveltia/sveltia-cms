@@ -84,6 +84,30 @@ export const createProxy = ({
     canonicalSlug: { key: canonicalSlugKey },
   } = (collectionFile ?? collection)._i18n;
 
+  /**
+   * Check if auto-duplication should be performed for the given field.
+   * @param {Field} fieldConfig Field configuration.
+   * @returns {boolean} True if auto-duplication should be performed.
+   */
+  const shouldAutoDuplicate = (fieldConfig) =>
+    get(i18nAutoDupEnabled) && fieldConfig.i18n === 'duplicate' && sourceLocale === defaultLocale;
+
+  /**
+   * Get field configuration for the given key path.
+   * @param {object} obj The proxy target object.
+   * @param {FieldKeyPath} keyPath The field key path.
+   * @returns {{ valueMap: any, getFieldArgs: GetFieldArgs, fieldConfig: Field | undefined }}
+   * Field info.
+   */
+  const getFieldInfo = (obj, keyPath) => {
+    const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
+    /** @type {GetFieldArgs} */
+    const getFieldArgs = { collectionName, fileName, keyPath, valueMap, isIndexFile };
+    const fieldConfig = getField({ ...getFieldArgs });
+
+    return { valueMap, getFieldArgs, fieldConfig };
+  };
+
   return new Proxy(/** @type {any} */ (target), {
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
@@ -96,10 +120,7 @@ export const createProxy = ({
         return true;
       }
 
-      const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
-      /** @type {GetFieldArgs} */
-      const getFieldArgs = { collectionName, fileName, keyPath, valueMap, isIndexFile };
-      const fieldConfig = getField({ ...getFieldArgs });
+      const { fieldConfig, getFieldArgs } = getFieldInfo(obj, keyPath);
 
       if (!fieldConfig) {
         return true;
@@ -116,12 +137,31 @@ export const createProxy = ({
       }
 
       // Copy value to other locales
-      if (
-        get(i18nAutoDupEnabled) &&
-        fieldConfig.i18n === 'duplicate' &&
-        sourceLocale === defaultLocale
-      ) {
+      if (shouldAutoDuplicate(fieldConfig)) {
         copyDefaultLocaleValue({ getFieldArgs, fieldConfig, sourceLocale, value });
+      }
+
+      return true;
+    },
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    deleteProperty: (obj, /** @type {FieldKeyPath} */ keyPath) => {
+      delete obj[keyPath];
+
+      const { fieldConfig } = getFieldInfo(obj, keyPath);
+
+      if (!fieldConfig) {
+        return true;
+      }
+
+      // Remove the property from other locales
+      if (shouldAutoDuplicate(fieldConfig)) {
+        Object.entries(/** @type {EntryDraft} */ (get(entryDraft)).currentValues).forEach(
+          ([targetLocale, content]) => {
+            if (targetLocale !== sourceLocale && keyPath in content) {
+              delete content[keyPath];
+            }
+          },
+        );
       }
 
       return true;
