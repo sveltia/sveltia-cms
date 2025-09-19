@@ -5,45 +5,31 @@
   @see https://decapcms.org/docs/widgets/#image
 -->
 <script>
-  import { AlertDialog, Button, ConfirmationDialog, Icon, TextArea } from '@sveltia/ui';
-  import { getHash } from '@sveltia/utils/crypto';
-  import equal from 'fast-deep-equal';
-  import DOMPurify from 'isomorphic-dompurify';
-  import { flushSync, getContext, untrack } from 'svelte';
+  import { AlertDialog, ConfirmationDialog, TextArea } from '@sveltia/ui';
+  import { flushSync, getContext } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
-  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import { allAssets, getAssetByPath } from '$lib/services/assets';
+  import DropZoneContent from '$lib/components/contents/details/widgets/file/drop-zone-content.svelte';
+  import FileEditorItem from '$lib/components/contents/details/widgets/file/file-editor-item.svelte';
   import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
-  import { getAssetPublicURL, getMediaFieldURL } from '$lib/services/assets/info';
-  import { getMediaKind } from '$lib/services/assets/kinds';
   import { entryDraft } from '$lib/services/contents/draft';
-  import {
-    getDefaultMediaLibraryOptions,
-    transformFile,
-  } from '$lib/services/integrations/media-libraries/default';
-  import { hasMouse } from '$lib/services/user/env';
-  import { createPath, formatSize, getGitHash } from '$lib/services/utils/file';
+  import { processResource } from '$lib/services/contents/widgets/file/process';
+  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+  import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
+  import { formatSize } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
-   * @import {
-   * Asset,
-   * AssetKind,
-   * EntryDraft,
-   * FieldEditorContext,
-   * SelectedResource,
-   * WidgetEditorProps,
-   * } from '$lib/types/private';
+   * @import { FieldEditorContext, SelectedResource, WidgetEditorProps } from '$lib/types/private';
    * @import { MediaField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
    * @property {MediaField} fieldConfig Field configuration.
-   * @property {string | undefined} currentValue Field value.
+   * @property {string | string[] | undefined} currentValue Field value.
    */
 
   /** @type {FieldEditorContext} */
@@ -52,6 +38,8 @@
   /** @type {WidgetEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
+    locale,
+    keyPath,
     fieldId,
     fieldConfig,
     currentValue = $bindable(),
@@ -61,20 +49,9 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /** @type {string | undefined} */
-  let url;
-  /** @type {string | undefined} */
-  let credit;
-
-  /** @type {Asset | undefined} */
-  let asset = $state();
-  /** @type {File | undefined} */
-  let file = $state();
-  /** @type {AssetKind | undefined} */
-  let kind = $state();
-  /** @type {string | undefined} */
-  let src = $state();
   let showSelectAssetsDialog = $state(false);
+  let replaceMode = $state(false);
+  let replaceIndex = $state(-1);
   let showSizeLimitDialog = $state(false);
   let showPhotoCreditDialog = $state(false);
   let photoCredit = $state('');
@@ -84,72 +61,33 @@
 
   const {
     widget: widgetName,
-    accept,
     // Widget-specific options
+    max = Infinity,
+    accept,
     choose_url: canEnterURL = true,
   } = $derived(fieldConfig);
-  const isImageWidget = $derived(widgetName === 'image');
-  const {
-    config: { max_file_size: maxSize, transformations },
-  } = $derived(getDefaultMediaLibraryOptions({ fieldConfig }));
   const entry = $derived($entryDraft?.originalEntry);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
+  const isImageWidget = $derived(widgetName === 'image');
+  const libraryConfig = $derived(getDefaultMediaLibraryOptions({ fieldConfig }).config);
+  const multiple = $derived(isMultiple(fieldConfig));
+  const maxSize = $derived(/** @type {number} */ (libraryConfig.max_file_size));
   const showRemoveButton = $derived(
     !required &&
       (!widgetContext ||
         !['markdown-editor-component', 'single-field-list-widget'].includes(widgetContext)),
   );
-
-  /**
-   * Get the path to display for the asset or file. For an unsaved file, this will be the same as
-   * the final path in most cases, but it could be different if a file with the same name already
-   * exists in the assets folder, and the new file is renamed to avoid conflicts.
-   * @type {string} The path to display. If the folder could not be determined, it will only be the
-   * file name.
-   * @todo Handle template tags and relative paths if possible.
-   */
-  const fileDisplayPath = $derived.by(() => {
-    if (!currentValue) {
-      return '';
-    }
-
-    if (file) {
-      const { publicPath, entryRelative, hasTemplateTags } =
-        $entryDraft?.files[currentValue].folder ?? {};
-
-      const _folder = entryRelative || hasTemplateTags ? '' : publicPath || '';
-
-      return createPath([_folder, decodeURI(file.name.normalize())]);
-    }
-
-    if (!currentValue.startsWith('blob:')) {
-      return decodeURI(currentValue);
-    }
-
-    return '';
+  const itemArgs = $derived({
+    widgetName,
+    readonly,
+    invalid,
+    required,
+    showRemoveButton,
+    collectionName,
+    fileName,
+    entry,
   });
-
-  /**
-   * Get the blob URL of an unsaved file that matches the given file.
-   * @param {File} _file File to be searched.
-   * @returns {Promise<string | undefined>} Blob URL.
-   */
-  const getExistingBlobURL = async (_file) => {
-    const hash = await getHash(_file);
-    /** @type {string | undefined} */
-    let foundURL = undefined;
-
-    await Promise.all(
-      Object.entries($entryDraft?.files ?? {}).map(async ([blobURL, f]) => {
-        if (!foundURL && (await getHash(f.file)) === hash) {
-          foundURL = blobURL;
-        }
-      }),
-    );
-
-    return foundURL;
-  };
 
   /**
    * Reset the current selection.
@@ -157,238 +95,218 @@
   const resetSelection = () => {
     dropZone?.reset();
 
-    // This will reset `file`, `asset`, `kind` and `src` via `updateProps`
-    currentValue = '';
-
-    // Force running `updateProps` first, otherwise `file`, `asset`, etc. will be  `undefined` while
-    // `await`ing a Promise in `onResourceSelect`
-    flushSync();
+    if (!multiple) {
+      currentValue = '';
+      flushSync();
+    }
   };
 
   /**
-   * Handle selected resource.
-   * @param {SelectedResource} selectedResource Selected resource.
+   * Handle selected resources.
+   * @param {SelectedResource[]} selectedResources Selected resources.
    */
-  const onResourceSelect = async (selectedResource) => {
+  const onResourcesSelect = async (selectedResources) => {
+    if (!$entryDraft) {
+      return;
+    }
+
     resetSelection();
     processing = true;
 
-    ({ asset, file, url, credit } = selectedResource);
+    const resources = await Promise.all(
+      selectedResources.map((resource) =>
+        processResource({ draft: $entryDraft, resource, libraryConfig }),
+      ),
+    );
 
-    if (file) {
-      const existingBlobURL = await getExistingBlobURL(file);
+    /** @type {string[]} */
+    const credits = [];
+    /** @type {string[]} */
+    const oversizedFileNames = [];
 
-      if (existingBlobURL) {
-        currentValue = existingBlobURL;
-      } else {
-        if (transformations) {
-          file = await transformFile(file, transformations);
-        }
+    const lastIndex = multiple
+      ? (Object.keys($entryDraft.currentValues[locale])
+          .filter((key) => key.startsWith(`${keyPath}.`))
+          .map((key) => Number(key.replace(`${keyPath}.`, '')))
+          .pop() ?? -1)
+      : -1;
 
-        const sha = await getGitHash(file);
-        const { folder } = selectedResource;
-        const existingAsset = $allAssets.find((a) => a.sha === sha && equal(a.folder, folder));
+    resources.forEach(({ value, credit, oversizedFileName }, index) => {
+      if (value) {
+        if (multiple) {
+          const targetIndex = replaceMode ? replaceIndex : lastIndex + 1 + index;
 
-        if (existingAsset) {
-          // If the selected file has already been uploaded, use the existing asset instead of
-          // uploading the same file twice
-          asset = existingAsset;
-          file = undefined;
-        } else if (file.size > /** @type {number} */ (maxSize)) {
-          showSizeLimitDialog = true;
-          file = undefined;
+          $entryDraft.currentValues[locale][`${keyPath}.${targetIndex}`] = value;
         } else {
-          // Set a temporary blob URL, which will be later replaced with the actual file path
-          currentValue = URL.createObjectURL(file);
-          // Cache the file itself for later upload
-          /** @type {EntryDraft} */ ($entryDraft).files[currentValue] = { file, folder };
+          currentValue = value;
         }
       }
-    }
 
-    if (asset) {
-      if (!asset.unsaved) {
-        currentValue = getAssetPublicURL(asset, { pathOnly: true, allowSpecial: true, entry });
-      } else if (asset.file) {
-        currentValue = await getExistingBlobURL(asset.file);
+      if (credit) {
+        credits.push(credit);
       }
-    }
 
-    if (url) {
-      currentValue = url;
-    }
+      if (oversizedFileName) {
+        oversizedFileNames.push(oversizedFileName);
+      }
+    });
 
-    if (credit) {
-      photoCredit = DOMPurify.sanitize(credit, { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href'] });
+    if (credits.length) {
+      photoCredit = credits.join('\n');
       showPhotoCreditDialog = true;
+    } else {
+      photoCredit = '';
+    }
+
+    if (oversizedFileNames.length) {
+      showSizeLimitDialog = true;
     }
 
     processing = false;
   };
 
   /**
-   * Update a couple of properties when {@link currentValue} is updated.
+   * Handle drop event.
+   * @param {object} detail Drop event detail.
+   * @param {File[]} detail.files Dropped files.
    */
-  const updateProps = async () => {
-    if (processing) {
+  const onDrop = ({ files }) => {
+    if (!files.length) {
       return;
     }
 
-    // Restore `file` after a draft backup is restored
-    if (currentValue?.startsWith('blob:') && $entryDraft) {
-      file = $entryDraft.files[currentValue]?.file;
-    }
+    const folder =
+      getAssetFolder({ collectionName, fileName }) ??
+      getAssetFolder({ collectionName }) ??
+      $globalAssetFolder;
 
-    if (currentValue) {
-      const getURLArgs = { value: currentValue, entry, collectionName, fileName };
-
-      // Update the `src` when an asset is selected
-      if (currentValue.startsWith('blob:')) {
-        asset = undefined;
-        kind = currentValue ? await getMediaKind(currentValue) : undefined;
-        src =
-          currentValue && kind
-            ? await getMediaFieldURL({ ...getURLArgs, thumbnail: true })
-            : undefined;
-      } else if (isImageWidget && /^https?:/.test(currentValue)) {
-        asset = undefined;
-        kind = 'image';
-        src = currentValue;
-      } else {
-        asset = getAssetByPath({ ...getURLArgs });
-        kind = undefined;
-        src = undefined;
-      }
-    } else {
-      // Remove `file` after the value is removed
-      asset = undefined;
-      file = undefined;
-      kind = undefined;
-      src = undefined;
-    }
+    onResourcesSelect(files.map((file) => ({ file, folder })));
   };
 
-  $effect(() => {
-    void [currentValue];
+  /**
+   * Remove an item from the list.
+   * @param {number} index Index of the item to remove.
+   */
+  const removeItem = (index) => {
+    if (!$entryDraft) {
+      return;
+    }
 
-    untrack(() => {
-      updateProps();
-    });
-  });
+    const valueMap = $state.snapshot($entryDraft.currentValues[locale]);
+    /** @type {string[]} */
+    const updatedValue = [];
+
+    for (let i = 0; ; i += 1) {
+      const currentKey = `${keyPath}.${i}`;
+      const nextKey = `${keyPath}.${i + 1}`;
+
+      if (i < index) {
+        updatedValue.push(valueMap[currentKey]);
+      } else if (nextKey in valueMap) {
+        updatedValue.push(valueMap[nextKey]);
+        $entryDraft.currentValues[locale][currentKey] = valueMap[nextKey];
+      } else {
+        $entryDraft.currentValues[locale][currentKey] = null;
+        delete $entryDraft.currentValues[locale][currentKey];
+        break;
+      }
+    }
+
+    currentValue = Object.values(updatedValue);
+  };
+
+  /**
+   * Move an item down in the list.
+   * @param {number} index Index of the item to move down.
+   */
+  const moveDown = (index) => {
+    if (!$entryDraft) {
+      return;
+    }
+
+    [
+      $entryDraft.currentValues[locale][`${keyPath}.${index}`],
+      $entryDraft.currentValues[locale][`${keyPath}.${index + 1}`],
+    ] = [
+      $entryDraft.currentValues[locale][`${keyPath}.${index + 1}`],
+      $entryDraft.currentValues[locale][`${keyPath}.${index}`],
+    ];
+  };
 </script>
+
+{#snippet dropZoneContent()}
+  <DropZoneContent
+    {invalid}
+    {readonly}
+    {processing}
+    {isImageWidget}
+    {multiple}
+    bind:showSelectAssetsDialog
+    bind:replaceMode
+  />
+{/snippet}
 
 <DropZone
   bind:this={dropZone}
+  {multiple}
   disabled={readonly}
   accept={accept ?? (isImageWidget ? SUPPORTED_IMAGE_TYPES.join(',') : undefined)}
-  onDrop={({ files }) => {
-    if (files.length) {
-      onResourceSelect({
-        file: files[0],
-        folder:
-          getAssetFolder({ collectionName, fileName }) ??
-          getAssetFolder({ collectionName }) ??
-          $globalAssetFolder,
-      });
-    }
-  }}
+  {onDrop}
 >
-  {#if currentValue && !processing}
-    <div role="none" class="filled">
-      {#if kind && src}
-        <AssetPreview {kind} {src} variant="tile" checkerboard={true} />
-      {:else if asset}
-        <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
-      {:else}
-        <span role="none" class="preview no-thumbnail">
-          <Icon name="draft" />
-        </span>
-      {/if}
-      <div role="none">
-        {#if typeof currentValue === 'string'}
-          <div
-            role="textbox"
-            id="{fieldId}-value"
-            tabindex="0"
-            class="filename"
-            aria-readonly={readonly}
-            aria-invalid={invalid}
-            aria-required={required}
-            aria-labelledby="{fieldId}-label"
-            aria-errormessage="{fieldId}-error"
-          >
-            {fileDisplayPath}
-          </div>
-        {/if}
-        <div role="none">
-          <Button
-            disabled={readonly}
-            variant="tertiary"
-            label={$_('replace')}
-            aria-label={$_(`replace_${widgetName}`)}
-            aria-controls="{fieldId}-value"
-            onclick={() => {
-              showSelectAssetsDialog = true;
-            }}
-          />
-          {#if showRemoveButton}
-            <Button
-              disabled={readonly}
-              variant="tertiary"
-              label={$_('remove')}
-              aria-label={$_(`remove_${widgetName}`)}
-              aria-controls="{fieldId}-value"
-              onclick={() => {
-                resetSelection();
+  {#if !!currentValue?.length && !processing}
+    {#if multiple}
+      {#if Array.isArray(currentValue)}
+        <div role="none" class="item-list">
+          {#each currentValue as value, index (`${value}|${index}`)}
+            <FileEditorItem
+              {...itemArgs}
+              {value}
+              fieldId="{fieldId}-{index}"
+              onReplace={() => {
+                replaceMode = true;
+                replaceIndex = index;
+                showSelectAssetsDialog = true;
               }}
+              onRemove={() => removeItem(index)}
+              onMoveUp={index > 0 ? () => moveDown(index - 1) : undefined}
+              onMoveDown={index < currentValue.length - 1 ? () => moveDown(index) : undefined}
             />
-          {/if}
+          {/each}
         </div>
-      </div>
-    </div>
-  {:else}
-    <div role="none" class="empty" class:invalid class:processing>
-      <Button
-        flex
-        role="button"
-        variant="tertiary"
-        disabled={readonly || processing}
-        tabindex="0"
-        onclick={() => {
-          if (!readonly) {
-            showSelectAssetsDialog = true;
-          }
+        {#if currentValue.length < max}
+          {@render dropZoneContent()}
+        {/if}
+      {/if}
+    {:else if typeof currentValue === 'string' && currentValue}
+      <FileEditorItem
+        {...itemArgs}
+        value={currentValue}
+        {fieldId}
+        onReplace={() => {
+          replaceMode = true;
+          showSelectAssetsDialog = true;
         }}
-      >
-        <Icon name="cloud_upload" />
-        <div role="none">
-          {#if processing}
-            <div role="status">
-              {$_('processing_file')}
-            </div>
-          {:else if isImageWidget}
-            {$_($hasMouse ? 'drop_image_file_or_click_to_browse' : 'tap_to_browse')}
-          {:else}
-            {$_($hasMouse ? 'drop_file_or_click_to_browse' : 'tap_to_browse')}
-          {/if}
-        </div>
-      </Button>
-    </div>
+        onRemove={resetSelection}
+      />
+    {/if}
+  {:else}
+    {@render dropZoneContent()}
   {/if}
 </DropZone>
 
 <SelectAssetsDialog
   kind={isImageWidget ? 'image' : undefined}
+  multiple={replaceMode ? false : multiple}
   {accept}
   {canEnterURL}
   {entryDraft}
   {fieldConfig}
   bind:open={showSelectAssetsDialog}
-  onSelect={onResourceSelect}
+  onSelect={onResourcesSelect}
 />
 
 <AlertDialog bind:open={showSizeLimitDialog} title={$_('assets_dialog.large_file.title')}>
-  {$_('warning_oversized_file', { values: { size: formatSize(/** @type {number} */ (maxSize)) } })}
+  {$_('warning_oversized_file', { values: { size: formatSize(maxSize) } })}
 </AlertDialog>
 
 <ConfirmationDialog
@@ -414,80 +332,9 @@
 </ConfirmationDialog>
 
 <style lang="scss">
-  .filled {
-    display: flex !important;
-    align-items: center;
-    gap: 16px;
-    margin: var(--sui-focus-ring-width);
-
-    :global {
-      .preview {
-        flex: none;
-        width: 120px !important;
-        height: 120px !important;
-        border-color: var(--sui-control-border-color) !important;
-        border-radius: var(--sui-control-medium-border-radius);
-        padding: 8px !important;
-
-        &.no-thumbnail {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: var(--sui-secondary-background-color);
-
-          .icon {
-            font-size: 64px;
-          }
-        }
-      }
-    }
-
-    & > div {
-      flex: auto;
-      overflow: hidden;
-
-      .filename {
-        margin: var(--sui-focus-ring-width);
-        padding: 4px;
-        word-break: break-all;
-
-        &:empty {
-          margin: 0;
-          padding: 0;
-        }
-      }
-    }
-  }
-
-  .empty {
-    :global {
-      button {
-        flex-direction: column;
-        justify-content: center;
-        height: 120px;
-        font-size: var(--sui-font-size-small);
-
-        .icon {
-          color: var(--sui-secondary-foreground-color);
-          font-size: 48px;
-        }
-
-        &:disabled {
-          pointer-events: none !important;
-
-          * {
-            opacity: 0.5;
-          }
-        }
-      }
-    }
-
-    &.invalid {
-      :global {
-        button {
-          border-color: var(--sui-error-border-color);
-        }
-      }
-    }
+  .item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 </style>

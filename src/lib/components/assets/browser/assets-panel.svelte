@@ -1,11 +1,12 @@
 <script>
-  import { EmptyState, InfiniteScroll, Option, TruncatedText } from '@sveltia/ui';
+  import { EmptyState, InfiniteScroll, TruncatedText } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
   import DOMPurify from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
+  import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { normalize } from '$lib/services/search/util';
@@ -17,27 +18,29 @@
 
   /**
    * @typedef {object} Props
+   * @property {boolean} [multiple] Whether to allow selecting multiple assets.
    * @property {Asset[]} [assets] Asset list.
-   * @property {SelectedResource} [selectedResource] Selected resource.
    * @property {ViewType} [viewType] View type.
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {string} [basePath] Path to an asset folder, if any folder is selected.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
    * @property {boolean} [checkerboard] Whether to show a checkerboard background below a
    * transparent image.
+   * @property {SelectedResource[]} [selectedResources] Selected resources.
    * @property {(detail: { asset: Asset }) => void} [onSelect] Custom `select` event handler.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
+    multiple = false,
     assets = [],
-    selectedResource = $bindable(),
     viewType = 'grid',
     searchTerms = '',
     basePath = undefined,
     gridId = undefined,
     checkerboard = false,
+    selectedResources = $bindable([]),
     onSelect = undefined,
     /* eslint-enable prefer-const */
   } = $props();
@@ -45,6 +48,29 @@
   const filteredAssets = $derived(
     searchTerms ? assets.filter(({ name }) => normalize(name).includes(searchTerms)) : assets,
   );
+
+  /**
+   * Check if the given asset is already selected.
+   * @param {Asset} asset The asset to check.
+   * @returns {boolean} `true` if the asset is selected, `false` otherwise.
+   */
+  const isSelected = (asset) => selectedResources.some((r) => equal(r.asset, asset));
+
+  /**
+   * Handle selection change of an asset.
+   * @param {Asset} asset The asset whose selection changed.
+   * @param {boolean} selected `true` if the asset is now selected, `false` otherwise.
+   */
+  const onSelectionChange = (asset, selected) => {
+    const otherResources = selectedResources.filter((r) => !equal(r.asset, asset));
+
+    if (selected) {
+      selectedResources = [...otherResources, { asset }];
+      onSelect?.({ asset });
+    } else {
+      selectedResources = otherResources;
+    }
+  };
 </script>
 
 {#snippet getLabel(/** @type {string} */ str)}
@@ -54,17 +80,7 @@
 
 {#if filteredAssets.length}
   <div role="none" class="grid-wrapper">
-    <SimpleImageGrid
-      {gridId}
-      {viewType}
-      showTitle={true}
-      onChange={({ value }) => {
-        const asset = /** @type {Asset} */ (assets.find(({ path }) => path === value));
-
-        selectedResource = { asset };
-        onSelect?.({ asset });
-      }}
-    >
+    <SimpleImageGrid {multiple} {gridId} {viewType} showTitle={true}>
       <InfiniteScroll items={filteredAssets} itemKey="path">
         {#snippet renderItem(/** @type {Asset} */ asset)}
           {#await sleep() then}
@@ -73,10 +89,15 @@
             {@const relPath =
               basePath && !folder.entryRelative ? stripSlashes(path.replace(basePath, '')) : name}
             {@const pathArray = relPath.split('/')}
-            <Option label="" value={path} selected={equal(asset, selectedResource?.asset)}>
-              {#snippet checkIcon()}
-                <!-- Remove check icon -->
-              {/snippet}
+            <SimpleImageGridItem
+              value={path}
+              {viewType}
+              {multiple}
+              selected={isSelected(asset)}
+              onChange={({ detail: { selected } }) => {
+                onSelectionChange(asset, selected);
+              }}
+            >
               {#if viewType === 'grid' && unsaved}
                 <div role="none" class="unsaved">{$_('assets_dialog.unsaved')}</div>
               {/if}
@@ -99,7 +120,7 @@
                   {/if}
                 </span>
               {/if}
-            </Option>
+            </SimpleImageGridItem>
           {/await}
         {/snippet}
       </InfiniteScroll>
@@ -121,14 +142,10 @@
         background-color: transparent;
 
         &.grid {
-          [role='option'] {
-            position: relative;
-          }
-
           .unsaved {
             position: absolute;
-            inset-block-start: 4px;
-            inset-inline-end: 4px;
+            inset-block-start: 8px;
+            inset-inline-end: 8px;
             z-index: 1;
           }
         }

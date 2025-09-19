@@ -4,19 +4,13 @@
   one for an image/file entry field.
 -->
 <script>
-  import {
-    Button,
-    EmptyState,
-    InfiniteScroll,
-    Option,
-    PasswordInput,
-    TextInput,
-  } from '@sveltia/ui';
+  import { Button, EmptyState, InfiniteScroll, PasswordInput, TextInput } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import DOMPurify from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { selectAssetsView } from '$lib/services/contents/editor';
@@ -35,20 +29,22 @@
   /**
    * @typedef {object} Props
    * @property {AssetKind} [kind] Asset kind.
+   * @property {boolean} [multiple] Whether to allow selecting multiple assets.
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {MediaLibraryService} serviceProps Media library service details.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
-   * @property {(resource: SelectedResource) => void} [onSelect] Custom `Select` event handler.
+   * @property {SelectedResource[]} selectedResources Selected resources.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     kind = 'image',
+    multiple = false,
     searchTerms = '',
     serviceProps,
     gridId = undefined,
-    onSelect = undefined,
+    selectedResources = $bindable([]),
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -65,6 +61,8 @@
     signIn,
     search,
   } = $derived(serviceProps);
+
+  const viewType = $derived($selectAssetsView?.type);
 
   const input = $state({ userName: '', password: '' });
   let hasConfig = $state(true);
@@ -98,22 +96,21 @@
   };
 
   /**
-   * Download the selected asset, if needed, and notify the file and credit. If hotlinking is
-   * required by the service, just notify the URL instead of downloading the file.
+   * Download the selected asset, if needed, and return the file and credit. If hotlinking is
+   * required by the service, just return the URL instead of downloading the file.
    * @param {ExternalAsset} asset Selected asset.
+   * @returns {Promise<SelectedResource | undefined>} The selected resource with the file or URL.
    * @todo Support video files.
    */
-  const selectAsset = async (asset) => {
-    const { downloadURL, fileName, credit } = asset;
+  const getResource = async (asset) => {
+    const { downloadURL: url, fileName, credit } = asset;
 
     if (hotlinking) {
-      onSelect?.({ url: downloadURL, credit });
-
-      return;
+      return { url, credit };
     }
 
     try {
-      const response = await fetch(downloadURL);
+      const response = await fetch(url);
       const { ok, status } = response;
 
       if (!ok) {
@@ -123,11 +120,39 @@
       const blob = await response.blob();
       const file = new File([blob], fileName, { type: blob.type });
 
-      onSelect?.({ file, credit });
+      return { url, credit, file };
     } catch (ex) {
       error = 'image_fetch_failed';
       // eslint-disable-next-line no-console
       console.error(ex);
+    }
+
+    return undefined;
+  };
+
+  /**
+   * Check if the given asset is already selected.
+   * @param {ExternalAsset} asset The asset to check.
+   * @returns {boolean} `true` if the asset is selected, `false` otherwise.
+   */
+  const isSelected = (asset) => selectedResources.some((r) => r.url === asset.downloadURL);
+
+  /**
+   * Handle selection change of an asset.
+   * @param {ExternalAsset} asset The asset whose selection changed.
+   * @param {boolean} selected `true` if the asset is now selected, `false` otherwise.
+   */
+  const onSelectionChange = async (asset, selected) => {
+    const otherResources = selectedResources.filter((r) => r.url !== asset.downloadURL);
+
+    if (selected) {
+      const resource = await getResource(asset);
+
+      if (resource) {
+        selectedResources = [...otherResources, resource];
+      }
+    } else {
+      selectedResources = otherResources;
     }
   };
 
@@ -178,30 +203,25 @@
       <span role="alert">{$_('no_files_found')}</span>
     </EmptyState>
   {:else}
-    <SimpleImageGrid
-      {gridId}
-      viewType={$selectAssetsView?.type}
-      onChange={({ value }) => {
-        const asset = searchResults?.find(({ id }) => id === value);
-
-        if (asset) {
-          selectAsset(asset);
-        }
-      }}
-    >
+    <SimpleImageGrid {viewType} {gridId} {multiple}>
       <InfiniteScroll items={searchResults} itemKey="id">
         {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
           {#await sleep() then}
             {@const { id, previewURL, description, kind: _kind } = asset}
-            <Option label="" value={id}>
-              {#snippet checkIcon()}
-                <!-- Remove check icon -->
-              {/snippet}
+            <SimpleImageGridItem
+              value={id}
+              {viewType}
+              {multiple}
+              selected={isSelected(asset)}
+              onChange={({ detail: { selected } }) => {
+                onSelectionChange(asset, selected);
+              }}
+            >
               <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
-              {#if !$isSmallScreen || $selectAssetsView?.type === 'list'}
+              {#if !$isSmallScreen || viewType === 'list'}
                 <span role="none" class="name">{description}</span>
               {/if}
-            </Option>
+            </SimpleImageGridItem>
           {/await}
         {/snippet}
       </InfiniteScroll>

@@ -52,19 +52,21 @@
   /**
    * @typedef {object} Props
    * @property {boolean} [open] Whether to open the dialog.
+   * @property {boolean} [multiple] Whether to allow selecting multiple assets.
    * @property {AssetKind | undefined} [kind] Asset kind.
    * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
    * @property {Writable<EntryDraft | null | undefined>} [entryDraft] Associated entry draft.
    * @property {MediaField} [fieldConfig] Field configuration.
-   * @property {(resource: SelectedResource) => void} [onSelect] Custom `Select` event handler that
-   * will be called when the dialog is closed with the Insert button.
+   * @property {(resources: SelectedResource[]) => void} [onSelect] Custom `Select` event handler
+   * that will be called when the dialog is closed with the Insert button.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     open = $bindable(false),
+    multiple = false,
     kind,
     accept = kind === 'image' ? SUPPORTED_IMAGE_TYPES.join(',') : undefined,
     canEnterURL = true,
@@ -76,8 +78,6 @@
 
   const elementIdPrefix = $props.id();
 
-  /** @type {SelectedResource | undefined} */
-  let selectedResource = $state();
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
   let libraryName = $state('default-global');
@@ -87,6 +87,8 @@
   let unsavedAssets = $state([]);
   /** @type {FilePicker | undefined} */
   let filePicker = $state();
+  /** @type {SelectedResource[]} */
+  let selectedResources = $state([]);
 
   const title = $derived(
     kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file'),
@@ -205,33 +207,61 @@
     ]);
 
   /**
+   * Check if an asset with the same hash and folder already exists in the unsaved assets.
+   * @param {object} args Arguments.
+   * @param {string} args.hash Hash of the file.
+   * @param {AssetFolderInfo | undefined} args.folder Asset folder.
+   * @returns {Promise<boolean>} `true` if the asset already exists.
+   */
+  const hasSameAsset = async ({ hash, folder }) => {
+    const results = await Promise.all(
+      unsavedAssets.map(
+        async (asset) =>
+          !!asset.file && equal(asset.folder, folder) && (await getHash(asset.file)) === hash,
+      ),
+    );
+
+    return results.includes(true);
+  };
+
+  /**
+   * Process a dropped file.
+   * @param {File} file File to be processed.
+   * @returns {Promise<SelectedResource | undefined>} Processed asset or `undefined` if the file
+   * already exists.
+   */
+  const processFile = async (file) => {
+    const hash = await getHash(file);
+    const folder = selectedFolder;
+
+    if (await hasSameAsset({ hash, folder })) {
+      return undefined;
+    }
+
+    const asset = await convertFileItemToAsset({ file, folder });
+
+    droppedAssets.push(asset);
+
+    return { asset };
+  };
+
+  /**
    * Handle dropped files.
    * @param {File[]} files File list.
    */
-  const onDrop = (files) => {
-    files.forEach(async (file, index) => {
-      const hash = await getHash(file);
-      const folder = selectedFolder;
-      const asset = await convertFileItemToAsset({ file, folder });
+  const onDrop = async (files) => {
+    selectedResources = (await Promise.all(files.map(processFile))).filter((r) => !!r);
+  };
 
-      const hasExistingResource = (
-        await Promise.all(
-          unsavedAssets.map(
-            async (a) => !!a.file && (await getHash(a.file)) === hash && equal(a.folder, folder),
-          ),
-        )
-      ).some(Boolean);
-
-      if (hasExistingResource) {
-        return;
-      }
-
-      droppedAssets.push(asset);
-
-      if (index === 0) {
-        selectedResource = { asset };
-      }
-    });
+  /**
+   * Reset all the values.
+   */
+  const resetValues = () => {
+    enteredURL = '';
+    rawSearchTerms = '';
+    droppedAssets = [];
+    unsavedAssets = [];
+    selectedResources = [];
   };
 
   $effect.pre(() => {
@@ -268,7 +298,7 @@
     <SearchBar
       flex={$isSmallScreen}
       bind:value={rawSearchTerms}
-      disabled={!!selectedResource?.file}
+      disabled={selectedResources.some((r) => r.file)}
       aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
     />
   {/if}
@@ -291,22 +321,24 @@
   {title}
   size={'x-large'}
   okLabel={$_('insert')}
-  okDisabled={!selectedResource}
+  okDisabled={!selectedResources.length}
   focusInput={false}
   bind:open
   onOk={() => {
-    if (selectedResource) {
-      const resource = $state.snapshot(selectedResource);
+    if (!selectedResources.length) {
+      return;
+    }
+
+    const resources = $state.snapshot(selectedResources).map((resource) => {
       const { unsaved, file, folder } = resource.asset ?? {};
 
-      onSelect?.(unsaved ? { file, folder } : resource);
-    }
+      return unsaved ? { file, folder } : resource;
+    });
+
+    onSelect?.(resources);
   }}
   onClose={() => {
-    // Reset values
-    enteredURL = '';
-    rawSearchTerms = '';
-    droppedAssets = [];
+    resetValues();
   }}
 >
   {#snippet headerExtra()}
@@ -334,7 +366,7 @@
         filterThreshold={-1}
         onChange={(event) => {
           libraryName = event.detail.name;
-          selectedResource = undefined;
+          selectedResources = [];
         }}
       >
         <OptionGroup label={$_('asset_location.repository')}>
@@ -378,6 +410,7 @@
       {#if isDefaultLibrary && selectedFolder}
         <InternalAssetsPanel
           {accept}
+          {multiple}
           assets={listedAssets.filter(
             (asset) =>
               equal(asset.folder, selectedFolder) &&
@@ -385,7 +418,7 @@
                 ? getPathInfo(asset.path).dirname === targetFolderPath
                 : true),
           )}
-          bind:selectedResource
+          bind:selectedResources
           {searchTerms}
           basePath={selectedFolder.internalPath}
           onDrop={({ files }) => {
@@ -406,7 +439,7 @@
             oninput={() => {
               const url = enteredURL.trim();
 
-              selectedResource = url ? { url } : undefined;
+              selectedResources = url ? [{ url }] : [];
             }}
           />
         </EmptyState>
@@ -415,12 +448,11 @@
         {#if libraryName === serviceId}
           <ExternalAssetsPanel
             {kind}
+            {multiple}
             {searchTerms}
             {serviceProps}
             gridId="select-assets-grid"
-            onSelect={(resource) => {
-              selectedResource = resource;
-            }}
+            bind:selectedResources
           />
         {/if}
       {/each}
