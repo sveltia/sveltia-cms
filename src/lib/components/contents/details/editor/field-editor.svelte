@@ -152,15 +152,30 @@
   const canCopy = $derived(!inEditorComponent && canTranslate && otherLocales.length);
   const canRevert = $derived(!inEditorComponent && !(canDuplicate && locale !== defaultLocale));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
-  // Multiple values are flattened in the value map object
-  const currentValue = $derived(
-    isList
-      ? Object.entries($state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {}))
-          .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-          .map(([, val]) => val)
-          .filter((val) => val !== undefined)
-      : $state.snapshot($entryDraft?.[valueStoreKey][locale])?.[keyPath],
-  );
+  const currentValue = $derived.by(() => {
+    const valueMap = $state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {});
+    const value = valueMap[keyPath];
+
+    if (!isList) {
+      return value;
+    }
+
+    // Multiple values are flattened in the value map object
+    const list = Object.entries(valueMap).filter(([_keyPath]) => keyPathRegex.test(_keyPath));
+
+    if (list.length) {
+      return list.map(([, val]) => val).filter((val) => val !== undefined);
+    }
+
+    // Convert invalid single value to list. This is in place to handle the case when a field is
+    // changed from single to multiple. (Continue to the `$effect` block below.)
+    // @todo Remove this logic to entry normalization
+    if (multiple && value !== undefined) {
+      return [value];
+    }
+
+    return [];
+  });
   const originalValue = $derived(
     isList
       ? Object.entries(originalValues?.[locale] ?? {})
@@ -178,6 +193,35 @@
       widgetName === 'uuid',
   );
   const invalid = $derived(validity?.valid === false);
+
+  $effect(() => {
+    // Convert invalid single value to list. This is in place to handle the case when a field is
+    // changed from single to multiple. (Continued from the `currentValue` store above.)
+    // @todo Remove this logic to entry normalization
+    if ($entryDraft && isList && Array.isArray(currentValue)) {
+      const listItem = $entryDraft[valueStoreKey][locale]?.[`${keyPath}.0`];
+      const [value] = currentValue;
+
+      if (listItem === undefined && value !== undefined) {
+        $entryDraft[valueStoreKey][locale][`${keyPath}.0`] = value;
+        delete $entryDraft[valueStoreKey][locale][keyPath];
+      }
+    }
+  });
+
+  $effect(() => {
+    // Convert invalid list to single value. This is in place to handle the case when a field is
+    // changed from multiple to single.
+    // @todo Remove this logic to entry normalization
+    if ($entryDraft && !isList && currentValue === undefined) {
+      const listItem = $entryDraft[valueStoreKey][locale]?.[`${keyPath}.0`];
+
+      if (listItem !== undefined) {
+        $entryDraft[valueStoreKey][locale][keyPath] = listItem;
+        delete $entryDraft[valueStoreKey][locale][`${keyPath}.0`];
+      }
+    }
+  });
 </script>
 
 {#if $entryDraft && canEdit && widgetName !== 'hidden'}
