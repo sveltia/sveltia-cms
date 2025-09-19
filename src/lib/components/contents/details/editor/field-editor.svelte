@@ -218,7 +218,12 @@
 
       if (listItem !== undefined) {
         $entryDraft[valueStoreKey][locale][keyPath] = listItem;
-        delete $entryDraft[valueStoreKey][locale][`${keyPath}.0`];
+        // Remove all list items
+        Object.keys($entryDraft[valueStoreKey][locale]).forEach((key) => {
+          if (keyPathRegex.test(key)) {
+            delete $entryDraft[valueStoreKey][locale][key];
+          }
+        });
       }
     }
   });
