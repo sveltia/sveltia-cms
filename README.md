@@ -520,6 +520,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Supports the `before_input` and `after_input` string options, which allow developers to display custom labels before and/or after the input UI.[^28] Markdown is supported in the value.
     - Compatibility note: In Static CMS, these options are implemented as `prefix` and `suffix`, respectively, which have different meaning in Sveltia CMS.
 - File and Image
+  - Supports `multiple`, `min` and `max` options to allow uploading multiple files at once.[^239]
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.[^234]
     - Entry, file, [collection](#using-a-custom-media-folder-for-a-collection) and global assets are listed on separate tabs for easy selection.[^19]
     - A new asset can be uploaded by dragging & dropping it into the dialog.[^20]
@@ -575,6 +576,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 - Enhancements to media libraries:
   - Supports multiple media libraries with the [new `media_libraries` option](#configuring-multiple-media-libraries).[^195]
   - Default media library
+    - It supports multiple file selection.[^239] This can be enabled by setting the new `multiple` File/Image widget option to `true`. For compatibility with other media libraries, the `media_library.config.multiple` option is also supported.
     - It comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images selected by users for upload are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200] SVG images can also be optimized.
     - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
     - Unlike Netlify/Decap CMS, files are uploaded with their original names. Uppercase letters and spaces are not converted to lowercase letters and hyphens.[^97] If you want to slugify filenames according to the [`slug` option](https://decapcms.org/docs/configuration-options/#slug-type), use the `slugify_filename` [default media library option](#configuring-multiple-media-libraries).
@@ -727,7 +729,7 @@ Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/dec
   - The [KeyValue widget](#new-widgets) is implemented in Sveltia CMS with the same options.
   - The [UUID widget](#new-widgets) is also implemented, but with different options.
   - The `prefix` and `suffix` options for the Boolean, Number and String widgets are implemented as `before_input` and `after_input` in Sveltia CMS, respectively. Our `prefix` and `suffix` options for the String widget are literally a prefix and suffix to the value.
-  - The `multiple` option for the File and Image widgets will be implemented in Sveltia CMS before GA. ([#10](https://github.com/sveltia/sveltia-cms/issues/10))
+  - The `multiple` option for the File and Image widgets is supported in Sveltia CMS, along with the `min` and `max` options.
   - The [breaking change to the List widget](https://staticjscms.netlify.app/docs/decap-migration-guide#list-widget) doesn’t apply to Sveltia CMS. You must use the `field` (singular) option to produce a single subfield with [no `name` output](#understanding-exceptions-in-data-output).
 - Customization
   - `CMS.registerIcon()` will not be supported, as Sveltia CMS includes the Material Symbols font for [custom collection icons](#using-a-custom-icon-for-a-collection) that doesn’t require manual registration.
@@ -1868,7 +1870,6 @@ Due late 2025
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
-  - [Multiple file selection with the File and Image widgets](https://github.com/sveltia/sveltia-cms/issues/10)[^239]
   - Several Cloudinary and Uploadcare media library issues, including selection of existing files[^247]
   - [RTL localization support](https://github.com/sveltia/sveltia-cms/issues/385)[^245]
   - Thorough site config validation[^246]
