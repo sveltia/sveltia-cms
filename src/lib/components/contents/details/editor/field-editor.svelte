@@ -169,7 +169,7 @@
 
     // Convert invalid single value to list. This is in place to handle the case when a field is
     // changed from single to multiple. (Continue to the `$effect` block below.)
-    // @todo Remove this logic to entry normalization
+    // @todo Move this logic to entry normalization module
     if (multiple && value !== undefined) {
       return [value];
     }
@@ -197,7 +197,7 @@
   $effect(() => {
     // Convert invalid single value to list. This is in place to handle the case when a field is
     // changed from single to multiple. (Continued from the `currentValue` store above.)
-    // @todo Remove this logic to entry normalization
+    // @todo Move this logic to entry normalization module
     if ($entryDraft && isList && Array.isArray(currentValue)) {
       const listItem = $entryDraft[valueStoreKey][locale]?.[`${keyPath}.0`];
       const [value] = currentValue;
@@ -212,7 +212,7 @@
   $effect(() => {
     // Convert invalid list to single value. This is in place to handle the case when a field is
     // changed from multiple to single.
-    // @todo Remove this logic to entry normalization
+    // @todo Move this logic to entry normalization module
     if ($entryDraft && !isList && currentValue === undefined) {
       const listItem = $entryDraft[valueStoreKey][locale]?.[`${keyPath}.0`];
 
