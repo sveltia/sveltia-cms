@@ -520,7 +520,9 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Supports the `before_input` and `after_input` string options, which allow developers to display custom labels before and/or after the input UI.[^28] Markdown is supported in the value.
     - Compatibility note: In Static CMS, these options are implemented as `prefix` and `suffix`, respectively, which have different meaning in Sveltia CMS.
 - File and Image
-  - Supports `multiple`, `min` and `max` options to allow uploading multiple files at once.[^239]
+  - Supports the boolean `multiple` option, which can be set to `true` to allow multiple file uploads.[^239]
+    - When enabled, users can select and upload multiple files at once in the Select File dialog, as well as drag and drop multiple files onto the field. The field value will be an array of strings instead of a single string.
+    - The `min` and `max` options are also available to limit the number of files that can be uploaded.
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.[^234]
     - Entry, file, [collection](#using-a-custom-media-folder-for-a-collection) and global assets are listed on separate tabs for easy selection.[^19]
     - A new asset can be uploaded by dragging & dropping it into the dialog.[^20]
