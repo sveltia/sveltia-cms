@@ -97,7 +97,7 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
     }
   }
 
-  if (url) {
+  if (url && !file && !asset) {
     value = url;
   }
 
