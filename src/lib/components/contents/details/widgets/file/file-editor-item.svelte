@@ -1,5 +1,6 @@
 <script>
   import { Button, Icon } from '@sveltia/ui';
+  import { isURL } from '@sveltia/utils/string';
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -80,7 +81,20 @@
     }
 
     if (!value.startsWith('blob:')) {
-      return decodeURI(value);
+      const decodedValue = decodeURI(value);
+
+      // Truncate query string for display. This is mainly for Unsplash URLs which have a long query
+      // string for image parameters.
+      if (isURL(decodedValue)) {
+        const url = new URL(decodedValue);
+
+        if (url.search) {
+          url.search = '';
+          return `${url}…`;
+        }
+      }
+
+      return decodedValue;
     }
 
     return '';
