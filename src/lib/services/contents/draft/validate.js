@@ -26,7 +26,6 @@ import { getRegex } from '$lib/services/utils/misc';
  * ListField,
  * LocaleCode,
  * MinMaxValueField,
- * MultiValueField,
  * NumberField,
  * StringField,
  * TextField,
@@ -76,19 +75,14 @@ const validityProxyHandler = {
 
 /**
  * Validate each field.
- * @param {object} args Arguments.
- * @param {EntryDraft} args.draft Entry draft.
- * @param {LocaleCode} args.locale Current locale.
- * @param {FlattenedEntryContent} args.valueMap Entry values.
- * @param {string} args.keyPath Field key path.
- * @param {any} args.value Field value.
- * @param {string} [args.componentName] Markdown editor component name.
+ * @param {ValidateFieldArgs} args Arguments.
  * @returns {EntryValidityState | undefined} Field validity.
  * @todo Refactor this function to reduce complexity and improve readability.
  */
-const validateAnyField = ({ draft, locale, valueMap, keyPath, value, componentName }) => {
-  const { collection, collectionName, fileName, collectionFile, files, validities, isIndexFile } =
-    draft;
+const validateAnyField = (args) => {
+  const { draft, locale, valueMap, componentName, validities } = args;
+  const { collection, collectionName, fileName, collectionFile, files, isIndexFile } = draft;
+  let { keyPath, value } = args;
 
   /** @type {GetFieldArgs} */
   const getFieldArgs = {
@@ -321,12 +315,7 @@ const validateField = (args) => {
  */
 const validateList = ({ fieldConfig, validateArgs }) => {
   const { validities, locale, keyPath } = validateArgs;
-  let valid = true;
-
-  if (!(keyPath in validities[locale])) {
-    valid = validateField(validateArgs);
-  }
-
+  const valid = validities[locale][keyPath]?.valid ?? validateField(validateArgs);
   const { widget: widgetName = 'string' } = fieldConfig;
 
   if (widgetName === 'list') {
