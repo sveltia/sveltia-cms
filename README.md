@@ -1896,7 +1896,7 @@ Due early/mid 2026
 
 - **Sveltia CMS Additions**: Edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
   - User management (Netlify Identity alternative) with roles[^23]
-  - Sign-in without a Git service account (Git Gateway alternative)
+  - Commits without a Git service account (Git Gateway alternative)
 - End-user documentation
 - Contributor documentation
 
@@ -2130,7 +2130,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^72]: Netlify/Decap CMS [#7047](https://github.com/decaporg/decap-cms/issues/7047)
 
-[^73]: Netlify/Decap CMS [#6993](https://github.com/decaporg/decap-cms/issues/6993), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7127](https://github.com/decaporg/decap-cms/issues/7127), [#7128](https://github.com/decaporg/decap-cms/issues/7128), [#7237](https://github.com/decaporg/decap-cms/issues/7237), [#7251](https://github.com/decaporg/decap-cms/issues/7251), [#7361](https://github.com/decaporg/decap-cms/issues/7361), [#7391](https://github.com/decaporg/decap-cms/issues/7391), [#7393](https://github.com/decaporg/decap-cms/issues/7393), [#7470](https://github.com/decaporg/decap-cms/issues/7470), [#7475](https://github.com/decaporg/decap-cms/issues/7475), [#7480](https://github.com/decaporg/decap-cms/issues/7480), [#7503](https://github.com/decaporg/decap-cms/issues/7503), [#7504](https://github.com/decaporg/decap-cms/issues/7504), [#7524](https://github.com/decaporg/decap-cms/issues/7524), [#7531](https://github.com/decaporg/decap-cms/issues/7531), [#7535](https://github.com/decaporg/decap-cms/issues/7535), [#7553](https://github.com/decaporg/decap-cms/issues/7553), [#7561](https://github.com/decaporg/decap-cms/issues/7561), [#7584](https://github.com/decaporg/decap-cms/issues/7584), [#7591](https://github.com/decaporg/decap-cms/issues/7591)
+[^73]: Netlify/Decap CMS [#6993](https://github.com/decaporg/decap-cms/issues/6993), [#7123](https://github.com/decaporg/decap-cms/issues/7123), [#7127](https://github.com/decaporg/decap-cms/issues/7127), [#7128](https://github.com/decaporg/decap-cms/issues/7128), [#7237](https://github.com/decaporg/decap-cms/issues/7237), [#7251](https://github.com/decaporg/decap-cms/issues/7251), [#7361](https://github.com/decaporg/decap-cms/issues/7361), [#7391](https://github.com/decaporg/decap-cms/issues/7391), [#7393](https://github.com/decaporg/decap-cms/issues/7393), [#7470](https://github.com/decaporg/decap-cms/issues/7470), [#7475](https://github.com/decaporg/decap-cms/issues/7475), [#7480](https://github.com/decaporg/decap-cms/issues/7480), [#7503](https://github.com/decaporg/decap-cms/issues/7503), [#7504](https://github.com/decaporg/decap-cms/issues/7504), [#7524](https://github.com/decaporg/decap-cms/issues/7524), [#7531](https://github.com/decaporg/decap-cms/issues/7531), [#7535](https://github.com/decaporg/decap-cms/issues/7535), [#7553](https://github.com/decaporg/decap-cms/issues/7553), [#7561](https://github.com/decaporg/decap-cms/issues/7561), [#7584](https://github.com/decaporg/decap-cms/issues/7584), [#7591](https://github.com/decaporg/decap-cms/issues/7591), [#7609](https://github.com/decaporg/decap-cms/issues/7609)
 
 [^74]: Netlify/Decap CMS [#4209](https://github.com/decaporg/decap-cms/issues/4209)
 
