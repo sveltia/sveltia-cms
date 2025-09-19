@@ -53,6 +53,14 @@
     },
   };
 
+  /** @type {DOMPurify.Config} */
+  const sanitizeOptions = {
+    // Allow `blob` images
+    // @see https://github.com/cure53/DOMPurify/issues/549
+    // @see https://github.com/cure53/DOMPurify#control-permitted-attribute-values
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+  };
+
   marked.use(markedBidi());
 
   $effect(() => {
@@ -64,7 +72,7 @@
 
 <div role="none">
   {#if typeof currentValue === 'string' && currentValue.trim()}
-    {@html sanitize ? DOMPurify.sanitize(rawHTML) : rawHTML}
+    {@html sanitize ? DOMPurify.sanitize(rawHTML, sanitizeOptions) : rawHTML}
   {/if}
 </div>
 
