@@ -256,8 +256,6 @@
  * `media_libraries` instead to support multiple libraries.
  * @property {MediaLibraries} [media_libraries] Unified media library option that supports multiple
  * libraries. This overrides the global `media_libraries` option.
- * @property {boolean} [allow_multiple] Whether to enable multiple item selection in an external
- * media library. Default: `true`.
  * @see https://decapcms.org/docs/widgets/#file
  * @see https://decapcms.org/docs/widgets/#image
  */
