@@ -129,9 +129,17 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
   - Mostly stagnated since then, with no significant progress made
   - A [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design: We have rebuilt the app from the ground up using a [modern framework](https://svelte.dev/) while closely monitoring and analyzing the predecessor’s issue tracker. We don’t reuse any part of their code. This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system.
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design:
 
-While Sveltia CMS was created to replace legacy Netlify CMS instances, it can also be used as an alternative to other Netlify CMS successors. With its [solid i18n support](#better-i18n-support), we’re hoping our product will eventually be an appearing option for anyone looking for a free headless CMS.
+- We have rebuilt the app from scratch using a [modern framework](https://svelte.dev/)
+- We closely monitor and analyze the predecessor’s issue tracker
+- We incorporate i18n support into the core instead of adding it as an afterthought
+- We don’t reuse any part of the predecessor’s codebase
+- We have rethought and redesigned the entire user experience (UX) and developer experience (DX)
+
+This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system, making Sveltia CMS an unparalleled successor to Netlify CMS.
+
+As we continue to add more features, we hope that our product will eventually become an appearing headless CMS option for everyone, not just for existing Netlify/Decap CMS users.
 
 ### Our goals
 
@@ -223,7 +231,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 - Avoids vulnerabilities in dependencies through constant updates, Dependabot alerts, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unaddressed for a long time.[^33]
   - We also use the [`cooldown`](https://github.com/raineorshine/npm-check-updates#cooldown) option for `ncu` and the [`minimumReleaseAge`](https://pnpm.io/settings#minimumreleaseage) option for `pnpm` to avoid upgrading to a version that was just released. These options help protect against npm supply chain attacks.
-- The unpatched [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) in Decap CMS does not affect Sveltia CMS, as our entry preview implementation is completely different.
+- The **unpatched** [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) in Decap CMS does not affect Sveltia CMS, as our entry preview implementation is completely different.
   - However, the Markdown widget was potentially vulnerable to XSS attacks because the `sanitize_preview` option was set to `false` by default for compatibility with Netlify/Decap CMS. This behaviour is [documented](https://decapcms.org/docs/widgets/#markdown) and is not a bug, but it’s definitely not secure. In [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), we changed the default value to `true`, assuming that most users would prefer security over compatibility.
 - Our [local repository workflow](#working-with-a-local-git-repository) does not require a proxy server. This reduces attack surfaces by eliminating the possibility of compromised dependencies[^158] and unauthorized API access.[^282]
 - Thanks to pnpm, Vite, GitHub Actions and [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/), our release process is fast, reliable and transparent. This setup makes it easy to verify the integrity of published code and assets. It also helps us avoid errors that can occur with manual build steps.[^264]
@@ -659,10 +667,10 @@ The following Netlify/Decap CMS features will not be implemented, primarily due 
   - [Relation](https://decapcms.org/docs/widgets/#relation) widget: `displayFields`, `searchFields`, `valueField`
   - Note: Some other camel case options, including Color widget options, are not deprecated.
 - The deprecated Date widget: It was removed from Decap CMS 3.0 and Sveltia CMS 0.10. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
+- The `allow_multiple` option for the File and Image widgets: It’s a confusing option that defaults to `true`, and there is a separate option called `media_library.config.multiple`. We have added the new `multiple` option instead, which is more intuitive and works with all media libraries.
 - The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality powered by [Prism](https://prismjs.com/), which is slated to be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
 - An absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
-- The `allow_multiple` option for the File and Image widgets. It’s a confusing option that defaults to `true`, and there is a separate option called `media_library.config.multiple`. Use the new `multiple` option instead, which is more intuitive and works with all media libraries.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
   - Backend: [`use_graphql`](https://decapcms.org/docs/github-backend/#graphql-api)
@@ -1874,7 +1882,7 @@ Due late 2025
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
-  - Several Cloudinary and Uploadcare media library issues, including selection of existing files[^247]
+  - Several Cloudinary and Uploadcare media library issues, including authentication[^288] and selection of existing files[^247]
   - [RTL localization support](https://github.com/sveltia/sveltia-cms/issues/385)[^245]
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
@@ -1883,6 +1891,8 @@ Due late 2025
 - [Developer documentation](https://github.com/sveltia/sveltia-cms/issues/485) (implementation guide)
 - Marketing site
 - [Live demo site](https://github.com/sveltia/sveltia-cms/issues/1)
+
+See also the [1.0 RC](https://github.com/sveltia/sveltia-cms/milestone/1) and [1.0](https://github.com/sveltia/sveltia-cms/milestone/2) milestones for a list of issues planned for v1.0.
 
 ### v2.0
 
@@ -1913,7 +1923,7 @@ Due early/mid 2026
     - [Theming](https://github.com/sveltia/sveltia-cms/issues/29)[^262]
     - [Reusable field groups](https://github.com/sveltia/sveltia-cms/discussions/463)[^263]
     - Offline support[^238]
-  - Features to turn the CMS into a powerful NoSQL database management system:
+  - Features to turn the CMS into a powerful NoSQL database management system (DBMS):
     - Advanced Relation fields[^242]
       - Cascade updates/deletes[^243]
       - [Quick item additions](https://github.com/sveltia/sveltia-cms/issues/493)[^266]
@@ -1959,6 +1969,7 @@ Due early/mid 2026
 
 - The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. There was also an [attempt](https://github.com/decaporg/decap-cms/issues/328) to replace React with Preact. Now we have completely rebuilt it in Svelte 4 and then in Svelte 5. So this is effectively the third/fourth time the application has gone through a framework migration. One more thing: We may migrate to [Ripple](https://www.ripplejs.com/) in the future if it looks promising.
 - Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for an improved DX, but also for our rapid application development.
+- What is Sveltia, by the way? It implies something related to Svelte, but it has [another meaning](https://en.wikipedia.org/wiki/Sveltia).
 - The maintainer may look 25 years younger than his actual age. [Here’s why](https://github.com/kyoshino#fun-facts-about-me).
 
 ## Related Links
@@ -2557,3 +2568,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^286]: Netlify/Decap CMS [#2367](https://github.com/decaporg/decap-cms/issues/2367)
 
 [^287]: Netlify/Decap CMS [#1069](https://github.com/decaporg/decap-cms/issues/1069)
+
+[^288]: Netlify/Decap CMS [#7015](https://github.com/decaporg/decap-cms/issues/7015)
