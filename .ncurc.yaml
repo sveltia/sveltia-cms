@@ -1,3 +1,4 @@
+cooldown: 1
 reject:
   # blocked by the ESLint v9 support of eslint-config-airbnb-base
   # https://github.com/airbnb/javascript/issues/2961
