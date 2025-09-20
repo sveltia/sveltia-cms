@@ -35,6 +35,7 @@ words:
   - dialogs
   - dompurify
   - embeddable
+  - esbuild
   - exif
   - exifreader
   - Flavored
