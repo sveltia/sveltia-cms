@@ -662,7 +662,7 @@ The following Netlify/Decap CMS features will not be implemented, primarily due 
 - The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality powered by [Prism](https://prismjs.com/), which is slated to be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
 - An absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
-- The `allow_multiple` option for the File and Image widgets. It’s an confusing option that defaults to `true`, and there is a separate option: `media_library.config.multiple`. Use the new `multiple` option instead, which is more intuitive and works with all media libraries.
+- The `allow_multiple` option for the File and Image widgets. It’s a confusing option that defaults to `true`, and there is a separate option called `media_library.config.multiple`. Use the new `multiple` option instead, which is more intuitive and works with all media libraries.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
   - Backend: [`use_graphql`](https://decapcms.org/docs/github-backend/#graphql-api)
