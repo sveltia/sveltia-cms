@@ -126,15 +126,15 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
   - Solved more than 250 issues reported in the Netlify/Decap CMS repository
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership
-  - Mostly stagnated since then, with no significant progress made
+  - Mostly low activity with occasional releases and minor improvements
   - A [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design:
 
 - We have rebuilt the app from scratch using a [modern framework](https://svelte.dev/)
-- We closely monitor and analyze the predecessor’s issue tracker
-- We incorporate i18n support into the core instead of adding it as an afterthought
 - We don’t reuse any part of the predecessor’s codebase
+- We incorporate i18n support into the core instead of adding it as an afterthought
+- We closely monitor and analyze the predecessor’s issue tracker
 - We have rethought and redesigned the entire user experience (UX) and developer experience (DX)
 
 This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in an old system, making Sveltia CMS an unparalleled successor to Netlify CMS.
@@ -214,16 +214,21 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 ### Better productivity
 
+We’ve made various improvements to help you get your work done faster and more efficiently:
+
 - Developers can [work with a local Git repository](#working-with-a-local-git-repository) without any additional configuration or proxy server, resulting in a streamlined workflow and improved performance.[^26]
   - It also avoids a number of issues, including potential security risks,[^158][^282] a 30 MB file size limit,[^51] an unknown error with `publish_mode`,[^75] and an unused `logo_url`.[^49]
   - When you delete an entry or an asset file, the empty folder that contains it is also deleted, so you don’t have to delete it manually.
 - Provides a smoother user experience in the Content Editor:
+  - Users can upload multiple files at once to File/Image fields when the `multiple` option is enabled.[^239]
+  - Uploading files can be done with drag and drop.[^20]
+  - Users can [translate entry fields with one click](#translating-entry-fields-with-one-click) using an integrated translation service without having to leave the CMS.
   - A local backup of an entry draft is automatically created without interruption by a confirmation dialog, which annoys users and can cause a page navigation problem if dismissed.[^106] The backup can then be reliably restored without unexpected overwriting.[^85]
   - Click once (the Save button) instead of twice (Publish > Publish now) to save an entry. Or just hit the `Ctrl+S` (Windows/Linux) or `Command+S` (macOS) key to save your time.
   - The editor closes automatically when an entry is saved. This behaviour can be changed in the application settings.
-- Uploading files can be done with drag and drop.[^20]
-- Users can upload multiple files at once to the Asset Library.
+- Thanks to the [built-in image optimizer](#optimizing-images-for-upload), there’s no need for an external application to convert or resize images before uploading them.[^199][^200]
 - Users can delete multiple entries and assets at once.
+- Users can manage content on-the-go with mobile and tablet support.[^18][^215] This is especially useful for content editors who need to make quick updates while away from their desks.
 - Instant full-text search with results sorted by relevance helps you find entries faster. In Netlify/Decap CMS, you often won’t get the results you expect.
 - Some [keyboard shortcuts](#using-keyboard-shortcuts) are available for faster editing.
 
