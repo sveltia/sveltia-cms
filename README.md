@@ -424,7 +424,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The Preview Pane displays all fields, including each label, making it easier to see which fields are populated.
 - Entering a long value into a field will not cause the field label to disappear.[^254]
 - Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed.
-  - This is equivalent to the (misleading) visual editing feature introduced in [Decap CMS 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option. We don’t plan to support this option because it’s both confusing and unnecessary.
+  - This is equivalent to the (misleading) visual editing feature introduced in [Decap CMS 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option. We don’t plan to support this option because it’s confusing, unnecessary and undocumented.
 - The Preview Pane doesn’t cause a scrolling issue.[^136]
 - The Preview Pane doesn’t crash with a Minified React error.[^186]
 - Provides better scroll synchronization between the panes when editing or previewing an entry.[^92]
