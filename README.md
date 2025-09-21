@@ -126,7 +126,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
   - Solved more than 250 issues reported in the Netlify/Decap CMS repository
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership
-  - Mostly low activity with occasional releases and minor improvements
+  - Mostly low activity with occasional releases and a few minor improvements
   - A [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design:
@@ -137,7 +137,7 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 - We closely monitor and analyze the predecessor’s issue tracker
 - We have rethought and redesigned the entire user experience (UX) and developer experience (DX)
 
-This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in a legacy system, making Sveltia CMS an **unparalleled successor** to Netlify CMS.
+This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in a legacy system, establishing Sveltia CMS as a **unparalleled successor** to Netlify CMS.
 
 As we continue to add more features, we hope that our product will eventually become an appearing headless CMS option for everyone, not just for existing Netlify/Decap CMS users.
 
