@@ -38,32 +38,41 @@ const isVerbose = process.argv.includes('--verbose');
  */
 function parseImportStatements(content) {
   const imports = [];
-  const lines = content.split('\n');
+  // Use regex to find all @import statements including multi-line ones
+  const importRegex = /^\s*\*?\s*@import\s*\{([^}]*(?:\n[^}]*)*)\}\s*from\s*['"`]([^'"`]+)['"`]/gm;
+  let match = importRegex.exec(content);
 
-  lines.forEach((line, index) => {
-    // Match @import statements like: @import { Type1, Type2 } from 'module'
-    const importMatch = line.match(
-      /^\s*\*?\s*@import\s*\{\s*([^}]+)\s*\}\s*from\s*['"`]([^'"`]+)['"`]/,
-    );
+  while (match !== null) {
+    const typesStr = match[1];
+    const fromModule = match[2];
+    // Find the line number where this import starts
+    const beforeMatch = content.substring(0, match.index);
+    const lineNumber = beforeMatch.split('\n').length;
+    // Get the first line of the import for fullLine
+    const lines = content.split('\n');
+    const fullLine = lines[lineNumber - 1];
 
-    if (importMatch) {
-      const typesStr = importMatch[1];
-      const fromModule = importMatch[2];
+    // Parse individual types, handling whitespace and line breaks
+    const types = typesStr
+      .replace(/\n/g, ' ') // Replace newlines with spaces
+      .split(',')
+      .map((type) =>
+        type
+          .replace(/^\s*\*?\s*/, '')
+          .replace(/\s*\*?\s*$/, '')
+          .trim(),
+      )
+      .filter((type) => type.length > 0);
 
-      // Parse individual types, handling whitespace and line breaks
-      const types = typesStr
-        .split(',')
-        .map((type) => type.trim())
-        .filter((type) => type.length > 0);
+    imports.push({
+      types,
+      from: fromModule,
+      line: lineNumber,
+      fullLine,
+    });
 
-      imports.push({
-        types,
-        from: fromModule,
-        line: index + 1,
-        fullLine: line,
-      });
-    }
-  });
+    match = importRegex.exec(content);
+  }
 
   return imports;
 }
@@ -96,8 +105,8 @@ function findTypeUsage(content, types) {
       // @type {TypeName} variations
       new RegExp(`@type\\s*\\{[^}]*\\b${escapedType}\\b[^}]*\\}`, 'gi'),
 
-      // @param {TypeName} variations - including optional params like [args.file]
-      new RegExp(`@param\\s*\\{[^}]*\\b${escapedType}\\b[^}]*\\}\\s*\\[?[^\\]]*\\]?`, 'gi'),
+      // @param {TypeName} variations - including optional params and square brackets
+      new RegExp(`@param\\s*\\{[^}]*\\b${escapedType}\\b[^}]*\\}\\s*\\[?[^\\]\\s]*\\]?`, 'gi'),
 
       // @returns {TypeName} variations
       new RegExp(`@returns?\\s*\\{[^}]*\\b${escapedType}\\b[^}]*\\}`, 'gi'),
@@ -114,24 +123,26 @@ function findTypeUsage(content, types) {
       // Generic type usage like Array<TypeName>, Promise<TypeName>
       new RegExp(`\\b\\w+<[^>]*\\b${escapedType}\\b[^>]*>`, 'gi'),
 
-      // Union types like {TypeName | OtherType}
+      // Union types like {TypeName | OtherType} or {OtherType | TypeName}
       new RegExp(`\\{[^}]*\\b${escapedType}\\b[^}]*\\|[^}]*\\}`, 'gi'),
       new RegExp(`\\{[^}]*\\|[^}]*\\b${escapedType}\\b[^}]*\\}`, 'gi'),
 
-      // Array types like {TypeName[]}
+      // Array types like {TypeName[]} or TypeName[]
       new RegExp(`\\{[^}]*\\b${escapedType}\\b\\[\\][^}]*\\}`, 'gi'),
+      new RegExp(`\\b${escapedType}\\[\\]`, 'gi'),
 
       // Optional types like {TypeName?}
       new RegExp(`\\{[^}]*\\b${escapedType}\\b\\?[^}]*\\}`, 'gi'),
 
-      // Type casting /** @type {TypeName} */
-      new RegExp(`/\\*\\*\\s*@type\\s*\\{[^}]*\\b${escapedType}\\b[^}]*\\}\\s*\\*/`, 'gi'),
+      // Type casting /** @type {TypeName} */ (single and multi-line)
+      new RegExp(`/\\*\\*[^*]*@type\\s*\\{[^}]*\\b${escapedType}\\b[^}]*\\}[^*]*\\*/`, 'gi'),
 
       // Function parameter types in JSDoc
       new RegExp(`\\([^)]*\\b${escapedType}\\b[^)]*\\)\\s*=>`, 'gi'),
 
       // Record/Object type patterns like Record<string, TypeName>
       new RegExp(`Record<[^,>]*,\\s*\\b${escapedType}\\b[^>]*>`, 'gi'),
+      new RegExp(`Record<[^>]*\\b${escapedType}\\b[^>]*,`, 'gi'),
 
       // Type augmentation like @augments {TypeName}
       new RegExp(`@augments\\s*\\{[^}]*\\b${escapedType}\\b[^}]*\\}`, 'gi'),
@@ -142,6 +153,14 @@ function findTypeUsage(content, types) {
 
       // Direct type references in JSDoc comments (including dot notation like JSX.Element)
       new RegExp(`\\b${escapedType}(?:\\.[a-zA-Z_$][a-zA-Z0-9_$]*)+\\b`, 'gi'),
+
+      // Type usage in union types with pipe separator (handle spacing variations)
+      new RegExp(`\\b${escapedType}\\s*\\|`, 'gi'),
+      new RegExp(`\\|\\s*\\b${escapedType}\\b`, 'gi'),
+
+      // Intersection types with &
+      new RegExp(`\\b${escapedType}\\s*&`, 'gi'),
+      new RegExp(`&\\s*\\b${escapedType}\\b`, 'gi'),
     ];
 
     patterns.forEach((pattern) => {
@@ -163,27 +182,66 @@ function findTypeUsage(content, types) {
  * @returns {string} Updated content with unused imports removed.
  */
 function removeUnusedImports(content, analysisResult) {
-  const lines = content.split('\n');
-  // Process imports in reverse order to maintain line numbers
+  let updatedContent = content;
+  // Process imports in reverse order to maintain accuracy
   const reversedImports = [...analysisResult.imports].reverse();
 
   reversedImports.forEach((importInfo) => {
-    const lineIndex = importInfo.line - 1;
-    const originalLine = lines[lineIndex];
-
     if (importInfo.usedTypes.length === 0) {
-      // Remove the entire line if no types are used
-      lines.splice(lineIndex, 1);
+      // Remove the entire import statement if no types are used
+      const importRegex = new RegExp(
+        `^\\s*\\*?\\s*@import\\s*\\{[^}]*(?:\\n[^}]*)*\\}\\s*from\\s*['"\`]${importInfo.from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"\`]\\s*;?`,
+        'gm',
+      );
+
+      updatedContent = updatedContent.replace(importRegex, '');
     } else if (importInfo.unusedTypes.length > 0) {
       // Remove only unused types from the import
-      const usedTypesStr = importInfo.usedTypes.join(', ');
-      const newLine = originalLine.replace(/\{\s*([^}]+)\s*\}/, `{ ${usedTypesStr} }`);
+      const escapedFrom = importInfo.from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-      lines[lineIndex] = newLine;
+      const importRegex = new RegExp(
+        // eslint-disable-next-line max-len
+        `^(\\s*\\*?\\s*@import\\s*\\{)([^}]*(?:\\n[^}]*)*)(\\}\\s*from\\s*['"\`]${escapedFrom}['"\`]\\s*;?)`,
+        'gm',
+      );
+
+      updatedContent = updatedContent.replace(importRegex, (match, start, typesSection, end) => {
+        // Parse all types from the types section
+        const allTypes = typesSection
+          .split(',')
+          .map((type) => type.replace(/^\s*\*?\s*/, '').trim())
+          .filter((type) => type.length > 0);
+
+        // Keep only the used types
+        const usedTypes = allTypes.filter((type) => importInfo.usedTypes.includes(type));
+
+        if (usedTypes.length === 0) {
+          return ''; // Remove entire import if no types are used
+        }
+
+        // Format the used types
+        if (usedTypes.length === 1) {
+          // Single type on one line
+          return `${start} ${usedTypes[0]} ${end}`;
+        }
+
+        // Multiple types, format as multi-line
+        const formattedTypes = usedTypes
+          .map((type, index) => {
+            if (index === 0) {
+              return `\n * ${type},`;
+            }
+
+            return ` * ${type},`;
+          })
+          .join('\n');
+
+        return `${start}${formattedTypes}\n * ${end}`;
+      });
     }
   });
 
-  return lines.join('\n');
+  return updatedContent;
 }
 
 /**

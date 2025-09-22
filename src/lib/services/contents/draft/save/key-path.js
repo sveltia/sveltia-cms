@@ -2,13 +2,7 @@ import { isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 
 /**
- * @import {
- * Field,
- * FieldKeyPath,
- * ListField,
- * MultiValueField,
- * ObjectField,
- * } from '$lib/types/public';
+ * @import { Field, FieldKeyPath, ListField, ObjectField } from '$lib/types/public';
  */
 
 /**

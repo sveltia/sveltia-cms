@@ -1,7 +1,6 @@
 /**
  * @import { TextEditorBlockType, TextEditorInlineType, TextEditorMode } from '@sveltia/ui';
  * @import {
- * EditorComponentDefinition,
  * RichTextEditorButtonName,
  * RichTextEditorComponentName,
  * RichTextEditorMode,

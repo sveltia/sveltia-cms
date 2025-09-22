@@ -21,7 +21,6 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  * Entry,
  * EntryDraft,
  * FileChange,
- * InternalSiteConfig,
  * MovingAsset,
  * } from '$lib/types/private';
  * @import { CollectionIndexFile } from '$lib/types/public';

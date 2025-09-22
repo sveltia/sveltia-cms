@@ -15,14 +15,7 @@ import {
 } from '$lib/services/contents/file/process';
 
 /**
- * @import {
- * BaseEntryListItem,
- * Entry,
- * InternalCollection,
- * InternalLocaleCode,
- * RawEntryContent,
- * } from '$lib/types/private';
- * @import { Field } from '$lib/types/public';
+ * @import { BaseEntryListItem, Entry, InternalCollection } from '$lib/types/private';
  */
 
 // Mock external dependencies
