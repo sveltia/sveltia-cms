@@ -170,7 +170,7 @@
     // Convert invalid single value to list. This is in place to handle the case when a field is
     // changed from single to multiple. (Continue to the `$effect` block below.)
     // @todo Move this logic to entry normalization module
-    if (multiple && value !== undefined) {
+    if (multiple && value !== undefined && typeof value !== 'object') {
       return [value];
     }
 
