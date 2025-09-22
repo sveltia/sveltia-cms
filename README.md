@@ -2,7 +2,7 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. While some features are still missing, we’ve already solved over 250 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
 
-Built from the ground up, Sveltia CMS offers an excellent UX, DX, performance, security and internationalization (i18n) support. Our numerous enhancements across the board ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in late 2025.
+Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Our numerous enhancements across the board ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in late 2025.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -125,7 +125,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
   - Actively developed with frequent releases and numerous improvements
   - Solved more than 250 issues reported in the Netlify/Decap CMS repository
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
-  - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as the official successor with a Netlify agency partner taking ownership
+  - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
   - Mostly low activity with occasional releases and a few minor improvements
   - A [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
 
@@ -135,9 +135,9 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 - We don’t reuse any part of the predecessor’s codebase
 - We incorporate i18n support into the core instead of adding it as an afterthought
 - We closely monitor and analyze the predecessor’s issue tracker
-- We have rethought and redesigned the entire user experience (UX) and developer experience (DX)
+- We have rearchitected the entire user experience (UX) and developer experience (DX)
 
-This “total reboot” allows us to make [hundreds of improvements](#differentiators) without getting stuck in a legacy system, establishing Sveltia CMS as a **unparalleled successor** to Netlify CMS.
+This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system, establishing Sveltia CMS as a **unparalleled successor** to Netlify CMS. [History](https://en.wikipedia.org/wiki/Apache_OpenOffice) reminds us that an official successor doesn’t necessarily mean a better one.
 
 As we continue to add more features, we hope that our product will eventually become an appearing headless CMS option for everyone, not just for existing Netlify/Decap CMS users.
 
