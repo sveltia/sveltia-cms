@@ -25,7 +25,7 @@ export const customComponentRegistry = new Map();
  * @type {EditorComponentDefinition}
  * @see https://decapcms.org/docs/widgets/#markdown
  */
-const IMAGE_COMPONENT = {
+export const IMAGE_COMPONENT = {
   /* eslint-disable jsdoc/require-jsdoc */
   id: 'image',
   label: 'Image',
@@ -56,7 +56,7 @@ const IMAGE_COMPONENT = {
  * Built-in linked image component definition. The labels are localized in `getComponentDef()`.
  * @type {EditorComponentDefinition}
  */
-const LINKED_IMAGE_COMPONENT = {
+export const LINKED_IMAGE_COMPONENT = {
   /* eslint-disable jsdoc/require-jsdoc */
   id: 'linked-image',
   label: 'Image',
@@ -89,6 +89,40 @@ const LINKED_IMAGE_COMPONENT = {
     return link ? `<a href="${encodeQuotes(link)}">${img}</a>` : img;
   },
   /* eslint-enable jsdoc/require-jsdoc */
+};
+
+/**
+ * Get all built-in component definitions with localized labels.
+ * @returns {EditorComponentDefinition[]} Array of built-in component definitions.
+ */
+export const getBuiltInComponentDefs = () => {
+  // Common props with localized labels
+  const commonImageProps = {
+    icon: 'image',
+    label: get(_)('editor_components.image'),
+    fields: [
+      { name: 'src', label: get(_)('editor_components.src'), widget: 'image' },
+      { name: 'alt', label: get(_)('editor_components.alt'), required: false },
+      { name: 'title', label: get(_)('editor_components.title'), required: false },
+    ],
+  };
+
+  return [
+    {
+      ...IMAGE_COMPONENT,
+      // Override with localized labels
+      ...commonImageProps,
+    },
+    {
+      ...LINKED_IMAGE_COMPONENT,
+      // Override with localized labels
+      ...commonImageProps,
+      fields: [
+        ...commonImageProps.fields,
+        { name: 'link', label: get(_)('editor_components.link'), required: false },
+      ],
+    },
+  ];
 };
 
 /**

@@ -21,7 +21,7 @@ import { createTransformer } from '$lib/services/contents/widgets/markdown/compo
  * does not match registered node CustomNode with the same type”.
  * @type {Map<string, LexicalNodeFeatures>}
  */
-const featureCacheMap = new Map();
+export const featureCacheMap = new Map();
 
 /**
  * Dynamically create a custom {@link DecoratorNode} class and related features for the Lexical
@@ -32,7 +32,7 @@ const featureCacheMap = new Map();
  * the transformer definition.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  */
-const createLexicalNodeFeatures = (componentDef) => {
+export const createLexicalNodeFeatures = (componentDef) => {
   const CustomNode = createCustomNodeClass(componentDef);
 
   return {
