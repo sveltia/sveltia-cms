@@ -284,6 +284,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`.[^95][^27] If a branch name is specified, it works as expected.[^232]
 - It’s possible to [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once.[^24]
 - The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
+- The GitLab backend properly supports authorization via the GraphQL API.[^290]
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - Users can quickly open the source file of an entry or asset in your repository via the 3-dot menu when Developer Mode is enabled.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
@@ -2579,3 +2580,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^288]: Netlify/Decap CMS [#7015](https://github.com/decaporg/decap-cms/issues/7015)
 
 [^289]: Netlify/Decap CMS [#2183](https://github.com/decaporg/decap-cms/issues/2183)
+
+[^290]: Netlify/Decap CMS [#7611](https://github.com/decaporg/decap-cms/issues/7611)
