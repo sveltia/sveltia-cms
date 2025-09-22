@@ -10,6 +10,7 @@ import { siteConfig } from '$lib/services/config';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { getField } from '$lib/services/contents/entry/fields';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
 
@@ -21,6 +22,7 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-
  * EntryDraft,
  * EntrySlugVariants,
  * FileChange,
+ * GetFieldArgs,
  * InternalLocaleCode,
  * LocalizedEntryMap,
  * RepositoryFileInfo,
@@ -40,7 +42,17 @@ const createBaseSavingEntryData = async ({
   slugs: { defaultLocaleSlug, canonicalSlug, localizedSlugs },
 }) => {
   const _globalAssetFolder = get(globalAssetFolder);
-  const { collection, currentLocales, collectionFile, currentValues, files } = draft;
+
+  const {
+    collection,
+    collectionName,
+    collectionFile,
+    fileName,
+    isIndexFile,
+    currentLocales,
+    currentValues,
+    files,
+  } = draft;
 
   const {
     _i18n: {
@@ -54,6 +66,8 @@ const createBaseSavingEntryData = async ({
   const savingAssets = [];
   const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
   const { encode_file_path: encodingEnabled = false } = get(siteConfig)?.output ?? {};
+  /** @type {GetFieldArgs} */
+  const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap: {}, isIndexFile };
 
   const replaceBlobBaseArgs = {
     draft,
@@ -61,7 +75,6 @@ const createBaseSavingEntryData = async ({
     changes,
     savingAssets,
     slugificationEnabled,
-    encodingEnabled,
   };
 
   const localizedEntryMap = Object.fromEntries(
@@ -100,7 +113,15 @@ const createBaseSavingEntryData = async ({
               return;
             }
 
-            const replaceBlobArgs = { ...replaceBlobBaseArgs, keyPath, content };
+            const field = getField({ ...getFieldArgs, valueMap: content, keyPath });
+
+            const replaceBlobArgs = {
+              ...replaceBlobBaseArgs,
+              keyPath,
+              content,
+              // Enable encoding for markdown fields to support embedded images
+              encodingEnabled: field?.widget === 'markdown' ? true : encodingEnabled,
+            };
 
             // Replace blob URLs in File/Image fields with asset paths
             await Promise.all(

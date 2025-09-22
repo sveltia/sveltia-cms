@@ -10,6 +10,8 @@
 
   import { getMediaFieldURL } from '$lib/services/assets/info';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { GLOBAL_IMAGE_REGEX } from '$lib/services/contents/widgets/markdown/constants';
+  import { encodeImageSrc } from '$lib/services/contents/widgets/markdown/helper';
 
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
@@ -36,6 +38,7 @@
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
   const { sanitize_preview: sanitize = true } = $derived(fieldConfig);
+  const markdown = $derived((currentValue ?? '').replace(GLOBAL_IMAGE_REGEX, encodeImageSrc));
 
   /** @type {import("marked").MarkedOptions} */
   const markedOptions = {
@@ -65,7 +68,7 @@
 
   $effect(() => {
     (async () => {
-      rawHTML = await marked.parse(currentValue ?? '', markedOptions);
+      rawHTML = await marked.parse(markdown, markedOptions);
     })();
   });
 </script>
