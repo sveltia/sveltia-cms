@@ -256,6 +256,10 @@
             }
           }
         }
+
+        button {
+          margin: var(--sui-focus-ring-width);
+        }
       }
     }
 
