@@ -137,7 +137,7 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 - We closely monitor and analyze the predecessor’s issue tracker
 - We have rearchitected the entire user experience (UX) and developer experience (DX)
 
-This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system, establishing Sveltia CMS as a **unparalleled successor** to Netlify CMS. [History](https://en.wikipedia.org/wiki/Apache_OpenOffice) reminds us that an official successor doesn’t necessarily mean a better one.
+This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system, establishing Sveltia CMS as a **unparalleled successor** to Netlify CMS.
 
 As we continue to add more features, we hope that our product will eventually become an appearing headless CMS option for everyone, not just for existing Netlify/Decap CMS users.
 
