@@ -156,6 +156,7 @@ Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
 - Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
+  - Some missing features will be implemented before or shortly after GA
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, **250+ issues, or 550+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
@@ -238,6 +239,7 @@ We’ve made various improvements to help you get your work done faster and more
   - We also use the [`cooldown`](https://github.com/raineorshine/npm-check-updates#cooldown) option for `ncu` and the [`minimumReleaseAge`](https://pnpm.io/settings#minimumreleaseage) option for `pnpm` to avoid upgrading to a version that was just released. These options help protect against npm supply chain attacks.
 - The **unpatched** [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) in Decap CMS does not affect Sveltia CMS, as our entry preview implementation is completely different.
   - However, the Markdown widget was potentially vulnerable to XSS attacks because the `sanitize_preview` option was set to `false` by default for compatibility with Netlify/Decap CMS. This behaviour is [documented](https://decapcms.org/docs/widgets/#markdown) and is not a bug, but it’s definitely not secure. In [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), we changed the default value to `true`, assuming that most users would prefer security over compatibility.
+  - If you cannot migrate from Decap CMS to Sveltia CMS at this time, it’s advisable to disable open authoring and set `sanitize_preview: true` in your Markdown fields to mitigate the risk of XSS attacks.
 - Our [local repository workflow](#working-with-a-local-git-repository) does not require a proxy server. This reduces attack surfaces by eliminating the possibility of compromised dependencies[^158] and unauthorized API access.[^282]
 - Thanks to pnpm, Vite, GitHub Actions and [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/), our release process is fast, reliable and transparent. This setup makes it easy to verify the integrity of published code and assets. It also helps us avoid errors that can occur with manual build steps.[^264]
 - We have created a [security policy](https://github.com/sveltia/sveltia-cms/blob/main/SECURITY.md).
@@ -283,8 +285,8 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.[^65]
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`.[^95][^27] If a branch name is specified, it works as expected.[^232]
 - It’s possible to [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once.[^24]
+- The GitLab backend implements the GraphQL API with proper authorization.[^290]
 - The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
-- The GitLab backend properly supports authorization via the GraphQL API.[^290]
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - Users can quickly open the source file of an entry or asset in your repository via the 3-dot menu when Developer Mode is enabled.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
@@ -640,11 +642,10 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - Comprehensive site config validation
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - LineString and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
-- Advanced customization features:
-  - Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent)
-  - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
-  - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
-  - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
+- Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent)
+- [Custom widgets](https://decapcms.org/docs/custom-widgets/)
+- [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
+- [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
 [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
 
