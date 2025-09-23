@@ -672,7 +672,7 @@ The following Netlify/Decap CMS features will not be implemented, primarily due 
   - [Markdown](https://decapcms.org/docs/widgets/#markdown) widget: `editorComponents`
   - [Number](https://decapcms.org/docs/widgets/#number) widget: `valueType`
   - [Relation](https://decapcms.org/docs/widgets/#relation) widget: `displayFields`, `searchFields`, `valueField`
-  - Note: Some other camel case options, including Color widget options, are not deprecated.
+  - Note: Some other camel case options, including Color widget options, are not deprecated and will continue to work.
 - The deprecated Date widget: It was removed from Decap CMS 3.0 and Sveltia CMS 0.10. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
 - The `allow_multiple` option for the File and Image widgets: It’s a confusing option that defaults to `true`, and there is a separate option called `media_library.config.multiple`. We have added the new `multiple` option instead, which is more intuitive and works with all media libraries.
 - The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality powered by [Prism](https://prismjs.com/), which is slated to be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
@@ -724,7 +724,7 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 
 ### Deprecations
 
-These options are deprecated and will be removed in Sveltia CMS 1.0:
+These options were added to Sveltia CMS 0.x but are now deprecated and will be removed in version 1.0:
 
 - The `automatic_deployments` backend option. Use the new [`skip_ci` option](#disabling-automatic-deployments) instead, which is more intuitive. `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments: true` is equivalent to `skip_ci: false`.
 - The `save_all_locales` i18n option. Use the [`initial_locales` option](#disabling-non-default-locale-content) instead, which provides more flexibility. `save_all_locales: false` is equivalent to `initial_locales: all`.
@@ -1912,12 +1912,14 @@ Due early/mid 2026
 - Tackling even more Netlify/Decap CMS issues to bring the total number of issues solved to 300:
   - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
+  - and a few more from the TBD list below
 
 ### v3.0
 
 - **Sveltia CMS Additions**: Edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
   - User management (Netlify Identity alternative) with roles[^23]
   - Commits without a Git service account (Git Gateway alternative)
+  - more enhancements are planned for the future; see the TBD list below
 - End-user documentation
 - Contributor documentation
 
