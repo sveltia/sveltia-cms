@@ -127,7 +127,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
   - Mostly low activity with occasional releases and a few minor improvements
-  - A [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
+  - A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design:
 
@@ -319,6 +319,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language.[^63]
   - It’s possible to embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`.[^101]
   - The `value_field` Relation field option can contain a locale prefix like `{{locale}}/{{slug}}`, which will be replaced with the current locale. It’s intended to support i18n in Astro. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/302))
+  - A collection filter is applied correctly when using the `single_file` i18n structure.[^291]
 - User interface
   - Eliminates UI confusion: The Preview Pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list when there are less than 5 locales.
@@ -2585,3 +2586,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^289]: Netlify/Decap CMS [#2183](https://github.com/decaporg/decap-cms/issues/2183)
 
 [^290]: Netlify/Decap CMS [#7611](https://github.com/decaporg/decap-cms/issues/7611)
+
+[^291]: Netlify/Decap CMS [#7612](https://github.com/decaporg/decap-cms/pull/7612)
