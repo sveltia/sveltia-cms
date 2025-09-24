@@ -106,6 +106,11 @@
       })
       .addTo(map);
 
+    mapElement.querySelectorAll('a[href]').forEach((a) => {
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    });
+
     new ResizeObserver(() => {
       map?.invalidateSize();
     }).observe(mapElement);

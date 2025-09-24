@@ -60,6 +60,11 @@
     leaflet.marker([latitude, longitude], { icon }).addTo(map);
     map.setView([latitude, longitude], 12);
 
+    mapElement.querySelectorAll('a[href]').forEach((a) => {
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    });
+
     new ResizeObserver(() => {
       map?.invalidateSize();
     }).observe(mapElement);
