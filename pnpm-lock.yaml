@@ -35,9 +35,9 @@ importers:
       deepmerge:
         specifier: ^4.3.1
         version: 4.3.1
-      exifreader:
-        specifier: ^4.32.0
-        version: 4.32.0
+      exifr:
+        specifier: ^7.1.3
+        version: 7.1.3
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
@@ -1265,10 +1265,6 @@ packages:
   '@vitest/utils@3.2.4':
     resolution: {integrity: sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA==}
 
-  '@xmldom/xmldom@0.9.8':
-    resolution: {integrity: sha512-p96FSY54r+WJ50FIOsCOjyj/wavs8921hG5+kVMmZgKcvIKxMXHTrjNJvRgWa/zuX3B6t2lijLNFaOyuxUH+2A==}
-    engines: {node: '>=14.6'}
-
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -1974,8 +1970,8 @@ packages:
   event-emitter@0.3.5:
     resolution: {integrity: sha512-D9rRn9y7kLPnJ+hMq7S/nhvoKwwvVJahBi2BPmx3bvbsEdK3W9ii8cBSGjP+72/LnM4n6fo3+dkCX5FeTQruXA==}
 
-  exifreader@4.32.0:
-    resolution: {integrity: sha512-sj1PzjpaPwSE/2MeUqoAYcfc2u7AZOGSby0FzmAkB4jjeCXgDryxzVgMwV+tJKGIkGdWkkWiUWoLSJoPHJ6V5Q==}
+  exifr@7.1.3:
+    resolution: {integrity: sha512-g/aje2noHivrRSLbAUtBPWFbxKdKhgj/xr1vATDdUXPOFYJlQ62Ft0oy+72V6XLIpDJfHs6gXLbBLAolqOXYRw==}
 
   expect-type@1.2.2:
     resolution: {integrity: sha512-JhFGDVJ7tmDJItKhYgJCGLOWjuK9vPxiXoUFLwLDc99NlmklilbiQJwoctZtt13+xMw91MCk/REan6MWHqDjyA==}
@@ -4612,9 +4608,6 @@ snapshots:
       loupe: 3.2.1
       tinyrainbow: 2.0.0
 
-  '@xmldom/xmldom@0.9.8':
-    optional: true
-
   acorn-jsx@5.3.2(acorn@8.15.0):
     dependencies:
       acorn: 8.15.0
@@ -5522,9 +5515,7 @@ snapshots:
       d: 1.0.2
       es5-ext: 0.10.64
 
-  exifreader@4.32.0:
-    optionalDependencies:
-      '@xmldom/xmldom': 0.9.8
+  exifr@7.1.3: {}
 
   expect-type@1.2.2: {}
 

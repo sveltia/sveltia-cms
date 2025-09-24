@@ -1,16 +1,9 @@
-import ExifReader from 'exifreader';
-
+import { loadModule } from '$lib/services/app/dependencies';
 import { toFixed } from '$lib/services/utils/number';
 
 /**
  * @import { Asset, AssetKind, GeoCoordinates } from '$lib/types/private';
  */
-
-/**
- * Regular expression to match the EXIF date/time format like `2023:10:01 12:34:56`.
- */
-const EXIF_DATETIME_PATTERN =
-  /^(?<year>\d{4}):(?<month>\d{2}):(?<date>\d{2}) (?<hour>\d{2}):(?<minute>\d{2}):(?<second>\d{2})$/;
 
 /**
  * Extract the timestamp and coordinates (latitude/longitude) from EXIF data of an image asset.
@@ -19,7 +12,7 @@ const EXIF_DATETIME_PATTERN =
  * @returns {Promise<{ createdDate: Date | undefined, coordinates: GeoCoordinates | undefined }>}
  * Date/Time and GPS Coordinates. If the asset is not an image or does not have EXIF data, returns
  * `undefined`.
- * @see https://github.com/mattiasw/ExifReader
+ * @see https://github.com/MikeKovarik/exifr
  * @todo Extract more EXIF metadata, such as camera model, exposure time, etc.
  */
 export const extractExifData = async (asset, kind) => {
@@ -29,36 +22,21 @@ export const extractExifData = async (asset, kind) => {
     return { createdDate: undefined, coordinates: undefined };
   }
 
+  /** @type {import('exifr')} */
+  const { parse } = await loadModule('exifr', 'dist/lite.esm.mjs');
+
   const {
-    exif: { DateTimeOriginal, DateTime } = { DateTimeOriginal: undefined, DateTime: undefined },
-    gps: { Latitude, Longitude } = { Latitude: undefined, Longitude: undefined },
-  } = (await ExifReader.load(asset.file, { expanded: true }).catch(() => {})) ?? {};
+    latitude,
+    longitude,
+    DateTimeOriginal,
+    CreateDate: timestamp = DateTimeOriginal,
+  } = (await parse(asset.file).catch(() => {})) ?? {};
 
-  const dateTimeStr = DateTimeOriginal?.description ?? DateTime?.description;
-  const dateTimeMatch = dateTimeStr?.match(EXIF_DATETIME_PATTERN);
-  let createdDate = undefined;
-  let coordinates = undefined;
-
-  if (dateTimeMatch?.groups) {
-    const { year, month, date, hour, minute, second } = dateTimeMatch.groups;
-    const dateTime = new Date(`${year}-${month}-${date}T${hour}:${minute}:${second}Z`);
-
-    if (!Number.isNaN(dateTime.getTime())) {
-      createdDate = dateTime;
-    }
-  }
-
-  if (
-    typeof Latitude === 'number' &&
-    typeof Longitude === 'number' &&
-    Number.isFinite(Latitude) &&
-    Number.isFinite(Longitude)
-  ) {
-    coordinates = {
-      latitude: toFixed(Latitude, 7),
-      longitude: toFixed(Longitude, 7),
-    };
-  }
-
-  return { createdDate, coordinates };
+  return {
+    createdDate: timestamp instanceof Date ? timestamp : undefined,
+    coordinates:
+      Number.isFinite(latitude) && Number.isFinite(longitude)
+        ? { latitude: toFixed(latitude, 7), longitude: toFixed(longitude, 7) }
+        : undefined,
+  };
 };

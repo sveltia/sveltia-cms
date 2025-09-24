@@ -5,5 +5,4 @@ onlyBuiltDependencies:
   - "@parcel/watcher"
   - "es5-ext"
   - "esbuild"
-  - "exifreader"
   - "svelte-preprocess"

@@ -2,11 +2,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { extractExifData } from './exif';
 
-// Mock ExifReader
-vi.mock('exifreader', () => ({
-  default: {
-    load: vi.fn(),
-  },
+// Mock exifr
+vi.mock('exifr', () => ({
+  parse: vi.fn(),
+}));
+
+// Mock loadModule
+vi.mock('$lib/services/app/dependencies', () => ({
+  loadModule: vi.fn(),
 }));
 
 // Mock toFixed utility
@@ -55,19 +58,16 @@ describe('extractExifData', () => {
     });
 
     const mockExifData = {
-      exif: {
-        DateTimeOriginal: { description: '2023:10:01 12:34:56' },
-        DateTime: { description: '2023:10:01 12:34:57' },
-      },
-      gps: {
-        Latitude: 37.7749,
-        Longitude: -122.4194,
-      },
+      DateTimeOriginal: new Date('2023-10-01T12:34:56Z'),
+      CreateDate: new Date('2023-10-01T12:34:57Z'),
+      latitude: 37.7749,
+      longitude: -122.4194,
     };
 
-    const ExifReader = (await import('exifreader')).default;
+    const mockParse = vi.fn().mockResolvedValue(mockExifData);
+    const { loadModule } = await import('$lib/services/app/dependencies');
 
-    vi.mocked(ExifReader.load).mockResolvedValue(/** @type {any} */ (mockExifData));
+    vi.mocked(loadModule).mockResolvedValue({ parse: mockParse });
 
     const { toFixed } = await import('$lib/services/utils/number');
 
@@ -76,7 +76,7 @@ describe('extractExifData', () => {
     const result = await extractExifData(mockAsset, 'image');
 
     expect(result).toEqual({
-      createdDate: new Date('2023-10-01T12:34:56Z'),
+      createdDate: new Date('2023-10-01T12:34:57Z'), // CreateDate takes priority
       coordinates: {
         latitude: 37.7749,
         longitude: -122.4194,
@@ -85,49 +85,46 @@ describe('extractExifData', () => {
 
     expect(toFixed).toHaveBeenCalledWith(37.7749, 7);
     expect(toFixed).toHaveBeenCalledWith(-122.4194, 7);
+    expect(loadModule).toHaveBeenCalledWith('exifr', 'dist/lite.esm.mjs');
   });
 
-  test('should prefer DateTimeOriginal over DateTime', async () => {
+  test('should prefer CreateDate over DateTimeOriginal', async () => {
     const mockAsset = /** @type {any} */ ({
       file: new File([''], 'test.jpg', { type: 'image/jpeg' }),
     });
 
     const mockExifData = {
-      exif: {
-        DateTimeOriginal: { description: '2023:10:01 12:34:56' },
-        DateTime: { description: '2023:10:01 12:34:57' },
-      },
-      gps: {},
+      DateTimeOriginal: new Date('2023-10-01T12:34:56Z'),
+      CreateDate: new Date('2023-10-01T12:34:57Z'),
     };
 
-    const ExifReader = (await import('exifreader')).default;
+    const mockParse = vi.fn().mockResolvedValue(mockExifData);
+    const { loadModule } = await import('$lib/services/app/dependencies');
 
-    vi.mocked(ExifReader.load).mockResolvedValue(/** @type {any} */ (mockExifData));
-
-    const result = await extractExifData(mockAsset, 'image');
-
-    expect(result.createdDate).toEqual(new Date('2023-10-01T12:34:56Z'));
-  });
-
-  test('should use DateTime when DateTimeOriginal is not available', async () => {
-    const mockAsset = /** @type {any} */ ({
-      file: new File([''], 'test.jpg', { type: 'image/jpeg' }),
-    });
-
-    const mockExifData = {
-      exif: {
-        DateTime: { description: '2023:10:01 12:34:57' },
-      },
-      gps: {},
-    };
-
-    const ExifReader = (await import('exifreader')).default;
-
-    vi.mocked(ExifReader.load).mockResolvedValue(/** @type {any} */ (mockExifData));
+    vi.mocked(loadModule).mockResolvedValue({ parse: mockParse });
 
     const result = await extractExifData(mockAsset, 'image');
 
     expect(result.createdDate).toEqual(new Date('2023-10-01T12:34:57Z'));
+  });
+
+  test('should use DateTimeOriginal when CreateDate is not available', async () => {
+    const mockAsset = /** @type {any} */ ({
+      file: new File([''], 'test.jpg', { type: 'image/jpeg' }),
+    });
+
+    const mockExifData = {
+      DateTimeOriginal: new Date('2023-10-01T12:34:56Z'),
+    };
+
+    const mockParse = vi.fn().mockResolvedValue(mockExifData);
+    const { loadModule } = await import('$lib/services/app/dependencies');
+
+    vi.mocked(loadModule).mockResolvedValue({ parse: mockParse });
+
+    const result = await extractExifData(mockAsset, 'image');
+
+    expect(result.createdDate).toEqual(new Date('2023-10-01T12:34:56Z'));
   });
 
   test('should handle invalid date format', async () => {
@@ -136,15 +133,13 @@ describe('extractExifData', () => {
     });
 
     const mockExifData = {
-      exif: {
-        DateTime: { description: 'invalid-date-format' },
-      },
-      gps: {},
+      CreateDate: 'invalid-date-format', // Non-Date object
     };
 
-    const ExifReader = (await import('exifreader')).default;
+    const mockParse = vi.fn().mockResolvedValue(mockExifData);
+    const { loadModule } = await import('$lib/services/app/dependencies');
 
-    vi.mocked(ExifReader.load).mockResolvedValue(/** @type {any} */ (mockExifData));
+    vi.mocked(loadModule).mockResolvedValue({ parse: mockParse });
 
     const result = await extractExifData(mockAsset, 'image');
 
@@ -157,16 +152,14 @@ describe('extractExifData', () => {
     });
 
     const mockExifData = {
-      exif: {},
-      gps: {
-        Latitude: Number.NaN,
-        Longitude: Number.POSITIVE_INFINITY,
-      },
+      latitude: Number.NaN,
+      longitude: Number.POSITIVE_INFINITY,
     };
 
-    const ExifReader = (await import('exifreader')).default;
+    const mockParse = vi.fn().mockResolvedValue(mockExifData);
+    const { loadModule } = await import('$lib/services/app/dependencies');
 
-    vi.mocked(ExifReader.load).mockResolvedValue(/** @type {any} */ (mockExifData));
+    vi.mocked(loadModule).mockResolvedValue({ parse: mockParse });
 
     const result = await extractExifData(mockAsset, 'image');
 
@@ -179,27 +172,28 @@ describe('extractExifData', () => {
     });
 
     const mockExifData = {
-      exif: {},
-      gps: {},
+      // No latitude/longitude properties
     };
 
-    const ExifReader = (await import('exifreader')).default;
+    const mockParse = vi.fn().mockResolvedValue(mockExifData);
+    const { loadModule } = await import('$lib/services/app/dependencies');
 
-    vi.mocked(ExifReader.load).mockResolvedValue(/** @type {any} */ (mockExifData));
+    vi.mocked(loadModule).mockResolvedValue({ parse: mockParse });
 
     const result = await extractExifData(mockAsset, 'image');
 
     expect(result.coordinates).toBeUndefined();
   });
 
-  test('should handle ExifReader load failure', async () => {
+  test('should handle exifr parse failure', async () => {
     const mockAsset = /** @type {any} */ ({
       file: new File([''], 'test.jpg', { type: 'image/jpeg' }),
     });
 
-    const ExifReader = (await import('exifreader')).default;
+    const mockParse = vi.fn().mockRejectedValue(new Error('Failed to parse EXIF'));
+    const { loadModule } = await import('$lib/services/app/dependencies');
 
-    vi.mocked(ExifReader.load).mockRejectedValue(new Error('Failed to load EXIF'));
+    vi.mocked(loadModule).mockResolvedValue({ parse: mockParse });
 
     const result = await extractExifData(mockAsset, 'image');
 
