@@ -4,9 +4,10 @@ import { cp, mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import { sveltePreprocess } from 'svelte-preprocess';
 import { createGenerator } from 'ts-json-schema-generator';
 import { defineConfig } from 'vite';
+
+import svelteConfig from './svelte.config';
 
 /**
  * Path to the generated public type declaration file.
@@ -185,11 +186,8 @@ export default defineConfig({
   esbuild: { legalComments: 'eof' },
   plugins: [
     svelte({
+      ...svelteConfig,
       emitCss: false,
-      preprocess: sveltePreprocess(),
-      compilerOptions: {
-        runes: true,
-      },
     }),
     copyPackageFiles(),
     generateExtraFiles(),
