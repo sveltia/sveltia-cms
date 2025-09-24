@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import openaiTranslator, { normalizeLanguage } from './openai.js';
+import openaiTranslator, { availability, normalizeLanguage } from './openai.js';
 
 // Mock the getLocaleLabel function
 vi.mock('$lib/services/contents/i18n', () => ({
@@ -86,27 +86,35 @@ describe('OpenAI Translator Service', () => {
       });
     });
 
-    describe('getSourceLanguage', () => {
-      it('should return normalized language codes', () => {
-        expect(openaiTranslator.getSourceLanguage('en')).toBe('en');
-        expect(openaiTranslator.getSourceLanguage('fr-FR')).toBe('fr');
-        expect(openaiTranslator.getSourceLanguage('zh-CN')).toBe('zh');
+    describe('availability', () => {
+      it('should return true for supported language pairs', async () => {
+        await expect(availability({ sourceLanguage: 'en', targetLanguage: 'fr' })).resolves.toBe(
+          true,
+        );
+        await expect(
+          availability({ sourceLanguage: 'fr-FR', targetLanguage: 'zh-CN' }),
+        ).resolves.toBe(true);
+        await expect(availability({ sourceLanguage: 'es', targetLanguage: 'ja' })).resolves.toBe(
+          true,
+        );
       });
 
-      it('should return undefined for unsupported languages', () => {
-        expect(openaiTranslator.getSourceLanguage('unsupported')).toBeUndefined();
-      });
-    });
-
-    describe('getTargetLanguage', () => {
-      it('should return normalized language codes', () => {
-        expect(openaiTranslator.getTargetLanguage('en')).toBe('en');
-        expect(openaiTranslator.getTargetLanguage('fr-FR')).toBe('fr');
-        expect(openaiTranslator.getTargetLanguage('zh-CN')).toBe('zh');
+      it('should return false for unsupported source languages', async () => {
+        await expect(
+          availability({ sourceLanguage: 'unsupported', targetLanguage: 'fr' }),
+        ).resolves.toBe(false);
       });
 
-      it('should return undefined for unsupported languages', () => {
-        expect(openaiTranslator.getTargetLanguage('unsupported')).toBeUndefined();
+      it('should return false for unsupported target languages', async () => {
+        await expect(
+          availability({ sourceLanguage: 'en', targetLanguage: 'unsupported' }),
+        ).resolves.toBe(false);
+      });
+
+      it('should return false when both languages are unsupported', async () => {
+        await expect(
+          availability({ sourceLanguage: 'unsupported1', targetLanguage: 'unsupported2' }),
+        ).resolves.toBe(false);
       });
     });
   });
@@ -115,8 +123,8 @@ describe('OpenAI Translator Service', () => {
     const mockApiKey = 'sk-proj-1234567890abcdefghijklmnopqrstuvwxyzABCDEF';
 
     const mockOptions = {
-      sourceLocale: 'en',
-      targetLocale: 'fr',
+      sourceLanguage: 'en',
+      targetLanguage: 'fr',
       apiKey: mockApiKey,
     };
 
@@ -191,7 +199,7 @@ describe('OpenAI Translator Service', () => {
     it('should throw error for unsupported source locale', async () => {
       const invalidOptions = {
         ...mockOptions,
-        sourceLocale: 'unsupported',
+        sourceLanguage: 'unsupported',
       };
 
       await expect(openaiTranslator.translate(['Hello'], invalidOptions)).rejects.toThrow(
@@ -202,7 +210,7 @@ describe('OpenAI Translator Service', () => {
     it('should throw error for unsupported target locale', async () => {
       const invalidOptions = {
         ...mockOptions,
-        targetLocale: 'unsupported',
+        targetLanguage: 'unsupported',
       };
 
       await expect(openaiTranslator.translate(['Hello'], invalidOptions)).rejects.toThrow(
@@ -456,8 +464,7 @@ describe('OpenAI Translator Service', () => {
       expect(openaiTranslator).toHaveProperty('apiKeyURL');
       expect(openaiTranslator).toHaveProperty('apiKeyPattern');
       expect(openaiTranslator).toHaveProperty('markdownSupported');
-      expect(openaiTranslator).toHaveProperty('getSourceLanguage');
-      expect(openaiTranslator).toHaveProperty('getTargetLanguage');
+      expect(openaiTranslator).toHaveProperty('availability');
       expect(openaiTranslator).toHaveProperty('translate');
     });
 
@@ -466,8 +473,7 @@ describe('OpenAI Translator Service', () => {
     });
 
     it('should have function properties that are callable', () => {
-      expect(typeof openaiTranslator.getSourceLanguage).toBe('function');
-      expect(typeof openaiTranslator.getTargetLanguage).toBe('function');
+      expect(typeof availability).toBe('function');
       expect(typeof openaiTranslator.translate).toBe('function');
     });
   });
@@ -476,8 +482,8 @@ describe('OpenAI Translator Service', () => {
     const mockApiKey = 'sk-proj-1234567890abcdefghijklmnopqrstuvwxyzABCDEF';
 
     const mockOptions = {
-      sourceLocale: 'en',
-      targetLocale: 'fr',
+      sourceLanguage: 'en',
+      targetLanguage: 'fr',
       apiKey: mockApiKey,
     };
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import deeplTranslator, { getSourceLanguage, getTargetLanguage } from './deepl.js';
+import deeplTranslator, { availability, getSourceLanguage, getTargetLanguage } from './deepl.js';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -109,6 +109,53 @@ describe('DeepL Translator Service', () => {
         expect(getTargetLanguage('hi')).toBeUndefined(); // Hindi not supported by DeepL
       });
     });
+
+    describe('availability', () => {
+      it('should return true for supported language pairs', async () => {
+        await expect(availability({ sourceLanguage: 'en', targetLanguage: 'fr' })).resolves.toBe(
+          true,
+        );
+        await expect(availability({ sourceLanguage: 'de', targetLanguage: 'en-US' })).resolves.toBe(
+          true,
+        );
+        await expect(availability({ sourceLanguage: 'zh', targetLanguage: 'pt-BR' })).resolves.toBe(
+          true,
+        );
+      });
+
+      it('should return false for unsupported source languages', async () => {
+        await expect(availability({ sourceLanguage: 'hi', targetLanguage: 'en' })).resolves.toBe(
+          false,
+        ); // Hindi not supported
+        await expect(
+          availability({ sourceLanguage: 'unsupported', targetLanguage: 'fr' }),
+        ).resolves.toBe(false);
+      });
+
+      it('should return false for unsupported target languages', async () => {
+        await expect(availability({ sourceLanguage: 'en', targetLanguage: 'hi' })).resolves.toBe(
+          false,
+        ); // Hindi not supported
+        await expect(
+          availability({ sourceLanguage: 'en', targetLanguage: 'unsupported' }),
+        ).resolves.toBe(false);
+      });
+
+      it('should return false when both languages are unsupported', async () => {
+        await expect(
+          availability({ sourceLanguage: 'unsupported1', targetLanguage: 'unsupported2' }),
+        ).resolves.toBe(false);
+      });
+
+      it('should handle locale codes with regions', async () => {
+        await expect(
+          availability({ sourceLanguage: 'en-US', targetLanguage: 'fr-FR' }),
+        ).resolves.toBe(true);
+        await expect(
+          availability({ sourceLanguage: 'zh-CN', targetLanguage: 'en-GB' }),
+        ).resolves.toBe(true);
+      });
+    });
   });
 
   describe('Translation Function', () => {
@@ -116,8 +163,8 @@ describe('DeepL Translator Service', () => {
     const mockFreeApiKey = '12345678-1234-1234-1234-123456789012:fx';
 
     const mockOptions = {
-      sourceLocale: 'en',
-      targetLocale: 'fr',
+      sourceLanguage: 'en',
+      targetLanguage: 'fr',
       apiKey: mockApiKey,
     };
 
@@ -206,7 +253,7 @@ describe('DeepL Translator Service', () => {
     it('should throw error for unsupported source locale', async () => {
       const invalidOptions = {
         ...mockOptions,
-        sourceLocale: 'unsupported',
+        sourceLanguage: 'unsupported',
       };
 
       await expect(deeplTranslator.translate(['Hello'], invalidOptions)).rejects.toThrow(
@@ -217,7 +264,7 @@ describe('DeepL Translator Service', () => {
     it('should throw error for unsupported target locale', async () => {
       const invalidOptions = {
         ...mockOptions,
-        targetLocale: 'unsupported',
+        targetLanguage: 'unsupported',
       };
 
       await expect(deeplTranslator.translate(['Hello'], invalidOptions)).rejects.toThrow(
@@ -278,8 +325,8 @@ describe('DeepL Translator Service', () => {
       );
 
       const specialOptions = {
-        sourceLocale: 'en',
-        targetLocale: 'zh-CN',
+        sourceLanguage: 'en',
+        targetLanguage: 'zh-CN',
         apiKey: mockApiKey,
       };
 
@@ -314,8 +361,7 @@ describe('DeepL Translator Service', () => {
       expect(deeplTranslator).toHaveProperty('apiKeyURL');
       expect(deeplTranslator).toHaveProperty('apiKeyPattern');
       expect(deeplTranslator).toHaveProperty('markdownSupported');
-      expect(deeplTranslator).toHaveProperty('getSourceLanguage');
-      expect(deeplTranslator).toHaveProperty('getTargetLanguage');
+      expect(deeplTranslator).toHaveProperty('availability');
       expect(deeplTranslator).toHaveProperty('translate');
     });
 
@@ -324,8 +370,7 @@ describe('DeepL Translator Service', () => {
     });
 
     it('should have function properties that are callable', () => {
-      expect(typeof getSourceLanguage).toBe('function');
-      expect(typeof getTargetLanguage).toBe('function');
+      expect(typeof availability).toBe('function');
       expect(typeof deeplTranslator.translate).toBe('function');
     });
   });
@@ -334,8 +379,8 @@ describe('DeepL Translator Service', () => {
     const mockApiKey = '12345678-1234-1234-1234-123456789012';
 
     const mockOptions = {
-      sourceLocale: 'en',
-      targetLocale: 'fr',
+      sourceLanguage: 'en',
+      targetLanguage: 'fr',
       apiKey: mockApiKey,
     };
 

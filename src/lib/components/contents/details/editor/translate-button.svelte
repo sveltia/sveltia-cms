@@ -9,7 +9,7 @@
   import { translator } from '$lib/services/integrations/translators';
 
   /**
-   * @import { InternalLocaleCode } from '$lib/types/private';
+   * @import { InternalLocaleCode, LanguagePair } from '$lib/types/private';
    * @import { FieldKeyPath } from '$lib/types/public';
    */
 
@@ -31,39 +31,42 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { getSourceLanguage, getTargetLanguage } = $derived($translator ?? {});
-  const sourceDisabled = $derived(
-    !$entryDraft?.currentLocales[locale] || !getSourceLanguage(locale),
-  );
+  const sourceDisabled = $derived(!$entryDraft?.currentLocales[locale]);
+
+  /**
+   * Check if the translate button should be disabled.
+   * @param {LanguagePair} languages Language pair.
+   * @returns {Promise<boolean>} Whether the button should be disabled.
+   */
+  const isButtonDisabled = async ({ sourceLanguage, targetLanguage }) =>
+    sourceDisabled ||
+    !$entryDraft?.currentLocales[sourceLanguage] ||
+    !(await $translator?.availability({ sourceLanguage, targetLanguage }));
 </script>
 
 {#if otherLocales.length === 1}
   {@const [otherLocale] = otherLocales}
   {@const label = $_('translate_from_x', { values: { locale: getLocaleLabel(otherLocale) } })}
-  <!-- @todo Replace `title` with a native tooltip -->
-  <Button
-    variant="ghost"
-    {size}
-    iconic
-    popupPosition="bottom-right"
-    aria-label={label}
-    title={label}
-    disabled={sourceDisabled ||
-      !$entryDraft?.currentLocales[otherLocale] ||
-      !getTargetLanguage(otherLocale)}
-    onclick={() => {
-      copyFromLocale({
-        sourceLocale: otherLocale,
-        targetLocale: locale,
-        keyPath,
-        translate: true,
-      });
-    }}
-  >
-    {#snippet startIcon()}
-      <Icon name="translate" />
-    {/snippet}
-  </Button>
+  {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
+  {#await isButtonDisabled(languagePair) then disabled}
+    <!-- @todo Replace `title` with a native tooltip -->
+    <Button
+      variant="ghost"
+      {size}
+      iconic
+      popupPosition="bottom-right"
+      aria-label={label}
+      title={label}
+      {disabled}
+      onclick={() => {
+        copyFromLocale({ ...languagePair, keyPath, translate: true });
+      }}
+    >
+      {#snippet startIcon()}
+        <Icon name="translate" />
+      {/snippet}
+    </Button>
+  {/await}
 {:else}
   <MenuButton
     variant="ghost"

@@ -12,8 +12,7 @@ vi.mock('./google.js', () => ({
     apiKeyURL: 'https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials',
     apiKeyPattern: /AIza[0-9A-Za-z-_]{35}/,
     markdownSupported: false,
-    getSourceLanguage: vi.fn(),
-    getTargetLanguage: vi.fn(),
+    availability: vi.fn(),
     translate: vi.fn(),
   },
 }));
@@ -27,8 +26,7 @@ vi.mock('./openai.js', () => ({
     apiKeyURL: 'https://platform.openai.com/api-keys',
     apiKeyPattern: /sk-[a-zA-Z0-9-_]{40,}/,
     markdownSupported: true,
-    getSourceLanguage: vi.fn(),
-    getTargetLanguage: vi.fn(),
+    availability: vi.fn(),
     translate: vi.fn(),
   },
 }));
@@ -76,8 +74,7 @@ describe('Translator Services Index', () => {
         'apiKeyURL',
         'apiKeyPattern',
         'markdownSupported',
-        'getSourceLanguage',
-        'getTargetLanguage',
+        'availability',
         'translate',
       ];
 
@@ -97,8 +94,7 @@ describe('Translator Services Index', () => {
 
     it('should have callable function properties', () => {
       Object.values(allTranslationServices).forEach((service) => {
-        expect(typeof service.getSourceLanguage).toBe('function');
-        expect(typeof service.getTargetLanguage).toBe('function');
+        expect(typeof service.availability).toBe('function');
         expect(typeof service.translate).toBe('function');
       });
     });
@@ -148,32 +144,37 @@ describe('Translator Services Index', () => {
         expect(typeof service.markdownSupported).toBe('boolean');
 
         // Test service functions
-        expect(typeof service.getSourceLanguage).toBe('function');
-        expect(typeof service.getTargetLanguage).toBe('function');
+        expect(typeof service.availability).toBe('function');
         expect(typeof service.translate).toBe('function');
       });
     });
   });
 
   describe('Service Function Calls', () => {
-    it('should allow calling service functions from allTranslationServices', () => {
+    it('should allow calling service functions from allTranslationServices', async () => {
       const googleService = allTranslationServices.google;
+
+      // Mock the availability function to return a resolved promise
+      vi.mocked(googleService.availability).mockResolvedValue(true);
 
       // Test function calls don't throw errors (functions are mocked)
-      expect(() => {
-        googleService.getSourceLanguage('en');
-        googleService.getTargetLanguage('fr');
-      }).not.toThrow();
+      await expect(
+        googleService.availability({ sourceLanguage: 'en', targetLanguage: 'fr' }),
+      ).resolves.toBe(true);
     });
 
-    it('should properly mock service functions', () => {
+    it('should properly mock service functions', async () => {
       const googleService = allTranslationServices.google;
 
-      googleService.getSourceLanguage('en');
-      googleService.getTargetLanguage('fr');
+      // Mock the availability function to return a resolved promise
+      vi.mocked(googleService.availability).mockResolvedValue(true);
 
-      expect(googleService.getSourceLanguage).toHaveBeenCalledWith('en');
-      expect(googleService.getTargetLanguage).toHaveBeenCalledWith('fr');
+      await googleService.availability({ sourceLanguage: 'en', targetLanguage: 'fr' });
+
+      expect(googleService.availability).toHaveBeenCalledWith({
+        sourceLanguage: 'en',
+        targetLanguage: 'fr',
+      });
     });
 
     it('should allow mocking translate function calls', async () => {
@@ -184,15 +185,15 @@ describe('Translator Services Index', () => {
       mockTranslate.mockResolvedValueOnce(['Bonjour']);
 
       const result = await googleService.translate(['Hello'], {
-        sourceLocale: 'en',
-        targetLocale: 'fr',
+        sourceLanguage: 'en',
+        targetLanguage: 'fr',
         apiKey: 'test-key',
       });
 
       expect(result).toEqual(['Bonjour']);
       expect(mockTranslate).toHaveBeenCalledWith(['Hello'], {
-        sourceLocale: 'en',
-        targetLocale: 'fr',
+        sourceLanguage: 'en',
+        targetLanguage: 'fr',
         apiKey: 'test-key',
       });
     });

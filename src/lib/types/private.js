@@ -214,10 +214,17 @@
  */
 
 /**
+ * Translation language pair.
+ * @typedef {object} LanguagePair
+ * @property {string} sourceLanguage Source language.
+ * @property {string} targetLanguage Target language.
+ */
+
+/**
  * Translate function options.
- * @typedef {object} TranslateOptions
- * @property {string} sourceLocale Source language.
- * @property {string} targetLocale Target language.
+ * @typedef {object} TranslationOptions
+ * @property {string} sourceLanguage Source language.
+ * @property {string} targetLanguage Target language.
  * @property {string} apiKey API authentication key.
  */
 
@@ -231,12 +238,10 @@
  * @property {string} apiKeyURL URL of the page that provides an API key.
  * @property {RegExp} apiKeyPattern API key pattern.
  * @property {boolean} markdownSupported Whether the service supports markdown content.
- * @property {(locale: string) => string | undefined} getSourceLanguage Get a supported source
- * language that matches the given locale code.
- * @property {(locale: string) => string | undefined} getTargetLanguage Get a supported target
- * language that matches the given locale code.
- * @property {(texts: string[], options: TranslateOptions) => Promise<string[]>} translate Function
- * to translate strings.
+ * @property {(options: LanguagePair) => Promise<boolean>} availability Function to check whether
+ * the given source and target languages are supported.
+ * @property {(texts: string[], options: TranslationOptions) => Promise<string[]>} translate
+ * Function to translate strings.
  */
 
 /**

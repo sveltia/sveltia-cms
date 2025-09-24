@@ -8,7 +8,7 @@
   import { translator } from '$lib/services/integrations/translators';
 
   /**
-   * @import { InternalLocaleCode } from '$lib/types/private';
+   * @import { InternalLocaleCode, LanguagePair } from '$lib/types/private';
    * @import { FieldKeyPath } from '$lib/types/public';
    */
 
@@ -30,29 +30,33 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { getSourceLanguage, getTargetLanguage } = $derived($translator);
+  /**
+   * Check if a menu item should be disabled.
+   * @param {LanguagePair} languages Language pair.
+   * @returns {Promise<boolean>} Whether the menu item should be disabled.
+   */
+  const isMenuDisabled = async ({ sourceLanguage, targetLanguage }) =>
+    !$entryDraft?.currentLocales[targetLanguage] ||
+    !$entryDraft.currentLocales[sourceLanguage] ||
+    (!!keyPath && !$state.snapshot($entryDraft.currentValues[sourceLanguage])[keyPath]) ||
+    (!translate &&
+      !!keyPath &&
+      $state.snapshot($entryDraft.currentValues[sourceLanguage])[keyPath] ===
+        $state.snapshot($entryDraft.currentValues[targetLanguage])[keyPath]) ||
+    (translate && !(await $translator?.availability({ sourceLanguage, targetLanguage })));
 </script>
 
 {#each otherLocales as otherLocale}
-  <MenuItem
-    label={$_(translate ? 'translate_from_x' : 'copy_from_x', {
-      values: { locale: getLocaleLabel(otherLocale) },
-    })}
-    disabled={!$entryDraft?.currentLocales[locale] ||
-      !$entryDraft.currentLocales[otherLocale] ||
-      (keyPath && !$state.snapshot($entryDraft.currentValues[otherLocale])[keyPath]) ||
-      (!translate &&
-        keyPath &&
-        $state.snapshot($entryDraft.currentValues[otherLocale])[keyPath] ===
-          $state.snapshot($entryDraft.currentValues[locale])[keyPath]) ||
-      (translate && (!getSourceLanguage(locale) || !getTargetLanguage(otherLocale)))}
-    onclick={() => {
-      copyFromLocale({
-        sourceLocale: otherLocale,
-        targetLocale: locale,
-        keyPath,
-        translate,
-      });
-    }}
-  />
+  {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
+  {#await isMenuDisabled(languagePair) then disabled}
+    <MenuItem
+      label={$_(translate ? 'translate_from_x' : 'copy_from_x', {
+        values: { locale: getLocaleLabel(otherLocale) },
+      })}
+      {disabled}
+      onclick={() => {
+        copyFromLocale({ ...languagePair, keyPath, translate });
+      }}
+    />
+  {/await}
 {/each}

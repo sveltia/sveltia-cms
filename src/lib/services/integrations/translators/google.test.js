@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import googleTranslator, { normalizeLanguage } from './google.js';
+import googleTranslator, { availability, normalizeLanguage } from './google.js';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -43,47 +43,56 @@ describe('Google Translator Service', () => {
   });
 
   describe('Language Support', () => {
-    describe('getSourceLanguage', () => {
-      it('should normalize valid locale codes', () => {
-        expect(googleTranslator.getSourceLanguage('en')).toBe('en');
-        expect(googleTranslator.getSourceLanguage('fr')).toBe('fr');
-        expect(googleTranslator.getSourceLanguage('zh-CN')).toBe('zh-CN');
-        expect(googleTranslator.getSourceLanguage('pt-BR')).toBe('pt-BR');
+    describe('availability', () => {
+      it('should return true for supported language pairs', async () => {
+        await expect(availability({ sourceLanguage: 'en', targetLanguage: 'fr' })).resolves.toBe(
+          true,
+        );
+        await expect(
+          availability({ sourceLanguage: 'zh-CN', targetLanguage: 'pt-BR' }),
+        ).resolves.toBe(true);
+        await expect(
+          availability({ sourceLanguage: 'fr-FR', targetLanguage: 'zh-TW' }),
+        ).resolves.toBe(true);
       });
 
-      it('should handle locale code variations', () => {
-        expect(googleTranslator.getSourceLanguage('fr-fr')).toBe('fr-FR');
-        expect(googleTranslator.getSourceLanguage('zh_CN')).toBe('zh-CN');
-        expect(googleTranslator.getSourceLanguage('zh_TW')).toBe('zh-TW');
+      it('should return false for unsupported source languages', async () => {
+        await expect(
+          availability({ sourceLanguage: 'unsupported', targetLanguage: 'en' }),
+        ).resolves.toBe(false);
+        await expect(availability({ sourceLanguage: 'xyz', targetLanguage: 'fr' })).resolves.toBe(
+          false,
+        );
       });
 
-      it('should fallback to language code when region is not supported', () => {
-        expect(googleTranslator.getSourceLanguage('en-XX')).toBe('en');
-        expect(googleTranslator.getSourceLanguage('fr-XX')).toBe('fr');
+      it('should return false for unsupported target languages', async () => {
+        await expect(
+          availability({ sourceLanguage: 'en', targetLanguage: 'unsupported' }),
+        ).resolves.toBe(false);
+        await expect(availability({ sourceLanguage: 'fr', targetLanguage: 'xyz' })).resolves.toBe(
+          false,
+        );
       });
 
-      it('should return undefined for unsupported languages', () => {
-        expect(googleTranslator.getSourceLanguage('unsupported')).toBeUndefined();
-        expect(googleTranslator.getSourceLanguage('xyz')).toBeUndefined();
-        expect(googleTranslator.getSourceLanguage('')).toBeUndefined();
-      });
-    });
-
-    describe('getTargetLanguage', () => {
-      it('should normalize valid locale codes', () => {
-        expect(googleTranslator.getTargetLanguage('en')).toBe('en');
-        expect(googleTranslator.getTargetLanguage('ja')).toBe('ja');
-        expect(googleTranslator.getTargetLanguage('zh-TW')).toBe('zh-TW');
+      it('should return false when both languages are unsupported', async () => {
+        await expect(
+          availability({ sourceLanguage: 'unsupported1', targetLanguage: 'unsupported2' }),
+        ).resolves.toBe(false);
       });
 
-      it('should handle locale code variations', () => {
-        expect(googleTranslator.getTargetLanguage('zh-cn')).toBe('zh-CN');
-        expect(googleTranslator.getTargetLanguage('pt_br')).toBe('pt-BR');
+      it('should handle locale code variations', async () => {
+        await expect(
+          availability({ sourceLanguage: 'fr-fr', targetLanguage: 'zh-cn' }),
+        ).resolves.toBe(true); // normalized to fr-FR, zh-CN
+        await expect(
+          availability({ sourceLanguage: 'zh_CN', targetLanguage: 'pt_BR' }),
+        ).resolves.toBe(true); // normalized to zh-CN, pt-BR
       });
 
-      it('should return undefined for unsupported languages', () => {
-        expect(googleTranslator.getTargetLanguage('unsupported')).toBeUndefined();
-        expect(googleTranslator.getTargetLanguage('')).toBeUndefined();
+      it('should handle fallback to base language', async () => {
+        await expect(
+          availability({ sourceLanguage: 'en-XX', targetLanguage: 'fr-XX' }),
+        ).resolves.toBe(true); // fallback to en, fr
       });
     });
   });
@@ -92,8 +101,8 @@ describe('Google Translator Service', () => {
     const mockApiKey = 'AIzaSyB12345678901234567890123456789012';
 
     const mockOptions = {
-      sourceLocale: 'en',
-      targetLocale: 'fr',
+      sourceLanguage: 'en',
+      targetLanguage: 'fr',
       apiKey: mockApiKey,
     };
 
@@ -165,7 +174,7 @@ describe('Google Translator Service', () => {
     it('should throw error for unsupported source locale', async () => {
       const invalidOptions = {
         ...mockOptions,
-        sourceLocale: 'unsupported',
+        sourceLanguage: 'unsupported',
       };
 
       await expect(googleTranslator.translate(['Hello'], invalidOptions)).rejects.toThrow(
@@ -176,7 +185,7 @@ describe('Google Translator Service', () => {
     it('should throw error for unsupported target locale', async () => {
       const invalidOptions = {
         ...mockOptions,
-        targetLocale: 'unsupported',
+        targetLanguage: 'unsupported',
       };
 
       await expect(googleTranslator.translate(['Hello'], invalidOptions)).rejects.toThrow(
@@ -293,8 +302,8 @@ describe('Google Translator Service', () => {
       );
 
       const specialOptions = {
-        sourceLocale: 'en',
-        targetLocale: 'zh-CN',
+        sourceLanguage: 'en',
+        targetLanguage: 'zh-CN',
         apiKey: mockApiKey,
       };
 
@@ -324,8 +333,7 @@ describe('Google Translator Service', () => {
       expect(googleTranslator).toHaveProperty('apiKeyURL');
       expect(googleTranslator).toHaveProperty('apiKeyPattern');
       expect(googleTranslator).toHaveProperty('markdownSupported');
-      expect(googleTranslator).toHaveProperty('getSourceLanguage');
-      expect(googleTranslator).toHaveProperty('getTargetLanguage');
+      expect(googleTranslator).toHaveProperty('availability');
       expect(googleTranslator).toHaveProperty('translate');
     });
 
@@ -334,8 +342,7 @@ describe('Google Translator Service', () => {
     });
 
     it('should have function properties that are callable', () => {
-      expect(typeof googleTranslator.getSourceLanguage).toBe('function');
-      expect(typeof googleTranslator.getTargetLanguage).toBe('function');
+      expect(typeof availability).toBe('function');
       expect(typeof googleTranslator.translate).toBe('function');
     });
   });

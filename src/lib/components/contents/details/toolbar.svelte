@@ -324,10 +324,10 @@
 </Toast>
 
 <Toast id={$copyFromLocaleToast.id} bind:show={$copyFromLocaleToast.show}>
-  {@const { status, message, count, sourceLocale } = $copyFromLocaleToast}
+  {@const { status, message, count, sourceLanguage } = $copyFromLocaleToast}
   <Alert {status}>
     {$_(`editor.${message}`, {
-      values: { count, source: sourceLocale ? getLocaleLabel(sourceLocale) : '' },
+      values: { count, source: sourceLanguage ? getLocaleLabel(sourceLanguage) : '' },
     })}
   </Alert>
 </Toast>

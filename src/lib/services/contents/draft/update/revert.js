@@ -97,11 +97,11 @@ const revertLocale = ({ draft, keyPath, locale }) => {
  * searching the source values. Omit this if copying all the fields. If the triggered widget is List
  * or Object, this will likely match multiple fields.
  */
-export const revertChanges = ({ locale: targetLocale = '', keyPath = '' } = {}) => {
+export const revertChanges = ({ locale: targetLanguage = '', keyPath = '' } = {}) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collection, collectionFile, currentValues } = draft;
   const { allLocales } = (collectionFile ?? collection)._i18n;
-  const locales = targetLocale ? [targetLocale] : allLocales;
+  const locales = targetLanguage ? [targetLanguage] : allLocales;
 
   locales.forEach((locale) => {
     revertLocale({ draft, keyPath, locale });

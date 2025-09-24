@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import anthropicTranslator, { normalizeLanguage } from './anthropic.js';
+import anthropicTranslator, { availability, normalizeLanguage } from './anthropic.js';
 
 // Mock the getLocaleLabel function
 vi.mock('$lib/services/contents/i18n', () => ({
@@ -96,27 +96,35 @@ describe('Anthropic Translator Service', () => {
       });
     });
 
-    describe('getSourceLanguage', () => {
-      it('should return normalized language codes', () => {
-        expect(anthropicTranslator.getSourceLanguage('en')).toBe('en');
-        expect(anthropicTranslator.getSourceLanguage('fr-FR')).toBe('fr');
-        expect(anthropicTranslator.getSourceLanguage('zh-CN')).toBe('zh');
+    describe('availability', () => {
+      it('should return true for supported language pairs', async () => {
+        await expect(availability({ sourceLanguage: 'en', targetLanguage: 'fr' })).resolves.toBe(
+          true,
+        );
+        await expect(
+          availability({ sourceLanguage: 'fr-FR', targetLanguage: 'zh-CN' }),
+        ).resolves.toBe(true);
+        await expect(availability({ sourceLanguage: 'es', targetLanguage: 'ja' })).resolves.toBe(
+          true,
+        );
       });
 
-      it('should return undefined for unsupported languages', () => {
-        expect(anthropicTranslator.getSourceLanguage('unsupported')).toBeUndefined();
-      });
-    });
-
-    describe('getTargetLanguage', () => {
-      it('should return normalized language codes', () => {
-        expect(anthropicTranslator.getTargetLanguage('en')).toBe('en');
-        expect(anthropicTranslator.getTargetLanguage('fr-FR')).toBe('fr');
-        expect(anthropicTranslator.getTargetLanguage('zh-CN')).toBe('zh');
+      it('should return false for unsupported source languages', async () => {
+        await expect(
+          availability({ sourceLanguage: 'unsupported', targetLanguage: 'fr' }),
+        ).resolves.toBe(false);
       });
 
-      it('should return undefined for unsupported languages', () => {
-        expect(anthropicTranslator.getTargetLanguage('unsupported')).toBeUndefined();
+      it('should return false for unsupported target languages', async () => {
+        await expect(
+          availability({ sourceLanguage: 'en', targetLanguage: 'unsupported' }),
+        ).resolves.toBe(false);
+      });
+
+      it('should return false when both languages are unsupported', async () => {
+        await expect(
+          availability({ sourceLanguage: 'unsupported1', targetLanguage: 'unsupported2' }),
+        ).resolves.toBe(false);
       });
     });
   });
@@ -126,8 +134,8 @@ describe('Anthropic Translator Service', () => {
       'sk-ant-api03-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_abcdefghijklmnopqrstuvwx';
 
     const mockOptions = {
-      sourceLocale: 'en',
-      targetLocale: 'fr',
+      sourceLanguage: 'en',
+      targetLanguage: 'fr',
       apiKey: mockApiKey,
     };
 
@@ -195,8 +203,8 @@ describe('Anthropic Translator Service', () => {
       const texts = ['Hello world'];
 
       const options = {
-        sourceLocale: 'en',
-        targetLocale: 'es',
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
         apiKey: mockApiKey,
       };
 
@@ -248,8 +256,8 @@ describe('Anthropic Translator Service', () => {
 
     it('should throw error for unsupported source language', async () => {
       const options = {
-        sourceLocale: 'unsupported',
-        targetLocale: 'fr',
+        sourceLanguage: 'unsupported',
+        targetLanguage: 'fr',
         apiKey: mockApiKey,
       };
 
@@ -260,8 +268,8 @@ describe('Anthropic Translator Service', () => {
 
     it('should throw error for unsupported target language', async () => {
       const options = {
-        sourceLocale: 'en',
-        targetLocale: 'unsupported',
+        sourceLanguage: 'en',
+        targetLanguage: 'unsupported',
         apiKey: mockApiKey,
       };
 

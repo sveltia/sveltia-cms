@@ -25,7 +25,7 @@ describe('editor/index', () => {
       status: 'success',
       message: undefined,
       count: 1,
-      sourceLocale: undefined,
+      sourceLanguage: undefined,
     });
     editorLeftPane.set(null);
     editorRightPane.set(null);
@@ -123,7 +123,7 @@ describe('editor/index', () => {
         status: 'success',
         message: undefined,
         count: 1,
-        sourceLocale: undefined,
+        sourceLanguage: undefined,
       });
     });
 
@@ -134,7 +134,7 @@ describe('editor/index', () => {
         status: /** @type {'error'} */ ('error'),
         message: 'Copy failed',
         count: 5,
-        sourceLocale: 'en',
+        sourceLanguage: 'en',
       };
 
       copyFromLocaleToast.set(newToast);
@@ -162,7 +162,7 @@ describe('editor/index', () => {
         status: /** @type {'info'} */ ('info'),
         message: 'Info message',
         count: 1,
-        sourceLocale: 'fr',
+        sourceLanguage: 'fr',
       });
 
       expect(get(copyFromLocaleToast).status).toBe('info');
@@ -361,7 +361,7 @@ describe('editor/index', () => {
         status: /** @type {'info'} */ ('info'),
         message: 'Test message',
         count: 2,
-        sourceLocale: 'es',
+        sourceLanguage: 'es',
       };
 
       copyFromLocaleToast.set(newToast);

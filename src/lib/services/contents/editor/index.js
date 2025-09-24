@@ -12,7 +12,7 @@ import { writable } from 'svelte/store';
  * @property {'info' | 'success' | 'error'} status Status of the toast.
  * @property {string | undefined} message Message to display in the toast.
  * @property {number} count Number of copies made.
- * @property {InternalLocaleCode | undefined} sourceLocale Source locale for the copy.
+ * @property {InternalLocaleCode | undefined} sourceLanguage Source locale for the copy.
  */
 
 /**
@@ -40,7 +40,7 @@ export const copyFromLocaleToast = writable({
   status: 'success',
   message: undefined,
   count: 1,
-  sourceLocale: undefined,
+  sourceLanguage: undefined,
 });
 
 /**
