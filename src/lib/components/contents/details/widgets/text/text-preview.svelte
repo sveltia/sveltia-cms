@@ -4,6 +4,8 @@
   @see https://decapcms.org/docs/widgets/#text
 -->
 <script>
+  import { getCanonicalLocale } from '$lib/services/contents/i18n';
+
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
    * @import { TextField } from '$lib/types/public';
@@ -25,7 +27,7 @@
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
-  <p lang={locale} dir="auto">{currentValue}</p>
+  <p lang={getCanonicalLocale(locale)} dir="auto">{currentValue}</p>
 {/if}
 
 <style lang="scss">

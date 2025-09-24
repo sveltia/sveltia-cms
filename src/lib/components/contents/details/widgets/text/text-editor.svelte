@@ -8,6 +8,7 @@
   import { getContext, untrack } from 'svelte';
 
   import CharacterCounter from '$lib/components/contents/details/widgets/string/character-counter.svelte';
+  import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
    * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
@@ -83,7 +84,7 @@
 </script>
 
 <TextArea
-  lang={locale}
+  lang={getCanonicalLocale(locale)}
   bind:value={inputValue}
   flex
   {readonly}

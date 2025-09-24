@@ -6,7 +6,7 @@
 <script>
   import { isObjectArray } from '@sveltia/utils/array';
 
-  import { getListFormatter } from '$lib/services/contents/i18n';
+  import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
@@ -45,7 +45,9 @@
 </script>
 
 {#if multiple && Array.isArray(currentValue) && currentValue.length}
-  <p lang={locale} dir="auto">{listFormatter.format(currentValue.map(getLabel).sort())}</p>
+  <p lang={getCanonicalLocale(locale)} dir="auto">
+    {listFormatter.format(currentValue.map(getLabel).sort())}
+  </p>
 {:else if currentValue !== undefined}
-  <p lang={locale} dir="auto">{getLabel(currentValue)}</p>
+  <p lang={getCanonicalLocale(locale)} dir="auto">{getLabel(currentValue)}</p>
 {/if}

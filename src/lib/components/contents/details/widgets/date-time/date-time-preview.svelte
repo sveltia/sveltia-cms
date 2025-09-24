@@ -4,6 +4,7 @@
   @see https://decapcms.org/docs/widgets/#datetime
 -->
 <script>
+  import { getCanonicalLocale } from '$lib/services/contents/i18n';
   import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
 
   /**
@@ -32,7 +33,7 @@
 </script>
 
 {#if displayValue}
-  <p lang={locale} dir="auto">
+  <p lang={getCanonicalLocale(locale)} dir="auto">
     {displayValue}
     {#if fieldConfig.picker_utc}
       UTC

@@ -6,7 +6,7 @@
 <script>
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
-  import { getListFormatter } from '$lib/services/contents/i18n';
+  import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
   import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
@@ -63,5 +63,5 @@
 </script>
 
 {#if refValues.length}
-  <p lang={locale} dir="auto">{listFormatter.format(refValues)}</p>
+  <p lang={getCanonicalLocale(locale)} dir="auto">{listFormatter.format(refValues)}</p>
 {/if}

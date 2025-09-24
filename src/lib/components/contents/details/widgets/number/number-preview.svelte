@@ -32,7 +32,7 @@
 </script>
 
 {#if currentValue !== undefined && currentValue !== null && currentValue !== ''}
-  <p lang={locale} dir="auto">
+  <p lang={canonicalLocale} dir="auto">
     {#if valueType === 'int' || valueType === 'float'}
       {numberFormatter.format(Number(currentValue))}
     {:else}

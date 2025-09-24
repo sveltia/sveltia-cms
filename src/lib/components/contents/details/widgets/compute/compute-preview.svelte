@@ -3,6 +3,8 @@
   Implement the preview for the experimental Compute widget.
 -->
 <script>
+  import { getCanonicalLocale } from '$lib/services/contents/i18n';
+
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
    * @import { StringField } from '$lib/types/public';
@@ -23,4 +25,4 @@
   } = $props();
 </script>
 
-<p lang={locale} dir="auto">{currentValue}</p>
+<p lang={getCanonicalLocale(locale)} dir="auto">{currentValue}</p>
