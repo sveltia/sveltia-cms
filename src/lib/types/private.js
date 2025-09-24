@@ -194,6 +194,17 @@
  */
 
 /**
+ * Media library fetch options.
+ * @typedef {object} MediaLibraryFetchOptions
+ * @property {AssetKind} [kind] Asset.
+ * @property {string} apiKey API authentication key.
+ * @property {string} [userName] User name for services that require user authentication, such as
+ * cloud storage services.
+ * @property {string} [password] Password for services that require user authentication, such as
+ * cloud storage services.
+ */
+
+/**
  * External media library service, such as a stock asset provider or a cloud storage service.
  * @typedef {object} MediaLibraryService
  * @property {'stock_assets' | 'cloud_storage'} serviceType Service type.
@@ -209,8 +220,10 @@
  * @property {() => Promise<boolean>} [init] Function to initialize the service.
  * @property {(userName: string, password: string) => Promise<boolean>} [signIn] Function to sign in
  * to the service.
- * @property {(query: string, options: { kind?: string, apiKey: string, userName?: string,
- * password?: string }) => Promise<ExternalAsset[]>} search Function to search files.
+ * @property {(query: string, options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>} search
+ * Function to search files.
+ * @property {(options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>} list Function to list
+ * files. For stock asset services, it should return popular or curated images.
  */
 
 /**

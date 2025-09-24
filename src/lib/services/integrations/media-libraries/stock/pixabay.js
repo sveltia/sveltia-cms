@@ -2,90 +2,49 @@ import { get } from 'svelte/store';
 import { locale as appLocale } from 'svelte-i18n';
 
 /**
- * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';
+ * @import {
+ * ExternalAsset,
+ * MediaLibraryFetchOptions,
+ * MediaLibraryService,
+ * } from '$lib/types/private';
+ */
+
+/**
+ * @typedef {object} FetchResult
+ * @property {number} id Asset ID.
+ * @property {string} webformatURL Image URL.
+ * @property {string} previewURL Preview URL.
+ * @property {string} largeImageURL Large image URL.
+ * @property {number} imageWidth Image width.
+ * @property {number} imageHeight Image height.
+ * @property {string} pageURL Page URL.
+ * @property {string} tags Tags.
+ * @property {string} user User name.
  */
 
 /**
  * @see https://pixabay.com/api/docs/#api_search_images
  */
-const SUPPORTED_LOCALES = [
-  'cs',
-  'da',
-  'de',
-  'en',
-  'es',
-  'fr',
-  'id',
-  'it',
-  'hu',
-  'nl',
-  'no',
-  'pl',
-  'pt',
-  'ro',
-  'sk',
-  'fi',
-  'sv',
-  'tr',
-  'vi',
-  'th',
-  'bg',
-  'ru',
-  'el',
-  'ja',
-  'ko',
-  'zh',
-];
+const SUPPORTED_LOCALES =
+  'cs,da,de,en,es,fr,id,it,hu,nl,no,pl,pt,ro,sk,fi,sv,tr,vi,th,bg,ru,el,ja,ko,zh'.split(',');
 
 const ENDPOINT = 'https://pixabay.com/api';
 
+/** @type {Record<string, any>} */
+const SEARCH_PARAMS = {
+  image_type: 'photo',
+  min_width: 1280,
+  safesearch: true,
+  per_page: 150,
+};
+
 /**
- * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query.
- * @param {object} options Options.
- * @param {string} options.apiKey API key.
- * @returns {Promise<ExternalAsset[]>} Assets.
- * @see https://pixabay.com/api/docs/
- * @todo Support video files.
+ * Parse API results into ExternalAsset format.
+ * @param {FetchResult[]} results API results.
+ * @returns {ExternalAsset[]} Assets.
  */
-const search = async (query, { apiKey }) => {
-  const [locale] = /** @type {string} */ (get(appLocale)).toLowerCase().split('-');
-
-  const params = new URLSearchParams(
-    /** @type {Record<string, any>} */ ({
-      key: apiKey,
-      q: query,
-      lang: SUPPORTED_LOCALES.includes(locale) ? locale : 'en',
-      image_type: 'photo',
-      min_width: 1280,
-      editors_choice: !query,
-      safesearch: true,
-      per_page: 150,
-    }),
-  );
-
-  const response = await fetch(`${ENDPOINT}/?${params}`);
-
-  if (!response.ok) {
-    return Promise.reject();
-  }
-
-  /**
-   * @type {{
-   * id: number,
-   * webformatURL: string,
-   * previewURL: string,
-   * largeImageURL: string,
-   * imageWidth: number,
-   * imageHeight: number,
-   * pageURL: string,
-   * tags: string,
-   * user: string
-   * }[]}
-   */
-  const results = (await response.json()).hits;
-
-  return results.map(
+export const parseResults = (results) =>
+  results.map(
     ({
       id,
       webformatURL,
@@ -106,6 +65,70 @@ const search = async (query, { apiKey }) => {
       credit: `<a href="${pageURL}">Photo by ${user} on Pixabay`,
     }),
   );
+
+/**
+ * Get the best matching locale supported by Pixabay API.
+ * @returns {string} Locale code.
+ */
+export const getLocale = () => {
+  const [locale] = /** @type {string} */ (get(appLocale)).toLowerCase().split('-');
+
+  return SUPPORTED_LOCALES.includes(locale) ? locale : 'en';
+};
+
+/**
+ * Fetch curated pictures.
+ * @param {MediaLibraryFetchOptions} options Options.
+ * @returns {Promise<ExternalAsset[]>} Assets.
+ * @see https://pixabay.com/api/docs/
+ * @todo Support video files.
+ */
+export const list = async ({ apiKey }) => {
+  const params = new URLSearchParams({
+    ...SEARCH_PARAMS,
+    key: apiKey,
+    lang: getLocale(),
+    editors_choice: String(true),
+  });
+
+  const response = await fetch(`${ENDPOINT}/?${params}`);
+
+  if (!response.ok) {
+    return Promise.reject();
+  }
+
+  /** @type {FetchResult[]} */
+  const results = (await response.json()).hits;
+
+  return parseResults(results);
+};
+
+/**
+ * Search images or fetch curated pictures if no query is given.
+ * @param {string} query Search query.
+ * @param {MediaLibraryFetchOptions} options Options.
+ * @returns {Promise<ExternalAsset[]>} Assets.
+ * @see https://pixabay.com/api/docs/
+ * @todo Support video files.
+ */
+export const search = async (query, { apiKey }) => {
+  const params = new URLSearchParams({
+    ...SEARCH_PARAMS,
+    key: apiKey,
+    lang: getLocale(),
+    q: query,
+  });
+
+  const response = await fetch(`${ENDPOINT}/?${params}`);
+
+  if (!response.ok) {
+    return Promise.reject();
+  }
+
+  /** @type {FetchResult[]} */
+  const results = (await response.json()).hits;
+
+  return parseResults(results);
 };
 
 /**
@@ -122,5 +145,6 @@ export default {
   developerURL: 'https://pixabay.com/service/about/api/',
   apiKeyURL: 'https://pixabay.com/api/docs/#api_key',
   apiKeyPattern: /^\d+-[a-f\d]{25}$/,
+  list,
   search,
 };

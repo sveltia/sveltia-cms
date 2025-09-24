@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import pixabayService from './pixabay';
+import pixabayService, { getLocale, list, parseResults, search } from './pixabay';
 
 // Mock dependencies
 vi.mock('svelte/store', () => ({
@@ -42,6 +42,17 @@ describe('integrations/media-libraries/stock/pixabay', () => {
       expect(pixabayService.developerURL).toBe('https://pixabay.com/service/about/api/');
       expect(pixabayService.apiKeyURL).toBe('https://pixabay.com/api/docs/#api_key');
       expect(pixabayService.apiKeyPattern).toBeInstanceOf(RegExp);
+      // eslint-disable-next-line import/no-named-as-default-member
+      expect(pixabayService.list).toBeDefined();
+      // eslint-disable-next-line import/no-named-as-default-member
+      expect(pixabayService.search).toBeDefined();
+    });
+
+    it('should have named exports available', () => {
+      expect(typeof parseResults).toBe('function');
+      expect(typeof getLocale).toBe('function');
+      expect(typeof list).toBe('function');
+      expect(typeof search).toBe('function');
     });
 
     it('should validate API key pattern', () => {
@@ -62,6 +73,235 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         expect(apiKeyPattern.test('12345_1234567890abcdef123456789')).toBe(false); // underscore instead of dash
         expect(apiKeyPattern.test('')).toBe(false);
       }
+    });
+  });
+
+  describe('utility functions', () => {
+    describe('getLocale', () => {
+      it('should return supported locale', async () => {
+        const { get } = await import('svelte/store');
+
+        vi.mocked(get).mockReturnValue('de-DE');
+
+        expect(getLocale()).toBe('de');
+      });
+
+      it('should fallback to English for unsupported locales', async () => {
+        const { get } = await import('svelte/store');
+
+        vi.mocked(get).mockReturnValue('unsupported-locale');
+
+        expect(getLocale()).toBe('en');
+      });
+    });
+
+    describe('parseResults', () => {
+      it('should parse API results correctly', () => {
+        const mockApiResults = [
+          {
+            id: 12345,
+            webformatURL: 'https://pixabay.com/get/sunset-mountains_640.jpg',
+            previewURL: 'https://cdn.pixabay.com/photo/2021/01/01/01/01/sunset-mountains_150.jpg',
+            largeImageURL: 'https://pixabay.com/get/sunset-mountains_1280.jpg',
+            imageWidth: 1920,
+            imageHeight: 1080,
+            pageURL: 'https://pixabay.com/photos/sunset-mountains-landscape-12345/',
+            tags: 'sunset, mountains, landscape',
+            user: 'johndoe',
+          },
+          {
+            id: 67890,
+            webformatURL: 'https://pixabay.com/get/ocean-waves_640.jpg',
+            previewURL: 'https://cdn.pixabay.com/photo/2021/02/01/01/01/ocean-waves_150.jpg',
+            largeImageURL: 'https://pixabay.com/get/ocean-waves_1280.jpg',
+            imageWidth: 1280,
+            imageHeight: 1920,
+            pageURL: 'https://pixabay.com/photos/ocean-waves-water-67890/',
+            tags: 'ocean, waves, water',
+            user: 'janesmith',
+          },
+        ];
+
+        const results = parseResults(mockApiResults);
+
+        expect(results).toHaveLength(2);
+        expect(results[0]).toMatchObject({
+          id: '12345',
+          description: 'sunset, mountains, landscape',
+          previewURL: expect.stringContaining('sunset-mountains_180.jpg'),
+          downloadURL: expect.stringContaining('sunset-mountains_1280.jpg'),
+          fileName: 'sunset-mountains_1280.jpg',
+          kind: 'image',
+          credit: expect.stringContaining('johndoe'),
+        });
+
+        expect(results[1]).toMatchObject({
+          id: '67890',
+          description: 'ocean, waves, water',
+          previewURL: expect.stringContaining('ocean-waves_340.jpg'),
+          fileName: 'ocean-waves_1280.jpg',
+          kind: 'image',
+        });
+      });
+
+      it('should adjust preview URL based on image orientation', () => {
+        const landscapeResult = parseResults([
+          {
+            id: 1,
+            webformatURL: 'https://pixabay.com/get/image_640.jpg',
+            previewURL: 'https://pixabay.com/get/image_150.jpg',
+            largeImageURL: 'https://pixabay.com/get/image_1280.jpg',
+            imageWidth: 1920,
+            imageHeight: 1080, // landscape
+            pageURL: 'https://pixabay.com/photos/1/',
+            tags: 'landscape',
+            user: 'user',
+          },
+        ]);
+
+        const portraitResult = parseResults([
+          {
+            id: 2,
+            webformatURL: 'https://pixabay.com/get/image_640.jpg',
+            previewURL: 'https://pixabay.com/get/image_150.jpg',
+            largeImageURL: 'https://pixabay.com/get/image_1280.jpg',
+            imageWidth: 1080,
+            imageHeight: 1920, // portrait
+            pageURL: 'https://pixabay.com/photos/2/',
+            tags: 'portrait',
+            user: 'user',
+          },
+        ]);
+
+        expect(landscapeResult[0].previewURL).toContain('_180.'); // landscape gets 180px width
+        expect(portraitResult[0].previewURL).toContain('_340.'); // portrait gets 340px width
+      });
+    });
+  });
+
+  describe('list function', () => {
+    const mockListResponse = {
+      hits: [
+        {
+          id: 54321,
+          webformatURL: 'https://pixabay.com/get/curated-image_640.jpg',
+          previewURL: 'https://cdn.pixabay.com/photo/2021/01/01/01/01/curated-image_150.jpg',
+          largeImageURL: 'https://pixabay.com/get/curated-image_1280.jpg',
+          imageWidth: 1920,
+          imageHeight: 1080,
+          pageURL: 'https://pixabay.com/photos/curated-editors-choice-54321/',
+          tags: 'curated, editors choice, featured',
+          user: 'curateduser',
+        },
+        {
+          id: 98765,
+          webformatURL: 'https://pixabay.com/get/featured-content_640.jpg',
+          previewURL: 'https://cdn.pixabay.com/photo/2021/01/01/01/01/featured-content_150.jpg',
+          largeImageURL: 'https://pixabay.com/get/featured-content_1280.jpg',
+          imageWidth: 1280,
+          imageHeight: 1920,
+          pageURL: 'https://pixabay.com/photos/featured-content-98765/',
+          tags: 'featured, content, quality',
+          user: 'featureduser',
+        },
+      ],
+    };
+
+    it('should fetch curated pictures', async () => {
+      const fetchMock = vi.mocked(fetch);
+
+      fetchMock.mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue(mockListResponse),
+        }),
+      );
+
+      const results = await list({ apiKey: mockApiKey });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'https://pixabay.com/api/?image_type=photo&min_width=1280&safesearch=true&per_page=150&key=12345-1234567890abcdef1234567890&lang=en&editors_choice=true',
+        ),
+      );
+
+      expect(results).toHaveLength(2);
+      expect(results[0]).toMatchObject({
+        id: '54321',
+        description: 'curated, editors choice, featured',
+        previewURL: expect.stringContaining('curated-image_180.jpg'),
+        downloadURL: expect.stringContaining('curated-image_1280.jpg'),
+        fileName: 'curated-image_1280.jpg',
+        kind: 'image',
+        credit: expect.stringContaining('curateduser'),
+      });
+
+      expect(results[1]).toMatchObject({
+        id: '98765',
+        description: 'featured, content, quality',
+        previewURL: expect.stringContaining('featured-content_340.jpg'),
+        fileName: 'featured-content_1280.jpg',
+        kind: 'image',
+      });
+    });
+
+    it('should handle API errors in list', async () => {
+      const fetchMock = vi.mocked(fetch);
+
+      fetchMock.mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: false,
+          status: 401,
+        }),
+      );
+
+      await expect(list({ apiKey: mockApiKey })).rejects.toBeUndefined();
+    });
+
+    it('should use supported locale in list parameters', async () => {
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockReturnValue('de-DE'); // German locale
+
+      const fetchMock = vi.mocked(fetch);
+
+      fetchMock.mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue(mockListResponse),
+        }),
+      );
+
+      await list({ apiKey: mockApiKey });
+
+      const fetchCall = fetchMock.mock.calls[0];
+      const url = new URL(/** @type {string} */ (fetchCall?.[0]));
+
+      expect(url.searchParams.get('lang')).toBe('de');
+      expect(url.searchParams.get('editors_choice')).toBe('true');
+    });
+
+    it('should include required list parameters', async () => {
+      const fetchMock = vi.mocked(fetch);
+
+      fetchMock.mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ hits: [] }),
+        }),
+      );
+
+      await list({ apiKey: mockApiKey });
+
+      const fetchCall = fetchMock.mock.calls[0];
+      const url = new URL(/** @type {string} */ (fetchCall?.[0]));
+
+      expect(url.searchParams.get('key')).toBe(mockApiKey);
+      expect(url.searchParams.get('image_type')).toBe('photo');
+      expect(url.searchParams.get('min_width')).toBe('1280');
+      expect(url.searchParams.get('safesearch')).toBe('true');
+      expect(url.searchParams.get('per_page')).toBe('150');
+      expect(url.searchParams.get('editors_choice')).toBe('true');
     });
   });
 
@@ -103,11 +343,11 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      const results = await pixabayService.search('sunset', { apiKey: mockApiKey });
+      const results = await search('sunset', { apiKey: mockApiKey });
 
       expect(fetchMock).toHaveBeenCalledWith(
         expect.stringContaining(
-          'https://pixabay.com/api/?key=12345-1234567890abcdef1234567890&q=sunset&lang=en&image_type=photo&min_width=1280&editors_choice=false&safesearch=true&per_page=150',
+          'https://pixabay.com/api/?image_type=photo&min_width=1280&safesearch=true&per_page=150&key=12345-1234567890abcdef1234567890&lang=en&q=sunset',
         ),
       );
 
@@ -131,7 +371,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
       });
     });
 
-    it('should fetch editors choice photos when no query is provided', async () => {
+    it('should search with empty query', async () => {
       const fetchMock = vi.mocked(fetch);
 
       fetchMock.mockResolvedValueOnce(
@@ -141,11 +381,9 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      const results = await pixabayService.search('', { apiKey: mockApiKey });
+      const results = await search('', { apiKey: mockApiKey });
 
-      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('editors_choice=true'));
-      // The URL still contains q= but with an empty value
-      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('q=&'));
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('q='));
 
       expect(results).toHaveLength(2);
     });
@@ -160,7 +398,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      await expect(pixabayService.search('test', { apiKey: mockApiKey })).rejects.toBeUndefined();
+      await expect(search('test', { apiKey: mockApiKey })).rejects.toBeUndefined();
     });
 
     it('should use supported locale in search parameters', async () => {
@@ -177,7 +415,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      await pixabayService.search('test', { apiKey: mockApiKey });
+      await search('test', { apiKey: mockApiKey });
 
       const fetchCall = fetchMock.mock.calls[0];
       const url = new URL(/** @type {string} */ (fetchCall?.[0]));
@@ -199,7 +437,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      await pixabayService.search('test', { apiKey: mockApiKey });
+      await search('test', { apiKey: mockApiKey });
 
       const fetchCall = fetchMock.mock.calls[0];
       const url = new URL(/** @type {string} */ (fetchCall?.[0]));
@@ -250,7 +488,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      let results = await pixabayService.search('landscape', { apiKey: mockApiKey });
+      let results = await search('landscape', { apiKey: mockApiKey });
 
       expect(results[0].previewURL).toContain('_180.'); // landscape gets 180px width
 
@@ -263,7 +501,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      results = await pixabayService.search('portrait', { apiKey: mockApiKey });
+      results = await search('portrait', { apiKey: mockApiKey });
 
       expect(results[0].previewURL).toContain('_340.'); // portrait gets 340px width
     });
@@ -278,7 +516,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      const results = await pixabayService.search('test', { apiKey: mockApiKey });
+      const results = await search('test', { apiKey: mockApiKey });
 
       expect(results[0].credit).toBe(
         '<a href="https://pixabay.com/photos/sunset-mountains-landscape-12345/">Photo by johndoe on Pixabay',
@@ -311,39 +549,9 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      const results = await pixabayService.search('test', { apiKey: mockApiKey });
+      const results = await search('test', { apiKey: mockApiKey });
 
       expect(results[0].fileName).toBe('complex-image-name_1280.jpg');
-    });
-
-    it('should set correct search parameters based on query presence', async () => {
-      const fetchMock = vi.mocked(fetch);
-
-      fetchMock.mockResolvedValue(
-        /** @type {any} */ ({
-          ok: true,
-          json: vi.fn().mockResolvedValue({ hits: [] }),
-        }),
-      );
-
-      // Test with query
-      await pixabayService.search('nature', { apiKey: mockApiKey });
-
-      const firstFetchCall = fetchMock.mock.calls[0];
-      const firstUrl = new URL(/** @type {string} */ (firstFetchCall?.[0]));
-
-      expect(firstUrl.searchParams.get('q')).toBe('nature');
-      expect(firstUrl.searchParams.get('editors_choice')).toBe('false');
-
-      // Reset and test without query
-      fetchMock.mockClear();
-      await pixabayService.search('', { apiKey: mockApiKey });
-
-      const secondFetchCall = fetchMock.mock.calls[0];
-      const secondUrl = new URL(/** @type {string} */ (secondFetchCall?.[0]));
-
-      expect(secondUrl.searchParams.get('q')).toBe('');
-      expect(secondUrl.searchParams.get('editors_choice')).toBe('true');
     });
 
     it('should include required search parameters', async () => {
@@ -356,7 +564,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      await pixabayService.search('test', { apiKey: mockApiKey });
+      await search('test', { apiKey: mockApiKey });
 
       const fetchCall = fetchMock.mock.calls[0];
       const url = new URL(/** @type {string} */ (fetchCall?.[0]));
@@ -366,6 +574,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
       expect(url.searchParams.get('min_width')).toBe('1280');
       expect(url.searchParams.get('safesearch')).toBe('true');
       expect(url.searchParams.get('per_page')).toBe('150');
+      expect(url.searchParams.get('q')).toBe('test');
     });
   });
 });

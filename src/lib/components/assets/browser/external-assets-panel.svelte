@@ -21,6 +21,7 @@
    * @import {
    * AssetKind,
    * ExternalAsset,
+   * MediaLibraryFetchOptions,
    * MediaLibraryService,
    * SelectedResource,
    * } from '$lib/types/private';
@@ -59,6 +60,7 @@
     apiKeyPattern,
     init,
     signIn,
+    list,
     search,
   } = $derived(serviceProps);
 
@@ -73,21 +75,25 @@
   /** @type {'initial' | 'requested' | 'success' | 'error'} */
   let authState = $state('initial');
   /** @type {ExternalAsset[] | null} */
-  let searchResults = $state(null);
+  let listedAssets = $state(null);
   /** @type {string | undefined} */
   let error = $state();
 
   let debounceTimer = 0;
 
   /**
-   * Search assets.
+   * Search or list assets from the external media library.
    * @param {string} [query] Search query.
    */
-  const searchAssets = async (query = '') => {
-    searchResults = null;
+  const getAssets = async (query = '') => {
+    listedAssets = null;
+    query = query.trim();
+
+    /** @type {MediaLibraryFetchOptions} */
+    const options = { kind, apiKey, userName, password };
 
     try {
-      searchResults = await search(query, { kind, apiKey, userName, password });
+      listedAssets = await (query ? search(query, options) : list(options));
     } catch (ex) {
       error = 'search_fetch_failed';
       // eslint-disable-next-line no-console
@@ -170,10 +176,10 @@
       apiKey = $prefs.apiKeys?.[serviceId] ?? '';
       [userName, password] = ($prefs.logins?.[serviceId] ?? '').split(' ');
       hasAuthInfo = !!apiKey || !!password;
-      searchResults = null;
+      listedAssets = null;
 
       if (hasAuthInfo) {
-        searchAssets();
+        getAssets();
       }
     })();
   });
@@ -183,7 +189,7 @@
     window.clearTimeout(debounceTimer);
     debounceTimer = window.setTimeout(() => {
       if (hasAuthInfo) {
-        searchAssets(searchTerms);
+        getAssets(searchTerms);
       }
     }, 1000);
   });
@@ -194,17 +200,17 @@
     <EmptyState>
       <span role="alert">{$_(`assets_dialog.error.${error}`)}</span>
     </EmptyState>
-  {:else if !searchResults}
+  {:else if !listedAssets}
     <EmptyState>
       <span role="alert">{$_('searching')}</span>
     </EmptyState>
-  {:else if !searchResults.length}
+  {:else if !listedAssets.length}
     <EmptyState>
       <span role="alert">{$_('no_files_found')}</span>
     </EmptyState>
   {:else}
     <SimpleImageGrid {viewType} {gridId} {multiple}>
-      <InfiniteScroll items={searchResults} itemKey="id">
+      <InfiniteScroll items={listedAssets} itemKey="id">
         {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
           {#await sleep() then}
             {@const { id, previewURL, description, kind: _kind } = asset}
@@ -270,7 +276,7 @@
               hasAuthInfo = true;
               $prefs.apiKeys ??= {};
               $prefs.apiKeys[serviceId] = apiKey;
-              searchAssets();
+              getAssets();
             }
           }}
         />
@@ -310,7 +316,7 @@
               hasAuthInfo = true;
               $prefs.logins ??= {};
               $prefs.logins[serviceId] = [userName, password].join(' ');
-              searchAssets();
+              getAssets();
             } else {
               authState = 'error';
             }
