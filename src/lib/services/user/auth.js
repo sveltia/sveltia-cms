@@ -12,7 +12,7 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { InternalSiteConfig } from '$lib/types/private';
+ * @import { InternalSiteConfig, User } from '$lib/types/private';
  */
 
 /**
@@ -137,14 +137,14 @@ export const signInAutomatically = async () => {
   if (_user && _backend) {
     // Temporarily populate the `user` store with the cache, otherwise it’s not updated in
     // `refreshAccessToken`
-    user.set(_user);
+    user.set(/** @type {User} */ (_user));
 
     const { token, refreshToken } = _user;
 
     signingIn.set(true);
 
     try {
-      _user = await _backend.signIn({ token, refreshToken, auto: true });
+      _user = /** @type {User} */ (await _backend.signIn({ token, refreshToken, auto: true }));
     } catch {
       // The local backend may throw if the file handle permission is not given
       _user = undefined;
@@ -160,7 +160,7 @@ export const signInAutomatically = async () => {
   }
 
   // Use the cached user to start fetching files
-  user.set(_user);
+  user.set(/** @type {User} */ (_user));
 
   // Copy user preferences passed with QR code
   if (copiedPrefs) {

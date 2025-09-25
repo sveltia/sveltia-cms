@@ -27,7 +27,7 @@ export const parseGroupConfig = (filters) => {
   }
 
   if (isObject(filters)) {
-    const { groups: options, default: defaultGroupName } = /** @type {ViewGroups} */ (filters);
+    const { groups: options, default: defaultGroupName } = filters;
 
     if (Array.isArray(options)) {
       const defaultGroup = defaultGroupName

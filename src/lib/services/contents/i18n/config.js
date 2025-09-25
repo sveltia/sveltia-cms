@@ -72,7 +72,7 @@ const mergeI18nConfigs = (collection, file) => {
     return undefined;
   }
 
-  const config = /** @type {I18nOptions} */ ({ ...siteConfigValue.i18n });
+  const config = structuredClone(siteConfigValue.i18n);
   const hasCollectionI18n = collection.i18n || isSingletonCollection(collection);
 
   // Check if the collection has its own i18n configuration. The singleton collection doesn’t have

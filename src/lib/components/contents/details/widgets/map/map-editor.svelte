@@ -189,7 +189,6 @@
         geometry = JSON.parse(newValue);
 
         if (
-          !geometry ||
           !isObject(geometry) ||
           geometry.type !== geometryType ||
           !Array.isArray(geometry.coordinates)

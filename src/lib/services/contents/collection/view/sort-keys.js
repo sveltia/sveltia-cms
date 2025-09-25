@@ -43,7 +43,7 @@ export const SPECIAL_SORT_KEYS = Object.keys(SPECIAL_SORT_KEY_TYPES);
 /**
  * Check if the given value is a valid array of strings.
  * @param {unknown} arr Value to check.
- * @returns {boolean} Whether the value is a valid array of strings.
+ * @returns {arr is string[]} Whether the value is a valid array of strings.
  */
 export const isValidArray = (arr) =>
   Array.isArray(arr) && arr.every((item) => typeof item === 'string');
@@ -64,15 +64,13 @@ export const parseCustomSortableFields = (customSortableFields) => {
   // Static CMS compatibility: if `sortable_fields` is an object, it should be treated as a
   // definition object with `fields` and `default` properties
   if (isObject(customSortableFields)) {
-    const { fields: keys, default: settings } = /** @type {SortableFields} */ (
-      customSortableFields
-    );
+    const { fields: keys, default: settings } = customSortableFields;
 
     if (!isValidArray(keys)) {
       return { keys: [] };
     }
 
-    if (!settings || !isObject(settings)) {
+    if (!isObject(settings)) {
       return { keys };
     }
 

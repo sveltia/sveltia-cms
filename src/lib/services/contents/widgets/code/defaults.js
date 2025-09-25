@@ -23,7 +23,7 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
     return { [keyPath]: typeof value === 'string' ? value : '' };
   }
 
-  const obj = isObject(value) ? /** @type {Record<string, any>} */ (value) : undefined;
+  const obj = isObject(value) ? value : undefined;
   const code = obj?.[outputKeys.code] ?? value;
   const lang = obj?.[outputKeys.lang] ?? '';
 

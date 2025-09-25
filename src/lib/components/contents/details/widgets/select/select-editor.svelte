@@ -47,9 +47,7 @@
     const _options = fieldOptions.map(
       (option) =>
         /** @type {SelectFieldSelectorOption} */ (
-          isObject(option)
-            ? /** @type {{ label: string, value: string }} */ (option)
-            : { label: option, value: option }
+          isObject(option) ? option : { label: option, value: option }
         ),
     );
 

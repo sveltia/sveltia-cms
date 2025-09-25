@@ -16,7 +16,7 @@ const getDefaultValue = ({ fieldConfig, locale }) => {
   const { default: defaultValue } = /** @type {KeyValueField} */ (fieldConfig);
   const required = isFieldRequired({ fieldConfig, locale });
 
-  if (defaultValue && isObject(defaultValue)) {
+  if (isObject(defaultValue)) {
     return defaultValue;
   }
 
@@ -43,7 +43,7 @@ export const getDefaultValueMap = (args) => {
 
       if (isObject(jsonValue)) {
         // Valid JSON object, use it (even if empty)
-        valueMap = /** @type {Record<string, any>} */ (jsonValue);
+        valueMap = jsonValue;
       }
     } catch {
       // Invalid JSON

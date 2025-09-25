@@ -25,7 +25,7 @@ export const parseFilterConfig = (filters) => {
   }
 
   if (isObject(filters)) {
-    const { filters: options, default: defaultFilterName } = /** @type {ViewFilters} */ (filters);
+    const { filters: options, default: defaultFilterName } = filters;
 
     if (Array.isArray(options)) {
       const defaultFilter = defaultFilterName
