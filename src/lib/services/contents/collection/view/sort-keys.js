@@ -58,7 +58,7 @@ export const parseCustomSortableFields = (customSortableFields) => {
   // Netlify/Decap CMS compatibility: if `sortable_fields` is an array, it should be treated as a
   // list of field keys
   if (isValidArray(customSortableFields)) {
-    return { keys: /** @type {string[]} */ (customSortableFields) };
+    return { keys: customSortableFields };
   }
 
   // Static CMS compatibility: if `sortable_fields` is an object, it should be treated as a
