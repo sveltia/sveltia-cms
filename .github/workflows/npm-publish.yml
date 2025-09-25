@@ -14,9 +14,6 @@ permissions:
 jobs:
   build-and-publish:
     name: Build and Publish
-    permissions:
-      contents: read
-      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the branch
@@ -31,6 +28,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
           registry-url: https://registry.npmjs.org/
+      - name: Update npm
+        run: npm install -g npm@latest
       - name: Install dependencies
         run: pnpm install
       - name: Build & publish the app
