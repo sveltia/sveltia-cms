@@ -119,15 +119,15 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 
 - [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork
   - Initial commit made in September 2022
-  - Discontinued in September 2024 after making meaningful improvements
+  - ⛔️ Discontinued in September 2024 after making meaningful improvements
 - **Sveltia CMS**: not a fork but a **complete rewrite**
   - Started in November 2022, first appeared on GitHub in March 2023
-  - Actively developed with frequent releases and numerous improvements
-  - Solved more than 250 issues reported in the Netlify/Decap CMS repository
+  - ✅ Actively developed with frequent releases and numerous improvements
+  - ✅ Solved more than 250 issues reported in the Netlify/Decap CMS repository
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
-  - Mostly low activity with occasional releases and a few minor improvements
-  - A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
+  - ⚠️ Mostly low activity with occasional releases and a few minor improvements
+  - ⚠️ A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design:
 
@@ -648,7 +648,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
-[Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
+[Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
 
 Due to the complexity, we have decided to defer the following features to the 2.0 release due early/mid 2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
 
