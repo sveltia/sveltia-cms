@@ -7,6 +7,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { createGenerator } from 'ts-json-schema-generator';
 import { defineConfig } from 'vite';
 
+import { BUILTIN_WIDGETS } from './src/lib/services/contents/widgets';
 import svelteConfig from './svelte.config';
 
 /**
@@ -115,6 +116,14 @@ const generateSchema = async () => {
   // Allow having the `$schema` property at the top of the config file
   // https://json-schema.org/understanding-json-schema/keywords
   schema.definitions.SiteConfig.properties.$schema = { type: 'string', format: 'uri' };
+
+  // Disallow built-in widget names for custom widgets. We need this because the `Exclude` type
+  // utility used in the TypeScript definition is not converted to JSON schema.
+  // @see https://github.com/vega/ts-json-schema-generator/issues/993
+  Object.assign(schema.definitions.CustomField.properties.widget, {
+    minLength: 1,
+    not: { enum: BUILTIN_WIDGETS },
+  });
 
   const schemaString = JSON.stringify(schema, null, 2)
     // Remove unnecessary line breaks in `markdownDescription` originally present in JSDoc

@@ -1,4 +1,34 @@
 /**
+ * @import { BuiltInWidgetName } from '$lib/types/public';
+ */
+
+/**
+ * List of built-in widget names.
+ * @type {BuiltInWidgetName[]}
+ */
+export const BUILTIN_WIDGETS = [
+  'boolean',
+  'code',
+  'color',
+  'compute',
+  'datetime',
+  'file',
+  'hidden',
+  'image',
+  'keyvalue',
+  'list',
+  'map',
+  'markdown',
+  'number',
+  'object',
+  'relation',
+  'select',
+  'string',
+  'text',
+  'uuid',
+];
+
+/**
  * List of widgets that support a simple value: boolean, number or string.
  * @type {string[]}
  */

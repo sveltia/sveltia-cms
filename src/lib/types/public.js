@@ -187,8 +187,8 @@
  */
 
 /**
- * Base field properties that are common to all fields.
- * @typedef {object} BaseFieldProps
+ * Common field properties that are shared among all field types.
+ * @typedef {object} CommonFieldProps
  * @property {string} name Unique identifier for the field. It cannot include periods and spaces.
  * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
  * field value.
@@ -203,12 +203,6 @@
  * when i18n is set up with the global and collection-level `i18n` option.
  * @see https://decapcms.org/docs/configuration-options/#fields
  * @see https://decapcms.org/docs/widgets/
- */
-
-/**
- * Common field properties. We have to allow arbitrary properties because custom widgets can have
- * any properties. This is also required to enable schema autocomplete for the fields in IDEs.
- * @typedef {BaseFieldProps & Record<string, any>} CommonFieldProps
  */
 
 /**
@@ -745,13 +739,13 @@
 /**
  * Custom field properties.
  * @typedef {object} CustomFieldProps
- * @property {Exclude<string, BuiltInWidgetName>} widget Widget name.
+ * @property {Exclude<string, BuiltInWidgetName | ''>} widget Widget name.
  * @see https://decapcms.org/docs/custom-widgets/
  */
 
 /**
  * Entry field using a custom widget.
- * @typedef {CommonFieldProps & CustomFieldProps} CustomField
+ * @typedef {CommonFieldProps & CustomFieldProps & Record<string, any>} CustomField
  */
 
 /**

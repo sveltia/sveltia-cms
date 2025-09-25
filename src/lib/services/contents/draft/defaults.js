@@ -51,6 +51,7 @@ const GET_DEFAULT_VALUE_MAP_FUNCTIONS = {
  * @returns {void} The `content` object is modified in place.
  */
 export const populateDefaultValue = ({ content, keyPath, fieldConfig, locale, dynamicValues }) => {
+  // @ts-ignore `default` is not defined in the Compute and custom field types
   const { widget: widgetName = 'string', default: defaultValue } = fieldConfig;
 
   // The `compute` widget doesn’t have the `default` option, so we just set an empty string,
