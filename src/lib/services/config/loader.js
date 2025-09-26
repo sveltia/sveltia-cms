@@ -45,7 +45,7 @@ const fetchFile = async ({ href, type = 'application/yaml' }) => {
     if (type === 'application/json') {
       result = response.json();
     } else {
-      result = parse(await response.text(), { merge: true });
+      result = parse(await response.text(), { merge: true, maxAliasCount: -1 });
     }
   } catch (ex) {
     throw new Error(get(_)('config.error.parse_failed'), { cause: ex });
