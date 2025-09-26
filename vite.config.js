@@ -117,6 +117,12 @@ const generateSchema = async () => {
   // https://json-schema.org/understanding-json-schema/keywords
   schema.definitions.SiteConfig.properties.$schema = { type: 'string', format: 'uri' };
 
+  // Require at least one of `collections` or `singletons`
+  schema.definitions.SiteConfig.oneOf = [
+    { required: ['collections'] },
+    { required: ['singletons'] },
+  ];
+
   // Disallow built-in widget names for custom widgets. We need this because the `Exclude` type
   // utility used in the TypeScript definition is not converted to JSON schema.
   // @see https://github.com/vega/ts-json-schema-generator/issues/993
