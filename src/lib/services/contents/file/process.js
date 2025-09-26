@@ -13,8 +13,8 @@ import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
  * @import {
  * BaseEntryListItem,
  * Entry,
- * EntryCollection,
  * InternalCollection,
+ * InternalEntryCollection,
  * InternalLocaleCode,
  * RawEntryContent,
  * } from '$lib/types/private';
@@ -379,7 +379,7 @@ export const prepareEntry = async ({ file, entries, errors }) => {
       structureMap: { i18nSingleFile, i18nMultiFile, i18nMultiFolder, i18nRootMultiFolder },
       canonicalSlug: { key: canonicalSlugKey },
     },
-  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const transformedContent = transformRawContent(rawContent, fields, i18nSingleFile);
 

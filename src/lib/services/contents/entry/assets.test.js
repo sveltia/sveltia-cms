@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 /**
- * @import { Asset, Entry, EntryCollection } from '$lib/types/private';
+ * @import { Asset, Entry, InternalEntryCollection } from '$lib/types/private';
  */
 
 // Create hoisted mocks
@@ -60,7 +60,7 @@ describe('getEntryThumbnail', () => {
     mockGetAssetFoldersByPath.mockClear();
   });
 
-  /** @type {EntryCollection} */
+  /** @type {InternalEntryCollection} */
   const mockCollection = {
     name: 'posts',
     folder: 'content/posts',

@@ -7,7 +7,6 @@ vi.mock('$lib/services/assets');
 /**
  * @import {
  * AssetFolderInfo,
- * CollectionType,
  * InternalCollection,
  * InternalI18nOptions,
  * } from '$lib/types/private';
@@ -20,7 +19,8 @@ describe('Test resolveAssetFolderPaths()', () => {
   const collectionBase = {
     name: 'blog',
     folder: 'src/content/blog',
-    _type: /** @type {CollectionType} */ ('entry'),
+    fields: [],
+    _type: /** @type {'entry'} */ ('entry'),
     _thumbnailFieldNames: [],
   };
 

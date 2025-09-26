@@ -38,7 +38,7 @@
         {#each collections as collection, index (collection.name ?? index)}
           {#await sleep() then}
             {#if !('divider' in collection)}
-              {@const { name, label, icon, files } = collection}
+              {@const { name, label, icon } = collection}
               <Option
                 label={label || name}
                 selected={$isSmallScreen ? false : $selectedCollection?.name === name}
@@ -51,7 +51,9 @@
                 {/snippet}
                 {#snippet endIcon()}
                   {#key $allEntries}
-                    {@const count = (files ?? getEntriesByCollection(name)).length}
+                    {@const count = (
+                      'files' in collection ? collection.files : getEntriesByCollection(name)
+                    ).length}
                     <span
                       class="count"
                       aria-label="({$_(

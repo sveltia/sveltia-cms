@@ -15,12 +15,12 @@
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   /**
-   * @import { Entry, EntryCollection, ViewType } from '$lib/types/private';
+   * @import { Entry, InternalEntryCollection, ViewType } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
-   * @property {EntryCollection} collection Selected collection.
+   * @property {InternalEntryCollection} collection Selected collection.
    * @property {Entry} entry Entry.
    * @property {ViewType} viewType View type.
    */

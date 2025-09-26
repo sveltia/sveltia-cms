@@ -17,6 +17,7 @@ describe('Test getEntrySummary()', () => {
   const collection = {
     name: 'pages-tags',
     folder: 'content/tags',
+    fields: [],
     slug_length: 50,
     _type: 'entry',
     _file: {

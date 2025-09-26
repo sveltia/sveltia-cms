@@ -7,7 +7,7 @@ import { getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getRegex } from '$lib/services/utils/misc';
 
 /**
- * @import { Entry, FilteringConditions, InternalCollection } from '$lib/types/private';
+ * @import { Entry, FilteringConditions, InternalEntryCollection } from '$lib/types/private';
  * @import { ViewFilter, ViewFilters } from '$lib/types/public';
  */
 
@@ -47,7 +47,7 @@ export const parseFilterConfig = (filters) => {
 /**
  * Filter the given entries.
  * @param {Entry[]} entries Entry list.
- * @param {InternalCollection} collection Collection that the entries belong to.
+ * @param {InternalEntryCollection} collection Collection that the entries belong to.
  * @param {FilteringConditions[]} filters One or more filtering conditions.
  * @returns {Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
@@ -94,15 +94,15 @@ export const filterEntries = (entries, collection, filters) => {
  * View filters for the selected entry collection.
  * @type {import('svelte/store').Readable<ViewFilter[]>}
  */
-export const viewFilters = derived([selectedCollection], ([_collection], set) => {
+export const viewFilters = derived([selectedCollection], ([collection], set) => {
   // Disable sorting for file/singleton collection
-  if (!_collection?.folder) {
+  if (!collection || !('folder' in collection)) {
     set([]);
 
     return;
   }
 
-  const { options, default: defaultFilter } = parseFilterConfig(_collection.view_filters);
+  const { options, default: defaultFilter } = parseFilterConfig(collection.view_filters);
 
   set(options);
 

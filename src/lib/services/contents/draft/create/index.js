@@ -11,6 +11,7 @@ import { getDefaultValues } from '$lib/services/contents/draft/defaults';
  * @import {
  * InternalCollection,
  * InternalCollectionFile,
+ * InternalEntryCollection,
  * LocaleContentMap,
  * LocaleExpanderMap,
  * } from '$lib/types/private';
@@ -35,11 +36,12 @@ const LOCALIZED_SLUG_EDITOR_TAG = '{{fields._slug | localize}}';
  * @see https://github.com/sveltia/sveltia-cms/issues/499
  */
 const getSlugEditorProp = ({ collection, collectionFile, originalEntry }) => {
+  const { _type } = collection;
+
   const {
-    _type,
     identifier_field: identifierField = 'title',
     slug: slugTemplate = `{{${identifierField}}}`,
-  } = collection;
+  } = _type === 'entry' ? collection : {};
 
   const { id } = originalEntry;
   const isNew = id === undefined;
@@ -90,7 +92,10 @@ export const createDraft = ({
   const fileName = collectionFile?.name;
   const { id, slug, locales } = originalEntry;
   const isNew = id === undefined;
-  const { fields: regularFields = [], _i18n } = collectionFile ?? collection;
+
+  const { fields: regularFields = [], _i18n } =
+    collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+
   const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
   const fields = indexFile?.fields ?? regularFields;
 

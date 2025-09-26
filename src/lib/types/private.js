@@ -5,8 +5,10 @@
  * BackendName,
  * Collection,
  * CollectionFile,
+ * EntryCollection,
  * Field,
  * FieldKeyPath,
+ * FileCollection,
  * FileExtension,
  * FileFormat,
  * FileFormatter,
@@ -430,7 +432,6 @@
 /**
  * Extra properties for a collection.
  * @typedef {object} CollectionExtraProps
- * @property {CollectionType} _type Collection type.
  * @property {InternalI18nOptions} _i18n Internal i18n configuration combined with the top-level
  * configuration.
  */
@@ -438,6 +439,7 @@
 /**
  * Extra properties for an entry collection.
  * @typedef {object} EntryCollectionExtraProps
+ * @property {Extract<CollectionType, "entry">} _type Collection type.
  * @property {FileConfig} _file Entry file configuration.
  * @property {FieldKeyPath[]} _thumbnailFieldNames A list of field key paths to be used to find an
  * entry thumbnail. See {@link Collection.thumbnail} for details.
@@ -445,24 +447,27 @@
 
 /**
  * An entry collection definition.
- * @typedef {Collection & CollectionExtraProps & EntryCollectionExtraProps} EntryCollection
+ * @typedef {EntryCollection & EntryCollectionExtraProps & CollectionExtraProps
+ * } InternalEntryCollection
  */
 
 /**
  * Extra properties for a file/singleton collection.
  * @typedef {object} FileCollectionExtraProps
+ * @property {Extract<CollectionType, "file" | "singleton">} _type Collection type.
  * @property {Record<string, InternalCollectionFile>} _fileMap File map with normalized collection
  * file definitions. The key is a file identifier.
  */
 
 /**
  * A file/singleton collection definition.
- * @typedef {Collection & CollectionExtraProps & FileCollectionExtraProps} FileCollection
+ * @typedef {FileCollection & FileCollectionExtraProps & CollectionExtraProps
+ * } InternalFileCollection
  */
 
 /**
  * A collection definition.
- * @typedef {EntryCollection | FileCollection} InternalCollection
+ * @typedef {InternalEntryCollection | InternalFileCollection} InternalCollection
  */
 
 /**

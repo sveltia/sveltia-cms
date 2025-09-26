@@ -37,6 +37,7 @@
 
   const isNew = $derived($entryDraft?.isNew ?? true);
   const collection = $derived($entryDraft?.collection);
+  const entryCollection = $derived(collection?._type === 'entry' ? collection : undefined);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const { showPreview } = $derived($entryEditorSettings ?? {});
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
@@ -46,8 +47,8 @@
   const paneStateKey = $derived(
     collectionFile?.name ? [collection?.name, collectionFile.name].join('|') : collection?.name,
   );
-  const canCreate = $derived(collection?.create ?? false);
-  const limit = $derived(collection?.limit ?? Infinity);
+  const canCreate = $derived(entryCollection?.create ?? false);
+  const limit = $derived(entryCollection?.limit ?? Infinity);
   const createDisabled = $derived(!canCreateEntry(collection));
 
   /**

@@ -21,6 +21,7 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  * Entry,
  * EntryDraft,
  * FileChange,
+ * InternalEntryCollection,
  * MovingAsset,
  * } from '$lib/types/private';
  * @import { CollectionIndexFile } from '$lib/types/public';
@@ -67,14 +68,16 @@ export const getDraftBaseProps = ({ entry }) => {
 /**
  * Add saving entry data to the stack.
  * @param {object} args Arguments.
- * @param {Record<string, any>} args.draftProps Entry draft properties.
+ * @param {Partial<EntryDraft>} args.draftProps Entry draft properties.
  * @param {CollectionIndexFile} [args.indexFile] Index file of the collection.
  * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
  * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
  */
 export const addSavingEntryData = async ({ draftProps, indexFile, savingEntries, changes }) => {
   const { collection, collectionFile } = draftProps;
-  const { fields: regularFields = [] } = collectionFile ?? collection;
+
+  const { fields: regularFields = [] } =
+    collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const draft = /** @type {EntryDraft} */ ({
     ...draftProps,

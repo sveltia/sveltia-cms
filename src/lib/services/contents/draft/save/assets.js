@@ -15,11 +15,11 @@ import {
  * @import {
  * Asset,
  * AssetFolderInfo,
- * EntryCollection,
  * EntryDraft,
  * FileChange,
  * FillTemplateOptions,
  * FlattenedEntryContent,
+ * InternalEntryCollection,
  * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
@@ -70,7 +70,7 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
 
   const subPath =
     collection._type === 'entry'
-      ? /** @type {EntryCollection} */ (collection)._file.subPath
+      ? /** @type {InternalEntryCollection} */ (collection)._file.subPath
       : undefined;
 
   const subPathFirstPart = subPath?.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? '';

@@ -5,7 +5,7 @@ import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getLocalePath } from '$lib/services/contents/i18n';
 
 /**
- * @import { EntryCollection, EntryDraft, InternalLocaleCode } from '$lib/types/private';
+ * @import { EntryDraft, InternalEntryCollection, InternalLocaleCode } from '$lib/types/private';
  */
 
 /**
@@ -35,7 +35,7 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     return originalEntry.locales[locale].path;
   }
 
-  const entryCollection = /** @type {EntryCollection} */ (collection);
+  const entryCollection = /** @type {InternalEntryCollection} */ (collection);
 
   const {
     _file: { basePath, subPath, extension },

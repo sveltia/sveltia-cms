@@ -18,11 +18,11 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-
  * @import {
  * Asset,
  * Entry,
- * EntryCollection,
  * EntryDraft,
  * EntrySlugVariants,
  * FileChange,
  * GetFieldArgs,
+ * InternalEntryCollection,
  * InternalLocaleCode,
  * LocalizedEntryMap,
  * RepositoryFileInfo,
@@ -175,7 +175,7 @@ const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
   const {
     _file,
     _i18n: { i18nEnabled, defaultLocale },
-  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const { slug, path, content } = savingEntry.locales[defaultLocale];
   const renamed = !isNew && (originalSlugs?.[defaultLocale] ?? originalSlugs?._) !== slug;
@@ -223,7 +223,7 @@ const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }) => {
     collectionFile,
   } = draft;
 
-  const { _file } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+  const { _file } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
   const { slug, path, content } = savingEntry.locales[locale] ?? {};
   const previousPath = originalEntry?.locales[locale]?.path;
   const previousSha = await getPreviousSha({ cacheDB, previousPath });
@@ -277,7 +277,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
       defaultLocale,
       structureMap: { i18nSingleFile },
     },
-  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const { localizedEntryMap, changes, savingAssets } = await createBaseSavingEntryData({
     draft,

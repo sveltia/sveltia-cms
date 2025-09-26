@@ -3,10 +3,10 @@ import { getIndexFile } from '$lib/services/contents/collection/index-file';
 
 /**
  * @import {
- * EntryCollection,
  * EntryDraft,
  * EntrySlugVariants,
  * FillTemplateOptions,
+ * InternalEntryCollection,
  * LocaleSlugMap,
  * } from '$lib/types/private';
  */
@@ -26,7 +26,7 @@ export const getFillSlugOptions = ({ draft }) => {
 
   return {
     // eslint-disable-next-line object-shorthand
-    collection: /** @type {EntryCollection} */ (collection),
+    collection: /** @type {InternalEntryCollection} */ (collection),
     content: {
       ...currentValues[defaultLocale],
       // Slug candidate for the default locale
@@ -46,11 +46,12 @@ export const getFillSlugOptions = ({ draft }) => {
  */
 const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
   const { isNew, collection, collectionFile, currentSlugs, currentValues, isIndexFile } = draft;
+  const { _type } = collection;
 
   const {
     identifier_field: identifierField = 'title',
     slug: slugTemplate = `{{${identifierField}}}`,
-  } = collection;
+  } = _type === 'entry' ? collection : {};
 
   const {
     _i18n: { defaultLocale },
@@ -88,11 +89,12 @@ const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
  */
 const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
   const { collection, collectionFile, currentLocales } = draft;
+  const { _type } = collection;
 
   const {
     identifier_field: identifierField = 'title',
     slug: slugTemplate = `{{${identifierField}}}`,
-  } = collection;
+  } = _type === 'entry' ? collection : {};
 
   const {
     _i18n: {
@@ -169,11 +171,12 @@ const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOp
  */
 export const getSlugs = ({ draft }) => {
   const { isNew, collection, collectionFile, fileName, currentSlugs, isIndexFile } = draft;
+  const { _type } = collection;
 
   const {
     identifier_field: identifierField = 'title',
     slug: slugTemplate = `{{${identifierField}}}`,
-  } = collection;
+  } = _type === 'entry' ? collection : {};
 
   if (isIndexFile) {
     return {

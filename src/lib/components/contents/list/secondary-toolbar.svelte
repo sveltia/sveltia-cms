@@ -17,12 +17,12 @@
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   /**
-   * @import { EntryCollection } from '$lib/types/private';
+   * @import { InternalEntryCollection } from '$lib/types/private';
    */
 
   const entryCollection = $derived(
     $selectedCollection?._type === 'entry'
-      ? /** @type {EntryCollection} */ ($selectedCollection)
+      ? /** @type {InternalEntryCollection} */ ($selectedCollection)
       : undefined,
   );
   const collectionName = $derived(entryCollection?.name);

@@ -6,7 +6,7 @@ import { fillTemplate } from '$lib/services/common/template';
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
 /**
- * @import { InternalCollection } from '$lib/types/private';
+ * @import { InternalEntryCollection, InternalFileCollection } from '$lib/types/private';
  */
 
 vi.mock('$lib/services/config');
@@ -24,9 +24,11 @@ vi.mock('$lib/services/utils/file', () => ({
 }));
 
 describe('Test fillTemplate()', async () => {
-  /** @type {InternalCollection} */
+  /** @type {InternalEntryCollection} */
   const collection = {
     name: 'posts',
+    folder: 'content/posts',
+    fields: [],
     slug_length: 50,
     _type: 'entry',
     _file: {
@@ -552,10 +554,12 @@ describe('Test fillTemplate()', async () => {
   test('collection without file configuration', async () => {
     await setupSiteConfig();
 
-    /** @type {import('$lib/types/private').InternalCollection} */
+    /** @type {InternalFileCollection} */
     const fileCollection = {
       ...collection,
+      files: [],
       _type: 'file',
+      _fileMap: {},
       // No _file property for file collections
     };
 

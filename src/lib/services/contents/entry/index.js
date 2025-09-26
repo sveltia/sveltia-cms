@@ -18,6 +18,7 @@ import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/coll
  * FlattenedEntryContent,
  * InternalCollection,
  * InternalCollectionFile,
+ * InternalEntryCollection,
  * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import { DateTimeField, Field } from '$lib/types/public';
@@ -87,7 +88,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
     preview_path: pathTemplate,
     preview_path_date_field: dateFieldName,
     fields: regularFields = [],
-  } = collectionFile ?? collection;
+  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   if (!showLinks || !baseURL || !entryFilePath || !content || !pathTemplate) {
     return undefined;

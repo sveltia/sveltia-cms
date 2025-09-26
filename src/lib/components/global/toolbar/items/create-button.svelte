@@ -8,7 +8,13 @@
   import { getValidCollections } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
-  const entryCollections = $derived(getValidCollections({ visible: true, type: 'entry' }));
+  /**
+   * @import { EntryCollection } from '$lib/types/public';
+   */
+
+  const entryCollections = $derived(
+    /** @type {EntryCollection[]} */ (getValidCollections({ visible: true, type: 'entry' })),
+  );
 </script>
 
 <MenuButton

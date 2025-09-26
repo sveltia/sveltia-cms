@@ -14,7 +14,7 @@ import {
 } from './sort-keys';
 
 /**
- * @import { EntryCollection } from '$lib/types/private';
+ * @import { InternalEntryCollection } from '$lib/types/private';
  */
 
 vi.mock('$lib/services/config');
@@ -53,7 +53,7 @@ describe('Test getSortConfig()', async () => {
     return undefined;
   });
 
-  /** @type {EntryCollection} */
+  /** @type {InternalEntryCollection} */
   const collectionBase = {
     name: 'posts',
     _type: 'entry',

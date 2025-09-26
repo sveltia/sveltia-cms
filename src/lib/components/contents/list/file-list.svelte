@@ -11,9 +11,14 @@
 
   /**
    * @import { CollectionFile } from '$lib/types/public';
+   * @import { InternalFileCollection } from '$lib/types/private';
    */
 
-  const files = $derived($selectedCollection?.files?.filter(isValidCollectionFile) ?? []);
+  const files = $derived(
+    /** @type {InternalFileCollection} */ ($selectedCollection)?.files.filter(
+      isValidCollectionFile,
+    ) ?? [],
+  );
 </script>
 
 <ListContainer aria-label={$_('file_list')}>

@@ -8,7 +8,12 @@ import {
 } from '$lib/services/contents/widgets/relation/helper';
 
 /**
- * @import { Entry, EntryCollection, LocalizedEntry } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * InternalEntryCollection,
+ * InternalFileCollection,
+ * LocalizedEntry,
+ * } from '$lib/types/private';
  * @import { RelationField } from '$lib/types/public';
  */
 
@@ -205,9 +210,11 @@ describe('Test getOptions()', async () => {
   const singleEntry = [comprehensiveMemberEntries[0]];
 
   // Mock collection configuration
-  /** @type {EntryCollection} */
+  /** @type {InternalEntryCollection} */
   const mockCollection = {
     name: 'members',
+    folder: 'content/members',
+    fields: [],
     identifier_field: 'title',
     _type: 'entry',
     _i18n: {
@@ -779,11 +786,12 @@ describe('Test getOptions()', async () => {
         },
       ];
 
-      /** @type {EntryCollection} */
+      /** @type {InternalFileCollection} */
       const citiesFileCollection = {
         name: 'relation_files',
-        identifier_field: 'title',
+        files: [],
         _type: 'file',
+        _fileMap: {},
         _i18n: {
           defaultLocale: '_default',
           i18nEnabled: false,
@@ -799,11 +807,6 @@ describe('Test getOptions()', async () => {
           canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
           omitDefaultLocaleFromFileName: false,
         },
-        _file: {
-          format: 'yaml',
-          extension: 'yml',
-        },
-        _thumbnailFieldNames: [],
       };
 
       beforeEach(() => {

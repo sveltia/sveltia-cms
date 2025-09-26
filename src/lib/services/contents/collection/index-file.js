@@ -35,9 +35,13 @@ export const getLocalizedLabel = () => {
  * @see https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection
  */
 export const getIndexFile = (collection) => {
+  if (!isEntryCollection(collection)) {
+    return undefined;
+  }
+
   const { index_file: indexFile } = collection;
 
-  if (!isEntryCollection(collection) || !indexFile) {
+  if (!indexFile) {
     return undefined;
   }
 

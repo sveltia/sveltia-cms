@@ -973,9 +973,8 @@
  */
 
 /**
- * A raw collection defined in the configuration file. Note: In Sveltia CMS, a folder collection is
- * called an entry collection.
- * @typedef {object} Collection
+ * Common collection properties.
+ * @typedef {object} CommonCollectionProps
  * @property {string} name Unique identifier for the collection.
  * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
  * option value.
@@ -986,13 +985,6 @@
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the collection
  * list.
- * @property {FieldKeyPath} [identifier_field] Field name to be used as the title and slug of an
- * entry. Entry collection only. Default: `title`.
- * @property {CollectionFile[]} [files] A set of files. File collection only.
- * @property {string} [folder] Base folder path relative to the project root. Entry collection only.
- * @property {Field[]} [fields] Set of fields to be included in entries. Entry collection only.
- * @property {string} [path] File path relative to `folder`, without a file extension. Entry
- * collection only.
  * @property {string} [media_folder] Internal media folder path for the collection. This overrides
  * the global `media_folder` option. It can be a relative path from the project root if it starts
  * with a slash. Otherwise it’s a path relative to the entry. If this option is omitted, the global
@@ -1001,69 +993,92 @@
  * details.
  * @property {string} [public_folder] Public media folder path for an entry collection. This
  * overrides the global `public_folder` option. Default: `media_folder` option value.
- * @property {CollectionFilter} [filter] Entry filter. Entry collection only.
  * @property {boolean} [hide] Whether to hide the collection in the UI. Default: `false`.
- * @property {boolean} [create] Whether to allow users to create entries in the collection. Entry
- * collection only. Default: `false`.
- * @property {boolean} [delete] Whether to allow users to delete entries in the collection. Entry
- * collection only. Default: `true`.
  * @property {boolean} [publish] Whether to show the publishing control UI for Editorial Workflow.
  * Default: `true`.
- * @property {FileExtension} [extension] File extension. Entry collection only. Default: `md`.
  * @property {FileFormat} [format] File format. It should match the file extension. Default:
  * `yaml-frontmatter`.
  * @property {string | string[]} [frontmatter_delimiter] Delimiters to be used for the front matter
  * format. Default: depends on the front matter type.
- * @property {string} [slug] Item slug template. Entry collection only. Default: `identifier_field`
- * option value. It’s possible to [localize the
- * slug](https://github.com/sveltia/sveltia-cms#localizing-entry-slugs) or [use a random
- * ID](https://github.com/sveltia/sveltia-cms#using-a-random-id-for-an-entry-slug). Also, it’s
- * possible to show a special slug editor field in initial entry drafts by using `{{fields._slug}}`
- * (with an underscore prefix) or `{{fields._slug | localize}}` (to localize the slug).
- * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
- * Entry collection only. Default: `Infinity`.
- * @property {string} [summary] Entry summary template. Entry collection only. Default:
- * `identifier_field`.
- * @property {FieldKeyPath[] | SortableFields} [sortable_fields] Custom sortable fields. Entry
- * collection only. Default: `title`, `name`, `date`, `author` and `description`. For a Git backend,
- * commit author and commit date are also included by default. See our
- * [README](https://github.com/sveltia/sveltia-cms#specifying-default-sort-field-and-direction) for
- * details.
- * @property {ViewFilter[] | ViewFilters} [view_filters] View filters to be used in the entry list.
- * Entry collection only.
- * @property {ViewGroup[] | ViewGroups} [view_groups] View groups to be used in the entry list.
- * Entry collection only.
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
  * @property {string} [preview_path] Preview URL path template.
  * @property {string} [preview_path_date_field] Date field name used for `preview_path`.
  * @property {EditorOptions} [editor] Editor view options.
- * @property {NestedCollectionOptions} [nested] Options for a nested collection. Entry collection
- * only.
- * @property {CollectionMetaData} [meta] Meta data for a nested collection. Entry collection only.
- * @property {CollectionIndexFile | boolean} [index_file] Index file inclusion options. Entry
- * collection only. If `true`, the default index file name is `_index`, which is used for Hugo’s
- * special index file. See our
- * [README](https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection)
- * for details.
  * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
  * format is used for file output. Default: `false`.
  * DEPRECATED: Use the global YAML format options. `yaml_quote: true` is equivalent to `quote:
  * double`. See our README https://github.com/sveltia/sveltia-cms#controlling-data-output for
  * details.
+ * @see https://decapcms.org/docs/configuration-options/#collections
+ */
+
+/**
+ * Entry collection properties.
+ * @typedef {object} EntryCollectionProps
+ * @property {string} folder Base folder path relative to the project root.
+ * @property {Field[]} fields Set of fields to be included in entries.
+ * @property {string} [path] File path relative to `folder`, without a file extension.
+ * @property {CollectionFilter} [filter] Entry filter.
+ * @property {boolean} [create] Whether to allow users to create entries in the collection. Default:
+ * `false`.
+ * @property {boolean} [delete] Whether to allow users to delete entries in the collection. Default:
+ * `true`.
+ * @property {FileExtension} [extension] File extension. Default: `md`.
+ * @property {FieldKeyPath} [identifier_field] Field name to be used as the title and slug of an
+ * entry. Default: `title`.
+ * @property {string} [slug] Item slug template. Default: `identifier_field` option value. It’s
+ * possible to [localize the slug](https://github.com/sveltia/sveltia-cms#localizing-entry-slugs) or
+ * [use a random ID](https://github.com/sveltia/sveltia-cms#using-a-random-id-for-an-entry-slug).
+ * Also, it’s possible to show a special slug editor field in initial entry drafts by using
+ * `{{fields._slug}}` (with an underscore prefix) or `{{fields._slug | localize}}` (to localize the
+ * slug).
+ * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
+ * Default: `Infinity`.
+ * @property {string} [summary] Entry summary template. Default: `identifier_field`.
+ * @property {FieldKeyPath[] | SortableFields} [sortable_fields] Custom sortable fields. Default:
+ * `title`, `name`, `date`, `author` and `description`. For a Git backend, commit author and commit
+ * date are also included by default. See our
+ * [README](https://github.com/sveltia/sveltia-cms#specifying-default-sort-field-and-direction) for
+ * details.
+ * @property {ViewFilter[] | ViewFilters} [view_filters] View filters to be used in the entry list.
+ * @property {ViewGroup[] | ViewGroups} [view_groups] View groups to be used in the entry list.
+ * @property {NestedCollectionOptions} [nested] Options for a nested collection.
+ * @property {CollectionMetaData} [meta] Meta data for a nested collection.
+ * @property {CollectionIndexFile | boolean} [index_file] Index file inclusion options. If `true`,
+ * the default index file name is `_index`, which is used for Hugo’s special index file. See our
+ * [README](https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection)
+ * for details.
  * @property {FieldKeyPath | FieldKeyPath[]} [thumbnail] A field key path to be used to find an
  * entry thumbnail displayed on the entry list. A nested field can be specified using dot notation,
  * e.g. `heroImage.src`. A wildcard in the key path is also supported, e.g. `images.*.src`. Multiple
  * key paths can be specified as an array for fallbacks. If this option is omitted, the `name` of
- * any non-nested, non-empty field using the Image or File widget is used. Entry collection only.
+ * any non-nested, non-empty field using the Image or File widget is used.
  * @property {number} [limit] The maximum number of entries that can be created in the collection.
- * Entry collection only. Default: `Infinity`.
- * @see https://decapcms.org/docs/configuration-options/#collections
+ * Default: `Infinity`.
  * @see https://decapcms.org/docs/collection-folder/
+ */
+
+/**
+ * Entry collection definition. In Netlify/Decap CMS, an entry collection is called a folder
+ * collection.
+ * @typedef {CommonCollectionProps & EntryCollectionProps} EntryCollection
+ */
+
+/**
+ * File collection properties.
+ * @typedef {object} FileCollectionProps
+ * @property {CollectionFile[]} files A set of files.
  * @see https://decapcms.org/docs/collection-file/
- * @see https://github.com/decaporg/decap-cms/issues/6987
- * @see https://github.com/decaporg/decap-cms/issues/7417
- * @see https://github.com/sveltia/sveltia-cms/issues/307
- * @see https://github.com/sveltia/sveltia-cms/issues/499
+ */
+
+/**
+ * File collection definition.
+ * @typedef {CommonCollectionProps & FileCollectionProps} FileCollection
+ */
+
+/**
+ * Collection definition.
+ * @typedef {EntryCollection | FileCollection} Collection
  */
 
 /**

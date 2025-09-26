@@ -185,8 +185,11 @@ export const getFrontMatterDelimiters = ({ format, delimiter }) => {
  */
 export const getFileConfig = ({ rawCollection, file, _i18n }) => {
   const {
+    // @ts-ignore
     folder,
+    // @ts-ignore
     path: subPath,
+    // @ts-ignore
     extension: _extension,
     format: _format,
     frontmatter_delimiter: _delimiter,

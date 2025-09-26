@@ -12,7 +12,7 @@ import { getField } from '$lib/services/contents/entry/fields';
 
 /**
  * @import { Readable } from 'svelte/store';
- * @import { EntryCollection, SortingConditions, SortOrder } from '$lib/types/private';
+ * @import { InternalEntryCollection, SortingConditions, SortOrder } from '$lib/types/private';
  * @import { Field, FieldKeyPath, NumberField, SortableFields } from '$lib/types/public';
  */
 
@@ -112,7 +112,7 @@ export const getDefaultSortKeys = (customIdField) => {
 /**
  * Get sort configuration for the given collection.
  * @param {object} args Arguments.
- * @param {EntryCollection} args.collection Collection.
+ * @param {InternalEntryCollection} args.collection Collection.
  * @param {boolean} args.isCommitAuthorAvailable Whether the entries in the collection have a commit
  * author. Available for some Git-based backends.
  * @param {boolean} args.isCommitDateAvailable Whether the entries in the collection have a commit
@@ -199,7 +199,7 @@ export const getSortKeyType = ({ key, fieldConfig }) => {
 /**
  * Get a field’s label by key.
  * @param {object} args Arguments.
- * @param {EntryCollection} args.collection Collection.
+ * @param {InternalEntryCollection} args.collection Collection.
  * @param {FieldKeyPath | string} args.key Field key path or one of other entry metadata property
  * keys: `slug`, `commit_author` and `commit_date`.
  * @returns {string} Label. For a nested field, it would be something like `Name – English`.
@@ -235,15 +235,14 @@ export const getSortKeyLabel = ({ collection, key }) => {
 export const sortKeys = derived(
   // Include `appLocale` as a dependency because `getSortKeyLabel()` may return a localized label
   [selectedCollection, allEntries, appLocale],
-  ([_collection, _allEntries], set) => {
+  ([collection, _allEntries], set) => {
     // Disable sorting for file/singleton collection
-    if (!_collection?.folder) {
+    if (!collection || !('folder' in collection)) {
       set([]);
 
       return;
     }
 
-    const collection = /** @type {EntryCollection} */ (_collection);
     const view = get(entryListSettings)?.[collection.name] ?? { type: 'list' };
 
     const { keys, default: defaultSort } = getSortConfig({

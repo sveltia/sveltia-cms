@@ -4,7 +4,7 @@ import { getCollection } from '$lib/services/contents/collection';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { Entry, EntryCollection, EntryFolderInfo } from '$lib/types/private';
+ * @import { Entry, EntryFolderInfo, InternalEntryCollection } from '$lib/types/private';
  */
 
 /**
@@ -42,7 +42,7 @@ export const getEntryFoldersByPath = (path) =>
         return Object.values(filePathMap).includes(path);
       }
 
-      return /** @type {EntryCollection} */ (
+      return /** @type {InternalEntryCollection} */ (
         getCollection(collectionName)
       )?._file?.fullPathRegEx?.test(path);
     })

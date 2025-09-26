@@ -13,9 +13,9 @@ import {
 /**
  * @import {
  * BaseEntryListItem,
- * EntryCollection,
  * InternalCollection,
- * InternalCollectionFile
+ * InternalCollectionFile,
+ * InternalEntryCollection,
  * } from '$lib/types/private';
  * @import { FrontMatterFormat } from '$lib/types/public';
  */
@@ -73,7 +73,7 @@ export const detectFrontMatterFormat = (text) => {
 export const parseFrontMatter = ({ collection, collectionFile, format, text }) => {
   const {
     _file: { format: _format, fmDelimiters },
-  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const [startDelimiter, endDelimiter] = (_format === 'frontmatter'
     ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
@@ -134,7 +134,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
 
   let {
     _file: { format },
-  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const customParser = customFileFormatRegistry.get(format)?.parser;
 

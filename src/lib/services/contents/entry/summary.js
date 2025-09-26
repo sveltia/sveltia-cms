@@ -16,7 +16,6 @@ import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fie
  * @import {
  * CommitAuthor,
  * Entry,
- * EntryCollection,
  * FlattenedEntryContent,
  * InternalCollection,
  * InternalLocaleCode,
@@ -195,16 +194,16 @@ export const getEntrySummary = (
   }
 
   const {
+    _type,
     name: collectionName,
-    identifier_field: identifierField = 'title',
-    summary: summaryTemplate,
     _i18n: { defaultLocale },
   } = collection;
 
-  const basePath =
-    collection._type === 'entry'
-      ? /** @type {EntryCollection} */ (collection)._file.basePath
-      : undefined;
+  const {
+    _file: { basePath } = {},
+    identifier_field: identifierField = 'title',
+    summary: summaryTemplate,
+  } = _type === 'entry' ? collection : {};
 
   const { locales, slug, commitDate, commitAuthor } = entry;
 

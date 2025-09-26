@@ -16,12 +16,7 @@
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
   /**
-   * @import {
-   * Entry,
-   * EntryCollection,
-   * InternalCollection,
-   * InternalCollectionFile,
-   * } from '$lib/types/private';
+   * @import { Entry, InternalCollection, InternalCollectionFile } from '$lib/types/private';
    */
 
   /**
@@ -59,7 +54,7 @@
     >
       <GridCell class="image">
         {#if collection._type === 'entry'}
-          {#await getEntryThumbnail(/** @type {EntryCollection} */ (collection), entry) then src}
+          {#await getEntryThumbnail(collection, entry) then src}
             {#if src}
               <Image {src} variant="icon" cover />
             {/if}

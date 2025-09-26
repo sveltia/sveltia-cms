@@ -20,6 +20,7 @@ import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
  * Entry,
  * FlattenedEntryContent,
  * GetFieldArgs,
+ * InternalEntryCollection,
  * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import {
@@ -93,7 +94,9 @@ export const getField = (args) => {
     return undefined;
   }
 
-  const { fields: regularFields = [] } = collectionFile ?? collection;
+  const { fields: regularFields = [] } =
+    collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+
   const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
 
   const fields = componentName

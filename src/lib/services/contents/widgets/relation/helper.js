@@ -683,10 +683,11 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
   }
 
   const {
-    identifier_field: identifierField = 'title',
+    _type,
     _i18n: { defaultLocale },
   } = collection;
 
+  const { identifier_field: identifierField = 'title' } = _type === 'entry' ? collection : {};
   const entryFilters = filters ?? [];
   const templates = prepareFieldTemplates(fieldConfig, identifierField);
   const { allFieldNames, hasListFields } = templates;

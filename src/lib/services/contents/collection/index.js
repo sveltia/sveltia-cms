@@ -14,12 +14,19 @@ import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
  * @import { Writable } from 'svelte/store';
  * @import {
  * CollectionType,
- * EntryCollection,
- * FileCollection,
  * InternalCollection,
+ * InternalEntryCollection,
+ * InternalFileCollection,
  * InternalI18nOptions,
  * } from '$lib/types/private';
- * @import { Collection, CollectionDivider, CollectionFile, FieldKeyPath } from '$lib/types/public';
+ * @import {
+ * Collection,
+ * CollectionDivider,
+ * CollectionFile,
+ * EntryCollection,
+ * FieldKeyPath,
+ * FileCollection,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -36,25 +43,27 @@ export const collectionCacheMap = new Map();
  * Check if the given collection is an entry collection. An entry collection is defined as one that
  * has the `folder` property that is a string and does not have the `files` property.
  * @param {Collection} collection Collection definition.
- * @returns {boolean} Whether the collection is an entry collection.
+ * @returns {collection is EntryCollection} Whether the collection is an entry collection.
  */
 export const isEntryCollection = (collection) =>
+  // @ts-ignore
   typeof collection.folder === 'string' && !Array.isArray(collection.files);
 
 /**
  * Check if the given collection is a file collection. A file collection is defined as one that has
  * the `files` property that is an array and does not have the `folder` property.
  * @param {Collection} collection Collection definition.
- * @returns {boolean} Whether the collection is a file collection.
+ * @returns {collection is FileCollection} Whether the collection is a file collection.
  */
 export const isFileCollection = (collection) =>
+  // @ts-ignore
   collection.folder === undefined && Array.isArray(collection.files);
 
 /**
  * Check if the given collection is a singleton collection. A singleton collection is a special type
  * of file collection that has the name `_singletons`.
  * @param {Collection} collection Collection definition.
- * @returns {boolean} Whether the collection is a singleton collection.
+ * @returns {collection is FileCollection} Whether the collection is a singleton collection.
  */
 export const isSingletonCollection = (collection) =>
   isFileCollection(collection) && collection.name === '_singletons';
@@ -68,7 +77,7 @@ export const isSingletonCollection = (collection) =>
  * @param {boolean} [options.visible] Whether to filter out hidden collections. Defaults to `false`.
  * @param {CollectionType} [options.type] Type of collections to filter by. If provided, only
  * collections of this type will be returned.
- * @returns {boolean} Whether the collection is valid.
+ * @returns {collection is Collection} Whether the collection is valid.
  */
 export const isValidCollection = (collection, { visible = undefined, type = undefined } = {}) => {
   if ('divider' in collection) {
@@ -127,11 +136,11 @@ export const getFirstCollection = () => getValidCollections({ visible: true })[0
  * @returns {FieldKeyPath[]} Key path list.
  */
 export const getThumbnailFieldNames = (rawCollection) => {
-  const { folder, fields, thumbnail } = rawCollection;
-
-  if (!folder) {
+  if (!('folder' in rawCollection)) {
     return [];
   }
+
+  const { fields, thumbnail } = rawCollection;
 
   if (typeof thumbnail === 'string') {
     return [thumbnail];
@@ -154,9 +163,9 @@ export const getThumbnailFieldNames = (rawCollection) => {
 
 /**
  * Parse an entry collection and add additional properties.
- * @param {Collection} rawCollection Raw collection definition.
+ * @param {EntryCollection} rawCollection Raw collection definition.
  * @param {InternalI18nOptions} _i18n I18n options of the collection.
- * @returns {EntryCollection} Parsed entry collection with additional properties.
+ * @returns {InternalEntryCollection} Parsed entry collection with additional properties.
  */
 export const parseEntryCollection = (rawCollection, _i18n) => ({
   ...rawCollection,
@@ -168,10 +177,10 @@ export const parseEntryCollection = (rawCollection, _i18n) => ({
 
 /**
  * Parse a file/singleton collection and add additional properties.
- * @param {Collection} rawCollection Raw collection definition.
+ * @param {FileCollection} rawCollection Raw collection definition.
  * @param {InternalI18nOptions} _i18n I18n options of the collection.
  * @param {CollectionFile[]} files List of files in the collection.
- * @returns {FileCollection} Parsed file/singleton collection with additional properties.
+ * @returns {InternalFileCollection} Parsed file/singleton collection with additional properties.
  */
 export const parseFileCollection = (rawCollection, _i18n, files) => ({
   ...rawCollection,
@@ -237,23 +246,28 @@ export const getCollection = (name) => {
   }
 
   const rawCollection = getValidCollections().find((c) => c.name === name);
-  const _isEntryCollection = rawCollection ? isEntryCollection(rawCollection) : false;
-  const _isFileCollection = rawCollection ? isFileCollection(rawCollection) : false;
 
   // Ignore invalid collection
-  if (!rawCollection || (!_isEntryCollection && !_isFileCollection)) {
+  if (!rawCollection) {
     collectionCacheMap.set(name, undefined);
 
     return undefined;
   }
 
-  const { folder, files = [] } = rawCollection;
+  const entryCollection = isEntryCollection(rawCollection) ? rawCollection : undefined;
+  const fileCollection = isFileCollection(rawCollection) ? rawCollection : undefined;
+
+  if (!entryCollection && !fileCollection) {
+    collectionCacheMap.set(name, undefined);
+
+    return undefined;
+  }
 
   // Normalize folder/file paths by removing leading/trailing slashes
-  if (_isEntryCollection) {
-    rawCollection.folder = stripSlashes(/** @type {string} */ (folder));
+  if (entryCollection) {
+    entryCollection.folder = stripSlashes(entryCollection.folder);
   } else {
-    files.forEach((f) => {
+    fileCollection?.files.forEach((f) => {
       if (f.file) {
         f.file = stripSlashes(f.file);
       }
@@ -262,9 +276,11 @@ export const getCollection = (name) => {
 
   const _i18n = normalizeI18nConfig(rawCollection);
 
-  const collection = _isEntryCollection
-    ? parseEntryCollection(rawCollection, _i18n)
-    : parseFileCollection(rawCollection, _i18n, files);
+  const collection = entryCollection
+    ? parseEntryCollection(entryCollection, _i18n)
+    : fileCollection
+      ? parseFileCollection(fileCollection, _i18n, fileCollection.files)
+      : undefined;
 
   collectionCacheMap.set(name, collection);
 

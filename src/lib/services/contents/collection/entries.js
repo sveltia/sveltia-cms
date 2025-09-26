@@ -45,10 +45,11 @@ export const getEntriesByCollection = (collectionName) => {
   }
 
   const {
-    filter,
+    _type,
     _i18n: { defaultLocale: locale },
   } = collection;
 
+  const { filter } = _type === 'entry' ? collection : {};
   const filterField = filter?.field;
   const filterPattern = getRegex(filter?.pattern);
 
@@ -84,11 +85,13 @@ export const canCreateEntry = (collection) => {
     return false;
   }
 
-  const { _type, create = false, limit = Infinity } = collection;
+  const { _type } = collection;
 
   if (_type !== 'entry') {
     return true;
   }
+
+  const { create = false, limit = Infinity } = collection;
 
   return create && getEntriesByCollection(collection.name).length < limit;
 };

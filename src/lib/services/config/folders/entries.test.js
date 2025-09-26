@@ -658,9 +658,9 @@ describe('config/folders/entries', () => {
     it('should return sorted entry collection folders', () => {
       // @ts-ignore - simplified mock for testing
       vi.mocked(getValidCollections).mockReturnValue([
-        { name: 'posts', folder: 'content/posts' },
-        { name: 'pages', folder: 'content/pages' },
-        { name: 'blog', folder: 'blog' },
+        { name: 'posts', folder: 'content/posts', fields: [] },
+        { name: 'pages', folder: 'content/pages', fields: [] },
+        { name: 'blog', folder: 'blog', fields: [] },
       ]);
 
       const config = {

@@ -20,6 +20,7 @@ describe('Test normalizeI18nConfig()', () => {
   /** @type {Collection} */
   const collectionWithoutI18n = {
     name: 'posts',
+    folder: 'content/posts',
     fields: [],
   };
 
@@ -32,6 +33,8 @@ describe('Test normalizeI18nConfig()', () => {
   /** @type {Collection} */
   const collectionWithPartialI18nOverride = {
     name: 'posts',
+    folder: 'content/posts',
+    fields: [],
     i18n: {
       structure: 'single_file',
       locales: ['fr'],
@@ -41,6 +44,8 @@ describe('Test normalizeI18nConfig()', () => {
   /** @type {Collection} */
   const collectionWithCompleteI18nOverride = {
     name: 'posts',
+    folder: 'content/posts',
+    fields: [],
     i18n: {
       structure: 'multiple_folders',
       locales: ['es'],

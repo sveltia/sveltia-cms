@@ -13,9 +13,9 @@ import { FULL_DATE_TIME_REGEX } from '$lib/services/utils/date';
 
 /**
  * @import {
- * EntryCollection,
  * EntryDraft,
  * FlattenedEntryContent,
+ * InternalEntryCollection,
  * InternalLocaleCode,
  * RawEntryContent,
  * } from '$lib/types/private';
@@ -185,7 +185,7 @@ export const serializeContent = ({ draft, locale, valueMap }) => {
     _i18n: {
       canonicalSlug: { key: canonicalSlugKey },
     },
-  } = collectionFile ?? /** @type {EntryCollection} */ (collection);
+  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const content = finalizeContent({
     collectionName,

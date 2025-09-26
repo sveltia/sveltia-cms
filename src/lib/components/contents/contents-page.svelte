@@ -38,7 +38,7 @@
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**
-   * @import { FileCollection, InternalCollection } from '$lib/types/private';
+   * @import { InternalCollection } from '$lib/types/private';
    */
 
   const routeRegex =
@@ -46,7 +46,7 @@
 
   let isIndexPage = $state(false);
 
-  const MainContent = $derived($selectedCollection?.files ? FileList : EntryList);
+  const MainContent = $derived('files' in ($selectedCollection ?? {}) ? FileList : EntryList);
 
   /**
    * Navigate to the content list or content details page given the URL hash.
@@ -100,12 +100,9 @@
       return; // Not Found
     }
 
-    const { name: collectionName, files } = $selectedCollection;
+    const { name: collectionName } = $selectedCollection;
     const collectionLabel = getCollectionLabel($selectedCollection);
-
-    const _fileMap = files
-      ? /** @type {FileCollection} */ ($selectedCollection)._fileMap
-      : undefined;
+    const _fileMap = '_fileMap' in $selectedCollection ? $selectedCollection._fileMap : undefined;
 
     if (!routeType) {
       const count = $listedEntries.length;

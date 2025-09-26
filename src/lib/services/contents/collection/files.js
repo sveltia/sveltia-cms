@@ -112,11 +112,13 @@ export const getCollectionFileIndex = (collectionName, fileName) => {
       return -1;
     }
 
-    return (
-      getValidCollections({ collections })
-        .find(({ name }) => name === collectionName)
-        ?.files?.findIndex(({ name }) => name === fileName) ?? -1
+    const collection = getValidCollections({ collections }).find(
+      ({ name }) => name === collectionName,
     );
+
+    if (collection && 'files' in collection) {
+      return collection.files.findIndex(({ name }) => name === fileName) ?? -1;
+    }
   }
 
   return -1;

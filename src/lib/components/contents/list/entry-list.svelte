@@ -11,15 +11,17 @@
   import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
 
   /**
-   * @import { Entry, EntryCollection } from '$lib/types/private';
+   * @import { Entry, InternalEntryCollection } from '$lib/types/private';
    */
 
-  const collection = $derived(/** @type {EntryCollection | undefined} */ ($selectedCollection));
+  const collection = $derived(
+    /** @type {InternalEntryCollection | undefined} */ ($selectedCollection),
+  );
   const viewType = $derived($currentView.type);
   const allEntries = $derived($entryGroups.map(({ entries }) => entries).flat(1));
 </script>
 
-<ListContainer aria-label={collection?.files ? $_('file_list') : $_('entry_list')}>
+<ListContainer aria-label={$_('entry_list')}>
   {#if collection}
     {#if allEntries.length}
       {@const { defaultLocale } = collection._i18n}

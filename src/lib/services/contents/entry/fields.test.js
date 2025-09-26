@@ -178,6 +178,7 @@ describe('Test getField()', () => {
 
     // Setup default mock behavior
     mockIsEntryCollection.mockImplementation(
+      // @ts-ignore
       (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
     );
   });

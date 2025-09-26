@@ -13,7 +13,7 @@ import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary
 import { renameIfNeeded } from '$lib/services/utils/file';
 
 /**
- * @import { EntryCollection, FillTemplateOptions, GetFieldArgs } from '$lib/types/private';
+ * @import { FillTemplateOptions, GetFieldArgs } from '$lib/types/private';
  */
 
 /**
@@ -287,17 +287,13 @@ const getExistingSlugs = (collectionName, locale) =>
  */
 export const fillTemplate = (template, options) => {
   const { collection, content: valueMap, currentSlug, locale, isIndexFile = false } = options;
+  const { _type, name: collectionName } = collection;
 
   const {
-    name: collectionName,
     identifier_field: identifierField = 'title',
     slug_length: slugMaxLength = undefined,
-  } = collection;
-
-  const basePath =
-    collection._type === 'entry'
-      ? /** @type {EntryCollection} */ (collection)._file.basePath
-      : undefined;
+    _file: { basePath } = {},
+  } = _type === 'entry' ? collection : {};
 
   /** @type {ReplaceContext} */
   const context = {

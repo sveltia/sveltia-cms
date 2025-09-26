@@ -10,13 +10,13 @@ import { isCollectionIndexFile } from '$lib/services/contents/collection/index-f
 import { getField } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { Asset, Entry, EntryCollection } from '$lib/types/private';
+ * @import { Asset, Entry, InternalEntryCollection } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**
  * Get the given entry’s thumbnail URL.
- * @param {EntryCollection} collection Entry’s collection.
+ * @param {InternalEntryCollection} collection Entry’s collection.
  * @param {Entry} entry Entry.
  * @returns {Promise<string | undefined>} URL.
  */

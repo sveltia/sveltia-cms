@@ -347,6 +347,7 @@ describe('Test getFileConfig()', () => {
   const rawFolderCollection = {
     name: 'posts',
     folder: '/content/posts',
+    fields: [],
   };
 
   const rawFileCollection = {

@@ -184,9 +184,12 @@ export const getAllAssetFolders = (config) => {
   getValidCollections({ collections }).forEach((collection) => {
     const {
       name: collectionName,
+      // @ts-ignore
       files: collectionFiles,
+      // @ts-ignore
       // e.g. `content/posts`
       folder: baseFolder,
+      // @ts-ignore
       // e.g. `{{slug}}/index`
       path: entryPath,
       // relative path, e.g. `` (an empty string), `./` (same as an empty string),

@@ -13,7 +13,7 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
- * @import { Entry, EntryListView, InternalCollection } from '$lib/types/private';
+ * @import { Entry, EntryListView, InternalEntryCollection } from '$lib/types/private';
  */
 
 /**
@@ -60,7 +60,7 @@ export const entryGroups = derived(
     cacheKey = newCacheKey;
     set([]);
 
-    const collection = /** @type {InternalCollection} */ (get(selectedCollection));
+    const collection = /** @type {InternalEntryCollection} */ (get(selectedCollection));
     /** @type {Entry[]} */
     let entries = [..._listedEntries];
 

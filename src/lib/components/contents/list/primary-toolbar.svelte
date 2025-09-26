@@ -35,15 +35,31 @@
 
   const name = $derived($selectedCollection?.name ?? '');
   const description = $derived($selectedCollection?.description);
-  const isEntryCollection = $derived($selectedCollection?._type === 'entry');
-  const canCreate = $derived($selectedCollection?.create ?? false);
-  const canDelete = $derived($selectedCollection?.delete ?? true);
-  const limit = $derived($selectedCollection?.limit ?? Infinity);
   const createDisabled = $derived(!canCreateEntry($selectedCollection));
   const collectionLabel = $derived(
     // `$appLocale` is a key, because `getCollectionLabel` can return a localized label
     $appLocale && $selectedCollection ? getCollectionLabel($selectedCollection) : name,
   );
+
+  const { isEntryCollection, canCreate, canDelete, limit } = $derived.by(() => {
+    const collection = $selectedCollection;
+
+    if (collection?._type === 'entry') {
+      return {
+        isEntryCollection: true,
+        canCreate: collection.create ?? false,
+        canDelete: collection.delete ?? true,
+        limit: collection.limit ?? Infinity,
+      };
+    }
+
+    return {
+      isEntryCollection: false,
+      canCreate: false,
+      canDelete: false,
+      limit: Infinity,
+    };
+  });
 </script>
 
 {#if $selectedCollection}
