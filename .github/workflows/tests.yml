@@ -3,9 +3,18 @@ name: Tests
 on: push
 
 jobs:
-  check:
-    name: Check
+  ci:
+    name: CI
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task:
+          - name: Check
+            command: pnpm check
+          - name: Test
+            command: pnpm test
+          - name: Build
+            command: pnpm build
     steps:
       - name: Checkout the branch
         uses: actions/checkout@v5
@@ -20,24 +29,5 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install
-      - name: Run all checks
-        run: pnpm check
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the branch
-        uses: actions/checkout@v5
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v5
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install
-      - name: Run tests
-        run: pnpm test
+      - name: ${{ matrix.task.name }}
+        run: ${{ matrix.task.command }}
