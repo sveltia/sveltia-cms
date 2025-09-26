@@ -5,6 +5,7 @@ import { siteConfig } from '$lib/services/config';
 
 /**
  * @import { Readable } from 'svelte/store';
+ * @import { GitBackend } from '$lib/types/public';
  */
 
 /**
@@ -17,11 +18,11 @@ export const skipCIConfigured = derived([siteConfig, backend], ([_siteConfig, _b
     return false;
   }
 
-  const {
-    backend: { skip_ci: skipCI, automatic_deployments: autoDeployEnabled },
-  } = _siteConfig;
+  const { skip_ci: skipCI, automatic_deployments: autoDeploy } = /** @type {GitBackend} */ (
+    _siteConfig.backend
+  );
 
-  return typeof skipCI === 'boolean' || typeof autoDeployEnabled === 'boolean';
+  return typeof skipCI === 'boolean' || typeof autoDeploy === 'boolean';
 });
 
 /**
@@ -33,9 +34,9 @@ export const skipCIEnabled = derived([siteConfig, backend], ([_siteConfig, _back
     return false;
   }
 
-  const {
-    backend: { skip_ci: skipCI, automatic_deployments: autoDeployEnabled },
-  } = _siteConfig;
+  const { skip_ci: skipCI, automatic_deployments: autoDeploy } = /** @type {GitBackend} */ (
+    _siteConfig.backend
+  );
 
-  return skipCI === true || autoDeployEnabled === false;
+  return skipCI === true || autoDeploy === false;
 });

@@ -17,8 +17,8 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { SiteConfig } from '$lib/types/public'
  * @import { InternalSiteConfig } from '$lib/types/private';
+ * @import { GitBackend, GiteaBackend, GitLabBackend, SiteConfig } from '$lib/types/public';
  */
 
 const { DEV, VITE_SITE_URL } = import.meta.env;
@@ -76,26 +76,40 @@ export const validate = (config) => {
   }
 
   if (Object.keys(gitBackendServices).includes(config.backend.name)) {
-    if (config.backend.repo === undefined) {
+    const { repo, automatic_deployments: autoDeploy } = /** @type {GitBackend} */ (config.backend);
+
+    if (repo === undefined) {
       throw new Error(get(_)('config.error.missing_repository'));
     }
 
-    if (typeof config.backend.repo !== 'string' || !/(.+)\/([^/]+)$/.test(config.backend.repo)) {
+    if (typeof repo !== 'string' || !/(.+)\/([^/]+)$/.test(repo)) {
       throw new Error(get(_)('config.error.invalid_repository'));
+    }
+
+    // @todo Remove the option prior to the 1.0 release.
+    if (autoDeploy !== undefined) {
+      warnDeprecation('automatic_deployments');
     }
   }
 
-  if (config.backend.auth_type === 'implicit') {
-    throw new Error(get(_)('config.error.oauth_implicit_flow'));
+  if (config.backend.name === 'gitlab') {
+    const { auth_type: authType, app_id: appId } = /** @type {GitLabBackend} */ (config.backend);
+
+    if (authType === 'implicit') {
+      throw new Error(get(_)('config.error.oauth_implicit_flow'));
+    }
+
+    if (authType === 'pkce' && !appId) {
+      throw new Error(get(_)('config.error.oauth_no_app_id'));
+    }
   }
 
-  if (config.backend.auth_type === 'pkce' && !config.backend.app_id) {
-    throw new Error(get(_)('config.error.oauth_no_app_id'));
-  }
+  if (config.backend.name === 'gitea') {
+    const { app_id: appId } = /** @type {GiteaBackend} */ (config.backend);
 
-  // @todo Remove the option prior to the 1.0 release.
-  if (config.backend.automatic_deployments !== undefined) {
-    warnDeprecation('automatic_deployments');
+    if (!appId) {
+      throw new Error(get(_)('config.error.oauth_no_app_id'));
+    }
   }
 
   if (config.media_folder === undefined) {

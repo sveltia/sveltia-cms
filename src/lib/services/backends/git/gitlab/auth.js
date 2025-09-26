@@ -12,6 +12,7 @@ import { siteConfig } from '$lib/services/config';
 
 /**
  * @import { SignInOptions, User } from '$lib/types/private';
+ * @import { GitLabBackend } from '$lib/types/public';
  */
 
 /**
@@ -40,7 +41,10 @@ export const getPatURL = (repoURL) => {
  */
 export const signIn = async ({ token, refreshToken, auto = false }) => {
   if (!token) {
-    const { site_domain: siteDomain, auth_type: authType } = get(siteConfig)?.backend ?? {};
+    const { site_domain: siteDomain, auth_type: authType } = /** @type {GitLabBackend} */ (
+      get(siteConfig)?.backend ?? {}
+    );
+
     const { clientId, authURL, tokenURL } = apiConfig;
     const authArgs = { backendName: BACKEND_NAME, authURL, scope: 'api' };
 

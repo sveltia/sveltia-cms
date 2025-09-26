@@ -1089,43 +1089,15 @@
  */
 
 /**
- * Backend options.
- * @typedef {object} BackendOptions
- * @property {BackendName} name Backend name.
- * @property {string} [repo] Repository identifier. Required for Git backends. GitHub/Gitea/Forgejo:
- * organization/user name and repository name joined by a slash, e.g. `owner/repo`. GitLab:
- * namespace and project name joined by a slash, e.g. `group/project` or `group/subgroup/project`.
+ * Git backend properties.
+ * @typedef {object} GitBackendProps
  * @property {string} [branch] Git branch name. If omitted, the default branch, usually `main` or
- * `master`, will be used. Git backends only.
- * @property {string} [api_root] REST API endpoint for the backend. Git backends only. Required when
- * using GitHub Enterprise Server, a self-hosted GitLab/Gitea/Forgejo instance. Default:
- * `https://api.github.com` (GitHub), `https://gitlab.com/api/v4` (GitLab) or
- * `https://gitea.com/api/v1` (Gitea/Forgejo).
- * @property {string} [graphql_api_root] GraphQL API endpoint for the backend. Git backends only.
- * Default: inferred from `api_root` option value.
+ * `master`, will be automatically detected and used.
  * @property {string} [site_domain] Site domain used for OAuth, which will be included in the
- * `site_id` param to be sent to the API endpoint. Git backends only. Default:
- * [`location.hostname`](https://developer.mozilla.org/en-US/docs/Web/API/Location/hostname).
- * @property {string} [base_url] OAuth base URL origin. Git backends only. Required when using an
- * OAuth client other than Netlify, including [Sveltia CMS
- * Authenticator](https://github.com/sveltia/sveltia-cms-auth). Default: `https://api.netlify.com`
- * (GitHub), `https://gitlab.com` (GitLab) or `https://gitea.com/` (Gitea/Forgejo).
- * @property {string} [auth_endpoint] OAuth base URL path. Git backends only. Default: `auth`
- * (GitHub) or `oauth/authorize` (GitLab).
- * @property {'pkce' | 'implicit'} [auth_type] OAuth authentication method. GitLab only. Default:
- * `pkce`.
- * @property {string} [app_id] OAuth application ID. GitLab, Gitea/Forgejo only. Required for
- * Gitea/Forgejo.
- * @property {CommitMessages} [commit_messages] Custom commit messages. Git backends only.
- * @property {string} [preview_context] Deploy preview link context. GitHub only.
- * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow. Git
- * backends only. Default: `sveltia-cms/`.
- * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Git
- * backends only. Default: `false`.
- * @property {boolean} [open_authoring] Whether to use Open Authoring. Git backends only. Default:
- * `false`.
- * @property {'repo' | 'public_repo'} [auth_scope] Authentication scope for Open Authoring. Git
- * backends only.
+ * `site_id` param to be sent to the API endpoint. Default: [current
+ * hostname](https://developer.mozilla.org/en-US/docs/Web/API/Location/hostname) (or
+ * `cms.netlify.com` on `localhost`).
+ * @property {CommitMessages} [commit_messages] Custom commit messages.
  * @property {boolean} [automatic_deployments] Whether to enable or disable automatic deployments
  * with any connected CI/CD provider. Default: `undefined`.
  * DEPRECATED: Use the new `skip_ci` option instead, which is more intuitive.
@@ -1134,15 +1106,105 @@
  * https://github.com/sveltia/sveltia-cms#disabling-automatic-deployments for details.
  * @property {boolean} [skip_ci] Whether to enable or disable automatic deployments with any
  * connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `true`, the `[skip ci]`
- * prefix will be added to commit messages. Git backends only. Default: `undefined`. See our
+ * prefix will be added to commit messages. Default: `undefined`. See our
  * [README](https://github.com/sveltia/sveltia-cms#disabling-automatic-deployments) for details.
  * @see https://decapcms.org/docs/backends-overview/
+ */
+
+/**
+ * GitHub backend properties.
+ * @typedef {object} GitHubBackendProps
+ * @property {'github'} name Backend name.
+ * @property {string} repo Repository identifier: organization/user name and repository name joined
+ * by a slash, e.g. `owner/repo`.
+ * @property {string} [api_root] REST API endpoint for the backend. Required when using GitHub
+ * Enterprise Server. Default: `https://api.github.com`.
+ * @property {string} [graphql_api_root] GraphQL API endpoint for the backend. Default: inferred
+ * from `api_root` option value.
+ * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
+ * than Netlify, including [Sveltia CMS Authenticator](https://github.com/sveltia/sveltia-cms-auth).
+ * Default: `https://api.netlify.com`.
+ * @property {string} [auth_endpoint] OAuth base URL path. Default: `auth`.
+ * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow. Default:
+ * `sveltia-cms/`.
+ * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Default:
+ * `false`.
+ * @property {string} [preview_context] Deploy preview link context.
+ * @property {boolean} [open_authoring] Whether to use Open Authoring. Default: `false`.
+ * @property {'repo' | 'public_repo'} [auth_scope] Authentication scope for Open Authoring.
  * @see https://decapcms.org/docs/github-backend/
- * @see https://decapcms.org/docs/gitlab-backend/
- * @see https://decapcms.org/docs/gitea-backend/
- * @see https://decapcms.org/docs/test-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
  * @see https://decapcms.org/docs/open-authoring/
+ */
+
+/**
+ * GitHub backend.
+ * @typedef {GitBackendProps & GitHubBackendProps} GitHubBackend
+ */
+
+/**
+ * GitLab backend properties.
+ * @typedef {object} GitLabBackendProps
+ * @property {'gitlab'} name Backend name.
+ * @property {string} repo Repository identifier: namespace and project name joined by a slash, e.g.
+ * `group/project` or `group/subgroup/project`.
+ * @property {string} [api_root] REST API endpoint for the backend. Required when using a
+ * self-hosted GitLab instance. Default: `https://gitlab.com/api/v4`.
+ * @property {string} [graphql_api_root] GraphQL API endpoint for the backend. Default: inferred
+ * from `api_root` option value.
+ * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
+ * than Netlify, including [Sveltia CMS Authenticator](https://github.com/sveltia/sveltia-cms-auth).
+ * Default: `https://gitlab.com`.
+ * @property {'pkce' | 'implicit'} [auth_type] OAuth authorization method. Default: `pkce`.
+ * @property {string} [auth_endpoint] OAuth base URL path. Default: `oauth/authorize`.
+ * @property {string} [app_id] OAuth application ID. Required when using PKCE authorization.
+ * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow. Default:
+ * `sveltia-cms/`.
+ * @see https://decapcms.org/docs/gitlab-backend/
+ * @see https://decapcms.org/docs/editorial-workflows/
+ */
+
+/**
+ * GitLab backend.
+ * @typedef {GitBackendProps & GitLabBackendProps} GitLabBackend
+ */
+
+/**
+ * Gitea/Forgejo backend properties.
+ * @typedef {object} GiteaBackendProps
+ * @property {'gitea'} name Backend name.
+ * @property {string} repo Repository identifier: organization/user name and repository name joined
+ * by a slash, e.g. `owner/repo`.
+ * @property {string} [api_root] REST API endpoint for the backend. Required when using a
+ * self-hosted Gitea/Forgejo instance. Default: `https://gitea.com/api/v1`.
+ * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
+ * than Netlify, including [Sveltia CMS Authenticator](https://github.com/sveltia/sveltia-cms-auth).
+ * Default: `https://gitea.com/`.
+ * @property {string} [auth_endpoint] OAuth base URL path. Default: `login/oauth/authorize`.
+ * @property {string} app_id OAuth application ID.
+ * @see https://decapcms.org/docs/gitea-backend/
+ */
+
+/**
+ * Gitea/Forgejo backend.
+ * @typedef {GitBackendProps & GiteaBackendProps} GiteaBackend
+ */
+
+/**
+ * Git-based backend.
+ * @typedef {GitHubBackend | GitLabBackend | GiteaBackend} GitBackend
+ */
+
+/**
+ * Test backend.
+ * @typedef {object} TestBackend
+ * @property {'test-repo'} name Backend name.
+ * @see https://decapcms.org/docs/test-backend/
+ */
+
+/**
+ * Backend options.
+ * @typedef {GitBackend | TestBackend} Backend
  */
 
 /**
@@ -1200,7 +1262,7 @@
  * @property {boolean} [load_config_file] Whether to load YAML/JSON site configuration file(s) when
  * [manually initializing the CMS](https://decapcms.org/docs/manual-initialization/). This works
  * only in the `CMS.init()` method’s `config` option. Default: `true`.
- * @property {BackendOptions} backend Backend options.
+ * @property {Backend} backend Backend options.
  * @property {'simple' | 'editorial_workflow' | ''} [publish_mode] Publish mode. An empty string is
  * the same as `simple`. Default: `simple`.
  * @property {string} media_folder Global internal media folder path, relative to the project’s root

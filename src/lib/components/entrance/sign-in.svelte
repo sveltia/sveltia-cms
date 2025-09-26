@@ -13,6 +13,10 @@
     signInManually,
   } from '$lib/services/user/auth';
 
+  /**
+   * @import { GitBackend } from '$lib/types/public';
+   */
+
   let isLocalHost = $state(false);
   let isLocalBackendSupported = $state(false);
   let isBrave = $state(false);
@@ -23,8 +27,12 @@
   const configuredBackend = $derived(
     configuredBackendName ? allBackendServices[configuredBackendName] : null,
   );
-  const repositoryName = $derived($siteConfig?.backend?.repo?.split('/')?.[1]);
   const isTestRepo = $derived(configuredBackendName === 'test-repo');
+  const repositoryName = $derived(
+    isTestRepo
+      ? undefined
+      : /** @type {GitBackend} */ ($siteConfig?.backend)?.repo?.split('/').pop(),
+  );
   const showLocalBackendOption = $derived(isLocalHost && !isTestRepo);
 
   /**

@@ -5,12 +5,8 @@ import { getCollectionLabel } from '$lib/services/contents/collection';
 import { user } from '$lib/services/user';
 
 /**
- * @import {
- * CommitOptions,
- * FileChange,
- * InternalSiteConfig,
- * User,
- * } from '$lib/types/private';
+ * @import { CommitOptions, FileChange, User } from '$lib/types/private';
+ * @import { GitBackend } from '$lib/types/public';
  */
 
 /**
@@ -37,12 +33,10 @@ export const createCommitMessage = (
   { commitType = 'update', collection, skipCI = undefined },
 ) => {
   const {
-    backend: {
-      commit_messages: customCommitMessages = {},
-      skip_ci: skipCIEnabled,
-      automatic_deployments: autoDeployEnabled,
-    },
-  } = /** @type {InternalSiteConfig} */ (get(siteConfig));
+    commit_messages: customCommitMessages = {},
+    skip_ci: skipCIEnabled,
+    automatic_deployments: autoDeploy,
+  } = /** @type {GitBackend} */ (get(siteConfig)?.backend ?? {});
 
   const { login = '', name = '' } = /** @type {User} */ (get(user));
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
@@ -87,7 +81,7 @@ export const createCommitMessage = (
   if (
     !['delete', 'deleteMedia'].includes(commitType) &&
     // Cannot use the `skipCIEnabled` store here because it leads to an uninitialized store error
-    (skipCI ?? (skipCIEnabled === true || autoDeployEnabled === false))
+    (skipCI ?? (skipCIEnabled === true || autoDeploy === false))
   ) {
     message = `[skip ci] ${message}`;
   }

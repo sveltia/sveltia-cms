@@ -8,6 +8,7 @@ import { siteConfig } from '$lib/services/config';
 
 /**
  * @import { SignInOptions, User } from '$lib/types/private';
+ * @import { GitHubBackend } from '$lib/types/public';
  */
 
 /**
@@ -41,7 +42,10 @@ export const signIn = async ({ token, auto = false }) => {
   }
 
   if (!token) {
-    const { site_domain: siteDomain } = get(siteConfig)?.backend ?? {};
+    const { site_domain: siteDomain } = /** @type {GitHubBackend} */ (
+      get(siteConfig)?.backend ?? {}
+    );
+
     const { authURL } = apiConfig;
 
     ({ token } = await initServerSideAuth({
