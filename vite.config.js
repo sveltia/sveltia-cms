@@ -123,6 +123,9 @@ const generateSchema = async () => {
     { required: ['singletons'] },
   ];
 
+  // Require at least one of `fields` or `types` for the Object widget
+  schema.definitions.ObjectField.oneOf = [{ required: ['fields'] }, { required: ['types'] }];
+
   // Disallow built-in widget names for custom widgets. We need this because the `Exclude` type
   // utility used in the TypeScript definition is not converted to JSON schema.
   // @see https://github.com/vega/ts-json-schema-generator/issues/993

@@ -594,7 +594,8 @@
  * `false`. If set to `auto`, the UI is collapsed if the object has any filled subfields and
  * expanded if all the subfields are empty.
  * @property {string} [summary] Template of a label to be displayed on a collapsed object.
- * @property {Field[]} fields Set of fields to be included.
+ * @property {Field[]} [fields] Set of fields to be included. Either the `fields` or `types` option
+ * is required.
  * @see https://decapcms.org/docs/widgets/#object
  */
 
