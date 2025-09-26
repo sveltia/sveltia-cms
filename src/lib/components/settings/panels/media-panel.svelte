@@ -1,6 +1,6 @@
 <script>
   import { TextInput } from '@sveltia/ui';
-  import DOMPurify from 'isomorphic-dompurify';
+  import { sanitize } from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
   import {
@@ -42,7 +42,7 @@
       {$_('prefs.media.stock_photos.title', { values: { service: serviceLabel } })}
     </h4>
     <p>
-      {@html DOMPurify.sanitize(
+      {@html sanitize(
         $_('prefs.media.stock_photos.description', {
           values: {
             service: serviceLabel,

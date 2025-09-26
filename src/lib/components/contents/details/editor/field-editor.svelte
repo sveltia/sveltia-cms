@@ -2,8 +2,8 @@
   import { Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
   import { escapeRegExp } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
-  import DOMPurify from 'isomorphic-dompurify';
-  import { marked } from 'marked';
+  import { sanitize } from 'isomorphic-dompurify';
+  import { parseInline } from 'marked';
   import { getContext, setContext } from 'svelte';
   import { writable } from 'svelte/store';
   import { _ } from 'svelte-i18n';
@@ -71,8 +71,8 @@
    * @param {string} str Original string.
    * @returns {string} Sanitized string.
    */
-  const sanitize = (str) =>
-    DOMPurify.sanitize(/** @type {string} */ (marked.parseInline(str.replaceAll('\\n', '<br>'))), {
+  const _sanitize = (str) =>
+    sanitize(/** @type {string} */ (parseInline(str.replaceAll('\\n', '<br>'))), {
       ALLOWED_TAGS: ['strong', 'em', 'del', 'code', 'a', 'br'],
       ALLOWED_ATTR: ['href'],
     });
@@ -275,7 +275,7 @@
       {/if}
     </header>
     {#if !readonly && comment}
-      <p class="comment">{@html sanitize(comment)}</p>
+      <p class="comment">{@html _sanitize(comment)}</p>
     {/if}
     {#if validity?.valid === false}
       <ValidationError id="{fieldId}-error">
@@ -340,7 +340,7 @@
         />
       {:else}
         {#if beforeInputLabel}
-          <div role="none" class="before-input">{@html sanitize(beforeInputLabel)}</div>
+          <div role="none" class="before-input">{@html _sanitize(beforeInputLabel)}</div>
         {/if}
         {#if prefix}
           <div role="none" class="prefix">{prefix}</div>
@@ -361,7 +361,7 @@
           <div role="none" class="suffix">{suffix}</div>
         {/if}
         {#if afterInputLabel}
-          <div role="none" class="after-input">{@html sanitize(afterInputLabel)}</div>
+          <div role="none" class="after-input">{@html _sanitize(afterInputLabel)}</div>
         {/if}
       {/if}
     </div>
@@ -369,7 +369,7 @@
       {@const ExtraHint = $extraHint}
       <div role="none" class="footer">
         {#if hint}
-          <p class="hint">{@html sanitize(hint)}</p>
+          <p class="hint">{@html _sanitize(hint)}</p>
         {/if}
         <ExtraHint {fieldConfig} {currentValue} />
       </div>

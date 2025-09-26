@@ -6,7 +6,7 @@
 <script>
   import { Button, EmptyState, InfiniteScroll, PasswordInput, TextInput } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import DOMPurify from 'isomorphic-dompurify';
+  import { sanitize } from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -237,7 +237,7 @@
   <EmptyState>
     <p role="alert">
       {#if serviceType === 'stock_assets'}
-        {@html DOMPurify.sanitize(
+        {@html sanitize(
           $_('prefs.media.stock_photos.description', {
             values: {
               service: serviceLabel,
@@ -249,7 +249,7 @@
         )}
       {/if}
       {#if serviceType === 'cloud_storage'}
-        {@html DOMPurify.sanitize(
+        {@html sanitize(
           $_(`cloud_storage.auth.${authState}`, {
             values: {
               service: serviceLabel,

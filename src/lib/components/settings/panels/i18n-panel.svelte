@@ -1,6 +1,6 @@
 <script>
   import { TextInput } from '@sveltia/ui';
-  import DOMPurify from 'isomorphic-dompurify';
+  import { sanitize } from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
   import TranslatorSelector from '$lib/components/settings/controls/translator-selector.svelte';
@@ -32,7 +32,7 @@
   <section>
     <h4>{serviceLabel}</h4>
     <p>
-      {@html DOMPurify.sanitize(
+      {@html sanitize(
         $_('prefs.i18n.translator.description', {
           values: {
             service: apiLabel,

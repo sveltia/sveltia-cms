@@ -1,8 +1,8 @@
 <script>
   import { EmptyState } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
-  import DOMPurify from 'isomorphic-dompurify';
-  import { marked } from 'marked';
+  import { sanitize } from 'isomorphic-dompurify';
+  import { parse } from 'marked';
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -89,9 +89,9 @@
         {:else if blob?.type && isTextFileType(blob.type)}
           {#await $overlaidAsset?.text ?? blob.text() then text}
             {#if name?.endsWith('.md')}
-              {#await marked.parse(text, { breaks: true, async: true }) then rawHTML}
+              {#await parse(text, { breaks: true, async: true }) then rawHTML}
                 <div role="figure" class="markdown">
-                  {@html DOMPurify.sanitize(rawHTML)}
+                  {@html sanitize(rawHTML)}
                 </div>
               {:catch}
                 <pre role="figure">{text}</pre>

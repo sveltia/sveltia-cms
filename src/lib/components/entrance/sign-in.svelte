@@ -1,6 +1,6 @@
 <script>
   import { Button, Icon, PromptDialog, Spacer } from '@sveltia/ui';
-  import DOMPurify from 'isomorphic-dompurify';
+  import { sanitize } from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -36,7 +36,7 @@
    * @returns {string} Linked and sanitized HTML string.
    */
   const getLinkedString = ({ key, values, link }) =>
-    DOMPurify.sanitize($_(key, { values }).replace('<a>', `<a href="${link}" target="_blank">`), {
+    sanitize($_(key, { values }).replace('<a>', `<a href="${link}" target="_blank">`), {
       ALLOWED_TAGS: ['a'],
       ALLOWED_ATTR: ['href', 'target'],
     });

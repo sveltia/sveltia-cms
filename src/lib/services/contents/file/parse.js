@@ -1,7 +1,7 @@
 import { toRaw } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
-import * as TOML from 'smol-toml';
-import YAML from 'yaml';
+import { parse as libParseTOML } from 'smol-toml';
+import { parse as libParseYAML } from 'yaml';
 
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
@@ -33,14 +33,14 @@ export const parseJSON = (str) => JSON.parse(str);
  * @param {string} str TOML document.
  * @returns {any} Parsed object.
  */
-export const parseTOML = (str) => toRaw(TOML.parse(str));
+export const parseTOML = (str) => toRaw(libParseTOML(str));
 
 /**
  * Parse a YAML document using a library.
  * @param {string} str YAML document.
  * @returns {any} Parsed object.
  */
-export const parseYAML = (str) => YAML.parse(str);
+export const parseYAML = (str) => libParseYAML(str);
 
 /**
  * Detect the Markdown front matter serialization format by checking a delimiter in the content.

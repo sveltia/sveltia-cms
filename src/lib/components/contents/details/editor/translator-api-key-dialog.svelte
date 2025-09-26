@@ -1,6 +1,6 @@
 <script>
   import { PromptDialog, Spacer } from '@sveltia/ui';
-  import DOMPurify from 'isomorphic-dompurify';
+  import { sanitize } from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
   import TranslatorSelector from '$lib/components/settings/controls/translator-selector.svelte';
@@ -44,7 +44,7 @@
 >
   <TranslatorSelector />
   <Spacer />
-  {@html DOMPurify.sanitize(
+  {@html sanitize(
     $_('prefs.i18n.translator.description', {
       values: {
         service: apiLabel,

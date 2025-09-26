@@ -3,7 +3,7 @@
   import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
-  import DOMPurify from 'isomorphic-dompurify';
+  import { sanitize } from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
@@ -75,7 +75,7 @@
 
 {#snippet getLabel(/** @type {string} */ str)}
   <!-- Allow to line-break after a hyphen, underscore and dot -->
-  {@html DOMPurify.sanitize(str.replace(/([-_.])/g, '$1<wbr>'), { ALLOWED_TAGS: ['wbr'] })}
+  {@html sanitize(str.replace(/([-_.])/g, '$1<wbr>'), { ALLOWED_TAGS: ['wbr'] })}
 {/snippet}
 
 {#if filteredAssets.length}

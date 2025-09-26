@@ -1,4 +1,4 @@
-import { marked } from 'marked';
+import { parse } from 'marked';
 import { get } from 'svelte/store';
 import TurndownService from 'turndown';
 
@@ -125,7 +125,7 @@ const translateFields = async ({ currentValues, options, copingFieldMap }) => {
     const translatedValues = await translate(
       Object.entries(copingFieldMap).map(([, { value, isMarkdown }]) =>
         // Convert the value from Markdown to HTML if needed
-        isMarkdown && !markdownSupported ? /** @type {string} */ (marked.parse(value)) : value,
+        isMarkdown && !markdownSupported ? /** @type {string} */ (parse(value)) : value,
       ),
       { apiKey, sourceLanguage, targetLanguage },
     );

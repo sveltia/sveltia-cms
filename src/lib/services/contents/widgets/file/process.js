@@ -1,6 +1,6 @@
 import { getHash } from '@sveltia/utils/crypto';
 import equal from 'fast-deep-equal';
-import DOMPurify from 'isomorphic-dompurify';
+import { sanitize } from 'isomorphic-dompurify';
 import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
@@ -103,9 +103,7 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
 
   return {
     value,
-    credit: credit
-      ? DOMPurify.sanitize(credit, { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href'] })
-      : '',
+    credit: credit ? sanitize(credit, { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href'] }) : '',
     oversizedFileName,
   };
 };

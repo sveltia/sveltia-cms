@@ -2,7 +2,7 @@ import { isObject } from '@sveltia/utils/object';
 import merge from 'deepmerge';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
-import YAML from 'yaml';
+import { parse } from 'yaml';
 
 const SUPPORTED_TYPES = ['text/yaml', 'application/yaml', 'application/json'];
 
@@ -45,7 +45,7 @@ const fetchFile = async ({ href, type = 'application/yaml' }) => {
     if (type === 'application/json') {
       result = response.json();
     } else {
-      result = YAML.parse(await response.text(), { merge: true });
+      result = parse(await response.text(), { merge: true });
     }
   } catch (ex) {
     throw new Error(get(_)('config.error.parse_failed'), { cause: ex });

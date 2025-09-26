@@ -13,9 +13,7 @@ vi.mock('fast-deep-equal', () => ({
 }));
 
 vi.mock('isomorphic-dompurify', () => ({
-  default: {
-    sanitize: vi.fn(),
-  },
+  sanitize: vi.fn(),
 }));
 
 vi.mock('svelte/store', () => ({
@@ -68,7 +66,7 @@ describe('Test processResource()', () => {
 
     const { getHash } = await import('@sveltia/utils/crypto');
     const equal = (await import('fast-deep-equal')).default;
-    const domPurify = (await import('isomorphic-dompurify')).default;
+    const { sanitize } = await import('isomorphic-dompurify');
     const { get } = await import('svelte/store');
     const { getAssetPublicURL } = await import('$lib/services/assets/info');
     const { transformFile } = await import('$lib/services/integrations/media-libraries/default');
@@ -76,16 +74,14 @@ describe('Test processResource()', () => {
 
     getHashMock = vi.mocked(getHash);
     equalMock = vi.mocked(equal);
-    // @ts-ignore - Mock the entire DOMPurify object
-    domPurifyMock = vi.mocked(domPurify);
+    domPurifyMock = vi.mocked(sanitize);
     getMock = vi.mocked(get);
     getAssetPublicURLMock = vi.mocked(getAssetPublicURL);
     transformFileMock = vi.mocked(transformFile);
     getGitHashMock = vi.mocked(getGitHash);
 
     // Default mock implementations
-    // @ts-ignore - Mock implementation
-    domPurifyMock.sanitize.mockImplementation((input) => String(input));
+    domPurifyMock.mockImplementation((input) => String(input));
     getMock.mockReturnValue([]);
   });
 
@@ -112,7 +108,7 @@ describe('Test processResource()', () => {
     expect(result.value).toBe('https://example.com/image.jpg');
     expect(result.credit).toBe('Photo credit');
     expect(result.oversizedFileName).toBeUndefined();
-    expect(domPurifyMock.sanitize).toHaveBeenCalledWith('Photo credit', {
+    expect(domPurifyMock).toHaveBeenCalledWith('Photo credit', {
       ALLOWED_TAGS: ['a'],
       ALLOWED_ATTR: ['href'],
     });
@@ -406,13 +402,13 @@ describe('Test processResource()', () => {
       max_file_size: 1000000,
     };
 
-    domPurifyMock.sanitize.mockReturnValue('Photo by <a href="https://example.com">Author</a>');
+    domPurifyMock.mockReturnValue('Photo by <a href="https://example.com">Author</a>');
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });
 
     expect(result.credit).toBe('Photo by <a href="https://example.com">Author</a>');
-    expect(domPurifyMock.sanitize).toHaveBeenCalledWith(
+    expect(domPurifyMock).toHaveBeenCalledWith(
       'Photo by <a href="https://example.com">Author</a> with <script>alert("xss")</script>',
       {
         ALLOWED_TAGS: ['a'],
@@ -442,7 +438,7 @@ describe('Test processResource()', () => {
     const result = await processResource({ draft, resource, libraryConfig });
 
     expect(result.credit).toBe('');
-    expect(domPurifyMock.sanitize).not.toHaveBeenCalled();
+    expect(domPurifyMock).not.toHaveBeenCalled();
   });
 
   test('should handle undefined credit', async () => {
@@ -465,7 +461,7 @@ describe('Test processResource()', () => {
     const result = await processResource({ draft, resource, libraryConfig });
 
     expect(result.credit).toBe('');
-    expect(domPurifyMock.sanitize).not.toHaveBeenCalled();
+    expect(domPurifyMock).not.toHaveBeenCalled();
   });
 
   test('should handle resource without any file, asset, or URL', async () => {
@@ -484,7 +480,7 @@ describe('Test processResource()', () => {
       max_file_size: 1000000,
     };
 
-    domPurifyMock.sanitize.mockReturnValue('Some credit');
+    domPurifyMock.mockReturnValue('Some credit');
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });

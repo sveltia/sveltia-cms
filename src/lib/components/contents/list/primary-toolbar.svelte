@@ -7,7 +7,7 @@
     Toolbar,
     TruncatedText,
   } from '@sveltia/ui';
-  import DOMPurify from 'isomorphic-dompurify';
+  import { sanitize } from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _, locale as appLocale } from 'svelte-i18n';
 
@@ -27,8 +27,8 @@
    * @param {string} str Original string.
    * @returns {string} Sanitized string.
    */
-  const sanitize = (str) =>
-    DOMPurify.sanitize(/** @type {string} */ (marked.parseInline(str)), {
+  const _sanitize = (str) =>
+    sanitize(/** @type {string} */ (marked.parseInline(str)), {
       ALLOWED_TAGS: ['strong', 'em', 'del', 'code', 'a'],
       ALLOWED_ATTR: ['href'],
     });
@@ -62,7 +62,7 @@
     {:else}
       <div role="none" class="description">
         <TruncatedText>
-          {@html sanitize(description || '')}
+          {@html _sanitize(description || '')}
         </TruncatedText>
       </div>
     {/if}

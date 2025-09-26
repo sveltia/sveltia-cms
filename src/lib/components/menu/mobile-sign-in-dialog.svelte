@@ -1,6 +1,6 @@
 <script>
   import { Dialog } from '@sveltia/ui';
-  import QRCode from 'qrcode';
+  import { toCanvas } from 'qrcode';
   import { _ } from 'svelte-i18n';
 
   import { showMobileSignInDialog } from '$lib/services/app/onboarding';
@@ -15,7 +15,7 @@
       const { origin, pathname } = window.location;
       const encodedData = btoa(JSON.stringify({ token: $user?.token, prefs: $prefs }));
 
-      QRCode.toCanvas(canvas, `${origin}${pathname}#/signin/${encodedData}`);
+      toCanvas(canvas, `${origin}${pathname}#/signin/${encodedData}`);
     }
   });
 </script>

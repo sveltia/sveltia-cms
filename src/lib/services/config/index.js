@@ -4,7 +4,7 @@ import { isURL } from '@sveltia/utils/string';
 import merge from 'deepmerge';
 import { get, writable } from 'svelte/store';
 import { _ } from 'svelte-i18n';
-import YAML from 'yaml';
+import { stringify } from 'yaml';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { gitBackendServices, validBackendNames } from '$lib/services/backends';
@@ -174,7 +174,7 @@ export const initSiteConfig = async (manualConfig) => {
     });
 
     siteConfig.set(config);
-    siteConfigVersion.set(await getHash(YAML.stringify(config)));
+    siteConfigVersion.set(await getHash(stringify(config)));
   } catch (/** @type {any} */ ex) {
     siteConfigError.set({
       message: ex.name === 'Error' ? ex.message : get(_)('config.error.unexpected'),

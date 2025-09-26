@@ -1,6 +1,6 @@
 <script>
   import { Progressbar } from '@sveltia/ui';
-  import DOMPurify from 'isomorphic-dompurify';
+  import { sanitize } from 'isomorphic-dompurify';
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
 
@@ -41,10 +41,10 @@
       <div role="alert">
         <div role="none" class="message">{$_('loading_site_data_error')}</div>
         <div role="none" class="error">
-          {@html DOMPurify.sanitize(
-            /** @type {string} */ (marked.parseInline($signInError.message)),
-            { ALLOWED_TAGS: ['a', 'code'], ALLOWED_ATTR: ['href'] },
-          )}
+          {@html sanitize(/** @type {string} */ (marked.parseInline($signInError.message)), {
+            ALLOWED_TAGS: ['a', 'code'],
+            ALLOWED_ATTR: ['href'],
+          })}
         </div>
       </div>
     {:else if $inAuthPopup}

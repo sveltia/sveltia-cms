@@ -4,8 +4,8 @@
   @see https://decapcms.org/docs/widgets/#markdown
 -->
 <script>
-  import DOMPurify from 'isomorphic-dompurify';
-  import { marked } from 'marked';
+  import { sanitize } from 'isomorphic-dompurify';
+  import { parse, use } from 'marked';
   import markedBidi from 'marked-bidi';
 
   import { getMediaFieldURL } from '$lib/services/assets/info';
@@ -14,6 +14,7 @@
   import { encodeImageSrc } from '$lib/services/contents/widgets/markdown/helper';
 
   /**
+   * @import DOMPurify from 'isomorphic-dompurify';
    * @import { WidgetPreviewProps } from '$lib/types/private';
    * @import { MarkdownField } from '$lib/types/public';
    */
@@ -37,7 +38,7 @@
   const entry = $derived($entryDraft?.originalEntry);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
-  const { sanitize_preview: sanitize = true } = $derived(fieldConfig);
+  const { sanitize_preview: doSanitize = true } = $derived(fieldConfig);
   const markdown = $derived((currentValue ?? '').replace(GLOBAL_IMAGE_REGEX, encodeImageSrc));
 
   /** @type {import("marked").MarkedOptions} */
@@ -64,18 +65,18 @@
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   };
 
-  marked.use(markedBidi());
+  use(markedBidi());
 
   $effect(() => {
     (async () => {
-      rawHTML = await marked.parse(markdown, markedOptions);
+      rawHTML = await parse(markdown, markedOptions);
     })();
   });
 </script>
 
 <div role="none">
   {#if typeof currentValue === 'string' && currentValue.trim()}
-    {@html sanitize ? DOMPurify.sanitize(rawHTML, sanitizeOptions) : rawHTML}
+    {@html doSanitize ? sanitize(rawHTML, sanitizeOptions) : rawHTML}
   {/if}
 </div>
 
