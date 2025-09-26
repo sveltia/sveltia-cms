@@ -23,6 +23,20 @@ import { FULL_DATE_TIME_REGEX } from '$lib/services/utils/date';
  */
 
 /**
+ * Check whether a value is empty, such as `undefined`, `null`, an empty string, an empty array, or
+ * an empty object.
+ * @param {any} value Value to check.
+ * @returns {boolean} Whether the value is empty.
+ */
+export const isValueEmpty = (value) =>
+  // Don’t use `!value` as `false` and `0` are valid values
+  value === undefined ||
+  value === null ||
+  value === '' ||
+  (Array.isArray(value) && !value.length) ||
+  (isObject(value) && !Object.keys(value).length);
+
+/**
  * Move a property name/value from a unsorted property map to a sorted property map.
  * @param {object} args Arguments.
  * @param {string} args.key Property name.
@@ -73,9 +87,7 @@ export const copyProperty = ({
     field &&
     !isFieldRequired({ fieldConfig: field, locale }) &&
     !Object.keys(unsortedMap).some((_key) => _key.startsWith(`${key}.`)) &&
-    (!value ||
-      (Array.isArray(value) && !value.length) ||
-      (isObject(value) && !Object.keys(value).length))
+    isValueEmpty(value)
   ) {
     // Omit the empty value
   } else {
