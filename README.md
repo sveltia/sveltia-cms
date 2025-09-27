@@ -2,7 +2,7 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. While some features are still missing, we’ve already solved over 250 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
 
-Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Our numerous enhancements across the board ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in late 2025.
+Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Our numerous enhancements across the board ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in early 2026.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -151,7 +151,7 @@ As we continue to add more features, we hope that our product will eventually be
 
 ## Project Status
 
-Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in late 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
+Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
@@ -638,7 +638,7 @@ However, 100% feature parity is never planned, and some features are still missi
 
 ### Current limitations
 
-These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due late 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
+These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
 - Comprehensive site config validation
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
@@ -650,7 +650,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
 
-Due to the complexity, we have decided to defer the following features to the 2.0 release due early/mid 2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
+Due to the complexity, we have decided to defer the following features to the 2.0 release due mid-2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
 
 - [Editorial workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open authoring](https://decapcms.org/docs/open-authoring/)
@@ -1888,7 +1888,7 @@ We cannot promise any specific release dates, but here is a rough roadmap for th
 
 ### v1.0
 
-Due late 2025
+Due early 2026
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
@@ -1906,7 +1906,7 @@ See also the [1.0 RC](https://github.com/sveltia/sveltia-cms/milestone/1) and [1
 
 ### v2.0
 
-Due early/mid 2026
+Due mid-2026
 
 - Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections, while addressing a number of bugs in their implementations
   - They will probably first be included as beta features in v1.x releases
@@ -1916,6 +1916,8 @@ Due early/mid 2026
   - and a few more from the TBD list below
 
 ### v3.0
+
+Due late 2026
 
 - **Sveltia CMS Additions**: Edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
   - User management (Netlify Identity alternative) with roles[^23]
