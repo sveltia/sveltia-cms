@@ -31,6 +31,7 @@ import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
  * MediaField,
  * MultiValueField,
  * NumberField,
+ * ObjectField,
  * RelationField,
  * SelectField,
  * } from '$lib/types/public';
@@ -142,8 +143,18 @@ export const getField = (args) => {
         const subFieldName = isNumericKey ? keyPathArray[index + 1] : undefined;
 
         // It’s possible to get a single-subfield List field with or without a subfield name (e.g.
-        // `image.0` or `image.0.src`), but when a subfield name is specified, check if it’s valid
-        field = !subFieldName || subField.name === subFieldName ? subField : undefined;
+        // `image.0` or `image.0.src`), but when a subfield name is specified, check if it’s valid.
+        // The field could be nested (object inside object), so check recursively.
+        if (
+          !subFieldName ||
+          subField.name === subFieldName ||
+          (subField.widget === 'object' &&
+            /** @type {ObjectField} */ (subField).fields?.some((f) => f.name === subFieldName))
+        ) {
+          field = subField;
+        } else {
+          field = undefined;
+        }
       } else if (subFields && isNumericKey) {
         // For list widgets with multiple fields, numeric keys (like "0") should be skipped
         // Keep the current field (the list widget) and continue to the next part of the path field

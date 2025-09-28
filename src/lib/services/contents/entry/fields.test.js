@@ -139,6 +139,38 @@ describe('Test getField()', () => {
         // Missing field, fields, or types
       },
       {
+        name: 'objectList',
+        widget: 'list',
+        field: {
+          name: 'item',
+          widget: 'object',
+          fields: [
+            { name: 'title', widget: 'string' },
+            { name: 'description', widget: 'text' },
+            { name: 'active', widget: 'boolean' },
+          ],
+        },
+      },
+      {
+        name: 'nestedObjectList',
+        widget: 'list',
+        field: {
+          name: 'section',
+          widget: 'object',
+          fields: [
+            { name: 'header', widget: 'string' },
+            {
+              name: 'content',
+              widget: 'object',
+              fields: [
+                { name: 'body', widget: 'text' },
+                { name: 'footnote', widget: 'string' },
+              ],
+            },
+          ],
+        },
+      },
+      {
         name: 'category',
         widget: 'select',
         options: ['blog', 'news', 'tutorial'],
@@ -346,6 +378,121 @@ describe('Test getField()', () => {
       });
 
       expect(result).toBeUndefined();
+    });
+
+    test('should handle list field with single object subfield', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollection);
+
+      // Access the object subfield itself
+      const objectResult = getField({
+        collectionName: 'posts',
+        keyPath: 'objectList.0',
+        valueMap: {},
+      });
+
+      expect(objectResult).toEqual({
+        name: 'item',
+        widget: 'object',
+        fields: [
+          { name: 'title', widget: 'string' },
+          { name: 'description', widget: 'text' },
+          { name: 'active', widget: 'boolean' },
+        ],
+      });
+
+      // Access a field within the object subfield - this tests the specific condition
+      const titleResult = getField({
+        collectionName: 'posts',
+        keyPath: 'objectList.0.title',
+        valueMap: {},
+      });
+
+      expect(titleResult).toEqual({ name: 'title', widget: 'string' });
+
+      // Access another field within the object subfield
+      const descriptionResult = getField({
+        collectionName: 'posts',
+        keyPath: 'objectList.0.description',
+        valueMap: {},
+      });
+
+      expect(descriptionResult).toEqual({ name: 'description', widget: 'text' });
+
+      // Access a boolean field within the object subfield
+      const activeResult = getField({
+        collectionName: 'posts',
+        keyPath: 'objectList.0.active',
+        valueMap: {},
+      });
+
+      expect(activeResult).toEqual({ name: 'active', widget: 'boolean' });
+
+      // Access a non-existent field within the object subfield
+      const invalidResult = getField({
+        collectionName: 'posts',
+        keyPath: 'objectList.0.nonexistent',
+        valueMap: {},
+      });
+
+      expect(invalidResult).toBeUndefined();
+    });
+
+    test('should handle list field with single object subfield - edge cases', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollection);
+
+      // Test when the object subfield exists but the requested field doesn't exist in it
+      // This should trigger the condition where subField.widget === 'object' but
+      // the field is not found in subField.fields, causing field to be set to undefined
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'objectList.0.invalidField',
+        valueMap: {},
+      });
+
+      expect(result).toBeUndefined();
+
+      // Test accessing deeper nested path that doesn't exist
+      const deepResult = getField({
+        collectionName: 'posts',
+        keyPath: 'objectList.0.title.nested.field',
+        valueMap: {},
+      });
+
+      expect(deepResult).toBeUndefined();
+    });
+
+    test('should handle nested object subfields recursively', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollection);
+
+      // Test accessing nested object field within list item
+      // This specifically tests the recursive condition:
+      // (subField.widget === 'object' && subField.fields?.some((f) => f.name === subFieldName))
+      const nestedResult = getField({
+        collectionName: 'posts',
+        keyPath: 'nestedObjectList.0.content',
+        valueMap: {},
+      });
+
+      expect(nestedResult).toEqual({
+        name: 'content',
+        widget: 'object',
+        fields: [
+          { name: 'body', widget: 'text' },
+          { name: 'footnote', widget: 'string' },
+        ],
+      });
+
+      // Test accessing field within the nested object
+      const deepFieldResult = getField({
+        collectionName: 'posts',
+        keyPath: 'nestedObjectList.0.content.body',
+        valueMap: {},
+      });
+
+      expect(deepFieldResult).toEqual({ name: 'body', widget: 'text' });
     });
   });
 
