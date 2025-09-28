@@ -855,7 +855,7 @@
 
 /**
  * Context for a field, which may change the behavior of the editor/preview.
- * @typedef {'markdown-editor-component' | 'single-field-list-widget'} WidgetContext
+ * @typedef {'markdown-editor-component' | 'single-subfield-list-widget'} WidgetContext
  */
 
 /**

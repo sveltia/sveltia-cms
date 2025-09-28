@@ -76,7 +76,7 @@
   const showRemoveButton = $derived(
     !required &&
       (!widgetContext ||
-        !['markdown-editor-component', 'single-field-list-widget'].includes(widgetContext)),
+        !['markdown-editor-component', 'single-subfield-list-widget'].includes(widgetContext)),
   );
   const itemArgs = $derived({
     widgetName,

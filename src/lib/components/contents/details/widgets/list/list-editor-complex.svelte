@@ -406,7 +406,7 @@
                     : `${keyPath}.${index}.${subField.name}`}
                   {locale}
                   fieldConfig={subField}
-                  context={hasSingleSubField ? 'single-field-list-widget' : undefined}
+                  context={hasSingleSubField ? 'single-subfield-list-widget' : undefined}
                 />
               </VisibilityObserver>
             {/each}
