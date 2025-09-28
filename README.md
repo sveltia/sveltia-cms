@@ -129,7 +129,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
   - ⚠️ Mostly low activity with occasional releases and a few minor improvements
   - ❌ A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
 
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is better by design:
+Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is **better by design**:
 
 - We have rebuilt the app from scratch using a [modern framework](https://svelte.dev/)
 - We don’t reuse any part of the predecessor’s codebase
@@ -185,7 +185,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 - Created and actively maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design, marketing, localization and everything in between. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - The maintainer tries to respond to bug reports as quickly as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 24 hours.
-- Frequent releases deliver new features and enhancements to users more quickly. The release interval of Decap CMS has been irregular and often long, sometimes exceeding 2 months.
+- Frequent releases deliver new features and enhancements to users more quickly. Meanwhile, the release interval of Decap CMS has been irregular and often long, sometimes exceeding 2 months.
 - Many of our minor [releases](https://github.com/sveltia/sveltia-cms/releases) address one or more Netlify/Decap CMS issues, giving you even more reasons to switch from the legacy predecessor.
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1][^211][^212][^213][^214]
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
@@ -319,7 +319,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - The `{{locale}}` template tag can be used in the [`preview_path`](https://decapcms.org/docs/configuration-options/#preview_path) collection option to provide site preview links for each language.[^63]
   - It’s possible to embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`.[^101]
   - The `value_field` Relation field option can contain a locale prefix like `{{locale}}/{{slug}}`, which will be replaced with the current locale. It’s intended to support i18n in Astro. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/302))
-  - A collection filter is applied correctly when using the `single_file` i18n structure.[^291]
+  - The collection filters are applied correctly regardless of the i18n structure.[^291]
 - User interface
   - Eliminates UI confusion: The Preview Pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list when there are less than 5 locales.
@@ -447,7 +447,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - A standard time is formatted as `HH:mm:ss` instead of `HH:mm` for framework compatibility.
 - DateTime field values in ISO 8601 format are stored in native date/time format instead of quoted strings when the data output is TOML.[^147]
 - Provides JSON/YAML format options as part of the [data output options](#controlling-data-output), including indentation and quotes.[^155][^9]
-- Front matter injection is impossible through the `body` field.[^268]
+- It’s impossible to inject front matter through the `body` field.[^268]
 
 ### Better widgets
 
@@ -632,7 +632,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 
 ## Compatibility
 
-We are trying to make Sveltia CMS compatible with Netlify/Decap CMS where possible, so that more users can seamlessly switch to our modern alternative. It’s ready to be used as a drop-in replacement for Netlify/Decap CMS in some casual use case scenarios with a [single line of code update](#migration).
+We are working to make Sveltia CMS compatible with Netlify/Decap CMS wherever possible so that more users can seamlessly switch to our modern alternative. In some casual use cases, Sveltia CMS can be used as a drop-in replacement for Netlify/Decap CMS with [just a one-line code update](#migration).
 
 However, 100% feature parity is never planned, and some features are still missing or will not be added due to performance, deprecation and other factors. Look at the compatibility info below to see if you can migrate now or in the near future.
 
@@ -650,7 +650,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
 
-Due to the complexity, we have decided to defer the following features to the 2.0 release due mid-2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
+Due to the complexity, we have decided to defer the following features to the 1.x or 2.0 release due mid-2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
 
 - [Editorial workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open authoring](https://decapcms.org/docs/open-authoring/)
@@ -659,7 +659,7 @@ Due to the complexity, we have decided to defer the following features to the 2.
 
 ### Features not to be implemented
 
-The following Netlify/Decap CMS features will not be implemented, primarily due to deprecation and performance considerations.
+The following Netlify/Decap CMS features will not be implemented in Sveltia CMS, primarily due to deprecation and performance considerations.
 
 - **Azure and Bitbucket backends**: For performance reasons. We’ll support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
 - **Git Gateway backend**: Also for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative [in the future](#roadmap) to secure a migration path for existing Git Gateway users.
@@ -704,7 +704,7 @@ There are some differences in behaviour between Sveltia CMS and Netlify/Decap CM
 
 While Sveltia CMS is built with Svelte, the application is **framework-agnostic**. It’s a small, compiled, vanilla JavaScript bundle that manages content in a Git repository directly via an API. It doesn’t interact with the framework that builds your site.
 
-As with Netlify/Decap CMS, you can use Sveltia CMS with any framework or static site generator (SSG) that loads static files during the build process. This includes Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit, VitePress, and [more](https://decapcms.org/docs/install-decap-cms/).
+As with Netlify/Decap CMS, you can use Sveltia CMS with any framework or [static site generator](https://jamstack.org/generators/) (SSG) that loads static files during the build process. This includes Astro, Eleventy, Hugo, Jekyll, Next.js, SvelteKit, VitePress, and [more](https://decapcms.org/docs/install-decap-cms/).
 
 We have added support for features and file structures used in certain frameworks and i18n libraries, such as [index file inclusion](#including-hugos-special-index-file-in-a-folder-collection) and [slug localization](#localizing-entry-slugs) for Hugo, i18n support for Astro and Zola, and [some enhancements](https://github.com/sveltia/sveltia-cms/issues/230) for VitePress. [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=feature) if your framework has specific requirements.
 
@@ -1882,7 +1882,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ## Roadmap
 
-As mentioned in the [Project Status](#project-status) section, we aim to solve 400+ [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) in total over the course of this project. We also have lots of ideas to make Sveltia CMS a great product.
+As mentioned in the [Project Status](#project-status) section, our goal is to solve most of the [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) over the course of this project. We also have lots of ideas to make Sveltia CMS a great product.
 
 We cannot promise any specific release dates, but here is a rough roadmap for the next few years.
 
@@ -1973,7 +1973,7 @@ Due late 2026
 ### Non-goals
 
 - Serving 100% of the existing Netlify/Decap CMS user base. While we aim to support most use cases, some users may be unable to migrate to Sveltia CMS due to unsupported features or technical limitations. See the [Compatibility](#compatibility) section for details.
-- Support for non-Git backends. Sveltia CMS is a Git-based headless CMS and will remain so to avoid feature creep and increased maintenance costs.
+- Support for non-Git backends. Sveltia CMS is a Git-based headless CMS and will remain so to avoid feature creep and increased maintenance costs. We may support custom backends through an API in the future, but it’s not a priority right now.
 - Framework-specific integrations, including a WYSIWYG editor. We will focus on framework-agnostic core features that are essential for succeeding Netlify/Decap CMS and modernizing the platform.
 - Enterprise features. We want to keep Sveltia CMS simple and easy to use for small teams and individual developers.
 - Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
@@ -1982,6 +1982,7 @@ Due late 2026
 ## Trivia
 
 - The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. There was also an [attempt](https://github.com/decaporg/decap-cms/issues/328) to replace React with Preact. Now we have completely rebuilt it in Svelte 4 and then in Svelte 5. So this is effectively the third/fourth time the application has gone through a framework migration. One more thing: We may migrate to [Ripple](https://www.ripplejs.com/) in the future if it looks promising.
+- We write our code in [TypeScript-flavoured JavaScript](https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html) to maintain readability while enabling strict type checking. During the build process, our type definitions are first converted to a TypeScript declaration file and then to a [JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file). It’s a bit of a hack, but it works well for us.
 - Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for an improved DX, but also for our rapid application development.
 - What is Sveltia, by the way? It implies something related to Svelte, but it has [another meaning](https://en.wikipedia.org/wiki/Sveltia).
 - The maintainer may look 25 years younger than his actual age. [Here’s why](https://github.com/kyoshino#fun-facts-about-me).
