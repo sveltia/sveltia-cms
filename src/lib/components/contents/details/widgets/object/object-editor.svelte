@@ -39,6 +39,8 @@
 
   /** @type {FieldEditorContext} */
   const { widgetContext, valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  // Hide the header/expander if in a single subfield list widget because it’s redundant
+  const hideHeader = widgetContext === 'single-subfield-list-widget';
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -99,6 +101,10 @@
    * Initialize the expander state.
    */
   const initializeExpanderState = () => {
+    if (hideHeader) {
+      return;
+    }
+
     const key = parentExpandedKeyPath;
 
     syncExpanderStates({ [key]: getInitialExpanderState({ key, locale, collapsed }) });
@@ -207,32 +213,34 @@
     class="wrapper"
     aria-labelledby={parentExpanded ? undefined : `object-${widgetId}-summary`}
   >
-    <ObjectHeader
-      label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
-      controlId="object-{widgetId}-item-list"
-      expanded={parentExpanded}
-      toggleExpanded={subFields.length
-        ? () => syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded })
-        : undefined}
-    >
-      {#snippet endContent()}
-        {#if hasVariableTypes}
-          <Button
-            size="small"
-            iconic
-            disabled={addButtonDisabled}
-            aria-label={$_('remove')}
-            onclick={() => {
-              removeFields();
-            }}
-          >
-            {#snippet startIcon()}
-              <Icon name="close" />
-            {/snippet}
-          </Button>
-        {/if}
-      {/snippet}
-    </ObjectHeader>
+    {#if !hideHeader}
+      <ObjectHeader
+        label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
+        controlId="object-{widgetId}-item-list"
+        expanded={parentExpanded}
+        toggleExpanded={subFields.length
+          ? () => syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded })
+          : undefined}
+      >
+        {#snippet endContent()}
+          {#if hasVariableTypes}
+            <Button
+              size="small"
+              iconic
+              disabled={addButtonDisabled}
+              aria-label={$_('remove')}
+              onclick={() => {
+                removeFields();
+              }}
+            >
+              {#snippet startIcon()}
+                <Icon name="close" />
+              {/snippet}
+            </Button>
+          {/if}
+        {/snippet}
+      </ObjectHeader>
+    {/if}
     <div role="none" class="item-list" id="object-{widgetId}-item-list" bind:this={wrapper}>
       {#await waitForVisibility(wrapper) then}
         {#if parentExpanded}
