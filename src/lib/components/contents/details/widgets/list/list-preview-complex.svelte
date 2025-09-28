@@ -4,6 +4,7 @@
   @see https://decapcms.org/docs/widgets/#list
 -->
 <script>
+  import { isObject } from '@sveltia/utils/object';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
 
@@ -55,7 +56,7 @@
   );
 </script>
 
-{#each items as item, index (item.__sc_item_id ?? index)}
+{#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
   <VisibilityObserver>
     {@const subFieldName = Array.isArray(types)
       ? $entryDraft?.currentValues[locale][`${keyPath}.${index}.${typeKey}`]

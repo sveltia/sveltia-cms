@@ -5,6 +5,7 @@
 -->
 <script>
   import { Button, Icon, Menu, MenuButton, MenuItem, Spacer, TruncatedText } from '@sveltia/ui';
+  import { isObject } from '@sveltia/utils/object';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
   import { getContext, onMount } from 'svelte';
@@ -277,7 +278,7 @@
   </div>
 {/if}
 <div role="none" id="list-{widgetId}-item-list" class="item-list" class:collapsed={!parentExpanded}>
-  {#each items as item, index (item.__sc_item_id ?? index)}
+  {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
     <VisibilityObserver>
       {@const expandedKeyPath = `${keyPath}.${index}`}
       {@const expanded = $entryDraft?.expanderStates?._[expandedKeyPath] ?? true}
