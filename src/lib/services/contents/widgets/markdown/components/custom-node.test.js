@@ -120,10 +120,6 @@ vi.mock('lexical', () => {
     updateDOM() {
       return false;
     }
-
-    decorate() {
-      return null;
-    }
   };
 
   return {
@@ -345,15 +341,6 @@ describe('createCustomNodeClass', () => {
       const shouldUpdate = node.updateDOM(prevNode, domElement, config);
 
       expect(typeof shouldUpdate).toBe('boolean');
-    });
-
-    it('should handle decorate method', () => {
-      const CustomNode = createCustomNodeClass(mockComponentDef);
-      const props = { title: 'Decorate Title' };
-      const node = new CustomNode(props);
-      const result = node.decorate();
-
-      expect(result).toBeNull();
     });
 
     it('should handle different component patterns', () => {

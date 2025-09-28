@@ -253,14 +253,6 @@ export const createCustomNodeClass = (componentDef) => {
     updateDOM() {
       return false;
     }
-
-    /**
-     * Decorator.
-     * @returns {null} Unused.
-     */
-    decorate() {
-      return null;
-    }
   }
 
   return CustomNode;
