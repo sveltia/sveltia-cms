@@ -151,7 +151,9 @@ As we continue to add more features, we hope that our product will eventually be
 
 ## Project Status
 
-Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
+<!-- prettier-ignore -->
+> [!NOTE]
+> Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
@@ -263,8 +265,10 @@ We’ve made various improvements to help you get your work done faster and more
 
 ### Better installation
 
-- Sveltia CMS is built with [Svelte](https://svelte.dev/), and we only publish compiled vanilla JavaScript bundles, so there are no React compatibility issues that might prevent developers from upgrading a project for many months.[^177] No dependencies will be installed when you [install the app with npm](#installing-with-npm).
-- Sveltia CMS also won’t cause peer dependency conflicts mainly due to legacy third-party React UI libraries.[^175][^237] We build the app using [our own Svelte UI component library](https://github.com/sveltia/sveltia-ui) to reduce reliance on third parties.
+- Sveltia CMS is built with [Svelte](https://svelte.dev/), and we only publish compiled, minified vanilla JavaScript bundles. No dependencies will be installed when you [install the app with npm](#installing-with-npm), meaning:
+  - No React compatibility issues that might prevent developers from upgrading a project for many months.[^177]
+  - No peer dependency conflicts mainly due to legacy third-party React UI libraries.[^175] We build the app using [our own Svelte UI component library](https://github.com/sveltia/sveltia-ui) to reduce reliance on third parties.
+  - No build errors due to browser-unfriendly packages and other dependency issues.[^237][^292][^293]
 - Some servers and frameworks are known to remove the trailing slash from the CMS URL (`/admin`) depending on the configuration. In such cases, the config file is loaded from the proper URL (`/admin/config.yml`) instead of a regular relative URL (`./config.yml` = `/config.yml`), which results in a 404 Not Found error.[^107]
 - The [robots `meta` tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) is automatically added to HTML to prevent the admin page from being indexed by search engines.[^174] Developers are still encouraged to manually add `<meta name="robots" content="noindex">` to `index.html`, as not all crawlers support dynamically added tags. However, our solution should at least work with Google in case you forget to do so.
 - Initializing the CMS twice (due to the incorrect or missing placement of `window.CMS_MANUAL_INIT`) will not result in a `NotFoundError`.[^251]
@@ -778,7 +782,11 @@ Unfortunately, **we are unable to provide installation and setup support** at th
 
 ### Migration
 
-Have a look at the [compatibility info](#compatibility) above first. If you’re already using Netlify/Decap CMS with the GitHub, GitLab or Gitea/Forgejo backend and don’t have any unsupported features like editorial workflow or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement.
+<!-- prettier-ignore -->
+> [!IMPORTANT]
+> Take a look at the [compatibility info](#compatibility) above first. Some Netlify/Decap CMS features have not yet been implemented or will never be added in Sveltia CMS.
+
+If you’re already using Netlify/Decap CMS with the GitHub, GitLab or Gitea/Forgejo backend and don’t have any unsupported features like editorial workflow or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement.
 
 Open `/admin/index.html` locally with an editor like VS Code and replace the CMS `<script>` tag with the new one:
 
@@ -2482,7 +2490,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^236]: Netlify/Decap CMS [#7507](https://github.com/decaporg/decap-cms/issues/7507)
 
-[^237]: Netlify/Decap CMS [#7375](https://github.com/decaporg/decap-cms/issues/7375), [#7518](https://github.com/decaporg/decap-cms/issues/7518)
+[^237]: Netlify/Decap CMS [#7375](https://github.com/decaporg/decap-cms/issues/7375)
 
 [^238]: Netlify/Decap CMS [#1502](https://github.com/decaporg/decap-cms/issues/1502)
 
@@ -2591,3 +2599,7 @@ This project would not have been possible without the open source Netlify CMS pr
 [^290]: Netlify/Decap CMS [#7611](https://github.com/decaporg/decap-cms/issues/7611)
 
 [^291]: Netlify/Decap CMS [#7612](https://github.com/decaporg/decap-cms/pull/7612)
+
+[^292]: Netlify/Decap CMS [7518](https://github.com/decaporg/decap-cms/issues/7518)
+
+[^293]: Netlify/Decap CMS [7616](https://github.com/decaporg/decap-cms/issues/7616)
