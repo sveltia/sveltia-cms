@@ -54,6 +54,7 @@ Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, secu
   - [Installation \& setup](#installation--setup)
   - [Migration](#migration)
     - [Editing the configuration file](#editing-the-configuration-file)
+    - [Dealing with unsupported features](#dealing-with-unsupported-features)
     - [Migrating from Git Gateway backend](#migrating-from-git-gateway-backend)
   - [Installing with npm](#installing-with-npm)
   - [Updates](#updates)
@@ -782,7 +783,7 @@ Unfortunately, **we are unable to provide installation and setup support** at th
 
 <!-- prettier-ignore -->
 > [!IMPORTANT]
-> Take a look at the [compatibility info](#compatibility) above first. Some Netlify/Decap CMS features have not yet been implemented or will never be added in Sveltia CMS.
+> Take a look at the [compatibility info](#compatibility) above first. Some Netlify/Decap CMS features have not yet been implemented or will never be added to Sveltia CMS.
 
 If you’re already using Netlify/Decap CMS with the GitHub, GitLab or Gitea/Forgejo backend and don’t have any unsupported features like editorial workflow or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement.
 
@@ -813,6 +814,12 @@ You can now open `https://[hostname]/admin/` as usual to start editing. There is
 #### Editing the configuration file
 
 For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the site configuration file in your code editor. If you have the YAML extension installed, VS Code may automatically apply the outdated Netlify CMS config schema to `config.yml`. To use the latest Sveltia CMS config schema instead, you need to specify its URL.
+
+#### Dealing with unsupported features
+
+If you’re using any features listed in the [current limitations](#current-limitations) section, you’ll need to wait until they are implemented in Sveltia CMS. We’re working hard to add these features in the coming months.
+
+If you’re using any features listed in the [features not to be implemented](#features-not-to-be-implemented) section, you need to find a workaround. For example, if you’re using the Azure or Bitbucket backend, consider migrating to GitHub, GitLab or Gitea/Forgejo. See the next section if you’re a Git Gateway user.
 
 #### Migrating from Git Gateway backend
 
