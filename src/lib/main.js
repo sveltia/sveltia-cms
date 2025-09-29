@@ -101,6 +101,9 @@ const registerCustomFormat = (name, extension, { fromFile, toFile }) => {
  */
 const registerEditorComponent = (definition) => {
   customComponentRegistry.set(definition.id, definition);
+
+  // eslint-disable-next-line no-console
+  console.warn('Preview for custom editor components are not yet supported in Sveltia CMS.');
 };
 
 /**
@@ -110,7 +113,7 @@ const registerEditorComponent = (definition) => {
  */
 const registerEventListener = (eventListener) => {
   // eslint-disable-next-line no-console
-  console.error('Event hooks are not yet supported in Sveltia CMS.');
+  console.warn('Event hooks are not yet supported in Sveltia CMS.');
   void [eventListener];
 };
 
@@ -144,7 +147,7 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
  */
 const registerPreviewTemplate = (name, component) => {
   // eslint-disable-next-line no-console
-  console.error('Custom preview templates are not yet supported in Sveltia CMS.');
+  console.warn('Custom preview templates are not yet supported in Sveltia CMS.');
   void [name, component];
 };
 
@@ -158,7 +161,7 @@ const registerPreviewTemplate = (name, component) => {
  */
 const registerWidget = (name, control, preview, schema) => {
   // eslint-disable-next-line no-console
-  console.error('Custom widgets are not yet supported in Sveltia CMS.');
+  console.warn('Custom widgets are not yet supported in Sveltia CMS.');
   void [name, control, preview, schema];
 };
 
@@ -189,7 +192,7 @@ const CMS = new Proxy(
 
       if (message) {
         // eslint-disable-next-line no-console
-        console.error(`${message} See %s for compatibility information.`, key, COMPATIBILITY_URL);
+        console.warn(`${message} See %s for compatibility information.`, key, COMPATIBILITY_URL);
 
         // eslint-disable-next-line jsdoc/require-description
         /** @returns {void} */

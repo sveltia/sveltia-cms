@@ -4,6 +4,10 @@
   @see https://decapcms.org/docs/widgets/#file
   @see https://decapcms.org/docs/widgets/#image
 -->
+<script module>
+  let unsupportedWarned = false;
+</script>
+
 <script>
   import { AlertDialog, ConfirmationDialog, TextArea } from '@sveltia/ui';
   import { flushSync, getContext } from 'svelte';
@@ -65,6 +69,8 @@
     max = Infinity,
     accept,
     choose_url: canEnterURL = true,
+    media_folder: mediaFolder,
+    public_folder: publicFolder,
   } = $derived(fieldConfig);
   const entry = $derived($entryDraft?.originalEntry);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
@@ -87,6 +93,14 @@
     collectionName,
     fileName,
     entry,
+  });
+
+  $effect(() => {
+    if ((mediaFolder || publicFolder) && !unsupportedWarned) {
+      // eslint-disable-next-line no-console
+      console.warn('Field-specific media folders are not yet supported in Sveltia CMS.');
+      unsupportedWarned = true;
+    }
   });
 
   /**

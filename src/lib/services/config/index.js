@@ -133,6 +133,31 @@ export const validate = (config) => {
       throw new Error(get(_)('config.error.public_folder_absolute_url'));
     }
   }
+
+  if (config.publish_mode === 'editorial_workflow') {
+    // eslint-disable-next-line no-console
+    console.warn('Editorial workflow is not yet supported in Sveltia CMS.');
+  }
+
+  if (config.backend.name === 'github' && config.backend.open_authoring) {
+    // eslint-disable-next-line no-console
+    console.warn('Open authoring is not yet supported in Sveltia CMS.');
+  }
+
+  if (config.collections?.some((collection) => 'nested' in collection)) {
+    // eslint-disable-next-line no-console
+    console.warn('Nested collections are not yet supported in Sveltia CMS.');
+  }
+
+  if (config.media_library?.name === 'cloudinary' || config.media_libraries?.cloudinary) {
+    // eslint-disable-next-line no-console
+    console.warn('Cloudinary media library is not yet supported in Sveltia CMS.');
+  }
+
+  if (config.media_library?.name === 'uploadcare' || config.media_libraries?.uploadcare) {
+    // eslint-disable-next-line no-console
+    console.warn('Uploadcare media library is not yet supported in Sveltia CMS.');
+  }
 };
 
 /**
