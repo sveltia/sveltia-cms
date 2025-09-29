@@ -151,9 +151,7 @@ As we continue to add more features, we hope that our product will eventually be
 
 ## Project Status
 
-<!-- prettier-ignore -->
-> [!NOTE]
-> Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
+Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
@@ -1880,7 +1878,9 @@ While we don’t have dedicated developer/user support resources, you can post [
 
 Join us on [Discord](https://discord.gg/5hwCGqup5b) or ping us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for a casual chat.
 
-As described throughout this README, Sveltia CMS is being built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are moving from the other product. We are happy to help you migrate, but **we cannot help you set up Sveltia CMS from scratch** through our free support channels.
+<!-- prettier-ignore -->
+> [!IMPORTANT]
+> As described throughout this README, Sveltia CMS is being built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are moving from the other product. We are happy to help you migrate, but **we cannot help you set up Sveltia CMS from scratch** through our free support channels.
 
 Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out!
 
