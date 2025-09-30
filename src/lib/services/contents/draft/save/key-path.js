@@ -58,10 +58,9 @@ const parseField = ({ field, keyPath, keyPathList }) => {
         keyPathList.push(`${keyPath}.*`);
       }
     }
-  }
-
-  if (widget && MULTI_VALUE_WIDGETS.includes(widget)) {
-    keyPathList.push(isFieldMultiple(field) ? `${keyPath}.*` : keyPath);
+  } else if (widget && MULTI_VALUE_WIDGETS.includes(widget) && isFieldMultiple(field)) {
+    // Only add wildcard path for multi-value widgets that aren't list/object
+    keyPathList.push(`${keyPath}.*`);
   }
 };
 

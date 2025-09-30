@@ -45,7 +45,7 @@ export const createEntryPath = ({ draft, locale, slug }) => {
    * Support folder collections path.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
    */
-  const path = isIndexFile
+  let path = isIndexFile
     ? /** @type {string} */ (getIndexFile(entryCollection)?.name)
     : subPath
       ? fillTemplate(subPath, {
@@ -55,6 +55,11 @@ export const createEntryPath = ({ draft, locale, slug }) => {
           currentSlug: slug,
         })
       : slug;
+
+  // Remove extension from index file name if it already has one
+  if (isIndexFile && path?.endsWith(`.${extension}`)) {
+    path = path.slice(0, -extension.length - 1);
+  }
 
   const pathOptions = {
     multiple_folders: `${basePath}/${locale}/${path}.${extension}`,

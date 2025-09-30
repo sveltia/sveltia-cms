@@ -1,15 +1,42 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { copyProperty, isValueEmpty } from '$lib/services/contents/draft/save/serialize';
+import {
+  copyProperty,
+  isValueEmpty,
+  serializeContent,
+} from '$lib/services/contents/draft/save/serialize';
 
 vi.mock('$lib/services/assets');
+vi.mock('$lib/services/config', () => ({
+  siteConfig: { subscribe: vi.fn((callback) => callback({})) },
+}));
+vi.mock('$lib/services/contents/draft/save/key-path', () => ({
+  createKeyPathList: vi.fn((fields) => fields.map((/** @type {any} */ f) => f.name)),
+}));
+vi.mock('$lib/services/contents/widgets/list/helper', () => ({
+  hasRootListField: vi.fn((fields) => fields.length === 1 && fields[0].widget === 'list'),
+}));
+vi.mock('svelte/store', async () => {
+  const actual = await vi.importActual('svelte/store');
 
-const { isFieldRequired } = vi.hoisted(() => ({
+  return {
+    ...actual,
+    get: vi.fn(() => ({})),
+  };
+});
+
+const { isFieldRequired, getField } = vi.hoisted(() => ({
   isFieldRequired: vi.fn(),
+  getField: vi.fn((args) => {
+    const { keyPath } = args;
+
+    return { name: keyPath, widget: 'string' };
+  }),
 }));
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   isFieldRequired,
+  getField,
 }));
 
 /**
@@ -619,5 +646,220 @@ describe('Test isValueEmpty()', () => {
     // And confirming that false and 0 are NOT empty (as mentioned in the comment)
     expect(isValueEmpty(false)).toBe(false);
     expect(isValueEmpty(0)).toBe(false);
+  });
+});
+
+describe('Test serializeContent()', () => {
+  test('serializes content with standard fields', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: 'slug' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'body', widget: 'markdown' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      title: 'Test Post',
+      body: 'Content here',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(result).toEqual({
+      title: 'Test Post',
+      body: 'Content here',
+    });
+  });
+
+  test('serializes content with root list field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'tags',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [
+        {
+          name: 'tags',
+          widget: 'list',
+          fields: [{ name: 'name', widget: 'string' }],
+        },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      'tags.0.name': 'JavaScript',
+      'tags.1.name': 'TypeScript',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    // When there's a root list field, should return the array directly
+    expect(result).toEqual([{ name: 'JavaScript' }, { name: 'TypeScript' }]);
+  });
+
+  test('serializes content with TOML format', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'toml' },
+        _i18n: {
+          canonicalSlug: { key: 'slug' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'date', widget: 'datetime' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      title: 'Test Post',
+      date: '2023-01-15T10:30:00Z',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(result).toHaveProperty('title', 'Test Post');
+    expect(result).toHaveProperty('date');
+  });
+
+  test('serializes content with collectionFile', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'settings',
+      collectionFile: {
+        name: 'general',
+        _file: { format: 'yaml' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [
+        { name: 'siteName', widget: 'string' },
+        { name: 'description', widget: 'text' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      siteName: 'My Site',
+      description: 'A great website',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(result).toEqual({
+      siteName: 'My Site',
+      description: 'A great website',
+    });
+  });
+
+  test('serializes content with index file', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'yaml' },
+        _i18n: {
+          canonicalSlug: { key: 'slug' },
+        },
+      },
+      fields: [{ name: 'title', widget: 'string' }],
+      isIndexFile: true,
+    };
+
+    const valueMap = {
+      title: 'Index Post',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(result).toEqual({
+      title: 'Index Post',
+    });
+  });
+
+  test('handles empty root list field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'tags',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [
+        {
+          name: 'tags',
+          widget: 'list',
+          fields: [{ name: 'name', widget: 'string' }],
+        },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {};
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    // Should return empty array for root list field with no content
+    expect(result).toEqual([]);
+  });
+
+  test('serializes content with nested objects', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: 'slug' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        {
+          name: 'author',
+          widget: 'object',
+          fields: [
+            { name: 'name', widget: 'string' },
+            { name: 'email', widget: 'string' },
+          ],
+        },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      title: 'Test Post',
+      'author.name': 'John Doe',
+      'author.email': 'john@example.com',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(result).toEqual({
+      title: 'Test Post',
+      author: {
+        name: 'John Doe',
+        email: 'john@example.com',
+      },
+    });
   });
 });
