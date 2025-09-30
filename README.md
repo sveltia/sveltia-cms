@@ -1624,6 +1624,7 @@ output:
   yaml:
     quote: none # or single or double
     indent_size: 2
+    indent_sequences: true # false for compact style
 ```
 
 ### Understanding exceptions in data output
