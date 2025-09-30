@@ -431,7 +431,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
 - The Preview Pane displays all fields, including each label, making it easier to see which fields are populated.
 - Entering a long value into a field will not cause the field label to disappear.[^254]
 - Clicking a field in the Preview Pane focuses the corresponding field in the Edit Pane.[^41] It automatically expands when collapsed.
-  - This is equivalent to the (misleading) visual editing feature introduced in [Decap CMS 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option. We don’t plan to support this option because it’s confusing, unnecessary and undocumented.
+  - This is equivalent to the (misleading) visual editing feature introduced in [Decap CMS 3.6.0](https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.6.0), but our click-to-highlight feature is enabled by default; you don’t need to opt in with the `editor.visualEditing` collection option. We don’t plan to support this option because it’s confusing, unnecessary and undocumented. (Plus, why camel case?)
 - The Preview Pane doesn’t cause a scrolling issue.[^136]
 - The Preview Pane doesn’t crash with a Minified React error.[^186]
 - Provides better scroll synchronization between the panes when editing or previewing an entry.[^92]
@@ -511,7 +511,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Code in a code block in the editor can be copied as expected.[^165]
   - Language-annotated code block doesn’t trigger unsaved changes.[^189]
   - Soft line breaks are [rendered as hard line breaks](#rendering-soft-line-breaks-as-hard-line-breaks-in-markdown) in the Preview Pane.
-  - Uploaded images will not disappear while editing an entry.[^278]
+  - Uploaded images will not disappear while editing an entry.[^278][^294]
 - Number
   - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
 - Object
@@ -2580,7 +2580,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^277]: Netlify/Decap CMS [#86](https://github.com/decaporg/decap-cms/issues/86)
 
-[^278]: Netlify/Decap CMS [#7575](https://github.com/decaporg/decap-cms/issues/7575), [#7576](https://github.com/decaporg/decap-cms/issues/7576), [#7587](https://github.com/decaporg/decap-cms/issues/7587)
+[^278]: Netlify/Decap CMS [#7575](https://github.com/decaporg/decap-cms/issues/7575)
 
 [^279]: Netlify/Decap CMS [#1390](https://github.com/decaporg/decap-cms/issues/1390), [#4912](https://github.com/decaporg/decap-cms/issues/4912), [#6986](https://github.com/decaporg/decap-cms/issues/6986)
 
@@ -2611,3 +2611,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^292]: Netlify/Decap CMS [7518](https://github.com/decaporg/decap-cms/issues/7518)
 
 [^293]: Netlify/Decap CMS [7616](https://github.com/decaporg/decap-cms/issues/7616)
+
+[^294]: Netlify/Decap CMS [#7576](https://github.com/decaporg/decap-cms/issues/7576), [#7587](https://github.com/decaporg/decap-cms/issues/7587)
