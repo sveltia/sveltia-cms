@@ -273,7 +273,8 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }
  * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByPath = ({ value, entry, collectionName, fileName }) => {
-  const path = decodeFilePath(value);
+  // Remove potential fragment before decoding
+  const path = decodeFilePath(value.split('#')[0]);
 
   // Handle a relative path. A path starting with `@`, like `@assets/images/...` is a special case,
   // considered as an absolute path.

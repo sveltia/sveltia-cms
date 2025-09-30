@@ -239,6 +239,11 @@ describe('assets/index', () => {
   });
 
   describe('getAssetByPath', () => {
+    /**
+     * @type {import('vitest').MockedFunction<typeof
+     * import('$lib/services/utils/file').decodeFilePath
+     * >}
+     */
     let decodeFilePathMock;
 
     beforeEach(async () => {
@@ -341,6 +346,126 @@ describe('assets/index', () => {
       });
 
       expect(result).toBeUndefined();
+    });
+
+    it('should remove URL fragments before processing path', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const stripSlashesMock = vi.mocked(stripSlashes);
+
+      stripSlashesMock.mockReturnValue('/assets/image.jpg');
+
+      const mockAsset = {
+        path: '/assets/image.jpg',
+        name: 'image.jpg',
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        sha: 'abc123',
+        size: 1024,
+        folder: {
+          internalPath: 'assets',
+          publicPath: '/assets',
+          collectionName: undefined,
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByPath({
+        value: '/assets/image.jpg#fragment',
+        collectionName: 'posts',
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(decodeFilePathMock).toHaveBeenCalledWith('/assets/image.jpg');
+      expect(stripSlashesMock).toHaveBeenCalledWith('/assets/image.jpg');
+    });
+
+    it('should remove URL fragments with complex hashes', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const stripSlashesMock = vi.mocked(stripSlashes);
+
+      stripSlashesMock.mockReturnValue('/assets/image.jpg');
+
+      const mockAsset = {
+        path: '/assets/image.jpg',
+        name: 'image.jpg',
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        sha: 'abc123',
+        size: 1024,
+        folder: {
+          internalPath: 'assets',
+          publicPath: '/assets',
+          collectionName: undefined,
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByPath({
+        value: '/assets/image.jpg#section:subsection',
+        collectionName: 'posts',
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(decodeFilePathMock).toHaveBeenCalledWith('/assets/image.jpg');
+    });
+
+    it('should handle relative paths with fragments', async () => {
+      const { resolvePath } = await import('$lib/services/utils/file');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+      const resolvePathMock = vi.mocked(resolvePath);
+      const getAssociatedCollectionsMock = vi.mocked(getAssociatedCollections);
+      const getCollectionFilesByEntryMock = vi.mocked(getCollectionFilesByEntry);
+
+      const mockEntry = /** @type {any} */ ({
+        slug: 'test-post',
+        id: 'test-post',
+        subPath: 'test-post.md',
+        locales: {
+          en: {
+            path: 'content/posts/test-post.md',
+            content: { title: 'Test Post' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      const mockAsset = {
+        path: 'content/posts/image.jpg',
+        name: 'image.jpg',
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        sha: 'abc123',
+        size: 1024,
+        folder: {
+          internalPath: 'content/posts',
+          publicPath: '/posts',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      allAssets.set([mockAsset]);
+      resolvePathMock.mockReturnValue('content/posts/image.jpg');
+      getAssociatedCollectionsMock.mockReturnValue([mockCollection]);
+      getCollectionFilesByEntryMock.mockReturnValue([]);
+
+      const result = getAssetByPath({
+        value: 'image.jpg#anchor',
+        entry: mockEntry,
+        collectionName: 'posts',
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(decodeFilePathMock).toHaveBeenCalledWith('image.jpg');
     });
 
     it('should handle @ prefixed paths as absolute', async () => {
