@@ -53,11 +53,12 @@ export const formatYAML = (
   options = get(siteConfig)?.output?.yaml ?? {},
   legacyOptions = {},
 ) => {
-  const { indent_size: indent = 2, quote = 'none' } = options;
+  const { indent_size: indent = 2, indent_sequences: indentSeq = true, quote = 'none' } = options;
   const { quote: legacyQuote = false } = legacyOptions;
 
   return stringifyYAML(obj, null, {
     indent,
+    indentSeq,
     lineWidth: 0,
     defaultKeyType: 'PLAIN',
     defaultStringType:

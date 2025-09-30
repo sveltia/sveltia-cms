@@ -194,6 +194,35 @@ image:
 `.trim(),
     );
   });
+
+  test('indent_sequences', () => {
+    expect(formatYAML(object, { indent_sequences: true })).toBe(
+      `
+title: My Post
+published: true
+options:
+  - 1
+  - 2
+  - 3
+image:
+  alt: flower
+  src: flower.jpg
+`.trim(),
+    );
+    expect(formatYAML(object, { indent_sequences: false })).toBe(
+      `
+title: My Post
+published: true
+options:
+- 1
+- 2
+- 3
+image:
+  alt: flower
+  src: flower.jpg
+`.trim(),
+    );
+  });
 });
 
 describe('Test formatFrontMatter()', () => {

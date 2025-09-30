@@ -1252,9 +1252,11 @@
  * YAML format options.
  * @typedef {object} YamlFormatOptions
  * @property {number} [indent_size] Indent size. Default: `2`.
+ * @property {boolean} [indent_sequences] Whether to indent block sequences. Default: `true`.
  * @property {'none' | 'single' | 'double'} [quote] String value’s default quote type. Default:
  * 'none'.
  * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
+ * @see https://eemeli.org/yaml/#tostring-options
  */
 
 /**
