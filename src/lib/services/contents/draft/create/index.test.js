@@ -27,48 +27,29 @@ vi.mock('$lib/services/contents/draft/defaults', () => ({
   getDefaultValues: vi.fn(),
 }));
 
-describe('contents/draft/create/index', () => {
-  /** @type {any} */
-  let mockEntryDraftSet;
-  /** @type {any} */
-  let mockGetIndexFile;
-  /** @type {any} */
-  let mockIsCollectionIndexFile;
-  /** @type {any} */
-  let mockRestoreBackupIfNeeded;
-  /** @type {any} */
-  let mockCreateProxy;
-  /** @type {any} */
-  let mockGetDefaultValues;
+// Import mocked modules once at the top level
+const { getIndexFile, isCollectionIndexFile } = await import(
+  '$lib/services/contents/collection/index-file'
+);
 
-  beforeEach(async () => {
+const { entryDraft } = await import('$lib/services/contents/draft');
+const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/backup');
+const { createProxy } = await import('$lib/services/contents/draft/create/proxy');
+const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
+const { siteConfig } = await import('$lib/services/config');
+const { createDraft } = await import('./index.js');
+
+describe('contents/draft/create/index', () => {
+  beforeEach(() => {
     vi.clearAllMocks();
 
-    // Import mocked modules
-    const { getIndexFile, isCollectionIndexFile } = await import(
-      '$lib/services/contents/collection/index-file'
-    );
-
-    const { entryDraft } = await import('$lib/services/contents/draft');
-    const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/backup');
-    const { createProxy } = await import('$lib/services/contents/draft/create/proxy');
-    const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
-    const { siteConfig } = await import('$lib/services/config');
-
-    mockEntryDraftSet = entryDraft.set;
-    mockGetIndexFile = getIndexFile;
-    mockIsCollectionIndexFile = isCollectionIndexFile;
-    mockRestoreBackupIfNeeded = restoreBackupIfNeeded;
-    mockCreateProxy = createProxy;
-    mockGetDefaultValues = getDefaultValues;
-
     // Setup default mocks
-    mockIsCollectionIndexFile.mockReturnValue(false);
-    mockGetIndexFile.mockReturnValue(undefined);
-    mockCreateProxy.mockImplementation((/** @type {any} */ args) => args.target);
-    mockGetDefaultValues.mockReturnValue({});
+    isCollectionIndexFile.mockReturnValue(false);
+    getIndexFile.mockReturnValue(undefined);
+    createProxy.mockImplementation((args) => args.target);
+    getDefaultValues.mockReturnValue({});
 
-    siteConfig.subscribe.mockImplementation((/** @type {any} */ callback) => {
+    siteConfig.subscribe.mockImplementation((callback) => {
       callback({ editor: { preview: true } });
 
       return vi.fn();
@@ -76,10 +57,7 @@ describe('contents/draft/create/index', () => {
   });
 
   describe('createDraft', () => {
-    it('should create a new entry draft', async () => {
-      const { createDraft } = await import('./index.js');
-
-      /** @type {any} */
+    it('should create a new entry draft', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -97,7 +75,7 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           collectionName: 'posts',
           isNew: true,
@@ -112,9 +90,7 @@ describe('contents/draft/create/index', () => {
       );
     });
 
-    it('should create draft for existing entry', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should create draft for existing entry', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -144,7 +120,7 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection, originalEntry });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           collectionName: 'posts',
           isNew: false,
@@ -157,9 +133,7 @@ describe('contents/draft/create/index', () => {
       );
     });
 
-    it('should handle file collection', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should handle file collection', () => {
       const collection = {
         name: 'pages',
         _type: 'file',
@@ -185,7 +159,7 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection, collectionFile });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           collectionName: 'pages',
           fileName: 'about',
@@ -194,9 +168,7 @@ describe('contents/draft/create/index', () => {
       );
     });
 
-    it('should set canPreview from collection config', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should set canPreview from collection config', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -212,16 +184,14 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           canPreview: false,
         }),
       );
     });
 
-    it('should set canPreview from collectionFile config', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should set canPreview from collectionFile config', () => {
       const collection = {
         name: 'pages',
         _type: 'file',
@@ -248,16 +218,14 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection, collectionFile });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           canPreview: false,
         }),
       );
     });
 
-    it('should use initial locales for new entry', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should use initial locales for new entry', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -272,7 +240,7 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           originalLocales: { en: true, fr: true, ja: false },
           currentLocales: { en: true, fr: true, ja: false },
@@ -280,9 +248,7 @@ describe('contents/draft/create/index', () => {
       );
     });
 
-    it('should create proxies for currentValues', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should create proxies for currentValues', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -297,7 +263,7 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection });
 
-      expect(mockCreateProxy).toHaveBeenCalledWith(
+      expect(createProxy).toHaveBeenCalledWith(
         expect.objectContaining({
           draft: { collectionName: 'posts', fileName: undefined, isIndexFile: false },
           locale: 'en',
@@ -305,9 +271,7 @@ describe('contents/draft/create/index', () => {
       );
     });
 
-    it('should handle dynamic default values', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should handle dynamic default values', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -324,12 +288,10 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection, dynamicValues });
 
-      expect(mockGetDefaultValues).toHaveBeenCalledWith(collection.fields, 'en', dynamicValues);
+      expect(getDefaultValues).toHaveBeenCalledWith(collection.fields, 'en', dynamicValues);
     });
 
-    it('should set slugEditor for entry collection with {{fields._slug}} template', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should set slugEditor for entry collection with {{fields._slug}} template', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -346,16 +308,14 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           slugEditor: { en: true, ja: 'readonly' },
         }),
       );
     });
 
-    it('should set slugEditor for localized slug template', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should set slugEditor for localized slug template', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -372,16 +332,14 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           slugEditor: { en: true, ja: true },
         }),
       );
     });
 
-    it('should disable slugEditor for existing entries', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should disable slugEditor for existing entries', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -404,16 +362,14 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection, originalEntry });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           slugEditor: { en: false },
         }),
       );
     });
 
-    it('should disable slugEditor for file collections', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should disable slugEditor for file collections', () => {
       const collection = {
         name: 'pages',
         _type: 'file',
@@ -439,16 +395,14 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection, collectionFile });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           slugEditor: { en: false },
         }),
       );
     });
 
-    it('should handle index file', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should handle index file', () => {
       const collection = {
         name: 'docs',
         _type: 'entry',
@@ -466,11 +420,11 @@ describe('contents/draft/create/index', () => {
         editor: { preview: false },
       };
 
-      mockGetIndexFile.mockReturnValue(indexFile);
+      getIndexFile.mockReturnValue(indexFile);
 
       createDraft({ collection, isIndexFile: true });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           isIndexFile: true,
           fields: indexFile.fields,
@@ -479,9 +433,7 @@ describe('contents/draft/create/index', () => {
       );
     });
 
-    it('should restore backup if needed', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should restore backup if needed', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -504,16 +456,14 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection, originalEntry });
 
-      expect(mockRestoreBackupIfNeeded).toHaveBeenCalledWith({
+      expect(restoreBackupIfNeeded).toHaveBeenCalledWith({
         collectionName: 'posts',
         fileName: undefined,
         slug: 'test-slug',
       });
     });
 
-    it('should handle expander states', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should handle expander states', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -530,16 +480,14 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection, expanderStates });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           expanderStates,
         }),
       );
     });
 
-    it('should use default expander states when not provided', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should use default expander states when not provided', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -554,16 +502,14 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           expanderStates: { _: {} },
         }),
       );
     });
 
-    it('should handle non-canonical slug entries', async () => {
-      const { createDraft } = await import('./index.js');
-
+    it('should handle non-canonical slug entries', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -581,7 +527,7 @@ describe('contents/draft/create/index', () => {
         slug: 'test-post',
         locales: {
           en: {
-            content: { title: 'Test Post' }, // No translationKey
+            content: { title: 'Test Post' },
             slug: 'test-post',
           },
         },
@@ -589,7 +535,7 @@ describe('contents/draft/create/index', () => {
 
       createDraft({ collection, originalEntry });
 
-      expect(mockEntryDraftSet).toHaveBeenCalledWith(
+      expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           originalSlugs: { _: 'test-post' },
           currentSlugs: { _: 'test-post' },
