@@ -645,7 +645,6 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 - Comprehensive site config validation
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
-- LineString and Polygon types for the [Map](https://decapcms.org/docs/widgets/#map) widget
 - Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent)
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
