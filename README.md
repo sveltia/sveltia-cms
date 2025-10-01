@@ -495,7 +495,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 - Map
   - A search bar enables users to quickly locate a specific place on the map.[^252]
   - With the [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), users can get their current location with one click.
-  - The value can be cleared if the field is optional.
+  - The value can be cleared by clicking the Clear button.
   - The map’s zoom level is adjusted more intuitively using pinch gestures.
   - The map looks good in dark mode.
 - Markdown
