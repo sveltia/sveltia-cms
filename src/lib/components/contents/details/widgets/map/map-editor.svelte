@@ -17,6 +17,9 @@
   import { sendRequest } from '$lib/services/utils/networking';
   import { toFixed } from '$lib/services/utils/number';
 
+  // @todo Copy minimal styles from Leaflet to avoid loading the whole CSS file
+  import 'leaflet/dist/leaflet.css';
+
   /**
    * @import { GeoJSONStoreGeometries, TerraDraw } from 'terra-draw';
    * @import { GeoCoordinates, WidgetEditorProps } from '$lib/types/private';
@@ -425,9 +428,6 @@
 </AlertDialog>
 
 <style lang="scss">
-  // @todo Copy minimal styles from Leaflet to avoid loading the whole CSS file
-  @import 'node_modules/leaflet/dist/leaflet.css';
-
   .toolbar {
     display: flex;
     align-items: center;

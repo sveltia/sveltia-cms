@@ -9,6 +9,9 @@
 
   import { getUnpkgURL, loadModule } from '$lib/services/app/dependencies';
 
+  // @todo Copy minimal styles from Leaflet to avoid loading the whole CSS file
+  import 'leaflet/dist/leaflet.css';
+
   /**
    * @import { GeoCoordinates } from '$lib/types/private';
    */
@@ -83,9 +86,6 @@
 ></div>
 
 <style lang="scss">
-  // @todo Copy minimal styles from Leaflet to avoid loading the whole CSS file
-  @import 'node_modules/leaflet/dist/leaflet.css';
-
   .map {
     margin: var(--sui-focus-ring-width);
     border: 1px solid var(--sui-textbox-border-color);
