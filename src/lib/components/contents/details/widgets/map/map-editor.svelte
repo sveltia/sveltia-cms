@@ -52,7 +52,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { required = true, decimals = 7, type: geometryType = 'Point' } = $derived(fieldConfig);
+  const { decimals = 7, type: geometryType = 'Point' } = $derived(fieldConfig);
   const drawMode = $derived(geometryType.toLowerCase());
 
   /** @type {HTMLElement | undefined} */
@@ -90,16 +90,6 @@
     /** @type {import('leaflet')} */
     const leaflet = await loadModule('leaflet', 'dist/leaflet-src.esm.js');
 
-    /** @type {import('terra-draw')} */
-    const { TerraDraw, TerraDrawLineStringMode, TerraDrawPointMode, TerraDrawPolygonMode } =
-      await loadModule('terra-draw', 'dist/terra-draw.module.js');
-
-    /** @type {import('terra-draw-leaflet-adapter')} */
-    const { TerraDrawLeafletAdapter } = await loadModule(
-      'terra-draw-leaflet-adapter',
-      'dist/terra-draw-leaflet-adapter.module.js?module',
-    );
-
     map = leaflet.map(mapElement, { center: [0, 0], zoom: 2 });
 
     leaflet
@@ -118,9 +108,26 @@
       map?.invalidateSize();
     }).observe(mapElement);
 
+    /** @type {import('terra-draw')} */
+    const { TerraDraw, TerraDrawLineStringMode, TerraDrawPointMode, TerraDrawPolygonMode } =
+      await loadModule('terra-draw', 'dist/terra-draw.module.js');
+
+    /** @type {import('terra-draw-leaflet-adapter')} */
+    const { TerraDrawLeafletAdapter } = await loadModule(
+      'terra-draw-leaflet-adapter',
+      'dist/terra-draw-leaflet-adapter.module.js?module',
+    );
+
+    /** @type {Record<string, any>} */
+    const constructors = {
+      Point: TerraDrawPointMode,
+      LineString: TerraDrawLineStringMode,
+      Polygon: TerraDrawPolygonMode,
+    };
+
     const _draw = new TerraDraw({
       adapter: new TerraDrawLeafletAdapter({ lib: leaflet, map }),
-      modes: [new TerraDrawPointMode(), new TerraDrawLineStringMode(), new TerraDrawPolygonMode()],
+      modes: [new constructors[geometryType]()],
     });
 
     _draw.start();
@@ -144,33 +151,29 @@
       return;
     }
 
-    if (changeType === 'create') {
-      const snapshot = draw.getSnapshot();
-      const feature = snapshot.findLast((f) => f.geometry.type === geometryType);
+    const snapshot = draw.getSnapshot();
+    const feature = snapshot[snapshot.length - 1];
 
-      if (!feature) {
-        return;
-      }
+    if (!feature || changeType !== (geometryType === 'Point' ? 'create' : 'delete')) {
+      return;
+    }
 
-      const { type, coordinates } = feature.geometry;
+    inputValue = JSON.stringify({
+      type: geometryType,
+      coordinates: feature.geometry.coordinates.map((coords) =>
+        Array.isArray(coords)
+          ? coords.map((c) =>
+              Array.isArray(c) ? c.map((cc) => toFixed(cc, decimals)) : toFixed(c, decimals),
+            )
+          : toFixed(coords, decimals),
+      ),
+    });
 
-      inputValue = JSON.stringify({
-        type,
-        coordinates: coordinates.map((coords) =>
-          Array.isArray(coords)
-            ? coords.map((c) =>
-                Array.isArray(c) ? c.map((cc) => toFixed(cc, decimals)) : toFixed(c, decimals),
-              )
-            : toFixed(coords, decimals),
-        ),
-      });
-
-      // Allow to have only one feature
-      if (geometryType === 'Point') {
-        draw.removeFeatures(
-          /** @type {string[]} */ (snapshot.filter((f) => f.id !== feature.id).map((f) => f.id)),
-        );
-      }
+    // Allow to have only one feature
+    if (snapshot.length > 1) {
+      draw.removeFeatures(
+        snapshot.filter((f) => f.id !== feature.id).map((f) => /** @type {string} */ (f.id)),
+      );
     }
   };
 
@@ -280,13 +283,17 @@
     latitude = toFixed(latitude, decimals);
     longitude = toFixed(longitude, decimals);
 
+    map?.setView([latitude, longitude], 15);
+
+    if (geometryType !== 'Point') {
+      return;
+    }
+
     /** @type {GeoJSONStoreGeometries} */
     const feature = { type: 'Point', coordinates: [longitude, latitude] };
 
     draw.clear();
     draw.addFeatures([{ type: 'Feature', geometry: feature, properties: { mode: 'point' } }]);
-    map?.setView([latitude, longitude], 15);
-
     inputValue = JSON.stringify(feature);
   };
 
@@ -365,63 +372,56 @@
   });
 </script>
 
-<!-- @todo Support LineString and Polygon types -->
-{#if geometryType === 'Point'}
-  <div role="none" class="toolbar">
-    <!-- @todo Replace this with `<Combobox>` -->
-    <SearchBar bind:value={searchQuery} {readonly} flex placeholder={$_('find_place')} />
-    <!-- @todo Replace `title` with a native tooltip -->
-    <Button
-      variant="tertiary"
-      iconic
-      title={$_('use_your_location')}
-      aria-label={$_('use_your_location')}
-      disabled={readonly}
-      onclick={() => {
-        useCurrentLocation();
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name="near_me" />
-      {/snippet}
-    </Button>
-    {#if !required}
-      <Button
-        variant="tertiary"
-        label={$_('clear')}
-        disabled={readonly || !currentValue}
-        onclick={() => {
-          clearValue();
-        }}
-      />
-    {/if}
-  </div>
+<div role="none" class="toolbar">
+  <!-- @todo Replace this with `<Combobox>` -->
+  <SearchBar bind:value={searchQuery} {readonly} flex placeholder={$_('find_place')} />
+  <!-- @todo Replace `title` with a native tooltip -->
+  <Button
+    variant="tertiary"
+    iconic
+    title={$_('use_your_location')}
+    aria-label={$_('use_your_location')}
+    disabled={readonly}
+    onclick={() => {
+      useCurrentLocation();
+    }}
+  >
+    {#snippet startIcon()}
+      <Icon name="near_me" />
+    {/snippet}
+  </Button>
+  <Button
+    variant="tertiary"
+    label={$_('clear')}
+    disabled={readonly || !currentValue}
+    onclick={() => {
+      clearValue();
+    }}
+  />
+</div>
 
-  {#if searching}
-    <div role="alert" class="search-result searching">{$_('searching')}</div>
-  {:else if searchQuery}
-    {#if searchResults}
-      {#if searchResults.length}
-        <Listbox aria-label={$_('search_results')}>
-          {#each searchResults as result (result.place_id)}
-            <Option
-              label={result.display_name}
-              onSelect={() => {
-                onSearchResultSelect(result);
-              }}
-            />
-          {/each}
-        </Listbox>
-      {:else}
-        <div role="alert" class="search-result no-result">{$_('no_results')}</div>
-      {/if}
+{#if searching}
+  <div role="alert" class="search-result searching">{$_('searching')}</div>
+{:else if searchQuery}
+  {#if searchResults}
+    {#if searchResults.length}
+      <Listbox aria-label={$_('search_results')}>
+        {#each searchResults as result (result.place_id)}
+          <Option
+            label={result.display_name}
+            onSelect={() => {
+              onSearchResultSelect(result);
+            }}
+          />
+        {/each}
+      </Listbox>
+    {:else}
+      <div role="alert" class="search-result no-result">{$_('no_results')}</div>
     {/if}
   {/if}
-
-  <div role="application" class="map" inert={readonly} class:invalid bind:this={mapElement}></div>
-{:else}
-  The {geometryType} type is not yet supported.
 {/if}
+
+<div role="application" class="map" inert={readonly} class:invalid bind:this={mapElement}></div>
 
 <AlertDialog bind:open={showAlertDialog} title={$_('geolocation_error_title')}>
   {errorMessage}
