@@ -5,6 +5,7 @@ import {
   fieldConfigCacheMap,
   getField,
   getFieldDisplayValue,
+  getPropertyValue,
   getVisibleFieldDisplayValue,
   isFieldMultiple,
   isFieldRequired,
@@ -2376,5 +2377,132 @@ describe('Test getVisibleFieldDisplayValue()', () => {
 
     // When field config is not found, the function should return empty string
     expect(result).toBe('');
+  });
+});
+
+describe('Test getPropertyValue()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('should return slug when key is "slug"', () => {
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      slug: 'my-post',
+      locales: { en: { content: {} } },
+    };
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'slug',
+    });
+
+    expect(result).toBe('my-post');
+  });
+
+  test('should return commit author name when key is "commit_author"', () => {
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: { en: { content: {} } },
+      commitAuthor: { name: 'Jane Smith', login: 'jane', email: 'jane@example.com' },
+    };
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'commit_author',
+    });
+
+    expect(result).toBe('Jane Smith');
+  });
+
+  test('should return commit date when key is "commit_date"', () => {
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: { en: { content: {} } },
+      commitDate: '2024-01-01T00:00:00Z',
+    };
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'commit_date',
+    });
+
+    expect(result).toBe('2024-01-01T00:00:00Z');
+  });
+
+  test('should return field value from content', () => {
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: {
+        en: {
+          content: { title: 'My Post' },
+        },
+      },
+    };
+
+    // @ts-ignore - Testing with minimal mock
+    mockGetCollection.mockReturnValue({
+      _type: 'entry',
+      fields: [{ name: 'title', widget: 'string' }],
+    });
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'title',
+    });
+
+    expect(result).toBe('My Post');
+  });
+
+  test('should return undefined when locale content is not available', () => {
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: {
+        en: { content: { title: 'My Post' } },
+      },
+    };
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'fr',
+      collectionName: 'posts',
+      key: 'title',
+    });
+
+    expect(result).toBe(undefined);
+  });
+
+  test('should return undefined when collection is not found', () => {
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: {
+        en: { content: { title: 'My Post' } },
+      },
+    };
+
+    mockGetCollection.mockReturnValue(undefined);
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'unknown',
+      key: 'title',
+    });
+
+    expect(result).toBe(undefined);
   });
 });

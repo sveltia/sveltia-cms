@@ -305,4 +305,239 @@ describe('editor/expanders', () => {
       expect(mockUpdate).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('getInitialExpanderState - auto collapsed behavior', () => {
+    it('should handle collapsed auto with values', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.currentValues = {
+        en: {
+          'details.title': 'Test',
+          'details.content': 'Content',
+        },
+      };
+
+      const result = getInitialExpanderState({
+        key: 'details#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('should handle collapsed auto without values', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.currentValues = {
+        en: {},
+      };
+
+      const result = getInitialExpanderState({
+        key: 'details#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('should use existing state if available', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: { 'test.0': true } };
+
+      const result = getInitialExpanderState({
+        key: 'test.0',
+        locale: 'en',
+        collapsed: false,
+      });
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when existing state is false', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: { 'test.0': false } };
+
+      const result = getInitialExpanderState({
+        key: 'test.0',
+        locale: 'en',
+        collapsed: true,
+      });
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getExpanderKeys - widget types', () => {
+    it('should handle object widget', () => {
+      vi.mocked(getField).mockReturnValue({
+        name: 'details',
+        widget: 'object',
+        fields: [],
+      });
+
+      const keys = getExpanderKeys({
+        collectionName: 'posts',
+        valueMap: {},
+        keyPath: 'details',
+      });
+
+      expect(Array.isArray(keys)).toBe(true);
+    });
+
+    it('should handle list widget', () => {
+      vi.mocked(getField).mockReturnValue({
+        name: 'items',
+        widget: 'list',
+        field: { name: 'item', widget: 'string' },
+      });
+
+      const keys = getExpanderKeys({
+        collectionName: 'posts',
+        valueMap: {},
+        keyPath: 'items.0',
+      });
+
+      expect(Array.isArray(keys)).toBe(true);
+    });
+
+    it('should handle nested paths with numbers', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'sections') {
+          return { name: 'sections', widget: 'list', field: { widget: 'object' } };
+        }
+
+        if (keyPath === 'sections.0') {
+          return { name: 'section', widget: 'object', fields: [] };
+        }
+
+        return undefined;
+      });
+
+      const keys = getExpanderKeys({
+        collectionName: 'pages',
+        valueMap: {},
+        keyPath: 'sections.0.title',
+      });
+
+      expect(Array.isArray(keys)).toBe(true);
+      expect(keys.length).toBeGreaterThan(0);
+    });
+
+    it('should handle parent object with fields', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'parent') {
+          return { name: 'parent', widget: 'object', fields: [] };
+        }
+
+        return { name: 'child', widget: 'string' };
+      });
+
+      const keys = getExpanderKeys({
+        collectionName: 'test',
+        valueMap: {},
+        keyPath: 'parent.child',
+      });
+
+      expect(Array.isArray(keys)).toBe(true);
+    });
+
+    it('should handle parent list with field', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'items') {
+          return { name: 'items', widget: 'list', field: { widget: 'string' } };
+        }
+
+        return undefined;
+      });
+
+      const keys = getExpanderKeys({
+        collectionName: 'test',
+        valueMap: {},
+        keyPath: 'items.0',
+      });
+
+      expect(Array.isArray(keys)).toBe(true);
+    });
+  });
+
+  describe('expandInvalidFields - validity handling', () => {
+    it('should handle invalid fields', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.validities = {
+        en: {
+          title: { valid: false },
+          content: { valid: true },
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'title',
+        widget: 'string',
+      });
+
+      expect(() => {
+        expandInvalidFields({
+          collectionName: 'posts',
+          currentValues: { en: { title: '', content: 'test' } },
+        });
+      }).not.toThrow();
+    });
+
+    it('should handle multiple locales with validities', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.validities = {
+        en: {
+          field1: { valid: false },
+        },
+        ja: {
+          field2: { valid: false },
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'field',
+        widget: 'string',
+      });
+
+      expect(() => {
+        expandInvalidFields({
+          collectionName: 'posts',
+          currentValues: {
+            en: { field1: '' },
+            ja: { field2: '' },
+          },
+        });
+      }).not.toThrow();
+    });
+
+    it('should skip valid fields', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.validities = {
+        en: {
+          field1: { valid: true },
+          field2: { valid: true },
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'field',
+        widget: 'string',
+      });
+
+      expandInvalidFields({
+        collectionName: 'posts',
+        currentValues: { en: { field1: 'a', field2: 'b' } },
+      });
+
+      // Should still call update even if no invalid fields
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
+  });
 });

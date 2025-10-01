@@ -1,10 +1,55 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { scanEntry, searchEntries } from './entries';
 
 /**
  * @import { Entry } from '$lib/types/private';
  */
+
+// Mock the dependencies
+vi.mock('$lib/services/contents/collection/files', () => ({
+  getCollectionFilesByEntry: vi.fn(() => [
+    { name: 'test-file', label: 'Test File' },
+    { name: 'data-file', label: 'Data File' },
+  ]),
+}));
+
+vi.mock('$lib/services/contents/entry', () => ({
+  getAssociatedCollections: vi.fn((entry) => {
+    // Return empty array for entries without mock collections
+    if (entry.id.startsWith('no-collection')) {
+      return [];
+    }
+
+    // Return mock collections for other entries
+    return [
+      {
+        name: entry.collectionName || 'blog',
+        label: 'Blog Posts',
+      },
+    ];
+  }),
+}));
+
+vi.mock('$lib/services/contents/entry/summary', () => ({
+  getEntrySummary: vi.fn((collection, entry) => {
+    // Return a mock summary based on entry content
+    const content = entry.locales[entry.currentLocaleKey]?.content;
+
+    return content?.title || 'Mock Entry Summary';
+  }),
+}));
+
+vi.mock('$lib/services/search/util', () => ({
+  hasMatch: vi.fn(({ value, terms }) => {
+    // Simple case-insensitive substring match
+    const normalizedValue = String(value).toLowerCase();
+    const normalizedTerms = String(terms).toLowerCase();
+
+    return normalizedValue.includes(normalizedTerms);
+  }),
+  normalize: vi.fn((text) => String(text).toLowerCase().trim()),
+}));
 
 describe('searchEntries basic functionality', () => {
   /**
@@ -223,5 +268,127 @@ describe('searchEntries basic functionality', () => {
 
     expect(typeof points).toBe('number');
     expect(points).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should award points for collection label matches', () => {
+    const entry = createEntry('blog-post', {
+      title: 'My Blog Post',
+      description: 'A post about blogs',
+    });
+
+    // Search for the collection label "Blog"
+    const points = scanEntry({ entry, terms: 'blog' });
+
+    expect(points).toBeGreaterThan(0);
+  });
+
+  it('should award points for collection name matches', () => {
+    const entry = createEntry('post-1', {
+      title: 'First Post',
+      description: 'My first post',
+    });
+
+    // Search for collection name
+    const points = scanEntry({ entry, terms: 'posts' });
+
+    expect(points).toBeGreaterThan(0);
+  });
+
+  it('should award points for file label matches', () => {
+    const entry = createEntry('entry-with-files', {
+      title: 'Entry Title',
+      description: 'Entry description',
+    });
+
+    // Search for file label
+    const points = scanEntry({ entry, terms: 'test' });
+
+    expect(points).toBeGreaterThan(0);
+  });
+
+  it('should award points for entry summary matches', () => {
+    const entry = createEntry('summary-entry', {
+      title: 'Summary Test Entry',
+      description: 'This tests the summary matching',
+    });
+
+    // Search for terms in summary
+    const points = scanEntry({ entry, terms: 'summary' });
+
+    expect(points).toBeGreaterThan(0);
+  });
+
+  it('should handle entries with no associated collections', () => {
+    const entry = createEntry('no-collection-entry', {
+      title: 'Orphaned Entry',
+      description: 'Entry with no collection',
+    });
+
+    // Should still score points for content matches
+    const points = scanEntry({ entry, terms: 'orphaned' });
+
+    expect(typeof points).toBe('number');
+    expect(points).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should handle entries with boolean values in content', () => {
+    const entry = createEntry('boolean-entry', {
+      title: 'Boolean Test',
+      published: true,
+      featured: false,
+    });
+
+    const points = scanEntry({ entry, terms: 'boolean' });
+
+    expect(typeof points).toBe('number');
+  });
+
+  it('should sort results by relevance (highest points first)', () => {
+    const entries = [
+      createEntry('low-relevance', {
+        title: 'Article about coding',
+        description: 'Generic article',
+      }),
+      createEntry('high-relevance', {
+        title: 'JavaScript JavaScript JavaScript',
+        description: 'All about JavaScript development',
+      }),
+      createEntry('medium-relevance', {
+        title: 'JavaScript Tutorial',
+        description: 'Learn the basics',
+      }),
+    ];
+
+    const result = searchEntries({ entries, terms: 'javascript' });
+
+    expect(result.length).toBeGreaterThan(0);
+
+    // Verify results are sorted by scanning their points
+    if (result.length > 1) {
+      const points = result.map((entry) => scanEntry({ entry, terms: 'javascript' }));
+
+      // Each point should be >= the next one (sorted descending)
+      for (let i = 0; i < points.length - 1; i += 1) {
+        expect(points[i]).toBeGreaterThanOrEqual(points[i + 1]);
+      }
+    }
+  });
+
+  it('should filter out entries with zero points', () => {
+    const entries = [
+      createEntry('match', {
+        title: 'JavaScript Tutorial',
+        description: 'Learn JavaScript',
+      }),
+      createEntry('no-match', {
+        title: 'Python Guide',
+        description: 'Learn Python',
+      }),
+    ];
+
+    const result = searchEntries({ entries, terms: 'javascript' });
+
+    // Should only include entries with matches
+    expect(result.every((entry) => scanEntry({ entry, terms: 'javascript' }) > 0)).toBe(true);
   });
 });

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ASSET_KINDS,
+  canEditAsset,
   canPreviewAsset,
   DOC_EXTENSION_REGEX,
   getAssetKind,
@@ -206,6 +207,81 @@ describe('assets/kinds', () => {
     it('should return "other" when mime type is null', () => {
       vi.mocked(mime.getType).mockReturnValue(null);
       expect(getAssetKind('unknown')).toBe('other');
+    });
+  });
+
+  describe('canEditAsset', () => {
+    let isTextFileTypeMock;
+
+    beforeEach(async () => {
+      const { isTextFileType } = await import('@sveltia/utils/file');
+
+      isTextFileTypeMock = vi.mocked(isTextFileType);
+      isTextFileTypeMock.mockImplementation(
+        (type) => type?.startsWith('text/') || type === 'application/json',
+      );
+    });
+
+    /**
+     * Create a mock asset for testing.
+     * @param {string} path Asset path.
+     * @param {string} kind Asset kind.
+     * @returns {import('$lib/types/private').Asset} Mock asset.
+     */
+    const createMockAsset = (path, kind) => ({
+      path,
+      // eslint-disable-next-line object-shorthand
+      kind: /** @type {import('$lib/types/private').AssetKind} */ (kind),
+      name: path.split('/').pop() || '',
+      sha: 'abc123',
+      size: 1024,
+      folder: {
+        internalPath: 'test',
+        publicPath: 'test',
+        collectionName: 'test',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+    });
+
+    it('should return true for text files', () => {
+      const asset = createMockAsset('file.txt', 'other');
+
+      vi.mocked(mime.getType).mockReturnValue('text/plain');
+
+      expect(canEditAsset(asset)).toBe(true);
+    });
+
+    it('should return true for JSON files', () => {
+      const asset = createMockAsset('config.json', 'other');
+
+      vi.mocked(mime.getType).mockReturnValue('application/json');
+
+      expect(canEditAsset(asset)).toBe(true);
+    });
+
+    it('should return false for image files', () => {
+      const asset = createMockAsset('image.jpg', 'image');
+
+      vi.mocked(mime.getType).mockReturnValue('image/jpeg');
+
+      expect(canEditAsset(asset)).toBe(false);
+    });
+
+    it('should return false for binary files', () => {
+      const asset = createMockAsset('file.exe', 'other');
+
+      vi.mocked(mime.getType).mockReturnValue('application/octet-stream');
+
+      expect(canEditAsset(asset)).toBe(false);
+    });
+
+    it('should return false when mime type is null', () => {
+      const asset = createMockAsset('unknown', 'other');
+
+      vi.mocked(mime.getType).mockReturnValue(null);
+
+      expect(canEditAsset(asset)).toBe(false);
     });
   });
 });

@@ -215,5 +215,6 @@ export default defineConfig({
       include: ['src/lib/{components,services}/**/*.js'],
       reporter: ['text'],
     },
+    silent: true,
   },
 });

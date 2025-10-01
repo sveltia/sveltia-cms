@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getDirectoryHandle, getFileHandle } from './files';
+import { getDirectoryHandle, getFileHandle, saveChanges } from './files';
 
 /**
  * @import { MockedFunction } from 'vitest';
@@ -418,5 +418,333 @@ describe('Integration scenarios', () => {
     expect(results[2].kind).toBe('directory');
     expect(results[3].kind).toBe('directory');
     expect(results[4].kind).toBe('file');
+  });
+
+  test('should handle path normalization with mixed slashes', async () => {
+    const path1 = '//folder//file.txt';
+    const path2 = 'folder///file.txt';
+    const handle1 = await getFileHandle(rootDirHandle, path1);
+    const handle2 = await getFileHandle(rootDirHandle, path2);
+
+    expect(handle1.name).toBe('file.txt');
+    expect(handle2.name).toBe('file.txt');
+  });
+
+  test('should handle windows-style paths', async () => {
+    const path = 'folder\\subfolder\\file.txt';
+    const handle = await getFileHandle(rootDirHandle, path);
+
+    expect(handle.kind).toBe('file');
+    // Note: The function uses forward slashes, so backslashes are treated as part of the name
+  });
+});
+
+describe('saveChanges', () => {
+  /** @type {FileSystemDirectoryHandle} */
+  let rootDirHandle;
+
+  beforeEach(() => {
+    rootDirHandle = createMockDirectoryHandle();
+  });
+
+  test('should save file creation changes', async () => {
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'create',
+        path: 'test.txt',
+        data: 'Hello World',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(result.sha).toBeDefined();
+    expect(result.files).toBeDefined();
+    expect(result.files['test.txt']).toBeDefined();
+    expect(result.files['test.txt'].sha).toBeDefined();
+  });
+
+  test('should save file update changes', async () => {
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'update',
+        path: 'test.txt',
+        data: 'Updated content',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(result.sha).toBeDefined();
+    expect(result.files['test.txt']).toBeDefined();
+  });
+
+  test('should save file deletion changes', async () => {
+    // First create a file
+    await getFileHandle(rootDirHandle, 'test.txt');
+
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'delete',
+        path: 'test.txt',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(result.sha).toBeDefined();
+  });
+
+  test('should handle move changes', async () => {
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'move',
+        previousPath: 'old.txt',
+        path: 'new.txt',
+        data: 'File content',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(result.sha).toBeDefined();
+    expect(result.files['new.txt']).toBeDefined();
+  });
+
+  test('should handle multiple changes', async () => {
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'create',
+        path: 'file1.txt',
+        data: 'Content 1',
+      },
+      {
+        action: 'create',
+        path: 'file2.txt',
+        data: 'Content 2',
+      },
+      {
+        action: 'update',
+        path: 'file3.txt',
+        data: 'Updated content',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(result.sha).toBeDefined();
+    expect(Object.keys(result.files)).toHaveLength(3);
+    expect(result.files['file1.txt']).toBeDefined();
+    expect(result.files['file2.txt']).toBeDefined();
+    expect(result.files['file3.txt']).toBeDefined();
+  });
+
+  test('should handle undefined rootDirHandle gracefully', async () => {
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'create',
+        path: 'test.txt',
+        data: 'Hello World',
+      },
+    ];
+
+    const result = await saveChanges(undefined, changes);
+
+    expect(result).toBeDefined();
+    expect(result.sha).toBeDefined();
+    expect(result.files['test.txt']).toBeDefined();
+  });
+
+  test('should handle File objects as data', async () => {
+    const file = new File(['content'], 'test.txt', { type: 'text/plain' });
+
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'create',
+        path: 'test.txt',
+        data: file,
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(result.files['test.txt']).toBeDefined();
+  });
+
+  test('should handle changes without data for delete action', async () => {
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'delete',
+        path: 'test.txt',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(result.sha).toBeDefined();
+  });
+
+  test('should handle empty changes array', async () => {
+    const result = await saveChanges(rootDirHandle, []);
+
+    expect(result).toBeDefined();
+    expect(result.sha).toBeDefined();
+    expect(result.files).toEqual({});
+  });
+
+  test('should handle nested file paths', async () => {
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'create',
+        path: 'folder/subfolder/deep/file.txt',
+        data: 'Deep content',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(result.files['folder/subfolder/deep/file.txt']).toBeDefined();
+  });
+
+  test('should continue processing even if one change fails', async () => {
+    // Mock a failure for one operation
+    const mockError = new Error('Write failed');
+
+    /** @type {MockedFunction<any>} */ (rootDirHandle.getFileHandle).mockImplementationOnce(
+      async () => {
+        throw mockError;
+      },
+    );
+
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'create',
+        path: 'failing.txt',
+        data: 'This will fail',
+      },
+      {
+        action: 'create',
+        path: 'success.txt',
+        data: 'This will succeed',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    // The failing file should have a fallback blob
+    expect(result.files['failing.txt']).toBeDefined();
+    expect(result.files['success.txt']).toBeDefined();
+  });
+
+  test('should handle delete action with nested paths', async () => {
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'delete',
+        path: 'folder/subfolder/file.txt',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(result.sha).toBeDefined();
+  });
+
+  test('should handle move action with data', async () => {
+    const mockFileHandle = createMockFileHandle('oldfile.txt');
+
+    /** @type {MockedFunction<any>} */ (rootDirHandle.getFileHandle).mockResolvedValueOnce(
+      mockFileHandle,
+    );
+
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'move',
+        path: 'newfile.txt',
+        previousPath: 'oldfile.txt',
+        data: 'Updated content',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(mockFileHandle.move).toHaveBeenCalled();
+    expect(result.files['newfile.txt']).toBeDefined();
+  });
+
+  test('should handle saveChanges with undefined rootDirHandle', async () => {
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'create',
+        path: 'file.txt',
+        data: 'Content',
+      },
+    ];
+
+    const result = await saveChanges(undefined, changes);
+
+    expect(result).toBeDefined();
+    expect(result.sha).toBeDefined();
+    expect(result.files['file.txt']).toBeDefined();
+  });
+
+  test('should handle delete action returning null file', async () => {
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'delete',
+        path: 'file.txt',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(result.files['file.txt']).toBeUndefined();
+  });
+
+  test('should handle move action without data', async () => {
+    const mockFileHandle = createMockFileHandle('oldfile.txt');
+
+    /** @type {MockedFunction<any>} */ (rootDirHandle.getFileHandle).mockResolvedValueOnce(
+      mockFileHandle,
+    );
+
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'move',
+        path: 'folder/newfile.txt',
+        previousPath: 'oldfile.txt',
+      },
+    ];
+
+    const result = await saveChanges(rootDirHandle, changes);
+
+    expect(result).toBeDefined();
+    expect(mockFileHandle.move).toHaveBeenCalled();
   });
 });

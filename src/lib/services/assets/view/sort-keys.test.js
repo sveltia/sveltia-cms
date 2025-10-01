@@ -48,17 +48,32 @@ describe('assets/view/sort-keys', () => {
     vi.clearAllMocks();
   });
 
-  describe('sortKeys', () => {
-    it('should provide basic sort keys for assets without commit info', () => {
-      let result;
+  it('should export sortKeys store', () => {
+    expect(sortKeys).toBeDefined();
+    expect(typeof sortKeys.subscribe).toBe('function');
+  });
 
-      const unsubscribe = sortKeys.subscribe((value) => {
-        result = value;
-      });
+  it('should include name field by default', () => {
+    /** @type {any} */
+    let currentSortKeys;
 
-      expect(result).toEqual([{ key: 'name', label: 'Name' }]);
+    sortKeys.subscribe((keys) => {
+      currentSortKeys = keys;
+    })();
 
-      unsubscribe();
+    expect(currentSortKeys).toBeDefined();
+    expect(currentSortKeys?.some((/** @type {any} */ k) => k.key === 'name')).toBe(true);
+  });
+
+  it('should provide basic sort keys for assets without commit info', () => {
+    let result;
+
+    const unsubscribe = sortKeys.subscribe((value) => {
+      result = value;
     });
+
+    expect(result).toEqual([{ key: 'name', label: 'Name' }]);
+
+    unsubscribe();
   });
 });

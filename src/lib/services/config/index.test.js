@@ -46,8 +46,12 @@ vi.mock('$lib/services/user/prefs', () => ({
 
 vi.mock('$lib/services/backends', () => ({
   initBackend: vi.fn(),
-  validBackendNames: ['git-gateway', 'github', 'gitlab'],
-  gitBackendServices: [],
+  validBackendNames: ['git-gateway', 'github', 'gitlab', 'gitea'],
+  gitBackendServices: {
+    github: {},
+    gitlab: {},
+    gitea: {},
+  },
 }));
 
 // Mock i18n
@@ -96,6 +100,184 @@ describe('config/index', () => {
       // @ts-ignore - testing invalid config
       expect(() => validate({ collections: [] })).toThrow();
     });
+
+    it('should reject config without collections or singletons', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({ backend: { name: 'github' }, media_folder: 'uploads' }),
+      ).toThrow();
+    });
+
+    it('should reject config without backend', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({ media_folder: 'uploads', collections: [] }),
+      ).toThrow();
+    });
+
+    it('should reject config without backend name', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({ backend: {}, media_folder: 'uploads', collections: [] }),
+      ).toThrow();
+    });
+
+    it('should reject config with unsupported backend', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({ backend: { name: 'unsupported' }, media_folder: 'uploads', collections: [] }),
+      ).toThrow();
+    });
+
+    it('should reject GitHub backend without repo', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({ backend: { name: 'github' }, media_folder: 'uploads', collections: [] }),
+      ).toThrow();
+    });
+
+    it('should reject GitHub backend with invalid repo format', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({
+          backend: { name: 'github', repo: 'invalid' },
+          media_folder: 'uploads',
+          collections: [],
+        }),
+      ).toThrow();
+    });
+
+    it('should accept GitHub backend with valid repo', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({
+          backend: { name: 'github', repo: 'owner/repo' },
+          media_folder: 'uploads',
+          collections: [],
+        }),
+      ).not.toThrow();
+    });
+
+    it('should reject GitLab backend with implicit auth', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({
+          backend: { name: 'gitlab', repo: 'owner/repo', auth_type: 'implicit' },
+          media_folder: 'uploads',
+          collections: [],
+        }),
+      ).toThrow();
+    });
+
+    it('should reject GitLab backend with PKCE auth but no app_id', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({
+          backend: { name: 'gitlab', repo: 'owner/repo', auth_type: 'pkce' },
+          media_folder: 'uploads',
+          collections: [],
+        }),
+      ).toThrow();
+    });
+
+    it('should accept GitLab backend with PKCE auth and app_id', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({
+          backend: { name: 'gitlab', repo: 'owner/repo', auth_type: 'pkce', app_id: 'test-app-id' },
+          media_folder: 'uploads',
+          collections: [],
+        }),
+      ).not.toThrow();
+    });
+
+    it('should reject Gitea backend without app_id', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'gitea', repo: 'owner/repo' },
+            media_folder: 'uploads',
+            collections: [],
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should accept Gitea backend with app_id', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({
+          backend: { name: 'gitea', repo: 'owner/repo', app_id: 'test-app-id' },
+          media_folder: 'uploads',
+          collections: [],
+        }),
+      ).not.toThrow();
+    });
+
+    it('should reject config without media_folder', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({ backend: { name: 'git-gateway' }, collections: [] }),
+      ).toThrow();
+    });
+
+    it('should reject config with non-string media_folder', () => {
+      expect(() =>
+        // @ts-ignore - testing invalid config
+        validate({ backend: { name: 'git-gateway' }, media_folder: 123, collections: [] }),
+      ).toThrow();
+    });
+
+    it('should reject config with non-string public_folder', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            public_folder: 123,
+            collections: [],
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should reject config with relative public_folder path', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            public_folder: '../images',
+            collections: [],
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should reject config with absolute URL in public_folder', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            public_folder: 'https://example.com/images',
+            collections: [],
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should accept singletons instead of collections', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            singletons: [{ name: 'config' }],
+          }),
+        ),
+      ).not.toThrow();
+    });
   });
 
   describe('constants', () => {
@@ -110,6 +292,277 @@ describe('config/index', () => {
       expect(siteConfig).toBeDefined();
       expect(siteConfigError).toBeDefined();
       expect(siteConfigVersion).toBeDefined();
+    });
+  });
+
+  describe('validate - additional edge cases', () => {
+    it('should warn about editorial workflow', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      validate(
+        /** @type {any} */ ({
+          backend: { name: 'git-gateway' },
+          media_folder: 'uploads',
+          collections: [],
+          publish_mode: 'editorial_workflow',
+        }),
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Editorial workflow is not yet supported in Sveltia CMS.',
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should warn about GitHub open authoring', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      validate(
+        /** @type {any} */ ({
+          backend: { name: 'github', repo: 'owner/repo', open_authoring: true },
+          media_folder: 'uploads',
+          collections: [],
+        }),
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Open authoring is not yet supported in Sveltia CMS.',
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should warn about nested collections', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      validate(
+        /** @type {any} */ ({
+          backend: { name: 'git-gateway' },
+          media_folder: 'uploads',
+          collections: [{ name: 'posts', folder: '_posts', nested: { depth: 3 } }],
+        }),
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Nested collections are not yet supported in Sveltia CMS.',
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should warn about Cloudinary media library', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      validate(
+        /** @type {any} */ ({
+          backend: { name: 'git-gateway' },
+          media_folder: 'uploads',
+          collections: [],
+          media_library: { name: 'cloudinary' },
+        }),
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Cloudinary media library is not yet supported in Sveltia CMS.',
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should warn about Cloudinary in media_libraries', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      validate(
+        /** @type {any} */ ({
+          backend: { name: 'git-gateway' },
+          media_folder: 'uploads',
+          collections: [],
+          media_libraries: { cloudinary: { cloud_name: 'test' } },
+        }),
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Cloudinary media library is not yet supported in Sveltia CMS.',
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should warn about Uploadcare media library', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      validate(
+        /** @type {any} */ ({
+          backend: { name: 'git-gateway' },
+          media_folder: 'uploads',
+          collections: [],
+          media_library: { name: 'uploadcare' },
+        }),
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Uploadcare media library is not yet supported in Sveltia CMS.',
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should warn about Uploadcare in media_libraries', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      validate(
+        /** @type {any} */ ({
+          backend: { name: 'git-gateway' },
+          media_folder: 'uploads',
+          collections: [],
+          media_libraries: { uploadcare: { public_key: 'test' } },
+        }),
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Uploadcare media library is not yet supported in Sveltia CMS.',
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should accept valid public_folder as absolute path', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            public_folder: '/images',
+            collections: [],
+          }),
+        ),
+      ).not.toThrow();
+    });
+
+    it('should reject relative path starting with ./ in public_folder', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            public_folder: './images',
+            collections: [],
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should reject relative path starting with ../ in public_folder', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            public_folder: '../images',
+            collections: [],
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should reject absolute URL in public_folder', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            public_folder: 'https://example.com/images',
+            collections: [],
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should reject http URL in public_folder', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            public_folder: 'http://example.com/images',
+            collections: [],
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should accept missing public_folder', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            collections: [],
+          }),
+        ),
+      ).not.toThrow();
+    });
+
+    it('should warn about open authoring', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      validate(
+        /** @type {any} */ ({
+          backend: { name: 'github', repo: 'test/repo', open_authoring: true },
+          media_folder: 'uploads',
+          collections: [],
+        }),
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Open authoring is not yet supported in Sveltia CMS.',
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should warn about nested collections', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      validate(
+        /** @type {any} */ ({
+          backend: { name: 'git-gateway' },
+          media_folder: 'uploads',
+          collections: [{ name: 'posts', folder: '_posts', nested: { depth: 2 } }],
+        }),
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Nested collections are not yet supported in Sveltia CMS.',
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should accept config with singletons', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            singletons: [{ name: 'about', file: 'about.md' }],
+          }),
+        ),
+      ).not.toThrow();
+    });
+
+    it('should accept config with both collections and singletons', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            media_folder: 'uploads',
+            collections: [{ name: 'posts', folder: '_posts' }],
+            singletons: [{ name: 'about', file: 'about.md' }],
+          }),
+        ),
+      ).not.toThrow();
     });
   });
 });

@@ -1,6 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 
 import {
+  createPath,
+  createPathRegEx,
   encodeFilePath,
   formatFileName,
   formatSize,
@@ -458,5 +460,101 @@ describe('Test resolvePath()', () => {
     // createPath filters out empty segments, so // becomes single /
     expect(resolvePath('folder//file.txt')).toBe('folder/file.txt');
     expect(resolvePath('//folder/file.txt')).toBe('folder/file.txt'); // Leading empty segments are filtered
+  });
+});
+
+describe('Test createPath()', () => {
+  test('should join valid path segments', () => {
+    expect(createPath(['folder', 'subfolder', 'file.txt'])).toBe('folder/subfolder/file.txt');
+    expect(createPath(['a', 'b', 'c'])).toBe('a/b/c');
+  });
+
+  test('should filter out null and undefined values', () => {
+    expect(createPath(['folder', null, 'file.txt'])).toBe('folder/file.txt');
+    expect(createPath(['folder', undefined, 'file.txt'])).toBe('folder/file.txt');
+    expect(createPath([null, 'folder', undefined, 'file.txt'])).toBe('folder/file.txt');
+  });
+
+  test('should filter out empty strings', () => {
+    expect(createPath(['folder', '', 'file.txt'])).toBe('folder/file.txt');
+    expect(createPath(['', 'folder', '', 'file.txt', ''])).toBe('folder/file.txt');
+  });
+
+  test('should handle all falsy values', () => {
+    expect(createPath([null, undefined, '', 'folder', 'file.txt'])).toBe('folder/file.txt');
+  });
+
+  test('should handle empty array', () => {
+    expect(createPath([])).toBe('');
+  });
+
+  test('should handle array with only falsy values', () => {
+    expect(createPath([null, undefined, ''])).toBe('');
+  });
+});
+
+describe('Test createPathRegEx()', () => {
+  test('should create regex for simple path', () => {
+    const regex = createPathRegEx('folder/file.txt', (segment) => segment);
+
+    expect(regex.test('folder/file.txt')).toBe(true);
+    expect(regex.test('folder/file.txt ')).toBe(true); // \b allows whitespace after
+    expect(regex.test('other/file.txt')).toBe(false);
+  });
+
+  test('should apply replacer function to each segment', () => {
+    const regex = createPathRegEx('folder/{{slug}}/file.txt', (segment) =>
+      segment.replace(/{{.+?}}/, '.+?'),
+    );
+
+    expect(regex.test('folder/my-slug/file.txt')).toBe(true);
+    expect(regex.test('folder/another-slug/file.txt')).toBe(true);
+    expect(regex.test('other/my-slug/file.txt')).toBe(false);
+  });
+
+  test('should not escape special regex characters by default', () => {
+    // The replacer is responsible for escaping - the function itself doesn't escape
+    const regex = createPathRegEx('folder/file.txt', (segment) => segment);
+
+    // Without escaping in the replacer, the dot matches any character
+    expect(regex.test('folder/file.txt')).toBe(true);
+    expect(regex.test('folder/fileXtxt')).toBe(true); // Dot matches X
+  });
+
+  test('should support escaping when replacer escapes', () => {
+    const regex = createPathRegEx('folder/file.txt', (segment) =>
+      segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+    );
+
+    // With escaping, dot only matches literal dot
+    expect(regex.test('folder/file.txt')).toBe(true);
+    expect(regex.test('folder/fileXtxt')).toBe(false);
+  });
+
+  test('should use word boundary at the end', () => {
+    const regex = createPathRegEx('folder/prefix', (segment) => segment);
+
+    expect(regex.test('folder/prefix')).toBe(true);
+    expect(regex.test('folder/prefix-more')).toBe(true); // Word boundary allows this
+    expect(regex.test('folder/prefixabc')).toBe(false); // No word boundary between x and a
+    expect(regex.test('other/prefix')).toBe(false);
+  });
+
+  test('should handle multiple template tags', () => {
+    const regex = createPathRegEx('{{year}}/{{month}}/{{slug}}.md', (segment) =>
+      segment.replace(/{{.+?}}/, '.+?'),
+    );
+
+    expect(regex.test('2024/01/my-post.md')).toBe(true);
+    expect(regex.test('2024/12/another-post.md')).toBe(true);
+    expect(regex.test('2024/01')).toBe(false);
+  });
+
+  test('should handle paths with multiple segments', () => {
+    const regex = createPathRegEx('a/b/c/d/e', (segment) => segment);
+
+    expect(regex.test('a/b/c/d/e')).toBe(true);
+    expect(regex.test('a/b/c/d/e/f')).toBe(true);
+    expect(regex.test('a/b/c/d')).toBe(false);
   });
 });

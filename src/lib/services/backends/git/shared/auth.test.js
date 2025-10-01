@@ -3,7 +3,17 @@ import { LocalStorage } from '@sveltia/utils/storage';
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createAuthSecrets, inAuthPopup, openPopup, sendMessage } from './auth';
+import {
+  authorize,
+  createAuthSecrets,
+  finishClientSideAuth,
+  handleClientSideAuthPopup,
+  inAuthPopup,
+  initClientSideAuth,
+  initServerSideAuth,
+  openPopup,
+  sendMessage,
+} from './auth';
 
 vi.mock('@sveltia/utils/crypto', () => ({
   generateRandomId: vi.fn(() => 'random-id'),
@@ -13,9 +23,29 @@ vi.mock('@sveltia/utils/crypto', () => ({
 
 vi.mock('@sveltia/utils/storage');
 
-vi.mock('svelte-i18n', () => ({
-  _: vi.fn(() => ({ subscribe: vi.fn(), get: vi.fn(() => 'Mocked translation') })),
-}));
+vi.mock('svelte-i18n', () => {
+  /**
+   * Mock translation function.
+   * @param {string} key Translation key.
+   * @returns {string} Translated string.
+   */
+  const mockTranslate = (key) => `Translated: ${key}`;
+
+  const mockStore = {
+    /**
+     * Subscribe to store changes.
+     * @param {(value: (key: string) => string) => void} fn Subscriber function.
+     * @returns {() => void} Unsubscribe function.
+     */
+    subscribe: (fn) => {
+      fn(mockTranslate);
+
+      return () => {};
+    },
+  };
+
+  return { _: mockStore };
+});
 
 describe('git/shared/auth', () => {
   /** @type {any} */
@@ -211,6 +241,416 @@ describe('git/shared/auth', () => {
         'authorization:github:success:{"provider":"github","token":"test-token"}',
         'https://example.com',
       );
+    });
+  });
+
+  describe('authorize', () => {
+    it('should resolve with token on successful authentication', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      // Get the message handler
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      // Simulate the first message
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      // Simulate the second message with success
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
+        origin: 'https://github.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({ token: 'test-token' });
+      expect(mockPopup.close).toHaveBeenCalled();
+    });
+
+    it('should reject on authentication error', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      messageHandler({
+        data: `authorization:github:error:${JSON.stringify({ error: 'Auth failed' })}`,
+        origin: 'https://github.com',
+      });
+
+      await expect(authPromise).rejects.toThrow('Authentication failed');
+      expect(mockPopup.close).toHaveBeenCalled();
+    });
+
+    it('should reject when popup is closed prematurely (GitHub)', async () => {
+      vi.useFakeTimers();
+      mockPopup.closed = false;
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      // Simulate popup being closed
+      mockPopup.closed = true;
+      vi.advanceTimersByTime(1000);
+
+      await expect(authPromise).rejects.toThrow('Authentication aborted');
+
+      vi.useRealTimers();
+    });
+
+    it('should handle malformed response data', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      messageHandler({
+        data: 'authorization:github:success:invalid-json',
+        origin: 'https://github.com',
+      });
+
+      await expect(authPromise).rejects.toThrow('Authentication failed');
+    });
+  });
+
+  describe('initServerSideAuth', () => {
+    it('should initialize server-side auth with provided siteDomain', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const args = {
+        backendName: 'github',
+        siteDomain: 'example.com',
+        authURL: 'https://api.netlify.com',
+        scope: 'repo',
+      };
+
+      const authPromise = initServerSideAuth(args);
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://api.netlify.com',
+      });
+
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
+        origin: 'https://api.netlify.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({ token: 'test-token' });
+    });
+
+    it('should use localhost default when siteDomain is not provided', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+      mockWindow.location.hostname = 'localhost';
+
+      const args = {
+        backendName: 'github',
+        authURL: 'https://api.netlify.com',
+        scope: 'repo',
+      };
+
+      const authPromise = initServerSideAuth(args);
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://api.netlify.com',
+      });
+
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
+        origin: 'https://api.netlify.com',
+      });
+
+      await authPromise;
+
+      // Check that it called authorize with cms.netlify.com as default
+      expect(mockWindow.open).toHaveBeenCalled();
+    });
+
+    it('should handle IDN conversion for Netlify auth', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const args = {
+        backendName: 'github',
+        siteDomain: '日本語.jp',
+        authURL: 'https://api.netlify.com',
+        scope: 'repo',
+      };
+
+      const authPromise = initServerSideAuth(args);
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://api.netlify.com',
+      });
+
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
+        origin: 'https://api.netlify.com',
+      });
+
+      await authPromise;
+    });
+  });
+
+  describe('initClientSideAuth', () => {
+    it('should initialize client-side auth with PKCE', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const args = {
+        backendName: 'gitlab',
+        clientId: 'test-client-id',
+        authURL: 'https://gitlab.com/oauth/authorize',
+        scope: 'api',
+      };
+
+      // Don't await immediately since LocalStorage.set is called internally
+      const authPromise = initClientSideAuth(args);
+
+      // Wait a bit for the async LocalStorage.set calls to complete
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.auth', expect.any(Object));
+      expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', { backendName: 'gitlab' });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:gitlab',
+        origin: 'https://localhost:3000',
+      });
+
+      messageHandler({
+        data: `authorization:gitlab:success:${JSON.stringify({ token: 'test-token' })}`,
+        origin: 'https://localhost:3000',
+      });
+
+      await authPromise;
+    });
+  });
+
+  describe('finishClientSideAuth', () => {
+    beforeEach(() => {
+      global.fetch = vi.fn();
+      mockWindow.location.href = 'https://localhost:3000/admin';
+    });
+
+    it('should finish auth successfully with valid token', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+      });
+
+      global.fetch.mockResolvedValue({
+        /**
+         * Mock JSON response.
+         * @returns {Promise<object>} Token response.
+         */
+        json: async () => ({
+          access_token: 'test-access-token',
+          refresh_token: 'test-refresh-token',
+        }),
+      });
+
+      await finishClientSideAuth({
+        backendName: 'gitlab',
+        clientId: 'test-client',
+        tokenURL: 'https://gitlab.com/oauth/token',
+        code: 'test-code',
+        state: 'test-csrf',
+      });
+
+      expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+      expect(fetch).toHaveBeenCalledWith('https://gitlab.com/oauth/token', expect.any(Object));
+    });
+
+    it('should detect CSRF attack', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+      });
+
+      await finishClientSideAuth({
+        backendName: 'gitlab',
+        clientId: 'test-client',
+        tokenURL: 'https://gitlab.com/oauth/token',
+        code: 'test-code',
+        state: 'wrong-csrf',
+      });
+
+      expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+    });
+
+    it('should handle missing stored auth data', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue(null);
+
+      await finishClientSideAuth({
+        backendName: 'gitlab',
+        clientId: 'test-client',
+        tokenURL: 'https://gitlab.com/oauth/token',
+        code: 'test-code',
+        state: 'test-csrf',
+      });
+
+      expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+    });
+
+    it('should handle fetch failure', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+      });
+
+      global.fetch.mockRejectedValue(new Error('Network error'));
+
+      await finishClientSideAuth({
+        backendName: 'gitlab',
+        clientId: 'test-client',
+        tokenURL: 'https://gitlab.com/oauth/token',
+        code: 'test-code',
+        state: 'test-csrf',
+      });
+
+      expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+    });
+
+    it('should handle malformed JSON response', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+      });
+
+      global.fetch.mockResolvedValue({
+        /**
+         * Mock JSON response that throws.
+         * @throws {Error} Invalid JSON error.
+         */
+        json: async () => {
+          throw new Error('Invalid JSON');
+        },
+      });
+
+      await finishClientSideAuth({
+        backendName: 'gitlab',
+        clientId: 'test-client',
+        tokenURL: 'https://gitlab.com/oauth/token',
+        code: 'test-code',
+        state: 'test-csrf',
+      });
+
+      expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+    });
+  });
+
+  describe('handleClientSideAuthPopup', () => {
+    beforeEach(() => {
+      mockWindow.location.href = 'https://localhost:3000/admin';
+    });
+
+    it('should finish auth when code and state are present', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+      });
+
+      mockWindow.location.search = '?code=test-code&state=test-csrf';
+
+      global.fetch = vi.fn().mockResolvedValue({
+        /**
+         * Mock JSON response.
+         * @returns {Promise<object>} Token response.
+         */
+        json: async () => ({
+          access_token: 'test-token',
+        }),
+      });
+
+      await handleClientSideAuthPopup({
+        backendName: 'gitlab',
+        clientId: 'test-client',
+        tokenURL: 'https://gitlab.com/oauth/token',
+      });
+
+      expect(get(inAuthPopup)).toBe(true);
+    });
+
+    it('should redirect to auth URL when no code is present', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        realAuthURL: 'https://gitlab.com/oauth/authorize?params',
+      });
+
+      mockWindow.location.search = '';
+      mockWindow.location.href = '';
+
+      await handleClientSideAuthPopup({
+        backendName: 'gitlab',
+        clientId: 'test-client',
+        tokenURL: 'https://gitlab.com/oauth/token',
+      });
+
+      expect(mockWindow.location.href).toBe('https://gitlab.com/oauth/authorize?params');
+    });
+
+    it('should do nothing when no auth data is stored', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue(null);
+
+      mockWindow.location.search = '';
+
+      await handleClientSideAuthPopup({
+        backendName: 'gitlab',
+        clientId: 'test-client',
+        tokenURL: 'https://gitlab.com/oauth/token',
+      });
+
+      expect(get(inAuthPopup)).toBe(true);
     });
   });
 });

@@ -281,4 +281,47 @@ describe('editor/settings', () => {
       expect(get(entryEditorSettings)?.selectAssetsView).toEqual(listView);
     });
   });
+
+  describe('initSettings edge cases', () => {
+    it('should initialize with default settings when no saved settings', async () => {
+      const mockBackendService = /** @type {any} */ ({
+        repository: {
+          databaseName: 'test-cms',
+        },
+      });
+
+      await initSettings(mockBackendService);
+
+      const settings = get(entryEditorSettings);
+
+      expect(settings?.showPreview).toBe(true);
+      expect(settings?.syncScrolling).toBe(true);
+      expect(settings?.selectAssetsView?.type).toBe('grid');
+    });
+
+    it('should handle undefined repository gracefully', async () => {
+      const mockBackendService = /** @type {any} */ ({
+        repository: undefined,
+      });
+
+      await initSettings(mockBackendService);
+
+      // Should still set default settings
+      const settings = get(entryEditorSettings);
+
+      expect(settings).toBeDefined();
+    });
+
+    it('should handle empty repository object', async () => {
+      const mockBackendService = /** @type {any} */ ({
+        repository: {},
+      });
+
+      await initSettings(mockBackendService);
+
+      const settings = get(entryEditorSettings);
+
+      expect(settings).toBeDefined();
+    });
+  });
 });
