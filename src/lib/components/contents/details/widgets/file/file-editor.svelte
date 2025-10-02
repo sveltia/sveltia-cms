@@ -152,7 +152,10 @@
 
           $entryDraft.currentValues[locale][`${keyPath}.${targetIndex}`] = value;
         } else {
-          currentValue = value;
+          // Encode spaces as `%20` when the widget is used in the Markdown editor component to
+          // avoid issues with Markdown parsers that do not support unencoded spaces in URLs.
+          currentValue =
+            widgetContext === 'markdown-editor-component' ? value.replaceAll(' ', '%20') : value;
         }
       }
 
