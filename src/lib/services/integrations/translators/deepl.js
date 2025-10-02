@@ -94,6 +94,7 @@ const TARGET_LANGUAGES = [
 
 /**
  * Get a supported source language that matches the given locale code.
+ * @internal
  * @param {string} locale Locale code.
  * @returns {string | undefined} Supported language.
  */
@@ -109,6 +110,7 @@ export const getSourceLanguage = (locale) => {
 
 /**
  * Get a supported target language that matches the given locale code.
+ * @internal
  * @param {string} locale Locale code.
  * @returns {string | undefined} Supported language.
  */

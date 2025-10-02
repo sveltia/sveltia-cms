@@ -9,6 +9,7 @@ import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/da
 
 /**
  * Update the asset stores after deleting assets.
+ * @internal
  * @param {object} args Arguments.
  * @param {Asset[]} args.assets List of assets that have been deleted.
  */
