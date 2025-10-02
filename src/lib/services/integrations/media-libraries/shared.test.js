@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { isMultiple } from './shared';
+import { hasMultipleInMediaLibraries, hasMultipleInMediaLibrary, isMultiple } from './shared';
 
 // Mock all dependencies
 vi.mock('svelte/store', () => ({
@@ -303,6 +303,101 @@ describe('integrations/media-libraries/shared', () => {
       const result = isMultiple(fieldConfig);
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('hasMultipleInMediaLibraries', () => {
+    it('should return undefined when mediaLibraries is undefined', () => {
+      expect(hasMultipleInMediaLibraries(undefined)).toBeUndefined();
+    });
+
+    it('should return true when any library has multiple: true', () => {
+      const mediaLibraries = /** @type {any} */ ({
+        lib1: { config: { multiple: true } },
+        lib2: { config: { multiple: false } },
+      });
+
+      expect(hasMultipleInMediaLibraries(mediaLibraries)).toBe(true);
+    });
+
+    it('should return false when all libraries have multiple: false', () => {
+      const mediaLibraries = /** @type {any} */ ({
+        lib1: { config: { multiple: false } },
+        lib2: { config: { multiple: false } },
+      });
+
+      expect(hasMultipleInMediaLibraries(mediaLibraries)).toBe(false);
+    });
+
+    it('should return undefined when no library has explicit multiple setting', () => {
+      const mediaLibraries = /** @type {any} */ ({
+        lib1: { config: {} },
+        lib2: { config: {} },
+      });
+
+      expect(hasMultipleInMediaLibraries(mediaLibraries)).toBeUndefined();
+    });
+
+    it('should return true when one library has multiple: true and others undefined', () => {
+      const mediaLibraries = /** @type {any} */ ({
+        lib1: { config: { multiple: true } },
+        lib2: { config: {} },
+      });
+
+      expect(hasMultipleInMediaLibraries(mediaLibraries)).toBe(true);
+    });
+
+    it('should handle stock asset libraries without config property', () => {
+      const mediaLibraries = /** @type {any} */ ({
+        stock: {}, // Stock library without config
+        default: { config: { multiple: true } },
+      });
+
+      expect(hasMultipleInMediaLibraries(mediaLibraries)).toBe(true);
+    });
+  });
+
+  describe('hasMultipleInMediaLibrary', () => {
+    it('should return undefined when mediaLibrary is undefined', () => {
+      expect(hasMultipleInMediaLibrary(undefined)).toBeUndefined();
+    });
+
+    it('should return undefined when config is missing', () => {
+      const mediaLibrary = /** @type {any} */ ({});
+
+      expect(hasMultipleInMediaLibrary(mediaLibrary)).toBeUndefined();
+    });
+
+    it('should return true when multiple is true', () => {
+      const mediaLibrary = /** @type {any} */ ({
+        config: { multiple: true },
+      });
+
+      expect(hasMultipleInMediaLibrary(mediaLibrary)).toBe(true);
+    });
+
+    it('should return false when multiple is false', () => {
+      const mediaLibrary = /** @type {any} */ ({
+        config: { multiple: false },
+      });
+
+      expect(hasMultipleInMediaLibrary(mediaLibrary)).toBe(false);
+    });
+
+    it('should return undefined when multiple is not a boolean', () => {
+      const mediaLibrary = /** @type {any} */ ({
+        config: { multiple: 'yes' },
+      });
+
+      expect(hasMultipleInMediaLibrary(mediaLibrary)).toBeUndefined();
+    });
+
+    it('should return undefined when multiple is not set', () => {
+      const mediaLibrary = /** @type {any} */ ({
+        config: {},
+      });
+
+      expect(hasMultipleInMediaLibrary(mediaLibrary)).toBeUndefined();
     });
   });
 });

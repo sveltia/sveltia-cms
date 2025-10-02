@@ -38,13 +38,14 @@ export const getFillSlugOptions = ({ draft }) => {
 
 /**
  * Get the localized slug for the given locale.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.locale Locale.
  * @param {string[]} args.localizingKeyPaths List of key paths that the value will be localized.
  * @returns {string} Localized slug.
  */
-const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
+export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
   const { isNew, collection, collectionFile, currentSlugs, currentValues, isIndexFile } = draft;
   const { _type } = collection;
 
@@ -82,12 +83,13 @@ const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
 /**
  * Get the localized slug map. This only applies when the i18n structure is multiple files or
  * folders, and the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @returns {LocaleSlugMap | undefined} Localized slug map.
  */
-const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
+export const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
   const { collection, collectionFile, currentLocales } = draft;
   const { _type } = collection;
 
@@ -131,6 +133,7 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
  * helps Sveltia CMS and some frameworks to link localized files. The default property name is
  * `translationKey` used in Hugo’s multilingual support, and the default value is the default
  * locale’s slug.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
@@ -140,7 +143,7 @@ const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
  * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
  * @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
  */
-const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOptions }) => {
+export const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOptions }) => {
   if (!localizedSlugs) {
     return undefined;
   }

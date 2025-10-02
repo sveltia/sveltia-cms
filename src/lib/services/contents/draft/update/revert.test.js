@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 
-import { revertChanges } from './revert';
+import { revertChanges, revertFields, revertLocale } from './revert';
 
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/entry/fields');
@@ -177,6 +177,357 @@ describe('draft/update/revert', () => {
 
       expect(mockUpdate).toHaveBeenCalled();
       expect(mockEntryDraft.currentValues.en['metadata.author']).toBe('Original Author');
+    });
+  });
+
+  describe('revertFields (internal)', () => {
+    it('should reset fields when reset=true', () => {
+      const currentValues = {
+        en: {
+          title: 'Modified Title',
+          body: 'Modified Body',
+        },
+      };
+
+      revertFields({
+        locale: 'en',
+        isDefaultLocale: true,
+        keyPath: '',
+        getFieldArgs: {
+          valueMap: { title: 'Current Title', body: 'Current Body' },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: true,
+      });
+
+      expect(currentValues.en.title).toBeUndefined();
+      expect(currentValues.en.body).toBeUndefined();
+    });
+
+    it('should restore values when reset=false', () => {
+      const currentValues = {
+        en: {
+          title: 'Modified Title',
+        },
+      };
+
+      revertFields({
+        locale: 'en',
+        isDefaultLocale: true,
+        keyPath: '',
+        getFieldArgs: {
+          valueMap: { title: 'Original Title', body: 'Original Body' },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: false,
+      });
+
+      expect(currentValues.en.title).toBe('Original Title');
+      expect(currentValues.en.body).toBe('Original Body');
+    });
+
+    it('should only revert fields matching keyPath', () => {
+      const currentValues = {
+        en: {
+          title: 'Modified Title',
+          body: 'Modified Body',
+          'metadata.author': 'Modified Author',
+        },
+      };
+
+      revertFields({
+        locale: 'en',
+        isDefaultLocale: true,
+        keyPath: 'metadata',
+        getFieldArgs: {
+          valueMap: {
+            title: 'Original Title',
+            body: 'Original Body',
+            'metadata.author': 'Original Author',
+          },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: false,
+      });
+
+      expect(currentValues.en.title).toBe('Modified Title');
+      expect(currentValues.en.body).toBe('Modified Body');
+      expect(currentValues.en['metadata.author']).toBe('Original Author');
+    });
+
+    it('should only revert translatable fields in non-default locale', () => {
+      const currentValues = {
+        ja: {
+          title: 'Modified Japanese Title',
+          date: 'Modified Date',
+        },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        if (keyPath === 'date') {
+          return { name: 'date', widget: 'datetime', i18n: 'duplicate' };
+        }
+
+        return undefined;
+      });
+
+      revertFields({
+        locale: 'ja',
+        isDefaultLocale: false,
+        keyPath: '',
+        getFieldArgs: {
+          valueMap: {
+            title: 'Original Japanese Title',
+            date: 'Original Date',
+          },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: false,
+      });
+
+      expect(currentValues.ja.title).toBe('Original Japanese Title');
+      expect(currentValues.ja.date).toBe('Modified Date');
+    });
+
+    it('should revert all fields in default locale', () => {
+      const currentValues = {
+        en: {
+          title: 'Modified Title',
+          date: 'Modified Date',
+        },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        if (keyPath === 'date') {
+          return { name: 'date', widget: 'datetime', i18n: 'duplicate' };
+        }
+
+        return undefined;
+      });
+
+      revertFields({
+        locale: 'en',
+        isDefaultLocale: true,
+        keyPath: '',
+        getFieldArgs: {
+          valueMap: {
+            title: 'Original Title',
+            date: 'Original Date',
+          },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: false,
+      });
+
+      expect(currentValues.en.title).toBe('Original Title');
+      expect(currentValues.en.date).toBe('Original Date');
+    });
+
+    it('should handle i18n=true fields', () => {
+      const currentValues = {
+        ja: {
+          body: 'Modified Body',
+        },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'body') {
+          return { name: 'body', widget: 'markdown', i18n: true };
+        }
+
+        return undefined;
+      });
+
+      revertFields({
+        locale: 'ja',
+        isDefaultLocale: false,
+        keyPath: '',
+        getFieldArgs: {
+          valueMap: { body: 'Original Body' },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: false,
+      });
+
+      expect(currentValues.ja.body).toBe('Original Body');
+    });
+  });
+
+  describe('revertLocale (internal)', () => {
+    it('should reset and restore values for a locale', () => {
+      const draft = {
+        collection: {
+          _i18n: {
+            defaultLocale: 'en',
+            allLocales: ['en', 'ja'],
+          },
+        },
+        collectionFile: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        currentValues: {
+          en: {
+            title: 'Modified Title',
+            body: 'Modified Body',
+          },
+        },
+        originalValues: {
+          en: {
+            title: 'Original Title',
+            body: 'Original Body',
+            date: '2024-01-01',
+          },
+        },
+      };
+
+      revertLocale({ draft, keyPath: '', locale: 'en' });
+
+      expect(draft.currentValues.en.title).toBe('Original Title');
+      expect(draft.currentValues.en.body).toBe('Original Body');
+      expect(draft.currentValues.en.date).toBe('2024-01-01');
+    });
+
+    it('should handle specific keyPath', () => {
+      const draft = {
+        collection: {
+          _i18n: {
+            defaultLocale: 'en',
+            allLocales: ['en', 'ja'],
+          },
+        },
+        collectionFile: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        currentValues: {
+          en: {
+            title: 'Modified Title',
+            body: 'Modified Body',
+          },
+        },
+        originalValues: {
+          en: {
+            title: 'Original Title',
+            body: 'Original Body',
+          },
+        },
+      };
+
+      revertLocale({ draft, keyPath: 'title', locale: 'en' });
+
+      expect(draft.currentValues.en.title).toBe('Original Title');
+      expect(draft.currentValues.en.body).toBe('Modified Body');
+    });
+
+    it('should use collectionFile i18n config when available', () => {
+      const draft = {
+        collection: {
+          _i18n: {
+            defaultLocale: 'en',
+            allLocales: ['en', 'ja'],
+          },
+        },
+        collectionFile: {
+          _i18n: {
+            defaultLocale: 'fr',
+            allLocales: ['fr', 'de'],
+          },
+        },
+        collectionName: 'pages',
+        fileName: 'about',
+        isIndexFile: false,
+        currentValues: {
+          fr: {
+            title: 'Modified French Title',
+          },
+        },
+        originalValues: {
+          fr: {
+            title: 'Original French Title',
+          },
+        },
+      };
+
+      revertLocale({ draft, keyPath: '', locale: 'fr' });
+
+      expect(draft.currentValues.fr.title).toBe('Original French Title');
+    });
+
+    it('should handle non-default locale correctly', () => {
+      const draft = {
+        collection: {
+          _i18n: {
+            defaultLocale: 'en',
+            allLocales: ['en', 'ja'],
+          },
+        },
+        collectionFile: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        currentValues: {
+          ja: {
+            title: 'Modified Japanese Title',
+            date: 'Modified Date',
+          },
+        },
+        originalValues: {
+          ja: {
+            title: 'Original Japanese Title',
+            date: 'Original Date',
+          },
+        },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        if (keyPath === 'date') {
+          return { name: 'date', widget: 'datetime', i18n: 'duplicate' };
+        }
+
+        return undefined;
+      });
+
+      revertLocale({ draft, keyPath: '', locale: 'ja' });
+
+      expect(draft.currentValues.ja.title).toBe('Original Japanese Title');
+      expect(draft.currentValues.ja.date).toBe('Modified Date');
     });
   });
 });

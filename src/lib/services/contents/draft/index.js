@@ -12,6 +12,7 @@ import { prefs } from '$lib/services/user/prefs';
  * @type {Writable<EntryDraft | null | undefined>}
  */
 export const entryDraft = writable();
+
 /**
  * Whether to enable automatic i18n duplication in proxies in {@link entryDraft}. This can be
  * temporarily disabled for performance reasons when making large changes to the values.

@@ -17,11 +17,21 @@ import { getDefaultValues } from '$lib/services/contents/draft/defaults';
  * } from '$lib/types/private';
  */
 
-const SLUG_EDITOR_TAG = '{{fields._slug}}';
-const LOCALIZED_SLUG_EDITOR_TAG = '{{fields._slug | localize}}';
+/**
+ * Tag to enable the slug editor for the default locale.
+ * @internal
+ */
+export const SLUG_EDITOR_TAG = '{{fields._slug}}';
+
+/**
+ * Tag to enable the slug editor for all locales.
+ * @internal
+ */
+export const LOCALIZED_SLUG_EDITOR_TAG = '{{fields._slug | localize}}';
 
 /**
  * Get the `slugEditor` property for an entry draft.
+ * @internal
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection that the entry belongs to.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
@@ -35,7 +45,7 @@ const LOCALIZED_SLUG_EDITOR_TAG = '{{fields._slug | localize}}';
  * be shown for new entries in entry collections.
  * @see https://github.com/sveltia/sveltia-cms/issues/499
  */
-const getSlugEditorProp = ({ collection, collectionFile, originalEntry }) => {
+export const getSlugEditorProp = ({ collection, collectionFile, originalEntry }) => {
   const { _type } = collection;
 
   const {

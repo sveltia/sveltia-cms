@@ -45,19 +45,21 @@ const UUID_TYPES = {
 
 /**
  * Handles date-time related template tags.
+ * @internal
  * @param {string} tag The template tag.
  * @param {Record<string, string>} dateTimeParts Date-time parts object.
  * @returns {string | undefined} The date-time value or undefined if not a date-time tag.
  */
-const handleDateTimeTag = (tag, dateTimeParts) =>
+export const handleDateTimeTag = (tag, dateTimeParts) =>
   DATE_TIME_FIELDS.includes(tag) ? dateTimeParts[tag] : undefined;
 
 /**
  * Handles UUID-related template tags.
+ * @internal
  * @param {string} tag The template tag.
  * @returns {string | undefined} The UUID value or undefined if not a UUID tag.
  */
-const handleUuidTag = (tag) => {
+export const handleUuidTag = (tag) => {
   const uuidGenerator = UUID_TYPES[/** @type {keyof typeof UUID_TYPES} */ (tag)];
 
   return uuidGenerator ? uuidGenerator() : undefined;
@@ -65,13 +67,14 @@ const handleUuidTag = (tag) => {
 
 /**
  * Handles slug-related template tags.
+ * @internal
  * @param {string} tag The template tag.
  * @param {string | undefined} currentSlug Current slug value.
  * @param {string} type Template type.
  * @param {boolean} isIndexFile Whether this is an index file.
  * @returns {string | undefined} The slug value or undefined if not a slug tag.
  */
-const handleSlugTag = (tag, currentSlug, type, isIndexFile) => {
+export const handleSlugTag = (tag, currentSlug, type, isIndexFile) => {
   if (tag !== 'slug' || !currentSlug) {
     return undefined;
   }
@@ -87,12 +90,13 @@ const handleSlugTag = (tag, currentSlug, type, isIndexFile) => {
 
 /**
  * Handles file path related template tags.
+ * @internal
  * @param {string} tag The template tag.
  * @param {string | undefined} entryFilePath Entry file path.
  * @param {string | undefined} basePath Base path.
  * @returns {string | undefined} The file path value or undefined if not a file path tag.
  */
-const handleFilePathTag = (tag, entryFilePath, basePath) => {
+export const handleFilePathTag = (tag, entryFilePath, basePath) => {
   if (!entryFilePath) {
     return '';
   }

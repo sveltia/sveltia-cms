@@ -17,8 +17,9 @@ import { isSingletonCollection } from '$lib/services/contents/collection';
 /**
  * I18n structure types.
  * @type {Record<string, I18nFileStructure>}
+ * @internal
  */
-const I18N_STRUCTURES = {
+export const I18N_STRUCTURES = {
   SINGLE_FILE: 'single_file',
   MULTIPLE_FILES: 'multiple_files',
   MULTIPLE_FOLDERS: 'multiple_folders',
@@ -27,13 +28,15 @@ const I18N_STRUCTURES = {
 
 /**
  * Default locale identifier.
+ * @internal
  */
-const DEFAULT_LOCALE_KEY = '_default';
+export const DEFAULT_LOCALE_KEY = '_default';
 
 /**
  * Default canonical slug configuration.
+ * @internal
  */
-const DEFAULT_CANONICAL_SLUG = {
+export const DEFAULT_CANONICAL_SLUG = {
   key: 'translationKey',
   value: '{{slug}}',
 };
@@ -61,11 +64,12 @@ export const DEFAULT_I18N_CONFIG = {
 
 /**
  * Merges i18n configuration from site, collection, and file levels.
+ * @internal
  * @param {Collection} collection The collection configuration.
  * @param {CollectionFile} [file] The collection file configuration.
  * @returns {I18nOptions | undefined} Merged configuration or undefined if i18n is not enabled.
  */
-const mergeI18nConfigs = (collection, file) => {
+export const mergeI18nConfigs = (collection, file) => {
   const siteConfigValue = /** @type {InternalSiteConfig} */ (get(siteConfig));
 
   if (!isObject(siteConfigValue.i18n)) {
@@ -100,11 +104,12 @@ const mergeI18nConfigs = (collection, file) => {
 
 /**
  * Determines the appropriate structure based on file configuration.
+ * @internal
  * @param {I18nFileStructure} defaultStructure The default structure from config.
  * @param {CollectionFile} [file] The collection file configuration.
  * @returns {I18nFileStructure} The determined structure.
  */
-const determineStructure = (defaultStructure, file) => {
+export const determineStructure = (defaultStructure, file) => {
   if (!file) {
     return defaultStructure;
   }
@@ -116,11 +121,12 @@ const determineStructure = (defaultStructure, file) => {
 
 /**
  * Creates the structure map based on i18n status and structure.
+ * @internal
  * @param {boolean} i18nEnabled Whether i18n is enabled.
  * @param {string} structure The current structure.
  * @returns {I18nFileStructureMap} The structure map.
  */
-const createStructureMap = (i18nEnabled, structure) => ({
+export const createStructureMap = (i18nEnabled, structure) => ({
   i18nSingleFile: i18nEnabled && structure === I18N_STRUCTURES.SINGLE_FILE,
   i18nMultiFile: i18nEnabled && structure === I18N_STRUCTURES.MULTIPLE_FILES,
   i18nMultiFolder: i18nEnabled && structure === I18N_STRUCTURES.MULTIPLE_FOLDERS,
@@ -129,12 +135,13 @@ const createStructureMap = (i18nEnabled, structure) => ({
 
 /**
  * Determines the default locale from the available locales.
+ * @internal
  * @param {boolean} i18nEnabled Whether i18n is enabled.
  * @param {string[]} allLocales All available locales.
  * @param {string} [specifiedDefault] The specified default locale.
  * @returns {string} The default locale.
  */
-const determineDefaultLocale = (i18nEnabled, allLocales, specifiedDefault) => {
+export const determineDefaultLocale = (i18nEnabled, allLocales, specifiedDefault) => {
   if (!i18nEnabled) {
     return DEFAULT_LOCALE_KEY;
   }
@@ -146,12 +153,13 @@ const determineDefaultLocale = (i18nEnabled, allLocales, specifiedDefault) => {
 
 /**
  * Determines the initial locales based on configuration.
+ * @internal
  * @param {string | string[] | undefined} initialLocalesConfig The initial locales configuration.
  * @param {string[]} allLocales All available locales.
  * @param {string} defaultLocale The default locale.
  * @returns {string[]} The initial locales.
  */
-const determineInitialLocales = (initialLocalesConfig, allLocales, defaultLocale) => {
+export const determineInitialLocales = (initialLocalesConfig, allLocales, defaultLocale) => {
   if (initialLocalesConfig === 'all') {
     return allLocales;
   }

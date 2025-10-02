@@ -15,12 +15,13 @@ import { getGitHash } from '$lib/services/utils/file';
 
 /**
  * Get the blob URL of an unsaved file that matches the given file.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft containing the resource.
  * @param {File} args.file File to be searched.
  * @returns {Promise<string | undefined>} Blob URL.
  */
-const getExistingBlobURL = async ({ draft, file }) => {
+export const getExistingBlobURL = async ({ draft, file }) => {
   const hash = await getHash(file);
   /** @type {string | undefined} */
   let foundURL = undefined;

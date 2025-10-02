@@ -12,10 +12,11 @@ import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
 /**
  * Update a flatten object with new properties by adding, updating and deleting properties.
+ * @internal
  * @param {Record<string, any>} obj Original object.
  * @param {Record<string, any>} newProps New properties.
  */
-const updateObject = (obj, newProps) => {
+export const updateObject = (obj, newProps) => {
   Object.entries(newProps).forEach(([key, value]) => {
     if (obj[key] !== value) {
       obj[key] = value;
@@ -31,11 +32,12 @@ const updateObject = (obj, newProps) => {
 
 /**
  * Traverse the given object by decoding dot-notated key path.
+ * @internal
  * @param {Record<string, any>} obj Original object.
  * @param {FieldKeyPath} keyPath Dot-notated field name.
  * @returns {[values: any, remainder: any]} Unflatten values and flatten remainder.
  */
-const getItemList = (obj, keyPath) => {
+export const getItemList = (obj, keyPath) => {
   const regex = new RegExp(`^${escapeRegExp(keyPath)}\\b(?!#)`);
 
   const filtered = Object.entries(obj)

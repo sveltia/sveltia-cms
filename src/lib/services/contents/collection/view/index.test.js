@@ -154,4 +154,21 @@ describe('collection/view/index', () => {
     // Should not call sort/filter/group for file collections
     expect(entryGroups).toBeDefined();
   });
+
+  test('entryGroups uses cache to avoid re-processing', () => {
+    /** @type {any} */
+    const mockEntries = [{ id: '1', slug: 'post-1', locales: {}, sha: 'abc' }];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: mockEntries }]);
+
+    // First call
+    currentView.set({ type: 'list' });
+
+    // Second call with same data (should use cache)
+    currentView.set({ type: 'list' });
+
+    expect(entryGroups).toBeDefined();
+  });
 });

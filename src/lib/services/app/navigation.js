@@ -34,10 +34,12 @@ export const hasOverlay = derived(
   [showContentOverlay, showAssetOverlay],
   ([_showContentOverlay, _showAssetOverlay]) => _showContentOverlay || _showAssetOverlay,
 );
+
 /**
  * @type {Writable<string>}
  */
 export const selectedPageName = writable('');
+
 /**
  * Page status to be announced by screen readers.
  * @type {Writable<string>}
@@ -65,7 +67,7 @@ export const parseLocation = (href = window.location.href) => {
  * @param {() => void} updateContent Function to trigger a content update.
  * @see https://developer.chrome.com/docs/web-platform/view-transitions/same-document
  */
-const startViewTransition = (transitionType, updateContent) => {
+export const startViewTransition = (transitionType, updateContent) => {
   if (!get(isSmallScreen) || !document.startViewTransition) {
     updateContent();
     return;

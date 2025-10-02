@@ -8,13 +8,14 @@ const SUPPORTED_TYPES = ['text/yaml', 'application/yaml', 'application/json'];
 
 /**
  * Fetch a single configuration file.
+ * @internal
  * @param {object} link Link attributes.
  * @param {string} link.href File path.
  * @param {string} [link.type] MIME type.
  * @returns {Promise<object>} Configuration.
  * @throws {Error} When fetching or parsing has failed.
  */
-const fetchFile = async ({ href, type = 'application/yaml' }) => {
+export const fetchFile = async ({ href, type = 'application/yaml' }) => {
   /** @type {Response} */
   let response;
 
@@ -64,6 +65,7 @@ const fetchFile = async ({ href, type = 'application/yaml' }) => {
  * Get the path to the configuration file. Depending on the server or framework configuration, a
  * trailing slash may be removed from the CMS `/admin/` URL. In that case, we need to determine the
  * correct path to the configuration file.
+ * @internal
  * @param {string} path Current `location.pathname` starting with a slash, like `/admin/`, `/admin`,
  * or `/admin/index.html`.
  * @returns {string} Path to the configuration file.

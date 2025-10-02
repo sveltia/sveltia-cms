@@ -80,6 +80,7 @@ export const defaultView = {
  * @type {Writable<AssetListView>}
  */
 export const currentView = writable({ type: 'grid', showInfo: true });
+
 /**
  * List of all the assets for the selected asset collection.
  * @type {Readable<Asset[]>}
@@ -94,6 +95,7 @@ export const listedAssets = derived(
     }
   },
 );
+
 /**
  * Sorted, filtered and grouped assets for the selected asset collection.
  * @type {Readable<Record<string, Asset[]>>}

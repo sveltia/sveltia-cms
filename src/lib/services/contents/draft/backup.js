@@ -41,6 +41,7 @@ const BACKUP_TOAST_DEFAULT_STATE = {
  * @type {Writable<{ show: boolean, timestamp?: Date, resolve?: (value?: boolean) => void }>}
  */
 export const restoreDialogState = writable({ show: false });
+
 /**
  * @type {Writable<{ saved: boolean, restored: boolean, deleted: boolean }>}
  */
@@ -127,12 +128,13 @@ export const saveBackup = async (draft) => {
 
 /**
  * Restore a draft backup to the current entry draft.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraftBackup} args.backup Backup to restore.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  */
-const restoreBackup = ({ backup, collectionName, fileName }) => {
+export const restoreBackup = ({ backup, collectionName, fileName }) => {
   const { currentLocales, currentSlugs, currentValues, files } = backup;
   const fileURLs = new Map();
 

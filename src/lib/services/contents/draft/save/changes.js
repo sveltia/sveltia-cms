@@ -31,13 +31,14 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-
 
 /**
  * Create base saving entry data.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {EntrySlugVariants} args.slugs Entry slugs.
  * @returns {Promise<{ localizedEntryMap: LocalizedEntryMap, changes: FileChange[], savingAssets:
  * Asset[] }>} Localized entry map, file changeset and asset list.
  */
-const createBaseSavingEntryData = async ({
+export const createBaseSavingEntryData = async ({
   draft,
   slugs: { defaultLocaleSlug, canonicalSlug, localizedSlugs },
 }) => {
@@ -146,12 +147,13 @@ const createBaseSavingEntryData = async ({
 
 /**
  * Get the previous SHA of the file from the cache database.
+ * @internal
  * @param {object} args Arguments.
  * @param {string | undefined} args.previousPath Previous file path.
  * @param {IndexedDB | undefined} args.cacheDB Cache database for file info.
  * @returns {Promise<string | undefined>} Previous SHA or `undefined` if not found.
  */
-const getPreviousSha = async ({ previousPath, cacheDB }) => {
+export const getPreviousSha = async ({ previousPath, cacheDB }) => {
   if (!previousPath) {
     return undefined;
   }
@@ -163,13 +165,14 @@ const getPreviousSha = async ({ previousPath, cacheDB }) => {
 
 /**
  * Get file change information for the entry draft, specifically for a single-file entry.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Entry} args.savingEntry Entry to be saved.
  * @param {IndexedDB | undefined} args.cacheDB Cache database for file info.
  * @returns {Promise<FileChange>} File change information.
  */
-const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
+export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
   const { collection, isNew, originalSlugs, originalEntry, collectionFile } = draft;
 
   const {
@@ -205,6 +208,7 @@ const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
 
 /**
  * Get file change information for the entry draft, specifically for a multi-file entry.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Entry} args.savingEntry Entry to be saved.
@@ -212,7 +216,7 @@ const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
  * @param {InternalLocaleCode} args.locale Locale code.
  * @returns {Promise<FileChange | undefined>} File change information.
  */
-const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }) => {
+export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }) => {
   const {
     collection,
     isNew,

@@ -65,6 +65,245 @@ describe('Local Backend Service', () => {
     localBackend = await import('./local.js');
   });
 
+  describe('getRootDirHandle', () => {
+    beforeEach(() => {
+      // Mock window.showDirectoryPicker
+      // @ts-ignore - Mock setup
+      global.window = /** @type {any} */ ({
+        showDirectoryPicker: /** @type {any} */ (vi.fn()),
+      });
+
+      // Initialize the backend to setup the DB
+      mockIndexedDB.mockReturnValue(mockDB);
+      mockGet.mockReturnValue({
+        backend: { name: 'github' },
+      });
+      mockInit.mockReturnValue({
+        service: 'github',
+        databaseName: 'test-db',
+      });
+    });
+
+    it('should throw error when File System Access API is not supported', async () => {
+      // @ts-ignore - Testing undefined case
+      delete (/** @type {any} */ (global.window).showDirectoryPicker);
+
+      const { getRootDirHandle } = localBackend;
+
+      await expect(getRootDirHandle()).rejects.toThrow('unsupported');
+    });
+
+    it('should return cached handle with valid permissions', async () => {
+      mockDirHandle.requestPermission.mockResolvedValue('granted');
+      mockDirHandle.entries.mockReturnValue({
+        next: vi.fn().mockResolvedValue({ done: false }),
+      });
+
+      mockDB.get.mockResolvedValue(mockDirHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      const handle = await getRootDirHandle();
+
+      expect(handle).toBe(mockDirHandle);
+      expect(mockDirHandle.requestPermission).toHaveBeenCalledWith({ mode: 'readwrite' });
+      expect(global.window.showDirectoryPicker).not.toHaveBeenCalled();
+    });
+
+    it('should show picker when no cached handle exists', async () => {
+      mockDirHandle.requestPermission.mockResolvedValue('granted');
+      mockDirHandle.entries.mockReturnValue({
+        next: vi.fn().mockResolvedValue({ done: false }),
+      });
+      mockDirHandle.getDirectoryHandle.mockResolvedValue({});
+
+      mockDB.get.mockResolvedValue(null);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      const handle = await getRootDirHandle();
+
+      expect(handle).toBe(mockDirHandle);
+      expect(global.window.showDirectoryPicker).toHaveBeenCalled();
+      expect(mockDirHandle.getDirectoryHandle).toHaveBeenCalledWith('.git');
+      expect(mockDB.set).toHaveBeenCalledWith('root_dir_handle', mockDirHandle);
+    });
+
+    it('should show picker when permission is denied', async () => {
+      const deniedHandle = {
+        requestPermission: vi.fn().mockResolvedValue('denied'),
+      };
+
+      const newHandle = {
+        requestPermission: vi.fn().mockResolvedValue('granted'),
+        entries: vi.fn().mockReturnValue({
+          next: vi.fn().mockResolvedValue({ done: false }),
+        }),
+        getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      };
+
+      mockDB.get.mockResolvedValue(deniedHandle);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(newHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      const handle = await getRootDirHandle();
+
+      expect(handle).toBe(newHandle);
+      expect(deniedHandle.requestPermission).toHaveBeenCalledWith({ mode: 'readwrite' });
+      expect(global.window.showDirectoryPicker).toHaveBeenCalled();
+    });
+
+    it('should show picker when cached directory has been moved/deleted', async () => {
+      mockDirHandle.requestPermission.mockResolvedValue('granted');
+      mockDirHandle.entries.mockReturnValue({
+        next: vi.fn().mockRejectedValue(new Error('Directory no longer exists')),
+      });
+
+      const newHandle = {
+        requestPermission: vi.fn().mockResolvedValue('granted'),
+        entries: vi.fn().mockReturnValue({
+          next: vi.fn().mockResolvedValue({ done: false }),
+        }),
+        getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      };
+
+      mockDB.get.mockResolvedValue(mockDirHandle);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(newHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      const handle = await getRootDirHandle();
+
+      expect(handle).toBe(newHandle);
+      expect(global.window.showDirectoryPicker).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundError when selected directory is not a project root', async () => {
+      const notFoundError = new Error('Directory not found');
+
+      notFoundError.name = 'NotFoundError';
+
+      mockDirHandle.requestPermission.mockResolvedValue('granted');
+      mockDirHandle.entries.mockReturnValue({
+        next: vi.fn().mockResolvedValue({ done: false }),
+      });
+      mockDirHandle.getDirectoryHandle.mockRejectedValue(notFoundError);
+
+      mockDB.get.mockResolvedValue(null);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      await expect(getRootDirHandle()).rejects.toThrow('Directory not found');
+    });
+
+    it('should throw AbortError when directory picker is dismissed', async () => {
+      const abortError = new Error('The user aborted a request.');
+
+      abortError.name = 'AbortError';
+
+      mockDB.get.mockResolvedValue(null);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockRejectedValue(abortError);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      await expect(getRootDirHandle()).rejects.toThrow('The user aborted a request.');
+    });
+
+    it('should return null when showPicker is false and no cached handle exists', async () => {
+      mockDB.get.mockResolvedValue(null);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      const handle = await getRootDirHandle({ showPicker: false });
+
+      expect(handle).toBeNull();
+      expect(global.window.showDirectoryPicker).not.toHaveBeenCalled();
+    });
+
+    it('should return null when showPicker is false and permission denied', async () => {
+      mockDirHandle.requestPermission.mockResolvedValue('denied');
+
+      mockDB.get.mockResolvedValue(mockDirHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      const handle = await getRootDirHandle({ showPicker: false });
+
+      expect(handle).toBeNull();
+      expect(global.window.showDirectoryPicker).not.toHaveBeenCalled();
+    });
+
+    it('should force reload and skip cache when forceReload is true', async () => {
+      mockDirHandle.requestPermission.mockResolvedValue('granted');
+      mockDirHandle.entries.mockReturnValue({
+        next: vi.fn().mockResolvedValue({ done: false }),
+      });
+      mockDirHandle.getDirectoryHandle.mockResolvedValue({});
+
+      // Set up a cached handle
+      mockDB.get.mockResolvedValue(mockDirHandle);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      const handle = await getRootDirHandle({ forceReload: true });
+
+      expect(handle).toBe(mockDirHandle);
+      expect(mockDB.get).not.toHaveBeenCalled();
+      expect(global.window.showDirectoryPicker).toHaveBeenCalled();
+    });
+
+    it('should cache the new handle after successful selection', async () => {
+      mockDirHandle.requestPermission.mockResolvedValue('granted');
+      mockDirHandle.entries.mockReturnValue({
+        next: vi.fn().mockResolvedValue({ done: false }),
+      });
+      mockDirHandle.getDirectoryHandle.mockResolvedValue({});
+
+      mockDB.get.mockResolvedValue(null);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      await getRootDirHandle();
+
+      expect(mockDB.set).toHaveBeenCalledWith('root_dir_handle', mockDirHandle);
+    });
+  });
+
   describe('Service Structure', () => {
     it('should export correct service properties', async () => {
       const service = localBackend.default;

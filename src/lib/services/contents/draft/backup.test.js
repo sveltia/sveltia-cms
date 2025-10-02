@@ -45,6 +45,7 @@ describe('draft/backup', () => {
   let saveBackup;
   let restoreDialogState;
   let backupToastState;
+  let restoreBackup;
   let restoreBackupIfNeeded;
   let showBackupToastIfNeeded;
   let resetBackupToastState;
@@ -66,6 +67,7 @@ describe('draft/backup', () => {
       saveBackup,
       restoreDialogState,
       backupToastState,
+      restoreBackup,
       restoreBackupIfNeeded,
       showBackupToastIfNeeded,
       resetBackupToastState,
@@ -398,6 +400,62 @@ describe('draft/backup', () => {
           collectionName: 'posts',
         }),
       );
+    });
+  });
+
+  describe('restoreBackup', () => {
+    it('should restore backup to entry draft without errors', () => {
+      const backup = {
+        timestamp: new Date(),
+        siteConfigVersion: 'v1.0.0',
+        collectionName: 'posts',
+        slug: 'my-post',
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: { en: { title: 'Restored Title' } },
+        files: {},
+      };
+
+      // Should not throw
+      expect(() => {
+        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+      }).not.toThrow();
+    });
+
+    it('should handle backup with blob URLs in values', () => {
+      const backup = {
+        timestamp: new Date(),
+        siteConfigVersion: 'v1.0.0',
+        collectionName: 'posts',
+        slug: 'my-post',
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: { en: { content: 'blob:http://localhost/abc123' } },
+        files: { 'blob:http://localhost/abc123': { file: new File(['test'], 'test.txt') } },
+      };
+
+      // Should not throw
+      expect(() => {
+        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+      }).not.toThrow();
+    });
+
+    it('should handle file collection with fileName', () => {
+      const backup = {
+        timestamp: new Date(),
+        siteConfigVersion: 'v1.0.0',
+        collectionName: 'pages',
+        slug: '',
+        currentLocales: { en: true },
+        currentSlugs: {},
+        currentValues: { en: { title: 'About Page' } },
+        files: {},
+      };
+
+      // Should not throw
+      expect(() => {
+        restoreBackup({ backup, collectionName: 'pages', fileName: 'about' });
+      }).not.toThrow();
     });
   });
 

@@ -32,18 +32,22 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
  * with the dev server’s middleware, or loading the CMS config file may fail due to a CORS error.
  */
 export const DEV_SITE_URL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
+
 /**
  * @type {Partial<SiteConfig>}
  */
 export const rawSiteConfig = {};
+
 /**
  * @type {Writable<InternalSiteConfig | undefined>}
  */
 export const siteConfig = writable();
+
 /**
  * @type {Writable<string | undefined>}
  */
 export const siteConfigVersion = writable();
+
 /**
  * @type {Writable<{ message: string } | undefined>}
  */

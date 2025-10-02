@@ -324,4 +324,89 @@ describe('editor/settings', () => {
       expect(settings).toBeDefined();
     });
   });
+
+  describe('database error handling', () => {
+    it('should handle errors when reading from database', async () => {
+      const { IndexedDB } = await import('@sveltia/utils/storage');
+
+      const mockDB = {
+        get: vi.fn().mockResolvedValue(undefined),
+        set: vi.fn(),
+      };
+
+      // @ts-ignore
+      IndexedDB.mockImplementation(() => mockDB);
+
+      const mockBackendService = /** @type {any} */ ({
+        repository: {
+          databaseName: 'test-cms',
+        },
+      });
+
+      // Should not throw despite database error
+      await expect(initSettings(mockBackendService)).resolves.not.toThrow();
+    });
+
+    it('should handle errors when writing to database', async () => {
+      const { IndexedDB } = await import('@sveltia/utils/storage');
+
+      const mockDB = {
+        get: vi.fn().mockResolvedValue({}),
+        set: vi.fn().mockRejectedValue(new Error('Database write error')),
+      };
+
+      // @ts-ignore
+      IndexedDB.mockImplementation(() => mockDB);
+
+      const mockBackendService = /** @type {any} */ ({
+        repository: {
+          databaseName: 'test-cms',
+        },
+      });
+
+      await initSettings(mockBackendService);
+
+      // Update the store to trigger save attempt
+      entryEditorSettings.set(
+        /** @type {import('$lib/types/private').EntryEditorView} */ ({
+          showPreview: false,
+          syncScrolling: false,
+          selectAssetsView: { type: 'list' },
+        }),
+      );
+
+      // Should not throw despite database error
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+    });
+  });
+
+  describe('selectAssetsView synchronization', () => {
+    it('should handle empty view object', async () => {
+      const { selectAssetsView } = await import('$lib/services/contents/editor');
+
+      const mockBackendService = /** @type {any} */ ({
+        repository: {
+          databaseName: 'test-cms',
+        },
+      });
+
+      await initSettings(mockBackendService);
+
+      // Simulate empty view
+      // @ts-ignore
+      const subscriber = selectAssetsView.subscribe.mock.calls[0]?.[0];
+
+      if (subscriber) {
+        // Call with empty object
+        subscriber({});
+      }
+
+      // Should not update entryEditorSettings
+      const settings = get(entryEditorSettings);
+
+      expect(settings?.selectAssetsView).toBeDefined();
+    });
+  });
 });

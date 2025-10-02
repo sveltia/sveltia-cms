@@ -14,6 +14,7 @@ const STORAGE_KEY = 'sveltia-cms.prefs';
  * @type {Writable<{ type: string } | undefined>}
  */
 export const prefsError = writable();
+
 /**
  * @type {Writable<Preferences>}
  */

@@ -15,6 +15,7 @@ import { getField } from '$lib/services/contents/entry/fields';
 
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
+ * @internal
  * @param {object} args Arguments.
  * @param {FieldKeyPath} args.keyPath Field key path to revert. If empty, all the fields will be
  * reverted.
@@ -24,7 +25,7 @@ import { getField } from '$lib/services/contents/entry/fields';
  * @param {LocaleContentMap} args.currentValues Current values to revert. This will be modified.
  * @param {boolean} [args.reset] Whether ro remove the current value.
  */
-const revertFields = ({
+export const revertFields = ({
   locale,
   isDefaultLocale,
   keyPath,
@@ -51,13 +52,14 @@ const revertFields = ({
 
 /**
  * Revert the changes made to the given locale.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {FieldKeyPath} args.keyPath Field key path to revert. If empty, all the fields will be
  * reverted.
  * @param {InternalLocaleCode} args.locale Locale code.
  */
-const revertLocale = ({ draft, keyPath, locale }) => {
+export const revertLocale = ({ draft, keyPath, locale }) => {
   const {
     collection,
     collectionName,

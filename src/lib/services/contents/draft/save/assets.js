@@ -112,6 +112,7 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
 
 /**
  * Get the information required to save an asset.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
@@ -119,7 +120,7 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
  * @returns {{ assetFolderPaths: ResolvedAssetFolderPaths, assetNamesInSameFolder: string[],
  * savingAssetProps: SavingAsset }} Arguments.
  */
-const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
+export const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
   const { collection, collectionName, collectionFile, isIndexFile } = draft;
 
   const {

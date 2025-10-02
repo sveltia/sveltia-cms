@@ -11,18 +11,22 @@ import { getCollection } from '$lib/services/contents/collection';
  * @type {Writable<boolean>}
  */
 export const dataLoaded = writable(false);
+
 /**
  * @type {Writable<number | undefined>}
  */
 export const dataLoadedProgress = writable();
+
 /**
  * @type {Writable<EntryFolderInfo[]>}
  */
 export const allEntryFolders = writable([]);
+
 /**
  * @type {Writable<Entry[]>}
  */
 export const allEntries = writable([]);
+
 /**
  * @type {Writable<Error[]>}
  */

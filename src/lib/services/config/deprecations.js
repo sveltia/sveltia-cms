@@ -2,8 +2,9 @@
  * Mapping of deprecation warnings that have been issued once. This prevents flooding the console
  * with repeated warnings.
  * @type {Record<string, boolean>}
+ * @internal
  */
-const warnedOnceMap = {
+export const warnedOnceMap = {
   yaml_quote: false,
   uuid_read_only: false,
   save_all_locales: false,
@@ -13,8 +14,9 @@ const warnedOnceMap = {
 /**
  * Deprecation warning messages.
  * @type {Record<string, string>}
+ * @internal
  */
-const warningMessages = {
+export const warningMessages = {
   yaml_quote:
     'The `yaml_quote` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the global `output.yaml.quote` option instead. `yaml_quote: true` is equivalent to ' +

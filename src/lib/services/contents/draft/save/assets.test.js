@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { replaceBlobURL, resolveAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
+import {
+  getAssetSavingInfo,
+  replaceBlobURL,
+  resolveAssetFolderPaths,
+} from '$lib/services/contents/draft/save/assets';
 
 vi.mock('$lib/services/assets', () => ({
   getAssetsByDirName: vi.fn(() => []),
@@ -995,5 +999,326 @@ describe('Test replaceBlobURL()', () => {
     });
 
     expect(content.body).not.toContain(blobURL);
+  });
+});
+
+describe('Test getAssetSavingInfo()', () => {
+  /** @type {any} */
+  let mockGetAssetsByDirName;
+  /** @type {any} */
+  let mockGetFillSlugOptions;
+  /** @type {any} */
+  let mockCreateEntryPath;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    const assetsModule = await import('$lib/services/assets');
+    const slugsModule = await import('$lib/services/contents/draft/slugs');
+    const entryPathModule = await import('$lib/services/contents/draft/save/entry-path');
+
+    mockGetAssetsByDirName = assetsModule.getAssetsByDirName;
+    mockGetFillSlugOptions = slugsModule.getFillSlugOptions;
+    mockCreateEntryPath = entryPathModule.createEntryPath;
+  });
+
+  test('should return asset saving info for non-entry-relative folder', async () => {
+    /** @type {any} */
+    const draft = {
+      collection: {
+        name: 'posts',
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'content/posts' },
+      },
+      collectionName: 'posts',
+      collectionFile: undefined,
+      isIndexFile: false,
+    };
+
+    /** @type {any} */
+    const folder = {
+      collectionName: 'posts',
+      entryRelative: false,
+      internalPath: 'static/uploads',
+      publicPath: '/uploads',
+    };
+
+    const defaultLocaleSlug = 'my-post';
+
+    mockGetAssetsByDirName.mockReturnValue([{ name: 'existing1.jpg' }, { name: 'existing2.png' }]);
+
+    mockGetFillSlugOptions.mockReturnValue({
+      collection: draft.collection,
+      content: {},
+    });
+
+    mockCreateEntryPath.mockReturnValue('content/posts/my-post.md');
+
+    const result = getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
+
+    expect(result.assetFolderPaths).toEqual({
+      resolvedInternalPath: 'static/uploads',
+      resolvedPublicPath: '/uploads',
+    });
+
+    expect(result.assetNamesInSameFolder).toEqual(['existing1.jpg', 'existing2.png']);
+
+    expect(result.savingAssetProps).toEqual({
+      collectionName: 'posts',
+      folder,
+    });
+
+    expect(mockGetAssetsByDirName).toHaveBeenCalledWith('static/uploads');
+  });
+
+  test('should return asset saving info for entry-relative folder with multiple_folders', async () => {
+    /** @type {any} */
+    const draft = {
+      collection: {
+        name: 'blog',
+        _type: 'entry',
+        _i18n: {
+          defaultLocale: 'en',
+          structure: 'multiple_folders',
+        },
+        _file: {
+          basePath: 'src/content/blog',
+          subPath: '{{slug}}',
+        },
+        media_folder: 'images',
+      },
+      collectionName: 'blog',
+      collectionFile: undefined,
+      isIndexFile: false,
+    };
+
+    /** @type {any} */
+    const folder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      internalPath: 'src/content/blog',
+      publicPath: '',
+    };
+
+    const defaultLocaleSlug = 'hello-world';
+
+    mockGetAssetsByDirName.mockReturnValue([]);
+
+    mockGetFillSlugOptions.mockReturnValue({
+      collection: draft.collection,
+      content: {},
+    });
+
+    mockCreateEntryPath.mockReturnValue('src/content/blog/hello-world.md');
+
+    const result = getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
+
+    expect(result.assetFolderPaths.resolvedInternalPath).toContain('hello-world');
+    expect(result.assetNamesInSameFolder).toEqual([]);
+    expect(result.savingAssetProps.collectionName).toBe('blog');
+  });
+
+  test('should normalize asset names', async () => {
+    /** @type {any} */
+    const draft = {
+      collection: {
+        name: 'posts',
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'content/posts' },
+      },
+      collectionName: 'posts',
+      collectionFile: undefined,
+      isIndexFile: false,
+    };
+
+    /** @type {any} */
+    const folder = {
+      collectionName: 'posts',
+      entryRelative: false,
+      internalPath: 'static/uploads',
+      publicPath: '/uploads',
+    };
+
+    const defaultLocaleSlug = 'test';
+
+    // Asset names with different normalizations (e.g., composed vs decomposed Unicode)
+    mockGetAssetsByDirName.mockReturnValue([
+      { name: 'café.jpg' }, // May have different Unicode representations
+      { name: 'naïve.png' },
+    ]);
+
+    mockGetFillSlugOptions.mockReturnValue({
+      collection: draft.collection,
+      content: {},
+    });
+
+    mockCreateEntryPath.mockReturnValue('content/posts/test.md');
+
+    const result = getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
+
+    // Names should be normalized
+    expect(result.assetNamesInSameFolder).toHaveLength(2);
+    expect(result.assetNamesInSameFolder[0]).toBe('café.jpg'.normalize());
+    expect(result.assetNamesInSameFolder[1]).toBe('naïve.png'.normalize());
+  });
+
+  test('should handle collection file i18n configuration', async () => {
+    const collectionFile = {
+      name: 'about',
+      _i18n: { defaultLocale: 'fr' },
+    };
+
+    /** @type {any} */
+    const draft = {
+      collection: {
+        name: 'pages',
+        _type: 'file',
+        _i18n: { defaultLocale: 'en' },
+      },
+      collectionName: 'pages',
+      collectionFile,
+      isIndexFile: false,
+    };
+
+    /** @type {any} */
+    const folder = {
+      collectionName: 'pages',
+      entryRelative: false,
+      internalPath: 'static/pages',
+      publicPath: '/pages',
+    };
+
+    const defaultLocaleSlug = 'about';
+
+    mockGetAssetsByDirName.mockReturnValue([]);
+    mockGetFillSlugOptions.mockReturnValue({
+      collection: draft.collection,
+      content: {},
+    });
+    mockCreateEntryPath.mockReturnValue('content/pages/about.md');
+
+    const result = getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
+
+    expect(mockCreateEntryPath).toHaveBeenCalledWith({
+      draft,
+      locale: 'fr', // Should use collection file's default locale
+      slug: 'about',
+    });
+
+    expect(result.savingAssetProps.collectionName).toBe('pages');
+  });
+
+  test('should pass correct parameters to getFillSlugOptions', async () => {
+    /** @type {any} */
+    const draft = {
+      collection: {
+        name: 'posts',
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'content/posts' },
+      },
+      collectionName: 'posts',
+      collectionFile: undefined,
+      isIndexFile: true,
+    };
+
+    /** @type {any} */
+    const folder = {
+      collectionName: 'posts',
+      entryRelative: false,
+      internalPath: 'static/uploads',
+      publicPath: '/uploads',
+    };
+
+    const defaultLocaleSlug = 'my-post';
+
+    mockGetAssetsByDirName.mockReturnValue([]);
+    mockGetFillSlugOptions.mockReturnValue({
+      collection: draft.collection,
+      content: {},
+    });
+    mockCreateEntryPath.mockReturnValue('content/posts/my-post/index.md');
+
+    getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
+
+    expect(mockGetFillSlugOptions).toHaveBeenCalledWith({ draft });
+  });
+
+  test('should handle empty asset directory', async () => {
+    /** @type {any} */
+    const draft = {
+      collection: {
+        name: 'posts',
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'content/posts' },
+      },
+      collectionName: 'posts',
+      collectionFile: undefined,
+      isIndexFile: false,
+    };
+
+    /** @type {any} */
+    const folder = {
+      collectionName: 'posts',
+      entryRelative: false,
+      internalPath: 'static/new-folder',
+      publicPath: '/new-folder',
+    };
+
+    const defaultLocaleSlug = 'first-post';
+
+    mockGetAssetsByDirName.mockReturnValue([]);
+    mockGetFillSlugOptions.mockReturnValue({
+      collection: draft.collection,
+      content: {},
+    });
+    mockCreateEntryPath.mockReturnValue('content/posts/first-post.md');
+
+    const result = getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
+
+    expect(result.assetNamesInSameFolder).toEqual([]);
+    expect(result.assetFolderPaths.resolvedInternalPath).toBe('static/new-folder');
+  });
+
+  test('should use resolveAssetFolderPaths with correct parameters', async () => {
+    /** @type {any} */
+    const draft = {
+      collection: {
+        name: 'posts',
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'content/posts' },
+      },
+      collectionName: 'posts',
+      collectionFile: undefined,
+      isIndexFile: false,
+    };
+
+    /** @type {any} */
+    const folder = {
+      collectionName: 'posts',
+      entryRelative: false,
+      internalPath: 'static/uploads/{{slug}}',
+      publicPath: '/uploads/{{slug}}',
+    };
+
+    const defaultLocaleSlug = 'template-test';
+
+    mockGetAssetsByDirName.mockReturnValue([]);
+    mockGetFillSlugOptions.mockReturnValue({
+      collection: draft.collection,
+      content: {},
+      currentSlug: defaultLocaleSlug,
+    });
+    mockCreateEntryPath.mockReturnValue('content/posts/template-test.md');
+
+    const result = getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
+
+    // The resolved paths should have the template tags replaced
+    expect(result.assetFolderPaths.resolvedInternalPath).toBe('static/uploads/template-test');
+    expect(result.assetFolderPaths.resolvedPublicPath).toBe('/uploads/template-test');
   });
 });

@@ -8,10 +8,11 @@ import { siteConfig } from '$lib/services/config';
 
 /**
  * Helper to check `multiple` option in media libraries config.
+ * @internal
  * @param {MediaLibraries | undefined} mediaLibraries Media libraries configuration.
  * @returns {boolean | undefined} Result of checking if any media library allows multiple files.
  */
-const hasMultipleInMediaLibraries = (mediaLibraries) => {
+export const hasMultipleInMediaLibraries = (mediaLibraries) => {
   if (!mediaLibraries) {
     return undefined;
   }
@@ -32,10 +33,11 @@ const hasMultipleInMediaLibraries = (mediaLibraries) => {
 
 /**
  * Helper to check `multiple` option in media library config.
+ * @internal
  * @param {MediaLibrary | undefined} mediaLibrary Media library configuration.
  * @returns {boolean | undefined} Result of checking if any media library allows multiple files.
  */
-const hasMultipleInMediaLibrary = (mediaLibrary) => {
+export const hasMultipleInMediaLibrary = (mediaLibrary) => {
   // @ts-ignore Stock Asset library doesn't have `config` property
   if (!mediaLibrary?.config) {
     return undefined;

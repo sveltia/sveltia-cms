@@ -26,7 +26,7 @@ let remoteRepository = undefined;
 /**
  * @type {RepositoryInfo}
  */
-const repositoryProps = { service: '', label: '', owner: '', repo: '', branch: '' };
+const REPOSITORY_PROPS = { service: '', label: '', owner: '', repo: '', branch: '' };
 
 /**
  * @type {RepositoryInfo}
@@ -39,7 +39,7 @@ const repository = new Proxy(/** @type {any} */ ({}), {
    * @returns {any} Property value.
    */
   // @ts-ignore
-  get: (_obj, key) => (remoteRepository ?? repositoryProps)[key],
+  get: (_obj, key) => (remoteRepository ?? REPOSITORY_PROPS)[key],
 });
 
 const ROOT_DIR_HANDLE_KEY = 'root_dir_handle';
@@ -55,6 +55,7 @@ let rootDirHandle = undefined;
 /**
  * Get the project’s root directory handle so the app can read all the files under the directory.
  * The handle will be cached in IndexedDB for later use.
+ * @internal
  * @param {object} [options] Options.
  * @param {boolean} [options.forceReload] Whether to force getting the handle.
  * @param {boolean} [options.showPicker] Whether to show the directory picker.
@@ -64,7 +65,7 @@ let rootDirHandle = undefined;
  * not a project root directory. There might be other reasons to throw.
  * @see https://developer.chrome.com/articles/file-system-access/#stored-file-or-directory-handles-and-permissions
  */
-const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {}) => {
+export const getRootDirHandle = async ({ forceReload = false, showPicker = true } = {}) => {
   if (!('showDirectoryPicker' in window)) {
     throw new Error('unsupported');
   }

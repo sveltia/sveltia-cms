@@ -46,14 +46,16 @@ import { getRegex } from '$lib/services/utils/misc';
 /**
  * Regular expression to match the list key path, e.g. `field.0`, `field.1`, etc.
  * @type {RegExp}
+ * @internal
  */
-const LIST_KEY_PATH_REGEX = /\.\d+$/;
+export const LIST_KEY_PATH_REGEX = /\.\d+$/;
 
 /**
  * Default validity state for a field.
  * @type {EntryValidityState}
+ * @internal
  */
-const DEFAULT_VALIDITY = {
+export const DEFAULT_VALIDITY = {
   valueMissing: false,
   tooShort: false,
   tooLong: false,
@@ -63,7 +65,11 @@ const DEFAULT_VALIDITY = {
   typeMismatch: false,
 };
 
-const validityProxyHandler = {
+/**
+ * Proxy handler for validity state. Exported for testing only.
+ * @internal
+ */
+export const validityProxyHandler = {
   /**
    * Proxy getter.
    * @param {EntryValidityState} obj Object itself.
@@ -75,11 +81,12 @@ const validityProxyHandler = {
 
 /**
  * Validate each field.
+ * @internal
  * @param {ValidateFieldArgs} args Arguments.
  * @returns {EntryValidityState | undefined} Field validity.
  * @todo Refactor this function to reduce complexity and improve readability.
  */
-const validateAnyField = (args) => {
+export const validateAnyField = (args) => {
   const { draft, locale, valueMap, componentName, validities } = args;
   const { collection, collectionName, fileName, collectionFile, files, isIndexFile } = draft;
   let { keyPath, value } = args;
@@ -287,10 +294,11 @@ const validateAnyField = (args) => {
 
 /**
  * Validate a single field and update the validity state.
+ * @internal
  * @param {ValidateFieldArgs} args Arguments.
  * @returns {boolean} Whether the field is valid.
  */
-const validateField = (args) => {
+export const validateField = (args) => {
   const { validities, locale, keyPath } = args;
   const validity = validateAnyField(args);
   let valid = true;
@@ -308,12 +316,13 @@ const validateField = (args) => {
 
 /**
  * Validate an array-type field.
+ * @internal
  * @param {object} args Arguments.
  * @param {Field} args.fieldConfig Field configuration.
  * @param {ValidateFieldArgs} args.validateArgs Arguments for field validation.
  * @returns {{ valid: boolean, validateItems: boolean }} Validation result.
  */
-const validateList = ({ fieldConfig, validateArgs }) => {
+export const validateList = ({ fieldConfig, validateArgs }) => {
   const { validities, locale, keyPath } = validateArgs;
   const valid = validities[locale][keyPath]?.valid ?? validateField(validateArgs);
   const { widget: widgetName = 'string' } = fieldConfig;
@@ -413,9 +422,10 @@ export const validateFields = (valueStoreKey) => {
 /**
  * Validate the slugs and return the results. At this time, we only check if the slug is empty
  * when the slug editor is shown. A pattern check can be added later if needed.
+ * @internal
  * @returns {{ valid: boolean, validities: LocaleValidityMap }} Validation results.
  */
-const validateSlugs = () => {
+export const validateSlugs = () => {
   const { currentSlugs, slugEditor } = /** @type {EntryDraft} */ (get(entryDraft));
   /** @type {LocaleValidityMap} */
   const validities = {};

@@ -1,7 +1,13 @@
 // @ts-nocheck
 import { describe, expect, it, vi } from 'vitest';
 
-import { getFillSlugOptions, getSlugs } from './slugs';
+import {
+  getCanonicalSlug,
+  getFillSlugOptions,
+  getLocalizedSlug,
+  getLocalizedSlugs,
+  getSlugs,
+} from './slugs';
 
 vi.mock('$lib/services/common/template', () => ({
   fillTemplate: vi.fn((template, options) => {
@@ -309,6 +315,255 @@ describe('draft/slugs', () => {
 
       expect(result.canonicalSlug).toBeDefined();
       expect(result.localizedSlugs).toBeDefined();
+    });
+  });
+
+  describe('getLocalizedSlug (internal)', () => {
+    it('should return slug for new entry with localized content', async () => {
+      const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
+
+      fillTemplate.mockReturnValue('mon-article');
+
+      const draft = {
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          identifier_field: 'title',
+          slug: '{{title}}',
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: undefined,
+        currentSlugs: {},
+        currentValues: {
+          en: { title: 'My Article' },
+          fr: { title: 'Mon Article' },
+        },
+        isIndexFile: false,
+      };
+
+      const result = getLocalizedSlug({
+        draft,
+        locale: 'fr',
+        localizingKeyPaths: ['title'],
+      });
+
+      expect(result).toBe('mon-article');
+      expect(fillTemplate).toHaveBeenCalledWith(
+        '{{title}}',
+        expect.objectContaining({
+          locale: 'fr',
+        }),
+      );
+    });
+
+    it('should return existing slug for existing entry', () => {
+      const draft = {
+        isNew: false,
+        collection: {
+          _type: 'entry',
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: undefined,
+        currentSlugs: { fr: 'mon-article-existant' },
+        currentValues: {
+          en: { title: 'My Existing Article' },
+          fr: { title: 'Mon Article Existant' },
+        },
+        isIndexFile: false,
+      };
+
+      const result = getLocalizedSlug({
+        draft,
+        locale: 'fr',
+        localizingKeyPaths: ['title'],
+      });
+
+      expect(result).toBe('mon-article-existant');
+    });
+
+    it('should fallback to _ slug when locale slug not available', () => {
+      const draft = {
+        isNew: false,
+        collection: {
+          _type: 'entry',
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: undefined,
+        currentSlugs: { _: 'default-slug' },
+        currentValues: {
+          en: { title: 'My Article' },
+          fr: { title: 'Mon Article' },
+        },
+        isIndexFile: false,
+      };
+
+      const result = getLocalizedSlug({
+        draft,
+        locale: 'fr',
+        localizingKeyPaths: ['title'],
+      });
+
+      expect(result).toBe('default-slug');
+    });
+  });
+
+  describe('getLocalizedSlugs (internal)', () => {
+    it('should return undefined for single file i18n', () => {
+      const draft = {
+        collection: {
+          _type: 'entry',
+          identifier_field: 'title',
+          slug: '{{title | localize}}',
+          _i18n: {
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: true },
+          },
+        },
+        collectionFile: undefined,
+        currentLocales: { en: true, fr: true },
+      };
+
+      const result = getLocalizedSlugs({ draft, defaultLocaleSlug: 'my-article' });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined when no localizing key paths', () => {
+      const draft = {
+        collection: {
+          _type: 'entry',
+          identifier_field: 'title',
+          slug: '{{title}}', // No localize modifier
+          _i18n: {
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+          },
+        },
+        collectionFile: undefined,
+        currentLocales: { en: true, fr: true },
+      };
+
+      const result = getLocalizedSlugs({ draft, defaultLocaleSlug: 'my-article' });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return localized slug map when localize modifier present', async () => {
+      const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
+
+      fillTemplate.mockImplementation((template, options) => {
+        if (options.locale === 'fr') {
+          return 'mon-article';
+        }
+
+        return 'my-article';
+      });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          identifier_field: 'title',
+          slug: '{{title | localize}}',
+          _i18n: {
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+          },
+        },
+        collectionFile: undefined,
+        currentLocales: { en: true, fr: true },
+        currentSlugs: {},
+        currentValues: {
+          en: { title: 'My Article' },
+          fr: { title: 'Mon Article' },
+        },
+        isIndexFile: false,
+        isNew: true,
+      };
+
+      const result = getLocalizedSlugs({ draft, defaultLocaleSlug: 'my-article' });
+
+      expect(result).toEqual({
+        en: 'my-article',
+        fr: 'mon-article',
+      });
+    });
+  });
+
+  describe('getCanonicalSlug (internal)', () => {
+    it('should return undefined when no localized slugs', () => {
+      const draft = {
+        collection: {
+          _i18n: {
+            canonicalSlug: { value: '{{slug}}' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      const result = getCanonicalSlug({
+        draft,
+        defaultLocaleSlug: 'my-article',
+        localizedSlugs: undefined,
+        fillSlugOptions: {},
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return default locale slug when template is {{slug}}', () => {
+      const draft = {
+        collection: {
+          _i18n: {
+            canonicalSlug: { value: '{{slug}}' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      const result = getCanonicalSlug({
+        draft,
+        defaultLocaleSlug: 'my-article',
+        localizedSlugs: { en: 'my-article', fr: 'mon-article' },
+        fillSlugOptions: {},
+      });
+
+      expect(result).toBe('my-article');
+    });
+
+    it('should use fillTemplate for custom canonical slug template', async () => {
+      const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
+
+      fillTemplate.mockReturnValue('custom-canonical-key');
+
+      const draft = {
+        collection: {
+          _i18n: {
+            canonicalSlug: { value: '{{fields.customKey}}' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      const fillSlugOptions = {
+        collection: draft.collection,
+        content: { customKey: 'custom-canonical-key' },
+        isIndexFile: false,
+      };
+
+      const result = getCanonicalSlug({
+        draft,
+        defaultLocaleSlug: 'my-article',
+        localizedSlugs: { en: 'my-article', fr: 'mon-article' },
+        fillSlugOptions,
+      });
+
+      expect(result).toBe('custom-canonical-key');
+      expect(fillTemplate).toHaveBeenCalledWith(
+        '{{fields.customKey}}',
+        expect.objectContaining({
+          currentSlug: 'my-article',
+        }),
+      );
     });
   });
 });

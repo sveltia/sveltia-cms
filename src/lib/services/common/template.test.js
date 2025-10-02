@@ -2,7 +2,15 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
-import { fillTemplate } from '$lib/services/common/template';
+import {
+  fillTemplate,
+  handleDateTimeTag,
+  handleFilePathTag,
+  handleSlugTag,
+  handleUuidTag,
+  // Note: These are internal functions tested indirectly through fillTemplate
+  // but we test them directly for comprehensive coverage
+} from '$lib/services/common/template';
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
 /**
@@ -652,5 +660,319 @@ describe('Test fillTemplate()', async () => {
         currentSlug: 'custom-slug',
       }),
     ).toEqual('/2024/');
+  });
+
+  describe('Internal helper functions coverage', () => {
+    test('DATE_TIME_FIELDS constant is used correctly', async () => {
+      await setupSiteConfig();
+
+      const dateTimeParts = getDateTimeParts({ timeZone: 'UTC' });
+
+      // Test that all date-time fields work
+      expect(fillTemplate('{{year}}', { collection, content: {}, dateTimeParts })).toBe(
+        dateTimeParts.year,
+      );
+      expect(fillTemplate('{{month}}', { collection, content: {}, dateTimeParts })).toBe(
+        dateTimeParts.month,
+      );
+      expect(fillTemplate('{{day}}', { collection, content: {}, dateTimeParts })).toBe(
+        dateTimeParts.day,
+      );
+      expect(fillTemplate('{{hour}}', { collection, content: {}, dateTimeParts })).toBe(
+        dateTimeParts.hour,
+      );
+      expect(fillTemplate('{{minute}}', { collection, content: {}, dateTimeParts })).toBe(
+        dateTimeParts.minute,
+      );
+      expect(fillTemplate('{{second}}', { collection, content: {}, dateTimeParts })).toBe(
+        dateTimeParts.second,
+      );
+    });
+
+    test('TEMPLATE_REGEX correctly matches template tags', async () => {
+      await setupSiteConfig();
+
+      // Test various template patterns
+      expect(fillTemplate('{{title}}-{{slug}}', { collection, content: { title: 'Hello' } })).toBe(
+        'hello-summary',
+      );
+      expect(
+        fillTemplate('prefix-{{title}}-suffix', { collection, content: { title: 'Test' } }),
+      ).toBe('prefix-test-suffix');
+    });
+
+    test('UUID_TYPES generates UUIDs correctly', async () => {
+      await setupSiteConfig();
+
+      const uuidResult = fillTemplate('{{uuid}}', { collection, content: {} });
+      const uuidShortResult = fillTemplate('{{uuid_short}}', { collection, content: {} });
+      const uuidShorterResult = fillTemplate('{{uuid_shorter}}', { collection, content: {} });
+
+      // UUID should be 36 characters (including hyphens)
+      expect(uuidResult).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+      // UUID short should be 12 hex characters
+      expect(uuidShortResult).toMatch(/^[0-9a-f]{12}$/);
+      // UUID shorter should be 8 hex characters
+      expect(uuidShorterResult).toMatch(/^[0-9a-f]{8}$/);
+    });
+
+    test('getFieldValue handles fields.* pattern', async () => {
+      await setupSiteConfig();
+
+      // Test fields.* pattern
+      expect(fillTemplate('{{fields.title}}', { collection, content: { title: 'My Title' } })).toBe(
+        'my-title',
+      );
+      expect(
+        fillTemplate('{{fields.author}}', { collection, content: { author: 'John Doe' } }),
+      ).toBe('john-doe');
+    });
+
+    test('getFieldValue handles slug tag specially', async () => {
+      await setupSiteConfig();
+
+      // When tag is 'slug', it should call getEntrySummaryFromContent
+      const result = fillTemplate('{{slug}}', { collection, content: { title: 'Test' } });
+
+      expect(result).toBe('summary'); // Mocked to return 'summary'
+    });
+
+    test('replaceTemplateTag handles locale for preview_path', async () => {
+      await setupSiteConfig();
+
+      const result = fillTemplate('{{locale}}', {
+        collection,
+        content: {},
+        type: 'preview_path',
+        locale: 'en',
+      });
+
+      expect(result).toBe('en');
+    });
+
+    test('processTransformations handles default transformation with nested tag', async () => {
+      await setupSiteConfig();
+
+      // Test nested template tag in default transformation
+      const result = fillTemplate("{{missing | default('{{fields.fallback}}')}}", {
+        collection,
+        content: { fallback: 'Fallback Value' },
+      });
+
+      expect(result).toBe('fallback-value');
+    });
+
+    test('replaceTemplatePlaceholder falls back to random ID', async () => {
+      await setupSiteConfig();
+
+      // When a field is missing and no default is provided, should generate UUID
+      const result = fillTemplate('{{nonexistent}}', { collection, content: {} });
+
+      expect(result).toMatch(/^[0-9a-f]{12}$/);
+    });
+
+    test('getExistingSlugs filters and maps slugs correctly', async () => {
+      await setupSiteConfig();
+
+      const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
+
+      // Mock with some existing entries
+      vi.mocked(getEntriesByCollection).mockReturnValueOnce([
+        // @ts-ignore
+        { slug: 'existing-1', locales: { en: { slug: 'existing-en-1' } } },
+        // @ts-ignore
+        { slug: 'existing-2', locales: { en: { slug: 'existing-en-2' } } },
+        // @ts-ignore
+        { slug: 'existing-3', locales: {} },
+      ]);
+
+      // The renameIfNeeded function should be called with existing slugs
+      const { renameIfNeeded } = await import('$lib/services/utils/file');
+
+      vi.mocked(renameIfNeeded).mockImplementationOnce((slug, existingSlugs) => {
+        expect(existingSlugs).toEqual(['existing-1', 'existing-2', 'existing-3']);
+
+        return slug;
+      });
+
+      fillTemplate('{{title}}', { collection, content: { title: 'New Post' } });
+    });
+
+    test('fillTemplate handles file path tags in media_folder context', async () => {
+      await setupSiteConfig();
+
+      const result = fillTemplate('{{dirname}}/uploads', {
+        collection,
+        content: {},
+        type: 'media_folder',
+        entryFilePath: 'content/posts/2024/my-post.md',
+      });
+
+      expect(result).toBe('/2024/uploads');
+    });
+
+    test('fillTemplate returns value as-is for preview_path type', async () => {
+      await setupSiteConfig();
+
+      // Test that values are not slugified in preview_path mode
+      const result1 = fillTemplate('{{locale}}', {
+        collection,
+        content: {},
+        type: 'preview_path',
+        locale: 'en-US',
+      });
+
+      expect(result1).toBe('en-US');
+
+      // Test with dirname (already covered but included for completeness)
+      const result2 = fillTemplate('{{dirname}}/article', {
+        collection,
+        content: {},
+        type: 'preview_path',
+        entryFilePath: 'content/posts/2024/my-post.md',
+      });
+
+      expect(result2).toBe('/2024/article');
+    });
+  });
+});
+
+describe('Test template helper functions', () => {
+  describe('handleDateTimeTag()', () => {
+    test('should return date-time field value when tag matches', () => {
+      const dateTimeParts = {
+        year: '2024',
+        month: '10',
+        day: '02',
+        hour: '14',
+        minute: '30',
+        second: '45',
+      };
+
+      expect(handleDateTimeTag('year', dateTimeParts)).toBe('2024');
+      expect(handleDateTimeTag('month', dateTimeParts)).toBe('10');
+      expect(handleDateTimeTag('day', dateTimeParts)).toBe('02');
+      expect(handleDateTimeTag('hour', dateTimeParts)).toBe('14');
+      expect(handleDateTimeTag('minute', dateTimeParts)).toBe('30');
+      expect(handleDateTimeTag('second', dateTimeParts)).toBe('45');
+    });
+
+    test('should return undefined for non-date-time tags', () => {
+      const dateTimeParts = { year: '2024', month: '10', day: '02' };
+
+      expect(handleDateTimeTag('slug', dateTimeParts)).toBeUndefined();
+      expect(handleDateTimeTag('title', dateTimeParts)).toBeUndefined();
+      expect(handleDateTimeTag('unknown', dateTimeParts)).toBeUndefined();
+    });
+  });
+
+  describe('handleUuidTag()', () => {
+    test('should return UUID for uuid tag', () => {
+      const result = handleUuidTag('uuid');
+
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('string');
+      expect(result?.length).toBeGreaterThan(0);
+    });
+
+    test('should return short UUID for uuid_short tag', () => {
+      const result = handleUuidTag('uuid_short');
+
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('string');
+      expect(result?.length).toBeGreaterThan(0);
+    });
+
+    test('should return shorter UUID for uuid_shorter tag', () => {
+      const result = handleUuidTag('uuid_shorter');
+
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('string');
+      expect(result?.length).toBeGreaterThan(0);
+    });
+
+    test('should return undefined for non-UUID tags', () => {
+      expect(handleUuidTag('slug')).toBeUndefined();
+      expect(handleUuidTag('title')).toBeUndefined();
+      expect(handleUuidTag('unknown')).toBeUndefined();
+    });
+  });
+
+  describe('handleSlugTag()', () => {
+    test('should return slug when tag is slug and currentSlug exists', () => {
+      expect(handleSlugTag('slug', 'my-post', 'path', false)).toBe('my-post');
+      expect(handleSlugTag('slug', 'another-slug', 'filename', false)).toBe('another-slug');
+    });
+
+    test('should return undefined when tag is not slug', () => {
+      expect(handleSlugTag('title', 'my-post', 'path', false)).toBeUndefined();
+      expect(handleSlugTag('year', 'my-post', 'path', false)).toBeUndefined();
+    });
+
+    test('should return undefined when currentSlug is undefined', () => {
+      expect(handleSlugTag('slug', undefined, 'path', false)).toBeUndefined();
+    });
+
+    test('should return empty string for preview_path with index file', () => {
+      expect(handleSlugTag('slug', '_index', 'preview_path', true)).toBe('');
+      expect(handleSlugTag('slug', 'any-slug', 'preview_path', true)).toBe('');
+    });
+
+    test('should return slug for preview_path with non-index file', () => {
+      expect(handleSlugTag('slug', 'my-post', 'preview_path', false)).toBe('my-post');
+    });
+
+    test('should return slug for non-preview_path types even with index file', () => {
+      expect(handleSlugTag('slug', '_index', 'path', true)).toBe('_index');
+      expect(handleSlugTag('slug', '_index', 'filename', true)).toBe('_index');
+    });
+  });
+
+  describe('handleFilePathTag()', () => {
+    test('should return dirname from entry file path', () => {
+      expect(handleFilePathTag('dirname', 'content/posts/2024/my-post.md', 'content/posts')).toBe(
+        '/2024',
+      );
+      expect(handleFilePathTag('dirname', 'content/blog/article.md', 'content/blog')).toBe('');
+      expect(
+        handleFilePathTag('dirname', 'content/posts/nested/folder/file.md', 'content/posts'),
+      ).toBe('/nested/folder');
+    });
+
+    test('should return filename without extension', () => {
+      expect(handleFilePathTag('filename', 'content/posts/my-post.md', 'content/posts')).toBe(
+        'my-post',
+      );
+      expect(handleFilePathTag('filename', 'path/to/article.html', 'path/to')).toBe('article');
+      expect(handleFilePathTag('filename', 'file.component.tsx', undefined)).toBe('file');
+    });
+
+    test('should return file extension', () => {
+      expect(handleFilePathTag('extension', 'content/posts/my-post.md', 'content/posts')).toBe(
+        'md',
+      );
+      expect(handleFilePathTag('extension', 'path/to/article.html', 'path/to')).toBe('html');
+      expect(handleFilePathTag('extension', 'file.component.tsx', undefined)).toBe('tsx');
+    });
+
+    test('should return empty string when entry file path is undefined', () => {
+      expect(handleFilePathTag('dirname', undefined, 'content/posts')).toBe('');
+      expect(handleFilePathTag('filename', undefined, 'content/posts')).toBe('');
+      expect(handleFilePathTag('extension', undefined, 'content/posts')).toBe('');
+    });
+
+    test('should return undefined for unknown tags', () => {
+      expect(
+        handleFilePathTag('slug', 'content/posts/my-post.md', 'content/posts'),
+      ).toBeUndefined();
+      expect(
+        handleFilePathTag('title', 'content/posts/my-post.md', 'content/posts'),
+      ).toBeUndefined();
+    });
+
+    test('should handle paths without base path', () => {
+      expect(handleFilePathTag('dirname', 'posts/2024/my-post.md', undefined)).toBe('posts/2024');
+      expect(handleFilePathTag('filename', 'my-post.md', undefined)).toBe('my-post');
+    });
   });
 });

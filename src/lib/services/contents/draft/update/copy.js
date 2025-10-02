@@ -30,9 +30,10 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * Initialize a Turndown service instance for converting HTML to Markdown.
+ * @internal
  * @see https://github.com/mixmark-io/turndown
  */
-const turndownService = new TurndownService({
+export const turndownService = new TurndownService({
   headingStyle: 'atx',
   bulletListMarker: '-',
   codeBlockStyle: 'fenced',
@@ -43,12 +44,13 @@ turndownService.keep(['span', 'div']);
 
 /**
  * Get a list of fields to be copied or translated from the source locale to the target locale.
+ * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {CopyOptions} args.options Copy options.
  * @returns {CopyingFieldMap} Copied or translated field values.
  */
-const getCopyingFieldMap = ({ draft, options }) => {
+export const getCopyingFieldMap = ({ draft, options }) => {
   const { collectionName, fileName, currentValues, isIndexFile } = draft;
   const { sourceLanguage, targetLanguage, keyPath = '', translate = false } = options;
   const valueMap = currentValues[sourceLanguage];
@@ -84,25 +86,27 @@ const getCopyingFieldMap = ({ draft, options }) => {
 
 /**
  * Update the toast notification.
+ * @internal
  * @param {'info' | 'success' | 'error'} status Status.
  * @param {string} message Message key.
  * @param {object} context Context.
  * @param {number} context.count Number of fields copied or translated.
  * @param {InternalLocaleCode} context.sourceLanguage Source locale, e.g. `en`.
  */
-const updateToast = (status, message, { count, sourceLanguage }) => {
+export const updateToast = (status, message, { count, sourceLanguage }) => {
   copyFromLocaleToast.set({ id: Date.now(), show: true, status, message, count, sourceLanguage });
 };
 
 /**
  * Translate the field value(s) from another locale.
+ * @internal
  * @param {object} args Arguments.
  * @param {LocaleContentMap} args.currentValues Current values for the entry draft. This will be
  * updated with the translated values.
  * @param {CopyOptions} args.options Copy options.
  * @param {CopyingFieldMap} args.copingFieldMap Copied or translated field values.
  */
-const translateFields = async ({ currentValues, options, copingFieldMap }) => {
+export const translateFields = async ({ currentValues, options, copingFieldMap }) => {
   const { serviceId, markdownSupported, translate } = get(translator);
   const { sourceLanguage, targetLanguage } = options;
   const count = Object.keys(copingFieldMap).length;
@@ -150,13 +154,14 @@ const translateFields = async ({ currentValues, options, copingFieldMap }) => {
 
 /**
  * Copy the field value(s) from another locale.
+ * @internal
  * @param {object} args Arguments.
  * @param {LocaleContentMap} args.currentValues Current values for the entry draft. This will be
  * updated with the copied values.
  * @param {CopyOptions} args.options Copy options.
  * @param {CopyingFieldMap} args.copingFieldMap Copied or translated field values.
  */
-const copyFields = ({ currentValues, options, copingFieldMap }) => {
+export const copyFields = ({ currentValues, options, copingFieldMap }) => {
   const { sourceLanguage, targetLanguage } = options;
   const count = Object.keys(copingFieldMap).length;
   const countType = count === 1 ? 'one' : 'many';

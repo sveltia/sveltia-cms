@@ -7,12 +7,13 @@ import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 
 /**
  * Parse a field to generate a sorted key path list.
+ * @internal
  * @param {object} args Arguments.
  * @param {Field} args.field Single field.
  * @param {FieldKeyPath} args.keyPath Key path of the field.
  * @param {FieldKeyPath[]} args.keyPathList Key path list.
  */
-const parseField = ({ field, keyPath, keyPathList }) => {
+export const parseField = ({ field, keyPath, keyPathList }) => {
   const { widget } = field;
   const isList = widget === 'list';
 

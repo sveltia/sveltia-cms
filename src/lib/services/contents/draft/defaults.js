@@ -22,8 +22,9 @@ import { getDefaultValueMap as getSelectFieldDefaultValueMap } from '$lib/servic
 /**
  * Map of functions to get default values for different field types.
  * @type {Record<string, (args: GetDefaultValueMapFuncArgs) => Record<FieldKeyPath, any>>}
+ * @internal
  */
-const GET_DEFAULT_VALUE_MAP_FUNCTIONS = {
+export const GET_DEFAULT_VALUE_MAP_FUNCTIONS = {
   boolean: getBooleanFieldDefaultValueMap,
   code: getCodeFieldDefaultValueMap,
   datetime: getDateTimeFieldDefaultValueMap,

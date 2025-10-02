@@ -4,7 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 
-import { copyFromLocale as copyFromLocaleUpdate } from './copy';
+import {
+  copyFields,
+  copyFromLocale as copyFromLocaleUpdate,
+  getCopyingFieldMap,
+  translateFields,
+  turndownService,
+  updateToast,
+} from './copy';
 
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/editor');
@@ -154,6 +161,218 @@ describe('draft/update/copy', () => {
 
       // Empty values should not be copied
       expect(mockUpdate).toHaveBeenCalled();
+    });
+  });
+
+  describe('turndownService (internal)', () => {
+    it('should be exported and available', () => {
+      // The turndownService is exported and can be imported
+      expect(turndownService).toBeDefined();
+      expect(typeof turndownService).toBe('object');
+    });
+  });
+
+  describe('getCopyingFieldMap (internal)', () => {
+    it('should return map of copyable fields', () => {
+      const draft = mockEntryDraft;
+
+      const result = getCopyingFieldMap({
+        draft,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+          translate: false,
+        },
+      });
+
+      expect(result).toHaveProperty('title');
+      expect(result.title).toEqual({ value: 'English Title', isMarkdown: false });
+      expect(result).toHaveProperty('body');
+      expect(result.body).toEqual({ value: 'English Body', isMarkdown: true });
+    });
+
+    it('should filter by keyPath when provided', () => {
+      const draft = mockEntryDraft;
+
+      const result = getCopyingFieldMap({
+        draft,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+          keyPath: 'title',
+          translate: false,
+        },
+      });
+
+      expect(result).toHaveProperty('title');
+      expect(result).not.toHaveProperty('body');
+    });
+
+    it('should skip non-string fields', () => {
+      mockEntryDraft.currentValues.en.count = 42;
+      mockEntryDraft.currentValues.ja.count = 0;
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'count') {
+          return { name: 'count', widget: 'number' };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string' };
+        }
+
+        return undefined;
+      });
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+          translate: false,
+        },
+      });
+
+      expect(result).not.toHaveProperty('count');
+    });
+
+    it('should skip empty values', () => {
+      mockEntryDraft.currentValues.en.empty = '';
+      mockEntryDraft.currentValues.ja.empty = '';
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'empty') {
+          return { name: 'empty', widget: 'string' };
+        }
+
+        return undefined;
+      });
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+          translate: false,
+        },
+      });
+
+      expect(result).not.toHaveProperty('empty');
+    });
+
+    it('should skip already populated fields when translating all', () => {
+      mockEntryDraft.currentValues.ja.title = 'Japanese Title';
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+          translate: true,
+        },
+      });
+
+      expect(result).not.toHaveProperty('title');
+    });
+  });
+
+  describe('updateToast (internal)', () => {
+    it('should update toast notification', async () => {
+      const { copyFromLocaleToast } = await import('$lib/services/contents/editor');
+
+      updateToast('success', 'copy.complete.one', { count: 1, sourceLanguage: 'en' });
+
+      expect(vi.mocked(copyFromLocaleToast).set).toHaveBeenCalledWith({
+        id: expect.any(Number),
+        show: true,
+        status: 'success',
+        message: 'copy.complete.one',
+        count: 1,
+        sourceLanguage: 'en',
+      });
+    });
+  });
+
+  describe('copyFields (internal)', () => {
+    it('should copy field values', () => {
+      const currentValues = {
+        en: { title: 'English Title', body: 'English Body' },
+        ja: { title: '', body: '' },
+      };
+
+      const copingFieldMap = {
+        title: { value: 'English Title', isMarkdown: false },
+        body: { value: 'English Body', isMarkdown: true },
+      };
+
+      copyFields({
+        currentValues,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+        },
+        copingFieldMap,
+      });
+
+      expect(currentValues.ja.title).toBe('English Title');
+      expect(currentValues.ja.body).toBe('English Body');
+    });
+  });
+
+  describe('translateFields (internal)', () => {
+    it('should handle missing API key gracefully', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs');
+
+      mockGet.mockImplementation((store) => {
+        if (store === translator) {
+          return {
+            serviceId: 'google',
+            markdownSupported: false,
+            translate: vi.fn(),
+          };
+        }
+
+        if (store === prefs) {
+          return { apiKeys: {} };
+        }
+
+        if (store === entryDraft) {
+          return mockEntryDraft;
+        }
+
+        return undefined;
+      });
+
+      const { translatorApiKeyDialogState } = await import('$lib/services/contents/editor');
+
+      // Mock the dialog state to immediately resolve with undefined (user cancels)
+      vi.mocked(translatorApiKeyDialogState).set = vi.fn((state) => {
+        if (state.show && state.resolve) {
+          state.resolve(undefined);
+        }
+      });
+
+      const currentValues = {
+        en: { title: 'English Title' },
+        ja: { title: '' },
+      };
+
+      const copingFieldMap = {
+        title: { value: 'English Title', isMarkdown: false },
+      };
+
+      await translateFields({
+        currentValues,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+        },
+        copingFieldMap,
+      });
+
+      // Should not translate without API key
+      expect(currentValues.ja.title).toBe('');
     });
   });
 });

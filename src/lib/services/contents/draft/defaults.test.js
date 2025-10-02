@@ -1,6 +1,10 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { getDefaultValues, populateDefaultValue } from './defaults';
+import {
+  GET_DEFAULT_VALUE_MAP_FUNCTIONS,
+  getDefaultValues,
+  populateDefaultValue,
+} from './defaults';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
@@ -708,5 +712,59 @@ describe('Test getDefaultValues()', () => {
       title: 'Trimmed Title',
       description: 'Default Description',
     });
+  });
+});
+
+describe('Test GET_DEFAULT_VALUE_MAP_FUNCTIONS (internal helper)', () => {
+  test('should contain all widget types', () => {
+    const expectedWidgets = [
+      'boolean',
+      'code',
+      'datetime',
+      'file',
+      'hidden',
+      'image',
+      'keyvalue',
+      'list',
+      'markdown',
+      'number',
+      'object',
+      'relation',
+      'select',
+    ];
+
+    expectedWidgets.forEach((widget) => {
+      expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS).toHaveProperty(widget);
+      expect(typeof GET_DEFAULT_VALUE_MAP_FUNCTIONS[widget]).toBe('function');
+    });
+  });
+
+  test('should map image widget to file widget handler', () => {
+    expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS.image).toBe(GET_DEFAULT_VALUE_MAP_FUNCTIONS.file);
+  });
+
+  test('should map relation widget to select widget handler', () => {
+    expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS.relation).toBe(GET_DEFAULT_VALUE_MAP_FUNCTIONS.select);
+  });
+
+  test('should have function values for all widget types', () => {
+    Object.entries(GET_DEFAULT_VALUE_MAP_FUNCTIONS).forEach(([, func]) => {
+      expect(typeof func).toBe('function');
+    });
+  });
+
+  test('should return expected number of widget types', () => {
+    // 13 total: boolean, code, datetime, file, hidden, image (alias), keyvalue, list,
+    // markdown, number, object, relation (alias), select
+    expect(Object.keys(GET_DEFAULT_VALUE_MAP_FUNCTIONS)).toHaveLength(13);
+  });
+
+  test('should not contain string or text widgets (handled as default)', () => {
+    expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS).not.toHaveProperty('string');
+    expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS).not.toHaveProperty('text');
+  });
+
+  test('should not contain compute widget (handled separately)', () => {
+    expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS).not.toHaveProperty('compute');
   });
 });

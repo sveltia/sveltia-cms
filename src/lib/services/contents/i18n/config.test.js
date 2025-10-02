@@ -1,7 +1,18 @@
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
-import { DEFAULT_I18N_CONFIG, normalizeI18nConfig } from './config';
+import {
+  createStructureMap,
+  DEFAULT_CANONICAL_SLUG,
+  DEFAULT_I18N_CONFIG,
+  DEFAULT_LOCALE_KEY,
+  determineDefaultLocale,
+  determineInitialLocales,
+  determineStructure,
+  I18N_STRUCTURES,
+  mergeI18nConfigs,
+  normalizeI18nConfig,
+} from './config';
 
 /**
  * @import { Collection, CollectionFile } from '$lib/types/public';
@@ -618,6 +629,323 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: false,
       canonicalSlug,
       omitDefaultLocaleFromFileName: false,
+    });
+  });
+});
+
+describe('Test internal helper functions', () => {
+  describe('I18N_STRUCTURES constant', () => {
+    test('should have all expected structure types', () => {
+      expect(I18N_STRUCTURES).toEqual({
+        SINGLE_FILE: 'single_file',
+        MULTIPLE_FILES: 'multiple_files',
+        MULTIPLE_FOLDERS: 'multiple_folders',
+        MULTIPLE_FOLDERS_I18N_ROOT: 'multiple_folders_i18n_root',
+      });
+    });
+  });
+
+  describe('DEFAULT_LOCALE_KEY constant', () => {
+    test('should be _default', () => {
+      expect(DEFAULT_LOCALE_KEY).toBe('_default');
+    });
+  });
+
+  describe('DEFAULT_CANONICAL_SLUG constant', () => {
+    test('should have correct default values', () => {
+      expect(DEFAULT_CANONICAL_SLUG).toEqual({
+        key: 'translationKey',
+        value: '{{slug}}',
+      });
+    });
+  });
+
+  describe('mergeI18nConfigs', () => {
+    const siteConfigBase = {
+      backend: { name: 'github' },
+      media_folder: 'static/images/uploads',
+      _siteURL: '',
+      _baseURL: '',
+    };
+
+    test('should return undefined when site config has no i18n', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).siteConfig = writable({
+        ...siteConfigBase,
+      });
+
+      const collection = { name: 'posts', folder: 'content/posts', fields: [] };
+
+      expect(mergeI18nConfigs(collection)).toBeUndefined();
+    });
+
+    test('should return undefined when collection has no i18n', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).siteConfig = writable({
+        ...siteConfigBase,
+        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
+      });
+
+      const collection = { name: 'posts', folder: 'content/posts', fields: [] };
+
+      expect(mergeI18nConfigs(collection)).toBeUndefined();
+    });
+
+    test('should return site i18n config for collection with i18n=true', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).siteConfig = writable({
+        ...siteConfigBase,
+        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
+      });
+
+      const collection = { name: 'posts', folder: 'content/posts', fields: [], i18n: true };
+      const result = mergeI18nConfigs(collection);
+
+      expect(result).toEqual({ structure: 'single_file', locales: ['en', 'fr'] });
+    });
+
+    test('should merge collection i18n config over site config', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).siteConfig = writable({
+        ...siteConfigBase,
+        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
+      });
+
+      /** @type {Collection} */
+      const collection = {
+        name: 'posts',
+        folder: 'content/posts',
+        fields: [],
+        // @ts-ignore
+        i18n: { structure: 'multiple_folders', locales: ['de', 'es'] },
+      };
+
+      const result = mergeI18nConfigs(collection);
+
+      expect(result).toEqual({ structure: 'multiple_folders', locales: ['de', 'es'] });
+    });
+
+    test('should merge file i18n config over collection config', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).siteConfig = writable({
+        ...siteConfigBase,
+        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
+      });
+
+      /** @type {Collection} */
+      const collection = {
+        name: 'pages',
+        folder: 'content/pages',
+        fields: [],
+        // @ts-ignore
+        i18n: { structure: 'multiple_folders', locales: ['de', 'es'] },
+      };
+
+      /** @type {CollectionFile} */
+      const file = {
+        name: 'about',
+        file: 'data/about.json',
+        fields: [],
+        // @ts-ignore
+        i18n: { structure: 'single_file', locales: ['ja'] },
+      };
+
+      const result = mergeI18nConfigs(collection, file);
+
+      expect(result).toEqual({ structure: 'single_file', locales: ['ja'] });
+    });
+
+    test('should return undefined if file has i18n=false', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).siteConfig = writable({
+        ...siteConfigBase,
+        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
+      });
+
+      const collection = {
+        name: 'pages',
+        folder: 'content/pages',
+        fields: [],
+        i18n: true,
+      };
+
+      const file = {
+        name: 'about',
+        file: 'data/about.json',
+        fields: [],
+        i18n: false,
+      };
+
+      const result = mergeI18nConfigs(collection, file);
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should handle singleton collection', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).siteConfig = writable({
+        ...siteConfigBase,
+        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
+      });
+
+      /** @type {Collection} */
+      const collection = {
+        name: '_singletons',
+        // @ts-ignore
+        files: [{ name: 'settings', file: 'data/settings.json', fields: [] }],
+      };
+
+      const result = mergeI18nConfigs(collection);
+
+      expect(result).toEqual({ structure: 'single_file', locales: ['en', 'fr'] });
+    });
+  });
+
+  describe('determineStructure', () => {
+    test('should return default structure when no file provided', () => {
+      expect(determineStructure('single_file')).toBe('single_file');
+      expect(determineStructure('multiple_folders')).toBe('multiple_folders');
+    });
+
+    test('should return single_file when file does not include {{locale}}', () => {
+      const file = { name: 'home', file: 'data/home.json', fields: [] };
+
+      expect(determineStructure('multiple_folders', file)).toBe('single_file');
+    });
+
+    test('should return multiple_files when file includes {{locale}}', () => {
+      const file = { name: 'home', file: 'data/home.{{locale}}.json', fields: [] };
+
+      expect(determineStructure('single_file', file)).toBe('multiple_files');
+    });
+
+    test('should return multiple_files for various {{locale}} patterns', () => {
+      const file1 = { name: 'config', file: 'config.{{locale}}.yml', fields: [] };
+      const file2 = { name: 'data', file: '{{locale}}/data.json', fields: [] };
+      const file3 = { name: 'content', file: 'content-{{locale}}.md', fields: [] };
+
+      expect(determineStructure('multiple_folders', file1)).toBe('multiple_files');
+      expect(determineStructure('single_file', file2)).toBe('multiple_files');
+      expect(determineStructure('multiple_folders_i18n_root', file3)).toBe('multiple_files');
+    });
+  });
+
+  describe('createStructureMap', () => {
+    test('should return all false when i18n is disabled', () => {
+      expect(createStructureMap(false, 'single_file')).toEqual({
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      });
+    });
+
+    test('should set i18nSingleFile to true for single_file structure', () => {
+      expect(createStructureMap(true, 'single_file')).toEqual({
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      });
+    });
+
+    test('should set i18nMultiFile to true for multiple_files structure', () => {
+      expect(createStructureMap(true, 'multiple_files')).toEqual({
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      });
+    });
+
+    test('should set i18nMultiFolder to true for multiple_folders structure', () => {
+      expect(createStructureMap(true, 'multiple_folders')).toEqual({
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: true,
+        i18nRootMultiFolder: false,
+      });
+    });
+
+    test('should set i18nRootMultiFolder to true for multiple_folders_i18n_root', () => {
+      expect(createStructureMap(true, 'multiple_folders_i18n_root')).toEqual({
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: true,
+      });
+    });
+  });
+
+  describe('determineDefaultLocale', () => {
+    test('should return DEFAULT_LOCALE_KEY when i18n is disabled', () => {
+      expect(determineDefaultLocale(false, ['en', 'fr'])).toBe('_default');
+      expect(determineDefaultLocale(false, [], 'en')).toBe('_default');
+    });
+
+    test('should return specified default when it exists in allLocales', () => {
+      expect(determineDefaultLocale(true, ['en', 'fr', 'de'], 'fr')).toBe('fr');
+      expect(determineDefaultLocale(true, ['ja', 'en'], 'ja')).toBe('ja');
+    });
+
+    test('should return first locale when specified default not in allLocales', () => {
+      expect(determineDefaultLocale(true, ['en', 'fr'], 'de')).toBe('en');
+      expect(determineDefaultLocale(true, ['ja', 'ko'], 'en')).toBe('ja');
+    });
+
+    test('should return first locale when no default specified', () => {
+      expect(determineDefaultLocale(true, ['en', 'fr'])).toBe('en');
+      expect(determineDefaultLocale(true, ['de', 'es', 'it'])).toBe('de');
+    });
+
+    test('should handle single locale', () => {
+      expect(determineDefaultLocale(true, ['en'])).toBe('en');
+      expect(determineDefaultLocale(true, ['fr'], 'fr')).toBe('fr');
+    });
+  });
+
+  describe('determineInitialLocales', () => {
+    test('should return all locales when config is "all"', () => {
+      expect(determineInitialLocales('all', ['en', 'fr', 'de'], 'en')).toEqual(['en', 'fr', 'de']);
+      expect(determineInitialLocales('all', ['ja'], 'ja')).toEqual(['ja']);
+    });
+
+    test('should return default locale when config is "default"', () => {
+      expect(determineInitialLocales('default', ['en', 'fr', 'de'], 'en')).toEqual(['en']);
+      expect(determineInitialLocales('default', ['en', 'fr', 'de'], 'fr')).toEqual(['fr']);
+    });
+
+    test('should filter locales based on array config', () => {
+      expect(determineInitialLocales(['en', 'fr'], ['en', 'fr', 'de'], 'en')).toEqual(['en', 'fr']);
+      expect(determineInitialLocales(['de'], ['en', 'fr', 'de'], 'de')).toEqual(['de']);
+    });
+
+    test('should always include default locale even if not in config array', () => {
+      expect(determineInitialLocales(['fr', 'de'], ['en', 'fr', 'de'], 'en')).toEqual([
+        'en',
+        'fr',
+        'de',
+      ]);
+      expect(determineInitialLocales(['en'], ['en', 'fr', 'de'], 'fr')).toEqual(['en', 'fr']);
+    });
+
+    test('should return all locales when config is undefined', () => {
+      expect(determineInitialLocales(undefined, ['en', 'fr', 'de'], 'en')).toEqual([
+        'en',
+        'fr',
+        'de',
+      ]);
+      expect(determineInitialLocales(undefined, ['ja'], 'ja')).toEqual(['ja']);
+    });
+
+    test('should handle empty array config', () => {
+      expect(determineInitialLocales([], ['en', 'fr', 'de'], 'en')).toEqual(['en']);
+      expect(determineInitialLocales([], ['en', 'fr', 'de'], 'fr')).toEqual(['fr']);
+    });
+
+    test('should preserve order and not duplicate default locale', () => {
+      expect(determineInitialLocales(['fr', 'en'], ['en', 'fr', 'de'], 'en')).toEqual(['en', 'fr']);
+      expect(determineInitialLocales(['de', 'fr'], ['en', 'fr', 'de'], 'fr')).toEqual(['fr', 'de']);
     });
   });
 });

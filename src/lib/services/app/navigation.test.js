@@ -6,6 +6,7 @@ import {
   goto,
   openProductionSite,
   parseLocation,
+  startViewTransition,
   updateContentFromHashChange,
 } from './navigation';
 
@@ -233,9 +234,9 @@ describe('navigation', () => {
 
     it('should detect forward navigation', () => {
       const updateContent = vi.fn();
-      const startViewTransition = vi.fn();
+      const mockStartViewTransition = vi.fn();
 
-      document.startViewTransition = startViewTransition;
+      document.startViewTransition = mockStartViewTransition;
 
       const event = new HashChangeEvent('hashchange', {
         oldURL: 'https://example.com/#/collections',
@@ -247,7 +248,7 @@ describe('navigation', () => {
 
       updateContentFromHashChange(event, updateContent, /^\/collections/);
 
-      expect(startViewTransition).toHaveBeenCalledWith({
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
         types: ['forwards'],
         update: expect.any(Function),
       });
@@ -255,9 +256,9 @@ describe('navigation', () => {
 
     it('should detect backward navigation', () => {
       const updateContent = vi.fn();
-      const startViewTransition = vi.fn();
+      const mockStartViewTransition = vi.fn();
 
-      document.startViewTransition = startViewTransition;
+      document.startViewTransition = mockStartViewTransition;
 
       const event = new HashChangeEvent('hashchange', {
         oldURL: 'https://example.com/#/collections/posts/new',
@@ -269,7 +270,7 @@ describe('navigation', () => {
 
       updateContentFromHashChange(event, updateContent, /^\/collections/);
 
-      expect(startViewTransition).toHaveBeenCalledWith({
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
         types: ['backwards'],
         update: expect.any(Function),
       });
@@ -277,9 +278,9 @@ describe('navigation', () => {
 
     it('should detect unknown navigation when not in same section', () => {
       const updateContent = vi.fn();
-      const startViewTransition = vi.fn();
+      const mockStartViewTransition = vi.fn();
 
-      document.startViewTransition = startViewTransition;
+      document.startViewTransition = mockStartViewTransition;
 
       const event = new HashChangeEvent('hashchange', {
         oldURL: 'https://example.com/#/collections',
@@ -291,7 +292,7 @@ describe('navigation', () => {
 
       updateContentFromHashChange(event, updateContent, /^\/collections/);
 
-      expect(startViewTransition).toHaveBeenCalledWith({
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
         types: ['unknown'],
         update: expect.any(Function),
       });
@@ -339,14 +340,14 @@ describe('navigation', () => {
     });
 
     it('should use view transition when supported and on small screen', async () => {
-      const startViewTransition = vi.fn();
+      const mockStartViewTransition = vi.fn();
 
-      document.startViewTransition = startViewTransition;
+      document.startViewTransition = mockStartViewTransition;
       vi.mocked(get).mockReturnValue(true); // Small screen
 
       await goto('/assets', { transitionType: 'forwards' });
 
-      expect(startViewTransition).toHaveBeenCalledWith({
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
         types: ['forwards'],
         update: expect.any(Function),
       });
@@ -367,14 +368,14 @@ describe('navigation', () => {
         configurable: true,
       });
 
-      const startViewTransition = vi.fn();
+      const mockStartViewTransition = vi.fn();
 
-      document.startViewTransition = startViewTransition;
+      document.startViewTransition = mockStartViewTransition;
       vi.mocked(get).mockReturnValue(true); // Small screen
 
       goBack('/default');
 
-      expect(startViewTransition).toHaveBeenCalledWith({
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
         types: ['backwards'],
         update: expect.any(Function),
       });
@@ -455,6 +456,88 @@ describe('navigation', () => {
       openProductionSite();
 
       expect(window.open).toHaveBeenCalledWith('/', '_blank');
+    });
+  });
+
+  describe('startViewTransition', () => {
+    it('should call updateContent directly when not on small screen', async () => {
+      const mockUpdateContent = vi.fn();
+      const { sleep } = await import('@sveltia/utils/misc');
+
+      vi.mocked(get).mockReturnValue(false); // isSmallScreen = false
+
+      startViewTransition('forwards', mockUpdateContent);
+
+      expect(mockUpdateContent).toHaveBeenCalled();
+      expect(document.startViewTransition).not.toHaveBeenCalled();
+      expect(sleep).not.toHaveBeenCalled();
+    });
+
+    it('should call updateContent directly when startViewTransition not supported', async () => {
+      const mockUpdateContent = vi.fn();
+      const originalStartViewTransition = document.startViewTransition;
+
+      // @ts-ignore
+      document.startViewTransition = undefined;
+      vi.mocked(get).mockReturnValue(true); // isSmallScreen = true
+
+      startViewTransition('backwards', mockUpdateContent);
+
+      expect(mockUpdateContent).toHaveBeenCalled();
+
+      // Restore
+      document.startViewTransition = originalStartViewTransition;
+    });
+
+    it('should use view transition API when on small screen and supported', async () => {
+      const mockUpdateContent = vi.fn();
+      const mockTransition = { update: vi.fn() };
+      const { sleep } = await import('@sveltia/utils/misc');
+      const { flushSync } = await import('svelte');
+
+      vi.mocked(get).mockReturnValue(true); // isSmallScreen = true
+      vi.mocked(sleep).mockResolvedValue(undefined);
+      vi.mocked(flushSync).mockImplementation((fn) => {
+        if (fn) fn();
+      });
+
+      // @ts-ignore - Simplified mock for testing
+      document.startViewTransition = vi.fn((config) => {
+        if (config?.update) {
+          config.update();
+        }
+
+        return mockTransition;
+      });
+
+      startViewTransition('forwards', mockUpdateContent);
+
+      expect(document.startViewTransition).toHaveBeenCalledWith(
+        expect.objectContaining({
+          types: ['forwards'],
+          update: expect.any(Function),
+        }),
+      );
+    });
+
+    it('should handle backwards transition type', () => {
+      const mockUpdateContent = vi.fn();
+
+      vi.mocked(get).mockReturnValue(false); // isSmallScreen = false
+
+      startViewTransition('backwards', mockUpdateContent);
+
+      expect(mockUpdateContent).toHaveBeenCalled();
+    });
+
+    it('should handle unknown transition type', () => {
+      const mockUpdateContent = vi.fn();
+
+      vi.mocked(get).mockReturnValue(false);
+
+      startViewTransition('unknown', mockUpdateContent);
+
+      expect(mockUpdateContent).toHaveBeenCalled();
     });
   });
 });

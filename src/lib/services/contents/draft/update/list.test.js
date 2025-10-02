@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
-import { updateListField } from './list';
+import { getItemList, updateListField, updateObject } from './list';
 
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/user/prefs', () => ({
@@ -191,6 +191,130 @@ describe('draft/update/list', () => {
 
       expect(mockSet).toHaveBeenNthCalledWith(1, false);
       expect(mockSet).toHaveBeenNthCalledWith(2, true);
+    });
+  });
+
+  describe('updateObject (internal)', () => {
+    it('should add new properties', () => {
+      const obj = { a: 1, b: 2 };
+      const newProps = { a: 1, b: 2, c: 3 };
+
+      updateObject(obj, newProps);
+
+      expect(obj).toEqual({ a: 1, b: 2, c: 3 });
+    });
+
+    it('should update existing properties', () => {
+      const obj = { a: 1, b: 2 };
+      const newProps = { a: 10, b: 20 };
+
+      updateObject(obj, newProps);
+
+      expect(obj).toEqual({ a: 10, b: 20 });
+    });
+
+    it('should delete properties not in newProps', () => {
+      const obj = { a: 1, b: 2, c: 3 };
+      const newProps = { a: 1 };
+
+      updateObject(obj, newProps);
+
+      expect(obj).toEqual({ a: 1 });
+      expect(obj).not.toHaveProperty('b');
+      expect(obj).not.toHaveProperty('c');
+    });
+
+    it('should handle empty newProps', () => {
+      const obj = { a: 1, b: 2 };
+      const newProps = {};
+
+      updateObject(obj, newProps);
+
+      expect(obj).toEqual({});
+    });
+
+    it('should not update when values are the same', () => {
+      const obj = { a: 1, b: 2 };
+      const newProps = { a: 1, b: 2 };
+      const originalObj = { ...obj };
+
+      updateObject(obj, newProps);
+
+      expect(obj).toEqual(originalObj);
+    });
+  });
+
+  describe('getItemList (internal)', () => {
+    it('should extract list items from flattened object', () => {
+      const obj = {
+        'tags.0': 'tag1',
+        'tags.1': 'tag2',
+        'tags.2': 'tag3',
+        other: 'value',
+      };
+
+      const [valueList, remainder] = getItemList(obj, 'tags');
+
+      expect(valueList).toEqual(['tag1', 'tag2', 'tag3']);
+      expect(remainder).toEqual({ other: 'value' });
+    });
+
+    it('should return empty array for non-existent key path', () => {
+      const obj = {
+        'tags.0': 'tag1',
+        other: 'value',
+      };
+
+      const [valueList, remainder] = getItemList(obj, 'nonexistent');
+
+      expect(valueList).toEqual([]);
+      expect(remainder).toEqual({
+        'tags.0': 'tag1',
+        other: 'value',
+      });
+    });
+
+    it('should handle nested list items', () => {
+      const obj = {
+        'items.0.name': 'Item 1',
+        'items.0.value': 10,
+        'items.1.name': 'Item 2',
+        'items.1.value': 20,
+        other: 'value',
+      };
+
+      const [valueList, remainder] = getItemList(obj, 'items');
+
+      expect(valueList).toEqual([
+        { name: 'Item 1', value: 10 },
+        { name: 'Item 2', value: 20 },
+      ]);
+      expect(remainder).toEqual({ other: 'value' });
+    });
+
+    it('should preserve sort order', () => {
+      const obj = {
+        'tags.2': 'tag3',
+        'tags.0': 'tag1',
+        'tags.1': 'tag2',
+      };
+
+      const [valueList] = getItemList(obj, 'tags');
+
+      expect(valueList).toEqual(['tag1', 'tag2', 'tag3']);
+    });
+
+    it('should not match keyPaths with # suffix', () => {
+      const obj = {
+        'tags.0': 'tag1',
+        'tags.1': 'tag2',
+        'tags#metadata': 'should not match',
+      };
+
+      const [valueList, remainder] = getItemList(obj, 'tags');
+
+      expect(valueList).toEqual(['tag1', 'tag2']);
+      expect(remainder).toEqual({ 'tags#metadata': 'should not match' });
     });
   });
 });

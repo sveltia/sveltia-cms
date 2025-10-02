@@ -2,9 +2,21 @@ import { flatten } from 'flat';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  analyzeListFields,
+  createSimpleOption,
+  extractFieldNames,
+  filterAndPrepareEntries,
+  getFieldReplacement,
+  getListFieldTypes,
   getOptions,
   getReferencedOptionLabel,
+  normalizeFieldName,
   optionCacheMap,
+  prepareFieldTemplates,
+  processComplexListField,
+  processListFields,
+  processSingleSubfieldList,
+  replaceTemplateFields,
 } from '$lib/services/contents/widgets/relation/helper';
 
 /**
@@ -15,6 +27,7 @@ import {
  * LocalizedEntry,
  * } from '$lib/types/private';
  * @import { RelationField } from '$lib/types/public';
+ * @import { TemplateStrings } from '$lib/services/contents/widgets/relation/helper';
  */
 
 // Mock dependencies
@@ -1442,5 +1455,686 @@ describe('Test getOptions()', async () => {
       expect(resolvedLabels[0]).toBe(options[0].label);
       expect(resolvedLabels[1]).toBe(options[1].label);
     });
+  });
+});
+
+describe('Test normalizeFieldName()', () => {
+  test('should return field name as-is if already in template format', () => {
+    expect(normalizeFieldName('{{name}}')).toBe('{{name}}');
+    expect(normalizeFieldName('{{name.first}}')).toBe('{{name.first}}');
+    expect(normalizeFieldName('{{cities.*.name}}')).toBe('{{cities.*.name}}');
+  });
+
+  test('should wrap plain field name in brackets', () => {
+    expect(normalizeFieldName('name')).toBe('{{name}}');
+    expect(normalizeFieldName('name.first')).toBe('{{name.first}}');
+    expect(normalizeFieldName('email')).toBe('{{email}}');
+  });
+
+  test('should handle slug field specially to avoid confusion', () => {
+    expect(normalizeFieldName('slug')).toBe('{{fields.slug}}');
+  });
+
+  test('should not modify already prefixed slug field', () => {
+    expect(normalizeFieldName('{{slug}}')).toBe('{{slug}}');
+    expect(normalizeFieldName('{{fields.slug}}')).toBe('{{fields.slug}}');
+  });
+});
+
+describe('Test getListFieldTypes()', () => {
+  test('should return false flags for undefined field config', () => {
+    const result = getListFieldTypes(undefined);
+
+    expect(result.isSimpleListField).toBe(false);
+    expect(result.isSingleSubfieldListField).toBe(false);
+  });
+
+  test('should return false flags for non-list field', () => {
+    const result = getListFieldTypes({ widget: 'string', name: 'title' });
+
+    expect(result.isSimpleListField).toBe(false);
+    expect(result.isSingleSubfieldListField).toBe(false);
+  });
+
+  test('should identify simple list field', () => {
+    const result = getListFieldTypes({ widget: 'list', name: 'tags' });
+
+    expect(result.isSimpleListField).toBe(true);
+    expect(result.isSingleSubfieldListField).toBe(false);
+  });
+
+  test('should identify single subfield list field', () => {
+    const result = getListFieldTypes({
+      widget: 'list',
+      name: 'items',
+      field: { widget: 'string', name: 'item' },
+    });
+
+    expect(result.isSimpleListField).toBe(false);
+    expect(result.isSingleSubfieldListField).toBe(true);
+  });
+
+  test('should return false for list with multiple fields', () => {
+    const result = getListFieldTypes({
+      widget: 'list',
+      name: 'items',
+      fields: [
+        { widget: 'string', name: 'title' },
+        { widget: 'string', name: 'description' },
+      ],
+    });
+
+    expect(result.isSimpleListField).toBe(false);
+    expect(result.isSingleSubfieldListField).toBe(false);
+  });
+
+  test('should return false for list with types', () => {
+    const result = getListFieldTypes({
+      widget: 'list',
+      name: 'items',
+      types: [{ label: 'Type A', widget: 'object', name: 'typeA', fields: [] }],
+    });
+
+    expect(result.isSimpleListField).toBe(false);
+    expect(result.isSingleSubfieldListField).toBe(false);
+  });
+});
+
+describe('Test extractFieldNames()', () => {
+  test('should extract field names from template string', () => {
+    expect(extractFieldNames('{{name}}')).toEqual(['name']);
+    expect(extractFieldNames('{{name}} {{email}}')).toEqual(['name', 'email']);
+    expect(extractFieldNames('{{name.first}} {{name.last}}')).toEqual(['name.first', 'name.last']);
+  });
+
+  test('should extract field names with wildcards', () => {
+    expect(extractFieldNames('{{cities.*.name}}')).toEqual(['cities.*.name']);
+    expect(extractFieldNames('{{items.*.id}} {{items.*.title}}')).toEqual([
+      'items.*.id',
+      'items.*.title',
+    ]);
+  });
+
+  test('should handle templates with no fields', () => {
+    expect(extractFieldNames('Plain text')).toEqual([]);
+    expect(extractFieldNames('')).toEqual([]);
+  });
+
+  test('should handle mixed content', () => {
+    expect(extractFieldNames('Name: {{name}}, Email: {{email}}')).toEqual(['name', 'email']);
+  });
+});
+
+describe('Test prepareFieldTemplates()', () => {
+  test('should prepare basic field templates with value_field', () => {
+    const result = prepareFieldTemplates(
+      { widget: 'relation', name: 'author', value_field: 'id', collection: 'authors' },
+      'title',
+    );
+
+    expect(result._valueField).toBe('{{id}}');
+    expect(result._displayField).toBe('{{id}}');
+    expect(result._searchField).toBe('{{id}}');
+    expect(result.allFieldNames).toContain('id');
+    expect(result.hasListFields).toBe(false);
+  });
+
+  test('should use slug as default value field when not specified', () => {
+    const result = prepareFieldTemplates(
+      { widget: 'relation', name: 'author', collection: 'authors' },
+      'title',
+    );
+
+    expect(result._valueField).toBe('{{slug}}');
+  });
+
+  test('should prepare templates with display_fields', () => {
+    const result = prepareFieldTemplates(
+      {
+        widget: 'relation',
+        name: 'author',
+        value_field: 'id',
+        display_fields: ['name.first', 'name.last'],
+        collection: 'authors',
+      },
+      'title',
+    );
+
+    expect(result._displayField).toBe('{{name.first}} {{name.last}}');
+    expect(result.allFieldNames).toContain('name.first');
+    expect(result.allFieldNames).toContain('name.last');
+  });
+
+  test('should prepare templates with search_fields', () => {
+    const result = prepareFieldTemplates(
+      {
+        widget: 'relation',
+        name: 'author',
+        value_field: 'id',
+        display_fields: ['name'],
+        search_fields: ['name', 'email'],
+        collection: 'authors',
+      },
+      'title',
+    );
+
+    expect(result._searchField).toBe('{{name}} {{email}}');
+  });
+
+  test('should detect list fields with wildcards', () => {
+    const result = prepareFieldTemplates(
+      {
+        widget: 'relation',
+        name: 'author',
+        display_fields: ['cities.*.name'],
+        collection: 'authors',
+      },
+      'title',
+    );
+
+    expect(result.hasListFields).toBe(true);
+    expect(result.allFieldNames).toContain('cities.*.name');
+  });
+
+  test('should handle slug field normalization', () => {
+    const result = prepareFieldTemplates(
+      {
+        widget: 'relation',
+        name: 'author',
+        display_fields: ['slug'],
+        collection: 'authors',
+      },
+      'title',
+    );
+
+    expect(result._displayField).toBe('{{fields.slug}}');
+  });
+
+  test('should handle template strings in display_fields', () => {
+    const result = prepareFieldTemplates(
+      {
+        widget: 'relation',
+        name: 'author',
+        display_fields: ['{{name}} ({{email}})'],
+        collection: 'authors',
+      },
+      'title',
+    );
+
+    expect(result._displayField).toBe('{{name}} ({{email}})');
+    expect(result.allFieldNames).toContain('name');
+    expect(result.allFieldNames).toContain('email');
+  });
+});
+
+describe('Test getFieldReplacement()', () => {
+  const context = {
+    slug: 'test-slug',
+    locale: 'en',
+    getDisplayValue: vi.fn((keyPath) => {
+      if (keyPath === 'title') return 'Test Title';
+      if (keyPath === 'email') return 'test@example.com';
+      return '';
+    }),
+  };
+
+  const fallbackContext = {
+    content: { title: 'Test Title' },
+    locales: { _default: { content: { title: 'Default Title' } } },
+    defaultLocale: '_default',
+    identifierField: 'title',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('should return slug for slug field', () => {
+    expect(getFieldReplacement('slug', context, fallbackContext)).toBe('test-slug');
+  });
+
+  test('should return locale for locale field', () => {
+    expect(getFieldReplacement('locale', context, fallbackContext)).toBe('en');
+  });
+
+  test('should get display value for regular field', () => {
+    expect(getFieldReplacement('title', context, fallbackContext)).toBe('Test Title');
+    expect(context.getDisplayValue).toHaveBeenCalledWith('title');
+  });
+
+  test('should strip fields. prefix when getting value', () => {
+    getFieldReplacement('fields.email', context, fallbackContext);
+    expect(context.getDisplayValue).toHaveBeenCalledWith('email');
+  });
+});
+
+describe('Test replaceTemplateFields()', () => {
+  const templates = {
+    label: '{{name}} - {{email}}',
+    value: '{{id}}',
+    searchValue: '{{name}} {{email}}',
+  };
+
+  const fieldNames = ['name', 'email', 'id'];
+
+  const context = {
+    slug: 'test-slug',
+    locale: 'en',
+    getDisplayValue: vi.fn((keyPath) => {
+      if (keyPath === 'name') return 'John Doe';
+      if (keyPath === 'email') return 'john@example.com';
+      if (keyPath === 'id') return '123';
+      return '';
+    }),
+  };
+
+  const fallbackContext = {
+    content: {},
+    locales: {},
+    defaultLocale: 'en',
+    identifierField: 'title',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('should replace all template fields', () => {
+    const result = replaceTemplateFields(templates, fieldNames, context, fallbackContext);
+
+    expect(result.label).toBe('John Doe - john@example.com');
+    expect(result.value).toBe('123');
+    expect(result.searchValue).toBe('John Doe john@example.com');
+  });
+
+  test('should handle empty replacements with fallback to slug', () => {
+    const emptyContext = {
+      ...context,
+      getDisplayValue: vi.fn(() => ''),
+    };
+
+    const result = replaceTemplateFields(templates, fieldNames, emptyContext, fallbackContext);
+
+    // When fields return empty, it falls back to slug via getFieldReplacement
+    expect(result.label).toBe('test-slug - test-slug');
+    expect(result.value).toBe('test-slug');
+  });
+});
+
+describe('Test filterAndPrepareEntries()', () => {
+  const locale = 'en';
+
+  /** @type {Entry[]} */
+  const entries = [
+    {
+      id: 'entry-1',
+      slug: 'entry-1',
+      subPath: 'entry-1',
+      locales: {
+        en: {
+          slug: 'entry-1',
+          path: 'entry-1.md',
+          content: { title: 'Entry 1', status: 'published' },
+        },
+      },
+    },
+    {
+      id: 'entry-2',
+      slug: 'entry-2',
+      subPath: 'entry-2',
+      locales: {
+        en: { slug: 'entry-2', path: 'entry-2.md', content: { title: 'Entry 2', status: 'draft' } },
+      },
+    },
+    {
+      id: 'entry-3',
+      slug: 'entry-3',
+      subPath: 'entry-3',
+      locales: {
+        _default: {
+          slug: 'entry-3',
+          path: 'entry-3.md',
+          content: { title: 'Entry 3', status: 'published' },
+        },
+      },
+    },
+  ];
+
+  test('should return all entries with content when no filters', () => {
+    const result = filterAndPrepareEntries(entries, locale);
+
+    expect(result).toHaveLength(3);
+    expect(result[0].refEntry.slug).toBe('entry-1');
+    expect(result[0].content).toEqual({ title: 'Entry 1', status: 'published' });
+  });
+
+  test('should filter by fileName', () => {
+    const result = filterAndPrepareEntries(entries, locale, 'entry-2');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].refEntry.slug).toBe('entry-2');
+  });
+
+  test('should apply entry filters', () => {
+    const filters = [{ field: 'status', values: ['published'] }];
+    const result = filterAndPrepareEntries(entries, locale, undefined, filters);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].refEntry.slug).toBe('entry-1');
+    expect(result[1].refEntry.slug).toBe('entry-3');
+  });
+
+  test('should fall back to default locale', () => {
+    const result = filterAndPrepareEntries(entries, locale);
+
+    expect(result[2].content).toEqual({ title: 'Entry 3', status: 'published' });
+  });
+
+  test('should handle multiple filters', () => {
+    /** @type {Entry[]} */
+    const multiEntries = [
+      {
+        id: 'entry-1',
+        slug: 'entry-1',
+        subPath: 'entry-1',
+        locales: {
+          en: {
+            slug: 'entry-1',
+            path: 'entry-1.md',
+            content: { status: 'published', category: 'tech' },
+          },
+        },
+      },
+      {
+        id: 'entry-2',
+        slug: 'entry-2',
+        subPath: 'entry-2',
+        locales: {
+          en: {
+            slug: 'entry-2',
+            path: 'entry-2.md',
+            content: { status: 'published', category: 'sports' },
+          },
+        },
+      },
+    ];
+
+    const filters = [
+      { field: 'status', values: ['published'] },
+      { field: 'category', values: ['tech'] },
+    ];
+
+    const result = filterAndPrepareEntries(multiEntries, locale, undefined, filters);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].refEntry.slug).toBe('entry-1');
+  });
+});
+
+describe('Test createSimpleOption()', () => {
+  test('should create a simple relation option', () => {
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{name}}',
+      _valueField: '{{id}}',
+      _searchField: '{{name}} {{email}}',
+      allFieldNames: ['name', 'id', 'email'],
+      hasListFields: false,
+    };
+
+    const allFieldNames = ['name', 'id', 'email'];
+
+    const context = {
+      slug: 'test-slug',
+      locale: 'en',
+      getDisplayValue: vi.fn((keyPath) => {
+        if (keyPath === 'name') return 'John Doe';
+        if (keyPath === 'id') return '123';
+        if (keyPath === 'email') return 'john@example.com';
+        return '';
+      }),
+    };
+
+    const fallbackContext = {
+      content: { name: 'John Doe' },
+      locales: {},
+      defaultLocale: 'en',
+      identifierField: 'name',
+    };
+
+    const result = createSimpleOption({ templates, allFieldNames, context, fallbackContext });
+
+    expect(result.label).toBe('John Doe');
+    expect(result.value).toBe('123');
+    expect(result.searchValue).toBe('John Doe john@example.com');
+  });
+
+  test('should use slug as fallback for empty label', () => {
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{name}}',
+      _valueField: '{{id}}',
+      _searchField: '{{name}}',
+      allFieldNames: ['name', 'id'],
+      hasListFields: false,
+    };
+
+    const allFieldNames = ['name', 'id'];
+
+    const context = {
+      slug: 'test-slug',
+      locale: 'en',
+      getDisplayValue: vi.fn(() => ''),
+    };
+
+    const fallbackContext = {
+      content: {},
+      locales: { _default: { content: {} } },
+      defaultLocale: '_default',
+      identifierField: 'title',
+    };
+
+    const result = createSimpleOption({ templates, allFieldNames, context, fallbackContext });
+
+    expect(result.label).toBe('test-slug');
+    expect(result.value).toBe('test-slug');
+  });
+});
+
+describe('Test analyzeListFields()', () => {
+  const getFieldArgs = {
+    collectionName: 'posts',
+    fileName: undefined,
+    isIndexFile: false,
+    keyPath: '',
+  };
+
+  test('should return empty map when no list fields', () => {
+    const allFieldNames = ['name', 'email', 'id'];
+    const result = analyzeListFields(allFieldNames, getFieldArgs);
+
+    expect(result.size).toBe(0);
+  });
+
+  test('should group list fields by base field name', () => {
+    const allFieldNames = ['cities.*.name', 'cities.*.id'];
+    const result = analyzeListFields(allFieldNames, getFieldArgs);
+
+    expect(result.size).toBe(1);
+    expect(result.has('cities')).toBe(true);
+
+    const group = result.get('cities');
+
+    expect(group).toHaveLength(2);
+  });
+
+  test('should handle multiple different list fields', () => {
+    const allFieldNames = ['cities.*.name', 'tags.*', 'items.*.id'];
+    const result = analyzeListFields(allFieldNames, getFieldArgs);
+
+    expect(result.size).toBe(3);
+    expect(result.has('cities')).toBe(true);
+    expect(result.has('tags')).toBe(true);
+    expect(result.has('items')).toBe(true);
+  });
+});
+
+describe('Test processSingleSubfieldList()', () => {
+  test('should process single subfield list and join values', () => {
+    const content = {
+      'skills.0': 'JavaScript',
+      'skills.1': 'React',
+      'skills.2': 'Node.js',
+    };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{skills.*}}',
+      _valueField: '{{id}}',
+      _searchField: '{{skills.*}}',
+      allFieldNames: ['skills.*', 'id'],
+      hasListFields: true,
+    };
+
+    const allFieldNames = ['skills.*', 'id'];
+    /** @type {[string, any][]} */
+    const groupEntries = [['skills.*', { baseFieldName: 'skills' }]];
+
+    const context = {
+      slug: 'test-slug',
+      locale: 'en',
+      getDisplayValue: vi.fn((keyPath) => {
+        if (keyPath === 'id') return '123';
+        return '';
+      }),
+    };
+
+    const fallbackContext = {
+      content,
+      locales: {},
+      defaultLocale: 'en',
+      identifierField: 'title',
+    };
+
+    const result = processSingleSubfieldList({
+      baseFieldName: 'skills',
+      groupEntries,
+      content,
+      templates,
+      allFieldNames,
+      context,
+      fallbackContext,
+    });
+
+    expect(result.label).toContain('JavaScript');
+    expect(result.label).toContain('React');
+    expect(result.label).toContain('Node.js');
+  });
+});
+
+describe('Test processComplexListField()', () => {
+  test('should process complex list field with multiple items', () => {
+    const content = {
+      'cities.0.id': 'city1',
+      'cities.0.name': 'New York',
+      'cities.1.id': 'city2',
+      'cities.1.name': 'Boston',
+    };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{cities.*.name}}',
+      _valueField: '{{cities.*.id}}',
+      _searchField: '{{cities.*.name}}',
+      allFieldNames: ['cities.*.name', 'cities.*.id'],
+      hasListFields: true,
+    };
+
+    const allFieldNames = ['cities.*.name', 'cities.*.id'];
+
+    /** @type {[string, any][]} */
+    const groupEntries = [
+      ['cities.*.name', { baseFieldName: 'cities' }],
+      ['cities.*.id', { baseFieldName: 'cities' }],
+    ];
+
+    const context = {
+      slug: 'test-slug',
+      locale: 'en',
+      getDisplayValue: vi.fn(() => ''),
+    };
+
+    const fallbackContext = {
+      content,
+      locales: {},
+      defaultLocale: 'en',
+      identifierField: 'title',
+    };
+
+    const result = processComplexListField({
+      groupEntries,
+      content,
+      templates,
+      allFieldNames,
+      context,
+      fallbackContext,
+    });
+
+    expect(result).toHaveLength(2);
+    expect(result[0].label).toBe('New York');
+    expect(result[0].value).toBe('city1');
+    expect(result[1].label).toBe('Boston');
+    expect(result[1].value).toBe('city2');
+  });
+
+  test('should return empty array when no valid pattern found', () => {
+    const result = processComplexListField({
+      groupEntries: [],
+      content: {},
+      templates: {
+        _displayField: '',
+        _valueField: '',
+        _searchField: '',
+        allFieldNames: [],
+        hasListFields: false,
+      },
+      allFieldNames: [],
+      context: { slug: '', locale: 'en', getDisplayValue: vi.fn() },
+      fallbackContext: {
+        content: {},
+        locales: {},
+        defaultLocale: 'en',
+        identifierField: 'title',
+      },
+    });
+
+    expect(result).toHaveLength(0);
+  });
+});
+
+describe('Test processListFields()', () => {
+  test('should return empty results when no list fields', () => {
+    const result = processListFields({
+      baseFieldGroups: new Map(),
+      content: {},
+      templates: {
+        _displayField: '',
+        _valueField: '',
+        _searchField: '',
+        allFieldNames: [],
+        hasListFields: false,
+      },
+      allFieldNames: [],
+      context: { slug: '', locale: 'en', getDisplayValue: vi.fn() },
+      fallbackContext: {
+        content: {},
+        locales: {},
+        defaultLocale: 'en',
+        identifierField: 'title',
+      },
+    });
+
+    expect(result.results).toHaveLength(0);
+    expect(result.hasProcessedListFields).toBe(false);
   });
 });

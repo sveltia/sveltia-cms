@@ -45,26 +45,30 @@ export const TRUNCATE_TRANSFORMATION_REGEX = /^truncate\((?<max>\d+)(?:,\s*'(?<e
 
 /**
  * Transform the input value to its uppercase string representation.
+ * @internal
  * @param {any} value The value to be transformed to uppercase.
  * @returns {string} The uppercase string representation of the input value.
  */
-const applyUpperCaseTransformation = (value) => String(value).toUpperCase();
+export const applyUpperCaseTransformation = (value) => String(value).toUpperCase();
+
 /**
  * Transform the input value to a string and returns it in lowercase.
+ * @internal
  * @param {any} value The value to be transformed to lowercase.
  * @returns {string} The lowercase string representation of the input value.
  */
-const applyLowerCaseTransformation = (value) => String(value).toLowerCase();
+export const applyLowerCaseTransformation = (value) => String(value).toLowerCase();
 
 /**
  * Transform the input value to a formatted string based on the provided format and time zone
  * options.
+ * @internal
  * @param {any} value The input value to be transformed into a date string.
  * @param {DateTimeTransformationArgs} args Transformation arguments.
  * @param {DateTimeField} fieldConfig Field configuration containing date and time settings.
  * @returns {string} The formatted date string if valid, otherwise an empty string.
  */
-const applyDateTransformation = (value, { format, timeZone }, fieldConfig) => {
+export const applyDateTransformation = (value, { format, timeZone }, fieldConfig) => {
   const sValue = String(value);
   const { dateOnly, utc } = parseDateTimeConfig(fieldConfig);
 
@@ -86,33 +90,37 @@ const applyDateTransformation = (value, { format, timeZone }, fieldConfig) => {
 /**
  * Return the string representation of the given value if it is truthy; otherwise, returns the
  * provided default value.
+ * @internal
  * @param {any} value The value to evaluate for truthiness.
  * @param {DefaultTransformationArgs} args Transformation arguments.
  * @returns {string} The stringified value or the default value.
  */
-const applyDefaultTransformation = (value, { defaultValue }) =>
+export const applyDefaultTransformation = (value, { defaultValue }) =>
   value ? String(value) : defaultValue;
 
 /**
  * Return one of two values based on the truthiness of the input value.
+ * @internal
  * @param {any} value The value to evaluate for truthiness.
  * @param {TernaryTransformationArgs} args Transformation arguments.
  * @returns {string} Returns `truthyValue` if `value` is truthy, otherwise returns `falsyValue`.
  */
-const ternaryTransformation = (value, { truthyValue, falsyValue }) =>
+export const ternaryTransformation = (value, { truthyValue, falsyValue }) =>
   value ? truthyValue : falsyValue;
 
 /**
  * Truncate a string to a specified maximum length and append an ellipsis if truncation occurs.
+ * @internal
  * @param {any} value The value to be truncated.
  * @param {TruncateTransformationArgs} args Transformation arguments.
  * @returns {string} The truncated string with ellipsis if applicable.
  */
-const applyTruncateTransformation = (value, { max, ellipsis = '…' }) =>
+export const applyTruncateTransformation = (value, { max, ellipsis = '…' }) =>
   truncate(String(value), Number(max), { ellipsis });
 
 /**
  * Apply a single string transformation to the value based on the specified transformation type.
+ * @internal
  * @param {object} args Arguments.
  * @param {Field} [args.fieldConfig] Field configuration, used for date transformations.
  * @param {any} args.value Original value to be transformed.

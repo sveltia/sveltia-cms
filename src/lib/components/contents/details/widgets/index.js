@@ -60,6 +60,7 @@ export const editors = {
   text: TextEditor,
   uuid: UuidEditor,
 };
+
 /**
  * @type {Record<string, Component>}
  */
