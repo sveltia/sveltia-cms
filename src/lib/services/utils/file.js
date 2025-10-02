@@ -134,7 +134,10 @@ export const formatFileName = (
   originalName,
   { slugificationEnabled = false, assetNamesInSameFolder = [] } = {},
 ) => {
-  let fileName = sanitize(originalName.normalize());
+  // Normalize the name to NFC format (composed characters), then replace all whitespace characters
+  // (including non-breaking spaces, tabs, newlines, etc.) with regular spaces before sanitizing.
+  // Consecutive whitespace characters are collapsed into a single space.
+  let fileName = sanitize(originalName.normalize().replace(/[\s\u00A0\u202F]+/g, ' '));
 
   if (slugificationEnabled) {
     const { filename, extension } = getPathInfo(fileName);

@@ -73,6 +73,25 @@ describe('Test formatFileName()', () => {
     // Test unicode normalization
     expect(formatFileName('café.jpg')).toEqual('café.jpg');
     expect(formatFileName('résumé.pdf')).toEqual('résumé.pdf');
+
+    // Test whitespace normalization - all whitespace characters replaced with regular spaces
+    // Consecutive whitespace is collapsed to a single space
+    // U+00A0: non-breaking space
+    expect(formatFileName('my\u00A0file.jpg')).toEqual('my file.jpg');
+    expect(formatFileName('test\u00A0\u00A0multiple.txt')).toEqual('test multiple.txt');
+    // U+202F: narrow no-break space (used by macOS in screenshot timestamps)
+    expect(formatFileName('Screenshot 2025-10-02 at 6.01.11\u202FPM.png')).toEqual(
+      'Screenshot 2025-10-02 at 6.01.11 PM.png',
+    );
+    // Tab character
+    expect(formatFileName('my\tfile.jpg')).toEqual('my file.jpg');
+    // Newline characters (edge case - gets replaced with space)
+    expect(formatFileName('my\nfile.jpg')).toEqual('my file.jpg');
+    expect(formatFileName('my\r\nfile.jpg')).toEqual('my file.jpg');
+    // Multiple consecutive spaces collapsed
+    expect(formatFileName('my   file.jpg')).toEqual('my file.jpg');
+    expect(formatFileName('test\t\t\tfile.txt')).toEqual('test file.txt');
+    expect(formatFileName('mixed\u00A0 \t\u202Fspaces.pdf')).toEqual('mixed spaces.pdf');
   });
 
   test('Slugification when enabled', () => {
