@@ -128,7 +128,6 @@
  * Default: `false`.
  * @property {boolean} [use_transformations] Whether to include transformation segments in an output
  * URL. Default: `true`.
- * @property {boolean} [use_secure_url] Whether to use an HTTP URL. Default: `true`.
  * @property {Record<string, any>} [config] Options to be passed to Cloudinary, such as `multiple`.
  * The `cloud_name` and `api_key` options are required for the global `media_library` option. See
  * the [Cloudinary
