@@ -650,7 +650,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
-[Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
+[Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready, hopefully by the end of 2025.
 
 Due to the complexity, we have decided to defer the following features to the 1.x or 2.0 release due mid-2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
 
@@ -680,6 +680,7 @@ The following Netlify/Decap CMS features will not be implemented in Sveltia CMS,
 - The `allow_multiple` option for the File and Image widgets: It’s a confusing option that defaults to `true`, and there is a separate option called `media_library.config.multiple`. We have added the new `multiple` option instead, which is more intuitive and works with all media libraries.
 - The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality powered by [Prism](https://prismjs.com/), which is slated to be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
+- The `use_secure_url` option for the Cloudinary media library: Insecure URLs should never be used.
 - Extra features in the [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries: We plan to integrate these services using their APIs instead of pre-built widgets. This means third-party upload sources and other features will be unavailable. We plan to support some of the sources, camera access and image editing in the future.
 - An absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
@@ -782,7 +783,7 @@ Unfortunately, **we are unable to provide installation and setup support** at th
 
 <!-- prettier-ignore -->
 > [!IMPORTANT]
-> Take a look at the [compatibility info](#compatibility) above first. Some Netlify/Decap CMS features have not yet been implemented or will never be added to Sveltia CMS.
+> Take a look at the [compatibility info](#compatibility) above first. Some Netlify/Decap CMS features are yet implemented or will not be added to Sveltia CMS, meaning you may not be able to migrate right away.
 
 If you’re already using Netlify/Decap CMS with the GitHub, GitLab or Gitea/Forgejo backend and don’t have any unsupported features like editorial workflow or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement.
 
@@ -1907,7 +1908,7 @@ Due early 2026
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
-  - Several Cloudinary and Uploadcare media library issues, including authentication[^288] and selection of existing files[^247]
+  - Several Cloudinary and Uploadcare media library issues, including authentication[^288] and file selection[^247]
   - [RTL localization support](https://github.com/sveltia/sveltia-cms/issues/385)[^245]
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
