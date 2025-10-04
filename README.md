@@ -783,7 +783,7 @@ Unfortunately, **we are unable to provide installation and setup support** at th
 
 <!-- prettier-ignore -->
 > [!IMPORTANT]
-> Take a look at the [compatibility info](#compatibility) above first. Some Netlify/Decap CMS features are yet implemented or will not be added to Sveltia CMS, meaning you may not be able to migrate right away.
+> Take a look at the [compatibility info](#compatibility) above first. Some Netlify/Decap CMS features are not yet implemented or will not be added to Sveltia CMS, meaning you may not be able to migrate right away.
 
 If you’re already using Netlify/Decap CMS with the GitHub, GitLab or Gitea/Forgejo backend and don’t have any unsupported features like editorial workflow or nested collections, migrating to Sveltia CMS is super easy — it works as a drop-in replacement.
 
