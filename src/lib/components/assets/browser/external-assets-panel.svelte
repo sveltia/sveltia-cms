@@ -19,8 +19,8 @@
 
   /**
    * @import {
-   * AssetKind,
    * ExternalAsset,
+   * MediaLibraryAssetKind,
    * MediaLibraryFetchOptions,
    * MediaLibraryService,
    * SelectedResource,
@@ -29,7 +29,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {AssetKind} [kind] Asset kind.
+   * @property {MediaLibraryAssetKind} [kind] Asset kind.
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {MediaLibraryService} serviceProps Media library service details.

@@ -132,7 +132,8 @@
  * The `cloud_name` and `api_key` options are required for the global `media_library` option. See
  * the [Cloudinary
  * documentation](https://cloudinary.com/documentation/media_library_widget#2_set_the_configuration_options)
- * for a full list of available options.
+ * for a full list of available options. Some options, including `inline_container`, will be ignored
+ * in Sveltia CMS because we use an API-based integration instead of Cloudinary’s pre-built widget.
  */
 
 /**
@@ -150,7 +151,8 @@
  * @property {Record<string, any>} [config] Options to be passed to Uploadcare, such as `multiple`.
  * The `publicKey` option is required for the global `media_library` option. See the [Uploadcare
  * documentation](https://uploadcare.com/docs/uploads/file-uploader-options/) for a full list of
- * available options.
+ * available options. Some options, including `previewStep`, will be ignored in Sveltia CMS because
+ * we use an API-based integration instead of Uploadcare’s deprecated jQuery File Uploader.
  * @property {UploadcareMediaLibrarySettings} [settings] Integration settings.
  */
 

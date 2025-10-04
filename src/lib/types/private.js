@@ -196,9 +196,14 @@
  */
 
 /**
+ * Asset kind filter.
+ * @typedef {'image'} MediaLibraryAssetKind
+ */
+
+/**
  * Media library fetch options.
  * @typedef {object} MediaLibraryFetchOptions
- * @property {AssetKind} [kind] Asset.
+ * @property {MediaLibraryAssetKind} [kind] Asset kind filter.
  * @property {string} apiKey API authentication key.
  * @property {string} [userName] User name for services that require user authentication, such as
  * cloud storage services.
@@ -226,6 +231,8 @@
  * Function to search files.
  * @property {(options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>} list Function to list
  * files. For stock asset services, it should return popular or curated images.
+ * @property {(files: File[], options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>
+ * } [upload] Function to upload files to the cloud storage service.
  */
 
 /**

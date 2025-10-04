@@ -40,8 +40,8 @@
    * @import {
    * Asset,
    * AssetFolderInfo,
-   * AssetKind,
    * EntryDraft,
+   * MediaLibraryAssetKind,
    * MediaLibraryService,
    * SelectAssetsView,
    * SelectedResource,
@@ -53,7 +53,7 @@
    * @typedef {object} Props
    * @property {boolean} [open] Whether to open the dialog.
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
-   * @property {AssetKind | undefined} [kind] Asset kind.
+   * @property {MediaLibraryAssetKind} [kind] Asset kind.
    * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
    * @property {Writable<EntryDraft | null | undefined>} [entryDraft] Associated entry draft.
