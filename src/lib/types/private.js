@@ -16,6 +16,7 @@
  * GitBackendName,
  * I18nFileStructure,
  * LocaleCode,
+ * MediaField,
  * RasterImageFormat,
  * SelectField,
  * SiteConfig,
@@ -204,6 +205,7 @@
  * Media library fetch options.
  * @typedef {object} MediaLibraryFetchOptions
  * @property {MediaLibraryAssetKind} [kind] Asset kind filter.
+ * @property {MediaField} [fieldConfig] File/Image field configuration.
  * @property {string} apiKey API authentication key.
  * @property {string} [userName] User name for services that require user authentication, such as
  * cloud storage services.
@@ -224,6 +226,8 @@
  * @property {string} [developerURL] URL of the page that provides the API/developer service.
  * @property {string} [apiKeyURL] URL of the page that provides an API key.
  * @property {RegExp} [apiKeyPattern] API key pattern.
+ * @property {() => boolean} [isEnabled] Whether the service is enabled. It’s determined by whether
+ * the service is defined in the site configuration.
  * @property {() => Promise<boolean>} [init] Function to initialize the service.
  * @property {(userName: string, password: string) => Promise<boolean>} [signIn] Function to sign in
  * to the service.

@@ -25,10 +25,12 @@
    * MediaLibraryService,
    * SelectedResource,
    * } from '$lib/types/private';
+   * @import { MediaField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
+   * @property {MediaField} [fieldConfig] File/Image field configuration.
    * @property {MediaLibraryAssetKind} [kind] Asset kind.
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
    * @property {string} [searchTerms] Search terms for filtering assets.
@@ -41,6 +43,7 @@
   let {
     /* eslint-disable prefer-const */
     kind = 'image',
+    fieldConfig = undefined,
     multiple = false,
     searchTerms = '',
     serviceProps,
@@ -90,7 +93,7 @@
     query = query.trim();
 
     /** @type {MediaLibraryFetchOptions} */
-    const options = { kind, apiKey, userName, password };
+    const options = { kind, fieldConfig, apiKey, userName, password };
 
     try {
       listedAssets = await (query ? search(query, options) : list(options));
@@ -250,10 +253,10 @@
       {/if}
       {#if serviceType === 'cloud_storage'}
         {@html sanitize(
-          $_(`cloud_storage.auth.${authState}`, {
-            values: {
-              service: serviceLabel,
-            },
+          $_(`cloud_storage.${serviceId}.auth.${authState}`, {
+            default: $_(`cloud_storage.auth.${authType}.${authState}`, {
+              values: { service: serviceLabel },
+            }),
           }),
           { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] },
         )}

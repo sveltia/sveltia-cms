@@ -2,10 +2,15 @@ import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import cloudinaryService, {
+  generateAuthHeader,
+  generateSignature,
   getCloudConfig,
+  getLibraryOptions,
+  isEnabled,
   list,
   parseResults,
   search,
+  transformationToString,
   upload,
 } from './cloudinary';
 
@@ -143,11 +148,229 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
     });
   });
 
+  describe('getLibraryOptions', () => {
+    it('should return cloudinary library options from media_libraries', () => {
+      const options = getLibraryOptions();
+
+      expect(options).toBeDefined();
+      expect(options?.config?.cloud_name).toBe(mockCloudName);
+      expect(options?.config?.api_key).toBe(mockApiKey);
+    });
+
+    it('should return undefined when config is missing', () => {
+      vi.mocked(get).mockReturnValue({});
+
+      const options = getLibraryOptions();
+
+      expect(options).toBeUndefined();
+    });
+
+    it('should support legacy media_library config', () => {
+      vi.mocked(get).mockReturnValue({
+        media_library: {
+          name: 'cloudinary',
+          config: {
+            cloud_name: 'legacy-cloud',
+            api_key: 'legacy-api-key',
+          },
+        },
+      });
+
+      const options = getLibraryOptions();
+
+      expect(options).toBeDefined();
+      expect(options?.config?.cloud_name).toBe('legacy-cloud');
+    });
+
+    it('should return undefined for non-cloudinary media_library', () => {
+      vi.mocked(get).mockReturnValue({
+        media_library: {
+          name: 'other-service',
+          config: {},
+        },
+      });
+
+      const options = getLibraryOptions();
+
+      expect(options).toBeUndefined();
+    });
+  });
+
+  describe('isEnabled', () => {
+    it('should return true when cloud name and API key are configured', () => {
+      expect(isEnabled()).toBe(true);
+    });
+
+    it('should return false when config is missing', () => {
+      vi.mocked(get).mockReturnValue({});
+
+      expect(isEnabled()).toBe(false);
+    });
+
+    it('should return false when cloud name is missing', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          cloudinary: {
+            config: {
+              api_key: mockApiKey,
+            },
+          },
+        },
+      });
+
+      expect(isEnabled()).toBe(false);
+    });
+
+    it('should return false when API key is missing', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          cloudinary: {
+            config: {
+              cloud_name: mockCloudName,
+            },
+          },
+        },
+      });
+
+      expect(isEnabled()).toBe(false);
+    });
+  });
+
+  describe('transformationToString', () => {
+    it('should convert basic transformation to string', () => {
+      const result = transformationToString({ width: 400, height: 300 });
+
+      expect(result).toBe('w_400,h_300');
+    });
+
+    it('should use abbreviations for known parameters', () => {
+      const result = transformationToString({
+        width: 400,
+        crop: 'fill',
+        quality: 80,
+        fetch_format: 'jpg',
+      });
+
+      expect(result).toBe('w_400,c_fill,q_80,f_jpg');
+    });
+
+    it('should handle boolean flags', () => {
+      const result = transformationToString({ progressive: true });
+
+      expect(result).toContain('progressive');
+    });
+
+    it('should skip false boolean flags', () => {
+      const result = transformationToString({ progressive: false, width: 100 });
+
+      expect(result).toBe('w_100');
+    });
+
+    it('should handle array values', () => {
+      const result = transformationToString({ flags: ['progressive', 'lossy'] });
+
+      expect(result).toBe('fl_progressive.lossy');
+    });
+
+    it('should skip undefined and null values', () => {
+      const result = transformationToString({
+        width: 400,
+        height: undefined,
+        crop: null,
+        quality: 80,
+      });
+
+      expect(result).toBe('w_400,q_80');
+    });
+
+    it('should handle custom parameters not in the map', () => {
+      const result = transformationToString({ custom_param: 'value', width: 400 });
+
+      expect(result).toContain('custom_param_value');
+      expect(result).toContain('w_400');
+    });
+
+    it('should return empty string for empty transformation', () => {
+      const result = transformationToString({});
+
+      expect(result).toBe('');
+    });
+  });
+
+  describe('generateAuthHeader', () => {
+    it('should generate Basic Auth header', () => {
+      const result = generateAuthHeader('test-key', 'test-secret');
+
+      expect(result).toMatch(/^Basic /);
+      expect(result).toBe(`Basic ${btoa('test-key:test-secret')}`);
+    });
+
+    it('should encode credentials correctly', () => {
+      const apiKey = mockApiKey;
+      const apiSecret = mockApiSecret;
+      const result = generateAuthHeader(apiKey, apiSecret);
+      const expectedEncoded = btoa(`${apiKey}:${apiSecret}`);
+
+      expect(result).toBe(`Basic ${expectedEncoded}`);
+    });
+  });
+
+  describe('generateSignature', () => {
+    it('should generate signature from parameters', async () => {
+      const params = { timestamp: 1234567890, public_id: 'test' };
+      const signature = await generateSignature(params, mockApiSecret);
+
+      expect(signature).toBeDefined();
+      expect(typeof signature).toBe('string');
+      expect(signature.length).toBeGreaterThan(0);
+      expect(crypto.subtle.digest).toHaveBeenCalledWith('SHA-256', expect.any(Uint8Array));
+    });
+
+    it('should sort parameters alphabetically', async () => {
+      const params = { z_param: 'z', a_param: 'a', m_param: 'm' };
+      const signature = await generateSignature(params, mockApiSecret);
+
+      expect(signature).toBeDefined();
+
+      // The signature should be consistent because params are sorted
+      const signature2 = await generateSignature(params, mockApiSecret);
+
+      expect(signature).toBe(signature2);
+    });
+
+    it('should include API secret in signature', async () => {
+      const params = { timestamp: 1234567890 };
+
+      // Mock different digest outputs for different inputs
+      vi.spyOn(crypto.subtle, 'digest')
+        .mockResolvedValueOnce(
+          new Uint8Array([0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]).buffer,
+        )
+        .mockResolvedValueOnce(
+          new Uint8Array([0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10]).buffer,
+        );
+
+      const signature1 = await generateSignature(params, 'secret1');
+      const signature2 = await generateSignature(params, 'secret2');
+
+      // Different secrets should produce different signatures
+      expect(signature1).not.toBe(signature2);
+    });
+
+    it('should return hex string', async () => {
+      const params = { timestamp: 1234567890 };
+      const signature = await generateSignature(params, mockApiSecret);
+
+      expect(signature).toMatch(/^[0-9a-f]+$/);
+    });
+  });
+
   describe('parseResults', () => {
     it('should parse image resources correctly', () => {
       const mockResources = [
         {
-          public_id: 'sample/image',
+          asset_id: 'asset-123',
+          filename: 'sample/image',
           format: 'jpg',
           resource_type: 'image',
           type: 'upload',
@@ -163,12 +386,14 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       expect(results).toHaveLength(1);
       expect(results[0]).toEqual({
-        id: 'sample/image',
-        description: 'sample/image.jpg',
+        id: 'asset-123',
+        description: 'image.jpg',
         previewURL:
           'https://res.cloudinary.com/test-cloud/image/upload/w_400,c_limit/v1/sample/image.jpg',
         downloadURL: 'https://res.cloudinary.com/test-cloud/image/upload/v1/sample/image.jpg',
-        fileName: 'sample/image.jpg',
+        fileName: 'image.jpg',
+        lastModified: new Date('2025-01-01T00:00:00Z'),
+        size: 12345,
         kind: 'image',
       });
     });
@@ -176,7 +401,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
     it('should parse video resources correctly', () => {
       const mockResources = [
         {
-          public_id: 'videos/sample',
+          asset_id: 'asset-456',
+          filename: 'videos/sample',
           format: 'mp4',
           resource_type: 'video',
           type: 'upload',
@@ -190,11 +416,14 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       expect(results).toHaveLength(1);
       expect(results[0]).toEqual({
-        id: 'videos/sample',
-        description: 'videos/sample.mp4',
-        previewURL: 'https://res.cloudinary.com/test-cloud/video/upload/v1/videos/sample.mp4',
+        id: 'asset-456',
+        description: 'sample.mp4',
+        previewURL:
+          'https://res.cloudinary.com/test-cloud/video/upload/w_400,c_limit/v1/videos/sample.mp4',
         downloadURL: 'https://res.cloudinary.com/test-cloud/video/upload/v1/videos/sample.mp4',
-        fileName: 'videos/sample.mp4',
+        fileName: 'sample.mp4',
+        lastModified: new Date('2025-01-02T00:00:00Z'),
+        size: 98765,
         kind: 'video',
       });
     });
@@ -202,7 +431,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
     it('should parse raw resources correctly', () => {
       const mockResources = [
         {
-          public_id: 'docs/document',
+          asset_id: 'asset-789',
+          filename: 'docs/document',
           format: 'pdf',
           resource_type: 'raw',
           type: 'upload',
@@ -216,11 +446,14 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       expect(results).toHaveLength(1);
       expect(results[0]).toEqual({
-        id: 'docs/document',
-        description: 'docs/document.pdf',
-        previewURL: 'https://res.cloudinary.com/test-cloud/raw/upload/v1/docs/document.pdf',
+        id: 'asset-789',
+        description: 'document.pdf',
+        previewURL:
+          'https://res.cloudinary.com/test-cloud/raw/upload/w_400,c_limit/v1/docs/document.pdf',
         downloadURL: 'https://res.cloudinary.com/test-cloud/raw/upload/v1/docs/document.pdf',
-        fileName: 'docs/document.pdf',
+        fileName: 'document.pdf',
+        lastModified: new Date('2025-01-03T00:00:00Z'),
+        size: 54321,
         kind: 'other',
       });
     });
@@ -228,7 +461,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
     it('should parse multiple resources correctly', () => {
       const mockResources = [
         {
-          public_id: 'img1',
+          asset_id: 'asset-1',
+          filename: 'img1',
           format: 'jpg',
           resource_type: 'image',
           type: 'upload',
@@ -237,7 +471,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
           created_at: '2025-01-01T00:00:00Z',
         },
         {
-          public_id: 'img2',
+          asset_id: 'asset-2',
+          filename: 'img2',
           format: 'png',
           resource_type: 'image',
           type: 'upload',
@@ -250,8 +485,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const results = parseResults(mockResources);
 
       expect(results).toHaveLength(2);
-      expect(results[0].id).toBe('img1');
-      expect(results[1].id).toBe('img2');
+      expect(results[0].id).toBe('asset-1');
+      expect(results[1].id).toBe('asset-2');
     });
   });
 
@@ -260,7 +495,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const mockResponse = {
         resources: [
           {
-            public_id: 'sample/image',
+            asset_id: 'asset-sample',
+            filename: 'sample/image',
             format: 'jpg',
             resource_type: 'image',
             type: 'upload',
@@ -286,25 +522,26 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(fetch).toHaveBeenCalledWith(
-        `https://api.cloudinary.com/v1_1/${mockCloudName}/resources/search`,
+        expect.stringContaining(
+          `https://api.cloudinary.com/v1_1/${mockCloudName}/resources/search`,
+        ),
         expect.objectContaining({
-          method: 'POST',
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
             Authorization: expect.stringMatching(/^Basic /),
           }),
-          body: expect.any(String),
         }),
       );
       expect(results).toHaveLength(1);
-      expect(results[0].id).toBe('sample/image');
+      expect(results[0].id).toBe('asset-sample');
     });
 
     it('should handle pagination', async () => {
       const mockResponsePage1 = {
         resources: [
           {
-            public_id: 'img1',
+            asset_id: 'asset-img1',
+            filename: 'img1',
             format: 'jpg',
             resource_type: 'image',
             type: 'upload',
@@ -322,7 +559,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const mockResponsePage2 = {
         resources: [
           {
-            public_id: 'img2',
+            asset_id: 'asset-img2',
+            filename: 'img2',
             format: 'jpg',
             resource_type: 'image',
             type: 'upload',
@@ -355,8 +593,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       expect(fetch).toHaveBeenCalledTimes(2);
       expect(results).toHaveLength(2);
-      expect(results[0].id).toBe('img1');
-      expect(results[1].id).toBe('img2');
+      expect(results[0].id).toBe('asset-img1');
+      expect(results[1].id).toBe('asset-img2');
     });
 
     it('should reject when cloud name is not configured', async () => {
@@ -404,7 +642,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const mockResponse = {
         resources: [
           {
-            public_id: 'img',
+            asset_id: 'asset-img',
+            filename: 'img',
             format: 'jpg',
             resource_type: 'image',
             type: 'upload',
@@ -441,7 +680,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const mockResponse = {
         resources: [
           {
-            public_id: 'test-image',
+            asset_id: 'asset-test-image',
+            filename: 'test-image',
             format: 'jpg',
             resource_type: 'image',
             type: 'upload',
@@ -469,15 +709,16 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       const fetchCall = vi.mocked(fetch).mock.calls[0];
 
-      if (!fetchCall[1]) {
-        throw new Error('Fetch call options are undefined');
+      if (!fetchCall[0]) {
+        throw new Error('Fetch call URL is undefined');
       }
 
-      const body = JSON.parse(/** @type {string} */ (fetchCall[1].body));
+      const url = new URL(/** @type {string} */ (fetchCall[0]));
+      const expression = url.searchParams.get('expression');
 
-      expect(body.expression).toContain('test');
+      expect(expression).toContain('test');
       expect(results).toHaveLength(1);
-      expect(results[0].id).toBe('test-image');
+      expect(results[0].id).toBe('asset-test-image');
     });
 
     it('should build correct search expression', async () => {
@@ -500,20 +741,22 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       const fetchCall = vi.mocked(fetch).mock.calls[0];
 
-      if (!fetchCall[1]) {
-        throw new Error('Fetch call options are undefined');
+      if (!fetchCall[0]) {
+        throw new Error('Fetch call URL is undefined');
       }
 
-      const body = JSON.parse(/** @type {string} */ (fetchCall[1].body));
+      const url = new URL(/** @type {string} */ (fetchCall[0]));
+      const expression = url.searchParams.get('expression');
 
-      expect(body.expression).toBe('public_id:*my-search* OR filename:*my-search*');
+      expect(expression).toBe('public_id:*my-search* OR filename:*my-search*');
     });
 
     it('should handle pagination during search', async () => {
       const mockResponsePage1 = {
         resources: [
           {
-            public_id: 'result1',
+            asset_id: 'asset-result1',
+            filename: 'result1',
             format: 'jpg',
             resource_type: 'image',
             type: 'upload',
@@ -531,7 +774,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const mockResponsePage2 = {
         resources: [
           {
-            public_id: 'result2',
+            asset_id: 'asset-result2',
+            filename: 'result2',
             format: 'jpg',
             resource_type: 'image',
             type: 'upload',
@@ -564,8 +808,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       expect(fetch).toHaveBeenCalledTimes(2);
       expect(results).toHaveLength(2);
-      expect(results[0].id).toBe('result1');
-      expect(results[1].id).toBe('result2');
+      expect(results[0].id).toBe('asset-result1');
+      expect(results[1].id).toBe('asset-result2');
     });
   });
 
@@ -574,7 +818,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 
       const mockResponse = {
-        public_id: 'uploaded/test',
+        asset_id: 'asset-uploaded-test',
+        filename: 'uploaded/test',
         format: 'jpg',
         resource_type: 'image',
         type: 'upload',
@@ -601,8 +846,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
         }),
       );
       expect(results).toHaveLength(1);
-      expect(results[0].id).toBe('uploaded/test');
-      expect(results[0].fileName).toBe('uploaded/test.jpg');
+      expect(results[0].id).toBe('asset-uploaded-test');
+      expect(results[0].fileName).toBe('test.jpg');
     });
 
     it('should upload multiple files successfully', async () => {
@@ -610,7 +855,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const mockFile2 = new File(['content2'], 'test2.png', { type: 'image/png' });
 
       const mockResponse1 = {
-        public_id: 'uploaded/test1',
+        asset_id: 'asset-uploaded-test1',
+        filename: 'uploaded/test1',
         format: 'jpg',
         resource_type: 'image',
         type: 'upload',
@@ -620,7 +866,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       };
 
       const mockResponse2 = {
-        public_id: 'uploaded/test2',
+        asset_id: 'asset-uploaded-test2',
+        filename: 'uploaded/test2',
         format: 'png',
         resource_type: 'image',
         type: 'upload',
@@ -647,8 +894,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       expect(fetch).toHaveBeenCalledTimes(2);
       expect(results).toHaveLength(2);
-      expect(results[0].id).toBe('uploaded/test1');
-      expect(results[1].id).toBe('uploaded/test2');
+      expect(results[0].id).toBe('asset-uploaded-test1');
+      expect(results[1].id).toBe('asset-uploaded-test2');
     });
 
     it('should return empty array for empty file list', async () => {

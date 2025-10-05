@@ -590,9 +590,30 @@ export const strings = {
   cloud_storage: {
     invalid: 'The service is not configured properly.',
     auth: {
-      initial: 'Sign into {service} to insert media on the storage to entry fields.',
-      requested: 'Signing in…',
-      error: 'User name or password is incorrect. Please double check and try again.',
+      api_key: {
+        initial: 'Enter your API key to sign in to {service}.',
+        requested: 'Validating…',
+        error: 'The provided API key is invalid. Please double check and try again.',
+      },
+      password: {
+        initial: 'Enter your password to sign in to {service}.',
+        requested: 'Signing in…',
+        error: 'User name or password is incorrect. Please double check and try again.',
+      },
+    },
+    cloudinary: {
+      auth: {
+        initial: 'Enter you API Secret to use Cloudinary.', // Not "API Key"
+        requested: 'Validating…',
+        error: 'The provided API Secret is invalid. Please double check and try again.',
+      },
+    },
+    uploadcare: {
+      auth: {
+        initial: 'Enter your API Secret Key to use Uploadcare.',
+        requested: 'Validating…',
+        error: 'The provided Secret Key is invalid. Please double check and try again.',
+      },
     },
   },
 

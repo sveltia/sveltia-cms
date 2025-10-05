@@ -12,11 +12,11 @@ import { formatFileName } from '$lib/services/utils/file';
  * MediaLibraryFetchOptions,
  * MediaLibraryService,
  * } from '$lib/types/private';
- * @import { UploadcareMediaLibrary } from '$lib/types/public';
+ * @import { MediaField, SiteConfig, UploadcareMediaLibrary } from '$lib/types/public';
  */
 
 /**
- * @typedef {object} UploadcareFile
+ * @typedef {object} UploadcareResource
  * @property {string} uuid File UUID.
  * @property {string} original_filename Original file name.
  * @property {string} original_file_url Original file URL.
@@ -32,74 +32,95 @@ import { formatFileName } from '$lib/services/utils/file';
 
 /**
  * @typedef {object} UploadcareListResponse
- * @property {UploadcareFile[]} results List of files.
+ * @property {UploadcareResource[]} results List of files.
  * @property {string | null} next Next page URL.
  * @property {number} total Total number of files.
  */
 
-const ENDPOINT = 'https://api.uploadcare.com';
+/**
+ * Get Uploadcare library options from site config.
+ * @internal
+ * @param {SiteConfig | MediaField} [config] Site configuration or field configuration.
+ * @returns {UploadcareMediaLibrary | undefined} Configuration object.
+ */
+export const getLibraryOptions = (config = get(siteConfig)) =>
+  config?.media_libraries?.uploadcare ??
+  (config?.media_library?.name === 'uploadcare'
+    ? /** @type {UploadcareMediaLibrary} */ (config?.media_library)
+    : undefined);
 
 /**
- * Get the public key from site config.
+ * Get Uploadcare public key from library options.
+ * @internal
  * @returns {string | undefined} Public key.
  */
-export const getPublicKey = () => {
-  const config = get(siteConfig);
-
-  // New config structure
-  if (config?.media_libraries?.uploadcare) {
-    return config?.media_libraries?.uploadcare?.config?.publicKey;
-  }
-
-  // Fallback to old config structure
-  if (config?.media_library?.name === 'uploadcare') {
-    return /** @type {UploadcareMediaLibrary} */ (config?.media_library)?.config?.publicKey;
-  }
-
-  return undefined;
-};
+export const getPublicKey = () => getLibraryOptions()?.config?.publicKey;
+/**
+ * Check if Uploadcare integration is enabled.
+ * @returns {boolean} True if enabled, false otherwise.
+ */
+export const isEnabled = () => !!getPublicKey();
 
 /**
  * Parse API results into ExternalAsset format.
- * @param {UploadcareFile[]} results API results.
+ * @internal
+ * @param {UploadcareResource[]} results API results.
+ * @param {object} [options] Additional options.
+ * @param {MediaField} [options.fieldConfig] Field configuration for custom handling.
  * @returns {ExternalAsset[]} Assets.
+ * @see https://decapcms.org/docs/uploadcare/#integration-settings
  */
-export const parseResults = (results) =>
-  results.map(
-    ({ uuid, original_filename: fileName, original_file_url: url, mime_type: mimeType }) => {
-      const kind = mimeType.startsWith('image/')
+export const parseResults = (results, { fieldConfig } = {}) => {
+  const { settings: { autoFilename = false, defaultOperations = undefined } = {} } =
+    getLibraryOptions(fieldConfig) ?? getLibraryOptions() ?? {};
+
+  return results.map((result) => {
+    const {
+      uuid,
+      original_filename: fileName,
+      original_file_url: url,
+      mime_type: mimeType,
+      datetime_uploaded: timestamp,
+      size,
+    } = result;
+
+    const baseURL = `${new URL(url).origin}/${uuid}/`;
+
+    return {
+      id: uuid,
+      description: fileName,
+      previewURL: `${baseURL}-/preview/400x400/`,
+      downloadURL: `${baseURL}${defaultOperations ? `-${defaultOperations}` : ''}${autoFilename ? fileName : ''}`,
+      fileName,
+      lastModified: new Date(timestamp),
+      size,
+      kind: mimeType.startsWith('image/')
         ? 'image'
         : mimeType.startsWith('video/')
           ? 'video'
-          : 'other';
-
-      return {
-        id: uuid,
-        description: fileName,
-        previewURL: kind === 'image' ? `${url}-/preview/-/resize/400x/` : url,
-        downloadURL: url,
-        fileName,
-        kind,
-      };
-    },
-  );
+          : 'other',
+    };
+  });
+};
 
 /**
  * Fetch files from Uploadcare API with pagination.
+ * @internal
  * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey) and kind.
  * @param {object} [config] Additional configuration.
  * @param {number} [config.maxPages] Maximum number of pages to fetch. Default: 10.
- * @param {(file: UploadcareFile) => boolean} [config.filter] Optional filter function.
+ * @param {(file: UploadcareResource) => boolean} [config.filter] Optional filter function.
  * @returns {Promise<ExternalAsset[]>} Assets.
+ * @see https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File/operation/filesList
  */
-const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
+export const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
   const publicKey = getPublicKey();
 
   if (!publicKey) {
     return Promise.reject(new Error('Uploadcare public key is not configured'));
   }
 
-  const { apiKey: secretKey, kind } = options;
+  const { kind, fieldConfig, apiKey: secretKey } = options;
 
   const headers = {
     Accept: 'application/vnd.uploadcare-v0.7+json',
@@ -112,10 +133,10 @@ const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
     stored: 'true',
   });
 
-  /** @type {UploadcareFile[]} */
+  /** @type {UploadcareResource[]} */
   const allResults = [];
   /** @type {string | null} */
-  let nextUrl = `${ENDPOINT}/files/?${params}`;
+  let nextUrl = `https://api.uploadcare.com/files/?${params}`;
 
   // Fetch up to maxPages pages
   for (let page = 0; page < maxPages && nextUrl; page += 1) {
@@ -149,14 +170,13 @@ const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
     await sleep(50);
   }
 
-  return parseResults(allResults);
+  return parseResults(allResults, { fieldConfig });
 };
 
 /**
  * List files from Uploadcare.
  * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey).
  * @returns {Promise<ExternalAsset[]>} Assets.
- * @see https://uploadcare.com/docs/api_reference/rest/accessing_files/
  */
 export const list = async (options) => fetchFiles(options);
 
@@ -166,13 +186,12 @@ export const list = async (options) => fetchFiles(options);
  * @param {string} query Search query.
  * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey).
  * @returns {Promise<ExternalAsset[]>} Assets.
- * @see https://uploadcare.com/docs/api_reference/rest/accessing_files/
  */
 export const search = async (query, options) => {
   const lowerQuery = query.toLowerCase();
   /**
    * Filter files by filename.
-   * @param {UploadcareFile} file File to check.
+   * @param {UploadcareResource} file File to check.
    * @returns {boolean} Whether the file matches the query.
    */
   const filter = (file) => file.original_filename.toLowerCase().includes(lowerQuery);
@@ -182,12 +201,13 @@ export const search = async (query, options) => {
 
 /**
  * Generate a secure signature for Uploadcare upload.
+ * @internal
  * @param {string} secretKey Secret key.
  * @param {number} expire Expiration timestamp.
  * @returns {Promise<string>} Signature.
  * @see https://uploadcare.com/docs/security/secure-uploads/
  */
-const generateSignature = async (secretKey, expire) => {
+export const generateSignature = async (secretKey, expire) => {
   const encoder = new TextEncoder();
   const data = encoder.encode(String(expire));
   const key = encoder.encode(secretKey);
@@ -211,7 +231,7 @@ const generateSignature = async (secretKey, expire) => {
  * @param {File[]} files Files to upload.
  * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey).
  * @returns {Promise<ExternalAsset[]>} Uploaded assets.
- * @see https://uploadcare.com/docs/api_reference/upload/
+ * @see https://uploadcare.com/api-refs/upload-api/#tag/Upload/operation/baseUpload
  * @see https://uploadcare.com/docs/security/secure-uploads/
  */
 export const upload = async (files, options) => {
@@ -225,7 +245,7 @@ export const upload = async (files, options) => {
     return Promise.reject(new Error('Uploadcare public key is not configured'));
   }
 
-  const { apiKey: secretKey } = options;
+  const { fieldConfig, apiKey: secretKey } = options;
 
   if (!secretKey) {
     return Promise.reject(new Error('Uploadcare secret key is not provided'));
@@ -281,7 +301,7 @@ export const upload = async (files, options) => {
       };
     });
 
-  return parseResults(uploadedFiles);
+  return parseResults(uploadedFiles, { fieldConfig });
 };
 
 /**
@@ -298,6 +318,7 @@ export default {
   developerURL: 'https://uploadcare.com/docs/',
   apiKeyURL: 'https://app.uploadcare.com/projects/-/api-keys/',
   apiKeyPattern: /^[a-f0-9]{20}$/,
+  isEnabled,
   list,
   search,
   upload,

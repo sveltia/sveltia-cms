@@ -1,7 +1,16 @@
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import uploadcareService, { getPublicKey, list, parseResults, search, upload } from './uploadcare';
+import uploadcareService, {
+  generateSignature,
+  getLibraryOptions,
+  getPublicKey,
+  isEnabled,
+  list,
+  parseResults,
+  search,
+  upload,
+} from './uploadcare';
 
 // Mock dependencies
 vi.mock('svelte/store', async (importOriginal) => {
@@ -19,6 +28,10 @@ vi.mock('$lib/services/config', () => ({
 
 vi.mock('@sveltia/utils/misc', () => ({
   sleep: vi.fn(),
+}));
+
+vi.mock('$lib/services/utils/file', () => ({
+  formatFileName: vi.fn((name) => name),
 }));
 
 // Setup global fetch mock
@@ -107,6 +120,166 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
   });
 
+  describe('getLibraryOptions', () => {
+    it('should return uploadcare library options from media_libraries', () => {
+      const options = getLibraryOptions();
+
+      expect(options).toBeDefined();
+      expect(options?.config?.publicKey).toBe(mockPublicKey);
+    });
+
+    it('should return undefined when config is missing', () => {
+      vi.mocked(get).mockReturnValue({});
+
+      const options = getLibraryOptions();
+
+      expect(options).toBeUndefined();
+    });
+
+    it('should support legacy media_library config', () => {
+      vi.mocked(get).mockReturnValue({
+        media_library: {
+          name: 'uploadcare',
+          config: {
+            publicKey: 'legacy-public-key',
+          },
+        },
+      });
+
+      const options = getLibraryOptions();
+
+      expect(options).toBeDefined();
+      expect(options?.config?.publicKey).toBe('legacy-public-key');
+    });
+
+    it('should return undefined for non-uploadcare media_library', () => {
+      vi.mocked(get).mockReturnValue({
+        media_library: {
+          name: 'other-service',
+          config: {},
+        },
+      });
+
+      const options = getLibraryOptions();
+
+      expect(options).toBeUndefined();
+    });
+  });
+
+  describe('isEnabled', () => {
+    it('should return true when public key is configured', () => {
+      expect(isEnabled()).toBe(true);
+    });
+
+    it('should return false when config is missing', () => {
+      vi.mocked(get).mockReturnValue({});
+
+      expect(isEnabled()).toBe(false);
+    });
+
+    it('should return false when public key is missing', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          uploadcare: {
+            config: {},
+          },
+        },
+      });
+
+      expect(isEnabled()).toBe(false);
+    });
+
+    it('should return false when uploadcare config is missing', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {},
+      });
+
+      expect(isEnabled()).toBe(false);
+    });
+  });
+
+  describe('generateSignature', () => {
+    /** @type {Crypto} */
+    let originalCrypto;
+
+    beforeEach(() => {
+      // Save original crypto and mock it
+      originalCrypto = globalThis.crypto;
+      Object.defineProperty(globalThis, 'crypto', {
+        value: {
+          subtle: {
+            importKey: vi.fn().mockResolvedValue({}),
+            sign: vi.fn().mockResolvedValue(new ArrayBuffer(32)),
+          },
+        },
+        writable: true,
+        configurable: true,
+      });
+    });
+
+    afterEach(() => {
+      // Restore original crypto
+      Object.defineProperty(globalThis, 'crypto', {
+        value: originalCrypto,
+        writable: true,
+        configurable: true,
+      });
+    });
+
+    it('should generate signature from secret key and expire timestamp', async () => {
+      const expire = Math.floor(Date.now() / 1000) + 1800;
+      const signature = await generateSignature(mockSecretKey, expire);
+
+      expect(signature).toBeDefined();
+      expect(typeof signature).toBe('string');
+      expect(signature.length).toBeGreaterThan(0);
+      expect(global.crypto.subtle.importKey).toHaveBeenCalledWith(
+        'raw',
+        expect.any(Uint8Array),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign'],
+      );
+      expect(global.crypto.subtle.sign).toHaveBeenCalled();
+    });
+
+    it('should return hex string', async () => {
+      const expire = Math.floor(Date.now() / 1000) + 1800;
+      const signature = await generateSignature(mockSecretKey, expire);
+
+      expect(signature).toMatch(/^[0-9a-f]+$/);
+    });
+
+    it('should use HMAC-SHA256', async () => {
+      const expire = Math.floor(Date.now() / 1000) + 1800;
+
+      await generateSignature(mockSecretKey, expire);
+
+      expect(global.crypto.subtle.importKey).toHaveBeenCalledWith(
+        'raw',
+        expect.any(Uint8Array),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign'],
+      );
+    });
+
+    it('should produce different signatures for different expire times', async () => {
+      const expire1 = 1000000000;
+      const expire2 = 2000000000;
+
+      // Mock different outputs
+      vi.spyOn(global.crypto.subtle, 'sign')
+        .mockResolvedValueOnce(new Uint8Array([1, 2, 3, 4]).buffer)
+        .mockResolvedValueOnce(new Uint8Array([5, 6, 7, 8]).buffer);
+
+      const signature1 = await generateSignature(mockSecretKey, expire1);
+      const signature2 = await generateSignature(mockSecretKey, expire2);
+
+      expect(signature1).not.toBe(signature2);
+    });
+  });
+
   describe('parseResults', () => {
     it('should parse image files correctly', () => {
       const mockResults = [
@@ -131,9 +304,11 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(results[0]).toEqual({
         id: 'abc123',
         description: 'image.jpg',
-        previewURL: 'https://ucarecdn.com/abc123/image.jpg-/preview/-/resize/400x/',
-        downloadURL: 'https://ucarecdn.com/abc123/image.jpg',
+        previewURL: 'https://ucarecdn.com/abc123/-/preview/400x400/',
+        downloadURL: 'https://ucarecdn.com/abc123/',
         fileName: 'image.jpg',
+        lastModified: new Date('2025-01-01T00:00:00.000Z'),
+        size: 12345,
         kind: 'image',
       });
     });
@@ -161,9 +336,11 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(results[0]).toEqual({
         id: 'def456',
         description: 'video.mp4',
-        previewURL: 'https://ucarecdn.com/def456/video.mp4',
-        downloadURL: 'https://ucarecdn.com/def456/video.mp4',
+        previewURL: 'https://ucarecdn.com/def456/-/preview/400x400/',
+        downloadURL: 'https://ucarecdn.com/def456/',
         fileName: 'video.mp4',
+        lastModified: new Date('2025-01-02T00:00:00.000Z'),
+        size: 98765,
         kind: 'video',
       });
     });
@@ -191,9 +368,11 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(results[0]).toEqual({
         id: 'ghi789',
         description: 'document.pdf',
-        previewURL: 'https://ucarecdn.com/ghi789/document.pdf',
-        downloadURL: 'https://ucarecdn.com/ghi789/document.pdf',
+        previewURL: 'https://ucarecdn.com/ghi789/-/preview/400x400/',
+        downloadURL: 'https://ucarecdn.com/ghi789/',
         fileName: 'document.pdf',
+        lastModified: new Date('2025-01-03T00:00:00.000Z'),
+        size: 54321,
         kind: 'other',
       });
     });

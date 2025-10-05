@@ -9,7 +9,7 @@ describe('Cloud storage services', () => {
   });
 
   test('should be an empty object', () => {
-    expect(Object.keys(allCloudStorageServices)).toHaveLength(0);
+    expect(Object.keys(allCloudStorageServices)).toHaveLength(1);
   });
 
   test.skip('should include cloudinary service', () => {
@@ -19,7 +19,7 @@ describe('Cloud storage services', () => {
     expect(allCloudStorageServices.cloudinary.serviceId).toBe('cloudinary');
   });
 
-  test.skip('should include uploadcare service', () => {
+  test('should include uploadcare service', () => {
     expect(Object.keys(allCloudStorageServices)).toContain('uploadcare');
     expect(allCloudStorageServices.uploadcare).toBeDefined();
     expect(allCloudStorageServices.uploadcare.serviceType).toBe('cloud_storage');

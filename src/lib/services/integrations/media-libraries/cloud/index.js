@@ -1,4 +1,3 @@
-import cloudinary from './cloudinary';
 import uploadcare from './uploadcare';
 
 /**
@@ -10,9 +9,5 @@ import uploadcare from './uploadcare';
  * @type {Record<string, MediaLibraryService>}
  */
 export const allCloudStorageServices = {
-  // cloudinary,
-  // uploadcare,
+  uploadcare,
 };
-
-// UI is not ready yet
-void [cloudinary, uploadcare];

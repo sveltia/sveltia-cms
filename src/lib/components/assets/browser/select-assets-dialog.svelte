@@ -157,17 +157,21 @@
     ).filter(([serviceId]) => providers.includes(serviceId));
   });
   const isEnabledMediaService = $derived(
-    (enabledStockAssetProviderEntries
+    enabledStockAssetProviderEntries
       .map(([serviceId]) => serviceId)
       .includes(/** @type {StockAssetProviderName} */ (libraryName)) &&
-      $prefs?.apiKeys?.[libraryName]) ||
-      (Object.keys(allCloudStorageServices).includes(libraryName) && $prefs?.logins?.[libraryName]),
+      !!$prefs?.apiKeys?.[libraryName],
   );
-  const enabledCloudServiceEntries = $derived(Object.entries(allCloudStorageServices));
+  const enabledCloudServiceEntries = $derived(
+    Object.entries(allCloudStorageServices).filter(([, { isEnabled }]) => isEnabled?.() ?? true),
+  );
   const enabledExternalServiceEntries = $derived([
     ...enabledStockAssetProviderEntries,
     ...enabledCloudServiceEntries,
   ]);
+  const showViewOptions = $derived(
+    isDefaultLibrary || enabledExternalServiceEntries.map(([key]) => key).includes(libraryName),
+  );
   const Selector = $derived($isSmallScreen ? Select : Listbox);
 
   /**
@@ -288,7 +292,7 @@
 </script>
 
 {#snippet headerItems()}
-  {#if isDefaultLibrary || isEnabledMediaService}
+  {#if showViewOptions}
     {#if $selectAssetsView}
       <ViewSwitcher
         currentView={(() => /** @type {Writable<SelectAssetsView>} */ (selectAssetsView))()}
@@ -381,13 +385,12 @@
             {/if}
           {/each}
         </OptionGroup>
-        {#if canEnterURL || !!Object.keys(allCloudStorageServices).length}
+        {#if canEnterURL || !!Object.keys(enabledCloudServiceEntries).length}
           <OptionGroup label={$_('asset_location.external')}>
             {#if canEnterURL}
               <Option name="enter-url" label={$_('assets_dialog.enter_url')} />
             {/if}
-            {#each Object.values(allCloudStorageServices) as service (service.serviceId)}
-              {@const { serviceId, serviceLabel } = service}
+            {#each enabledCloudServiceEntries as [, { serviceId, serviceLabel }] (serviceId)}
               <Option name={serviceId} label={serviceLabel} />
             {/each}
           </OptionGroup>
@@ -448,6 +451,7 @@
         {#if libraryName === serviceId}
           <ExternalAssetsPanel
             {kind}
+            {fieldConfig}
             {multiple}
             {searchTerms}
             {serviceProps}
