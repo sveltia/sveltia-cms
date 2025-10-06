@@ -387,12 +387,12 @@
         </OptionGroup>
         {#if canEnterURL || !!Object.keys(enabledCloudServiceEntries).length}
           <OptionGroup label={$_('asset_location.external')}>
-            {#if canEnterURL}
-              <Option name="enter-url" label={$_('assets_dialog.enter_url')} />
-            {/if}
             {#each enabledCloudServiceEntries as [, { serviceId, serviceLabel }] (serviceId)}
               <Option name={serviceId} label={serviceLabel} />
             {/each}
+            {#if canEnterURL}
+              <Option name="enter-url" label={$_('assets_dialog.enter_url')} />
+            {/if}
           </OptionGroup>
         {/if}
         {#if enabledStockAssetProviderEntries.length}
