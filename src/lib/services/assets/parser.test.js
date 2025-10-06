@@ -23,7 +23,7 @@ describe('assets/parser', () => {
 
       const assetFiles = [
         {
-          type: /** @type {const} */ ('asset'),
+          type: /** @type {'asset'} */ ('asset'),
           file: new File([''], 'test.jpg'),
           path: 'images/test.jpg',
           name: 'test.jpg',
@@ -38,7 +38,7 @@ describe('assets/parser', () => {
           },
         },
         {
-          type: /** @type {const} */ ('asset'),
+          type: /** @type {'asset'} */ ('asset'),
           file: new File([''], 'doc.pdf'),
           path: 'docs/doc.pdf',
           name: 'doc.pdf',
@@ -98,7 +98,7 @@ describe('assets/parser', () => {
 
       const assetFiles = [
         {
-          type: /** @type {const} */ ('asset'),
+          type: /** @type {'asset'} */ ('asset'),
           file: new File([''], 'simple.txt'),
           path: 'simple.txt',
           name: 'simple.txt',

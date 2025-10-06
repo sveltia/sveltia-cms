@@ -3,9 +3,9 @@
 /* eslint-disable no-console */
 
 /**
- * Find unused type imports in JSDoc @import statements for Sveltia CMS.
+ * Find unused type imports in JSDoc `@import` statements for Sveltia CMS.
  *
- * This script analyzes JavaScript/Svelte files with JSDoc @import statements
+ * This script analyzes JavaScript/Svelte files with JSDoc `@import` statements
  * and identifies which imported types are actually used in the file.
  *
  * Usage: node scripts/find-unused-imports.js [--fix] [--verbose].
@@ -31,7 +31,7 @@ const shouldFix = process.argv.includes('--fix');
 const isVerbose = process.argv.includes('--verbose');
 
 /**
- * Parse @import statements from JSDoc comments.
+ * Parse `@import` statements from JSDoc comments.
  * @param {string} content File content.
  * @returns {Array<{types: string[], from: string, line: number, fullLine: string}>}
  * Import statements.
@@ -176,7 +176,7 @@ function findTypeUsage(content, types) {
 }
 
 /**
- * Remove unused imports from @import statement.
+ * Remove unused imports from `@import` statement.
  * @param {string} content File content.
  * @param {object} analysisResult Analysis result for the file.
  * @returns {string} Updated content with unused imports removed.

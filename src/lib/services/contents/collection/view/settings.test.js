@@ -47,12 +47,12 @@ describe('Test entryListSettings', () => {
   test('can be set and retrieved', () => {
     const testSettings = {
       posts: {
-        type: /** @type {const} */ ('grid'),
-        sort: { key: 'title', order: /** @type {const} */ ('ascending') },
+        type: /** @type {'grid'} */ ('grid'),
+        sort: { key: 'title', order: /** @type {'ascending'} */ ('ascending') },
       },
       pages: {
-        type: /** @type {const} */ ('list'),
-        sort: { key: 'date', order: /** @type {const} */ ('descending') },
+        type: /** @type {'list'} */ ('list'),
+        sort: { key: 'date', order: /** @type {'descending'} */ ('descending') },
       },
     };
 
@@ -63,14 +63,14 @@ describe('Test entryListSettings', () => {
 
   test('can be updated', () => {
     const initialSettings = {
-      posts: { type: /** @type {const} */ ('grid') },
+      posts: { type: /** @type {'grid'} */ ('grid') },
     };
 
     entryListSettings.set(initialSettings);
 
     entryListSettings.update((settings) => ({
       ...settings,
-      pages: { type: /** @type {const} */ ('list') },
+      pages: { type: /** @type {'list'} */ ('list') },
     }));
 
     expect(get(entryListSettings)).toEqual({
@@ -161,7 +161,7 @@ describe('Test initSettings()', () => {
     await initSettings(mockBackend);
 
     const newSettings = {
-      posts: { type: /** @type {const} */ ('grid') },
+      posts: { type: /** @type {'grid'} */ ('grid') },
     };
 
     // Trigger settings change
@@ -183,7 +183,7 @@ describe('Test initSettings()', () => {
     await initSettings(mockBackend);
 
     const newSettings = {
-      posts: { type: /** @type {const} */ ('grid') },
+      posts: { type: /** @type {'grid'} */ ('grid') },
     };
 
     // Trigger settings change
@@ -229,8 +229,8 @@ describe('Test initSettings()', () => {
 
     // Trigger currentView change
     const newView = {
-      type: /** @type {const} */ ('grid'),
-      sort: { key: 'title', order: /** @type {const} */ ('ascending') },
+      type: /** @type {'grid'} */ ('grid'),
+      sort: { key: 'title', order: /** @type {'ascending'} */ ('ascending') },
     };
 
     currentView.set(/** @type {any} */ (newView));
@@ -254,7 +254,7 @@ describe('Test initSettings()', () => {
     selectedCollection.set(/** @type {any} */ ({ name: 'posts' }));
 
     // Initialize settings with existing view
-    const existingView = { type: /** @type {const} */ ('list') };
+    const existingView = { type: /** @type {'list'} */ ('list') };
 
     entryListSettings.set(/** @type {any} */ ({ posts: existingView }));
 
@@ -277,7 +277,7 @@ describe('Test initSettings()', () => {
     entryListSettings.set({});
 
     // Trigger currentView change
-    const newView = { type: /** @type {const} */ ('grid') };
+    const newView = { type: /** @type {'grid'} */ ('grid') };
 
     currentView.set(/** @type {any} */ (newView));
 

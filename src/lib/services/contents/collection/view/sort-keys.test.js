@@ -831,7 +831,7 @@ describe('Test parseCustomSortableFields()', () => {
   test('parses advanced object with fields array', () => {
     const config = {
       fields: ['title', 'date'],
-      default: { field: 'title', direction: /** @type {const} */ ('descending') },
+      default: { field: 'title', direction: /** @type {'descending'} */ ('descending') },
     };
 
     const result = parseCustomSortableFields(config);
@@ -858,11 +858,11 @@ describe('Test parseCustomSortableFields()', () => {
     const configs = [
       {
         fields: ['title'],
-        default: { field: 'title', direction: /** @type {const} */ ('descending') },
+        default: { field: 'title', direction: /** @type {'descending'} */ ('descending') },
       },
       {
         fields: ['title'],
-        default: { field: 'title', direction: /** @type {const} */ ('Descending') },
+        default: { field: 'title', direction: /** @type {'Descending'} */ ('Descending') },
       },
     ];
 
@@ -877,7 +877,7 @@ describe('Test parseCustomSortableFields()', () => {
     const configs = [
       {
         fields: ['title'],
-        default: { field: 'title', direction: /** @type {const} */ ('ascending') },
+        default: { field: 'title', direction: /** @type {'ascending'} */ ('ascending') },
       },
       { fields: ['title'], default: { field: 'title', direction: /** @type {any} */ ('invalid') } },
       { fields: ['title'], default: { field: 'title' } },

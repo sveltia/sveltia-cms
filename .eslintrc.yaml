@@ -92,6 +92,7 @@ rules:
         property: never
   jsdoc/require-throws: 1
   jsdoc/sort-tags: 1
+  jsdoc/valid-types: 0
   max-len:
     - error
     - code: 100

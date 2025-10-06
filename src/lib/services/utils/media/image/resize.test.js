@@ -110,7 +110,7 @@ describe('Test resizeCanvas()', () => {
     });
 
     const source = { width: 200, height: 100 };
-    const target = { width: 100, height: 50, fit: /** @type {const} */ ('contain') };
+    const target = { width: 100, height: 50, fit: /** @type {'contain'} */ ('contain') };
     const result = resizeCanvas(mockCanvas, source, target);
 
     expect(mockCanvas.width).toBe(100);

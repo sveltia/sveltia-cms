@@ -511,7 +511,7 @@ describe('Test parseEntryFile()', () => {
     name: 'test-file.md',
     sha: 'abc123',
     size: 1024,
-    type: /** @type {const} */ ('entry'),
+    type: /** @type {'entry'} */ ('entry'),
   };
 
   beforeEach(async () => {

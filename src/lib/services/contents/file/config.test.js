@@ -103,7 +103,7 @@ describe('Test getEntryPathRegEx()', () => {
     allLocales: ['en', 'fr'],
     initialLocales: ['en', 'fr'],
     defaultLocale: 'en',
-    structure: /** @type {const} */ ('single_file'),
+    structure: /** @type {'single_file'} */ ('single_file'),
     omitDefaultLocaleFromFileName: false,
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
