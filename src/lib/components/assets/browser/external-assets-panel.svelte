@@ -7,7 +7,7 @@
   import { Button, EmptyState, InfiniteScroll, PasswordInput, TextInput } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { sanitize } from 'isomorphic-dompurify';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
@@ -180,21 +180,20 @@
       [userName, password] = ($prefs.logins?.[serviceId] ?? '').split(' ');
       hasAuthInfo = !!apiKey || !!password;
       listedAssets = null;
-
-      if (hasAuthInfo) {
-        getAssets();
-      }
     })();
   });
 
   $effect(() => {
-    void [searchTerms];
-    window.clearTimeout(debounceTimer);
-    debounceTimer = window.setTimeout(() => {
-      if (hasAuthInfo) {
-        getAssets(searchTerms);
-      }
-    }, 1000);
+    void [searchTerms, hasAuthInfo];
+
+    untrack(() => {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => {
+        if (hasAuthInfo) {
+          getAssets(searchTerms);
+        }
+      }, 1000);
+    });
   });
 </script>
 
