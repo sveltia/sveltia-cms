@@ -322,6 +322,10 @@ export const strings = {
     'This file cannot be uploaded because it exceeds the maximum size of {size}. Please reduce the size or select a different file.',
   warning_oversized_files:
     'These files cannot be uploaded because they exceed the maximum size of {size}. Please reduce the sizes or select different files.',
+  uploading_files_progress: 'Uploading files…',
+  uploading_file_progress: 'Uploading file…',
+  uploading_files_failed: 'Files could not be uploaded',
+  uploading_file_failed: 'File could not be uploaded',
   file_meta: '{type} · {size}',
   file_meta_converted_from_x: '(converted from {type})',
   no_entries_created: 'This collection has no entries yet.',

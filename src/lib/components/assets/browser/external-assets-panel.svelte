@@ -4,7 +4,15 @@
   one for an image/file entry field.
 -->
 <script>
-  import { Button, EmptyState, InfiniteScroll, PasswordInput, TextInput } from '@sveltia/ui';
+  import {
+    Alert,
+    Button,
+    EmptyState,
+    InfiniteScroll,
+    PasswordInput,
+    TextInput,
+    Toast,
+  } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { sanitize } from 'isomorphic-dompurify';
   import { onMount, untrack } from 'svelte';
@@ -13,6 +21,7 @@
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { selectAssetsView } from '$lib/services/contents/editor';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
@@ -65,6 +74,7 @@
     signIn,
     list,
     search,
+    upload,
   } = $derived(serviceProps);
 
   const viewType = $derived($selectAssetsView?.type);
@@ -81,6 +91,11 @@
   let listedAssets = $state(null);
   /** @type {string | undefined} */
   let error = $state();
+  /** @type {{ show: boolean, status: 'info' | 'error', length: number }} */
+  let uploadingToast = $state({ show: false, status: 'info', length: 0 });
+
+  /** @type {MediaLibraryFetchOptions} */
+  const listFetchOptions = $derived({ kind, fieldConfig, apiKey, userName, password });
 
   let debounceTimer = 0;
 
@@ -92,15 +107,32 @@
     listedAssets = null;
     query = query.trim();
 
-    /** @type {MediaLibraryFetchOptions} */
-    const options = { kind, fieldConfig, apiKey, userName, password };
-
     try {
-      listedAssets = await (query ? search(query, options) : list(options));
+      listedAssets = await (query ? search(query, listFetchOptions) : list(listFetchOptions));
     } catch (ex) {
       error = 'search_fetch_failed';
       // eslint-disable-next-line no-console
       console.error(ex);
+    }
+  };
+
+  /**
+   * Handle `Drop` event to upload files.
+   * @param {object} args Arguments.
+   * @param {File[]} args.files Dropped files.
+   */
+  const uploadFiles = async ({ files }) => {
+    if (!upload) {
+      return;
+    }
+
+    uploadingToast = { show: true, status: 'info', length: files.length };
+
+    try {
+      await upload(files, listFetchOptions);
+      getAssets();
+    } catch {
+      uploadingToast = { show: true, status: 'error', length: files.length };
     }
   };
 
@@ -197,6 +229,32 @@
   });
 </script>
 
+{#snippet imageGrid()}
+  <SimpleImageGrid {viewType} {gridId} {multiple}>
+    <InfiniteScroll items={listedAssets ?? []} itemKey="id">
+      {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
+        {#await sleep() then}
+          {@const { id, previewURL, description, kind: _kind } = asset}
+          <SimpleImageGridItem
+            value={id}
+            {viewType}
+            {multiple}
+            selected={isSelected(asset)}
+            onChange={({ detail: { selected } }) => {
+              onSelectionChange(asset, selected);
+            }}
+          >
+            <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
+            {#if !$isSmallScreen || viewType === 'list'}
+              <span role="none" class="name">{description}</span>
+            {/if}
+          </SimpleImageGridItem>
+        {/await}
+      {/snippet}
+    </InfiniteScroll>
+  </SimpleImageGrid>
+{/snippet}
+
 {#if hasAuthInfo}
   {#if error}
     <EmptyState>
@@ -210,30 +268,13 @@
     <EmptyState>
       <span role="alert">{$_('no_files_found')}</span>
     </EmptyState>
+  {:else if upload}
+    <!-- Allow uploading multiple files at once even if selection is single -->
+    <DropZone onDrop={uploadFiles} multiple accept={fieldConfig?.accept}>
+      {@render imageGrid()}
+    </DropZone>
   {:else}
-    <SimpleImageGrid {viewType} {gridId} {multiple}>
-      <InfiniteScroll items={listedAssets} itemKey="id">
-        {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
-          {#await sleep() then}
-            {@const { id, previewURL, description, kind: _kind } = asset}
-            <SimpleImageGridItem
-              value={id}
-              {viewType}
-              {multiple}
-              selected={isSelected(asset)}
-              onChange={({ detail: { selected } }) => {
-                onSelectionChange(asset, selected);
-              }}
-            >
-              <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
-              {#if !$isSmallScreen || viewType === 'list'}
-                <span role="none" class="name">{description}</span>
-              {/if}
-            </SimpleImageGridItem>
-          {/await}
-        {/snippet}
-      </InfiniteScroll>
-    </SimpleImageGrid>
+    {@render imageGrid()}
   {/if}
 {:else if hasConfig}
   <EmptyState>
@@ -332,6 +373,21 @@
     <span role="alert">{$_('cloud_storage.invalid')}</span>
   </EmptyState>
 {/if}
+
+<Toast bind:show={uploadingToast.show}>
+  <Alert status={uploadingToast.status}>
+    {#if uploadingToast.status === 'info'}
+      {$_(uploadingToast.length === 1 ? 'uploading_file_progress' : 'uploading_files_progress', {
+        values: { count: uploadingToast.length },
+      })}
+    {/if}
+    {#if uploadingToast.status === 'error'}
+      {$_(uploadingToast.length === 1 ? 'uploading_file_failed' : 'uploading_files_failed', {
+        values: { count: uploadingToast.length },
+      })}
+    {/if}
+  </Alert>
+</Toast>
 
 <style lang="scss">
   p {

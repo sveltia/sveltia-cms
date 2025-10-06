@@ -325,6 +325,10 @@ export const strings = {
     'このファイルは最大サイズ {size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください。',
   warning_oversized_files:
     'これらのファイルは最大サイズ {size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください',
+  uploading_files_progress: 'ファイルをアップロード中…',
+  uploading_file_progress: 'ファイルをアップロード中…',
+  uploading_files_failed: 'ファイルをアップロードできませんでした',
+  uploading_file_failed: 'ファイルをアップロードできませんでした',
   file_meta: '{type} · {size}',
   file_meta_converted_from_x: '({type} から変換)',
   no_entries_created: 'このコレクションにはまだエントリーがありません。',
