@@ -389,44 +389,6 @@ describe('config/index', () => {
       consoleWarnSpy.mockRestore();
     });
 
-    it('should warn about Uploadcare media library', () => {
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      validate(
-        /** @type {any} */ ({
-          backend: { name: 'git-gateway' },
-          media_folder: 'uploads',
-          collections: [],
-          media_library: { name: 'uploadcare' },
-        }),
-      );
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Uploadcare media library is not yet supported in Sveltia CMS.',
-      );
-
-      consoleWarnSpy.mockRestore();
-    });
-
-    it('should warn about Uploadcare in media_libraries', () => {
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      validate(
-        /** @type {any} */ ({
-          backend: { name: 'git-gateway' },
-          media_folder: 'uploads',
-          collections: [],
-          media_libraries: { uploadcare: { public_key: 'test' } },
-        }),
-      );
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Uploadcare media library is not yet supported in Sveltia CMS.',
-      );
-
-      consoleWarnSpy.mockRestore();
-    });
-
     it('should accept valid public_folder as absolute path', () => {
       expect(() =>
         validate(

@@ -157,11 +157,6 @@ export const validate = (config) => {
     // eslint-disable-next-line no-console
     console.warn('Cloudinary media library is not yet supported in Sveltia CMS.');
   }
-
-  if (config.media_library?.name === 'uploadcare' || config.media_libraries?.uploadcare) {
-    // eslint-disable-next-line no-console
-    console.warn('Uploadcare media library is not yet supported in Sveltia CMS.');
-  }
 };
 
 /**
