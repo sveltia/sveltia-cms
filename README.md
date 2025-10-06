@@ -1,6 +1,6 @@
 # Sveltia CMS: Netlify/Decap CMS successor
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. While some features are still missing, we’ve already solved over 250 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, quick replacement for Netlify CMS and Decap CMS. While some features are still missing, we’ve already solved over 260 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Our numerous enhancements across the board ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is now in public beta, with version 1.0 expected in early 2026.
 
@@ -124,7 +124,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite**
   - Started in November 2022, first appeared on GitHub in March 2023
   - ✅ Actively developed with frequent releases and numerous improvements
-  - ✅ Solved more than 250 issues reported in the Netlify/Decap CMS repository
+  - ✅ Solved more than 260 issues reported in the Netlify/Decap CMS repository
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
   - ⚠️ Mostly low activity with occasional releases and a few minor improvements
@@ -160,7 +160,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - Some missing features will be implemented before or shortly after GA
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **250+ issues, or 550+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **260+ issues, or 550+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -174,7 +174,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![250 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20250814)<br>
+![260 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251005)<br>
 
 ## Differentiators
 
@@ -603,6 +603,8 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
     - It comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images selected by users for upload are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200] SVG images can also be optimized.
     - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
     - Unlike Netlify/Decap CMS, files are uploaded with their original names. Sanitization is still applied to avoid issues with special characters, but uppercase letters and spaces are not converted to lowercase letters and hyphens.[^97] If you want to slugify filenames according to the [`slug` option](https://decapcms.org/docs/configuration-options/#slug-type), use the `slugify_filename` [default media library option](#configuring-multiple-media-libraries).
+  - Uploadcare
+    - An API-based integration allows users to select existing files from their Uploadcare account.[^247]
   - Other integrations
     - Integrates stock photo providers, including Pexels, Pixabay and Unsplash.[^8] Developers can [disable them](#disabling-stock-assets) if needed.
     - More integration options, including Amazon S3 and Cloudflare R2/Images/Stream, would be added in the future.
@@ -630,6 +632,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 ### Better localization
 
 - The application UI locale is automatically selected based on the preferred language set with the browser.[^132] Users can also change the locale in the application settings. Therefore, the `locale` configuration option is ignored and `CMS.registerLocale()` is not required.
+- The application UI is ready to be localized into RTL languages like Arabic and Hebrew.[^245]
 - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized.[^98]
 - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container.[^117][^265]
 
@@ -644,7 +647,7 @@ However, 100% feature parity is never planned, and some features are still missi
 These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
 - Comprehensive site config validation
-- [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
+- [Cloudinary](https://decapcms.org/docs/cloudinary/) media library ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent)
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/)
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
@@ -1350,7 +1353,7 @@ media_libraries:
       defaultOperations: '/resize/800x600/'
 ```
 
-Note: Cloudinary and Uploadcare are not yet supported in Sveltia CMS.
+Note: Cloudinary is not yet supported in Sveltia CMS.
 
 Similar to the conventional `media_library` option, the unified `media_libraries` option can also be defined for each File/Image field. This allows you to use different media library configurations for different fields. For example, you can optimize images for upload in one field while using the default settings in another:
 
@@ -1908,8 +1911,7 @@ Due early 2026
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
-  - Several Cloudinary and Uploadcare media library issues, including authentication[^288] and file selection[^247]
-  - [RTL localization support](https://github.com/sveltia/sveltia-cms/issues/385)[^245]
+  - Several Cloudinary media library issues, including authentication[^288]
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
 - Accessibility audit
@@ -1970,6 +1972,7 @@ Due late 2026
   - Scheduled posts[^167]
   - [Credential management](https://github.com/sveltia/sveltia-cms/issues/444) for service API keys, deploy hook URL, etc.
   - Proxy for services that don’t support [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS):
+    - Cloudinary media library’s file listing
     - [DeepL Translate](https://github.com/sveltia/sveltia-cms/issues/437)
     - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
 - Search enhancements:
