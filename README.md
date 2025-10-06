@@ -152,7 +152,7 @@ As we continue to add more features, we hope that our product will eventually be
 
 ## Project Status
 
-Sveltia CMS is currently in **beta** and version 1.0 (GA) is expected to ship in early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
+Sveltia CMS is currently in **beta**, with version 1.0 (GA) scheduled for release in early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
@@ -644,7 +644,7 @@ However, 100% feature parity is never planned, and some features are still missi
 
 ### Current limitations
 
-These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release due early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
+These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them by the end of 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
 - Comprehensive site config validation
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) media library ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
@@ -653,7 +653,7 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
-[Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready, hopefully by the end of 2025.
+[Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
 
 Due to the complexity, we have decided to defer the following features to the 1.x or 2.0 release due mid-2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
 
@@ -664,7 +664,7 @@ Due to the complexity, we have decided to defer the following features to the 1.
 
 ### Features not to be implemented
 
-The following Netlify/Decap CMS features will not be implemented in Sveltia CMS, primarily due to deprecation and performance considerations.
+The following Netlify/Decap CMS features will not be added to Sveltia CMS, primarily due to deprecation and performance considerations.
 
 - **Azure and Bitbucket backends**: For performance reasons. We’ll support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
 - **Git Gateway backend**: Also for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. We plan to develop a GraphQL-based high-performance alternative [in the future](#roadmap) to secure a migration path for existing Git Gateway users.
@@ -684,7 +684,7 @@ The following Netlify/Decap CMS features will not be implemented in Sveltia CMS,
 - The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality powered by [Prism](https://prismjs.com/), which is slated to be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
 - The `use_secure_url` option for the Cloudinary media library: Insecure URLs should never be used.
-- Additional features of the [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries: We’re planning to integrate these services using their APIs instead of pre-built widgets, since the [Uploadcare jQuery File Uploader](https://uploadcare.com/docs/uploads/file-uploader/) has been deprecated and the [Cloudinary Media Library Widget](https://cloudinary.com/documentation/media_library_widget) does not provide a seamless UX. This means third-party upload sources and other features will be unavailable. We plan to support some of the sources, camera access and image editing in the future.
+- Additional features of the [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries: Sveltia CMS uses their APIs to integrate the services instead of their pre-built widgets, as the [Uploadcare jQuery File Uploader](https://uploadcare.com/docs/uploads/file-uploader/) has been deprecated and the [Cloudinary Media Library Widget](https://cloudinary.com/documentation/media_library_widget) does not provide a seamless UX. This means the features found in the widgets are unavailable. However, we plan to support some third-party upload sources, camera access and image editing in the future.
 - An absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
