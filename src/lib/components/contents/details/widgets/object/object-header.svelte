@@ -1,6 +1,8 @@
 <script>
-  import { Button, Icon } from '@sveltia/ui';
+  import { Button } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
+
+  import ExpandIcon from '$lib/components/common/expand-icon.svelte';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -42,7 +44,7 @@
       }}
     >
       {#snippet startIcon()}
-        <Icon name={expanded ? 'expand_more' : 'chevron_right'} />
+        <ExpandIcon {expanded} />
       {/snippet}
       {#if label}
         <span role="none" class="type">

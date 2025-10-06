@@ -164,6 +164,51 @@
     }
   }
 
+  // RTL-specific keyframes that mirror the depth effect
+  @keyframes slide-out-to-left-rtl {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+  @keyframes slide-out-to-right-rtl {
+    from {
+      transform: translateX(0);
+      filter: brightness(1);
+    }
+
+    to {
+      transform: translateX(20%);
+      filter: brightness(0.5);
+    }
+  }
+
+  @keyframes slide-in-from-right-rtl {
+    from {
+      transform: translateX(20%);
+      filter: brightness(0.5);
+    }
+
+    to {
+      transform: translateX(0);
+      filter: brightness(1);
+    }
+  }
+
+  @keyframes slide-in-from-left-rtl {
+    from {
+      transform: translateX(-100%);
+    }
+
+    to {
+      transform: translateX(0);
+    }
+  }
+
   :global {
     html:active-view-transition-type(forwards) {
       &::view-transition-old(page-root) {
@@ -181,6 +226,16 @@
 
         @media (prefers-reduced-motion) {
           animation: none;
+        }
+      }
+
+      &:dir(rtl) {
+        &::view-transition-old(page-root) {
+          animation: 100ms ease-out both slide-out-to-right-rtl;
+        }
+
+        &::view-transition-new(page-root) {
+          animation: 100ms ease-out both slide-in-from-left-rtl;
         }
       }
     }
@@ -201,6 +256,16 @@
 
         @media (prefers-reduced-motion) {
           animation: none;
+        }
+      }
+
+      &:dir(rtl) {
+        &::view-transition-old(page-root) {
+          animation: 100ms ease-out both slide-out-to-left-rtl;
+        }
+
+        &::view-transition-new(page-root) {
+          animation: 100ms ease-out both slide-in-from-right-rtl;
         }
       }
     }

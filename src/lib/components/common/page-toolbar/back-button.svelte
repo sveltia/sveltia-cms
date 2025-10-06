@@ -1,5 +1,5 @@
 <script>
-  import { Button, Icon } from '@sveltia/ui';
+  import { Button, Icon, isRTL } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
   /**
@@ -28,6 +28,6 @@
   {onclick}
 >
   {#snippet startIcon()}
-    <Icon name={document.documentElement.dir === 'rtl' ? 'arrow_forward' : 'arrow_back'} />
+    <Icon name={$isRTL ? 'arrow_forward' : 'arrow_back'} />
   {/snippet}
 </Button>

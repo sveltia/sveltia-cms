@@ -46,12 +46,12 @@ export const copyFromLocaleToast = writable({
 /**
  * @type {Writable<?EntryEditorPane>}
  */
-export const editorLeftPane = writable(null);
+export const editorFirstPane = writable(null);
 
 /**
  * @type {Writable<?EntryEditorPane>}
  */
-export const editorRightPane = writable(null);
+export const editorSecondPane = writable(null);
 
 /**
  * View settings for the Select Assets dialog.

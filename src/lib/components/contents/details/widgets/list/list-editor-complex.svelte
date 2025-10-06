@@ -11,6 +11,7 @@
   import { getContext, onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import ExpandIcon from '$lib/components/common/expand-icon.svelte';
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
@@ -243,7 +244,7 @@
     }}
   >
     {#snippet startIcon()}
-      <Icon name={parentExpanded ? 'expand_more' : 'chevron_right'} />
+      <ExpandIcon expanded={parentExpanded} />
     {/snippet}
   </Button>
   <div role="none" class="summary" id="object-{widgetId}-summary">

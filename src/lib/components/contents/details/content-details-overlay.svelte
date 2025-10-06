@@ -15,8 +15,8 @@
     showBackupToastIfNeeded,
   } from '$lib/services/contents/draft/backup';
   import {
-    editorLeftPane,
-    editorRightPane,
+    editorFirstPane,
+    editorSecondPane,
     showContentOverlay,
     showDuplicateToast,
   } from '$lib/services/contents/editor';
@@ -31,9 +31,9 @@
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
   /** @type {HTMLElement | undefined} */
-  let leftPaneContentArea = $state();
+  let firstPaneContentArea = $state();
   /** @type {HTMLElement | undefined} */
-  let rightPaneContentArea = $state();
+  let secondPaneContentArea = $state();
 
   const isNew = $derived($entryDraft?.isNew ?? true);
   const collection = $derived($entryDraft?.collection);
@@ -56,30 +56,30 @@
    * @returns {Promise<boolean>} Whether the panes are restored.
    */
   const restorePanes = async () => {
-    const [_editorLeftPane, _editorRightPane] =
+    const [_editorFirstPane, _editorSecondPane] =
       $entryEditorSettings?.paneStates?.[paneStateKey ?? ''] ?? [];
 
     if (
       restoring ||
-      !_editorLeftPane ||
-      !_editorRightPane ||
-      (!!_editorLeftPane.locale && !allLocales.includes(_editorLeftPane.locale)) ||
-      (!!_editorRightPane.locale && !allLocales.includes(_editorRightPane.locale)) ||
+      !_editorFirstPane ||
+      !_editorSecondPane ||
+      (!!_editorFirstPane.locale && !allLocales.includes(_editorFirstPane.locale)) ||
+      (!!_editorSecondPane.locale && !allLocales.includes(_editorSecondPane.locale)) ||
       ((!showPreview || !canPreview) &&
-        (_editorLeftPane.mode === 'preview' || _editorRightPane.mode === 'preview'))
+        (_editorFirstPane.mode === 'preview' || _editorSecondPane.mode === 'preview'))
     ) {
       return false;
     }
 
     restoring = true;
     await tick();
-    $editorLeftPane = _editorLeftPane;
-    $editorRightPane = _editorRightPane;
+    $editorFirstPane = _editorFirstPane;
+    $editorSecondPane = _editorSecondPane;
     await tick();
     restoring = false;
 
     if ($isSmallScreen || $isMediumScreen) {
-      $editorRightPane = null;
+      $editorSecondPane = null;
     }
 
     return true;
@@ -97,18 +97,18 @@
       return;
     }
 
-    $editorLeftPane = { mode: 'edit', locale: $editorLeftPane?.locale ?? defaultLocale };
+    $editorFirstPane = { mode: 'edit', locale: $editorFirstPane?.locale ?? defaultLocale };
 
     if ($isSmallScreen || $isMediumScreen) {
-      $editorRightPane = null;
+      $editorSecondPane = null;
     } else if (!showPreview || !canPreview) {
       const otherLocales = i18nEnabled
-        ? allLocales.filter((l) => l !== $editorLeftPane?.locale)
+        ? allLocales.filter((l) => l !== $editorFirstPane?.locale)
         : [];
 
-      $editorRightPane = otherLocales.length ? { mode: 'edit', locale: otherLocales[0] } : null;
+      $editorSecondPane = otherLocales.length ? { mode: 'edit', locale: otherLocales[0] } : null;
     } else {
-      $editorRightPane = { mode: 'preview', locale: $editorLeftPane.locale };
+      $editorSecondPane = { mode: 'preview', locale: $editorFirstPane.locale };
     }
   };
 
@@ -116,7 +116,7 @@
    * Save the pane state to IndexedDB.
    */
   const savePanes = () => {
-    if (!collection || restoring || !$editorLeftPane || !$editorRightPane || !paneStateKey) {
+    if (!collection || restoring || !$editorFirstPane || !$editorSecondPane || !paneStateKey) {
       return;
     }
 
@@ -124,7 +124,7 @@
       ...view,
       paneStates: {
         ...view.paneStates,
-        [paneStateKey]: [$editorLeftPane, $editorRightPane],
+        [paneStateKey]: [$editorFirstPane, $editorSecondPane],
       },
     }));
   };
@@ -154,8 +154,8 @@
   $effect(() => {
     if (paneStateKey) {
       // Reset the editor panes
-      $editorLeftPane = null;
-      $editorRightPane = null;
+      $editorFirstPane = null;
+      $editorSecondPane = null;
     }
   });
 
@@ -168,7 +168,7 @@
   });
 
   $effect(() => {
-    void [$editorLeftPane, $editorRightPane];
+    void [$editorFirstPane, $editorSecondPane];
     savePanes();
   });
 
@@ -224,9 +224,9 @@
     {:else}
       <div role="none" class="cols">
         {#if collection}
-          {#if $editorLeftPane}
+          {#if $editorFirstPane}
             <!-- Somehow we need a fallback object or we’ll get a property destructuring error -->
-            {@const { locale, mode } = $editorLeftPane ?? {}}
+            {@const { locale, mode } = $editorFirstPane ?? {}}
             <Group
               class="pane"
               aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
@@ -236,21 +236,21 @@
               data-mode={mode}
             >
               <PaneHeader
-                id="left-pane-header"
-                thisPane={editorLeftPane}
-                thatPane={editorRightPane}
+                id="first-pane-header"
+                thisPane={editorFirstPane}
+                thatPane={editorSecondPane}
               />
               <PaneBody
-                id="left-pane-body"
-                thisPane={editorLeftPane}
-                bind:thisPaneContentArea={leftPaneContentArea}
-                bind:thatPaneContentArea={rightPaneContentArea}
+                id="first-pane-body"
+                thisPane={editorFirstPane}
+                bind:thisPaneContentArea={firstPaneContentArea}
+                bind:thatPaneContentArea={secondPaneContentArea}
               />
             </Group>
           {/if}
-          {#if $editorRightPane}
+          {#if $editorSecondPane}
             <!-- Ditto -->
-            {@const { locale, mode } = $editorRightPane ?? {}}
+            {@const { locale, mode } = $editorSecondPane ?? {}}
             <Group
               aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
                 values: { locale: getLocaleLabel(locale) },
@@ -259,15 +259,15 @@
               data-mode={mode}
             >
               <PaneHeader
-                id="right-pane-header"
-                thisPane={editorRightPane}
-                thatPane={editorLeftPane}
+                id="second-pane-header"
+                thisPane={editorSecondPane}
+                thatPane={editorFirstPane}
               />
               <PaneBody
-                id="right-pane-body"
-                thisPane={editorRightPane}
-                bind:thisPaneContentArea={rightPaneContentArea}
-                bind:thatPaneContentArea={leftPaneContentArea}
+                id="second-pane-body"
+                thisPane={editorSecondPane}
+                bind:thisPaneContentArea={secondPaneContentArea}
+                bind:thatPaneContentArea={firstPaneContentArea}
               />
             </Group>
           {/if}

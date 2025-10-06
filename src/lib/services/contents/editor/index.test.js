@@ -5,8 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   copyFromLocaleToast,
   customPreviewStyleRegistry,
-  editorLeftPane,
-  editorRightPane,
+  editorFirstPane,
+  editorSecondPane,
   selectAssetsView,
   showContentOverlay,
   showDuplicateToast,
@@ -27,8 +27,8 @@ describe('editor/index', () => {
       count: 1,
       sourceLanguage: undefined,
     });
-    editorLeftPane.set(null);
-    editorRightPane.set(null);
+    editorFirstPane.set(null);
+    editorSecondPane.set(null);
     selectAssetsView.set(undefined);
     // Clear the Set
     customPreviewStyleRegistry.clear();
@@ -169,9 +169,9 @@ describe('editor/index', () => {
     });
   });
 
-  describe('editorLeftPane', () => {
+  describe('editorFirstPane', () => {
     it('should initialize as null', () => {
-      expect(get(editorLeftPane)).toBeNull();
+      expect(get(editorFirstPane)).toBeNull();
     });
 
     it('should update when set to a pane value', () => {
@@ -180,25 +180,25 @@ describe('editor/index', () => {
         locale: 'en',
       });
 
-      editorLeftPane.set(pane);
-      expect(get(editorLeftPane)).toBe(pane);
+      editorFirstPane.set(pane);
+      expect(get(editorFirstPane)).toBe(pane);
     });
 
     it('should reset to null', () => {
-      editorLeftPane.set(
+      editorFirstPane.set(
         /** @type {import('$lib/types/private').EntryEditorPane} */ ({
           mode: 'preview',
           locale: 'en',
         }),
       );
-      editorLeftPane.set(null);
-      expect(get(editorLeftPane)).toBeNull();
+      editorFirstPane.set(null);
+      expect(get(editorFirstPane)).toBeNull();
     });
   });
 
-  describe('editorRightPane', () => {
+  describe('editorSecondPane', () => {
     it('should initialize as null', () => {
-      expect(get(editorRightPane)).toBeNull();
+      expect(get(editorSecondPane)).toBeNull();
     });
 
     it('should update when set to a pane value', () => {
@@ -207,19 +207,19 @@ describe('editor/index', () => {
         locale: 'en',
       });
 
-      editorRightPane.set(pane);
-      expect(get(editorRightPane)).toBe(pane);
+      editorSecondPane.set(pane);
+      expect(get(editorSecondPane)).toBe(pane);
     });
 
     it('should reset to null', () => {
-      editorRightPane.set(
+      editorSecondPane.set(
         /** @type {import('$lib/types/private').EntryEditorPane} */ ({
           mode: 'edit',
           locale: 'en',
         }),
       );
-      editorRightPane.set(null);
-      expect(get(editorRightPane)).toBeNull();
+      editorSecondPane.set(null);
+      expect(get(editorSecondPane)).toBeNull();
     });
   });
 

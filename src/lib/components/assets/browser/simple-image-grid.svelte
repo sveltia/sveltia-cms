@@ -120,7 +120,7 @@
 
       &:not(.wrapper.show-title) .listbox.grid .option .name {
         position: absolute;
-        left: -99999px;
+        inset-inline-start: -99999px;
       }
 
       .listbox.list {
