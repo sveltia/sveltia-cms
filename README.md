@@ -1,6 +1,6 @@
 # Sveltia CMS: Netlify/Decap CMS successor
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, effortless replacement for Netlify CMS (now Decap CMS). While some features are still missing, we’ve already solved over 260 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). While some features are still missing, we’ve already solved over 260 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Our numerous enhancements across the board ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026.
 
@@ -822,7 +822,7 @@ For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplet
 
 If you’re using any features listed in the [current limitations](#current-limitations) section, you’ll need to wait until they are implemented in Sveltia CMS. We’re working hard to add these features in the coming months.
 
-If you’re using any [features that are not going to be implemented](#features-not-to-be-implemented), you need to find a workaround. For example, if you’re using the Azure or Bitbucket backend, consider migrating to GitHub, GitLab, Gitea or Forgejo. See the next section if you’re a Git Gateway user.
+If you’re using any [features that are not going to be implemented](#features-not-to-be-implemented), you’ll need to find a workaround. For example, if you’re using the Azure or Bitbucket backend, consider migrating to GitHub, GitLab, Gitea or Forgejo. See the next section if you’re a Git Gateway user.
 
 #### Migrating from Git Gateway backend
 
@@ -1928,7 +1928,7 @@ Due mid-2026
 
 - Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections, while addressing a number of bugs in their implementations
   - They will probably first be included as beta features in v1.x releases
-- Tackling even more Netlify/Decap CMS issues to bring the total number of issues solved to 300:
+- Tackling even more Netlify/Decap CMS issues:
   - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
   - and a few more from the TBD list below
@@ -1967,7 +1967,7 @@ Due late 2026
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
   - PKCE for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub
   - and many more (100+ issues and discussions)
-- Enhancements to Sveltia CMS Additions (some may be included in v3.0):
+- Enhancements to **Sveltia CMS Additions** (some may be included in v3.0):
   - Post locking[^166] (like [WordPress](https://codex.wordpress.org/Post_Locking))
   - Scheduled posts[^167]
   - [Credential management](https://github.com/sveltia/sveltia-cms/issues/444) for service API keys, deploy hook URL, etc.
