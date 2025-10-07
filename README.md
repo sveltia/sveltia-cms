@@ -1806,6 +1806,16 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://*.openstreetmap.org
     ```
+- Uploadcare:
+  - `img-src`
+    ```
+    https://*.ucarecd.net https://ucarecdn.com
+    ```
+    or a custom domain if configured
+  - `connect-src`
+    ```
+    https://upload.uploadcare.com https://api.uploadcare.com
+    ```
 - Pexels:
   - `img-src`
     ```
