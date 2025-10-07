@@ -1817,7 +1817,6 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://upload.uploadcare.com https://api.uploadcare.com
     ```
-    replace `upload.uploadcare.com` with a custom domain if configured
 - Pexels:
   - `img-src`
     ```
