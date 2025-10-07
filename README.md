@@ -605,6 +605,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
     - Unlike Netlify/Decap CMS, files are uploaded with their original names. Sanitization is still applied to avoid issues with special characters, but uppercase letters and spaces are not converted to lowercase letters and hyphens.[^97] If you want to slugify filenames according to the [`slug` option](https://decapcms.org/docs/configuration-options/#slug-type), use the `slugify_filename` [default media library option](#configuring-multiple-media-libraries).
   - Uploadcare
     - An API-based integration allows users to select existing files from their Uploadcare account.[^247]
+    - Supports [signed uploads](https://uploadcare.com/docs/security/secure-uploads/) to prevent unauthorized uploads. Files are uploaded with a signature computed using your secret key.
   - Other integrations
     - Integrates stock photo providers, including Pexels, Pixabay and Unsplash.[^8] Developers can [disable them](#disabling-stock-assets) if needed.
     - More integration options, including Amazon S3 and Cloudflare R2/Images/Stream, would be added in the future.
@@ -1816,6 +1817,7 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://upload.uploadcare.com https://api.uploadcare.com
     ```
+    replace `upload.uploadcare.com` with a custom domain if configured
 - Pexels:
   - `img-src`
     ```
