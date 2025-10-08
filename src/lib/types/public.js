@@ -29,8 +29,13 @@
  */
 
 /**
+ * Cloud media library name.
+ * @typedef {'cloudinary' | 'uploadcare'} CloudMediaLibraryName
+ */
+
+/**
  * Supported media library name.
- * @typedef {'default' | 'cloudinary' | 'uploadcare' | 'stock_assets'} MediaLibraryName
+ * @typedef {'default' | CloudMediaLibraryName | 'stock_assets'} MediaLibraryName
  */
 
 /**
@@ -1285,8 +1290,8 @@
  * @property {Backend} backend Backend options.
  * @property {'simple' | 'editorial_workflow' | ''} [publish_mode] Publish mode. An empty string is
  * the same as `simple`. Default: `simple`.
- * @property {string} media_folder Global internal media folder path, relative to the project’s root
- * directory.
+ * @property {string} [media_folder] Global internal media folder path, relative to the project’s
+ * root directory. Required unless a cloud media library is configured.
  * @property {string} [public_folder] Global public media folder path, relative to the project’s
  * public URL. It must be an absolute path starting with `/`. Default: `media_folder` option value.
  * @property {MediaLibrary & GlobalMediaLibraryOptions} [media_library] Legacy media library option

@@ -123,10 +123,13 @@
       },
       global: {
         folder: $globalAssetFolder,
-        enabled: true,
+        enabled: $globalAssetFolder !== undefined,
       },
     };
   });
+  const isDefaultLibraryEnabled = $derived(
+    Object.values(allDefaultLibraryFolders).some(({ enabled }) => enabled),
+  );
   const isDefaultLibrary = $derived(libraryName.startsWith('default-'));
   const selectedFolder = $derived(
     isDefaultLibrary
@@ -166,11 +169,16 @@
     Object.entries(allCloudStorageServices).filter(([, { isEnabled }]) => isEnabled?.() ?? true),
   );
   const enabledExternalServiceEntries = $derived([
-    ...enabledStockAssetProviderEntries,
     ...enabledCloudServiceEntries,
+    ...enabledStockAssetProviderEntries,
   ]);
-  const showViewOptions = $derived(
-    isDefaultLibrary || enabledExternalServiceEntries.map(([key]) => key).includes(libraryName),
+  const isCloudLibrary = $derived(
+    enabledCloudServiceEntries.map(([serviceId]) => serviceId).includes(libraryName),
+  );
+  const isStockLibrary = $derived(
+    enabledStockAssetProviderEntries
+      .map(([serviceId]) => serviceId)
+      .includes(/** @type {any} */ (libraryName)),
   );
   const Selector = $derived($isSmallScreen ? Select : Listbox);
 
@@ -269,10 +277,17 @@
   };
 
   $effect.pre(() => {
-    // Select the first enabled folder
-    const id = Object.entries(allDefaultLibraryFolders).find(([, { enabled }]) => enabled)?.[0];
+    const firstDefaultLibraryId = Object.entries(allDefaultLibraryFolders).find(
+      ([, { enabled }]) => enabled,
+    )?.[0];
 
-    libraryName = `default-${id}`;
+    if (firstDefaultLibraryId) {
+      // Select the first enabled folder
+      libraryName = `default-${firstDefaultLibraryId}`;
+    } else {
+      // Select the first available external service
+      libraryName = enabledExternalServiceEntries[0]?.[0];
+    }
   });
 
   $effect(() => {
@@ -292,7 +307,7 @@
 </script>
 
 {#snippet headerItems()}
-  {#if showViewOptions}
+  {#if isDefaultLibrary || isCloudLibrary || isStockLibrary}
     {#if $selectAssetsView}
       <ViewSwitcher
         currentView={(() => /** @type {Writable<SelectAssetsView>} */ (selectAssetsView))()}
@@ -373,32 +388,38 @@
           selectedResources = [];
         }}
       >
-        <OptionGroup label={$_('asset_location.repository')}>
-          {#each Object.entries(allDefaultLibraryFolders) as [id, { enabled }] (id)}
-            {#if enabled}
-              {@const name = `default-${id}`}
-              <Option
-                {name}
-                label={$_(`assets_dialog.folder.${id}`)}
-                selected={libraryName === name}
-              />
-            {/if}
-          {/each}
-        </OptionGroup>
+        {#if isDefaultLibraryEnabled}
+          <OptionGroup label={$_('asset_location.repository')}>
+            {#each Object.entries(allDefaultLibraryFolders) as [id, { enabled }] (id)}
+              {#if enabled}
+                {@const name = `default-${id}`}
+                <Option
+                  {name}
+                  label={$_(`assets_dialog.folder.${id}`)}
+                  selected={libraryName === name}
+                />
+              {/if}
+            {/each}
+          </OptionGroup>
+        {/if}
         {#if canEnterURL || !!Object.keys(enabledCloudServiceEntries).length}
           <OptionGroup label={$_('asset_location.external')}>
             {#each enabledCloudServiceEntries as [, { serviceId, serviceLabel }] (serviceId)}
-              <Option name={serviceId} label={serviceLabel} />
+              <Option name={serviceId} label={serviceLabel} selected={libraryName === serviceId} />
             {/each}
             {#if canEnterURL}
-              <Option name="enter-url" label={$_('assets_dialog.enter_url')} />
+              <Option
+                name="enter-url"
+                label={$_('assets_dialog.enter_url')}
+                selected={libraryName === 'enter-url'}
+              />
             {/if}
           </OptionGroup>
         {/if}
         {#if enabledStockAssetProviderEntries.length}
           <OptionGroup label={$_('asset_location.stock_photos')}>
             {#each enabledStockAssetProviderEntries as [serviceId, { serviceLabel }] (serviceId)}
-              <Option name={serviceId} label={serviceLabel} />
+              <Option name={serviceId} label={serviceLabel} selected={libraryName === serviceId} />
             {/each}
           </OptionGroup>
         {/if}

@@ -13,6 +13,7 @@ import { getAllAssetFolders } from '$lib/services/config/folders/assets';
 import { getAllEntryFolders } from '$lib/services/config/folders/entries';
 import { fetchSiteConfig } from '$lib/services/config/loader';
 import { allEntryFolders } from '$lib/services/contents';
+import { CLOUD_MEDIA_LIBRARIES } from '$lib/services/integrations/media-libraries';
 import { prefs } from '$lib/services/user/prefs';
 
 /**
@@ -117,10 +118,16 @@ export const validate = (config) => {
   }
 
   if (config.media_folder === undefined) {
-    throw new Error(get(_)('config.error.missing_media_folder'));
-  }
-
-  if (typeof config.media_folder !== 'string') {
+    // Require `media_folder` unless a cloud media library is configured
+    if (
+      !CLOUD_MEDIA_LIBRARIES.includes(/** @type {any} */ (config.media_library?.name ?? '')) &&
+      !Object.keys(config.media_libraries || {}).some((name) =>
+        CLOUD_MEDIA_LIBRARIES.includes(/** @type {any} */ (name)),
+      )
+    ) {
+      throw new Error(get(_)('config.error.missing_media_folder'));
+    }
+  } else if (typeof config.media_folder !== 'string') {
     throw new Error(get(_)('config.error.invalid_media_folder'));
   }
 

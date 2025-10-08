@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   addFolderIfNeeded,
   getAllAssetFolders,
+  hasTags,
   iterateFiles,
   normalizeAssetFolder,
   replaceTags,
@@ -56,6 +57,21 @@ describe('config/folders/assets', () => {
         entryRelative: false,
         hasTemplateTags: false,
       });
+    });
+
+    it('should handle missing global media_folder', () => {
+      vi.mocked(getValidCollections).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      // Should only have the "all assets" folder
+      expect(result).toHaveLength(0);
     });
 
     it('should handle root folder configurations', () => {
@@ -301,6 +317,97 @@ describe('config/folders/assets', () => {
         hasTemplateTags: false,
       });
     });
+
+    it('should skip collections with template tags when global folder is not configured', () => {
+      vi.mocked(getValidCollections).mockReturnValue([
+        // @ts-ignore - simplified collection for testing
+        {
+          name: 'posts',
+          folder: 'content/posts',
+          media_folder: '{{media_folder}}/posts',
+          public_folder: '{{public_folder}}/posts',
+        },
+      ]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      // Should only have empty result since template tags can't be resolved
+      expect(result).toHaveLength(0);
+    });
+
+    it('should handle collections without template tags when global folder is not configured', () => {
+      vi.mocked(getValidCollections).mockReturnValue([
+        // @ts-ignore - simplified collection for testing
+        {
+          name: 'posts',
+          folder: 'content/posts',
+          media_folder: '/uploads/posts',
+          public_folder: '/static/posts',
+        },
+      ]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      // Should have the all assets folder and the posts folder
+      expect(result).toHaveLength(2);
+      expect(result[1]).toEqual({
+        collectionName: 'posts',
+        fileName: undefined,
+        internalPath: 'uploads/posts',
+        publicPath: '/static/posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      });
+    });
+  });
+
+  describe('hasTags', () => {
+    it('should return true for media_folder tag', () => {
+      expect(hasTags('{{media_folder}}/images')).toBe(true);
+    });
+
+    it('should return true for public_folder tag', () => {
+      expect(hasTags('{{public_folder}}/uploads')).toBe(true);
+    });
+
+    it('should return true for both tags', () => {
+      expect(hasTags('{{media_folder}}/{{public_folder}}')).toBe(true);
+    });
+
+    it('should return false for strings without tags', () => {
+      expect(hasTags('/static/images')).toBe(false);
+    });
+
+    it('should return false for empty string', () => {
+      expect(hasTags('')).toBe(false);
+    });
+
+    it('should return false for relative paths without tags', () => {
+      expect(hasTags('images/uploads')).toBe(false);
+    });
+
+    it('should return false for strings with partial tag syntax', () => {
+      expect(hasTags('{{media}}')).toBe(false);
+      expect(hasTags('media_folder')).toBe(false);
+      expect(hasTags('{media_folder}')).toBe(false);
+    });
+
+    it('should handle tags with surrounding text', () => {
+      expect(hasTags('prefix/{{media_folder}}/suffix')).toBe(true);
+      expect(hasTags('{{public_folder}}/suffix')).toBe(true);
+    });
   });
 
   describe('replaceTags', () => {
@@ -480,6 +587,65 @@ describe('config/folders/assets', () => {
         fileName: 'general',
         internalPath: 'config/uploads',
         publicPath: '/uploads',
+        entryRelative: false,
+        hasTemplateTags: false,
+      });
+    });
+
+    it('should return undefined when template tags are present without global folders', () => {
+      const result = normalizeAssetFolder({
+        collectionName: 'posts',
+        fileName: undefined,
+        mediaFolder: '{{media_folder}}/posts',
+        publicFolder: '{{public_folder}}/posts',
+        baseFolder: 'content/posts',
+        globalFolders: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined when media folder has template tags without global folders', () => {
+      const result = normalizeAssetFolder({
+        collectionName: 'posts',
+        fileName: undefined,
+        mediaFolder: '{{media_folder}}/posts',
+        publicFolder: '/static/posts',
+        baseFolder: 'content/posts',
+        globalFolders: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined when public folder has template tags without global folders', () => {
+      const result = normalizeAssetFolder({
+        collectionName: 'posts',
+        fileName: undefined,
+        mediaFolder: '/uploads/posts',
+        publicFolder: '{{public_folder}}/posts',
+        baseFolder: 'content/posts',
+        globalFolders: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should work without global folders when no template tags are present', () => {
+      const result = normalizeAssetFolder({
+        collectionName: 'posts',
+        fileName: undefined,
+        mediaFolder: '/uploads/posts',
+        publicFolder: '/static/posts',
+        baseFolder: 'content/posts',
+        globalFolders: undefined,
+      });
+
+      expect(result).toEqual({
+        collectionName: 'posts',
+        fileName: undefined,
+        internalPath: 'uploads/posts',
+        publicPath: '/static/posts',
         entryRelative: false,
         hasTemplateTags: false,
       });

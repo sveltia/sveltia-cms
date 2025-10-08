@@ -3,8 +3,13 @@ import { get } from 'svelte/store';
 import { siteConfig } from '$lib/services/config';
 
 /**
- * @import { MediaField, MediaLibraryName } from '$lib/types/public';
+ * @import { CloudMediaLibraryName, MediaField, MediaLibraryName } from '$lib/types/public';
  */
+
+/**
+ * @type {CloudMediaLibraryName[]}
+ */
+export const CLOUD_MEDIA_LIBRARIES = ['cloudinary', 'uploadcare'];
 
 /**
  * Get any media library options. Support both new and legacy options at the field level and global.

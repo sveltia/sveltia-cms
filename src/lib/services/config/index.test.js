@@ -13,7 +13,16 @@ vi.mock('svelte/store', async () => {
 
   return {
     ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
+    get: vi.fn((store) => {
+      // Handle the i18n _ store
+      if (store && typeof store === 'function') {
+        // Return a mock translation function
+        return (/** @type {string} */ key) => key;
+      }
+
+      // Default mock behavior for other stores
+      return { devModeEnabled: false };
+    }),
   };
 });
 
@@ -57,6 +66,7 @@ vi.mock('$lib/services/backends', () => ({
 // Mock i18n
 vi.mock('svelte-i18n', () => ({
   init: vi.fn().mockResolvedValue({}),
+  _: vi.fn(),
 }));
 
 describe('config/index', () => {
@@ -219,6 +229,90 @@ describe('config/index', () => {
         // @ts-ignore - testing invalid config
         validate({ backend: { name: 'git-gateway' }, collections: [] }),
       ).toThrow();
+    });
+
+    it('should accept config without media_folder when using external media_library', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            collections: [],
+            media_library: { name: 'uploadcare' },
+          }),
+        ),
+      ).not.toThrow();
+    });
+
+    it('should reject config without media_folder when using stock_assets media_library', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            collections: [],
+            media_library: { name: 'stock_assets' },
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should accept config without media_folder when using external media_libraries', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            collections: [],
+            media_libraries: { uploadcare: { public_key: 'test' } },
+          }),
+        ),
+      ).not.toThrow();
+    });
+
+    it('should reject config without media_folder when using stock_assets media_libraries', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            collections: [],
+            media_libraries: { stock_assets: {} },
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should reject config without media_folder when using non-external media library', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            collections: [],
+            media_library: { name: 'unknown' },
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should reject config without media_folder when using multiple non-external media_libraries', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            collections: [],
+            media_libraries: { custom: {} },
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it('should accept config without media_folder when at least one external media library is present', () => {
+      expect(() =>
+        validate(
+          /** @type {any} */ ({
+            backend: { name: 'git-gateway' },
+            collections: [],
+            media_libraries: { uploadcare: { public_key: 'test' }, custom: {} },
+          }),
+        ),
+      ).not.toThrow();
     });
 
     it('should reject config with non-string media_folder', () => {
