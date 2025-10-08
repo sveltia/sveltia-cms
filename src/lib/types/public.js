@@ -924,6 +924,7 @@
  * @property {number} [depth] Maximum depth to show nested items in the collection tree. Default:
  * `Infinity`.
  * @property {string} [summary] Summary template for a tree item. Default: `{{title}}`.
+ * @property {boolean} [subfolders] Whether to include subfolders. Default: `true`.
  * @see https://decapcms.org/docs/collection-nested/
  */
 
