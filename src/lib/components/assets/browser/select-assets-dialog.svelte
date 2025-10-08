@@ -157,9 +157,13 @@
   const enabledStockAssetProviderEntries = $derived.by(() => {
     const { providers = [] } = getStockAssetMediaLibraryOptions({ fieldConfig });
 
-    return /** @type {[StockAssetProviderName, MediaLibraryService][]} */ (
-      Object.entries(allStockAssetProviders)
-    ).filter(([serviceId]) => providers.includes(serviceId));
+    return Object.entries(allStockAssetProviders).filter(
+      ([serviceId, { hotlinking }]) =>
+        providers.includes(/** @type {StockAssetProviderName} */ (serviceId)) &&
+        // When hotlinking is not required, files are downloaded and then uploaded to the
+        // repository, so the default library has to be configured.
+        (hotlinking || isDefaultLibraryEnabled),
+    );
   });
   const isEnabledMediaService = $derived(
     enabledStockAssetProviderEntries
