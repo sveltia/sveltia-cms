@@ -293,7 +293,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
 - GitLab-specific improvements:
   - Implements the GraphQL API with proper authorization.[^290]
-  - Doesn’t hit GraphQL complexity limits with Relation fields.[^269]
+  - Doesn’t hit GraphQL complexity limits with Relation fields.[^296]
   - Comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
   - Supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
   - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
