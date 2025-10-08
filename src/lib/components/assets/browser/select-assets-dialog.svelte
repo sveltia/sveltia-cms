@@ -42,7 +42,6 @@
    * AssetFolderInfo,
    * EntryDraft,
    * MediaLibraryAssetKind,
-   * MediaLibraryService,
    * SelectAssetsView,
    * SelectedResource,
    * } from '$lib/types/private';
