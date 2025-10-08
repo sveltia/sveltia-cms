@@ -525,9 +525,9 @@
 
 /**
  * Supported button name for the rich text editor.
- * @typedef {'bold' | 'italic' | 'code' | 'link' | 'heading-one' | 'heading-two' | 'heading-three' |
- * 'heading-four' | 'heading-five' | 'heading-six' | 'quote' | 'bulleted-list' | 'numbered-list'
- * } RichTextEditorButtonName
+ * @typedef {'bold' | 'italic' | 'strikethrough' | 'code' | 'link' | 'heading-one' | 'heading-two' |
+ * 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'quote' | 'bulleted-list' |
+ * 'numbered-list' } RichTextEditorButtonName
  * @see https://decapcms.org/docs/widgets/#markdown
  */
 
