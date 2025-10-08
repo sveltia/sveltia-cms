@@ -288,13 +288,15 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.[^65]
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`.[^95][^27] If a branch name is specified, it works as expected.[^232]
 - It’s possible to [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once.[^24]
-- The GitLab backend implements the GraphQL API with proper authorization.[^290]
-- The GitLab backend support comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
-- Service status checks are performed frequently and an incident notification is displayed prominently.
 - Users can quickly open the source file of an entry or asset in your repository via the 3-dot menu when Developer Mode is enabled.
+- Service status checks are performed frequently and an incident notification is displayed prominently.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
-- The GitLab backend supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
-- Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
+- GitLab-specific improvements:
+  - Implements the GraphQL API with proper authorization.[^290]
+  - Doesn’t hit GraphQL complexity limits with Relation fields.[^269]
+  - Comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
+  - Supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
+  - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
 - Users can sign in directly with a Git-based backend using a personal access token (PAT) instead of going through the regular OAuth flow.[^258]
 - The OAuth access token is automatically renewed when using the GitLab or Gitea/Forgejo backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
@@ -2630,3 +2632,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^294]: Netlify/Decap CMS [#7576](https://github.com/decaporg/decap-cms/issues/7576), [#7587](https://github.com/decaporg/decap-cms/issues/7587)
 
 [^295]: Netlify/Decap CMS [6243](https://github.com/decaporg/decap-cms/issues/6243)
+
+[^296]: Netlify/Decap CMS [7627](https://github.com/decaporg/decap-cms/issues/7627)
