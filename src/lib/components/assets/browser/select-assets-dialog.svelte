@@ -89,6 +89,8 @@
   let filePicker = $state();
   /** @type {SelectedResource[]} */
   let selectedResources = $state([]);
+  /** @type {ExternalAssetsPanel | undefined} */
+  let externalAssetsPanel = $state();
 
   const title = $derived(
     kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file'),
@@ -321,7 +323,7 @@
       aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
     />
   {/if}
-  {#if isDefaultLibrary}
+  {#if isDefaultLibrary || isCloudLibrary}
     <Button
       variant="primary"
       label={$_('upload')}
@@ -478,6 +480,7 @@
             {serviceProps}
             gridId="select-assets-grid"
             bind:selectedResources
+            bind:this={externalAssetsPanel}
           />
         {/if}
       {/each}
@@ -488,8 +491,13 @@
 <FilePicker
   bind:this={filePicker}
   {accept}
+  {multiple}
   onSelect={({ files }) => {
-    onDrop(files);
+    if (isCloudLibrary) {
+      externalAssetsPanel?.uploadFiles(files);
+    } else {
+      onDrop(files);
+    }
   }}
 />
 

@@ -118,10 +118,9 @@
 
   /**
    * Handle `Drop` event to upload files.
-   * @param {object} args Arguments.
-   * @param {File[]} args.files Dropped files.
+   * @param {File[]} files Dropped files.
    */
-  const uploadFiles = async ({ files }) => {
+  export const uploadFiles = async (files) => {
     if (!upload) {
       return;
     }
@@ -269,8 +268,7 @@
       <span role="alert">{$_('no_files_found')}</span>
     </EmptyState>
   {:else if upload}
-    <!-- Allow uploading multiple files at once even if selection is single -->
-    <DropZone onDrop={uploadFiles} multiple accept={fieldConfig?.accept}>
+    <DropZone accept={fieldConfig?.accept} {multiple} onDrop={({ files }) => uploadFiles(files)}>
       {@render imageGrid()}
     </DropZone>
   {:else}
