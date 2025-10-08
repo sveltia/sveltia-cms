@@ -413,6 +413,291 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(results[0].id).toBe('file1');
       expect(results[1].id).toBe('file2');
     });
+
+    it('should use custom cdnBase when configured', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          uploadcare: {
+            config: {
+              publicKey: mockPublicKey,
+              cdnBase: 'https://custom-cdn.example.com',
+            },
+          },
+        },
+      });
+
+      const mockResults = [
+        {
+          uuid: 'abc123',
+          original_filename: 'image.jpg',
+          original_file_url: 'https://ucarecdn.com/abc123/image.jpg',
+          size: 12345,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ];
+
+      const results = parseResults(mockResults);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].previewURL).toBe(
+        'https://custom-cdn.example.com/abc123/-/preview/400x400/',
+      );
+      expect(results[0].downloadURL).toBe('https://custom-cdn.example.com/abc123/');
+    });
+
+    it('should include filename in downloadURL when autoFilename is true', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          uploadcare: {
+            config: {
+              publicKey: mockPublicKey,
+            },
+            settings: {
+              autoFilename: true,
+            },
+          },
+        },
+      });
+
+      const mockResults = [
+        {
+          uuid: 'abc123',
+          original_filename: 'image.jpg',
+          original_file_url: 'https://ucarecdn.com/abc123/image.jpg',
+          size: 12345,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ];
+
+      const results = parseResults(mockResults);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].downloadURL).toBe('https://ucarecdn.com/abc123/image.jpg');
+    });
+
+    it('should not include filename when autoFilename is false', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          uploadcare: {
+            config: {
+              publicKey: mockPublicKey,
+            },
+            settings: {
+              autoFilename: false,
+            },
+          },
+        },
+      });
+
+      const mockResults = [
+        {
+          uuid: 'abc123',
+          original_filename: 'image.jpg',
+          original_file_url: 'https://ucarecdn.com/abc123/image.jpg',
+          size: 12345,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ];
+
+      const results = parseResults(mockResults);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].downloadURL).toBe('https://ucarecdn.com/abc123/');
+    });
+
+    it('should include defaultOperations in downloadURL when configured', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          uploadcare: {
+            config: {
+              publicKey: mockPublicKey,
+            },
+            settings: {
+              defaultOperations: '/quality/smart/-/format/auto/',
+            },
+          },
+        },
+      });
+
+      const mockResults = [
+        {
+          uuid: 'abc123',
+          original_filename: 'image.jpg',
+          original_file_url: 'https://ucarecdn.com/abc123/image.jpg',
+          size: 12345,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ];
+
+      const results = parseResults(mockResults);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].downloadURL).toBe(
+        'https://ucarecdn.com/abc123/-/quality/smart/-/format/auto/',
+      );
+    });
+
+    it('should combine defaultOperations with autoFilename', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          uploadcare: {
+            config: {
+              publicKey: mockPublicKey,
+            },
+            settings: {
+              autoFilename: true,
+              defaultOperations: '/quality/smart/-/format/auto/',
+            },
+          },
+        },
+      });
+
+      const mockResults = [
+        {
+          uuid: 'abc123',
+          original_filename: 'image.jpg',
+          original_file_url: 'https://ucarecdn.com/abc123/image.jpg',
+          size: 12345,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ];
+
+      const results = parseResults(mockResults);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].downloadURL).toBe(
+        'https://ucarecdn.com/abc123/-/quality/smart/-/format/auto/image.jpg',
+      );
+    });
+
+    it('should use all options together: cdnBase, defaultOperations, and autoFilename', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          uploadcare: {
+            config: {
+              publicKey: mockPublicKey,
+              cdnBase: 'https://custom-cdn.example.com',
+            },
+            settings: {
+              autoFilename: true,
+              defaultOperations: '/quality/smart/-/format/auto/',
+            },
+          },
+        },
+      });
+
+      const mockResults = [
+        {
+          uuid: 'abc123',
+          original_filename: 'image.jpg',
+          original_file_url: 'https://ucarecdn.com/abc123/image.jpg',
+          size: 12345,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ];
+
+      const results = parseResults(mockResults);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].previewURL).toBe(
+        'https://custom-cdn.example.com/abc123/-/preview/400x400/',
+      );
+      expect(results[0].downloadURL).toBe(
+        'https://custom-cdn.example.com/abc123/-/quality/smart/-/format/auto/image.jpg',
+      );
+    });
+
+    it('should use field-level config over global config', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          uploadcare: {
+            config: {
+              publicKey: mockPublicKey,
+              cdnBase: 'https://global-cdn.example.com',
+            },
+            settings: {
+              autoFilename: false,
+              defaultOperations: '/global/operations/',
+            },
+          },
+        },
+      });
+
+      const fieldConfig = /** @type {import('$lib/types/public').ImageField} */ ({
+        name: 'test_image',
+        widget: 'image',
+        media_library: {
+          name: 'uploadcare',
+          config: {
+            cdnBase: 'https://field-cdn.example.com',
+          },
+          settings: {
+            autoFilename: true,
+            defaultOperations: '/field/operations/',
+          },
+        },
+      });
+
+      const mockResults = [
+        {
+          uuid: 'abc123',
+          original_filename: 'image.jpg',
+          original_file_url: 'https://ucarecdn.com/abc123/image.jpg',
+          size: 12345,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ];
+
+      const results = parseResults(mockResults, { fieldConfig });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].previewURL).toBe('https://field-cdn.example.com/abc123/-/preview/400x400/');
+      expect(results[0].downloadURL).toBe(
+        'https://field-cdn.example.com/abc123/-/field/operations/image.jpg',
+      );
+    });
   });
 
   describe('list', () => {

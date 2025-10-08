@@ -71,8 +71,10 @@ export const isEnabled = () => !!getPublicKey();
  * @see https://decapcms.org/docs/uploadcare/#integration-settings
  */
 export const parseResults = (results, { fieldConfig } = {}) => {
-  const { settings: { autoFilename = false, defaultOperations = undefined } = {} } =
-    getLibraryOptions(fieldConfig) ?? getLibraryOptions() ?? {};
+  const {
+    settings: { autoFilename = false, defaultOperations = undefined } = {},
+    config: { cdnBase = undefined } = {},
+  } = getLibraryOptions(fieldConfig) ?? getLibraryOptions() ?? {};
 
   return results.map((result) => {
     const {
@@ -84,7 +86,7 @@ export const parseResults = (results, { fieldConfig } = {}) => {
       size,
     } = result;
 
-    const baseURL = `${new URL(url).origin}/${uuid}/`;
+    const baseURL = `${new URL(cdnBase ?? url).origin}/${uuid}/`;
 
     return {
       id: uuid,
