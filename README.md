@@ -606,6 +606,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Uploadcare
     - An API-based integration allows users to select existing files from their Uploadcare account.[^247]
     - Supports [signed uploads](https://uploadcare.com/docs/security/secure-uploads/) to prevent unauthorized uploads. Files are uploaded with a signature computed using your secret key.
+    - No error is raised for file collections if the `media_folder` option is not defined.[^295]
   - Other integrations
     - Integrates stock photo providers, including Pexels, Pixabay and Unsplash.[^8] Developers can [disable them](#disabling-stock-assets) if needed.
     - More integration options, including Amazon S3 and Cloudflare R2/Images/Stream, would be added in the future.
@@ -2627,3 +2628,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^293]: Netlify/Decap CMS [7616](https://github.com/decaporg/decap-cms/issues/7616)
 
 [^294]: Netlify/Decap CMS [#7576](https://github.com/decaporg/decap-cms/issues/7576), [#7587](https://github.com/decaporg/decap-cms/issues/7587)
+
+[^295]: Netlify/Decap CMS [6243](https://github.com/decaporg/decap-cms/issues/6243)
