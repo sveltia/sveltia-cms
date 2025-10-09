@@ -391,7 +391,7 @@
         width: 100%;
       }
 
-      input:is([type='color'], [type='number']) {
+      input:is(:global([type='color'], [type='number'])) {
         outline: 0;
         border-width: 1px;
         border-color: var(--sui-primary-border-color);
@@ -401,7 +401,7 @@
         background-color: var(--sui-textbox-background-color);
       }
 
-      input:is([type='file'], [type='checkbox']) {
+      input:is(:global([type='file'], [type='checkbox'])) {
         color: inherit;
       }
 
@@ -409,7 +409,7 @@
         color: inherit;
       }
 
-      input:is([type='date'], [type='datetime-local'], [type='time']) {
+      input:is(:global([type='date'], [type='datetime-local'], [type='time'])) {
         outline: 0;
         margin: var(--sui-focus-ring-width);
         border-width: var(--sui-textbox-border-width, 1px);
@@ -429,12 +429,12 @@
         }
       }
 
-      input[aria-invalid='true']:is(
+      input[aria-invalid='true']:is(:global(
           [type='color'],
           [type='date'],
           [type='datetime-local'],
           [type='time']
-        ) {
+        )) {
         border-color: var(--sui-error-border-color);
       }
 

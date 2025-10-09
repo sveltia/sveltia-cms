@@ -213,7 +213,7 @@
       height: var(--icon-size, 32px);
     }
 
-    &:is(.tile, .icon) {
+    &:is(:global(.tile, .icon)) {
       overflow: hidden;
       aspect-ratio: 1 / 1;
 

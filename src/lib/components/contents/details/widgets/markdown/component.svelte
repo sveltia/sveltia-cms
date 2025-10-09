@@ -234,7 +234,7 @@
     }
 
     // Make the input fields compact within the built-in image component
-    &:is([data-component-name='image'], [data-component-name='linked-image']) {
+    &:is(:global([data-component-name='image'], [data-component-name='linked-image'])) {
       :global {
         @media (768px <= width) {
           [data-widget] {
