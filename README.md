@@ -688,7 +688,7 @@ The following Netlify/Decap CMS features will not be added to Sveltia CMS, prima
 - The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality powered by [Prism](https://prismjs.com/), which is slated to be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
 - The `use_secure_url` option for the Cloudinary media library: Insecure URLs should never be used.
-- Additional features of the [Cloudinary](https://decapcms.org/docs/cloudinary/) and [Uploadcare](https://decapcms.org/docs/uploadcare/) media libraries: Sveltia CMS uses their APIs to integrate the services instead of their pre-built widgets, as the [Uploadcare jQuery File Uploader](https://uploadcare.com/docs/uploads/file-uploader/) has been deprecated and the [Cloudinary Media Library Widget](https://cloudinary.com/documentation/media_library_widget) does not provide a seamless UX. This means the features found in the widgets are unavailable. However, we plan to support some third-party upload sources, camera access and image editing in the future.
+- Deprecated [Uploadcare jQuery File Uploader](https://uploadcare.com/docs/uploads/file-uploader/): Sveltia CMS uses the Uploadcare API to integrate the service to solve some issues, as mentioned in the [better asset management](#better-asset-management) section above. Users are prompted to enter their secret key to use the integration. This means the features found in the widget are currently unavailable. We plan to support some third-party upload sources, camera access and image editing in the future.
 - An absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
@@ -1925,7 +1925,7 @@ Due early 2026
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
-  - Several Cloudinary media library issues, including authentication[^288]
+  - Several Cloudinary media library issues
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
 - Accessibility audit
@@ -1986,7 +1986,6 @@ Due late 2026
   - Scheduled posts[^167]
   - [Credential management](https://github.com/sveltia/sveltia-cms/issues/444) for service API keys, deploy hook URL, etc.
   - Proxy for services that don’t support [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS):
-    - Cloudinary media library’s file listing
     - [DeepL Translate](https://github.com/sveltia/sveltia-cms/issues/437)
     - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
 - Search enhancements:
@@ -2616,8 +2615,6 @@ This project would not have been possible without the open source Netlify CMS pr
 [^286]: Netlify/Decap CMS [#2367](https://github.com/decaporg/decap-cms/issues/2367)
 
 [^287]: Netlify/Decap CMS [#1069](https://github.com/decaporg/decap-cms/issues/1069)
-
-[^288]: Netlify/Decap CMS [#7015](https://github.com/decaporg/decap-cms/issues/7015)
 
 [^289]: Netlify/Decap CMS [#2183](https://github.com/decaporg/decap-cms/issues/2183)
 
