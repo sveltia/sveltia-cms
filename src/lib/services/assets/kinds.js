@@ -1,4 +1,5 @@
 import { isTextFileType } from '@sveltia/utils/file';
+import { isURL } from '@sveltia/utils/string';
 import mime from 'mime';
 
 /**
@@ -58,6 +59,18 @@ export const getMediaKind = async (source) => {
         //
       }
     } else {
+      if (isURL(source)) {
+        const { hostname, pathname } = new URL(source);
+
+        // Handle common image CDN hostnames, e.g. images.unsplash.com
+        if (hostname.startsWith('images.')) {
+          return 'image';
+        }
+
+        // Remove query string and hash
+        source = pathname;
+      }
+
       mimeType = mime.getType(source) ?? '';
     }
   } else if (source instanceof Blob) {
