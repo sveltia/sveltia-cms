@@ -72,6 +72,8 @@
  * @property {boolean} [devModeEnabled] Whether to enable the developer mode.
  * @property {string} [deployHookURL] Webhook URL to manually trigger a new deployment on any
  * connected CI/CD provider.
+ * @property {string} [deployHookAuthHeader] Webhook `Authorization` request header value, including
+ * the scheme and token, e.g. `Bearer <token>`.
  * @property {string} [defaultTranslationService] Default translation service ID, e.g. `google`.
  */
 

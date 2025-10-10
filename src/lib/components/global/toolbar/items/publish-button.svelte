@@ -7,7 +7,7 @@
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
 
-  const { deployHookURL } = $derived($prefs);
+  const { deployHookURL, deployHookAuthHeader } = $derived($prefs);
   const triggerDeployment = $derived($backend?.triggerDeployment);
   const canPublish = $derived(
     (!!deployHookURL || typeof triggerDeployment === 'function') && !$isLastCommitPublished,
@@ -27,11 +27,15 @@
 
     try {
       const { ok, status } = deployHookURL
-        ? await fetch(deployHookURL, { method: 'POST', mode: 'no-cors' })
+        ? await fetch(deployHookURL, {
+            method: 'POST',
+            mode: deployHookAuthHeader ? 'cors' : 'no-cors',
+            headers: deployHookAuthHeader ? { Authorization: deployHookAuthHeader } : {},
+          })
         : ((await triggerDeployment?.()) ?? {});
 
       // If the `mode` is `no-cors`, the regular response status will be `0`
-      if (!ok && status !== 0) {
+      if (!ok && (deployHookAuthHeader || status !== 0)) {
         throw new Error(`Webhook returned ${status} error`);
       }
 

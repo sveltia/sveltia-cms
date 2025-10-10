@@ -756,9 +756,16 @@ export const strings = {
         title: 'Deploy Hook',
         description:
           'Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions.',
-        field_label: 'Deploy Hook URL',
-        url_saved: 'Webhook URL has been saved.',
-        url_removed: 'Webhook URL has been removed.',
+        url: {
+          field_label: 'Hook URL',
+          saved: 'Hook URL has been saved.',
+          removed: 'Hook URL has been removed.',
+        },
+        auth: {
+          field_label: 'Authorization header (e.g. Bearer <token>) (optional)',
+          saved: 'Authorization header has been saved.',
+          removed: 'Authorization header has been removed.',
+        },
       },
     },
   },

@@ -762,9 +762,16 @@ export const strings = {
         title: 'デプロイフック',
         description:
           '「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions を使用する場合は空欄のままで構いません。',
-        field_label: 'デプロイフック URL',
-        url_saved: 'ウェブフック URL が保存されました。',
-        url_removed: 'ウェブフック URL が削除されました。',
+        url: {
+          field_label: 'フック URL',
+          saved: 'フック URL が保存されました。',
+          removed: 'フック URL が削除されました。',
+        },
+        auth: {
+          field_label: '認証ヘッダー (例: Bearer <token>) (オプション)',
+          saved: '認証ヘッダーが保存されました。',
+          removed: '認証ヘッダーが削除されました。',
+        },
       },
     },
   },

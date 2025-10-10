@@ -57,13 +57,31 @@
       <TextInput
         bind:value={$prefs.deployHookURL}
         flex
-        label={$_('prefs.advanced.deploy_hook.field_label')}
+        aria-label={$_('prefs.advanced.deploy_hook.url.field_label')}
+        showInlineLabel={true}
         onchange={() => {
           onChange?.({
             message: $_(
               $prefs.deployHookURL
-                ? 'prefs.advanced.deploy_hook.url_saved'
-                : 'prefs.advanced.deploy_hook.url_removed',
+                ? 'prefs.advanced.deploy_hook.url.saved'
+                : 'prefs.advanced.deploy_hook.url.removed',
+            ),
+          });
+        }}
+      />
+    </div>
+    <div role="none">
+      <TextInput
+        bind:value={$prefs.deployHookAuthHeader}
+        flex
+        aria-label={$_('prefs.advanced.deploy_hook.auth.field_label')}
+        showInlineLabel={true}
+        onchange={() => {
+          onChange?.({
+            message: $_(
+              $prefs.deployHookAuthHeader
+                ? 'prefs.advanced.deploy_hook.auth.saved'
+                : 'prefs.advanced.deploy_hook.auth.removed',
             ),
           });
         }}
