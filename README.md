@@ -293,7 +293,6 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
 - GitLab-specific improvements:
   - Implements the GraphQL API with proper authorization.[^290]
-  - Doesn’t hit GraphQL complexity limits with Relation fields.[^296]
   - Comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
   - Supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
   - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
@@ -688,7 +687,7 @@ The following Netlify/Decap CMS features will not be added to Sveltia CMS, prima
 - The theme and keymap inline settings for the Code widget, along with support for some languages. Instead of [CodeMirror](https://codemirror.net/), we use Lexical’s code block functionality powered by [Prism](https://prismjs.com/), which is slated to be [replaced by Shiki](https://github.com/facebook/lexical/issues/6575).
 - Remark plugins for the Markdown widget: Not compatible with our Lexical-based rich text editor.
 - The `use_secure_url` option for the Cloudinary media library: Insecure URLs should never be used.
-- Deprecated [Uploadcare jQuery File Uploader](https://uploadcare.com/docs/uploads/file-uploader/): Sveltia CMS uses the Uploadcare API to integrate the service to solve some issues, as mentioned in the [better asset management](#better-asset-management) section above. Users are prompted to enter their secret key to use the integration. This means the features found in the widget are currently unavailable. We plan to support some third-party upload sources, camera access and image editing in the future.
+- Deprecated [Uploadcare jQuery File Uploader](https://uploadcare.com/docs/uploads/file-uploader/): Sveltia CMS uses the Uploadcare API to integrate the service to solve some issues, as [mentioned above](#better-asset-management). Users are prompted to enter their secret key to use the integration. This means the features found in the pre-built widget are currently unavailable. We plan to support some third-party upload sources, camera access and image editing in the future.
 - An absolute URL in the [`public_folder`](https://decapcms.org/docs/configuration-options/#public-folder) option: Such configuration is not recommended, as stated in the Netlify/Decap CMS document.
 - Performance-related options: Sveltia CMS has [drastically improved performance](#better-performance) with GraphQL enabled by default, so these are no longer relevant:
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
@@ -1925,7 +1924,7 @@ Due early 2026
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
-  - Several Cloudinary media library issues
+  - A couple of Cloudinary media library issues
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
 - Accessibility audit
@@ -2629,5 +2628,3 @@ This project would not have been possible without the open source Netlify CMS pr
 [^294]: Netlify/Decap CMS [#7576](https://github.com/decaporg/decap-cms/issues/7576), [#7587](https://github.com/decaporg/decap-cms/issues/7587)
 
 [^295]: Netlify/Decap CMS [6243](https://github.com/decaporg/decap-cms/issues/6243)
-
-[^296]: Netlify/Decap CMS [7627](https://github.com/decaporg/decap-cms/issues/7627)
