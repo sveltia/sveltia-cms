@@ -165,7 +165,11 @@
     variant="ghost"
     label={$_('duplicate')}
     aria-label={$_('duplicate_entry')}
-    disabled={isIndexFile || entryCollection?.create === false || !canCreateEntry(collection)}
+    disabled={isIndexFile ||
+      // @todo Enable duplication for Hugo’s page bundles = the `path` option. We need to duplicate
+      // assets along with the entry. @see https://github.com/sveltia/sveltia-cms/issues/526
+      !!entryCollection?.path ||
+      !canCreateEntry(collection)}
     onclick={() => {
       goto(`/collections/${collectionName}/new`, {
         replaceState: true,
