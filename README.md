@@ -651,10 +651,10 @@ These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are 
 
 - Comprehensive site config validation
 - [Cloudinary](https://decapcms.org/docs/cloudinary/) media library ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
-- Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent)
-- [Custom widgets](https://decapcms.org/docs/custom-widgets/)
-- [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
-- [Event hooks](https://decapcms.org/docs/registering-events/) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
+- Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent) (`CMS.registerEditorComponent`)
+- [Custom widgets](https://decapcms.org/docs/custom-widgets/) (`CMS.registerWidget`)
+- [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) (`CMS.registerPreviewTemplate`) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
+- [Event hooks](https://decapcms.org/docs/registering-events/) (`CMS.registerEventListener`) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
 [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
 
