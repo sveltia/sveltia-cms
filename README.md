@@ -2005,7 +2005,7 @@ Due late 2026
 
 - Serving 100% of the existing Netlify/Decap CMS user base. While we aim to support most use cases, some users may be unable to migrate to Sveltia CMS due to unsupported features or technical limitations. See the [Compatibility](#compatibility) section for details.
 - Support for non-Git backends. Sveltia CMS is a Git-based headless CMS and will remain so to avoid feature creep and increased maintenance costs. We may support custom backends through an API in the future, but it’s not a priority right now.
-- Framework-specific integrations, including a WYSIWYG editor. We will focus on framework-agnostic core features that are essential for succeeding Netlify/Decap CMS and modernizing the platform.
+- Framework-specific integrations, including a WYSIWYG editor and out-of-the-box live site preview. We will focus on framework-agnostic core features that are essential for succeeding Netlify/Decap CMS and modernizing the platform.
 - Enterprise features. We want to keep Sveltia CMS simple and easy to use for small teams and individual developers.
 - Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
 - Creating the longest README file in the world. 😉
