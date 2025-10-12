@@ -18,7 +18,7 @@
   /**
    * @typedef {object} Props
    * @property {CodeField} fieldConfig Field configuration.
-   * @property {string | {} | undefined} currentValue Field value.
+   * @property {string | Record<string, string> | undefined} currentValue Field value.
    */
 
   /** @type {FieldEditorContext} */
