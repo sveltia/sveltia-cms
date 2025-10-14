@@ -1,8 +1,9 @@
 <script>
-  import { TextInput } from '@sveltia/ui';
+  import { EmptyState, TextInput } from '@sveltia/ui';
   import { sanitize } from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
+  import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import {
     allStockAssetProviders,
     getStockAssetMediaLibraryOptions,
@@ -33,49 +34,97 @@
       Object.entries(allStockAssetProviders)
     ).filter(([serviceId]) => providers.includes(serviceId));
   });
+
+  const enabledCloudServiceEntries = $derived(
+    Object.entries(allCloudStorageServices).filter(
+      ([, { isEnabled, authType }]) => (isEnabled?.() ?? true) && authType !== 'widget',
+    ),
+  );
+
+  /**
+   * Sanitize the given string to allow only safe HTML tags and attributes.
+   * @param {string} str The string to sanitize.
+   * @returns {string} The sanitized string.
+   */
+  const _sanitize = (str) =>
+    sanitize(str, { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] });
+
+  /**
+   * Handler for `change` event of the text input.
+   * @param {string} serviceId The service ID whose API key has changed.
+   */
+  const onchange = (serviceId) => {
+    onChange?.({
+      message: $_(
+        $prefs.apiKeys?.[serviceId]
+          ? 'prefs.changes.api_key_saved'
+          : 'prefs.changes.api_key_removed',
+      ),
+    });
+  };
 </script>
 
-{#each enabledStockAssetProviderEntries as [serviceId, service] (serviceId)}
-  {@const { serviceLabel, developerURL, apiKeyURL } = service}
-  <section>
-    <h4>
-      {$_('prefs.media.stock_photos.title', { values: { service: serviceLabel } })}
-    </h4>
-    <p>
-      {@html sanitize(
-        $_('prefs.media.stock_photos.description', {
-          values: {
-            service: serviceLabel,
-            homeHref: `href="${developerURL}"`,
-            apiKeyHref: `href="${apiKeyURL}"`,
-          },
-        }),
-        { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] },
-      )}
-    </p>
-    <div role="none">
-      {#if $prefs.apiKeys}
-        <TextInput
-          bind:value={$prefs.apiKeys[serviceId]}
-          flex
-          monospace
-          spellcheck="false"
-          aria-label={$_('prefs.media.stock_photos.field_label', {
-            values: { service: serviceLabel },
-          })}
-          onchange={() => {
-            onChange?.({
-              message: $_(
-                $prefs.apiKeys?.[serviceId]
-                  ? 'prefs.changes.api_key_saved'
-                  : 'prefs.changes.api_key_removed',
-              ),
-            });
-          }}
-        />
-      {/if}
-    </div>
-  </section>
+{#if enabledStockAssetProviderEntries.length || enabledCloudServiceEntries.length}
+  {#if $prefs.apiKeys}
+    {#each enabledCloudServiceEntries as [serviceId, service] (serviceId)}
+      {@const { serviceLabel } = service}
+      <section>
+        <h4>{serviceLabel}</h4>
+        <p>
+          {@html _sanitize(
+            $_('prefs.media.cloud_storage.description', {
+              values: { service: serviceLabel },
+            }),
+          )}
+        </p>
+        <div role="none">
+          <TextInput
+            bind:value={$prefs.apiKeys[serviceId]}
+            flex
+            monospace
+            spellcheck="false"
+            aria-label={$_('prefs.media.cloud_storage.field_label', {
+              values: { service: serviceLabel },
+            })}
+            onchange={() => onchange(serviceId)}
+          />
+        </div>
+      </section>
+    {/each}
+    {#each enabledStockAssetProviderEntries as [serviceId, service] (serviceId)}
+      {@const { serviceLabel, developerURL, apiKeyURL } = service}
+      <section>
+        <h4>{$_('prefs.media.stock_photos.title', { values: { service: serviceLabel } })}</h4>
+        <p>
+          {@html _sanitize(
+            $_('prefs.media.stock_photos.description', {
+              values: {
+                service: serviceLabel,
+                homeHref: `href="${developerURL}"`,
+                apiKeyHref: `href="${apiKeyURL}"`,
+              },
+            }),
+          )}
+        </p>
+        <div role="none">
+          <TextInput
+            bind:value={$prefs.apiKeys[serviceId]}
+            flex
+            monospace
+            spellcheck="false"
+            aria-label={$_('prefs.media.stock_photos.field_label', {
+              values: { service: serviceLabel },
+            })}
+            onchange={() => onchange(serviceId)}
+          />
+        </div>
+      </section>
+    {/each}
+  {/if}
 {:else}
-  {$_('prefs.media.stock_photos.providers_disabled')}
-{/each}
+  <EmptyState>
+    <div role="none">
+      {$_('prefs.media.libraries_disabled')}
+    </div>
+  </EmptyState>
+{/if}

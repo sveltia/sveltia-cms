@@ -728,8 +728,12 @@ export const strings = {
         description:
           'Sign up for <a {homeHref}>{service} API</a> and enter <a {apiKeyHref}>your API Key</a> here to insert free stock photos to image entry fields.',
         credit: 'Photos provided by {service}',
-        providers_disabled: 'Stock asset providers are disabled by the administrator.',
       },
+      cloud_storage: {
+        field_label: '{service} API Key',
+        description: 'Enter your {service} API key to enable uploading assets to {service}.',
+      },
+      libraries_disabled: 'External media libraries are disabled by the administrator.',
     },
     accessibility: {
       title: 'Accessibility',

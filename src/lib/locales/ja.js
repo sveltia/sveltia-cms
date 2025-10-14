@@ -732,8 +732,13 @@ export const strings = {
         description:
           '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行された API キー</a> をここに入力すると、画像エントリー項目に無料のストックフォトを挿入できます。',
         credit: '写真提供: {service}',
-        providers_disabled: 'ストックアセットプロバイダーは管理者によって無効化されています。',
       },
+      cloud_storage: {
+        field_label: '{service} API キー',
+        description:
+          'アセットを {service} にアップロードできるようにするには、{service} の API キーを入力してください。',
+      },
+      libraries_disabled: '外部メディアライブラリは管理者によって無効化されています。',
     },
     accessibility: {
       title: 'アクセシビリティ',
