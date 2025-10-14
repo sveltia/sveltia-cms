@@ -274,6 +274,7 @@ export const strings = {
   },
   replace_asset: 'アセットを差し替え',
   replace_x: '{name} を差し替え',
+  click_to_browse: 'クリックして参照…',
   tap_to_browse: 'タップして参照…',
   drop_file_or_click_to_browse: 'ここにファイルをドロップするかクリックして参照…',
   drop_files_or_click_to_browse: 'ここにファイルをドロップするかクリックして参照…',

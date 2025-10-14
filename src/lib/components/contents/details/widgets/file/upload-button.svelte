@@ -6,6 +6,7 @@
 
   /**
    * @typedef {object} Props
+   * @property {boolean} allowDrop Whether to allow dropping files.
    * @property {boolean} invalid Whether the field is invalid.
    * @property {boolean} readonly Whether the field is readonly.
    * @property {boolean} processing Whether the field is processing.
@@ -18,6 +19,7 @@
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
+    allowDrop,
     invalid,
     readonly,
     processing,
@@ -50,7 +52,9 @@
           {$_('processing_file')}
         </div>
       {:else if $hasMouse}
-        {#if isImageWidget}
+        {#if !allowDrop}
+          {$_('click_to_browse')}
+        {:else if isImageWidget}
           {$_(`drop_image_${multiple ? 'files' : 'file'}_or_click_to_browse`)}
         {:else}
           {$_(`drop_${multiple ? 'files' : 'file'}_or_click_to_browse`)}

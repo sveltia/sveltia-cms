@@ -273,6 +273,7 @@ export const strings = {
   },
   replace_asset: 'Replace Asset',
   replace_x: 'Replace {name}',
+  click_to_browse: 'Click to browse…',
   tap_to_browse: 'Tap to browse…',
   drop_file_or_click_to_browse: 'Drop a file here or click to browse…',
   drop_files_or_click_to_browse: 'Drop files here or click to browse…',

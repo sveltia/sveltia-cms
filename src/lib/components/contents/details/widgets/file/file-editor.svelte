@@ -15,11 +15,12 @@
 
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import DropZoneContent from '$lib/components/contents/details/widgets/file/drop-zone-content.svelte';
   import FileEditorItem from '$lib/components/contents/details/widgets/file/file-editor-item.svelte';
+  import UploadButton from '$lib/components/contents/details/widgets/file/upload-button.svelte';
   import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
   import { entryDraft } from '$lib/services/contents/draft';
   import { processResource } from '$lib/services/contents/widgets/file/process';
+  import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
   import { formatSize } from '$lib/services/utils/file';
@@ -94,6 +95,13 @@
     fileName,
     entry,
   });
+  const enabledCloudServiceEntries = $derived(
+    Object.entries(allCloudStorageServices).filter(([, { isEnabled }]) => isEnabled?.() ?? true),
+  );
+  /**
+   * Disable the drop zone if there are cloud services configured to avoid confusion.
+   */
+  const allowDrop = $derived(!enabledCloudServiceEntries.length);
 
   $effect(() => {
     if ((mediaFolder || publicFolder) && !unsupportedWarned) {
@@ -251,8 +259,9 @@
   };
 </script>
 
-{#snippet dropZoneContent()}
-  <DropZoneContent
+{#snippet uploadButton()}
+  <UploadButton
+    {allowDrop}
     {invalid}
     {readonly}
     {processing}
@@ -263,13 +272,7 @@
   />
 {/snippet}
 
-<DropZone
-  bind:this={dropZone}
-  {multiple}
-  disabled={readonly}
-  accept={accept ?? (isImageWidget ? SUPPORTED_IMAGE_TYPES.join(',') : undefined)}
-  {onDrop}
->
+{#snippet content()}
   {#if !!currentValue?.length && !processing}
     {#if multiple}
       {#if Array.isArray(currentValue)}
@@ -291,7 +294,7 @@
           {/each}
         </div>
         {#if currentValue.length < max}
-          {@render dropZoneContent()}
+          {@render uploadButton()}
         {/if}
       {/if}
     {:else if typeof currentValue === 'string' && currentValue}
@@ -307,9 +310,23 @@
       />
     {/if}
   {:else}
-    {@render dropZoneContent()}
+    {@render uploadButton()}
   {/if}
-</DropZone>
+{/snippet}
+
+{#if allowDrop}
+  <DropZone
+    bind:this={dropZone}
+    {multiple}
+    disabled={readonly}
+    accept={accept ?? (isImageWidget ? SUPPORTED_IMAGE_TYPES.join(',') : undefined)}
+    {onDrop}
+  >
+    {@render content()}
+  </DropZone>
+{:else}
+  {@render content()}
+{/if}
 
 <SelectAssetsDialog
   kind={isImageWidget ? 'image' : undefined}
