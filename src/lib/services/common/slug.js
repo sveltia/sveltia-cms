@@ -31,12 +31,9 @@ export const slugify = (string, { fallback = true } = {}) => {
   let slug = string;
 
   if (cleanAccents) {
-    // Remove any accent after transliteration
+    // Remove any accented characters by transliterating them to their ASCII equivalents
     // @see https://www.npmjs.com/package/@sindresorhus/transliterate
-    // @see https://stackoverflow.com/q/990904
-    slug = transliterate(slug)
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '');
+    slug = transliterate(slug.normalize('NFD'));
   }
 
   if (encoding === 'ascii') {

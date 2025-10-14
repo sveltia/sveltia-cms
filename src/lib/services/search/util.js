@@ -3,6 +3,7 @@
  * apply basic normalization.
  * @param {string} value Original value.
  * @returns {string} Normalized value.
+ * @see https://stackoverflow.com/q/990904
  */
 export const normalize = (value) => {
   value = value.trim();
