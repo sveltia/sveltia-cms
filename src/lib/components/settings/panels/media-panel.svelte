@@ -1,5 +1,5 @@
 <script>
-  import { EmptyState, TextInput } from '@sveltia/ui';
+  import { EmptyState, PasswordInput } from '@sveltia/ui';
   import { sanitize } from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
@@ -78,10 +78,10 @@
           )}
         </p>
         <div role="none">
-          <TextInput
+          <PasswordInput
             bind:value={$prefs.apiKeys[serviceId]}
             flex
-            monospace
+            autocomplete="off"
             spellcheck="false"
             aria-label={$_('prefs.media.cloud_storage.field_label', {
               values: { service: serviceLabel },
@@ -107,10 +107,10 @@
           )}
         </p>
         <div role="none">
-          <TextInput
+          <PasswordInput
             bind:value={$prefs.apiKeys[serviceId]}
             flex
-            monospace
+            autocomplete="off"
             spellcheck="false"
             aria-label={$_('prefs.media.stock_photos.field_label', {
               values: { service: serviceLabel },

@@ -1,5 +1,5 @@
 <script>
-  import { TextInput } from '@sveltia/ui';
+  import { PasswordInput } from '@sveltia/ui';
   import { sanitize } from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
@@ -45,10 +45,10 @@
     </p>
     <div role="none">
       {#if $prefs.apiKeys}
-        <TextInput
+        <PasswordInput
           bind:value={$prefs.apiKeys[serviceId]}
           flex
-          monospace
+          autocomplete="off"
           spellcheck="false"
           aria-label={$_('prefs.i18n.translator.field_label', {
             values: { service: serviceLabel },
