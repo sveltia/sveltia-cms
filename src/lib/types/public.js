@@ -1178,7 +1178,7 @@
  * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
  * than Netlify, including [Sveltia CMS Authenticator](https://github.com/sveltia/sveltia-cms-auth).
  * Default: `https://gitlab.com`.
- * @property {'pkce' | 'implicit'} [auth_type] OAuth authorization method. Default: `pkce`.
+ * @property {'pkce' | 'implicit'} [auth_type] OAuth authorization method. Default: `implicit`.
  * @property {string} [auth_endpoint] OAuth base URL path. Default: `oauth/authorize`.
  * @property {string} [app_id] OAuth application ID. Required when using PKCE authorization.
  * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow. Default:
