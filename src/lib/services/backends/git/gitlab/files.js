@@ -168,7 +168,12 @@ export const fetchBlobs = async (allPaths) => {
   // 15 + (2 * node size) so 100 paths = 215 complexity, where the max number of records is 100 and
   // max complexity is 250 or 300
   for (;;) {
-    const currentPaths = paths.splice(0, 100);
+    // TEMPORARY CHANGE: Fetch one by one to reduce the complexity score, because requesting
+    // multiple paths cause an error on GitLab 18.4.2. We can normally request 100 paths at once, so
+    // we will revert this change when the issue is resolved.
+    // @see https://github.com/sveltia/sveltia-cms/issues/525
+    // @see https://gitlab.com/gitlab-org/gitlab/-/issues/576497
+    const currentPaths = paths.splice(0, 1);
 
     const result = /** @type {FetchBlobsResponse} */ (
       await fetchGraphQL(FETCH_BLOBS_QUERY, { paths: currentPaths })
