@@ -363,7 +363,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - `pattern` can be used instead of `value` to provide a regular expression, just like the `view_filters` collection option.[^153]
   - Enhancements to [summary string transformations](https://decapcms.org/docs/summary-strings/):
     - Transformations can be used in more places than just the collection `summary`:
-      - The `slug`, `path` and `preview_path` collection options[^29][^276]
+      - The `slug`, `path` and `preview_path` collection options[^29]
       - The `summary` field option for the List and Object widgets
     - The `default` transformation accepts a template tag like `{{fields.slug | default('{{fields.title}}')}}`, making it possible to fall back to a different field value. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/345))
     - The `date` transformation supports the time zone argument. The only available value is `utc`, which converts a date to UTC. This is useful if the specified DateTime field is local, but you want to force UTC in the entry slug, e.g. `{{date | date('YYYYMMDD-HHmm', 'utc')}}`. ([Discussion](https://github.com/sveltia/sveltia-cms/issues/278#issuecomment-2565313420))
@@ -386,7 +386,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - Use `{{fields._slug | localize}}` to make the slug field editable and localizable.
   - Slug generation is fail-safe: If a slug cannot be determined from entry content, part of a random UUID is used instead of throwing an error or filling in with arbitrary string field values.[^133]
   - If a collection only has the Markdown `body` field, an entry slug will be generated from a header in the `body`, if exists. This supports a typical VitePress setup.
-  - Entry slug template tags support [transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags.[^29]
+  - Entry slug template tags support [transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags.[^29] For example, you can use `{{fields.date | date('YYYY-MM-DD')}}` to generate a slug like `2025-01-23` from a DateTime field.
   - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed.[^52]
   - The [global `slug` option](https://decapcms.org/docs/configuration-options/#slug-type) accepts the `trim` option to remove leading and trailing replacement characters, such as hyphens, from an entry slug. The default value is `true`. Set to `false` to keep them.
   - The maximum number of characters for an entry slug can be set with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms.[^25]
@@ -2101,7 +2101,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^28]: Netlify/Decap CMS [#2677](https://github.com/decaporg/decap-cms/issues/2677), [#6836](https://github.com/decaporg/decap-cms/pull/6836)
 
-[^29]: Netlify/Decap CMS [#4783](https://github.com/decaporg/decap-cms/issues/4783)
+[^29]: Netlify/Decap CMS [#3750](https://github.com/decaporg/decap-cms/issues/3750), [#4783](https://github.com/decaporg/decap-cms/issues/4783), [#6801](https://github.com/decaporg/decap-cms/issues/6801), [#6806](https://github.com/decaporg/decap-cms/discussions/6806)
 
 [^30]: Netlify/Decap CMS [#565](https://github.com/decaporg/decap-cms/issues/565), [#6733](https://github.com/decaporg/decap-cms/discussions/6733)
 
@@ -2590,8 +2590,6 @@ This project would not have been possible without the open source Netlify CMS pr
 [^274]: Netlify/Decap CMS [#549](https://github.com/decaporg/decap-cms/issues/549)
 
 [^275]: Netlify/Decap CMS [#4762](https://github.com/decaporg/decap-cms/pull/4762)
-
-[^276]: Netlify/Decap CMS [#6806](https://github.com/decaporg/decap-cms/discussions/6806)
 
 [^277]: Netlify/Decap CMS [#86](https://github.com/decaporg/decap-cms/issues/86)
 
