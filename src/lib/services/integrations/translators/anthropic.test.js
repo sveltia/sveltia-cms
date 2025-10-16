@@ -174,7 +174,7 @@ describe('Anthropic Translator Service', () => {
             'anthropic-version': '2023-06-01',
             'anthropic-dangerous-direct-browser-access': 'true',
           }),
-          body: expect.stringContaining('"model":"claude-3-5-haiku-latest"'),
+          body: expect.stringContaining('"model":"claude-haiku-4-5"'),
         }),
       );
     });
@@ -447,7 +447,7 @@ describe('Anthropic Translator Service', () => {
         /** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body),
       );
 
-      expect(requestBody.model).toBe('claude-3-5-haiku-latest');
+      expect(requestBody.model).toBe('claude-haiku-4-5');
       expect(requestBody.temperature).toBe(0.3);
       expect(requestBody.max_tokens).toBe(4000);
     });

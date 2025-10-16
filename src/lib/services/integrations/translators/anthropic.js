@@ -48,7 +48,7 @@ export const availability = async ({ sourceLanguage, targetLanguage }) =>
   !!normalizeLanguage(sourceLanguage) && !!normalizeLanguage(targetLanguage);
 
 /**
- * Translate the given text with Anthropic Claude Haiku 3.5.
+ * Translate the given text with Anthropic Claude Haiku 4.5.
  * Supports markdown content and preserves formatting.
  * @param {string[]} texts Array of original texts.
  * @param {TranslationOptions} options Options.
@@ -75,7 +75,7 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
   const userPrompt = createTranslationUserPrompt(texts);
 
   const requestBody = {
-    model: 'claude-3-5-haiku-latest',
+    model: 'claude-haiku-4-5',
     max_tokens: 4000,
     temperature: 0.3, // Lower temperature for more consistent translations
     system: systemPrompt,
