@@ -332,7 +332,10 @@
   {@const { status, message, count, sourceLanguage } = $copyFromLocaleToast}
   <Alert {status}>
     {$_(`editor.${message}`, {
-      values: { count, source: sourceLanguage ? getLocaleLabel(sourceLanguage) : '' },
+      values: {
+        count,
+        source: sourceLanguage ? (getLocaleLabel(sourceLanguage) ?? sourceLanguage) : '',
+      },
     })}
   </Alert>
 </Toast>

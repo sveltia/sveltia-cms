@@ -62,7 +62,7 @@
     <!-- Need an inner to style elements inside the <dialog> -->
     <div role="none" class="inner">
       {#each listedLocales as locale}
-        {@const label = getLocaleLabel(locale)}
+        {@const label = getLocaleLabel(locale) ?? locale}
         {@const disabled = !$entryDraft?.currentLocales[locale]}
         {@const hasError = Object.values($entryDraft?.validities[locale] ?? {}).some(
           ({ valid }) => !valid,

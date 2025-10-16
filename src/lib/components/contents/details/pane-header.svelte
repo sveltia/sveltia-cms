@@ -83,7 +83,7 @@
     {/if}
     <Spacer flex />
     {#if $thisPane?.mode === 'edit'}
-      {@const localeLabel = getLocaleLabel($thisPane.locale)}
+      {@const localeLabel = getLocaleLabel($thisPane.locale) ?? $thisPane.locale}
       {#if canCopy}
         <TranslateButton locale={$thisPane.locale} {otherLocales} />
       {/if}

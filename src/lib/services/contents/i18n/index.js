@@ -30,28 +30,30 @@ export const getCanonicalLocale = (locale) => {
  * Translate the given locale code in the application UI locale.
  * @param {InternalLocaleCode} locale Locale code like `en`.
  * @param {object} [options] Options.
- * @param {boolean} [options.native] Whether to return the locale name in its native language. By
- * default, the locale name is returned in the current application UI language.
- * @returns {string} Locale label like `English`. If the formatter raises an error, just return the
- * locale code as is.
+ * @param {InternalLocaleCode} [options.displayLocale] Locale code to display the locale name. If
+ * not given, use the current application locale. Default is `en`.
+ * @returns {string | undefined} Locale label like `English`. If the locale is not valid, returns
+ * `undefined`.
  */
-export const getLocaleLabel = (locale, { native = false } = {}) => {
+export const getLocaleLabel = (
+  locale,
+  { displayLocale = getCanonicalLocale(get(appLocale) ?? 'en') } = {},
+) => {
   const canonicalLocale = getCanonicalLocale(locale);
 
   if (!canonicalLocale) {
-    return locale;
+    return undefined;
   }
 
-  const displayLocale = native ? canonicalLocale : getCanonicalLocale(get(appLocale) ?? 'en');
   const formatter = new Intl.DisplayNames(displayLocale, { type: 'language' });
 
   try {
-    return formatter.of(canonicalLocale) ?? locale;
+    return formatter.of(canonicalLocale) ?? undefined;
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
 
-    return locale;
+    return undefined;
   }
 };
 

@@ -230,7 +230,7 @@
             <Group
               class="pane"
               aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-                values: { locale: getLocaleLabel(locale) },
+                values: { locale: getLocaleLabel(locale) ?? locale },
               })}
               data-locale={locale}
               data-mode={mode}
@@ -253,7 +253,7 @@
             {@const { locale, mode } = $editorSecondPane ?? {}}
             <Group
               aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-                values: { locale: getLocaleLabel(locale) },
+                values: { locale: getLocaleLabel(locale) ?? locale },
               })}
               data-locale={locale}
               data-mode={mode}

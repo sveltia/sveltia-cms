@@ -46,7 +46,9 @@
 
 {#if otherLocales.length === 1}
   {@const [otherLocale] = otherLocales}
-  {@const label = $_('translate_from_x', { values: { locale: getLocaleLabel(otherLocale) } })}
+  {@const label = $_('translate_from_x', {
+    values: { locale: getLocaleLabel(otherLocale) ?? otherLocale },
+  })}
   {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
   {#await isButtonDisabled(languagePair) then disabled}
     <!-- @todo Replace `title` with a native tooltip -->

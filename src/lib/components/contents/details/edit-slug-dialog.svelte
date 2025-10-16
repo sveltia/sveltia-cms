@@ -75,7 +75,7 @@
       <section>
         {#if !['_', '_default'].includes(locale)}
           <div role="none">
-            <h3>{getLocaleLabel(locale)}</h3>
+            <h3>{getLocaleLabel(locale) ?? locale}</h3>
           </div>
         {/if}
         <div role="none">

@@ -31,7 +31,7 @@
       >
         {#each $appLocales as locale}
           <Option
-            label={getLocaleLabel(locale, { native: true })}
+            label={getLocaleLabel(locale, { displayLocale: locale }) ?? locale}
             value={locale}
             selected={locale === $appLocale}
             dir="auto"
