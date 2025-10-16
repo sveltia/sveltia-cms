@@ -8,7 +8,7 @@ import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 /**
  * Get the default value map for a File/Image field.
  * @param {GetDefaultValueMapFuncArgs} args Arguments.
- * @returns {Record<string, any>} Default value map.
+ * @returns {Record<string, string>} Default value map.
  */
 export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
   const config = /** @type {MediaField} */ (fieldConfig);
@@ -40,11 +40,7 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
   }
 
   if (!multiple && typeof value === 'string') {
-    value = value.trim();
-
-    if (value) {
-      content[keyPath] = value;
-    }
+    content[keyPath] = value.trim();
   }
 
   return content;
