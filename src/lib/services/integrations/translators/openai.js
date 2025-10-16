@@ -63,7 +63,6 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
     ],
     temperature: 0.3, // Lower temperature for more consistent translations
     max_tokens: 4000,
-    response_format: { type: 'json_object' }, // Enable JSON mode
   };
 
   try {

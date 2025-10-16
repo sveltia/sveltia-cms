@@ -161,7 +161,6 @@ describe('OpenAI Translator Service', () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${mockApiKey}`,
           },
-          body: expect.stringContaining('"response_format":{"type":"json_object"}'),
         }),
       );
     });
@@ -509,7 +508,6 @@ describe('OpenAI Translator Service', () => {
       expect(requestBody.messages[0].content).toContain('JSON array');
       expect(requestBody.model).toBe('gpt-4o-mini');
       expect(requestBody.temperature).toBe(0.3);
-      expect(requestBody.response_format).toEqual({ type: 'json_object' });
     });
 
     it('should use proper authentication header', async () => {
