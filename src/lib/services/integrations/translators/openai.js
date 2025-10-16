@@ -93,20 +93,18 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
 
     const content = data.choices[0].message.content.trim();
     // Parse the JSON response
-    let parsedResponse;
+    let translations;
 
     try {
-      parsedResponse = JSON.parse(content);
+      translations = JSON.parse(content);
     } catch {
       throw new Error('Failed to parse JSON response from OpenAI API.');
     }
 
     // Validate the response structure
-    if (!parsedResponse || !Array.isArray(parsedResponse.translations)) {
+    if (!Array.isArray(translations)) {
       throw new Error('Invalid JSON structure in OpenAI API response.');
     }
-
-    const { translations } = parsedResponse;
 
     // Ensure we have the right number of translations
     if (translations.length !== texts.length) {

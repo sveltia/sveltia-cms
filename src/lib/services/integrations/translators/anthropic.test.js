@@ -134,9 +134,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
-            text: JSON.stringify({
-              translations: ['Bonjour le monde', 'Comment allez-vous ?'],
-            }),
+            text: JSON.stringify(['Bonjour le monde', 'Comment allez-vous ?']),
           },
         ],
       };
@@ -174,9 +172,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
-            text: JSON.stringify({
-              translations: ['Hola mundo'],
-            }),
+            text: JSON.stringify(['Hola mundo']),
           },
         ],
       };
@@ -215,9 +211,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
-            text: JSON.stringify({
-              translations: ['# Bonjour **monde**'],
-            }),
+            text: JSON.stringify(['# Bonjour **monde**']),
           },
         ],
       };
@@ -366,9 +360,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
-            text: JSON.stringify({
-              translations: ['Only one translation'], // Should have 2
-            }),
+            text: JSON.stringify(['Only one translation']), // Should have 2
           },
         ],
       };
@@ -415,9 +407,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
-            text: JSON.stringify({
-              translations: ['Test'],
-            }),
+            text: JSON.stringify(['Test']),
           },
         ],
       };

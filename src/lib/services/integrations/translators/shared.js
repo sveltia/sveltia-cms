@@ -36,8 +36,8 @@ export const createTranslationSystemPrompt = (sourceLanguageName, targetLanguage
   ];
 
   const responseInstructions = [
-    '- Return your response as a valid JSON object with a "translations" array',
-    '- The "translations" array should contain the translated texts in the same order as provided',
+    '- Return your response as a valid JSON array containing the translated texts',
+    '- The array should contain the translated texts in the same order as provided',
     '- VALIDATION: Before responding, double-check that any translate="no", class="notranslate", or notranslate comment content remains EXACTLY the same',
   ];
 
@@ -53,9 +53,9 @@ export const createTranslationSystemPrompt = (sourceLanguageName, targetLanguage
     '- Do NOT use markdown code blocks or formatting\n' +
     '- Do NOT add any explanation or commentary\n' +
     '- Your entire response should be parseable by JSON.parse()\n' +
-    '- Start your response with { and end with }\n\n' +
+    '- Start your response with [ and end with ]\n\n' +
     'Required JSON structure:\n' +
-    '{"translations": ["translation 1", "translation 2", ...]}'
+    '["translation 1", "translation 2", ...]'
   );
 };
 

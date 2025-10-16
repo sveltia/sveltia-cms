@@ -133,9 +133,7 @@ describe('OpenAI Translator Service', () => {
         choices: [
           {
             message: {
-              content: JSON.stringify({
-                translations: ['Bonjour le monde', 'Comment allez-vous ?'],
-              }),
+              content: JSON.stringify(['Bonjour le monde', 'Comment allez-vous ?']),
             },
           },
         ],
@@ -173,9 +171,10 @@ describe('OpenAI Translator Service', () => {
         choices: [
           {
             message: {
-              content: JSON.stringify({
-                translations: ['# Bonjour **monde**', 'Voici une [lien](https://example.com)'],
-              }),
+              content: JSON.stringify([
+                '# Bonjour **monde**',
+                'Voici une [lien](https://example.com)',
+              ]),
             },
           },
         ],
@@ -298,9 +297,7 @@ describe('OpenAI Translator Service', () => {
         choices: [
           {
             message: {
-              content: JSON.stringify({
-                translations: [],
-              }),
+              content: JSON.stringify([]),
             },
           },
         ],
@@ -325,9 +322,7 @@ describe('OpenAI Translator Service', () => {
         choices: [
           {
             message: {
-              content: JSON.stringify({
-                translations: ['Bonjour'],
-              }),
+              content: JSON.stringify(['Bonjour']),
             },
           },
         ],
@@ -352,9 +347,7 @@ describe('OpenAI Translator Service', () => {
         choices: [
           {
             message: {
-              content: JSON.stringify({
-                translations: ['Bonjour\nComment allez-vous ?\nBonne journée !'],
-              }),
+              content: JSON.stringify(['Bonjour\nComment allez-vous ?\nBonne journée !']),
             },
           },
         ],
@@ -380,9 +373,7 @@ describe('OpenAI Translator Service', () => {
         choices: [
           {
             message: {
-              content: JSON.stringify({
-                translations: ['Bonjour'], // Only one translation for two inputs
-              }),
+              content: JSON.stringify(['Bonjour']), // Only one translation for two inputs
             },
           },
         ],
@@ -492,9 +483,7 @@ describe('OpenAI Translator Service', () => {
         choices: [
           {
             message: {
-              content: JSON.stringify({
-                translations: ['Test'],
-              }),
+              content: JSON.stringify(['Test']),
             },
           },
         ],
@@ -517,7 +506,7 @@ describe('OpenAI Translator Service', () => {
 
       expect(requestBody.messages[0].content).toContain('markdown formatting');
       expect(requestBody.messages[0].content).toContain('HTML tags');
-      expect(requestBody.messages[0].content).toContain('JSON object');
+      expect(requestBody.messages[0].content).toContain('JSON array');
       expect(requestBody.model).toBe('gpt-4o-mini');
       expect(requestBody.temperature).toBe(0.3);
       expect(requestBody.response_format).toEqual({ type: 'json_object' });
@@ -528,9 +517,7 @@ describe('OpenAI Translator Service', () => {
         choices: [
           {
             message: {
-              content: JSON.stringify({
-                translations: ['Test'],
-              }),
+              content: JSON.stringify(['Test']),
             },
           },
         ],

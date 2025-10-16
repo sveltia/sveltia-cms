@@ -116,8 +116,8 @@ describe('Translation Shared Utilities', () => {
       expect(prompt).toContain('Do not translate URLs, email addresses');
       expect(prompt).toContain('Do not split translations into separate paragraphs');
       expect(prompt).toContain('Keep each translation as a single continuous text');
-      expect(prompt).toContain('"translations" array');
-      expect(prompt).toContain('{"translations": ["translation 1", "translation 2", ...]}');
+      expect(prompt).toContain('valid JSON array');
+      expect(prompt).toContain('["translation 1", "translation 2", ...]');
       expect(prompt).toContain('Output ONLY valid JSON');
       expect(prompt).toContain('Do NOT use markdown code blocks');
     });
@@ -168,7 +168,7 @@ describe('Translation Shared Utilities', () => {
       expect(systemPrompt).toContain('English to French');
       expect(userPrompt).toContain('["Hello","World"]');
       // Both should reference JSON format requirements
-      expect(systemPrompt).toContain('"translations"');
+      expect(systemPrompt).toContain('valid JSON array');
       expect(systemPrompt).toContain('Output ONLY valid JSON');
       expect(userPrompt).toContain('ONLY valid JSON');
     });
