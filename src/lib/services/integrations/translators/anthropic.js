@@ -2,7 +2,11 @@
  * @import { LanguagePair, TranslationOptions, TranslationService } from '$lib/types/private';
  */
 
-import { createTranslationSystemPrompt, createTranslationUserPrompt } from './shared.js';
+import {
+  createTranslationSystemPrompt,
+  createTranslationUserPrompt,
+  normalizeLanguage,
+} from './shared.js';
 
 const serviceId = 'anthropic';
 const serviceLabel = 'Anthropic Claude';
@@ -10,34 +14,6 @@ const apiLabel = 'Anthropic API';
 const developerURL = 'https://docs.claude.com/en/api/overview';
 const apiKeyURL = 'https://platform.claude.com/settings/keys';
 const apiKeyPattern = /sk-ant-api03-[a-zA-Z0-9-_]{80,}/;
-
-/**
- * Common languages supported by Claude.
- * Claude supports a wide range of languages for translation tasks.
- * @see https://docs.claude.com/en/docs/build-with-claude/multilingual-support
- */
-const SUPPORTED_LANGUAGES = [
-  'af,ar,be,bg,bn,bs,ca,cs,cy,da,de,el,en,eo,es,et,eu,fa,fi,fr,ga,gl,gu,he,hi,hr,hu,hy,id,is,it,ja',
-  'ka,kk,km,kn,ko,ky,la,lt,lv,mk,ml,mn,mr,ms,mt,my,ne,nl,no,pl,pt,ro,ru,si,sk,sl,sq,sr,sv,sw,ta,te',
-  'th,tl,tr,uk,ur,uz,vi,zh',
-]
-  .join(',')
-  .split(',');
-
-/**
- * Normalize a locale code to a supported language code.
- * @param {string} locale Locale code, e.g., 'en', 'fr-FR', 'zh-CN'.
- * @returns {string | undefined} Normalized language code, e.g., 'en', 'fr', 'zh'.
- */
-export const normalizeLanguage = (locale) => {
-  const [lang] = locale.toLowerCase().split(/[-_]/);
-
-  if (SUPPORTED_LANGUAGES.includes(lang)) {
-    return lang;
-  }
-
-  return undefined;
-};
 
 /**
  * Check if the given source and target languages are supported.
@@ -58,20 +34,20 @@ export const availability = async ({ sourceLanguage, targetLanguage }) =>
  * @see https://docs.claude.com/en/api/messages
  */
 const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
-  sourceLanguage = normalizeLanguage(sourceLanguage) ?? '';
-  targetLanguage = normalizeLanguage(targetLanguage) ?? '';
+  const sourceLanguageName = normalizeLanguage(sourceLanguage);
+  const targetLanguageName = normalizeLanguage(targetLanguage);
 
-  if (!sourceLanguage) {
+  if (!sourceLanguageName) {
     throw new Error('Source locale is not supported.');
   }
 
-  if (!targetLanguage) {
+  if (!targetLanguageName) {
     throw new Error('Target locale is not supported.');
   }
 
   // Anthropic Messages API endpoint
   const url = 'https://api.anthropic.com/v1/messages';
-  const systemPrompt = createTranslationSystemPrompt(sourceLanguage, targetLanguage);
+  const systemPrompt = createTranslationSystemPrompt(sourceLanguageName, targetLanguageName);
   const userPrompt = createTranslationUserPrompt(texts);
 
   const requestBody = {

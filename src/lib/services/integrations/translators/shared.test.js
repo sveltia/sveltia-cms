@@ -1,28 +1,103 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createTranslationSystemPrompt, createTranslationUserPrompt } from './shared.js';
+import {
+  createTranslationSystemPrompt,
+  createTranslationUserPrompt,
+  normalizeLanguage,
+} from './shared.js';
 
-// Mock the getLocaleLabel function
+// Mock the i18n functions
 vi.mock('$lib/services/contents/i18n', () => ({
-  getLocaleLabel: vi.fn((locale) => {
+  getLocaleLabel: vi.fn((locale, options) => {
+    // Normalize locale code (handle both - and _ separators, case variations)
+    const normalizedLocale = String(locale || '')
+      .toLowerCase()
+      .replace(/_/g, '-');
+
     /** @type {Record<string, string>} */
     const labels = {
+      // Base languages
       en: 'English',
       fr: 'French',
       de: 'German',
       es: 'Spanish',
       zh: 'Chinese',
       ja: 'Japanese',
+      pt: 'Portuguese',
+      // Regional variants
+      'en-ca': 'Canadian English',
+      'en-us': 'American English',
+      'en-gb': 'British English',
+      'fr-ca': 'Canadian French',
+      'fr-fr': 'French (France)',
+      'zh-cn': 'Chinese (China)',
+      'zh-tw': 'Chinese (Taiwan)',
+      'pt-br': 'Brazilian Portuguese',
+      'pt-pt': 'European Portuguese',
+      'es-mx': 'Mexican Spanish',
+      'es-es': 'Spanish (Spain)',
+      'de-de': 'German (Germany)',
+      'de-at': 'Austrian German',
     };
 
-    return labels[locale] || locale;
+    // When displayLocale is 'en', undefined, or not provided, return the English name
+    if (!options || !options.displayLocale || options.displayLocale === 'en') {
+      return labels[normalizedLocale] || undefined;
+    }
+
+    // Otherwise return the label or the locale itself (for other display locales)
+    return labels[normalizedLocale] || locale;
   }),
 }));
 
 describe('Translation Shared Utilities', () => {
+  describe('normalizeLanguage', () => {
+    it('should return language label for supported locales', () => {
+      expect(normalizeLanguage('en')).toBe('English');
+      expect(normalizeLanguage('fr')).toBe('French');
+      expect(normalizeLanguage('de')).toBe('German');
+      expect(normalizeLanguage('es')).toBe('Spanish');
+      expect(normalizeLanguage('zh')).toBe('Chinese');
+      expect(normalizeLanguage('ja')).toBe('Japanese');
+      expect(normalizeLanguage('pt')).toBe('Portuguese');
+    });
+
+    it('should return regional language labels for locale codes with regions', () => {
+      expect(normalizeLanguage('en-CA')).toBe('Canadian English');
+      expect(normalizeLanguage('en-US')).toBe('American English');
+      expect(normalizeLanguage('en-GB')).toBe('British English');
+      expect(normalizeLanguage('fr-CA')).toBe('Canadian French');
+      expect(normalizeLanguage('fr-FR')).toBe('French (France)');
+      expect(normalizeLanguage('zh-CN')).toBe('Chinese (China)');
+      expect(normalizeLanguage('zh-TW')).toBe('Chinese (Taiwan)');
+      expect(normalizeLanguage('pt-BR')).toBe('Brazilian Portuguese');
+      expect(normalizeLanguage('pt-PT')).toBe('European Portuguese');
+    });
+
+    it('should handle case variations in locale codes', () => {
+      expect(normalizeLanguage('EN')).toBe('English');
+      expect(normalizeLanguage('En-Ca')).toBe('Canadian English');
+      expect(normalizeLanguage('FR-ca')).toBe('Canadian French');
+      expect(normalizeLanguage('ZH-CN')).toBe('Chinese (China)');
+    });
+
+    it('should handle underscore separators in locale codes', () => {
+      expect(normalizeLanguage('en_CA')).toBe('Canadian English');
+      expect(normalizeLanguage('fr_CA')).toBe('Canadian French');
+      expect(normalizeLanguage('pt_BR')).toBe('Brazilian Portuguese');
+    });
+
+    it('should return undefined for unsupported locales', () => {
+      expect(normalizeLanguage('unsupported')).toBeUndefined();
+      expect(normalizeLanguage('xyz')).toBeUndefined();
+      expect(normalizeLanguage('')).toBeUndefined();
+      expect(normalizeLanguage('en-XX')).toBeUndefined();
+    });
+  });
+
   describe('createTranslationSystemPrompt', () => {
     it('should create a system prompt with all instructions', () => {
-      const prompt = createTranslationSystemPrompt('en', 'fr');
+      const prompt = createTranslationSystemPrompt('English', 'French');
 
       expect(prompt).toContain('You are a professional translator');
       expect(prompt).toContain('English to French');
@@ -45,18 +120,6 @@ describe('Translation Shared Utilities', () => {
       expect(prompt).toContain(
         '{\n  "translations": ["translated text 1", "translated text 2", ...]\n}',
       );
-    });
-
-    it('should handle different language pairs correctly', () => {
-      const prompt = createTranslationSystemPrompt('de', 'ja');
-
-      expect(prompt).toContain('German to Japanese');
-    });
-
-    it('should handle unknown languages by using the language code as fallback', () => {
-      const prompt = createTranslationSystemPrompt('unknown', 'fr');
-
-      expect(prompt).toContain('unknown to French');
     });
   });
 
@@ -95,7 +158,7 @@ describe('Translation Shared Utilities', () => {
 
   describe('Integration', () => {
     it('should produce prompts that work together', () => {
-      const systemPrompt = createTranslationSystemPrompt('en', 'fr');
+      const systemPrompt = createTranslationSystemPrompt('English', 'French');
       const userPrompt = createTranslationUserPrompt(['Hello', 'World']);
 
       expect(systemPrompt).toContain('English to French');
@@ -106,7 +169,7 @@ describe('Translation Shared Utilities', () => {
     });
 
     it('should handle markdown and HTML preservation instructions', () => {
-      const prompt = createTranslationSystemPrompt('en', 'fr');
+      const prompt = createTranslationSystemPrompt('English', 'French');
 
       expect(prompt).toContain(
         'markdown formatting (headers, links, bold, italic, code blocks, lists, etc.)',
@@ -116,14 +179,14 @@ describe('Translation Shared Utilities', () => {
     });
 
     it('should include code and technical content preservation instructions', () => {
-      const prompt = createTranslationSystemPrompt('en', 'fr');
+      const prompt = createTranslationSystemPrompt('English', 'French');
 
       expect(prompt).toContain('Do not translate code content within code blocks or inline code');
       expect(prompt).toContain('Do not translate URLs, email addresses, or technical identifiers');
     });
 
     it('should include translation skip instructions for comments and notranslate elements', () => {
-      const prompt = createTranslationSystemPrompt('en', 'fr');
+      const prompt = createTranslationSystemPrompt('English', 'French');
 
       expect(prompt).toContain(
         'CRITICAL: Leave content EXACTLY unchanged within HTML elements that have translate="no"',

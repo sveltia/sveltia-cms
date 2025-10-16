@@ -5,15 +5,19 @@
 import { getLocaleLabel } from '$lib/services/contents/i18n';
 
 /**
+ * Normalize a locale code to a language label in English that AI services can understand.
+ * @param {string} locale Locale code, e.g., 'en', 'fr-FR', 'zh-CN'.
+ * @returns {string | undefined} Normalized language label, e.g., 'English', 'French', 'Chinese'.
+ */
+export const normalizeLanguage = (locale) => getLocaleLabel(locale, { displayLocale: 'en' });
+
+/**
  * Generate a standardized system prompt for AI translation services.
- * @param {string} sourceLanguage Source language code.
- * @param {string} targetLanguage Target language code.
+ * @param {string} sourceLanguageName Source language name, e.g., 'English', 'Canadian French'.
+ * @param {string} targetLanguageName Target language name, e.g., 'French', 'Brazilian Portuguese'.
  * @returns {string} System prompt for translation.
  */
-export const createTranslationSystemPrompt = (sourceLanguage, targetLanguage) => {
-  const sourceLanguageName = getLocaleLabel(sourceLanguage);
-  const targetLanguageName = getLocaleLabel(targetLanguage);
-
+export const createTranslationSystemPrompt = (sourceLanguageName, targetLanguageName) => {
   const baseInstructions = [
     '- CRITICAL: Leave content EXACTLY unchanged within HTML elements that have translate="no"',
     '- CRITICAL: Leave content EXACTLY unchanged within HTML elements that have class="notranslate"',

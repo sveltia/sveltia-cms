@@ -1,21 +1,48 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import anthropicTranslator, { availability, normalizeLanguage } from './anthropic.js';
+import anthropicTranslator, { availability } from './anthropic.js';
 
-// Mock the getLocaleLabel function
+// Mock the i18n functions
 vi.mock('$lib/services/contents/i18n', () => ({
-  getLocaleLabel: vi.fn((locale) => {
+  getLocaleLabel: vi.fn((locale, options) => {
+    // Normalize locale code (handle both - and _ separators, case variations)
+    const normalizedLocale = String(locale || '')
+      .toLowerCase()
+      .replace(/_/g, '-');
+
     /** @type {Record<string, string>} */
     const labels = {
+      // Base languages
       en: 'English',
       fr: 'French',
       de: 'German',
       es: 'Spanish',
       zh: 'Chinese',
       ja: 'Japanese',
+      pt: 'Portuguese',
+      // Regional variants
+      'en-ca': 'Canadian English',
+      'en-us': 'American English',
+      'en-gb': 'British English',
+      'fr-ca': 'Canadian French',
+      'fr-fr': 'French (France)',
+      'zh-cn': 'Chinese (China)',
+      'zh-tw': 'Chinese (Taiwan)',
+      'pt-br': 'Brazilian Portuguese',
+      'pt-pt': 'European Portuguese',
+      'es-mx': 'Mexican Spanish',
+      'es-es': 'Spanish (Spain)',
+      'de-de': 'German (Germany)',
+      'de-at': 'Austrian German',
     };
 
-    return labels[locale] || locale;
+    // When displayLocale is 'en', undefined, or not provided, return the English name
+    if (!options || !options.displayLocale || options.displayLocale === 'en') {
+      return labels[normalizedLocale] || undefined;
+    }
+
+    // Otherwise return the label or the locale itself (for other display locales)
+    return labels[normalizedLocale] || locale;
   }),
 }));
 
@@ -61,71 +88,35 @@ describe('Anthropic Translator Service', () => {
     });
   });
 
-  describe('Language Normalization', () => {
-    describe('normalizeLanguage', () => {
-      it('should normalize basic language codes', () => {
-        expect(normalizeLanguage('en')).toBe('en');
-        expect(normalizeLanguage('fr')).toBe('fr');
-        expect(normalizeLanguage('de')).toBe('de');
-        expect(normalizeLanguage('ja')).toBe('ja');
-        expect(normalizeLanguage('zh')).toBe('zh');
-      });
-
-      it('should handle locale codes with regions', () => {
-        expect(normalizeLanguage('en-US')).toBe('en');
-        expect(normalizeLanguage('fr-FR')).toBe('fr');
-        expect(normalizeLanguage('zh-CN')).toBe('zh');
-        expect(normalizeLanguage('pt-BR')).toBe('pt');
-      });
-
-      it('should handle case variations', () => {
-        expect(normalizeLanguage('EN')).toBe('en');
-        expect(normalizeLanguage('Fr')).toBe('fr');
-        expect(normalizeLanguage('ZH-CN')).toBe('zh');
-      });
-
-      it('should handle underscore separators', () => {
-        expect(normalizeLanguage('en_US')).toBe('en');
-        expect(normalizeLanguage('zh_CN')).toBe('zh');
-      });
-
-      it('should return undefined for unsupported languages', () => {
-        expect(normalizeLanguage('unsupported')).toBeUndefined();
-        expect(normalizeLanguage('xyz')).toBeUndefined();
-        expect(normalizeLanguage('')).toBeUndefined();
-      });
+  describe('Availability', () => {
+    it('should return true for supported language pairs', async () => {
+      await expect(availability({ sourceLanguage: 'en', targetLanguage: 'fr' })).resolves.toBe(
+        true,
+      );
+      await expect(
+        availability({ sourceLanguage: 'fr-FR', targetLanguage: 'zh-CN' }),
+      ).resolves.toBe(true);
+      await expect(availability({ sourceLanguage: 'es', targetLanguage: 'ja' })).resolves.toBe(
+        true,
+      );
     });
 
-    describe('availability', () => {
-      it('should return true for supported language pairs', async () => {
-        await expect(availability({ sourceLanguage: 'en', targetLanguage: 'fr' })).resolves.toBe(
-          true,
-        );
-        await expect(
-          availability({ sourceLanguage: 'fr-FR', targetLanguage: 'zh-CN' }),
-        ).resolves.toBe(true);
-        await expect(availability({ sourceLanguage: 'es', targetLanguage: 'ja' })).resolves.toBe(
-          true,
-        );
-      });
+    it('should return false for unsupported source languages', async () => {
+      await expect(
+        availability({ sourceLanguage: 'unsupported', targetLanguage: 'fr' }),
+      ).resolves.toBe(false);
+    });
 
-      it('should return false for unsupported source languages', async () => {
-        await expect(
-          availability({ sourceLanguage: 'unsupported', targetLanguage: 'fr' }),
-        ).resolves.toBe(false);
-      });
+    it('should return false for unsupported target languages', async () => {
+      await expect(
+        availability({ sourceLanguage: 'en', targetLanguage: 'unsupported' }),
+      ).resolves.toBe(false);
+    });
 
-      it('should return false for unsupported target languages', async () => {
-        await expect(
-          availability({ sourceLanguage: 'en', targetLanguage: 'unsupported' }),
-        ).resolves.toBe(false);
-      });
-
-      it('should return false when both languages are unsupported', async () => {
-        await expect(
-          availability({ sourceLanguage: 'unsupported1', targetLanguage: 'unsupported2' }),
-        ).resolves.toBe(false);
-      });
+    it('should return false when both languages are unsupported', async () => {
+      await expect(
+        availability({ sourceLanguage: 'unsupported1', targetLanguage: 'unsupported2' }),
+      ).resolves.toBe(false);
     });
   });
 
