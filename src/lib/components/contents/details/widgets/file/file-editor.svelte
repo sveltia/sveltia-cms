@@ -39,6 +39,7 @@
 
   /** @type {FieldEditorContext} */
   const { widgetContext = undefined } = getContext('field-editor') ?? {};
+  const inEditorComponent = widgetContext === 'markdown-editor-component';
 
   /** @type {WidgetEditorProps & Props} */
   let {
@@ -78,7 +79,8 @@
   const fileName = $derived($entryDraft?.fileName);
   const isImageWidget = $derived(widgetName === 'image');
   const libraryConfig = $derived(getDefaultMediaLibraryOptions({ fieldConfig }).config);
-  const multiple = $derived(isMultiple(fieldConfig));
+  // Ignore the `multiple` option when the widget is use in a Markdown editor component
+  const multiple = $derived(isMultiple(fieldConfig) && !inEditorComponent);
   const maxSize = $derived(/** @type {number} */ (libraryConfig.max_file_size));
   const showRemoveButton = $derived(
     !required &&
@@ -162,8 +164,7 @@
         } else {
           // Encode spaces as `%20` when the widget is used in the Markdown editor component to
           // avoid issues with Markdown parsers that do not support unencoded spaces in URLs.
-          currentValue =
-            widgetContext === 'markdown-editor-component' ? value.replaceAll(' ', '%20') : value;
+          currentValue = inEditorComponent ? value.replaceAll(' ', '%20') : value;
         }
       }
 
