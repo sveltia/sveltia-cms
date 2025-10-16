@@ -32,8 +32,8 @@ describe('Anthropic Translator Service', () => {
       expect(anthropicTranslator.serviceId).toBe('anthropic');
       expect(anthropicTranslator.serviceLabel).toBe('Anthropic Claude');
       expect(anthropicTranslator.apiLabel).toBe('Anthropic API');
-      expect(anthropicTranslator.developerURL).toBe('https://docs.anthropic.com/en/api/overview');
-      expect(anthropicTranslator.apiKeyURL).toBe('https://console.anthropic.com/settings/keys');
+      expect(anthropicTranslator.developerURL).toBe('https://docs.claude.com/en/api/overview');
+      expect(anthropicTranslator.apiKeyURL).toBe('https://platform.claude.com/settings/keys');
       expect(anthropicTranslator.apiKeyPattern).toBeInstanceOf(RegExp);
     });
 

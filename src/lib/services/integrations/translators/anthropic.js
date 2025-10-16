@@ -7,14 +7,14 @@ import { createTranslationSystemPrompt, createTranslationUserPrompt } from './sh
 const serviceId = 'anthropic';
 const serviceLabel = 'Anthropic Claude';
 const apiLabel = 'Anthropic API';
-const developerURL = 'https://docs.anthropic.com/en/api/overview';
-const apiKeyURL = 'https://console.anthropic.com/settings/keys';
+const developerURL = 'https://docs.claude.com/en/api/overview';
+const apiKeyURL = 'https://platform.claude.com/settings/keys';
 const apiKeyPattern = /sk-ant-api03-[a-zA-Z0-9-_]{80,}/;
 
 /**
  * Common languages supported by Claude.
  * Claude supports a wide range of languages for translation tasks.
- * @see https://docs.anthropic.com/en/docs/about-claude/capabilities
+ * @see https://docs.claude.com/en/docs/build-with-claude/multilingual-support
  */
 const SUPPORTED_LANGUAGES = [
   'af,ar,be,bg,bn,bs,ca,cs,cy,da,de,el,en,eo,es,et,eu,fa,fi,fr,ga,gl,gu,he,hi,hr,hu,hy,id,is,it,ja',
@@ -54,7 +54,8 @@ export const availability = async ({ sourceLanguage, targetLanguage }) =>
  * @param {TranslationOptions} options Options.
  * @returns {Promise<string[]>} Translated strings in the original order.
  * @throws {Error} When the source or target locale is not supported or API call fails.
- * @see https://docs.anthropic.com/en/api/messages
+ * @see https://docs.claude.com/en/docs/about-claude/models/overview
+ * @see https://docs.claude.com/en/api/messages
  */
 const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
   sourceLanguage = normalizeLanguage(sourceLanguage) ?? '';
