@@ -205,6 +205,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast with [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead). Note that Svelte is a compiler and Sveltia CMS is framework-agnostic; it’s served as a vanilla JavaScript bundle.
 - Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.5 MB) and Static CMS (2.6 MB).[^57][^64] This significant reduction in size is thanks to the combination of [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) and [Vite](https://vite.dev/). Sveltia CMS also dynamically loads certain dependencies only when needed, further reducing the initial load time.
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation fields.[^14]
+  - Note: Loading files from GitLab is currently slower than usual because we have implemented a workaround for a [GraphQL complexity limit issue](https://github.com/sveltia/sveltia-cms/issues/525) in GitLab 18.4.2. This workaround will be removed in the future once GitLab has fixed the issue.
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - The Gitea/Forgejo backend is also faster because it utilizes an efficient API method introduced in Gitea 1.24 and Forgejo 12.0.
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
@@ -1195,7 +1196,7 @@ The configuration for a [file collection](https://decapcms.org/docs/collection-f
 Sveltia CMS comes with a handy translation API integration so that you can translate any text field from another locale without leaving the Content Editor. Currently, the following services are supported:
 
 - Google’s [Cloud Translation](https://cloud.google.com/translate)
-- Anthropic’s [Claude Haiku 3.5](https://www.anthropic.com/claude/haiku)
+- Anthropic’s [Claude Haiku 4.5](https://www.anthropic.com/claude/haiku)
 - OpenAI’s [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini)
 
 Google’s API is very fast and offers a free tier. Other LLMs may produce more natural translations, but they are slower and require a paid plan. Choose the one that best fits your needs.
