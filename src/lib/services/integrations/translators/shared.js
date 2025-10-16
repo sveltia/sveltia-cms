@@ -45,16 +45,17 @@ export const createTranslationSystemPrompt = (sourceLanguageName, targetLanguage
 
   return (
     'You are a professional translator. Translate the given texts from ' +
-    `${sourceLanguageName} to ${targetLanguageName}.
-
-IMPORTANT INSTRUCTIONS:
-${allInstructions.join('\n')}
-
-RESPONSE FORMAT:
-Return a JSON object with this exact structure:
-{
-  "translations": ["translated text 1", "translated text 2", ...]
-}`
+    `${sourceLanguageName} to ${targetLanguageName}. ` +
+    'Your response must be valid JSON that can be parsed directly.\n\n' +
+    `IMPORTANT INSTRUCTIONS:\n${allInstructions.join('\n')}\n\n` +
+    'OUTPUT FORMAT:\n' +
+    '- Output ONLY valid JSON, nothing else\n' +
+    '- Do NOT use markdown code blocks or formatting\n' +
+    '- Do NOT add any explanation or commentary\n' +
+    '- Your entire response should be parseable by JSON.parse()\n' +
+    '- Start your response with { and end with }\n\n' +
+    'Required JSON structure:\n' +
+    '{"translations": ["translation 1", "translation 2", ...]}'
   );
 };
 
@@ -64,4 +65,6 @@ Return a JSON object with this exact structure:
  * @returns {string} User prompt for translation.
  */
 export const createTranslationUserPrompt = (texts) =>
-  `Translate these texts:\n${JSON.stringify(texts)}`;
+  'Translate these texts and return ONLY valid JSON (no markdown, no code blocks):\n' +
+  `${JSON.stringify(texts)}\n\n` +
+  'Respond with JSON only:';

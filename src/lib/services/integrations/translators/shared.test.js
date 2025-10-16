@@ -117,9 +117,9 @@ describe('Translation Shared Utilities', () => {
       expect(prompt).toContain('Do not split translations into separate paragraphs');
       expect(prompt).toContain('Keep each translation as a single continuous text');
       expect(prompt).toContain('"translations" array');
-      expect(prompt).toContain(
-        '{\n  "translations": ["translated text 1", "translated text 2", ...]\n}',
-      );
+      expect(prompt).toContain('{"translations": ["translation 1", "translation 2", ...]}');
+      expect(prompt).toContain('Output ONLY valid JSON');
+      expect(prompt).toContain('Do NOT use markdown code blocks');
     });
   });
 
@@ -128,14 +128,17 @@ describe('Translation Shared Utilities', () => {
       const texts = ['Hello world'];
       const prompt = createTranslationUserPrompt(texts);
 
-      expect(prompt).toBe('Translate these texts:\n["Hello world"]');
+      expect(prompt).toContain('["Hello world"]');
+      expect(prompt).toContain('ONLY valid JSON');
+      expect(prompt).toContain('Respond with JSON only');
     });
 
     it('should create a user prompt with multiple texts', () => {
       const texts = ['Hello world', 'How are you?', 'Good morning'];
       const prompt = createTranslationUserPrompt(texts);
 
-      expect(prompt).toBe('Translate these texts:\n["Hello world","How are you?","Good morning"]');
+      expect(prompt).toContain('["Hello world","How are you?","Good morning"]');
+      expect(prompt).toContain('ONLY valid JSON');
     });
 
     it('should handle empty array', () => {
@@ -143,7 +146,8 @@ describe('Translation Shared Utilities', () => {
       const texts = [];
       const prompt = createTranslationUserPrompt(texts);
 
-      expect(prompt).toBe('Translate these texts:\n[]');
+      expect(prompt).toContain('[]');
+      expect(prompt).toContain('ONLY valid JSON');
     });
 
     it('should properly escape JSON content', () => {
@@ -163,9 +167,10 @@ describe('Translation Shared Utilities', () => {
 
       expect(systemPrompt).toContain('English to French');
       expect(userPrompt).toContain('["Hello","World"]');
-      // Both should reference the same JSON structure
+      // Both should reference JSON format requirements
       expect(systemPrompt).toContain('"translations"');
-      expect(userPrompt).toContain('Translate these texts:');
+      expect(systemPrompt).toContain('Output ONLY valid JSON');
+      expect(userPrompt).toContain('ONLY valid JSON');
     });
 
     it('should handle markdown and HTML preservation instructions', () => {
