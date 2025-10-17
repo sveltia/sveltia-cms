@@ -505,6 +505,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - For [better security](#better-security), the `sanitize_preview` option defaults to `true` since [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0).
   - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - A Markdown field plays well with a variable type List field.[^202]
+  - The bullet list marker is a hyphen (`-`) rather than an asterisk (`*`), which is the comment form’s default behaviour on GitHub and GitLab.[^296]
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup.[^160] In our editor, bold is 2 asterisks and italic is an underscore.
   - The built-in `image` component can be inserted with a single click.
   - The built-in `image` component allows users to add, edit or remove a link on an image.[^171] To disable this feature, add `linked_images: false` to the Markdown field options.
@@ -2620,10 +2621,12 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^291]: Netlify/Decap CMS [#7612](https://github.com/decaporg/decap-cms/pull/7612)
 
-[^292]: Netlify/Decap CMS [7518](https://github.com/decaporg/decap-cms/issues/7518)
+[^292]: Netlify/Decap CMS [#7518](https://github.com/decaporg/decap-cms/issues/7518)
 
-[^293]: Netlify/Decap CMS [7616](https://github.com/decaporg/decap-cms/issues/7616)
+[^293]: Netlify/Decap CMS [#7616](https://github.com/decaporg/decap-cms/issues/7616)
 
 [^294]: Netlify/Decap CMS [#7576](https://github.com/decaporg/decap-cms/issues/7576), [#7587](https://github.com/decaporg/decap-cms/issues/7587)
 
-[^295]: Netlify/Decap CMS [6243](https://github.com/decaporg/decap-cms/issues/6243)
+[^295]: Netlify/Decap CMS [#6243](https://github.com/decaporg/decap-cms/issues/6243)
+
+[^296]: Netlify/Decap CMS [#7638](https://github.com/decaporg/decap-cms/discussions/7638)
