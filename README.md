@@ -1227,11 +1227,16 @@ Note that the Translation button on the pane header only translates empty fields
 
 You can also provide your API keys in the Settings dialog or change the default translation service. API keys are stored in the browser’s local storage, so you don’t need to enter them every time.
 
-If you don’t want some text to be translated, use the HTML [`translate`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/translate) attribute or [`notranslate`](https://developers.google.com/search/blog/2008/10/helping-you-break-language-barrier) class. For Anthropic and OpenAI, you can also use the `notranslate` comment to exclude specific parts of Markdown content from translation:
+If you don’t want some text to be translated, use the HTML [`translate`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/translate) attribute or [`notranslate`](https://developers.google.com/search/blog/2008/10/helping-you-break-language-barrier) class:
 
 ```html
 <div translate="no">...</div>
 <span class="notranslate">...</span>
+```
+
+For Anthropic and OpenAI, you can also use the `notranslate` comment to exclude specific parts of Markdown content from translation:
+
+```html
 <!-- notranslate -->...<!-- /notranslate -->
 {/* notranslate */}...{/* /notranslate */}
 ```
