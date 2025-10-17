@@ -125,6 +125,11 @@ describe('Test formatFileName()', () => {
 
     // Test with empty array
     expect(formatFileName('test.jpg', { assetNamesInSameFolder: [] })).toEqual('test.jpg');
+
+    // Test when only base name exists (no numbered suffix) - should create test-1.jpg
+    expect(formatFileName('test.jpg', { assetNamesInSameFolder: ['test.jpg'] })).toEqual(
+      'test-1.jpg',
+    );
   });
 
   test('Combined slugification and duplicate handling', () => {

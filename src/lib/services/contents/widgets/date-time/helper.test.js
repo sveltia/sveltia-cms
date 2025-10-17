@@ -1,3 +1,6 @@
+/* eslint-disable max-classes-per-file */
+
+import dayjs from 'dayjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -190,6 +193,44 @@ describe('getDate', () => {
     expect(Number.isNaN(result?.getTime())).toBe(true);
     consoleSpy.mockRestore();
   });
+
+  test('should catch and log exceptions when getDate fails', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const originalDate = global.Date;
+
+    /**
+     * Custom Date mock that throws errors.
+     */
+    // @ts-expect-error - Mocking Date constructor.
+    global.Date = class extends originalDate {
+      /**
+       * Constructor.
+       * @param {any[]} args Constructor arguments.
+       */
+      constructor(...args) {
+        if (args.length > 0 && typeof args[0] === 'string' && args[0].includes('throw-error')) {
+          throw new Error('Date parsing error');
+        }
+
+        // @ts-expect-error - Passing args to super.
+        super(...args);
+      }
+    };
+
+    /** @type {DateTimeField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      date_format: false,
+    };
+
+    const result = getDate('throw-error', fieldConfig);
+
+    expect(result).toBeUndefined();
+    expect(consoleSpy).toHaveBeenCalled();
+
+    global.Date = originalDate;
+    consoleSpy.mockRestore();
+  });
 });
 
 describe('getCurrentDateTime', () => {
@@ -321,6 +362,33 @@ describe('getCurrentValue', () => {
 
     expect(result).toBe('2023-12-25T14:30:00.000');
   });
+
+  test('should catch and log exceptions in getCurrentValue when formatting fails', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Use an invalid input that will cause an error in the formatting logic
+    /** @type {DateTimeField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      format: 'YYYY-MM-DD',
+      picker_utc: true,
+    };
+
+    // Mock dayjs.utc to throw an error
+    const originalUtc = dayjs.utc;
+
+    dayjs.utc = vi.fn(() => {
+      throw new Error('dayjs error');
+    });
+
+    const result = getCurrentValue('2023-12-25T14:30', '', fieldConfig);
+
+    expect(result).toBeUndefined();
+    expect(consoleSpy).toHaveBeenCalled();
+
+    dayjs.utc = originalUtc;
+    consoleSpy.mockRestore();
+  });
 });
 
 describe('getInputValue', () => {
@@ -442,6 +510,78 @@ describe('getInputValue', () => {
 
     expect(result2).toBe('09:15');
   });
+
+  test('should return empty string when value cannot be parsed with custom format', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    /** @type {DateTimeField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      format: 'YYYY-MM-DD',
+    };
+
+    // Use a completely invalid value that will fail parsing
+    const result = getInputValue('not-a-valid-date-at-all', fieldConfig);
+
+    expect(result).toBe('');
+    consoleSpy.mockRestore();
+  });
+
+  test('should return empty string when getDate returns invalid Date object', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    /** @type {DateTimeField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      format: 'YYYY-MM-DD HH:mm:ss',
+    };
+
+    // This should fail to parse and result in an invalid date
+    const result = getInputValue('this-is-totally-invalid', fieldConfig);
+
+    // Should handle invalid dates gracefully
+    expect(result).toBe('');
+    consoleSpy.mockRestore();
+  });
+
+  test('should return empty string when getDate returns undefined due to exception', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const originalDate = global.Date;
+
+    /**
+     * Custom Date mock that throws errors.
+     */
+    // @ts-expect-error - Mocking Date constructor.
+    global.Date = class extends originalDate {
+      /**
+       * Constructor.
+       * @param {any[]} args Constructor arguments.
+       */
+      constructor(...args) {
+        if (args.length > 0 && typeof args[0] === 'string' && args[0].includes('parse-fail')) {
+          throw new Error('Date parsing error');
+        }
+
+        // @ts-expect-error - Passing args to super.
+        super(...args);
+      }
+    };
+
+    /** @type {DateTimeField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      date_format: false,
+    };
+
+    // This will trigger getDate to throw and return undefined
+    const result = getInputValue('parse-fail', fieldConfig);
+
+    expect(result).toBe('');
+    expect(consoleSpy).toHaveBeenCalled();
+
+    global.Date = originalDate;
+    consoleSpy.mockRestore();
+  });
 });
 
 describe('getDateTimeFieldDisplayValue', () => {
@@ -561,6 +701,18 @@ describe('getDateTimeFieldDisplayValue', () => {
 
     expect(typeof result).toBe('string');
     expect(result.length).toBeGreaterThan(0);
+  });
+
+  test('should catch errors when format parsing fails in getDateTimeFieldDisplayValue', () => {
+    // Use a format and value combination that dayjs can't parse
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD HH:mm:ss' },
+      currentValue: 'completely-invalid-format-value',
+    });
+
+    // When dayjs parsing fails in the try block, it falls to regular date parsing
+    expect(typeof result).toBe('string');
   });
 });
 

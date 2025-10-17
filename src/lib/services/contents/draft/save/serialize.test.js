@@ -862,4 +862,164 @@ describe('Test serializeContent()', () => {
       },
     });
   });
+
+  test('serializes content with canonical slug key present', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: 'slug' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'slug', widget: 'string' },
+        { name: 'body', widget: 'markdown' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      title: 'Test Post',
+      slug: 'test-post-slug',
+      body: 'Content here',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    // The slug should be present in the result
+    expect(result).toEqual({
+      title: 'Test Post',
+      slug: 'test-post-slug',
+      body: 'Content here',
+    });
+  });
+
+  test('serializes content with keyvalue field', () => {
+    getField.mockImplementation((args) => {
+      const { keyPath } = args;
+
+      if (keyPath === 'metadata') {
+        return { name: 'metadata', widget: 'keyvalue' };
+      }
+
+      return { name: keyPath, widget: 'string' };
+    });
+
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'metadata', widget: 'keyvalue' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      title: 'Test Post',
+      'metadata.author': 'John Doe',
+      'metadata.version': '1.0',
+      'metadata.category': 'tech',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(result).toEqual({
+      title: 'Test Post',
+      metadata: {
+        author: 'John Doe',
+        version: '1.0',
+        category: 'tech',
+      },
+    });
+  });
+
+  test('serializes content with remainder properties not in field list', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [{ name: 'title', widget: 'string' }],
+      isIndexFile: false,
+    };
+
+    // Use flattened format since that's what the function expects
+    const valueMap = {
+      title: 'Test Post',
+      customField1: 'value1',
+      customField2: 'value2',
+      'nested.prop': 'value',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    // All properties should be present, including those not in the field list
+    expect(result).toEqual({
+      title: 'Test Post',
+      customField1: 'value1',
+      customField2: 'value2',
+      nested: { prop: 'value' },
+    });
+  });
+
+  test('serializes content with list field using wildcard pattern matching', async () => {
+    // Mock createKeyPathList to return a wildcard pattern for list items
+    const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+    vi.mocked(createKeyPathList).mockReturnValueOnce(['title', 'items.*']);
+
+    getField.mockImplementation((args) => {
+      const { keyPath } = args;
+
+      if (keyPath === 'items.*') {
+        return { name: 'items', widget: 'list' };
+      }
+
+      return { name: keyPath, widget: 'string' };
+    });
+
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'items', widget: 'list' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      title: 'Test Post',
+      'items.0': 'First',
+      'items.1': 'Second',
+      'items.2': 'Third',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(result).toEqual({
+      title: 'Test Post',
+      items: ['First', 'Second', 'Third'],
+    });
+  });
 });

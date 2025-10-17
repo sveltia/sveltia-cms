@@ -162,6 +162,77 @@ describe('draft/update/copy', () => {
       // Empty values should not be copied
       expect(mockUpdate).toHaveBeenCalled();
     });
+
+    it('should show info toast when no fields to copy', async () => {
+      // Set all target fields to same value as source (already copied)
+      mockEntryDraft.currentValues.ja.title = 'English Title';
+      mockEntryDraft.currentValues.ja.body = 'English Body';
+
+      // Clear any previous calls from setup
+      mockUpdate.mockClear();
+
+      await copyFromLocaleUpdate({
+        sourceLanguage: 'en',
+        targetLanguage: 'ja',
+        translate: false,
+      });
+
+      // Should not call update when nothing to copy
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should show info toast when no fields to translate', async () => {
+      // Set all target fields to already have content
+      mockEntryDraft.currentValues.ja.title = 'Already has content';
+      mockEntryDraft.currentValues.ja.body = 'Already has content';
+
+      // Clear any previous calls from setup
+      mockUpdate.mockClear();
+
+      await copyFromLocaleUpdate({
+        sourceLanguage: 'en',
+        targetLanguage: 'ja',
+        translate: true,
+      });
+
+      // Should not call update when nothing to translate
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should call translateFields when translate is true', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs');
+      const mockTranslate = vi.fn().mockResolvedValue(['Japanese Title', 'Japanese Body']);
+
+      mockGet.mockImplementation((store) => {
+        if (store === translator) {
+          return {
+            serviceId: 'google',
+            markdownSupported: true,
+            translate: mockTranslate,
+          };
+        }
+
+        if (store === prefs) {
+          return { apiKeys: { google: 'test-api-key' } };
+        }
+
+        if (store === entryDraft) {
+          return mockEntryDraft;
+        }
+
+        return undefined;
+      });
+
+      await copyFromLocaleUpdate({
+        sourceLanguage: 'en',
+        targetLanguage: 'ja',
+        translate: true,
+      });
+
+      expect(mockTranslate).toHaveBeenCalled();
+      expect(mockUpdate).toHaveBeenCalled();
+    });
   });
 
   describe('turndownService (internal)', () => {

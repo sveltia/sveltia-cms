@@ -171,6 +171,71 @@ describe('assets/kinds', () => {
 
       expect(result).toBe('image');
     });
+
+    it('should handle blob URLs successfully', async () => {
+      global.fetch = vi.fn(() =>
+        Promise.resolve(
+          /** @type {Response} */ (
+            /** @type {unknown} */ ({
+              /**
+               * Mock blob method.
+               * @returns {Promise<Blob>} Blob.
+               */
+              blob: () => Promise.resolve(new Blob([''], { type: 'image/jpeg' })),
+            })
+          ),
+        ),
+      );
+
+      const result = await getMediaKind('blob:http://example.com/blob-id');
+
+      expect(result).toBe('image');
+    });
+
+    it('should handle blob URL fetch errors', async () => {
+      global.fetch = vi.fn(() => Promise.reject(new Error('Fetch failed')));
+
+      const result = await getMediaKind('blob:http://example.com/blob-id');
+
+      expect(result).toBe(undefined);
+    });
+
+    it('should handle URLs with image CDN hostname', async () => {
+      const result = await getMediaKind('https://images.unsplash.com/photo-123?w=800');
+
+      expect(result).toBe('image');
+    });
+
+    it('should handle URLs and extract pathname', async () => {
+      vi.mocked(mime.getType).mockReturnValue('video/mp4');
+
+      const result = await getMediaKind('https://example.com/videos/movie.mp4?token=abc');
+
+      expect(result).toBe('video');
+      expect(mime.getType).toHaveBeenCalledWith('/videos/movie.mp4');
+    });
+
+    it('should return undefined for x- subtypes', async () => {
+      const mockBlob = new Blob([''], { type: 'image/x-custom' });
+      const result = await getMediaKind(mockBlob);
+
+      expect(result).toBe(undefined);
+    });
+
+    it('should handle video with x- subtype', async () => {
+      const mockBlob = new Blob([''], { type: 'video/x-msvideo' });
+      const result = await getMediaKind(mockBlob);
+
+      expect(result).toBe(undefined);
+    });
+
+    it('should return undefined when mimeType is empty', async () => {
+      vi.mocked(mime.getType).mockReturnValue(null);
+
+      const result = await getMediaKind('unknown.file');
+
+      expect(result).toBe(undefined);
+    });
   });
 
   describe('getAssetKind', () => {

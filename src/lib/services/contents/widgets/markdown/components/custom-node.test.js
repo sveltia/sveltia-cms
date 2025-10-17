@@ -417,4 +417,432 @@ describe('createCustomNodeClass', () => {
       expect(node.isKeyboardSelectable()).toBe(true);
     });
   });
+
+  describe('Tag name extraction', () => {
+    it('should extract tag name from preview when available', () => {
+      const componentWithPreview = {
+        ...mockComponentDef,
+        /**
+         * Convert properties to preview format.
+         * @returns {string} Preview HTML.
+         */
+        toPreview: () => '<span>Preview content</span>',
+        /**
+         * Convert properties to block format.
+         * @param {Record<string, any>} props Properties.
+         * @returns {string} Block string.
+         */
+        toBlock: (props) => `{% test ${props.title || ''} %}`,
+      };
+
+      const CustomNode = createCustomNodeClass(componentWithPreview);
+      const importDOM = CustomNode.importDOM();
+
+      expect(importDOM).toBeDefined();
+      expect(importDOM.span).toBeDefined();
+    });
+
+    it('should extract tag name from block when preview does not match', () => {
+      const componentWithBlockTag = {
+        ...mockComponentDef,
+        /**
+         * Convert properties to preview format.
+         * @returns {string} Preview string.
+         */
+        toPreview: () => 'Plain text without tags',
+        /**
+         * Convert properties to block format.
+         * @returns {string} Block string.
+         */
+        toBlock: () => '<article>Block content</article>',
+      };
+
+      const CustomNode = createCustomNodeClass(componentWithBlockTag);
+      const importDOM = CustomNode.importDOM();
+
+      expect(importDOM).toBeDefined();
+      expect(importDOM.article).toBeDefined();
+    });
+
+    it('should handle when both preview and block return non-tag strings', () => {
+      const componentNoTag = {
+        ...mockComponentDef,
+        /**
+         * Convert properties to preview format.
+         * @returns {string} Preview string.
+         */
+        toPreview: () => 'Plain text',
+        /**
+         * Convert properties to block format.
+         * @returns {string} Block string.
+         */
+        toBlock: () => 'Plain block',
+      };
+
+      const CustomNode = createCustomNodeClass(componentNoTag);
+      const importDOM = CustomNode.importDOM();
+
+      expect(importDOM).toBeDefined();
+      expect(Object.keys(importDOM).length).toBe(0);
+    });
+  });
+
+  describe('DOM import conversion', () => {
+    it('should convert DOM elements when tagName is present', () => {
+      const componentWithTag = {
+        ...mockComponentDef,
+        fields: [
+          { name: 'src', label: 'Source', widget: 'string' },
+          { name: 'alt', label: 'Alt text', widget: 'string' },
+        ],
+        /**
+         * Convert properties to preview format.
+         * @returns {string} Preview HTML.
+         */
+        toPreview: () => '<img src="" alt="">',
+        /**
+         * Convert properties to block format.
+         * @param {Record<string, any>} props Properties.
+         * @returns {string} Block string.
+         */
+        toBlock: (props) => `![${props.alt}](${props.src})`,
+      };
+
+      const CustomNode = createCustomNodeClass(componentWithTag);
+      const importDOM = CustomNode.importDOM();
+
+      expect(importDOM.img).toBeDefined();
+
+      const conversion = importDOM.img();
+
+      expect(conversion).toBeDefined();
+      expect(conversion.priority).toBe(3);
+
+      const mockElement = {
+        src: 'test.jpg',
+        alt: 'Test image',
+      };
+
+      const result = conversion.conversion(mockElement);
+
+      expect(result.node).toBeInstanceOf(CustomNode);
+      expect(result.node.__props).toEqual({
+        src: 'test.jpg',
+        alt: 'Test image',
+      });
+    });
+
+    it('should handle fields with missing values in DOM conversion', () => {
+      const componentWithTag = {
+        ...mockComponentDef,
+        fields: [
+          { name: 'title', label: 'Title', widget: 'string' },
+          { name: 'missing', label: 'Missing', widget: 'string' },
+        ],
+        /**
+         * Convert properties to preview format.
+         * @returns {string} Preview HTML.
+         */
+        toPreview: () => '<div>Test</div>',
+        /**
+         * Convert properties to block format.
+         * @returns {string} Block string.
+         */
+        toBlock: () => '{% test %}',
+      };
+
+      const CustomNode = createCustomNodeClass(componentWithTag);
+      const importDOM = CustomNode.importDOM();
+      const conversion = importDOM.div();
+
+      const mockElement = {
+        title: 'Present',
+      };
+
+      const result = conversion.conversion(mockElement);
+
+      expect(result.node.__props).toEqual({
+        title: 'Present',
+        missing: '',
+      });
+    });
+  });
+
+  describe('Linked image conversion', () => {
+    it('should handle linked-image component conversion', () => {
+      const linkedImageComponentDef = {
+        id: 'linked-image',
+        label: 'Linked Image',
+        fields: [
+          { name: 'src', label: 'Image', widget: 'image' },
+          { name: 'alt', label: 'Alt', widget: 'string' },
+          { name: 'title', label: 'Title', widget: 'string' },
+          { name: 'link', label: 'Link', widget: 'string' },
+        ],
+        pattern: /!\[(.+?)\]\((.+?)\)/,
+        /**
+         * Convert properties to block format.
+         * @param {Record<string, any>} props Properties.
+         * @returns {string} Block string.
+         */
+        toBlock: (props) => `![${props.alt}](${props.src})`,
+        /**
+         * Convert properties to preview format.
+         * @param {Record<string, any>} props Properties.
+         * @returns {string} Preview HTML.
+         */
+        toPreview: (props) => `<img src="${props.src}" alt="${props.alt}">`,
+        /**
+         * Extract properties from match array.
+         * @param {RegExpMatchArray} match Regex match array.
+         * @returns {Record<string, any>} Properties.
+         */
+        fromBlock: (match) => ({ alt: match[1], src: match[2] }),
+      };
+
+      const CustomNode = createCustomNodeClass(linkedImageComponentDef);
+      const importDOM = CustomNode.importDOM();
+
+      expect(importDOM.a).toBeDefined();
+
+      const mockAnchor = {
+        href: 'https://example.com',
+        firstChild: {
+          nodeName: 'IMG',
+          src: 'image.jpg',
+          alt: 'Test image',
+          title: 'Image title',
+        },
+      };
+
+      const conversion = importDOM.a(mockAnchor);
+
+      expect(conversion).not.toBeNull();
+      expect(conversion?.priority).toBe(4);
+
+      const result = conversion?.conversion();
+
+      expect(result?.node).toBeInstanceOf(CustomNode);
+      expect(result?.node.__props).toEqual({
+        src: 'image.jpg',
+        alt: 'Test image',
+        title: 'Image title',
+        link: 'https://example.com',
+      });
+      expect(typeof result?.after).toBe('function');
+      expect(result?.after?.()).toEqual([]);
+    });
+
+    it('should return null for linked-image when firstChild is not an img', () => {
+      const linkedImageComponentDef = {
+        id: 'linked-image',
+        label: 'Linked Image',
+        fields: [],
+        pattern: /!\[(.+?)\]\((.+?)\)/,
+        /**
+         * Convert properties to block format.
+         * @returns {string} Block string.
+         */
+        toBlock: () => '',
+        /**
+         * Convert properties to preview format.
+         * @returns {string} Preview HTML.
+         */
+        toPreview: () => '',
+        /**
+         * Extract properties from match array.
+         * @returns {Record<string, any>} Properties.
+         */
+        fromBlock: () => ({}),
+      };
+
+      const CustomNode = createCustomNodeClass(linkedImageComponentDef);
+      const importDOM = CustomNode.importDOM();
+
+      const mockAnchor = {
+        href: 'https://example.com',
+        firstChild: {
+          nodeName: 'SPAN',
+        },
+      };
+
+      const conversion = importDOM.a(mockAnchor);
+
+      expect(conversion).toBeNull();
+    });
+
+    it('should return null for linked-image when firstChild is undefined', () => {
+      const linkedImageComponentDef = {
+        id: 'linked-image',
+        label: 'Linked Image',
+        fields: [],
+        pattern: /!\[(.+?)\]\((.+?)\)/,
+        /**
+         * Convert properties to block format.
+         * @returns {string} Block string.
+         */
+        toBlock: () => '',
+        /**
+         * Convert properties to preview format.
+         * @returns {string} Preview HTML.
+         */
+        toPreview: () => '',
+        /**
+         * Extract properties from match array.
+         * @returns {Record<string, any>} Properties.
+         */
+        fromBlock: () => ({}),
+      };
+
+      const CustomNode = createCustomNodeClass(linkedImageComponentDef);
+      const importDOM = CustomNode.importDOM();
+
+      const mockAnchor = {
+        href: 'https://example.com',
+      };
+
+      const conversion = importDOM.a(mockAnchor);
+
+      expect(conversion).toBeNull();
+    });
+  });
+
+  describe('onChange handler', () => {
+    it('should handle update event in onChange', async () => {
+      const { mount, tick } = await import('svelte');
+      const { getNearestEditorFromDOMNode } = await import('lexical');
+
+      vi.clearAllMocks();
+
+      let capturedOnChange;
+
+      vi.mocked(mount).mockImplementation((component, options) => {
+        capturedOnChange = options.props.onChange;
+
+        return {
+          getElement: vi.fn(() => document.createElement('div')),
+          destroy: vi.fn(),
+        };
+      });
+
+      const mockEditor = {
+        update: vi.fn((callback) => callback()),
+      };
+
+      vi.mocked(getNearestEditorFromDOMNode).mockReturnValue(mockEditor);
+
+      const CustomNode = createCustomNodeClass(mockComponentDef);
+      const node = new CustomNode({ title: 'Initial' });
+
+      node.getWritable = vi.fn(() => node);
+      node.remove = vi.fn();
+
+      // Create DOM to trigger mount
+      node.createDOM();
+
+      expect(capturedOnChange).toBeDefined();
+
+      // Simulate update event
+      await capturedOnChange({
+        type: 'update',
+        detail: { title: 'Updated' },
+      });
+
+      expect(tick).toHaveBeenCalled();
+      expect(getNearestEditorFromDOMNode).toHaveBeenCalled();
+      expect(mockEditor.update).toHaveBeenCalled();
+      expect(node.getWritable).toHaveBeenCalled();
+      expect(node.__props).toEqual({ title: 'Updated' });
+    });
+
+    it('should handle update event with getWritable error', async () => {
+      const { mount } = await import('svelte');
+      const { getNearestEditorFromDOMNode } = await import('lexical');
+
+      vi.clearAllMocks();
+
+      let capturedOnChange;
+
+      vi.mocked(mount).mockImplementation((component, options) => {
+        capturedOnChange = options.props.onChange;
+
+        return {
+          getElement: vi.fn(() => document.createElement('div')),
+          destroy: vi.fn(),
+        };
+      });
+
+      const mockEditor = {
+        update: vi.fn((callback) => callback()),
+      };
+
+      vi.mocked(getNearestEditorFromDOMNode).mockReturnValue(mockEditor);
+
+      const CustomNode = createCustomNodeClass(mockComponentDef);
+      const node = new CustomNode({ title: 'Initial' });
+
+      node.getWritable = vi.fn(() => {
+        throw new Error('Cannot get writable');
+      });
+
+      // Create DOM to trigger mount
+      node.createDOM();
+
+      // Simulate update event - should not throw
+      await expect(
+        capturedOnChange({
+          type: 'update',
+          detail: { title: 'Updated' },
+        }),
+      ).resolves.not.toThrow();
+    });
+
+    it('should handle remove event in onChange', async () => {
+      const { mount, tick, unmount } = await import('svelte');
+      const { getNearestEditorFromDOMNode } = await import('lexical');
+
+      vi.clearAllMocks();
+
+      let capturedOnChange;
+      let capturedComponent;
+
+      vi.mocked(mount).mockImplementation((component, options) => {
+        capturedOnChange = options.props.onChange;
+        capturedComponent = {
+          getElement: vi.fn(() => document.createElement('div')),
+          destroy: vi.fn(),
+        };
+
+        return capturedComponent;
+      });
+
+      const mockEditor = {
+        update: vi.fn((callback) => callback()),
+      };
+
+      vi.mocked(getNearestEditorFromDOMNode).mockReturnValue(mockEditor);
+
+      const CustomNode = createCustomNodeClass(mockComponentDef);
+      const node = new CustomNode({ title: 'Initial' });
+
+      node.remove = vi.fn();
+
+      // Create DOM to trigger mount
+      node.createDOM();
+
+      expect(capturedOnChange).toBeDefined();
+
+      // Simulate remove event
+      await capturedOnChange({
+        type: 'remove',
+        detail: {},
+      });
+
+      expect(tick).toHaveBeenCalled();
+      expect(getNearestEditorFromDOMNode).toHaveBeenCalled();
+      expect(mockEditor.update).toHaveBeenCalled();
+      expect(unmount).toHaveBeenCalledWith(capturedComponent);
+      expect(node.remove).toHaveBeenCalled();
+    });
+  });
 });

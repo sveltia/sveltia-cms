@@ -740,16 +740,24 @@ describe('Test prepareEntry()', () => {
   /** @type {any} */
   let getCollection;
   /** @type {any} */
+  let getCollectionFile;
+  /** @type {any} */
   let parseEntryFile;
+  /** @type {any} */
+  let hasRootListField;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     const collectionModule = await import('$lib/services/contents/collection');
+    const collectionFilesModule = await import('$lib/services/contents/collection/files');
     const parseModule = await import('$lib/services/contents/file/parse');
+    const listHelperModule = await import('$lib/services/contents/widgets/list/helper');
 
     getCollection = collectionModule.getCollection;
+    getCollectionFile = collectionFilesModule.getCollectionFile;
     parseEntryFile = parseModule.parseEntryFile;
+    hasRootListField = listHelperModule.hasRootListField;
   });
 
   test('skips when parsing fails', async () => {
@@ -799,7 +807,418 @@ describe('Test prepareEntry()', () => {
     expect(entries).toHaveLength(0);
   });
 
-  // Add more comprehensive tests for prepareEntry...
+  test('skips when fileName is provided but collectionFile not found', async () => {
+    parseEntryFile.mockResolvedValue({ title: 'Test' });
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /test/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: false,
+        allLocales: ['en'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+    getCollectionFile.mockReturnValue(undefined);
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'test.md',
+      path: '/test.md',
+      text: '---\\ntitle: Test\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts', fileName: 'about' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    expect(entries).toHaveLength(0);
+  });
+
+  test('skips when transformedContent is undefined', async () => {
+    parseEntryFile.mockResolvedValue('invalid content');
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [{ name: 'items', widget: 'list' }],
+      _file: {
+        fullPathRegEx: /test/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: false,
+        allLocales: ['en'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+    hasRootListField.mockReturnValue(true);
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'test.md',
+      path: '/test.md',
+      text: 'invalid',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    expect(entries).toHaveLength(0);
+  });
+
+  test('skips when shouldSkipIndexFile returns true', async () => {
+    parseEntryFile.mockResolvedValue({ title: 'Test' });
+    hasRootListField.mockReturnValue(false);
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /test/,
+        subPath: '_index',
+        extension: 'html',
+      },
+      _i18n: {
+        i18nEnabled: false,
+        allLocales: ['en'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: '_index.html',
+      path: '/posts/_index.html',
+      text: '---\\ntitle: Test\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    expect(entries).toHaveLength(0);
+  });
+
+  test('skips when subPath is undefined', async () => {
+    parseEntryFile.mockResolvedValue({ title: 'Test' });
+    hasRootListField.mockReturnValue(false);
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: false,
+        allLocales: ['en'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'test.md',
+      path: '/other/test.md',
+      text: '---\\ntitle: Test\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    expect(entries).toHaveLength(0);
+  });
+
+  test('skips when isMultiFileStructure is true but locale is undefined', async () => {
+    parseEntryFile.mockResolvedValue({ title: 'Test' });
+    hasRootListField.mockReturnValue(false);
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: true,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'test.md',
+      path: '/posts/test.md',
+      text: '---\\ntitle: Test\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    expect(entries).toHaveLength(0);
+  });
+
+  test('processes non-i18n entry successfully', async () => {
+    parseEntryFile.mockResolvedValue({ title: 'Test Post' });
+    hasRootListField.mockReturnValue(false);
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: false,
+        allLocales: ['en'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'my-post.md',
+      path: '/posts/my-post.md',
+      text: '---\\ntitle: Test Post\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].slug).toBe('my-post');
+    expect(entries[0].locales._default).toBeDefined();
+  });
+
+  test('processes i18n single file entry successfully', async () => {
+    parseEntryFile.mockResolvedValue({
+      en: { title: 'Test Post' },
+      fr: { title: 'Article de Test' },
+    });
+    hasRootListField.mockReturnValue(false);
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: true,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'my-post.md',
+      path: '/posts/my-post.md',
+      text: '---\\nen:\\n  title: Test Post\\nfr:\\n  title: Article de Test\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].slug).toBe('my-post');
+    expect(entries[0].locales.en).toBeDefined();
+    expect(entries[0].locales.fr).toBeDefined();
+  });
+  test('processes i18n multi-file entry successfully - new entry', async () => {
+    parseEntryFile.mockResolvedValue({ title: 'Test Post' });
+    hasRootListField.mockReturnValue(false);
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: true,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'my-post.en.md',
+      path: '/posts/my-post.en.md',
+      text: '---\\ntitle: Test Post\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].slug).toBe('my-post');
+    expect(entries[0].locales.en).toBeDefined();
+  });
+  test('processes i18n multi-file entry successfully - merging with existing', async () => {
+    parseEntryFile.mockResolvedValue({ title: 'Article de Test' });
+    hasRootListField.mockReturnValue(false);
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: true,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    // Create an existing entry
+    const existingEntry = /** @type {Entry} */ ({
+      id: 'posts/my-post',
+      slug: 'my-post',
+      subPath: 'my-post',
+      locales: {
+        en: {
+          slug: 'my-post',
+          path: '/posts/my-post.en.md',
+          content: { title: 'Test Post' },
+        },
+      },
+    });
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'my-post.fr.md',
+      path: '/posts/my-post.fr.md',
+      text: '---\\ntitle: Article de Test\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([existingEntry]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    // Should still have 1 entry, not 2
+    expect(entries).toHaveLength(1);
+    expect(entries[0].locales.en).toBeDefined();
+    expect(entries[0].locales.fr).toBeDefined();
+    expect(entries[0].locales.fr.content.title).toBe('Article de Test');
+  });
 });
 
 describe('Test prepareEntries()', () => {

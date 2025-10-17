@@ -300,6 +300,31 @@ describe('draft/validate', () => {
       // Japanese locale should not be validated
       expect(result.validities.ja.title).toBeUndefined();
     });
+
+    it('should skip fields when getField returns undefined', () => {
+      mockEntryDraft.currentValues = {
+        en: {
+          title: 'Test',
+          unknown: 'value',
+        },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string' };
+        }
+
+        // Return undefined for unknown field
+        return undefined;
+      });
+
+      const result = validateFields('currentValues');
+
+      // Title should be validated
+      expect(result.validities.en.title).toBeDefined();
+      // Unknown field should be skipped (not in validities)
+      expect(result.validities.en.unknown).toBeUndefined();
+    });
   });
 
   describe('validateEntry', () => {
@@ -768,6 +793,83 @@ describe('draft/validate', () => {
 
         expect(result).toBeDefined();
         expect(result.rangeUnderflow).toBe(true);
+      });
+
+      it('should validate required number field (int) with null value', () => {
+        const validities = { en: {} };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'count',
+          valueMap: { count: null },
+          value: null,
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'count',
+          widget: 'number',
+          value_type: 'int',
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(true);
+
+        const result = validateAnyField(args);
+
+        expect(result).toBeDefined();
+        expect(result.typeMismatch).toBe(true);
+      });
+
+      it('should validate required number field (float) with null value', () => {
+        const validities = { en: {} };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'price',
+          valueMap: { price: null },
+          value: null,
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'price',
+          widget: 'number',
+          value_type: 'float',
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(true);
+
+        const result = validateAnyField(args);
+
+        expect(result).toBeDefined();
+        expect(result.typeMismatch).toBe(true);
+      });
+
+      it('should validate number field with range overflow', () => {
+        const validities = { en: {} };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'age',
+          valueMap: { age: 150 },
+          value: 150,
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'age',
+          widget: 'number',
+          min: 10,
+          max: 100,
+        });
+
+        const result = validateAnyField(args);
+
+        expect(result).toBeDefined();
+        expect(result.rangeOverflow).toBe(true);
       });
     });
   });

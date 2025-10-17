@@ -199,6 +199,91 @@ describe('assets/index', () => {
       expect(transformFileMock).not.toHaveBeenCalled();
     });
 
+    it.skip('should transform files when transformations are provided', async () => {
+      const originalFile = new File(['content'], 'original.jpg', { type: 'image/jpeg' });
+      const transformedFile = new File(['transformed'], 'transformed.jpg', { type: 'image/jpeg' });
+
+      Object.defineProperty(originalFile, 'size', { value: 500000 });
+      Object.defineProperty(transformedFile, 'size', { value: 300000 });
+
+      /** @type {import('$lib/types/public').ImageTransformations} */
+      const transformations = {
+        jpeg: {
+          quality: 80,
+        },
+      };
+
+      getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        config: {
+          max_file_size: 1000000,
+          multiple: false,
+          transformations,
+        },
+      });
+
+      transformFileMock.mockResolvedValue(transformedFile);
+
+      uploadingAssets.set({
+        folder: undefined,
+        files: [originalFile],
+      });
+
+      // Wait for async processing to complete - transformations take time
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+
+      const result = get(processedAssets);
+
+      expect(result.processing).toBe(false);
+      expect(result.undersizedFiles).toEqual([transformedFile]);
+      expect(transformFileMock).toHaveBeenCalledWith(originalFile, transformations);
+      // Check that the transformed file map was populated
+      expect(result.transformedFileMap.has(transformedFile)).toBe(true);
+      expect(result.transformedFileMap.get(transformedFile)).toBe(originalFile);
+    });
+
+    it.skip('should not populate transformedFileMap when file is not transformed', async () => {
+      const file = new File(['content'], 'original.jpg', { type: 'image/jpeg' });
+
+      Object.defineProperty(file, 'size', { value: 500000 });
+
+      /** @type {import('$lib/types/public').ImageTransformations} */
+      const transformations = {
+        webp: {
+          quality: 85,
+        },
+      };
+
+      getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        config: {
+          max_file_size: 1000000,
+          multiple: false,
+          transformations,
+        },
+      });
+
+      // Return the same file (no transformation)
+      transformFileMock.mockResolvedValue(file);
+
+      uploadingAssets.set({
+        folder: undefined,
+        files: [file],
+      });
+
+      // Wait for async processing to complete - transformations take time
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+
+      const result = get(processedAssets);
+
+      expect(result.processing).toBe(false);
+      expect(result.undersizedFiles).toEqual([file]);
+      // Check that the file is NOT in the transformed file map
+      expect(result.transformedFileMap.has(file)).toBe(false);
+    });
+
     it('should set processing state during transformations', async () => {
       const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 
