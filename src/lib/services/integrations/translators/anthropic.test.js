@@ -284,6 +284,27 @@ describe('Anthropic Translator Service', () => {
       );
     });
 
+    it('should handle API error responses without error message', async () => {
+      const mockFetch = vi.mocked(fetch);
+
+      mockFetch.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            // No error.message field
+          }),
+          {
+            status: 500,
+            statusText: 'Internal Server Error',
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
+      );
+
+      await expect(anthropicTranslator.translate(['test'], mockOptions)).rejects.toThrow(
+        'Anthropic API error: 500 Internal Server Error',
+      );
+    });
+
     it('should handle malformed response structure', async () => {
       const mockFetch = vi.mocked(fetch);
 

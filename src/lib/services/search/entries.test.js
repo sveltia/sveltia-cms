@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
+import { getAssociatedCollections } from '$lib/services/contents/entry';
+
 import { scanEntry, searchEntries } from './entries';
 
 /**
@@ -390,5 +393,49 @@ describe('searchEntries basic functionality', () => {
 
     // Should only include entries with matches
     expect(result.every((entry) => scanEntry({ entry, terms: 'javascript' }) > 0)).toBe(true);
+  });
+
+  it('should test collection name fallback when label is undefined', () => {
+    // Override mock to return collection without label
+    vi.mocked(getAssociatedCollections).mockReturnValueOnce([
+      /** @type {any} */ ({
+        name: 'articles',
+        // No label property - should fallback to name
+      }),
+    ]);
+
+    const entry = createEntry('test-fallback', {
+      title: 'Test Entry',
+      description: 'Testing fallback',
+    });
+
+    // Search for collection name (not label)
+    const points = scanEntry({ entry, terms: 'articles' });
+
+    expect(points).toBeGreaterThan(0);
+  });
+
+  it('should test file name fallback when label is undefined', () => {
+    // Override mock to return files without labels
+    vi.mocked(getCollectionFilesByEntry).mockReturnValueOnce([
+      /** @type {any} */ ({
+        name: 'config-file',
+        // No label property - should fallback to name
+      }),
+      /** @type {any} */ ({
+        name: 'settings-file',
+        // No label property - should fallback to name
+      }),
+    ]);
+
+    const entry = createEntry('test-file-fallback', {
+      title: 'Test Entry',
+      description: 'Testing file fallback',
+    });
+
+    // Search for file name (not label)
+    const points = scanEntry({ entry, terms: 'config' });
+
+    expect(points).toBeGreaterThan(0);
   });
 });

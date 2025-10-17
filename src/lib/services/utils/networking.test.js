@@ -190,6 +190,43 @@ describe('sendRequest', () => {
     expect(result).toEqual(mockSuccessResponse);
   });
 
+  test('should handle 401 unauthorized with token refresh when no Authorization header', async () => {
+    const mockRefreshFunction = vi.fn().mockResolvedValue({ token: 'new-token' });
+    const mockErrorResponse = { error: 'Unauthorized' };
+    const mockSuccessResponse = { data: 'success' };
+
+    // First call returns 401 without Authorization header
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve(mockErrorResponse),
+    });
+
+    // Second call (after refresh) returns success
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve(mockSuccessResponse),
+    });
+
+    const result = await sendRequest(
+      'https://api.example.com/data',
+      {},
+      { refreshAccessToken: mockRefreshFunction },
+    );
+
+    expect(mockRefreshFunction).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    // Should default to 'token' scheme when no Authorization header exists
+    const [, secondInit] = mockFetch.mock.calls[1];
+
+    expect(secondInit.headers.get('Authorization')).toBe('token new-token');
+    expect(result).toEqual(mockSuccessResponse);
+  });
+
   test('should handle server errors with message', async () => {
     const mockErrorResponse = {
       message: 'Server error message',

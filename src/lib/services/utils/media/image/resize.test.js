@@ -70,6 +70,15 @@ describe('Test calculateResize()', () => {
       width: 25,
       height: 50,
     });
+
+    // Portrait image in landscape target (targetWidth > targetHeight)
+    expect(
+      calculateResize({ width: 100, height: 200 }, { width: 100, height: 50, fit: 'contain' }),
+    ).toEqual({
+      scale: 0.25,
+      width: 25,
+      height: 50,
+    });
   });
 
   test('default parameters', () => {

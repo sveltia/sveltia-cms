@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { exportCanvasAsBlob } from './encode';
+import * as encodeModule from './encode';
+
+const { exportCanvasAsBlob } = encodeModule;
 
 // Mock dependencies
 vi.mock('$lib/services/app/dependencies', () => ({
@@ -89,6 +91,60 @@ describe('exportCanvasAsBlob', () => {
 
     expect(result).toBeInstanceOf(Blob);
     expect(result.type).toBe('image/webp');
+  });
+
+  test('should use jSquash encoding when native encoding is not supported', async () => {
+    const { loadModule } = await import('$lib/services/app/dependencies');
+    const mockEncodedBuffer = new Uint8Array([1, 2, 3, 4]);
+    // Mock jSquash encode function
+    const mockEncode = vi.fn(() => Promise.resolve(mockEncodedBuffer));
+
+    vi.mocked(loadModule).mockResolvedValue({ default: mockEncode });
+
+    // Create a new OffscreenCanvas mock that returns wrong type
+    const wrongTypeContext = {
+      getImageData: vi.fn(() => ({
+        data: new Uint8ClampedArray(400),
+        width: 10,
+        height: 10,
+      })),
+    };
+
+    // Mock OffscreenCanvas to return wrong type for AVIF (simulating unsupported encoding)
+    // @ts-ignore - Mock implementation doesn't need all properties
+    global.OffscreenCanvas = vi.fn((width, height) => {
+      if (width === 1 && height === 1) {
+        // This is the check canvas - return wrong type
+        return {
+          getContext: vi.fn(() => wrongTypeContext),
+          convertToBlob: vi.fn(() => Promise.resolve(new Blob([''], { type: 'image/png' }))),
+        };
+      }
+
+      // This is the actual canvas
+      return {
+        getContext: vi.fn(() => mockContext),
+        convertToBlob: vi.fn(() => Promise.resolve(new Blob([''], { type: 'image/avif' }))),
+      };
+    });
+
+    const mockImageData = {
+      data: new Uint8ClampedArray(400),
+      width: 10,
+      height: 10,
+    };
+
+    mockContext.getImageData.mockReturnValue(mockImageData);
+    mockCanvas.width = 10;
+    mockCanvas.height = 10;
+
+    const result = await exportCanvasAsBlob(mockCanvas, { format: 'avif', quality: 90 });
+
+    expect(loadModule).toHaveBeenCalledWith('@jsquash/avif', 'encode.js?module');
+    expect(mockEncode).toHaveBeenCalledWith(mockImageData, { quality: 90 });
+    expect(result).toBeInstanceOf(Blob);
+    expect(result.type).toBe('image/avif');
+    expect(await result.arrayBuffer()).toEqual(mockEncodedBuffer.buffer);
   });
 
   test('should handle jSquash fallback scenario', async () => {

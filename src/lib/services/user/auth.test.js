@@ -166,8 +166,8 @@ describe('auth service', () => {
       const error = new Error('Aborted');
 
       error.name = 'AbortError';
-      mockGet.mockImplementation((fn) => {
-        if (fn.name === 'backendName') return 'local';
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendName) return 'local';
 
         return mockGetLocaleText;
       });
@@ -185,8 +185,8 @@ describe('auth service', () => {
       const error = new Error('Aborted');
 
       error.name = 'AbortError';
-      mockGet.mockImplementation((fn) => {
-        if (fn.name === 'backendName') return 'github';
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendName) return 'github';
 
         return mockGetLocaleText;
       });
@@ -335,6 +335,92 @@ describe('auth service', () => {
       expect(mockPrefs.update).toHaveBeenCalled();
     });
 
+    it('should handle invalid QR code data gracefully', async () => {
+      const encodedData = btoa('invalid json data');
+
+      mockLocalStorage.get.mockResolvedValue(null);
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockGetLocaleText) return mockGetLocaleText;
+
+        return mockSiteConfig;
+      });
+
+      await authModule.signInAutomatically();
+
+      // Should handle the parsing error gracefully (lines 132-133)
+      expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+      // Should not attempt to sign in with invalid data
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+    });
+
+    it('should use local backend when cached user has proxy backendName', async () => {
+      // Test line 104 - when _user?.backendName === 'proxy', it should use 'local'
+      const cachedUser = { token: 'test-token', backendName: 'proxy' };
+
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function that returns null.
+           * @returns {null} Null match result.
+           */
+          match: () => null,
+        },
+      });
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockGetLocaleText) return mockGetLocaleText;
+
+        return mockSiteConfig;
+      });
+      mockBackend.signIn.mockResolvedValue(cachedUser);
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInAutomatically();
+
+      // Should set backendName to 'local' when cached user has 'proxy' backend
+      expect(mockBackendName.set).toHaveBeenCalledWith('local');
+    });
+
+    it('should handle QR code path without encoded data', async () => {
+      // Test line 116 - when path.match() returns null or has no groups
+      mockLocalStorage.get.mockResolvedValue(null);
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function that returns object without groups.
+           * @returns {object} Match result without groups property.
+           */
+          match: () => ({}), // No groups property
+        },
+      });
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockGetLocaleText) return mockGetLocaleText;
+
+        return mockSiteConfig;
+      });
+
+      await authModule.signInAutomatically();
+
+      // Should not call goto or attempt QR code authentication
+      expect(mockGoto).not.toHaveBeenCalled();
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+    });
+
     it('should handle sign in failure gracefully', async () => {
       const cachedUser = { token: 'test-token', backendName: 'github' };
 
@@ -448,7 +534,7 @@ describe('auth service', () => {
 
     it('should handle PAT token authentication failure', async () => {
       mockGet.mockImplementation((store) => {
-        if (store === mockBackend) return mockBackend;
+        if (store === mockBackendStore) return mockBackend;
         if (store === mockGetLocaleText) return mockGetLocaleText;
         if (store && typeof store.subscribe === 'function') return mockSiteConfig;
 
@@ -466,10 +552,49 @@ describe('auth service', () => {
       expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
       expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
       expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      // Lines 210-214 should be covered - specific error for invalid PAT
       expect(authModule.signInError.set).toHaveBeenCalledWith({
         message: 'The provided token is invalid',
         context: 'authentication',
       });
+    });
+
+    it('should handle sign in failure without token (OAuth flow)', async () => {
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockGetLocaleText) return mockGetLocaleText;
+        if (store && typeof store.subscribe === 'function') return mockSiteConfig;
+
+        return mockBackend;
+      });
+
+      const signInError = new Error('Unauthorized');
+
+      signInError.cause = { status: 401 };
+      mockBackend.signIn.mockRejectedValue(signInError);
+
+      // No token provided - OAuth flow
+      await authModule.signInManually('github');
+
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
+      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      // Should use general error handling (else branch of lines 210-214)
+      expect(authModule.signInError.set).toHaveBeenCalled();
+    });
+
+    it('should return early if sign in returns no user', async () => {
+      mockGet.mockReturnValue(mockBackend);
+      mockBackend.signIn.mockResolvedValue(null);
+
+      await authModule.signInManually('github', 'token');
+
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
+      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
+      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      // Lines 226-227 should be covered - early return when no user
+      expect(mockUser.set).not.toHaveBeenCalled();
+      expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
     });
 
     it('should return early if no backend', async () => {
@@ -520,6 +645,34 @@ describe('auth service', () => {
       expect(mockUser.set).toHaveBeenCalledWith(undefined);
       expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
       expect(mockDataLoaded.set).toHaveBeenCalledWith(false);
+    });
+
+    it('should redirect to logout URL when configured', async () => {
+      const mockSiteConfigWithLogout = {
+        backend: { name: 'github' },
+        logout_redirect_url: 'https://example.com/goodbye',
+      };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfigWithLogout;
+
+        return mockSiteConfigWithLogout;
+      });
+      mockBackend.signOut.mockResolvedValue(undefined);
+
+      // Mock window.location
+      const originalWindow = global.window;
+
+      global.window = /** @type {any} */ ({ location: { href: '' } });
+
+      await authModule.signOut();
+
+      // Lines 256-257 should be covered - redirect when logout_redirect_url is set
+      expect(global.window.location.href).toBe('https://example.com/goodbye');
+
+      // Restore
+      global.window = originalWindow;
     });
   });
 });

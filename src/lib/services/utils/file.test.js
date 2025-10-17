@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 import {
   createPath,
   createPathRegEx,
+  decodeFilePath,
   encodeFilePath,
   formatFileName,
   formatSize,
@@ -56,6 +57,17 @@ describe('Test encodeFilePath()', () => {
     );
     expect(encodeFilePath('@assets/images/私の画像.jpg')).toEqual(
       '@assets/images/%E7%A7%81%E3%81%AE%E7%94%BB%E5%83%8F.jpg',
+    );
+  });
+});
+
+describe('Test decodeFilePath()', () => {
+  test('Decode', () => {
+    expect(decodeFilePath('/public/uploads/French%20Hotdog%281%29.jpg')).toEqual(
+      '/public/uploads/French Hotdog(1).jpg',
+    );
+    expect(decodeFilePath('@assets/images/%E7%A7%81%E3%81%AE%E7%94%BB%E5%83%8F.jpg')).toEqual(
+      '@assets/images/私の画像.jpg',
     );
   });
 });

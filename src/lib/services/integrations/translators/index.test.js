@@ -31,16 +31,37 @@ vi.mock('./openai.js', () => ({
   },
 }));
 
-// Mock svelte/store
-vi.mock('svelte/store', () => ({
-  derived: vi.fn(() => ({ subscribe: vi.fn() })),
-  get: vi.fn(),
-  writable: vi.fn(() => ({
-    subscribe: vi.fn(),
-    set: vi.fn(),
-    update: vi.fn(),
-  })),
+vi.mock('./anthropic.js', () => ({
+  default: {
+    serviceId: 'anthropic',
+    serviceLabel: 'Anthropic Claude',
+    apiLabel: 'Anthropic API',
+    developerURL: 'https://console.anthropic.com/',
+    apiKeyURL: 'https://console.anthropic.com/settings/keys',
+    apiKeyPattern: /sk-ant-[a-zA-Z0-9-_]{40,}/,
+    markdownSupported: true,
+    availability: vi.fn(),
+    translate: vi.fn(),
+  },
 }));
+
+vi.mock('svelte/store', () => {
+  // Use globalThis to avoid hoisting issues
+  const mockDerived = vi.fn((stores, callback) => {
+    /** @type {any} */ (globalThis).testDerivedCallback = callback; // Capture the callback
+    return { subscribe: vi.fn() };
+  });
+
+  return {
+    derived: mockDerived,
+    get: vi.fn(),
+    writable: vi.fn(() => ({
+      subscribe: vi.fn(),
+      set: vi.fn(),
+      update: vi.fn(),
+    })),
+  };
+});
 
 describe('Translator Services Index', () => {
   beforeEach(() => {
@@ -118,6 +139,40 @@ describe('Translator Services Index', () => {
     it('should default to Google translator', () => {
       // The store should be initialized with the Google translator by default
       expect(translator).toBeDefined();
+    });
+
+    it('should test derived callback with default prefs', () => {
+      const callback = /** @type {any} */ (globalThis).testDerivedCallback;
+
+      expect(callback).toBeDefined();
+
+      // Test the callback with empty prefs (should default to google)
+      const result = callback([{}]);
+
+      expect(result).toBe(allTranslationServices.google);
+    });
+
+    it('should test derived callback with openai prefs', () => {
+      const callback = /** @type {any} */ (globalThis).testDerivedCallback;
+
+      expect(callback).toBeDefined();
+
+      // Test the callback with prefs specifying openai
+      const result = callback([{ defaultTranslationService: 'openai' }]);
+
+      expect(result).toBe(allTranslationServices.openai);
+    });
+
+    it('should test derived callback fallback for unknown service', () => {
+      const callback = /** @type {any} */ (globalThis).testDerivedCallback;
+
+      expect(callback).toBeDefined();
+
+      // Test the callback with prefs specifying an unknown service
+      const result = callback([{ defaultTranslationService: 'deepl' }]);
+
+      // Should fallback to google when service is not found
+      expect(result).toBe(allTranslationServices.google);
     });
   });
 
