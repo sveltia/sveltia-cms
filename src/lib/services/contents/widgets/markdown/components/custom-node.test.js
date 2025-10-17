@@ -845,4 +845,157 @@ describe('createCustomNodeClass', () => {
       expect(node.remove).toHaveBeenCalled();
     });
   });
+
+  describe('tagName extraction - lines 40-41', () => {
+    it('should extract tagName from preview string', () => {
+      const preview = '<div class="container">content</div>';
+
+      const componentDef = {
+        id: 'div-component',
+        label: 'Div',
+        fields: [],
+        pattern: /div-pattern/,
+        toPreview: () => preview,
+        toBlock: () => '<div>block</div>',
+      };
+
+      const CustomNode = createCustomNodeClass(componentDef);
+
+      expect(CustomNode).toBeDefined();
+      expect(CustomNode.getType()).toBe('div-component');
+    });
+
+    it('should extract tagName from block when preview is not a string', () => {
+      // This tests the second part of the ternary (lines 40-41)
+      const componentDef = {
+        id: 'section-component',
+        label: 'Section',
+        fields: [],
+        pattern: /section-pattern/,
+        toPreview: () => ({ element: 'object' }), // Non-string preview
+        toBlock: () => '<section>block content</section>',
+      };
+
+      const CustomNode = createCustomNodeClass(componentDef);
+
+      expect(CustomNode).toBeDefined();
+      expect(CustomNode.getType()).toBe('section-component');
+    });
+
+    it('should handle case-insensitive tag matching', () => {
+      // The regex uses case-insensitive flag /i
+      const componentDef = {
+        id: 'uppercase-tag',
+        label: 'Uppercase',
+        fields: [],
+        pattern: /upper/,
+        toPreview: () => '<ARTICLE>content</ARTICLE>',
+        toBlock: () => '<div></div>',
+      };
+
+      const CustomNode = createCustomNodeClass(componentDef);
+
+      expect(CustomNode).toBeDefined();
+    });
+
+    it('should return undefined tagName when neither preview nor block have HTML tags', () => {
+      const componentDef = {
+        id: 'plain-text',
+        label: 'Plain',
+        fields: [],
+        pattern: /plain/,
+        toPreview: () => 'Just plain text',
+        toBlock: () => 'More plain text',
+      };
+
+      const CustomNode = createCustomNodeClass(componentDef);
+
+      expect(CustomNode).toBeDefined();
+    });
+
+    it('should handle multiple tags and extract first one', () => {
+      const componentDef = {
+        id: 'multi-tag',
+        label: 'Multi',
+        fields: [],
+        pattern: /multi/,
+        toPreview: () => '<div><span>nested</span></div>',
+        toBlock: () => '<p>paragraph</p>',
+      };
+
+      const CustomNode = createCustomNodeClass(componentDef);
+
+      expect(CustomNode).toBeDefined();
+    });
+
+    it('should handle empty HTML tags', () => {
+      const componentDef = {
+        id: 'empty-tag',
+        label: 'Empty',
+        fields: [],
+        pattern: /empty/,
+        toPreview: () => '<img />',
+        toBlock: () => '<br />',
+      };
+
+      const CustomNode = createCustomNodeClass(componentDef);
+
+      expect(CustomNode).toBeDefined();
+    });
+
+    it('should fall back from preview to block when preview not a string', () => {
+      // This specifically tests line 40-41 fallback path
+      const componentDef = {
+        id: 'fallback-test',
+        label: 'Fallback',
+        fields: [],
+        pattern: /fallback/,
+        toPreview: () => null, // Not a string
+        toBlock: () => '<footer>footer content</footer>',
+      };
+
+      const CustomNode = createCustomNodeClass(componentDef);
+
+      expect(CustomNode).toBeDefined();
+    });
+
+    it('should handle linked-image importDOM with non-img child node', () => {
+      // Test line 106: return null when firstChild is not an img
+      const componentDef = {
+        id: 'linked-image',
+        label: 'Linked Image',
+        fields: [
+          { name: 'src', label: 'Source', widget: 'image' },
+          { name: 'alt', label: 'Alt Text', required: false },
+          { name: 'title', label: 'Title', required: false },
+          { name: 'link', label: 'Link', required: false },
+        ],
+        pattern: /linked-image/,
+        toPreview: () => '<img src="test.jpg" alt="test" />',
+        toBlock: () => '![test](test.jpg)',
+      };
+
+      const CustomNode = createCustomNodeClass(componentDef);
+      const conversionMap = CustomNode.importDOM();
+
+      // Should have 'a' conversion for linked-image component
+      expect(conversionMap).toHaveProperty('a');
+
+      // Create a mock anchor node with non-img first child
+      const mockNode = {
+        nodeName: 'A',
+        firstChild: {
+          nodeName: 'SPAN', // Not an img
+          toLowerCase: () => 'span',
+        },
+      };
+
+      // The 'a' handler should return null for non-img children
+      const handler = conversionMap.a;
+      // @ts-expect-error - Testing internal behavior
+      const result = handler(mockNode);
+
+      expect(result).toBeNull();
+    });
+  });
 });

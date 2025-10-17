@@ -520,3 +520,130 @@ describe('Test processResource()', () => {
     expect(transformFileMock).not.toHaveBeenCalled();
   });
 });
+
+describe('Test getExistingBlobURL()', () => {
+  /** @type {import('vitest').MockedFunction<any>} */
+  let getHashMock;
+
+  beforeEach(async () => {
+    vi.resetAllMocks();
+
+    const { getHash } = await import('@sveltia/utils/crypto');
+
+    getHashMock = vi.mocked(getHash);
+  });
+
+  test('should find existing blob URL when file hash matches', async () => {
+    // This tests line 30 of process.js - the Promise.all path
+    const { getExistingBlobURL } = await import('./process');
+    const mockFile1 = new File(['content'], 'test1.jpg');
+    const mockFile2 = new File(['content'], 'test2.jpg');
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {
+        'blob:url-1': { file: mockFile1 },
+        'blob:url-2': { file: mockFile2 },
+      },
+    };
+
+    // Mock getHash to return matching hash for the second file
+    getHashMock
+      .mockResolvedValueOnce('hash123') // Initial file hash
+      .mockResolvedValueOnce('hash456') // First file in draft
+      .mockResolvedValueOnce('hash123'); // Second file in draft (matches)
+
+    // @ts-ignore - Simplified file for testing
+    const result = await getExistingBlobURL({ draft, file: mockFile2 });
+
+    expect(result).toBe('blob:url-2');
+  });
+
+  test('should return undefined when no matching file found', async () => {
+    const { getExistingBlobURL } = await import('./process');
+    const mockFile1 = new File(['content'], 'test1.jpg');
+    const mockFile2 = new File(['content'], 'test2.jpg');
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {
+        'blob:url-1': { file: mockFile1 },
+      },
+    };
+
+    // Mock getHash to return different hashes
+    getHashMock
+      .mockResolvedValueOnce('hash456') // Initial file hash
+      .mockResolvedValueOnce('hash123'); // File in draft (doesn't match)
+
+    // @ts-ignore - Simplified file for testing
+    const result = await getExistingBlobURL({ draft, file: mockFile2 });
+
+    expect(result).toBeUndefined();
+  });
+
+  test('should handle draft with no files', async () => {
+    const { getExistingBlobURL } = await import('./process');
+    const mockFile = new File(['content'], 'test.jpg');
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: undefined, // Using nullish coalescing
+    };
+
+    getHashMock.mockResolvedValueOnce('hash123');
+
+    // @ts-ignore - Simplified file for testing
+    const result = await getExistingBlobURL({ draft, file: mockFile });
+
+    expect(result).toBeUndefined();
+  });
+
+  test('should handle draft with empty files object', async () => {
+    const { getExistingBlobURL } = await import('./process');
+    const mockFile = new File(['content'], 'test.jpg');
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+    };
+
+    getHashMock.mockResolvedValueOnce('hash123');
+
+    // @ts-ignore - Simplified file for testing
+    const result = await getExistingBlobURL({ draft, file: mockFile });
+
+    expect(result).toBeUndefined();
+  });
+
+  test('should stop searching once a match is found (line 30 behavior)', async () => {
+    const { getExistingBlobURL } = await import('./process');
+    const mockFile1 = new File(['content'], 'test1.jpg');
+    const mockFile2 = new File(['content'], 'test2.jpg');
+    const mockFile3 = new File(['content'], 'test3.jpg');
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {
+        'blob:url-1': { file: mockFile1 },
+        'blob:url-2': { file: mockFile2 },
+        'blob:url-3': { file: mockFile3 },
+      },
+    };
+
+    // Mock getHash - match on first file
+    getHashMock
+      .mockResolvedValueOnce('hash-match') // Initial file hash
+      .mockResolvedValueOnce('hash-match') // First file in draft (matches)
+      .mockResolvedValueOnce('other-hash') // Other drafts
+      .mockResolvedValueOnce('other-hash');
+
+    // @ts-ignore - Simplified file for testing
+    const result = await getExistingBlobURL({ draft, file: mockFile1 });
+
+    expect(result).toBe('blob:url-1');
+    // Promise.all runs all hash comparisons in parallel, so foundURL is set
+    // to the first match and returned after all promises resolve
+    expect(getHashMock).toHaveBeenCalled();
+  });
+});

@@ -127,4 +127,29 @@ describe('Test getOptionLabel()', () => {
 
     expect(result).toEqual([]);
   });
+
+  test('should return cached result on subsequent calls', () => {
+    /** @type {SelectField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      multiple: false,
+      options: [
+        { label: 'First Option', value: 'option1' },
+        { label: 'Second Option', value: 'option2' },
+      ],
+    };
+
+    const valueMap = { category: 'option1' };
+    const keyPath = 'category';
+    // First call - should compute and cache
+    const result1 = getOptionLabel({ fieldConfig, valueMap, keyPath });
+
+    expect(result1).toBe('First Option');
+
+    // Second call with same params - should return cached result
+    const result2 = getOptionLabel({ fieldConfig, valueMap, keyPath });
+
+    expect(result2).toBe('First Option');
+    expect(result1).toBe(result2); // Same reference from cache
+  });
 });

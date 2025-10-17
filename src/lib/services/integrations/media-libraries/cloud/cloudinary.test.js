@@ -2,6 +2,7 @@ import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import cloudinaryService, {
+  fetchResources,
   generateAuthHeader,
   generateSignature,
   getCloudConfig,
@@ -636,6 +637,99 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       await expect(list({ apiKey: mockApiSecret })).rejects.toThrow(
         'Failed to fetch resources: Unauthorized',
       );
+    });
+
+    it('should filter by image kind without expression', async () => {
+      const mockResponse = {
+        resources: [
+          {
+            asset_id: 'asset-img',
+            filename: 'image',
+            format: 'jpg',
+            resource_type: 'image',
+            type: 'upload',
+            secure_url: 'https://res.cloudinary.com/test-cloud/image/upload/v1/image.jpg',
+            bytes: 12345,
+            created_at: '2025-01-01T00:00:00Z',
+          },
+        ],
+        next_cursor: undefined,
+        rate_limit_allowed: 500,
+        rate_limit_remaining: 499,
+        rate_limit_reset_at: Date.now() + 3600000,
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue(mockResponse),
+        }),
+      );
+
+      const results = await list({ kind: 'image', apiKey: mockApiSecret });
+
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      const fetchCall = vi.mocked(fetch).mock.calls[0];
+
+      if (!fetchCall[0]) {
+        throw new Error('Fetch call URL is undefined');
+      }
+
+      const url = new URL(/** @type {string} */ (fetchCall[0]));
+      const expression = url.searchParams.get('expression');
+
+      expect(expression).toBe('resource_type:image');
+      expect(results).toHaveLength(1);
+      expect(results[0].kind).toBe('image');
+    });
+
+    it('should filter by image kind with custom expression', async () => {
+      const mockResponse = {
+        resources: [
+          {
+            asset_id: 'asset-special-img',
+            filename: 'special-image',
+            format: 'png',
+            resource_type: 'image',
+            type: 'upload',
+            secure_url: 'https://res.cloudinary.com/test-cloud/image/upload/v1/special-image.png',
+            bytes: 54321,
+            created_at: '2025-01-02T00:00:00Z',
+          },
+        ],
+        next_cursor: undefined,
+        rate_limit_allowed: 500,
+        rate_limit_remaining: 499,
+        rate_limit_reset_at: Date.now() + 3600000,
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue(mockResponse),
+        }),
+      );
+
+      const results = await fetchResources(
+        { kind: 'image', apiKey: mockApiSecret },
+        { expression: 'filename:special*' },
+      );
+
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      const fetchCall = vi.mocked(fetch).mock.calls[0];
+
+      if (!fetchCall[0]) {
+        throw new Error('Fetch call URL is undefined');
+      }
+
+      const url = new URL(/** @type {string} */ (fetchCall[0]));
+      const expression = url.searchParams.get('expression');
+
+      expect(expression).toBe('(filename:special*) AND resource_type:image');
+      expect(results).toHaveLength(1);
+      expect(results[0].kind).toBe('image');
     });
 
     it('should limit to 10 pages', async () => {

@@ -808,6 +808,106 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(results[1].id).toBe('file2');
     });
 
+    it('should break loop when nextUrl is null (no more pages)', async () => {
+      const mockResponse = {
+        results: [
+          {
+            uuid: 'file1',
+            original_filename: 'single-image.jpg',
+            original_file_url: 'https://ucarecdn.com/file1/single-image.jpg',
+            size: 100,
+            mime_type: 'image/jpeg',
+            is_image: true,
+            is_ready: true,
+            content_info: null,
+            datetime_uploaded: '2025-01-01T00:00:00.000Z',
+            datetime_stored: '2025-01-01T00:00:00.000Z',
+            datetime_removed: null,
+          },
+        ],
+        next: null,
+        total: 1,
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue(mockResponse),
+        }),
+      );
+
+      const results = await list({ apiKey: mockSecretKey });
+
+      // Should fetch only once and return the single file
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(results).toHaveLength(1);
+      expect(results[0].id).toBe('file1');
+    });
+
+    it('should filter results with kind and custom filter, then break on null nextUrl', async () => {
+      const mockResponse = {
+        results: [
+          {
+            uuid: 'file1',
+            original_filename: 'special-image.jpg',
+            original_file_url: 'https://ucarecdn.com/file1/special-image.jpg',
+            size: 100,
+            mime_type: 'image/jpeg',
+            is_image: true,
+            is_ready: true,
+            content_info: null,
+            datetime_uploaded: '2025-01-01T00:00:00.000Z',
+            datetime_stored: '2025-01-01T00:00:00.000Z',
+            datetime_removed: null,
+          },
+          {
+            uuid: 'file2',
+            original_filename: 'other-image.jpg',
+            original_file_url: 'https://ucarecdn.com/file2/other-image.jpg',
+            size: 200,
+            mime_type: 'image/jpeg',
+            is_image: true,
+            is_ready: true,
+            content_info: null,
+            datetime_uploaded: '2025-01-02T00:00:00.000Z',
+            datetime_stored: '2025-01-02T00:00:00.000Z',
+            datetime_removed: null,
+          },
+          {
+            uuid: 'file3',
+            original_filename: 'document.pdf',
+            original_file_url: 'https://ucarecdn.com/file3/document.pdf',
+            size: 300,
+            mime_type: 'application/pdf',
+            is_image: false,
+            is_ready: true,
+            content_info: null,
+            datetime_uploaded: '2025-01-03T00:00:00.000Z',
+            datetime_stored: '2025-01-03T00:00:00.000Z',
+            datetime_removed: null,
+          },
+        ],
+        next: null,
+        total: 3,
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue(mockResponse),
+        }),
+      );
+
+      const results = await list({ kind: 'image', apiKey: mockSecretKey });
+
+      // Should fetch only once
+      expect(fetch).toHaveBeenCalledTimes(1);
+      // Should return only images (not the PDF)
+      expect(results).toHaveLength(2);
+      expect(results[0].kind).toBe('image');
+      expect(results[1].kind).toBe('image');
+    });
+
     it('should reject when public key is not configured', async () => {
       vi.mocked(get).mockReturnValue({});
 
@@ -1229,6 +1329,95 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       // Verify crypto was called to generate signature
       expect(global.crypto.subtle.importKey).toHaveBeenCalled();
       expect(global.crypto.subtle.sign).toHaveBeenCalled();
+    });
+
+    it('should upload non-image files with correct kind', async () => {
+      const mockFilePDF = new File(['pdf content'], 'document.pdf', { type: 'application/pdf' });
+      const mockFileVideo = new File(['video content'], 'video.mp4', { type: 'video/mp4' });
+
+      const mockResponse = {
+        'document.pdf': 'pdf-uuid-123',
+        'video.mp4': 'video-uuid-456',
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue(mockResponse),
+        }),
+      );
+
+      const result = await upload([mockFilePDF, mockFileVideo], { apiKey: mockSecretKey });
+
+      expect(result).toHaveLength(2);
+      // PDF should have kind: 'other'
+      expect(result[0]).toMatchObject({
+        id: 'pdf-uuid-123',
+        fileName: 'document.pdf',
+        kind: 'other',
+      });
+      // Video should have kind: 'video'
+      expect(result[1]).toMatchObject({
+        id: 'video-uuid-456',
+        fileName: 'video.mp4',
+        kind: 'video',
+      });
+    });
+
+    it('should handle file without type property', async () => {
+      const mockFile = new File(['content'], 'unknown.bin');
+
+      // Clear the type property
+      Object.defineProperty(mockFile, 'type', {
+        value: '',
+        writable: false,
+      });
+
+      const mockResponse = {
+        'unknown.bin': 'unknown-uuid-789',
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue(mockResponse),
+        }),
+      );
+
+      const result = await upload([mockFile], { apiKey: mockSecretKey });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        id: 'unknown-uuid-789',
+        fileName: 'unknown.bin',
+        kind: 'other',
+      });
+    });
+
+    it('should handle file size as 0 when file not found', async () => {
+      const mockFile = new File(['content'], 'original.txt', { type: 'text/plain' });
+
+      const mockResponse = {
+        // Server returns a different filename
+        'renamed.txt': 'renamed-uuid-999',
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue(mockResponse),
+        }),
+      );
+
+      const result = await upload([mockFile], { apiKey: mockSecretKey });
+
+      expect(result).toHaveLength(1);
+      // When file is not found by name, size should default to 0
+      expect(result[0]).toMatchObject({
+        id: 'renamed-uuid-999',
+        fileName: 'renamed.txt',
+        size: 0,
+      });
     });
 
     it('should reject when public key is not configured', async () => {

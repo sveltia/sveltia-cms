@@ -390,5 +390,55 @@ describe('Test getDefaultValueMap()', () => {
 
       expect(result).toEqual({ value: '' });
     });
+
+    test('should return custom value_type string without modification (lines 44-45)', () => {
+      // Test when value is a string and value_type is custom
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'my-custom-value',
+        value_type: 'custom-enum', // Custom type
+      };
+
+      const keyPath = 'customField';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      // For custom value_type with string value, return as-is
+      expect(result).toEqual({ customField: 'my-custom-value' });
+    });
+
+    test('should return empty object when custom value_type has non-string value', () => {
+      // Test line 45: return {} when not a string for custom type
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 123, // Non-string value
+        value_type: 'custom-type',
+      };
+
+      const keyPath = 'customField';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      // For custom value_type with non-string value, return empty object
+      expect(result).toEqual({});
+    });
+
+    test('should handle multiple custom value types', () => {
+      const customTypes = ['hex', 'rgb', 'hsl', 'custom-unit'];
+
+      customTypes.forEach((valueType) => {
+        /** @type {NumberField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          default: `value-${valueType}`,
+          value_type: valueType,
+        };
+
+        const keyPath = 'field';
+        const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+        expect(result).toEqual({ field: `value-${valueType}` });
+      });
+    });
   });
 });

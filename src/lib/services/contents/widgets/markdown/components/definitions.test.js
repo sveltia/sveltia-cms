@@ -449,5 +449,117 @@ describe('definitions', () => {
         expect(titleField?.required).toBe(false);
       }
     });
+
+    it('should localize component labels using get(_) (line 77)', async () => {
+      // This tests the localization path where get(_)(...) is called
+      const { get } = await import('svelte/store');
+
+      vi.clearAllMocks();
+
+      // Mock get to return a function that returns the i18n key
+      const getMock = vi.mocked(get);
+
+      getMock.mockImplementation((store) => {
+        if (typeof store === 'function') {
+          return (key) => `localized_${key}`;
+        }
+
+        return store;
+      });
+
+      const builtInDefs = getBuiltInComponentDefs();
+
+      // Should have localized labels
+      builtInDefs.forEach((def) => {
+        expect(typeof def.label).toBe('string');
+        // Labels should be present (either from mock or actual localization)
+        expect(def.label.length).toBeGreaterThan(0);
+      });
+
+      // Verify that get was called for i18n (specifically for labels)
+      expect(getMock).toHaveBeenCalled();
+    });
+
+    it('should include localized field labels in built-in components', () => {
+      // More tests for the localization paths in getBuiltInComponentDefs
+      const builtInDefs = getBuiltInComponentDefs();
+
+      builtInDefs.forEach((def) => {
+        // Check that fields exist and have localized labels
+        if (def.fields && Array.isArray(def.fields)) {
+          def.fields.forEach((field) => {
+            expect(typeof field.label).toBe('string');
+            expect(field.label.length).toBeGreaterThan(0);
+          });
+        }
+      });
+    });
+
+    it('should return components with correct field structure', () => {
+      // Verify the common image props structure is used correctly
+      const builtInDefs = getBuiltInComponentDefs();
+      const imageDef = builtInDefs.find((def) => def.id === 'image');
+
+      expect(imageDef).toBeDefined();
+      expect(imageDef?.fields).toBeInstanceOf(Array);
+      expect(imageDef?.fields.length).toBeGreaterThan(0);
+
+      // Each field should have required structure
+      imageDef?.fields.forEach((field) => {
+        expect(field).toHaveProperty('name');
+        expect(field).toHaveProperty('label');
+
+        // Not all fields have a widget property, so just check it exists if present
+        if (field.widget) {
+          expect(typeof field.widget).toBe('string');
+        }
+      });
+    });
+  });
+
+  describe('getComponentDef', () => {
+    it('should return undefined for non-existent component', () => {
+      const result = getComponentDef('non-existent-component');
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return image component definition', () => {
+      const result = getComponentDef('image');
+
+      expect(result).toBeDefined();
+      expect(result?.id).toBe('image');
+      // The label depends on the i18n mock behavior
+      expect(typeof result?.label).toBe('string');
+      expect(result?.label.length).toBeGreaterThan(0);
+    });
+
+    it('should return linked-image component definition', () => {
+      const result = getComponentDef('linked-image');
+
+      expect(result).toBeDefined();
+      expect(result?.id).toBe('linked-image');
+      expect(result?.fields).toBeInstanceOf(Array);
+      expect(result?.fields.length).toBeGreaterThan(3); // Has link field
+    });
+
+    it('should return custom registered component', () => {
+      const customComponent = {
+        id: 'custom',
+        label: 'Custom',
+        fields: [],
+        pattern: /test/,
+        toBlock: () => 'test',
+        toPreview: () => '<div>test</div>',
+      };
+
+      customComponentRegistry.set('custom', customComponent);
+
+      const result = getComponentDef('custom');
+
+      expect(result).toBe(customComponent);
+
+      customComponentRegistry.delete('custom');
+    });
   });
 });
