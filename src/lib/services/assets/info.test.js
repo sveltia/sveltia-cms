@@ -13,6 +13,7 @@ import {
 
 // Mock all dependencies
 vi.mock('@sveltia/utils/file');
+vi.mock('@sveltia/utils/misc');
 vi.mock('@sveltia/utils/storage');
 vi.mock('@sveltia/utils/string');
 vi.mock('mime');
@@ -216,6 +217,40 @@ describe('assets/info', () => {
       mockBackend.fetchBlob.mockResolvedValue(null);
 
       await expect(getAssetBlob(mockAsset)).rejects.toThrow('Failed to retrieve blob');
+    });
+
+    it('should retry when blob is already being requested', async () => {
+      const { sleep } = await import('@sveltia/utils/misc');
+      const sleepMock = vi.mocked(sleep);
+
+      sleepMock.mockResolvedValue(undefined);
+
+      // Create asset without file or blobURL to force backend fetch
+      const assetWithoutFile = {
+        ...mockAsset,
+        file: undefined,
+        blobURL: undefined,
+      };
+
+      mockBackend.fetchBlob.mockResolvedValue(new Blob(['test data'], { type: 'image/jpeg' }));
+
+      const { default: mime } = await import('mime');
+      const mimeMock = vi.mocked(mime);
+
+      mimeMock.getType.mockReturnValue('image/jpeg');
+
+      // First call - should add path to requestedAssetPaths
+      const promise1 = getAssetBlob(assetWithoutFile, 0);
+      // Simulate a concurrent call that finds the path already in requestedAssetPaths
+      // and retryCount is within limit (0 <= 25)
+      const promise2 = getAssetBlob(assetWithoutFile, 0);
+      // Both should eventually resolve
+      const [blob1, blob2] = await Promise.all([promise1, promise2]);
+
+      expect(blob1).toBeInstanceOf(Blob);
+      expect(blob2).toBeInstanceOf(Blob);
+      // sleep should have been called due to retry logic
+      expect(sleepMock).toHaveBeenCalled();
     });
   });
 

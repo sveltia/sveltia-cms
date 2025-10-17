@@ -89,9 +89,9 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = true } = {}) => 
       // Compare that the enclosing directory is exactly the same as the internal path, and ignore
       // any subdirectories, unless the `matchSubFolders` option is specified. The internal path can
       // contain template tags like `{{slug}}` so that we have to take it into account.
-      const regex = new RegExp(
-        `^${internalPath.replace(/{{.+?}}/g, '.+?')}${internalPath && matchSubFolders ? '\\b' : '$'}`,
-      );
+      const normalizedPath = internalPath.replace(/{{.+?}}/g, '.+?');
+      const anchor = internalPath && matchSubFolders ? '\\b' : '$';
+      const regex = new RegExp(`^${normalizedPath}${anchor}`);
 
       return regex.test(getPathInfo(path).dirname ?? '');
     })

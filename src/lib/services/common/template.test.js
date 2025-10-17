@@ -662,6 +662,19 @@ describe('Test fillTemplate()', async () => {
     ).toEqual('/2024/');
   });
 
+  test('default transformation with nested template tag', async () => {
+    await setupSiteConfig();
+
+    // Test with a field that exists but is empty
+    const result = fillTemplate("{{emptyField | default('{{fallbackField}}')}}", {
+      collection,
+      content: { emptyField: '', fallbackField: 'Fallback Text' },
+    });
+
+    // When emptyField is empty, the default should use the fallback template tag
+    expect(result).toBe('fallback-text');
+  });
+
   describe('Internal helper functions coverage', () => {
     test('DATE_TIME_FIELDS constant is used correctly', async () => {
       await setupSiteConfig();
@@ -796,6 +809,125 @@ describe('Test fillTemplate()', async () => {
       });
 
       fillTemplate('{{title}}', { collection, content: { title: 'New Post' } });
+    });
+
+    test('getExistingSlugs with locale returns locale-specific slugs', async () => {
+      await setupSiteConfig();
+
+      const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
+      const { renameIfNeeded } = await import('$lib/services/utils/file');
+
+      // Mock with entries that have locale-specific slugs
+      vi.mocked(getEntriesByCollection).mockReturnValueOnce([
+        // @ts-ignore
+        { slug: 'entry-1', locales: { en: { slug: 'entry-1-en' }, ja: { slug: 'entry-1-ja' } } },
+        // @ts-ignore
+        { slug: 'entry-2', locales: { en: { slug: 'entry-2-en' }, ja: { slug: 'entry-2-ja' } } },
+        // @ts-ignore
+        { slug: 'entry-3', locales: { en: { slug: 'entry-3-en' } } }, // No ja locale
+      ]);
+
+      vi.mocked(renameIfNeeded).mockImplementation((slug, existingSlugs) => {
+        // When locale is 'ja', should only include entries with ja locale
+        if (existingSlugs.includes('entry-1-ja')) {
+          expect(existingSlugs).toEqual(['entry-1-ja', 'entry-2-ja']);
+        } else if (existingSlugs.includes('entry-1-en')) {
+          // When locale is 'en', should include all entries with en locale
+          expect(existingSlugs).toEqual(['entry-1-en', 'entry-2-en', 'entry-3-en']);
+        }
+
+        return slug;
+      });
+
+      // Test with en locale
+      fillTemplate('{{title}}', {
+        collection,
+        content: { title: 'New Post' },
+        locale: 'en',
+      });
+
+      // Test with ja locale
+      vi.mocked(renameIfNeeded).mockClear();
+      vi.mocked(getEntriesByCollection).mockReturnValueOnce([
+        // @ts-ignore
+        { slug: 'entry-1', locales: { en: { slug: 'entry-1-en' }, ja: { slug: 'entry-1-ja' } } },
+        // @ts-ignore
+        { slug: 'entry-2', locales: { en: { slug: 'entry-2-en' }, ja: { slug: 'entry-2-ja' } } },
+        // @ts-ignore
+        { slug: 'entry-3', locales: { en: { slug: 'entry-3-en' } } },
+      ]);
+
+      vi.mocked(renameIfNeeded).mockImplementationOnce((slug, existingSlugs) => {
+        expect(existingSlugs).toEqual(['entry-1-ja', 'entry-2-ja']);
+
+        return slug;
+      });
+
+      fillTemplate('{{title}}', {
+        collection,
+        content: { title: 'New Post' },
+        locale: 'ja',
+      });
+    });
+
+    test('processTransformations with nested template tag generates correct default value', async () => {
+      await setupSiteConfig();
+
+      // This test ensures that line 227 is covered by testing the specific case
+      // where a nested template tag exists in a default transformation
+      const content = { title: '', backupSlug: 'backup-slug' };
+
+      const result = fillTemplate("{{title | default('{{backupSlug}}')}}", {
+        collection,
+        content,
+      });
+
+      // The nested tag {{backupSlug}} should be replaced with 'backup-slug'
+      // And then the default transformation should use it
+      expect(result).toBe('backup-slug');
+    });
+
+    test('processTransformations with nested fields. prefix in default', async () => {
+      await setupSiteConfig();
+
+      const content = { title: '', slug: 'example-slug' };
+
+      const result = fillTemplate("{{title | default('{{fields.slug}}')}}", {
+        collection,
+        content,
+      });
+
+      expect(result).toBe('example-slug');
+    });
+
+    test('processTransformations nested tag with author field', async () => {
+      await setupSiteConfig();
+
+      // Test that the nested template tag in default transformation is processed
+      const content = { author: '', name: 'John Doe' };
+
+      const result = fillTemplate("{{author | default('{{name}}')}}", {
+        collection,
+        content,
+      });
+
+      expect(result).toBe('john-doe');
+    });
+
+    test('processTransformations nested tag fallback when primary value is undefined', async () => {
+      await setupSiteConfig();
+
+      // Test explicitly with a field that doesn't exist, ensuring the default is used
+      const content = { fallback: 'fallback-value' };
+
+      // When 'missing' field doesn't exist, value will be undefined
+      // The transformation should use the fallback value
+      const result = fillTemplate("{{missing | default('{{fallback}}')}}", {
+        collection,
+        content,
+      });
+
+      expect(result).toBe('fallback-value');
     });
 
     test('fillTemplate handles file path tags in media_folder context', async () => {

@@ -713,6 +713,11 @@ describe('Backend Save', () => {
         commitType: /** @type {CommitType} */ ('create'),
       };
 
+      // Mock URL.createObjectURL
+      const mockBlobURL = 'blob:http://localhost/test-blob-url';
+
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockBlobURL);
+
       // @ts-ignore - Type issues in test
       const result = await saveChanges({
         changes,
@@ -726,7 +731,131 @@ describe('Backend Save', () => {
         path: 'images/photo.jpg',
         name: 'photo.jpg',
         sha: 'file123',
+        blobURL: mockBlobURL,
       });
+      expect(URL.createObjectURL).toHaveBeenCalled();
+    });
+
+    test('should handle asset changes with missing file in commit results', async () => {
+      /** @type {FileChange[]} */
+      const changes = [
+        {
+          action: /** @type {CommitAction} */ ('create'),
+          path: 'images/photo2.jpg',
+          data: new File(['fake image data'], 'photo2.jpg'),
+        },
+      ];
+
+      /** @type {Asset[]} */
+      const savingAssets = [
+        // @ts-ignore - Minimal test object
+        {
+          path: 'images/photo2.jpg',
+          name: 'photo2.jpg',
+          size: 2048,
+          sha: 'test-sha-2',
+          kind: /** @type {AssetKind} */ ('image'),
+          folder: /** @type {AssetFolderInfo} */ ({
+            collectionName: undefined,
+            internalPath: 'images',
+            publicPath: '/images',
+            entryRelative: false,
+            hasTemplateTags: false,
+          }),
+        },
+      ];
+
+      mockCommitChanges.mockResolvedValue({
+        sha: 'commit789',
+        date: new Date('2023-01-01T12:00:00Z'),
+        files: {
+          // No entry for 'images/photo2.jpg' - file is undefined
+        },
+      });
+
+      /** @type {CommitOptions} */
+      const options = {
+        commitType: /** @type {CommitType} */ ('create'),
+      };
+
+      // @ts-ignore - Type issues in test
+      const result = await saveChanges({
+        changes,
+        savingEntries: [],
+        savingAssets,
+        options,
+      });
+
+      expect(result.savedAssets).toHaveLength(1);
+      expect(result.savedAssets[0]).toMatchObject({
+        path: 'images/photo2.jpg',
+        name: 'photo2.jpg',
+        sha: undefined,
+        blobURL: undefined,
+      });
+    });
+
+    test('should handle asset changes with sha but no file in commit results', async () => {
+      /** @type {FileChange[]} */
+      const changes = [
+        {
+          action: /** @type {CommitAction} */ ('create'),
+          path: 'images/photo3.jpg',
+          data: new File(['fake image data'], 'photo3.jpg'),
+        },
+      ];
+
+      /** @type {Asset[]} */
+      const savingAssets = [
+        // @ts-ignore - Minimal test object
+        {
+          path: 'images/photo3.jpg',
+          name: 'photo3.jpg',
+          size: 3072,
+          sha: 'test-sha-3',
+          kind: /** @type {AssetKind} */ ('image'),
+          folder: /** @type {AssetFolderInfo} */ ({
+            collectionName: undefined,
+            internalPath: 'images',
+            publicPath: '/images',
+            entryRelative: false,
+            hasTemplateTags: false,
+          }),
+        },
+      ];
+
+      mockCommitChanges.mockResolvedValue({
+        sha: 'commit999',
+        date: new Date('2023-01-01T12:00:00Z'),
+        files: {
+          'images/photo3.jpg': {
+            sha: 'new-file-sha',
+            // file property is missing/undefined
+          },
+        },
+      });
+
+      /** @type {CommitOptions} */
+      const options = {
+        commitType: /** @type {CommitType} */ ('create'),
+      };
+
+      // @ts-ignore - Type issues in test
+      const result = await saveChanges({
+        changes,
+        savingEntries: [],
+        savingAssets,
+        options,
+      });
+
+      expect(result.savedAssets).toHaveLength(1);
+      expect(result.savedAssets[0]).toMatchObject({
+        path: 'images/photo3.jpg',
+        name: 'photo3.jpg',
+        sha: 'new-file-sha',
+        blobURL: undefined,
+      });
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
     });
 
     test('should handle missing user information', async () => {

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { apiConfig, graphqlVars, refreshAccessToken } from './api';
+import * as apiModule from './api';
 
 // Mock svelte-i18n
 vi.mock('svelte-i18n', () => ({
@@ -34,6 +35,14 @@ describe('api.js', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  describe('Exported functions', () => {
+    it('should export all required functions', async () => {
+      expect(typeof apiModule.fetchAPI).toBe('function');
+      expect(typeof apiModule.fetchGraphQL).toBe('function');
+      expect(typeof apiModule.refreshAccessToken).toBe('function');
+    });
   });
 
   describe('apiConfig', () => {
@@ -354,6 +363,56 @@ describe('api.js', () => {
           refreshAccessToken: expect.any(Function),
         },
       );
+    });
+
+    it('should handle undefined user in store', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const { get } = await import('svelte/store');
+
+      // Mock user store to return undefined
+      vi.mocked(get).mockReturnValue(undefined);
+
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint', {
+        token: 'provided-token',
+        refreshToken: 'provided-refresh-token',
+      });
+
+      expect(sendRequest).toHaveBeenCalledWith(
+        'https://api.github.com/test-endpoint',
+        {
+          method: 'GET',
+          headers: { Authorization: 'token provided-token' },
+          body: null,
+        },
+        {
+          responseType: 'json',
+          refreshAccessToken: expect.any(Function),
+        },
+      );
+    });
+
+    it('should invoke refreshAccessToken callback when provided', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const { get } = await import('svelte/store');
+
+      const mockUser = {
+        token: 'test-token',
+        refreshToken: 'test-refresh-token',
+      };
+
+      vi.mocked(get).mockReturnValue(mockUser);
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint', { refreshToken: 'provided-refresh-token' });
+
+      const [, , options] = vi.mocked(sendRequest).mock.calls[0];
+
+      expect(options).toHaveProperty('refreshAccessToken');
+      expect(typeof options?.refreshAccessToken).toBe('function');
     });
   });
 

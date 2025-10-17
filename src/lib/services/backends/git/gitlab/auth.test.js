@@ -122,6 +122,31 @@ describe('GitLab auth service', () => {
       expect(result).toEqual(mockUser);
     });
 
+    test('initiates server-side auth when siteConfig is null', async () => {
+      const mockUser = /** @type {any} */ ({
+        id: 123,
+        username: 'testuser',
+        name: 'Test User',
+        backendName: 'gitlab',
+      });
+
+      vi.mocked(get).mockReturnValueOnce(null);
+
+      vi.mocked(initServerSideAuth).mockResolvedValue({ token: 'new-token' });
+      vi.mocked(getUserProfile).mockResolvedValue(mockUser);
+
+      const result = await signIn({ auto: false });
+
+      expect(initServerSideAuth).toHaveBeenCalledWith({
+        backendName: 'gitlab',
+        authURL: 'https://gitlab.com/oauth/authorize',
+        scope: 'api',
+        siteDomain: undefined,
+      });
+      expect(getUserProfile).toHaveBeenCalledWith({ token: 'new-token' });
+      expect(result).toEqual(mockUser);
+    });
+
     test('initiates PKCE auth when auth_type is pkce', async () => {
       const mockUser = /** @type {any} */ ({
         id: 123,

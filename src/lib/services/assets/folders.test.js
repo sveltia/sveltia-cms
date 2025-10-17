@@ -453,6 +453,177 @@ describe('assets/folders', () => {
         'content',
       ]);
     });
+
+    it('should not match subfolders when matchSubFolders is false and path matches exactly', () => {
+      allAssetFolders.set([
+        {
+          collectionName: 'posts',
+          internalPath: 'content/posts',
+          publicPath: '/posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ]);
+
+      getPathInfoMock.mockReturnValue({
+        filename: 'image.jpg',
+        basename: 'image.jpg',
+        dirname: 'content/posts',
+      });
+
+      const result = getAssetFoldersByPath('content/posts/image.jpg', {
+        matchSubFolders: false,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].internalPath).toBe('content/posts');
+    });
+
+    it('should use word boundary when matchSubFolders is true', () => {
+      allAssetFolders.set([
+        {
+          collectionName: 'posts',
+          internalPath: 'content/posts',
+          publicPath: '/posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ]);
+
+      getPathInfoMock.mockReturnValue({
+        filename: 'image.jpg',
+        basename: 'image.jpg',
+        dirname: 'content/posts',
+      });
+
+      const result = getAssetFoldersByPath('content/posts/image.jpg', {
+        matchSubFolders: true,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].internalPath).toBe('content/posts');
+    });
+
+    it('should not match when path dirname does not match folder and matchSubFolders is true', () => {
+      allAssetFolders.set([
+        {
+          collectionName: 'posts',
+          internalPath: 'content/posts',
+          publicPath: '/posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ]);
+
+      getPathInfoMock.mockReturnValue({
+        filename: 'photo.jpg',
+        basename: 'photo.jpg',
+        dirname: 'different/path',
+      });
+
+      const result = getAssetFoldersByPath('different/path/photo.jpg', {
+        matchSubFolders: true,
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it('should use word boundary when both internalPath and matchSubFolders are true', () => {
+      allAssetFolders.set([
+        {
+          collectionName: 'posts',
+          internalPath: 'uploads/posts',
+          publicPath: '/posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ]);
+
+      getPathInfoMock.mockReturnValue({
+        filename: 'image.jpg',
+        basename: 'image.jpg',
+        dirname: 'uploads/posts',
+      });
+
+      // With matchSubFolders true, should match exact dirname
+      const result = getAssetFoldersByPath('uploads/posts/image.jpg', {
+        matchSubFolders: true,
+      });
+
+      expect(result).toHaveLength(1);
+    });
+
+    it('should exclude matching subfolders when matchSubFolders is false', () => {
+      allAssetFolders.set([
+        {
+          collectionName: 'posts',
+          internalPath: 'content/posts',
+          publicPath: '/posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ]);
+
+      getPathInfoMock.mockReturnValue({
+        filename: 'image.jpg',
+        basename: 'image.jpg',
+        dirname: 'content/posts/subfolder',
+      });
+
+      // With matchSubFolders false, should NOT match subfolders
+      const result = getAssetFoldersByPath('content/posts/subfolder/image.jpg', {
+        matchSubFolders: false,
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it('should use end anchor with non-empty internalPath and matchSubFolders=false', () => {
+      allAssetFolders.set([
+        {
+          collectionName: 'posts',
+          internalPath: 'images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ]);
+
+      getPathInfoMock.mockReturnValue({
+        filename: 'photo.jpg',
+        basename: 'photo.jpg',
+        dirname: 'images',
+      });
+
+      const result = getAssetFoldersByPath('images/photo.jpg', {
+        matchSubFolders: false,
+      });
+
+      expect(result).toHaveLength(1);
+    });
+
+    it('should use end anchor with empty internalPath', () => {
+      allAssetFolders.set([
+        {
+          collectionName: 'global',
+          internalPath: '',
+          publicPath: '/assets',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ]);
+
+      getPathInfoMock.mockReturnValue({
+        filename: 'image.jpg',
+        basename: 'image.jpg',
+        dirname: '',
+      });
+
+      const result = getAssetFoldersByPath('image.jpg', { matchSubFolders: true });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].internalPath).toBe('');
+    });
   });
 
   describe('canCreateAsset', () => {
