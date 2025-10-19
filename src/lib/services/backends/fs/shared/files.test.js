@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  collectScanningPaths,
   deleteEmptyParentDirs,
   deleteFile,
   getDirectoryHandle,
@@ -10,7 +11,7 @@ import {
   getHandleByPath,
   getPathRegex,
   moveFile,
-  normalizeFileListItem,
+  parseFileHandleItem,
   readTextFile,
   saveChange,
   saveChanges,
@@ -871,14 +872,14 @@ describe('getPathRegex', () => {
   });
 });
 
-describe('normalizeFileListItem', () => {
+describe('parseFileHandleItem', () => {
   test('should normalize file list item with hash', async () => {
     const handle = createMockFileHandle('test.txt');
     const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
 
     handle.getFile = vi.fn(async () => file);
 
-    const result = await normalizeFileListItem({
+    const result = await parseFileHandleItem({
       handle,
       path: 'folder/test.txt',
     });
@@ -898,7 +899,7 @@ describe('normalizeFileListItem', () => {
 
     handle.getFile = vi.fn(async () => file);
 
-    const result = await normalizeFileListItem({
+    const result = await parseFileHandleItem({
       handle,
       path: 'フォルダー/テスト.txt',
     });
@@ -913,7 +914,7 @@ describe('normalizeFileListItem', () => {
 
     handle.getFile = vi.fn(async () => file);
 
-    const result = await normalizeFileListItem({
+    const result = await parseFileHandleItem({
       handle,
       path: 'empty.txt',
     });
@@ -929,7 +930,7 @@ describe('normalizeFileListItem', () => {
 
     handle.getFile = getFileSpy;
 
-    await normalizeFileListItem({
+    await parseFileHandleItem({
       handle,
       path: 'test.txt',
     });
@@ -947,7 +948,7 @@ describe('normalizeFileListItem', () => {
 
     handle.getFile = vi.fn(async () => file);
 
-    const result = await normalizeFileListItem({
+    const result = await parseFileHandleItem({
       handle,
       path: 'test.txt',
     });
@@ -1343,13 +1344,13 @@ describe('saveChange', () => {
 
 describe('scanDir', () => {
   /** @type {import('$lib/services/backends/fs/shared/files').FileHandleItem[]} */
-  let fileList;
+  let fileHandles;
   /** @type {FileSystemDirectoryHandle} */
   let rootDirHandle;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    fileList = [];
+    fileHandles = [];
     rootDirHandle = createMockDirectoryHandle();
   });
 
@@ -1375,13 +1376,13 @@ describe('scanDir', () => {
       rootDirHandle,
       scanningPaths: ['error.txt'],
       scanningPathsRegEx: [/error\.txt/],
-      fileList,
+      fileHandles,
     });
 
-    // File handle is stored during scan; errors will occur later in normalizeFileListItem
-    expect(fileList).toHaveLength(1);
-    expect(fileList[0].handle).toBe(fileHandle);
-    expect(fileList[0].path).toBe('error.txt');
+    // File handle is stored during scan; errors will occur later in parseFileHandleItem
+    expect(fileHandles).toHaveLength(1);
+    expect(fileHandles[0].handle).toBe(fileHandle);
+    expect(fileHandles[0].path).toBe('error.txt');
   });
 
   test('should skip directory when path does not match', async () => {
@@ -1403,11 +1404,11 @@ describe('scanDir', () => {
       rootDirHandle,
       scanningPaths: ['other/path'],
       scanningPathsRegEx: [/^other\/path/],
-      fileList,
+      fileHandles,
     });
 
     // Should not add any files since path doesn't match
-    expect(fileList).toHaveLength(0);
+    expect(fileHandles).toHaveLength(0);
   });
 
   test('should skip hidden files except Git config files', async () => {
@@ -1441,13 +1442,13 @@ describe('scanDir', () => {
       rootDirHandle,
       scanningPaths: ['.hidden', '.gitignore'],
       scanningPathsRegEx: [/.*/],
-      fileList,
+      fileHandles,
     });
 
     // Only .gitignore should be included, .hidden should be skipped
-    expect(fileList).toHaveLength(1);
-    expect(fileList[0].handle).toBe(gitignoreFile);
-    expect(fileList[0].path).toBe('.gitignore');
+    expect(fileHandles).toHaveLength(1);
+    expect(fileHandles[0].handle).toBe(gitignoreFile);
+    expect(fileHandles[0].path).toBe('.gitignore');
   });
 
   test('should handle directory matching scanning path', async () => {
@@ -1489,12 +1490,157 @@ describe('scanDir', () => {
       rootDirHandle,
       scanningPaths: ['parent/nested/file.txt'],
       scanningPathsRegEx: [/parent\/nested\/file\.txt/],
-      fileList,
+      fileHandles,
     });
 
-    expect(fileList).toHaveLength(1);
-    expect(fileList[0].handle).toBe(fileHandle);
-    expect(fileList[0].path).toBe('parent/nested/file.txt');
+    expect(fileHandles).toHaveLength(1);
+    expect(fileHandles[0].handle).toBe(fileHandle);
+    expect(fileHandles[0].path).toBe('parent/nested/file.txt');
+  });
+});
+
+describe('collectScanningPaths', () => {
+  /** @type {import('svelte/store').Writable<import('$lib/types/private').EntryFolderInfo[]>} */
+  let allEntryFolders;
+  /** @type {import('svelte/store').Writable<import('$lib/types/private').AssetFolderInfo[]>} */
+  let allAssetFolders;
+
+  beforeEach(async () => {
+    // Import fresh store references for each test
+    const contents = await import('$lib/services/contents');
+    const folders = await import('$lib/services/assets/folders');
+
+    allEntryFolders = contents.allEntryFolders;
+    allAssetFolders = folders.allAssetFolders;
+
+    // Reset stores to empty state
+    allEntryFolders.set([]);
+    allAssetFolders.set([]);
+  });
+
+  test('should collect and deduplicate paths from entry and asset folders', () => {
+    allEntryFolders.set([
+      {
+        collectionName: 'posts',
+        filePathMap: {
+          field1: 'content/posts',
+          field2: 'content/pages',
+        },
+      },
+      {
+        collectionName: 'drafts',
+        folderPathMap: {
+          folder1: 'content/drafts',
+        },
+      },
+    ]);
+
+    allAssetFolders.set([
+      {
+        collectionName: 'images',
+        internalPath: 'static/images',
+        publicPath: '/images',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+      {
+        collectionName: 'videos',
+        internalPath: 'static/videos',
+        publicPath: '/videos',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+      {
+        collectionName: 'other',
+        internalPath: undefined,
+        publicPath: undefined,
+        entryRelative: false,
+        hasTemplateTags: false,
+      }, // Should be filtered out
+    ]);
+
+    const paths = collectScanningPaths();
+
+    expect(paths).toContain('content/posts');
+    expect(paths).toContain('content/pages');
+    expect(paths).toContain('content/drafts');
+    expect(paths).toContain('static/images');
+    expect(paths).toContain('static/videos');
+    expect(paths.length).toBe(5);
+  });
+
+  test('should handle empty stores', () => {
+    // Stores already reset to empty in beforeEach
+    const paths = collectScanningPaths();
+
+    expect(paths).toEqual([]);
+  });
+
+  test('should strip slashes and deduplicate paths', () => {
+    allEntryFolders.set([
+      {
+        collectionName: 'posts',
+        filePathMap: {
+          field1: '/content/posts/',
+          field2: 'content/posts',
+        },
+      },
+    ]);
+
+    allAssetFolders.set([
+      {
+        collectionName: 'images',
+        internalPath: '/static/images/',
+        publicPath: '/images',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+    ]);
+
+    const paths = collectScanningPaths();
+
+    expect(paths).toContain('content/posts');
+    expect(paths).toContain('static/images');
+    // Should deduplicate the duplicate 'content/posts' entries
+    expect(paths.filter((p) => p === 'content/posts').length).toBe(1);
+  });
+
+  test('should prefer filePathMap over folderPathMap when filePathMap exists', () => {
+    allEntryFolders.set([
+      {
+        collectionName: 'mixed',
+        filePathMap: {
+          field1: 'content/files',
+        },
+        folderPathMap: {
+          folder1: 'content/folders',
+        },
+      },
+    ]);
+
+    allAssetFolders.set([]);
+
+    const paths = collectScanningPaths();
+
+    expect(paths).toContain('content/files');
+    expect(paths).not.toContain('content/folders');
+  });
+
+  test('should use folderPathMap when filePathMap is not present', () => {
+    allEntryFolders.set([
+      {
+        collectionName: 'folders',
+        folderPathMap: {
+          folder1: 'content/folders',
+        },
+      },
+    ]);
+
+    allAssetFolders.set([]);
+
+    const paths = collectScanningPaths();
+
+    expect(paths).toContain('content/folders');
   });
 });
 
@@ -1516,13 +1662,13 @@ describe('loadFiles', () => {
 
 describe('scanDir - directory recursion scenarios', () => {
   /** @type {import('$lib/services/backends/fs/shared/files').FileHandleItem[]} */
-  let fileList;
+  let fileHandles;
   /** @type {FileSystemDirectoryHandle} */
   let rootDirHandle;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    fileList = [];
+    fileHandles = [];
     rootDirHandle = createMockDirectoryHandle();
   });
 
@@ -1572,12 +1718,12 @@ describe('scanDir - directory recursion scenarios', () => {
       rootDirHandle,
       scanningPaths: ['level1/level2/file.txt'],
       scanningPathsRegEx: [/level1\/level2\/file\.txt/],
-      fileList,
+      fileHandles,
     });
 
-    expect(fileList).toHaveLength(1);
-    expect(fileList[0].handle).toBe(fileHandle);
-    expect(fileList[0].path).toBe('level1/level2/file.txt');
+    expect(fileHandles).toHaveLength(1);
+    expect(fileHandles[0].handle).toBe(fileHandle);
+    expect(fileHandles[0].path).toBe('level1/level2/file.txt');
   });
 
   test('should continue scanning when directory has template tags and path may match', async () => {
@@ -1616,12 +1762,12 @@ describe('scanDir - directory recursion scenarios', () => {
       rootDirHandle,
       scanningPaths: ['parent/posts/{{slug}}/index.md'],
       scanningPathsRegEx: [/parent\/posts\/.+?\/index\.md/],
-      fileList,
+      fileHandles,
     });
 
     // The directory recursion should happen even though the template directory
     // doesn't directly match, because we check against scanningPaths
-    expect(fileList.length).toBeGreaterThanOrEqual(0);
+    expect(fileHandles.length).toBeGreaterThanOrEqual(0);
   });
 
   test('should skip hidden directories', async () => {
@@ -1647,7 +1793,7 @@ describe('scanDir - directory recursion scenarios', () => {
       rootDirHandle,
       scanningPaths: ['parent/.hidden/file.txt'],
       scanningPathsRegEx: [/parent\/\.hidden\/file\.txt/],
-      fileList,
+      fileHandles,
     });
 
     // Hidden directory should be skipped
@@ -1678,11 +1824,11 @@ describe('scanDir - directory recursion scenarios', () => {
       rootDirHandle,
       scanningPaths: ['file.txt'],
       scanningPathsRegEx: [/^file\.txt$/],
-      fileList,
+      fileHandles,
     });
 
     // Should find the file since the regex matches
-    expect(fileList.length).toBeGreaterThanOrEqual(0);
+    expect(fileHandles.length).toBeGreaterThanOrEqual(0);
   });
 });
 

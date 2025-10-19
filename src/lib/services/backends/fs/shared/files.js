@@ -112,10 +112,10 @@ export const getPathRegex = (path) =>
  * @param {FileSystemDirectoryHandle} context.rootDirHandle Root directory handle.
  * @param {string[]} context.scanningPaths Scanning paths.
  * @param {RegExp[]} context.scanningPathsRegEx Regular expressions for scanning paths.
- * @param {FileHandleItem[]} context.fileList List of available files.
+ * @param {FileHandleItem[]} context.fileHandles List of available file handles.
  */
 export const scanDir = async (dirHandle, context) => {
-  const { rootDirHandle, scanningPaths, scanningPathsRegEx, fileList } = context;
+  const { rootDirHandle, scanningPaths, scanningPathsRegEx, fileHandles } = context;
 
   for await (const [name, handle] of dirHandle.entries()) {
     // Skip hidden files and directories, except for Git configuration files
@@ -126,37 +126,31 @@ export const scanDir = async (dirHandle, context) => {
     const path = (await rootDirHandle.resolve(handle))?.join('/') ?? '';
     const hasMatchingPath = scanningPathsRegEx.some((regex) => regex.test(path));
 
-    if (handle.kind === 'file') {
-      if (!hasMatchingPath) {
-        continue;
-      }
-
+    if (handle.kind === 'file' && hasMatchingPath) {
       // Store only the handle and path. Metadata will be extracted later when needed, avoiding
       // memory leaks from holding multiple file references during directory scanning.
-      fileList.push({ handle, path });
+      fileHandles.push({ handle, path });
     }
 
     if (handle.kind === 'directory') {
       const regex = getPathRegex(path);
 
-      if (!hasMatchingPath && !scanningPaths.some((p) => regex.test(p))) {
-        continue;
+      if (hasMatchingPath || scanningPaths.some((p) => regex.test(p))) {
+        await scanDir(handle, context);
       }
-
-      await scanDir(handle, context);
     }
   }
 };
 
 /**
- * Normalize a file list item to ensure it has the required properties. This function also computes
- * the SHA-1 hash of the file. The file path and name must be normalized, as certain non-ASCII
- * characters (e.g. Japanese) can be problematic particularly on macOS.
+ * Parse a file handle item and normalize its properties. The file path and name must be normalized,
+ * as certain non-ASCII characters (e.g. Japanese) can be problematic particularly on macOS. This
+ * function also computes the Git Object ID of the file for compatibility with Git-based backends.
  * @internal
  * @param {FileHandleItem} fileHandleItem File handle item.
  * @returns {Promise<BaseFileListItemProps>} Normalized file list item.
  */
-export const normalizeFileListItem = async ({ handle, path }) => {
+export const parseFileHandleItem = async ({ handle, path }) => {
   const file = await handle.getFile();
   const { name, size } = file;
 
@@ -170,6 +164,25 @@ export const normalizeFileListItem = async ({ handle, path }) => {
 };
 
 /**
+ * Collect all scanning paths from entry and asset folders.
+ * @internal
+ * @returns {string[]} Unique list of normalized scanning paths.
+ */
+export const collectScanningPaths = () => {
+  const entryPaths = get(allEntryFolders)
+    .map(({ filePathMap, folderPathMap }) =>
+      filePathMap ? Object.values(filePathMap) : Object.values(folderPathMap ?? {}),
+    )
+    .flat(1);
+
+  const assetPaths = get(allAssetFolders)
+    .filter(({ internalPath }) => internalPath !== undefined)
+    .map(({ internalPath }) => internalPath);
+
+  return unique([...entryPaths, ...assetPaths].map((path) => stripSlashes(path ?? '')));
+};
+
+/**
  * Retrieve all files under the static directory.
  * @internal
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
@@ -177,30 +190,17 @@ export const normalizeFileListItem = async ({ handle, path }) => {
  */
 export const getAllFiles = async (rootDirHandle) => {
   /** @type {FileHandleItem[]} */
-  const fileList = [];
-
-  /** @type {string[]} */
-  const scanningPaths = unique(
-    [
-      ...get(allEntryFolders)
-        .map(({ filePathMap, folderPathMap }) =>
-          filePathMap ? Object.values(filePathMap) : Object.values(folderPathMap ?? {}),
-        )
-        .flat(1),
-      ...get(allAssetFolders)
-        .filter(({ internalPath }) => internalPath !== undefined)
-        .map(({ internalPath }) => internalPath),
-    ].map((path) => stripSlashes(path ?? '')),
-  );
+  const fileHandles = [];
+  const scanningPaths = collectScanningPaths();
 
   await scanDir(rootDirHandle, {
     rootDirHandle,
     scanningPaths,
     scanningPathsRegEx: scanningPaths.map(getPathRegex),
-    fileList,
+    fileHandles,
   });
 
-  return Promise.all(fileList.map(normalizeFileListItem));
+  return Promise.all(fileHandles.map(parseFileHandleItem));
 };
 
 /**
@@ -310,12 +310,7 @@ export const deleteEmptyParentDirs = async (rootDirHandle, pathSegments) => {
   let dirHandle = await getDirectoryHandle(rootDirHandle, pathSegments.join('/'));
 
   for (;;) {
-    /** @type {string[]} */
-    const keys = [];
-
-    for await (const key of dirHandle.keys()) {
-      keys.push(key);
-    }
+    const keys = await Array.fromAsync(dirHandle.keys());
 
     if (keys.length > 1 || !pathSegments.length) {
       break;
@@ -407,11 +402,11 @@ export const saveChanges = async (rootDirHandle, changes) => {
       }
 
       if (!file) {
-        if (data !== undefined) {
-          file = getBlob(data);
-        } else {
+        if (data === undefined) {
           return null;
         }
+
+        file = getBlob(data);
       }
 
       return [path, { file, sha: await getGitHash(file) }];
