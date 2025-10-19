@@ -73,8 +73,7 @@ export const startViewTransition = (transitionType, updateContent) => {
     return;
   }
 
-  document.startViewTransition({
-    // @ts-ignore
+  const options = {
     types: [transitionType],
     // eslint-disable-next-line jsdoc/require-jsdoc
     update: async () => {
@@ -86,7 +85,16 @@ export const startViewTransition = (transitionType, updateContent) => {
         });
       });
     },
-  });
+  };
+
+  // Firefox for Android currently doesn’t support the options parameter of `startViewTransition`
+  // and will throw a `TypeError` if provided.
+  // @see https://developer.mozilla.org/en-US/docs/Web/API/Document/startViewTransition
+  try {
+    document.startViewTransition(options);
+  } catch {
+    updateContent();
+  }
 };
 
 /**
