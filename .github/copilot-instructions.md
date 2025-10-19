@@ -60,9 +60,8 @@ pnpm check:imports   # Unused import detection
 pnpm check:audit     # Security audit
 
 # Testing
-pnpm test            # Run all tests
-pnpm test:watch      # Watch mode testing
-pnpm test:coverage   # Test coverage report
+vitest run test            # Run all tests
+vitest run test:coverage   # Test coverage report
 
 # Code formatting
 pnpm format          # Auto-fix Prettier formatting
