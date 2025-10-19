@@ -26,7 +26,14 @@ import { createPathRegEx, getBlob, getGitHash } from '$lib/services/utils/file';
  */
 
 /**
- * @typedef {{ file: File, path: string }} FileListItem
+ * File handle item containing metadata and handle reference.
+ * @typedef {object} FileHandleItem
+ * @property {FileSystemFileHandle} handle File system handle.
+ * @property {string} path Path to the file.
+ * @property {string} name File name.
+ * @property {number} size File size in bytes.
+ * @property {string} type MIME type.
+ * @property {number} lastModified Last modified timestamp.
  */
 
 /**
@@ -109,7 +116,7 @@ export const getPathRegex = (path) =>
  * @param {FileSystemDirectoryHandle} context.rootDirHandle Root directory handle.
  * @param {string[]} context.scanningPaths Scanning paths.
  * @param {RegExp[]} context.scanningPathsRegEx Regular expressions for scanning paths.
- * @param {FileListItem[]} context.fileList List of available files.
+ * @param {FileHandleItem[]} context.fileList List of available files.
  */
 export const scanDir = async (dirHandle, context) => {
   const { rootDirHandle, scanningPaths, scanningPathsRegEx, fileList } = context;
@@ -129,14 +136,12 @@ export const scanDir = async (dirHandle, context) => {
       }
 
       try {
-        /** @type {File} */
-        let file = await handle.getFile();
-        const { type, lastModified } = file;
+        // Only get metadata, don’t hold a reference to the file content
+        const { name: fileName, size, type, lastModified } = await handle.getFile();
 
-        // Clone the file immediately to avoid potential permission problems
-        file = new File([file], file.name, { type, lastModified });
-
-        fileList.push({ file, path });
+        // Store the handle and metadata instead of cloning the file. This avoids memory leaks from
+        // holding multiple file blob references.
+        fileList.push({ handle, path, name: fileName, size, type, lastModified });
       } catch (ex) {
         // eslint-disable-next-line no-console
         console.error(ex);
@@ -160,16 +165,21 @@ export const scanDir = async (dirHandle, context) => {
  * the SHA-1 hash of the file. The file path and name must be normalized, as certain non-ASCII
  * characters (e.g. Japanese) can be problematic particularly on macOS.
  * @internal
- * @param {FileListItem} fileListItem File list item.
+ * @param {FileHandleItem} fileHandleItem File handle item.
  * @returns {Promise<BaseFileListItemProps>} Normalized file list item.
  */
-export const normalizeFileListItem = async ({ file, path }) => ({
-  file,
-  path: path.normalize(),
-  name: file.name.normalize(),
-  size: file.size,
-  sha: await getGitHash(file),
-});
+export const normalizeFileListItem = async ({ handle, path, name, size, type, lastModified }) => {
+  // Get a fresh File reference when needed, avoiding long-term memory retention
+  const file = await handle.getFile();
+
+  return {
+    file: new File([file], name, { type, lastModified }),
+    path: path.normalize(),
+    name: name.normalize(),
+    size,
+    sha: await getGitHash(file),
+  };
+};
 
 /**
  * Retrieve all files under the static directory.
@@ -178,7 +188,7 @@ export const normalizeFileListItem = async ({ file, path }) => ({
  * @returns {Promise<BaseFileListItemProps[]>} File list.
  */
 export const getAllFiles = async (rootDirHandle) => {
-  /** @type {FileListItem[]} */
+  /** @type {FileHandleItem[]} */
   const fileList = [];
 
   /** @type {string[]} */

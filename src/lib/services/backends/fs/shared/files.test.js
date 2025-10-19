@@ -873,10 +873,22 @@ describe('getPathRegex', () => {
 
 describe('normalizeFileListItem', () => {
   test('should normalize file list item with hash', async () => {
+    const handle = createMockFileHandle('test.txt');
     const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
-    const result = await normalizeFileListItem({ file, path: 'folder/test.txt' });
 
-    expect(result).toHaveProperty('file', file);
+    handle.getFile = vi.fn(async () => file);
+
+    const result = await normalizeFileListItem({
+      handle,
+      path: 'folder/test.txt',
+      name: 'test.txt',
+      size: file.size,
+      type: 'text/plain',
+      lastModified: Date.now(),
+    });
+
+    expect(result).toHaveProperty('file');
+    expect(result.file).toBeInstanceOf(File);
     expect(result).toHaveProperty('path', 'folder/test.txt');
     expect(result).toHaveProperty('name', 'test.txt');
     expect(result).toHaveProperty('size', file.size);
@@ -885,19 +897,60 @@ describe('normalizeFileListItem', () => {
   });
 
   test('should normalize Unicode characters in path and name', async () => {
+    const handle = createMockFileHandle('テスト.txt');
     const file = new File(['内容'], 'テスト.txt');
-    const result = await normalizeFileListItem({ file, path: 'フォルダー/テスト.txt' });
+
+    handle.getFile = vi.fn(async () => file);
+
+    const result = await normalizeFileListItem({
+      handle,
+      path: 'フォルダー/テスト.txt',
+      name: 'テスト.txt',
+      size: file.size,
+      type: 'text/plain',
+      lastModified: Date.now(),
+    });
 
     expect(result.path).toBe('フォルダー/テスト.txt');
     expect(result.name).toBe('テスト.txt');
   });
 
   test('should handle empty file', async () => {
+    const handle = createMockFileHandle('empty.txt');
     const file = new File([], 'empty.txt');
-    const result = await normalizeFileListItem({ file, path: 'empty.txt' });
+
+    handle.getFile = vi.fn(async () => file);
+
+    const result = await normalizeFileListItem({
+      handle,
+      path: 'empty.txt',
+      name: 'empty.txt',
+      size: 0,
+      type: 'text/plain',
+      lastModified: Date.now(),
+    });
 
     expect(result.size).toBe(0);
     expect(result.sha).toBeDefined();
+  });
+
+  test('should get fresh File reference from handle', async () => {
+    const handle = createMockFileHandle('test.txt');
+    const file = new File(['content'], 'test.txt', { type: 'text/plain' });
+    const getFileSpy = vi.fn(async () => file);
+
+    handle.getFile = getFileSpy;
+
+    await normalizeFileListItem({
+      handle,
+      path: 'test.txt',
+      name: 'test.txt',
+      size: file.size,
+      type: 'text/plain',
+      lastModified: Date.now(),
+    });
+
+    expect(getFileSpy).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -1284,7 +1337,7 @@ describe('saveChange', () => {
 });
 
 describe('scanDir', () => {
-  /** @type {import('$lib/services/backends/fs/shared/files').FileListItem[]} */
+  /** @type {import('$lib/services/backends/fs/shared/files').FileHandleItem[]} */
   let fileList;
   /** @type {FileSystemDirectoryHandle} */
   let rootDirHandle;
@@ -1385,7 +1438,7 @@ describe('scanDir', () => {
 
     // Only .gitignore should be included, .hidden should be skipped
     expect(fileList).toHaveLength(1);
-    expect(fileList[0].file.name).toBe('.gitignore');
+    expect(fileList[0].name).toBe('.gitignore');
   });
 
   test('should handle directory matching scanning path', async () => {
@@ -1431,7 +1484,7 @@ describe('scanDir', () => {
     });
 
     expect(fileList).toHaveLength(1);
-    expect(fileList[0].file.name).toBe('file.txt');
+    expect(fileList[0].name).toBe('file.txt');
   });
 });
 
@@ -1452,7 +1505,7 @@ describe('loadFiles', () => {
 });
 
 describe('scanDir - directory recursion scenarios', () => {
-  /** @type {import('$lib/services/backends/fs/shared/files').FileListItem[]} */
+  /** @type {import('$lib/services/backends/fs/shared/files').FileHandleItem[]} */
   let fileList;
   /** @type {FileSystemDirectoryHandle} */
   let rootDirHandle;
@@ -1513,7 +1566,7 @@ describe('scanDir - directory recursion scenarios', () => {
     });
 
     expect(fileList).toHaveLength(1);
-    expect(fileList[0].file.name).toBe('file.txt');
+    expect(fileList[0].name).toBe('file.txt');
   });
 
   test('should continue scanning when directory has template tags and path may match', async () => {
