@@ -881,10 +881,6 @@ describe('normalizeFileListItem', () => {
     const result = await normalizeFileListItem({
       handle,
       path: 'folder/test.txt',
-      name: 'test.txt',
-      size: file.size,
-      type: 'text/plain',
-      lastModified: Date.now(),
     });
 
     expect(result).toHaveProperty('file');
@@ -905,10 +901,6 @@ describe('normalizeFileListItem', () => {
     const result = await normalizeFileListItem({
       handle,
       path: 'フォルダー/テスト.txt',
-      name: 'テスト.txt',
-      size: file.size,
-      type: 'text/plain',
-      lastModified: Date.now(),
     });
 
     expect(result.path).toBe('フォルダー/テスト.txt');
@@ -924,10 +916,6 @@ describe('normalizeFileListItem', () => {
     const result = await normalizeFileListItem({
       handle,
       path: 'empty.txt',
-      name: 'empty.txt',
-      size: 0,
-      type: 'text/plain',
-      lastModified: Date.now(),
     });
 
     expect(result.size).toBe(0);
@@ -944,13 +932,30 @@ describe('normalizeFileListItem', () => {
     await normalizeFileListItem({
       handle,
       path: 'test.txt',
-      name: 'test.txt',
-      size: file.size,
-      type: 'text/plain',
-      lastModified: Date.now(),
     });
 
     expect(getFileSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('should extract metadata from file handle', async () => {
+    const handle = createMockFileHandle('test.txt');
+
+    const file = new File(['content'], 'test.txt', {
+      type: 'text/plain',
+      lastModified: 1234567890,
+    });
+
+    handle.getFile = vi.fn(async () => file);
+
+    const result = await normalizeFileListItem({
+      handle,
+      path: 'test.txt',
+    });
+
+    expect(result.name).toBe('test.txt');
+    expect(result.size).toBe(7); // 'content' is 7 bytes
+    expect(result.file).toBeDefined();
+    expect(result.file?.type).toBe('text/plain');
   });
 });
 
@@ -1348,11 +1353,11 @@ describe('scanDir', () => {
     rootDirHandle = createMockDirectoryHandle();
   });
 
-  test('should handle file that throws error on getFile', async () => {
+  test('should store file handle even if getFile will fail later', async () => {
     const fileHandle = createMockFileHandle('error.txt');
     const dirHandle = createMockDirectoryHandle('test');
 
-    // Mock getFile to throw error
+    // Mock getFile to throw error - this won't be called during scanDir anymore
     fileHandle.getFile = vi.fn().mockRejectedValue(new Error('Permission denied'));
 
     // @ts-ignore - Mock async iterator
@@ -1373,7 +1378,10 @@ describe('scanDir', () => {
       fileList,
     });
 
-    expect(fileList).toHaveLength(0);
+    // File handle is stored during scan; errors will occur later in normalizeFileListItem
+    expect(fileList).toHaveLength(1);
+    expect(fileList[0].handle).toBe(fileHandle);
+    expect(fileList[0].path).toBe('error.txt');
   });
 
   test('should skip directory when path does not match', async () => {
@@ -1438,7 +1446,8 @@ describe('scanDir', () => {
 
     // Only .gitignore should be included, .hidden should be skipped
     expect(fileList).toHaveLength(1);
-    expect(fileList[0].name).toBe('.gitignore');
+    expect(fileList[0].handle).toBe(gitignoreFile);
+    expect(fileList[0].path).toBe('.gitignore');
   });
 
   test('should handle directory matching scanning path', async () => {
@@ -1484,7 +1493,8 @@ describe('scanDir', () => {
     });
 
     expect(fileList).toHaveLength(1);
-    expect(fileList[0].name).toBe('file.txt');
+    expect(fileList[0].handle).toBe(fileHandle);
+    expect(fileList[0].path).toBe('parent/nested/file.txt');
   });
 });
 
@@ -1566,7 +1576,8 @@ describe('scanDir - directory recursion scenarios', () => {
     });
 
     expect(fileList).toHaveLength(1);
-    expect(fileList[0].name).toBe('file.txt');
+    expect(fileList[0].handle).toBe(fileHandle);
+    expect(fileList[0].path).toBe('level1/level2/file.txt');
   });
 
   test('should continue scanning when directory has template tags and path may match', async () => {
