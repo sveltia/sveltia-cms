@@ -177,7 +177,7 @@ export default defineConfig({
     extensions: ['.js', '.svelte'],
   },
   build: {
-    target: 'es2022',
+    target: 'es2024',
     reportCompressedSize: false,
     chunkSizeWarningLimit: 5000,
     sourcemap: true,

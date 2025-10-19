@@ -7,7 +7,7 @@
 **Key Details:**
 
 - **Size**: ~800 source files, 170+ test files, 2748+ tests
-- **Languages**: TypeScript-flavoured JavaScript (ES2022/JSDoc), Svelte 5, SCSS/CSS, HTML
+- **Languages**: TypeScript-flavoured JavaScript (ES2024/JSDoc), Svelte 5, SCSS/CSS, HTML
 - **Target Runtime**: Browser (IIFE and ES modules)
 - **Package Manager**: **pnpm only** (npm will cause issues)
 - **Node Version**: v24 (see `.nvmrc`)
@@ -198,7 +198,7 @@ import Button from '$lib/components/common/button.svelte';
 
 - **Svelte 5**: Uses new runes syntax - avoid legacy Svelte patterns
 - **Bundle size**: Watch for large dependencies - final bundle should stay under 1.5MB
-- **Browser support**: Targets modern browsers (ES2022)
+- **Browser support**: Targets modern browsers (ES2024)
 - **CMS Domain**: Understanding of headless CMS concepts helpful for meaningful contributions
 
 **Trust these instructions** - they are validated against the current codebase. Only search for additional information if these instructions are incomplete or incorrect.
