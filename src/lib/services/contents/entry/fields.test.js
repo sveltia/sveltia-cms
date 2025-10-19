@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getCollection, isEntryCollection } from '$lib/services/contents/collection';
+import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import {
   fieldConfigCacheMap,
   getField,
@@ -10,12 +11,20 @@ import {
   isFieldMultiple,
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
+import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
+import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
+import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 
 // Mock dependencies
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
   isEntryCollection: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/collection/index-file', () => ({
+  getIndexFile: vi.fn(),
+  isCollectionIndexFile: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/i18n', () => ({
@@ -30,6 +39,18 @@ vi.mock('$lib/services/contents/widgets', () => ({
   MULTI_VALUE_WIDGETS: ['file', 'image', 'relation', 'select'],
 }));
 
+vi.mock('$lib/services/contents/widgets/date-time/helper', () => ({
+  getDateTimeFieldDisplayValue: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/widgets/relation/helper', () => ({
+  getReferencedOptionLabel: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/widgets/select/helper', () => ({
+  getOptionLabel: vi.fn(),
+}));
+
 vi.mock('$lib/services/integrations/media-libraries/shared', () => ({
   isMultiple: vi.fn(),
 }));
@@ -37,6 +58,11 @@ vi.mock('$lib/services/integrations/media-libraries/shared', () => ({
 const mockGetCollection = vi.mocked(getCollection);
 const mockIsEntryCollection = vi.mocked(isEntryCollection);
 const mockIsMultiple = vi.mocked(isMultiple);
+const mockGetIndexFile = vi.mocked(getIndexFile);
+const mockIsCollectionIndexFile = vi.mocked(isCollectionIndexFile);
+const mockGetDateTimeFieldDisplayValue = vi.mocked(getDateTimeFieldDisplayValue);
+const mockGetReferencedOptionLabel = vi.mocked(getReferencedOptionLabel);
+const mockGetOptionLabel = vi.mocked(getOptionLabel);
 
 describe('Test getField()', () => {
   // Comprehensive mock collection that covers all test scenarios
@@ -957,6 +983,9 @@ describe('Test getField()', () => {
     test('should use index file fields when isIndexFile is true', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
+      mockGetIndexFile.mockReturnValue({
+        fields: [{ name: 'description', widget: 'text' }],
+      });
 
       const result = getField({
         collectionName: 'posts',
@@ -970,6 +999,9 @@ describe('Test getField()', () => {
     test('should fallback to regular fields when index file fields not found', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
+      mockGetIndexFile.mockReturnValue({
+        fields: [{ name: 'description', widget: 'text' }],
+      });
 
       const result = getField({
         collectionName: 'posts',
@@ -1864,6 +1896,248 @@ describe('Test getFieldDisplayValue()', () => {
     });
   });
 
+  describe('Relation widget handling', () => {
+    test('should handle relation field type recognition (line 243-250)', () => {
+      // This test ensures the relation widget branch is tested
+      // The actual relation handling is tested in other test files
+      const mockCollectionWithRelation = {
+        ...mockCollection,
+        fields: [
+          ...mockCollection.fields,
+          {
+            name: 'author',
+            widget: 'relation',
+            collection: 'authors',
+          },
+        ],
+      };
+
+      // @ts-expect-error - Mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithRelation);
+
+      // Just verify the field config can be fetched
+      const fieldConfig = getField({
+        collectionName: 'posts',
+        valueMap: {},
+        keyPath: 'author',
+      });
+
+      expect(fieldConfig?.widget).toBe('relation');
+    });
+
+    test('should call getReferencedOptionLabel for relation widget (line 243-250)', () => {
+      const mockCollectionWithRelation = {
+        ...mockCollection,
+        fields: [
+          {
+            name: 'author',
+            widget: 'relation',
+            collection: 'authors',
+            value_field: 'name',
+            display_fields: ['name', 'email'],
+          },
+        ],
+      };
+
+      // @ts-expect-error - Mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithRelation);
+      mockGetReferencedOptionLabel.mockReturnValue('John Doe');
+
+      const valueMap = {
+        author: 'john-doe',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'author',
+        locale: 'en',
+      });
+
+      expect(mockGetReferencedOptionLabel).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fieldConfig: expect.objectContaining({ widget: 'relation' }),
+          valueMap,
+          keyPath: 'author',
+          locale: 'en',
+        }),
+      );
+      expect(result).toBe('John Doe');
+    });
+  });
+
+  describe('Select widget handling', () => {
+    test('should handle select field type recognition (line 253-259)', () => {
+      // Verify select widget branch is recognized
+      const mockCollectionWithSelect = {
+        ...mockCollection,
+        fields: [
+          ...mockCollection.fields,
+          {
+            name: 'category',
+            widget: 'select',
+            options: ['blog', 'news'],
+          },
+        ],
+      };
+
+      // @ts-expect-error - Mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithSelect);
+
+      // Just verify the field config can be fetched
+      const fieldConfig = getField({
+        collectionName: 'posts',
+        valueMap: {},
+        keyPath: 'category',
+      });
+
+      expect(fieldConfig?.widget).toBe('select');
+    });
+
+    test('should call getOptionLabel for select widget (line 253-259)', () => {
+      const mockCollectionWithSelect = {
+        ...mockCollection,
+        fields: [
+          {
+            name: 'category',
+            widget: 'select',
+            options: [
+              { label: 'Blog', value: 'blog' },
+              { label: 'News', value: 'news' },
+            ],
+          },
+        ],
+      };
+
+      // @ts-expect-error - Mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithSelect);
+      mockGetOptionLabel.mockReturnValue('Blog');
+
+      const valueMap = {
+        category: 'blog',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'category',
+        locale: 'en',
+      });
+
+      expect(mockGetOptionLabel).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fieldConfig: expect.objectContaining({ widget: 'select' }),
+          valueMap,
+          keyPath: 'category',
+        }),
+      );
+      expect(result).toBe('Blog');
+    });
+  });
+
+  describe('Datetime widget handling', () => {
+    test('should recognize datetime field type (lines 230-240)', () => {
+      // Verify datetime widget branch is recognized
+      const mockCollectionWithDatetime = {
+        ...mockCollection,
+        fields: [
+          ...mockCollection.fields,
+          {
+            name: 'publishDate',
+            widget: 'datetime',
+            format: 'YYYY-MM-DD',
+          },
+        ],
+      };
+
+      // @ts-expect-error - Mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithDatetime);
+
+      // Just verify the field config can be fetched
+      const fieldConfig = getField({
+        collectionName: 'posts',
+        valueMap: {},
+        keyPath: 'publishDate',
+      });
+
+      expect(fieldConfig?.widget).toBe('datetime');
+    });
+
+    test('should call getDateTimeFieldDisplayValue when datetime widget has no date transformation (line 230-240)', () => {
+      const mockCollectionWithDatetime = {
+        ...mockCollection,
+        fields: [
+          {
+            name: 'publishDate',
+            widget: 'datetime',
+            format: 'YYYY-MM-DD',
+          },
+        ],
+      };
+
+      // @ts-expect-error - Mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithDatetime);
+      mockGetDateTimeFieldDisplayValue.mockReturnValue('2024-01-15');
+
+      const valueMap = {
+        publishDate: '2024-01-15T10:30:00Z',
+      };
+
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'publishDate',
+        locale: 'en',
+      });
+
+      expect(mockGetDateTimeFieldDisplayValue).toHaveBeenCalled();
+      expect(result).toBe('2024-01-15');
+    });
+
+    test('should call getDateTimeFieldDisplayValue when no date transformation is provided (line 230-240)', () => {
+      // Clear previous mock calls
+      mockGetDateTimeFieldDisplayValue.mockClear();
+
+      const mockCollectionWithDatetime = {
+        ...mockCollection,
+        fields: [
+          {
+            name: 'publishDate',
+            widget: 'datetime',
+            format: 'YYYY-MM-DD',
+          },
+        ],
+      };
+
+      // @ts-expect-error - Mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithDatetime);
+      mockGetDateTimeFieldDisplayValue.mockReturnValue('2024-01-15');
+
+      const valueMap = {
+        publishDate: '2024-01-15T10:30:00Z',
+      };
+
+      // When transformations array is empty or doesn't contain a date transformation,
+      // getDateTimeFieldDisplayValue SHOULD be called
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap,
+        keyPath: 'publishDate',
+        locale: 'en',
+        transformations: ['upper'], // Non-date transformation
+      });
+
+      expect(mockGetDateTimeFieldDisplayValue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fieldConfig: expect.objectContaining({ widget: 'datetime' }),
+          currentValue: '2024-01-15T10:30:00Z',
+          locale: 'en',
+        }),
+      );
+      expect(result).toBe('2024-01-15');
+    });
+  });
+
   describe('Transformations', () => {
     test('should apply transformations when provided', () => {
       const valueMap = {
@@ -2504,5 +2778,388 @@ describe('Test getPropertyValue()', () => {
     });
 
     expect(result).toBe(undefined);
+  });
+
+  test('should resolve relation field value when resolveRef is true (lines 390-397)', () => {
+    // Create mock collection with relation field
+    const mockCollectionWithRelation = {
+      _type: 'entry',
+      fields: [
+        {
+          name: 'author',
+          widget: 'relation',
+          collection: 'authors',
+          search_fields: ['name'],
+          value_field: 'name',
+          display_fields: ['name'],
+        },
+      ],
+      _i18n: {
+        i18nEnabled: false,
+      },
+    };
+
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: {
+        en: {
+          content: {
+            author: 'john-doe',
+          },
+        },
+      },
+    };
+
+    // @ts-ignore - Mock collection
+    mockGetCollection.mockReturnValue(mockCollectionWithRelation);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetReferencedOptionLabel.mockReturnValue('John Doe');
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'author',
+      resolveRef: true,
+    });
+
+    expect(result).toBe('John Doe');
+    expect(mockGetReferencedOptionLabel).toHaveBeenCalled();
+  });
+
+  test('should not resolve relation field value when resolveRef is false', () => {
+    // Create mock collection with relation field
+    const mockCollectionWithRelation = {
+      _type: 'entry',
+      fields: [
+        {
+          name: 'author',
+          widget: 'relation',
+          collection: 'authors',
+        },
+      ],
+      _i18n: {
+        i18nEnabled: false,
+      },
+    };
+
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: {
+        en: {
+          content: {
+            author: 'john-doe',
+          },
+        },
+      },
+    };
+
+    // @ts-ignore - Mock collection
+    mockGetCollection.mockReturnValue(mockCollectionWithRelation);
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'author',
+      resolveRef: false,
+    });
+
+    expect(result).toBe('john-doe');
+  });
+
+  test('should return raw field value for non-relation fields', () => {
+    const mockNormalCollection = {
+      _type: 'entry',
+      fields: [{ name: 'title', widget: 'string' }],
+      _i18n: {
+        i18nEnabled: false,
+      },
+    };
+
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: {
+        en: {
+          content: {
+            title: 'My Post',
+          },
+        },
+      },
+    };
+
+    // @ts-ignore - Mock collection
+    mockGetCollection.mockReturnValue(mockNormalCollection);
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'title',
+      resolveRef: true,
+    });
+
+    expect(result).toBe('My Post');
+  });
+
+  test('should return login when name is not available (line 365)', () => {
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: { en: { content: {} } },
+      commitAuthor: { login: 'john_doe', email: 'john@example.com' },
+    };
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'commit_author',
+    });
+
+    expect(result).toBe('john_doe');
+  });
+
+  test('should return email when name and login are not available (line 365)', () => {
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: { en: { content: {} } },
+      commitAuthor: { email: 'john@example.com' },
+    };
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'commit_author',
+    });
+
+    expect(result).toBe('john@example.com');
+  });
+
+  test('should return falsy value when no commit author info available (line 365)', () => {
+    // @ts-ignore - Testing with minimal mock
+    const entry = {
+      locales: { en: { content: {} } },
+      commitAuthor: {},
+    };
+
+    const result = getPropertyValue({
+      // @ts-expect-error - Using minimal mock for testing
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'commit_author',
+    });
+
+    // When none of name, login, email are available, the || operator chain returns undefined
+    expect(result).toBeUndefined();
+  });
+});
+
+describe('Test getField() with componentName (line 104)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const localMockCollection = {
+    name: 'posts',
+    folder: 'content/posts',
+    _type: 'entry',
+    fields: [
+      { name: 'title', widget: 'string' },
+      { name: 'content', widget: 'markdown' },
+    ],
+  };
+
+  test('should check componentName parameter in getField (line 104)', () => {
+    // Line 104 tests the conditional: componentName
+    //   ? (getComponentDef(componentName)?.fields ?? [])
+    //   : (indexFile?.fields ?? regularFields);
+
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(localMockCollection);
+
+    // When componentName is not provided, it should use indexFile?.fields or regularFields
+    const resultWithoutComponentName = getField({
+      collectionName: 'posts',
+      keyPath: 'title',
+      valueMap: {},
+    });
+
+    expect(resultWithoutComponentName?.name).toBe('title');
+    expect(resultWithoutComponentName?.widget).toBe('string');
+
+    // When componentName is provided, getComponentDef would be called
+    // (We can't easily mock this without triggering i18n, so we verify the conditional
+    // structure by testing the non-componentName path which is the else branch)
+  });
+
+  test('should use regularFields when no indexFile available (line 104 else branch)', () => {
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(localMockCollection);
+    mockGetIndexFile.mockReturnValue(undefined);
+
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'title',
+      valueMap: {},
+      isIndexFile: false,
+    });
+
+    expect(result).toEqual({ name: 'title', widget: 'string' });
+  });
+
+  test('should use indexFile fields when available (line 104 else branch)', () => {
+    const mockIndexFile = {
+      name: 'index',
+      fields: [
+        { name: 'indexField', widget: 'string' },
+        { name: 'content', widget: 'markdown' },
+      ],
+    };
+
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(localMockCollection);
+    mockGetIndexFile.mockReturnValue(mockIndexFile);
+
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'indexField',
+      valueMap: {},
+      isIndexFile: true,
+    });
+
+    expect(result?.name).toBe('indexField');
+    expect(result?.widget).toBe('string');
+  });
+});
+
+describe('Test getField() nested object field check (line 143)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('should handle nested object field within list using .some() check (line 143)', () => {
+    const mockCollectionWithNestedObject = {
+      name: 'posts',
+      folder: 'content/posts',
+      _type: 'entry',
+      fields: [
+        {
+          name: 'listWithNestedObject',
+          widget: 'list',
+          field: {
+            name: 'item',
+            widget: 'object',
+            fields: [
+              { name: 'title', widget: 'string' },
+              { name: 'nested', widget: 'object', fields: [{ name: 'value', widget: 'text' }] },
+            ],
+          },
+        },
+      ],
+    };
+
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(mockCollectionWithNestedObject);
+
+    // Access nested field using index and field name
+    // This tests line 143: subField.widget === 'object' &&
+    // subField.fields?.some((f) => f.name === subFieldName)
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'listWithNestedObject.0.nested',
+      valueMap: {},
+    });
+
+    expect(result).toEqual({
+      name: 'nested',
+      widget: 'object',
+      fields: [{ name: 'value', widget: 'text' }],
+    });
+  });
+
+  test('should find subfield in nested object structure (line 143)', () => {
+    const mockCollectionWithNestedObject = {
+      name: 'posts',
+      folder: 'content/posts',
+      _type: 'entry',
+      fields: [
+        {
+          name: 'items',
+          widget: 'list',
+          field: {
+            name: 'item',
+            widget: 'object',
+            fields: [
+              {
+                name: 'author',
+                widget: 'object',
+                fields: [
+                  { name: 'name', widget: 'string' },
+                  { name: 'email', widget: 'string' },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(mockCollectionWithNestedObject);
+
+    // Access deeply nested field - tests the .some() condition on line 143
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'items.0.author',
+      valueMap: {},
+    });
+
+    expect(result?.name).toBe('author');
+    expect(result?.widget).toBe('object');
+  });
+
+  test('should return undefined when subFieldName not found in nested object (line 143)', () => {
+    const mockCollectionWithNestedObject = {
+      name: 'posts',
+      folder: 'content/posts',
+      _type: 'entry',
+      fields: [
+        {
+          name: 'items',
+          widget: 'list',
+          field: {
+            name: 'item',
+            widget: 'object',
+            fields: [
+              {
+                name: 'author',
+                widget: 'object',
+                fields: [{ name: 'name', widget: 'string' }],
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(mockCollectionWithNestedObject);
+
+    // Try to access a non-existent field in the nested object
+    // This tests the condition on line 143 when .some() returns false
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'items.0.author.nonexistent',
+      valueMap: {},
+    });
+
+    expect(result).toBeUndefined();
   });
 });

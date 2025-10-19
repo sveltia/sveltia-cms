@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { getCanonicalLocale, getLocaleLabel, getLocalePath } from '$lib/services/contents/i18n';
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
@@ -343,5 +343,33 @@ describe('Test getLocaleLabel()', () => {
     expect(getLocaleLabel('fr', {})).toBe('French');
     expect(getLocaleLabel('de', {})).toBe('German');
     expect(getLocaleLabel('ja', {})).toBe('Japanese');
+  });
+
+  test('handles formatter.of() errors gracefully (lines 53-57)', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const originalDisplayNames = Intl.DisplayNames;
+
+    /** @type {any} */
+    const MockDisplayNames = class {
+      /**
+       * Throws test error.
+       * @throws {Error} Test error.
+       */
+      of() {
+        throw new Error('Test error');
+      }
+    };
+
+    // @ts-ignore
+    Intl.DisplayNames = MockDisplayNames;
+
+    const result = getLocaleLabel('en', { displayLocale: 'en' });
+
+    expect(result).toBe(undefined);
+    expect(errorSpy).toHaveBeenCalled();
+
+    // @ts-ignore
+    Intl.DisplayNames = originalDisplayNames;
+    errorSpy.mockRestore();
   });
 });

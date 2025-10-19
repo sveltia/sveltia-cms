@@ -614,6 +614,22 @@ describe('Test getEntryPreviewURL()', () => {
 
     expect(result).toBe('https://example.com/posts/test-entry');
   });
+
+  test('handles null siteConfig by using empty object fallback (line 84)', async () => {
+    // @ts-ignore - Set siteConfig to null to test the ?? {} fallback
+    (await import('$lib/services/config')).siteConfig = writable(null);
+
+    // Mock index file functions
+    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+    // When siteConfig is null, show_preview_links defaults to true but _baseURL is undefined
+    // This should return undefined because baseURL will be undefined
+    const result = getEntryPreviewURL(mockEntry, 'en', mockCollection);
+
+    expect(result).toBeUndefined();
+  });
 });
 
 describe('Test getAssociatedCollections()', () => {

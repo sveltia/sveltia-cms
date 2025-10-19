@@ -114,6 +114,90 @@ describe('Test getEntrySummary()', () => {
     expect(format(charRefStr, { allowMarkdown: true })).toEqual('«ABC\u00adDEF\u00a0GH»');
     expect(format(charRefStr, { allowMarkdown: false })).toEqual('«ABC\u00adDEF\u00a0GH»');
   });
+
+  test('handles non-entry collection type (line 206)', () => {
+    // File/singleton collection without _file, identifier_field, or summary
+    // The ternary should return empty object and function falls back to title/slug
+    const fileCollection = {
+      ...collection,
+      _type: 'file',
+    };
+
+    // @ts-ignore - Intentionally creating a collection with _type !== 'entry'
+    const result = getEntrySummary(fileCollection, entry, {
+      locale: 'de',
+      useTemplate: false,
+    });
+
+    // Should still return a valid summary from the entry's title or slug
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  test('handles index file collection (line 193)', () => {
+    // Create an index file collection where isCollectionIndexFile returns true
+    const indexFileCollection = {
+      ...collection,
+      index_file: {
+        name: 'net',
+        label: 'Category Index',
+      },
+    };
+
+    // Create entry that would be identified as an index file
+    const indexFileEntry = {
+      ...entry,
+      slug: 'net',
+    };
+
+    const result = getEntrySummary(indexFileCollection, indexFileEntry, {
+      locale: 'de',
+      useTemplate: false,
+    });
+
+    // When entry is an index file, should return the index file's label
+    expect(result).toBe('Category Index');
+  });
+
+  test('handles missing locales fallback (lines 210-211)', () => {
+    // Entry with missing requested locale should fall back to first available
+    const entryWithSingleLocale = {
+      ...entry,
+      locales: {
+        de: {
+          slug: 'test',
+          path: 'test.md',
+          content: {
+            title: 'Test Title',
+          },
+        },
+      },
+    };
+
+    const result = getEntrySummary(collection, entryWithSingleLocale, {
+      locale: 'en', // Request 'en' but only 'de' exists
+      useTemplate: false,
+    });
+
+    expect(result).toContain('Test Title');
+  });
+
+  test('handles empty locales fallback (lines 210-211)', () => {
+    // Entry with no locales at all should use empty object fallback
+    const entryWithNoLocales = {
+      ...entry,
+      slug: 'fallback-slug',
+      locales: {},
+    };
+
+    const result = getEntrySummary(collection, entryWithNoLocales, {
+      locale: 'de',
+      useTemplate: false,
+    });
+
+    // Should use slug as fallback when no content available
+    expect(result).toContain('fallback');
+  });
 });
 
 describe('Test sanitizeEntrySummary()', () => {
@@ -421,6 +505,138 @@ describe('Test replace()', () => {
 
   test('should convert values to string', () => {
     const result = replace('tags', context);
+
+    expect(typeof result).toBe('string');
+  });
+
+  test('should return empty string for undefined field values', () => {
+    const contextWithMissingField = {
+      ...context,
+      content: {
+        ...context.content,
+        // Don't include 'missingField', so it will be undefined
+      },
+    };
+
+    const result = replace('missingField', contextWithMissingField);
+
+    expect(result).toBe('');
+  });
+
+  test('should handle Date values with transformations (lines 157-160)', () => {
+    const dateValue = new Date('2024-01-15T10:30:00Z');
+
+    const contextWithDateTransformation = {
+      ...context,
+      content: {
+        ...context.content,
+        publishDate: dateValue,
+      },
+    };
+
+    // Test that date transformations are recognized
+    const result = replace("publishDate | date('YYYY-MM-DD')", contextWithDateTransformation);
+
+    expect(typeof result).toBe('string');
+  });
+
+  test('should handle Date instance without transformations (line 153-154)', () => {
+    const dateValue = new Date('2024-01-15T10:30:00Z');
+
+    const contextWithDate = {
+      ...context,
+      content: {
+        ...context.content,
+        createdDate: dateValue,
+      },
+    };
+
+    const result = replace('createdDate', contextWithDate);
+
+    // Should format the date as YYYY-MM-DD
+    expect(typeof result).toBe('string');
+    expect(result).toContain('2024');
+  });
+
+  test('should handle ternary transformations with Date values (lines 193-194)', () => {
+    const dateValue = new Date('2024-01-15T10:30:00Z');
+
+    const contextWithTernary = {
+      ...context,
+      content: {
+        ...context.content,
+        published: true,
+        publishDate: dateValue,
+      },
+    };
+
+    // Test ternary transformation
+    const result = replace("published | ternary('Yes', 'No')", contextWithTernary);
+
+    expect(result).toBe('Yes');
+  });
+
+  test('should handle commit_date tag with Date formatting (lines 153-154)', () => {
+    // commit_date returns a Date object, so we test the branch that formats dates
+    const result = replace('commit_date', context);
+
+    // Should return a formatted date string in YYYY-MM-DD format
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  test('should format Date value without transformations (lines 153-154)', () => {
+    // Create a context where value is explicitly a Date from replaceSub
+    const contextWithDate = {
+      ...context,
+      replaceSubContext: {
+        ...context.replaceSubContext,
+        commitDate: new Date('2024-12-25T12:00:00Z'),
+      },
+    };
+
+    // When placeholder is 'commit_date' with no transformations,
+    // replaceSub returns the Date and it should be formatted as YYYY-MM-DD
+    const result = replace('commit_date', contextWithDate);
+
+    // The result should be a formatted date
+    expect(result).toBe('2024-12-25');
+  });
+
+  test('should return empty string when field is undefined with transformations (line 153-154)', () => {
+    // To trigger the second `if (value === undefined)` check:
+    // 1. replaceSub returns undefined for non-special tags
+    // 2. We have a transformation that triggers the date/ternary check
+    // 3. valueMap doesn't have the field, so valueMap[keyPath] is undefined
+    const contextWithMissingField = {
+      content: {
+        // Empty, no 'missingField'
+      },
+      collectionName: 'posts',
+      replaceSubContext: context.replaceSubContext,
+      defaultLocale: 'en',
+    };
+
+    // 'missingField' doesn't exist in replaceSub (returns undefined)
+    // Has a ternary transformation, so we check valueMap[keyPath] which is undefined
+    const result = replace("missingField | ternary('Yes', 'No')", contextWithMissingField);
+
+    // Since the field doesn't exist anywhere, should return empty string
+    expect(result).toBe('');
+  });
+
+  test('should handle DATE_TRANSFORMATION_REGEX match (lines 145-146)', () => {
+    const dateValue = new Date('2024-01-15T10:30:00Z');
+
+    const contextWithDateTrans = {
+      ...context,
+      content: {
+        ...context.content,
+        pubDate: dateValue,
+      },
+    };
+
+    // Test with date transformation
+    const result = replace("pubDate | date('MMM D, YYYY')", contextWithDateTrans);
 
     expect(typeof result).toBe('string');
   });

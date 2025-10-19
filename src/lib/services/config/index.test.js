@@ -940,6 +940,38 @@ describe('config/index', () => {
       expect(config?._siteURL).toBeDefined();
     });
 
+    it('should set _baseURL to empty string for invalid URL (line 207)', async () => {
+      const { initSiteConfig } = await import('./index.js');
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        site_url: 'not-a-valid-url',
+      };
+
+      fetchSiteConfigMock.mockResolvedValue(mockConfig);
+
+      await initSiteConfig();
+
+      const config = await new Promise((resolve) => {
+        /* eslint-disable prefer-const */
+        /** @type {() => void} */
+        let unsubscribe;
+
+        unsubscribe = siteConfig.subscribe((cfg) => {
+          if (cfg) {
+            unsubscribe?.();
+            resolve(cfg);
+          }
+        });
+      });
+
+      expect(config?._siteURL).toBe('not-a-valid-url');
+      // When site_url is not a valid URL, _baseURL should be empty string
+      expect(config?._baseURL).toBe('');
+    });
+
     it('should handle root collection folder variants', async () => {
       const { initSiteConfig } = await import('./index.js');
 

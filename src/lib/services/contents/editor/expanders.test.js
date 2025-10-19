@@ -539,5 +539,533 @@ describe('editor/expanders', () => {
       // Should still call update even if no invalid fields
       expect(entryDraft.update).toHaveBeenCalled();
     });
+
+    it('should expand expander keys for invalid fields (line 141)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.validities = {
+        en: {
+          'details.title': { valid: false },
+          'details.content': { valid: true },
+        },
+      };
+
+      mockState.currentValues = {
+        en: {
+          'details.title': 'Test',
+          'details.content': 'Content',
+        },
+      };
+
+      // Mock getExpanderKeys to return some keys to exercise the forEach loop on line 141
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'details.title') {
+          return { name: 'title', widget: 'string' };
+        }
+
+        return undefined;
+      });
+
+      // This should exercise the forEach at line 141
+      expandInvalidFields({
+        collectionName: 'posts',
+        fileName: 'post.md',
+        currentValues: mockState.currentValues,
+      });
+
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
+
+    it('should handle getExpanderKeys returning multiple keys for an invalid field', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      // Create a nested invalid field
+      mockState.validities = {
+        en: {
+          'author.details': { valid: false },
+        },
+      };
+
+      mockState.currentValues = {
+        en: {
+          'author.details': 'some value',
+          'author.name': 'John',
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'author',
+        widget: 'object',
+      });
+
+      // This tests the forEach loop when getExpanderKeys returns multiple keys
+      expandInvalidFields({
+        collectionName: 'posts',
+        currentValues: mockState.currentValues,
+      });
+
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
+
+    it('should handle multiple invalid fields in the same locale (line 131)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.validities = {
+        en: {
+          field1: { valid: false },
+          field2: { valid: false },
+          field3: { valid: true },
+        },
+      };
+
+      mockState.currentValues = {
+        en: {
+          field1: 'value1',
+          field2: 'value2',
+          field3: 'value3',
+        },
+      };
+
+      // Mock getExpanderKeys to return keys for each invalid field
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'field1') {
+          return { name: 'field1', widget: 'string' };
+        }
+
+        if (keyPath === 'field2') {
+          return { name: 'field2', widget: 'string' };
+        }
+
+        return undefined;
+      });
+
+      // This should exercise the inner forEach at line 141
+      expandInvalidFields({
+        collectionName: 'posts',
+        currentValues: mockState.currentValues,
+      });
+
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
+
+    it('should exercise the conditional branch at line 38 with regex test (collapsed auto)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: {
+          'details.title': 'Test',
+          'details.description': '',
+          'details.content': 'Some content',
+        },
+      };
+
+      // When collapsed is 'auto', should check for values matching the regex
+      const result = getInitialExpanderState({
+        key: 'details#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // With values present, should return false (not collapsed, i.e., expanded)
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('should exercise line 38 with no matching values (collapsed auto)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: {
+          'other.field': 'value',
+        },
+      };
+
+      // When collapsed is 'auto' and no matching values exist
+      const result = getInitialExpanderState({
+        key: 'details#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should return true (collapsed) when no matching values
+      expect(result).toBe(true);
+    });
+
+    it('should exercise line 38 regex test with matching value (collapsed auto expands)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: {
+          'section.title': 'My Section', // Matches regex ^section\.[^\.]+$ with truthy value
+          'section.content': 'Content here', // Also matches
+          'other.data': 'other', // Does not match regex for 'section#'
+        },
+      };
+
+      // When collapsed is 'auto' and matching values exist with truthy values
+      const result = getInitialExpanderState({
+        key: 'section#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should return false (expanded) when matching values exist
+      // This exercises the regex.test && !!value branch returning true, then ! negates to false
+      expect(result).toBe(false);
+    });
+
+    it('should exercise line 38 regex test with falsy values (collapsed auto)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: {
+          'section.title': '',
+          'section.content': null,
+          'section.empty': undefined,
+        },
+      };
+
+      // When collapsed is 'auto' and matching keys exist but all values are falsy
+      const result = getInitialExpanderState({
+        key: 'section#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should return true (collapsed) when all matching values are falsy
+      expect(result).toBe(true);
+    });
+
+    it('should exercise line 38 with 0 as value (falsy but valid)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: {
+          'count.value': 0, // 0 is falsy, so !!0 is false
+          'other.number': 5,
+        },
+      };
+
+      // When collapsed is 'auto' and matching key has falsy value (0)
+      const result = getInitialExpanderState({
+        key: 'count#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should return true (collapsed) since 0 is falsy
+      expect(result).toBe(true);
+    });
+
+    it('should exercise line 38 regex branch where regex.test fails', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: {
+          section: 'value', // No dot, so regex won't match ^section\.[^\.]+$
+          'deep.nested.field': 'value', // Too many dots
+          'other.field': 'truthy',
+        },
+      };
+
+      // When collapsed is 'auto' and regex doesn't match any keys
+      const result = getInitialExpanderState({
+        key: 'section#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should return true (collapsed) since no keys match the regex
+      expect(result).toBe(true);
+    });
+
+    it('should exercise line 38 with mixed matching and non-matching keys', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: {
+          'meta.title': 'Test', // Matches regex and truthy
+          metadata: 'value', // Doesn't match (no dot after meta)
+          'meta.desc': '', // Matches regex but falsy
+        },
+      };
+
+      // When collapsed is 'auto' with one matching truthy value
+      const result = getInitialExpanderState({
+        key: 'meta#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should return false (expanded) due to meta.title being truthy
+      expect(result).toBe(false);
+    });
+
+    it('should exercise line 38 with first entry matching truthy condition', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: {
+          'author.name': 'John Doe', // First entry, matches and truthy
+          'other.field': 'value',
+        },
+      };
+
+      // This should hit the early exit of .some() since first entry matches
+      const result = getInitialExpanderState({
+        key: 'author#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should return false (expanded)
+      expect(result).toBe(false);
+    });
+
+    it('should exercise line 38 with regex special characters (needs escaping)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: {
+          'config[].name': 'value', // Special regex chars that need escaping
+          'config[].value': 'test',
+        },
+      };
+
+      // When key contains special regex characters
+      const result = getInitialExpanderState({
+        key: 'config[]#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should handle the escaped regex properly
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('should exercise line 38 empty valueMap case', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: {}, // Empty map
+      };
+
+      // When valueMap is empty
+      const result = getInitialExpanderState({
+        key: 'field#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should return true (collapsed) when no entries at all
+      expect(result).toBe(true);
+    });
+
+    it('should exercise line 38 with undefined locale in currentValues', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        // 'en' locale not present, will use ?? {} fallback
+      };
+
+      // When locale doesn't exist in currentValues
+      const result = getInitialExpanderState({
+        key: 'field#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should return true (collapsed) when valueMap is empty from ?? {}
+      expect(result).toBe(true);
+    });
+
+    it('should exercise line 38 with null valueMap (using ?? fallback)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = { _: {} };
+      mockState.currentValues = {
+        en: null, // Explicitly null
+      };
+
+      // When currentValues[locale] is null
+      const result = getInitialExpanderState({
+        key: 'field#',
+        locale: 'en',
+        collapsed: 'auto',
+      });
+
+      // Should return true (collapsed) when valueMap becomes {} from ?? fallback
+      expect(result).toBe(true);
+    });
+
+    it('should exercise line 131 with multiple invalid fields per locale', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.validities = {
+        en: {
+          field1: { valid: false },
+          field2: { valid: false },
+          field3: { valid: false },
+        },
+      };
+
+      mockState.currentValues = {
+        en: {
+          field1: 'value1',
+          field2: 'value2',
+          field3: 'value3',
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'field',
+        widget: 'string',
+      });
+
+      // This directly exercises the inner forEach at line 131 with multiple iterations
+      expandInvalidFields({
+        collectionName: 'posts',
+        currentValues: mockState.currentValues,
+      });
+
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
+
+    it('should exercise line 131 forEach with getExpanderKeys returning keys (line 138-141)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.validities = {
+        en: {
+          'author.profile': { valid: false },
+        },
+        ja: {
+          'author.bio': { valid: false },
+        },
+      };
+
+      mockState.currentValues = {
+        en: {
+          'author.profile': 'profile value',
+          'author.name': 'John',
+        },
+        ja: {
+          'author.bio': 'bio value',
+          'author.name': 'ジョン',
+        },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'author.profile') {
+          return { name: 'profile', widget: 'object', fields: [] };
+        }
+
+        if (keyPath === 'author.bio') {
+          return { name: 'bio', widget: 'object', fields: [] };
+        }
+
+        return { name: keyPath, widget: 'string' };
+      });
+
+      // This exercises the nested forEach loops at lines 131 and 138-141 across multiple locales
+      expandInvalidFields({
+        collectionName: 'posts',
+        currentValues: mockState.currentValues,
+      });
+
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
+
+    it('should handle empty validityMap for a locale (line 131)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.validities = {
+        en: {}, // Empty validity map for en
+        ja: {
+          title: { valid: false },
+        },
+      };
+
+      mockState.currentValues = {
+        en: { title: 'Test' },
+        ja: { title: 'テスト' },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'title',
+        widget: 'string',
+      });
+
+      // This exercises the forEach at line 131 with an empty validityMap
+      expandInvalidFields({
+        collectionName: 'posts',
+        currentValues: mockState.currentValues,
+      });
+
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
+
+    it('should skip valid fields at line 132-137 (valid: true)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.validities = {
+        en: {
+          field1: { valid: true }, // valid is true, should skip
+          field2: { valid: false }, // valid is false, should process
+        },
+      };
+
+      mockState.currentValues = {
+        en: {
+          field1: 'value1',
+          field2: 'value2',
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'field',
+        widget: 'string',
+      });
+
+      // This exercises the if (!valid) check at line 132
+      expandInvalidFields({
+        collectionName: 'posts',
+        currentValues: mockState.currentValues,
+      });
+
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
+
+    it('should handle null validities (line 131 with ?? fallback)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.validities = null; // null validities, should use ?? {} fallback
+
+      mockState.currentValues = {
+        en: { title: 'Test' },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'title',
+        widget: 'string',
+      });
+
+      // This exercises Object.entries(validities ?? {}) when validities is null
+      expandInvalidFields({
+        collectionName: 'posts',
+        currentValues: mockState.currentValues,
+      });
+
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
   });
 });

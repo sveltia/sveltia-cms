@@ -484,6 +484,99 @@ describe('Test parseFrontMatter()', () => {
     expect(result.title).toBe('Collection Only');
     expect(result.body).toBe('\nContent.');
   });
+
+  test('uses fmDelimiters directly when _file.format is not "frontmatter"', async () => {
+    const mockCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: {
+        format: 'yaml-frontmatter',
+        fmDelimiters: ['---', '---'],
+      },
+    });
+
+    const mockCollectionFile = /** @type {any} */ ({
+      _file: {
+        format: 'yaml-frontmatter',
+        fmDelimiters: ['---', '---'],
+      },
+    });
+
+    const text = '---\ntitle: Direct Delimiters\npublished: true\n---\n\nBody content.';
+
+    const result = parseFrontMatter({
+      collection: mockCollection,
+      collectionFile: mockCollectionFile,
+      format: 'yaml-frontmatter',
+      text,
+    });
+
+    expect(result.title).toBe('Direct Delimiters');
+    expect(result.published).toBe(true);
+    expect(result.body).toBe('\nBody content.');
+  });
+
+  test('uses fmDelimiters directly when _format is not frontmatter (line 80)', async () => {
+    // When _format is a specific format like 'yaml-frontmatter' instead of generic 'frontmatter',
+    // the code should use fmDelimiters directly without calling getFrontMatterDelimiters
+    const mockCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: {
+        format: 'yaml-frontmatter', // NOT 'frontmatter'
+        fmDelimiters: ['---', '---'],
+      },
+    });
+
+    const mockCollectionFile = /** @type {any} */ ({
+      _file: {
+        format: 'yaml-frontmatter', // NOT 'frontmatter' - triggers the false branch
+        fmDelimiters: ['---', '---'],
+      },
+    });
+
+    const text = '---\ntitle: Direct Format\npublished: true\n---\n\nBody content.';
+
+    const result = parseFrontMatter({
+      collection: mockCollection,
+      collectionFile: mockCollectionFile,
+      format: 'yaml-frontmatter',
+      text,
+    });
+
+    expect(result.title).toBe('Direct Format');
+    expect(result.published).toBe(true);
+    expect(result.body).toBe('\nBody content.');
+  });
+
+  test('uses default delimiters when fmDelimiters is undefined (line 80)', async () => {
+    // Test the ?? ['---', '---'] fallback when fmDelimiters is undefined/null
+    const mockCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: {
+        format: 'toml-frontmatter',
+        fmDelimiters: undefined, // triggers the ?? fallback
+      },
+    });
+
+    const mockCollectionFile = /** @type {any} */ ({
+      _file: {
+        format: 'toml-frontmatter',
+        fmDelimiters: undefined,
+      },
+    });
+
+    const text = '---\ntitle: Fallback Delimiters\npublished: true\n---\n\nBody content.';
+
+    const result = parseFrontMatter({
+      collection: mockCollection,
+      collectionFile: mockCollectionFile,
+      format: 'yaml-frontmatter',
+      text,
+    });
+
+    expect(result.title).toBe('Fallback Delimiters');
+    expect(result.published).toBe(true);
+    expect(result.body).toBe('\nBody content.');
+  });
 });
 
 describe('Test parseEntryFile()', () => {

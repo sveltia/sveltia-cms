@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import {
   customFileFormatRegistry,
@@ -12,6 +12,9 @@ import {
 /**
  * @import { InternalI18nOptions } from '$lib/types/private';
  */
+
+// Mock dependencies
+vi.mock('$lib/services/config/deprecations');
 
 describe('Test detectFileExtension()', () => {
   test('returns custom extension from format', () => {
@@ -1384,5 +1387,62 @@ describe('Test getFileConfig()', () => {
       fmDelimiters: undefined,
       yamlQuote: false,
     });
+  });
+
+  test('warns about deprecated yaml_quote option (line 207)', async () => {
+    const { warnDeprecation } = await import('$lib/services/config/deprecations');
+    const mockWarn = vi.mocked(warnDeprecation);
+
+    mockWarn.mockClear();
+
+    // Call getFileConfig with yaml_quote defined (should trigger deprecation warning)
+    getFileConfig({
+      rawCollection: {
+        ...rawFolderCollection,
+        yaml_quote: true,
+      },
+      _i18n: i18nDisabled,
+    });
+
+    // Verify warnDeprecation was called with 'yaml_quote'
+    expect(mockWarn).toHaveBeenCalledWith('yaml_quote');
+  });
+
+  test('does not warn when yaml_quote is undefined', async () => {
+    const { warnDeprecation } = await import('$lib/services/config/deprecations');
+    const mockWarn = vi.mocked(warnDeprecation);
+
+    mockWarn.mockClear();
+
+    // Call getFileConfig without yaml_quote (should not trigger warning)
+    getFileConfig({
+      rawCollection: {
+        ...rawFolderCollection,
+        // yaml_quote is undefined
+      },
+      _i18n: i18nDisabled,
+    });
+
+    // Verify warnDeprecation was not called
+    expect(mockWarn).not.toHaveBeenCalled();
+  });
+
+  test('handles index_file name property (line 207)', () => {
+    // Test with index_file that has a name property
+    const result = getFileConfig({
+      rawCollection: {
+        ...rawFolderCollection,
+        path: '{{slug}}',
+        index_file: {
+          name: '_index',
+          label: 'Index',
+        },
+      },
+      _i18n: i18nDisabled,
+    });
+
+    // When index_file is defined, indexFileName should be added to the regex as an alternative
+    // The regex should contain the pattern: (?<subPath>{{slug}}|_index)
+    expect(result.fullPathRegEx?.toString()).toContain('_index');
   });
 });

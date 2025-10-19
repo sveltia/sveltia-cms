@@ -1,3 +1,4 @@
+import { get } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
 import {
@@ -98,6 +99,26 @@ describe('Test formatJSON()', () => {
 \t\t"alt": "flower",
 \t\t"src": "flower.jpg"
 \t}
+}
+`.trim(),
+    );
+  });
+
+  test('tab with custom indent_size', () => {
+    expect(formatJSON(object, { indent_style: 'tab', indent_size: 2 })).toBe(
+      `
+{
+\t\t"title": "My Post",
+\t\t"published": true,
+\t\t"options": [
+\t\t\t\t1,
+\t\t\t\t2,
+\t\t\t\t3
+\t\t],
+\t\t"image": {
+\t\t\t\t"alt": "flower",
+\t\t\t\t"src": "flower.jpg"
+\t\t}
 }
 `.trim(),
     );
@@ -220,6 +241,114 @@ options:
 image:
   alt: flower
   src: flower.jpg
+`.trim(),
+    );
+  });
+
+  test('legacyQuote parameter', () => {
+    expect(formatYAML(object, {}, { quote: true })).toBe(
+      `
+title: "My Post"
+published: true
+options:
+  - 1
+  - 2
+  - 3
+image:
+  alt: "flower"
+  src: "flower.jpg"
+`.trim(),
+    );
+  });
+
+  test('legacyQuote false with single quote (line 53)', () => {
+    // Test when legacyQuote is false (default) but quote is 'single'
+    // This exercises the branch at line 53 with legacyQuote false
+    expect(formatYAML(object, { quote: 'single' }, {})).toBe(
+      `
+title: 'My Post'
+published: true
+options:
+  - 1
+  - 2
+  - 3
+image:
+  alt: 'flower'
+  src: 'flower.jpg'
+`.trim(),
+    );
+  });
+
+  test('uses empty legacyOptions when not provided (line 53)', () => {
+    // Mock get to return undefined for output.yaml to test the ?? {} fallback on line 52
+    vi.mocked(get).mockReturnValueOnce({ output: { yaml: undefined } });
+
+    const result = formatYAML(object);
+
+    // When options is {}, all defaults apply
+    // legacyOptions defaults to {}
+    // This tests the ?? {} operator on line 52
+    expect(result).toBe(
+      `
+title: My Post
+published: true
+options:
+  - 1
+  - 2
+  - 3
+image:
+  alt: flower
+  src: flower.jpg
+`.trim(),
+    );
+  });
+
+  test('tab with indent_size defaults to 1 (lines 20-23)', () => {
+    // Test formatJSON with tab style and no explicit indent_size
+    // This tests line 21 where indent_size defaults to 1 when indent_style is 'tab'
+    // and line 23 where '\t'.repeat(1) produces a single tab
+    expect(formatJSON(object, { indent_style: 'tab', indent_size: 1 })).toBe(
+      `
+{
+\t"title": "My Post",
+\t"published": true,
+\t"options": [
+\t\t1,
+\t\t2,
+\t\t3
+\t],
+\t"image": {
+\t\t"alt": "flower",
+\t\t"src": "flower.jpg"
+\t}
+}
+`.trim(),
+    );
+  });
+
+  test('uses empty options when siteConfig.output.json is undefined (line 20)', () => {
+    // Mock get to return undefined for output.json to test the ?? {} fallback
+    vi.mocked(get).mockReturnValueOnce({ output: { json: undefined } });
+
+    const result = formatJSON(object);
+
+    // When options is {}, indent_style defaults to 'space' and indent_size to 2
+    // This tests the ?? {} operator on line 20
+    expect(result).toBe(
+      `
+{
+  "title": "My Post",
+  "published": true,
+  "options": [
+    1,
+    2,
+    3
+  ],
+  "image": {
+    "alt": "flower",
+    "src": "flower.jpg"
+  }
+}
 `.trim(),
     );
   });
@@ -449,6 +578,45 @@ title: My Post
       published: true,
       tags: ['test', 'vitest'],
     });
+  });
+
+  test('error handling in formatFrontMatter', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const _file = {
+      format: /** @type {any} */ ('invalid-type'),
+      extension: '.md',
+    };
+
+    const content = { title: 'Test' };
+    const result = formatFrontMatter({ content, _file });
+
+    expect(result).toBe('');
+    errorSpy.mockRestore();
+  });
+
+  test('error handling in formatFrontMatter with json-frontmatter (lines 106-108)', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Create a mock _file object that would trigger an error during formatting
+    const _file = /** @type {any} */ ({
+      format: 'json-frontmatter',
+      extension: '.md',
+      fmDelimiters: ['---', '---'], // Valid delimiters
+    });
+
+    // Mock the content with a circular reference to trigger an error in formatJSON
+    const circularObj = /** @type {any} */ ({ title: 'Test' });
+
+    circularObj.self = circularObj; // Create circular reference
+
+    const result = formatFrontMatter({ content: circularObj, _file });
+
+    // When an error occurs, formatFrontMatter returns empty string
+    expect(result).toBe('');
+    // Verify that console.error was called
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });
 

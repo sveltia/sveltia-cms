@@ -48,7 +48,7 @@ export const getLocaleLabel = (
   const formatter = new Intl.DisplayNames(displayLocale, { type: 'language' });
 
   try {
-    return formatter.of(canonicalLocale) ?? undefined;
+    return formatter.of(canonicalLocale);
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);

@@ -152,6 +152,34 @@ describe('getEntryThumbnail', () => {
     expect(result).toBeUndefined();
   });
 
+  test('returns undefined when entry has no content in any locale (line 34-35)', async () => {
+    const entryWithoutLocaleContent = /** @type {any} */ ({
+      ...mockEntry,
+      locales: {
+        en: {
+          slug: 'test-entry',
+          path: 'content/posts/test-entry.md',
+          // No content property
+        },
+      },
+    });
+
+    const result = await getEntryThumbnail(mockCollection, entryWithoutLocaleContent);
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns undefined when all locales are missing content (line 34-35)', async () => {
+    const entryWithoutAnyContent = /** @type {any} */ ({
+      ...mockEntry,
+      locales: {},
+    });
+
+    const result = await getEntryThumbnail(mockCollection, entryWithoutAnyContent);
+
+    expect(result).toBeUndefined();
+  });
+
   test('returns thumbnail URL when image field is found', async () => {
     mockGetMediaFieldURL.mockResolvedValue('https://example.com/thumbnails/test.jpg');
 
@@ -416,5 +444,131 @@ describe('getAssociatedAssets', () => {
     // Should only include the relative path asset
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('relative/image.jpg');
+  });
+
+  test('returns empty array when no locales have content (lines 34-35)', () => {
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    const entryWithoutContent = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'test.md',
+          content: undefined,
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+
+    const result = getAssociatedAssets({
+      entry: entryWithoutContent,
+      collectionName: 'posts',
+    });
+
+    expect(result).toEqual([]);
+  });
+
+  test('handles orphaned entry-relative assets (lines 121-131)', () => {
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    const mockAsset = /** @type {Asset} */ ({
+      path: 'post-dir/orphaned.jpg',
+      name: 'orphaned.jpg',
+      kind: 'image',
+      size: 1024,
+      text: '',
+      sha: 'abc123',
+      folder: {
+        collectionName: 'posts',
+        internalPath: 'post-dir',
+        publicPath: '/post-dir',
+        entryRelative: true,
+        hasTemplateTags: false,
+      },
+    });
+
+    const entryWithContent = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'post-dir/index.md',
+          content: {
+            title: 'Test',
+            // No image field in content
+          },
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetField.mockReturnValue(undefined); // No image field
+    mockGetAssetByPath.mockReturnValue(undefined);
+    mockGetAssetFolder.mockReturnValue({ entryRelative: true });
+    mockGetAssetFoldersByPath.mockReturnValue([]);
+    mockAllAssets.subscribe.mockImplementation((callback) => {
+      callback([mockAsset]);
+      return vi.fn();
+    });
+
+    const result = getAssociatedAssets({
+      entry: entryWithContent,
+      collectionName: 'posts',
+      relative: true,
+    });
+
+    // Should include the orphaned asset since it's in the same directory
+    expect(result).toContain(mockAsset);
+  });
+
+  test('does not include orphaned assets when relative is false (lines 121-131)', () => {
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    const mockAsset = /** @type {Asset} */ ({
+      path: 'post-dir/orphaned.jpg',
+      name: 'orphaned.jpg',
+      kind: 'image',
+      size: 1024,
+      text: '',
+      sha: 'abc123',
+      folder: {
+        collectionName: 'posts',
+        internalPath: 'post-dir',
+        publicPath: '/post-dir',
+        entryRelative: true,
+        hasTemplateTags: false,
+      },
+    });
+
+    const entryWithContent = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'post-dir/index.md',
+          content: {
+            title: 'Test',
+          },
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetField.mockReturnValue(undefined);
+    mockGetAssetByPath.mockReturnValue(undefined);
+    mockGetAssetFolder.mockReturnValue({ entryRelative: true });
+    mockGetAssetFoldersByPath.mockReturnValue([]);
+    mockAllAssets.subscribe.mockImplementation((callback) => {
+      callback([mockAsset]);
+      return vi.fn();
+    });
+
+    const result = getAssociatedAssets({
+      entry: entryWithContent,
+      collectionName: 'posts',
+      relative: false, // Not requesting relative assets
+    });
+
+    // Should not include orphaned assets when relative is false
+    expect(result).not.toContain(mockAsset);
   });
 });

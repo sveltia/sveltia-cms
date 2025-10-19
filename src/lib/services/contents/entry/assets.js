@@ -86,7 +86,7 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
   const assets = /** @type {Asset[]} */ (
     Object.values(locales)
       .map(({ content }) =>
-        Object.entries(content).map(([keyPath, value]) => {
+        Object.entries(content ?? {}).map(([keyPath, value]) => {
           if (
             typeof value === 'string' &&
             (relative ? !/^[/@]/.test(value) : true) &&
