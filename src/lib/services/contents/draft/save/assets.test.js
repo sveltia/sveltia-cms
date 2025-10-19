@@ -654,6 +654,339 @@ describe('Test resolveAssetFolderPaths()', () => {
       resolvedPublicPath: '',
     });
   });
+
+  test('handles undefined internal path', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file,
+      _i18n: i18nMultiFile,
+    };
+
+    /** @type {AssetFolderInfo} */
+    const folderWithUndefinedInternalPath = {
+      collectionName: 'blog',
+      entryRelative: false,
+      hasTemplateTags: false,
+      internalPath: undefined,
+      publicPath: '/uploads',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: folderWithUndefinedInternalPath,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: '',
+      resolvedPublicPath: '',
+    });
+  });
+
+  test('handles undefined public path', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file,
+      _i18n: i18nMultiFile,
+    };
+
+    /** @type {AssetFolderInfo} */
+    const folderWithUndefinedPublicPath = {
+      collectionName: 'blog',
+      entryRelative: false,
+      hasTemplateTags: false,
+      internalPath: 'static/uploads',
+      publicPath: undefined,
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: folderWithUndefinedPublicPath,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: '',
+      resolvedPublicPath: '',
+    });
+  });
+
+  test('handles both internal and public paths undefined', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file,
+      _i18n: i18nMultiFile,
+    };
+
+    /** @type {AssetFolderInfo} */
+    const folderWithBothUndefined = {
+      collectionName: 'blog',
+      entryRelative: false,
+      hasTemplateTags: false,
+      internalPath: undefined,
+      publicPath: undefined,
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: folderWithBothUndefined,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: '',
+      resolvedPublicPath: '',
+    });
+  });
+
+  test('entry relative with non-multi-folders and empty public path', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nMultiFile,
+    };
+
+    const entryRelativeFolder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      publicPath: '',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: entryRelativeFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '',
+    });
+  });
+
+  test('entry relative with non-multi-folders and dot public path', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nMultiFile,
+    };
+
+    const entryRelativeFolder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      publicPath: '.',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: entryRelativeFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '.',
+    });
+  });
+
+  test('entry relative with non-multi-folders and regular public path', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nMultiFile,
+    };
+
+    const entryRelativeFolder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      publicPath: '/images',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: entryRelativeFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '/images',
+    });
+  });
+
+  test('entry relative with nested path, non-multi-folders and regular public path', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}/index' },
+      _i18n: i18nMultiFile,
+    };
+
+    const entryRelativeFolder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      publicPath: '/images',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: entryRelativeFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedPublicPath: '/images',
+    });
+  });
+
+  test('entry relative with single file i18n and empty public path', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nSingleFile,
+    };
+
+    const entryRelativeFolder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      publicPath: '',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: entryRelativeFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '',
+    });
+  });
+
+  test('entry relative with single file i18n and dot public path', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nSingleFile,
+    };
+
+    const entryRelativeFolder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      publicPath: '.',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: entryRelativeFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '.',
+    });
+  });
+
+  test('entry relative with single file i18n and root public path', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nSingleFile,
+    };
+
+    const entryRelativeFolder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      publicPath: '/',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: entryRelativeFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '/',
+    });
+  });
+
+  test('file collection type with entry relative and regular public path', () => {
+    /** @type {any} */
+    const fileCollection = {
+      name: 'settings',
+      files: [],
+      _type: 'file',
+      _i18n: i18nSingleFile,
+      _thumbnailFieldNames: [],
+      _fileMap: {},
+    };
+
+    const entryRelativeFolder = {
+      collectionName: 'settings',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'data',
+      publicPath: '/data',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: entryRelativeFolder,
+        fillSlugOptions: { collection: fileCollection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'data',
+      resolvedPublicPath: '/data',
+    });
+  });
+
+  test('file collection type with entry relative and empty public path', () => {
+    /** @type {any} */
+    const fileCollection = {
+      name: 'settings',
+      files: [],
+      _type: 'file',
+      _i18n: i18nSingleFile,
+      _thumbnailFieldNames: [],
+      _fileMap: {},
+    };
+
+    const entryRelativeFolder = {
+      collectionName: 'settings',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'data',
+      publicPath: '',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: entryRelativeFolder,
+        fillSlugOptions: { collection: fileCollection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'data',
+      resolvedPublicPath: '',
+    });
+  });
 });
 
 describe('Test replaceBlobURL()', () => {
@@ -999,6 +1332,89 @@ describe('Test replaceBlobURL()', () => {
     });
 
     expect(content.body).not.toContain(blobURL);
+  });
+
+  test('should handle dot-only public path correctly', async () => {
+    const { getFillSlugOptions } = await import('$lib/services/contents/draft/slugs');
+    const mockFile = new File(['content'], 'relative-image.jpg', { type: 'image/jpeg' });
+    const blobURL = 'blob:http://localhost:5173/vwx-234';
+
+    /** @type {InternalCollection} */
+    const mockCollection = {
+      _type: /** @type {'entry'} */ ('entry'),
+      name: 'posts',
+      folder: 'posts',
+      fields: [],
+      _i18n: {
+        i18nEnabled: true,
+        defaultLocale: 'en',
+        structure: 'single_file',
+        allLocales: ['en'],
+        initialLocales: ['en'],
+        canonicalSlug: { key: '', value: '' },
+        omitDefaultLocaleFromFileName: false,
+        structureMap: {
+          i18nSingleFile: true,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+      },
+      _file: {
+        basePath: 'posts',
+        subPath: 'test-post',
+        extension: 'md',
+        format: 'yaml-frontmatter',
+      },
+      _thumbnailFieldNames: [],
+    };
+
+    vi.mocked(getFillSlugOptions).mockReturnValue({
+      collection: mockCollection,
+      content: {},
+    });
+
+    /** @type {any} */
+    const draft = {
+      collection: mockCollection,
+      collectionName: 'posts',
+      fileName: undefined,
+      collectionFile: undefined,
+      isIndexFile: false,
+      currentValues: { en: { title: 'Test' } },
+      currentSlugs: { en: 'test-post' },
+    };
+
+    /** @type {any} */
+    const folder = {
+      internalPath: 'content/posts',
+      publicPath: '.',
+      entryRelative: true,
+      collectionName: 'posts',
+      hasTemplateTags: false,
+    };
+
+    const content = { image: blobURL };
+    /** @type {any[]} */
+    const changes = [];
+    /** @type {any[]} */
+    const savingAssets = [];
+
+    await replaceBlobURL({
+      file: mockFile,
+      folder,
+      blobURL,
+      draft,
+      defaultLocaleSlug: 'test-post',
+      keyPath: 'image',
+      content,
+      changes,
+      savingAssets,
+      slugificationEnabled: false,
+      encodingEnabled: false,
+    });
+
+    expect(content.image).toBe('./relative-image.jpg');
   });
 });
 

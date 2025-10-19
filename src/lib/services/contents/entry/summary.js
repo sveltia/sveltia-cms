@@ -102,7 +102,20 @@ export const replaceSub = (tag, context) => {
   }
 
   if (tag === 'dirname') {
-    return stripSlashes(entryPath.replace(/[^/]+$/, '').replace(basePath ?? '', ''));
+    let dirPath = entryPath.replace(/[^/]+$/, '');
+
+    if (basePath) {
+      // Remove basePath prefix with boundary awareness
+      const prefix = basePath.endsWith('/') ? basePath : `${basePath}/`;
+
+      if (dirPath.startsWith(prefix)) {
+        dirPath = dirPath.slice(prefix.length);
+      } else if (dirPath.startsWith(basePath)) {
+        dirPath = dirPath.slice(basePath.length);
+      }
+    }
+
+    return stripSlashes(dirPath);
   }
 
   if (tag === 'filename') {

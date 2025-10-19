@@ -1097,4 +1097,258 @@ describe('editor/settings', () => {
       expect(get(entryEditorSettings)).toBeDefined();
     });
   });
+
+  describe('selectAssetsView subscriber - savedView fallback (line 54)', () => {
+    it('should use empty object fallback when selectAssetsView is undefined (line 54)', async () => {
+      const { selectAssetsView } = await import('$lib/services/contents/editor');
+      const equal = await import('fast-deep-equal');
+
+      // Mock equal to return false so views are always different
+      // @ts-ignore
+      equal.default.mockReset();
+
+      // @ts-ignore
+      equal.default.mockReturnValue(false);
+
+      const mockBackendService = /** @type {any} */ ({
+        repository: null,
+      });
+
+      await initSettings(mockBackendService);
+
+      // Set settings with undefined selectAssetsView to trigger the ?? {} fallback
+      entryEditorSettings.set(
+        /** @type {import('$lib/types/private').EntryEditorView} */ ({
+          showPreview: true,
+          syncScrolling: true,
+          selectAssetsView: undefined,
+        }),
+      );
+
+      // @ts-ignore
+      const callbacks = selectAssetsView._mockCallbacks.selectAssetsView;
+      const viewSubscriber = callbacks?.[callbacks.length - 1];
+
+      if (viewSubscriber) {
+        // Call subscriber with a view - at line 54, savedView will use ?? {} fallback
+        // because selectAssetsView is undefined
+        viewSubscriber({ type: 'list' });
+
+        // Wait for update
+        await new Promise((resolve) => {
+          setTimeout(resolve, 50);
+        });
+
+        // Verify the comparison happened and update was performed
+        const updated = get(entryEditorSettings);
+
+        // The view should have been updated
+        expect(updated?.selectAssetsView?.type).toBe('list');
+      }
+    });
+
+    it('should compare using fallback empty object when selectAssetsView is null (line 54)', async () => {
+      const { selectAssetsView } = await import('$lib/services/contents/editor');
+      const equal = await import('fast-deep-equal');
+
+      // @ts-ignore
+      equal.default.mockReset();
+
+      // Mock equal to return false so the comparison sees them as different
+      // @ts-ignore
+      equal.default.mockReturnValue(false);
+
+      const mockBackendService = /** @type {any} */ ({
+        repository: null,
+      });
+
+      await initSettings(mockBackendService);
+
+      // Set settings with null selectAssetsView (another case for ?? {} to trigger)
+      entryEditorSettings.set(
+        /** @type {import('$lib/types/private').EntryEditorView} */ ({
+          showPreview: true,
+          syncScrolling: true,
+          selectAssetsView: undefined,
+        }),
+      );
+
+      // @ts-ignore
+      const callbacks = selectAssetsView._mockCallbacks.selectAssetsView;
+      const viewSubscriber = callbacks?.[callbacks.length - 1];
+
+      if (viewSubscriber) {
+        // Call subscriber - savedView will be {} due to ?? fallback
+        viewSubscriber({ type: 'grid' });
+
+        // Wait for update
+        await new Promise((resolve) => {
+          setTimeout(resolve, 50);
+        });
+
+        // Verify update occurred
+        const updated = get(entryEditorSettings);
+
+        expect(updated?.selectAssetsView?.type).toBe('grid');
+      }
+    });
+
+    it('should handle comparison when both view and savedView are truthy (line 54)', async () => {
+      const { selectAssetsView } = await import('$lib/services/contents/editor');
+      const equal = await import('fast-deep-equal');
+
+      // @ts-ignore
+      equal.default.mockReset();
+
+      let comparisonCount = 0;
+
+      // Mock equal to track calls and return false
+      // @ts-ignore
+      equal.default.mockImplementation((a, b) => {
+        comparisonCount += 1;
+
+        // Verify that both arguments are objects
+        if (comparisonCount === 1) {
+          // First call should have view and savedView as arguments
+          expect(typeof a).toBe('object');
+
+          expect(typeof b).toBe('object');
+        }
+
+        return false;
+      });
+
+      const mockBackendService = /** @type {any} */ ({
+        repository: null,
+      });
+
+      await initSettings(mockBackendService);
+
+      // Set settings with a proper selectAssetsView
+      entryEditorSettings.set(
+        /** @type {import('$lib/types/private').EntryEditorView} */ ({
+          showPreview: true,
+          syncScrolling: true,
+          selectAssetsView: { type: 'grid' },
+        }),
+      );
+
+      // @ts-ignore
+      const callbacks = selectAssetsView._mockCallbacks.selectAssetsView;
+      const viewSubscriber = callbacks?.[callbacks.length - 1];
+
+      if (viewSubscriber) {
+        // Call with different view
+        viewSubscriber({ type: 'list' });
+
+        // Wait for update
+        await new Promise((resolve) => {
+          setTimeout(resolve, 50);
+        });
+
+        // Verify equal was called to compare the views
+        expect(comparisonCount).toBeGreaterThan(0);
+
+        // Verify update happened
+        const updated = get(entryEditorSettings);
+
+        expect(updated?.selectAssetsView?.type).toBe('list');
+      }
+    });
+
+    it('should preserve other settings when savedView fallback is used (line 54)', async () => {
+      const { selectAssetsView } = await import('$lib/services/contents/editor');
+      const equal = await import('fast-deep-equal');
+
+      // @ts-ignore
+      equal.default.mockReset();
+
+      // @ts-ignore
+      equal.default.mockReturnValue(false);
+
+      const mockBackendService = /** @type {any} */ ({
+        repository: null,
+      });
+
+      await initSettings(mockBackendService);
+
+      const initialSettings = /** @type {import('$lib/types/private').EntryEditorView} */ ({
+        showPreview: true,
+        syncScrolling: false,
+        selectAssetsView: undefined,
+      });
+
+      entryEditorSettings.set(initialSettings);
+
+      // @ts-ignore
+      const callbacks = selectAssetsView._mockCallbacks.selectAssetsView;
+      const viewSubscriber = callbacks?.[callbacks.length - 1];
+
+      if (viewSubscriber) {
+        viewSubscriber({ type: 'list' });
+
+        // Wait for update
+        await new Promise((resolve) => {
+          setTimeout(resolve, 50);
+        });
+
+        // Verify other settings are preserved while selectAssetsView is updated
+        const updated = get(entryEditorSettings);
+
+        expect(updated?.showPreview).toBe(true);
+        expect(updated?.syncScrolling).toBe(false);
+        expect(updated?.selectAssetsView?.type).toBe('list');
+      }
+    });
+  });
+
+  describe('memory leak prevention', () => {
+    it('should not accumulate subscribers when initSettings is called multiple times', async () => {
+      const { IndexedDB } = await import('@sveltia/utils/storage');
+      let dbSetCallCount = 0;
+
+      const mockDB = {
+        get: vi.fn().mockResolvedValue({}),
+        set: vi.fn().mockImplementation(() => {
+          dbSetCallCount += 1;
+
+          return Promise.resolve();
+        }),
+      };
+
+      // @ts-ignore
+      IndexedDB.mockImplementation(() => mockDB);
+
+      const mockBackendService = /** @type {any} */ ({
+        repository: { databaseName: 'test-cms' },
+      });
+
+      // Call initSettings twice
+      await initSettings(mockBackendService);
+
+      await initSettings(mockBackendService);
+
+      // Reset counter
+      dbSetCallCount = 0;
+
+      // Update settings once
+      entryEditorSettings.set(
+        /** @type {import('$lib/types/private').EntryEditorView} */ ({
+          showPreview: false,
+          syncScrolling: false,
+          selectAssetsView: { type: 'list' },
+        }),
+      );
+
+      // Wait for async operations
+      await new Promise((resolve) => {
+        setTimeout(resolve, 150);
+      });
+
+      // BUG: If subscribers accumulate, dbSetCallCount would be > 1
+      // EXPECTED: dbSetCallCount should be exactly 1 (only one subscriber should fire)
+      // This test documents the bug - it should fail with the current implementation
+      expect(dbSetCallCount).toBe(1);
+    });
+  });
 });

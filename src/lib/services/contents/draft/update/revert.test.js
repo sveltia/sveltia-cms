@@ -383,6 +383,128 @@ describe('draft/update/revert', () => {
 
       expect(currentValues.ja.body).toBe('Original Body');
     });
+
+    it('should not revert non-translatable fields in non-default locale', () => {
+      const currentValues = {
+        ja: {
+          title: 'Modified Title',
+          status: 'Modified Status',
+        },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        if (keyPath === 'status') {
+          return { name: 'status', widget: 'select', i18n: false };
+        }
+
+        return undefined;
+      });
+
+      revertFields({
+        locale: 'ja',
+        isDefaultLocale: false,
+        keyPath: '',
+        getFieldArgs: {
+          valueMap: {
+            title: 'Original Title',
+            status: 'Original Status',
+          },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: false,
+      });
+
+      expect(currentValues.ja.title).toBe('Original Title');
+      expect(currentValues.ja.status).toBe('Modified Status');
+    });
+
+    it('should not revert field with undefined i18n config in non-default locale', () => {
+      const currentValues = {
+        ja: {
+          title: 'Modified Title',
+          custom: 'Modified Custom',
+        },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        if (keyPath === 'custom') {
+          return { name: 'custom', widget: 'string' };
+        }
+
+        return undefined;
+      });
+
+      revertFields({
+        locale: 'ja',
+        isDefaultLocale: false,
+        keyPath: '',
+        getFieldArgs: {
+          valueMap: {
+            title: 'Original Title',
+            custom: 'Original Custom',
+          },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: false,
+      });
+
+      expect(currentValues.ja.title).toBe('Original Title');
+      expect(currentValues.ja.custom).toBe('Modified Custom');
+    });
+
+    it('should not revert field when getField returns undefined in non-default locale', () => {
+      const currentValues = {
+        ja: {
+          title: 'Modified Title',
+          unknown: 'Modified Unknown',
+        },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      revertFields({
+        locale: 'ja',
+        isDefaultLocale: false,
+        keyPath: '',
+        getFieldArgs: {
+          valueMap: {
+            title: 'Original Title',
+            unknown: 'Original Unknown',
+          },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: false,
+      });
+
+      expect(currentValues.ja.title).toBe('Original Title');
+      expect(currentValues.ja.unknown).toBe('Modified Unknown');
+    });
   });
 
   describe('revertLocale (internal)', () => {

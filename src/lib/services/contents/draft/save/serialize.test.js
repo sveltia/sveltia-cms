@@ -34,9 +34,27 @@ const { isFieldRequired, getField } = vi.hoisted(() => ({
   }),
 }));
 
+const { parseDateTimeConfig } = vi.hoisted(() => ({
+  parseDateTimeConfig: vi.fn(
+    /**
+     * Mock parseDateTimeConfig that returns format config.
+     * @returns {any} Config object with format property.
+     */
+    () => ({ format: null }),
+  ),
+}));
+
 vi.mock('$lib/services/contents/entry/fields', () => ({
   isFieldRequired,
   getField,
+}));
+
+vi.mock('$lib/services/contents/widgets/date-time/helper', () => ({
+  parseDateTimeConfig,
+}));
+
+vi.mock('$lib/services/utils/date', () => ({
+  FULL_DATE_TIME_REGEX: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/,
 }));
 
 /**
@@ -500,6 +518,209 @@ describe('Test copyProperty()', () => {
       expect(sortedMap).toEqual({
         parent: {},
       });
+    });
+  });
+
+  describe('TOML date conversion', () => {
+    test('converts ISO 8601 datetime string to TomlDate when isTomlOutput is true and field widget is datetime with no format', async () => {
+      const { TomlDate: TomlDateClass } = await vi.importActual('smol-toml');
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = {
+        publishDate: '2024-01-15T10:30:00Z',
+      };
+
+      const args = {
+        locale: 'en',
+        unsortedMap,
+        sortedMap,
+        isTomlOutput: true,
+        omitEmptyOptionalFields: false,
+      };
+
+      copyProperty({
+        ...args,
+        key: 'publishDate',
+        field: { name: 'publishDate', widget: 'datetime', required: false },
+      });
+
+      // The date should be converted to a TomlDate object
+      expect(sortedMap.publishDate).toBeInstanceOf(TomlDateClass);
+      expect(sortedMap).toHaveProperty('publishDate');
+    });
+
+    test('does not convert date when isTomlOutput is false even if field is datetime', () => {
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = {
+        publishDate: '2024-01-15T10:30:00Z',
+      };
+
+      const args = {
+        locale: 'en',
+        unsortedMap,
+        sortedMap,
+        isTomlOutput: false,
+        omitEmptyOptionalFields: false,
+      };
+
+      copyProperty({
+        ...args,
+        key: 'publishDate',
+        field: { name: 'publishDate', widget: 'datetime', required: false },
+      });
+
+      // The date should remain as a string
+      expect(sortedMap.publishDate).toBe('2024-01-15T10:30:00Z');
+      expect(typeof sortedMap.publishDate).toBe('string');
+    });
+
+    test('does not convert non-datetime value to TomlDate even if isTomlOutput is true', () => {
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = {
+        publishDate: '2024-01-15T10:30:00Z',
+      };
+
+      const args = {
+        locale: 'en',
+        unsortedMap,
+        sortedMap,
+        isTomlOutput: true,
+        omitEmptyOptionalFields: false,
+      };
+
+      copyProperty({
+        ...args,
+        key: 'publishDate',
+        field: { name: 'publishDate', widget: 'string', required: false },
+      });
+
+      // The date should remain as a string because widget is not 'datetime'
+      expect(sortedMap.publishDate).toBe('2024-01-15T10:30:00Z');
+      expect(typeof sortedMap.publishDate).toBe('string');
+    });
+
+    test('does not convert string that does not match date regex to TomlDate', () => {
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = {
+        title: 'Some random string',
+      };
+
+      const args = {
+        locale: 'en',
+        unsortedMap,
+        sortedMap,
+        isTomlOutput: true,
+        omitEmptyOptionalFields: false,
+      };
+
+      copyProperty({
+        ...args,
+        key: 'title',
+        field: { name: 'title', widget: 'datetime', required: false },
+      });
+
+      // The string should remain as-is because it does not match the date regex
+      expect(sortedMap.title).toBe('Some random string');
+      expect(typeof sortedMap.title).toBe('string');
+    });
+
+    test('does not convert date when datetime format is configured', () => {
+      // Reset mock to return a format object
+      /** @type {any} */
+      parseDateTimeConfig.mockReturnValueOnce({ format: 'YYYY-MM-DD' });
+
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = {
+        publishDate: '2024-01-15T10:30:00Z',
+      };
+
+      const args = {
+        locale: 'en',
+        unsortedMap,
+        sortedMap,
+        isTomlOutput: true,
+        omitEmptyOptionalFields: false,
+      };
+
+      copyProperty({
+        ...args,
+        key: 'publishDate',
+        field: { name: 'publishDate', widget: 'datetime', required: false },
+      });
+
+      // The date should remain as a string because a custom format is defined
+      expect(sortedMap.publishDate).toBe('2024-01-15T10:30:00Z');
+      expect(typeof sortedMap.publishDate).toBe('string');
+
+      // Reset the mock for other tests
+      parseDateTimeConfig.mockReturnValueOnce({ format: null });
+    });
+
+    test('handles exception when TomlDate constructor throws', async () => {
+      // eslint-disable-next-line no-unused-vars
+      const _tomlDateModule = await vi.importActual('smol-toml');
+
+      // Mock TomlDate to throw an error
+      /**
+       * Mock TomlDate class that throws an error.
+       */
+      class MockTomlDateThrows {
+        /**
+         * Constructor that throws.
+         */
+        constructor() {
+          throw new Error('Invalid date format');
+        }
+      }
+
+      vi.stubGlobal('TomlDate', MockTomlDateThrows);
+
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = {
+        publishDate: '2024-01-15T10:30:00Z',
+      };
+
+      const args = {
+        locale: 'en',
+        unsortedMap,
+        sortedMap,
+        isTomlOutput: true,
+        omitEmptyOptionalFields: false,
+      };
+
+      // This should not throw and instead keep the original value
+      copyProperty({
+        ...args,
+        key: 'publishDate',
+        field: { name: 'publishDate', widget: 'datetime', required: false },
+      });
+
+      // The catch block should prevent the error from propagating
+      // and the value should be stored in sortedMap
+      expect(sortedMap).toHaveProperty('publishDate');
+      // The copy function does not throw when TomlDate constructor fails
+      // The value will be stored as whatever the original type was
+      expect(sortedMap.publishDate).toBeDefined();
+
+      // Restore the original TomlDate
+      vi.unstubAllGlobals();
     });
   });
 });

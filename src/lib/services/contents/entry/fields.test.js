@@ -12,6 +12,7 @@ import {
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
+import { getComponentDef } from '$lib/services/contents/widgets/markdown/components/definitions';
 import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
 import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
@@ -39,6 +40,10 @@ vi.mock('$lib/services/contents/widgets', () => ({
   MULTI_VALUE_WIDGETS: ['file', 'image', 'relation', 'select'],
 }));
 
+vi.mock('$lib/services/contents/widgets/markdown/components/definitions', () => ({
+  getComponentDef: vi.fn(),
+}));
+
 vi.mock('$lib/services/contents/widgets/date-time/helper', () => ({
   getDateTimeFieldDisplayValue: vi.fn(),
 }));
@@ -60,6 +65,7 @@ const mockIsEntryCollection = vi.mocked(isEntryCollection);
 const mockIsMultiple = vi.mocked(isMultiple);
 const mockGetIndexFile = vi.mocked(getIndexFile);
 const mockIsCollectionIndexFile = vi.mocked(isCollectionIndexFile);
+const mockGetComponentDef = vi.mocked(getComponentDef);
 const mockGetDateTimeFieldDisplayValue = vi.mocked(getDateTimeFieldDisplayValue);
 const mockGetReferencedOptionLabel = vi.mocked(getReferencedOptionLabel);
 const mockGetOptionLabel = vi.mocked(getOptionLabel);
@@ -2963,6 +2969,7 @@ describe('Test getPropertyValue()', () => {
 
 describe('Test getField() with componentName (line 104)', () => {
   beforeEach(() => {
+    fieldConfigCacheMap.clear();
     vi.clearAllMocks();
   });
 
@@ -3035,6 +3042,152 @@ describe('Test getField() with componentName (line 104)', () => {
     });
 
     expect(result?.name).toBe('indexField');
+    expect(result?.widget).toBe('string');
+  });
+
+  test('should use getComponentDef fields when componentName is provided (line 104 ternary branch)', () => {
+    // Test the TRUE branch: componentName
+    //   ? (getComponentDef(componentName)?.fields ?? [])
+    const componentFields = [
+      { name: 'componentField1', widget: 'string' },
+      { name: 'componentField2', widget: 'text' },
+    ];
+
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(localMockCollection);
+    // @ts-expect-error - Mock only needs fields property
+    mockGetComponentDef.mockReturnValue({
+      icon: 'component',
+      label: 'Test Component',
+      fields: componentFields,
+    });
+
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'componentField1',
+      valueMap: {},
+      componentName: 'test-component',
+    });
+
+    expect(mockGetComponentDef).toHaveBeenCalledWith('test-component');
+    expect(result).toEqual(componentFields[0]);
+  });
+
+  test('should use empty array when componentName is provided but getComponentDef returns undefined (line 104)', () => {
+    // Test the fallback: getComponentDef(componentName)?.fields ?? []
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(localMockCollection);
+    mockGetComponentDef.mockReturnValue(undefined);
+
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'componentField1',
+      valueMap: {},
+      componentName: 'nonexistent-component',
+    });
+
+    expect(mockGetComponentDef).toHaveBeenCalledWith('nonexistent-component');
+    expect(result).toBeUndefined();
+  });
+
+  test('should access nested field within component definition (line 104)', () => {
+    // Test accessing nested fields in component definition
+    const componentFields = [
+      {
+        name: 'author',
+        widget: 'object',
+        fields: [
+          { name: 'name', widget: 'string' },
+          { name: 'email', widget: 'string' },
+        ],
+      },
+    ];
+
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(localMockCollection);
+    // @ts-expect-error - Mock only needs fields property
+    mockGetComponentDef.mockReturnValue({
+      icon: 'component',
+      label: 'Test Component',
+      fields: componentFields,
+    });
+
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'author.name',
+      valueMap: {},
+      componentName: 'test-component',
+    });
+
+    expect(mockGetComponentDef).toHaveBeenCalledWith('test-component');
+    expect(result?.name).toBe('name');
+    expect(result?.widget).toBe('string');
+  });
+
+  test('should handle list fields within component definition (line 104)', () => {
+    // Test accessing list fields in component definition
+    const componentFields = [
+      {
+        name: 'items',
+        widget: 'list',
+        fields: [
+          { name: 'title', widget: 'string' },
+          { name: 'value', widget: 'number' },
+        ],
+      },
+    ];
+
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(localMockCollection);
+    // @ts-expect-error - Mock only needs fields property
+    mockGetComponentDef.mockReturnValue({
+      icon: 'component',
+      label: 'Test Component',
+      fields: componentFields,
+    });
+
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'items.0.title',
+      valueMap: {},
+      componentName: 'test-component',
+    });
+
+    expect(mockGetComponentDef).toHaveBeenCalledWith('test-component');
+    expect(result?.name).toBe('title');
+    expect(result?.widget).toBe('string');
+  });
+
+  test('should fallback to regularFields when componentName not found (line 104 fallback)', () => {
+    // When componentName is provided and isIndexFile is true but getComponentDef returns undefined,
+    // the code will use empty array [] from the ternary operator. However, the fallback at line 117
+    // (if (!field && indexFile?.fields)) will try regularFields. Since indexFile?.fields is set,
+    // it will attempt the fallback.
+    const mockCollectionWithIndexFile = {
+      ...localMockCollection,
+      index_file: {
+        fields: [{ name: 'sidebarField', widget: 'string' }],
+      },
+    };
+
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(mockCollectionWithIndexFile);
+    mockGetIndexFile.mockReturnValue(mockCollectionWithIndexFile.index_file);
+    mockGetComponentDef.mockReturnValue(undefined);
+
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'title',
+      valueMap: {},
+      componentName: 'nonexistent',
+      isIndexFile: true,
+    });
+
+    // When componentName is provided and getComponentDef returns undefined,
+    // fields will be [] (empty array). The field is not found in [], so field = undefined.
+    // Then the fallback condition checks: if (!field && indexFile?.fields)
+    // Since indexFile?.fields exists, we fallback to regularFields and find 'title' there
+    expect(result?.name).toBe('title');
     expect(result?.widget).toBe('string');
   });
 });
@@ -3161,5 +3314,47 @@ describe('Test getField() nested object field check (line 143)', () => {
     });
 
     expect(result).toBeUndefined();
+  });
+
+  test('should handle non-numeric key access on list field (line 143 - isNumericKey false)', () => {
+    // This test covers the case where isNumericKey is FALSE on line 143
+    // When key is not numeric, subFieldName will be undefined
+    const mockCollectionWithListField = {
+      name: 'posts',
+      folder: 'content/posts',
+      _type: 'entry',
+      fields: [
+        {
+          name: 'images',
+          widget: 'list',
+          field: {
+            name: 'image',
+            widget: 'object',
+            fields: [
+              { name: 'src', widget: 'image' },
+              { name: 'alt', widget: 'string' },
+            ],
+          },
+        },
+      ],
+    };
+
+    // @ts-expect-error - Simplified mock for testing
+    mockGetCollection.mockReturnValue(mockCollectionWithListField);
+
+    // Access images.src where 'src' is not a numeric key
+    // Line 143: isNumericKey = false, so subFieldName = undefined
+    // Condition becomes: if (!undefined || ...) which is true
+    // So field should be set to the subField (the list item object)
+    const result = getField({
+      collectionName: 'posts',
+      keyPath: 'images.src',
+      valueMap: {},
+    });
+
+    // When accessing with non-numeric key on a list field with subField,
+    // we should get the subField itself
+    expect(result?.name).toBe('image');
+    expect(result?.widget).toBe('object');
   });
 });

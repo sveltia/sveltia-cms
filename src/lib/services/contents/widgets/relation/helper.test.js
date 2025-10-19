@@ -14,6 +14,7 @@ import {
   optionCacheMap,
   prepareFieldTemplates,
   processComplexListField,
+  processEntry,
   processListFields,
   processSingleSubfieldList,
   replaceTemplateFields,
@@ -1455,6 +1456,335 @@ describe('Test getOptions()', async () => {
       expect(resolvedLabels[0]).toBe(options[0].label);
       expect(resolvedLabels[1]).toBe(options[1].label);
     });
+
+    test('should handle empty label fallback using getEntrySummaryFromContent (lines 303-307)', () => {
+      vi.mocked(getEntrySummaryFromContent).mockReturnValueOnce('Entry Summary From Content');
+
+      /** @type {TemplateStrings} */
+      const templates = {
+        _displayField: '{{missingField}}',
+        _valueField: '{{id}}',
+        _searchField: '{{missingField}}',
+        allFieldNames: ['missingField', 'id'],
+        hasListFields: false,
+      };
+
+      const context = {
+        slug: 'test-slug',
+        locale: 'en',
+        getDisplayValue: vi.fn(() => ''),
+      };
+
+      const fallbackContext = {
+        content: { title: 'Entry Title' },
+        locales: { _default: { content: { title: 'Default Title' } } },
+        defaultLocale: '_default',
+        identifierField: 'title',
+      };
+
+      const result = createSimpleOption({
+        templates,
+        allFieldNames: ['missingField', 'id'],
+        context,
+        fallbackContext,
+      });
+
+      expect(result.label).toBe('Entry Summary From Content');
+      expect(vi.mocked(getEntrySummaryFromContent)).toHaveBeenCalledWith(fallbackContext.content, {
+        identifierField: 'title',
+      });
+    });
+
+    test('should fallback through to default locale summary (lines 303-307)', () => {
+      // First call returns empty, second returns default summary
+      vi.mocked(getEntrySummaryFromContent).mockReturnValueOnce('');
+      vi.mocked(getEntrySummaryFromContent).mockReturnValueOnce('Default Locale Summary');
+
+      /** @type {TemplateStrings} */
+      const templates = {
+        _displayField: '{{name}}',
+        _valueField: '{{id}}',
+        _searchField: '{{name}}',
+        allFieldNames: ['name', 'id'],
+        hasListFields: false,
+      };
+
+      const context = {
+        slug: 'fallback-slug',
+        locale: 'en',
+        getDisplayValue: vi.fn(() => ''),
+      };
+
+      const fallbackContext = {
+        content: {},
+        locales: { _default: { content: { title: 'Default Title' } } },
+        defaultLocale: '_default',
+        identifierField: 'title',
+      };
+
+      const result = createSimpleOption({
+        templates,
+        allFieldNames: ['name', 'id'],
+        context,
+        fallbackContext,
+      });
+
+      expect(result.label).toBe('Default Locale Summary');
+    });
+
+    test('should handle whitespace-only labels as empty (lines 303-307)', () => {
+      // Test that whitespace-only display field triggers fallback to entry summary
+      // The mock implementation will return 'summary' for the test content
+
+      /** @type {TemplateStrings} */
+      const templates = {
+        _displayField: '   ',
+        _valueField: '{{id}}',
+        _searchField: '   ',
+        allFieldNames: ['id'],
+        hasListFields: false,
+      };
+
+      const context = {
+        slug: 'test-slug',
+        locale: 'en',
+        getDisplayValue: vi.fn(() => ''),
+      };
+
+      const fallbackContext = {
+        content: { title: 'Test' },
+        locales: {},
+        defaultLocale: '_default',
+        identifierField: 'title',
+      };
+
+      const result = createSimpleOption({
+        templates,
+        allFieldNames: ['id'],
+        context,
+        fallbackContext,
+      });
+
+      // When label is whitespace-only, it should fallback to getEntrySummaryFromContent
+      // which in the test implementation returns 'summary'
+      expect(result.label).not.toBe('   ');
+      expect(result.label).toBe('summary');
+    });
+
+    test('should process complex list field with pattern matching (lines 453-454)', () => {
+      const content = {
+        'articles.0.title': 'Article 1',
+        'articles.0.slug': 'article-1',
+        'articles.1.title': 'Article 2',
+        'articles.1.slug': 'article-2',
+      };
+
+      /** @type {TemplateStrings} */
+      const templates = {
+        _displayField: '{{articles.*.title}}',
+        _valueField: '{{articles.*.slug}}',
+        _searchField: '{{articles.*.title}}',
+        allFieldNames: ['articles.*.title', 'articles.*.slug'],
+        hasListFields: true,
+      };
+
+      /** @type {[string, any][]} */
+      const groupEntries = [
+        ['articles.*.title', { baseFieldName: 'articles' }],
+        ['articles.*.slug', { baseFieldName: 'articles' }],
+      ];
+
+      const context = {
+        slug: 'parent',
+        locale: 'en',
+        getDisplayValue: vi.fn(() => ''),
+      };
+
+      const fallbackContext = {
+        content,
+        locales: {},
+        defaultLocale: 'en',
+        identifierField: 'title',
+      };
+
+      const result = processComplexListField({
+        groupEntries,
+        content,
+        templates,
+        allFieldNames: ['articles.*.title', 'articles.*.slug'],
+        context,
+        fallbackContext,
+      });
+
+      expect(result).toHaveLength(2);
+      expect(result[0].value).toBe('article-1');
+      expect(result[0].label).toBe('Article 1');
+      expect(result[1].value).toBe('article-2');
+      expect(result[1].label).toBe('Article 2');
+    });
+
+    test('should handle invalid patterns in complex list gracefully (lines 453-454)', () => {
+      const content = { invalid: 'value' };
+
+      /** @type {TemplateStrings} */
+      const templates = {
+        _displayField: '{{invalid}}',
+        _valueField: '{{invalid}}',
+        _searchField: '{{invalid}}',
+        allFieldNames: ['invalid'],
+        hasListFields: false,
+      };
+
+      /** @type {[string, any][]} */
+      const groupEntries = [['invalid', {}]];
+
+      const context = {
+        slug: 'test',
+        locale: 'en',
+        getDisplayValue: vi.fn(() => ''),
+      };
+
+      const fallbackContext = {
+        content,
+        locales: {},
+        defaultLocale: 'en',
+        identifierField: 'title',
+      };
+
+      const result = processComplexListField({
+        groupEntries,
+        content,
+        templates,
+        allFieldNames: ['invalid'],
+        context,
+        fallbackContext,
+      });
+
+      expect(result).toHaveLength(0);
+    });
+
+    test('should skip empty group entries in processListFields (lines 548-549)', () => {
+      /** @type {Map<string, any>} */
+      const baseFieldGroups = new Map([
+        ['empty', []],
+        [
+          'items',
+          [
+            [
+              'items.*',
+              {
+                isSingleSubfieldListField: true,
+                isSimpleListField: false,
+              },
+            ],
+          ],
+        ],
+      ]);
+
+      const content = { 'items.0': 'value' };
+
+      /** @type {TemplateStrings} */
+      const templates = {
+        _displayField: '{{items.*}}',
+        _valueField: '{{items.*}}',
+        _searchField: '{{items.*}}',
+        allFieldNames: ['items.*'],
+        hasListFields: true,
+      };
+
+      const context = {
+        slug: 'test',
+        locale: 'en',
+        getDisplayValue: vi.fn(() => ''),
+      };
+
+      const fallbackContext = {
+        content,
+        locales: {},
+        defaultLocale: 'en',
+        identifierField: 'title',
+      };
+
+      const result = processListFields({
+        baseFieldGroups,
+        content,
+        templates,
+        allFieldNames: ['items.*'],
+        context,
+        fallbackContext,
+      });
+
+      // Should process only non-empty groups
+      expect(result.hasProcessedListFields).toBe(true);
+      expect(result.results.length).toBeGreaterThan(0);
+    });
+
+    test('should successfully match and destructure complex list field pattern (line 453)', () => {
+      // This test triggers destructuring: const [, baseFieldNameForList, subKey] = subFieldMatch;
+      // at line 456 where the pattern /^([^.]+)\.\*\.([^.]+)$/ successfully matches
+
+      /** @type {Map<string, any>} */
+      const baseFieldGroups = new Map([
+        [
+          'authors',
+          [
+            [
+              'authors.*.name',
+              {
+                isSingleSubfieldListField: false,
+                isSimpleListField: false,
+              },
+            ],
+          ],
+        ],
+      ]);
+
+      const templates = {
+        _displayField: '{{authors.*.name}}',
+        _valueField: '{{id}}',
+        _searchField: '{{authors.*.email}}',
+        allFieldNames: ['id', 'authors.*.name', 'authors.*.email'],
+        hasListFields: true,
+      };
+
+      const content = {
+        id: '123',
+        'authors.0.name': 'Alice',
+        'authors.0.email': 'alice@example.com',
+        'authors.1.name': 'Bob',
+        'authors.1.email': 'bob@example.com',
+      };
+
+      const context = {
+        slug: 'test',
+        locale: 'en',
+        getDisplayValue: vi.fn((key) => {
+          if (key === 'authors.0.name') return 'Alice';
+          if (key === 'authors.1.name') return 'Bob';
+          return '';
+        }),
+      };
+
+      const fallbackContext = {
+        content,
+        locales: {},
+        defaultLocale: 'en',
+        identifierField: 'id',
+      };
+
+      const result = processListFields({
+        baseFieldGroups,
+        content,
+        templates,
+        allFieldNames: templates.allFieldNames,
+        context,
+        fallbackContext,
+      });
+
+      // Should successfully parse the authors.*.name pattern and destructure it
+      expect(result.hasProcessedListFields).toBe(true);
+      expect(result.results).toHaveLength(2);
+    });
   });
 });
 
@@ -2110,6 +2440,34 @@ describe('Test processComplexListField()', () => {
 
     expect(result).toHaveLength(0);
   });
+
+  test('should return empty array when pattern does not match (line 453)', () => {
+    // Test coverage for line 453: return []; when subFieldMatch is null
+    const result = processComplexListField({
+      groupEntries: [['cities', { baseFieldName: 'cities' }]],
+      content: {
+        'cities.0': 'New York',
+        'cities.1': 'Boston',
+      },
+      templates: {
+        _displayField: '{{cities}}',
+        _valueField: '{{id}}',
+        _searchField: '{{cities}}',
+        allFieldNames: ['cities', 'id'],
+        hasListFields: false,
+      },
+      allFieldNames: ['cities', 'id'],
+      context: { slug: '', locale: 'en', getDisplayValue: vi.fn() },
+      fallbackContext: {
+        content: {},
+        locales: {},
+        defaultLocale: 'en',
+        identifierField: 'title',
+      },
+    });
+
+    expect(result).toHaveLength(0);
+  });
 });
 
 describe('Test processListFields()', () => {
@@ -2136,5 +2494,533 @@ describe('Test processListFields()', () => {
 
     expect(result.results).toHaveLength(0);
     expect(result.hasProcessedListFields).toBe(false);
+  });
+});
+
+describe('Test processEntry()', async () => {
+  const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+  const { getField, getFieldDisplayValue } = await import('$lib/services/contents/entry/fields');
+  const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Set up default mocks
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getField).mockReturnValue(undefined);
+
+    // Mock getFieldDisplayValue to return based on valueMap
+    vi.mocked(getFieldDisplayValue).mockImplementation(({ keyPath, valueMap }) => {
+      if (!valueMap || !keyPath) return '';
+      return valueMap[keyPath] || '';
+    });
+
+    // Mock getEntrySummaryFromContent to return empty
+    vi.mocked(getEntrySummaryFromContent).mockReturnValue('');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('Simple option creation (no list fields)', () => {
+    test('should use createSimpleOption when hasListFields is false', () => {
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getFieldDisplayValue).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'name') return 'John Doe';
+        if (keyPath === 'email') return 'john@example.com';
+        return '';
+      });
+
+      /** @type {Entry} */
+      const entry = {
+        id: 'author-1',
+        slug: 'john-doe',
+        subPath: 'john-doe',
+        locales: {
+          _default: {
+            slug: 'john-doe',
+            path: 'authors/john-doe.md',
+            content: { name: 'John Doe', email: 'john@example.com' },
+          },
+        },
+      };
+
+      // @ts-ignore - Simplified mock collection for testing
+      const mockCollection = { _type: 'entry', name: 'authors' };
+
+      const result = processEntry({
+        refEntry: entry,
+        content: { name: 'John Doe', email: 'john@example.com' },
+        // @ts-ignore
+        collection: mockCollection,
+        templates: {
+          _displayField: '{{name}}',
+          _valueField: '{{slug}}',
+          _searchField: '{{name}} {{email}}',
+          allFieldNames: ['name', 'email', 'slug'],
+          hasListFields: false,
+        },
+        allFieldNames: ['name', 'email', 'slug'],
+        hasListFields: false,
+        collectionName: 'authors',
+        fileName: undefined,
+        locale: '_default',
+        identifierField: 'title',
+        defaultLocale: '_default',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].label).toBe('John Doe');
+      expect(result[0].value).toBe('john-doe');
+      expect(result[0].searchValue).toBe('John Doe john@example.com');
+    });
+  });
+
+  describe('Fallback section (lines 656-673) - when processListFields returns hasProcessedListFields=false', () => {
+    test('should use replaceTemplateFields fallback when processListFields returns false', () => {
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('');
+
+      /** @type {Entry} */
+      const entry = {
+        id: 'test-entry',
+        slug: 'test-slug',
+        subPath: 'test-slug',
+        locales: {
+          _default: {
+            slug: 'test-slug',
+            path: 'test-slug.md',
+            content: { title: 'Test Title' },
+          },
+        },
+      };
+
+      // @ts-ignore - Simplified mock collection for testing
+      const mockCollection = { _type: 'entry', name: 'pages' };
+
+      const result = processEntry({
+        refEntry: entry,
+        content: { title: 'Test Title' },
+        // @ts-ignore
+        collection: mockCollection,
+        templates: {
+          _displayField: '{{title}}',
+          _valueField: '{{slug}}',
+          _searchField: '{{title}}',
+          allFieldNames: ['title', 'slug'],
+          hasListFields: true, // Has list fields but processListFields will return false
+        },
+        allFieldNames: ['title', 'slug'],
+        hasListFields: true,
+        collectionName: 'pages',
+        fileName: undefined,
+        locale: '_default',
+        identifierField: 'title',
+        defaultLocale: '_default',
+      });
+
+      // When replaceTemplateFields returns values
+      expect(result).toHaveLength(1);
+      expect(result[0].value).toBe('test-slug');
+    });
+
+    test('should fallback to slug for empty label (line 666)', () => {
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('');
+
+      /** @type {Entry} */
+      const entry = {
+        id: 'empty-label-entry',
+        slug: 'fallback-slug',
+        subPath: 'fallback-slug',
+        locales: {
+          _default: {
+            slug: 'fallback-slug',
+            path: 'fallback-slug.md',
+            content: {},
+          },
+        },
+      };
+
+      // @ts-ignore - Simplified mock collection for testing
+      const mockCollection = { _type: 'entry', name: 'test' };
+
+      const result = processEntry({
+        refEntry: entry,
+        content: {},
+        // @ts-ignore
+        collection: mockCollection,
+        templates: {
+          _displayField: '{{nonexistent}}',
+          _valueField: '{{slug}}',
+          _searchField: '{{nonexistent}}',
+          allFieldNames: ['nonexistent', 'slug'],
+          hasListFields: true,
+        },
+        allFieldNames: ['nonexistent', 'slug'],
+        hasListFields: true,
+        collectionName: 'test',
+        fileName: undefined,
+        locale: '_default',
+        identifierField: 'title',
+        defaultLocale: '_default',
+      });
+
+      // Label should fallback to slug when empty
+      expect(result).toHaveLength(1);
+      expect(result[0].label).toBe('fallback-slug');
+    });
+
+    test('should fallback to slug for empty value (line 668)', () => {
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('');
+
+      /** @type {Entry} */
+      const entry = {
+        id: 'empty-value-entry',
+        slug: 'value-fallback-slug',
+        subPath: 'value-fallback-slug',
+        locales: {
+          _default: {
+            slug: 'value-fallback-slug',
+            path: 'value-fallback-slug.md',
+            content: {},
+          },
+        },
+      };
+
+      // @ts-ignore - Simplified mock collection for testing
+      const mockCollection = { _type: 'entry', name: 'test' };
+
+      const result = processEntry({
+        refEntry: entry,
+        content: {},
+        // @ts-ignore
+        collection: mockCollection,
+        templates: {
+          _displayField: 'Valid Label',
+          _valueField: '{{nonexistent_value}}',
+          _searchField: '{{nonexistent_value}}',
+          allFieldNames: ['nonexistent_value'],
+          hasListFields: true,
+        },
+        allFieldNames: ['nonexistent_value'],
+        hasListFields: true,
+        collectionName: 'test',
+        fileName: undefined,
+        locale: '_default',
+        identifierField: 'title',
+        defaultLocale: '_default',
+      });
+
+      // Value should fallback to slug when empty
+      expect(result).toHaveLength(1);
+      expect(result[0].value).toBe('value-fallback-slug');
+    });
+
+    test('should fallback searchValue to label when searchValue template is empty', () => {
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('');
+      vi.mocked(getEntrySummaryFromContent).mockReturnValue('');
+
+      /** @type {Entry} */
+      const entry = {
+        id: 'empty-search-entry',
+        slug: 'search-slug',
+        subPath: 'search-slug',
+        locales: {
+          _default: {
+            slug: 'search-slug',
+            path: 'search-slug.md',
+            content: {},
+          },
+        },
+      };
+
+      // @ts-ignore - Simplified mock collection for testing
+      const mockCollection = { _type: 'entry', name: 'test' };
+
+      const result = processEntry({
+        refEntry: entry,
+        content: {},
+        // @ts-ignore
+        collection: mockCollection,
+        templates: {
+          _displayField: 'Valid Label',
+          _valueField: '{{slug}}',
+          _searchField: '', // Empty searchField template
+          allFieldNames: ['slug'],
+          hasListFields: true,
+        },
+        allFieldNames: ['slug'],
+        hasListFields: true,
+        collectionName: 'test',
+        fileName: undefined,
+        locale: '_default',
+        identifierField: 'title',
+        defaultLocale: '_default',
+      });
+
+      // When searchValue template is empty, it stays empty after replaceTemplateFields
+      // Then it falls back to label
+      expect(result).toHaveLength(1);
+      expect(result[0].searchValue).toBe('Valid Label');
+    });
+
+    test('should handle all empty fallbacks (label, value, and searchValue)', () => {
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('');
+
+      /** @type {Entry} */
+      const entry = {
+        id: 'all-empty-entry',
+        slug: 'all-empty-slug',
+        subPath: 'all-empty-slug',
+        locales: {
+          _default: {
+            slug: 'all-empty-slug',
+            path: 'all-empty-slug.md',
+            content: {},
+          },
+        },
+      };
+
+      // @ts-ignore - Simplified mock collection for testing
+      const mockCollection = { _type: 'entry', name: 'test' };
+
+      const result = processEntry({
+        refEntry: entry,
+        content: {},
+        // @ts-ignore
+        collection: mockCollection,
+        templates: {
+          _displayField: '{{missing1}}',
+          _valueField: '{{missing2}}',
+          _searchField: '{{missing3}}',
+          allFieldNames: ['missing1', 'missing2', 'missing3'],
+          hasListFields: true,
+        },
+        allFieldNames: ['missing1', 'missing2', 'missing3'],
+        hasListFields: true,
+        collectionName: 'test',
+        fileName: undefined,
+        locale: '_default',
+        identifierField: 'title',
+        defaultLocale: '_default',
+      });
+
+      // All should fallback appropriately
+      expect(result).toHaveLength(1);
+      expect(result[0].label).toBe('all-empty-slug'); // Label falls back to slug
+      expect(result[0].value).toBe('all-empty-slug'); // Value falls back to slug
+      expect(result[0].searchValue).toBe('all-empty-slug'); // SearchValue falls back to label which is slug
+    });
+  });
+
+  describe('Complex multi-list fallback scenarios', () => {
+    // Note: The fallback section (lines 656-673) in processEntry appears to be unreachable
+    // in practice because processListFields always sets hasProcessedListFields=true if
+    // there are any list fields to analyze, even if they yield no results.
+    // The fallback code remains in the codebase for safety/future use.
+    test('should process entries with mixed list and non-list fields', () => {
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getField).mockReturnValue(undefined);
+
+      /** @type {Entry} */
+      const entry = {
+        id: 'mixed-entry',
+        slug: 'mixed-slug',
+        subPath: 'mixed-slug',
+        locales: {
+          _default: {
+            slug: 'mixed-slug',
+            path: 'mixed-slug.md',
+            content: {
+              title: 'Test Entry',
+            },
+          },
+        },
+      };
+
+      // @ts-ignore - Simplified mock collection for testing
+      const mockCollection = { _type: 'entry', name: 'test' };
+
+      // Test with hasListFields=true but templates that don't have wildcards
+      // @ts-ignore
+      const result = processEntry({
+        refEntry: entry,
+        content: {
+          title: 'Test Entry',
+        },
+        // @ts-ignore
+        collection: mockCollection,
+        templates: {
+          _displayField: '{{title}}',
+          _valueField: '{{slug}}',
+          _searchField: '{{title}}',
+          allFieldNames: ['title', 'slug'],
+          hasListFields: false,
+        },
+        allFieldNames: ['title', 'slug'],
+        hasListFields: false,
+        collectionName: 'test',
+        fileName: undefined,
+        locale: '_default',
+        identifierField: 'title',
+        defaultLocale: '_default',
+      });
+
+      // Should process using createSimpleOption path
+      expect(result.length).toBeGreaterThanOrEqual(1);
+      expect(result[0].value).toBe('mixed-slug');
+    });
+  });
+
+  describe('Locale and content handling', () => {
+    test('should handle different locales properly', () => {
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('Japanese Name');
+
+      /** @type {Entry} */
+      const entry = {
+        id: 'multi-locale-entry',
+        slug: 'entry-slug',
+        subPath: 'entry-slug',
+        locales: {
+          _default: {
+            slug: 'entry-slug',
+            path: 'entry-slug.md',
+            content: { name: 'English Name' },
+          },
+          ja: {
+            slug: 'entry-slug',
+            path: 'entry-slug.ja.md',
+            content: { name: 'Japanese Name' },
+          },
+        },
+      };
+
+      // @ts-ignore - Simplified mock collection for testing
+      const mockCollection = { _type: 'entry', name: 'entries' };
+
+      const result = processEntry({
+        refEntry: entry,
+        content: { name: 'Japanese Name' },
+        // @ts-ignore
+        collection: mockCollection,
+        templates: {
+          _displayField: '{{name}}',
+          _valueField: '{{slug}}',
+          _searchField: '{{name}}',
+          allFieldNames: ['name', 'slug'],
+          hasListFields: false,
+        },
+        allFieldNames: ['name', 'slug'],
+        hasListFields: false,
+        collectionName: 'entries',
+        fileName: undefined,
+        locale: 'ja',
+        identifierField: 'title',
+        defaultLocale: '_default',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].label).toBe('Japanese Name');
+    });
+
+    test('should handle missing locales gracefully', () => {
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('Default Name');
+
+      /** @type {Entry} */
+      const entry = {
+        id: 'single-locale-entry',
+        slug: 'entry-slug',
+        subPath: 'entry-slug',
+        locales: {
+          _default: {
+            slug: 'entry-slug',
+            path: 'entry-slug.md',
+            content: { name: 'Default Name' },
+          },
+        },
+      };
+
+      // @ts-ignore - Simplified mock collection for testing
+      const mockCollection = { _type: 'entry', name: 'entries' };
+
+      const result = processEntry({
+        refEntry: entry,
+        content: { name: 'Default Name' },
+        // @ts-ignore
+        collection: mockCollection,
+        templates: {
+          _displayField: '{{name}}',
+          _valueField: '{{slug}}',
+          _searchField: '{{name}}',
+          allFieldNames: ['name', 'slug'],
+          hasListFields: false,
+        },
+        allFieldNames: ['name', 'slug'],
+        hasListFields: false,
+        collectionName: 'entries',
+        fileName: undefined,
+        locale: '_default',
+        identifierField: 'title',
+        defaultLocale: '_default',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].label).toBe('Default Name');
+    });
+  });
+
+  describe('File collection handling', () => {
+    test('should handle file collection entries', () => {
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('File Entry');
+
+      /** @type {Entry} */
+      const entry = {
+        id: 'file-entry',
+        slug: 'config',
+        subPath: 'config',
+        locales: {
+          _default: {
+            slug: 'config',
+            path: 'config.md',
+            content: { name: 'File Entry' },
+          },
+        },
+      };
+
+      // @ts-ignore - Simplified mock collection for testing
+      const mockCollection = { _type: 'file', name: 'config' };
+
+      const result = processEntry({
+        refEntry: entry,
+        content: { name: 'File Entry' },
+        // @ts-ignore
+        collection: mockCollection,
+        templates: {
+          _displayField: '{{name}}',
+          _valueField: '{{slug}}',
+          _searchField: '{{name}}',
+          allFieldNames: ['name', 'slug'],
+          hasListFields: false,
+        },
+        allFieldNames: ['name', 'slug'],
+        hasListFields: false,
+        collectionName: 'config',
+        fileName: 'config.md',
+        locale: '_default',
+        identifierField: 'title',
+        defaultLocale: '_default',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].label).toBe('File Entry');
+    });
   });
 });

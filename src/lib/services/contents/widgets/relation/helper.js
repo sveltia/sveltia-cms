@@ -664,7 +664,7 @@ export const processEntry = ({
 
   const { label, value, searchValue } = replaceTemplateFields(
     processedTemplates,
-    allFieldNames,
+    allFieldNames.filter((name) => !name.includes('*')),
     context,
     fallbackContext,
   );

@@ -631,6 +631,144 @@ describe('Test normalizeI18nConfig()', () => {
       omitDefaultLocaleFromFileName: false,
     });
   });
+
+  test('config with omit_default_locale_from_filename in multi-file structure (line 222)', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
+      ...siteConfigBase,
+      i18n: {
+        structure: 'multiple_files',
+        locales: ['en', 'de', 'fr'],
+        omit_default_locale_from_filename: true,
+      },
+      collections: [collectionWithI18n],
+    });
+
+    // When no file param, the ternary at line 222 uses structureMap.i18nMultiFile
+    expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
+      structure: 'multiple_files',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFileName: true, // Should be true because i18nMultiFile is true
+    });
+  });
+
+  test('config with omit_default_locale_from_filename in single-file structure (line 222)', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
+      ...siteConfigBase,
+      i18n: {
+        structure: 'single_file',
+        locales: ['en', 'de', 'fr'],
+        omit_default_locale_from_filename: true,
+      },
+      collections: [collectionWithI18n],
+    });
+
+    // When no file param and structure is single_file, line 222 returns false
+    expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
+      structure: 'single_file',
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFileName: false, // Should be false because i18nMultiFile is false
+    });
+  });
+
+  test('config with omit_default_locale_from_filename and file with locale placeholder (line 223)', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
+      ...siteConfigBase,
+      i18n: {
+        structure: 'multiple_folders', // File will change this to multiple_files
+        locales: ['en', 'de', 'fr'],
+        omit_default_locale_from_filename: true,
+      },
+      collections: [collectionWithI18n],
+    });
+
+    const fileWithLocale = {
+      name: 'translations',
+      file: 'data/strings.{{locale}}.json',
+      fields: [],
+      i18n: true,
+    };
+
+    // When file param contains {{locale}} pattern, regex matches and returns true
+    expect(normalizeI18nConfig(collectionWithI18n, fileWithLocale)).toEqual({
+      structure: 'multiple_files', // File with {{locale}} determines multiple_files
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFileName: true, // Regex matches file.file pattern (line 223)
+    });
+  });
+
+  test('config with omit_default_locale_from_filename and file without locale placeholder (line 223)', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).siteConfig = writable({
+      ...siteConfigBase,
+      i18n: {
+        structure: 'multiple_files', // File will change this to single_file
+        locales: ['en', 'de', 'fr'],
+        omit_default_locale_from_filename: true,
+      },
+      collections: [collectionWithI18n],
+    });
+
+    const fileWithoutLocale = {
+      name: 'sitedata',
+      file: 'data/sitedata.json',
+      fields: [],
+      i18n: true,
+    };
+
+    // When file param does NOT contain {{locale}} pattern, regex fails and returns false
+    expect(normalizeI18nConfig(collectionWithI18n, fileWithoutLocale)).toEqual({
+      structure: 'single_file', // File without {{locale}} determines single_file
+      structureMap: {
+        i18nSingleFile: true,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFileName: false, // False because regex doesn't match (line 223)
+    });
+  });
 });
 
 describe('Test internal helper functions', () => {

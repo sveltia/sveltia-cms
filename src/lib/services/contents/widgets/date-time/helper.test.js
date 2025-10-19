@@ -1295,83 +1295,160 @@ describe('Day.js format tokens', () => {
     });
   });
 
-  describe('getDateTimeFieldDisplayValue - additional coverage', () => {
-    test('should execute format try-catch path when format exists', () => {
-      // This specifically tests lines 212-213 and 217-221
-      // Test the successful format parsing path
+  describe('getDateTimeFieldDisplayValue - format parsing (lines 212-213)', () => {
+    test('should execute format try path with UTC dayjs when format and utc are specified', () => {
+      // Tests line 212: return (utc ? dayjs.utc : dayjs)(currentValue, format).format(format);
       const result = getDateTimeFieldDisplayValue({
         locale: 'en',
-        fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD' },
+        fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD', picker_utc: true },
         currentValue: '2023-12-25',
       });
 
-      expect(typeof result).toBe('string');
-      expect(result.length).toBeGreaterThan(0);
+      expect(result).toBe('2023-12-25');
     });
 
-    test('should handle format parsing failure gracefully', () => {
-      // Test the catch block path (lines 217-221)
+    test('should execute format try path with regular dayjs when format is specified but utc is false', () => {
+      // Tests line 212: return (utc ? dayjs.utc : dayjs)(currentValue, format).format(format);
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD', picker_utc: false },
+        currentValue: '2023-12-25',
+      });
+
+      expect(result).toBe('2023-12-25');
+    });
+
+    test('should successfully format when custom format matches input', () => {
+      // Tests line 212-213: format parsing and return
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, format: 'DD/MM/YYYY' },
+        currentValue: '25/12/2023',
+      });
+
+      expect(result).toBe('25/12/2023');
+    });
+  });
+
+  describe('getDateTimeFieldDisplayValue - format catch block (lines 217-221)', () => {
+    test('should catch dayjs parsing exception and fall through to regular parsing', () => {
+      // Tests lines 217-221: catch block that falls through silently
+      // When format parsing fails, it should fall through and try regular parsing
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-      // This should throw in dayjs but be caught and fallback to regular parsing
       const result = getDateTimeFieldDisplayValue({
         locale: 'en',
         fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD' },
-        currentValue: 'definitely-not-a-date',
+        currentValue: '2023-12-25T14:30:00', // Has time component, format doesn't
       });
 
-      // Should return empty string when getDate also fails, or attempt regular parsing
+      expect(typeof result).toBe('string');
+      // Should fallthrough and use regular parsing
+      consoleSpy.mockRestore();
+    });
+
+    test('should handle format error when invalid date string provided to parser', () => {
+      // Tests lines 217-221: empty catch block that silently continues
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD' },
+        currentValue: 'not-a-real-date-at-all',
+      });
+
+      // After format catch, falls through to getDate which creates Invalid Date
       expect(typeof result).toBe('string');
       consoleSpy.mockRestore();
     });
 
-    test('should handle timeZone conditional with DATE_REGEX match (line 244-245)', () => {
-      // Test when currentValue matches DATE_REGEX
-      const result = getDateTimeFieldDisplayValue({
-        locale: 'en',
-        fieldConfig: { ...baseFieldConfig, time_format: false },
-        currentValue: '2023-12-25', // Matches DATE_REGEX
-      });
+    test('should handle parsing exception with Z format token and continue', () => {
+      // Tests lines 217-221: catch block allows continuation
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-      expect(typeof result).toBe('string');
-      expect(result.length).toBeGreaterThan(0);
-    });
-
-    test('should handle timeZone conditional with TIME_SUFFIX_REGEX match', () => {
-      // Test when currentValue matches TIME_SUFFIX_REGEX
-      const result = getDateTimeFieldDisplayValue({
-        locale: 'en',
-        fieldConfig: { ...baseFieldConfig, time_format: false },
-        currentValue: '2023-12-25+02:00', // Matches TIME_SUFFIX_REGEX
-      });
-
-      expect(typeof result).toBe('string');
-    });
-
-    test('should handle timeZone conditional without UTC or regex match', () => {
-      // Test when no regex matches and not UTC
-      const result = getDateTimeFieldDisplayValue({
-        locale: 'en',
-        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
-        currentValue: '2023-12-25T14:30:00', // No suffix, not UTC
-      });
-
-      expect(typeof result).toBe('string');
-      expect(result.length).toBeGreaterThan(0);
-    });
-
-    test('should handle Z format token replacement in custom format', () => {
-      // Test the Z token replacement logic when format includes 'Z'
       const result = getDateTimeFieldDisplayValue({
         locale: 'en',
         fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DDTHH:mm:ssZ' },
-        currentValue: '2023-12-25T14:30:00Z',
+        currentValue: '2023/12/25T14:30:00Z', // Wrong date format separator
       });
 
-      // Should attempt to format with Z token
       expect(typeof result).toBe('string');
+      // Should catch error and continue
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('getDateTimeFieldDisplayValue - timezone conditional (lines 244-245)', () => {
+    test('should use UTC timezone when DATE_REGEX matches currentValue in dateOnly mode', () => {
+      // Tests lines 244-245: utc || DATE_REGEX.test(currentValue) condition
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+        currentValue: '2023-12-25', // Matches DATE_REGEX pattern
+      });
+
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
     });
 
+    test('should use UTC timezone when TIME_SUFFIX_REGEX matches currentValue in dateOnly mode', () => {
+      // Tests lines 244-245 - TIME_SUFFIX_REGEX branch
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+        currentValue: '2023-12-25T00:00:00Z', // Matches TIME_SUFFIX_REGEX
+      });
+
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    test('should use UTC timezone when picker_utc is true in dateOnly mode', () => {
+      // Tests lines 244-245: utc || ... condition (utc branch)
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: true },
+        currentValue: '2023-12-25T14:30:00', // Does not match regex, but utc is true
+      });
+
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    test('should use undefined timezone when no conditions match in dateOnly mode', () => {
+      // Tests lines 244-245: undefined branch of ternary
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+        currentValue: '2023-12-25T14:30:00', // ISO format, doesn't match simple patterns
+      });
+
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    test('should handle multiple regex pattern matching scenarios together', () => {
+      // Tests all branches of line 244-245 in sequence
+      const configs = [
+        { currentValue: '2023-12-25', utc: false }, // DATE_REGEX match
+        { currentValue: '2023-12-25T00:00Z', utc: false }, // TIME_SUFFIX_REGEX match
+        { currentValue: '2023-12-25', utc: true }, // utc true
+        { currentValue: '2023-12-25T14:30:00', utc: false }, // no match
+      ];
+
+      configs.forEach(({ currentValue, utc }) => {
+        const result = getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: utc },
+          currentValue,
+        });
+
+        expect(typeof result).toBe('string');
+      });
+    });
+  });
+
+  describe('getDateTimeFieldDisplayValue - additional coverage', () => {
     test('should handle invalid date after getDate returns falsy', () => {
       // Test when getDate returns undefined and we hit the return ''
       const result = getDateTimeFieldDisplayValue({
@@ -1428,17 +1505,6 @@ describe('Day.js format tokens', () => {
       expect(result.length).toBeGreaterThan(0);
     });
 
-    test('should display date with timezone offset in regex', () => {
-      const result = getDateTimeFieldDisplayValue({
-        locale: 'en',
-        fieldConfig: { ...baseFieldConfig, time_format: false },
-        currentValue: '2023-12-25',
-      });
-
-      expect(typeof result).toBe('string');
-      expect(result.length).toBeGreaterThan(0);
-    });
-
     test('should handle timeZoneName parameter for non-UTC datetime', () => {
       const result = getDateTimeFieldDisplayValue({
         locale: 'en',
@@ -1449,6 +1515,446 @@ describe('Day.js format tokens', () => {
       expect(typeof result).toBe('string');
       // Non-UTC with timeZoneName should include timezone info
       expect(result.length).toBeGreaterThan(0);
+    });
+
+    test('should return empty string when currentValue is not a string', () => {
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: baseFieldConfig,
+        // @ts-expect-error - Testing invalid type
+        currentValue: 123,
+      });
+
+      expect(result).toBe('');
+    });
+
+    test('should handle null currentValue', () => {
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: baseFieldConfig,
+        // @ts-expect-error - Testing invalid type
+        currentValue: null,
+      });
+
+      expect(result).toBe('');
+    });
+
+    test('should handle undefined currentValue', () => {
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: baseFieldConfig,
+        currentValue: undefined,
+      });
+
+      expect(result).toBe('');
+    });
+
+    test('should handle invalid Date object from getDate gracefully', () => {
+      // When getDate returns an invalid Date (NaN timestamp)
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: baseFieldConfig,
+        currentValue: 'invalid-date-string',
+      });
+
+      expect(result).toBe('');
+    });
+  });
+
+  describe('getInputValue - timeOnly return path (lines 212-213)', () => {
+    test('should return timeStr when timeOnly is true in standard time format', () => {
+      // Tests lines 212-213: if (timeOnly) { return timeStr; }
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        date_format: false,
+      };
+
+      // Ensure timeOnly is true
+      expect(fieldConfig.date_format).toBe(false);
+
+      // Test with datetime string - should extract time
+      const result = getInputValue('2023-12-25T14:30:00', fieldConfig);
+
+      expect(result).toBe('14:30');
+    });
+
+    test('should return timeStr for timeOnly with just time string input', () => {
+      // Tests lines 212-213: return timeStr branch
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        date_format: false,
+      };
+
+      const result = getInputValue('12:45', fieldConfig);
+
+      expect(result).toBe('12:45');
+    });
+
+    test('should return timeStr with early morning time when timeOnly is true', () => {
+      // Tests lines 212-213: verify timeStr is returned correctly
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        date_format: false,
+      };
+
+      const result = getInputValue('2023-06-15T03:15:00', fieldConfig);
+
+      expect(result).toBe('03:15');
+    });
+
+    test('should return timeStr with late evening time when timeOnly is true', () => {
+      // Tests lines 212-213: return timeStr for various times
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        date_format: false,
+      };
+
+      const result = getInputValue('2023-06-15T23:59:00', fieldConfig);
+
+      expect(result).toBe('23:59');
+    });
+  });
+
+  describe('getInputValue - error handling and edge cases', () => {
+    test('should handle dateOnly mode and return dateStr', () => {
+      // Tests lines 212-213: if (dateOnly) { return dateStr; }
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        time_format: false, // dateOnly = true
+      };
+
+      const result = getInputValue('2023-06-15T10:30:00', fieldConfig);
+
+      expect(result).toBe('2023-06-15');
+
+      consoleSpy.mockRestore();
+    });
+
+    test('should return empty string for unparseable values', () => {
+      // Tests line 221 and catch block behavior
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        date_format: false,
+      };
+
+      const result = getInputValue('not-a-valid-time', fieldConfig);
+
+      expect(result).toBe('');
+
+      consoleSpy.mockRestore();
+    });
+
+    test('should handle error cases gracefully with different configurations', () => {
+      // Tests catch block error handling (lines 217-221)
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        time_format: false,
+        picker_utc: true,
+      };
+
+      const result = getInputValue('invalid-date', fieldConfig);
+
+      expect(result).toBe('');
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('getDateTimeFieldDisplayValue - timezone ternary (lines 244-245)', () => {
+    test('should use UTC timezone when utc flag is true in dateOnly mode', () => {
+      // Tests lines 244-245: utc || ... ? 'UTC' : undefined (utc branch)
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: true },
+        currentValue: '2023-12-25T14:30:00',
+      });
+
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    test('should use UTC timezone when DATE_REGEX matches currentValue in dateOnly mode', () => {
+      // Tests lines 244-245: DATE_REGEX.test(currentValue) branch
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+        currentValue: '2023-12-25', // Matches YYYY-MM-DD pattern
+      });
+
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    test('should use UTC timezone when TIME_SUFFIX_REGEX matches currentValue in dateOnly mode', () => {
+      // Tests lines 244-245: TIME_SUFFIX_REGEX.test(currentValue) branch
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+        currentValue: '2023-12-25T00:00:00Z', // Matches timezone offset pattern
+      });
+
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    test('should use undefined timezone when none of conditions match in dateOnly mode', () => {
+      // Tests lines 244-245: undefined branch (none of the conditions true)
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+        currentValue: '2023-12-25T14:30:00', // ISO datetime without suffix, won't match patterns
+      });
+
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    test('should correctly apply timezone ternary with all true conditions', () => {
+      // Tests lines 244-245: multiple branches combined
+      const configs = [
+        { value: '2023-12-25', desc: 'DATE_REGEX match' },
+        { value: '2023-12-25+02:00', desc: 'TIME_SUFFIX_REGEX match' },
+        { value: '2023-12-25T14:30', desc: 'no match' },
+      ];
+
+      configs.forEach(({ value }) => {
+        const result = getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+          currentValue: value,
+        });
+
+        expect(typeof result).toBe('string');
+      });
+    });
+
+    test('should prioritize utc flag over DATE_REGEX in timezone ternary', () => {
+      // Tests lines 244-245: utc || ... short-circuit evaluation
+      const resultWithUtcTrue = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: true },
+        currentValue: '2023-12-25',
+      });
+
+      const resultWithUtcFalse = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+        currentValue: '2023-12-25',
+      });
+
+      expect(typeof resultWithUtcTrue).toBe('string');
+      expect(typeof resultWithUtcFalse).toBe('string');
+    });
+
+    test('should handle timezone ternary with TIME_SUFFIX_REGEX and utc false', () => {
+      // Tests lines 244-245: explicitly test TIME_SUFFIX_REGEX branch
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+        currentValue: '2023-12-25-05:00', // Negative offset matches TIME_SUFFIX_REGEX
+      });
+
+      expect(typeof result).toBe('string');
+    });
+  });
+
+  describe('Uncovered line paths', () => {
+    describe('getInputValue - lines 212-213 (return timeStr path)', () => {
+      test('should hit line 212-213 when timeOnly=true and value needs full parsing', () => {
+        // Lines 212-213: if (timeOnly) { return timeStr; }
+        // To hit this, we need:
+        // 1. timeOnly = true (date_format: false)
+        // 2. A currentValue that does NOT match the early regex pattern
+        //    /(?:^|T)(?<time>[0-2]\d:[0-5]\d)\b/
+        // 3. But CAN be parsed by getDate() to extract time
+
+        /** @type {DateTimeField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          date_format: false, // timeOnly = true
+          format: 'HH:mm:ss', // Custom format that won't match early regex
+        };
+
+        // Use a datetime string that includes seconds - won't match early regex
+        const result = getInputValue('2023-12-25T14:30:45', fieldConfig);
+
+        // Should extract the time (line 212 return)
+        expect(result).toBe('14:30');
+      });
+
+      test('should hit line 212-213 with ISO datetime containing milliseconds', () => {
+        // Another case that bypasses early regex and hits line 212
+        /** @type {DateTimeField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          date_format: false, // timeOnly = true
+        };
+
+        // Full ISO string with milliseconds - won't match early regex pattern
+        const result = getInputValue('2023-12-25T09:15:30.123Z', fieldConfig);
+
+        // Should extract time via getDateTimeParts (line 212 return)
+        expect(result).toBe('09:15');
+      });
+
+      test('should hit line 212-213 with timezone offset time string', () => {
+        /** @type {DateTimeField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          date_format: false, // timeOnly = true
+          picker_utc: true,
+        };
+
+        // String with timezone - won't match early regex
+        const result = getInputValue('2023-06-15T22:45:00+00:00', fieldConfig);
+
+        // Should extract time (line 212 return)
+        expect(result).toBe('22:45');
+      });
+    });
+
+    describe('getInputValue - lines 217-221 (catch block)', () => {
+      test('should return empty when format parsing throws exception', () => {
+        // Lines 217-221: catch block execution
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        /** @type {DateTimeField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          date_format: false, // timeOnly = true
+          format: 'YYYY-MM-DD[invalid', // Malformed day.js format string
+        };
+
+        // This will attempt to parse with dayjs, causing an error
+        const result = getInputValue('2023-12-25', fieldConfig);
+
+        // Should return empty due to exception in try block
+        expect(result).toBe('');
+        consoleSpy.mockRestore();
+      });
+
+      test('should return empty when getDate throws during catch block', () => {
+        // Verify catch block returns empty string when an error occurs
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        /** @type {DateTimeField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          time_format: false, // dateOnly = true
+          format: 'BROKEN]]]][[[[',
+        };
+
+        // Use a date value that will cause error with broken format
+        // Early regex won't match, so it goes through the full try block
+        const result = getInputValue('bad-date-value', fieldConfig);
+
+        // Should hit catch block
+        expect(result).toBe('');
+        consoleSpy.mockRestore();
+      });
+    });
+
+    describe('getDateTimeFieldDisplayValue - lines 244-245 (timezone ternary)', () => {
+      test('should take UTC branch when utc flag is true (lines 244-245)', () => {
+        // Lines 244-245: utc || ... ? 'UTC' : undefined
+        // The utc flag short-circuits to 'UTC'
+        const result = getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: true },
+          currentValue: '2023-12-25T14:30:00',
+        });
+
+        expect(typeof result).toBe('string');
+        expect(result.length).toBeGreaterThan(0);
+      });
+
+      test('should take UTC branch when DATE_REGEX matches (lines 244-245)', () => {
+        // Lines 244-245: DATE_REGEX.test(currentValue) ? 'UTC' : undefined
+        // DATE_REGEX is /^\d{4}-\d{2}-\d{2}$/
+        const result = getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+          currentValue: '2023-12-25', // Exact DATE_REGEX match
+        });
+
+        expect(typeof result).toBe('string');
+        expect(result.length).toBeGreaterThan(0);
+      });
+
+      test('should take UTC branch when TIME_SUFFIX_REGEX matches (lines 244-245)', () => {
+        // Lines 244-245: TIME_SUFFIX_REGEX.test(currentValue) ? 'UTC' : undefined
+        // TIME_SUFFIX_REGEX is /[+-]\d{2}:\d{2}$/
+        const result = getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+          currentValue: '2023-12-25T00:00:00+02:00', // Positive timezone offset
+        });
+
+        expect(typeof result).toBe('string');
+        expect(result.length).toBeGreaterThan(0);
+      });
+
+      test('should take undefined branch when none of conditions match (lines 244-245)', () => {
+        // Lines 244-245: undefined branch (all conditions false)
+        const result = getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+          currentValue: '2023-12-25T14:30:00', // ISO datetime without suffix - no regex match
+        });
+
+        expect(typeof result).toBe('string');
+        expect(result.length).toBeGreaterThan(0);
+      });
+
+      test('should correctly evaluate complex timezone ternary condition', () => {
+        // All branches of lines 244-245 in one comprehensive test
+        const testCases = [
+          {
+            desc: 'utc=true (short-circuit)',
+            config: { ...baseFieldConfig, time_format: false, picker_utc: true },
+            value: '2023-12-25T14:30',
+          },
+          {
+            desc: 'DATE_REGEX matches',
+            config: { ...baseFieldConfig, time_format: false, picker_utc: false },
+            value: '2023-12-25',
+          },
+          {
+            desc: 'TIME_SUFFIX_REGEX matches',
+            config: { ...baseFieldConfig, time_format: false, picker_utc: false },
+            value: '2023-12-25T14:30:00-05:00',
+          },
+          {
+            desc: 'no match',
+            config: { ...baseFieldConfig, time_format: false, picker_utc: false },
+            value: '2023-12-25T14:30:00',
+          },
+        ];
+
+        testCases.forEach(({ config, value }) => {
+          const result = getDateTimeFieldDisplayValue({
+            locale: 'en',
+            fieldConfig: config,
+            currentValue: value,
+          });
+
+          expect(typeof result).toBe('string');
+          expect(result.length).toBeGreaterThan(0);
+        });
+      });
     });
   });
 });

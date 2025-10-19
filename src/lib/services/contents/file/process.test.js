@@ -602,6 +602,29 @@ describe('Test extractPathInfo()', () => {
       locale: undefined,
     });
   });
+
+  test('handles file collection with multi-file i18n when filePathMap is undefined (line 203 branch)', () => {
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'data.md',
+      path: '/data/members.md',
+      text: '',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: {
+        collectionName: 'data',
+        // filePathMap is undefined - tests the ?? {} fallback
+      },
+    });
+
+    // With fileName and multi-file structure but no filePathMap
+    const result = extractPathInfo(file, 'members', undefined, 'en', true);
+
+    expect(result).toEqual({
+      subPath: undefined,
+      locale: undefined,
+    });
+  });
 });
 
 describe('Test processNonI18nEntry()', () => {
@@ -1187,18 +1210,39 @@ describe('Test prepareEntry()', () => {
 
   test('skips when isMultiFileStructure is true but locale is undefined (line 409-410)', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test' });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue({
       name: 'posts',
       fields: [],
       _file: {
-        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.md$/,
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
         subPath: undefined,
         extension: 'md',
       },
       _i18n: {
         i18nEnabled: true,
-        allLocales: ['en', 'fr'],
+        allLocales: ['en', 'fr', ''],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: true,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+    getCollectionFile.mockReturnValue({
+      name: 'test',
+      file: 'posts/test.md',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr', ''],
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
@@ -1210,6 +1254,7 @@ describe('Test prepareEntry()', () => {
       },
     });
 
+    // File collection with multi-file i18n where filePathMap has empty string locale key
     const file = /** @type {BaseEntryListItem} */ ({
       name: 'test.md',
       path: '/posts/test.md',
@@ -1217,7 +1262,15 @@ describe('Test prepareEntry()', () => {
       sha: 'abc123',
       size: 100,
       type: 'entry',
-      folder: { collectionName: 'posts' },
+      folder: {
+        collectionName: 'posts',
+        fileName: 'test',
+        filePathMap: {
+          '': '/posts/test.md', // Empty string locale (falsy) with the current path
+          en: '/posts/test.en.md',
+          fr: '/posts/test.fr.md',
+        },
+      },
     });
 
     const entries = /** @type {Entry[]} */ ([]);
@@ -1225,6 +1278,7 @@ describe('Test prepareEntry()', () => {
 
     await prepareEntry({ file, entries, errors });
 
+    // Should skip because locale is falsy (empty string from filePathMap)
     expect(entries).toHaveLength(0);
   });
 
@@ -1524,19 +1578,60 @@ describe('Test prepareEntry()', () => {
 describe('Test prepareEntries()', () => {
   /** @type {any} */
   let generateUUID;
+  /** @type {any} */
+  let getCollection;
+  /** @type {any} */
+  let getCollectionFile;
+  /** @type {any} */
+  let parseEntryFile;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     const cryptoModule = await import('@sveltia/utils/crypto');
+    const collectionModule = await import('$lib/services/contents/collection');
+    const collectionFilesModule = await import('$lib/services/contents/collection/files');
+    const parseModule = await import('$lib/services/contents/file/parse');
 
     generateUUID = cryptoModule.generateUUID;
+    getCollection = collectionModule.getCollection;
+    getCollectionFile = collectionFilesModule.getCollectionFile;
+    parseEntryFile = parseModule.parseEntryFile;
   });
 
-  test('processes multiple files and generates UUIDs', async () => {
-    generateUUID.mockImplementation(() => `test-uuid-${Math.random()}`);
+  test('processes multiple files and generates UUIDs (lines 471-474)', async () => {
+    let uuidCounter = 0;
 
-    // Create mock files that will pass through prepareEntry naturally
+    generateUUID.mockImplementation(() => {
+      uuidCounter += 1;
+      return `test-uuid-${uuidCounter}`;
+    });
+
+    parseEntryFile.mockResolvedValue({ title: 'Post 1' });
+
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: false,
+        allLocales: ['en'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nRootMultiFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    // Create mock files that will pass through prepareEntry successfully
     const files = [
       /** @type {BaseEntryListItem} */ ({
         name: 'post1.md',
@@ -1547,14 +1642,24 @@ describe('Test prepareEntries()', () => {
         type: 'entry',
         folder: { collectionName: 'posts' },
       }),
+      /** @type {BaseEntryListItem} */ ({
+        name: 'post2.md',
+        path: '/posts/post2.md',
+        text: '---\\ntitle: Post 2\\n---',
+        sha: 'abc124',
+        size: 100,
+        type: 'entry',
+        folder: { collectionName: 'posts' },
+      }),
     ];
 
     const result = await prepareEntries(files);
 
-    expect(result.entries).toBeDefined();
-    expect(result.errors).toBeDefined();
-    expect(Array.isArray(result.entries)).toBe(true);
-    expect(Array.isArray(result.errors)).toBe(true);
+    // Verify entries were processed and UUIDs assigned (lines 471-474)
+    expect(result.entries).toHaveLength(2);
+    expect(result.entries[0].id).toBe('test-uuid-1');
+    expect(result.entries[1].id).toBe('test-uuid-2');
+    expect(result.errors).toHaveLength(0);
   });
 
   test('returns empty arrays when no files provided', async () => {
@@ -1617,11 +1722,7 @@ describe('Test prepareEntries()', () => {
   test('filters out entries without slug or locales (lines 471-474)', async () => {
     generateUUID.mockImplementation(() => `test-uuid-${Math.random()}`);
 
-    const { getCollection } = await import('$lib/services/contents/collection');
-    const { getCollectionFile } = await import('$lib/services/contents/collection/files');
-    const { parseEntryFile } = await import('$lib/services/contents/file/parse');
-
-    // Mock to return empty collection so prepareEntry doesn't populate entries
+    // Use the mocked versions
     vi.mocked(getCollection).mockReturnValue(undefined);
     vi.mocked(getCollectionFile).mockReturnValue(undefined);
     vi.mocked(parseEntryFile).mockResolvedValue({ title: 'Test' });

@@ -445,5 +445,158 @@ describe('draft/update/copy', () => {
       // Should not translate without API key
       expect(currentValues.ja.title).toBe('');
     });
+
+    it('should handle translation API errors gracefully', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs');
+      const mockTranslate = vi.fn().mockRejectedValue(new Error('Translation API failed'));
+
+      mockGet.mockImplementation((store) => {
+        if (store === translator) {
+          return {
+            serviceId: 'google',
+            markdownSupported: true,
+            translate: mockTranslate,
+          };
+        }
+
+        if (store === prefs) {
+          return { apiKeys: { google: 'test-api-key' } };
+        }
+
+        if (store === entryDraft) {
+          return mockEntryDraft;
+        }
+
+        return undefined;
+      });
+
+      const currentValues = {
+        en: { title: 'English Title' },
+        ja: { title: '' },
+      };
+
+      const copingFieldMap = {
+        title: { value: 'English Title', isMarkdown: false },
+      };
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      await translateFields({
+        currentValues,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+        },
+        copingFieldMap,
+      });
+
+      // Should not change values when translation fails
+      expect(currentValues.ja.title).toBe('');
+      // Should log the error
+      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should handle markdown conversion during translation', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs');
+      const mockTranslate = vi.fn().mockResolvedValue(['Japanese Title']);
+
+      mockGet.mockImplementation((store) => {
+        if (store === translator) {
+          return {
+            serviceId: 'google',
+            markdownSupported: true,
+            translate: mockTranslate,
+          };
+        }
+
+        if (store === prefs) {
+          return { apiKeys: { google: 'test-api-key' } };
+        }
+
+        if (store === entryDraft) {
+          return mockEntryDraft;
+        }
+
+        return undefined;
+      });
+
+      const currentValues = {
+        en: { body: '# English Title' },
+        ja: { body: '' },
+      };
+
+      const copingFieldMap = {
+        body: { value: '# English Title', isMarkdown: true },
+      };
+
+      await translateFields({
+        currentValues,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+        },
+        copingFieldMap,
+      });
+
+      // Should have translated the markdown value
+      expect(currentValues.ja.body).toBe('Japanese Title');
+    });
+
+    it('should handle multiple field translation', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs');
+      const mockTranslate = vi.fn().mockResolvedValue(['Japanese Title', 'Japanese Body']);
+
+      mockGet.mockImplementation((store) => {
+        if (store === translator) {
+          return {
+            serviceId: 'google',
+            markdownSupported: true,
+            translate: mockTranslate,
+          };
+        }
+
+        if (store === prefs) {
+          return { apiKeys: { google: 'test-api-key' } };
+        }
+
+        if (store === entryDraft) {
+          return mockEntryDraft;
+        }
+
+        return undefined;
+      });
+
+      const currentValues = {
+        en: { title: 'English Title', body: 'English Body' },
+        ja: { title: '', body: '' },
+      };
+
+      const copingFieldMap = {
+        title: { value: 'English Title', isMarkdown: false },
+        body: { value: 'English Body', isMarkdown: true },
+      };
+
+      await translateFields({
+        currentValues,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+        },
+        copingFieldMap,
+      });
+
+      expect(currentValues.ja.title).toBe('Japanese Title');
+      expect(currentValues.ja.body).toBe('Japanese Body');
+      expect(mockTranslate).toHaveBeenCalledWith(['English Title', 'English Body'], {
+        apiKey: 'test-api-key',
+        sourceLanguage: 'en',
+        targetLanguage: 'ja',
+      });
+    });
   });
 });

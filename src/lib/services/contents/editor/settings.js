@@ -16,6 +16,12 @@ import { selectAssetsView } from '$lib/services/contents/editor';
 export const entryEditorSettings = writable();
 
 /**
+ * Store unsubscribe functions to prevent memory leaks.
+ * @type {{ entryEditorSettingsUnsubscribe?: () => void, selectAssetsViewUnsubscribe?: () => void }}
+ */
+const unsubscribers = {};
+
+/**
  * Initialize {@link entryEditorSettings}, {@link selectAssetsView} and relevant subscribers.
  * @param {BackendService} _backend Backend service.
  */
@@ -34,7 +40,11 @@ export const initSettings = async ({ repository }) => {
   entryEditorSettings.set(settings);
   selectAssetsView.set(settings.selectAssetsView);
 
-  entryEditorSettings.subscribe((_settings) => {
+  // Unsubscribe from previous subscribers to prevent memory leaks
+  unsubscribers.entryEditorSettingsUnsubscribe?.();
+  unsubscribers.selectAssetsViewUnsubscribe?.();
+
+  unsubscribers.entryEditorSettingsUnsubscribe = entryEditorSettings.subscribe((_settings) => {
     (async () => {
       try {
         if (!equal(_settings, await settingsDB?.get(storageKey))) {
@@ -46,7 +56,7 @@ export const initSettings = async ({ repository }) => {
     })();
   });
 
-  selectAssetsView.subscribe((view) => {
+  unsubscribers.selectAssetsViewUnsubscribe = selectAssetsView.subscribe((view) => {
     if (!view || !Object.keys(view).length) {
       return;
     }

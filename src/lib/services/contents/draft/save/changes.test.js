@@ -61,6 +61,11 @@ describe('draft/save/changes', () => {
         transformations: undefined,
       },
     });
+
+    // Mock toRaw to return the input value unchanged
+    const { toRaw } = await import('@sveltia/utils/object');
+
+    vi.mocked(toRaw).mockImplementation((value) => value);
   });
 
   describe('createSavingEntryData', () => {
@@ -555,6 +560,1131 @@ describe('draft/save/changes', () => {
       });
 
       expect(result).toBeUndefined();
+    });
+
+    it('should create move change for renamed locale in multi-file entry', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml-frontmatter' },
+        },
+        isNew: false,
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'old-post' },
+        originalEntry: {
+          locales: {
+            en: { path: 'posts/en/old-post.md' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          en: {
+            slug: 'new-post',
+            path: 'posts/en/new-post.md',
+            content: { title: 'Renamed Post' },
+          },
+        },
+      };
+
+      const result = await getMultiFileChange({
+        draft,
+        savingEntry,
+        cacheDB: undefined,
+        locale: 'en',
+      });
+
+      expect(result?.action).toBe('move');
+      expect(result?.previousPath).toBe('posts/en/old-post.md');
+    });
+
+    it('should create update change for existing locale without rename', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml-frontmatter' },
+        },
+        isNew: false,
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'same-post' },
+        originalEntry: {
+          locales: {
+            en: { path: 'posts/en/same-post.md' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          en: {
+            slug: 'same-post',
+            path: 'posts/en/same-post.md',
+            content: { title: 'Updated Post' },
+          },
+        },
+      };
+
+      const result = await getMultiFileChange({
+        draft,
+        savingEntry,
+        cacheDB: undefined,
+        locale: 'en',
+      });
+
+      expect(result?.action).toBe('update');
+      expect(result?.previousPath).toBeUndefined();
+    });
+  });
+
+  describe('createBaseSavingEntryData with various config scenarios', () => {
+    it('should handle missing siteConfig gracefully', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+
+      // Mock siteConfig to return undefined (Line 69: get(siteConfig)?.output ?? {})
+      mockGet.mockReturnValue(undefined);
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: { title: 'Test Post' },
+        },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      // Line 69: Should handle missing siteConfig by using empty object
+      expect(result.localizedEntryMap.en).toBeDefined();
+      expect(result.localizedEntryMap.en.content.title).toBe('Test Post');
+    });
+
+    it('should handle siteConfig with output property', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+
+      // Mock siteConfig to return config with output and encodingEnabled
+      mockGet.mockReturnValue({
+        output: {
+          encode_file_path: true,
+        },
+      });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: { title: 'Test Post' },
+        },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      // Line 69: Should properly extract encodingEnabled from siteConfig
+      expect(result.localizedEntryMap.en).toBeDefined();
+      expect(result.localizedEntryMap.en.content.title).toBe('Test Post');
+    });
+  });
+
+  describe('createBaseSavingEntryData with blob URLs (internal)', () => {
+    it('should handle string values with blob URLs', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { replaceBlobURL } = await import('$lib/services/contents/draft/save/assets');
+      const { getField } = await import('$lib/services/contents/entry/fields');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getField).mockReturnValue({ widget: 'image' });
+      vi.mocked(replaceBlobURL).mockResolvedValue(undefined);
+
+      // Mock getBlobRegex to return a regex that matches blob URLs
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: { title: 'Test', image: 'blob:http://localhost:5000/abc123' },
+        },
+        files: {
+          'blob:http://localhost:5000/abc123': {
+            file: { name: 'image.jpg', size: 1024 },
+            folder: 'uploads',
+          },
+        },
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      expect(result.localizedEntryMap.en).toBeDefined();
+      expect(result.localizedEntryMap.en.slug).toBe('test-post');
+      expect(vi.mocked(replaceBlobURL)).toHaveBeenCalled();
+    });
+
+    it('should handle markdown fields with blob URLs and enable encoding', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { getField } = await import('$lib/services/contents/entry/fields');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getField).mockReturnValue({ widget: 'markdown' });
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: { title: 'Test', body: 'blob:http://localhost:5000/xyz789' },
+        },
+        files: {
+          'blob:http://localhost:5000/xyz789': {
+            file: { name: 'image.jpg', size: 2048 },
+          },
+        },
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      expect(result.localizedEntryMap.en).toBeDefined();
+      expect(result.localizedEntryMap.en.content).toBeDefined();
+
+      // Verify that getField was called for the markdown body field
+      expect(vi.mocked(getField)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          keyPath: 'body',
+        }),
+      );
+    });
+
+    it('should trim whitespace from string values', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: { title: '  Test Post  ', body: '\n\nContent\n\n' },
+        },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      expect(result.localizedEntryMap.en).toBeDefined();
+      expect(result.localizedEntryMap.en.content.title).toBe('Test Post');
+      expect(result.localizedEntryMap.en.content.body).toBe('Content');
+    });
+
+    it('should skip non-string values without trimming', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: {
+            title: 'Test',
+            published: true,
+            views: 42,
+            tags: ['tag1', 'tag2'],
+          },
+        },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      expect(result.localizedEntryMap.en).toBeDefined();
+      expect(result.localizedEntryMap.en.content.published).toBe(true);
+      expect(result.localizedEntryMap.en.content.views).toBe(42);
+      expect(result.localizedEntryMap.en.content.tags).toEqual(['tag1', 'tag2']);
+    });
+
+    it('should skip locales that are not in currentLocales', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true, ja: false },
+        currentValues: {
+          en: { title: 'English Title' },
+          ja: { title: 'Japanese Title' },
+        },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: { en: 'test-post', ja: 'test-post' },
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      expect(result.localizedEntryMap.en).toBeDefined();
+      expect(result.localizedEntryMap.ja).toBeDefined();
+      expect(result.localizedEntryMap.ja.path).toBeDefined();
+    });
+  });
+
+  describe('createSavingEntryData with fullPathRegEx', () => {
+    it('should extract subPath from path when fullPathRegEx is provided', async () => {
+      const { generateUUID } = await import('@sveltia/utils/crypto');
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(generateUUID).mockReturnValue('test-uuid');
+      vi.mocked(createEntryPath).mockReturnValue('blog/2025/01/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: {
+            fullPathRegEx: /^blog\/(?<year>\d+)\/(?<month>\d+)\/(?<subPath>.+)$/,
+          },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'blog',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: { en: { title: 'Test' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      expect(result.savingEntry.subPath).toBe('test-post.md');
+    });
+
+    it('should use slug as fallback when fullPathRegEx does not match', async () => {
+      const { generateUUID } = await import('@sveltia/utils/crypto');
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(generateUUID).mockReturnValue('test-uuid');
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: {
+            fullPathRegEx: /^blog\/(?<year>\d+)\/(?<month>\d+)\/(?<subPath>.+)$/,
+          },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: { en: { title: 'Test' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      expect(result.savingEntry.subPath).toBe('test-post');
+    });
+
+    it('should use slug when fullPathRegEx is null', async () => {
+      const { generateUUID } = await import('@sveltia/utils/crypto');
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(generateUUID).mockReturnValue('test-uuid');
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: { en: { title: 'Test' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      expect(result.savingEntry.subPath).toBe('test-post');
+    });
+  });
+
+  describe('createSavingEntryData with database and caching', () => {
+    it('should create IndexedDB when backend has databaseName', async () => {
+      const { generateUUID } = await import('@sveltia/utils/crypto');
+
+      await import('@sveltia/utils/storage');
+
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(generateUUID).mockReturnValue('test-uuid');
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      // Create a mock for IndexedDB constructor
+      const mockIndexedDB = vi.fn().mockReturnValue({
+        get: vi.fn(),
+      });
+
+      vi.doMock('@sveltia/utils/storage', () => ({
+        IndexedDB: mockIndexedDB,
+      }));
+
+      // Mock backend store to return database name
+      mockGet.mockImplementation((store) => {
+        const storeString = store?.toString?.();
+
+        if (storeString && storeString.includes('backend')) {
+          return {
+            repository: {
+              databaseName: 'test-db',
+            },
+          };
+        }
+
+        return undefined;
+      });
+
+      const draft = {
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: { en: { title: 'Test' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      expect(result.savingEntry).toBeDefined();
+    });
+
+    it('should not create IndexedDB when backend is undefined', async () => {
+      const { generateUUID } = await import('@sveltia/utils/crypto');
+
+      await import('@sveltia/utils/storage');
+
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(generateUUID).mockReturnValue('test-uuid');
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const mockIndexedDB = vi.fn();
+
+      vi.doMock('@sveltia/utils/storage', () => ({
+        IndexedDB: mockIndexedDB,
+      }));
+
+      mockGet.mockReturnValue(undefined);
+
+      const draft = {
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: { en: { title: 'Test' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      expect(result.savingEntry).toBeDefined();
+    });
+  });
+
+  describe('getSingleFileChange with i18n', () => {
+    it('should serialize all locales with content when i18nEnabled is true', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml-frontmatter' },
+          _i18n: {
+            i18nEnabled: true,
+            defaultLocale: 'en',
+          },
+        },
+        isNew: true,
+        originalSlugs: undefined,
+        originalEntry: undefined,
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          en: {
+            slug: 'new-post',
+            path: 'posts/new-post.md',
+            content: { title: 'English Post' },
+          },
+          ja: {
+            slug: 'new-post',
+            path: 'posts/new-post.md',
+            content: { title: 'Japanese Post' },
+          },
+        },
+      };
+
+      await getSingleFileChange({ draft, savingEntry, cacheDB: undefined });
+
+      expect(vi.mocked(serializeContent)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locale: 'en',
+          valueMap: { title: 'English Post' },
+        }),
+      );
+      expect(vi.mocked(serializeContent)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locale: 'ja',
+          valueMap: { title: 'Japanese Post' },
+        }),
+      );
+    });
+
+    it('should skip locales without content when i18nEnabled is true', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml-frontmatter' },
+          _i18n: {
+            i18nEnabled: true,
+            defaultLocale: 'en',
+          },
+        },
+        isNew: true,
+        originalSlugs: undefined,
+        originalEntry: undefined,
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          en: {
+            slug: 'new-post',
+            path: 'posts/new-post.md',
+            content: { title: 'English Post' },
+          },
+          ja: {
+            slug: 'new-post',
+            path: 'posts/new-post.md',
+            content: null,
+          },
+        },
+      };
+
+      await getSingleFileChange({ draft, savingEntry, cacheDB: undefined });
+
+      // serializeContent should only be called for en (which has content)
+      const calls = vi.mocked(serializeContent).mock.calls.filter(([args]) => args.locale === 'ja');
+
+      expect(calls).toHaveLength(0);
+    });
+  });
+
+  describe('getSingleFileChange with previousPath handling', () => {
+    it('should not include previousPath when entry is not renamed', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml-frontmatter' },
+          _i18n: {
+            i18nEnabled: false,
+            defaultLocale: 'en',
+          },
+        },
+        isNew: false,
+        originalSlugs: { en: 'same-slug' },
+        originalEntry: {
+          locales: {
+            en: { path: 'posts/same-slug.md' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          en: {
+            slug: 'same-slug',
+            path: 'posts/same-slug.md',
+            content: { title: 'Updated' },
+          },
+        },
+      };
+
+      const result = await getSingleFileChange({ draft, savingEntry, cacheDB: undefined });
+
+      // Line 237: previousPath should be undefined when NOT renamed
+      expect(result.previousPath).toBeUndefined();
+      expect(result.action).toBe('update');
+    });
+
+    it('should use originalSlugs._ as fallback when locale-specific key not found', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml-frontmatter' },
+          _i18n: {
+            i18nEnabled: false,
+            defaultLocale: 'en',
+          },
+        },
+        isNew: false,
+        // No locale-specific key, only underscore fallback
+        originalSlugs: { _: 'old-post' },
+        originalEntry: {
+          locales: {
+            en: { path: 'posts/old-post.md' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          en: {
+            slug: 'new-post',
+            path: 'posts/new-post.md',
+            content: { title: 'Renamed' },
+          },
+        },
+      };
+
+      const result = await getSingleFileChange({ draft, savingEntry, cacheDB: undefined });
+
+      // Line 184: Should use originalSlugs._ as fallback
+      expect(result.action).toBe('move');
+      expect(result.previousPath).toBe('posts/old-post.md');
+    });
+  });
+
+  describe('getMultiFileChange with fallback to global folder', () => {
+    it('should handle locale without slug/path gracefully', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml-frontmatter' },
+        },
+        isNew: false,
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: undefined,
+        originalEntry: {
+          locales: {
+            en: { path: 'posts/test.md' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          en: {
+            slug: 'test-new',
+            path: 'posts/test-new.md',
+            content: { title: 'Test' },
+          },
+        },
+      };
+
+      const result = await getMultiFileChange({
+        draft,
+        savingEntry,
+        cacheDB: undefined,
+        locale: 'en',
+      });
+
+      // Should handle slug/path changes
+      expect(result?.action).toBe('move');
+      expect(result?.slug).toBe('test-new');
+      expect(result?.path).toBe('posts/test-new.md');
+    });
+
+    it('should use originalSlugs._ fallback in multi-file entry rename (line 237)', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml-frontmatter' },
+        },
+        isNew: false,
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        // Line 237: Use underscore as fallback when locale-specific key not available
+        originalSlugs: { _: 'old-name' },
+        originalEntry: {
+          locales: {
+            en: { path: 'posts/en/old-name.md' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          en: {
+            slug: 'new-name',
+            path: 'posts/en/new-name.md',
+            content: { title: 'Updated' },
+          },
+        },
+      };
+
+      const result = await getMultiFileChange({
+        draft,
+        savingEntry,
+        cacheDB: undefined,
+        locale: 'en',
+      });
+
+      // Line 237: Should detect rename using underscore fallback
+      expect(result?.action).toBe('move');
+      expect(result?.previousPath).toBe('posts/en/old-name.md');
+      expect(result?.path).toBe('posts/en/new-name.md');
+    });
+  });
+
+  describe('createSavingEntryData with multiple locales', () => {
+    it('should process multiple locales with Promise.all (i18n multi-file)', async () => {
+      const { generateUUID } = await import('@sveltia/utils/crypto');
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(generateUUID).mockReturnValue('test-uuid');
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        isNew: false,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: true,
+            allLocales: ['en', 'ja', 'fr'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true, ja: true, fr: true },
+        originalLocales: { en: true, ja: true, fr: false },
+        originalSlugs: { en: 'test', ja: 'test', fr: undefined },
+        originalEntry: {
+          locales: {
+            en: { path: 'posts/en/test.md' },
+            ja: { path: 'posts/ja/test.md' },
+          },
+        },
+        currentValues: {
+          en: { title: 'English' },
+          ja: { title: '日本語' },
+          fr: { title: 'Français' },
+        },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test',
+        canonicalSlug: 'test',
+        localizedSlugs: { en: 'test', ja: 'test', fr: 'test' },
+      };
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      // Lines 302-303: else branch with Promise.all for multiple locales
+      // When i18nEnabled=true and i18nSingleFile=false, all locales are processed
+      expect(result.changes).toHaveLength(3);
+      expect(result.changes.every((c) => c !== undefined)).toBe(true);
+      expect(result.changes.filter((c) => c.action === 'create')).toHaveLength(1); // fr is new
+      expect(result.changes.filter((c) => c.action === 'update')).toHaveLength(2); // en, ja exist
+    });
+
+    it('should use Promise.all for concurrent locale processing (i18n multi-file)', async () => {
+      const { generateUUID } = await import('@sveltia/utils/crypto');
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(generateUUID).mockReturnValue('test-uuid');
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: true,
+            allLocales: ['en', 'ja', 'de'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'slug' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true, ja: true, de: true },
+        originalLocales: {},
+        currentValues: {
+          en: { title: 'New Post' },
+          ja: { title: '新しい投稿' },
+          de: { title: 'Neuer Beitrag' },
+        },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'new-post',
+        canonicalSlug: 'new-post',
+        localizedSlugs: { en: 'new-post', ja: 'new-post', de: 'new-post' },
+      };
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      // Verify Promise.all processed all locales with correct locale assignments
+      expect(result.changes).toHaveLength(3);
+      expect(result.changes.every((c) => c.action === 'create')).toBe(true);
+      // All locales should produce changes with the same slug
+      expect(result.changes.every((c) => c.slug === 'new-post')).toBe(true);
+    });
+
+    it('should handle cache database creation when backend provides databaseName', async () => {
+      const { generateUUID } = await import('@sveltia/utils/crypto');
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(generateUUID).mockReturnValue('test-uuid');
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      // Mock backend store to return object with databaseName (line 302)
+      mockGet.mockImplementation(() => ({
+        repository: {
+          databaseName: 'cms-db-test',
+        },
+      }));
+
+      const draft = {
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        originalLocales: {},
+        currentValues: { en: { title: 'New Post' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'new-post',
+        canonicalSlug: 'new-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      // Verify result is properly created with databaseName (lines 302-303 executed)
+      expect(result.savingEntry).toBeDefined();
+      expect(result.savingEntry.id).toBe('test-uuid');
+      expect(result.changes).toHaveLength(1);
+      expect(result.changes[0].action).toBe('create');
     });
   });
 });
