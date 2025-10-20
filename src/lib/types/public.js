@@ -484,6 +484,9 @@
  * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
  * field value.
  * @property {string} [summary] Template of a label to be displayed on a collapsed list item.
+ * @property {string} [thumbnail] Subfield name to be used as a thumbnail image for a list item. It
+ * will be displayed along with the summary label when the item is collapsed. The subfield must be
+ * an Image field. Default: none.
  * @property {boolean | 'auto'} [collapsed] Whether to collapse the list items by default. Default:
  * `false`. If set to `auto`, the UI is collapsed if the item has any filled subfields and expanded
  * if all the subfields are empty.

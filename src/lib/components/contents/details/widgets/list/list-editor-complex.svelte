@@ -8,14 +8,16 @@
   import { isObject } from '@sveltia/utils/object';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
-  import { getContext, onMount } from 'svelte';
+  import { getContext, onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import Image from '$lib/components/assets/shared/image.svelte';
   import ExpandIcon from '$lib/components/common/expand-icon.svelte';
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/widgets/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
+  import { getMediaFieldURL } from '$lib/services/assets/info';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { updateListField } from '$lib/services/contents/draft/update/list';
@@ -23,6 +25,7 @@
     getInitialExpanderState,
     syncExpanderStates,
   } from '$lib/services/contents/editor/expanders';
+  import { getField } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { formatSummary, getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
   import { isSmallScreen } from '$lib/services/user/env';
@@ -62,6 +65,7 @@
     allow_reorder: allowReorder = true,
     collapsed,
     summary,
+    thumbnail: thumbnailFieldName,
     minimize_collapsed: minimizeCollapsed = false,
     label_singular: labelSingular,
     field,
@@ -104,6 +108,12 @@
     }),
   );
   const hasMaxItems = $derived(items.length >= max);
+
+  /**
+   * List item thumbnails.
+   * @type {(string | undefined)[]}
+   */
+  const thumbnails = $state([]);
 
   /**
    * Initialize the expander state.
@@ -226,6 +236,70 @@
       index,
       isIndexFile,
     });
+
+  /**
+   * Get the thumbnail image URL for a list item.
+   * @param {number} index List index.
+   * @returns {Promise<string | undefined>} Thumbnail image URL.
+   */
+  const getThumbnail = async (index) => {
+    if (!thumbnailFieldName) {
+      return undefined;
+    }
+
+    const thumbnailKeyPath = `${keyPath}.${index}.${thumbnailFieldName.replace(/^fields\./, '')}`;
+    const thumbnailValue = valueMap[thumbnailKeyPath];
+
+    if (!thumbnailValue) {
+      return undefined;
+    }
+
+    const thumbnailFieldConfig = getField({
+      collectionName,
+      fileName,
+      valueMap,
+      keyPath: thumbnailKeyPath,
+      isIndexFile,
+    });
+
+    if (thumbnailFieldConfig?.widget !== 'image') {
+      return undefined;
+    }
+
+    return getMediaFieldURL({
+      value: thumbnailValue,
+      entry: $entryDraft?.originalEntry,
+      collectionName,
+      fileName,
+    });
+  };
+
+  /**
+   * Update thumbnails for all items.
+   */
+  const updateThumbnails = async () => {
+    if (!thumbnailFieldName) {
+      return;
+    }
+
+    thumbnails.length = items.length;
+
+    items.forEach(async (_item, index) => {
+      const itemThumbnail = await getThumbnail(index);
+
+      if (thumbnails[index] !== itemThumbnail) {
+        thumbnails[index] = itemThumbnail;
+      }
+    });
+  };
+
+  $effect(() => {
+    void [items];
+
+    untrack(() => {
+      updateThumbnails();
+    });
+  });
 
   onMount(() => {
     initializeExpanderState();
@@ -414,6 +488,9 @@
             {/each}
           {:else}
             <div role="none" class="summary">
+              {#if thumbnails[index]}
+                <Image src={thumbnails[index]} variant="icon" cover />
+              {/if}
               <TruncatedText lines={$isSmallScreen ? 2 : 1}>
                 {_formatSummary(index, summaryTemplate)}
               </TruncatedText>
@@ -458,6 +535,9 @@
     border-radius: var(--sui-control-medium-border-radius);
 
     .summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       padding: 8px;
 
       &:empty {
