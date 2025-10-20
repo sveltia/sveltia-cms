@@ -160,7 +160,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - Some missing features will be implemented before or shortly after GA
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **260+ issues, or 560+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **260+ issues, or 570+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 800 if including duplicates, in the future 💪
@@ -492,6 +492,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - A simple List field with no subfields is displayed as a multiline text field,[^219] where users can use spaces[^50] and commas[^220] for list items. A comma is no longer treated as a list delimiter.
   - Users can preview variable types without having to register a preview template.[^42]
   - It’s possible to omit `fields` in a variable type object.[^163] In that case, only the `typeKey` (default: `type`) is saved in the output.
+  - The new `thumbnail` option allows developers to specify an Image field name for the list item thumbnail. Thumbnails are displayed alongside the `summary` in the collapsed item view. ([Discussion](https://github.com/decaporg/decap-cms/issues/2001))
   - A collapsed List field will not display a programmatic summary like `List [ Map { "key": "value" } ]` if the `summary` option is not set.[^183]
   - The `allow_remove` and `allow_reorder` options can be used to prevent users from removing items and reordering them, respectively.[^272]
 - Map
@@ -606,6 +607,8 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
     - It comes with a [built-in image optimizer](#optimizing-images-for-upload). With a few lines of configuration, images selected by users for upload are automatically converted to WebP format for reduced size,[^199] and it’s also possible to specify a maximum width and/or height.[^200] SVG images can also be optimized.
     - The `max_file_size` option for the File/Image widget can be defined within the global `media_library` option, using `default` as the library name. It applies to all File/Image entry fields, as well as direct uploads to the Asset Library. The option can also be part of the [new `media_libraries` option](#configuring-multiple-media-libraries).
     - Unlike Netlify/Decap CMS, files are uploaded with their original names. Sanitization is still applied to avoid issues with special characters, but uppercase letters and spaces are not converted to lowercase letters and hyphens.[^97] If you want to slugify filenames according to the [`slug` option](https://decapcms.org/docs/configuration-options/#slug-type), use the `slugify_filename` [default media library option](#configuring-multiple-media-libraries).
+  - Cloudinary
+    - Field-specific media library configuration works as expected.[^297]
   - Uploadcare
     - An API-based integration allows users to select existing files from their Uploadcare account.[^247]
     - Supports [signed uploads](https://uploadcare.com/docs/security/secure-uploads/) to prevent unauthorized uploads. Files are uploaded with a signature computed using your secret key.
@@ -652,7 +655,6 @@ However, 100% feature parity is never planned, and some features are still missi
 These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them by the end of 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
 - Comprehensive site config validation
-- [Cloudinary](https://decapcms.org/docs/cloudinary/) media library ([#4](https://github.com/sveltia/sveltia-cms/discussions/4))
 - Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent) (`CMS.registerEditorComponent`)
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/) (`CMS.registerWidget`)
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) (`CMS.registerPreviewTemplate`) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
@@ -1363,8 +1365,6 @@ media_libraries:
       defaultOperations: '/resize/800x600/'
 ```
 
-Note: Cloudinary is not yet supported in Sveltia CMS.
-
 Similar to the conventional `media_library` option, the unified `media_libraries` option can also be defined for each File/Image field. This allows you to use different media library configurations for different fields. For example, you can optimize images for upload in one field while using the default settings in another:
 
 ```yaml
@@ -1941,7 +1941,6 @@ Due early 2026
 
 - Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
 - Tackling some more Netlify/Decap CMS issues:
-  - A couple of Cloudinary media library issues
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
 - Accessibility audit
@@ -2645,3 +2644,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^295]: Netlify/Decap CMS [#6243](https://github.com/decaporg/decap-cms/issues/6243)
 
 [^296]: Netlify/Decap CMS [#7638](https://github.com/decaporg/decap-cms/discussions/7638)
+
+[^297]: Netlify/Decap CMS [#2001](https://github.com/decaporg/decap-cms/issues/2001)
