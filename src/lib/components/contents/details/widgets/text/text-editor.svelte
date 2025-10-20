@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Text widget.
-  @see https://decapcms.org/docs/widgets/#text
+  @see https://decapcms.org/docs/widgets/#Text
 -->
 <script>
   import { TextArea } from '@sveltia/ui';

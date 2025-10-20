@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the List widget without subfield(s).
-  @see https://decapcms.org/docs/widgets/#list
+  @see https://decapcms.org/docs/widgets/#List
 -->
 <script>
   import { TextArea } from '@sveltia/ui';

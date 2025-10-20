@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Object widget.
-  @see https://decapcms.org/docs/widgets/#object
+  @see https://decapcms.org/docs/widgets/#Object
 -->
 <script>
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';

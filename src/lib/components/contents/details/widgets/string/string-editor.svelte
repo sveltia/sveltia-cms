@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the String widget.
-  @see https://decapcms.org/docs/widgets/#string
+  @see https://decapcms.org/docs/widgets/#String
 -->
 <script>
   import { TextInput } from '@sveltia/ui';

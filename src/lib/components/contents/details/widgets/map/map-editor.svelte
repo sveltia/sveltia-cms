@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Map widget.
-  @see https://decapcms.org/docs/widgets/#map
+  @see https://decapcms.org/docs/widgets/#Map
   @see https://leafletjs.com/
   @see https://github.com/JamesLMilner/terra-draw
 -->

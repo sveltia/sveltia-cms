@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the List widget with subfield(s).
-  @see https://decapcms.org/docs/widgets/#list
+  @see https://decapcms.org/docs/widgets/#List
 -->
 <script>
   import { isObject } from '@sveltia/utils/object';

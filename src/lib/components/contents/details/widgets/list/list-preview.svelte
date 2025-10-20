@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the List widget.
-  @see https://decapcms.org/docs/widgets/#list
+  @see https://decapcms.org/docs/widgets/#List
 -->
 <script>
   import ListPreviewComplex from '$lib/components/contents/details/widgets/list/list-preview-complex.svelte';

@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Relation widget.
-  @see https://decapcms.org/docs/widgets/#relation
+  @see https://decapcms.org/docs/widgets/#Relation
 -->
 <script>
   import SelectEditor from '$lib/components/contents/details/widgets/select/select-editor.svelte';

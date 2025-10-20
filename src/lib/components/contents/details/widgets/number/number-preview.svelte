@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Number widget.
-  @see https://decapcms.org/docs/widgets/#number
+  @see https://decapcms.org/docs/widgets/#Number
 -->
 <script>
   import { getCanonicalLocale } from '$lib/services/contents/i18n';

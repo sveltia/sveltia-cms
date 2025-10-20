@@ -23,7 +23,7 @@ export const customComponentRegistry = new Map();
 /**
  * Built-in image component definition. The labels are localized in `getComponentDef()`.
  * @type {EditorComponentDefinition}
- * @see https://decapcms.org/docs/widgets/#markdown
+ * @see https://decapcms.org/docs/widgets/#Markdown
  */
 export const IMAGE_COMPONENT = {
   /* eslint-disable jsdoc/require-jsdoc */

@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the List widget with subfield(s).
-  @see https://decapcms.org/docs/widgets/#list
+  @see https://decapcms.org/docs/widgets/#List
 -->
 <script>
   import { Button, Icon, Menu, MenuButton, MenuItem, Spacer, TruncatedText } from '@sveltia/ui';

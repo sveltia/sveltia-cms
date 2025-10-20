@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Select widget.
-  @see https://decapcms.org/docs/widgets/#select
+  @see https://decapcms.org/docs/widgets/#Select
 -->
 <script>
   import { isObjectArray } from '@sveltia/utils/array';

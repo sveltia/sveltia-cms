@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Markdown widget.
-  @see https://decapcms.org/docs/widgets/#markdown
+  @see https://decapcms.org/docs/widgets/#Markdown
 -->
 <script>
   import { sanitize } from 'isomorphic-dompurify';

@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Relation widget.
-  @see https://decapcms.org/docs/widgets/#relation
+  @see https://decapcms.org/docs/widgets/#Relation
 -->
 <script>
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';

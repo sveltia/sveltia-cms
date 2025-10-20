@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the Select widget.
-  @see https://decapcms.org/docs/widgets/#select
+  @see https://decapcms.org/docs/widgets/#Select
 -->
 <script>
   import { isObject } from '@sveltia/utils/object';

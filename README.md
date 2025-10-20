@@ -240,7 +240,7 @@ We’ve made various improvements to help you get your work done faster and more
 - Avoids vulnerabilities in dependencies through constant updates, Dependabot alerts, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unaddressed for a long time.[^33]
   - We also use the [`cooldown`](https://github.com/raineorshine/npm-check-updates#cooldown) option for `ncu` and the [`minimumReleaseAge`](https://pnpm.io/settings#minimumreleaseage) option for `pnpm` to avoid upgrading to a version that was just released. These options help protect against npm supply chain attacks.
 - The **unpatched** [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) in Decap CMS does not affect Sveltia CMS, as our entry preview implementation is completely different.
-  - However, the Markdown widget was potentially vulnerable to XSS attacks because the `sanitize_preview` option was set to `false` by default for compatibility with Netlify/Decap CMS. This behaviour is [documented](https://decapcms.org/docs/widgets/#markdown) and is not a bug, but it’s definitely not secure. In [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), we changed the default value to `true`, assuming that most users would prefer security over compatibility.
+  - However, the Markdown widget was potentially vulnerable to XSS attacks because the `sanitize_preview` option was set to `false` by default for compatibility with Netlify/Decap CMS. This behaviour is [documented](https://decapcms.org/docs/widgets/#Markdown) and is not a bug, but it’s definitely not secure. In [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), we changed the default value to `true`, assuming that most users would prefer security over compatibility.
 - Our [local repository workflow](#working-with-a-local-git-repository) does not require a proxy server. This reduces attack surfaces by eliminating the possibility of compromised dependencies[^158] and unauthorized API access.[^282]
 - Thanks to pnpm, Vite, GitHub Actions and [npm package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/), our release process is fast, reliable and transparent. This setup makes it easy to verify the integrity of published code and assets. It also helps us avoid errors that can occur with manual build steps.[^264]
 - We have enabled [trusted publishing](https://docs.npmjs.com/trusted-publishers) and [2FA for package publishing](https://docs.npmjs.com/requiring-2fa-for-package-publishing-and-settings-modification).
@@ -667,7 +667,7 @@ Due to the complexity, we have decided to defer the following features to the 1.
 - [Editorial workflow](https://decapcms.org/docs/editorial-workflows/)
 - [Open authoring](https://decapcms.org/docs/open-authoring/)
 - [Nested collections](https://decapcms.org/docs/collection-nested/) (beta)
-- The `media_folder` and `public_folder` options (beta) for the [File](https://decapcms.org/docs/widgets/#file) and [Image](https://decapcms.org/docs/widgets/#image) widgets ([#497](https://github.com/sveltia/sveltia-cms/issues/497))
+- The `media_folder` and `public_folder` options (beta) for the [File](https://decapcms.org/docs/widgets/#File) and [Image](https://decapcms.org/docs/widgets/#Image) widgets ([#497](https://github.com/sveltia/sveltia-cms/issues/497))
 
 ### Features not to be implemented
 
@@ -681,10 +681,10 @@ The following Netlify/Decap CMS features will not be added to Sveltia CMS, prima
 - The deprecated Netlify Large Media service: Consider other storage providers.
 - Deprecated camel case configuration options: Use snake case instead, according to the current Decap CMS document.
   - [Collection](https://decapcms.org/docs/configuration-options/#sortable_fields): `sortableFields`
-  - [DateTime](https://decapcms.org/docs/widgets/#datetime) widget: `dateFormat`, `timeFormat`, `pickerUtc`
-  - [Markdown](https://decapcms.org/docs/widgets/#markdown) widget: `editorComponents`
-  - [Number](https://decapcms.org/docs/widgets/#number) widget: `valueType`
-  - [Relation](https://decapcms.org/docs/widgets/#relation) widget: `displayFields`, `searchFields`, `valueField`
+  - [DateTime](https://decapcms.org/docs/widgets/#Datetime) widget: `dateFormat`, `timeFormat`, `pickerUtc`
+  - [Markdown](https://decapcms.org/docs/widgets/#Markdown) widget: `editorComponents`
+  - [Number](https://decapcms.org/docs/widgets/#Number) widget: `valueType`
+  - [Relation](https://decapcms.org/docs/widgets/#Relation) widget: `displayFields`, `searchFields`, `valueField`
   - Note: Some other camel case options, including Color widget options, are not deprecated and will continue to work.
 - The deprecated Date widget: It was removed from Decap CMS 3.0 and Sveltia CMS 0.10. Use the DateTime widget with the [`time_format: false` option](#changing-the-input-type-of-a-datetime-field) instead.
 - The `allow_multiple` option for the File and Image widgets: It’s a confusing option that defaults to `true`, and there is a separate option called `media_library.config.multiple`. We have added the new `multiple` option instead, which is more intuitive and works with all media libraries.
@@ -709,7 +709,7 @@ There are some differences in behaviour between Sveltia CMS and Netlify/Decap CM
 - By default, Sveltia CMS does not slugify uploaded filenames, as mentioned in the [asset management](#better-asset-management) section. If your site generator expects hyphenated filenames, you can enable the `slugify_filename` [default media library option](#configuring-multiple-media-libraries).
 - In some cases, the [data output](#better-data-output) of Sveltia CMS may differ from that of Netlify/Decap CMS. Notably, Sveltia CMS does not omit empty optional fields by default. If you have data validation in your site generator, this could cause issues. Use the `omit_empty_optional_fields` [output option](#controlling-data-output) if needed.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running your own remote server and serving content over HTTP, the CMS will not work. We recommend obtaining a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
-- As of [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), the `sanitize_preview` option for the [Markdown](https://decapcms.org/docs/widgets/#markdown) widget is set to `true` by default to prevent potential XSS attacks via entry previews. We recommend keeping this option enabled unless disabling it fixes a broken preview and you fully trust all users of your CMS.
+- As of [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), the `sanitize_preview` option for the [Markdown](https://decapcms.org/docs/widgets/#Markdown) widget is set to `true` by default to prevent potential XSS attacks via entry previews. We recommend keeping this option enabled unless disabling it fixes a broken preview and you fully trust all users of your CMS.
 
 [Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) if you have encounter any compatibility issues that are not listed here.
 
@@ -1422,7 +1422,7 @@ media_libraries:
 
 If you write blog posts, for example, you may want to categorize them with taxonomies, often called tags, categories, labels or keywords. With Sveltia CMS, there are several ways to implement this feature, depending on your needs.
 
-If you don’t have a predefined list of tags, you can use a simple [List](https://decapcms.org/docs/widgets/#list) field. This configuration will produce a newline-separated text field where users can enter tags freely:
+If you don’t have a predefined list of tags, you can use a simple [List](https://decapcms.org/docs/widgets/#List) field. This configuration will produce a newline-separated text field where users can enter tags freely:
 
 ```yaml
 collections:
@@ -1442,7 +1442,7 @@ collections:
         widget: markdown
 ```
 
-If you have a small number of predefined tags, you can use a [Select](https://decapcms.org/docs/widgets/#select) field. This configuration will produce a dropdown list where users can select one or more tags:
+If you have a small number of predefined tags, you can use a [Select](https://decapcms.org/docs/widgets/#Select) field. This configuration will produce a dropdown list where users can select one or more tags:
 
 ```yaml
 fields:
@@ -1457,7 +1457,7 @@ fields:
       - { label: Lifestyle, value: lifestyle }
 ```
 
-If you want more flexibility, you can create a separate collection for tags and reference it using a [Relation](https://decapcms.org/docs/widgets/#relation) field from your blog post collection. This approach allows you to:
+If you want more flexibility, you can create a separate collection for tags and reference it using a [Relation](https://decapcms.org/docs/widgets/#Relation) field from your blog post collection. This approach allows you to:
 
 - Add many tags without bloating the configuration file
 - Manage tags in one place within the CMS
@@ -1585,7 +1585,7 @@ Note: The `root` option is ignored if the file or singleton contains multiple fi
 
 ### Changing the input type of a DateTime field
 
-It may be worth mentioning this topic here because the current [Decap CMS doc about the DateTime widget](https://decapcms.org/docs/widgets/#datetime) is unclear. By default, a DateTime field lets users pick both [date and time](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/datetime-local), but developers can change the input type if needed.
+It may be worth mentioning this topic here because the current [Decap CMS doc about the DateTime widget](https://decapcms.org/docs/widgets/#Datetime) is unclear. By default, a DateTime field lets users pick both [date and time](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/datetime-local), but developers can change the input type if needed.
 
 Set `time_format` to `false` to hide the time picker and make the input [date only](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date):
 
@@ -1699,7 +1699,7 @@ There are two exceptional cases for the List widget:
      - image: https://example.com/image1.jpg
      - image: https://example.com/image2.jpg
    ```
-   This is not mentioned in the [Decap CMS document](https://decapcms.org/docs/widgets/#list), but it’s a known behaviour. If you expect the latter, you can use the `fields` (plural) option to define a single field:
+   This is not mentioned in the [Decap CMS document](https://decapcms.org/docs/widgets/#List), but it’s a known behaviour. If you expect the latter, you can use the `fields` (plural) option to define a single field:
    ```yaml
    - name: images
      label: Images

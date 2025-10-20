@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the String widget.
-  @see https://decapcms.org/docs/widgets/#string
+  @see https://decapcms.org/docs/widgets/#String
 -->
 <script>
   import { isURL } from '@sveltia/utils/string';

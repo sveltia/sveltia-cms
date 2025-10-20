@@ -1,8 +1,8 @@
 <!--
   @component
   Implement the editor for the File and Image widgets.
-  @see https://decapcms.org/docs/widgets/#file
-  @see https://decapcms.org/docs/widgets/#image
+  @see https://decapcms.org/docs/widgets/#File
+  @see https://decapcms.org/docs/widgets/#Image
 -->
 <script module>
   let unsupportedWarned = false;

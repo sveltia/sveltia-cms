@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Boolean widget.
-  @see https://decapcms.org/docs/widgets/#boolean
+  @see https://decapcms.org/docs/widgets/#Boolean
 -->
 <script>
   import { _ } from 'svelte-i18n';

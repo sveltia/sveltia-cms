@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the editor for the List widget.
-  @see https://decapcms.org/docs/widgets/#list
+  @see https://decapcms.org/docs/widgets/#List
 -->
 <script>
   import { Group } from '@sveltia/ui';

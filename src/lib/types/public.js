@@ -116,8 +116,8 @@
  * original format like `png` or `jpeg`. It can also be `raster_image` that matches any supported
  * raster image format. See our
  * [README](https://github.com/sveltia/sveltia-cms#optimizing-images-for-upload) for details.
- * @see https://decapcms.org/docs/widgets/#file
- * @see https://decapcms.org/docs/widgets/#image
+ * @see https://decapcms.org/docs/widgets/#File
+ * @see https://decapcms.org/docs/widgets/#Image
  */
 
 /**
@@ -256,8 +256,8 @@
  * `media_libraries` instead to support multiple libraries.
  * @property {MediaLibraries} [media_libraries] Unified media library option that supports multiple
  * libraries. This overrides the global `media_libraries` option.
- * @see https://decapcms.org/docs/widgets/#file
- * @see https://decapcms.org/docs/widgets/#image
+ * @see https://decapcms.org/docs/widgets/#File
+ * @see https://decapcms.org/docs/widgets/#Image
  */
 
 /**
@@ -326,7 +326,7 @@
  * @typedef {object} BooleanFieldProps
  * @property {'boolean'} widget Widget name.
  * @property {boolean} [default] Default value. Accepts `true` or `false`.
- * @see https://decapcms.org/docs/widgets/#boolean
+ * @see https://decapcms.org/docs/widgets/#Boolean
  */
 
 /**
@@ -349,7 +349,7 @@
  * @property {boolean} [output_code_only] Whether to output code snippet only. Default: `false`.
  * @property {{ code: string, lang: string }} [keys] Output property names. It has no effect if
  * `output_code_only` is `true`. Default: `{ code: 'code', lang: 'lang' }`.
- * @see https://decapcms.org/docs/widgets/#code
+ * @see https://decapcms.org/docs/widgets/#Code
  */
 
 /**
@@ -404,7 +404,7 @@
  * option is not defined. If `true`, ISO 8601 format is used unless the `format` option is defined.
  * If `false`, time input/output is disabled.
  * @property {boolean} [picker_utc] Whether to make the date input/output UTC. Default: `false`.
- * @see https://decapcms.org/docs/widgets/#datetime
+ * @see https://decapcms.org/docs/widgets/#Datetime
  */
 
 /**
@@ -416,7 +416,7 @@
  * File field properties.
  * @typedef {object} FileFieldProps
  * @property {'file'} widget Widget name.
- * @see https://decapcms.org/docs/widgets/#file
+ * @see https://decapcms.org/docs/widgets/#File
  */
 
 /**
@@ -430,7 +430,7 @@
  * @property {'hidden'} widget Widget name.
  * @property {any} [default] Default value. Accepts any data type that can be stored with the
  * configured file format.
- * @see https://decapcms.org/docs/widgets/#hidden
+ * @see https://decapcms.org/docs/widgets/#Hidden
  */
 
 /**
@@ -442,7 +442,7 @@
  * Image field properties.
  * @typedef {object} ImageFieldProps
  * @property {'image'} widget Widget name.
- * @see https://decapcms.org/docs/widgets/#image
+ * @see https://decapcms.org/docs/widgets/#Image
  */
 
 /**
@@ -500,7 +500,7 @@
  * saved under locale keys. Default: `false`. See our
  * [README](https://github.com/sveltia/sveltia-cms#editing-data-files-with-a-top-level-list) for
  * details.
- * @see https://decapcms.org/docs/widgets/#list
+ * @see https://decapcms.org/docs/widgets/#List
  */
 
 /**
@@ -518,7 +518,7 @@
  * properties.
  * @property {number} [decimals] Precision of coordinates to be saved. Default: `7`.
  * @property {'Point' | 'LineString' | 'Polygon'} [type] Geometry type. Default: `Point`.
- * @see https://decapcms.org/docs/widgets/#map
+ * @see https://decapcms.org/docs/widgets/#Map
  */
 
 /**
@@ -531,19 +531,19 @@
  * @typedef {'bold' | 'italic' | 'strikethrough' | 'code' | 'link' | 'heading-one' | 'heading-two' |
  * 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'quote' | 'bulleted-list' |
  * 'numbered-list' } RichTextEditorButtonName
- * @see https://decapcms.org/docs/widgets/#markdown
+ * @see https://decapcms.org/docs/widgets/#Markdown
  */
 
 /**
  * Built-in editor component name for the rich text editor.
  * @typedef {'code-block' | 'image'} RichTextEditorComponentName
- * @see https://decapcms.org/docs/widgets/#markdown
+ * @see https://decapcms.org/docs/widgets/#Markdown
  */
 
 /**
  * Supported mode name for the rich text editor.
  * @typedef {'rich_text' | 'raw'} RichTextEditorMode
- * @see https://decapcms.org/docs/widgets/#markdown
+ * @see https://decapcms.org/docs/widgets/#Markdown
  */
 
 /**
@@ -568,7 +568,7 @@
  * field for specifying a URL to wrap the image as a link. The resulting Markdown output will be in
  * the format `[![alt](src)](link)`, where clicking the image navigates to the provided link. This
  * feature can be disabled if it causes conflicts with certain frameworks.
- * @see https://decapcms.org/docs/widgets/#markdown
+ * @see https://decapcms.org/docs/widgets/#Markdown
  */
 
 /**
@@ -585,7 +585,7 @@
  * @property {number} [min] Minimum value that can be entered in the input. Default: `-Infinity`.
  * @property {number} [max] Maximum value that can be entered in the input. Default: `Infinity`.
  * @property {number} [step] Number to increase/decrease with the arrow key/button. Default: `1`.
- * @see https://decapcms.org/docs/widgets/#number
+ * @see https://decapcms.org/docs/widgets/#Number
  */
 
 /**
@@ -605,7 +605,7 @@
  * @property {string} [summary] Template of a label to be displayed on a collapsed object.
  * @property {Field[]} [fields] Set of fields to be included. Either the `fields` or `types` option
  * is required.
- * @see https://decapcms.org/docs/widgets/#object
+ * @see https://decapcms.org/docs/widgets/#Object
  */
 
 /**
@@ -640,7 +640,7 @@
  * @property {FieldKeyPath[]} [search_fields] Name of fields to be searched. Default:
  * `display_fields` field value.
  * @property {RelationFieldFilterOptions[]} [filters] Entry filter options.
- * @see https://decapcms.org/docs/widgets/#relation
+ * @see https://decapcms.org/docs/widgets/#Relation
  */
 
 /**
@@ -656,7 +656,7 @@
  * @property {any | any[]} [default] Default value(s), which should match the options. When
  * `multiple` is `false`, it should be a single value that matches the `value` option.
  * @property {string[] | { label: string, value: string }[]} options Options.
- * @see https://decapcms.org/docs/widgets/#select
+ * @see https://decapcms.org/docs/widgets/#Select
  */
 
 /**
@@ -674,7 +674,7 @@
  * validation. Default: `text`.
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {string} [suffix] A string to be appended to the value. Default: empty string.
- * @see https://decapcms.org/docs/widgets/#string
+ * @see https://decapcms.org/docs/widgets/#String
  */
 
 /**
@@ -688,7 +688,7 @@
  * @typedef {object} TextFieldProps
  * @property {'text'} widget Widget name.
  * @property {string} [default] Default value.
- * @see https://decapcms.org/docs/widgets/#text
+ * @see https://decapcms.org/docs/widgets/#Text
  */
 
 /**

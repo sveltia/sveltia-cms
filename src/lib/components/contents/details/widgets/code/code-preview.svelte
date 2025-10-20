@@ -1,7 +1,7 @@
 <!--
   @component
   Implement the preview for the Code widget.
-  @see https://decapcms.org/docs/widgets/#code
+  @see https://decapcms.org/docs/widgets/#Code
 -->
 <script>
   import { entryDraft } from '$lib/services/contents/draft';

@@ -1,8 +1,8 @@
 <!--
   @component
   Implement the preview for the File and Image widgets.
-  @see https://decapcms.org/docs/widgets/#file
-  @see https://decapcms.org/docs/widgets/#image
+  @see https://decapcms.org/docs/widgets/#File
+  @see https://decapcms.org/docs/widgets/#Image
 -->
 <script>
   import FilePreviewItem from '$lib/components/contents/details/widgets/file/file-preview-item.svelte';
