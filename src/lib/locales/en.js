@@ -607,6 +607,11 @@ export const strings = {
       },
     },
     cloudinary: {
+      iframe_title: 'Cloudinary media library',
+      activate: {
+        button_label: 'Activate Cloudinary',
+        description: 'After signing in, click the Sign In button again to continue.', // Don’t translate "Sign In" here
+      },
       auth: {
         initial: 'Enter you API Secret to use Cloudinary.', // Not "API Key"
         requested: 'Validating…',

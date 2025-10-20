@@ -108,7 +108,8 @@
     query = query.trim();
 
     try {
-      listedAssets = await (query ? search(query, listFetchOptions) : list(listFetchOptions));
+      listedAssets =
+        (await (query ? search?.(query, listFetchOptions) : list?.(listFetchOptions))) ?? [];
     } catch (ex) {
       error = 'search_fetch_failed';
       // eslint-disable-next-line no-console

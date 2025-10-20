@@ -1816,6 +1816,16 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://*.openstreetmap.org
     ```
+- Cloudinary:
+  - `img-src`
+    ```
+    https://res.cloudinary.com
+    ```
+    or a custom domain if configured
+  - `frame-src`
+    ```
+    https://console.cloudinary.com
+    ```
 - Uploadcare:
   - `img-src`
     ```

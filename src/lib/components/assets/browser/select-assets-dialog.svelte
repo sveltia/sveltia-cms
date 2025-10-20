@@ -17,6 +17,7 @@
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
 
+  import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
@@ -281,6 +282,23 @@
     selectedResources = [];
   };
 
+  /**
+   * Handle the OK button click.
+   */
+  const onOk = () => {
+    if (!selectedResources.length) {
+      return;
+    }
+
+    const resources = $state.snapshot(selectedResources).map((resource) => {
+      const { unsaved, file, folder } = resource.asset ?? {};
+
+      return unsaved ? { file, folder } : resource;
+    });
+
+    onSelect?.(resources);
+  };
+
   $effect.pre(() => {
     const firstDefaultLibraryId = Object.entries(allDefaultLibraryFolders).find(
       ([, { enabled }]) => enabled,
@@ -312,7 +330,7 @@
 </script>
 
 {#snippet headerItems()}
-  {#if isDefaultLibrary || isCloudLibrary || isStockLibrary}
+  {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary') || isStockLibrary}
     {#if $selectAssetsView}
       <ViewSwitcher
         currentView={(() => /** @type {Writable<SelectAssetsView>} */ (selectAssetsView))()}
@@ -326,7 +344,7 @@
       aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
     />
   {/if}
-  {#if isDefaultLibrary || isCloudLibrary}
+  {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary')}
     <Button
       variant="primary"
       label={$_('upload')}
@@ -346,21 +364,10 @@
   size={'x-large'}
   okLabel={$_('insert')}
   okDisabled={!selectedResources.length}
+  keepContent={true}
   focusInput={false}
   bind:open
-  onOk={() => {
-    if (!selectedResources.length) {
-      return;
-    }
-
-    const resources = $state.snapshot(selectedResources).map((resource) => {
-      const { unsaved, file, folder } = resource.asset ?? {};
-
-      return unsaved ? { file, folder } : resource;
-    });
-
-    onSelect?.(resources);
-  }}
+  {onOk}
   onClose={() => {
     resetValues();
   }}
@@ -474,7 +481,24 @@
         </EmptyState>
       {/if}
       {#each enabledExternalServiceEntries as [serviceId, serviceProps] (serviceId)}
-        {#if libraryName === serviceId}
+        {#if serviceId === 'cloudinary'}
+          <!-- Always include the Cloudinary panel in the DOM, otherwise the iframe will be
+            destroyed when the component is unmounted and the user has to sign in again due to the
+            third-party cookie limitation. The `keepContent` prop on the `<Dialog>` is also needed
+            for that reason -->
+          <CloudinaryPanel
+            {kind}
+            {fieldConfig}
+            {multiple}
+            hidden={libraryName !== 'cloudinary'}
+            onSelect={(resources) => {
+              // Close the dialog after selection
+              selectedResources = resources;
+              onOk();
+              open = false;
+            }}
+          />
+        {:else if libraryName === serviceId}
           <ExternalAssetsPanel
             {kind}
             {fieldConfig}

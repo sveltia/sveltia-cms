@@ -236,10 +236,10 @@
  * @property {() => Promise<boolean>} [init] Function to initialize the service.
  * @property {(userName: string, password: string) => Promise<boolean>} [signIn] Function to sign in
  * to the service.
- * @property {(query: string, options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>} search
- * Function to search files.
- * @property {(options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>} list Function to list
- * files. For stock asset services, it should return popular or curated images.
+ * @property {(query: string, options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>
+ * } [search] Function to search files.
+ * @property {(options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>} [list] Function to
+ * list files. For stock asset services, it should return popular or curated images.
  * @property {(files: File[], options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>
  * } [upload] Function to upload files to the cloud storage service.
  */

@@ -7,6 +7,7 @@ import cloudinaryService, {
   generateSignature,
   getCloudConfig,
   getLibraryOptions,
+  getMergedLibraryOptions,
   isEnabled,
   list,
   parseResults,
@@ -72,16 +73,12 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       expect(cloudinaryService.serviceURL).toBe('https://cloudinary.com/');
       expect(cloudinaryService.showServiceLink).toBe(true);
       expect(cloudinaryService.hotlinking).toBe(true);
-      expect(cloudinaryService.authType).toBe('api_key');
+      expect(cloudinaryService.authType).toBe('widget');
       expect(cloudinaryService.developerURL).toBe('https://cloudinary.com/documentation/');
       expect(cloudinaryService.apiKeyURL).toBe('https://console.cloudinary.com/settings/api-keys');
       expect(cloudinaryService.apiKeyPattern).toBeInstanceOf(RegExp);
       // eslint-disable-next-line import/no-named-as-default-member
-      expect(cloudinaryService.list).toBeDefined();
-      // eslint-disable-next-line import/no-named-as-default-member
-      expect(cloudinaryService.search).toBeDefined();
-      // eslint-disable-next-line import/no-named-as-default-member
-      expect(cloudinaryService.upload).toBeDefined();
+      expect(cloudinaryService.isEnabled).toBeDefined();
     });
 
     it('should validate API key format', () => {
@@ -194,6 +191,178 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const options = getLibraryOptions();
 
       expect(options).toBeUndefined();
+    });
+
+    it('should accept media_library config without name when site config has cloudinary media_library', () => {
+      vi.mocked(get)
+        .mockReturnValueOnce({
+          media_library: {
+            name: 'cloudinary',
+            config: {
+              cloud_name: 'site-cloud',
+              api_key: 'site-key',
+            },
+          },
+        })
+        .mockReturnValueOnce({
+          media_library: {
+            name: 'cloudinary',
+            config: {
+              cloud_name: 'site-cloud',
+              api_key: 'site-key',
+            },
+          },
+        });
+
+      const fieldConfig = /** @type {any} */ ({
+        media_library: {
+          // No name property - should fall back to site config check
+          config: {
+            cloud_name: 'field-cloud',
+            api_key: 'field-key',
+          },
+        },
+      });
+
+      const options = getLibraryOptions(fieldConfig);
+
+      expect(options).toBeDefined();
+      expect(options?.config?.cloud_name).toBe('field-cloud');
+    });
+  });
+
+  describe('getMergedLibraryOptions', () => {
+    it('should return site config when field config has no cloudinary options', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          cloudinary: {
+            config: {
+              cloud_name: 'site-cloud',
+              api_key: 'site-key',
+            },
+          },
+        },
+      });
+
+      const merged = getMergedLibraryOptions(/** @type {any} */ ({}));
+
+      expect(merged.config?.cloud_name).toBe('site-cloud');
+      expect(merged.config?.api_key).toBe('site-key');
+    });
+
+    it('should merge site and field config when both have cloudinary options', () => {
+      vi.mocked(get)
+        .mockReturnValueOnce({
+          media_libraries: {
+            cloudinary: {
+              config: {
+                cloud_name: 'site-cloud',
+                api_key: 'site-key',
+                default_transformations: [
+                  [
+                    {
+                      width: 400,
+                      crop: 'fill',
+                    },
+                  ],
+                ],
+              },
+            },
+          },
+        })
+        .mockReturnValueOnce({
+          media_library: {
+            name: 'cloudinary',
+            config: {
+              cloud_name: 'field-cloud',
+              use_transformations: false,
+            },
+          },
+        });
+
+      const fieldConfig = /** @type {any} */ ({
+        media_library: {
+          name: 'cloudinary',
+          config: {
+            cloud_name: 'field-cloud',
+            use_transformations: false,
+          },
+        },
+      });
+
+      const merged = getMergedLibraryOptions(fieldConfig);
+
+      // Field config should override site config for cloud_name
+      expect(merged.config?.cloud_name).toBe('field-cloud');
+      expect(merged.config?.use_transformations).toBe(false);
+    });
+
+    it('should handle undefined site config', () => {
+      vi.mocked(get).mockReturnValue({});
+
+      const merged = getMergedLibraryOptions(/** @type {any} */ ({}));
+
+      expect(merged.config).toEqual({});
+    });
+
+    it('should use site config when field config is undefined', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          cloudinary: {
+            config: {
+              cloud_name: 'site-cloud',
+              api_key: 'site-key',
+            },
+          },
+        },
+      });
+
+      const merged = getMergedLibraryOptions(undefined);
+
+      expect(merged.config?.cloud_name).toBe('site-cloud');
+      expect(merged.config?.api_key).toBe('site-key');
+    });
+
+    it('should merge top-level properties with site options taking precedence then field options', () => {
+      vi.mocked(get)
+        .mockReturnValueOnce({
+          media_libraries: {
+            cloudinary: {
+              label: 'Site Label',
+              config: {
+                cloud_name: 'site-cloud',
+              },
+            },
+          },
+        })
+        .mockReturnValueOnce(undefined);
+
+      const fieldConfig = /** @type {any} */ ({});
+      const merged = getMergedLibraryOptions(fieldConfig);
+
+      expect(merged.config?.cloud_name).toBe('site-cloud');
+    });
+
+    it('should deeply merge config objects', () => {
+      vi.mocked(get)
+        .mockReturnValueOnce({
+          media_libraries: {
+            cloudinary: {
+              config: {
+                cloud_name: 'site-cloud',
+                api_key: 'site-key',
+                transform_a: 'site-value',
+              },
+            },
+          },
+        })
+        .mockReturnValueOnce(undefined);
+
+      const merged = getMergedLibraryOptions(/** @type {any} */ ({}));
+
+      expect(merged.config?.cloud_name).toBe('site-cloud');
+      expect(merged.config?.api_key).toBe('site-key');
+      expect(merged.config?.transform_a).toBe('site-value');
     });
   });
 

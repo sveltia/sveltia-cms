@@ -608,6 +608,11 @@ export const strings = {
       },
     },
     cloudinary: {
+      iframe_title: 'Cloudinary メディアライブラリ',
+      activate: {
+        button_label: 'Cloudinary を有効化',
+        description: 'ログイン後、再度 Sign In ボタンをクリックして続行してください。', // Don’t translate "Sign In" here
+      },
       auth: {
         initial: 'Cloudinary の API Secret を入力してください。', // Not "API Key"
         requested: 'API Secret を検証中…',

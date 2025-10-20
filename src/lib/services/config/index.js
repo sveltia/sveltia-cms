@@ -159,11 +159,6 @@ export const validate = (config) => {
     // eslint-disable-next-line no-console
     console.warn('Nested collections are not yet supported in Sveltia CMS.');
   }
-
-  if (config.media_library?.name === 'cloudinary' || config.media_libraries?.cloudinary) {
-    // eslint-disable-next-line no-console
-    console.warn('Cloudinary media library is not yet supported in Sveltia CMS.');
-  }
 };
 
 /**

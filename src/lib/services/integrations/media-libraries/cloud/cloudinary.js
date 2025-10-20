@@ -36,16 +36,97 @@ import { siteConfig } from '$lib/services/config';
  */
 
 /**
+ * Cloudinary Media Library iframe origin.
+ */
+export const FRAME_ORIGIN = 'https://console.cloudinary.com';
+
+/**
+ * Cloudinary Media Library iframe’s `src` search parameters.
+ */
+export const FRAME_SRC_PARAMS = [
+  'cloud_name',
+  'api_key',
+  'username',
+  'timestamp',
+  'signature',
+  'integration',
+  'use_saml',
+  'saml_iframe_support',
+];
+
+/**
+ * Cloudinary Media Library configuration properties.
+ */
+export const CONFIG_PROPS = [
+  'integration',
+  'inline_container',
+  'z_index',
+  'multiple',
+  'max_files',
+  'default_transformations',
+  'insert_caption',
+  'remove_header',
+  'folder',
+  'search',
+  'collection',
+  'asset',
+  'transformation',
+  'sandboxNotAllowedAttributes',
+  'theme',
+];
+
+/**
  * Get Cloudinary library options from site config.
  * @internal
  * @param {SiteConfig | MediaField} [config] Site configuration or field configuration.
  * @returns {CloudinaryMediaLibrary | undefined} Configuration object.
  */
-export const getLibraryOptions = (config = get(siteConfig)) =>
-  config?.media_libraries?.cloudinary ??
-  (config?.media_library?.name === 'cloudinary'
-    ? /** @type {CloudinaryMediaLibrary} */ (config?.media_library)
-    : undefined);
+export const getLibraryOptions = (config) => {
+  const _siteConfig = get(siteConfig);
+
+  config ??= _siteConfig;
+
+  // Check for explicit media_libraries.cloudinary config (preferred)
+  if (config?.media_libraries?.cloudinary) {
+    return config.media_libraries.cloudinary;
+  }
+
+  // Fall back to legacy media_library config
+  if (!config?.media_library) {
+    return undefined;
+  }
+
+  const isExplicitlyCloudinary = config.media_library.name === 'cloudinary';
+
+  const isImplicitlyCloudinary =
+    !config.media_library.name && _siteConfig?.media_library?.name === 'cloudinary';
+
+  if (isExplicitlyCloudinary || isImplicitlyCloudinary) {
+    return /** @type {CloudinaryMediaLibrary} */ (config.media_library);
+  }
+
+  return undefined;
+};
+
+/**
+ * Get merged Cloudinary library options from site and field config.
+ * Field config options override site config options.
+ * @param {MediaField} [fieldConfig] Field configuration.
+ * @returns {CloudinaryMediaLibrary} Merged configuration object.
+ */
+export const getMergedLibraryOptions = (fieldConfig) => {
+  const siteOptions = getLibraryOptions() ?? { config: {} };
+  const fieldOptions = getLibraryOptions(fieldConfig) ?? { config: {} };
+
+  return {
+    ...siteOptions,
+    ...fieldOptions,
+    config: {
+      ...siteOptions.config,
+      ...fieldOptions.config,
+    },
+  };
+};
 
 /**
  * Get Cloudinary configuration from site config.
@@ -411,6 +492,10 @@ export const upload = async (files, options) => {
 };
 
 /**
+ * Cloudinary media library service integration. The `list`, `search`, and `upload` methods are not
+ * used at this time because Cloudinary has a CORS restriction that prevents direct API access from
+ * the browser. Instead, the Cloudinary Media Library widget is used for authentication and file
+ * selection/uploading.
  * @type {MediaLibraryService}
  */
 export default {
@@ -420,12 +505,9 @@ export default {
   serviceURL: 'https://cloudinary.com/',
   showServiceLink: true,
   hotlinking: true,
-  authType: 'api_key',
+  authType: 'widget',
   developerURL: 'https://cloudinary.com/documentation/',
   apiKeyURL: 'https://console.cloudinary.com/settings/api-keys',
   apiKeyPattern: /^[A-Za-z0-9_-]{15,}$/,
   isEnabled,
-  list,
-  search,
-  upload,
 };
