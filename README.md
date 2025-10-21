@@ -156,7 +156,7 @@ Sveltia CMS is currently in **beta**, with version 1.0 (GA) scheduled for releas
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
-- Ensuring substantial [compatibility with Netlify/Decap CMS](#current-limitations)
+- Ensuring near-complete [compatibility with Netlify/Decap CMS](#current-limitations)
   - Some missing features will be implemented before or shortly after GA
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
@@ -609,6 +609,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
     - Unlike Netlify/Decap CMS, files are uploaded with their original names. Sanitization is still applied to avoid issues with special characters, but uppercase letters and spaces are not converted to lowercase letters and hyphens.[^97] If you want to slugify filenames according to the [`slug` option](https://decapcms.org/docs/configuration-options/#slug-type), use the `slugify_filename` [default media library option](#configuring-multiple-media-libraries).
   - Cloudinary
     - Field-specific media library configuration works as expected.[^297]
+    - The `script-src` CSP directive is not required for the widget to work, as we implemented the Cloudinary media library without using their hosted widget script.
   - Uploadcare
     - An API-based integration allows users to select existing files from their Uploadcare account.[^247]
     - Supports [signed uploads](https://uploadcare.com/docs/security/secure-uploads/) to prevent unauthorized uploads. Files are uploaded with a signature computed using your secret key.
