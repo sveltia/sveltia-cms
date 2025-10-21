@@ -508,6 +508,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - A Markdown field plays well with a variable type List field.[^202]
   - The bullet list marker is a hyphen (`-`) rather than an asterisk (`*`), which is the comment form’s default behaviour on GitHub and GitLab.[^296]
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup.[^160] In our editor, bold is 2 asterisks and italic is an underscore.
+  - When deleting a linked text, the link is removed cleanly without leaving behind any unwanted characters.[^298]
   - The built-in `image` component can be inserted with a single click.
   - The built-in `image` component allows users to add, edit or remove a link on an image.[^171] To disable this feature, add `linked_images: false` to the Markdown field options.
   - It’s possible to paste/drop local/remote images into the rich text editor to insert them as expected. Note: Pasting multiple images is [not supported in Firefox](https://bugzilla.mozilla.org/show_bug.cgi?id=864052). In Netlify/Decap CMS, pasting an image may cause the application to crash.[^284]
@@ -609,6 +610,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
     - Unlike Netlify/Decap CMS, files are uploaded with their original names. Sanitization is still applied to avoid issues with special characters, but uppercase letters and spaces are not converted to lowercase letters and hyphens.[^97] If you want to slugify filenames according to the [`slug` option](https://decapcms.org/docs/configuration-options/#slug-type), use the `slugify_filename` [default media library option](#configuring-multiple-media-libraries).
   - Cloudinary
     - Field-specific media library configuration works as expected.[^297]
+    - When the `multiple` option is enabled, the output is always an array of strings, regardless of whether a single file is selected.[^299]
     - The `script-src` CSP directive is not required for the widget to work, as we implemented the Cloudinary media library without using their hosted widget script.
   - Uploadcare
     - An API-based integration allows users to select existing files from their Uploadcare account.[^247]
@@ -2647,3 +2649,7 @@ This project would not have been possible without the open source Netlify CMS pr
 [^296]: Netlify/Decap CMS [#7638](https://github.com/decaporg/decap-cms/discussions/7638)
 
 [^297]: Netlify/Decap CMS [#2001](https://github.com/decaporg/decap-cms/issues/2001)
+
+[^298]: Netlify/Decap CMS [#7640](https://github.com/decaporg/decap-cms/issues/7640)
+
+[^299]: Netlify/Decap CMS [#5812](https://github.com/decaporg/decap-cms/issues/5812)
