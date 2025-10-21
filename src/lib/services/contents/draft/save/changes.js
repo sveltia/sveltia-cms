@@ -1,4 +1,3 @@
-import { generateUUID } from '@sveltia/utils/crypto';
 import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
@@ -270,7 +269,7 @@ export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }
  * entry, assets and file changes.
  */
 export const createSavingEntryData = async ({ draft, slugs }) => {
-  const { collection, originalEntry, collectionFile } = draft;
+  const { id, collection, collectionFile } = draft;
   const { defaultLocaleSlug } = slugs;
 
   const {
@@ -290,7 +289,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
 
   /** @type {Entry} */
   const savingEntry = {
-    id: originalEntry?.id ?? generateUUID(),
+    id,
     slug: defaultLocaleSlug,
     subPath: _file.fullPathRegEx
       ? (localizedEntryMap[defaultLocale].path.match(_file.fullPathRegEx)?.groups?.subPath ??

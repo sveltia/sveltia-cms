@@ -70,17 +70,16 @@ describe('draft/save/changes', () => {
 
   describe('createSavingEntryData', () => {
     it('should create saving entry data for new entry', async () => {
-      const { generateUUID } = await import('@sveltia/utils/crypto');
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
 
-      vi.mocked(generateUUID).mockReturnValue('test-uuid');
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
 
       const draft = {
+        id: 'test-uuid',
         isNew: true,
         collection: {
           _type: 'entry',
@@ -117,17 +116,16 @@ describe('draft/save/changes', () => {
     });
 
     it('should handle i18n single file', async () => {
-      const { generateUUID } = await import('@sveltia/utils/crypto');
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
 
-      vi.mocked(generateUUID).mockReturnValue('test-uuid');
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
 
       const draft = {
+        id: 'test-uuid',
         isNew: true,
         collection: {
           _type: 'entry',
@@ -165,17 +163,16 @@ describe('draft/save/changes', () => {
     });
 
     it('should handle i18n multiple files', async () => {
-      const { generateUUID } = await import('@sveltia/utils/crypto');
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
 
-      vi.mocked(generateUUID).mockReturnValue('test-uuid');
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
 
       const draft = {
+        id: 'test-uuid',
         isNew: true,
         collection: {
           _type: 'entry',
@@ -1012,17 +1009,16 @@ describe('draft/save/changes', () => {
     });
 
     it('should use slug as fallback when fullPathRegEx does not match', async () => {
-      const { generateUUID } = await import('@sveltia/utils/crypto');
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
 
-      vi.mocked(generateUUID).mockReturnValue('test-uuid');
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
 
       const draft = {
+        id: 'test-uuid',
         isNew: true,
         collection: {
           _type: 'entry',
@@ -1058,17 +1054,16 @@ describe('draft/save/changes', () => {
     });
 
     it('should use slug when fullPathRegEx is null', async () => {
-      const { generateUUID } = await import('@sveltia/utils/crypto');
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
 
-      vi.mocked(generateUUID).mockReturnValue('test-uuid');
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
 
       const draft = {
+        id: 'test-uuid',
         isNew: true,
         collection: {
           _type: 'entry',
@@ -1104,15 +1099,12 @@ describe('draft/save/changes', () => {
 
   describe('createSavingEntryData with database and caching', () => {
     it('should create IndexedDB when backend has databaseName', async () => {
-      const { generateUUID } = await import('@sveltia/utils/crypto');
-
       await import('@sveltia/utils/storage');
 
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
 
-      vi.mocked(generateUUID).mockReturnValue('test-uuid');
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
@@ -1142,6 +1134,7 @@ describe('draft/save/changes', () => {
       });
 
       const draft = {
+        id: 'test-uuid',
         isNew: true,
         collection: {
           _type: 'entry',
@@ -1175,15 +1168,12 @@ describe('draft/save/changes', () => {
     });
 
     it('should not create IndexedDB when backend is undefined', async () => {
-      const { generateUUID } = await import('@sveltia/utils/crypto');
-
       await import('@sveltia/utils/storage');
 
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
 
-      vi.mocked(generateUUID).mockReturnValue('test-uuid');
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
@@ -1197,6 +1187,7 @@ describe('draft/save/changes', () => {
       mockGet.mockReturnValue(undefined);
 
       const draft = {
+        id: 'test-uuid',
         isNew: true,
         collection: {
           _type: 'entry',
@@ -1518,17 +1509,16 @@ describe('draft/save/changes', () => {
 
   describe('createSavingEntryData with multiple locales', () => {
     it('should process multiple locales with Promise.all (i18n multi-file)', async () => {
-      const { generateUUID } = await import('@sveltia/utils/crypto');
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
 
-      vi.mocked(generateUUID).mockReturnValue('test-uuid');
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
 
       const draft = {
+        id: 'test-uuid',
         isNew: false,
         collection: {
           _type: 'entry',
@@ -1579,17 +1569,16 @@ describe('draft/save/changes', () => {
     });
 
     it('should use Promise.all for concurrent locale processing (i18n multi-file)', async () => {
-      const { generateUUID } = await import('@sveltia/utils/crypto');
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
 
-      vi.mocked(generateUUID).mockReturnValue('test-uuid');
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
 
       const draft = {
+        id: 'test-uuid',
         isNew: true,
         collection: {
           _type: 'entry',
@@ -1650,6 +1639,7 @@ describe('draft/save/changes', () => {
       }));
 
       const draft = {
+        id: 'test-uuid',
         isNew: true,
         collection: {
           _type: 'entry',

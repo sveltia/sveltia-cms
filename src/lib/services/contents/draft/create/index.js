@@ -147,6 +147,7 @@ export const createDraft = ({
   );
 
   entryDraft.set({
+    id: isNew ? crypto.randomUUID() : id,
     createdAt: Date.now(),
     isNew,
     isIndexFile,

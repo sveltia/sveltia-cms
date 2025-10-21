@@ -600,6 +600,8 @@
 /**
  * Entry draft.
  * @typedef {object} EntryDraft
+ * @property {string} id Unique draft ID. For a new entry, it’s a randomly-generated UUID. For an
+ * existing entry, it’s the same as the corresponding {@link Entry} ID.
  * @property {number} createdAt Timestamp of the draft creation.
  * @property {boolean} isNew `true` if it’s a new entry draft in an entry collection.
  * @property {boolean} isIndexFile Whether the corresponding entry is the collection’s special index

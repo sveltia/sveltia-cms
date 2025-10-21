@@ -81,6 +81,8 @@ export const duplicateDraft = () => {
 
   entryDraft.set({
     ...draft,
+    id: crypto.randomUUID(),
+    createdAt: Date.now(),
     isNew: true,
     originalEntry: undefined,
     originalSlugs: {},

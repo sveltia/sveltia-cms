@@ -79,6 +79,7 @@ describe('contents/draft/create/index', () => {
         expect.objectContaining({
           collectionName: 'posts',
           isNew: true,
+          id: expect.any(String),
           canPreview: true,
           fields: collection.fields,
           originalEntry: undefined,
@@ -124,6 +125,7 @@ describe('contents/draft/create/index', () => {
         expect.objectContaining({
           collectionName: 'posts',
           isNew: false,
+          id: 'entry-123',
           originalEntry,
           originalLocales: { en: true, ja: true },
           currentLocales: { en: true, ja: true },

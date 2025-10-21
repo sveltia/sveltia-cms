@@ -194,7 +194,7 @@
   aria-label={$_('content_editor')}
   bind:this={wrapper}
 >
-  {#key $entryDraft?.createdAt}
+  {#key $entryDraft?.id}
     <Toolbar disabled={isNew && createDisabled} />
     {#if !$entryDraft}
       <!-- Hide the content after saving a draft -->

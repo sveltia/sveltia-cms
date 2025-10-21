@@ -272,6 +272,31 @@ describe('contents/draft/create/duplicate', () => {
       expect(setCallArg.isNew).toBe(true);
     });
 
+    it('should generate a new id', async () => {
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.id).toBeDefined();
+      expect(setCallArg.id).not.toBe(mockEntryDraft.id);
+    });
+
+    it('should update createdAt timestamp', async () => {
+      const beforeTime = Date.now();
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const afterTime = Date.now();
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.createdAt).toBeDefined();
+      expect(setCallArg.createdAt).toBeGreaterThanOrEqual(beforeTime);
+      expect(setCallArg.createdAt).toBeLessThanOrEqual(afterTime);
+    });
+
     it('should clear originalEntry', async () => {
       const { duplicateDraft } = await import('./duplicate.js');
 
