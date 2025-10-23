@@ -1254,6 +1254,27 @@ describe('deleteEmptyParentDirs', () => {
 
     expect(dirHandle.removeEntry).not.toHaveBeenCalled();
   });
+
+  test('should delete empty directory when pathSegments has single item', async () => {
+    const emptyDir = createMockDirectoryHandle('folder');
+
+    // Mock empty directory
+    // @ts-ignore - Mock async iterator
+    emptyDir.keys = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* () {
+        // empty
+      },
+    }));
+
+    /** @type {import('vitest').MockedFunction<any>} */ (
+      rootDirHandle.getDirectoryHandle
+    ).mockResolvedValue(emptyDir);
+
+    await deleteEmptyParentDirs(rootDirHandle, ['folder']);
+
+    // Should try to remove the folder from root
+    expect(rootDirHandle.removeEntry).toHaveBeenCalledWith('folder');
+  });
 });
 
 describe('parseAssetFileInfo', () => {
@@ -1497,8 +1518,6 @@ describe('scanDir', () => {
       },
     }));
 
-    rootDirHandle.resolve = vi.fn().mockResolvedValue(['error.txt']);
-
     await scanDir(dirHandle, {
       rootDirHandle,
       scanningPaths: ['error.txt'],
@@ -1525,14 +1544,16 @@ describe('scanDir', () => {
       },
     }));
 
-    rootDirHandle.resolve = vi.fn().mockResolvedValue(['parent', 'nested']);
-
-    await scanDir(parentDirHandle, {
-      rootDirHandle,
-      scanningPaths: ['other/path'],
-      scanningPathsRegEx: [/^other\/path/],
-      fileHandles,
-    });
+    await scanDir(
+      parentDirHandle,
+      {
+        rootDirHandle,
+        scanningPaths: ['other/path'],
+        scanningPathsRegEx: [/^other\/path/],
+        fileHandles,
+      },
+      'parent',
+    );
 
     // Should not add any files since path doesn't match
     expect(fileHandles).toHaveLength(0);
@@ -1552,18 +1573,6 @@ describe('scanDir', () => {
         yield ['.gitignore', gitignoreFile];
       },
     }));
-
-    rootDirHandle.resolve = vi.fn((handle) => {
-      if (handle === hiddenFile) {
-        return Promise.resolve(['.hidden']);
-      }
-
-      if (handle === gitignoreFile) {
-        return Promise.resolve(['.gitignore']);
-      }
-
-      return Promise.resolve([]);
-    });
 
     await scanDir(dirHandle, {
       rootDirHandle,
@@ -1613,12 +1622,16 @@ describe('scanDir', () => {
       return Promise.resolve([]);
     });
 
-    await scanDir(parentDirHandle, {
-      rootDirHandle,
-      scanningPaths: ['parent/nested/file.txt'],
-      scanningPathsRegEx: [/parent\/nested\/file\.txt/],
-      fileHandles,
-    });
+    await scanDir(
+      parentDirHandle,
+      {
+        rootDirHandle,
+        scanningPaths: ['parent/nested/file.txt'],
+        scanningPathsRegEx: [/parent\/nested\/file\.txt/],
+        fileHandles,
+      },
+      'parent',
+    );
 
     expect(fileHandles).toHaveLength(1);
     expect(fileHandles[0].handle).toBe(fileHandle);
@@ -1825,22 +1838,6 @@ describe('scanDir - directory recursion scenarios', () => {
       },
     }));
 
-    rootDirHandle.resolve = vi.fn((handle) => {
-      if (handle === level1Dir) {
-        return Promise.resolve(['level1']);
-      }
-
-      if (handle === level2Dir) {
-        return Promise.resolve(['level1', 'level2']);
-      }
-
-      if (handle === fileHandle) {
-        return Promise.resolve(['level1', 'level2', 'file.txt']);
-      }
-
-      return Promise.resolve([]);
-    });
-
     await scanDir(rootDirHandle, {
       rootDirHandle,
       scanningPaths: ['level1/level2/file.txt'],
@@ -1872,25 +1869,17 @@ describe('scanDir - directory recursion scenarios', () => {
       },
     }));
 
-    rootDirHandle.resolve = vi.fn((handle) => {
-      if (handle === templateDir) {
-        return Promise.resolve(['parent', 'posts']);
-      }
-
-      if (handle === nestedFileHandle) {
-        return Promise.resolve(['parent', 'posts', 'my-post', 'index.md']);
-      }
-
-      return Promise.resolve([]);
-    });
-
     // Scanning path with template tag
-    await scanDir(parentDirHandle, {
-      rootDirHandle,
-      scanningPaths: ['parent/posts/{{slug}}/index.md'],
-      scanningPathsRegEx: [/parent\/posts\/.+?\/index\.md/],
-      fileHandles,
-    });
+    await scanDir(
+      parentDirHandle,
+      {
+        rootDirHandle,
+        scanningPaths: ['parent/posts/{{slug}}/index.md'],
+        scanningPathsRegEx: [/parent\/posts\/.+?\/index\.md/],
+        fileHandles,
+      },
+      'parent',
+    );
 
     // The directory recursion should happen even though the template directory
     // doesn't directly match, because we check against scanningPaths
@@ -1908,20 +1897,16 @@ describe('scanDir - directory recursion scenarios', () => {
       },
     }));
 
-    rootDirHandle.resolve = vi.fn((handle) => {
-      if (handle === hiddenDir) {
-        return Promise.resolve(['parent', '.hidden']);
-      }
-
-      return Promise.resolve([]);
-    });
-
-    await scanDir(parentDirHandle, {
-      rootDirHandle,
-      scanningPaths: ['parent/.hidden/file.txt'],
-      scanningPathsRegEx: [/parent\/\.hidden\/file\.txt/],
-      fileHandles,
-    });
+    await scanDir(
+      parentDirHandle,
+      {
+        rootDirHandle,
+        scanningPaths: ['parent/.hidden/file.txt'],
+        scanningPathsRegEx: [/parent\/\.hidden\/file\.txt/],
+        fileHandles,
+      },
+      'parent',
+    );
 
     // Hidden directory should be skipped
     expect(hiddenDir.entries).not.toHaveBeenCalled();
@@ -1937,15 +1922,6 @@ describe('scanDir - directory recursion scenarios', () => {
         yield ['file.txt', fileHandle];
       },
     }));
-
-    // Mock resolve to return path with empty string (null.join becomes empty)
-    rootDirHandle.resolve = vi.fn(async (handle) => {
-      if (handle === fileHandle) {
-        return ['file.txt'];
-      }
-
-      return [];
-    });
 
     await scanDir(dirHandle, {
       rootDirHandle,

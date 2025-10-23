@@ -117,9 +117,10 @@ export const getPathRegex = (path) =>
  * @param {string[]} context.scanningPaths Scanning paths.
  * @param {RegExp[]} context.scanningPathsRegEx Regular expressions for scanning paths.
  * @param {FileHandleItem[]} context.fileHandles List of available file handles.
+ * @param {string} [currentPath] Current directory path (for recursion).
  */
-export const scanDir = async (dirHandle, context) => {
-  const { rootDirHandle, scanningPaths, scanningPathsRegEx, fileHandles } = context;
+export const scanDir = async (dirHandle, context, currentPath = '') => {
+  const { scanningPaths, scanningPathsRegEx, fileHandles } = context;
 
   for await (const [name, handle] of dirHandle.entries()) {
     // Skip hidden files and directories, except for Git configuration files
@@ -127,7 +128,7 @@ export const scanDir = async (dirHandle, context) => {
       continue;
     }
 
-    const path = (await rootDirHandle.resolve(handle))?.join('/') ?? '';
+    const path = currentPath ? `${currentPath}/${name}` : name;
     const hasMatchingPath = scanningPathsRegEx.some((regex) => regex.test(path));
 
     if (handle.kind === 'file' && hasMatchingPath) {
@@ -144,7 +145,7 @@ export const scanDir = async (dirHandle, context) => {
       const regex = getPathRegex(path);
 
       if (hasMatchingPath || scanningPaths.some((p) => regex.test(p))) {
-        await scanDir(/** @type {FileSystemDirectoryHandle} */ (handle), context);
+        await scanDir(/** @type {FileSystemDirectoryHandle} */ (handle), context, path);
       }
     }
   }
@@ -284,9 +285,10 @@ export const loadFiles = async (rootDirHandle) => {
  */
 export const moveFile = async ({ rootDirHandle, previousPath, path }) => {
   const { dirname, basename } = getPathInfo(path);
+  const previousDirname = getPathInfo(previousPath).dirname;
   const fileHandle = await getFileHandle(rootDirHandle, previousPath);
 
-  if (dirname && dirname !== getPathInfo(previousPath).dirname) {
+  if (dirname && dirname !== previousDirname) {
     await fileHandle.move(await getDirectoryHandle(rootDirHandle, dirname), basename);
   } else {
     await fileHandle.move(basename);
@@ -336,21 +338,23 @@ export const writeFile = async ({ rootDirHandle, fileHandle, path, data }) => {
  * @param {string[]} pathSegments Array of directory path segments.
  */
 export const deleteEmptyParentDirs = async (rootDirHandle, pathSegments) => {
-  let dirHandle = await getDirectoryHandle(rootDirHandle, pathSegments.join('/'));
-
-  for (;;) {
+  // Start from the deepest directory
+  for (let i = pathSegments.length; i > 0; i -= 1) {
+    const currentPath = pathSegments.slice(0, i).join('/');
+    const dirHandle = await getDirectoryHandle(rootDirHandle, currentPath);
     const keys = await Array.fromAsync(dirHandle.keys());
 
-    if (keys.length > 1 || !pathSegments.length) {
+    // If directory is not empty, stop
+    if (keys.length > 0) {
       break;
     }
 
-    const dirName = /** @type {string} */ (pathSegments.pop());
+    // Get parent directory and remove the empty directory
+    const dirName = pathSegments[i - 1];
+    const parentPath = pathSegments.slice(0, i - 1).join('/');
+    const parentHandle = await getDirectoryHandle(rootDirHandle, parentPath);
 
-    // Get the parent directory handle
-    dirHandle = await getDirectoryHandle(rootDirHandle, pathSegments.join('/'));
-
-    await dirHandle.removeEntry(dirName);
+    await parentHandle.removeEntry(dirName);
   }
 };
 
