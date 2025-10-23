@@ -337,7 +337,7 @@
 /**
  * File info being processed as {@link Entry} or {@link Asset}.
  * @typedef {object} BaseFileListItemProps
- * @property {File} [file] File object. Local backend only.
+ * @property {FileSystemFileHandle} [handle] File handle. Local backend only.
  * @property {string} path File path.
  * @property {string} name File name, without a path.
  * @property {string} sha Git object ID (SHA-1 hash) for the file.
@@ -701,7 +701,8 @@
 /**
  * Asset properties.
  * @typedef {object} AssetProps
- * @property {File} [file] File object. Local backend and unsaved files only.
+ * @property {File} [file] File object. Unsaved files only.
+ * @property {FileSystemFileHandle} [handle] File handle. Local backend only.
  * @property {string} [blobURL] Blob URL for the asset. It’s a temporary URL for a remote file being
  * fetched or a local file being uploaded. Or `undefined` if the URL is not generated yet.
  * @property {string} name File name.

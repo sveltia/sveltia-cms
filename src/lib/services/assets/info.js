@@ -38,7 +38,7 @@ const requestedAssetPaths = new Set();
  * @returns {Promise<Blob>} Blob.
  */
 export const getAssetBlob = async (asset, retryCount = 0) => {
-  const { file, blobURL, name, path } = asset;
+  const { file, handle, blobURL, name, path } = asset;
 
   if (blobURL) {
     return fetch(blobURL).then((r) => r.blob());
@@ -49,6 +49,12 @@ export const getAssetBlob = async (asset, retryCount = 0) => {
 
   if (file) {
     blob = file;
+  } else if (handle) {
+    try {
+      blob = await handle.getFile();
+    } catch {
+      throw new Error('Failed to retrieve blob from file handle');
+    }
   } else {
     // If the blob is already being requested, wait for it to prevent multiple requests. If the
     // `blobURL` is still not available after 25 retries, or 5 seconds, fetch the file directly.

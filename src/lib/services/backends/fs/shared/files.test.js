@@ -11,8 +11,8 @@ import {
   getHandleByPath,
   getPathRegex,
   moveFile,
-  parseFileHandleItem,
-  readTextFile,
+  parseAssetFileInfo,
+  parseTextFileInfo,
   saveChange,
   saveChanges,
   scanDir,
@@ -21,6 +21,7 @@ import {
 
 /**
  * @import { MockedFunction } from 'vitest';
+ * @import { FileHandleItem } from './files';
  */
 
 /**
@@ -872,55 +873,73 @@ describe('getPathRegex', () => {
   });
 });
 
-describe('parseFileHandleItem', () => {
-  test('should normalize file list item with hash', async () => {
+describe('parseTextFileInfo', () => {
+  test('should parse file with text content', async () => {
     const handle = createMockFileHandle('test.txt');
     const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
 
     handle.getFile = vi.fn(async () => file);
 
-    const result = await parseFileHandleItem({
+    const result = await parseTextFileInfo({
       handle,
       path: 'folder/test.txt',
+      name: 'test.txt',
+      sha: '',
+      size: 0,
+      type: 'config',
     });
 
-    expect(result).toHaveProperty('file');
-    expect(result.file).toBeInstanceOf(File);
+    expect(result).toHaveProperty('handle');
+    expect(result.handle).toBe(handle);
     expect(result).toHaveProperty('path', 'folder/test.txt');
     expect(result).toHaveProperty('name', 'test.txt');
     expect(result).toHaveProperty('size', file.size);
     expect(result).toHaveProperty('sha');
     expect(typeof result.sha).toBe('string');
+    expect(result).toHaveProperty('text');
+    expect(result.text).toBe('test content');
   });
 
   test('should normalize Unicode characters in path and name', async () => {
     const handle = createMockFileHandle('テスト.txt');
-    const file = new File(['内容'], 'テスト.txt');
+    const file = new File(['内容'], 'テスト.txt', { type: 'text/plain' });
 
     handle.getFile = vi.fn(async () => file);
 
-    const result = await parseFileHandleItem({
+    const result = await parseTextFileInfo({
       handle,
       path: 'フォルダー/テスト.txt',
+      name: 'テスト.txt',
+      sha: '',
+      size: 0,
+      type: 'config',
     });
 
     expect(result.path).toBe('フォルダー/テスト.txt');
     expect(result.name).toBe('テスト.txt');
+    expect(result).toHaveProperty('text');
+    expect(result.text).toBe('内容');
   });
 
   test('should handle empty file', async () => {
     const handle = createMockFileHandle('empty.txt');
-    const file = new File([], 'empty.txt');
+    const file = new File([], 'empty.txt', { type: 'text/plain' });
 
     handle.getFile = vi.fn(async () => file);
 
-    const result = await parseFileHandleItem({
+    const result = await parseTextFileInfo({
       handle,
       path: 'empty.txt',
+      name: 'empty.txt',
+      sha: '',
+      size: 0,
+      type: 'config',
     });
 
     expect(result.size).toBe(0);
     expect(result.sha).toBeDefined();
+    expect(result).toHaveProperty('text');
+    expect(result.text).toBe('');
   });
 
   test('should get fresh File reference from handle', async () => {
@@ -930,9 +949,13 @@ describe('parseFileHandleItem', () => {
 
     handle.getFile = getFileSpy;
 
-    await parseFileHandleItem({
+    await parseTextFileInfo({
       handle,
       path: 'test.txt',
+      name: 'test.txt',
+      sha: '',
+      size: 0,
+      type: 'config',
     });
 
     expect(getFileSpy).toHaveBeenCalledTimes(1);
@@ -948,15 +971,61 @@ describe('parseFileHandleItem', () => {
 
     handle.getFile = vi.fn(async () => file);
 
-    const result = await parseFileHandleItem({
+    const result = await parseTextFileInfo({
       handle,
       path: 'test.txt',
+      name: 'test.txt',
+      sha: '',
+      size: 0,
+      type: 'config',
     });
 
     expect(result.name).toBe('test.txt');
     expect(result.size).toBe(7); // 'content' is 7 bytes
-    expect(result.file).toBeDefined();
-    expect(result.file?.type).toBe('text/plain');
+    expect(result.handle).toBeDefined();
+    expect(result.handle).toBe(handle);
+    expect(result).toHaveProperty('text');
+    expect(result.text).toBe('content');
+  });
+
+  test('should skip .gitkeep files', async () => {
+    const handle = createMockFileHandle('.gitkeep');
+    const file = new File([''], '.gitkeep');
+
+    handle.getFile = vi.fn(async () => file);
+
+    const result = await parseTextFileInfo({
+      handle,
+      path: '.gitkeep',
+      name: '.gitkeep',
+      sha: '',
+      size: 0,
+      type: 'config',
+    });
+
+    expect(result.text).toBeUndefined();
+  });
+
+  test('should handle read errors gracefully', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const handle = createMockFileHandle('test.txt');
+
+    handle.getFile = vi.fn(async () => {
+      throw new Error('Read failed');
+    });
+
+    const result = await parseTextFileInfo({
+      handle,
+      path: 'test.txt',
+      name: 'test.txt',
+      sha: '',
+      size: 0,
+      type: 'config',
+    });
+
+    expect(result.text).toBe('');
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 });
 
@@ -1187,51 +1256,109 @@ describe('deleteEmptyParentDirs', () => {
   });
 });
 
-describe('readTextFile', () => {
-  test('should read text content from file', async () => {
+describe('parseAssetFileInfo', () => {
+  test('should parse asset file and extract metadata', async () => {
+    const handle = createMockFileHandle('test.txt');
     const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
+
+    handle.getFile = vi.fn(async () => file);
+
     /** @type {any} */
-    const entryFile = { name: 'test.txt', file, path: 'test.txt', size: file.size, sha: 'abc' };
+    const assetFile = {
+      handle,
+      path: 'test.txt',
+      name: 'test.txt',
+      size: 0,
+      sha: '',
+      type: 'asset',
+      folder: { internalPath: '.' },
+    };
 
-    await readTextFile(entryFile);
+    const result = await parseAssetFileInfo(assetFile);
 
-    expect(entryFile.text).toBe('test content');
+    expect(result.kind).toBeDefined();
+    expect(result.size).toBe(file.size);
+    expect(result.sha).toBeDefined();
+    expect(typeof result.sha).toBe('string');
+    expect(result.text).toBeUndefined();
   });
 
-  test('should skip .gitkeep files', async () => {
+  test('should handle .gitkeep files for asset parsing', async () => {
+    const handle = createMockFileHandle('.gitkeep');
     const file = new File([''], '.gitkeep');
+
+    handle.getFile = vi.fn(async () => file);
+
     /** @type {any} */
-    const entryFile = { name: '.gitkeep', file, path: '.gitkeep', size: 0, sha: 'abc' };
+    const assetFile = {
+      handle,
+      path: '.gitkeep',
+      name: '.gitkeep',
+      size: 0,
+      sha: '',
+      type: 'asset',
+      folder: { internalPath: '.' },
+    };
 
-    await readTextFile(entryFile);
+    const result = await parseAssetFileInfo(assetFile);
 
-    expect(entryFile.text).toBeUndefined();
+    expect(result.kind).toBeDefined();
+    expect(result.text).toBeUndefined();
   });
 
-  test('should handle read errors gracefully', async () => {
+  test('should handle read errors gracefully for asset files', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const file = new File(['content'], 'test.txt');
+    const handle = createMockFileHandle('test.txt');
+
+    handle.getFile = vi.fn(async () => {
+      throw new Error('Read failed');
+    });
+
     /** @type {any} */
-    const entryFile = { name: 'test.txt', file, path: 'test.txt', size: file.size, sha: 'abc' };
+    const assetFile = {
+      handle,
+      path: 'test.txt',
+      name: 'test.txt',
+      size: 0,
+      sha: '',
+      type: 'asset',
+      folder: { internalPath: '.' },
+    };
 
-    // Mock readAsText to throw error
-    vi.spyOn(file, 'text').mockRejectedValue(new Error('Read failed'));
+    const result = await parseAssetFileInfo(assetFile);
 
-    await readTextFile(entryFile);
-
-    expect(entryFile.text).toBe('');
+    expect(result).toHaveProperty('kind');
+    expect(result.text).toBeUndefined();
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
-  test('should handle binary files', async () => {
-    const file = new File([new Uint8Array([0, 1, 2])], 'binary.dat');
+  test('should handle binary files for assets', async () => {
+    const handle = createMockFileHandle('binary.dat');
+
+    const file = new File([new Uint8Array([0, 1, 2])], 'binary.dat', {
+      type: 'application/octet-stream',
+    });
+
+    handle.getFile = vi.fn(async () => file);
+
     /** @type {any} */
-    const entryFile = { name: 'binary.dat', file, path: 'binary.dat', size: 3, sha: 'abc' };
+    const assetFile = {
+      handle,
+      path: 'binary.dat',
+      name: 'binary.dat',
+      size: 0,
+      sha: '',
+      type: 'asset',
+      folder: { internalPath: '.' },
+    };
 
-    await readTextFile(entryFile);
+    const result = await parseAssetFileInfo(assetFile);
 
-    expect(typeof entryFile.text).toBe('string');
+    expect(result.kind).toBeDefined();
+    expect(result.size).toBe(3);
+    expect(result.sha).toBeDefined();
+    expect(result.text).toBeUndefined();
   });
 });
 
@@ -1343,7 +1470,7 @@ describe('saveChange', () => {
 });
 
 describe('scanDir', () => {
-  /** @type {import('$lib/services/backends/fs/shared/files').FileHandleItem[]} */
+  /** @type {FileHandleItem[]} */
   let fileHandles;
   /** @type {FileSystemDirectoryHandle} */
   let rootDirHandle;
@@ -1661,7 +1788,7 @@ describe('loadFiles', () => {
 });
 
 describe('scanDir - directory recursion scenarios', () => {
-  /** @type {import('$lib/services/backends/fs/shared/files').FileHandleItem[]} */
+  /** @type {FileHandleItem[]} */
   let fileHandles;
   /** @type {FileSystemDirectoryHandle} */
   let rootDirHandle;

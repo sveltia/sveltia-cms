@@ -2,7 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 
 import { allAssets } from '$lib/services/assets';
-import { parseAssetFiles } from '$lib/services/assets/parser';
+import { getAssetKind } from '$lib/services/assets/kinds';
 import { isLastCommitPublished } from '$lib/services/backends';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
@@ -78,23 +78,37 @@ export const restoreCachedFileData = ({ allFiles, cachedFiles }) => {
 };
 
 /**
- * Parse a file and add additional metadata, such as name, size, and text content.
+ * Parse file info and add additional metadata, such as name, size, and text content.
+ * @internal
  * @param {object} args Arguments.
- * @param {BaseFileListItem} args.file File to parse.
+ * @param {BaseFileListItem} args.fileInfo File info.
  * @param {RepositoryContentsMap} args.fetchedFileMap Map of fetched file metadata and content.
  * @returns {BaseFileListItem} Parsed file with additional metadata.
  */
-export const parseFile = ({ file, fetchedFileMap }) => {
+export const parseFileInfo = ({ fileInfo, fetchedFileMap }) => {
   // The `size` and `text` are only available in the 2nd request (`fetchFileContents`) for the
   // GitLab backend, so we need to set them here if they are not already defined
-  const { meta, size, text } = fetchedFileMap[file.path] ?? {};
+  const { meta, size, text } = fetchedFileMap[fileInfo.path] ?? {};
 
   return {
-    ...file,
-    size: file.size ?? size,
-    text: file.text ?? text,
-    meta: file.meta ?? meta,
+    ...fileInfo,
+    size: fileInfo.size ?? size,
+    text: fileInfo.text ?? text,
+    meta: fileInfo.meta ?? meta,
   };
+};
+
+/**
+ * Parse a single asset file to create a complete, serialized asset.
+ * @internal
+ * @param {BaseAssetListItem} fileInfo Asset file info.
+ * @returns {Asset} Parsed asset.
+ */
+export const parseAssetFileInfo = (fileInfo) => {
+  const { name, meta = {}, ...rest } = fileInfo;
+  const kind = getAssetKind(name);
+
+  return { ...rest, ...meta, name, kind };
 };
 
 /**
@@ -201,22 +215,21 @@ export const fetchAndParseFiles = async ({
 
   const { entries, errors } = await prepareEntries(
     entryFiles.map(
-      (file) => /** @type {BaseEntryListItem} */ (parseFile({ file, fetchedFileMap })),
+      (fileInfo) => /** @type {BaseEntryListItem} */ (parseFileInfo({ fileInfo, fetchedFileMap })),
     ),
   );
 
-  updateStores({
-    entries,
-    assets: parseAssetFiles(
-      assetFiles.map(
-        (file) => /** @type {BaseAssetListItem} */ (parseFile({ file, fetchedFileMap })),
-      ),
+  const assets = assetFiles.map((fileInfo) =>
+    parseAssetFileInfo(
+      /** @type {BaseAssetListItem} */ (parseFileInfo({ fileInfo, fetchedFileMap })),
     ),
-    configFiles: configFiles.map(
-      (file) => /** @type {BaseConfigListItem} */ (parseFile({ file, fetchedFileMap })),
-    ),
-    errors,
-  });
+  );
+
+  const configFileItems = configFiles.map(
+    (fileInfo) => /** @type {BaseConfigListItem} */ (parseFileInfo({ fileInfo, fetchedFileMap })),
+  );
+
+  updateStores({ entries, assets, configFiles: configFileItems, errors });
 
   await updateCache({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap });
 };

@@ -1,8 +1,8 @@
 // @ts-nocheck
+import { IndexedDB } from '@sveltia/utils/storage';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets';
-import { parseAssetFiles } from '$lib/services/assets/parser';
 import { isLastCommitPublished } from '$lib/services/backends';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
@@ -12,7 +12,8 @@ import { prepareEntries } from '$lib/services/contents/file/process';
 import {
   fetchAndParseFiles,
   getFileList,
-  parseFile,
+  parseAssetFileInfo,
+  parseFileInfo,
   restoreCachedFileData,
   updateCache,
   updateStores,
@@ -21,7 +22,6 @@ import {
 // Mock dependencies
 vi.mock('@sveltia/utils/storage');
 vi.mock('$lib/services/assets');
-vi.mock('$lib/services/assets/parser');
 vi.mock('$lib/services/backends');
 vi.mock('$lib/services/backends/git/shared/config');
 vi.mock('$lib/services/backends/process');
@@ -44,8 +44,8 @@ describe('git/shared/fetch', () => {
       deleteEntries: vi.fn(),
     };
 
-    // Mock IndexedDB constructor
-    global.IndexedDB = vi.fn().mockImplementation((dbName, storeName) => {
+    // Mock IndexedDB constructor - import at module level from storage mock
+    vi.mocked(IndexedDB).mockImplementation((dbName, storeName) => {
       if (storeName === 'meta') {
         return mockMetaDB;
       }
@@ -69,8 +69,6 @@ describe('git/shared/fetch', () => {
       entries: [],
       errors: [],
     });
-
-    vi.mocked(parseAssetFiles).mockReturnValue([]);
   });
 
   afterEach(() => {
@@ -207,9 +205,9 @@ describe('git/shared/fetch', () => {
     });
   });
 
-  describe('parseFile', () => {
+  describe('parseFileInfo', () => {
     it('should merge file data with fetched data', () => {
-      const file = {
+      const fileInfo = {
         path: 'test.md',
         sha: 'abc123',
         name: 'test.md',
@@ -223,7 +221,7 @@ describe('git/shared/fetch', () => {
         },
       };
 
-      const result = parseFile({ file, fetchedFileMap });
+      const result = parseFileInfo({ fileInfo, fetchedFileMap });
 
       expect(result).toEqual({
         path: 'test.md',
@@ -236,7 +234,7 @@ describe('git/shared/fetch', () => {
     });
 
     it('should preserve existing file data when not in fetched map', () => {
-      const file = {
+      const fileInfo = {
         path: 'test.md',
         sha: 'abc123',
         name: 'test.md',
@@ -246,9 +244,140 @@ describe('git/shared/fetch', () => {
       };
 
       const fetchedFileMap = {};
-      const result = parseFile({ file, fetchedFileMap });
+      const result = parseFileInfo({ fileInfo, fetchedFileMap });
 
-      expect(result).toEqual(file);
+      expect(result).toEqual(fileInfo);
+    });
+  });
+
+  describe('parseAssetFileInfo', () => {
+    it('should parse asset file with image extension', () => {
+      const fileInfo = {
+        path: 'images/sample.jpg',
+        name: 'sample.jpg',
+        sha: 'abc123',
+        size: 2048,
+        text: undefined,
+      };
+
+      const result = parseAssetFileInfo(fileInfo);
+
+      expect(result).toEqual({
+        path: 'images/sample.jpg',
+        name: 'sample.jpg',
+        sha: 'abc123',
+        size: 2048,
+        text: undefined,
+        kind: 'image',
+      });
+    });
+
+    it('should parse asset file with video extension', () => {
+      const fileInfo = {
+        path: 'videos/sample.mp4',
+        name: 'sample.mp4',
+        sha: 'def456',
+        size: 10240,
+      };
+
+      const result = parseAssetFileInfo(fileInfo);
+
+      expect(result.kind).toBe('video');
+      expect(result.name).toBe('sample.mp4');
+      expect(result.sha).toBe('def456');
+    });
+
+    it('should parse asset file with audio extension', () => {
+      const fileInfo = {
+        path: 'audio/song.mp3',
+        name: 'song.mp3',
+        sha: 'ghi789',
+        size: 5120,
+      };
+
+      const result = parseAssetFileInfo(fileInfo);
+
+      expect(result.kind).toBe('audio');
+      expect(result.name).toBe('song.mp3');
+    });
+
+    it('should parse asset file with document extension', () => {
+      const fileInfo = {
+        path: 'docs/report.pdf',
+        name: 'report.pdf',
+        sha: 'jkl012',
+        size: 1024,
+      };
+
+      const result = parseAssetFileInfo(fileInfo);
+
+      expect(result.kind).toBe('document');
+      expect(result.name).toBe('report.pdf');
+    });
+
+    it('should parse asset file with unknown extension as "other"', () => {
+      const fileInfo = {
+        path: 'files/unknown.xyz',
+        name: 'unknown.xyz',
+        sha: 'mno345',
+        size: 512,
+      };
+
+      const result = parseAssetFileInfo(fileInfo);
+
+      expect(result.kind).toBe('other');
+      expect(result.name).toBe('unknown.xyz');
+    });
+
+    it('should preserve meta data if provided', () => {
+      const fileInfo = {
+        path: 'images/sample.png',
+        name: 'sample.png',
+        sha: 'pqr678',
+        size: 3072,
+        meta: { customField: 'customValue', exif: { width: 800, height: 600 } },
+      };
+
+      const result = parseAssetFileInfo(fileInfo);
+
+      expect(result).toEqual({
+        path: 'images/sample.png',
+        name: 'sample.png',
+        sha: 'pqr678',
+        size: 3072,
+        kind: 'image',
+        customField: 'customValue',
+        exif: { width: 800, height: 600 },
+      });
+    });
+
+    it('should handle asset file with various document types', () => {
+      const documentTypes = [
+        { name: 'file.pdf', expected: 'document' },
+        { name: 'file.docx', expected: 'document' },
+        { name: 'file.xlsx', expected: 'document' },
+        { name: 'file.csv', expected: 'document' },
+        { name: 'file.pptx', expected: 'document' },
+      ];
+
+      documentTypes.forEach(({ name, expected }) => {
+        const result = parseAssetFileInfo({ path: name, name, sha: 'test123' });
+
+        expect(result.kind).toBe(expected);
+      });
+    });
+
+    it('should extract name from fileInfo when parsing', () => {
+      const fileInfo = {
+        path: 'images/my-image.gif',
+        name: 'my-image.gif',
+        sha: 'stu901',
+      };
+
+      const result = parseAssetFileInfo(fileInfo);
+
+      expect(result.name).toBe('my-image.gif');
+      expect(result.kind).toBe('image');
     });
   });
 
@@ -434,6 +563,252 @@ describe('git/shared/fetch', () => {
       expect(allAssets.set).toHaveBeenCalledWith([]);
       expect(gitConfigFiles.set).toHaveBeenCalledWith([]);
       expect(dataLoaded.set).toHaveBeenCalledWith(true);
+    });
+
+    it('should fetch and process entries, assets, and config files', async () => {
+      const mockEntryFiles = [
+        { path: 'posts/post1.md', name: 'post1.md', sha: 'entry1', size: 1024 },
+      ];
+
+      const mockAssetFiles = [
+        { path: 'images/image1.jpg', name: 'image1.jpg', sha: 'asset1', size: 2048 },
+      ];
+
+      const mockConfigFiles = [
+        { path: '.gitignore', name: '.gitignore', sha: 'config1', size: 512 },
+      ];
+
+      const allFilesArray = [...mockEntryFiles, ...mockAssetFiles, ...mockConfigFiles];
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 3,
+        entryFiles: mockEntryFiles,
+        assetFiles: mockAssetFiles,
+        configFiles: mockConfigFiles,
+        allFiles: allFilesArray,
+      });
+
+      vi.mocked(prepareEntries).mockResolvedValue({
+        entries: [{ path: 'posts/post1.md', title: 'Post 1' }],
+        errors: [],
+      });
+
+      mockCacheDB.entries.mockResolvedValue([]);
+      mockMetaDB.get.mockResolvedValue(null);
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(prepareEntries).toHaveBeenCalled();
+      expect(mockFetchFileContents).toHaveBeenCalledWith(allFilesArray);
+    });
+
+    it('should handle entries with parsing errors', async () => {
+      const mockEntryFiles = [{ path: 'posts/bad.md', name: 'bad.md', sha: 'bad1', size: 512 }];
+      const mockAssetFiles = [];
+      const mockConfigFiles = [];
+      const allFilesArray = mockEntryFiles;
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: mockEntryFiles,
+        assetFiles: mockAssetFiles,
+        configFiles: mockConfigFiles,
+        allFiles: allFilesArray,
+      });
+
+      const parseError = new Error('Invalid YAML');
+
+      vi.mocked(prepareEntries).mockResolvedValue({
+        entries: [],
+        errors: [parseError],
+      });
+
+      mockCacheDB.entries.mockResolvedValue([]);
+      mockMetaDB.get.mockResolvedValue(null);
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(entryParseErrors.set).toHaveBeenCalledWith([parseError]);
+    });
+
+    it('should skip fetching file contents when all files are cached', async () => {
+      const mockEntryFiles = [
+        { path: 'posts/post1.md', name: 'post1.md', sha: 'entry1', size: 1024 },
+      ];
+
+      const allFilesArray = mockEntryFiles;
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: mockEntryFiles,
+        assetFiles: [],
+        configFiles: [],
+        allFiles: allFilesArray.map((file) => ({ ...file, meta: { cached: true } })),
+      });
+
+      vi.mocked(prepareEntries).mockResolvedValue({
+        entries: [],
+        errors: [],
+      });
+
+      mockCacheDB.entries.mockResolvedValue([]);
+      mockMetaDB.get.mockResolvedValue(null);
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockFetchFileContents).not.toHaveBeenCalled();
+    });
+
+    it('should call updateCache with correct parameters', async () => {
+      const mockEntryFiles = [
+        { path: 'posts/post1.md', name: 'post1.md', sha: 'entry1', size: 1024 },
+      ];
+
+      const allFilesArray = mockEntryFiles;
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: mockEntryFiles,
+        assetFiles: [],
+        configFiles: [],
+        allFiles: allFilesArray,
+      });
+
+      vi.mocked(prepareEntries).mockResolvedValue({
+        entries: [],
+        errors: [],
+      });
+
+      const fetchedContent = {
+        'posts/post1.md': { sha: 'entry1', text: '# Post 1' },
+      };
+
+      mockFetchFileContents.mockResolvedValue(fetchedContent);
+      mockCacheDB.entries.mockResolvedValue([]);
+      mockMetaDB.get.mockResolvedValue(null);
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockCacheDB.saveEntries).toHaveBeenCalledWith(
+        expect.arrayContaining([['posts/post1.md', expect.objectContaining({ sha: 'entry1' })]]),
+      );
+    });
+
+    it('should restore cached data before fetching new content', async () => {
+      const mockEntryFiles = [
+        { path: 'posts/post1.md', name: 'post1.md', sha: 'entry1', size: 1024 },
+        { path: 'posts/post2.md', name: 'post2.md', sha: 'entry2', size: 2048 },
+      ];
+
+      const allFilesArray = mockEntryFiles;
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 2,
+        entryFiles: mockEntryFiles,
+        assetFiles: [],
+        configFiles: [],
+        allFiles: allFilesArray,
+      });
+
+      vi.mocked(prepareEntries).mockResolvedValue({
+        entries: [{ path: 'posts/post1.md', title: 'Post 1', text: 'cached content' }],
+        errors: [],
+      });
+
+      // Simulate cache with post1 but not post2
+      mockCacheDB.entries.mockResolvedValue([
+        ['posts/post1.md', { sha: 'entry1', text: 'cached content', meta: { cached: true } }],
+      ]);
+
+      mockMetaDB.get.mockResolvedValue(null);
+      mockFetchFileContents.mockResolvedValue({
+        'posts/post2.md': { sha: 'entry2', text: 'new content' },
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      // post2 should be fetched since it's not cached
+      expect(mockFetchFileContents).toHaveBeenCalled();
+      expect(mockFetchFileContents).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ path: 'posts/post2.md' })]),
+      );
+    });
+
+    it('should set published status to true when commit message does not start with [skip ci]', async () => {
+      mockFetchLastCommit.mockResolvedValue({
+        hash: 'abc123',
+        message: 'Regular commit message',
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(isLastCommitPublished.set).toHaveBeenCalledWith(true);
+    });
+
+    it('should cache meta database hash after fetching files', async () => {
+      const lastHash = 'hash123abc';
+
+      mockFetchLastCommit.mockResolvedValue({
+        hash: lastHash,
+        message: 'Test commit',
+      });
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 0,
+        entryFiles: [],
+        assetFiles: [],
+        configFiles: [],
+        allFiles: [],
+      });
+
+      mockCacheDB.entries.mockResolvedValue([]);
+      mockMetaDB.get.mockResolvedValue(null);
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockMetaDB.set).toHaveBeenCalledWith('last_commit_hash', lastHash);
     });
   });
 });

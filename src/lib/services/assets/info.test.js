@@ -183,15 +183,20 @@ describe('assets/info', () => {
     it('should return blob from file if available', async () => {
       const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 
-      const assetWithFile = {
-        ...mockAsset,
-        file,
+      const mockHandle = {
+        getFile: vi.fn(async () => file),
       };
 
-      const result = await getAssetBlob(assetWithFile);
+      const assetWithHandle = {
+        ...mockAsset,
+        handle: mockHandle,
+      };
+
+      const result = await getAssetBlob(assetWithHandle);
 
       expect(result).toBe(file);
-      expect(assetWithFile.blobURL).toBe('blob:mock-url');
+      expect(assetWithHandle.blobURL).toBe('blob:mock-url');
+      expect(mockHandle.getFile).toHaveBeenCalled();
     });
 
     it('should fetch blob from backend and override MIME type', async () => {
@@ -225,10 +230,10 @@ describe('assets/info', () => {
 
       sleepMock.mockResolvedValue(undefined);
 
-      // Create asset without file or blobURL to force backend fetch
-      const assetWithoutFile = {
+      // Create asset without handle or blobURL to force backend fetch
+      const assetWithoutHandle = {
         ...mockAsset,
-        file: undefined,
+        handle: undefined,
         blobURL: undefined,
       };
 
@@ -240,10 +245,10 @@ describe('assets/info', () => {
       mimeMock.getType.mockReturnValue('image/jpeg');
 
       // First call - should add path to requestedAssetPaths
-      const promise1 = getAssetBlob(assetWithoutFile, 0);
+      const promise1 = getAssetBlob(assetWithoutHandle, 0);
       // Simulate a concurrent call that finds the path already in requestedAssetPaths
       // and retryCount is within limit (0 <= 25)
-      const promise2 = getAssetBlob(assetWithoutFile, 0);
+      const promise2 = getAssetBlob(assetWithoutHandle, 0);
       // Both should eventually resolve
       const [blob1, blob2] = await Promise.all([promise1, promise2]);
 
@@ -269,15 +274,19 @@ describe('assets/info', () => {
     it('should create new blobURL if not available', async () => {
       const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 
-      const assetWithFile = {
-        ...mockAsset,
-        file,
+      const mockHandle = {
+        getFile: vi.fn(async () => file),
       };
 
-      const result = await getAssetBlobURL(assetWithFile);
+      const assetWithHandle = {
+        ...mockAsset,
+        handle: mockHandle,
+      };
+
+      const result = await getAssetBlobURL(assetWithHandle);
 
       expect(result).toBe('blob:mock-url');
-      expect(assetWithFile.blobURL).toBe('blob:mock-url');
+      expect(assetWithHandle.blobURL).toBe('blob:mock-url');
     });
   });
 
@@ -342,25 +351,36 @@ describe('assets/info', () => {
 
       mockIndexedDB.get.mockResolvedValue(cachedBlob);
 
-      // Provide a file to avoid getAssetBlob issues
-      const assetWithFile = {
-        ...mockAsset,
-        file: new File(['content'], 'test.jpg', { type: 'image/jpeg' }),
+      // Provide a handle to avoid getAssetBlob issues
+      const mockHandle = {
+        getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),
       };
 
-      const result = await getAssetThumbnailURL(assetWithFile);
+      const assetWithHandle = {
+        ...mockAsset,
+        handle: mockHandle,
+      };
+
+      const result = await getAssetThumbnailURL(assetWithHandle);
 
       // Since this test may run after another test that initialized thumbnailDB,
       // we focus on the core behavior: returning a blob URL
       expect(result).toBe('blob:mock-url');
     });
+
     it('should generate thumbnail for PDF using renderPDF', async () => {
       mockIndexedDB.get.mockResolvedValue(undefined);
+
+      const pdfFile = new File(['pdf content'], 'test.pdf', { type: 'application/pdf' });
+
+      const mockHandle = {
+        getFile: vi.fn(async () => pdfFile),
+      };
 
       const pdfAsset = {
         ...mockAsset,
         name: 'test.pdf',
-        file: new File(['pdf content'], 'test.pdf', { type: 'application/pdf' }),
+        handle: mockHandle,
       };
 
       const { renderPDF } = await import('$lib/services/utils/media/pdf');
@@ -371,7 +391,7 @@ describe('assets/info', () => {
 
       const result = await getAssetThumbnailURL(pdfAsset);
 
-      expect(renderPDFMock).toHaveBeenCalledWith(pdfAsset.file, {
+      expect(renderPDFMock).toHaveBeenCalledWith(pdfFile, {
         format: 'webp',
         quality: 85,
         width: 512,
@@ -581,14 +601,18 @@ describe('assets/info', () => {
     });
 
     it('should return blob URL for found asset', async () => {
-      const assetWithFile = {
+      const mockHandle = {
+        getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),
+      };
+
+      const assetWithHandle = {
         ...mockAsset,
-        file: new File(['content'], 'test.jpg', { type: 'image/jpeg' }),
+        handle: mockHandle,
       };
 
       const { getAssetByPath } = await import('$lib/services/assets');
 
-      vi.mocked(getAssetByPath).mockReturnValue(assetWithFile);
+      vi.mocked(getAssetByPath).mockReturnValue(assetWithHandle);
 
       const result = await getMediaFieldURL({
         value: 'test.jpg',
@@ -614,14 +638,18 @@ describe('assets/info', () => {
 
       vi.mocked(transformImage).mockResolvedValue(new Blob(['thumbnail']));
 
-      const assetWithFile = {
+      const mockHandle = {
+        getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),
+      };
+
+      const assetWithHandle = {
         ...mockAsset,
-        file: new File(['content'], 'test.jpg', { type: 'image/jpeg' }),
+        handle: mockHandle,
       };
 
       const { getAssetByPath } = await import('$lib/services/assets');
 
-      vi.mocked(getAssetByPath).mockReturnValue(assetWithFile);
+      vi.mocked(getAssetByPath).mockReturnValue(assetWithHandle);
 
       const result = await getMediaFieldURL({
         value: 'test.jpg',
@@ -649,12 +677,16 @@ describe('assets/info', () => {
     });
 
     it('should return asset details with metadata for media files', async () => {
-      const assetWithFile = {
-        ...mockAsset,
-        file: new File(['content'], 'test.jpg', { type: 'image/jpeg' }),
+      const mockHandle = {
+        getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),
       };
 
-      const result = await getAssetDetails(assetWithFile);
+      const assetWithHandle = {
+        ...mockAsset,
+        handle: mockHandle,
+      };
+
+      const result = await getAssetDetails(assetWithHandle);
 
       expect(result).toEqual({
         dimensions: { width: 800, height: 600 },
@@ -668,11 +700,15 @@ describe('assets/info', () => {
     it('should not fetch metadata for non-media files', async () => {
       const { getMediaMetadata } = await import('$lib/services/utils/media');
 
+      const mockHandle = {
+        getFile: vi.fn(async () => new File(['content'], 'test.txt', { type: 'text/plain' })),
+      };
+
       const textAsset = {
         ...mockAsset,
         name: 'test.txt',
         kind: 'document',
-        file: new File(['content'], 'test.txt', { type: 'text/plain' }),
+        handle: mockHandle,
       };
 
       await getAssetDetails(textAsset);
@@ -683,12 +719,16 @@ describe('assets/info', () => {
     it('should handle missing repository blobBaseURL', async () => {
       mockBackend.repository.blobBaseURL = undefined;
 
-      const assetWithFile = {
-        ...mockAsset,
-        file: new File(['content'], 'test.jpg', { type: 'image/jpeg' }),
+      const mockHandle = {
+        getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),
       };
 
-      const result = await getAssetDetails(assetWithFile);
+      const assetWithHandle = {
+        ...mockAsset,
+        handle: mockHandle,
+      };
+
+      const result = await getAssetDetails(assetWithHandle);
 
       expect(result.repoBlobURL).toBe(undefined);
     });

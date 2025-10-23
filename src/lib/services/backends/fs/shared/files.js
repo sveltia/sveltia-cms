@@ -9,7 +9,7 @@ import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
 import { allAssetFolders } from '$lib/services/assets/folders';
-import { parseAssetFiles } from '$lib/services/assets/parser';
+import { getAssetKind } from '$lib/services/assets/kinds';
 import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
@@ -18,6 +18,10 @@ import { createPathRegEx, getBlob, getGitHash } from '$lib/services/utils/file';
 
 /**
  * @import {
+ * Asset,
+ * BaseAssetListItem,
+ * BaseConfigListItem,
+ * BaseEntryListItem,
  * BaseFileListItem,
  * BaseFileListItemProps,
  * CommitResults,
@@ -107,7 +111,7 @@ export const getPathRegex = (path) =>
 /**
  * Retrieve all the files under the given directory recursively.
  * @internal
- * @param {FileSystemDirectoryHandle | any} dirHandle Directory handle.
+ * @param {FileSystemDirectoryHandle} dirHandle Directory handle.
  * @param {object} context Context object.
  * @param {FileSystemDirectoryHandle} context.rootDirHandle Root directory handle.
  * @param {string[]} context.scanningPaths Scanning paths.
@@ -129,38 +133,21 @@ export const scanDir = async (dirHandle, context) => {
     if (handle.kind === 'file' && hasMatchingPath) {
       // Store only the handle and path. Metadata will be extracted later when needed, avoiding
       // memory leaks from holding multiple file references during directory scanning.
-      fileHandles.push({ handle, path });
+      fileHandles.push({
+        // eslint-disable-next-line object-shorthand
+        handle: /** @type {FileSystemFileHandle} */ (handle),
+        path,
+      });
     }
 
     if (handle.kind === 'directory') {
       const regex = getPathRegex(path);
 
       if (hasMatchingPath || scanningPaths.some((p) => regex.test(p))) {
-        await scanDir(handle, context);
+        await scanDir(/** @type {FileSystemDirectoryHandle} */ (handle), context);
       }
     }
   }
-};
-
-/**
- * Parse a file handle item and normalize its properties. The file path and name must be normalized,
- * as certain non-ASCII characters (e.g. Japanese) can be problematic particularly on macOS. This
- * function also computes the Git Object ID of the file for compatibility with Git-based backends.
- * @internal
- * @param {FileHandleItem} fileHandleItem File handle item.
- * @returns {Promise<BaseFileListItemProps>} Normalized file list item.
- */
-export const parseFileHandleItem = async ({ handle, path }) => {
-  const file = await handle.getFile();
-  const { name, size } = file;
-
-  return {
-    file,
-    path: path.normalize(),
-    name: name.normalize(),
-    size,
-    sha: await getGitHash(file),
-  };
 };
 
 /**
@@ -200,46 +187,88 @@ export const getAllFiles = async (rootDirHandle) => {
     fileHandles,
   });
 
-  return Promise.all(fileHandles.map(parseFileHandleItem));
+  return fileHandles.map(({ handle, path }) => ({
+    handle,
+    path: path.normalize(),
+    name: handle.name.normalize(),
+    size: 0, // Will be populated later
+    sha: '', // Will be populated later
+  }));
 };
 
 /**
- * Read text content from a file and store it in the entry file object.
+ * Parse text file info to create a complete entry or config file object.
  * @internal
- * @param {BaseFileListItem} entryFile Entry file object to read text from.
+ * @param {BaseFileListItem} fileInfo Entry or config file info.
+ * @returns {Promise<BaseFileListItem>} Entry or config file with text content.
  */
-export const readTextFile = async (entryFile) => {
-  const { name, file } = entryFile;
+export const parseTextFileInfo = async (fileInfo) => {
+  const { name, handle } = fileInfo;
 
   // Skip `.gitkeep` file, as we don’t need to read its content
   if (name === '.gitkeep') {
-    return;
+    return fileInfo;
   }
 
   try {
-    entryFile.text = await readAsText(/** @type {File} */ (file));
+    const file = await /** @type {FileSystemFileHandle} */ (handle).getFile();
+    const { size } = file;
+    const [sha, text] = await Promise.all([getGitHash(file), readAsText(file)]);
+
+    return { ...fileInfo, size, sha, text };
   } catch (ex) {
-    entryFile.text = '';
     // eslint-disable-next-line no-console
     console.error(ex);
+
+    return { ...fileInfo, text: '' };
   }
 };
 
 /**
- * Load file list and all the entry files from the file system, then cache them in the
- * {@link allEntries} and {@link allAssets} stores.
+ * Parse asset file info to create a complete asset object.
+ * @internal
+ * @param {BaseAssetListItem} fileInfo Asset file info.
+ * @returns {Promise<Asset>} Asset object.
+ */
+export const parseAssetFileInfo = async (fileInfo) => {
+  const { name, handle } = fileInfo;
+  const kind = getAssetKind(name);
+
+  try {
+    const file = await /** @type {FileSystemFileHandle} */ (handle).getFile();
+    const { size } = file;
+    const sha = await getGitHash(file);
+
+    return { ...fileInfo, kind, size, sha };
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
+    return { ...fileInfo, kind };
+  }
+};
+
+/**
+ * Load file list and all the entry files from the file system, then cache them in the stores.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  */
 export const loadFiles = async (rootDirHandle) => {
   const { entryFiles, assetFiles, configFiles } = createFileList(await getAllFiles(rootDirHandle));
 
-  await Promise.all([...entryFiles, ...configFiles].map(readTextFile));
+  const entryFileItems = /** @type {BaseEntryListItem[]} */ (
+    await Promise.all(entryFiles.map(parseTextFileInfo))
+  );
 
-  const { entries, errors } = await prepareEntries(entryFiles);
+  const configFileItems = /** @type {BaseConfigListItem[]} */ (
+    await Promise.all(configFiles.map(parseTextFileInfo))
+  );
+
+  const { entries, errors } = await prepareEntries(entryFileItems);
+  const assets = await Promise.all(assetFiles.map(parseAssetFileInfo));
 
   allEntries.set(entries);
-  allAssets.set(parseAssetFiles(assetFiles));
-  gitConfigFiles.set(configFiles);
+  allAssets.set(assets);
+  gitConfigFiles.set(configFileItems);
   entryParseErrors.set(errors);
   dataLoaded.set(true);
 };
