@@ -201,7 +201,8 @@ export const getAllFiles = async (rootDirHandle) => {
  * Parse text file info to create a complete entry or config file object.
  * @internal
  * @param {BaseFileListItem} fileInfo Entry or config file info.
- * @returns {Promise<BaseFileListItem>} Entry or config file with text content.
+ * @returns {Promise<BaseFileListItem>} Entry or config file with text content. We don’t populate
+ * `size` and `sha` for entries and config files, as they are not needed.
  */
 export const parseTextFileInfo = async (fileInfo) => {
   const { name, handle } = fileInfo;
@@ -213,10 +214,9 @@ export const parseTextFileInfo = async (fileInfo) => {
 
   try {
     const file = await /** @type {FileSystemFileHandle} */ (handle).getFile();
-    const { size } = file;
-    const [sha, text] = await Promise.all([getGitHash(file), readAsText(file)]);
+    const text = await readAsText(file);
 
-    return { ...fileInfo, size, sha, text };
+    return { ...fileInfo, text };
   } catch (ex) {
     // eslint-disable-next-line no-console
     console.error(ex);

@@ -893,7 +893,7 @@ describe('parseTextFileInfo', () => {
     expect(result.handle).toBe(handle);
     expect(result).toHaveProperty('path', 'folder/test.txt');
     expect(result).toHaveProperty('name', 'test.txt');
-    expect(result).toHaveProperty('size', file.size);
+    expect(result).toHaveProperty('size', 0);
     expect(result).toHaveProperty('sha');
     expect(typeof result.sha).toBe('string');
     expect(result).toHaveProperty('text');
@@ -981,7 +981,7 @@ describe('parseTextFileInfo', () => {
     });
 
     expect(result.name).toBe('test.txt');
-    expect(result.size).toBe(7); // 'content' is 7 bytes
+    expect(result.size).toBe(0);
     expect(result.handle).toBeDefined();
     expect(result.handle).toBe(handle);
     expect(result).toHaveProperty('text');
