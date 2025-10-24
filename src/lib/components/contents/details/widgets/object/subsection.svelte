@@ -1,6 +1,4 @@
 <script>
-  import { waitForVisibility } from '@sveltia/utils/element';
-
   /**
    * @import { Snippet } from 'svelte';
    */
@@ -21,25 +19,16 @@
 
   const sectionId = $props.id();
   const headerId = `${sectionId}-header`;
-  /** @type {HTMLElement | undefined} */
-  let wrapper = $state();
 </script>
 
-<div
-  role="group"
-  class="subsection"
-  aria-labelledby={label ? headerId : undefined}
-  bind:this={wrapper}
->
+<div role="group" class="subsection" aria-labelledby={label ? headerId : undefined}>
   {#if label}
     <div role="none" id={headerId} class="header">
       {label}
     </div>
   {/if}
   <div role="none" class="items">
-    {#await waitForVisibility(wrapper) then}
-      {@render children?.()}
-    {/await}
+    {@render children?.()}
   </div>
 </div>
 

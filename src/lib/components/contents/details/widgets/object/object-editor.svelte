@@ -5,7 +5,6 @@
 -->
 <script>
   import { Button, Checkbox, Icon, TruncatedText } from '@sveltia/ui';
-  import { waitForVisibility } from '@sveltia/utils/element';
   import { toRaw } from '@sveltia/utils/object';
   import { getContext, onMount, tick } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -54,9 +53,6 @@
   } = $props();
 
   const widgetId = $props.id();
-
-  /** @type {HTMLElement | undefined} */
-  let wrapper = $state();
 
   const {
     name: fieldName,
@@ -241,29 +237,27 @@
         {/snippet}
       </ObjectHeader>
     {/if}
-    <div role="none" class="item-list" id="object-{widgetId}-item-list" bind:this={wrapper}>
-      {#await waitForVisibility(wrapper) then}
-        {#if parentExpanded}
-          {#each subFields as subField (subField.name)}
-            <VisibilityObserver>
-              <FieldEditor
-                keyPath={[keyPath, subField.name].join('.')}
-                {locale}
-                fieldConfig={subField}
-              />
-            </VisibilityObserver>
-          {/each}
-        {:else}
-          {@const formattedSummary = _formatSummary()}
-          {#if formattedSummary}
-            <div role="none" class="summary" id="object-{widgetId}-summary">
-              <TruncatedText lines={$isSmallScreen ? 2 : 1}>
-                {formattedSummary}
-              </TruncatedText>
-            </div>
-          {/if}
+    <div role="none" class="item-list" id="object-{widgetId}-item-list">
+      {#if parentExpanded}
+        {#each subFields as subField (subField.name)}
+          <VisibilityObserver>
+            <FieldEditor
+              keyPath={[keyPath, subField.name].join('.')}
+              {locale}
+              fieldConfig={subField}
+            />
+          </VisibilityObserver>
+        {/each}
+      {:else}
+        {@const formattedSummary = _formatSummary()}
+        {#if formattedSummary}
+          <div role="none" class="summary" id="object-{widgetId}-summary">
+            <TruncatedText lines={$isSmallScreen ? 2 : 1}>
+              {formattedSummary}
+            </TruncatedText>
+          </div>
         {/if}
-      {/await}
+      {/if}
     </div>
   </div>
 {/if}

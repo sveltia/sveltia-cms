@@ -1,8 +1,8 @@
 <script>
-  import { waitForVisibility } from '@sveltia/utils/element';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import { getYouTubeEmbedURL } from '$lib/services/utils/media/video/youtube';
 
   /**
@@ -17,8 +17,6 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /** @type {HTMLElement | undefined} */
-  let wrapper = $state();
   let embeddable = $state(true);
 
   const embedURL = $derived(getYouTubeEmbedURL(url));
@@ -33,9 +31,9 @@
   });
 </script>
 
-<div role="none" bind:this={wrapper}>
+<div role="none">
   {#if embeddable}
-    {#await waitForVisibility(wrapper) then}
+    <VisibilityObserver>
       <iframe
         src={encodeURI(embedURL)}
         title={$_('youtube_video_player')}
@@ -44,7 +42,7 @@
         referrerpolicy="strict-origin-when-cross-origin"
         allowfullscreen
       ></iframe>
-    {/await}
+    </VisibilityObserver>
   {:else}
     <a href={encodeURI(url)}>{url}</a>
   {/if}
