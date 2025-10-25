@@ -260,6 +260,9 @@ export const loadFiles = async (rootDirHandle) => {
   /** @type {BaseConfigListItem[]} */
   const configFileItems = [];
 
+  // Avoid using `Promise.all` to prevent concurrent file reads that can lead to memory leaks,
+  // especially on Linux systems with a large number of files.
+  // @see https://github.com/sveltia/sveltia-cms/issues/224
   for (const fileInfo of entryFiles) {
     entryFileItems.push(/** @type {BaseEntryListItem} */ (await parseTextFileInfo(fileInfo)));
   }
