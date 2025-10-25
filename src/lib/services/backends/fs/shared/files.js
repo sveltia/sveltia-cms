@@ -255,17 +255,26 @@ export const parseAssetFileInfo = async (fileInfo) => {
  */
 export const loadFiles = async (rootDirHandle) => {
   const { entryFiles, assetFiles, configFiles } = createFileList(await getAllFiles(rootDirHandle));
+  /** @type {BaseEntryListItem[]} */
+  const entryFileItems = [];
+  /** @type {BaseConfigListItem[]} */
+  const configFileItems = [];
 
-  const entryFileItems = /** @type {BaseEntryListItem[]} */ (
-    await Promise.all(entryFiles.map(parseTextFileInfo))
-  );
+  for (const fileInfo of entryFiles) {
+    entryFileItems.push(/** @type {BaseEntryListItem} */ (await parseTextFileInfo(fileInfo)));
+  }
 
-  const configFileItems = /** @type {BaseConfigListItem[]} */ (
-    await Promise.all(configFiles.map(parseTextFileInfo))
-  );
+  for (const fileInfo of configFiles) {
+    configFileItems.push(/** @type {BaseConfigListItem} */ (await parseTextFileInfo(fileInfo)));
+  }
 
   const { entries, errors } = await prepareEntries(entryFileItems);
-  const assets = await Promise.all(assetFiles.map(parseAssetFileInfo));
+  /** @type {Asset[]} */
+  const assets = [];
+
+  for (const fileInfo of assetFiles) {
+    assets.push(await parseAssetFileInfo(fileInfo));
+  }
 
   allEntries.set(entries);
   allAssets.set(assets);
