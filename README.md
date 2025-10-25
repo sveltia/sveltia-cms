@@ -655,7 +655,7 @@ However, 100% feature parity is never planned, and some features are still missi
 
 ### Current limitations
 
-These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them by the end of 2025. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
+These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
 - Comprehensive site config validation
 - The `media_folder` and `public_folder` options (beta) for the [File](https://decapcms.org/docs/widgets/#File) and [Image](https://decapcms.org/docs/widgets/#Image) widgets ([#497](https://github.com/sveltia/sveltia-cms/issues/497))
