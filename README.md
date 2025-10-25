@@ -194,7 +194,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
   - For a smoother experience, we even go beyond responsive design with optimized navigation, floating action buttons, smooth [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions), larger buttons, and other tweaks. We’ll continue to fully optimize the app for small screens and touch devices.
   - If you’re already signed in on your desktop, open the Account menu in the top right corner of the CMS, click Sign In with Mobile, and scan the QR code for passwordless sign-in. Your settings will be automatically copied.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
-- Other crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204][^260] Netlify/Decap CMS continues to receive crash reports, with no effective solution in sight.
+- Other crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204][^260] Netlify/Decap CMS continues to receive crash reports on a daily basis, with no effective solution in sight.
 - We build [our own UI component library](https://github.com/sveltia/sveltia-ui), including custom dialogs, to ensure optimal usability without compromising accessibility.[^277][^196][^205][^206][^207][^208][^209][^210]
 - Users can personalize the application with various settings, including appearance and language. Developer Mode can also be enabled, which enables certain features and displays the CMS version number.[^270]
 - Never miss out on the latest features and bug fixes by being notified when an update to the CMS is available.[^31] Then update to the latest version with a single click.[^66]
@@ -700,6 +700,7 @@ The following Netlify/Decap CMS features will not be added to Sveltia CMS, prima
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
   - Backend: [`use_graphql`](https://decapcms.org/docs/github-backend/#graphql-api)
   - Relation widget: `options_length`
+- Local proxy server: As [mentioned above](#better-productivity), our [local repository workflow](#working-with-a-local-git-repository) eliminates the need for a proxy server. We don’t plan to add support for `netlify-cms-proxy-server`, `decap-server` or the `local_backend` option.
 - The global [`locale`](https://decapcms.org/docs/configuration-options/#locale) option and `CMS.registerLocale()` method: Sveltia CMS automatically detects the user’s preferred language and changes the UI locale as [mentioned above](#better-localization).
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 - Any other undocumented features and options. Exceptions apply.
@@ -941,7 +942,7 @@ If you get an “Authentication Aborted” error when trying to sign in to GitHu
 
 ### Working with a local Git repository
 
-Sveltia CMS has simplified the local repository workflow by removing the need for additional configuration (the `local_backend` property) and a proxy server (`netlify-cms-proxy-server` or `decap-server`), thanks to the [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
+Sveltia CMS has simplified the local repository workflow by removing the need for additional configuration (the `local_backend` option) and a proxy server (`netlify-cms-proxy-server` or `decap-server`), thanks to the [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) available in [some modern browsers](https://developer.mozilla.org/en-US/docs/web/api/window/showopenfilepicker#browser_compatibility).
 
 Here are the workflow steps and tips:
 
@@ -964,7 +965,7 @@ Here are the workflow steps and tips:
    - You can skip this step if your changes don’t involve any pages.
 1. Commit and push the changes if satisfied, or discard them if you’re just testing.
 
-If you have migrated from Netlify/Decap CMS and are happy with the local repository workflow of Sveltia CMS, you can remove the `local_backend` property from your configuration and uninstall the proxy server. If you have configured a custom port number with the `.env` file, you can remove it as well.
+If you have migrated from Netlify/Decap CMS and are happy with the local repository workflow of Sveltia CMS, you can remove the `local_backend` option from your configuration and uninstall the proxy server. If you have configured a custom port number with the `.env` file, you can remove it as well.
 
 Note that, as with Netlify/Decap CMS, the local repository support in Sveltia CMS doesn’t perform any Git operations. You have to manually fetch, pull, commit and push all changes using a Git client. Additionally, you’ll need to reload the CMS after modifying the configuration file or retrieving remote updates.
 
