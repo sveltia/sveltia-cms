@@ -3358,3 +3358,656 @@ describe('Test getField() nested object field check (line 143)', () => {
     expect(result?.widget).toBe('object');
   });
 });
+
+describe('Test getField() with explicit variable type syntax', () => {
+  beforeEach(() => {
+    fieldConfigCacheMap.clear();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    fieldConfigCacheMap.clear();
+  });
+
+  const mockCollectionWithVariableTypes = {
+    name: 'posts',
+    folder: 'content/posts',
+    _type: 'entry',
+    fields: [
+      {
+        name: 'blocks',
+        widget: 'list',
+        types: [
+          {
+            name: 'image',
+            fields: [
+              { name: 'src', widget: 'image' },
+              { name: 'alt', widget: 'string' },
+            ],
+          },
+          {
+            name: 'text',
+            fields: [{ name: 'content', widget: 'markdown' }],
+          },
+        ],
+      },
+      {
+        name: 'widget',
+        widget: 'object',
+        types: [
+          {
+            name: 'button',
+            fields: [
+              { name: 'label', widget: 'string' },
+              { name: 'action', widget: 'string' },
+            ],
+          },
+          {
+            name: 'link',
+            fields: [{ name: 'url', widget: 'string' }],
+          },
+        ],
+      },
+      {
+        name: 'complexBlocks',
+        widget: 'list',
+        typeKey: 'blockType',
+        types: [
+          {
+            name: 'section',
+            fields: [
+              {
+                name: 'header',
+                widget: 'object',
+                types: [
+                  {
+                    name: 'simple',
+                    fields: [{ name: 'title', widget: 'string' }],
+                  },
+                  {
+                    name: 'advanced',
+                    fields: [
+                      { name: 'title', widget: 'string' },
+                      { name: 'subtitle', widget: 'string' },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  describe('List field with variable types - explicit type syntax', () => {
+    test('should handle list field variable type with explicit type in keyPath', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image>.src',
+        valueMap: undefined,
+      });
+
+      expect(result).toEqual({ name: 'src', widget: 'image' });
+    });
+
+    test('should handle list field variable type with different explicit type', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<text>.content',
+        valueMap: undefined,
+      });
+
+      expect(result).toEqual({ name: 'content', widget: 'markdown' });
+    });
+
+    test('should return undefined for non-existent field in explicit type', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image>.nonexistent',
+        valueMap: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should return undefined for unknown type in explicit type syntax', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<unknown>.src',
+        valueMap: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should handle explicit type without accessing subfield', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image>',
+        valueMap: undefined,
+      });
+
+      // Should return the type configuration itself
+      expect(result).toEqual({
+        name: 'image',
+        fields: [
+          { name: 'src', widget: 'image' },
+          { name: 'alt', widget: 'string' },
+        ],
+      });
+    });
+
+    test('should handle numeric index with explicit type syntax', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      // Even with explicit type, numeric indices should work
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.0<image>.src',
+        valueMap: undefined,
+      });
+
+      expect(result).toEqual({ name: 'src', widget: 'image' });
+    });
+  });
+
+  describe('Object field with variable types - explicit type syntax', () => {
+    test('should handle object field variable type with explicit type in keyPath', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'widget<button>.label',
+        valueMap: undefined,
+      });
+
+      expect(result).toEqual({ name: 'label', widget: 'string' });
+    });
+
+    test('should handle object field variable type with different explicit type', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'widget<link>.url',
+        valueMap: undefined,
+      });
+
+      expect(result).toEqual({ name: 'url', widget: 'string' });
+    });
+
+    test('should return undefined for non-existent field in explicit type', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'widget<button>.nonexistent',
+        valueMap: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should return undefined for unknown type in explicit type syntax', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'widget<unknown>.label',
+        valueMap: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should handle explicit type without accessing subfield', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'widget<button>',
+        valueMap: undefined,
+      });
+
+      // Should return the type configuration itself
+      expect(result).toEqual({
+        name: 'button',
+        fields: [
+          { name: 'label', widget: 'string' },
+          { name: 'action', widget: 'string' },
+        ],
+      });
+    });
+  });
+
+  describe('Complex nested explicit types', () => {
+    test('should handle nested object within list with explicit types', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'complexBlocks.*<section>.header<advanced>.subtitle',
+        valueMap: undefined,
+      });
+
+      expect(result).toEqual({ name: 'subtitle', widget: 'string' });
+    });
+
+    test('should handle custom typeKey with explicit type syntax', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'complexBlocks.*<section>.header<simple>.title',
+        valueMap: undefined,
+      });
+
+      expect(result).toEqual({ name: 'title', widget: 'string' });
+    });
+  });
+
+  describe('Explicit vs implicit variable type handling', () => {
+    test('should prefer explicit type over valueMap when valueMap is undefined', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image>.src',
+        valueMap: undefined,
+      });
+
+      expect(result).toEqual({ name: 'src', widget: 'image' });
+    });
+
+    test('should fall back to implicit type lookup when valueMap is provided', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.0.src',
+        valueMap: { 'blocks.0.type': 'image' },
+      });
+
+      expect(result).toEqual({ name: 'src', widget: 'image' });
+    });
+
+    test('should handle mixed explicit and implicit types in nested paths', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      // Using explicit type for the list, valueMap for nested object
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image>.src',
+        valueMap: undefined,
+      });
+
+      expect(result).toEqual({ name: 'src', widget: 'image' });
+    });
+  });
+
+  describe('Edge cases with explicit type syntax', () => {
+    test('should handle empty type name in brackets', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<>.src',
+        valueMap: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should handle malformed brackets (missing closing bracket)', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image.src',
+        valueMap: undefined,
+      });
+
+      // Should treat '<image' as part of field name and not find it
+      expect(result).toBeUndefined();
+    });
+
+    test('should handle malformed brackets (missing opening bracket)', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*image>.src',
+        valueMap: undefined,
+      });
+
+      // Should treat 'image>' as part of field name and not find it
+      expect(result).toBeUndefined();
+    });
+
+    test('should be case-sensitive for type names in explicit syntax', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<Image>.src',
+        valueMap: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should handle type name with special characters', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const result = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image-variant>.src',
+        valueMap: undefined,
+      });
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('Caching with explicit types', () => {
+    test('should cache results with explicit type syntax', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      const args = {
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image>.src',
+        valueMap: undefined,
+      };
+
+      getField(args);
+      expect(mockGetCollection).toHaveBeenCalledTimes(1);
+
+      getField(args);
+      expect(mockGetCollection).toHaveBeenCalledTimes(1); // Should use cache
+    });
+
+    test('should create separate cache entries for different explicit types', () => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
+
+      getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image>.src',
+        valueMap: undefined,
+      });
+
+      getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<text>.content',
+        valueMap: undefined,
+      });
+
+      expect(mockGetCollection).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('Multiple types sharing fields', () => {
+    test('should handle multiple types with shared field names', () => {
+      const mockCollectionWithSharedFields = {
+        name: 'posts',
+        folder: 'content/posts',
+        _type: 'entry',
+        fields: [
+          {
+            name: 'blocks',
+            widget: 'list',
+            types: [
+              {
+                name: 'image',
+                fields: [
+                  { name: 'src', widget: 'image' },
+                  { name: 'title', widget: 'string' }, // shared field
+                  { name: 'alt', widget: 'string' },
+                ],
+              },
+              {
+                name: 'video',
+                fields: [
+                  { name: 'url', widget: 'string' },
+                  { name: 'title', widget: 'string' }, // same field name
+                  { name: 'description', widget: 'text' },
+                ],
+              },
+              {
+                name: 'text',
+                fields: [
+                  { name: 'content', widget: 'markdown' },
+                  { name: 'title', widget: 'string' }, // also has title
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithSharedFields);
+
+      // Test accessing shared 'title' field in image type
+      const imageTitle = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image>.title',
+        valueMap: undefined,
+      });
+
+      expect(imageTitle).toEqual({ name: 'title', widget: 'string' });
+
+      // Test accessing shared 'title' field in video type
+      const videoTitle = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<video>.title',
+        valueMap: undefined,
+      });
+
+      expect(videoTitle).toEqual({ name: 'title', widget: 'string' });
+
+      // Test accessing shared 'title' field in text type
+      const textTitle = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<text>.title',
+        valueMap: undefined,
+      });
+
+      expect(textTitle).toEqual({ name: 'title', widget: 'string' });
+
+      // Test accessing type-specific fields
+      const imageSrc = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<image>.src',
+        valueMap: undefined,
+      });
+
+      expect(imageSrc).toEqual({ name: 'src', widget: 'image' });
+
+      const videoUrl = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<video>.url',
+        valueMap: undefined,
+      });
+
+      expect(videoUrl).toEqual({ name: 'url', widget: 'string' });
+
+      const textContent = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.*<text>.content',
+        valueMap: undefined,
+      });
+
+      expect(textContent).toEqual({ name: 'content', widget: 'markdown' });
+    });
+
+    test('should handle object types with shared fields in explicit syntax', () => {
+      const mockCollectionWithSharedObjectFields = {
+        name: 'posts',
+        folder: 'content/posts',
+        _type: 'entry',
+        fields: [
+          {
+            name: 'widget',
+            widget: 'object',
+            types: [
+              {
+                name: 'button',
+                fields: [
+                  { name: 'label', widget: 'string' }, // shared
+                  { name: 'action', widget: 'string' },
+                  { name: 'color', widget: 'string' },
+                ],
+              },
+              {
+                name: 'link',
+                fields: [
+                  { name: 'label', widget: 'string' }, // shared
+                  { name: 'url', widget: 'string' },
+                  { name: 'target', widget: 'string' },
+                ],
+              },
+              {
+                name: 'dropdown',
+                fields: [
+                  { name: 'label', widget: 'string' }, // shared
+                  { name: 'items', widget: 'list' },
+                  { name: 'defaultValue', widget: 'string' },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithSharedObjectFields);
+
+      // Test accessing shared 'label' field across different types
+      const buttonLabel = getField({
+        collectionName: 'posts',
+        keyPath: 'widget<button>.label',
+        valueMap: undefined,
+      });
+
+      expect(buttonLabel).toEqual({ name: 'label', widget: 'string' });
+
+      const linkLabel = getField({
+        collectionName: 'posts',
+        keyPath: 'widget<link>.label',
+        valueMap: undefined,
+      });
+
+      expect(linkLabel).toEqual({ name: 'label', widget: 'string' });
+
+      const dropdownLabel = getField({
+        collectionName: 'posts',
+        keyPath: 'widget<dropdown>.label',
+        valueMap: undefined,
+      });
+
+      expect(dropdownLabel).toEqual({ name: 'label', widget: 'string' });
+
+      // Test accessing type-specific fields
+      const buttonAction = getField({
+        collectionName: 'posts',
+        keyPath: 'widget<button>.action',
+        valueMap: undefined,
+      });
+
+      expect(buttonAction).toEqual({ name: 'action', widget: 'string' });
+
+      const linkUrl = getField({
+        collectionName: 'posts',
+        keyPath: 'widget<link>.url',
+        valueMap: undefined,
+      });
+
+      expect(linkUrl).toEqual({ name: 'url', widget: 'string' });
+    });
+
+    test('should handle implicit type resolution with shared fields via valueMap', () => {
+      const mockCollectionWithSharedFields = {
+        name: 'posts',
+        folder: 'content/posts',
+        _type: 'entry',
+        fields: [
+          {
+            name: 'blocks',
+            widget: 'list',
+            types: [
+              {
+                name: 'image',
+                fields: [
+                  { name: 'src', widget: 'image' },
+                  { name: 'title', widget: 'string' },
+                ],
+              },
+              {
+                name: 'video',
+                fields: [
+                  { name: 'url', widget: 'string' },
+                  { name: 'title', widget: 'string' },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue(mockCollectionWithSharedFields);
+
+      // Test with implicit type resolution via valueMap
+      const imageTitle = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.0.title',
+        valueMap: { 'blocks.0.type': 'image' },
+      });
+
+      expect(imageTitle).toEqual({ name: 'title', widget: 'string' });
+
+      const videoTitle = getField({
+        collectionName: 'posts',
+        keyPath: 'blocks.1.title',
+        valueMap: { 'blocks.1.type': 'video' },
+      });
+
+      expect(videoTitle).toEqual({ name: 'title', widget: 'string' });
+    });
+  });
+});

@@ -1005,7 +1005,9 @@
  * @property {string} [componentName] Markdown editor component name.
  * @property {FlattenedEntryContent} [valueMap] Object holding current entry values. This is
  * required when working with list/object widget variable types.
- * @property {FieldKeyPath} keyPath Key path, e.g. `author.name`.
+ * @property {FieldKeyPath} keyPath Key path, e.g. `author.name`, `blocks.*<image>.src`, or
+ * `widget<button>.label`. The explicit type syntax (angle bracket notation) can be used to specify
+ * the type for variable type fields.
  * @property {boolean} [isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  */
