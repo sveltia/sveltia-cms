@@ -21,11 +21,11 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@sveltia/ui':
-        specifier: ^0.31.3
-        version: 0.31.3(svelte@5.41.0)
+        specifier: ^0.31.4
+        version: 0.31.4(svelte@5.41.0)
       '@sveltia/utils':
-        specifier: ^0.8.5
-        version: 0.8.5
+        specifier: ^0.8.6
+        version: 0.8.6
       create-react-class:
         specifier: ^15.7.0
         version: 15.7.0
@@ -1192,13 +1192,13 @@ packages:
       svelte: ^5.0.0
       vite: ^6.3.0 || ^7.0.0
 
-  '@sveltia/ui@0.31.3':
-    resolution: {integrity: sha512-DVO7Gy1zpzP8Ja9D+zXt7CWQ3v07uGEp0uEEAxnbL6+9dYI10s2Q+xzuSDW1wupJYvNbUMdh6zUMxW/9RAGabg==}
+  '@sveltia/ui@0.31.4':
+    resolution: {integrity: sha512-/3/v+gsv2FEIwpoAA91tXoRfmLXkYBXaFzfmxr+yjd1Hi03aNrKgbXPWNQlIACF2pR1/RxOWmdIXmjfgjFsk+w==}
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/utils@0.8.5':
-    resolution: {integrity: sha512-JrNNNInv/RAUNbGYUBYh+x1ruvnWVJBGr/rrDVXaw5bx2J/231Xh3KOrBifwtHZsg4qu0g9yYhffBbdlUNFaOA==}
+  '@sveltia/utils@0.8.6':
+    resolution: {integrity: sha512-can2nvwvrvS2bXpUlMA2eOvRDR3bveynBO0SRMIzeerdfnsa71d7z13hB7Gu/4SgGQHAlWqZiV2ELHK/onewew==}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -4534,7 +4534,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltia/ui@0.31.3(svelte@5.41.0)':
+  '@sveltia/ui@0.31.4(svelte@5.41.0)':
     dependencies:
       '@lexical/code': 0.37.0
       '@lexical/dragon': 0.37.0
@@ -4546,13 +4546,13 @@ snapshots:
       '@lexical/selection': 0.37.0
       '@lexical/table': 0.37.0
       '@lexical/utils': 0.37.0
-      '@sveltia/utils': 0.8.5
+      '@sveltia/utils': 0.8.6
       lexical: 0.37.0
       prismjs: 1.30.0
       svelte: 5.41.0
       svelte-i18n: 4.0.1(svelte@5.41.0)
 
-  '@sveltia/utils@0.8.5':
+  '@sveltia/utils@0.8.6':
     dependencies:
       base32-encode: 2.0.0
 
