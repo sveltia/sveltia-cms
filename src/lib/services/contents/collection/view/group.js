@@ -104,11 +104,13 @@ export const groupEntries = (entries, collection, conditions) => {
 };
 
 /**
- * View groups for the selected entry collection.
- * @type {import('svelte/store').Readable<ViewGroup[]>}
+ * Initialize view groups for the given collection.
+ * @internal
+ * @param {InternalCollection | undefined} collection Collection to initialize groups for.
+ * @param {(value: ViewGroup[]) => void} set Function to set the groups.
  */
-export const viewGroups = derived([selectedCollection], ([collection], set) => {
-  // Disable sorting for file/singleton collection
+export const initializeViewGroups = (collection, set) => {
+  // Disable grouping for file/singleton collection
   if (!collection || !('folder' in collection)) {
     set([]);
 
@@ -123,4 +125,12 @@ export const viewGroups = derived([selectedCollection], ([collection], set) => {
     ..._view,
     group: _view.group === undefined ? defaultGroup : _view.group,
   }));
+};
+
+/**
+ * View groups for the selected entry collection.
+ * @type {import('svelte/store').Readable<ViewGroup[]>}
+ */
+export const viewGroups = derived([selectedCollection], ([collection], set) => {
+  initializeViewGroups(collection, set);
 });

@@ -292,6 +292,161 @@ describe('sortEntries', () => {
     expect(result.map((e) => e.slug)).toEqual(['entry-2', 'entry-1', 'entry-3']); // A, B, C
   });
 
+  test('should strip markdown syntax when sorting description field', () => {
+    const conditions = { key: 'description', order: 'ascending' };
+
+    // Create entries where markdown syntax would affect alphabetical ordering
+    // **C text** vs **A text** - without stripping would sort differently than C vs A
+    const entriesWithMarkdownDesc = [
+      {
+        ...mockEntries[0],
+        locales: {
+          en: {
+            ...mockEntries[0].locales.en,
+            content: {
+              ...mockEntries[0].locales.en.content,
+              description: '**C is for cat**',
+            },
+          },
+        },
+      },
+      {
+        ...mockEntries[1],
+        locales: {
+          en: {
+            ...mockEntries[1].locales.en,
+            content: {
+              ...mockEntries[1].locales.en.content,
+              description: '**A is for apple**',
+            },
+          },
+        },
+      },
+      {
+        ...mockEntries[2],
+        locales: {
+          en: {
+            ...mockEntries[2].locales.en,
+            content: {
+              ...mockEntries[2].locales.en.content,
+              description: '**B is for ball**',
+            },
+          },
+        },
+      },
+    ];
+
+    vi.mocked(getField).mockReturnValue({
+      name: 'description',
+      widget: 'text',
+      label: 'Description',
+    });
+
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+
+    vi.mocked(getPropertyValue).mockImplementation(({ entry, key }) => {
+      if (key === 'description') {
+        return entry.locales.en.content.description;
+      }
+
+      return undefined;
+    });
+
+    let callCount = 0;
+
+    vi.mocked(removeMarkdownSyntax).mockImplementation((value) => {
+      callCount += 1;
+      // Remove markdown bold (**text**)
+      return value.replace(/\*\*/g, '');
+    });
+
+    const result = sortEntries(entriesWithMarkdownDesc, mockCollection, conditions);
+
+    // Verify removeMarkdownSyntax was called during sorting (for markdown field)
+    expect(callCount).toBeGreaterThan(0);
+    // After stripping ** **, should be sorted as: A, B, C
+    expect(result.map((e) => e.slug)).toEqual(['entry-2', 'entry-3', 'entry-1']);
+  });
+
+  test('should strip markdown syntax when sorting markdown widget fields', () => {
+    const conditions = { key: 'title', order: 'ascending' };
+
+    // Use simple markdown values that sort differently with vs without **
+    const entries = [
+      {
+        id: '1',
+        sha: 'sha1',
+        slug: 'c-entry',
+        subPath: '',
+        locales: {
+          en: {
+            path: 'path1',
+            slug: 'c-entry',
+            content: { title: '**C Title**' },
+          },
+        },
+      },
+      {
+        id: '2',
+        sha: 'sha2',
+        slug: 'a-entry',
+        subPath: '',
+        locales: {
+          en: {
+            path: 'path2',
+            slug: 'a-entry',
+            content: { title: '**A Title**' },
+          },
+        },
+      },
+      {
+        id: '3',
+        sha: 'sha3',
+        slug: 'b-entry',
+        subPath: '',
+        locales: {
+          en: {
+            path: 'path3',
+            slug: 'b-entry',
+            content: { title: '**B Title**' },
+          },
+        },
+      },
+    ];
+
+    vi.mocked(getField).mockReturnValue({
+      name: 'title',
+      widget: 'markdown',
+      label: 'Title',
+    });
+
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+
+    vi.mocked(getPropertyValue).mockImplementation(({ entry, key }) => {
+      if (key === 'title') {
+        return entry.locales.en.content.title;
+      }
+
+      return undefined;
+    });
+
+    let stripCallCount = 0;
+
+    vi.mocked(removeMarkdownSyntax).mockImplementation((value) => {
+      stripCallCount += 1;
+      // Remove the ** markdown syntax
+      return value.replace(/\*\*/g, '');
+    });
+
+    const result = sortEntries(entries, mockCollection, conditions);
+
+    // Confirm that removeMarkdownSyntax was called (meaning lines 75-76 were executed)
+    expect(stripCallCount).toBeGreaterThan(0);
+
+    // After stripping **, should be sorted as A, B, C
+    expect(result.map((e) => e.slug)).toEqual(['a-entry', 'b-entry', 'c-entry']);
+  });
+
   test('should handle entries with undefined values', () => {
     const conditions = { key: 'title', order: 'ascending' };
 

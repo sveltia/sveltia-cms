@@ -485,6 +485,106 @@ describe('Test parseFilterConfig()', () => {
   });
 });
 
-// Note: The viewFilters store is a derived Svelte store that requires complex mocking
-// to test properly. The core logic is tested through parseFilterConfig and filterEntries functions.
-// Store reactivity would typically be tested in integration tests.
+describe('initializeViewFilters', () => {
+  test('calls set with empty array when collection is undefined', async () => {
+    const { initializeViewFilters } = await import('./filter');
+    const mockSet = vi.fn();
+
+    initializeViewFilters(undefined, mockSet);
+
+    expect(mockSet).toHaveBeenCalledWith([]);
+  });
+
+  test('calls set with empty array for file collection', async () => {
+    const { initializeViewFilters } = await import('./filter');
+    const mockSet = vi.fn();
+
+    const fileCollection = /** @type {any} */ ({
+      name: 'pages',
+      _type: 'file',
+      files: [],
+      _fileMap: {},
+    });
+
+    initializeViewFilters(fileCollection, mockSet);
+
+    expect(mockSet).toHaveBeenCalledWith([]);
+  });
+
+  test('processes and sets filters for entry collection', async () => {
+    const { initializeViewFilters } = await import('./filter');
+    const { currentView } = await import('$lib/services/contents/collection/view');
+    const mockSet = vi.fn();
+
+    vi.mocked(currentView).update = vi.fn();
+
+    const entryCollection = /** @type {any} */ ({
+      name: 'posts',
+      _type: 'entry',
+      folder: 'content/posts',
+      view_filters: [
+        { field: 'status', pattern: 'published', name: 'published' },
+        { field: 'category', pattern: 'tech', name: 'tech' },
+      ],
+    });
+
+    initializeViewFilters(entryCollection, mockSet);
+
+    expect(mockSet).toHaveBeenCalledWith([
+      { field: 'status', pattern: 'published', name: 'published' },
+      { field: 'category', pattern: 'tech', name: 'tech' },
+    ]);
+
+    expect(vi.mocked(currentView).update).toHaveBeenCalled();
+  });
+
+  test('handles entry collection with no view_filters', async () => {
+    const { initializeViewFilters } = await import('./filter');
+    const { currentView } = await import('$lib/services/contents/collection/view');
+    const mockSet = vi.fn();
+
+    vi.mocked(currentView).update = vi.fn();
+
+    const entryCollection = /** @type {any} */ ({
+      name: 'posts',
+      _type: 'entry',
+      folder: 'content/posts',
+    });
+
+    initializeViewFilters(entryCollection, mockSet);
+
+    expect(mockSet).toHaveBeenCalledWith([]);
+
+    expect(vi.mocked(currentView).update).toHaveBeenCalled();
+  });
+
+  test('handles entry collection with view_filters object format', async () => {
+    const { initializeViewFilters } = await import('./filter');
+    const { currentView } = await import('$lib/services/contents/collection/view');
+    const mockSet = vi.fn();
+
+    vi.mocked(currentView).update = vi.fn();
+
+    const entryCollection = /** @type {any} */ ({
+      name: 'posts',
+      _type: 'entry',
+      folder: 'content/posts',
+      view_filters: {
+        filters: [
+          { field: 'status', pattern: 'published', name: 'published' },
+          { field: 'category', pattern: 'tech', name: 'tech' },
+        ],
+        default: 'published',
+      },
+    });
+
+    initializeViewFilters(entryCollection, mockSet);
+
+    expect(mockSet).toHaveBeenCalledWith([
+      { field: 'status', pattern: 'published', name: 'published' },
+      { field: 'category', pattern: 'tech', name: 'tech' },
+    ]);
+
+    expect(vi.mocked(currentView).update).toHaveBeenCalled();
+  });
+});

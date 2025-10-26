@@ -855,6 +855,184 @@ describe('getEntriesByAssetURL()', () => {
 
     expect(result).toHaveLength(0);
   });
+
+  test('skips entries with non-string content values', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+    const { getMediaFieldURL } = await import('$lib/services/assets/info');
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: {
+            content: {
+              image: 'test.jpg',
+              count: 42, // Non-string value
+              enabled: true, // Non-string value
+            },
+            slug: 'test',
+            path: 'posts/test.md',
+          },
+        },
+      },
+    ];
+
+    const mockCollection = {
+      name: 'posts',
+      _type: 'entry',
+    };
+
+    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
+    vi.mocked(getMediaFieldURL).mockResolvedValue('test.jpg');
+
+    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
+  });
+
+  test('skips entries with empty string content values', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+    const { getMediaFieldURL } = await import('$lib/services/assets/info');
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: {
+            content: {
+              image: 'test.jpg',
+              emptyField: '', // Empty string - should be skipped
+              anotherEmpty: '', // Another empty string
+            },
+            slug: 'test',
+            path: 'posts/test.md',
+          },
+        },
+      },
+    ];
+
+    const mockCollection = {
+      name: 'posts',
+      _type: 'entry',
+    };
+
+    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
+    vi.mocked(getMediaFieldURL).mockResolvedValue('test.jpg');
+
+    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
+  });
+
+  test('handles file collections with collectionFiles', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+    const { getMediaFieldURL } = await import('$lib/services/assets/info');
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: {
+            content: { image: 'test.jpg' },
+            slug: 'test',
+            path: 'config/main.yml',
+          },
+        },
+      },
+    ];
+
+    const mockCollection = {
+      name: 'config',
+      _type: 'file',
+    };
+
+    const mockCollectionFile = {
+      name: 'main',
+      file: 'config/main.yml',
+    };
+
+    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([mockCollectionFile]);
+    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
+    vi.mocked(getMediaFieldURL).mockResolvedValue('test.jpg');
+
+    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
+  });
+
+  test('handles multiple locales with different content', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+    const { getMediaFieldURL } = await import('$lib/services/assets/info');
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: {
+            content: { image: 'test.jpg', title: 'English title' },
+            slug: 'test',
+            path: 'posts/test.md',
+          },
+          ja: {
+            content: { image: 'other.jpg', title: '日本語タイトル' },
+            slug: 'test',
+            path: 'posts/test.ja.md',
+          },
+        },
+      },
+    ];
+
+    const mockCollection = {
+      name: 'posts',
+      _type: 'entry',
+    };
+
+    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
+    vi.mocked(getMediaFieldURL).mockResolvedValue('test.jpg');
+
+    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
+  });
 });
 
 describe('selectedEntries', () => {

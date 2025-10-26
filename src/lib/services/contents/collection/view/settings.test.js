@@ -284,4 +284,47 @@ describe('Test initSettings()', () => {
     // Settings should remain empty
     expect(get(entryListSettings)).toEqual({});
   });
+
+  test('entryListSettings.subscribe saves to IndexedDB when settings differ', async () => {
+    const equal = (await import('fast-deep-equal')).default;
+
+    vi.mocked(equal).mockReturnValue(false);
+
+    mockIndexedDB.get.mockResolvedValue({ posts: { type: 'list' } });
+
+    await initSettings(mockBackend);
+
+    // Trigger settings change to ensure save is called
+    const newSettings = { posts: { type: /** @type {'grid'} */ ('grid') } };
+
+    entryListSettings.set(/** @type {any} */ (newSettings));
+
+    // Allow async operations to complete
+    await sleep(0);
+
+    expect(mockIndexedDB.set).toHaveBeenCalledWith('contents-view', newSettings);
+  });
+
+  test('currentView.subscribe updates entryListSettings when view differs', async () => {
+    const { selectedCollection } = await import('$lib/services/contents/collection');
+    const { currentView } = await import('$lib/services/contents/collection/view');
+    const equal = (await import('fast-deep-equal')).default;
+
+    vi.mocked(equal).mockReturnValue(false);
+
+    await initSettings(mockBackend);
+
+    selectedCollection.set(/** @type {any} */ ({ name: 'articles' }));
+
+    entryListSettings.set({});
+
+    const newView = {
+      type: /** @type {'grid'} */ ('grid'),
+      sort: { key: 'date', order: /** @type {'descending'} */ ('descending') },
+    };
+
+    currentView.set(/** @type {any} */ (newView));
+
+    expect(get(entryListSettings)).toEqual({ articles: newView });
+  });
 });

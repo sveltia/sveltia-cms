@@ -91,11 +91,13 @@ export const filterEntries = (entries, collection, filters) => {
 };
 
 /**
- * View filters for the selected entry collection.
- * @type {import('svelte/store').Readable<ViewFilter[]>}
+ * Initialize view filters for a collection.
+ * @internal
+ * @param {any} collection Collection (entry or file).
+ * @param {(options: ViewFilter[]) => void} set Callback to set the filter options.
  */
-export const viewFilters = derived([selectedCollection], ([collection], set) => {
-  // Disable sorting for file/singleton collection
+export const initializeViewFilters = (collection, set) => {
+  // Disable filters for file/singleton collection
   if (!collection || !('folder' in collection)) {
     set([]);
 
@@ -110,4 +112,12 @@ export const viewFilters = derived([selectedCollection], ([collection], set) => 
     ..._view,
     filters: _view.filters ?? (defaultFilter ? [defaultFilter] : undefined),
   }));
+};
+
+/**
+ * View filters for the selected entry collection.
+ * @type {import('svelte/store').Readable<ViewFilter[]>}
+ */
+export const viewFilters = derived([selectedCollection], ([collection], set) => {
+  initializeViewFilters(collection, set);
 });

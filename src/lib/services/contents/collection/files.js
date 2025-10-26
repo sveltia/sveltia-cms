@@ -117,7 +117,7 @@ export const getCollectionFileIndex = (collectionName, fileName) => {
     );
 
     if (collection && 'files' in collection) {
-      return collection.files.findIndex(({ name }) => name === fileName) ?? -1;
+      return collection.files.findIndex(({ name }) => name === fileName);
     }
   }
 

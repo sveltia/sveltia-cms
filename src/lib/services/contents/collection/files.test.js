@@ -594,4 +594,59 @@ describe('getCollectionFileIndex()', () => {
 
     expect(result).toBe(-1);
   });
+
+  test('returns -1 for entry collection (no files property)', () => {
+    const mockCollection = /** @type {any} */ ({
+      name: 'entry-collection',
+      folder: 'posts',
+      // No 'files' property - it's an entry collection
+    });
+
+    vi.mocked(get).mockReturnValue({
+      collections: [mockCollection],
+      singletons: [],
+    });
+    vi.mocked(getValidCollections).mockReturnValue([mockCollection]);
+
+    const result = getCollectionFileIndex('entry-collection', 'some-file');
+
+    expect(result).toBe(-1);
+  });
+
+  test('finds file index in collection when file exists at index 0', () => {
+    const mockCollection = {
+      name: 'test-collection',
+      files: [
+        { name: 'first-file', file: 'first.md', fields: [] },
+        { name: 'second-file', file: 'second.md', fields: [] },
+      ],
+    };
+
+    vi.mocked(get).mockReturnValue({
+      collections: [mockCollection],
+      singletons: [],
+    });
+    vi.mocked(getValidCollections).mockReturnValue([/** @type {any} */ (mockCollection)]);
+
+    const result = getCollectionFileIndex('test-collection', 'first-file');
+
+    expect(result).toBe(0);
+  });
+
+  test('handles file collection when findIndex returns -1', () => {
+    const mockCollection = {
+      name: 'test-collection',
+      files: [{ name: 'file1', file: 'file1.md', fields: [] }],
+    };
+
+    vi.mocked(get).mockReturnValue({
+      collections: [mockCollection],
+      singletons: [],
+    });
+    vi.mocked(getValidCollections).mockReturnValue([/** @type {any} */ (mockCollection)]);
+
+    const result = getCollectionFileIndex('test-collection', 'nonexistent');
+
+    expect(result).toBe(-1);
+  });
 });
