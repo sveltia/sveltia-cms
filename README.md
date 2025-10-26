@@ -156,7 +156,7 @@ Sveltia CMS is currently in **beta**, with version 1.0 (GA) scheduled for releas
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
-- Ensuring near-complete [compatibility with Netlify/Decap CMS](#current-limitations)
+- Ensuring near-complete [compatibility with Netlify/Decap CMS](#compatibility)
   - Some missing features will be implemented before or shortly after GA
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
@@ -284,7 +284,7 @@ We’ve made various improvements to help you get your work done faster and more
 
 ### Better backend support
 
-The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/), [Gitea/Forgejo](https://decapcms.org/docs/gitea-backend/) and [Test](https://decapcms.org/docs/test-backend/) backends are available in Sveltia CMS. For [performance reasons](#features-not-to-be-implemented), we don’t support [Azure](https://decapcms.org/docs/azure-backend/), [Bitbucket](https://decapcms.org/docs/bitbucket-backend/) and [Git Gateway](https://decapcms.org/docs/git-gateway-backend/).
+The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapcms.org/docs/gitlab-backend/), [Gitea/Forgejo](https://decapcms.org/docs/gitea-backend/) and [Test](https://decapcms.org/docs/test-backend/) backends are available in Sveltia CMS. For performance reasons, [we don’t plan to support](#features-not-to-be-implemented) other backends.
 
 - Uses the GraphQL API where possible for better performance, as mentioned above. You don’t need to set the `use_graphql` option to enable it for GitHub and GitLab.[^65]
 - The Git branch name is automatically set to the repository’s default branch (`main`, `master` or whatever) if not specified in the configuration file, preventing data loading errors due to a hardcoded fallback to `master`.[^95][^27] If a branch name is specified, it works as expected.[^232]
@@ -701,7 +701,7 @@ The following Netlify/Decap CMS features will not be added to Sveltia CMS, prima
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
   - Backend: [`use_graphql`](https://decapcms.org/docs/github-backend/#graphql-api)
   - Relation widget: `options_length`
-- Local proxy server: As [mentioned above](#better-productivity), our [local repository workflow](#working-with-a-local-git-repository) eliminates the need for a proxy server. We don’t plan to add support for `netlify-cms-proxy-server`, `decap-server` or the `local_backend` option.
+- Local proxy server: As [mentioned above](#better-productivity), our [local repository workflow](#working-with-a-local-git-repository) eliminates the need for a proxy server. For security and performance reasons, we don’t support `netlify-cms-proxy-server`, `decap-server` or the `local_backend` option.
 - The global [`locale`](https://decapcms.org/docs/configuration-options/#locale) option and `CMS.registerLocale()` method: Sveltia CMS automatically detects the user’s preferred language and changes the UI locale as [mentioned above](#better-localization).
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 - Any other undocumented features and options. Exceptions apply.
@@ -834,7 +834,7 @@ For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplet
 
 If you’re using any features listed in the [current limitations](#current-limitations) section, you’ll need to wait until they are implemented in Sveltia CMS. We’re working hard to add these features in the coming months.
 
-If you’re using any [features that are not going to be implemented](#features-not-to-be-implemented), you’ll need to find a workaround. For example, if you’re using the Azure or Bitbucket backend, consider migrating to GitHub, GitLab, Gitea or Forgejo. See the next section if you’re a Git Gateway user.
+If you’re using any [features that are not going to be implemented](#features-not-to-be-implemented), you’ll need to find a workaround. For example, if you’re on Azure or Bitbucket, consider migrating to GitHub, GitLab, Gitea or Forgejo. See the next section if you’re a Git Gateway user.
 
 #### Migrating from Git Gateway backend
 
@@ -1944,7 +1944,7 @@ We cannot promise any specific release dates, but here is a rough roadmap for th
 
 Due early 2026
 
-- Enhanced [compatibility with Netlify/Decap CMS](#current-limitations)
+- Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling some more Netlify/Decap CMS issues:
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
