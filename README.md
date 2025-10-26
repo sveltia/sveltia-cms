@@ -1,6 +1,6 @@
 # Sveltia CMS: Netlify/Decap CMS successor
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). While some features are still missing, we’ve already solved over 260 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). While some features are still missing, we’ve already solved over 265 issues reported in the predecessor’s repository, from critical bugs to top feature requests.
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Our numerous enhancements across the board ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026.
 
@@ -124,7 +124,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite**
   - Started in November 2022, first appeared on GitHub in March 2023
   - ✅ Actively developed with frequent releases and numerous improvements
-  - ✅ Solved more than 260 issues reported in the Netlify/Decap CMS repository
+  - ✅ Solved more than 265 issues reported in the Netlify/Decap CMS repository
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
   - ⚠️ Mostly low activity with only occasional releases and a few minor improvements
@@ -160,7 +160,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - Some missing features will be implemented before or shortly after GA
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **260+ issues, or 570+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **265+ issues, or 575+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 900 if including duplicates, in the future 💪
@@ -174,7 +174,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![260 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251005)<br>
+![265 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251025)<br>
 
 ## Differentiators
 
@@ -292,6 +292,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - Users can quickly open the source file of an entry or asset in your repository via the 3-dot menu when Developer Mode is enabled.
 - Service status checks are performed frequently and an incident notification is displayed prominently.
 - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
+- The external OAuth window will not get stuck on a blank page after signing in.[^300]
 - GitLab-specific improvements:
   - Implements the GraphQL API with proper authorization.[^290]
   - Comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
@@ -2654,3 +2655,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^298]: Netlify/Decap CMS [#7640](https://github.com/decaporg/decap-cms/issues/7640)
 
 [^299]: Netlify/Decap CMS [#5812](https://github.com/decaporg/decap-cms/issues/5812)
+
+[^300]: Netlify/Decap CMS [#7257](https://github.com/decaporg/decap-cms/issues/7257)
