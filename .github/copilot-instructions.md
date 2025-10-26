@@ -2,7 +2,7 @@
 
 ## Repository Overview
 
-**Sveltia CMS** is a modern, Git-based headless content management system built as a drop-in replacement for Netlify/Decap CMS. The project is written in Svelte 5 with JavaScript, using Vite as the build tool and Vitest for testing.
+**Sveltia CMS** is a modern, Git-based headless content management system built as a drop-in replacement for Netlify/Decap CMS. The project is written in Svelte 5 with JavaScript, using Vite as the build tool and Vitest 4 for testing.
 
 **Key Details:**
 
@@ -164,7 +164,7 @@ src/lib/
 
 ### Testing
 
-- **Framework**: Vitest with coverage reporting
+- **Framework**: Vitest 4 with coverage reporting
 - **Location**: Co-located `*.test.js` files
 - **Coverage**: Focuses on `src/lib/{components,services}/**/*.js`
 - **Standards**: 2748+ tests must continue passing

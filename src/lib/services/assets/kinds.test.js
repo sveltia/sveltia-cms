@@ -13,7 +13,12 @@ import {
 } from './kinds';
 
 // Mock dependencies
-vi.mock('mime');
+vi.mock('mime', () => ({
+  default: {
+    getType: vi.fn().mockReturnValue(null),
+  },
+}));
+
 vi.mock('@sveltia/utils/file', () => ({
   isTextFileType: vi.fn(),
 }));
@@ -21,6 +26,8 @@ vi.mock('@sveltia/utils/file', () => ({
 describe('assets/kinds', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mime.getType to default null return
+    vi.mocked(mime.getType).mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -239,10 +246,6 @@ describe('assets/kinds', () => {
   });
 
   describe('getAssetKind', () => {
-    beforeEach(() => {
-      vi.mocked(mime.getType).mockClear();
-    });
-
     it('should return "image" for image files', () => {
       vi.mocked(mime.getType).mockReturnValue('image/jpeg');
       expect(getAssetKind('photo.jpg')).toBe('image');

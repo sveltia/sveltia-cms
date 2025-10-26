@@ -50,6 +50,9 @@ describe('assets/view/group', () => {
     // Mock svelte-i18n properly - get(_) should return a function that returns the translation
     getMock.mockReturnValue(() => 'Other');
 
+    // Mock getRegex to return null by default (when no pattern)
+    getRegexMock.mockReturnValue(null);
+
     // Sample asset data with complete Asset structure
     mockAssets = [
       {

@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import * as encodeModule from './encode';
@@ -42,10 +44,21 @@ describe('exportCanvasAsBlob', () => {
 
     // Mock OffscreenCanvas globally
     // @ts-ignore - Mock implementation doesn't need all properties
-    global.OffscreenCanvas = vi.fn(() => ({
-      getContext: vi.fn(() => mockContext),
-      convertToBlob: vi.fn(() => Promise.resolve(new Blob([''], { type: 'image/webp' }))),
-    }));
+    /**
+     * Mock OffscreenCanvas class for testing.
+     */
+    class MockOffscreenCanvas {
+      /**
+       * Constructor for MockOffscreenCanvas.
+       */
+      constructor() {
+        this.getContext = vi.fn(() => mockContext);
+        this.convertToBlob = vi.fn(() => Promise.resolve(new Blob([''], { type: 'image/webp' })));
+      }
+    }
+
+    // @ts-ignore - Assigning mock class to global
+    global.OffscreenCanvas = MockOffscreenCanvas;
   });
 
   afterEach(() => {
@@ -112,21 +125,30 @@ describe('exportCanvasAsBlob', () => {
 
     // Mock OffscreenCanvas to return wrong type for AVIF (simulating unsupported encoding)
     // @ts-ignore - Mock implementation doesn't need all properties
-    global.OffscreenCanvas = vi.fn((width, height) => {
-      if (width === 1 && height === 1) {
-        // This is the check canvas - return wrong type
-        return {
-          getContext: vi.fn(() => wrongTypeContext),
-          convertToBlob: vi.fn(() => Promise.resolve(new Blob([''], { type: 'image/png' }))),
-        };
+    /**
+     * Mock OffscreenCanvas class for testing unsupported encoding.
+     */
+    class MockOffscreenCanvasWithWrongType {
+      /**
+       * Constructor for MockOffscreenCanvasWithWrongType.
+       * @param {number} width Canvas width.
+       * @param {number} height Canvas height.
+       */
+      constructor(width, height) {
+        if (width === 1 && height === 1) {
+          // This is the check canvas - return wrong type
+          this.getContext = vi.fn(() => wrongTypeContext);
+          this.convertToBlob = vi.fn(() => Promise.resolve(new Blob([''], { type: 'image/png' })));
+        } else {
+          // This is the actual canvas
+          this.getContext = vi.fn(() => mockContext);
+          this.convertToBlob = vi.fn(() => Promise.resolve(new Blob([''], { type: 'image/avif' })));
+        }
       }
+    }
 
-      // This is the actual canvas
-      return {
-        getContext: vi.fn(() => mockContext),
-        convertToBlob: vi.fn(() => Promise.resolve(new Blob([''], { type: 'image/avif' }))),
-      };
-    });
+    // @ts-ignore - Assigning mock class to global
+    global.OffscreenCanvas = MockOffscreenCanvasWithWrongType;
 
     const mockImageData = {
       data: new Uint8ClampedArray(400),

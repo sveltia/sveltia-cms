@@ -21,12 +21,36 @@ vi.mock('svelte/store', () => ({
   get: vi.fn(),
 }));
 
-vi.mock('@sveltia/utils/storage', () => ({
-  IndexedDB: vi.fn(() => ({
-    delete: vi.fn(),
-    set: vi.fn(),
-  })),
-}));
+vi.mock('@sveltia/utils/storage', () => {
+  /**
+   * Mock IndexedDB class.
+   */
+  class MockIndexedDB {
+    /**
+     * Constructor for MockIndexedDB.
+     */
+    constructor() {
+      this.delete = vi.fn();
+      this.set = vi.fn();
+    }
+  }
+
+  /**
+   * Constructor wrapper for IndexedDB.
+   * @param {string} _dbName Database name.
+   * @param {string} _storeName Store name.
+   * @returns {MockIndexedDB} Mock instance.
+   */
+  // eslint-disable-next-line no-unused-vars
+  function IndexedDBConstructor(_dbName, _storeName) {
+    return new MockIndexedDB();
+  }
+
+  return {
+    // @ts-ignore - Assigning wrapper constructor
+    IndexedDB: IndexedDBConstructor,
+  };
+});
 
 vi.mock('$lib/services/assets', () => ({
   allAssets: { update: vi.fn() },

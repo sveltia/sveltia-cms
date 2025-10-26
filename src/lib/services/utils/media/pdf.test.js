@@ -17,17 +17,39 @@ describe('renderPDF', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock URL methods
-    global.URL = /** @type {any} */ ({
-      createObjectURL: vi.fn(() => 'blob:mock-url'),
-      revokeObjectURL: vi.fn(),
-    });
-    // Mock OffscreenCanvas
-    global.OffscreenCanvas = /** @type {any} */ (
-      vi.fn(() => ({
-        getContext: vi.fn(() => ({})),
-      }))
-    );
+    /**
+     * Mock URL class with static methods.
+     */
+    class MockURL {
+      /**
+       * Constructor for MockURL.
+       * @param {string} url URL string.
+       */
+      constructor(url) {
+        this.href = url;
+      }
+    }
+
+    MockURL.createObjectURL = vi.fn(() => 'blob:mock-url');
+    MockURL.revokeObjectURL = vi.fn();
+
+    global.URL = /** @type {any} */ (MockURL);
+
+    /**
+     * Mock OffscreenCanvas class.
+     */
+    class MockOffscreenCanvas {
+      /**
+       * Get the rendering context.
+       * @param {string} _contextType Context type.
+       * @returns {object} Rendering context.
+       */
+      getContext(_contextType) {
+        return {};
+      }
+    }
+
+    global.OffscreenCanvas = /** @type {any} */ (MockOffscreenCanvas);
   });
 
   afterEach(() => {

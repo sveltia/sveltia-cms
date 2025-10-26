@@ -7,6 +7,28 @@ vi.mock('$lib/services/utils/media/image/exif', () => ({
   extractExifData: vi.fn(),
 }));
 
+/**
+ * Mock Image class factory.
+ * @param {number} width Image width.
+ * @param {number} height Image height.
+ * @returns {object} Mock image instance.
+ */
+function createMockImage(width = 800, height = 600) {
+  return {
+    naturalWidth: width,
+    naturalHeight: height,
+    src: '',
+    addEventListener: vi.fn(
+      (/** @type {string} */ event, /** @type {(ev: any) => void} */ callback) => {
+        if (event === 'load') {
+          // Simulate image load
+          setTimeout(callback, 0);
+        }
+      },
+    ),
+  };
+}
+
 describe('getMediaMetadata', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -40,28 +62,13 @@ describe('getMediaMetadata', () => {
 
     vi.mocked(extractExifData).mockResolvedValue(mockExifData);
 
-    // Mock Image constructor and loading
-    const mockImage = {
-      naturalWidth: 800,
-      naturalHeight: 600,
-      addEventListener: vi.fn((event, callback) => {
-        if (event === 'load') {
-          // Simulate image load
-          setTimeout(callback, 0);
-        }
-      }),
-      /**
-       * Sets the src property to trigger image load.
-       * @param {string} value The image source URL.
-       */
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      set src(value) {
-        // Trigger load event when src is set
-      },
+    // @ts-ignore - Mock global Image with factory function
+    /**
+     *
+     */
+    global.Image = function Image() {
+      return createMockImage();
     };
-
-    // @ts-ignore - Mock global Image
-    global.Image = vi.fn(() => mockImage);
 
     const result = await getMediaMetadata(mockAsset, mockSrc, 'image');
 
@@ -216,26 +223,14 @@ describe('getMediaMetadata', () => {
     vi.mocked(extractExifData).mockResolvedValue(mockExifData);
 
     // Mock Image with no dimensions (failed load)
-    const mockImage = {
-      naturalWidth: 0,
-      naturalHeight: 0,
-      addEventListener: vi.fn((event, callback) => {
-        if (event === 'load') {
-          setTimeout(callback, 0);
-        }
-      }),
-      /**
-       * Sets the src property for image with failed load.
-       * @param {string} value The image source URL.
-       */
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      set src(value) {
-        // Image fails to load, but load event still fires
-      },
+    /**
+     * Mock global Image constructor.
+     * @returns {object} Mock image with 0 dimensions.
+     */
+    // @ts-ignore
+    global.Image = function Image() {
+      return createMockImage(0, 0);
     };
-
-    // @ts-ignore - Mock global Image
-    global.Image = vi.fn(() => mockImage);
 
     const result = await getMediaMetadata(mockAsset, mockSrc, 'image');
 

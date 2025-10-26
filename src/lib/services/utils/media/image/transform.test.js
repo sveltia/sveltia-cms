@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Mock dependencies
@@ -20,31 +21,106 @@ describe('Image Transform Functions', () => {
     // Mock HTMLVideoElement first
     global.HTMLVideoElement = vi.fn();
 
-    // Mock global URL object
-    global.URL = /** @type {any} */ ({
-      createObjectURL: vi.fn(() => 'blob:mock-url'),
-      revokeObjectURL: vi.fn(),
-    });
+    // Mock global URL object - need to provide a real URL-like implementation
+    // Some code may use 'new URL()' so we need to support both static methods
+    // and the constructor
+    const RealURL = URL;
 
-    // Mock global Image constructor
-    global.Image = /** @type {any} */ (
-      vi.fn(() => ({
-        addEventListener: vi.fn((event, callback) => {
+    /**
+     * Mock URL class that delegates to real URL.
+     */
+    class MockURL {
+      /**
+       * Constructor for MockURL.
+       * @param {string} url URL string.
+       * @param {string} base Base URL.
+       */
+      constructor(url, base) {
+        try {
+          const realURL = new RealURL(url, base);
+
+          this.href = realURL.href;
+          this.origin = realURL.origin;
+          this.pathname = realURL.pathname;
+          this.hostname = realURL.hostname;
+          this.searchParams = realURL.searchParams;
+        } catch {
+          // Fallback for mock URLs
+          this.href = url;
+          this.origin = 'https://example.com';
+          this.pathname = '/';
+          this.hostname = 'example.com';
+        }
+      }
+
+      /**
+       * Create a mock object URL.
+       * @param {Blob} blob The blob to create a URL for.
+       * @returns {string} Mock blob URL.
+       */
+      static createObjectURL(blob) {
+        // eslint-disable-next-line no-unused-vars
+        void blob;
+        return 'blob:mock-url';
+      }
+
+      /**
+       * Revoke a mock object URL.
+       * @param {string} url The URL to revoke.
+       */
+      static revokeObjectURL(url) {
+        // eslint-disable-next-line no-unused-vars
+        void url;
+        // Mock implementation
+      }
+    }
+
+    // @ts-ignore - MockURL is compatible enough for these tests
+    global.URL = MockURL;
+
+    // Make static methods spyable
+    MockURL.createObjectURL = vi.fn(MockURL.createObjectURL);
+    MockURL.revokeObjectURL = vi.fn(MockURL.revokeObjectURL);
+
+    /**
+     * Mock Image class.
+     */
+    class MockImage {
+      /**
+       * Constructor for MockImage.
+       */
+      constructor() {
+        this.addEventListener = vi.fn((event, callback) => {
           if (event === 'load') {
             setTimeout(callback, 0);
           }
-        }),
-        naturalWidth: 800,
-        naturalHeight: 600,
-        /**
-         * Sets the src property to trigger image load.
-         * @param {string} _value The image source URL.
-         */
-        set src(_value) {
-          // Trigger load event when src is set
-        },
-      }))
-    );
+        });
+        this.naturalWidth = 800;
+        this.naturalHeight = 600;
+      }
+
+      /**
+       * Sets the src property to trigger image load.
+       * @param {string} value The image source URL.
+       */
+      set src(value) {
+        // eslint-disable-next-line no-unused-vars
+        void value;
+        // Trigger load event when src is set
+      }
+    }
+
+    // Create a vi.fn that delegates to MockImage properly for 'new' calls
+    /**
+     * Wrapper function for MockImage constructor.
+     * @returns {MockImage} A new MockImage instance.
+     */
+    function ImageConstructor() {
+      return new MockImage();
+    }
+
+    // @ts-ignore - imageConstructor is compatible enough for these tests
+    global.Image = vi.fn(ImageConstructor);
 
     // Mock document and createElement for video
     global.document = /** @type {any} */ ({
@@ -93,15 +169,26 @@ describe('Image Transform Functions', () => {
     });
 
     // Mock OffscreenCanvas
-    global.OffscreenCanvas = /** @type {any} */ (
-      vi.fn((width, height) => ({
-        width,
-        height,
-        getContext: vi.fn(() => ({
+    /**
+     * Mock OffscreenCanvas class.
+     */
+    class MockOffscreenCanvas {
+      /**
+       * Constructor for MockOffscreenCanvas.
+       * @param {number} width Canvas width.
+       * @param {number} height Canvas height.
+       */
+      constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this.getContext = vi.fn(() => ({
           drawImage: vi.fn(),
-        })),
-      }))
-    );
+        }));
+      }
+    }
+
+    // @ts-ignore - MockOffscreenCanvas is compatible enough for tests
+    global.OffscreenCanvas = MockOffscreenCanvas;
   });
 
   afterEach(() => {
