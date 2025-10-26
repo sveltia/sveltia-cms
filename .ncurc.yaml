@@ -6,3 +6,7 @@ reject:
   # https://github.com/airbnb/javascript/issues/2961
   - eslint
   - eslint-plugin-svelte
+  # There are still various bugs in Vitest 4
+  # https://github.com/vitest-dev/vitest/issues
+  - vitest
+  - "@vitest/*"
