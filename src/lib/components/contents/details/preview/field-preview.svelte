@@ -8,7 +8,7 @@
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
   /**
-   * @import { InternalLocaleCode } from '$lib/types/private';
+   * @import { InternalLocaleCode, TypedFieldKeyPath } from '$lib/types/private';
    * @import { Field, FieldKeyPath } from '$lib/types/public';
    */
 
@@ -16,6 +16,7 @@
    * @typedef {object} Props
    * @property {InternalLocaleCode} locale Current pane’s locale.
    * @property {FieldKeyPath} keyPath Field key path.
+   * @property {TypedFieldKeyPath} typedKeyPath Typed field key path.
    * @property {Field} fieldConfig Field configuration.
    */
 
@@ -24,6 +25,7 @@
     /* eslint-disable prefer-const */
     locale,
     keyPath,
+    typedKeyPath,
     fieldConfig,
     /* eslint-enable prefer-const */
   } = $props();
@@ -100,6 +102,7 @@
     role="group"
     data-widget={widgetName}
     data-key-path={keyPath}
+    data-typed-key-path={typedKeyPath}
     tabindex="0"
     onkeydown={(event) => {
       if (event.key === 'Enter') {
@@ -115,7 +118,7 @@
     <h4>{label || fieldName}</h4>
     {#if widgetName in previews}
       {@const Preview = previews[widgetName]}
-      <Preview {keyPath} {locale} {fieldConfig} {currentValue} />
+      <Preview {keyPath} {typedKeyPath} {locale} {fieldConfig} {currentValue} />
     {/if}
   </section>
 {/if}

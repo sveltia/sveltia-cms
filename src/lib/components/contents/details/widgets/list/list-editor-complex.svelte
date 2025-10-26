@@ -355,8 +355,8 @@
 <div role="none" id="list-{widgetId}-item-list" class="item-list" class:collapsed={!parentExpanded}>
   {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
     <VisibilityObserver>
-      {@const expandedKeyPath = `${keyPath}.${index}`}
-      {@const expanded = $entryDraft?.expanderStates?._[expandedKeyPath] ?? true}
+      {@const itemKeyPath = `${keyPath}.${index}`}
+      {@const expanded = $entryDraft?.expanderStates?._[itemKeyPath] ?? true}
       {@const typeConfig = hasVariableTypes
         ? types?.find(({ name }) => name === item[typeKey])
         : undefined}
@@ -371,7 +371,7 @@
           controlId="list-{widgetId}-item-{index}-body"
           {expanded}
           toggleExpanded={subFields.length
-            ? () => syncExpanderStates({ [expandedKeyPath]: !expanded })
+            ? () => syncExpanderStates({ [itemKeyPath]: !expanded })
             : undefined}
         >
           {#snippet centerContent()}
@@ -475,11 +475,17 @@
         <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
           {#if expanded}
             {#each subFields as subField (subField.name)}
+              {@const subFieldKeyPath = hasSingleSubField
+                ? itemKeyPath
+                : `${itemKeyPath}.${subField.name}`}
               <VisibilityObserver>
                 <FieldEditor
-                  keyPath={hasSingleSubField
-                    ? `${keyPath}.${index}`
-                    : `${keyPath}.${index}.${subField.name}`}
+                  keyPath={subFieldKeyPath}
+                  typedKeyPath={hasVariableTypes
+                    ? hasSingleSubField
+                      ? `${keyPath}.*<${item[typeKey]}>`
+                      : `${keyPath}.*<${item[typeKey]}>.${subField.name}`
+                    : subFieldKeyPath}
                   {locale}
                   fieldConfig={subField}
                   context={hasSingleSubField ? 'single-subfield-list-widget' : undefined}

@@ -189,6 +189,7 @@
         <FieldEditor
           {locale}
           keyPath="{keyPathPrefix}{fieldConfig.name}"
+          typedKeyPath="{keyPathPrefix}{fieldConfig.name}"
           {fieldConfig}
           context="markdown-editor-component"
           {valueStoreKey}

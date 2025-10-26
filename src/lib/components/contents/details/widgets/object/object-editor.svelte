@@ -240,9 +240,13 @@
     <div role="none" class="item-list" id="object-{widgetId}-item-list">
       {#if parentExpanded}
         {#each subFields as subField (subField.name)}
+          {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
           <VisibilityObserver>
             <FieldEditor
-              keyPath={[keyPath, subField.name].join('.')}
+              keyPath={subFieldKeyPath}
+              typedKeyPath={hasVariableTypes && typeConfig?.name
+                ? `${keyPath}<${typeConfig.name}>.${subField.name}`
+                : subFieldKeyPath}
               {locale}
               fieldConfig={subField}
             />

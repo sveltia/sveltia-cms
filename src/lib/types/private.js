@@ -3,7 +3,6 @@
  * @import { Writable } from 'svelte/store';
  * @import {
  * BackendName,
- * Collection,
  * CollectionFile,
  * EntryCollection,
  * Field,
@@ -21,6 +20,14 @@
  * SelectField,
  * SiteConfig,
  * } from './public';
+ */
+
+/**
+ * A variant of {@link FieldKeyPath} that can include type information for fields with variable
+ * types. The syntax uses angle brackets to enclose the type, e.g. `blocks.*<image>.src` (for a
+ * variable type List field; a list index is replaced with an asterisk) or `widget<button>.label`
+ * (for a variable type Object field).
+ * @typedef {string} TypedFieldKeyPath
  */
 
 /**
@@ -891,6 +898,7 @@
  * @typedef {object} WidgetEditorProps
  * @property {InternalLocaleCode} locale Current pane’s locale.
  * @property {FieldKeyPath} keyPath Field key path.
+ * @property {TypedFieldKeyPath} typedKeyPath Typed field key path.
  * @property {string} fieldId Field ID.
  * @property {string} fieldLabel Field label.
  * @property {boolean} [required] Whether to mark the field required.
@@ -903,6 +911,7 @@
  * @typedef {object} WidgetPreviewProps
  * @property {InternalLocaleCode} locale Current pane’s locale.
  * @property {FieldKeyPath} keyPath Field key path.
+ * @property {TypedFieldKeyPath} typedKeyPath Typed field key path.
  */
 
 /**
@@ -1005,9 +1014,7 @@
  * @property {string} [componentName] Markdown editor component name.
  * @property {FlattenedEntryContent} [valueMap] Object holding current entry values. This is
  * required when working with list/object widget variable types.
- * @property {FieldKeyPath} keyPath Key path, e.g. `author.name`, `blocks.*<image>.src`, or
- * `widget<button>.label`. The explicit type syntax (angle bracket notation) can be used to specify
- * the type for variable type fields.
+ * @property {FieldKeyPath | TypedFieldKeyPath} keyPath Field key path or typed key path.
  * @property {boolean} [isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  */

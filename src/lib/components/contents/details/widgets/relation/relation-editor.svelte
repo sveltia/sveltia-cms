@@ -25,6 +25,7 @@
     /* eslint-disable prefer-const */
     locale,
     keyPath,
+    typedKeyPath,
     fieldId,
     fieldLabel,
     fieldConfig,
@@ -57,6 +58,7 @@
   <SelectEditor
     {locale}
     {keyPath}
+    {typedKeyPath}
     {fieldId}
     {fieldLabel}
     fieldConfig={selectFieldConfig}

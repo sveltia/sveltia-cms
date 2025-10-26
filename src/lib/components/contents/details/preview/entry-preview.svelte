@@ -29,7 +29,12 @@
 {#snippet children()}
   {#each fields as fieldConfig (fieldConfig.name)}
     <VisibilityObserver>
-      <FieldPreview keyPath={fieldConfig.name} {locale} {fieldConfig} />
+      <FieldPreview
+        keyPath={fieldConfig.name}
+        typedKeyPath={fieldConfig.name}
+        {locale}
+        {fieldConfig}
+      />
     </VisibilityObserver>
   {/each}
 {/snippet}

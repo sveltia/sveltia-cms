@@ -29,7 +29,12 @@
   {/if}
   {#each fields as fieldConfig (fieldConfig.name)}
     <VisibilityObserver>
-      <FieldEditor keyPath={fieldConfig.name} {locale} {fieldConfig} />
+      <FieldEditor
+        keyPath={fieldConfig.name}
+        typedKeyPath={fieldConfig.name}
+        {locale}
+        {fieldConfig}
+      />
     </VisibilityObserver>
   {/each}
 </VisibilityObserver>

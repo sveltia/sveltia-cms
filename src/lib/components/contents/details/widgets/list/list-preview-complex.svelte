@@ -58,8 +58,9 @@
 
 {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
   <VisibilityObserver>
+    {@const itemKeyPath = `${keyPath}.${index}`}
     {@const subFieldName = Array.isArray(types)
-      ? $entryDraft?.currentValues[locale][`${keyPath}.${index}.${typeKey}`]
+      ? $entryDraft?.currentValues[locale][`${itemKeyPath}.${typeKey}`]
       : undefined}
     {@const typeConfig = types?.find(({ name }) => name === subFieldName)}
     {@const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
@@ -68,9 +69,15 @@
       : (fields ?? (field ? [field] : []))}
     <Subsection {label}>
       {#each subFields as subField (subField.name)}
+        {@const subFieldKeyPath = field ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
         <VisibilityObserver>
           <FieldPreview
-            keyPath={field ? `${keyPath}.${index}` : `${keyPath}.${index}.${subField.name}`}
+            keyPath={subFieldKeyPath}
+            typedKeyPath={subFieldName
+              ? field
+                ? `${keyPath}.*<${subFieldName}>`
+                : `${keyPath}.*<${subFieldName}>.${subField.name}`
+              : subFieldKeyPath}
             {locale}
             fieldConfig={subField}
           />

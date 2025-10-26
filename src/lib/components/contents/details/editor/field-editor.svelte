@@ -27,6 +27,7 @@
    * DraftValueStoreKey,
    * FieldEditorContext,
    * InternalLocaleCode,
+   * TypedFieldKeyPath,
    * WidgetContext,
    * } from '$lib/types/private';
    * @import {
@@ -48,6 +49,7 @@
    * @typedef {object} Props
    * @property {InternalLocaleCode} locale Current pane’s locale.
    * @property {FieldKeyPath} keyPath Field key path.
+   * @property {TypedFieldKeyPath} typedKeyPath Typed field key path.
    * @property {Field} fieldConfig Field configuration.
    * @property {WidgetContext} [context] Where the widget is rendered.
    * @property {DraftValueStoreKey} [valueStoreKey] Key to store the values in {@link EntryDraft}.
@@ -58,6 +60,7 @@
     /* eslint-disable prefer-const */
     locale,
     keyPath,
+    typedKeyPath,
     fieldConfig,
     context: widgetContext = parent.widgetContext ?? undefined,
     valueStoreKey = parent.valueStoreKey ?? 'currentValues',
@@ -234,6 +237,7 @@
     aria-label={$_('x_field', { values: { field: fieldLabel } })}
     data-widget={widgetName}
     data-key-path={keyPath}
+    data-typed-key-path={typedKeyPath}
     hidden={widgetName === 'compute'}
   >
     <header role="none">
@@ -330,6 +334,7 @@
         <Editor
           {locale}
           {keyPath}
+          {typedKeyPath}
           {fieldId}
           {fieldLabel}
           {fieldConfig}
@@ -349,6 +354,7 @@
         <Editor
           {locale}
           {keyPath}
+          {typedKeyPath}
           {fieldId}
           {fieldLabel}
           {fieldConfig}
