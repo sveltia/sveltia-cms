@@ -1948,6 +1948,7 @@ Due early 2026
 
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling some more Netlify/Decap CMS issues:
+  - PKCE for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub but planned in [Q4 2025](https://github.com/orgs/github/projects/4247?pane=issue&itemId=126571572&issue=github%7Croadmap%7C1153)
   - Thorough site config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
 - Accessibility audit
@@ -2001,7 +2002,6 @@ Due late 2026
     - Data integrity checks
   - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
   - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
-  - PKCE for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub
   - and many more (100+ issues and discussions)
 - Enhancements to **Sveltia CMS Additions** (some may be included in v3.0):
   - Post locking[^166] (like [WordPress](https://codex.wordpress.org/Post_Locking))
