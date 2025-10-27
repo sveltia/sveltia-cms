@@ -2,11 +2,11 @@
 
 ## Repository Overview
 
-**Sveltia CMS** is a modern, Git-based headless content management system built as a drop-in replacement for Netlify/Decap CMS. The project is written in Svelte 5 with JavaScript, using Vite as the build tool and Vitest 4 for testing.
+**Sveltia CMS** is a modern, Git-based headless content management system built as a drop-in replacement for Netlify/Decap CMS. The project is written in Svelte 5 with JavaScript, using Vite 7 as the build tool and Vitest 4 for testing.
 
 **Key Details:**
 
-- **Size**: ~800 source files, 170+ test files, 2748+ tests
+- **Size**: ~800 source files, 170+ test files, 4200+ tests
 - **Languages**: TypeScript-flavoured JavaScript (ES2024/JSDoc), Svelte 5, SCSS/CSS, HTML
 - **Target Runtime**: Browser (IIFE and ES modules)
 - **Package Manager**: **pnpm only** (npm will cause issues)
@@ -17,7 +17,7 @@
 
 ### Prerequisites
 
-**CRITICAL**: Always use `pnpm` - npm will not work correctly with this project.
+**CRITICAL**: Always use `pnpm` - `npm` will not work correctly with this project.
 
 ```bash
 # Install pnpm if not available
@@ -60,8 +60,8 @@ pnpm check:imports   # Unused import detection
 pnpm check:audit     # Security audit
 
 # Testing
-vitest run test            # Run all tests
-vitest run test:coverage   # Test coverage report
+pnpm exec vitest run test            # Run all tests
+pnpm exec vitest run test:coverage   # Test coverage report
 
 # Code formatting
 pnpm format          # Auto-fix Prettier formatting
@@ -71,7 +71,7 @@ pnpm format          # Auto-fix Prettier formatting
 
 - `pnpm install`: ~25-30 seconds
 - `pnpm check`: ~30-45 seconds
-- `pnpm test`: ~30 seconds (2748 tests)
+- `pnpm exec vitest run`: ~35 seconds (4200+ tests)
 - `pnpm build`: ~15-20 seconds
 
 ### Common Issues & Solutions
@@ -138,9 +138,9 @@ src/lib/
 
 **Validation Steps for PRs:**
 
-1. All ESLint rules pass (strict Airbnb config + Svelte rules)
+1. All ESLint rules pass (strict Airbnb config + Svelte rules + some customizations)
 2. Prettier formatting enforced
-3. All 2748+ tests pass
+3. All 4200+ tests pass
 4. Svelte compiler checks pass
 5. Production build succeeds
 6. No unused imports (custom script validation)
@@ -167,7 +167,7 @@ src/lib/
 - **Framework**: Vitest 4 with coverage reporting
 - **Location**: Co-located `*.test.js` files
 - **Coverage**: Focuses on `src/lib/{components,services}/**/*.js`
-- **Standards**: 2748+ tests must continue passing
+- **Standards**: 4200+ tests must continue passing
 
 ### File Patterns
 
@@ -184,21 +184,26 @@ import { get } from 'svelte/store';
 // Internal with $lib alias
 import { siteConfig } from '$lib/services/config';
 import Button from '$lib/components/common/button.svelte';
+
+/**
+ * @import { SiteConfig } from '$lib/types/public';
+ */
 ```
 
 ### Making Changes
 
 1. **Always run `pnpm install` first**
 2. **Use `pnpm check` before committing** - fixes many issues automatically
-3. **Run tests frequently**: `pnpm test` or `pnpm test:watch`
+3. **Run tests frequently**: `pnpm exec vitest run`
 4. **Follow existing patterns** - this codebase has consistent conventions
 5. **Test in browser**: Use `pnpm dev` to verify UI changes work correctly
 
 ### Special Notes
 
-- **Svelte 5**: Uses new runes syntax - avoid legacy Svelte patterns
+- **Svelte 5**: Uses new runes syntax - avoid legacy Svelte patterns; use the [MCP server](https://mcp.svelte.dev/mcp) if needed
 - **Bundle size**: Watch for large dependencies - final bundle should stay under 1.5MB
 - **Browser support**: Targets modern browsers (ES2024)
 - **CMS Domain**: Understanding of headless CMS concepts helpful for meaningful contributions
+- **Test coverage**: Use `sed` to find uncovered lines in reports
 
 **Trust these instructions** - they are validated against the current codebase. Only search for additional information if these instructions are incomplete or incorrect.
