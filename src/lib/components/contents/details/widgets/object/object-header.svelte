@@ -23,7 +23,7 @@
     /* eslint-disable prefer-const */
     label = '',
     controlId,
-    expanded,
+    expanded = $bindable(),
     toggleExpanded,
     centerContent = undefined,
     endContent = undefined,
@@ -35,11 +35,11 @@
   <div role="none">
     <Button
       size="small"
-      disabled={!toggleExpanded}
       aria-label={expanded ? $_('collapse') : $_('expand')}
       aria-expanded={expanded}
       aria-controls={controlId}
       onclick={() => {
+        expanded = !expanded;
         toggleExpanded?.();
       }}
     >
@@ -66,6 +66,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    height: 24px;
     background-color: var(--sui-secondary-border-color);
 
     & > div {

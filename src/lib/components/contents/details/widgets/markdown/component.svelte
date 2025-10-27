@@ -7,6 +7,7 @@
 
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import ObjectHeader from '$lib/components/contents/details/widgets/object/object-header.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 
@@ -19,6 +20,7 @@
    * @typedef {object} Props
    * @property {string} componentName Markdown editor component name.
    * @property {string} label Field label.
+   * @property {boolean} [collapsed] Whether to collapse the object by default. Default: `false`.
    * @property {Field[]} fields Subfield definitions.
    * @property {Record<string, any> | undefined} values Value map.
    * @property {(event: CustomEvent) => void} [onChange] Custom `change` event handler.
@@ -29,13 +31,14 @@
     /* eslint-disable prefer-const */
     componentName,
     label,
+    collapsed = false,
     fields,
     values,
     onChange = () => undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
-  const randomId = $props.id();
+  const widgetId = $props.id();
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
@@ -43,8 +46,10 @@
   let locale = $state('');
   /** @type {FieldKeyPath} */
   let keyPath = $state('');
+  /** @type {boolean} */
+  let expanded = $state(!collapsed);
 
-  const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${randomId}:`);
+  const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${widgetId}:`);
 
   /**
    * Get the wrapper element.
@@ -168,35 +173,38 @@
     }
   }}
 >
-  <header role="none">
-    <h3 role="none">{label}</h3>
-    <Button
-      size="small"
-      iconic
-      aria-label={$_('remove')}
-      onclick={() => {
-        onChange(new CustomEvent('remove'));
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name="close" />
-      {/snippet}
-    </Button>
-  </header>
-  {#if locale && keyPath}
-    {#each fields as fieldConfig (fieldConfig.name)}
-      <VisibilityObserver>
-        <FieldEditor
-          {locale}
-          keyPath="{keyPathPrefix}{fieldConfig.name}"
-          typedKeyPath="{keyPathPrefix}{fieldConfig.name}"
-          {fieldConfig}
-          context="markdown-editor-component"
-          {valueStoreKey}
-        />
-      </VisibilityObserver>
-    {/each}
-  {/if}
+  <ObjectHeader {label} controlId="object-{widgetId}-item-list" bind:expanded>
+    {#snippet endContent()}
+      <Button
+        size="small"
+        iconic
+        aria-label={$_('remove')}
+        onclick={() => {
+          onChange(new CustomEvent('remove'));
+        }}
+      >
+        {#snippet startIcon()}
+          <Icon name="close" />
+        {/snippet}
+      </Button>
+    {/snippet}
+  </ObjectHeader>
+  <div role="none" class="item-list" id="object-{widgetId}-item-list">
+    {#if locale && keyPath && expanded}
+      {#each fields as fieldConfig (fieldConfig.name)}
+        <VisibilityObserver>
+          <FieldEditor
+            {locale}
+            keyPath="{keyPathPrefix}{fieldConfig.name}"
+            typedKeyPath="{keyPathPrefix}{fieldConfig.name}"
+            {fieldConfig}
+            context="markdown-editor-component"
+            {valueStoreKey}
+          />
+        </VisibilityObserver>
+      {/each}
+    {/if}
+  </div>
 </div>
 
 <style lang="scss">
@@ -213,25 +221,6 @@
 
     &:focus {
       outline-color: var(--sui-primary-accent-color-translucent);
-    }
-
-    & > header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      color: var(--sui-secondary-foreground-color);
-      background-color: var(--sui-selected-background-color);
-
-      h3 {
-        padding: 0 8px;
-        font-size: var(--sui-font-size-small);
-        font-weight: 600;
-      }
-
-      :global(button) {
-        padding: 0;
-        height: 16px;
-      }
     }
 
     // Make the input fields compact within the built-in image component

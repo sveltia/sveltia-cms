@@ -1347,6 +1347,7 @@
  * @property {string} label Label of the component to be displayed in the editor UI.
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
+ * @property {boolean} [collapsed] Whether to collapse the object by default. Default: `false`.
  * @property {Field[]} fields Set of fields to be displayed in the component.
  * @property {RegExp} pattern Regular expression to search a block from Markdown document.
  * @property {(match: RegExpMatchArray) => { [key: string]: any }} [fromBlock] Function to convert

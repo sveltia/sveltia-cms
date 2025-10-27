@@ -27,7 +27,7 @@ import {
  * @returns {any} Custom node class.
  */
 export const createCustomNodeClass = (componentDef) => {
-  const { id: componentName, label, fields, pattern, toBlock, toPreview } = componentDef;
+  const { id: componentName, label, collapsed, fields, pattern, toBlock, toPreview } = componentDef;
   const isMultiLine = isMultiLinePattern(pattern);
   const preview = toPreview({});
   const block = toBlock({});
@@ -151,6 +151,7 @@ export const createCustomNodeClass = (componentDef) => {
         props: {
           componentName,
           label,
+          collapsed,
           fields,
           values: this.__props,
           onChange,
