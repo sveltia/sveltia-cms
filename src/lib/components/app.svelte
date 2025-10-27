@@ -71,7 +71,7 @@
   <meta name="referrer" content="same-origin" />
   <meta name="robots" content="noindex" />
   {#if $siteConfig}
-    {@const logoURL = $siteConfig.logo_url}
+    {@const logoURL = $siteConfig.logo?.src ?? $siteConfig.logo_url}
     <link
       rel="icon"
       href={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}

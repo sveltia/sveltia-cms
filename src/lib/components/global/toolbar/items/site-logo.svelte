@@ -4,9 +4,12 @@
 
   import { openProductionSite } from '$lib/services/app/navigation';
   import { siteConfig } from '$lib/services/config';
+
+  const src = $derived($siteConfig?.logo?.src ?? $siteConfig?.logo_url);
+  const showInHeader = $derived($siteConfig?.logo?.show_in_header ?? true);
 </script>
 
-{#if $siteConfig?.logo_url}
+{#if src && showInHeader}
   <Button
     variant="ghost"
     iconic
@@ -15,7 +18,7 @@
       openProductionSite();
     }}
   >
-    <img loading="lazy" src={$siteConfig.logo_url} alt="" class="logo" />
+    <img loading="lazy" {src} alt="" class="logo" />
   </Button>
 {/if}
 
