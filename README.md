@@ -743,7 +743,7 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 
 ### Deprecations
 
-The deprecated `logo_url` option will be removed in Sveltia CMS 1.0. Use the [new `logo` option](https://decapcms.org/docs/configuration-options/#custom-logo) instead.
+The deprecated `logo_url` option will be removed in Sveltia CMS 1.0. Use the [new `logo.src` option](https://decapcms.org/docs/configuration-options/#custom-logo) instead.
 
 These options were added to Sveltia CMS 0.x but are now deprecated and will be removed in version 1.0:
 

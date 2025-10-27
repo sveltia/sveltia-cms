@@ -1318,7 +1318,8 @@
  * @property {string} [logo_url] Absolute URL or absolute path to the site logo that will be
  * displayed on the entrance page and the browser’s tab (favicon). A square image works best.
  * Default: Sveltia logo.
- * DEPRECATED: This option is superseded by the new `logo` option.
+ * DEPRECATED: This option is superseded by the new `logo.src` option. See the Decap CMS doc
+ * https://decapcms.org/docs/configuration-options/#custom-logo for details.
  * @property {LogoOptions} [logo] Site logo options.
  * @property {string} [logout_redirect_url] URL to redirect users to after logging out.
  * @property {boolean} [show_preview_links] Whether to show site preview links. Default: `true`.
