@@ -743,12 +743,14 @@ Sveitia CMS works with all modern browsers, but there are a few limitations beca
 
 ### Deprecations
 
+The deprecated `logo_url` option will be removed in Sveltia CMS 1.0. Use the [new `logo` option](https://decapcms.org/docs/configuration-options/#custom-logo) instead.
+
 These options were added to Sveltia CMS 0.x but are now deprecated and will be removed in version 1.0:
 
-- The `automatic_deployments` backend option. Use the new [`skip_ci` option](#disabling-automatic-deployments) instead, which is more intuitive. `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments: true` is equivalent to `skip_ci: false`.
-- The `save_all_locales` i18n option. Use the [`initial_locales` option](#disabling-non-default-locale-content) instead, which provides more flexibility. `save_all_locales: false` is equivalent to `initial_locales: all`.
-- The `yaml_quote` collection option. `yaml_quote: true` is equivalent to `quote: double` in the [new YAML format options](#controlling-data-output).
-- The `read_only` UUID widget option. Use the `readonly` common field option instead, which defaults to `true` for the UUID widget.
+- The `automatic_deployments` backend option: Use the new [`skip_ci` option](#disabling-automatic-deployments) instead, which is more intuitive. `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments: true` is equivalent to `skip_ci: false`.
+- The `save_all_locales` i18n option: Use the [`initial_locales` option](#disabling-non-default-locale-content) instead, which provides more flexibility. `save_all_locales: false` is equivalent to `initial_locales: all`.
+- The `yaml_quote` collection option: `yaml_quote: true` is equivalent to `quote: double` in the [new YAML format options](#controlling-data-output).
+- The `read_only` UUID widget option: Use the `readonly` common field option instead, which defaults to `true` for the UUID widget.
 
 ### Compatibility with Static CMS
 
