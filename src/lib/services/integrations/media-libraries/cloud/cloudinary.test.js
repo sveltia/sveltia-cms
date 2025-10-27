@@ -658,6 +658,119 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       expect(results[0].id).toBe('asset-1');
       expect(results[1].id).toBe('asset-2');
     });
+
+    it('should handle fileNameOnly option', () => {
+      // Test lines 268-270: when fileNameOnly is true
+      const mockResources = [
+        {
+          asset_id: 'asset-123',
+          filename: 'sample/image',
+          format: 'jpg',
+          resource_type: 'image',
+          type: 'upload',
+          secure_url: 'https://res.cloudinary.com/test-cloud/image/upload/v1/sample/image.jpg',
+          bytes: 12345,
+          created_at: '2025-01-01T00:00:00Z',
+        },
+      ];
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          cloudinary: {
+            output_filename_only: true,
+          },
+        },
+      });
+
+      const results = parseResults(mockResources, { fieldConfig });
+
+      expect(results).toHaveLength(1);
+      // When fileNameOnly is true, downloadURL should be just the filename
+      expect(results[0].downloadURL).toBe('image.jpg');
+    });
+
+    it('should handle transformations', () => {
+      // Test lines 268-270: when hasTransformation is true and fileNameOnly is false
+      const mockResources = [
+        {
+          asset_id: 'asset-123',
+          filename: 'sample/image',
+          format: 'jpg',
+          resource_type: 'image',
+          type: 'upload',
+          secure_url: 'https://res.cloudinary.com/test-cloud/image/upload/v1/sample/image.jpg',
+          bytes: 12345,
+          created_at: '2025-01-01T00:00:00Z',
+        },
+      ];
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          cloudinary: {
+            use_transformations: true,
+            config: {
+              default_transformations: [[{ width: 400, crop: 'scale' }]],
+            },
+          },
+        },
+      });
+
+      const results = parseResults(mockResources, { fieldConfig });
+
+      expect(results).toHaveLength(1);
+      // When hasTransformation is true, downloadURL should include transformation
+      expect(results[0].downloadURL).toContain('w_400,c_scale');
+    });
+
+    it('should handle library options fallback', () => {
+      // Test line 248: when getLibraryOptions(fieldConfig) returns undefined
+      // Should fall back to getLibraryOptions() which returns the global config
+      const mockResources = [
+        {
+          asset_id: 'asset-fallback',
+          filename: 'sample/image',
+          format: 'jpg',
+          resource_type: 'image',
+          type: 'upload',
+          secure_url: 'https://res.cloudinary.com/test-cloud/image/upload/v1/sample/image.jpg',
+          bytes: 12345,
+          created_at: '2025-01-01T00:00:00Z',
+        },
+      ];
+
+      // Call with undefined fieldConfig - should use global config
+      const results = parseResults(mockResources, { fieldConfig: undefined });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].id).toBe('asset-fallback');
+    });
+
+    it('should handle empty library options', () => {
+      // Test line 248: when both getLibraryOptions(fieldConfig) and getLibraryOptions()
+      // return undefined, should fall back to empty object {}
+      vi.mocked(get).mockReturnValue({}); // No cloudinary config
+
+      const mockResources = [
+        {
+          asset_id: 'asset-empty',
+          filename: 'sample/image',
+          format: 'jpg',
+          resource_type: 'image',
+          type: 'upload',
+          secure_url: 'https://res.cloudinary.com/test-cloud/image/upload/v1/sample/image.jpg',
+          bytes: 12345,
+          created_at: '2025-01-01T00:00:00Z',
+        },
+      ];
+
+      const results = parseResults(mockResources);
+
+      expect(results).toHaveLength(1);
+      // Should use default values (fileNameOnly=false, useTransformations=true)
+      expect(results[0].downloadURL).toBe(
+        'https://res.cloudinary.com/test-cloud/image/upload/v1/sample/image.jpg',
+      );
+    });
   });
 
   describe('list', () => {

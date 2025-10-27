@@ -252,6 +252,22 @@ describe('OpenAI Translator Service', () => {
       );
     });
 
+    it('should handle API errors when error JSON parsing fails', async () => {
+      const mockFetch = vi.mocked(fetch);
+
+      // Create a Response that fails to parse as JSON
+      const mockResponse = new Response('Invalid JSON', {
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      await expect(openaiTranslator.translate(['Hello'], mockOptions)).rejects.toThrow(
+        'OpenAI API error: 500 Internal Server Error',
+      );
+    });
+
     it('should handle invalid response format', async () => {
       const mockResponse = {
         choices: [],

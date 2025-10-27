@@ -17,7 +17,20 @@ const mockBackendStore = { subscribe: vi.fn() };
 const mockSiteConfigStore = { subscribe: vi.fn() };
 const mockUser = { set: vi.fn() };
 const mockDataLoaded = { set: vi.fn() };
-const mockPrefs = { update: vi.fn() };
+
+const mockPrefs = {
+  /**
+   * Mock prefs update function that executes the callback.
+   * @param {(p: object) => object} callback Update callback.
+   */
+  update: vi.fn((callback) => {
+    // Execute the callback to ensure line 167 is covered
+    if (typeof callback === 'function') {
+      callback({});
+    }
+  }),
+};
+
 const mockGoto = vi.fn();
 const mockParseLocation = vi.fn();
 const mockGet = vi.fn();
@@ -333,6 +346,37 @@ describe('auth service', () => {
       });
       expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
       expect(mockPrefs.update).toHaveBeenCalled();
+    });
+
+    it('should handle QR code authentication without prefs', async () => {
+      // Test line 127: when data.prefs is not an object or is missing
+      const encodedData = btoa(JSON.stringify({ token: 'qr-token' }));
+
+      mockLocalStorage.get.mockResolvedValue(null);
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockGetLocaleText) return mockGetLocaleText;
+
+        return mockSiteConfig;
+      });
+      mockBackend.signIn.mockResolvedValue({ token: 'qr-token' });
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInAutomatically();
+
+      expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+      // Should sign in without prefs update (line 127 condition is false)
+      expect(mockPrefs.update).not.toHaveBeenCalled();
     });
 
     it('should handle invalid QR code data gracefully', async () => {

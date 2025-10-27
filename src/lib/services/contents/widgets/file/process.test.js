@@ -646,4 +646,70 @@ describe('Test getExistingBlobURL()', () => {
     // to the first match and returned after all promises resolve
     expect(getHashMock).toHaveBeenCalled();
   });
+
+  test('should process unsaved asset when asset.file exists but no existing blob URL (line 96-97)', async () => {
+    const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = {
+      asset: {
+        path: 'uploads/image.jpg',
+        unsaved: true,
+        file: mockFile,
+      },
+      credit: '',
+    };
+
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = {
+      max_file_size: 1000000,
+    };
+
+    // Mock getHash to return different hashes, so no existing blob URL is found
+    getHashMock.mockResolvedValueOnce('hash1').mockResolvedValueOnce('hash2');
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    // When no existing blob URL is found, result.value should be undefined
+    expect(result.value).toBeUndefined();
+    expect(result.credit).toBe('');
+    expect(result.oversizedFileName).toBeUndefined();
+  });
+
+  test('should handle unsaved asset without file property (line 96-102 coverage)', async () => {
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+      originalEntry: { slug: 'test-entry' },
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = {
+      asset: {
+        path: 'uploads/image.jpg',
+        unsaved: true,
+        // No file property
+      },
+      credit: '',
+    };
+
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = {
+      max_file_size: 1000000,
+    };
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    // When asset is unsaved but has no file, value should remain as initialized (empty string)
+    expect(result.value).toBe('');
+    expect(result.credit).toBe('');
+    expect(result.oversizedFileName).toBeUndefined();
+  });
 });

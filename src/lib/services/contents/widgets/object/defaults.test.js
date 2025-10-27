@@ -521,4 +521,20 @@ describe('Test getDefaultValueMap()', () => {
       });
     });
   });
+
+  describe('edge cases', () => {
+    test('should return empty object for required field with no subfields and no default', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        required: true,
+        fields: [],
+      };
+
+      const keyPath = 'metadata';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      expect(result).toEqual({});
+    });
+  });
 });

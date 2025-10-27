@@ -414,6 +414,31 @@ export const processSingleSubfieldList = ({
 };
 
 /**
+ * Regex to match complex list fields with subfields (e.g., `cities.*.name`).
+ * @type {RegExp}
+ */
+const COMPLEX_LIST_FIELD_REGEX = /^([^.]+)\.\*\.([^.]+)$/;
+
+/**
+ * Get the subfield match from group entries.
+ * @internal
+ * @param {[string, any][]} groupEntries Group entries.
+ * @returns {RegExpMatchArray | null} Subfield match.
+ */
+export const getSubFieldMatch = (groupEntries) => {
+  /** @type {RegExpMatchArray | null} */
+  let subFieldMatch = null;
+
+  groupEntries.some(([fieldName]) => {
+    subFieldMatch = fieldName.match(COMPLEX_LIST_FIELD_REGEX);
+
+    return !!subFieldMatch;
+  });
+
+  return subFieldMatch;
+};
+
+/**
  * Process complex list fields (e.g., `cities.*.name`).
  * @internal
  * @param {object} params Parameters.
@@ -433,27 +458,11 @@ export const processComplexListField = ({
   context,
   fallbackContext,
 }) => {
-  const { _displayField, _valueField, _searchField } = templates;
-  /** @type {RelationOption[]} */
-  const results = [];
+  const [, baseFieldNameForList, subKey] = getSubFieldMatch(groupEntries) ?? [];
 
-  // Find a field that has the pattern we can use to extract the list
-  const complexField = groupEntries.find(([fieldName]) =>
-    fieldName.match(/^([^.]+)\.\*\.([^.]+)$/),
-  );
-
-  if (!complexField) {
+  if (!baseFieldNameForList) {
     return [];
   }
-
-  const [fieldName] = complexField;
-  const subFieldMatch = fieldName.match(/^([^.]+)\.\*\.([^.]+)$/);
-
-  if (!subFieldMatch) {
-    return [];
-  }
-
-  const [, baseFieldNameForList, subKey] = subFieldMatch;
 
   const regex = new RegExp(
     `^${escapeRegExp(baseFieldNameForList)}\\.\\d+\\.${escapeRegExp(subKey)}$`,
@@ -472,7 +481,9 @@ export const processComplexListField = ({
     })
     .sort((a, b) => a.index - b.index);
 
-  listValues.forEach(({ index }) => {
+  const { _displayField, _valueField, _searchField } = templates;
+
+  return listValues.map(({ index }) => {
     // Replace all wildcards for this base field with the current list item
     const processedTemplates = {
       label: _displayField,
@@ -509,14 +520,12 @@ export const processComplexListField = ({
       fallbackContext,
     );
 
-    results.push({
+    return {
       label: label || '',
       value: value || context.slug,
       searchValue: searchValue || label || '',
-    });
+    };
   });
-
-  return results;
 };
 
 /**

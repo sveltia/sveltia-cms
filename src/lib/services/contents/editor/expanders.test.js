@@ -202,6 +202,83 @@ describe('editor/expanders', () => {
       // The function should attempt to update the draft
       expect(entryDraft.update).toHaveBeenCalled();
     });
+
+    it('should skip update when state already matches (lines 54-56)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = {
+        _: {
+          'field.0': true,
+          'content#': false,
+        },
+      };
+
+      entryDraft.update = vi.fn().mockImplementation((fn) => {
+        const updated = fn(mockState);
+
+        if (updated) {
+          Object.assign(mockState, updated);
+        }
+
+        return updated;
+      });
+
+      syncExpanderStates({
+        'field.0': true,
+        'content#': false,
+      });
+
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
+
+    it('should update state when it differs (lines 54-56 opposite branch)', () => {
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.expanderStates = {
+        _: {
+          'field.0': false,
+          'content#': true,
+        },
+      };
+
+      entryDraft.update = vi.fn().mockImplementation((fn) => {
+        const updated = fn(mockState);
+
+        if (updated) {
+          Object.assign(mockState, updated);
+        }
+
+        return updated;
+      });
+
+      syncExpanderStates({
+        'field.0': true,
+        'content#': false,
+      });
+
+      expect(entryDraft.update).toHaveBeenCalled();
+      // After the update, the state should be changed
+      expect(mockState.expanderStates._['field.0']).toBe(true);
+      expect(mockState.expanderStates._['content#']).toBe(false);
+    });
+
+    it('should handle null draft (line 54 if condition)', () => {
+      entryDraft.update = vi.fn().mockImplementation((fn) => {
+        // Pass null as the draft to test the if (_draft) condition
+        const updated = fn(null);
+
+        return updated;
+      });
+
+      expect(() => {
+        syncExpanderStates({
+          'field.0': true,
+          'content#': false,
+        });
+      }).not.toThrow();
+
+      expect(entryDraft.update).toHaveBeenCalled();
+    });
   });
 
   describe('expandInvalidFields', () => {

@@ -305,6 +305,22 @@ describe('Anthropic Translator Service', () => {
       );
     });
 
+    it('should handle API errors when error JSON parsing fails', async () => {
+      const mockFetch = vi.mocked(fetch);
+
+      // Create a Response that fails to parse as JSON
+      const mockResponse = new Response('Invalid JSON', {
+        status: 503,
+        statusText: 'Service Unavailable',
+      });
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      await expect(anthropicTranslator.translate(['test'], mockOptions)).rejects.toThrow(
+        'Anthropic API error: 503 Service Unavailable',
+      );
+    });
+
     it('should handle malformed response structure', async () => {
       const mockFetch = vi.mocked(fetch);
 

@@ -497,6 +497,16 @@ describe('Test resolvePath()', () => {
     expect(resolvePath('folder//file.txt')).toBe('folder/file.txt');
     expect(resolvePath('//folder/file.txt')).toBe('folder/file.txt'); // Leading empty segments are filtered
   });
+
+  test('should handle dots after all segments are removed', () => {
+    // When .. is encountered but no named segment exists before it (after first segment)
+    // This tests the case where lastIndex === -1 inside the .. handling
+    expect(resolvePath('file.txt/../..')).toBe(''); // .. after removing file.txt finds no segment
+    expect(resolvePath('a/file.txt/../../..')).toBe(''); // Going back 3 times removes all segments
+    expect(resolvePath('a/b/file.txt/../..')).toBe('a'); // Going back twice: removes file.txt then b, a remains
+    // Case where segment exists after going back
+    expect(resolvePath('a/b/c/../../file.txt')).toBe('a/file.txt'); // Go back twice, then file.txt at same level
+  });
 });
 
 describe('Test createPath()', () => {

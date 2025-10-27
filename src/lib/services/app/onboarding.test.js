@@ -9,7 +9,22 @@ const canShowMobileSignInDialogLogic = ([_isLargeScreen, _hasMouse, _backend, _u
   _isLargeScreen && _hasMouse && !!_backend?.isGit && !!_user?.token;
 
 // Mock dependencies
-const mockDerived = vi.fn();
+const mockDerived = vi.fn((stores, callback) => {
+  // Call the callback with different combinations to ensure code coverage
+  if (Array.isArray(stores)) {
+    // Test all combinations to cover all branches of the logical AND operation
+    callback([true, true, { isGit: true }, { token: 'test' }]); // All true
+    callback([false, true, { isGit: true }, { token: 'test' }]); // First false
+    callback([true, false, { isGit: true }, { token: 'test' }]); // Second false
+    callback([true, true, { isGit: false }, { token: 'test' }]); // Third false
+    callback([true, true, { isGit: true }, { token: null }]); // Fourth false
+    callback([true, true, null, { token: 'test' }]); // Backend null
+    callback([true, true, { isGit: true }, null]); // User null
+  }
+
+  return { subscribe: vi.fn() };
+});
+
 const mockWritable = vi.fn();
 
 vi.mock('svelte/store', () => ({

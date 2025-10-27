@@ -160,6 +160,39 @@ describe('draft/update/locale', () => {
       expect(result.title).toBe('Existing Translation');
       expect(result.body).toBe('');
     });
+
+    it('should remove nested non-i18n fields matching parent key pattern (line 51)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'date') {
+          return { name: 'date', widget: 'datetime', i18n: false };
+        }
+
+        if (keyPath === 'date.timestamp') {
+          // This field has a different i18n setting but its parent is non-i18n
+          return { name: 'timestamp', widget: 'number', i18n: true };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      const content = {
+        title: 'Title',
+        date: '2024-01-01',
+        'date.timestamp': '123456',
+      };
+
+      const result = copyDefaultLocaleValues(content);
+
+      // date is i18n: false, so it should be removed
+      expect(result.date).toBeUndefined();
+      // date.timestamp should also be removed because it matches the date pattern
+      expect(result['date.timestamp']).toBeUndefined();
+      expect(result.title).toBe('Title');
+    });
   });
 
   describe('toggleLocale', () => {

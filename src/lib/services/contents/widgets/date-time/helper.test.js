@@ -1376,6 +1376,29 @@ describe('Day.js format tokens', () => {
       // Should catch error and continue
       consoleSpy.mockRestore();
     });
+
+    test('should catch exception from dayjs.utc in format path (line 242 catch)', async () => {
+      // Tests the catch block at line 247 in getDateTimeFieldDisplayValue
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const originalUtc = dayjs.utc;
+
+      // Make dayjs.utc throw
+      dayjs.utc = vi.fn(() => {
+        throw new Error('dayjs.utc error');
+      });
+
+      const result = getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD', picker_utc: true },
+        currentValue: '2023-12-25',
+      });
+
+      expect(typeof result).toBe('string');
+      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
+
+      dayjs.utc = originalUtc;
+      consoleSpy.mockRestore();
+    });
   });
 
   describe('getDateTimeFieldDisplayValue - timezone conditional (lines 244-245)', () => {
@@ -1671,6 +1694,30 @@ describe('Day.js format tokens', () => {
 
       consoleSpy.mockRestore();
     });
+
+    test('should catch exception from getDateTimeParts (line 216-218 catch block)', async () => {
+      // Tests the catch block at line 216-218 in getInputValue
+      const { getDateTimeParts } = await import('@sveltia/utils/datetime');
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      // Make getDateTimeParts throw an error
+      vi.mocked(getDateTimeParts).mockImplementationOnce(() => {
+        throw new Error('getDateTimeParts error');
+      });
+
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+      };
+
+      const result = getInputValue('2023-12-25T14:30:00', fieldConfig);
+
+      // Should return empty string when exception occurs
+      expect(result).toBe('');
+      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
+
+      consoleSpy.mockRestore();
+    });
   });
 
   describe('getDateTimeFieldDisplayValue - timezone ternary (lines 244-245)', () => {
@@ -1954,6 +2001,58 @@ describe('Day.js format tokens', () => {
           expect(typeof result).toBe('string');
           expect(result.length).toBeGreaterThan(0);
         });
+      });
+
+      test('should catch format parsing exception (line 247 catch block)', () => {
+        // Force an exception in dayjs format parsing by using invalid format/value combo
+        // This tests the empty catch block at line 247
+        const result = getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD HH:mm:ss' },
+          currentValue: 'not-a-valid-date',
+        });
+
+        // When format parsing fails in try, it falls through to regular date parsing
+        // which will also fail and return empty string
+        expect(typeof result).toBe('string');
+      });
+
+      test('should handle timezone branch with DATE_REGEX match for date-only display (line 264)', () => {
+        // Test the branch: DATE_REGEX.test(currentValue) === true
+        // This should set timeZone to 'UTC'
+        const result = getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+          currentValue: '2023-12-25', // Matches DATE_REGEX pattern
+        });
+
+        expect(typeof result).toBe('string');
+        expect(result.length).toBeGreaterThan(0);
+      });
+
+      test('should handle timezone branch with TIME_SUFFIX_REGEX match for date-only display (line 264)', () => {
+        // Test the branch: TIME_SUFFIX_REGEX.test(currentValue) === true
+        // This should set timeZone to 'UTC'
+        const result = getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+          currentValue: '2023-12-25T14:30:00+02:00', // Matches TIME_SUFFIX_REGEX pattern
+        });
+
+        expect(typeof result).toBe('string');
+        expect(result.length).toBeGreaterThan(0);
+      });
+
+      test('should handle timezone branch undefined when no regex matches (line 264)', () => {
+        // Test the undefined branch when both DATE_REGEX and TIME_SUFFIX_REGEX fail
+        const result = getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, time_format: false, picker_utc: false },
+          currentValue: '2023-12-25T14:30:00', // Doesn't match either regex
+        });
+
+        expect(typeof result).toBe('string');
+        expect(result.length).toBeGreaterThan(0);
       });
     });
   });

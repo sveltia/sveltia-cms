@@ -210,6 +210,41 @@ describe('definitions', () => {
 
         expect(result).toBe('![Test image](https://example.com/image.jpg "Test title")');
       });
+
+      it('should generate markdown for linked image without title', () => {
+        const props = {
+          src: 'https://example.com/image.jpg',
+          alt: 'Test image',
+          link: 'https://example.com',
+        };
+
+        const result = LINKED_IMAGE_COMPONENT.toBlock(props);
+
+        expect(result).toBe('[![Test image](https://example.com/image.jpg)](https://example.com)');
+      });
+
+      it('should return empty string for linked image without src', () => {
+        const props = {
+          alt: 'Test image',
+          title: 'Test title',
+          link: 'https://example.com',
+        };
+
+        const result = LINKED_IMAGE_COMPONENT.toBlock(props);
+
+        expect(result).toBe('');
+      });
+
+      it('should return empty string for image without src and without link', () => {
+        const props = {
+          alt: 'Test image',
+          title: 'Test title',
+        };
+
+        const result = LINKED_IMAGE_COMPONENT.toBlock(props);
+
+        expect(result).toBe('');
+      });
     });
 
     describe('toPreview method', () => {

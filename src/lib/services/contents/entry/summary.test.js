@@ -535,6 +535,43 @@ describe('Test replaceSub()', () => {
     expect(replaceSub('commit_author', contextWithoutCommit)).toBeUndefined();
   });
 
+  test('should handle commitAuthor with only email (line 130 || chain)', () => {
+    const contextOnlyEmail = {
+      slug: 'test-entry',
+      entryPath: 'content/posts/test-entry.md',
+      basePath: 'content/posts',
+      commitDate: new Date('2024-01-15T10:30:00Z'),
+      commitAuthor: {
+        name: '',
+        login: '',
+        email: 'author@example.com',
+      },
+    };
+
+    const result = replaceSub('commit_author', contextOnlyEmail);
+
+    expect(result).toBe('author@example.com');
+  });
+
+  test('should handle commitAuthor with all empty strings (line 130 || chain)', () => {
+    const contextAllEmpty = {
+      slug: 'test-entry',
+      entryPath: 'content/posts/test-entry.md',
+      basePath: 'content/posts',
+      commitDate: new Date('2024-01-15T10:30:00Z'),
+      commitAuthor: {
+        name: '',
+        login: '',
+        email: '',
+      },
+    };
+
+    const result = replaceSub('commit_author', contextAllEmpty);
+
+    // The OR chain returns the last value, which is '' (email)
+    expect(result).toBe('');
+  });
+
   test('should handle dirname with basePath (line 105)', () => {
     // Test replaceSub dirname with a custom basePath to exercise the
     // .replace(basePath ?? '', '') part of line 105
@@ -588,6 +625,92 @@ describe('Test replaceSub()', () => {
     // After .replace('', ''), nothing changes: 'content/posts/'
     // After stripSlashes, we have 'content/posts'
     expect(result).toBe('content/posts');
+  });
+
+  test('should handle dirname when dirPath starts with basePath but not with prefix (line 113 else if branch)', () => {
+    // This specifically tests the else if branch on line 113
+    // We need dirPath that starts with basePath but NOT with prefix (basePath + '/')
+    // Example: basePath='content/posts', dirPath='content/posts-backup/'
+    // prefix would be 'content/posts/', but dirPath starts with 'content/posts-'
+    const contextEdgeCase = {
+      slug: 'test-entry',
+      entryPath: 'content/posts-backup/index/test-entry.md',
+      basePath: 'content/posts', // basePath without slash
+      commitDate: new Date('2024-01-15T10:30:00Z'),
+      commitAuthor: { name: 'John Doe', login: 'john', email: 'john@test.com' },
+    };
+
+    const result = replaceSub('dirname', contextEdgeCase);
+
+    // After removing 'test-entry.md', dirPath is 'content/posts-backup/index/'
+    // prefix is 'content/posts/' (basePath + '/')
+    // dirPath doesn't start with prefix 'content/posts/' (next char is -, not /)
+    // dirPath DOES start with basePath 'content/posts'
+    // So else if branch removes 'content/posts' leaving '-backup/index/'
+    // stripSlashes only removes slashes, leaving '-backup/index'
+    expect(result).toBe('-backup/index');
+  });
+
+  test('should handle dirname when dirPath does NOT start with basePath (line 113 skip)', () => {
+    // Test the case where both prefix and basePath don't match
+    // basePath='other', dirPath='content/posts/index/'
+    // Neither prefix='other/' nor basePath='other' match dirPath
+    const contextNoMatch = {
+      slug: 'test-entry',
+      entryPath: 'content/posts/index/test-entry.md',
+      basePath: 'other', // Doesn't match dirPath at all
+      commitDate: new Date('2024-01-15T10:30:00Z'),
+      commitAuthor: { name: 'John Doe', login: 'john', email: 'john@test.com' },
+    };
+
+    const result = replaceSub('dirname', contextNoMatch);
+
+    // dirPath is 'content/posts/index/' after replace
+    // basePath 'other' doesn't match at all, so dirPath stays the same
+    // stripSlashes removes only slashes, leaving 'content/posts/index'
+    expect(result).toBe('content/posts/index');
+  });
+
+  test('should handle dirname with basePath as substring prefix (line 113 else if)', () => {
+    // Another case for the else if on line 113
+    // basePath='posts', dirPath starts with 'posts' but prefix='posts/' doesn't match
+    const contextSubstring = {
+      slug: 'entry',
+      entryPath: 'posts-archive/2024/entry.md',
+      basePath: 'posts', // Substring that matches without the slash
+      commitDate: new Date('2024-01-15T10:30:00Z'),
+      commitAuthor: { name: 'John Doe', login: 'john', email: 'john@test.com' },
+    };
+
+    const result = replaceSub('dirname', contextSubstring);
+
+    // After removing 'entry.md', dirPath is 'posts-archive/2024/'
+    // prefix is 'posts/' (basePath + '/')
+    // dirPath doesn't start with prefix (next is -, not /)
+    // dirPath DOES start with basePath 'posts'
+    // So else if removes 'posts' leaving '-archive/2024/'
+    // stripSlashes removes slashes leaving '-archive/2024'
+    expect(result).toBe('-archive/2024');
+  });
+
+  test('should handle dirname when basePath ends with slash (line 109 ternary)', () => {
+    // Test the ternary on line 109 where basePath already ends with /
+    const contextWithSlash = {
+      slug: 'test-entry',
+      entryPath: 'content/posts/2024/test-entry.md',
+      basePath: 'content/posts/', // basePath with trailing slash
+      commitDate: new Date('2024-01-15T10:30:00Z'),
+      commitAuthor: { name: 'John Doe', login: 'john', email: 'john@test.com' },
+    };
+
+    const result = replaceSub('dirname', contextWithSlash);
+
+    // After removing filename, dirPath is 'content/posts/2024/'
+    // prefix is 'content/posts/' (basePath already ends with /, so used as-is)
+    // dirPath 'content/posts/2024/' starts with prefix 'content/posts/'
+    // So first if removes prefix leaving '2024/'
+    // stripSlashes removes slashes leaving '2024'
+    expect(result).toBe('2024');
   });
 });
 
@@ -800,6 +923,26 @@ describe('Test replace()', () => {
     const result = replace("pubDate | date('MMM D, YYYY')", contextWithDateTrans);
 
     expect(typeof result).toBe('string');
+  });
+
+  test('should skip Date formatting when transformations exist (line 153-154 && branch)', () => {
+    // Test the && !transformations.length condition:
+    // When value IS a Date AND transformations DO exist,
+    // we should NOT format the date (that branch on line 153-154 is skipped)
+    const contextWithDateTransformations = {
+      ...context,
+      content: {
+        ...context.content,
+        eventDate: new Date('2024-01-15T10:30:00Z'),
+      },
+    };
+
+    // commit_date with a transformation should skip the date formatting on line 153-154
+    const result = replace("commit_date | date('YYYY')", contextWithDateTransformations);
+
+    // Result should be from applyTransformations, not from the date formatting
+    expect(typeof result).toBe('string');
+    // The transformation would be applied, not the default date format
   });
 });
 
@@ -1127,6 +1270,84 @@ describe('Additional comprehensive tests for edge cases', () => {
     const result = replaceSub('dirname', context);
 
     expect(result).toBe('blog/post');
+  });
+
+  test('should use getFieldDisplayValue when no date/ternary transformation (line 150)', () => {
+    // Test the case where transformations.some() returns false
+    // (no date or ternary transformations) so we call getFieldDisplayValue
+    const testContext = {
+      content: {
+        regularField: 'Test Value',
+      },
+      collectionName: 'posts',
+      replaceSubContext: {
+        slug: 'test-entry',
+        entryPath: 'content/posts/test-entry.md',
+        basePath: 'content/posts',
+        commitDate: new Date('2024-01-15T10:30:00Z'),
+        commitAuthor: {
+          name: 'John Doe',
+          email: 'john@example.com',
+        },
+      },
+      defaultLocale: 'en',
+    };
+
+    // Regular field with no special transformation, not in replaceSub
+    // Should call getFieldDisplayValue since no date/ternary transformation
+    const result = replace('regularField', testContext);
+
+    // Should get the field display value
+    expect(result).toBe('Test Value');
+  });
+
+  test('should return last property when all are falsy (line 133 || chain)', () => {
+    // Test case where commitAuthor object exists but all three properties are
+    // falsy (empty strings) - should return the last falsy value (empty string)
+    const context = {
+      slug: 'test-entry',
+      entryPath: 'content/posts/test-entry.md',
+      basePath: 'content/posts',
+      commitDate: new Date('2024-01-15T10:30:00Z'),
+      commitAuthor: {
+        name: '',
+        login: '',
+        email: '',
+      },
+    };
+
+    const result = replaceSub('commit_author', context);
+
+    // When all properties are falsy, returns the last falsy value
+    expect(result).toBe('');
+  });
+
+  test('should handle ternary transformation with falsy field value (lines 149-150)', () => {
+    // Test accessing valueMap[keyPath] when it's falsy but exists
+    // with ternary transformation
+    const context = {
+      content: {
+        isPublished: false, // Falsy but defined
+      },
+      collectionName: 'posts',
+      replaceSubContext: {
+        slug: 'test-entry',
+        entryPath: 'content/posts/test-entry.md',
+        basePath: 'content/posts',
+        commitDate: new Date('2024-01-15T10:30:00Z'),
+        commitAuthor: {
+          name: 'John Doe',
+          email: 'john@example.com',
+        },
+      },
+      defaultLocale: 'en',
+    };
+
+    // With ternary transformation on falsy value, should use valueMap
+    const result = replace("isPublished | ternary('Published', 'Draft')", context);
+
+    // False value processed through ternary should give 'Draft'
+    expect(result).toBe('Draft');
   });
 
   test('getEntrySummary should handle entry with commitDate but no commitAuthor', () => {

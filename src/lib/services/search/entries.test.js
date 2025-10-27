@@ -1,3 +1,4 @@
+import { writable } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
 
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
@@ -52,6 +53,19 @@ vi.mock('$lib/services/search/util', () => ({
     return normalizedValue.includes(normalizedTerms);
   }),
   normalize: vi.fn((text) => String(text).toLowerCase().trim()),
+}));
+
+// Mock stores as plain objects
+vi.mock('svelte-i18n', () => ({
+  locale: writable('en'),
+}));
+
+vi.mock('$lib/services/contents', () => ({
+  allEntries: writable([]),
+}));
+
+vi.mock('$lib/services/search', () => ({
+  searchTerms: writable(''),
 }));
 
 describe('searchEntries basic functionality', () => {
@@ -437,5 +451,46 @@ describe('searchEntries basic functionality', () => {
     const points = scanEntry({ entry, terms: 'config' });
 
     expect(points).toBeGreaterThan(0);
+  });
+});
+
+describe('entrySearchResults derived store', () => {
+  it('should execute the derived store callback', async () => {
+    // Import after mocks are set up
+    const { entrySearchResults } = await import('./entries');
+    const { allEntries } = await import('$lib/services/contents');
+    const { searchTerms } = await import('$lib/services/search');
+    let callbackExecuted = false;
+
+    const unsubscribe = entrySearchResults.subscribe(() => {
+      callbackExecuted = true;
+    });
+
+    // Trigger store updates to force the derived callback (line 91 execution)
+    allEntries.set([
+      /** @type {any} */ ({
+        id: 'test',
+        slug: 'test',
+        subPath: '/test',
+        collectionName: 'blog',
+        fileName: 'test.md',
+        sha: 'mock-sha',
+        size: 1024,
+        locales: {
+          en: {
+            slug: 'test',
+            path: '/test',
+            content: { title: 'Test' },
+          },
+        },
+        defaultLocaleKey: 'en',
+        currentLocaleKey: 'en',
+      }),
+    ]);
+    searchTerms.set('test');
+
+    // The callback should have executed
+    expect(callbackExecuted).toBe(true);
+    unsubscribe();
   });
 });

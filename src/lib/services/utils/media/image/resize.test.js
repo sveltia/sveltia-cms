@@ -81,6 +81,41 @@ describe('Test calculateResize()', () => {
     });
   });
 
+  test('scale-down converted to contain', () => {
+    // Larger landscape image with landscape target - fits scale-down to contain
+    expect(
+      calculateResize(
+        { width: 2048, height: 1536 },
+        { width: 1024, height: 768, fit: 'scale-down' },
+      ),
+    ).toEqual({
+      scale: 0.5,
+      width: 1024,
+      height: 768,
+    });
+
+    // Larger portrait image with portrait target - fits scale-down to contain
+    expect(
+      calculateResize(
+        { width: 1536, height: 2048 },
+        { width: 768, height: 1024, fit: 'scale-down' },
+      ),
+    ).toEqual({
+      scale: 0.375,
+      width: 576,
+      height: 768,
+    });
+
+    // Larger portrait image in landscape target - scale-down converts to contain
+    expect(
+      calculateResize({ width: 200, height: 400 }, { width: 300, height: 100, fit: 'scale-down' }),
+    ).toEqual({
+      scale: 0.25,
+      width: 50,
+      height: 100,
+    });
+  });
+
   test('default parameters', () => {
     const source = { width: 100, height: 50 };
 
@@ -96,6 +131,13 @@ describe('Test calculateResize()', () => {
       scale: 1,
       width: 100,
       height: 50,
+    });
+
+    // Unknown fit option - should return with scale 1 and newWidth/newHeight as 0
+    expect(calculateResize(source, { fit: /** @type {'contain'} */ ('unknown') })).toEqual({
+      scale: 1,
+      width: 0,
+      height: 0,
     });
   });
 

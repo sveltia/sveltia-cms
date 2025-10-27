@@ -446,6 +446,103 @@ describe('getAssociatedAssets', () => {
     expect(result[0].path).toBe('relative/image.jpg');
   });
 
+  test('accepts entry-relative assets when relative parameter is false (line 104-106 branch)', () => {
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    /** @type {Asset} */
+    const mockAsset = {
+      path: 'relative/image.jpg',
+      name: 'image.jpg',
+      kind: 'image',
+      size: 1024,
+      text: '',
+      sha: 'abc123',
+      folder: {
+        collectionName: 'posts',
+        internalPath: 'relative',
+        publicPath: '/relative',
+        entryRelative: true,
+        hasTemplateTags: false,
+      },
+    };
+
+    const entryWithRelativeAsset = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'test.md',
+          content: {
+            image: 'relative/image.jpg', // Relative path
+          },
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetField.mockReturnValue({ widget: 'image' });
+    mockGetAssetByPath.mockReturnValue(mockAsset);
+    mockGetAssetFoldersByPath.mockReturnValue([
+      { collectionName: 'posts', fileName: undefined, entryRelative: true },
+    ]);
+
+    const result = getAssociatedAssets({
+      entry: entryWithRelativeAsset,
+      collectionName: 'posts',
+      relative: false, // Explicitly false - should still accept entryRelative: true assets
+    });
+
+    // Should include the asset even though it's entry-relative and relative is false
+    expect(result).toHaveLength(1);
+    expect(result).toContain(mockAsset);
+  });
+
+  test('excludes asset when getAssetFoldersByPath returns empty array (line 99-107)', () => {
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    /** @type {Asset} */
+    const mockAsset = {
+      path: '/images/test.jpg',
+      name: 'test.jpg',
+      kind: 'image',
+      size: 1024,
+      text: '',
+      sha: 'abc123',
+      folder: {
+        collectionName: 'posts',
+        internalPath: 'images',
+        publicPath: '/images',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+    };
+
+    const entryWithAsset = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'test.md',
+          content: {
+            image: '/images/test.jpg',
+          },
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetField.mockReturnValue({ widget: 'image' });
+    mockGetAssetByPath.mockReturnValue(mockAsset);
+    // getAssetFoldersByPath returns empty array - no matching folder found
+    mockGetAssetFoldersByPath.mockReturnValue([]);
+
+    const result = getAssociatedAssets({
+      entry: entryWithAsset,
+      collectionName: 'posts',
+    });
+
+    // Should not include the asset since no folder matched
+    expect(result).toHaveLength(0);
+  });
+
   test('returns empty array when no locales have content (lines 34-35)', () => {
     const mockCollection = { name: 'posts', _type: 'entry' };
 
@@ -519,6 +616,67 @@ describe('getAssociatedAssets', () => {
 
     // Should include the orphaned asset since it's in the same directory
     expect(result).toContain(mockAsset);
+  });
+
+  test('does not duplicate assets already in the array (line 126 !assets.find)', () => {
+    // Test that when an asset is already in the assets array,
+    // it's not added again even if it appears in allAssets
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    const sharedAsset = /** @type {Asset} */ ({
+      path: 'post-dir/shared.jpg',
+      name: 'shared.jpg',
+      kind: 'image',
+      size: 1024,
+      text: '',
+      sha: 'shared123',
+      folder: {
+        collectionName: 'posts',
+        internalPath: 'post-dir',
+        publicPath: '/post-dir',
+        entryRelative: true,
+        hasTemplateTags: false,
+      },
+    });
+
+    const entryWithContent = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'post-dir/index.md',
+          content: {
+            title: 'Test',
+            image: 'post-dir/shared.jpg', // This asset is in the content
+          },
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetField.mockReturnValue({ widget: 'image' }); // Image field
+    mockGetAssetByPath.mockReturnValue(sharedAsset); // Asset from content
+    mockGetAssetFoldersByPath.mockReturnValue([
+      {
+        collectionName: 'posts',
+        fileName: undefined,
+        entryRelative: true,
+      },
+    ]);
+    mockGetAssetFolder.mockReturnValue({ entryRelative: true });
+    mockAllAssets.subscribe.mockImplementation((callback) => {
+      // Same asset appears in allAssets (as orphaned)
+      callback([sharedAsset]);
+      return vi.fn();
+    });
+
+    const result = getAssociatedAssets({
+      entry: entryWithContent,
+      collectionName: 'posts',
+      relative: true,
+    });
+
+    // Should only contain the asset once (not duplicated)
+    expect(result.filter((a) => a.path === 'post-dir/shared.jpg')).toHaveLength(1);
   });
 
   test('does not include orphaned assets when relative is false (lines 121-131)', () => {

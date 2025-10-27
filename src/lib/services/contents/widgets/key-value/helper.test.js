@@ -384,4 +384,31 @@ describe('Test savePairs()', () => {
       expect(result).toEqual([undefined, undefined, undefined]);
     });
   });
+
+  describe('savePairs - null draft handling (line 60)', () => {
+    test('should handle null draft gracefully', async () => {
+      const { i18nAutoDupEnabled } = await import('$lib/services/contents/draft');
+      const entryDraft = writable(null);
+
+      /** @type {KeyValueField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        i18n: undefined,
+      };
+
+      const keyPath = 'metadata';
+      const locale = '_default';
+      /** @type {[string, string][]} */
+      const pairs = [['key1', 'value1']];
+
+      // Should not throw error even with null draft
+      expect(() => {
+        // @ts-expect-error - Testing null draft edge case
+        savePairs({ entryDraft, fieldConfig, keyPath, locale, pairs });
+      }).not.toThrow();
+
+      expect(i18nAutoDupEnabled.set).toHaveBeenCalledWith(false);
+      expect(i18nAutoDupEnabled.set).toHaveBeenCalledWith(true);
+    });
+  });
 });

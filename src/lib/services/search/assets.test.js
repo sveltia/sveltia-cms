@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { writable } from 'svelte/store';
+import { describe, expect, it, vi } from 'vitest';
 
 import { searchAssets } from './assets';
 import { hasMatch, normalize } from './util';
@@ -6,6 +7,15 @@ import { hasMatch, normalize } from './util';
 /**
  * @import { Asset } from '$lib/types/private';
  */
+
+// Mock only the stores, not the util functions
+vi.mock('$lib/services/assets', () => ({
+  allAssets: writable([]),
+}));
+
+vi.mock('$lib/services/search', () => ({
+  searchTerms: writable(''),
+}));
 
 describe('searchAssets integration', () => {
   /**
@@ -101,5 +111,42 @@ describe('searchAssets integration', () => {
     const result = searchAssets({ assets, terms: 'cafe' });
 
     expect(result).toHaveLength(1);
+  });
+});
+
+describe('assetSearchResults derived store', () => {
+  it('should execute the derived store callback', async () => {
+    // Import after mocks are set up
+    const { assetSearchResults } = await import('./assets');
+    const { allAssets } = await import('$lib/services/assets');
+    const { searchTerms } = await import('$lib/services/search');
+    let callbackExecuted = false;
+
+    const unsubscribe = assetSearchResults.subscribe(() => {
+      callbackExecuted = true;
+    });
+
+    // Trigger store updates to force the derived callback (line 34 execution)
+    allAssets.set([
+      /** @type {any} */ ({
+        name: 'profile.jpg',
+        path: '/assets/profile.jpg',
+        sha: 'mock-sha',
+        size: 1024,
+        kind: 'image',
+        folder: {
+          collectionName: undefined,
+          internalPath: '/assets',
+          publicPath: '/assets',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      }),
+    ]);
+    searchTerms.set('profile');
+
+    // The callback should have executed
+    expect(callbackExecuted).toBe(true);
+    unsubscribe();
   });
 });

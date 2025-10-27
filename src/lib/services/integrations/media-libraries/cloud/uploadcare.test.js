@@ -698,6 +698,63 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
         'https://field-cdn.example.com/abc123/-/field/operations/image.jpg',
       );
     });
+
+    it('should handle missing library options with fallbacks', () => {
+      // Test line 77: when getLibraryOptions(fieldConfig) returns undefined
+      // Should fall back to getLibraryOptions() which returns the global config
+      const mockResults = [
+        {
+          uuid: 'test123',
+          original_filename: 'test.jpg',
+          original_file_url: 'https://ucarecdn.com/test123/test.jpg',
+          size: 1000,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ];
+
+      // Call with undefined fieldConfig - should use global config
+      const results = parseResults(mockResults, { fieldConfig: undefined });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].id).toBe('test123');
+      // Should use default CDN base and no special operations
+      expect(results[0].downloadURL).toBe('https://ucarecdn.com/test123/');
+    });
+
+    it('should use empty options when all fallbacks are exhausted', () => {
+      // Test line 77: when both getLibraryOptions(fieldConfig) and getLibraryOptions()
+      // return undefined, should fall back to empty object {}
+      vi.mocked(get).mockReturnValue({}); // No uploadcare config
+
+      const mockResults = [
+        {
+          uuid: 'fallback123',
+          original_filename: 'fallback.jpg',
+          original_file_url: 'https://ucarecdn.com/fallback123/fallback.jpg',
+          size: 2000,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ];
+
+      const results = parseResults(mockResults);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].id).toBe('fallback123');
+      // With no library options, should use original_file_url base
+      expect(results[0].downloadURL).toBe('https://ucarecdn.com/fallback123/');
+    });
   });
 
   describe('list', () => {
