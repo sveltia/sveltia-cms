@@ -1,6 +1,111 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { editors, previews } from './index.js';
+
+// Mock all Svelte components - they're not needed for this test, but they must be mocked
+// because Vitest 4 cannot load .svelte files in Node environment
+vi.mock('$lib/components/contents/details/widgets/boolean/boolean-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/boolean/boolean-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/code/code-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/code/code-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/color/color-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/color/color-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/compute/compute-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/compute/compute-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/date-time/date-time-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/date-time/date-time-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/file/file-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/file/file-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/key-value/key-value-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/key-value/key-value-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/list/list-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/list/list-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/map/map-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/map/map-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/markdown/markdown-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/markdown/markdown-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/number/number-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/number/number-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/object/object-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/object/object-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/relation/relation-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/relation/relation-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/select/select-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/select/select-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/string/string-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/string/string-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/text/text-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/text/text-preview.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/uuid/uuid-editor.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/contents/details/widgets/uuid/uuid-preview.svelte', () => ({
+  default: {},
+}));
 
 describe('Widget components', () => {
   describe('editors', () => {

@@ -36,9 +36,9 @@ describe('assets/view/group', () => {
     const { get } = await import('svelte/store');
     const { getRegex } = await import('$lib/services/utils/misc');
 
-    compareMock = vi.mocked(compare);
-    getMock = vi.mocked(get);
-    getRegexMock = vi.mocked(getRegex);
+    compareMock = /** @type {any} */ (vi.mocked(compare));
+    getMock = /** @type {any} */ (vi.mocked(get));
+    getRegexMock = /** @type {any} */ (vi.mocked(getRegex));
 
     // Default compare implementation for sorting
     compareMock.mockImplementation((a, b) => {

@@ -72,13 +72,13 @@ describe('Test processResource()', () => {
     const { transformFile } = await import('$lib/services/integrations/media-libraries/default');
     const { getGitHash } = await import('$lib/services/utils/file');
 
-    getHashMock = vi.mocked(getHash);
-    equalMock = vi.mocked(equal);
-    domPurifyMock = vi.mocked(sanitize);
-    getMock = vi.mocked(get);
-    getAssetPublicURLMock = vi.mocked(getAssetPublicURL);
-    transformFileMock = vi.mocked(transformFile);
-    getGitHashMock = vi.mocked(getGitHash);
+    getHashMock = /** @type {any} */ (vi.mocked(getHash));
+    equalMock = /** @type {any} */ (vi.mocked(equal));
+    domPurifyMock = /** @type {any} */ (vi.mocked(sanitize));
+    getMock = /** @type {any} */ (vi.mocked(get));
+    getAssetPublicURLMock = /** @type {any} */ (vi.mocked(getAssetPublicURL));
+    transformFileMock = /** @type {any} */ (vi.mocked(transformFile));
+    getGitHashMock = /** @type {any} */ (vi.mocked(getGitHash));
 
     // Default mock implementations
     domPurifyMock.mockImplementation((input) => String(input));
@@ -530,7 +530,7 @@ describe('Test getExistingBlobURL()', () => {
 
     const { getHash } = await import('@sveltia/utils/crypto');
 
-    getHashMock = vi.mocked(getHash);
+    getHashMock = /** @type {any} */ (vi.mocked(getHash));
   });
 
   test('should find existing blob URL when file hash matches', async () => {

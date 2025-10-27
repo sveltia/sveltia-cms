@@ -25,8 +25,8 @@ describe('assets/view/filter', () => {
     const { getAssetKind } = await import('$lib/services/assets/kinds');
     const { getRegex } = await import('$lib/services/utils/misc');
 
-    getAssetKindMock = vi.mocked(getAssetKind);
-    getRegexMock = vi.mocked(getRegex);
+    getAssetKindMock = /** @type {any} */ (vi.mocked(getAssetKind));
+    getRegexMock = /** @type {any} */ (vi.mocked(getRegex));
 
     // Sample asset data with complete Asset structure
     mockAssets = [

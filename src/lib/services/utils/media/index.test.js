@@ -62,13 +62,19 @@ describe('getMediaMetadata', () => {
 
     vi.mocked(extractExifData).mockResolvedValue(mockExifData);
 
-    // @ts-ignore - Mock global Image with factory function
-    /**
-     *
-     */
-    global.Image = function Image() {
-      return createMockImage();
-    };
+    // Mock global Image with proper constructor
+    /** @type {any} */
+    class MockImage {
+      /**
+       * Creates a mock image instance.
+       */
+      constructor() {
+        Object.assign(this, createMockImage());
+      }
+    }
+
+    // @ts-ignore - MockImage doesn't fully implement HTMLImageElement interface
+    global.Image = MockImage;
 
     const result = await getMediaMetadata(mockAsset, mockSrc, 'image');
 

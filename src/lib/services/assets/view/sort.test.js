@@ -18,7 +18,7 @@ describe('assets/view/sort', () => {
 
     const { compare } = await import('@sveltia/utils/string');
 
-    compareMock = vi.mocked(compare);
+    compareMock = /** @type {any} */ (vi.mocked(compare));
 
     // Default compare implementation for string sorting
     compareMock.mockImplementation((a, b) => {

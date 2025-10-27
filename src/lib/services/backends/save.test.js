@@ -199,7 +199,21 @@ describe('save', () => {
       // Mock IndexedDB class constructor to return our mock
       const { IndexedDB } = await import('@sveltia/utils/storage');
 
-      vi.mocked(IndexedDB).mockImplementation(() => mockCacheDB);
+      // Vitest 4 requires proper constructor with 'class' keyword
+      /** @type {any} */
+      class MockIndexedDB {
+        /**
+         * Creates a mock IndexedDB instance.
+         */
+        constructor() {
+          Object.assign(this, mockCacheDB);
+        }
+      }
+
+      /** @type {any} */
+      const mockedIndexedDB = vi.mocked(IndexedDB);
+
+      mockedIndexedDB.mockImplementation(MockIndexedDB);
     });
 
     test('should return early when no database name is available', async () => {

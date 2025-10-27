@@ -44,18 +44,24 @@ describe('git/shared/fetch', () => {
       deleteEntries: vi.fn(),
     };
 
-    // Mock IndexedDB constructor - import at module level from storage mock
-    vi.mocked(IndexedDB).mockImplementation((dbName, storeName) => {
-      if (storeName === 'meta') {
-        return mockMetaDB;
+    // Mock IndexedDB constructor - Vitest 4 requires proper constructor with 'class' keyword
+    /** @type {any} */
+    class MockIndexedDB {
+      /**
+       * Creates an instance that returns appropriate mock based on store name.
+       * @param {string} dbName Database name.
+       * @param {string} storeName Store name.
+       */
+      constructor(dbName, storeName) {
+        if (storeName === 'meta') {
+          Object.assign(this, mockMetaDB);
+        } else if (storeName === 'file-cache') {
+          Object.assign(this, mockCacheDB);
+        }
       }
+    }
 
-      if (storeName === 'file-cache') {
-        return mockCacheDB;
-      }
-
-      return {};
-    });
+    vi.mocked(IndexedDB).mockImplementation(MockIndexedDB);
 
     vi.mocked(createFileList).mockReturnValue({
       count: 10,

@@ -33,7 +33,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const { isMultiple } = await import('$lib/services/integrations/media-libraries/shared');
 
-    isMultipleMock = vi.mocked(isMultiple);
+    isMultipleMock = /** @type {any} */ (vi.mocked(isMultiple));
   });
 
   test('should return empty string for single file field without default', () => {

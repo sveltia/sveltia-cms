@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -301,8 +303,20 @@ describe('assets/info', () => {
         get: vi.fn(),
         set: vi.fn(),
       };
-      // @ts-ignore
-      vi.mocked(IndexedDB).mockReturnValue(mockIndexedDB);
+
+      // Vitest 4 requires proper constructor with 'class' keyword
+      /** @type {any} */
+      class MockIndexedDB {
+        /**
+         * Creates a mock IndexedDB instance.
+         */
+        constructor() {
+          Object.assign(this, mockIndexedDB);
+        }
+      }
+
+      // @ts-expect-error - Constructor signature mismatch between class and interface
+      vi.mocked(IndexedDB).mockImplementation(MockIndexedDB);
     });
 
     it('should return undefined for non-image/video/PDF assets', async () => {
@@ -631,8 +645,22 @@ describe('assets/info', () => {
         set: vi.fn(),
       };
 
-      // @ts-ignore
-      vi.mocked(IndexedDB).mockReturnValue(mockIndexedDB);
+      // Vitest 4 requires proper constructor with 'class' keyword
+      /** @type {any} */
+      class MockIndexedDB {
+        /**
+         * Creates a mock IndexedDB instance.
+         */
+        constructor() {
+          Object.assign(this, mockIndexedDB);
+        }
+      }
+
+      /** @type {any} */
+      const mockedIndexedDB = vi.mocked(IndexedDB);
+
+      // @ts-ignore - Constructor signature mismatch
+      mockedIndexedDB.mockImplementation(MockIndexedDB);
 
       const { transformImage } = await import('$lib/services/utils/media/image/transform');
 

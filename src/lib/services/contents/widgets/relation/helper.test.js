@@ -2077,11 +2077,16 @@ describe('Test replaceTemplateFields()', () => {
     expect(result.searchValue).toBe('John Doe john@example.com');
   });
 
-  test('should handle empty replacements with fallback to slug', () => {
+  test('should handle empty replacements with fallback to slug', async () => {
+    const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
+
     const emptyContext = {
       ...context,
       getDisplayValue: vi.fn(() => ''),
     };
+
+    // Vitest 4: Explicitly set mock return value to avoid leaking from other tests
+    vi.mocked(getEntrySummaryFromContent).mockReturnValue('');
 
     const result = replaceTemplateFields(templates, fieldNames, emptyContext, fallbackContext);
 
@@ -2239,7 +2244,9 @@ describe('Test createSimpleOption()', () => {
     expect(result.searchValue).toBe('John Doe john@example.com');
   });
 
-  test('should use slug as fallback for empty label', () => {
+  test('should use slug as fallback for empty label', async () => {
+    const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
+
     /** @type {TemplateStrings} */
     const templates = {
       _displayField: '{{name}}',
@@ -2263,6 +2270,9 @@ describe('Test createSimpleOption()', () => {
       defaultLocale: '_default',
       identifierField: 'title',
     };
+
+    // Vitest 4: Explicitly set mock return value to avoid leaking from other tests
+    vi.mocked(getEntrySummaryFromContent).mockReturnValue('');
 
     const result = createSimpleOption({ templates, allFieldNames, context, fallbackContext });
 

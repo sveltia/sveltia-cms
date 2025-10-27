@@ -52,7 +52,19 @@ describe('draft/backup', () => {
   let entryDraft;
 
   // Mock IndexedDB constructor to return our mock (must happen before importing backup module)
-  vi.mocked(IndexedDB).mockReturnValue(mockBackupDB);
+  // Vitest 4 requires proper constructor with 'class' keyword
+  /** @type {any} */
+  class MockIndexedDB {
+    /**
+     * Creates an instance of MockIndexedDB with mock methods.
+     */
+    constructor() {
+      // Copy all methods from mockBackupDB to this instance
+      Object.assign(this, mockBackupDB);
+    }
+  }
+
+  vi.mocked(IndexedDB).mockImplementation(MockIndexedDB);
 
   beforeEach(async () => {
     vi.clearAllMocks();

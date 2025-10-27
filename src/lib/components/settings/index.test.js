@@ -1,9 +1,33 @@
 import { get } from 'svelte/store';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { siteConfig } from '$lib/services/config';
 
 import { panels } from './index.js';
+
+// Mock Svelte components - they're not needed for this test, but they must be mocked
+// because Vitest 4 cannot load .svelte files in Node environment
+vi.mock('$lib/components/settings/panels/accessibility-panel.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/settings/panels/advanced-panel.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/settings/panels/appearance-panel.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/settings/panels/contents-panel.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/settings/panels/i18n-panel.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/settings/panels/language-panel.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/settings/panels/media-panel.svelte', () => ({
+  default: {},
+}));
 
 describe('Settings panels', () => {
   test('should export panels store', () => {
