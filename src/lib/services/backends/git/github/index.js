@@ -75,6 +75,7 @@ export const init = () => {
     apiConfig,
     /** @type {ApiEndpointConfig} */ ({
       clientId: '', // @todo Implement OAuth token renewal
+      authScope: 'repo,user',
       authURL,
       tokenURL: authURL.replace('/authorize', '/access_token'),
       restBaseURL: normalizeRestBaseURL(restApiRoot),
