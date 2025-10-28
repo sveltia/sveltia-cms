@@ -19,7 +19,7 @@ import { prefs } from '$lib/services/user/prefs';
 /**
  * @import { Writable } from 'svelte/store';
  * @import { InternalSiteConfig } from '$lib/types/private';
- * @import { GitBackend, GiteaBackend, GitLabBackend, SiteConfig } from '$lib/types/public';
+ * @import { GitBackend, SiteConfig } from '$lib/types/public';
  */
 
 const { DEV, VITE_SITE_URL } = import.meta.env;
@@ -70,18 +70,25 @@ export const validate = (config) => {
     throw new Error(get(_)('config.error.missing_backend'));
   }
 
-  if (!config.backend.name) {
+  const backendName = config.backend.name;
+
+  if (!backendName) {
     throw new Error(get(_)('config.error.missing_backend_name'));
   }
 
-  if (!validBackendNames.includes(config.backend.name)) {
-    throw new Error(
-      get(_)('config.error.unsupported_backend', { values: { name: config.backend.name } }),
-    );
+  if (!validBackendNames.includes(backendName)) {
+    throw new Error(get(_)('config.error.unsupported_backend', { values: { name: backendName } }));
   }
 
-  if (Object.keys(gitBackendServices).includes(config.backend.name)) {
-    const { repo, automatic_deployments: autoDeploy } = /** @type {GitBackend} */ (config.backend);
+  if (Object.keys(gitBackendServices).includes(backendName)) {
+    const {
+      repo,
+      // @ts-ignore Gitea backend doesn’t have the property
+      auth_type: authType,
+      // @ts-ignore GitHub backend doesn’t have the property
+      app_id: appId,
+      automatic_deployments: autoDeploy,
+    } = /** @type {GitBackend} */ (config.backend);
 
     if (repo === undefined) {
       throw new Error(get(_)('config.error.missing_repository'));
@@ -91,30 +98,17 @@ export const validate = (config) => {
       throw new Error(get(_)('config.error.invalid_repository'));
     }
 
-    // @todo Remove the option prior to the 1.0 release.
-    if (autoDeploy !== undefined) {
-      warnDeprecation('automatic_deployments');
-    }
-  }
-
-  if (config.backend.name === 'gitlab') {
-    const { auth_type: authType, app_id: appId } = /** @type {GitLabBackend} */ (config.backend);
-
-    // @ts-ignore `implicit` is not supported in Sveltia CMS
     if (authType === 'implicit') {
       throw new Error(get(_)('config.error.oauth_implicit_flow'));
     }
 
-    if (authType === 'pkce' && !appId) {
+    if ((backendName === 'gitea' || (backendName === 'gitlab' && authType === 'pkce')) && !appId) {
       throw new Error(get(_)('config.error.oauth_no_app_id'));
     }
-  }
 
-  if (config.backend.name === 'gitea') {
-    const { app_id: appId } = /** @type {GiteaBackend} */ (config.backend);
-
-    if (!appId) {
-      throw new Error(get(_)('config.error.oauth_no_app_id'));
+    // @todo Remove the option prior to the 1.0 release.
+    if (autoDeploy !== undefined) {
+      warnDeprecation('automatic_deployments');
     }
   }
 
