@@ -176,6 +176,7 @@ describe('config/index', () => {
       expect(() =>
         // @ts-ignore - testing invalid config
         validate({
+          // @ts-ignore `implicit` is not supported in Sveltia CMS
           backend: { name: 'gitlab', repo: 'owner/repo', auth_type: 'implicit' },
           media_folder: 'uploads',
           collections: [],

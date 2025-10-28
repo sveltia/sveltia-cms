@@ -100,6 +100,7 @@ export const validate = (config) => {
   if (config.backend.name === 'gitlab') {
     const { auth_type: authType, app_id: appId } = /** @type {GitLabBackend} */ (config.backend);
 
+    // @ts-ignore `implicit` is not supported in Sveltia CMS
     if (authType === 'implicit') {
       throw new Error(get(_)('config.error.oauth_implicit_flow'));
     }
