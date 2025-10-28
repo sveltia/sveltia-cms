@@ -1,9 +1,8 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getPatURL, signIn, signOut } from '$lib/services/backends/git/github/auth';
 import { getUserProfile } from '$lib/services/backends/git/github/user';
-import { initServerSideAuth } from '$lib/services/backends/git/shared/auth';
+import { getTokens } from '$lib/services/backends/git/shared/auth';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/user');
@@ -11,22 +10,10 @@ vi.mock('$lib/services/backends/git/shared/auth');
 vi.mock('$lib/services/backends/git/shared/api', () => ({
   apiConfig: { authURL: undefined },
 }));
-vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
-}));
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  writable: vi.fn(() => ({ subscribe: vi.fn(), set: vi.fn(), update: vi.fn() })),
-  derived: vi.fn(() => ({ subscribe: vi.fn() })),
-}));
 
 describe('GitHub auth service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Set default mock behavior
-    vi.mocked(get).mockReturnValue({
-      backend: { site_domain: 'example.com' },
-    });
   });
 
   describe('getPatURL', () => {
@@ -59,13 +46,16 @@ describe('GitHub auth service', () => {
   });
 
   describe('signIn', () => {
-    test('returns undefined for auto sign-in without token', async () => {
+    test('returns undefined when getTokens returns undefined', async () => {
+      vi.mocked(getTokens).mockResolvedValue(undefined);
+
       const result = await signIn({ auto: true });
 
       expect(result).toBeUndefined();
+      expect(getUserProfile).not.toHaveBeenCalled();
     });
 
-    test('signs in with provided token', async () => {
+    test('signs in with token from getTokens', async () => {
       const mockUser = /** @type {any} */ ({
         id: '123',
         login: 'testuser',
@@ -73,87 +63,42 @@ describe('GitHub auth service', () => {
         backendName: 'github',
       });
 
-      vi.mocked(getUserProfile).mockResolvedValue(mockUser);
-
-      const result = await signIn({ token: 'test-token', auto: false });
-
-      expect(getUserProfile).toHaveBeenCalledWith({ token: 'test-token' });
-      expect(result).toEqual(mockUser);
-    });
-
-    test('initiates server-side auth when no token provided', async () => {
-      const mockUser = /** @type {any} */ ({
-        id: '123',
-        login: 'testuser',
-        name: 'Test User',
-        backendName: 'github',
+      vi.mocked(getTokens).mockResolvedValue({
+        token: 'auth-token',
+        refreshToken: 'refresh-token',
       });
-
-      vi.mocked(initServerSideAuth).mockResolvedValue({ token: 'new-token' });
       vi.mocked(getUserProfile).mockResolvedValue(mockUser);
 
       const result = await signIn({ auto: false });
 
-      expect(initServerSideAuth).toHaveBeenCalledWith({
-        backendName: 'github',
-        siteDomain: 'example.com',
-        authURL: undefined,
-        scope: 'repo,user',
+      expect(getTokens).toHaveBeenCalledWith({
+        options: { auto: false },
+        apiConfig: expect.any(Object),
       });
-      expect(getUserProfile).toHaveBeenCalledWith({ token: 'new-token' });
+      expect(getUserProfile).toHaveBeenCalledWith({
+        token: 'auth-token',
+        refreshToken: 'refresh-token',
+      });
       expect(result).toEqual(mockUser);
     });
 
-    test('initiates server-side auth when no token provided and no site domain', async () => {
-      const mockUser = /** @type {any} */ ({
-        id: '123',
-        login: 'testuser',
-        name: 'Test User',
-        backendName: 'github',
+    test('passes options to getTokens', async () => {
+      vi.mocked(getTokens).mockResolvedValue(undefined);
+
+      await signIn({ token: 'existing-token', auto: false });
+
+      expect(getTokens).toHaveBeenCalledWith({
+        options: { token: 'existing-token', auto: false },
+        apiConfig: expect.any(Object),
       });
-
-      // Mock get to return backend without site_domain
-      vi.mocked(get).mockReturnValueOnce({ backend: {} });
-
-      vi.mocked(initServerSideAuth).mockResolvedValue({ token: 'new-token' });
-      vi.mocked(getUserProfile).mockResolvedValue(mockUser);
-
-      const result = await signIn({ auto: false });
-
-      expect(initServerSideAuth).toHaveBeenCalledWith({
-        backendName: 'github',
-        siteDomain: undefined,
-        authURL: undefined,
-        scope: 'repo,user',
-      });
-      expect(getUserProfile).toHaveBeenCalledWith({ token: 'new-token' });
-      expect(result).toEqual(mockUser);
     });
 
-    test('initiates server-side auth when siteConfig is null', async () => {
-      const mockUser = /** @type {any} */ ({
-        id: '123',
-        login: 'testuser',
-        name: 'Test User',
-        backendName: 'github',
-      });
-
-      // Mock get to return null for siteConfig
-      vi.mocked(get).mockReturnValueOnce(null);
-
-      vi.mocked(initServerSideAuth).mockResolvedValue({ token: 'new-token' });
-      vi.mocked(getUserProfile).mockResolvedValue(mockUser);
+    test('returns undefined when getTokens returns no token', async () => {
+      vi.mocked(getTokens).mockResolvedValue(undefined);
 
       const result = await signIn({ auto: false });
 
-      expect(initServerSideAuth).toHaveBeenCalledWith({
-        backendName: 'github',
-        siteDomain: undefined,
-        authURL: undefined,
-        scope: 'repo,user',
-      });
-      expect(getUserProfile).toHaveBeenCalledWith({ token: 'new-token' });
-      expect(result).toEqual(mockUser);
+      expect(result).toBeUndefined();
     });
   });
 

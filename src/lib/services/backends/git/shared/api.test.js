@@ -53,6 +53,7 @@ describe('api.js', () => {
 
     it('should have expected properties', () => {
       expect(apiConfig).toHaveProperty('clientId');
+      expect(apiConfig).toHaveProperty('authScope');
       expect(apiConfig).toHaveProperty('authURL');
       expect(apiConfig).toHaveProperty('tokenURL');
       expect(apiConfig).toHaveProperty('authScheme');
@@ -62,6 +63,7 @@ describe('api.js', () => {
 
     it('should have empty string defaults', () => {
       expect(apiConfig.clientId).toBe('');
+      expect(apiConfig.authScope).toBe('');
       expect(apiConfig.authURL).toBe('');
       expect(apiConfig.tokenURL).toBe('');
       expect(apiConfig.restBaseURL).toBe('');

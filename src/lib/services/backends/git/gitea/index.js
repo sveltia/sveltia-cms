@@ -68,6 +68,7 @@ export const init = () => {
     apiConfig,
     /** @type {ApiEndpointConfig} */ ({
       clientId,
+      authScope: 'read:repository,write:repository,read:user',
       authURL,
       tokenURL: authURL.replace('/authorize', '/access_token'),
       restBaseURL: stripSlashes(restApiRoot),

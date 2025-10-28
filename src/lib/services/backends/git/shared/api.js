@@ -14,6 +14,7 @@ import { sendRequest } from '$lib/services/utils/networking';
  */
 const API_CONFIG_INFO_PLACEHOLDER = {
   clientId: '',
+  authScope: '',
   authURL: '',
   tokenURL: '',
   authScheme: 'token',

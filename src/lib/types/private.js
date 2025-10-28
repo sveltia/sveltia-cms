@@ -109,6 +109,7 @@
  * API endpoint configuration.
  * @typedef {object} ApiEndpointConfig
  * @property {string} clientId OAuth client ID.
+ * @property {string} authScope OAuth scope.
  * @property {string} authURL OAuth authorization URL.
  * @property {string} tokenURL OAuth token URL.
  * @property {string} [authScheme] Authorization scheme. Default is `token`.

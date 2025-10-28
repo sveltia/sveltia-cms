@@ -1,14 +1,9 @@
-import { get } from 'svelte/store';
-
-import { BACKEND_NAME } from '$lib/services/backends/git/github/constants';
 import { getUserProfile } from '$lib/services/backends/git/github/user';
 import { apiConfig } from '$lib/services/backends/git/shared/api';
-import { initServerSideAuth } from '$lib/services/backends/git/shared/auth';
-import { siteConfig } from '$lib/services/config';
+import { getTokens } from '$lib/services/backends/git/shared/auth';
 
 /**
  * @import { SignInOptions, User } from '$lib/types/private';
- * @import { GitHubBackend } from '$lib/types/public';
  */
 
 /**
@@ -30,33 +25,20 @@ export const getPatURL = (repoURL) => {
 };
 
 /**
- * Retrieve the repository configuration and sign in with GitHub REST API.
+ * Sign in with GitHub REST API.
  * @param {SignInOptions} options Options.
  * @returns {Promise<User | void>} User info, or nothing when the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
  * @todo Add `refreshToken` support.
  */
-export const signIn = async ({ token, auto = false }) => {
-  if (auto && !token) {
+export const signIn = async (options) => {
+  const { token, refreshToken } = (await getTokens({ options, apiConfig })) ?? {};
+
+  if (!token) {
     return undefined;
   }
 
-  if (!token) {
-    const { site_domain: siteDomain } = /** @type {GitHubBackend} */ (
-      get(siteConfig)?.backend ?? {}
-    );
-
-    const { authURL } = apiConfig;
-
-    ({ token } = await initServerSideAuth({
-      backendName: BACKEND_NAME,
-      siteDomain,
-      authURL,
-      scope: 'repo,user',
-    }));
-  }
-
-  return getUserProfile({ token });
+  return getUserProfile({ token, refreshToken });
 };
 
 /**

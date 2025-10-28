@@ -3,10 +3,14 @@ import { LocalStorage } from '@sveltia/utils/storage';
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { siteConfig } from '$lib/services/config';
+
 import {
   authorize,
   createAuthSecrets,
   finishClientSideAuth,
+  getTokens,
+  handleAuthFlow,
   handleClientSideAuthPopup,
   inAuthPopup,
   initClientSideAuth,
@@ -22,6 +26,21 @@ vi.mock('@sveltia/utils/crypto', () => ({
 }));
 
 vi.mock('@sveltia/utils/storage');
+
+vi.mock('$lib/services/config', () => ({
+  siteConfig: {
+    subscribe: vi.fn((fn) => {
+      fn({
+        backend: {
+          name: 'github',
+          site_domain: 'example.com',
+        },
+      });
+
+      return () => {};
+    }),
+  },
+}));
 
 vi.mock('svelte-i18n', () => {
   /**
@@ -651,6 +670,454 @@ describe('git/shared/auth', () => {
       });
 
       expect(get(inAuthPopup)).toBe(true);
+    });
+  });
+
+  describe('handleAuthFlow', () => {
+    beforeEach(() => {
+      global.fetch = vi.fn();
+      mockWindow.location.href = 'https://localhost:3000/admin';
+      mockWindow.opener = null;
+    });
+
+    it('should handle GitHub server-side auth flow', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+      vi.mocked(siteConfig.subscribe).mockImplementation((fn) => {
+        fn({
+          backend: {
+            name: 'github',
+            site_domain: 'example.com',
+          },
+        });
+
+        return () => {};
+      });
+
+      const apiConfig = {
+        clientId: 'github-client-id',
+        authScope: 'repo',
+        authURL: 'https://github.com/login/oauth/authorize',
+        tokenURL: 'https://github.com/login/oauth/access_token',
+      };
+
+      const authPromise = handleAuthFlow({ auto: false, apiConfig });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({
+          token: 'github-token',
+          refreshToken: 'github-refresh-token',
+        })}`,
+        origin: 'https://github.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({
+        token: 'github-token',
+        refreshToken: 'github-refresh-token',
+      });
+    });
+
+    it('should handle GitLab PKCE auth flow', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+      vi.mocked(siteConfig.subscribe).mockImplementation((fn) => {
+        fn({
+          backend: {
+            name: 'gitlab',
+            site_domain: 'example.com',
+            auth_type: 'pkce',
+          },
+        });
+
+        return () => {};
+      });
+
+      const apiConfig = {
+        clientId: 'gitlab-client-id',
+        authScope: 'api',
+        authURL: 'https://gitlab.com/oauth/authorize',
+        tokenURL: 'https://gitlab.com/oauth/token',
+      };
+
+      const authPromise = handleAuthFlow({ auto: false, apiConfig });
+
+      // Wait for LocalStorage operations
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.auth', expect.any(Object));
+      expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', { backendName: 'gitlab' });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:gitlab',
+        origin: 'https://localhost:3000',
+      });
+
+      messageHandler({
+        data: `authorization:gitlab:success:${JSON.stringify({
+          token: 'gitlab-token',
+          refreshToken: 'gitlab-refresh-token',
+        })}`,
+        origin: 'https://localhost:3000',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({
+        token: 'gitlab-token',
+        refreshToken: 'gitlab-refresh-token',
+      });
+    });
+
+    it('should handle Gitea PKCE auth flow', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+      vi.mocked(siteConfig.subscribe).mockImplementation((_fn) => {
+        _fn({
+          backend: {
+            name: 'gitea',
+            site_domain: 'gitea.example.com',
+          },
+        });
+
+        return () => {};
+      });
+
+      const apiConfig = {
+        clientId: 'gitea-client-id',
+        authScope: 'api',
+        authURL: 'https://gitea.example.com/login/oauth/authorize',
+        tokenURL: 'https://gitea.example.com/login/oauth/token',
+      };
+
+      const authPromise = handleAuthFlow({ auto: false, apiConfig });
+
+      // Wait for LocalStorage operations
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.auth', expect.any(Object));
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:gitea',
+        origin: 'https://localhost:3000',
+      });
+
+      messageHandler({
+        data: `authorization:gitea:success:${JSON.stringify({
+          token: 'gitea-token',
+          refreshToken: 'gitea-refresh-token',
+        })}`,
+        origin: 'https://localhost:3000',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({
+        token: 'gitea-token',
+        refreshToken: 'gitea-refresh-token',
+      });
+    });
+
+    it('should return undefined for automatic sign-in with Gitea PKCE', async () => {
+      vi.mocked(siteConfig.subscribe).mockImplementation((fn) => {
+        fn({
+          backend: {
+            name: 'gitea',
+            site_domain: 'gitea.example.com',
+          },
+        });
+
+        return () => {};
+      });
+
+      const apiConfig = {
+        clientId: 'gitea-client-id',
+        authScope: 'api',
+        authURL: 'https://gitea.example.com/login/oauth/authorize',
+        tokenURL: 'https://gitea.example.com/login/oauth/token',
+      };
+
+      const result = await handleAuthFlow({ auto: true, apiConfig });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined for automatic sign-in with GitHub', async () => {
+      vi.mocked(siteConfig.subscribe).mockImplementation((fn) => {
+        fn({
+          backend: {
+            name: 'github',
+            site_domain: 'example.com',
+          },
+        });
+
+        return () => {};
+      });
+
+      const apiConfig = {
+        clientId: 'github-client-id',
+        authScope: 'repo',
+        authURL: 'https://github.com/login/oauth/authorize',
+        tokenURL: 'https://github.com/login/oauth/access_token',
+      };
+
+      const result = await handleAuthFlow({ auto: true, apiConfig });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined when in auth popup for Gitea', async () => {
+      mockWindow.opener = {
+        origin: 'https://localhost:3000',
+        postMessage: vi.fn(),
+      };
+      mockWindow.name = 'auth';
+
+      vi.mocked(siteConfig.subscribe).mockImplementation((fn) => {
+        fn({
+          backend: {
+            name: 'gitea',
+            site_domain: 'gitea.example.com',
+          },
+        });
+
+        return () => {};
+      });
+
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+      });
+
+      global.fetch.mockResolvedValue({
+        /**
+         * Mock JSON response.
+         * @returns {Promise<object>} Token response.
+         */
+        json: async () => ({
+          access_token: 'gitea-token',
+        }),
+      });
+
+      mockWindow.location.search = '?code=test-code&state=test-csrf';
+
+      const apiConfig = {
+        clientId: 'gitea-client-id',
+        authScope: 'api',
+        authURL: 'https://gitea.example.com/login/oauth/authorize',
+        tokenURL: 'https://gitea.example.com/login/oauth/token',
+      };
+
+      const result = await handleAuthFlow({ auto: false, apiConfig });
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getTokens', () => {
+    beforeEach(() => {
+      global.fetch = vi.fn();
+      mockWindow.open.mockReturnValue(mockPopup);
+      mockWindow.location.href = 'https://localhost:3000/admin';
+      mockWindow.opener = null;
+    });
+
+    it('should return existing tokens without calling handleAuthFlow', async () => {
+      const apiConfig = {
+        clientId: 'github-client-id',
+        authScope: 'repo',
+        authURL: 'https://github.com/login/oauth/authorize',
+        tokenURL: 'https://github.com/login/oauth/access_token',
+      };
+
+      const options = {
+        token: 'existing-token',
+        refreshToken: 'existing-refresh-token',
+        auto: false,
+      };
+
+      const result = await getTokens({ options, apiConfig });
+
+      expect(result).toEqual({
+        token: 'existing-token',
+        refreshToken: 'existing-refresh-token',
+      });
+    });
+
+    it('should call handleAuthFlow and return tokens when token is not provided', async () => {
+      vi.mocked(siteConfig.subscribe).mockImplementation((fn) => {
+        fn({
+          backend: {
+            name: 'github',
+            site_domain: 'example.com',
+          },
+        });
+
+        return () => {};
+      });
+
+      const apiConfig = {
+        clientId: 'github-client-id',
+        authScope: 'repo',
+        authURL: 'https://github.com/login/oauth/authorize',
+        tokenURL: 'https://github.com/login/oauth/access_token',
+      };
+
+      const options = {
+        token: undefined,
+        refreshToken: undefined,
+        auto: false,
+      };
+
+      const authPromise = getTokens({ options, apiConfig });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({
+          token: 'new-token',
+          refreshToken: 'new-refresh-token',
+        })}`,
+        origin: 'https://github.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({
+        token: 'new-token',
+        refreshToken: 'new-refresh-token',
+      });
+    });
+
+    it('should return undefined for automatic sign-in without token', async () => {
+      vi.mocked(siteConfig.subscribe).mockImplementation((fn) => {
+        fn({
+          backend: {
+            name: 'github',
+            site_domain: 'example.com',
+          },
+        });
+
+        return () => {};
+      });
+
+      const apiConfig = {
+        clientId: 'github-client-id',
+        authScope: 'repo',
+        authURL: 'https://github.com/login/oauth/authorize',
+        tokenURL: 'https://github.com/login/oauth/access_token',
+      };
+
+      const options = {
+        token: undefined,
+        refreshToken: undefined,
+        auto: true,
+      };
+
+      const result = await getTokens({ options, apiConfig });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should handle handleAuthFlow returning undefined', async () => {
+      vi.mocked(siteConfig.subscribe).mockImplementation((fn) => {
+        fn({
+          backend: {
+            name: 'gitea',
+            site_domain: 'gitea.example.com',
+          },
+        });
+
+        return () => {};
+      });
+
+      mockWindow.opener = {
+        origin: 'https://localhost:3000',
+        postMessage: vi.fn(),
+      };
+      mockWindow.name = 'auth';
+
+      const apiConfig = {
+        clientId: 'gitea-client-id',
+        authScope: 'api',
+        authURL: 'https://gitea.example.com/login/oauth/authorize',
+        tokenURL: 'https://gitea.example.com/login/oauth/token',
+      };
+
+      const options = {
+        token: undefined,
+        refreshToken: undefined,
+        auto: false,
+      };
+
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+      });
+
+      global.fetch.mockResolvedValue({
+        /**
+         * Mock JSON response.
+         * @returns {Promise<object>} Token response.
+         */
+        json: async () => ({
+          access_token: 'gitea-token',
+        }),
+      });
+
+      mockWindow.location.search = '?code=test-code&state=test-csrf';
+
+      const result = await getTokens({ options, apiConfig });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should preserve refreshToken when not provided in options', async () => {
+      const apiConfig = {
+        clientId: 'github-client-id',
+        authScope: 'repo',
+        authURL: 'https://github.com/login/oauth/authorize',
+        tokenURL: 'https://github.com/login/oauth/access_token',
+      };
+
+      const options = {
+        token: 'existing-token',
+        refreshToken: 'existing-refresh-token',
+        auto: false,
+      };
+
+      const result = await getTokens({ options, apiConfig });
+
+      expect(result).toEqual({
+        token: 'existing-token',
+        refreshToken: 'existing-refresh-token',
+      });
     });
   });
 });

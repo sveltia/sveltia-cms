@@ -80,6 +80,7 @@ export const init = () => {
     apiConfig,
     /** @type {ApiEndpointConfig} */ ({
       clientId,
+      authScope: 'api',
       authURL,
       tokenURL: authURL.replace('/authorize', '/token'),
       authScheme: 'Bearer',
