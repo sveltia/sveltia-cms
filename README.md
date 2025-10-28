@@ -4,6 +4,8 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Our numerous enhancements across the board ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026.
 
+Welcome to the only Netlify CMS successor you can trust!
+
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
 ![Fast and lightweight; modern UX/UI with dark mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2.webp?20250405)<br>
@@ -291,16 +293,17 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - It’s possible to [disable automatic deployments](#disabling-automatic-deployments) by default or on demand to save costs and resources associated with CI/CD and to publish multiple changes at once.[^24]
 - Users can quickly open the source file of an entry or asset in your repository via the 3-dot menu when Developer Mode is enabled.
 - Service status checks are performed frequently and an incident notification is displayed prominently.
-- We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
-- The external OAuth window will not get stuck on a blank page after signing in.[^300]
+- Authentication improvements:
+  - We provide [our own OAuth client](https://github.com/sveltia/sveltia-cms-auth) for GitHub and GitLab.
+  - The external OAuth window will not get stuck on a blank page after signing in.[^300]
+  - Users can sign in directly with a Git-based backend using a personal access token (PAT) instead of going through the regular OAuth flow.[^258]
+  - The OAuth access token is automatically renewed when using PKCE authorization.[^224]
 - GitLab-specific improvements:
   - Implements the GraphQL API with proper authorization.[^290]
   - Comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
   - Supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
   - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
 - Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
-- Users can sign in directly with a Git-based backend using a personal access token (PAT) instead of going through the regular OAuth flow.[^258]
-- The OAuth access token is automatically renewed when using the GitLab or Gitea/Forgejo backend with PKCE authorization.[^224] Token renewal for other backend configurations will be implemented later.
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) for a better DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
 - The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage support works with all modern browsers [except Safari](https://bugs.webkit.org/show_bug.cgi?id=254726).
@@ -2056,7 +2059,7 @@ Due late 2026
 
 Sveltia CMS is not a service but a client-side application that runs in your web browser. You don’t need an account to use the app, but you do need to authenticate with your Git hosting provider to read and write remote data. All content is stored in your Git repository. No data is sent to any server operated by us.
 
-GitHub (and GitLab, depending on your configuration) requires server-side authentication. If you choose the GitHub backend, you will need to use an OAuth application hosted by yourself or a third party, such as Netlify or Cloudflare, to retrieve an access token from GitHub. Alternatively, you can provide an access token directly on the CMS’s sign-in page. Other Git backends support client-side authentication. In any case, your token is stored in your browser’s local storage, and subsequent API requests are made directly between your browser and the Git hosting provider.
+Depending on your site configuration, you will need to use an OAuth application hosted by yourself or a third party, such as Netlify or Cloudflare, to retrieve an access token from GitHub. Alternatively, you can provide an access token directly on the CMS’s sign-in page. In any case, your token is stored in your browser’s local storage, and subsequent API requests are made directly between your browser and the Git hosting provider.
 
 The CMS also integrates with various third-party services, including stock photo providers and translation services. These are “bring your own key” (BYOK) features that are entirely optional. You provide your own API keys for these services, which are stored in your browser’s local storage, and API requests are then made directly between your browser and the relevant service providers.
 
