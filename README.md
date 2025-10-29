@@ -138,7 +138,7 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 - We don’t reuse any part of the predecessor’s codebase
 - We incorporate i18n support into the core instead of adding it as an afterthought
 - We closely monitor and analyze the predecessor’s issue tracker
-- We have rearchitected the entire user experience (UX) and developer experience (DX)
+- We rearchitect the entire user experience (UX) and developer experience (DX)
 
 This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system, establishing Sveltia CMS as a **unparalleled successor** to Netlify CMS.
 
@@ -207,7 +207,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast with [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead). Note that Svelte is a compiler and Sveltia CMS is framework-agnostic; it’s served as a vanilla JavaScript bundle.
 - Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.5 MB) and Static CMS (2.6 MB).[^57][^64] This significant reduction in size is thanks to the combination of [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) and [Vite](https://vite.dev/). Sveltia CMS also dynamically loads certain dependencies only when needed, further reducing the initial load time.
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation fields.[^14]
-  - Note: Loading files from GitLab is currently slower than usual because we have implemented a workaround for a [GraphQL complexity limit issue](https://github.com/sveltia/sveltia-cms/issues/525) in GitLab 18.4.2. This workaround will be removed in the future once GitLab has fixed the issue.
+  - Note: Loading files from GitLab is currently slower than usual because we have implemented a workaround for a [GraphQL complexity limit issue](https://github.com/sveltia/sveltia-cms/issues/525) in GitLab 18.4.2. This workaround will be removed in the future once GitLab has relaxed the limit.
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - The Gitea/Forgejo backend is also faster because it utilizes an efficient API method introduced in Gitea 1.24 and Forgejo 12.0.
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
@@ -647,7 +647,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 ### Better localization
 
 - The application UI locale is automatically selected based on the preferred language set with the browser.[^132] Users can also change the locale in the application settings. Therefore, the `locale` configuration option is ignored and `CMS.registerLocale()` is not required.
-- The application UI is ready to be localized into RTL languages like Arabic and Hebrew.[^245]
+- The application UI is ready to be localized into RTL languages like Arabic, Hebrew and Persian.[^245]
 - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized.[^98]
 - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container.[^117][^265]
 
@@ -975,7 +975,7 @@ If you have migrated from Netlify/Decap CMS and are happy with the local reposit
 
 Note that, as with Netlify/Decap CMS, the local repository support in Sveltia CMS doesn’t perform any Git operations. You have to manually fetch, pull, commit and push all changes using a Git client. Additionally, you’ll need to reload the CMS after modifying the configuration file or retrieving remote updates.
 
-In the future, it will probably be possible to commit changes locally. The proxy server actually has an experimental, undocumented Git mode that allows it.[^131] ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/31)) We also plan to use the newly available [File System Observer API](https://developer.chrome.com/blog/file-system-observer) to detect changes and eliminate the need for manual reloads.
+In the future, it will probably be possible to commit changes locally. The Netlify/Decap CMS proxy server actually has an experimental, undocumented Git mode that allows it.[^131] ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/31)) We also plan to use the newly available [File System Observer API](https://developer.chrome.com/blog/file-system-observer) to detect changes and eliminate the need for manual reloads.
 
 ### Enabling local development in Brave
 
@@ -1931,7 +1931,7 @@ Join us on [Discord](https://discord.gg/5hwCGqup5b) or ping us on [Bluesky](http
 
 <!-- prettier-ignore -->
 > [!IMPORTANT]
-> As described throughout this README, Sveltia CMS is being built as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are moving from the other product. We are happy to help you migrate, but **we cannot help you set up Sveltia CMS from scratch** through our free support channels.
+> As described throughout this README, Sveltia CMS is specifically designed as a replacement for Netlify/Decap CMS. At this point, we assume that most developers and users are moving from the other product. We are happy to help you migrate, but **we cannot help you set up Sveltia CMS from scratch** through our free support channels.
 
 Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out!
 
