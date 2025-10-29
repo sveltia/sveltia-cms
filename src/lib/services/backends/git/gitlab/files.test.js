@@ -4,10 +4,12 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
   fetchBlob,
+  fetchBlobs,
   fetchCommits,
   fetchFileContents,
   fetchFileList,
   fetchFiles,
+  parseFileContents,
 } from '$lib/services/backends/git/gitlab/files';
 import {
   checkRepositoryAccess,
@@ -222,6 +224,232 @@ describe('GitLab files service', () => {
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(2);
       expect(result).toHaveLength(20);
+    });
+  });
+
+  describe('parseFileContents', () => {
+    test('parses file contents with commit metadata', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+      ]);
+
+      const blobs = [{ size: '100', rawTextBlob: 'file content' }];
+
+      const commits = [
+        {
+          author: { id: 'gid://gitlab/User/123', username: 'testuser' },
+          authorName: 'Test User',
+          authorEmail: 'test@example.com',
+          committedDate: '2023-01-01T00:00:00Z',
+        },
+      ];
+
+      const result = await parseFileContents(fetchingFiles, blobs, commits);
+
+      expect(result['file1.md']).toEqual({
+        sha: 'sha1',
+        size: 100,
+        text: 'file content',
+        meta: {
+          commitAuthor: {
+            name: 'Test User',
+            email: 'test@example.com',
+            id: 123,
+            login: 'testuser',
+          },
+          committedDate: new Date('2023-01-01T00:00:00Z'),
+        },
+      });
+    });
+
+    test('parses file contents with null author', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+      ]);
+
+      const blobs = [{ size: '200', rawTextBlob: 'content' }];
+
+      const commits = [
+        {
+          author: null,
+          authorName: 'Anonymous',
+          authorEmail: 'anon@example.com',
+          committedDate: '2023-01-02T00:00:00Z',
+        },
+      ];
+
+      const result = await parseFileContents(fetchingFiles, blobs, commits);
+
+      expect(result['file1.md']).toEqual({
+        sha: 'sha1',
+        size: 200,
+        text: 'content',
+        meta: {
+          commitAuthor: {
+            name: 'Anonymous',
+            email: 'anon@example.com',
+            id: undefined,
+            login: undefined,
+          },
+          committedDate: new Date('2023-01-02T00:00:00Z'),
+        },
+      });
+    });
+
+    test('handles multiple files with mixed commit data', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+        { path: 'file2.md', sha: 'sha2', size: 0, name: 'file2.md' },
+        { path: 'file3.md', sha: 'sha3', size: 0, name: 'file3.md' },
+      ]);
+
+      const blobs = [
+        { size: '100', rawTextBlob: 'content1' },
+        { size: '200', rawTextBlob: 'content2' },
+        { size: '300', rawTextBlob: 'content3' },
+      ];
+
+      const commits = [
+        {
+          author: { id: 'gid://gitlab/User/1', username: 'user1' },
+          authorName: 'User 1',
+          authorEmail: 'user1@example.com',
+          committedDate: '2023-01-01T00:00:00Z',
+        },
+        {
+          author: null,
+          authorName: 'User 2',
+          authorEmail: 'user2@example.com',
+          committedDate: '2023-01-02T00:00:00Z',
+        },
+        {
+          author: { id: 'gid://gitlab/User/999', username: 'user3' },
+          authorName: 'User 3',
+          authorEmail: 'user3@example.com',
+          committedDate: '2023-01-03T00:00:00Z',
+        },
+      ];
+
+      const result = await parseFileContents(fetchingFiles, blobs, commits);
+
+      expect(Object.keys(result)).toHaveLength(3);
+      expect(result['file1.md']?.meta?.commitAuthor?.id).toBe(1);
+      expect(result['file2.md']?.meta?.commitAuthor?.id).toBeUndefined();
+      expect(result['file3.md']?.meta?.commitAuthor?.id).toBe(999);
+    });
+
+    test('handles non-numeric author ID extraction', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+      ]);
+
+      const blobs = [{ size: '100', rawTextBlob: 'content' }];
+
+      const commits = [
+        {
+          author: { id: 'invalid-non-numeric-id', username: 'testuser' },
+          authorName: 'Test User',
+          authorEmail: 'test@example.com',
+          committedDate: '2023-01-01T00:00:00Z',
+        },
+      ];
+
+      const result = await parseFileContents(fetchingFiles, blobs, commits);
+
+      expect(result['file1.md']?.meta?.commitAuthor?.id).toBeUndefined();
+      expect(result['file1.md']?.meta?.commitAuthor?.login).toBe('testuser');
+    });
+
+    test('parses file contents without commits', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+      ]);
+
+      const blobs = [{ size: '50', rawTextBlob: 'minimal' }];
+      const commits = /** @type {any[]} */ ([]);
+      const result = await parseFileContents(fetchingFiles, blobs, commits);
+
+      expect(result['file1.md']).toEqual({
+        sha: 'sha1',
+        size: 50,
+        text: 'minimal',
+        meta: {},
+      });
+    });
+
+    test('handles conversion of size from string to number', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+      ]);
+
+      const blobs = [{ size: '12345', rawTextBlob: 'content' }];
+      const commits = /** @type {any[]} */ ([]);
+      const result = await parseFileContents(fetchingFiles, blobs, commits);
+
+      expect(result['file1.md'].size).toBe(12345);
+      expect(typeof result['file1.md'].size).toBe('number');
+    });
+  });
+
+  describe('fetchBlobs', () => {
+    test('returns empty array without API call when paths are empty', async () => {
+      const paths = /** @type {any[]} */ ([]);
+      const result = await fetchBlobs(paths);
+
+      expect(fetchGraphQL).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    test('fetches blobs one-by-one due to complexity scoring', async () => {
+      const paths = Array.from({ length: 3 }, (_, i) => `file${i}.md`);
+
+      const mockResponses = Array.from({ length: 3 }, (_, i) => ({
+        project: {
+          repository: {
+            blobs: {
+              nodes: [{ size: '100', rawTextBlob: `content${i}` }],
+            },
+          },
+        },
+      }));
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce(mockResponses[0])
+        .mockResolvedValueOnce(mockResponses[1])
+        .mockResolvedValueOnce(mockResponses[2]);
+
+      const result = await fetchBlobs(paths);
+
+      expect(fetchGraphQL).toHaveBeenCalledTimes(3);
+      expect(result).toHaveLength(3);
+      expect(result[0]).toEqual({ size: '100', rawTextBlob: 'content0' });
+      expect(result[1]).toEqual({ size: '100', rawTextBlob: 'content1' });
+      expect(result[2]).toEqual({ size: '100', rawTextBlob: 'content2' });
+      // Verify each call uses a single path
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toEqual({ paths: ['file0.md'] });
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]).toEqual({ paths: ['file1.md'] });
+      expect(vi.mocked(fetchGraphQL).mock.calls[2][1]).toEqual({ paths: ['file2.md'] });
+    });
+
+    test('updates progress correctly during single-file fetches', async () => {
+      const paths = Array.from({ length: 5 }, (_, i) => `file${i}.md`);
+
+      const mockResponse = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: [{ size: '100', rawTextBlob: 'content' }],
+            },
+          },
+        },
+      };
+
+      vi.mocked(fetchGraphQL).mockResolvedValue(mockResponse);
+
+      const result = await fetchBlobs(paths);
+
+      expect(fetchGraphQL).toHaveBeenCalledTimes(5);
+      expect(result).toHaveLength(5);
     });
   });
 

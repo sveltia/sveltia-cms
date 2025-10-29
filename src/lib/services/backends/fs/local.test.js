@@ -316,6 +316,65 @@ describe('Local Backend Service', () => {
 
       expect(result !== null || result === null).toBe(true);
     });
+
+    it('should handle cached directory that is no longer accessible and allow new selection', async () => {
+      mockDirHandle.requestPermission.mockResolvedValue('granted');
+      mockDirHandle.entries.mockReturnValue({
+        next: vi.fn().mockRejectedValue(new Error('Directory access failed')),
+      });
+
+      const newHandle = {
+        requestPermission: vi.fn().mockResolvedValue('granted'),
+        entries: vi.fn().mockReturnValue({
+          next: vi.fn().mockResolvedValue({ done: false }),
+        }),
+        getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      };
+
+      mockDB.get.mockResolvedValue(mockDirHandle);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(newHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      const handle = await getRootDirHandle();
+
+      // Should fall back to the new handle from picker
+      expect(handle).toBe(newHandle);
+      // Picker should have been called after cached handle failed
+      expect(global.window.showDirectoryPicker).toHaveBeenCalled();
+    });
+
+    it('should recover from permission denied on cached handle', async () => {
+      const deniedHandle = {
+        requestPermission: vi.fn().mockResolvedValue('denied'),
+      };
+
+      const grantedHandle = {
+        requestPermission: vi.fn().mockResolvedValue('granted'),
+        entries: vi.fn().mockReturnValue({
+          next: vi.fn().mockResolvedValue({ done: false }),
+        }),
+        getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      };
+
+      mockDB.get.mockResolvedValue(deniedHandle);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(grantedHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      const handle = await getRootDirHandle();
+
+      // Should fall back to the new handle from picker
+      expect(handle).toBe(grantedHandle);
+      // Picker should have been called after permission was denied
+      expect(global.window.showDirectoryPicker).toHaveBeenCalled();
+    });
   });
 
   describe('Service Structure', () => {

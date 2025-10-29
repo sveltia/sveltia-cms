@@ -157,6 +157,10 @@ const FETCH_BLOBS_QUERY = `
  * @see https://docs.gitlab.com/api/graphql/#limits
  */
 export const fetchBlobs = async (allPaths) => {
+  if (!allPaths.length) {
+    return [];
+  }
+
   const paths = [...allPaths];
   /** @type {BlobItem[]} */
   const blobs = [];

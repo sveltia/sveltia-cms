@@ -337,6 +337,42 @@ describe('git/shared/auth', () => {
       vi.useRealTimers();
     });
 
+    it('should keep popup timer active while popup is open (GitHub)', async () => {
+      vi.useFakeTimers();
+      mockPopup.closed = false;
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      // Keep popup open through timer check
+      mockPopup.closed = false;
+      vi.advanceTimersByTime(500);
+
+      // Popup is still open, so no rejection yet
+      // Send valid auth message
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
+        origin: 'https://github.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({ token: 'test-token' });
+
+      vi.useRealTimers();
+    });
+
     it('should handle malformed response data', async () => {
       mockWindow.open.mockReturnValue(mockPopup);
 
@@ -359,6 +395,197 @@ describe('git/shared/auth', () => {
       });
 
       await expect(authPromise).rejects.toThrow('Authentication failed');
+    });
+
+    it('should handle non-GitHub backends without popup timeout', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://gitlab.com/oauth/authorize';
+      const backendName = 'gitlab';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:gitlab',
+        origin: 'https://gitlab.com',
+      });
+
+      messageHandler({
+        data: `authorization:gitlab:success:${JSON.stringify({ token: 'gitlab-token' })}`,
+        origin: 'https://gitlab.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({ token: 'gitlab-token' });
+      expect(mockPopup.close).toHaveBeenCalled();
+    });
+
+    it('should handle missing regex match groups gracefully', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      // Send a message that won't match the regex pattern
+      messageHandler({
+        data: 'authorization:github:invalid-format',
+        origin: 'https://github.com',
+      });
+
+      await expect(authPromise).rejects.toThrow('Authentication failed');
+    });
+
+    it('should ignore non-string message data', async () => {
+      vi.useFakeTimers();
+      mockPopup.closed = false;
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      // Send non-string data (should be ignored)
+      messageHandler({
+        data: { token: 'test' },
+        origin: 'https://github.com',
+      });
+
+      // Then send valid data
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
+        origin: 'https://github.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({ token: 'test-token' });
+
+      vi.useRealTimers();
+    });
+
+    it('should ignore messages from wrong origin', async () => {
+      vi.useFakeTimers();
+      mockPopup.closed = false;
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      // Send message from wrong origin (should be ignored)
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://evil.com',
+      });
+
+      // Then send valid message from correct origin
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
+        origin: 'https://github.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({ token: 'test-token' });
+
+      vi.useRealTimers();
+    });
+
+    it('should handle non-object parsed response data', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      // Send a message with valid JSON that is not an object (e.g., array or primitive)
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify(['token'])}`,
+        origin: 'https://github.com',
+      });
+
+      await expect(authPromise).rejects.toThrow('Authentication failed');
+    });
+
+    it('should handle error response with errorCode', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      messageHandler({
+        data: `authorization:github:error:${JSON.stringify({ error: 'User denied', errorCode: 'access_denied' })}`,
+        origin: 'https://github.com',
+      });
+
+      await expect(authPromise).rejects.toThrow();
+    });
+
+    it('should handle popup being null', async () => {
+      mockWindow.open.mockReturnValue(null);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
+        origin: 'https://github.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({ token: 'test-token' });
     });
   });
 
@@ -453,6 +680,38 @@ describe('git/shared/auth', () => {
       });
 
       await authPromise;
+    });
+
+    it('should use hostname as siteDomain when not localhost and not Netlify', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+      mockWindow.location.hostname = 'example.com';
+
+      const args = {
+        backendName: 'github',
+        authURL: 'https://github.com/login/oauth/authorize',
+        scope: 'repo',
+      };
+
+      const authPromise = initServerSideAuth(args);
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+      });
+
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
+        origin: 'https://github.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({ token: 'test-token' });
+      expect(mockWindow.open).toHaveBeenCalled();
     });
   });
 

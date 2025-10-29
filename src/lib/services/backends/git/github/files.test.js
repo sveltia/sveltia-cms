@@ -107,6 +107,37 @@ describe('GitHub files service', () => {
       expect(result).toContain('content_10:');
       expect(result).toContain('commit_10:');
     });
+
+    test('skips content query for asset types', () => {
+      const chunk = [
+        { type: 'asset', path: 'image.jpg', sha: 'sha1' },
+        { type: 'blob', path: 'file.txt', sha: 'sha2' },
+      ];
+
+      const result = getFileContentsQuery(chunk, 0);
+
+      expect(result).not.toContain('content_0:');
+      expect(result).toContain('content_1:');
+      expect(result).toContain('commit_0:');
+      expect(result).toContain('commit_1:');
+    });
+
+    test('handles mixed asset and blob types with correct indices', () => {
+      const chunk = [
+        { type: 'asset', path: 'image.png', sha: 'sha1' },
+        { type: 'asset', path: 'video.mp4', sha: 'sha2' },
+        { type: 'blob', path: 'doc.md', sha: 'sha3' },
+      ];
+
+      const result = getFileContentsQuery(chunk, 5);
+
+      expect(result).not.toContain('content_5:');
+      expect(result).not.toContain('content_6:');
+      expect(result).toContain('content_7:');
+      expect(result).toContain('commit_5:');
+      expect(result).toContain('commit_6:');
+      expect(result).toContain('commit_7:');
+    });
   });
 
   describe('parseFileContents', () => {
@@ -217,6 +248,111 @@ describe('GitHub files service', () => {
       expect(result['binary.jpg']?.meta?.commitAuthor?.id).toBeUndefined();
       expect(result['binary.jpg']?.meta?.commitAuthor?.login).toBeUndefined();
     });
+
+    test('handles multiple files with mixed user data', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.txt', sha: 'sha1', size: 100 },
+        { path: 'file2.txt', sha: 'sha2', size: 100 },
+        { path: 'file3.txt', sha: 'sha3', size: 100 },
+      ]);
+
+      const results = {
+        content_0: { text: 'Content 1' },
+        content_1: { text: 'Content 2' },
+        content_2: { text: 'Content 3' },
+        commit_0: {
+          target: {
+            history: {
+              nodes: [
+                {
+                  author: {
+                    name: 'Author 1',
+                    email: 'author1@example.com',
+                    user: { id: 'u1', login: 'author1' },
+                  },
+                  committedDate: '2023-01-01T00:00:00Z',
+                },
+              ],
+            },
+          },
+        },
+        commit_1: {
+          target: {
+            history: {
+              nodes: [
+                {
+                  author: {
+                    name: 'Author 2',
+                    email: 'author2@example.com',
+                    user: null,
+                  },
+                  committedDate: '2023-01-02T00:00:00Z',
+                },
+              ],
+            },
+          },
+        },
+        commit_2: {
+          target: {
+            history: {
+              nodes: [
+                {
+                  author: {
+                    name: 'Author 3',
+                    email: 'author3@example.com',
+                    user: { id: 'u3', login: 'author3' },
+                  },
+                  committedDate: '2023-01-03T00:00:00Z',
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const result = await parseFileContents(fetchingFiles, results);
+
+      expect(Object.keys(result)).toHaveLength(3);
+      expect(result['file1.txt']?.meta?.commitAuthor?.id).toBe('u1');
+      expect(result['file2.txt']?.meta?.commitAuthor?.id).toBeUndefined();
+      expect(result['file3.txt']?.meta?.commitAuthor?.login).toBe('author3');
+    });
+
+    test('preserves all file metadata correctly', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'path/to/file.txt', sha: 'abc123def456', size: 12345 },
+      ]);
+
+      const results = {
+        content_0: { text: 'File content here' },
+        commit_0: {
+          target: {
+            history: {
+              nodes: [
+                {
+                  author: {
+                    name: 'John Doe',
+                    email: 'john@example.com',
+                    user: { id: '12345', login: 'johndoe' },
+                  },
+                  committedDate: '2024-06-15T10:30:45Z',
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const result = await parseFileContents(fetchingFiles, results);
+      const parsed = result['path/to/file.txt'];
+
+      expect(parsed.sha).toBe('abc123def456');
+      expect(parsed.size).toBe(12345);
+      expect(parsed.text).toBe('File content here');
+      expect(parsed?.meta?.commitAuthor?.name).toBe('John Doe');
+      expect(parsed?.meta?.commitAuthor?.email).toBe('john@example.com');
+      expect(parsed?.meta?.commitDate).toEqual(new Date('2024-06-15T10:30:45Z'));
+    });
   });
 
   describe('fetchFileContents', () => {
@@ -319,10 +455,230 @@ describe('GitHub files service', () => {
 
       vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
 
+      const mockSet = vi.fn();
+      const mockUpdate = vi.fn();
+
+      vi.mocked(dataLoadedProgress).set = mockSet;
+      vi.mocked(dataLoadedProgress).update = mockUpdate;
+
       await fetchFileContents(fetchingFiles);
 
       // Should make 2 GraphQL requests (300 files / 250 chunk size = 2 chunks)
       expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+    });
+
+    test('applies delays between chunk requests', async () => {
+      const { sleep: mockSleep } = await import('@sveltia/utils/misc');
+
+      const fetchingFiles = /** @type {any[]} */ (
+        Array.from({ length: 500 }, (_, i) => ({
+          path: `file${i}.txt`,
+          sha: `sha${i}`,
+          size: 100,
+        }))
+      );
+
+      const mockResults = {
+        repository: Object.fromEntries(
+          Array.from({ length: 500 }, (_, i) => [
+            `commit_${i}`,
+            {
+              target: {
+                history: {
+                  nodes: [
+                    {
+                      author: {
+                        name: 'Author',
+                        email: 'author@example.com',
+                        user: { id: 'user1', login: 'author' },
+                      },
+                      committedDate: '2023-01-01T00:00:00Z',
+                    },
+                  ],
+                },
+              },
+            },
+          ]),
+        ),
+      };
+
+      vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
+
+      const mockSet = vi.fn();
+      const mockUpdate = vi.fn();
+
+      vi.mocked(dataLoadedProgress).set = mockSet;
+      vi.mocked(dataLoadedProgress).update = mockUpdate;
+
+      await fetchFileContents(fetchingFiles);
+
+      // Should make 2 GraphQL requests (300 files / 250 chunk size = 2 chunks)
+      // First request has index 0 (no delay), second has index 1 (500ms delay)
+      expect(mockSleep).toHaveBeenCalledWith(0);
+      expect(mockSleep).toHaveBeenCalledWith(500);
+    });
+
+    test('handles empty file list', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([]);
+      const mockSet = vi.fn();
+      const mockUpdate = vi.fn();
+
+      vi.mocked(dataLoadedProgress).set = mockSet;
+      vi.mocked(dataLoadedProgress).update = mockUpdate;
+
+      const result = await fetchFileContents(fetchingFiles);
+
+      expect(result).toEqual({});
+      expect(mockSet).toHaveBeenCalledWith(0);
+      expect(mockSet).toHaveBeenCalledWith(undefined);
+    });
+
+    test('handles exactly chunk size boundary', async () => {
+      const fetchingFiles = /** @type {any[]} */ (
+        Array.from({ length: 250 }, (_, i) => ({
+          path: `file${i}.txt`,
+          sha: `sha${i}`,
+          size: 100,
+        }))
+      );
+
+      const mockResults = {
+        repository: Object.fromEntries(
+          Array.from({ length: 250 }, (_, i) => [
+            `commit_${i}`,
+            {
+              target: {
+                history: {
+                  nodes: [
+                    {
+                      author: {
+                        name: 'Author',
+                        email: 'author@example.com',
+                        user: { id: 'user1', login: 'author' },
+                      },
+                      committedDate: '2023-01-01T00:00:00Z',
+                    },
+                  ],
+                },
+              },
+            },
+          ]),
+        ),
+      };
+
+      vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
+
+      const mockSet = vi.fn();
+      const mockUpdate = vi.fn();
+
+      vi.mocked(dataLoadedProgress).set = mockSet;
+      vi.mocked(dataLoadedProgress).update = mockUpdate;
+
+      await fetchFileContents(fetchingFiles);
+
+      // Should make exactly 1 GraphQL request
+      expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+    });
+
+    test('progress interval callback is executed', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([{ path: 'file.txt', sha: 'sha1', size: 100 }]);
+
+      const mockResults = {
+        repository: {
+          content_0: { text: 'Content' },
+          commit_0: {
+            target: {
+              history: {
+                nodes: [
+                  {
+                    author: {
+                      name: 'Author',
+                      email: 'author@example.com',
+                      user: { id: 'user1', login: 'author' },
+                    },
+                    committedDate: '2023-01-01T00:00:00Z',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      };
+
+      vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
+
+      const mockSet = vi.fn();
+      const mockUpdate = vi.fn();
+      /** @type {any} */
+      let intervalCallback = null;
+
+      // Capture the callback function passed to setInterval
+      vi.mocked(window.setInterval).mockImplementation((callback) => {
+        intervalCallback = callback;
+        return /** @type {any} */ (1);
+      });
+
+      vi.mocked(dataLoadedProgress).set = mockSet;
+      vi.mocked(dataLoadedProgress).update = mockUpdate;
+
+      await fetchFileContents(fetchingFiles);
+
+      // Verify interval callback was captured and can be executed
+      expect(intervalCallback).toBeDefined();
+
+      if (intervalCallback) {
+        intervalCallback();
+        expect(mockUpdate).toHaveBeenCalledWith(expect.any(Function));
+      }
+    });
+
+    test('progress update receives correct initial value in callback', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([{ path: 'file.txt', sha: 'sha1', size: 100 }]);
+
+      const mockResults = {
+        repository: {
+          content_0: { text: 'Content' },
+          commit_0: {
+            target: {
+              history: {
+                nodes: [
+                  {
+                    author: {
+                      name: 'Author',
+                      email: 'author@example.com',
+                      user: { id: 'user1', login: 'author' },
+                    },
+                    committedDate: '2023-01-01T00:00:00Z',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      };
+
+      vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
+
+      const mockSet = vi.fn();
+      const mockUpdate = vi.fn((fn) => fn(0));
+      /** @type {any} */
+      let intervalCallback = null;
+
+      vi.mocked(window.setInterval).mockImplementation((callback) => {
+        intervalCallback = callback;
+        return /** @type {any} */ (1);
+      });
+
+      vi.mocked(dataLoadedProgress).set = mockSet;
+      vi.mocked(dataLoadedProgress).update = mockUpdate;
+
+      await fetchFileContents(fetchingFiles);
+
+      if (intervalCallback) {
+        intervalCallback();
+
+        expect(mockUpdate).toHaveBeenCalled();
+      }
     });
   });
 
@@ -412,6 +768,74 @@ describe('GitHub files service', () => {
       const result = await fetchBlob(asset);
 
       expect(result.type).toBe('text/plain');
+    });
+
+    test('handles text files with JSON content', async () => {
+      const asset = /** @type {any} */ ({
+        sha: 'json-sha',
+        path: 'data.json',
+      });
+
+      const mockResponse = {
+        headers: new Map([['Content-Type', 'application/json']]),
+        text: vi.fn().mockResolvedValue('{"key":"value"}'),
+      };
+
+      const mockMime = await import('mime');
+
+      vi.mocked(mockMime.default.getType).mockReturnValue('application/json');
+
+      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+
+      const result = await fetchBlob(asset);
+
+      expect(result.type).toBe('application/json');
+    });
+
+    test('handles text files with Markdown content', async () => {
+      const asset = /** @type {any} */ ({
+        sha: 'md-sha',
+        path: 'README.md',
+      });
+
+      const mockResponse = {
+        headers: new Map([['Content-Type', 'text/markdown']]),
+        text: vi.fn().mockResolvedValue('# Readme'),
+      };
+
+      const mockMime = await import('mime');
+
+      vi.mocked(mockMime.default.getType).mockReturnValue('text/markdown');
+
+      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+
+      const result = await fetchBlob(asset);
+
+      expect(result.type).toBe('text/markdown');
+    });
+
+    test('calls fetchAPI with correct repository and asset SHA', async () => {
+      const asset = /** @type {any} */ ({
+        sha: 'custom-sha-123',
+        path: 'path/to/file.bin',
+      });
+
+      const mockResponse = {
+        headers: new Map([['Content-Type', 'application/octet-stream']]),
+        blob: vi.fn().mockResolvedValue(new Blob()),
+      };
+
+      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+
+      await fetchBlob(asset);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/git/blobs/custom-sha-123',
+        expect.objectContaining({
+          headers: { Accept: 'application/vnd.github.raw' },
+          responseType: 'raw',
+        }),
+      );
     });
   });
 });
