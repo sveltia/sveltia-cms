@@ -95,7 +95,7 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = true } = {}) => 
 
       return regex.test(getPathInfo(path).dirname ?? '');
     })
-    .sort((a, b) => (b.internalPath ?? '').localeCompare(a.internalPath ?? '') ?? 0);
+    .sort((a, b) => (b.internalPath ?? '').localeCompare(a.internalPath ?? ''));
 };
 
 /**

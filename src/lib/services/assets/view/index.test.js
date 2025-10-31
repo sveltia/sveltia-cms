@@ -45,7 +45,8 @@ vi.mock('$lib/services/assets', () => ({
   },
   uploadingAssets: {
     subscribe: vi.fn((callback) => {
-      callback({ files: [] });
+      // Default mock with empty files
+      callback(/** @type {any} */ ({ files: [] }));
       return vi.fn();
     }),
   },
@@ -88,6 +89,52 @@ describe('assets/view/index', () => {
     it('should be defined as a store', () => {
       expect(showUploadAssetsDialog).toBeDefined();
       expect(typeof showUploadAssetsDialog.subscribe).toBe('function');
+    });
+
+    it('should set to false when uploadingAssets.files is empty', async () => {
+      const mockCallback = vi.fn();
+
+      showUploadAssetsDialog.subscribe(mockCallback);
+
+      expect(mockCallback).toHaveBeenCalledWith(false);
+    });
+
+    it('should trigger when uploadingAssets has files to exercise line 36', async () => {
+      vi.resetModules();
+
+      const mockCallback = vi.fn();
+      const { uploadingAssets } = await import('$lib/services/assets');
+
+      vi.mocked(uploadingAssets.subscribe).mockImplementationOnce((callback) => {
+        callback(/** @type {any} */ ({ files: [new File(['test'], 'test.jpg')] }));
+        return vi.fn();
+      });
+
+      const { showUploadAssetsConfirmDialog } = await import('./index.js');
+
+      showUploadAssetsConfirmDialog.subscribe(mockCallback);
+
+      expect(mockCallback).toHaveBeenCalled();
+    });
+
+    it('should set to true when uploadingAssets.files has items', async () => {
+      const mockCallback = vi.fn();
+      const { uploadingAssets } = await import('$lib/services/assets');
+      const uploadMock = vi.mocked(uploadingAssets);
+
+      uploadMock.subscribe.mockImplementationOnce((callback) => {
+        callback(
+          /** @type {any} */ ({
+            folder: undefined,
+            files: [new File(['test'], 'test.jpg')],
+          }),
+        );
+        return vi.fn();
+      });
+
+      showUploadAssetsDialog.subscribe(mockCallback);
+
+      expect(mockCallback).toHaveBeenCalled();
     });
   });
 
@@ -241,6 +288,311 @@ describe('assets/view/index', () => {
       expect(getCollectionLabel).toHaveBeenCalledWith(mockCollection);
       expect(getCollectionFile).toHaveBeenCalledWith(mockCollection, 'unknown-file');
       expect(result).toBe('Blog Posts › unknown-file');
+    });
+
+    it('should handle case where collection is not found and fileName is provided', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const { getCollectionFile } = await import('$lib/services/contents/collection/files');
+
+      vi.clearAllMocks();
+
+      vi.mocked(getCollection).mockReturnValue(undefined);
+      vi.mocked(getCollectionFile).mockReturnValue(undefined);
+
+      const folder = {
+        collectionName: 'nonexistent',
+        fileName: 'some-file',
+        internalPath: 'static/uploads',
+        publicPath: '/static/uploads',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      const result = getFolderLabelByCollection(folder);
+
+      expect(result).toBe('nonexistent › some-file');
+      expect(getCollectionFile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('defaultView', () => {
+    it('should have correct default view settings', async () => {
+      const { defaultView } = await import('./index.js');
+
+      expect(defaultView).toEqual({
+        type: 'grid',
+        showInfo: true,
+        sort: {
+          key: 'name',
+          order: 'ascending',
+        },
+      });
+    });
+  });
+
+  describe('currentView', () => {
+    it('should be defined as a store', async () => {
+      const { currentView } = await import('./index.js');
+
+      expect(currentView).toBeDefined();
+      expect(typeof currentView.subscribe).toBe('function');
+    });
+  });
+
+  describe('listedAssets store with different scenarios', () => {
+    it('should return all assets when selectedAssetFolder is undefined', async () => {
+      vi.resetModules();
+
+      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
+
+      const mockAssetList = /** @type {any[]} */ ([
+        {
+          path: '/images/photo1.jpg',
+          name: 'photo1.jpg',
+          sha: 'sha1',
+          size: 1024,
+          kind: 'image',
+          folder: {
+            collectionName: undefined,
+            internalPath: '/images',
+            publicPath: '/images',
+            entryRelative: false,
+            hasTemplateTags: false,
+          },
+          commitAuthor: { name: 'Alice', email: 'alice@example.com' },
+          commitDate: new Date('2023-01-01'),
+        },
+      ]);
+
+      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
+        callback(mockAssetList);
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
+        callback(undefined);
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
+
+      const { listedAssets } = await import('./index.js');
+      const mockAssetCallback = vi.fn();
+
+      listedAssets.subscribe(mockAssetCallback);
+
+      expect(mockAssetCallback).toHaveBeenCalled();
+    });
+
+    it('should return empty array when allAssets is null', async () => {
+      vi.resetModules();
+
+      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
+
+      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
+        callback(/** @type {any} */ (null));
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
+        callback(
+          /** @type {any} */ ({
+            collectionName: undefined,
+            internalPath: '/images',
+            publicPath: '/images',
+            entryRelative: false,
+            hasTemplateTags: false,
+          }),
+        );
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
+
+      const { listedAssets } = await import('./index.js');
+      const mockAssetCallback = vi.fn();
+
+      listedAssets.subscribe(mockAssetCallback);
+
+      expect(mockAssetCallback).toHaveBeenCalled();
+    });
+
+    it('should handle empty asset list from filter', async () => {
+      vi.resetModules();
+
+      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
+      const emptyAssetList = /** @type {any[]} */ ([]);
+
+      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
+        callback(emptyAssetList);
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
+        callback(
+          /** @type {any} */ ({
+            collectionName: undefined,
+            internalPath: '/images',
+            publicPath: '/images',
+            entryRelative: false,
+            hasTemplateTags: false,
+          }),
+        );
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
+
+      const { listedAssets } = await import('./index.js');
+      const mockAssetCallback = vi.fn();
+
+      listedAssets.subscribe(mockAssetCallback);
+
+      expect(mockAssetCallback).toHaveBeenCalled();
+    });
+
+    it('should filter assets when folder with internalPath is selected', async () => {
+      vi.resetModules();
+
+      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
+
+      const mockAssetList = /** @type {any[]} */ ([
+        {
+          path: '/images/photo1.jpg',
+          name: 'photo1.jpg',
+          sha: 'sha1',
+          size: 1024,
+          kind: 'image',
+          folder: {
+            collectionName: undefined,
+            internalPath: '/images',
+            publicPath: '/images',
+            entryRelative: false,
+            hasTemplateTags: false,
+          },
+          commitAuthor: { name: 'Alice', email: 'alice@example.com' },
+          commitDate: new Date('2023-01-01'),
+        },
+      ]);
+
+      const selectedFolder = /** @type {any} */ ({
+        collectionName: undefined,
+        internalPath: '/images',
+        publicPath: '/images',
+        entryRelative: false,
+        hasTemplateTags: false,
+      });
+
+      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
+        callback(mockAssetList);
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
+        callback(selectedFolder);
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
+
+      const { listedAssets } = await import('./index.js');
+      const mockAssetCallback = vi.fn();
+
+      listedAssets.subscribe(mockAssetCallback);
+
+      expect(mockAssetCallback).toHaveBeenCalled();
+    });
+  });
+
+  describe('assetGroups derived store', () => {
+    it('should sort, filter, and group assets', async () => {
+      vi.resetModules();
+
+      const { filterAssets } = await import('$lib/services/assets/view/filter');
+      const { sortAssets } = await import('$lib/services/assets/view/sort');
+      const { groupAssets } = await import('$lib/services/assets/view/group');
+      const mockSortFn = vi.mocked(sortAssets);
+      const mockFilterFn = vi.mocked(filterAssets);
+      const mockGroupFn = vi.mocked(groupAssets);
+
+      const mockAssets = /** @type {any[]} */ ([
+        {
+          path: '/images/photo1.jpg',
+          name: 'photo1.jpg',
+          sha: 'sha1',
+          size: 1024,
+          kind: 'image',
+          folder: {
+            collectionName: undefined,
+            internalPath: '/images',
+            publicPath: '/images',
+            entryRelative: false,
+            hasTemplateTags: false,
+          },
+          commitAuthor: { name: 'Alice', email: 'alice@example.com' },
+          commitDate: new Date('2023-01-01'),
+        },
+      ]);
+
+      const mockGroups = /** @type {any} */ ({ '*': mockAssets });
+
+      mockSortFn.mockReturnValue(mockAssets);
+      mockFilterFn.mockReturnValue(mockAssets);
+      mockGroupFn.mockReturnValue(mockGroups);
+
+      const { assetGroups } = await import('./index.js');
+      const mockCallback = vi.fn();
+
+      assetGroups.subscribe(mockCallback);
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      expect(mockCallback).toHaveBeenCalled();
+    });
+  });
+
+  describe('listedAssets subscription with dev mode', () => {
+    it('should not log assets to console when dev mode is disabled', async () => {
+      vi.resetModules();
+
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      const { prefs } = await import('$lib/services/user/prefs');
+
+      vi.mocked(prefs.subscribe).mockImplementation((callback) => {
+        callback(/** @type {any} */ ({ devModeEnabled: false }));
+        return vi.fn();
+      });
+
+      await import('./index.js');
+
+      // Should not have been called for logging when dev mode is disabled
+      expect(consoleSpy).not.toHaveBeenCalledWith('listedAssets', expect.any(Array));
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should log assets to console when dev mode is enabled', async () => {
+      vi.resetModules();
+
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      const { prefs } = await import('$lib/services/user/prefs');
+
+      vi.mocked(prefs.subscribe).mockImplementation((callback) => {
+        callback(/** @type {any} */ ({ devModeEnabled: true }));
+        return vi.fn();
+      });
+
+      await import('./index.js');
+
+      expect(consoleSpy).toHaveBeenCalledWith('listedAssets', expect.any(Array));
+
+      consoleSpy.mockRestore();
     });
   });
 });

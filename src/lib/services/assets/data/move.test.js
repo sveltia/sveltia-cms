@@ -301,6 +301,102 @@ describe('assets/data/move', () => {
         slugs: {},
       });
     });
+
+    it('should use regularFields when indexFile exists but has no fields', async () => {
+      const { createSavingEntryData } = await import('$lib/services/contents/draft/save/changes');
+      const { getSlugs } = await import('$lib/services/contents/draft/slugs');
+
+      vi.mocked(createSavingEntryData).mockResolvedValue({
+        savingEntry: /** @type {import('$lib/types/private').Entry} */ ({
+          id: 'test',
+          slug: 'test',
+          subPath: 'test.md',
+          locales: {},
+        }),
+        changes: [],
+      });
+      vi.mocked(getSlugs).mockReturnValue({});
+
+      const regularFields = [{ name: 'title', widget: 'string' }];
+
+      const draftProps = {
+        collection: {
+          fields: regularFields,
+        },
+        collectionFile: undefined,
+      };
+
+      const indexFile = {
+        fields: undefined,
+      };
+
+      /** @type {import('$lib/types/private').Entry[]} */
+      const savingEntries = [];
+      /** @type {import('$lib/types/private').FileChange[]} */
+      const changes = [];
+
+      await addSavingEntryData({
+        draftProps,
+        indexFile,
+        savingEntries,
+        changes,
+      });
+
+      // Should use regularFields when indexFile.fields is undefined
+      expect(createSavingEntryData).toHaveBeenCalledWith({
+        draft: expect.objectContaining({
+          fields: regularFields,
+        }),
+        slugs: {},
+      });
+    });
+
+    it('should use collectionFile fields when collectionFile has no fields property', async () => {
+      const { createSavingEntryData } = await import('$lib/services/contents/draft/save/changes');
+      const { getSlugs } = await import('$lib/services/contents/draft/slugs');
+
+      vi.mocked(createSavingEntryData).mockResolvedValue({
+        savingEntry: /** @type {import('$lib/types/private').Entry} */ ({
+          id: 'test',
+          slug: 'test',
+          subPath: 'test.md',
+          locales: {},
+        }),
+        changes: [],
+      });
+      vi.mocked(getSlugs).mockReturnValue({});
+
+      const collectionFileData = {
+        name: 'config',
+      };
+
+      const draftProps = {
+        collection: {
+          fields: [{ name: 'fallback', widget: 'string' }],
+        },
+        collectionFile: collectionFileData,
+      };
+
+      /** @type {import('$lib/types/private').Entry[]} */
+      const savingEntries = [];
+      /** @type {import('$lib/types/private').FileChange[]} */
+      const changes = [];
+
+      await addSavingEntryData({
+        draftProps,
+        indexFile: undefined,
+        savingEntries,
+        changes,
+      });
+
+      // Should use collectionFile which has no fields property, defaulting to []
+      expect(createSavingEntryData).toHaveBeenCalledWith({
+        draft: expect.objectContaining({
+          fields: [],
+        }),
+        slugs: {},
+      });
+    });
   });
 
   describe('collectEntryChanges', () => {
@@ -469,6 +565,424 @@ describe('assets/data/move', () => {
       expect(savingEntries).toHaveLength(0);
       expect(changes).toHaveLength(0);
     });
+
+    it('should handle asset with used entries but no updating entries', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+
+      const mockAsset = {
+        path: 'assets/image.jpg',
+        folder: { internalPath: 'assets' },
+        blobURL: undefined,
+      };
+
+      const mockFolder = {
+        collectionName: 'posts',
+        publicPath: '/images',
+      };
+
+      const mockUsedEntry = { id: 'entry1', title: 'Test' };
+
+      // First call returns used entries, second call returns empty (no updating entries)
+      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
+      vi.mocked(getEntriesByAssetURL)
+        .mockResolvedValueOnce([mockUsedEntry])
+        .mockResolvedValueOnce([]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockFolder]);
+
+      const savingEntries = [];
+      const changes = [];
+
+      await collectEntryChangesFromAsset({
+        _siteConfig: {},
+        _globalAssetFolder: { publicPath: '/global' },
+        newPath: 'new-assets/image.jpg',
+        asset: mockAsset,
+        savingEntries,
+        changes,
+      });
+
+      // Should return early when no updating entries found
+      expect(savingEntries).toHaveLength(0);
+      expect(changes).toHaveLength(0);
+    });
+
+    it('should collect changes for asset with updating entries', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+
+      const mockAsset = {
+        path: 'assets/image.jpg',
+        folder: { internalPath: 'assets' },
+        blobURL: undefined,
+      };
+
+      const mockFolder = {
+        collectionName: 'posts',
+        publicPath: '/images',
+      };
+
+      const mockUsedEntry = { id: 'entry1', title: 'Test' };
+
+      const mockUpdatingEntry = {
+        id: 'entry1',
+        title: 'Test Updated',
+        locales: { en: { path: 'content/test.md', content: {} } },
+      };
+
+      // First call returns used entries, second call returns updating entries
+      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
+      vi.mocked(getEntriesByAssetURL)
+        .mockResolvedValueOnce([mockUsedEntry])
+        .mockResolvedValueOnce([mockUpdatingEntry]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockFolder]);
+
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+
+      const { isCollectionIndexFile } = await import(
+        '$lib/services/contents/collection/index-file'
+      );
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+      const savingEntries = [];
+      const changes = [];
+
+      await collectEntryChangesFromAsset({
+        _globalAssetFolder: { publicPath: '/global' },
+        newPath: 'new-assets/image.jpg',
+        asset: mockAsset,
+        savingEntries,
+        changes,
+      });
+
+      // Should call getEntriesByAssetURL twice and process updating entries
+      expect(getEntriesByAssetURL).toHaveBeenCalledTimes(2);
+      expect(getAssociatedCollections).toHaveBeenCalledWith(mockUpdatingEntry);
+    });
+
+    it('should use blobURL when getAssetPublicURL returns undefined', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+
+      const mockAsset = {
+        path: 'assets/image.jpg',
+        folder: { internalPath: 'assets' },
+        blobURL: 'blob:http://example.com/12345',
+      };
+
+      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
+      vi.mocked(getEntriesByAssetURL).mockResolvedValue([]);
+
+      const savingEntries = [];
+      const changes = [];
+
+      await collectEntryChangesFromAsset({
+        _globalAssetFolder: {},
+        newPath: 'new-assets/image.jpg',
+        asset: mockAsset,
+        savingEntries,
+        changes,
+      });
+
+      // Should use blobURL as fallback
+      expect(getEntriesByAssetURL).toHaveBeenCalledWith('blob:http://example.com/12345');
+    });
+
+    it('should handle asset folder without internalPath', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+
+      const mockAsset = {
+        path: 'assets/image.jpg',
+        folder: { internalPath: undefined },
+        blobURL: undefined,
+      };
+
+      const mockFolder = {
+        collectionName: 'posts',
+        publicPath: '/images',
+      };
+
+      const mockUsedEntry = { id: 'entry1' };
+
+      const mockUpdatingEntry = {
+        id: 'entry1',
+        locales: { en: { path: 'content/test.md', content: {} } },
+      };
+
+      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
+      vi.mocked(getEntriesByAssetURL)
+        .mockResolvedValueOnce([mockUsedEntry])
+        .mockResolvedValueOnce([mockUpdatingEntry]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockFolder]);
+
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+
+      const { isCollectionIndexFile } = await import(
+        '$lib/services/contents/collection/index-file'
+      );
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+      const savingEntries = [];
+      const changes = [];
+
+      await collectEntryChangesFromAsset({
+        _globalAssetFolder: { publicPath: '/global' },
+        newPath: 'new-assets/image.jpg',
+        asset: mockAsset,
+        savingEntries,
+        changes,
+      });
+
+      // When internalPath is undefined (becomes ''), replace('', publicPath) prepends publicPath
+      expect(getEntriesByAssetURL).toHaveBeenLastCalledWith(
+        'https://example.com/assets/image.jpg',
+        expect.objectContaining({
+          newURL: '/imagesnew-assets/image.jpg', // '' is replaced with '/images'
+        }),
+      );
+    });
+
+    it('should use global asset folder publicPath when collection not found', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+
+      const mockAsset = {
+        path: 'assets/image.jpg',
+        folder: { internalPath: 'assets' },
+        blobURL: undefined,
+      };
+
+      const mockUsedEntry = { id: 'entry1' };
+
+      const mockUpdatingEntry = {
+        id: 'entry1',
+        locales: { en: { path: 'content/test.md', content: {} } },
+      };
+
+      // Return empty array so find returns undefined
+      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
+      vi.mocked(getEntriesByAssetURL)
+        .mockResolvedValueOnce([mockUsedEntry])
+        .mockResolvedValueOnce([mockUpdatingEntry]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+
+      const { isCollectionIndexFile } = await import(
+        '$lib/services/contents/collection/index-file'
+      );
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+      const savingEntries = [];
+      const changes = [];
+      const globalPublicPath = '/media';
+
+      await collectEntryChangesFromAsset({
+        _globalAssetFolder: { publicPath: globalPublicPath },
+        newPath: 'new-assets/image.jpg',
+        asset: mockAsset,
+        savingEntries,
+        changes,
+      });
+
+      // Should use global asset folder publicPath
+      expect(getEntriesByAssetURL).toHaveBeenLastCalledWith(
+        'https://example.com/assets/image.jpg',
+        expect.objectContaining({
+          newURL: expect.stringContaining(globalPublicPath),
+        }),
+      );
+    });
+
+    it('should handle global asset folder with undefined publicPath', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+
+      const mockAsset = {
+        path: 'assets/image.jpg',
+        folder: { internalPath: 'assets' },
+        blobURL: undefined,
+      };
+
+      const mockUsedEntry = { id: 'entry1' };
+
+      const mockUpdatingEntry = {
+        id: 'entry1',
+        locales: { en: { path: 'content/test.md', content: {} } },
+      };
+
+      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
+      vi.mocked(getEntriesByAssetURL)
+        .mockResolvedValueOnce([mockUsedEntry])
+        .mockResolvedValueOnce([mockUpdatingEntry]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+
+      const { isCollectionIndexFile } = await import(
+        '$lib/services/contents/collection/index-file'
+      );
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+      const savingEntries = [];
+      const changes = [];
+
+      await collectEntryChangesFromAsset({
+        _globalAssetFolder: { publicPath: undefined },
+        newPath: 'new-assets/image.jpg',
+        asset: mockAsset,
+        savingEntries,
+        changes,
+      });
+
+      // Should use undefined as publicPath when global has undefined
+      expect(getEntriesByAssetURL).toHaveBeenLastCalledWith(
+        'https://example.com/assets/image.jpg',
+        expect.objectContaining({
+          newURL: expect.any(String),
+        }),
+      );
+    });
+
+    it('should handle when both find() and ?? return globalAssetFolder', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+
+      const mockAsset = {
+        path: 'assets/image.jpg',
+        folder: { internalPath: 'assets' },
+        blobURL: undefined,
+      };
+
+      const mockUsedEntry = { id: 'entry1' };
+
+      const mockUpdatingEntry = {
+        id: 'entry1',
+        locales: { en: { path: 'content/test.md', content: {} } },
+      };
+
+      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
+      vi.mocked(getEntriesByAssetURL)
+        .mockResolvedValueOnce([mockUsedEntry])
+        .mockResolvedValueOnce([mockUpdatingEntry]);
+      // Return array with folder that doesn't have collectionName !== undefined property
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([{ publicPath: '/local' }]);
+
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+
+      const { isCollectionIndexFile } = await import(
+        '$lib/services/contents/collection/index-file'
+      );
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+      const savingEntries = [];
+      const changes = [];
+
+      await collectEntryChangesFromAsset({
+        _globalAssetFolder: { publicPath: '/global' },
+        newPath: 'new-assets/image.jpg',
+        asset: mockAsset,
+        savingEntries,
+        changes,
+      });
+
+      // Should use global publicPath when find() doesn't find a folder with collectionName
+      expect(getEntriesByAssetURL).toHaveBeenLastCalledWith(
+        'https://example.com/assets/image.jpg',
+        expect.objectContaining({
+          newURL: expect.stringContaining('/global'),
+        }),
+      );
+    });
+
+    it('should collect changes for multiple updating entries', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+
+      const mockAsset = {
+        path: 'assets/image.jpg',
+        folder: { internalPath: 'assets' },
+        blobURL: undefined,
+      };
+
+      const mockFolder = {
+        collectionName: 'posts',
+        publicPath: '/images',
+      };
+
+      const mockUsedEntry = { id: 'entry1' };
+
+      const mockUpdatingEntry1 = {
+        id: 'entry1',
+        locales: { en: { path: 'content/test1.md', content: {} } },
+      };
+
+      const mockUpdatingEntry2 = {
+        id: 'entry2',
+        locales: { en: { path: 'content/test2.md', content: {} } },
+      };
+
+      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
+      vi.mocked(getEntriesByAssetURL)
+        .mockResolvedValueOnce([mockUsedEntry])
+        .mockResolvedValueOnce([mockUpdatingEntry1, mockUpdatingEntry2]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockFolder]);
+
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+
+      const { isCollectionIndexFile } = await import(
+        '$lib/services/contents/collection/index-file'
+      );
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+      const savingEntries = [];
+      const changes = [];
+
+      await collectEntryChangesFromAsset({
+        _globalAssetFolder: { publicPath: '/global' },
+        newPath: 'new-assets/image.jpg',
+        asset: mockAsset,
+        savingEntries,
+        changes,
+      });
+
+      // Should process both updating entries
+      expect(getAssociatedCollections).toHaveBeenCalledTimes(2);
+      expect(getAssociatedCollections).toHaveBeenNthCalledWith(1, mockUpdatingEntry1);
+      expect(getAssociatedCollections).toHaveBeenNthCalledWith(2, mockUpdatingEntry2);
+    });
   });
 
   describe('updateStores', () => {
@@ -529,6 +1043,108 @@ describe('assets/data/move', () => {
         renamed: true,
         count: 1,
       });
+    });
+
+    it('should handle focused asset not in movedAssets', async () => {
+      const { get } = await import('svelte/store');
+      const { allAssets, focusedAsset, overlaidAsset } = await import('$lib/services/assets');
+      const mockAsset = { path: 'different.jpg' };
+      const mockMovedAsset = { path: 'moved.jpg' };
+      const mockNewAsset = { path: 'new.jpg' };
+      const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
+
+      vi.mocked(get).mockImplementation((store) => {
+        if (store === allAssets) return [mockNewAsset];
+        if (store === focusedAsset) return mockAsset;
+        if (store === overlaidAsset) return undefined;
+        return undefined;
+      });
+
+      updateStores({ action: 'move', movedAssets });
+
+      // focusedAsset should not be set since it's not in movedAssets
+      expect(focusedAsset.set).not.toHaveBeenCalled();
+    });
+
+    it('should handle focused asset found in allAssets', async () => {
+      const { get } = await import('svelte/store');
+      const { allAssets, focusedAsset, overlaidAsset } = await import('$lib/services/assets');
+      const mockMovedAsset = { path: 'old.jpg' };
+      const mockNewAsset = { path: 'new.jpg' };
+      const mockAllAssets = [mockNewAsset];
+      const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
+
+      vi.mocked(get).mockImplementation((store) => {
+        if (store === allAssets) return mockAllAssets;
+        if (store === focusedAsset) return mockMovedAsset;
+        if (store === overlaidAsset) return undefined;
+        return undefined;
+      });
+
+      updateStores({ action: 'move', movedAssets });
+
+      // focusedAsset should be set to the matching asset from allAssets
+      expect(focusedAsset.set).toHaveBeenCalledWith(mockNewAsset);
+    });
+
+    it('should handle focused asset not found in allAssets', async () => {
+      const { get } = await import('svelte/store');
+      const { allAssets, focusedAsset, overlaidAsset } = await import('$lib/services/assets');
+      const mockMovedAsset = { path: 'old.jpg' };
+      const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
+
+      vi.mocked(get).mockImplementation((store) => {
+        if (store === allAssets) return []; // Empty array, asset not found
+        if (store === focusedAsset) return mockMovedAsset;
+        if (store === overlaidAsset) return undefined;
+        return undefined;
+      });
+
+      updateStores({ action: 'move', movedAssets });
+
+      // focusedAsset should be set to undefined
+      expect(focusedAsset.set).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should handle overlaid asset not found in allAssets', async () => {
+      const { get } = await import('svelte/store');
+      const { allAssets, focusedAsset, overlaidAsset } = await import('$lib/services/assets');
+      const mockMovedAsset = { path: 'old.jpg' };
+      const mockFocusedAsset = { path: 'focused.jpg' };
+      const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
+
+      vi.mocked(get).mockImplementation((store) => {
+        if (store === allAssets) return [];
+        if (store === focusedAsset) return mockFocusedAsset;
+        if (store === overlaidAsset) return mockMovedAsset;
+        return undefined;
+      });
+
+      updateStores({ action: 'rename', movedAssets });
+
+      // overlaidAsset should be set to undefined
+      expect(overlaidAsset.set).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should handle overlaid asset found in allAssets', async () => {
+      const { get } = await import('svelte/store');
+      const { allAssets, focusedAsset, overlaidAsset } = await import('$lib/services/assets');
+      const mockMovedAsset = { path: 'old.jpg' };
+      const mockNewAsset = { path: 'new.jpg' };
+      const mockAllAssets = [mockNewAsset];
+      const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
+
+      vi.mocked(get).mockImplementation((store) => {
+        if (store === allAssets) return mockAllAssets;
+        if (store === focusedAsset) return undefined;
+        if (store === overlaidAsset) return mockMovedAsset;
+        return undefined;
+      });
+
+      updateStores({ action: 'move', movedAssets });
+
+      // overlaidAsset should be set to the matching asset from allAssets
+      expect(overlaidAsset.set).toHaveBeenCalledWith(mockNewAsset);
     });
   });
 

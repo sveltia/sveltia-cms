@@ -432,7 +432,99 @@ describe('assets/view/group', () => {
 
       expect(result).toEqual({
         1024: [mockAssets[0], mockAssets[2]], // Both sizes contain "1024"
-        Other: [mockAssets[1], mockAssets[3]], // Other sizes don’t contain "1024"
+        Other: [mockAssets[1], mockAssets[3]], // Other sizes don't contain "1024"
+      });
+    });
+
+    it('should use otherKey when regex match fails on empty string', () => {
+      const mockRegex = /\d+/; // Matches one or more digits
+
+      getRegexMock.mockReturnValue(mockRegex);
+
+      const testAssets = /** @type {any[]} */ ([
+        {
+          path: '/test.jpg',
+          name: 'test.jpg',
+          sha: 'sha1',
+          size: 1000,
+          kind: 'image',
+          folder: {
+            collectionName: undefined,
+            internalPath: '/test',
+            publicPath: '/test',
+            entryRelative: false,
+            hasTemplateTags: false,
+          },
+          description: '', // Empty string value
+        },
+        {
+          path: '/test2.jpg',
+          name: 'test2.jpg',
+          sha: 'sha2',
+          size: 2000,
+          kind: 'image',
+          folder: {
+            collectionName: undefined,
+            internalPath: '/test',
+            publicPath: '/test',
+            entryRelative: false,
+            hasTemplateTags: false,
+          },
+          description: '123abc', // Matches regex
+        },
+      ]);
+
+      const result = groupAssets(testAssets, { field: 'description', pattern: '\\d+' });
+
+      expect(result).toEqual({
+        123: [testAssets[1]],
+        Other: [testAssets[0]], // Empty string doesn't match \d+, falls back to otherKey
+      });
+    });
+
+    it('should handle null/undefined values with regex pattern', () => {
+      const mockRegex = /test/;
+
+      getRegexMock.mockReturnValue(mockRegex);
+
+      const testAssets = /** @type {any[]} */ ([
+        {
+          path: '/test.jpg',
+          name: 'test.jpg',
+          sha: 'sha1',
+          size: 1000,
+          kind: 'image',
+          folder: {
+            collectionName: undefined,
+            internalPath: '/test',
+            publicPath: '/test',
+            entryRelative: false,
+            hasTemplateTags: false,
+          },
+          description: null, // null value
+        },
+        {
+          path: '/test2.jpg',
+          name: 'test2.jpg',
+          sha: 'sha2',
+          size: 2000,
+          kind: 'image',
+          folder: {
+            collectionName: undefined,
+            internalPath: '/test',
+            publicPath: '/test',
+            entryRelative: false,
+            hasTemplateTags: false,
+          },
+          description: undefined, // undefined value
+        },
+      ]);
+
+      const result = groupAssets(testAssets, { field: 'description', pattern: 'test' });
+
+      // Both null and undefined convert to empty string '', which doesn't match 'test' regex
+      expect(result).toEqual({
+        Other: testAssets,
       });
     });
   });

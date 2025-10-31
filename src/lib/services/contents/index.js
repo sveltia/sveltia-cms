@@ -50,4 +50,4 @@ export const getEntryFoldersByPath = (path) =>
         getCollection(collectionName)
       )?._file?.fullPathRegEx?.test(path);
     })
-    .sort((a, b) => b.folderPath?.localeCompare(a.folderPath ?? '') ?? 0);
+    .sort((a, b) => (b.folderPath ?? '').localeCompare(a.folderPath ?? ''));

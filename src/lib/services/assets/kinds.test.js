@@ -243,6 +243,31 @@ describe('assets/kinds', () => {
 
       expect(result).toBe(undefined);
     });
+
+    it('should handle local file paths with mime type', async () => {
+      vi.mocked(mime.getType).mockReturnValue('audio/wav');
+
+      const result = await getMediaKind('sound.wav');
+
+      expect(result).toBe('audio');
+      expect(mime.getType).toHaveBeenCalledWith('sound.wav');
+    });
+
+    it('should return undefined for local file path with null mime type', async () => {
+      vi.mocked(mime.getType).mockReturnValue(null);
+
+      const result = await getMediaKind('local-file.unknown');
+
+      expect(result).toBe(undefined);
+      expect(mime.getType).toHaveBeenCalledWith('local-file.unknown');
+    });
+
+    it('should return undefined when source is neither string nor Blob', async () => {
+      // @ts-ignore
+      const result = await getMediaKind({} /* invalid source type */);
+
+      expect(result).toBe(undefined);
+    });
   });
 
   describe('getAssetKind', () => {
