@@ -7,19 +7,17 @@ import { _ } from 'svelte-i18n';
 import { stringify } from 'yaml';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
-import { gitBackendServices, validBackendNames } from '$lib/services/backends';
-import { warnDeprecation } from '$lib/services/config/deprecations';
 import { getAllAssetFolders } from '$lib/services/config/folders/assets';
 import { getAllEntryFolders } from '$lib/services/config/folders/entries';
 import { fetchSiteConfig } from '$lib/services/config/loader';
+import { parseSiteConfig } from '$lib/services/config/parser';
 import { allEntryFolders } from '$lib/services/contents';
-import { CLOUD_MEDIA_LIBRARIES } from '$lib/services/integrations/media-libraries';
 import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
  * @import { InternalSiteConfig } from '$lib/types/private';
- * @import { GitBackend, SiteConfig } from '$lib/types/public';
+ * @import { SiteConfig } from '$lib/types/public';
  */
 
 const { DEV, VITE_SITE_URL } = import.meta.env;
@@ -53,108 +51,6 @@ export const siteConfigVersion = writable();
  * @type {Writable<{ message: string } | undefined>}
  */
 export const siteConfigError = writable();
-
-/**
- * Validate the site configuration file.
- * @param {SiteConfig} config Raw config object.
- * @throws {Error} If there is an error in the config.
- * @see https://decapcms.org/docs/configuration-options/
- * @todo Add more validations.
- */
-export const validate = (config) => {
-  if (!Array.isArray(config.collections) && !Array.isArray(config.singletons)) {
-    throw new Error(get(_)('config.error.no_collection'));
-  }
-
-  if (!config.backend) {
-    throw new Error(get(_)('config.error.missing_backend'));
-  }
-
-  const backendName = config.backend.name;
-
-  if (!backendName) {
-    throw new Error(get(_)('config.error.missing_backend_name'));
-  }
-
-  if (!validBackendNames.includes(backendName)) {
-    throw new Error(get(_)('config.error.unsupported_backend', { values: { name: backendName } }));
-  }
-
-  if (Object.keys(gitBackendServices).includes(backendName)) {
-    const {
-      repo,
-      // @ts-ignore Gitea backend doesn’t have the property
-      auth_type: authType,
-      // @ts-ignore GitHub backend doesn’t have the property
-      app_id: appId,
-      automatic_deployments: autoDeploy,
-    } = /** @type {GitBackend} */ (config.backend);
-
-    if (repo === undefined) {
-      throw new Error(get(_)('config.error.missing_repository'));
-    }
-
-    if (typeof repo !== 'string' || !/(.+)\/([^/]+)$/.test(repo)) {
-      throw new Error(get(_)('config.error.invalid_repository'));
-    }
-
-    if (authType === 'implicit') {
-      throw new Error(get(_)('config.error.oauth_implicit_flow'));
-    }
-
-    if ((backendName === 'gitea' || (backendName === 'gitlab' && authType === 'pkce')) && !appId) {
-      throw new Error(get(_)('config.error.oauth_no_app_id'));
-    }
-
-    // @todo Remove the option prior to the 1.0 release.
-    if (autoDeploy !== undefined) {
-      warnDeprecation('automatic_deployments');
-    }
-  }
-
-  if (config.media_folder === undefined) {
-    // Require `media_folder` unless a cloud media library is configured
-    if (
-      !CLOUD_MEDIA_LIBRARIES.includes(/** @type {any} */ (config.media_library?.name ?? '')) &&
-      !Object.keys(config.media_libraries || {}).some((name) =>
-        CLOUD_MEDIA_LIBRARIES.includes(/** @type {any} */ (name)),
-      )
-    ) {
-      throw new Error(get(_)('config.error.missing_media_folder'));
-    }
-  } else if (typeof config.media_folder !== 'string') {
-    throw new Error(get(_)('config.error.invalid_media_folder'));
-  }
-
-  if (config.public_folder !== undefined) {
-    if (typeof config.public_folder !== 'string') {
-      throw new Error(get(_)('config.error.invalid_public_folder'));
-    }
-
-    if (/^\.{1,2}\//.test(config.public_folder)) {
-      throw new Error(get(_)('config.error.public_folder_relative_path'));
-    }
-
-    if (/^https?:/.test(config.public_folder)) {
-      throw new Error(get(_)('config.error.public_folder_absolute_url'));
-    }
-  }
-
-  if (config.publish_mode === 'editorial_workflow') {
-    // eslint-disable-next-line no-console
-    console.warn('Editorial workflow is not yet supported in Sveltia CMS.');
-  }
-
-  if (config.backend.name === 'github' && config.backend.open_authoring) {
-    // eslint-disable-next-line no-console
-    console.warn('Open authoring is not yet supported in Sveltia CMS.');
-  }
-
-  if (config.collections?.some((collection) => 'nested' in collection)) {
-    // eslint-disable-next-line no-console
-    console.warn('Nested collections are not yet supported in Sveltia CMS.');
-  }
-};
 
 /**
  * Initialize the site configuration state by loading the YAML file and optionally merge the object
@@ -192,7 +88,7 @@ export const initSiteConfig = async (manualConfig) => {
     // Store the raw config so it can be used in the parser and config viewer
     Object.assign(rawSiteConfig, rawConfig);
 
-    validate(rawConfig);
+    parseSiteConfig(rawConfig);
 
     /** @type {InternalSiteConfig} */
     const config = structuredClone(rawConfig);
