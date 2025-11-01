@@ -8,7 +8,7 @@
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { inAuthPopup } from '$lib/services/backends/git/shared/auth';
-  import { siteConfig, siteConfigError } from '$lib/services/config';
+  import { siteConfig, siteConfigErrors } from '$lib/services/config';
   import { dataLoaded, dataLoadedProgress } from '$lib/services/contents';
   import { user } from '$lib/services/user';
   import { signInError, unauthenticated } from '$lib/services/user/auth';
@@ -21,15 +21,21 @@
 
 <div role="none" class="container" inert={$user && $dataLoaded}>
   <div role="none" class="inner">
-    {#if $siteConfig || $siteConfigError}
+    {#if $siteConfig || $siteConfigErrors.length}
       {@const logoURL = $siteConfig?.logo?.src ?? $siteConfig?.logo_url}
       <img src={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`} alt="" class="logo" />
     {/if}
     <h1>Sveltia CMS</h1>
-    {#if $siteConfigError}
+    {#if $siteConfigErrors.length}
       <div role="alert" class="message">
-        {$siteConfigError.message}
-        {$_('config.error.try_again')}
+        <div role="none">
+          {$_($siteConfigErrors.length === 1 ? 'config.one_error' : 'config.many_errors')}
+        </div>
+        <ul class="error">
+          {#each $siteConfigErrors as error}
+            <li>{error}</li>
+          {/each}
+        </ul>
       </div>
     {:else if $prefsError}
       <div role="alert" class="message">
@@ -107,7 +113,7 @@
     .error {
       border-radius: var(--sui-control-medium-border-radius);
       padding: 12px;
-      background-color: var(--sui-secondary-background-color);
+      background-color: var(--sui-tertiary-background-color);
       font-size: var(--sui-font-size-default);
       line-height: 1.5;
       text-align: center;
@@ -120,6 +126,19 @@
         font-size: var(--sui-font-size-large);
         font-weight: var(--sui-font-weight-normal);
         text-align: center;
+
+        ul {
+          margin: 8px 0 0;
+          padding: 0;
+          max-height: 120px;
+          overflow-y: auto;
+          list-style: none;
+        }
+
+        li {
+          margin: 8px 0;
+          padding: 0;
+        }
       }
     }
   }

@@ -7,15 +7,18 @@ import { CLOUD_MEDIA_LIBRARIES } from '$lib/services/integrations/media-librarie
 
 /**
  * @import { SiteConfig } from '$lib/types/public';
+ * @import { ConfigParserCollectors } from '$lib/types/private';
  */
 
 /**
  * Parse and validate media folder configuration.
- * @param {SiteConfig} config Raw config object.
+ * @param {SiteConfig} siteConfig Raw site configuration.
+ * @param {ConfigParserCollectors} collectors Collectors.
  * @throws {Error} If there is an error in the media folder config.
  */
-export const parseMediaConfig = (config) => {
-  const { media_folder, public_folder, media_library, media_libraries } = config;
+export const parseMediaConfig = (siteConfig, collectors) => {
+  const { media_folder, public_folder, media_library, media_libraries } = siteConfig;
+  const { errors } = collectors;
 
   if (media_folder === undefined) {
     // Require `media_folder` unless a cloud media library is configured
@@ -25,23 +28,23 @@ export const parseMediaConfig = (config) => {
         CLOUD_MEDIA_LIBRARIES.includes(/** @type {any} */ (name)),
       )
     ) {
-      throw new Error(get(_)('config.error.missing_media_folder'));
+      errors.add(get(_)('config.error.missing_media_folder'));
     }
   } else if (typeof media_folder !== 'string') {
-    throw new Error(get(_)('config.error.invalid_media_folder'));
+    errors.add(get(_)('config.error.invalid_media_folder'));
   }
 
   if (public_folder !== undefined) {
     if (typeof public_folder !== 'string') {
-      throw new Error(get(_)('config.error.invalid_public_folder'));
-    }
+      errors.add(get(_)('config.error.invalid_public_folder'));
+    } else {
+      if (/^\.{1,2}\//.test(public_folder)) {
+        errors.add(get(_)('config.error.public_folder_relative_path'));
+      }
 
-    if (/^\.{1,2}\//.test(public_folder)) {
-      throw new Error(get(_)('config.error.public_folder_relative_path'));
-    }
-
-    if (/^https?:/.test(public_folder)) {
-      throw new Error(get(_)('config.error.public_folder_absolute_url'));
+      if (/^https?:/.test(public_folder)) {
+        errors.add(get(_)('config.error.public_folder_absolute_url'));
+      }
     }
   }
 };

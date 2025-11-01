@@ -3,6 +3,7 @@
  * @import { Writable } from 'svelte/store';
  * @import {
  * BackendName,
+ * Collection,
  * CollectionFile,
  * EntryCollection,
  * Field,
@@ -17,6 +18,7 @@
  * LocaleCode,
  * MediaField,
  * RasterImageFormat,
+ * RelationField,
  * SelectField,
  * SiteConfig,
  * } from './public';
@@ -1018,6 +1020,50 @@
  * @property {FieldKeyPath | TypedFieldKeyPath} keyPath Field key path or typed key path.
  * @property {boolean} [isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
+ */
+
+/**
+ * Context for config parsing.
+ * @typedef {object} ConfigParserContext
+ * @property {SiteConfig} [siteConfig] Raw site config to parse.
+ * @property {Collection} [collection] Collection config to parse.
+ * @property {CollectionFile} [collectionFile] File config to parse.
+ * @property {string} [componentName] Name of the editor component.
+ * @property {boolean} [isIndexFile] Whether the field is part of an index file.
+ * @property {TypedFieldKeyPath} [keyPath] Key path to the field being parsed.
+ */
+
+/**
+ * Collected Media field during config parsing. It will be processed later to enable field-specific
+ * asset folders.
+ * @typedef {object} CollectedMediaField
+ * @property {MediaField} fieldConfig File/Image field config.
+ * @property {ConfigParserContext} context Field parser context.
+ */
+
+/**
+ * Collected Relation field during config parsing. It will be processed later to enable reverse
+ * reference lookups.
+ * @typedef {object} CollectedRelationField
+ * @property {RelationField} fieldConfig Relation field config.
+ * @property {ConfigParserContext} context Field parser context.
+ */
+
+/**
+ * Collectors used during config parsing.
+ * @typedef {object} ConfigParserCollectors
+ * @property {Set<string>} errors Collected error messages.
+ * @property {Set<string>} warnings Collected warning messages.
+ * @property {Set<CollectedMediaField>} mediaFields Collected media fields.
+ * @property {Set<CollectedRelationField>} relationFields Collected relation fields.
+ */
+
+/**
+ * Arguments for a field parser function.
+ * @typedef {object} FieldParserArgs
+ * @property {Field} fieldConfig Field configuration.
+ * @property {ConfigParserContext} context Field parser context.
+ * @property {ConfigParserCollectors} collectors Collectors to collect messages and special fields.
  */
 
 export {};

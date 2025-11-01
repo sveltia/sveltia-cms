@@ -16,7 +16,7 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { InternalSiteConfig } from '$lib/types/private';
+ * @import { ConfigParserCollectors, InternalSiteConfig } from '$lib/types/private';
  * @import { SiteConfig } from '$lib/types/public';
  */
 
@@ -48,9 +48,20 @@ export const siteConfig = writable();
 export const siteConfigVersion = writable();
 
 /**
- * @type {Writable<{ message: string } | undefined>}
+ * @type {Writable<string[]>}
  */
-export const siteConfigError = writable();
+export const siteConfigErrors = writable([]);
+
+/**
+ * Collectors used during config parsing.
+ * @type {ConfigParserCollectors}
+ */
+const collectors = {
+  errors: new Set(),
+  warnings: new Set(),
+  mediaFields: new Set(),
+  relationFields: new Set(),
+};
 
 /**
  * Initialize the site configuration state by loading the YAML file and optionally merge the object
@@ -60,7 +71,14 @@ export const siteConfigError = writable();
  */
 export const initSiteConfig = async (manualConfig) => {
   siteConfig.set(undefined);
-  siteConfigError.set(undefined);
+  siteConfigErrors.set([]);
+
+  Object.assign(collectors, {
+    errors: new Set(),
+    warnings: new Set(),
+    mediaFields: new Set(),
+    relationFields: new Set(),
+  });
 
   try {
     // Not a config error but `getHash` below and some other features require a secure context
@@ -88,7 +106,18 @@ export const initSiteConfig = async (manualConfig) => {
     // Store the raw config so it can be used in the parser and config viewer
     Object.assign(rawSiteConfig, rawConfig);
 
-    parseSiteConfig(rawConfig);
+    parseSiteConfig(rawConfig, collectors);
+
+    if (collectors.errors.size) {
+      throw new Error('Errors found in configuration');
+    }
+
+    if (collectors.warnings.size) {
+      collectors.warnings.forEach((warning) => {
+        // eslint-disable-next-line no-console
+        console.warn(warning);
+      });
+    }
 
     /** @type {InternalSiteConfig} */
     const config = structuredClone(rawConfig);
@@ -107,9 +136,11 @@ export const initSiteConfig = async (manualConfig) => {
     siteConfig.set(config);
     siteConfigVersion.set(await getHash(stringify(config)));
   } catch (/** @type {any} */ ex) {
-    siteConfigError.set({
-      message: ex.name === 'Error' ? ex.message : get(_)('config.error.unexpected'),
-    });
+    siteConfigErrors.set(
+      collectors.errors.size
+        ? [...collectors.errors]
+        : [ex.name === 'Error' ? ex.message : get(_)('config.error.unexpected')],
+    );
 
     // eslint-disable-next-line no-console
     console.error(ex, ex.cause);
@@ -120,6 +151,8 @@ siteConfig.subscribe((config) => {
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('siteConfig', config);
+    // eslint-disable-next-line no-console
+    console.info('collectors', collectors);
   }
 
   if (!config) {

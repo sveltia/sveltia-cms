@@ -629,6 +629,9 @@ export const strings = {
 
   // Configuration
   config: {
+    one_error: 'There is an error in the site configuration. Please solve the issue and try again.',
+    many_errors:
+      'There are errors in the site configuration. Please solve the issues and try again.',
     error: {
       no_secure_context: 'Sveltia CMS only works with HTTPS or localhost URLs.',
       fetch_failed: 'The configuration file could not be retrieved.',
@@ -637,23 +640,27 @@ export const strings = {
       parse_failed_invalid_object: 'The configuration file is not a valid JavaScript object.',
       parse_failed_unsupported_type:
         'The configuration file is not a valid file type. Only YAML and JSON are supported.',
-      no_collection: 'Collections are not defined in the configuration file.',
-      missing_backend: 'The backend is not defined in the configuration file.',
-      missing_backend_name: 'The backend name is not defined in the configuration file.',
+      no_collection: 'Collections are not defined.',
+      missing_backend: 'The backend is not defined.',
+      missing_backend_name: 'The backend name is not defined.',
       unsupported_backend: 'The configured “{name}” backend is not supported.',
-      missing_repository: 'The repository is not defined in the configuration file.',
+      missing_repository: 'The repository is not defined.',
       invalid_repository:
         'The configured repository is invalid. It must be in “owner/repo” format.',
       oauth_implicit_flow: 'The configured authentication method (implicit flow) is not supported.',
-      oauth_no_app_id: 'OAuth application ID is not defined in the configuration file.',
-      missing_media_folder: 'The media folder is not defined in the configuration file.',
+      oauth_no_app_id: 'OAuth application ID is not defined.',
+      missing_media_folder: 'The media folder is not defined.',
       invalid_media_folder: 'The configured media folder is invalid. It must be a string.',
       invalid_public_folder: 'The configured public folder is invalid. It must be a string.',
       public_folder_relative_path:
         'The configured public folder is invalid. It must be an absolute path starting with “/”.',
       public_folder_absolute_url: 'An absolute URL for the public folder option is not supported.',
-      unexpected: 'There was an unexpected error while validating the configuration file.',
-      try_again: 'Please solve the issue and try again.',
+      unexpected: 'Unexpected error',
+    },
+    warning: {
+      editorial_workflow_unsupported: 'Editorial workflow is not yet supported in Sveltia CMS.',
+      open_authoring_unsupported: 'Open authoring is not yet supported in Sveltia CMS.',
+      nested_collections_unsupported: 'Nested collections are not yet supported in Sveltia CMS.',
     },
   },
 

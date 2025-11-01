@@ -630,6 +630,8 @@ export const strings = {
 
   // Configuration
   config: {
+    one_error: 'サイト設定に問題が見つかりました。問題を解決してから再度お試しください。',
+    many_errors: 'サイト設定に問題が見つかりました。問題を解決してから再度お試しください。',
     error: {
       no_secure_context: 'Sveltia CMS は HTTPS またはローカルホスト URL でのみ動作します。',
       fetch_failed: '設定ファイルを読み込めませんでした。',
@@ -638,16 +640,16 @@ export const strings = {
       parse_failed_invalid_object: '設定ファイルが有効な JavaScript オブジェクトではありません。',
       parse_failed_unsupported_type:
         '設定ファイルが有効なファイル形式ではありません。サポートされているのは YAML と JSON のみです。',
-      no_collection: '設定ファイル内でコレクションが定義されていません。',
-      missing_backend: '設定ファイル内でバックエンドが定義されていません。',
-      missing_backend_name: '設定ファイル内でバックエンド名が定義されていません。',
+      no_collection: 'コレクションが定義されていません。',
+      missing_backend: 'バックエンドが定義されていません。',
+      missing_backend_name: 'バックエンド名が定義されていません。',
       unsupported_backend: '設定されている「{name}」バックエンドは非対応です。',
-      missing_repository: '設定ファイル内でレポジトリが定義されていません。',
+      missing_repository: 'レポジトリが定義されていません。',
       invalid_repository:
         '設定されているレポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。',
       oauth_implicit_flow: '設定されている認証方式 (暗黙的フロー) は非対応です。',
-      oauth_no_app_id: '設定ファイル内で OAuth アプリケーション ID が定義されていません。',
-      missing_media_folder: '設定ファイル内でメディアフォルダーが定義されていません。',
+      oauth_no_app_id: ' OAuth アプリケーション ID が定義されていません。',
+      missing_media_folder: 'メディアフォルダーが定義されていません。',
       invalid_media_folder:
         '設定されているメディアフォルダーが正しくありません。この設定は文字列でなければなりません。',
       invalid_public_folder:
@@ -655,8 +657,15 @@ export const strings = {
       public_folder_relative_path:
         '設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。',
       public_folder_absolute_url: 'パブリックフォルダーオプションの絶対 URL は非対応です。',
-      unexpected: '設定ファイルを検証中に予期せぬ問題が発生しました。',
-      try_again: '問題を解決してから再度お試しください。',
+      unexpected: '予期せぬ問題',
+    },
+    warning: {
+      editorial_workflow_unsupported:
+        'Sveltia CMS ではまだエディトリアルワークフローはサポートされていません。',
+      open_authoring_unsupported:
+        'Sveltia CMS ではまだオープンオーサリングはサポートされていません。',
+      nested_collections_unsupported:
+        'Sveltia CMS ではネストされたコレクションはまだサポートされていません。',
     },
   },
 

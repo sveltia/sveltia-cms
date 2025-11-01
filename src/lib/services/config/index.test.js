@@ -1,7 +1,7 @@
 import { init as initI18n } from 'svelte-i18n';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DEV_SITE_URL, siteConfig, siteConfigError, siteConfigVersion } from './index.js';
+import { DEV_SITE_URL, siteConfig, siteConfigErrors, siteConfigVersion } from './index.js';
 
 // Mock external dependencies
 vi.mock('@sveltia/utils/crypto', () => ({
@@ -88,7 +88,7 @@ describe('config/index', () => {
   afterEach(() => {
     // Reset stores
     siteConfig.set(undefined);
-    siteConfigError.set(undefined);
+    siteConfigErrors.set([]);
     siteConfigVersion.set('0');
   });
 
@@ -102,7 +102,7 @@ describe('config/index', () => {
   describe('stores', () => {
     it('should export config stores', () => {
       expect(siteConfig).toBeDefined();
-      expect(siteConfigError).toBeDefined();
+      expect(siteConfigErrors).toBeDefined();
       expect(siteConfigVersion).toBeDefined();
     });
   });
@@ -173,12 +173,12 @@ describe('config/index', () => {
 
       await initSiteConfig();
 
-      const error = await new Promise((resolve) => {
+      const errors = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfigError.subscribe((err) => {
+        unsubscribe = siteConfigErrors.subscribe((err) => {
           if (err) {
             unsubscribe?.();
             resolve(err);
@@ -186,8 +186,8 @@ describe('config/index', () => {
         });
       });
 
-      expect(error).toBeDefined();
-      expect(error?.message).toContain('config.error.no_secure_context');
+      expect(errors).toBeDefined();
+      expect(errors).toContain('config.error.no_secure_context');
     });
 
     it('should load config from file when no manual config provided', async () => {
@@ -299,12 +299,12 @@ describe('config/index', () => {
 
       await initSiteConfig(/** @type {any} */ ('not-an-object'));
 
-      const error = await new Promise((resolve) => {
+      const errors = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfigError.subscribe((err) => {
+        unsubscribe = siteConfigErrors.subscribe((err) => {
           if (err) {
             unsubscribe?.();
             resolve(err);
@@ -312,8 +312,8 @@ describe('config/index', () => {
         });
       });
 
-      expect(error).toBeDefined();
-      expect(error?.message).toContain('config.error.parse_failed');
+      expect(errors).toBeDefined();
+      expect(errors).toContain('config.error.parse_failed');
     });
 
     it('should set _siteURL from site_url config', async () => {
@@ -491,12 +491,12 @@ describe('config/index', () => {
 
       await initSiteConfig();
 
-      const error = await new Promise((resolve) => {
+      const errors = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfigError.subscribe((err) => {
+        unsubscribe = siteConfigErrors.subscribe((err) => {
           if (err) {
             unsubscribe?.();
             resolve(err);
@@ -504,7 +504,7 @@ describe('config/index', () => {
         });
       });
 
-      expect(error).toBeDefined();
+      expect(errors).toBeDefined();
     });
 
     it('should handle unexpected errors with generic message', async () => {
@@ -514,12 +514,12 @@ describe('config/index', () => {
 
       await initSiteConfig();
 
-      const error = await new Promise((resolve) => {
+      const errors = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfigError.subscribe((err) => {
+        unsubscribe = siteConfigErrors.subscribe((err) => {
           if (err) {
             unsubscribe?.();
             resolve(err);
@@ -527,8 +527,8 @@ describe('config/index', () => {
         });
       });
 
-      expect(error).toBeDefined();
-      expect(error?.message).toContain('config.error.unexpected');
+      expect(errors).toBeDefined();
+      expect(errors).toContain('config.error.unexpected');
     });
   });
 });
