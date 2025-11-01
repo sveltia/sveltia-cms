@@ -46,7 +46,7 @@ export const parseBackendConfig = (siteConfig, collectors) => {
     const {
       repo,
       automatic_deployments: autoDeploy,
-      // @ts-ignore GitHub/GitLab only
+      // @ts-ignore GitLab only
       auth_type: authType,
       // @ts-ignore GitLab/Gitea only
       app_id: appId,
