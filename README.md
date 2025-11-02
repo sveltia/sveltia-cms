@@ -551,7 +551,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
     - Compatibility note: In Static CMS, these options are implemented as `prefix` and `suffix`, respectively, which have different meaning in Sveltia CMS.
 - File and Image
   - Provides a reimagined all-in-one asset selection dialog for File and Image fields.[^234]
-    - Entry, file, [collection](#using-a-custom-media-folder-for-a-collection) and global assets are listed on separate tabs for easy selection.[^19]
+    - Field, entry, file, [collection](#using-a-custom-media-folder-for-a-collection) and global assets are listed on separate tabs for easy selection.[^19]
     - A new asset can be uploaded by dragging & dropping it into the dialog.[^20]
     - A URL can also be entered in the dialog.
     - Integration with Pexels, Pixabay and Unsplash makes it easy to select and insert a free stock photo.[^8] More stock photo providers will be added in the future.
@@ -562,7 +562,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - The new `accept` option allows files to be filtered by a comma-separated list of unique file type specifiers, in the same way as the HTML [`accept` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept) for `<input type="file">`.[^216]
     - By default, the Image widget only accepts an AVIF, GIF, JPEG, PNG, WebP or SVG image. BMP, HEIC, JPEG XL, PSD, TIFF and other less common or non-standard files are excluded.[^217]
     - The File widget has no default restriction.
-  - If the `public_folder` contains `{{slug}}` and you’ve edited a slug field (e.g. `title`) of a new entry after uploading an asset, the updated slug will be used in the saved asset path.[^140] Other dynamic template tags such as `{{filename}}` will also be populated as expected.[^141]
+  - If the collection’s `public_folder` contains `{{slug}}` and you’ve edited a slug field (e.g. `title`) of a new entry after uploading an asset, the updated slug will be used in the saved asset path.[^140] Other dynamic template tags such as `{{filename}}` will also be populated as expected.[^141]
   - The CMS prevents the same file from being uploaded twice. It compares the hashes and selects an existing asset instead.
   - Large images automatically fit in the Preview Pane instead of being displayed at their original size, which can easily exceed the width of the pane.
 - List and Object
@@ -662,7 +662,6 @@ However, 100% feature parity is never planned, and some features are still missi
 These Netlify/Decap CMS features are not yet implemented in Sveltia CMS. We are working hard to add them before the 1.0 release. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
 - Comprehensive site config validation
-- The `media_folder` and `public_folder` options (beta) for the [File](https://decapcms.org/docs/widgets/#File) and [Image](https://decapcms.org/docs/widgets/#Image) widgets ([#497](https://github.com/sveltia/sveltia-cms/issues/497))
 - Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent) (`CMS.registerEditorComponent`)
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/) (`CMS.registerWidget`)
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) (`CMS.registerPreviewTemplate`) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
