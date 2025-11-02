@@ -14,7 +14,7 @@
   import FileEditorItem from '$lib/components/contents/details/widgets/file/file-editor-item.svelte';
   import UploadButton from '$lib/components/contents/details/widgets/file/upload-button.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getAssetLibraryFolderMap } from '$lib/services/contents/widgets/file/helpers';
+  import { getAssetLibraryFolderMap } from '$lib/services/contents/widgets/file/helper';
   import { processResource } from '$lib/services/contents/widgets/file/process';
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';

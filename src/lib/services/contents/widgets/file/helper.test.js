@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getAssetLibraryFolderMap } from './helpers';
+import { getAssetLibraryFolderMap } from './helper';
 
 // Mock dependencies
 vi.mock('$lib/services/assets/folders', async () => {
@@ -14,7 +14,7 @@ vi.mock('$lib/services/assets/folders', async () => {
 
 const { getAssetFolder } = await import('$lib/services/assets/folders');
 
-describe('contents/widgets/file/helpers', () => {
+describe('contents/widgets/file/helper', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
