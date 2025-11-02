@@ -11,26 +11,30 @@ import { parseFieldConfig, parseFields } from '$lib/services/config/parser/field
  */
 export const parseListFieldConfig = ({ fieldConfig, context, collectors }) => {
   const { field: subfield, fields: subfields, types } = /** @type {ListField} */ (fieldConfig);
-  const { keyPath } = context;
+  const { typedKeyPath } = context;
 
   // Handle single subfield
   if (subfield) {
     parseFieldConfig({
       fieldConfig: subfield,
-      context: { ...context, keyPath: `${keyPath}.*` },
+      context: { ...context, typedKeyPath: `${typedKeyPath}.*` },
       collectors,
     });
   }
 
   // Handle subfields
   if (subfields) {
-    parseFields(subfields, { ...context, keyPath: `${keyPath}.*` }, collectors);
+    parseFields(subfields, { ...context, typedKeyPath: `${typedKeyPath}.*` }, collectors);
   }
 
   // Handle variable types
   types?.forEach(({ name: type, fields: typedFields }) => {
     if (typedFields) {
-      parseFields(typedFields, { ...context, keyPath: `${keyPath}.*<${type}>` }, collectors);
+      parseFields(
+        typedFields,
+        { ...context, typedKeyPath: `${typedKeyPath}.*<${type}>` },
+        collectors,
+      );
     }
   });
 };

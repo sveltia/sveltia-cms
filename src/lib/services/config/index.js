@@ -160,7 +160,7 @@ siteConfig.subscribe((config) => {
   }
 
   const _allEntryFolders = getAllEntryFolders(config);
-  const _allAssetFolders = getAllAssetFolders(config);
+  const _allAssetFolders = getAllAssetFolders(config, [...collectors.mediaFields]);
 
   // `getCollection` depends on `allAssetFolders`
   allEntryFolders.set(_allEntryFolders);

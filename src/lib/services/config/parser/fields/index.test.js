@@ -93,7 +93,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -115,7 +115,7 @@ describe('Field Collectors', () => {
 
       const [mediaField] = [...collectors.mediaFields];
 
-      expect(mediaField.context.keyPath).toBe('cover_image');
+      expect(mediaField.context.typedKeyPath).toBe('cover_image');
     });
 
     it('should collect media fields in object field subfields', async () => {
@@ -126,7 +126,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -154,7 +154,7 @@ describe('Field Collectors', () => {
 
       const [mediaField] = [...collectors.mediaFields];
 
-      expect(mediaField.context.keyPath).toBe('content.featured_image');
+      expect(mediaField.context.typedKeyPath).toBe('content.featured_image');
     });
 
     it('should collect media fields in nested object fields', async () => {
@@ -165,7 +165,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -195,7 +195,7 @@ describe('Field Collectors', () => {
 
       const [mediaField] = [...collectors.mediaFields];
 
-      expect(mediaField.context.keyPath).toBe('meta.settings.thumbnail');
+      expect(mediaField.context.typedKeyPath).toBe('meta.settings.thumbnail');
     });
 
     it('should collect media fields in list field subfields', async () => {
@@ -206,7 +206,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -230,7 +230,7 @@ describe('Field Collectors', () => {
 
       const [mediaField] = [...collectors.mediaFields];
 
-      expect(mediaField.context.keyPath).toBe('gallery.*.image');
+      expect(mediaField.context.typedKeyPath).toBe('gallery.*.image');
     });
 
     it('should collect media fields in list with single field', async () => {
@@ -241,7 +241,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -263,7 +263,7 @@ describe('Field Collectors', () => {
 
       const [mediaField] = [...collectors.mediaFields];
 
-      expect(mediaField.context.keyPath).toBe('photos.*.photo');
+      expect(mediaField.context.typedKeyPath).toBe('photos.*.photo');
     });
 
     it('should collect media fields in nested list and object structures', async () => {
@@ -274,7 +274,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -305,7 +305,7 @@ describe('Field Collectors', () => {
 
       const [mediaField] = [...collectors.mediaFields];
 
-      expect(mediaField.context.keyPath).toBe('sections.*.details.media');
+      expect(mediaField.context.typedKeyPath).toBe('sections.*.details.media');
     });
 
     it('should collect multiple media fields at different depths', async () => {
@@ -316,7 +316,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -355,9 +355,9 @@ describe('Field Collectors', () => {
       expect(collectors.mediaFields.size).toBe(3);
       expect(collectors.relationFields.size).toBe(0);
 
-      const keyPaths = [...collectors.mediaFields].map((f) => f.context.keyPath);
+      const typedKeyPaths = [...collectors.mediaFields].map((f) => f.context.typedKeyPath);
 
-      expect(keyPaths).toEqual(['hero_image', 'content.image', 'gallery.*.photo']);
+      expect(typedKeyPaths).toEqual(['hero_image', 'content.image', 'gallery.*.photo']);
     });
   });
 
@@ -370,7 +370,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -390,7 +390,7 @@ describe('Field Collectors', () => {
 
       const [relationField] = [...collectors.relationFields];
 
-      expect(relationField.context.keyPath).toBe('author');
+      expect(relationField.context.typedKeyPath).toBe('author');
     });
 
     it('should collect relation fields in object field', async () => {
@@ -401,7 +401,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -427,7 +427,7 @@ describe('Field Collectors', () => {
 
       const [relationField] = [...collectors.relationFields];
 
-      expect(relationField.context.keyPath).toBe('meta.related_post');
+      expect(relationField.context.typedKeyPath).toBe('meta.related_post');
     });
 
     it('should collect relation fields in list field', async () => {
@@ -438,7 +438,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -462,7 +462,7 @@ describe('Field Collectors', () => {
 
       const [relationField] = [...collectors.relationFields];
 
-      expect(relationField.context.keyPath).toBe('team_members.*.member');
+      expect(relationField.context.typedKeyPath).toBe('team_members.*.member');
     });
 
     it('should collect relation fields in deeply nested structures', async () => {
@@ -473,7 +473,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -506,7 +506,7 @@ describe('Field Collectors', () => {
 
       const [relationField] = [...collectors.relationFields];
 
-      expect(relationField.context.keyPath).toBe('chapters.*.sections.*.author_reference');
+      expect(relationField.context.typedKeyPath).toBe('chapters.*.sections.*.author_reference');
     });
   });
 
@@ -519,7 +519,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -558,7 +558,7 @@ describe('Field Collectors', () => {
 
       const [mediaField] = [...collectors.mediaFields];
 
-      expect(mediaField.context.keyPath).toBe('blocks.*<image_block>.image');
+      expect(mediaField.context.typedKeyPath).toBe('blocks.*<image_block>.image');
     });
 
     it('should collect relation fields in object with variable types', async () => {
@@ -569,7 +569,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'pages' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -610,7 +610,7 @@ describe('Field Collectors', () => {
 
       const [relationField] = [...collectors.relationFields];
 
-      expect(relationField.context.keyPath).toBe('components<featured_post>.post_ref');
+      expect(relationField.context.typedKeyPath).toBe('components<featured_post>.post_ref');
     });
 
     it('should collect fields from multiple variable types', async () => {
@@ -621,7 +621,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'posts' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -664,8 +664,8 @@ describe('Field Collectors', () => {
       const [mediaField] = [...collectors.mediaFields];
       const [relationField] = [...collectors.relationFields];
 
-      expect(mediaField.context.keyPath).toBe('content_blocks.*<image_block>.image');
-      expect(relationField.context.keyPath).toBe('content_blocks.*<related_posts>.post');
+      expect(mediaField.context.typedKeyPath).toBe('content_blocks.*<image_block>.image');
+      expect(relationField.context.typedKeyPath).toBe('content_blocks.*<related_posts>.post');
     });
 
     it('should handle complex nested variable type structures', async () => {
@@ -676,7 +676,7 @@ describe('Field Collectors', () => {
       const context = {
         siteConfig: {},
         collection: { name: 'pages' },
-        keyPath: '',
+        typedKeyPath: '',
       };
 
       /** @type {any} */
@@ -725,14 +725,14 @@ describe('Field Collectors', () => {
       expect(collectors.mediaFields.size).toBe(2);
       expect(collectors.relationFields.size).toBe(1);
 
-      const mediaKeyPaths = [...collectors.mediaFields].map((f) => f.context.keyPath);
+      const mediatypedKeyPaths = [...collectors.mediaFields].map((f) => f.context.typedKeyPath);
       const [relationField] = [...collectors.relationFields];
 
-      expect(mediaKeyPaths).toEqual([
+      expect(mediatypedKeyPaths).toEqual([
         'sections.*<hero>.background_image',
         'sections.*<gallery>.images.*.image',
       ]);
-      expect(relationField.context.keyPath).toBe('sections.*<hero>.featured_article');
+      expect(relationField.context.typedKeyPath).toBe('sections.*<hero>.featured_article');
     });
   });
 });

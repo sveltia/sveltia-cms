@@ -22,7 +22,6 @@
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { allAssets } from '$lib/services/assets';
-  import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
   import { getAssetKind } from '$lib/services/assets/kinds';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
@@ -41,6 +40,8 @@
    * @import {
    * Asset,
    * AssetFolderInfo,
+   * AssetLibraryFolderMap,
+   * AssetLibraryFolderMapKey,
    * EntryDraft,
    * MediaLibraryAssetKind,
    * SelectAssetsView,
@@ -58,6 +59,7 @@
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
    * @property {Writable<EntryDraft | null | undefined>} [entryDraft] Associated entry draft.
    * @property {MediaField} [fieldConfig] Field configuration.
+   * @property {AssetLibraryFolderMap} assetLibraryFolderMap Default asset library folder map.
    * @property {(resources: SelectedResource[]) => void} [onSelect] Custom `Select` event handler
    * that will be called when the dialog is closed with the Insert button.
    */
@@ -72,6 +74,7 @@
     canEnterURL = true,
     entryDraft,
     fieldConfig,
+    assetLibraryFolderMap,
     onSelect = undefined,
     /* eslint-enable prefer-const */
   } = $props();
@@ -96,50 +99,23 @@
     kind === 'image' ? $_('assets_dialog.title.image') : $_('assets_dialog.title.file'),
   );
   const searchTerms = $derived(normalize(rawSearchTerms));
-  /** @type {Record<string, { folder: AssetFolderInfo | undefined, enabled: boolean }>} */
-  const allDefaultLibraryFolders = $derived.by(() => {
-    const collectionName = $entryDraft?.collectionName ?? '';
-    const fileName = $entryDraft?.fileName;
-    const fileAssetFolder = fileName ? getAssetFolder({ collectionName, fileName }) : undefined;
-    const collectionAssetFolder = getAssetFolder({ collectionName });
-    const entryAssetFolder = fileAssetFolder ?? collectionAssetFolder;
-
-    return {
-      entry: {
-        folder: entryAssetFolder,
-        enabled:
-          !!entryAssetFolder &&
-          (entryAssetFolder.entryRelative || entryAssetFolder.hasTemplateTags),
-      },
-      file: {
-        folder: fileAssetFolder,
-        enabled:
-          !!fileAssetFolder && !fileAssetFolder.entryRelative && !fileAssetFolder.hasTemplateTags,
-      },
-      collection: {
-        folder: collectionAssetFolder,
-        enabled:
-          !!collectionAssetFolder &&
-          !collectionAssetFolder.entryRelative &&
-          !collectionAssetFolder.hasTemplateTags,
-      },
-      global: {
-        folder: $globalAssetFolder,
-        enabled: $globalAssetFolder !== undefined,
-      },
-    };
-  });
   const isDefaultLibraryEnabled = $derived(
-    Object.values(allDefaultLibraryFolders).some(({ enabled }) => enabled),
+    Object.values(assetLibraryFolderMap).some(({ enabled }) => enabled),
   );
   const isDefaultLibrary = $derived(libraryName.startsWith('default-'));
-  const selectedFolder = $derived(
-    isDefaultLibrary
-      ? allDefaultLibraryFolders[libraryName.replace('default-', '')].folder
-      : undefined,
-  );
-  const originalEntry = $derived($entryDraft?.originalEntry);
+  const selectedFolder = $derived.by(() => {
+    if (!isDefaultLibrary) {
+      return undefined;
+    }
+
+    const key = /** @type {AssetLibraryFolderMapKey} */ (libraryName.replace('default-', ''));
+    const { folder } = assetLibraryFolderMap[key];
+
+    return folder;
+  });
   const targetFolderPath = $derived.by(() => {
+    const { originalEntry } = $entryDraft ?? {};
+
     if (selectedFolder?.entryRelative && originalEntry) {
       // @todo FIXME: This only works with `media_folder: ""`
       return getPathInfo(Object.values(originalEntry.locales)[0].path).dirname;
@@ -300,7 +276,7 @@
   };
 
   $effect.pre(() => {
-    const firstDefaultLibraryId = Object.entries(allDefaultLibraryFolders).find(
+    const firstDefaultLibraryId = Object.entries(assetLibraryFolderMap).find(
       ([, { enabled }]) => enabled,
     )?.[0];
 
@@ -402,7 +378,7 @@
       >
         {#if isDefaultLibraryEnabled}
           <OptionGroup label={$_('asset_location.repository')}>
-            {#each Object.entries(allDefaultLibraryFolders) as [id, { enabled }] (id)}
+            {#each Object.entries(assetLibraryFolderMap) as [id, { enabled }] (id)}
               {#if enabled}
                 {@const name = `default-${id}`}
                 <Option

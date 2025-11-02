@@ -375,7 +375,9 @@
  * @property {string | undefined} collectionName Collection name or `undefined` for the All Assets
  * and Global Assets folders.
  * @property {string} [fileName] Collection file name. File/singleton collection only.
- * @property {FieldKeyPath} [keyPath] Field key path.
+ * @property {TypedFieldKeyPath} [typedKeyPath] Field key path for a field-level asset folder.
+ * @property {boolean} [isIndexFile] Whether the asset folder is for the special index file used
+ * specifically in Hugo. It works only for field-level asset folders in an entry collection.
  * @property {string | undefined} internalPath Folder path on the repository/filesystem, relative to
  * the project root directory. It can be a partial path if the collection’s `media_folder` property
  * is a relative path, because the complete path is entry-specific in that case. It will be
@@ -745,6 +747,23 @@
  */
 
 /**
+ * Asset library folder map key.
+ * @typedef {'field' | 'entry' | 'file' | 'collection' | 'global'} AssetLibraryFolderMapKey
+ */
+
+/**
+ * Asset library folder map value.
+ * @typedef {object} AssetLibraryFolderMapValue
+ * @property {AssetFolderInfo | undefined} folder Asset folder info.
+ * @property {boolean} enabled Whether the folder is enabled.
+ */
+
+/**
+ * Information about all the default asset library folders and whether these are enabled.
+ * @typedef {Record<AssetLibraryFolderMapKey, AssetLibraryFolderMapValue>} AssetLibraryFolderMap
+ */
+
+/**
  * Asset details.
  * @typedef {object} AssetDetails
  * @property {string} [publicURL] The asset’s public URL on the live site.
@@ -1030,7 +1049,7 @@
  * @property {CollectionFile} [collectionFile] File config to parse.
  * @property {string} [componentName] Name of the editor component.
  * @property {boolean} [isIndexFile] Whether the field is part of an index file.
- * @property {TypedFieldKeyPath} [keyPath] Key path to the field being parsed.
+ * @property {TypedFieldKeyPath} [typedKeyPath] Key path to the field being parsed.
  */
 
 /**

@@ -11,7 +11,7 @@ import { parseFields } from '$lib/services/config/parser/fields';
  */
 export const parseObjectFieldConfig = ({ fieldConfig, context, collectors }) => {
   const { fields: subfields, types } = /** @type {ObjectField} */ (fieldConfig);
-  const { keyPath } = context;
+  const { typedKeyPath } = context;
 
   // Handle subfields
   if (subfields) {
@@ -21,7 +21,11 @@ export const parseObjectFieldConfig = ({ fieldConfig, context, collectors }) => 
   // Handle variable types
   types?.forEach(({ name: type, fields: typedFields }) => {
     if (typedFields) {
-      parseFields(typedFields, { ...context, keyPath: `${keyPath}<${type}>` }, collectors);
+      parseFields(
+        typedFields,
+        { ...context, typedKeyPath: `${typedKeyPath}<${type}>` },
+        collectors,
+      );
     }
   });
 };

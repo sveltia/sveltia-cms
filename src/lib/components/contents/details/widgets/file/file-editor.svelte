@@ -4,10 +4,6 @@
   @see https://decapcms.org/docs/widgets/#File
   @see https://decapcms.org/docs/widgets/#Image
 -->
-<script module>
-  let unsupportedWarned = false;
-</script>
-
 <script>
   import { AlertDialog, ConfirmationDialog, TextArea } from '@sveltia/ui';
   import { flushSync, getContext } from 'svelte';
@@ -17,8 +13,8 @@
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import FileEditorItem from '$lib/components/contents/details/widgets/file/file-editor-item.svelte';
   import UploadButton from '$lib/components/contents/details/widgets/file/upload-button.svelte';
-  import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getAssetLibraryFolderMap } from '$lib/services/contents/widgets/file/helpers';
   import { processResource } from '$lib/services/contents/widgets/file/process';
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
@@ -27,7 +23,12 @@
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
-   * @import { FieldEditorContext, SelectedResource, WidgetEditorProps } from '$lib/types/private';
+   * @import {
+   * AssetFolderInfo,
+   * FieldEditorContext,
+   * SelectedResource,
+   * WidgetEditorProps,
+   * } from '$lib/types/private';
    * @import { MediaField } from '$lib/types/public';
    */
 
@@ -46,6 +47,7 @@
     /* eslint-disable prefer-const */
     locale,
     keyPath,
+    typedKeyPath,
     fieldId,
     fieldConfig,
     currentValue = $bindable(),
@@ -71,14 +73,21 @@
     max = Infinity,
     accept,
     choose_url: canEnterURL = true,
-    media_folder: mediaFolder,
-    public_folder: publicFolder,
   } = $derived(fieldConfig);
   const entry = $derived($entryDraft?.originalEntry);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
+  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const isImageWidget = $derived(widgetName === 'image');
   const libraryConfig = $derived(getDefaultMediaLibraryOptions({ fieldConfig }).config);
+  const assetLibraryFolderMap = $derived(
+    getAssetLibraryFolderMap({ collectionName, fileName, typedKeyPath, isIndexFile }),
+  );
+  const targetFolder = $derived(
+    /** @type {AssetFolderInfo} */ (
+      Object.values(assetLibraryFolderMap).find(({ enabled }) => enabled)?.folder
+    ),
+  );
   // Ignore the `multiple` option when the widget is use in a Markdown editor component
   const multiple = $derived(isMultiple(fieldConfig) && !inEditorComponent);
   const maxSize = $derived(/** @type {number} */ (libraryConfig.max_file_size));
@@ -104,14 +113,6 @@
    * Disable the drop zone if there are cloud services configured to avoid confusion.
    */
   const allowDrop = $derived(!enabledCloudServiceEntries.length);
-
-  $effect(() => {
-    if ((mediaFolder || publicFolder) && !unsupportedWarned) {
-      // eslint-disable-next-line no-console
-      console.warn('Field-specific media folders are not yet supported in Sveltia CMS.');
-      unsupportedWarned = true;
-    }
-  });
 
   /**
    * Reset the current selection.
@@ -201,12 +202,7 @@
       return;
     }
 
-    const folder =
-      getAssetFolder({ collectionName, fileName }) ??
-      getAssetFolder({ collectionName }) ??
-      $globalAssetFolder;
-
-    onResourcesSelect(files.map((file) => ({ file, folder })));
+    onResourcesSelect(files.map((file) => ({ file, folder: targetFolder })));
   };
 
   /**
@@ -336,6 +332,7 @@
   {canEnterURL}
   {entryDraft}
   {fieldConfig}
+  {assetLibraryFolderMap}
   bind:open={showSelectAssetsDialog}
   onSelect={onResourcesSelect}
 />

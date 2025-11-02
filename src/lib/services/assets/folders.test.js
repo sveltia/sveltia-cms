@@ -163,7 +163,8 @@ describe('assets/folders', () => {
         {
           collectionName: 'posts',
           fileName: undefined,
-          keyPath: undefined,
+          typedKeyPath: undefined,
+          isIndexFile: false,
           internalPath: 'content/posts/images',
           publicPath: '/images',
           entryRelative: false,
@@ -172,7 +173,8 @@ describe('assets/folders', () => {
         {
           collectionName: 'posts',
           fileName: 'about.md',
-          keyPath: undefined,
+          typedKeyPath: undefined,
+          isIndexFile: false,
           internalPath: 'content/posts/about/images',
           publicPath: '/about/images',
           entryRelative: false,
@@ -181,7 +183,8 @@ describe('assets/folders', () => {
         {
           collectionName: 'posts',
           fileName: undefined,
-          keyPath: 'gallery',
+          typedKeyPath: 'gallery',
+          isIndexFile: false,
           internalPath: 'content/posts/gallery',
           publicPath: '/gallery',
           entryRelative: false,
@@ -196,13 +199,13 @@ describe('assets/folders', () => {
       const result = getAssetFolder({
         collectionName: 'posts',
         fileName: undefined,
-        keyPath: undefined,
       });
 
       expect(result).toEqual({
         collectionName: 'posts',
         fileName: undefined,
-        keyPath: undefined,
+        typedKeyPath: undefined,
+        isIndexFile: false,
         internalPath: 'content/posts/images',
         publicPath: '/images',
         entryRelative: false,
@@ -214,13 +217,13 @@ describe('assets/folders', () => {
       const result = getAssetFolder({
         collectionName: 'posts',
         fileName: 'about.md',
-        keyPath: undefined,
       });
 
       expect(result).toEqual({
         collectionName: 'posts',
         fileName: 'about.md',
-        keyPath: undefined,
+        typedKeyPath: undefined,
+        isIndexFile: false,
         internalPath: 'content/posts/about/images',
         publicPath: '/about/images',
         entryRelative: false,
@@ -228,17 +231,17 @@ describe('assets/folders', () => {
       });
     });
 
-    it('should find folder by collection name and key path', () => {
+    it('should find folder by collection name and typed key path', () => {
       const result = getAssetFolder({
         collectionName: 'posts',
-        fileName: undefined,
-        keyPath: 'gallery',
+        typedKeyPath: 'gallery',
       });
 
       expect(result).toEqual({
         collectionName: 'posts',
         fileName: undefined,
-        keyPath: 'gallery',
+        typedKeyPath: 'gallery',
+        isIndexFile: false,
         internalPath: 'content/posts/gallery',
         publicPath: '/gallery',
         entryRelative: false,
@@ -250,10 +253,110 @@ describe('assets/folders', () => {
       const result = getAssetFolder({
         collectionName: 'nonexistent',
         fileName: undefined,
-        keyPath: undefined,
       });
 
       expect(result).toBeUndefined();
+    });
+
+    it('should ignore isIndexFile when not provided in condition', () => {
+      // Should match the collection folder regardless of isIndexFile value in the folder
+      const result = getAssetFolder({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      // Should return the first matching folder regardless of isIndexFile
+      expect(result?.internalPath).toBe('content/posts/images');
+    });
+
+    it('should find folder by typed key path and isIndexFile when both provided', () => {
+      const mockFolders = [
+        {
+          collectionName: 'posts',
+          fileName: 'index.md',
+          typedKeyPath: 'banner',
+          isIndexFile: true,
+          internalPath: 'content/posts/banner',
+          publicPath: '/banner',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        {
+          collectionName: 'posts',
+          fileName: 'post-1.md',
+          typedKeyPath: 'banner',
+          isIndexFile: false,
+          internalPath: 'content/posts/entry-banner',
+          publicPath: '/entry-banner',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ];
+
+      allAssetFolders.set(mockFolders);
+
+      const result = getAssetFolder({
+        collectionName: 'posts',
+        fileName: 'index.md',
+        typedKeyPath: 'banner',
+        isIndexFile: true,
+      });
+
+      expect(result).toEqual({
+        collectionName: 'posts',
+        fileName: 'index.md',
+        typedKeyPath: 'banner',
+        isIndexFile: true,
+        internalPath: 'content/posts/banner',
+        publicPath: '/banner',
+        entryRelative: false,
+        hasTemplateTags: false,
+      });
+    });
+
+    it('should find folder by typed key path and non-index file', () => {
+      const mockFolders = [
+        {
+          collectionName: 'posts',
+          fileName: 'index.md',
+          typedKeyPath: 'banner',
+          isIndexFile: true,
+          internalPath: 'content/posts/banner',
+          publicPath: '/banner',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        {
+          collectionName: 'posts',
+          fileName: 'post-1.md',
+          typedKeyPath: 'banner',
+          isIndexFile: false,
+          internalPath: 'content/posts/entry-banner',
+          publicPath: '/entry-banner',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ];
+
+      allAssetFolders.set(mockFolders);
+
+      const result = getAssetFolder({
+        collectionName: 'posts',
+        fileName: 'post-1.md',
+        typedKeyPath: 'banner',
+        isIndexFile: false,
+      });
+
+      expect(result).toEqual({
+        collectionName: 'posts',
+        fileName: 'post-1.md',
+        typedKeyPath: 'banner',
+        isIndexFile: false,
+        internalPath: 'content/posts/entry-banner',
+        publicPath: '/entry-banner',
+        entryRelative: false,
+        hasTemplateTags: false,
+      });
     });
   });
 

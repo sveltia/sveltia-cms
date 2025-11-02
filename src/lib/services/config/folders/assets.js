@@ -5,14 +5,21 @@ import { getValidCollections } from '$lib/services/contents/collection';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/files';
 
 /**
- * @import { AssetFolderInfo, InternalSiteConfig } from '$lib/types/private';
- * @import { CollectionDivider, CollectionFile } from '$lib/types/public';
+ * @import {
+ * AssetFolderInfo,
+ * CollectedMediaField,
+ * InternalSiteConfig,
+ * TypedFieldKeyPath,
+ * } from '$lib/types/private';
+ * @import { Collection, CollectionDivider, CollectionFile } from '$lib/types/public';
  */
 
 /**
  * @typedef {object} NormalizeAssetFolderArgs
  * @property {string} collectionName Collection name.
  * @property {string} [fileName] Collection file name. File/singleton collection only.
+ * @property {TypedFieldKeyPath} [typedKeyPath] Key path to the field.
+ * @property {boolean} [isIndexFile] Whether the field is part of an index file entry.
  * @property {string} mediaFolder Raw `media_folder` option of the collection or collection file.
  * @property {string | undefined} publicFolder Raw `public_folder` option of the collection or
  * collection file.
@@ -36,6 +43,7 @@ const assetFolders = [];
 
 /**
  * Check if a folder string contains template tags.
+ * @internal
  * @param {string} folder Folder string.
  * @returns {boolean} `true` if the folder contains template tags.
  */
@@ -44,6 +52,7 @@ export const hasTags = (folder) =>
 
 /**
  * Replace `{{media_folder}}` and `{{public_folder}}` template tags.
+ * @internal
  * @param {string} folder Original folder path.
  * @param {object} context Context for replacement.
  * @param {string} context.globalMediaFolder Normalized global `media_folder` option.
@@ -59,6 +68,7 @@ export const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =
 
 /**
  * Get a normalized asset folder information given the arguments.
+ * @internal
  * @param {NormalizeAssetFolderArgs} args Arguments.
  * @returns {AssetFolderInfo | undefined} Normalized asset folder information or `undefined` if
  * template tags are used but global folder information is not available.
@@ -66,6 +76,8 @@ export const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =
 export const normalizeAssetFolder = ({
   collectionName,
   fileName,
+  typedKeyPath,
+  isIndexFile = false,
   mediaFolder,
   publicFolder,
   baseFolder,
@@ -96,6 +108,8 @@ export const normalizeAssetFolder = ({
   return {
     collectionName,
     fileName,
+    typedKeyPath,
+    isIndexFile,
     internalPath: stripSlashes(entryRelative ? (baseFolder ?? '') : mediaFolder),
     publicPath:
       // Prefix the public path with `/` unless it’s empty or starting with `.` (entry-relative
@@ -111,6 +125,7 @@ export const normalizeAssetFolder = ({
 /**
  * Add an asset folder for a collection or collection file if it’s not the same as the global
  * asset folder.
+ * @internal
  * @param {NormalizeAssetFolderArgs} args Arguments for {@link normalizeAssetFolder}.
  */
 export const addFolderIfNeeded = (args) => {
@@ -139,6 +154,7 @@ export const addFolderIfNeeded = (args) => {
 
 /**
  * Iterate through files in a file/singleton collection and add their folders.
+ * @internal
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {(CollectionFile | CollectionDivider)[]} args.files Collection files. May include
@@ -167,11 +183,45 @@ export const iterateFiles = ({ collectionName, files, globalFolders }) => {
 };
 
 /**
+ * Handle field-level media folders and add them if needed.
+ * @internal
+ * @param {object} args Arguments.
+ * @param {CollectedMediaField[]} args.fieldMediaFolders Collected field-level media folders.
+ * @param {Collection[]} args.validCollections Valid collections.
+ * @param {GlobalFolders | undefined} args.globalFolders Global folders information.
+ */
+export const handleFieldMediaFolders = ({ fieldMediaFolders, validCollections, globalFolders }) => {
+  fieldMediaFolders.forEach(({ fieldConfig, context }) => {
+    const _collection = /** @type {Collection} */ (context.collection);
+
+    const isValidCollection =
+      _collection.name === '_singletons' ||
+      validCollections.some((c) => c.name === _collection.name);
+
+    if (!isValidCollection) {
+      return;
+    }
+
+    addFolderIfNeeded({
+      collectionName: _collection.name,
+      fileName: context.collectionFile?.name,
+      mediaFolder: /** @type {string} */ (fieldConfig.media_folder),
+      publicFolder: fieldConfig.public_folder,
+      baseFolder: 'folder' in _collection ? _collection.folder : undefined,
+      typedKeyPath: /** @type {string} */ (context.typedKeyPath),
+      isIndexFile: /** @type {boolean} */ (context.isIndexFile),
+      globalFolders,
+    });
+  });
+};
+
+/**
  * Get all asset folders.
  * @param {InternalSiteConfig} config Site configuration.
+ * @param {CollectedMediaField[]} [fieldMediaFolders] Collected field-level media folders.
  * @returns {AssetFolderInfo[]} Asset folders.
  */
-export const getAllAssetFolders = (config) => {
+export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
   // Clear any previous results
   assetFolders.length = 0;
 
@@ -215,7 +265,9 @@ export const getAllAssetFolders = (config) => {
     ? { globalMediaFolder, globalPublicFolder }
     : undefined;
 
-  getValidCollections({ collections }).forEach((collection) => {
+  const validCollections = getValidCollections({ collections });
+
+  validCollections.forEach((collection) => {
     const {
       name: collectionName,
       // @ts-ignore
@@ -254,6 +306,8 @@ export const getAllAssetFolders = (config) => {
     // Singleton collection is always at the end
     iterateFiles({ collectionName: '_singletons', files: singletons, globalFolders });
   }
+
+  handleFieldMediaFolders({ fieldMediaFolders, validCollections, globalFolders });
 
   assetFolders.sort((a, b) => compare(a.internalPath ?? '', b.internalPath ?? ''));
 

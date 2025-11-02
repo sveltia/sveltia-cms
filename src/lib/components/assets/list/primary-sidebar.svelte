@@ -22,6 +22,8 @@
     // All Assets, Global Assets, then collection-level, file-level folders, sorted by appearance
     // order in the config
     ...$allAssetFolders
+      // Exclude field-level folders
+      .filter(({ typedKeyPath }) => typedKeyPath === undefined)
       .sort(
         (a, b) =>
           getCollectionFileIndex(a.collectionName, a.fileName) -

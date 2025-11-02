@@ -30,12 +30,11 @@ const parsers = {
  */
 export const parseFieldConfig = ({ fieldConfig, context, collectors }) => {
   const { name, widget = 'string' } = fieldConfig;
-  const { keyPath } = context;
-  const _keyPath = keyPath ? `${keyPath}.${name}` : name;
+  const { typedKeyPath } = context;
 
   parsers[widget]?.({
     fieldConfig,
-    context: { ...context, keyPath: _keyPath },
+    context: { ...context, typedKeyPath: typedKeyPath ? `${typedKeyPath}.${name}` : name },
     collectors,
   });
 };
