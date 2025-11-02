@@ -21,8 +21,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@sveltia/ui':
-        specifier: ^0.31.5
-        version: 0.31.5(svelte@5.43.2)
+        specifier: ^0.31.6
+        version: 0.31.6(svelte@5.43.2)
       '@sveltia/utils':
         specifier: ^0.8.6
         version: 0.8.6
@@ -1184,8 +1184,8 @@ packages:
       svelte: ^5.0.0
       vite: ^6.3.0 || ^7.0.0
 
-  '@sveltia/ui@0.31.5':
-    resolution: {integrity: sha512-KoCNq7fjTHDi27TpCJTIqdJEMe8uQZ7hyNtt64APPuOH3y9jA+F0f7RlVbJNrsI7p6pfaqCs4uyZ6BBx/2R41g==}
+  '@sveltia/ui@0.31.6':
+    resolution: {integrity: sha512-2Ryyxht4l2EeKCAtgXXiuMQ/0D1k5Hy9+hzQDILRW6ycLbxyIPhmHuI8zF6jDPRAYXoPcua+UneBn6uURGeQhw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -4460,7 +4460,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltia/ui@0.31.5(svelte@5.43.2)':
+  '@sveltia/ui@0.31.6(svelte@5.43.2)':
     dependencies:
       '@lexical/code': 0.38.2
       '@lexical/dragon': 0.38.2

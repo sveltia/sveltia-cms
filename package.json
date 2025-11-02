@@ -36,7 +36,7 @@
     "@jsquash/webp": "^1.5.0",
     "@lexical/markdown": "^0.38.2",
     "@sindresorhus/transliterate": "^2.2.0",
-    "@sveltia/ui": "^0.31.5",
+    "@sveltia/ui": "^0.31.6",
     "@sveltia/utils": "^0.8.6",
     "create-react-class": "^15.7.0",
     "dayjs": "^1.11.19",
