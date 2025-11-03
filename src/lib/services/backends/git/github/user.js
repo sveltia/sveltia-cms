@@ -1,5 +1,8 @@
+import { get } from 'svelte/store';
+
 import { BACKEND_NAME } from '$lib/services/backends/git/github/constants';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { user } from '$lib/services/user';
 
 /**
  * @import { AuthTokens, User } from '$lib/types/private';
@@ -21,7 +24,7 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
  * @returns {Promise<User>} User information.
  * @see https://docs.github.com/en/rest/users/users#get-the-authenticated-user
  */
-export const getUserProfile = async ({ token }) => {
+export const getUserProfile = async ({ token, refreshToken }) => {
   const {
     id,
     name,
@@ -29,7 +32,16 @@ export const getUserProfile = async ({ token }) => {
     email,
     avatar_url: avatarURL,
     html_url: profileURL,
-  } = /** @type {UserProfileResponse} */ (await fetchAPI('/user', { token }));
+  } = /** @type {UserProfileResponse} */ (await fetchAPI('/user', { token, refreshToken }));
+
+  const _user = get(user);
+
+  // Update the tokens because these may have been renewed in `refreshAccessToken` while fetching
+  // the user info
+  if (_user?.token && _user.token !== token) {
+    token = _user.token;
+    refreshToken = _user.refreshToken;
+  }
 
   return {
     backendName: BACKEND_NAME,
@@ -40,5 +52,6 @@ export const getUserProfile = async ({ token }) => {
     avatarURL,
     profileURL,
     token,
+    refreshToken,
   };
 };

@@ -1150,7 +1150,10 @@
  * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
  * than Netlify, including [Sveltia CMS Authenticator](https://github.com/sveltia/sveltia-cms-auth).
  * Default: `https://api.netlify.com`.
+ * @property {'' | 'pkce'} [auth_type] OAuth grant type. The default is an empty string, which is
+ * authorization code grant. `pkce` is not yet supported.
  * @property {string} [auth_endpoint] OAuth base URL path. Default: `auth`.
+ * @property {string} [app_id] OAuth application ID. Required when using PKCE authorization.
  * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow. Default:
  * `sveltia-cms/`.
  * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Default:

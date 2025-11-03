@@ -46,7 +46,7 @@ export const parseBackendConfig = (siteConfig, collectors) => {
     const {
       repo,
       automatic_deployments: autoDeploy,
-      // @ts-ignore GitLab only
+      // @ts-ignore GitHub/GitLab only
       auth_type: authType,
       // @ts-ignore GitLab/Gitea only
       app_id: appId,
@@ -66,7 +66,7 @@ export const parseBackendConfig = (siteConfig, collectors) => {
       errors.add(get(_)('config.error.oauth_implicit_flow'));
     }
 
-    if ((name === 'gitea' || (name === 'gitlab' && authType === 'pkce')) && !appId) {
+    if ((name === 'gitea' || authType === 'pkce') && !appId) {
       errors.add(get(_)('config.error.oauth_no_app_id'));
     }
 

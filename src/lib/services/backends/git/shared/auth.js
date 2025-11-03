@@ -381,9 +381,8 @@ export const handleAuthFlow = async ({ auto, apiConfig }) => {
   const { clientId, authScope, authURL, tokenURL } = apiConfig;
   const authArgs = { backendName, authURL, scope: authScope };
 
-  // GitHub doesn’t yet support PKCE. GitLab supports both client-side and server-side auth.
-  // Gitea/Forgejo only supports PKCE.
-  if (backendName === 'gitea' || (backendName === 'gitlab' && authType === 'pkce')) {
+  // Gitea/Forgejo backend only supports PKCE at this time
+  if (backendName === 'gitea' || authType === 'pkce') {
     const inPopup = window.opener?.origin === window.location.origin && window.name === 'auth';
 
     if (inPopup) {

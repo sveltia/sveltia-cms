@@ -13,6 +13,8 @@ import {
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
+  DEFAULT_PKCE_AUTH_PATH,
+  DEFAULT_PKCE_AUTH_ROOT,
 } from '$lib/services/backends/git/github/constants';
 import { triggerDeployment } from '$lib/services/backends/git/github/deployment';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/github/files';
@@ -42,8 +44,10 @@ export const init = () => {
   const {
     repo: projectPath,
     branch,
-    base_url: authRoot = DEFAULT_AUTH_ROOT,
-    auth_endpoint: authPath = DEFAULT_AUTH_PATH,
+    auth_type: authType = '',
+    base_url: authRoot = authType === 'pkce' ? DEFAULT_PKCE_AUTH_ROOT : DEFAULT_AUTH_ROOT,
+    auth_endpoint: authPath = authType === 'pkce' ? DEFAULT_PKCE_AUTH_PATH : DEFAULT_AUTH_PATH,
+    app_id: clientId = '',
     // GitHub Enterprise Server: https://HOSTNAME/api/v3
     api_root: restApiRoot = DEFAULT_API_ROOT,
     // GitHub Enterprise Server: https://HOSTNAME/api/graphql
@@ -74,7 +78,7 @@ export const init = () => {
   Object.assign(
     apiConfig,
     /** @type {ApiEndpointConfig} */ ({
-      clientId: '', // @todo Implement OAuth token renewal
+      clientId,
       authScope: 'repo,user',
       authURL,
       tokenURL: authURL.replace('/authorize', '/access_token'),
