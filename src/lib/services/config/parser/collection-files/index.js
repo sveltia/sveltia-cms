@@ -1,3 +1,8 @@
+import { getPathInfo } from '@sveltia/utils/file';
+import { get } from 'svelte/store';
+import { _ } from 'svelte-i18n';
+
+import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { parseFields } from '$lib/services/config/parser/fields';
 
 /**
@@ -14,7 +19,22 @@ import { parseFields } from '$lib/services/config/parser/fields';
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseCollectionFile = ({ siteConfig, collection, collectionFile }, collectors) => {
-  const { fields } = collectionFile;
+  const { name, label, file, format = collection.format, fields } = collectionFile;
+  const { extension } = getPathInfo(file);
+  const { errors } = collectors;
+
+  if (isFormatMismatch(extension, format)) {
+    errors.add(
+      get(_)('config.error.collection_file_format_mismatch', {
+        values: {
+          collection: collection.label ?? collection.name,
+          file: label ?? name,
+          extension,
+          format,
+        },
+      }),
+    );
+  }
 
   parseFields(fields, { siteConfig, collection, collectionFile }, collectors);
 };

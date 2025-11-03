@@ -655,6 +655,10 @@ export const strings = {
       public_folder_relative_path:
         'The configured public folder is invalid. It must be an absolute path starting with “/”.',
       public_folder_absolute_url: 'An absolute URL for the public folder option is not supported.',
+      collection_format_mismatch:
+        '{collection} collection: the {extension} extension doesn’t match the {format} format.',
+      collection_file_format_mismatch:
+        '{collection} collection, {file} file: the {extension} extension doesn’t match the {format} format.',
       unexpected: 'Unexpected error',
     },
     warning: {

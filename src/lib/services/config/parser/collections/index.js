@@ -4,6 +4,7 @@ import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
+import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { parseFields } from '$lib/services/config/parser/fields';
 
 /**
@@ -20,7 +21,20 @@ import { parseFields } from '$lib/services/config/parser/fields';
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseEntryCollection = ({ siteConfig, collection }, collectors) => {
-  const { fields, index_file } = collection;
+  const { name, label, extension, format, fields, index_file } = collection;
+  const { errors } = collectors;
+
+  if (isFormatMismatch(extension, format)) {
+    errors.add(
+      get(_)('config.error.collection_format_mismatch', {
+        values: {
+          collection: label ?? name,
+          extension,
+          format,
+        },
+      }),
+    );
+  }
 
   parseFields(fields, { siteConfig, collection }, collectors);
 

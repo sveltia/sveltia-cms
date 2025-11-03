@@ -657,6 +657,10 @@ export const strings = {
       public_folder_relative_path:
         '設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。',
       public_folder_absolute_url: 'パブリックフォルダーオプションの絶対 URL は非対応です。',
+      collection_format_mismatch:
+        '{collection} コレクション: 拡張子 {extension} は {format} 形式と一致しません。',
+      collection_file_format_mismatch:
+        '{collection} コレクション、{file} ファイル: 拡張子 {extension} は {format} 形式と一致しません。',
       unexpected: '予期せぬ問題',
     },
     warning: {
