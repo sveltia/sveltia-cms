@@ -2,7 +2,9 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 265 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
 
-Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements ensure smooth daily workflows. This free, open source alternative to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026.
+Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements ensure smooth daily workflows.
+
+This free, open source alternative to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -138,7 +140,7 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 - We closely monitor and analyze the predecessor’s issue tracker, solving the issues one by one
 - We rearchitect the entire user experience (UX) and developer experience (DX)
 
-This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system, establishing Sveltia CMS as the **true successor** to Netlify CMS — not just a spiritual successor or a mere alternative.
+This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system, establishing Sveltia CMS as the **true, unparalleled successor to Netlify CMS** — not just a spiritual successor or a mere alternative.
 
 As we continue to add more features, we hope that our product will eventually become an appearing headless CMS option for everyone, not just for existing Netlify/Decap CMS users.
 
@@ -301,6 +303,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
   - Comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
   - Supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
   - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
+  - We have implemented a workaround for a [GraphQL complexity limit issue](https://github.com/sveltia/sveltia-cms/issues/525) in GitLab 18.4.2, while Netlify/Decap CMS continues to suffer from the same problem.[^301]
 - Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) for a better DX. See the [productivity section](#better-productivity) above.
 - Developers can select the local and remote backends while working on a local server.
@@ -2662,3 +2665,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^299]: Netlify/Decap CMS [#5812](https://github.com/decaporg/decap-cms/issues/5812)
 
 [^300]: Netlify/Decap CMS [#7257](https://github.com/decaporg/decap-cms/issues/7257)
+
+[^301]: Netlify/Decap CMS [#7627](https://github.com/decaporg/decap-cms/issues/7627)
