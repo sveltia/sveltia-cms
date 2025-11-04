@@ -14,8 +14,14 @@
     if (canvas && $showMobileSignInDialog) {
       const { origin, pathname } = window.location;
       const encodedData = btoa(JSON.stringify({ token: $user?.token, prefs: $prefs }));
+      const url = `${origin}${pathname}#/signin/${encodedData}`;
 
-      toCanvas(canvas, `${origin}${pathname}#/signin/${encodedData}`);
+      toCanvas(canvas, url);
+
+      if ($prefs.devModeEnabled) {
+        // eslint-disable-next-line no-console
+        console.info('Mobile sign-in URL:', url);
+      }
     }
   });
 </script>
