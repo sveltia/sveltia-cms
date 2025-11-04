@@ -675,6 +675,7 @@ export const strings = {
 
   // Backends
   local_backend: {
+    indicator: 'ローカル',
     unsupported_browser:
       'お使いのブラウザーはローカル開発に対応していません。代わりに Chrome か Edge を使ってください。',
     disabled:
