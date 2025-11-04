@@ -2,9 +2,9 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 265 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
 
-Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements ensure smooth daily workflows.
+Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows.
 
-This free, open source alternative to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026.
+This free, open source successor to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -654,7 +654,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 
 ## Compatibility
 
-We are working to make Sveltia CMS compatible with Netlify/Decap CMS wherever possible so that more users can seamlessly switch to our modern alternative. In some casual use cases, Sveltia CMS can be used as a drop-in replacement for Netlify/Decap CMS with [just a one-line code update](#migration).
+We are working to make Sveltia CMS compatible with Netlify/Decap CMS wherever possible so that more users can seamlessly switch to our modern successor. In some casual use cases, Sveltia CMS can be used as a drop-in replacement for Netlify/Decap CMS with [just a one-line code update](#migration).
 
 However, 100% feature parity is never planned, and some features are still missing or will not be added due to performance, deprecation and other factors. Look at the compatibility info below to see if you can migrate now or in the near future.
 
