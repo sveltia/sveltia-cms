@@ -137,12 +137,12 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 - We have rebuilt the app from scratch using a [modern framework](https://svelte.dev/)
 - We don’t reuse any part of the predecessor’s codebase
 - We incorporate i18n support into the core instead of adding it as an afterthought
-- We closely monitor and analyze the predecessor’s issue tracker, solving the issues one by one
+- We closely monitor and analyze the predecessor’s issue tracker
 - We rearchitect the entire user experience (UX) and developer experience (DX)
 
-This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system, establishing Sveltia CMS as the **true, unparalleled successor to Netlify CMS** — not just a spiritual successor or a mere alternative.
+This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system.
 
-As we continue to add more features, we hope that our product will eventually become an appearing headless CMS option for everyone, not just for existing Netlify/Decap CMS users.
+We are continuing to address the [issues](https://github.com/decaporg/decap-cms/issues) reported in the predecessor’s repository and deliver the enhancements that Netlify CMS users have desired for a long time. Of the 3 successors, only Sveltia CMS is actively developed, with frequent [releases](https://github.com/sveltia/sveltia-cms/releases) and a clear [roadmap](#roadmap). For this reason, Sveltia CMS is the **true successor to Netlify CMS** — not just a spiritual successor or a mere alternative.
 
 ### Our goals
 
