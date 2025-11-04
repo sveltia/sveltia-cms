@@ -1936,6 +1936,10 @@ Join us on [Discord](https://discord.gg/5hwCGqup5b) or ping us on [Bluesky](http
 
 Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out!
 
+<!-- prettier-ignore -->
+> [!IMPORTANT]
+> Please do not email the maintainer for free support. Your emails will be ignored. Instead, use the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page.
+
 ## Contributions
 
 See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md). Bug reports are highly encouraged.
