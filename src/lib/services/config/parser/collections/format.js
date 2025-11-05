@@ -20,8 +20,12 @@ export const isFormatMismatch = (extension, format) => {
   // Normalize formats (yml and yaml are interchangeable)
   const normalizedFormat = format === 'yml' ? 'yaml' : format;
 
-  // For md/markdown extensions, only -frontmatter formats are valid
-  if (normalizedExtension === 'md' || normalizedExtension === 'markdown') {
+  // For md/markdown/mdx extensions, only -frontmatter formats are valid
+  if (
+    normalizedExtension === 'md' ||
+    normalizedExtension === 'markdown' ||
+    normalizedExtension === 'mdx'
+  ) {
     // Valid formats: 'frontmatter' (auto-detect) or any *-frontmatter format
     return !(normalizedFormat === 'frontmatter' || normalizedFormat.endsWith('-frontmatter'));
   }

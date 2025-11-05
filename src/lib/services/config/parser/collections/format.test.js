@@ -105,6 +105,40 @@ describe('isFormatMismatch', () => {
     });
   });
 
+  describe('mdx extensions', () => {
+    it('should return true when mdx extension with yaml format', () => {
+      // mdx should only work with frontmatter formats or -frontmatter
+      expect(isFormatMismatch('mdx', 'yaml')).toBe(true);
+    });
+
+    it('should return true when mdx extension with json format', () => {
+      // mdx should only work with frontmatter formats or -frontmatter
+      expect(isFormatMismatch('mdx', 'json')).toBe(true);
+    });
+
+    it('should return true when mdx extension with toml format', () => {
+      // mdx should only work with frontmatter formats or -frontmatter
+      expect(isFormatMismatch('mdx', 'toml')).toBe(true);
+    });
+
+    it('should return false when mdx extension with frontmatter (auto-detect) format', () => {
+      // mdx + frontmatter is valid; frontmatter is the auto-detect format
+      expect(isFormatMismatch('mdx', 'frontmatter')).toBe(false);
+    });
+
+    it('should return false when mdx extension with yaml-frontmatter', () => {
+      expect(isFormatMismatch('mdx', 'yaml-frontmatter')).toBe(false);
+    });
+
+    it('should return false when mdx extension with toml-frontmatter', () => {
+      expect(isFormatMismatch('mdx', 'toml-frontmatter')).toBe(false);
+    });
+
+    it('should return false when mdx extension with json-frontmatter', () => {
+      expect(isFormatMismatch('mdx', 'json-frontmatter')).toBe(false);
+    });
+  });
+
   describe('front-matter formats', () => {
     it('should return false when md extension with yaml-frontmatter', () => {
       expect(isFormatMismatch('md', 'yaml-frontmatter')).toBe(false);
@@ -262,6 +296,10 @@ describe('isFormatMismatch', () => {
 
     it('should return false when markdown extension with frontmatter', () => {
       expect(isFormatMismatch('markdown', 'frontmatter')).toBe(false);
+    });
+
+    it('should return false when mdx extension with frontmatter', () => {
+      expect(isFormatMismatch('mdx', 'frontmatter')).toBe(false);
     });
 
     it('should return true when yaml extension with frontmatter', () => {
