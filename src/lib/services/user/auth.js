@@ -12,7 +12,7 @@ import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { InternalSiteConfig, User } from '$lib/types/private';
+ * @import { BackendService, InternalSiteConfig, User } from '$lib/types/private';
  */
 
 /**
@@ -70,29 +70,69 @@ export const logError = (ex, context = 'authentication') => {
 };
 
 /**
- * Check if the user info is cached, set the backend, and automatically start loading files if the
- * backend is Git-based and user’s auth token is found.
+ * Parse a magic link URL generated for QR code sign-in to extract the token and preferences.
+ * @internal
+ * @returns {{ _user: { token: string } | undefined, copiedPrefs: Record<string, any> | undefined
+ * }} Object containing the user token and copied preferences.
  */
-export const signInAutomatically = async () => {
-  resetError();
+export const parseMagicLink = () => {
+  const { path } = parseLocation();
+  const { encodedData } = path.match(/^\/signin\/(?<encodedData>.+)/)?.groups ?? {};
 
-  // Find cached user info, including a compatible Netlify/Decap CMS user object
+  if (!encodedData) {
+    return { _user: undefined, copiedPrefs: undefined };
+  }
+
+  // Remove token from the URL
+  goto('', { replaceState: true });
+
+  /** @type {{ token: string } | undefined} */
+  let _user = undefined;
+  /** @type {Record<string, any> | undefined} */
+  let copiedPrefs = undefined;
+
+  try {
+    const data = JSON.parse(atob(encodedData));
+
+    if (isObject(data) && typeof data.token === 'string') {
+      _user = { token: data.token };
+
+      if (isObject(data.prefs)) {
+        copiedPrefs = data.prefs;
+      }
+    }
+  } catch {
+    //
+  }
+
+  return { _user, copiedPrefs };
+};
+
+/**
+ * Find cached user info, including a compatible Netlify/Decap CMS user object.
+ * @internal
+ * @returns {Promise<Record<string, any> | undefined>} Cached user info, or undefined if not found.
+ */
+export const getUserCache = async () => {
   const userCache =
     (await LocalStorage.get('sveltia-cms.user')) ||
     (await LocalStorage.get('decap-cms-user')) ||
     (await LocalStorage.get('netlify-cms-user'));
 
-  const hasUserCache = isObject(userCache);
-
-  // If the user has been signed out, the user cache is an empty object. In that case, we should not
-  // proceed with the sign-in process even if the Decap CMS or Netlify CMS user cache is found. This
-  // is to prevent the user from being signed in again automatically immediately after signing out.
-  if (hasUserCache && !Object.keys(userCache).length) {
-    return;
+  if (isObject(userCache) && typeof userCache.backendName === 'string') {
+    return userCache;
   }
 
-  let _user = hasUserCache && userCache.backendName ? userCache : undefined;
+  return undefined;
+};
 
+/**
+ * Get the backend instance based on the cached user info or site config.
+ * @internal
+ * @param {Record<string, any> | undefined} _user Cached user info.
+ * @returns {BackendService | undefined} Backend instance to be used.
+ */
+export const getBackend = (_user) => {
   // Determine the backend name based on the user cache or site config. Use the local backend if the
   // user cache is found and the backend name is `local`, which is used by Sveltia CMS, or `proxy`,
   // which is used by Netlify/Decap CMS when running the local proxy server. Otherwise, simply use
@@ -106,33 +146,30 @@ export const signInAutomatically = async () => {
 
   backendName.set(_backendName);
 
-  const _backend = get(backend);
-  const { path } = parseLocation();
+  return get(backend);
+};
+
+/**
+ * Check if the user info is cached, set the backend, and automatically start loading files if the
+ * backend is Git-based and user’s auth token is found.
+ */
+export const signInAutomatically = async () => {
+  resetError();
+
+  /** @type {Record<string, any> | undefined} */
+  let _user = undefined;
   /** @type {Record<string, any> | undefined} */
   let copiedPrefs = undefined;
 
-  // Support QR code authentication
-  if (!_user && _backend) {
-    const { encodedData } = path.match(/^\/signin\/(?<encodedData>.+)/)?.groups ?? {};
+  ({ _user, copiedPrefs } = parseMagicLink());
+  _user ??= await getUserCache();
 
-    if (encodedData) {
-      goto('', { replaceState: true }); // Remove token from the URL
-
-      try {
-        const data = JSON.parse(atob(encodedData));
-
-        if (isObject(data) && typeof data.token === 'string') {
-          _user = { token: data.token };
-
-          if (isObject(data.prefs)) {
-            copiedPrefs = data.prefs;
-          }
-        }
-      } catch {
-        //
-      }
-    }
+  // If no cached user info is found, simply return as we cannot sign in automatically
+  if (!_user) {
+    return;
   }
+
+  const _backend = getBackend(_user);
 
   if (_user && _backend) {
     // Temporarily populate the `user` store with the cache, otherwise it’s not updated in

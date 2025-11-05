@@ -136,6 +136,330 @@ describe('auth service', () => {
     vi.spyOn(authModule.signingIn, 'set');
   });
 
+  describe('parseMagicLink', () => {
+    it('should parse valid magic link with token and prefs', () => {
+      const encodedData = btoa(JSON.stringify({ token: 'magic-token', prefs: { theme: 'dark' } }));
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+
+      const result = authModule.parseMagicLink();
+
+      expect(result._user).toEqual({ token: 'magic-token' });
+      expect(result.copiedPrefs).toEqual({ theme: 'dark' });
+      expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+    });
+
+    it('should parse magic link with token but no prefs', () => {
+      const encodedData = btoa(JSON.stringify({ token: 'magic-token' }));
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+
+      const result = authModule.parseMagicLink();
+
+      expect(result._user).toEqual({ token: 'magic-token' });
+      expect(result.copiedPrefs).toBeUndefined();
+      expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+    });
+
+    it('should return empty result when no encoded data in path', () => {
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function that returns null.
+           * @returns {null} Null match result.
+           */
+          match: () => null,
+        },
+      });
+
+      const result = authModule.parseMagicLink();
+
+      expect(result._user).toBeUndefined();
+      expect(result.copiedPrefs).toBeUndefined();
+      expect(mockGoto).not.toHaveBeenCalled();
+    });
+
+    it('should return empty result when path match has no groups', () => {
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function that returns object without groups.
+           * @returns {object} Match result without groups property.
+           */
+          match: () => ({}),
+        },
+      });
+
+      const result = authModule.parseMagicLink();
+
+      expect(result._user).toBeUndefined();
+      expect(result.copiedPrefs).toBeUndefined();
+      expect(mockGoto).not.toHaveBeenCalled();
+    });
+
+    it('should handle invalid JSON in encoded data gracefully', () => {
+      const encodedData = btoa('invalid json');
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+
+      const result = authModule.parseMagicLink();
+
+      expect(result._user).toBeUndefined();
+      expect(result.copiedPrefs).toBeUndefined();
+      expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+    });
+
+    it('should handle encoded data without token property', () => {
+      const encodedData = btoa(JSON.stringify({ prefs: { theme: 'dark' } }));
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+
+      const result = authModule.parseMagicLink();
+
+      expect(result._user).toBeUndefined();
+      expect(result.copiedPrefs).toBeUndefined();
+      expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+    });
+
+    it('should handle non-object data in encoded data', () => {
+      const encodedData = btoa(JSON.stringify('just a string'));
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+
+      const result = authModule.parseMagicLink();
+
+      expect(result._user).toBeUndefined();
+      expect(result.copiedPrefs).toBeUndefined();
+      expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+    });
+  });
+
+  describe('getUserCache', () => {
+    it('should return sveltia-cms user cache if available', async () => {
+      const cachedUser = { token: 'cached-token', backendName: 'github' };
+
+      mockLocalStorage.get.mockImplementation((key) => {
+        if (key === 'sveltia-cms.user') return Promise.resolve(cachedUser);
+
+        return Promise.resolve(null);
+      });
+
+      const result = await authModule.getUserCache();
+
+      expect(result).toEqual(cachedUser);
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('sveltia-cms.user');
+    });
+
+    it('should fallback to decap-cms user cache', async () => {
+      const cachedUser = { token: 'cached-token', backendName: 'github' };
+
+      mockLocalStorage.get.mockImplementation((key) => {
+        if (key === 'decap-cms-user') return Promise.resolve(cachedUser);
+
+        return Promise.resolve(null);
+      });
+
+      const result = await authModule.getUserCache();
+
+      expect(result).toEqual(cachedUser);
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('sveltia-cms.user');
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('decap-cms-user');
+    });
+
+    it('should fallback to netlify-cms user cache', async () => {
+      const cachedUser = { token: 'cached-token', backendName: 'github' };
+
+      mockLocalStorage.get.mockImplementation((key) => {
+        if (key === 'netlify-cms-user') return Promise.resolve(cachedUser);
+
+        return Promise.resolve(null);
+      });
+
+      const result = await authModule.getUserCache();
+
+      expect(result).toEqual(cachedUser);
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('sveltia-cms.user');
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('decap-cms-user');
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('netlify-cms-user');
+    });
+
+    it('should return undefined if no cache found', async () => {
+      mockLocalStorage.get.mockResolvedValue(null);
+
+      const result = await authModule.getUserCache();
+
+      expect(result).toBeUndefined();
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('sveltia-cms.user');
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('decap-cms-user');
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('netlify-cms-user');
+    });
+
+    it('should return undefined if cache is not a valid object', async () => {
+      mockLocalStorage.get.mockResolvedValue('not an object');
+
+      const result = await authModule.getUserCache();
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined if cache is object but missing backendName', async () => {
+      const cachedUser = { token: 'cached-token' }; // Missing backendName
+
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+
+      const result = await authModule.getUserCache();
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined if cache is empty object', async () => {
+      mockLocalStorage.get.mockResolvedValue({});
+
+      const result = await authModule.getUserCache();
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getBackend', () => {
+    it('should return backend and set local backendName when user has local backendName', () => {
+      const _user = { token: 'test-token', backendName: 'local' };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+
+        return mockSiteConfig;
+      });
+
+      const result = authModule.getBackend(_user);
+
+      expect(mockBackendName.set).toHaveBeenCalledWith('local');
+      expect(result).toBe(mockBackend);
+    });
+
+    it('should return backend and set local backendName when user has proxy backendName', () => {
+      const _user = { token: 'test-token', backendName: 'proxy' };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+
+        return mockSiteConfig;
+      });
+
+      const result = authModule.getBackend(_user);
+
+      // Should convert proxy to local
+      expect(mockBackendName.set).toHaveBeenCalledWith('local');
+      expect(result).toBe(mockBackend);
+    });
+
+    it('should use backend name from siteConfig when user has different backendName', () => {
+      const _user = { token: 'test-token', backendName: 'gitlab' };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+
+        return mockSiteConfig;
+      });
+
+      const result = authModule.getBackend(_user);
+
+      // Should use the name from siteConfig (github in this case)
+      expect(mockBackendName.set).toHaveBeenCalledWith('github');
+      expect(result).toBe(mockBackend);
+    });
+
+    it('should use backend name from siteConfig when user is undefined', () => {
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+
+        return mockSiteConfig;
+      });
+
+      const result = authModule.getBackend(undefined);
+
+      expect(mockBackendName.set).toHaveBeenCalledWith('github');
+      expect(result).toBe(mockBackend);
+    });
+
+    it('should return undefined when backend store returns undefined', () => {
+      const _user = { token: 'test-token', backendName: 'github' };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return undefined;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+
+        return mockSiteConfig;
+      });
+
+      const result = authModule.getBackend(_user);
+
+      expect(mockBackendName.set).toHaveBeenCalledWith('github');
+      expect(result).toBeUndefined();
+    });
+
+    it('should handle user with custom backend name not in local/proxy list', () => {
+      const _user = { token: 'test-token', backendName: 'gitea' };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+
+        return mockSiteConfig;
+      });
+
+      const result = authModule.getBackend(_user);
+
+      // Should use siteConfig backend name, not the user's gitea
+      expect(mockBackendName.set).toHaveBeenCalledWith('github');
+      expect(result).toBe(mockBackend);
+    });
+  });
+
   describe('resetError', () => {
     it('should reset signInError to initial state', () => {
       authModule.resetError();
@@ -241,7 +565,93 @@ describe('auth service', () => {
   });
 
   describe('signInAutomatically', () => {
+    it('should prioritize magic link over cached user', async () => {
+      // Test that parseMagicLink is called before getUserCache
+      const encodedData = btoa(JSON.stringify({ token: 'magic-token', prefs: { theme: 'dark' } }));
+      const cachedUser = { token: 'cached-token', backendName: 'github' };
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockGetLocaleText) return mockGetLocaleText;
+
+        return mockSiteConfig;
+      });
+      mockBackend.signIn.mockResolvedValue({ token: 'magic-token' });
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInAutomatically();
+
+      // Should use magic link token, not cached token
+      expect(mockBackend.signIn).toHaveBeenCalledWith({
+        token: 'magic-token',
+        refreshToken: undefined,
+        auto: true,
+      });
+      // Should apply copied prefs from magic link
+      expect(mockPrefs.update).toHaveBeenCalled();
+      // Should remove token from URL
+      expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+    });
+
+    it('should fallback to cached user when no magic link', async () => {
+      // Test that getUserCache is called when parseMagicLink returns no user
+      const cachedUser = { token: 'cached-token', backendName: 'github' };
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function that returns null (no magic link).
+           * @returns {null} Null match result.
+           */
+          match: () => null,
+        },
+      });
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return mockBackend;
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockGetLocaleText) return mockGetLocaleText;
+
+        return mockSiteConfig;
+      });
+      mockBackend.signIn.mockResolvedValue(cachedUser);
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInAutomatically();
+
+      // Should use cached token when no magic link
+      expect(mockBackend.signIn).toHaveBeenCalledWith({
+        token: 'cached-token',
+        refreshToken: undefined,
+        auto: true,
+      });
+      // Should NOT apply prefs since they come from magic link
+      expect(mockPrefs.update).not.toHaveBeenCalled();
+      // Should NOT call goto since no magic link was parsed
+      expect(mockGoto).not.toHaveBeenCalled();
+    });
+
     it('should return early if user cache is empty object', async () => {
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function that returns null.
+           * @returns {null} Null match result.
+           */
+          match: () => null,
+        },
+      });
       mockLocalStorage.get.mockResolvedValue({});
 
       await authModule.signInAutomatically();
@@ -531,6 +941,37 @@ describe('auth service', () => {
       await authModule.signInAutomatically();
 
       expect(authModule.signInError.set).toHaveBeenCalled();
+    });
+
+    it('should handle case when getBackend returns undefined', async () => {
+      const cachedUser = { token: 'test-token', backendName: 'github' };
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function that returns null.
+           * @returns {null} Null match result.
+           */
+          match: () => null,
+        },
+      });
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+      mockGet.mockImplementation((store) => {
+        if (store === mockBackendStore) return undefined; // Backend is undefined
+        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockGetLocaleText) return mockGetLocaleText;
+
+        return mockSiteConfig;
+      });
+
+      await authModule.signInAutomatically();
+
+      // Should set backendName but return early since backend is undefined
+      expect(mockBackendName.set).toHaveBeenCalledWith('github');
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+      expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
+      // unauthenticated should be set to false since _user is still truthy
+      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(false);
     });
   });
 
