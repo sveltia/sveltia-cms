@@ -142,7 +142,7 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 
 This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system.
 
-We are continuing to address the [issues](https://github.com/decaporg/decap-cms/issues) reported in the predecessor’s repository and deliver the enhancements that Netlify CMS users have desired for a long time. Of the 3 successors, only Sveltia CMS is continuously developed, with [regular updates](https://github.com/sveltia/sveltia-cms/releases) and a [clear roadmap](#roadmap). For that reason, Sveltia CMS is the **true successor to Netlify CMS** — not just a spiritual successor or a mere alternative.
+We are continuing to address the [issues](https://github.com/decaporg/decap-cms/issues) reported in the predecessor’s repository and deliver the enhancements that Netlify CMS users have desired for a long time. Of the 3 successors, only Sveltia CMS is receiving consistent development, with [regular updates](https://github.com/sveltia/sveltia-cms/releases) and a [clear roadmap](#roadmap). For that reason, Sveltia CMS is the **true, superior successor to Netlify CMS** — not just a spiritual successor or a mere alternative.
 
 ### Our goals
 
@@ -283,6 +283,7 @@ We’ve made various improvements to help you get your work done faster and more
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
 - We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253] If you use [deprecated options](#deprecations) in a supported code editor, you should receive a warning.
 - Improved TypeScript support: We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
+- Sveltia CMS alerts you when there is a mismatch between the `format` and `extension` options of a collection.
 
 ### Better backend support
 
@@ -306,6 +307,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
   - We have implemented a workaround for a [GraphQL complexity limit issue](https://github.com/sveltia/sveltia-cms/issues/525) in GitLab 18.4.2, while Netlify/Decap CMS continues to suffer from the same problem.[^301]
 - Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) for a better DX. See the [productivity section](#better-productivity) above.
+- An indicator is displayed in the account menu when using the local repository workflow.[^302]
 - Developers can select the local and remote backends while working on a local server.
 - The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage support works with all modern browsers [except Safari](https://bugs.webkit.org/show_bug.cgi?id=254726).
 
@@ -2671,3 +2673,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^300]: Netlify/Decap CMS [#7257](https://github.com/decaporg/decap-cms/issues/7257)
 
 [^301]: Netlify/Decap CMS [#7627](https://github.com/decaporg/decap-cms/issues/7627)
+
+[^302]: Netlify/Decap CMS [#3286](https://github.com/decaporg/decap-cms/issues/3286)
