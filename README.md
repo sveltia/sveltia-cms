@@ -142,7 +142,7 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 
 This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system.
 
-We are continuing to address the [issues](https://github.com/decaporg/decap-cms/issues) reported in the predecessor’s repository and deliver the enhancements that Netlify CMS users have desired for a long time. We are dedicating significant time and effort to improving compatibility and enhancing every aspect of the product. Of the 3 successors, only Sveltia CMS is receiving consistent development, making outstanding progress, and providing [regular updates](https://github.com/sveltia/sveltia-cms/releases) and a [clear roadmap](#roadmap).
+We are continuing to address the [issues](https://github.com/decaporg/decap-cms/issues) reported in the predecessor’s repository and deliver the enhancements that Netlify CMS users have long desired. We are dedicating significant time and effort to improving compatibility and enhancing every aspect of the product. Of the 3 successors, only Sveltia CMS is receiving consistent development, making outstanding progress, and providing [regular updates](https://github.com/sveltia/sveltia-cms/releases) and a [clear roadmap](#roadmap).
 
 That’s why Sveltia CMS is the **true successor to Netlify CMS** — not just a spiritual successor or a mere alternative.
 
@@ -214,9 +214,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 - The Gitea/Forgejo backend is also faster because it utilizes an efficient API method introduced in Gitea 1.24 and Forgejo 12.0.
 - Our [local repository workflow](#working-with-a-local-git-repository) utilizes the modern [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) to read and write files natively through the web browser, rather than using a slow, ad hoc REST API through a proxy server.
 - Sorting, filtering and grouping of entries is done instantly without reloading the entire content.
-- Lazy loading is implemented throughout the app to improve performance.
-- Infinite scroll is used as an alternative to pagination to provide a smoother browsing experience, especially when there are many entries.[^303]
-- A list of repository files is cached locally for faster startup and bandwidth savings.
+- Uses caching, lazy loading and infinite scrolling techniques. A list of repository files is stored locally for faster startup and bandwidth savings.
 - Thumbnails of assets, including videos and PDF files, are generated and cached for faster rendering of the Asset Library and other parts of the CMS.[^39][^38]
 - No typing lag on input fields, especially within nested lists and objects.[^77]
 - The entry preview doesn’t use an `<iframe>` by default because it’s a performance overhead.[^179]
@@ -2679,5 +2677,3 @@ This project would not have been possible without the open source Netlify CMS pr
 [^301]: Netlify/Decap CMS [#7627](https://github.com/decaporg/decap-cms/issues/7627)
 
 [^302]: Netlify/Decap CMS [#3286](https://github.com/decaporg/decap-cms/issues/3286)
-
-[^303]: Netlify/Decap CMS [#3714](https://github.com/decaporg/decap-cms/issues/3714)
