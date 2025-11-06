@@ -109,6 +109,11 @@ export const initSiteConfig = async (manualConfig) => {
     parseSiteConfig(rawConfig, collectors);
 
     if (collectors.errors.size) {
+      collectors.errors.forEach((warning) => {
+        // eslint-disable-next-line no-console
+        console.error(warning);
+      });
+
       throw new Error('Errors found in configuration');
     }
 

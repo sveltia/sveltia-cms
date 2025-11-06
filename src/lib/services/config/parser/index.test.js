@@ -18,6 +18,9 @@ const mockI18nStrings = {
   'config.error.missing_media_folder': 'Missing media_folder',
   'config.warning.editorial_workflow_unsupported': 'Editorial workflow is not supported',
   'config.warning.nested_collections_unsupported': 'Nested collections are not supported',
+  'config.error_locator.collection': 'Collection: {collection}',
+  'config.error_locator.file': 'File: {file}',
+  'config.error_locator.field': 'Field: {field}',
 };
 
 /**
@@ -46,6 +49,13 @@ vi.mock('svelte-i18n', () => ({
       return () => {};
     }),
   },
+  locale: {
+    subscribe: vi.fn((fn) => {
+      fn('en-US');
+
+      return () => {};
+    }),
+  },
 }));
 
 const mockGetStore = vi.fn();
@@ -58,6 +68,17 @@ const mockIsObject = vi.fn();
 
 vi.mock('@sveltia/utils/object', () => ({
   isObject: mockIsObject,
+}));
+
+vi.mock('$lib/services/contents/i18n', () => ({
+  getListFormatter: vi.fn(() => ({
+    /**
+     * Format array.
+     * @param {string[]} arr Array to format.
+     * @returns {string} Formatted string.
+     */
+    format: (arr) => arr.join(', '),
+  })),
 }));
 
 vi.mock('$lib/services/backends', () => ({

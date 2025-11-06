@@ -6,11 +6,21 @@ import { _ } from 'svelte-i18n';
 
 import { gitBackendServices, validBackendNames } from '$lib/services/backends';
 import { warnDeprecation } from '$lib/services/config/deprecations';
+import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
 
 /**
  * @import { GitBackend, SiteConfig } from '$lib/types/public';
- * @import { ConfigParserCollectors } from '$lib/types/private';
+ * @import { ConfigParserCollectors, UnsupportedOption } from '$lib/types/private';
  */
+
+/**
+ * Unsupported options for Relation fields.
+ * @type {UnsupportedOption[]}
+ */
+const UNSUPPORTED_OPTIONS = [
+  { type: 'warning', prop: 'use_graphql', strKey: 'unsupported_ignored_option' },
+  { type: 'warning', prop: 'open_authoring', strKey: 'open_authoring_unsupported' },
+];
 
 /**
  * Parse and validate the backend configuration from the site config.
@@ -20,7 +30,7 @@ import { warnDeprecation } from '$lib/services/config/deprecations';
  */
 export const parseBackendConfig = (siteConfig, collectors) => {
   const { backend } = siteConfig;
-  const { errors, warnings } = collectors;
+  const { errors } = collectors;
 
   if (!isObject(backend)) {
     errors.add(get(_)('config.error.missing_backend'));
@@ -50,8 +60,6 @@ export const parseBackendConfig = (siteConfig, collectors) => {
       auth_type: authType,
       // @ts-ignore GitLab/Gitea only
       app_id: appId,
-      // @ts-ignore GitHub only
-      open_authoring,
     } = /** @type {GitBackend} */ (backend);
 
     if (repo === undefined) {
@@ -75,8 +83,11 @@ export const parseBackendConfig = (siteConfig, collectors) => {
       warnDeprecation('automatic_deployments');
     }
 
-    if (name === 'github' && open_authoring) {
-      warnings.add(get(_)('config.warning.open_authoring_unsupported'));
-    }
+    checkUnsupportedOptions({
+      UNSUPPORTED_OPTIONS,
+      config: backend,
+      context: { siteConfig },
+      collectors,
+    });
   }
 };

@@ -1,7 +1,11 @@
+import { parseDateTimeFieldConfig } from '$lib/services/config/parser/fields/datetime';
 import { parseFileFieldConfig } from '$lib/services/config/parser/fields/file';
 import { parseListFieldConfig } from '$lib/services/config/parser/fields/list';
+import { parseMarkdownFieldConfig } from '$lib/services/config/parser/fields/markdown';
+import { parseNumberFieldConfig } from '$lib/services/config/parser/fields/number';
 import { parseObjectFieldConfig } from '$lib/services/config/parser/fields/object';
 import { parseRelationFieldConfig } from '$lib/services/config/parser/fields/relation';
+import { addMessage } from '$lib/services/config/parser/utils/messages';
 
 /**
  * @import { Field } from '$lib/types/public';
@@ -17,9 +21,12 @@ import { parseRelationFieldConfig } from '$lib/services/config/parser/fields/rel
  * @type {Record<string, (args: FieldParserArgs) => void>}
  */
 const parsers = {
+  datetime: parseDateTimeFieldConfig,
   file: parseFileFieldConfig,
   image: parseFileFieldConfig, // alias
   list: parseListFieldConfig,
+  markdown: parseMarkdownFieldConfig,
+  number: parseNumberFieldConfig,
   object: parseObjectFieldConfig,
   relation: parseRelationFieldConfig,
 };
@@ -28,15 +35,24 @@ const parsers = {
  * Parse and validate a single field configuration.
  * @param {FieldParserArgs} args Arguments.
  */
-export const parseFieldConfig = ({ fieldConfig, context, collectors }) => {
-  const { name, widget = 'string' } = fieldConfig;
+export const parseFieldConfig = (args) => {
+  const { config, context } = args;
+  const { name, widget = 'string' } = config;
   const { typedKeyPath } = context;
 
-  parsers[widget]?.({
-    fieldConfig,
-    context: { ...context, typedKeyPath: typedKeyPath ? `${typedKeyPath}.${name}` : name },
-    collectors,
-  });
+  const newArgs = {
+    ...args,
+    context: {
+      ...context,
+      typedKeyPath: typedKeyPath ? `${typedKeyPath}.${name}` : name,
+    },
+  };
+
+  parsers[widget]?.(newArgs);
+
+  if (widget === 'date') {
+    addMessage({ ...newArgs, strKey: 'date_widget' });
+  }
 };
 
 /**
@@ -46,7 +62,7 @@ export const parseFieldConfig = ({ fieldConfig, context, collectors }) => {
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseFields = (fields, context, collectors) => {
-  fields?.forEach((fieldConfig) => {
-    parseFieldConfig({ fieldConfig, context, collectors });
+  fields?.forEach((config) => {
+    parseFieldConfig({ config, context, collectors });
   });
 };

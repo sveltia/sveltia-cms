@@ -6,11 +6,21 @@ import { _ } from 'svelte-i18n';
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { parseFields } from '$lib/services/config/parser/fields';
+import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
 
 /**
  * @import { CollectionFile, EntryCollection, FileCollection, SiteConfig } from '$lib/types/public';
- * @import { ConfigParserCollectors } from '$lib/types/private';
+ * @import { ConfigParserCollectors, UnsupportedOption } from '$lib/types/private';
  */
+
+/**
+ * Unsupported options for Number fields.
+ * @type {UnsupportedOption[]}
+ */
+const UNSUPPORTED_OPTIONS = [
+  { type: 'warning', prop: 'nested', strKey: 'nested_collections_unsupported' },
+  { prop: 'sortableFields', newProp: 'sortable_fields' },
+];
 
 /**
  * Parse and validate a single entry collection configuration.
@@ -20,23 +30,22 @@ import { parseFields } from '$lib/services/config/parser/fields';
  * @param {EntryCollection} context.collection Collection config to parse.
  * @param {ConfigParserCollectors} collectors Collectors.
  */
-export const parseEntryCollection = ({ siteConfig, collection }, collectors) => {
-  const { name, label, extension, format, fields, index_file } = collection;
-  const { errors } = collectors;
+export const parseEntryCollection = (context, collectors) => {
+  const { siteConfig, collection } = context;
+  const { extension, format, fields, index_file } = collection;
 
   if (isFormatMismatch(extension, format)) {
-    errors.add(
-      get(_)('config.error.collection_format_mismatch', {
-        values: {
-          collection: label ?? name,
-          extension,
-          format,
-        },
-      }),
-    );
+    addMessage({
+      strKey: 'file_format_mismatch',
+      values: { extension, format },
+      context,
+      collectors,
+    });
   }
 
-  parseFields(fields, { siteConfig, collection }, collectors);
+  checkUnsupportedOptions({ UNSUPPORTED_OPTIONS, config: collection, context, collectors });
+
+  parseFields(fields, context, collectors);
 
   if (index_file) {
     parseFields(
@@ -55,8 +64,8 @@ export const parseEntryCollection = ({ siteConfig, collection }, collectors) => 
  * @param {FileCollection} context.collection Collection config to parse.
  * @param {ConfigParserCollectors} collectors Collectors.
  */
-export const parseFileCollection = ({ siteConfig, collection }, collectors) => {
-  parseCollectionFiles({ siteConfig, collection }, collectors);
+export const parseFileCollection = (context, collectors) => {
+  parseCollectionFiles(context, collectors);
 };
 
 /**
@@ -67,15 +76,13 @@ export const parseFileCollection = ({ siteConfig, collection }, collectors) => {
  */
 export const parseCollections = (siteConfig, collectors) => {
   const { collections, singletons } = siteConfig;
-  const { errors, warnings } = collectors;
+  const { errors } = collectors;
 
   if (!Array.isArray(collections) && !Array.isArray(singletons)) {
     errors.add(get(_)('config.error.no_collection'));
 
     return;
   }
-
-  let hasNestedCollections = false;
 
   collections?.forEach((collection) => {
     if ('divider' in collection) {
@@ -84,16 +91,8 @@ export const parseCollections = (siteConfig, collectors) => {
       parseFileCollection({ siteConfig, collection }, collectors);
     } else {
       parseEntryCollection({ siteConfig, collection }, collectors);
-
-      if (collection.nested) {
-        hasNestedCollections = true;
-      }
     }
   });
-
-  if (hasNestedCollections) {
-    warnings.add(get(_)('config.warning.nested_collections_unsupported'));
-  }
 
   const files = /** @type {CollectionFile[]} */ (
     singletons?.filter((c) => !('divider' in c)) || []

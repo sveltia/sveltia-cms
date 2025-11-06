@@ -632,6 +632,11 @@ export const strings = {
     one_error: 'There is an error in the site configuration. Please solve the issue and try again.',
     many_errors:
       'There are errors in the site configuration. Please solve the issues and try again.',
+    error_locator: {
+      collection: '{collection} collection',
+      file: '{file} file',
+      field: '`{field}` field',
+    },
     error: {
       no_secure_context: 'Sveltia CMS only works with HTTPS or localhost URLs.',
       fetch_failed: 'The configuration file could not be retrieved.',
@@ -655,16 +660,21 @@ export const strings = {
       public_folder_relative_path:
         'The configured public folder is invalid. It must be an absolute path starting with “/”.',
       public_folder_absolute_url: 'An absolute URL for the public folder option is not supported.',
-      collection_format_mismatch:
-        '{collection} collection: the {extension} extension doesn’t match the {format} format.',
-      collection_file_format_mismatch:
-        '{collection} collection, {file} file: the {extension} extension doesn’t match the {format} format.',
+      file_format_mismatch: 'The `{extension}` extension doesn’t match the `{format}` format.',
+      date_widget:
+        'The deprecated `date` widget is not supported in Sveltia CMS. Use the `datetime` widget with the `time_format:false` option instead.',
+      unsupported_deprecated_option:
+        'The deprecated `{prop}` option is not supported in Sveltia CMS. Use the `{newProp}` option instead.',
+      allow_multiple:
+        'The `allow_multiple` option is not supported in Sveltia CMS. Use the `multiple` option instead, which defaults to `false`.',
       unexpected: 'Unexpected error',
     },
     warning: {
       editorial_workflow_unsupported: 'Editorial workflow is not yet supported in Sveltia CMS.',
       open_authoring_unsupported: 'Open authoring is not yet supported in Sveltia CMS.',
       nested_collections_unsupported: 'Nested collections are not yet supported in Sveltia CMS.',
+      unsupported_ignored_option:
+        'The `{prop}` option is not supported in Sveltia CMS. It will be ignored.',
     },
   },
 

@@ -9,14 +9,15 @@ import { parseFieldConfig, parseFields } from '$lib/services/config/parser/field
  * Parse and validate a List field configuration.
  * @param {FieldParserArgs} args Arguments.
  */
-export const parseListFieldConfig = ({ fieldConfig, context, collectors }) => {
-  const { field: subfield, fields: subfields, types } = /** @type {ListField} */ (fieldConfig);
+export const parseListFieldConfig = (args) => {
+  const { config, context, collectors } = args;
+  const { field: subfield, fields: subfields, types } = /** @type {ListField} */ (config);
   const { typedKeyPath } = context;
 
   // Handle single subfield
   if (subfield) {
     parseFieldConfig({
-      fieldConfig: subfield,
+      config: subfield,
       context: { ...context, typedKeyPath: `${typedKeyPath}.*` },
       collectors,
     });

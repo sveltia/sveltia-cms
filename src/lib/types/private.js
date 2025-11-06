@@ -1082,9 +1082,19 @@
 /**
  * Arguments for a field parser function.
  * @typedef {object} FieldParserArgs
- * @property {Field} fieldConfig Field configuration.
+ * @property {Field} config Field configuration.
  * @property {ConfigParserContext} context Field parser context.
  * @property {ConfigParserCollectors} collectors Collectors to collect messages and special fields.
+ */
+
+/**
+ * @typedef {object} UnsupportedOption
+ * @property {'error' | 'warning'} [type] Message type. Default: `error`.
+ * @property {string} prop Property name.
+ * @property {string} [newProp] New property name if renamed.
+ * @property {any} [value] Unsupported property value.
+ * @property {string} [strKey] The i18n string key for the message. Default:
+ * `unsupported_deprecated_option`.
  */
 
 export {};

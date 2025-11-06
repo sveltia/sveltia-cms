@@ -19,6 +19,13 @@
   });
 </script>
 
+{#snippet parseMarkdown(/** @type {string} */ str)}
+  {@html sanitize(/** @type {string} */ (marked.parseInline(str)), {
+    ALLOWED_TAGS: ['a', 'code'],
+    ALLOWED_ATTR: ['href'],
+  })}
+{/snippet}
+
 <div role="none" class="container" inert={$user && $dataLoaded}>
   <div role="none" class="inner">
     {#if $siteConfig || $siteConfigErrors.length}
@@ -33,7 +40,9 @@
         </div>
         <ul class="error">
           {#each $siteConfigErrors as error}
-            <li>{error}</li>
+            <li>
+              {@render parseMarkdown(error)}
+            </li>
           {/each}
         </ul>
       </div>
@@ -47,10 +56,7 @@
       <div role="alert">
         <div role="none" class="message">{$_('loading_site_data_error')}</div>
         <div role="none" class="error">
-          {@html sanitize(/** @type {string} */ (marked.parseInline($signInError.message)), {
-            ALLOWED_TAGS: ['a', 'code'],
-            ALLOWED_ATTR: ['href'],
-          })}
+          {@render parseMarkdown($signInError.message)}
         </div>
       </div>
     {:else if $inAuthPopup}
@@ -115,7 +121,6 @@
       padding: 12px;
       background-color: var(--sui-tertiary-background-color);
       font-size: var(--sui-font-size-default);
-      line-height: 1.5;
       text-align: center;
     }
 
@@ -128,15 +133,15 @@
         text-align: center;
 
         ul {
-          margin: 8px 0 0;
+          margin: 12px 0 0;
           padding: 0;
-          max-height: 120px;
+          max-height: 160px;
           overflow-y: auto;
           list-style: none;
         }
 
         li {
-          margin: 8px 0;
+          margin: 12px;
           padding: 0;
         }
       }

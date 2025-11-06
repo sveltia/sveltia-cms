@@ -632,6 +632,11 @@ export const strings = {
   config: {
     one_error: 'サイト設定に問題が見つかりました。問題を解決してから再度お試しください。',
     many_errors: 'サイト設定に問題が見つかりました。問題を解決してから再度お試しください。',
+    error_locator: {
+      collection: '{collection} コレクション',
+      file: '{file} ファイル',
+      field: '`{field}` フィールド',
+    },
     error: {
       no_secure_context: 'Sveltia CMS は HTTPS またはローカルホスト URL でのみ動作します。',
       fetch_failed: '設定ファイルを読み込めませんでした。',
@@ -657,10 +662,13 @@ export const strings = {
       public_folder_relative_path:
         '設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。',
       public_folder_absolute_url: 'パブリックフォルダーオプションの絶対 URL は非対応です。',
-      collection_format_mismatch:
-        '{collection} コレクション: 拡張子 {extension} は {format} 形式と一致しません。',
-      collection_file_format_mismatch:
-        '{collection} コレクション、{file} ファイル: 拡張子 {extension} は {format} 形式と一致しません。',
+      file_format_mismatch: '拡張子 `{extension}` は `{format}` 形式と一致しません。',
+      date_widget:
+        'Sveltia CMS では非推奨の `date` ウィジェットはサポートされていません。代わりに `time_format:false` オプション付きの `datetime` ウィジェットを使用してください。',
+      unsupported_deprecated_option:
+        'Sveltia CMS では非推奨の `{prop}` オプションはサポートされていません。代わりに `{newProp}` オプションを使用してください。',
+      allow_multiple:
+        'Sveltia CMS では `allow_multiple` オプションはサポートされていません。代わりにデフォルトで `false` の `multiple` オプションを使用してください。',
       unexpected: '予期せぬ問題',
     },
     warning: {
@@ -670,6 +678,8 @@ export const strings = {
         'Sveltia CMS ではまだオープンオーサリングはサポートされていません。',
       nested_collections_unsupported:
         'Sveltia CMS ではネストされたコレクションはまだサポートされていません。',
+      unsupported_ignored_option:
+        '`{prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。',
     },
   },
 

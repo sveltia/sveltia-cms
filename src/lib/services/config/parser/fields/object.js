@@ -9,8 +9,9 @@ import { parseFields } from '$lib/services/config/parser/fields';
  * Parse and validate an Object field configuration.
  * @param {FieldParserArgs} args Arguments.
  */
-export const parseObjectFieldConfig = ({ fieldConfig, context, collectors }) => {
-  const { fields: subfields, types } = /** @type {ObjectField} */ (fieldConfig);
+export const parseObjectFieldConfig = (args) => {
+  const { config, context, collectors } = args;
+  const { fields: subfields, types } = /** @type {ObjectField} */ (config);
   const { typedKeyPath } = context;
 
   // Handle subfields
