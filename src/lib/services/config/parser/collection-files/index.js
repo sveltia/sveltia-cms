@@ -2,7 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { parseFields } from '$lib/services/config/parser/fields';
-import { addMessage } from '$lib/services/config/parser/utils/messages';
+import { addMessage, checkDuplicateNames } from '$lib/services/config/parser/utils/messages';
 
 /**
  * @import { CollectionFile, FileCollection, SiteConfig } from '$lib/types/public';
@@ -41,10 +41,21 @@ export const parseCollectionFile = (context, collectors) => {
  * @param {FileCollection} context.collection Collection config to parse.
  * @param {ConfigParserCollectors} collectors Collectors.
  */
-export const parseCollectionFiles = ({ siteConfig, collection }, collectors) => {
+export const parseCollectionFiles = (context, collectors) => {
+  const { siteConfig, collection } = context;
   const { files } = collection;
+  /** @type {Record<string, number>} */
+  const nameCounts = {};
 
   files.forEach((collectionFile) => {
+    nameCounts[collectionFile.name] = (nameCounts[collectionFile.name] ?? 0) + 1;
     parseCollectionFile({ siteConfig, collection, collectionFile }, collectors);
+  });
+
+  checkDuplicateNames({
+    nameCounts,
+    strKey: 'duplicate_collection_file_name',
+    context,
+    collectors,
   });
 };

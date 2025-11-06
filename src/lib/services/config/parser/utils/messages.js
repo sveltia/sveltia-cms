@@ -75,3 +75,19 @@ export const checkUnsupportedOptions = ({ UNSUPPORTED_OPTIONS, config, context, 
     },
   );
 };
+
+/**
+ * Check for duplicate names in a configuration and add messages if found.
+ * @param {object} args Arguments.
+ * @param {Record<string, number>} args.nameCounts Record of name counts.
+ * @param {string} args.strKey I18n string key for the duplicate name message.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+export const checkDuplicateNames = ({ nameCounts, strKey, context, collectors }) => {
+  Object.entries(nameCounts)
+    .filter(([, count]) => count > 1)
+    .forEach(([name]) => {
+      addMessage({ strKey, values: { name }, context, collectors });
+    });
+};

@@ -6,7 +6,11 @@ import { _ } from 'svelte-i18n';
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { parseFields } from '$lib/services/config/parser/fields';
-import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
+import {
+  addMessage,
+  checkDuplicateNames,
+  checkUnsupportedOptions,
+} from '$lib/services/config/parser/utils/messages';
 
 /**
  * @import { CollectionFile, EntryCollection, FileCollection, SiteConfig } from '$lib/types/public';
@@ -84,14 +88,21 @@ export const parseCollections = (siteConfig, collectors) => {
     return;
   }
 
+  /** @type {Record<string, number>} */
+  const nameCounts = {};
+
   collections?.forEach((collection) => {
     if ('divider' in collection) {
-      // Skip dividers
-    } else if ('files' in collection) {
+      return;
+    }
+
+    if ('files' in collection) {
       parseFileCollection({ siteConfig, collection }, collectors);
     } else {
       parseEntryCollection({ siteConfig, collection }, collectors);
     }
+
+    nameCounts[collection.name] = (nameCounts[collection.name] ?? 0) + 1;
   });
 
   const files = /** @type {CollectionFile[]} */ (
@@ -101,4 +112,11 @@ export const parseCollections = (siteConfig, collectors) => {
   if (files.length) {
     parseFileCollection({ siteConfig, collection: { name: '_singletons', files } }, collectors);
   }
+
+  checkDuplicateNames({
+    nameCounts,
+    strKey: 'duplicate_collection_name',
+    context: { siteConfig },
+    collectors,
+  });
 };

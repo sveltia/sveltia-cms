@@ -1,4 +1,5 @@
 import { parseFields } from '$lib/services/config/parser/fields';
+import { checkDuplicateNames } from '$lib/services/config/parser/utils/messages';
 
 /**
  * @import { ObjectField } from '$lib/types/public';
@@ -13,6 +14,8 @@ export const parseObjectFieldConfig = (args) => {
   const { config, context, collectors } = args;
   const { fields: subfields, types } = /** @type {ObjectField} */ (config);
   const { typedKeyPath } = context;
+  /** @type {Record<string, number>} */
+  const nameCounts = {};
 
   // Handle subfields
   if (subfields) {
@@ -21,6 +24,8 @@ export const parseObjectFieldConfig = (args) => {
 
   // Handle variable types
   types?.forEach(({ name: type, fields: typedFields }) => {
+    nameCounts[type] = (nameCounts[type] ?? 0) + 1;
+
     if (typedFields) {
       parseFields(
         typedFields,
@@ -28,5 +33,12 @@ export const parseObjectFieldConfig = (args) => {
         collectors,
       );
     }
+  });
+
+  checkDuplicateNames({
+    nameCounts,
+    strKey: 'duplicate_variable_type',
+    context,
+    collectors,
   });
 };

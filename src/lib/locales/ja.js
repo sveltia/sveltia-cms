@@ -663,6 +663,14 @@ export const strings = {
         '設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。',
       public_folder_absolute_url: 'パブリックフォルダーオプションの絶対 URL は非対応です。',
       file_format_mismatch: '拡張子 `{extension}` は `{format}` 形式と一致しません。',
+      duplicate_collection_name:
+        'コレクション名は一意でなければなりませんが、`{name}` が複数回使用されています。',
+      duplicate_collection_file_name:
+        'コレクションファイル名は一意でなければなりませんが、`{name}` が複数回使用されています。',
+      duplicate_field_name:
+        'フィールド名は一意でなければなりませんが、`{name}` が複数回使用されています。',
+      duplicate_variable_type:
+        '変数タイプ名は一意でなければなりませんが、`{name}` が複数回使用されています。',
       date_widget:
         'Sveltia CMS では非推奨の `date` ウィジェットはサポートされていません。代わりに `time_format:false` オプション付きの `datetime` ウィジェットを使用してください。',
       unsupported_deprecated_option:

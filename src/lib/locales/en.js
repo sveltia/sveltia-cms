@@ -661,6 +661,13 @@ export const strings = {
         'The configured public folder is invalid. It must be an absolute path starting with “/”.',
       public_folder_absolute_url: 'An absolute URL for the public folder option is not supported.',
       file_format_mismatch: 'The `{extension}` extension doesn’t match the `{format}` format.',
+      duplicate_collection_name:
+        'Collection names must be unique, but `{name}` is used more than once.',
+      duplicate_collection_file_name:
+        'Collection file names must be unique, but `{name}` is used more than once.',
+      duplicate_field_name: 'Field names must be unique, but `{name}` is used more than once.',
+      duplicate_variable_type:
+        'Variable type names must be unique, but `{name}` is used more than once.',
       date_widget:
         'The deprecated `date` widget is not supported in Sveltia CMS. Use the `datetime` widget with the `time_format:false` option instead.',
       unsupported_deprecated_option:

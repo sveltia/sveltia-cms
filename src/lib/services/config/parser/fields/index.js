@@ -5,7 +5,7 @@ import { parseMarkdownFieldConfig } from '$lib/services/config/parser/fields/mar
 import { parseNumberFieldConfig } from '$lib/services/config/parser/fields/number';
 import { parseObjectFieldConfig } from '$lib/services/config/parser/fields/object';
 import { parseRelationFieldConfig } from '$lib/services/config/parser/fields/relation';
-import { addMessage } from '$lib/services/config/parser/utils/messages';
+import { addMessage, checkDuplicateNames } from '$lib/services/config/parser/utils/messages';
 
 /**
  * @import { Field } from '$lib/types/public';
@@ -62,7 +62,18 @@ export const parseFieldConfig = (args) => {
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseFields = (fields, context, collectors) => {
+  /** @type {Record<string, number>} */
+  const nameCounts = {};
+
   fields?.forEach((config) => {
+    nameCounts[config.name] = (nameCounts[config.name] ?? 0) + 1;
     parseFieldConfig({ config, context, collectors });
+  });
+
+  checkDuplicateNames({
+    nameCounts,
+    strKey: 'duplicate_field_name',
+    context,
+    collectors,
   });
 };
