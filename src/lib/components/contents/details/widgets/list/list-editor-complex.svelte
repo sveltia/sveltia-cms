@@ -475,17 +475,14 @@
         <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
           {#if expanded}
             {#each subFields as subField (subField.name)}
-              {@const subFieldKeyPath = hasSingleSubField
-                ? itemKeyPath
-                : `${itemKeyPath}.${subField.name}`}
               <VisibilityObserver>
                 <FieldEditor
-                  keyPath={subFieldKeyPath}
+                  keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
                   typedKeyPath={hasVariableTypes
                     ? hasSingleSubField
                       ? `${keyPath}.*<${item[typeKey]}>`
                       : `${keyPath}.*<${item[typeKey]}>.${subField.name}`
-                    : subFieldKeyPath}
+                    : `${keyPath}.*.${subField.name}`}
                   {locale}
                   fieldConfig={subField}
                   context={hasSingleSubField ? 'single-subfield-list-widget' : undefined}
