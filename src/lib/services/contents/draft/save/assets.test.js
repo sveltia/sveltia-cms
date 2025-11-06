@@ -115,6 +115,7 @@ describe('Test resolveAssetFolderPaths()', () => {
     entryRelative: true,
     hasTemplateTags: false,
     internalPath: 'src/content/blog',
+    internalSubPath: 'images',
     publicPath: '',
   };
 
@@ -123,6 +124,7 @@ describe('Test resolveAssetFolderPaths()', () => {
     entryRelative: false,
     hasTemplateTags: false,
     internalPath: 'static/uploads/blog',
+    internalSubPath: undefined,
     publicPath: '/uploads/blog',
   };
 
@@ -131,6 +133,7 @@ describe('Test resolveAssetFolderPaths()', () => {
     entryRelative: false,
     hasTemplateTags: true,
     internalPath: 'static/uploads/blog/{{slug}}',
+    internalSubPath: undefined,
     publicPath: '/uploads/blog/{{slug}}',
   };
 
@@ -160,7 +163,7 @@ describe('Test resolveAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedInternalPath: 'src/content/blog/foo/images',
       resolvedPublicPath: '../foo',
     });
   });
@@ -181,7 +184,7 @@ describe('Test resolveAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedInternalPath: 'src/content/blog/foo/images',
       resolvedPublicPath: '../../foo',
     });
   });
@@ -202,7 +205,7 @@ describe('Test resolveAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedInternalPath: 'src/content/blog/foo/images',
       resolvedPublicPath: '../foo',
     });
   });
@@ -223,7 +226,7 @@ describe('Test resolveAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedInternalPath: 'src/content/blog/foo/images',
       resolvedPublicPath: '../../foo',
     });
   });
@@ -244,7 +247,7 @@ describe('Test resolveAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog',
+      resolvedInternalPath: 'src/content/blog/images',
       resolvedPublicPath: '',
     });
   });
@@ -265,7 +268,7 @@ describe('Test resolveAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedInternalPath: 'src/content/blog/foo/images',
       resolvedPublicPath: '',
     });
   });
@@ -286,7 +289,7 @@ describe('Test resolveAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog',
+      resolvedInternalPath: 'src/content/blog/images',
       resolvedPublicPath: '',
     });
   });
@@ -307,7 +310,7 @@ describe('Test resolveAssetFolderPaths()', () => {
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedInternalPath: 'src/content/blog/foo/images',
       resolvedPublicPath: '',
     });
   });
@@ -532,11 +535,20 @@ describe('Test resolveAssetFolderPaths()', () => {
       _i18n: i18nMultiFolder,
     };
 
-    await setupAssetFolder(relativeAssetFolder);
+    const folder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      internalSubPath: 'assets/media',
+      publicPath: '',
+    };
+
+    await setupAssetFolder(folder);
 
     expect(
       resolveAssetFolderPaths({
-        folder: relativeAssetFolder,
+        folder,
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
@@ -554,11 +566,20 @@ describe('Test resolveAssetFolderPaths()', () => {
       _i18n: i18nMultiFile,
     };
 
-    await setupAssetFolder(relativeAssetFolder);
+    const folder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      internalSubPath: 'uploads',
+      publicPath: '',
+    };
+
+    await setupAssetFolder(folder);
 
     expect(
       resolveAssetFolderPaths({
-        folder: relativeAssetFolder,
+        folder,
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
@@ -576,11 +597,20 @@ describe('Test resolveAssetFolderPaths()', () => {
       _i18n: i18nMultiFile,
     };
 
-    await setupAssetFolder(relativeAssetFolder);
+    const folder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      internalSubPath: 'media/files',
+      publicPath: '',
+    };
+
+    await setupAssetFolder(folder);
 
     expect(
       resolveAssetFolderPaths({
-        folder: relativeAssetFolder,
+        folder,
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
@@ -598,11 +628,20 @@ describe('Test resolveAssetFolderPaths()', () => {
       _i18n: i18nSingleFile,
     };
 
-    await setupAssetFolder(relativeAssetFolder);
+    const folder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      internalSubPath: 'static',
+      publicPath: '',
+    };
+
+    await setupAssetFolder(folder);
 
     expect(
       resolveAssetFolderPaths({
-        folder: relativeAssetFolder,
+        folder,
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
@@ -620,11 +659,20 @@ describe('Test resolveAssetFolderPaths()', () => {
       _i18n: i18nMultiFile,
     };
 
-    await setupAssetFolder(relativeAssetFolder);
+    const folder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      internalSubPath: '',
+      publicPath: '',
+    };
+
+    await setupAssetFolder(folder);
 
     expect(
       resolveAssetFolderPaths({
-        folder: relativeAssetFolder,
+        folder,
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
@@ -642,11 +690,20 @@ describe('Test resolveAssetFolderPaths()', () => {
       _i18n: i18nMultiFile,
     };
 
-    await setupAssetFolder(relativeAssetFolder);
+    const folder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      internalSubPath: undefined,
+      publicPath: '',
+    };
+
+    await setupAssetFolder(folder);
 
     expect(
       resolveAssetFolderPaths({
-        folder: relativeAssetFolder,
+        folder,
         fillSlugOptions: { collection, content: {}, currentSlug },
       }),
     ).toEqual({
@@ -669,6 +726,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: false,
       hasTemplateTags: false,
       internalPath: undefined,
+      internalSubPath: undefined,
       publicPath: '/uploads',
     };
 
@@ -697,6 +755,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: false,
       hasTemplateTags: false,
       internalPath: 'static/uploads',
+      internalSubPath: undefined,
       publicPath: undefined,
     };
 
@@ -725,6 +784,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: false,
       hasTemplateTags: false,
       internalPath: undefined,
+      internalSubPath: undefined,
       publicPath: undefined,
     };
 
@@ -752,6 +812,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: true,
       hasTemplateTags: false,
       internalPath: 'src/content/blog',
+      internalSubPath: undefined,
       publicPath: '',
     };
 
@@ -779,6 +840,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: true,
       hasTemplateTags: false,
       internalPath: 'src/content/blog',
+      internalSubPath: undefined,
       publicPath: '.',
     };
 
@@ -806,6 +868,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: true,
       hasTemplateTags: false,
       internalPath: 'src/content/blog',
+      internalSubPath: undefined,
       publicPath: '/images',
     };
 
@@ -833,6 +896,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: true,
       hasTemplateTags: false,
       internalPath: 'src/content/blog',
+      internalSubPath: undefined,
       publicPath: '/images',
     };
 
@@ -860,6 +924,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: true,
       hasTemplateTags: false,
       internalPath: 'src/content/blog',
+      internalSubPath: undefined,
       publicPath: '',
     };
 
@@ -887,6 +952,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: true,
       hasTemplateTags: false,
       internalPath: 'src/content/blog',
+      internalSubPath: undefined,
       publicPath: '.',
     };
 
@@ -914,6 +980,35 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: true,
       hasTemplateTags: false,
       internalPath: 'src/content/blog',
+      internalSubPath: undefined,
+      publicPath: '.',
+    };
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: entryRelativeFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog',
+      resolvedPublicPath: '.',
+    });
+  });
+
+  test('entry relative with single file i18n and root public path', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nSingleFile,
+    };
+
+    const entryRelativeFolder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      internalSubPath: undefined,
       publicPath: '/',
     };
 
@@ -944,6 +1039,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: true,
       hasTemplateTags: false,
       internalPath: 'data',
+      internalSubPath: undefined,
       publicPath: '/data',
     };
 
@@ -974,6 +1070,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       entryRelative: true,
       hasTemplateTags: false,
       internalPath: 'data',
+      internalSubPath: undefined,
       publicPath: '',
     };
 

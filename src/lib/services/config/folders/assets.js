@@ -111,6 +111,7 @@ export const normalizeAssetFolder = ({
     typedKeyPath,
     isIndexFile,
     internalPath: stripSlashes(entryRelative ? (baseFolder ?? '') : mediaFolder),
+    internalSubPath: entryRelative ? stripSlashes(mediaFolder) : undefined,
     publicPath:
       // Prefix the public path with `/` unless it’s empty or starting with `.` (entry-relative
       // setting) or starting with `@` (framework-specific)
@@ -251,6 +252,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
   const allAssetsFolder = {
     collectionName: undefined,
     internalPath: undefined,
+    internalSubPath: undefined,
     publicPath: undefined,
     entryRelative: false,
     hasTemplateTags: false,
@@ -294,6 +296,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
       mediaFolder,
       publicFolder,
       baseFolder,
+      entryPath,
       globalFolders,
     });
 

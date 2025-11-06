@@ -382,6 +382,8 @@
  * the project root directory. It can be a partial path if the collection’s `media_folder` property
  * is a relative path, because the complete path is entry-specific in that case. It will be
  * `undefined` for the All Assets folder.
+ * @property {string | undefined} [internalSubPath] Subfolder below the `internalPath`, relative to
+ * the entry folder. It will be set when `entryRelative` is `true`.
  * @property {string | undefined} publicPath Absolute folder path that will appear in the public
  * URL, starting with `/`. It can be empty if the collection’s `public_folder` property is a
  * relative path, because the complete path cannot be easily determined. It will be `undefined` for

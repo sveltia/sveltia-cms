@@ -48,7 +48,7 @@ import {
  * @returns {ResolvedAssetFolderPaths} Determined paths.
  */
 export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
-  const { entryRelative, internalPath, publicPath } = folder;
+  const { entryRelative, internalPath, internalSubPath, publicPath } = folder;
 
   if (internalPath === undefined || publicPath === undefined) {
     // This shouldn’t happen, but avoids type errors in the following code
@@ -80,7 +80,7 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
       createPath([
         internalPath,
         isMultiFolders || subPath?.includes('/') ? subPathFirstPart : undefined,
-        collection.media_folder, // subfolder, e.g. `images`
+        internalSubPath, // subfolder, e.g. `images`
       ]),
       fillSlugOptions,
     ),
