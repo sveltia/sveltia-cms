@@ -7,11 +7,12 @@
 
   /**
    * @import { FieldEditorContext, SelectFieldSelectorProps } from '$lib/types/private';
+   * @import { SelectFieldValue } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {string[]} currentValue Field value.
+   * @property {SelectFieldValue[] | undefined} currentValue Field value.
    */
 
   /** @type {FieldEditorContext} */
@@ -52,7 +53,7 @@
 
   /**
    * Add a value to the list.
-   * @param {string} value Value to be added.
+   * @param {SelectFieldValue} value Value to be added.
    */
   const addValue = (value) => {
     updateList(({ valueList }) => {
@@ -62,7 +63,7 @@
 
   /**
    * Remove a value from the list.
-   * @param {string} value Value to be removed.
+   * @param {SelectFieldValue} value Value to be removed.
    */
   const removeValue = (value) => {
     updateList(({ valueList }) => {
@@ -78,7 +79,10 @@
     {required}
     {invalid}
     {options}
-    values={currentValue}
+    {...{
+      // @todo Fix type in SelectTags
+      values: /** @type {any} */ (currentValue),
+    }}
     {max}
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
@@ -98,7 +102,7 @@
         {readonly}
         {required}
         {invalid}
-        checked={currentValue.includes(value)}
+        checked={currentValue?.includes(value) ?? false}
         aria-errormessage="{fieldId}-error"
         onChange={({ detail: { checked } }) => {
           if (checked) {

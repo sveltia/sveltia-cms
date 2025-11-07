@@ -20,6 +20,7 @@
  * RasterImageFormat,
  * RelationField,
  * SelectField,
+ * SelectFieldValue,
  * SiteConfig,
  * } from './public';
  */
@@ -966,7 +967,7 @@
  * Select/Relation field editor’s selector option.
  * @typedef {object} SelectFieldSelectorOption
  * @property {string} label Option label.
- * @property {any} value Option value.
+ * @property {SelectFieldValue} value Option value.
  * @property {string} [searchValue] Option value specifically for filtering.
  */
 

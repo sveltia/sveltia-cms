@@ -4,11 +4,12 @@
 
   /**
    * @import { SelectFieldSelectorProps } from '$lib/types/private';
+   * @import { SelectFieldValue } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {string} currentValue Field value.
+   * @property {SelectFieldValue | undefined} currentValue Field value.
    */
 
   /** @type {SelectFieldSelectorProps & Props} */

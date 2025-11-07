@@ -650,12 +650,17 @@
  */
 
 /**
+ * Select field option value.
+ * @typedef {string | number | null} SelectFieldValue
+ */
+
+/**
  * Select field properties.
  * @typedef {object} SelectFieldProps
  * @property {'select'} widget Widget name.
- * @property {any | any[]} [default] Default value(s), which should match the options. When
- * `multiple` is `false`, it should be a single value that matches the `value` option.
- * @property {string[] | { label: string, value: string }[]} options Options.
+ * @property {SelectFieldValue | SelectFieldValue[]} [default] Default value that matches one of the
+ * options. When `multiple` is `true`, it should be an array of valid values.
+ * @property {SelectFieldValue[] | { label: string, value: SelectFieldValue }[]} options Options.
  * @see https://decapcms.org/docs/widgets/#Select
  */
 

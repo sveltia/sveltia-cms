@@ -10,13 +10,13 @@
 
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
-   * @import { SelectField } from '$lib/types/public';
+   * @import { SelectField, SelectFieldValue } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
    * @property {SelectField} fieldConfig Field configuration.
-   * @property {string | string[] | undefined} currentValue Field value.
+   * @property {SelectFieldValue | SelectFieldValue[] | undefined} currentValue Field value.
    */
 
   /** @type {WidgetPreviewProps & Props} */
@@ -34,7 +34,7 @@
 
   /**
    * Get the display label by value.
-   * @param {string | string[]} value Value.
+   * @param {SelectFieldValue | SelectFieldValue[]} value Value.
    * @returns {string} Label.
    */
   const getLabel = (value) =>
