@@ -12,6 +12,7 @@
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import Subsection from '$lib/components/contents/details/widgets/object/subsection.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
 
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
@@ -41,6 +42,7 @@
     types,
     typeKey = 'type',
   } = $derived(fieldConfig);
+  const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`));
   const items = $derived(
     unflatten(
@@ -69,15 +71,12 @@
       : (fields ?? (field ? [field] : []))}
     <Subsection {label}>
       {#each subFields as subField (subField.name)}
-        {@const subFieldKeyPath = field ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
         <VisibilityObserver>
           <FieldPreview
-            keyPath={subFieldKeyPath}
-            typedKeyPath={subFieldName
-              ? field
-                ? `${keyPath}.*<${subFieldName}>`
-                : `${keyPath}.*<${subFieldName}>.${subField.name}`
-              : subFieldKeyPath}
+            keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
+            typedKeyPath={hasVariableTypes
+              ? `${keyPath}.*<${subFieldName}>.${subField.name}`
+              : `${keyPath}.*.${subField.name}`}
             {locale}
             fieldConfig={subField}
           />

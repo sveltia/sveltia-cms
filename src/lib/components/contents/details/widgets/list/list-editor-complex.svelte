@@ -479,9 +479,7 @@
                 <FieldEditor
                   keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
                   typedKeyPath={hasVariableTypes
-                    ? hasSingleSubField
-                      ? `${keyPath}.*<${item[typeKey]}>`
-                      : `${keyPath}.*<${item[typeKey]}>.${subField.name}`
+                    ? `${keyPath}.*<${item[typeKey]}>.${subField.name}`
                     : `${keyPath}.*.${subField.name}`}
                   {locale}
                   fieldConfig={subField}
