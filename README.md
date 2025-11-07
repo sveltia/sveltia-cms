@@ -673,15 +673,14 @@ However, 100% feature parity is never planned, and some features are still missi
 
 ### Current limitations
 
-These Netlify/Decap CMS features are **not yet implemented** in Sveltia CMS. We are working hard to add them before the 1.0 release. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
+These advanced customization features in Netlify/Decap CMS are **not yet implemented** in Sveltia CMS. We are working hard to add them before the 1.0 release. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
-- Comprehensive site config validation
 - Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent) (`CMS.registerEditorComponent`)
 - [Custom widgets](https://decapcms.org/docs/custom-widgets/) (`CMS.registerWidget`)
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) (`CMS.registerPreviewTemplate`) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) (`CMS.registerEventListener`) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
-[Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
+Site config validation is also under development. [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md), [documentation](https://github.com/sveltia/sveltia-cms/issues/485) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
 
 Due to the complexity, we have decided to **defer the following features to the 1.x or 2.0 release** due mid-2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
 
