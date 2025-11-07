@@ -687,6 +687,14 @@ export const strings = {
         'Object フィールドは `fields` と `types` オプションを同時に持つことはできません。',
       object_field_missing_fields:
         'Object フィールドは `fields` または `types` オプションのいずれかを定義する必要があります。',
+      relation_field_invalid_collection:
+        '参照されている `{collection}` コレクションは無効であるか定義されていません。',
+      relation_field_invalid_collection_file:
+        '参照されている `{file}` ファイルは無効であるか定義されていません。',
+      relation_field_missing_file_name:
+        'ファイルコレクションへの参照には `file` オプションを定義する必要があります。',
+      relation_field_invalid_value_field:
+        '参照されている値フィールド `{field}` は無効であるか定義されていません。',
       unexpected: '予期せぬ問題',
     },
     warning: {

@@ -684,6 +684,14 @@ export const strings = {
         'The Object field cannot have the `fields` and `types` options together.',
       object_field_missing_fields:
         'The Object field must have either the `fields` or `types` option defined.',
+      relation_field_invalid_collection:
+        'The referenced `{collection}` collection is invalid or not defined.',
+      relation_field_invalid_collection_file:
+        'The referenced `{file}` file is invalid or not defined.',
+      relation_field_missing_file_name:
+        'The `file` option must be defined for a relation to a file collection.',
+      relation_field_invalid_value_field:
+        'The referenced value field `{field}` is invalid or not defined.',
       unexpected: 'Unexpected error',
     },
     warning: {

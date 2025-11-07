@@ -1,7 +1,9 @@
-import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
+/* eslint-disable camelcase */
+
+import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
 
 /**
- * @import { RelationField } from '$lib/types/public';
+ * @import { CollectionFile, RelationField } from '$lib/types/public';
  * @import { FieldParserArgs, UnsupportedOption } from '$lib/types/private';
  */
 
@@ -22,12 +24,56 @@ const UNSUPPORTED_OPTIONS = [
  */
 export const parseRelationFieldConfig = (args) => {
   const { config, context, collectors } = args;
+  const fieldConfig = /** @type {RelationField} */ (config);
+  const { collection: collectionName, file: fileName, value_field: valueField } = fieldConfig;
+  const { siteConfig } = context;
+
+  const collection =
+    collectionName === '_singletons'
+      ? siteConfig?.singletons
+      : siteConfig?.collections?.find((col) => col.name === collectionName);
+
+  /** @type {CollectionFile | undefined} */
+  let file = undefined;
+
+  // Check if the collection exists
+  if (collection) {
+    const hasFiles = 'files' in collection;
+
+    if (fileName) {
+      // Check if the file exists in the collection
+      file = hasFiles ? collection.files.find((f) => f.name === fileName) : undefined;
+
+      if (!file) {
+        addMessage({
+          strKey: 'relation_field_invalid_collection_file',
+          context,
+          collectors,
+          values: { file: fileName },
+        });
+      }
+    } else if (hasFiles) {
+      addMessage({
+        strKey: 'relation_field_missing_file_name',
+        context,
+        collectors,
+        values: { collection: collectionName },
+      });
+    }
+  } else {
+    addMessage({
+      strKey: 'relation_field_invalid_collection',
+      context,
+      collectors,
+      values: { collection: collectionName },
+    });
+  }
+
+  // @todo Check if the `value_field` exists in the target collection/file
+  void valueField;
 
   checkUnsupportedOptions({ ...args, UNSUPPORTED_OPTIONS });
 
   // Collect relation information for later processing
-  collectors.relationFields.add({
-    fieldConfig: /** @type {RelationField} */ (config),
-    context,
-  });
+  collectors.relationFields.add({ fieldConfig, context });
 };
