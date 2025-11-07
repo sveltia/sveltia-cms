@@ -36,6 +36,13 @@ vi.mock('svelte-i18n', () => ({
       return () => {};
     }),
   },
+  locale: {
+    subscribe: vi.fn((fn) => {
+      fn('en');
+
+      return () => {};
+    }),
+  },
 }));
 
 const mockGetStore = vi.fn();
@@ -61,27 +68,21 @@ describe('Field Collectors', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockGetStore.mockImplementation(
-      /**
-       * Get store implementation.
-       * @param {any} fn Store function.
-       * @returns {any} Result.
-       */
-      (fn) => {
-        if (typeof fn === 'function') {
-          return fn(
-            /**
-             * I18n callback.
-             * @param {string} key Message key.
-             * @returns {string} Translated string.
-             */
-            (key) => mockI18nStrings[key] || key,
-          );
-        }
+    mockGetStore.mockImplementation((store) => {
+      // Handle the _ (i18n) store
+      if (store && typeof store.subscribe === 'function') {
+        let result;
 
-        return fn;
-      },
-    );
+        store.subscribe((/** @type {any} */ value) => {
+          result = value;
+        })();
+
+        return result;
+      }
+
+      // Fallback for other stores
+      return store;
+    });
   });
 
   describe('Media field collection in nested structures', () => {
