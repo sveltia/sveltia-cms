@@ -662,6 +662,10 @@ export const strings = {
       public_folder_relative_path:
         '設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。',
       public_folder_absolute_url: 'パブリックフォルダーオプションの絶対 URL は非対応です。',
+      invalid_collection_no_options:
+        'コレクションは `folder`、`files`、`divider` オプションのいずれかを定義する必要があります。',
+      invalid_collection_multiple_options:
+        'コレクションは `folder`、`files`、`divider` オプションを同時に持つことはできません。',
       file_format_mismatch: '拡張子 `{extension}` は `{format}` 形式と一致しません。',
       duplicate_collection_name:
         'コレクション名は一意でなければなりませんが、`{name}` が複数回使用されています。',
@@ -677,6 +681,12 @@ export const strings = {
         'Sveltia CMS では非推奨の `{prop}` オプションはサポートされていません。代わりに `{newProp}` オプションを使用してください。',
       allow_multiple:
         'Sveltia CMS では `allow_multiple` オプションはサポートされていません。代わりにデフォルトで `false` の `multiple` オプションを使用してください。',
+      invalid_list_field:
+        'List フィールドは `field`、`fields`、`types` オプションを同時に持つことはできません。',
+      invalid_object_field:
+        'Object フィールドは `fields` と `types` オプションを同時に持つことはできません。',
+      object_field_missing_fields:
+        'Object フィールドは `fields` または `types` オプションのいずれかを定義する必要があります。',
       unexpected: '予期せぬ問題',
     },
     warning: {

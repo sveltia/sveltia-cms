@@ -660,6 +660,10 @@ export const strings = {
       public_folder_relative_path:
         'The configured public folder is invalid. It must be an absolute path starting with “/”.',
       public_folder_absolute_url: 'An absolute URL for the public folder option is not supported.',
+      invalid_collection_no_options:
+        'The collection must have either the `folder`, `files` or `divider` option defined.',
+      invalid_collection_multiple_options:
+        'The collection cannot have the `folder`, `files` and `divider` options together.',
       file_format_mismatch: 'The `{extension}` extension doesn’t match the `{format}` format.',
       duplicate_collection_name:
         'Collection names must be unique, but `{name}` is used more than once.',
@@ -674,6 +678,12 @@ export const strings = {
         'The deprecated `{prop}` option is not supported in Sveltia CMS. Use the `{newProp}` option instead.',
       allow_multiple:
         'The `allow_multiple` option is not supported in Sveltia CMS. Use the `multiple` option instead, which defaults to `false`.',
+      invalid_list_field:
+        'The List field cannot have the `field`, `fields` and `types` options together.',
+      invalid_object_field:
+        'The Object field cannot have the `fields` and `types` options together.',
+      object_field_missing_fields:
+        'The Object field must have either the `fields` or `types` option defined.',
       unexpected: 'Unexpected error',
     },
     warning: {

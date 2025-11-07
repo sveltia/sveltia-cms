@@ -1,5 +1,5 @@
 import { parseFieldConfig, parseFields } from '$lib/services/config/parser/fields';
-import { checkDuplicateNames } from '$lib/services/config/parser/utils/messages';
+import { addMessage, checkDuplicateNames } from '$lib/services/config/parser/utils/messages';
 
 /**
  * @import { ListField } from '$lib/types/public';
@@ -16,6 +16,17 @@ export const parseListFieldConfig = (args) => {
   const { typedKeyPath } = context;
   /** @type {Record<string, number>} */
   const nameCounts = {};
+
+  // Validate mutually exclusive options
+  if ((subfield && subfields) || (subfield && types) || (subfields && types)) {
+    addMessage({
+      strKey: 'invalid_list_field',
+      context,
+      collectors,
+    });
+
+    return;
+  }
 
   // Handle single subfield
   if (subfield) {

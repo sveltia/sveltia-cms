@@ -13,7 +13,14 @@ import {
 } from '$lib/services/config/parser/utils/messages';
 
 /**
- * @import { CollectionFile, EntryCollection, FileCollection, SiteConfig } from '$lib/types/public';
+ * @import {
+ * Collection,
+ * CollectionDivider,
+ * CollectionFile,
+ * EntryCollection,
+ * FileCollection,
+ * SiteConfig,
+ * } from '$lib/types/public';
  * @import { ConfigParserCollectors, UnsupportedOption } from '$lib/types/private';
  */
 
@@ -73,6 +80,49 @@ export const parseFileCollection = (context, collectors) => {
 };
 
 /**
+ * Parse and validate a collection or divider configuration.
+ * @internal
+ * @param {object} context Context.
+ * @param {SiteConfig} context.siteConfig Raw site configuration.
+ * @param {Collection | CollectionDivider} context.collection Collection config to parse.
+ * @param {ConfigParserCollectors} collectors Collectors.
+ */
+export const parseCollection = ({ siteConfig, collection }, collectors) => {
+  const hasDivider = 'divider' in collection;
+  const hasFiles = 'files' in collection;
+  const hasFolder = 'folder' in collection;
+
+  // Validate at least one option
+  if (!hasDivider && !hasFiles && !hasFolder) {
+    addMessage({
+      strKey: 'invalid_collection_no_options',
+      context: { siteConfig, collection },
+      collectors,
+    });
+
+    return;
+  }
+
+  // Validate mutually exclusive options
+  if ((hasDivider && hasFiles) || (hasDivider && hasFolder) || (hasFiles && hasFolder)) {
+    addMessage({
+      strKey: 'invalid_collection_multiple_options',
+      // @ts-ignore
+      context: { siteConfig, collection },
+      collectors,
+    });
+
+    return;
+  }
+
+  if (hasFiles) {
+    parseFileCollection({ siteConfig, collection }, collectors);
+  } else if (hasFolder) {
+    parseEntryCollection({ siteConfig, collection }, collectors);
+  }
+};
+
+/**
  * Parse and validate the collections configuration from the site config.
  * @param {SiteConfig} siteConfig Raw site configuration.
  * @param {ConfigParserCollectors} collectors Collectors.
@@ -92,17 +142,11 @@ export const parseCollections = (siteConfig, collectors) => {
   const nameCounts = {};
 
   collections?.forEach((collection) => {
-    if ('divider' in collection) {
-      return;
-    }
+    parseCollection({ siteConfig, collection }, collectors);
 
-    if ('files' in collection) {
-      parseFileCollection({ siteConfig, collection }, collectors);
-    } else {
-      parseEntryCollection({ siteConfig, collection }, collectors);
+    if (collection.name !== undefined) {
+      nameCounts[collection.name] = (nameCounts[collection.name] ?? 0) + 1;
     }
-
-    nameCounts[collection.name] = (nameCounts[collection.name] ?? 0) + 1;
   });
 
   const files = /** @type {CollectionFile[]} */ (

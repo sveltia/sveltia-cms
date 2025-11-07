@@ -1,5 +1,5 @@
 import { parseFields } from '$lib/services/config/parser/fields';
-import { checkDuplicateNames } from '$lib/services/config/parser/utils/messages';
+import { addMessage, checkDuplicateNames } from '$lib/services/config/parser/utils/messages';
 
 /**
  * @import { ObjectField } from '$lib/types/public';
@@ -16,6 +16,28 @@ export const parseObjectFieldConfig = (args) => {
   const { typedKeyPath } = context;
   /** @type {Record<string, number>} */
   const nameCounts = {};
+
+  // Validate mutually exclusive options
+  if (subfields && types) {
+    addMessage({
+      strKey: 'invalid_object_field',
+      context,
+      collectors,
+    });
+
+    return;
+  }
+
+  // Ensure at least one of `fields` or `types` is defined
+  if (!subfields && !types) {
+    addMessage({
+      strKey: 'object_field_missing_fields',
+      context,
+      collectors,
+    });
+
+    return;
+  }
 
   // Handle subfields
   if (subfields) {
