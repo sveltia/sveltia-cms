@@ -285,7 +285,16 @@ We’ve made various improvements to help you get your work done faster and more
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
 - We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253] If you use [deprecated options](#deprecations) in a supported code editor, you should receive a warning.
 - Improved TypeScript support: We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
-- Sveltia CMS alerts you when there is a mismatch between the `format` and `extension` options of a collection.
+- Config validation enhancements:
+  - Sveltia CMS has additional validation rules designed to prevent common misconfigurations that could lead to runtime errors:
+    - Common backend misconfigurations, such as an incorrect repository name or a missing OAuth client ID[^303]
+    - A mismatch between the `format` and `extension` options for a collection
+    - Duplicate variable type names
+    - Unsupported widgets and options
+    - (more to come)
+  - The error messages include the specific collection, field, variable type and fields names, rather than indexes such as `collections[7].fields[9].types[1]`. This helps you to quickly identify the problematic configuration.
+  - There are no false error messages saying `should match case "color" schema`.
+  - There are no error messages that advise to use deprecated camel case options like `valueField`.
 
 ### Better backend support
 
@@ -2677,3 +2686,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^301]: Netlify/Decap CMS [#7627](https://github.com/decaporg/decap-cms/issues/7627)
 
 [^302]: Netlify/Decap CMS [#3286](https://github.com/decaporg/decap-cms/issues/3286)
+
+[^303]: Netlify/Decap CMS [#3803](https://github.com/decaporg/decap-cms/issues/3803)
