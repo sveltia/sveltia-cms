@@ -142,7 +142,7 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 
 This “total reboot” allows us to implement [hundreds of improvements](#differentiators) without getting stuck in a legacy system.
 
-We are continuing to aggressively address the [issues](https://github.com/decaporg/decap-cms/issues) reported in the predecessor’s repository and deliver the enhancements that Netlify CMS users have long desired. We are dedicating significant time and effort to improving compatibility and enhancing every aspect of the product. Of the 3 successors, Sveltia CMS is the only one is providing a [clear roadmap](#roadmap), [regular updates](https://github.com/sveltia/sveltia-cms/releases) and [excellent outcomes](#differentiators).
+We are continuing to aggressively address the [issues](https://github.com/decaporg/decap-cms/issues) reported in the predecessor’s repository and deliver the enhancements that Netlify CMS users have long desired. We are dedicating significant time and effort to improving compatibility and enhancing every aspect of the product. Of the 3 successors, Sveltia CMS is the only one providing a [clear roadmap](#roadmap), [regular updates](https://github.com/sveltia/sveltia-cms/releases) and [excellent outcomes](#differentiators).
 
 That’s why Sveltia CMS is the **true successor to Netlify CMS**, rather than just an alternative or a spiritual successor.
 
@@ -2577,7 +2577,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^245]: Netlify/Decap CMS [#1769](https://github.com/decaporg/decap-cms/issues/1769)
 
-[^246]: Netlify/Decap CMS [#1074](https://github.com/decaporg/decap-cms/issues/1074), [#1693](https://github.com/decaporg/decap-cms/issues/1693), [#3803](https://github.com/decaporg/decap-cms/issues/3803)
+[^246]: Netlify/Decap CMS [#1074](https://github.com/decaporg/decap-cms/issues/1074), [#1693](https://github.com/decaporg/decap-cms/issues/1693)
 
 [^247]: Netlify/Decap CMS [#1794](https://github.com/decaporg/decap-cms/issues/1794), [#2966](https://github.com/decaporg/decap-cms/issues/2966)
 
