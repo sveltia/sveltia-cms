@@ -682,9 +682,7 @@ The following advanced customization features are not yet implemented and will b
 - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) (`CMS.registerPreviewTemplate`) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
 - [Event hooks](https://decapcms.org/docs/registering-events/) (`CMS.registerEventListener`) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 
-[Documentation](https://github.com/sveltia/sveltia-cms/issues/485) and site config validation are also under development.
-
-[Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will all be prepared once the 1.0 Release Candidate is ready.
+[Documentation](https://github.com/sveltia/sveltia-cms/issues/485) and site config validation are also under development. [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will follow soon.
 
 Due to the complexity, we have decided to **defer the following features to the 1.x or 2.0 release** due mid-2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
 
@@ -1013,7 +1011,7 @@ You can specify an icon for each collection for easy identification in the colle
 1. Reload Sveltia CMS once the updated config file is deployed.
 
 ```yaml
-fields:
+collections:
   - name: tags
     label: Tags
     icon: sell # or any icon name
