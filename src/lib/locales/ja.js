@@ -667,12 +667,26 @@ export const strings = {
       invalid_collection_multiple_options:
         'コレクションは `folder`、`files`、`divider` オプションを同時に持つことはできません。',
       file_format_mismatch: '拡張子 `{extension}` は `{format}` 形式と一致しません。',
+      missing_collection_name:
+        'コレクション {count} には `name` オプションを空でない文字列として定義する必要があります。',
+      invalid_collection_name:
+        'コレクション名 `{name}` は無効です。特殊文字を含めることはできません。',
       duplicate_collection_name:
         'コレクション名は一意でなければなりませんが、`{name}` が複数回使用されています。',
+      missing_collection_file_name:
+        'コレクションファイル {count} には `name` オプションを空でない文字列として定義する必要があります。',
+      invalid_collection_file_name:
+        'コレクションファイル名 `{name}` は無効です。特殊文字を含めることはできません。',
       duplicate_collection_file_name:
         'コレクションファイル名は一意でなければなりませんが、`{name}` が複数回使用されています。',
+      missing_field_name:
+        'フィールド {count} には `name` オプションを空でない文字列として定義する必要があります。',
+      invalid_field_name: 'フィールド名 `{name}` は無効です。特殊文字を含めることはできません。',
       duplicate_field_name:
         'フィールド名は一意でなければなりませんが、`{name}` が複数回使用されています。',
+      missing_variable_type:
+        '変数タイプ {count} には `name` オプションを空でない文字列として定義する必要があります。',
+      invalid_variable_type: '変数タイプ名 `{name}` は無効です。特殊文字を含めることはできません。',
       duplicate_variable_type:
         '変数タイプ名は一意でなければなりませんが、`{name}` が複数回使用されています。',
       date_widget:

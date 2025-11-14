@@ -1,5 +1,5 @@
 import { parseFields } from '$lib/services/config/parser/fields';
-import { addMessage, checkDuplicateNames } from '$lib/services/config/parser/utils/messages';
+import { addMessage, checkName } from '$lib/services/config/parser/utils/messages';
 
 /**
  * @import { ObjectField } from '$lib/types/public';
@@ -16,6 +16,7 @@ export const parseObjectFieldConfig = (args) => {
   const { typedKeyPath } = context;
   /** @type {Record<string, number>} */
   const nameCounts = {};
+  const strKeyBase = 'variable_type';
 
   // Validate mutually exclusive options
   if (subfields && types) {
@@ -45,22 +46,14 @@ export const parseObjectFieldConfig = (args) => {
   }
 
   // Handle variable types
-  types?.forEach(({ name: type, fields: typedFields }) => {
-    nameCounts[type] = (nameCounts[type] ?? 0) + 1;
+  types?.forEach(({ name: type, fields: typedFields }, index) => {
+    const newContext = { ...context, typedKeyPath: `${typedKeyPath}<${type}>` };
 
-    if (typedFields) {
-      parseFields(
-        typedFields,
-        { ...context, typedKeyPath: `${typedKeyPath}<${type}>` },
-        collectors,
-      );
+    if (
+      checkName({ name: type, index, nameCounts, strKeyBase, context: newContext, collectors }) &&
+      typedFields
+    ) {
+      parseFields(typedFields, newContext, collectors);
     }
-  });
-
-  checkDuplicateNames({
-    nameCounts,
-    strKey: 'duplicate_variable_type',
-    context,
-    collectors,
   });
 };

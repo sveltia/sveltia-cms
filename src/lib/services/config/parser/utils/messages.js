@@ -77,17 +77,58 @@ export const checkUnsupportedOptions = ({ UNSUPPORTED_OPTIONS, config, context, 
 };
 
 /**
- * Check for duplicate names in a configuration and add messages if found.
+ * Regular expression to validate names. A valid name is a non-empty string that does not contain
+ * spaces, dots, asterisks, colons or angle brackets. Dots are used as separators in key paths,
+ * asterisks are used for wildcard matching for relation fields, colons are used for editor
+ * component identification, and angle brackets are used for variable type placeholders.
+ */
+export const VALID_NAME_REGEX = /^[^\s.*:<>]+$/;
+
+/**
+ * Checks if the given name is valid.
+ * @param {string} name Name to check.
+ * @returns {boolean} `true` if the name is valid, `false` otherwise.
+ */
+export const isValidName = (name) => VALID_NAME_REGEX.test(name);
+
+/**
+ * Check if the given collection name, collection file name, field name or variable type name is
+ * valid and not duplicated. Adds messages to the collectors if invalid or duplicated.
  * @param {object} args Arguments.
- * @param {Record<string, number>} args.nameCounts Record of name counts.
- * @param {string} args.strKey I18n string key for the duplicate name message.
+ * @param {any} args.name Name to check.
+ * @param {number} args.index Index of the item in the array, used for error messages.
+ * @param {Record<string, number>} args.nameCounts Record of name counts. The keys are the names and
+ * the values are the counts.
+ * @param {string} args.strKeyBase I18n string key for the name message, excluding "missing_" or
+ * "invalid_".
  * @param {ConfigParserContext} args.context Context.
  * @param {ConfigParserCollectors} args.collectors Collectors.
+ * @returns {boolean} `true` if the name is valid, `false` otherwise.
  */
-export const checkDuplicateNames = ({ nameCounts, strKey, context, collectors }) => {
-  Object.entries(nameCounts)
-    .filter(([, count]) => count > 1)
-    .forEach(([name]) => {
-      addMessage({ strKey, values: { name }, context, collectors });
-    });
+export const checkName = ({ name, index, nameCounts, strKeyBase, context, collectors }) => {
+  if (!name || typeof name !== 'string') {
+    // Use count (1-based index) for user-facing messages
+    const count = String(index + 1);
+
+    addMessage({ strKey: `missing_${strKeyBase}`, context, values: { count }, collectors });
+
+    return false;
+  }
+
+  if (!isValidName(name)) {
+    addMessage({ strKey: `invalid_${strKeyBase}`, context, values: { name }, collectors });
+
+    return false;
+  }
+
+  // Check for duplicates, the second occurrence will be caught here
+  if (nameCounts[name] === 1) {
+    addMessage({ strKey: `duplicate_${strKeyBase}`, context, values: { name }, collectors });
+
+    return false;
+  }
+
+  nameCounts[name] = (nameCounts[name] ?? 0) + 1;
+
+  return true;
 };

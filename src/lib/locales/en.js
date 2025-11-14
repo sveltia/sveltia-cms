@@ -665,11 +665,27 @@ export const strings = {
       invalid_collection_multiple_options:
         'The collection cannot have the `folder`, `files` and `divider` options together.',
       file_format_mismatch: 'The `{extension}` extension doesn’t match the `{format}` format.',
+      missing_collection_name:
+        'The collection {count} must have the `name` option defined as a non-empty string.',
+      invalid_collection_name:
+        'The collection name `{name}` is invalid. It must not contain special characters.',
       duplicate_collection_name:
         'Collection names must be unique, but `{name}` is used more than once.',
+      missing_collection_file_name:
+        'The collection file {count} must have the `name` option defined as a non-empty string.',
+      invalid_collection_file_name:
+        'The collection file name `{name}` is invalid. It must not contain special characters.',
       duplicate_collection_file_name:
         'Collection file names must be unique, but `{name}` is used more than once.',
+      missing_field_name:
+        'The field {count} must have the `name` option defined as a non-empty string.',
+      invalid_field_name:
+        'The field name `{name}` is invalid. It must not contain special characters.',
       duplicate_field_name: 'Field names must be unique, but `{name}` is used more than once.',
+      missing_variable_type:
+        'The variable type {count} must have the `name` option defined as a non-empty string.',
+      invalid_variable_type:
+        'The variable type name `{name}` is invalid. It must not contain special characters.',
       duplicate_variable_type:
         'Variable type names must be unique, but `{name}` is used more than once.',
       date_widget:

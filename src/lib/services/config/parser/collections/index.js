@@ -8,7 +8,7 @@ import { isFormatMismatch } from '$lib/services/config/parser/collections/format
 import { parseFields } from '$lib/services/config/parser/fields';
 import {
   addMessage,
-  checkDuplicateNames,
+  checkName,
   checkUnsupportedOptions,
 } from '$lib/services/config/parser/utils/messages';
 
@@ -140,12 +140,15 @@ export const parseCollections = (siteConfig, collectors) => {
 
   /** @type {Record<string, number>} */
   const nameCounts = {};
+  const strKeyBase = 'collection_name';
 
-  collections?.forEach((collection) => {
-    parseCollection({ siteConfig, collection }, collectors);
+  collections?.forEach((collection, index) => {
+    const { name } = collection;
+    const newContext = { siteConfig, collection };
 
-    if (collection.name !== undefined) {
-      nameCounts[collection.name] = (nameCounts[collection.name] ?? 0) + 1;
+    // @ts-ignore
+    if (checkName({ name, index, nameCounts, strKeyBase, context: newContext, collectors })) {
+      parseCollection(newContext, collectors);
     }
   });
 
@@ -156,11 +159,4 @@ export const parseCollections = (siteConfig, collectors) => {
   if (files.length) {
     parseFileCollection({ siteConfig, collection: { name: '_singletons', files } }, collectors);
   }
-
-  checkDuplicateNames({
-    nameCounts,
-    strKey: 'duplicate_collection_name',
-    context: { siteConfig },
-    collectors,
-  });
 };

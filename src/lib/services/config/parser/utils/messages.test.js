@@ -21,7 +21,12 @@ function mockTranslate(key, options) {
     'config.error.unsupported_deprecated_option': 'Unsupported option: {prop} (use {newProp})',
     'config.error.custom_message': 'Custom unsupported option: {prop}',
     'config.error.duplicate_names': 'Duplicate name found: {name}',
+    'config.error.duplicate_duplicate_names': 'Duplicate name found: {name}',
+    'config.error.invalid_duplicate_names': 'Invalid name found: {name}',
     'config.error.my_custom_key': 'Custom duplicate message: {name}',
+    'config.error.missing_field_names': 'Missing field name at position {count}',
+    'config.error.invalid_field_names': 'Invalid field name: {name}',
+    'config.error.duplicate_field_names': 'Duplicate field name: {name}',
     'config.error_locator.collection': 'Collection: {collection}',
     'config.error_locator.file': 'File: {file}',
     'config.error_locator.field': 'Field: {field}',
@@ -67,7 +72,9 @@ vi.mock('$lib/services/contents/i18n', () => ({
 }));
 
 // Must import after mocking
-const { addMessage, checkUnsupportedOptions, checkDuplicateNames } = await import('./messages.js');
+const { addMessage, checkUnsupportedOptions, isValidName, checkName } = await import(
+  './messages.js'
+);
 
 /**
  * Create a fresh collectors object for testing.
@@ -659,80 +666,237 @@ describe('messages', () => {
     });
   });
 
-  describe('checkDuplicateNames', () => {
-    it('should not add a message when no duplicates exist', () => {
-      const collectors = createCollectors();
+  describe('isValidName', () => {
+    it('should return true for valid names', () => {
+      expect(isValidName('validName')).toBe(true);
+      expect(isValidName('valid_name')).toBe(true);
+      expect(isValidName('ValidName')).toBe(true);
+      expect(isValidName('valid-name')).toBe(true);
+      expect(isValidName('name123')).toBe(true);
+      expect(isValidName('a')).toBe(true);
+      expect(isValidName('valid@name')).toBe(true);
+    });
 
-      checkDuplicateNames({
-        nameCounts: { name1: 1, name2: 1, name3: 1 },
-        strKey: 'duplicate_names',
+    it('should return false for names with spaces', () => {
+      expect(isValidName('invalid name')).toBe(false);
+      expect(isValidName(' name')).toBe(false);
+      expect(isValidName('name ')).toBe(false);
+      expect(isValidName(' name ')).toBe(false);
+    });
+
+    it('should return false for names with dots', () => {
+      expect(isValidName('invalid.name')).toBe(false);
+      expect(isValidName('.name')).toBe(false);
+      expect(isValidName('name.')).toBe(false);
+    });
+
+    it('should return false for names with angle brackets', () => {
+      expect(isValidName('invalid<name')).toBe(false);
+      expect(isValidName('invalid>name')).toBe(false);
+      expect(isValidName('<name')).toBe(false);
+      expect(isValidName('name>')).toBe(false);
+      expect(isValidName('<name>')).toBe(false);
+    });
+
+    it('should return false for names with colons', () => {
+      expect(isValidName('invalid:name')).toBe(false);
+      expect(isValidName(':name')).toBe(false);
+      expect(isValidName('name:')).toBe(false);
+      expect(isValidName(':')).toBe(false);
+    });
+
+    it('should return false for names with asterisks', () => {
+      expect(isValidName('invalid*name')).toBe(false);
+      expect(isValidName('*name')).toBe(false);
+      expect(isValidName('name*')).toBe(false);
+      expect(isValidName('*')).toBe(false);
+    });
+
+    it('should return false for empty strings', () => {
+      expect(isValidName('')).toBe(false);
+    });
+
+    it('should return false for strings with only whitespace', () => {
+      expect(isValidName(' ')).toBe(false);
+      expect(isValidName('  ')).toBe(false);
+      expect(isValidName('\t')).toBe(false);
+      expect(isValidName('\n')).toBe(false);
+    });
+
+    it('should return false for names with multiple invalid characters', () => {
+      expect(isValidName('invalid<name>')).toBe(false);
+      expect(isValidName('invalid name.')).toBe(false);
+      expect(isValidName('invalid*name<>')).toBe(false);
+    });
+  });
+
+  describe('checkName', () => {
+    it('should return true for valid unique names', () => {
+      const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = {};
+
+      const result = checkName({
+        name: 'validName',
+        index: 0,
+        nameCounts,
+        strKeyBase: 'field_names',
         context: {},
         collectors,
       });
 
+      expect(result).toBe(true);
       expect(collectors.errors.size).toBe(0);
+      expect(nameCounts.validName).toBe(1);
     });
 
-    it('should add messages for duplicate names', () => {
+    it('should return false for missing name', () => {
       const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = {};
 
-      checkDuplicateNames({
-        nameCounts: { duplicate1: 2, duplicate2: 3, unique: 1 },
-        strKey: 'duplicate_names',
+      const result = checkName({
+        name: null,
+        index: 0,
+        nameCounts,
+        strKeyBase: 'field_names',
         context: {},
         collectors,
       });
 
-      // Each duplicate name gets its own message added via addMessage
-      expect(collectors.errors.size).toBeGreaterThan(0);
+      expect(result).toBe(false);
+      expect(collectors.errors.size).toBe(1);
     });
 
-    it('should add a message for names with count > 1', () => {
+    it('should return false for empty string name', () => {
       const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = {};
 
-      checkDuplicateNames({
-        nameCounts: { duplicate: 5, unique: 1 },
-        strKey: 'duplicate_names',
+      const result = checkName({
+        name: '',
+        index: 0,
+        nameCounts,
+        strKeyBase: 'field_names',
         context: {},
         collectors,
       });
 
+      expect(result).toBe(false);
+      expect(collectors.errors.size).toBe(1);
+    });
+
+    it('should return false for undefined name', () => {
+      const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = {};
+
+      const result = checkName({
+        name: undefined,
+        index: 5,
+        nameCounts,
+        strKeyBase: 'field_names',
+        context: {},
+        collectors,
+      });
+
+      expect(result).toBe(false);
       expect(collectors.errors.size).toBe(1);
 
       const message = Array.from(collectors.errors)[0];
 
-      expect(message).toBeTruthy();
+      expect(message).toContain('6'); // index + 1
     });
 
-    it('should handle empty nameCounts object', () => {
+    it('should return false for invalid name', () => {
       const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = {};
 
-      checkDuplicateNames({
-        nameCounts: {},
-        strKey: 'duplicate_names',
+      const result = checkName({
+        name: 'invalid.name',
+        index: 0,
+        nameCounts,
+        strKeyBase: 'field_names',
         context: {},
         collectors,
       });
 
-      expect(collectors.errors.size).toBe(0);
+      expect(result).toBe(false);
+      expect(collectors.errors.size).toBe(1);
     });
 
-    it('should call addMessage for each duplicate name', () => {
+    it('should return false for duplicate name', () => {
       const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = { duplicate: 1 };
 
-      checkDuplicateNames({
-        nameCounts: { dup1: 2, dup2: 3, dup3: 4, unique: 1 },
-        strKey: 'duplicate_names',
+      const result = checkName({
+        name: 'duplicate',
+        index: 1,
+        nameCounts,
+        strKeyBase: 'field_names',
         context: {},
         collectors,
       });
 
-      // Should have added 3 messages (for dup1, dup2, dup3)
-      expect(collectors.errors.size).toBe(3);
+      expect(result).toBe(false);
+      expect(collectors.errors.size).toBe(1);
+      expect(nameCounts.duplicate).toBe(1); // Not incremented
     });
 
-    it('should include context information in messages', () => {
+    it('should increment name count on success', () => {
       const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = {};
+
+      checkName({
+        name: 'first',
+        index: 0,
+        nameCounts,
+        strKeyBase: 'field_names',
+        context: {},
+        collectors,
+      });
+
+      expect(nameCounts.first).toBe(1);
+
+      checkName({
+        name: 'second',
+        index: 1,
+        nameCounts,
+        strKeyBase: 'field_names',
+        context: {},
+        collectors,
+      });
+
+      expect(nameCounts.second).toBe(1);
+      expect(nameCounts.first).toBe(1);
+    });
+
+    it('should use 1-based index in error message', () => {
+      const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = {};
+
+      checkName({
+        name: null,
+        index: 9,
+        nameCounts,
+        strKeyBase: 'field_names',
+        context: {},
+        collectors,
+      });
+
+      const message = Array.from(collectors.errors)[0];
+
+      expect(message).toContain('10'); // index + 1
+    });
+
+    it('should include context information in error messages', () => {
+      const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = {};
 
       /** @type {any} */
       const context = {
@@ -740,218 +904,56 @@ describe('messages', () => {
         typedKeyPath: 'fields.name',
       };
 
-      checkDuplicateNames({
-        nameCounts: { duplicate: 2 },
-        strKey: 'duplicate_names',
+      checkName({
+        name: 'invalid:name',
+        index: 0,
+        nameCounts,
+        strKeyBase: 'field_names',
         context,
         collectors,
       });
 
       const message = Array.from(collectors.errors)[0];
 
-      expect(message).toContain('Posts');
-      expect(message).toContain('fields.name');
-    });
-
-    it('should handle high duplicate counts', () => {
-      const collectors = createCollectors();
-
-      checkDuplicateNames({
-        nameCounts: { duplicate: 100, another: 50 },
-        strKey: 'duplicate_names',
-        context: {},
-        collectors,
-      });
-
-      expect(collectors.errors.size).toBe(2);
-    });
-
-    it('should only filter entries with count > 1', () => {
-      const collectors = createCollectors();
-
-      checkDuplicateNames({
-        nameCounts: {
-          name1: 1,
-          name2: 1,
-          name3: 2,
-          name4: 3,
-          name5: 1,
-          name6: 2,
-        },
-        strKey: 'duplicate_names',
-        context: {},
-        collectors,
-      });
-
-      // Only entries with count > 1 should generate messages: name3, name4, name6
-      expect(collectors.errors.size).toBe(3);
-    });
-
-    it('should work with special characters in duplicate names', () => {
-      const collectors = createCollectors();
-
-      checkDuplicateNames({
-        nameCounts: { 'field-name_123': 2, 'another.field': 3 },
-        strKey: 'duplicate_names',
-        context: {},
-        collectors,
-      });
-
-      const messages = Array.from(collectors.errors);
-
-      expect(messages.length).toBe(2);
-    });
-
-    it('should use custom i18n string key', () => {
-      const collectors = createCollectors();
-
-      checkDuplicateNames({
-        nameCounts: { duplicate: 2 },
-        strKey: 'my_custom_key',
-        context: {},
-        collectors,
-      });
-
+      expect(message).toBeTruthy();
       expect(collectors.errors.size).toBe(1);
     });
 
-    it('should pass context with collection information', () => {
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const context = {
-        collection: { name: 'items', label: 'Items' },
-      };
-
-      checkDuplicateNames({
-        nameCounts: { duplicate: 2 },
-        strKey: 'duplicate_names',
-        context,
-        collectors,
-      });
-
-      const message = Array.from(collectors.errors)[0];
-
-      expect(message).toContain('Items');
-    });
-
-    it('should pass context with file information', () => {
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const context = {
-        collectionFile: { name: 'file.md', label: 'My File' },
-      };
-
-      checkDuplicateNames({
-        nameCounts: { duplicate: 2 },
-        strKey: 'duplicate_names',
-        context,
-        collectors,
-      });
-
-      const message = Array.from(collectors.errors)[0];
-
-      expect(message).toContain('My File');
-    });
-
-    it('should pass context with multiple locators', () => {
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const context = {
-        collection: { name: 'posts', label: 'Posts' },
-        collectionFile: { name: 'post-1', label: 'Post 1' },
-        typedKeyPath: 'fields.tags',
-      };
-
-      checkDuplicateNames({
-        nameCounts: { duplicate: 2 },
-        strKey: 'duplicate_names',
-        context,
-        collectors,
-      });
-
-      const message = Array.from(collectors.errors)[0];
-
-      expect(message).toContain('Posts');
-      expect(message).toContain('Post 1');
-      expect(message).toContain('fields.tags');
-    });
-
-    it('should iterate through all entries in nameCounts', () => {
+    it('should handle non-string names correctly', () => {
       const collectors = createCollectors();
       /** @type {Record<string, number>} */
       const nameCounts = {};
 
-      // Create a sparse object with duplicate counts scattered
-      for (let i = 0; i < 10; i += 1) {
-        nameCounts[`name${i}`] = i % 2 === 0 ? 1 : 2; // Alternating 1 and 2
-      }
-
-      checkDuplicateNames({
+      const result = checkName({
+        name: 123,
+        index: 0,
         nameCounts,
-        strKey: 'duplicate_names',
+        strKeyBase: 'field_names',
         context: {},
         collectors,
       });
 
-      // Should have 5 duplicates (count === 2): name1, name3, name5, name7, name9
-      expect(collectors.errors.size).toBe(5);
-    });
-
-    it('should handle duplicate count of exactly 2', () => {
-      const collectors = createCollectors();
-
-      checkDuplicateNames({
-        nameCounts: { duplicate: 2 },
-        strKey: 'duplicate_names',
-        context: {},
-        collectors,
-      });
-
+      expect(result).toBe(false);
       expect(collectors.errors.size).toBe(1);
     });
 
-    it('should not add message for count of exactly 1', () => {
+    it('should handle names with special allowed characters', () => {
       const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = {};
 
-      checkDuplicateNames({
-        nameCounts: { unique: 1 },
-        strKey: 'duplicate_names',
+      const result = checkName({
+        name: 'field_name-123',
+        index: 0,
+        nameCounts,
+        strKeyBase: 'field_names',
         context: {},
         collectors,
       });
 
+      expect(result).toBe(true);
       expect(collectors.errors.size).toBe(0);
-    });
-
-    it('should add error by default (not warning)', () => {
-      const collectors = createCollectors();
-
-      checkDuplicateNames({
-        nameCounts: { duplicate: 2 },
-        strKey: 'duplicate_names',
-        context: {},
-        collectors,
-      });
-
-      expect(collectors.errors.size).toBe(1);
-      expect(collectors.warnings.size).toBe(0);
-    });
-
-    it('should filter out names with count <= 1 from processing', () => {
-      const collectors = createCollectors();
-
-      checkDuplicateNames({
-        nameCounts: { a: 1, b: 1, c: 1 },
-        strKey: 'duplicate_names',
-        context: {},
-        collectors,
-      });
-
-      expect(collectors.errors.size).toBe(0);
-      expect(collectors.warnings.size).toBe(0);
+      expect(nameCounts['field_name-123']).toBe(1);
     });
   });
 });
