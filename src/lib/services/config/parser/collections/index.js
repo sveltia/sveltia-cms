@@ -124,9 +124,7 @@ export const parseCollections = (siteConfig, collectors) => {
     return;
   }
 
-  /** @type {Record<string, number>} */
-  const nameCounts = {};
-  const strKeyBase = 'collection_name';
+  const checkNameArgs = { nameCounts: {}, strKeyBase: 'collection_name' };
 
   collections?.forEach((collection, index) => {
     // Skip collection dividers
@@ -135,7 +133,7 @@ export const parseCollections = (siteConfig, collectors) => {
     const { name } = collection;
     const newContext = { siteConfig, collection };
 
-    if (checkName({ name, index, nameCounts, strKeyBase, context: newContext, collectors })) {
+    if (checkName({ ...checkNameArgs, name, index, context: newContext, collectors })) {
       parseCollection(newContext, collectors);
     }
   });

@@ -14,9 +14,7 @@ export const parseListFieldConfig = (args) => {
   const { config, context, collectors } = args;
   const { field: subfield, fields: subfields, types } = /** @type {ListField} */ (config);
   const { typedKeyPath } = context;
-  /** @type {Record<string, number>} */
-  const nameCounts = {};
-  const strKeyBase = 'variable_type';
+  const checkNameArgs = { nameCounts: {}, strKeyBase: 'variable_type' };
 
   // Validate mutually exclusive options
   if ((subfield && subfields) || (subfield && types) || (subfields && types)) {
@@ -48,7 +46,7 @@ export const parseListFieldConfig = (args) => {
     const newContext = { ...context, typedKeyPath: `${typedKeyPath}.*<${type}>` };
 
     if (
-      checkName({ name: type, index, nameCounts, strKeyBase, context: newContext, collectors }) &&
+      checkName({ ...checkNameArgs, name: type, index, context: newContext, collectors }) &&
       typedFields
     ) {
       parseFields(typedFields, newContext, collectors);

@@ -47,9 +47,7 @@ export const parseCollectionFile = (context, collectors) => {
 export const parseCollectionFiles = (context, collectors) => {
   const { siteConfig, collection } = context;
   const { files } = collection;
-  /** @type {Record<string, number>} */
-  const nameCounts = {};
-  const strKeyBase = 'collection_file_name';
+  const checkNameArgs = { nameCounts: {}, strKeyBase: 'collection_file_name' };
 
   files.forEach((collectionFile, index) => {
     // Skip file dividers
@@ -58,7 +56,7 @@ export const parseCollectionFiles = (context, collectors) => {
     const { name } = collectionFile;
     const newContext = { siteConfig, collection, collectionFile };
 
-    if (checkName({ name, index, nameCounts, strKeyBase, context: newContext, collectors })) {
+    if (checkName({ ...checkNameArgs, name, index, context: newContext, collectors })) {
       parseCollectionFile(newContext, collectors);
     }
   });

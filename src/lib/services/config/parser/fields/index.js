@@ -62,14 +62,12 @@ export const parseFieldConfig = (args) => {
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseFields = (fields, context, collectors) => {
-  /** @type {Record<string, number>} */
-  const nameCounts = {};
-  const strKeyBase = 'field_name';
+  const checkNameArgs = { nameCounts: {}, strKeyBase: 'field_name' };
 
   fields?.forEach((config, index) => {
     const { name } = config;
 
-    if (checkName({ name, index, nameCounts, strKeyBase, context, collectors })) {
+    if (checkName({ ...checkNameArgs, name, index, context, collectors })) {
       parseFieldConfig({ config, context, collectors });
     }
   });
