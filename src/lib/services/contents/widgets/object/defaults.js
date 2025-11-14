@@ -6,7 +6,12 @@ import { isFieldRequired } from '$lib/services/contents/entry/fields';
 
 /**
  * @import { FlattenedEntryContent, GetDefaultValueMapFuncArgs } from '$lib/types/private';
- * @import { FieldKeyPath, ObjectField } from '$lib/types/public';
+ * @import {
+ * FieldKeyPath,
+ * ObjectField,
+ * ObjectFieldWithSubFields,
+ * ObjectFieldWithTypes,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -16,12 +21,9 @@ import { isFieldRequired } from '$lib/services/contents/entry/fields';
  * @returns {Record<FieldKeyPath, any>} Default value map.
  */
 export const getDefaultValueMap = ({ fieldConfig, keyPath, locale }) => {
-  const {
-    default: defaultValue,
-    fields: subFields,
-    types,
-  } = /** @type {ObjectField} */ (fieldConfig);
-
+  const { default: defaultValue } = /** @type {ObjectField} */ (fieldConfig);
+  const { fields: subFields } = /** @type {ObjectFieldWithSubFields} */ (fieldConfig);
+  const { types } = /** @type {ObjectFieldWithTypes} */ (fieldConfig);
   const required = isFieldRequired({ fieldConfig, locale });
   /** @type {FlattenedEntryContent} */
   const content = {};

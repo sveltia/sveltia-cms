@@ -110,6 +110,7 @@ export const validateAnyField = (args) => {
   const { widget: widgetName = 'string', i18n = false, pattern: validation } = fieldConfig;
   const multiple = isFieldMultiple(fieldConfig);
 
+  // @ts-ignore SimpleListField doesn’t have `min` and `max` properties
   const { min = 0, max = Infinity } = /** @type {MinMaxValueField} */ (
     MIN_MAX_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}
   );

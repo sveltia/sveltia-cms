@@ -295,7 +295,7 @@
 /**
  * Variable field properties.
  * @typedef {object} VariableFieldProps
- * @property {VariableFieldType[]} [types] Set of nested Object fields to be selected or added.
+ * @property {VariableFieldType[]} types Set of nested Object fields to be selected or added.
  * @property {string} [typeKey] Property name to store the type name in nested objects. Default:
  * `type`.
  * @see https://decapcms.org/docs/variable-type-widgets/
@@ -473,6 +473,12 @@
  * @property {string[] | Record<string, any>[] | Record<string, any>} [default] Default value. The
  * format depends on how the field is configured, with or without `field`, `fields` or `types`. See
  * the document for details.
+ * @see https://decapcms.org/docs/widgets/#List
+ */
+
+/**
+ * Base properties for a complex List field with subfields or variable types.
+ * @typedef {object} ComplexListFieldBaseProps
  * @property {boolean} [allow_add] Whether to allow users to add new items to the list. Default:
  * `true`.
  * @property {boolean} [allow_remove] Whether to allow users to remove items from the list. Default:
@@ -493,20 +499,59 @@
  * @property {boolean | 'auto'} [minimize_collapsed] Whether to collapse the entire list. Default:
  * `false`. If set to `auto`, the UI is collapsed if the list has any items and expanded if it’s
  * empty.
- * @property {Field} [field] Single field to be included in a list item.
- * @property {Field[]} [fields] Set of fields to be included in a list item.
  * @property {boolean} [root] Whether to save the field value at the top-level of the data file
  * without the field name. If the `single_file` i18n structure is enabled, the lists will still be
  * saved under locale keys. Default: `false`. See our
  * [README](https://github.com/sveltia/sveltia-cms#editing-data-files-with-a-top-level-list) for
  * details.
- * @see https://decapcms.org/docs/widgets/#List
+ */
+
+/**
+ * Simple List field definition with primitive item types.
+ * @typedef {CommonFieldProps & StandardFieldProps & ListFieldProps} SimpleListField
+ */
+
+/**
+ * Properties for a complex List field with subfields or variable types.
+ * @typedef {CommonFieldProps & StandardFieldProps & ListFieldProps & ComplexListFieldBaseProps &
+ * MultiValueFieldProps} ComplexListFieldProps
+ */
+
+/**
+ * Properties for a List field with a single subfield.
+ * @typedef {object} ListFieldSubFieldProps
+ * @property {Field} field Single field to be included in a list item.
+ */
+
+/**
+ * List field definition with a single subfield.
+ * @typedef {ComplexListFieldProps & ListFieldSubFieldProps} ListFieldWithSubField
+ */
+
+/**
+ * Properties for a List field with multiple subfields.
+ * @typedef {object} ListFieldSubFieldsProps
+ * @property {Field[]} fields Set of fields to be included in a list item.
+ */
+
+/**
+ * List field definition with multiple subfields.
+ * @typedef {ComplexListFieldProps & ListFieldSubFieldsProps} ListFieldWithSubFields
+ */
+
+/**
+ * List field definition with variable types.
+ * @typedef {ComplexListFieldProps & VariableFieldProps} ListFieldWithTypes
+ */
+
+/**
+ * List field definition with complex items.
+ * @typedef {ListFieldWithSubField | ListFieldWithSubFields | ListFieldWithTypes} ComplexListField
  */
 
 /**
  * List field definition.
- * @typedef {CommonFieldProps & StandardFieldProps & ListFieldProps & MultiValueFieldProps &
- * VariableFieldProps} ListField
+ * @typedef {SimpleListField | ComplexListField} ListField
  */
 
 /**
@@ -603,15 +648,33 @@
  * `false`. If set to `auto`, the UI is collapsed if the object has any filled subfields and
  * expanded if all the subfields are empty.
  * @property {string} [summary] Template of a label to be displayed on a collapsed object.
- * @property {Field[]} [fields] Set of fields to be included. Either the `fields` or `types` option
- * is required.
  * @see https://decapcms.org/docs/widgets/#Object
  */
 
 /**
+ * Base properties for a complex Object field with subfields or variable types.
+ * @typedef {CommonFieldProps & StandardFieldProps & ObjectFieldProps} ComplexObjectFieldProps
+ */
+
+/**
+ * Properties for an Object field with multiple subfields.
+ * @typedef {object} ObjectFieldSubFieldsProps
+ * @property {Field[]} fields Set of fields to be included.
+ */
+
+/**
+ * Object field definition with multiple subfields.
+ * @typedef {ComplexObjectFieldProps & ObjectFieldSubFieldsProps} ObjectFieldWithSubFields
+ */
+
+/**
+ * Object field definition with variable types.
+ * @typedef {ComplexObjectFieldProps & VariableFieldProps} ObjectFieldWithTypes
+ */
+
+/**
  * Object field definition.
- * @typedef {CommonFieldProps & StandardFieldProps & ObjectFieldProps & VariableFieldProps
- * } ObjectField
+ * @typedef {ObjectFieldWithSubFields | ObjectFieldWithTypes} ObjectField
  */
 
 /**
@@ -740,6 +803,16 @@
 /**
  * Field types that have the `min` and `max` options.
  * @typedef {MultiValueField | ListField | NumberField} MinMaxValueField
+ */
+
+/**
+ * Field types that have subfields.
+ * @typedef {ListFieldWithSubFields | ObjectFieldWithSubFields} FieldWithSubFields
+ */
+
+/**
+ * Field types that support variable types.
+ * @typedef {ListFieldWithTypes | ObjectFieldWithTypes} FieldWithTypes
  */
 
 /**

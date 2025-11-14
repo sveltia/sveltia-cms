@@ -3,13 +3,13 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * @import { ListField, ObjectField } from '$lib/types/public';
+   * @import { ComplexListField, FieldWithTypes, ObjectField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
    * @property {boolean} [disabled] Whether to disable the button.
-   * @property {ListField | ObjectField} fieldConfig Field configuration.
+   * @property {ComplexListField | ObjectField} fieldConfig Field configuration.
    * @property {object[]} [items] List items. `<ListEditor>` only.
    * @property {(args?: { type?: string }) => void} [addItem] Function to add a new item.
    */
@@ -24,16 +24,9 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const {
-    widget: widgetType,
-    name: fieldName,
-    label: labelPlural,
-    // Widget-specific options
-    types,
-  } = $derived(fieldConfig);
-  const listField = $derived(
-    widgetType === 'list' ? /** @type {ListField} */ (fieldConfig) : undefined,
-  );
+  const { name: fieldName, label: labelPlural } = $derived(fieldConfig);
+  const { types } = $derived(/** @type {FieldWithTypes} */ (fieldConfig));
+  const listField = $derived(fieldConfig.widget === 'list' ? fieldConfig : undefined);
   const labelSingular = $derived(listField?.label_singular ?? '');
   const max = $derived(listField?.max ?? undefined);
   const label = $derived(

@@ -3,7 +3,12 @@ import { flatten } from 'flat';
 
 /**
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
- * @import { FieldKeyPath, ListField } from '$lib/types/public';
+ * @import {
+ * FieldKeyPath,
+ * ListField,
+ * ListFieldWithSubFields,
+ * ListFieldWithTypes,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -12,7 +17,9 @@ import { flatten } from 'flat';
  * @returns {Record<FieldKeyPath, any>} Default value map.
  */
 export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
-  const { default: defaultValue, fields, types } = /** @type {ListField} */ (fieldConfig);
+  const { default: defaultValue } = /** @type {ListField} */ (fieldConfig);
+  const { fields } = /** @type {ListFieldWithSubFields} */ (fieldConfig);
+  const { types } = /** @type {ListFieldWithTypes} */ (fieldConfig);
   /** @type {any[]} */
   let value;
 

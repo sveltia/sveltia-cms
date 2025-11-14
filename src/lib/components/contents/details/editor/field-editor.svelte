@@ -106,6 +106,7 @@
       : { hasSubFields: false },
   );
   const multiple = $derived(isFieldMultiple(fieldConfig));
+  // @ts-ignore SimpleListField doesn’t have `min` and `max` properties
   const { min = 0, max = Infinity } = $derived(
     /** @type {MinMaxValueField} */ (MIN_MAX_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}),
   );

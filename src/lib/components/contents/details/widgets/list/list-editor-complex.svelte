@@ -32,12 +32,17 @@
 
   /**
    * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
-   * @import { ListField } from '$lib/types/public';
+   * @import {
+   * ComplexListField,
+   * ListFieldWithSubField,
+   * ListFieldWithSubFields,
+   * ListFieldWithTypes,
+   * } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {ListField} fieldConfig Field configuration.
+   * @property {ComplexListField} fieldConfig Field configuration.
    * @property {string[]} currentValue Field value.
    */
 
@@ -68,13 +73,12 @@
     thumbnail: thumbnailFieldName,
     minimize_collapsed: minimizeCollapsed = false,
     label_singular: labelSingular,
-    field,
-    fields,
     max = Infinity,
     add_to_top: addToTop = false,
-    types,
-    typeKey = 'type',
-  } = $derived(fieldConfig);
+  } = $derived(/** @type {ComplexListField} */ (fieldConfig));
+  const { field } = $derived(/** @type {ListFieldWithSubField} */ (fieldConfig));
+  const { fields } = $derived(/** @type {ListFieldWithSubFields} */ (fieldConfig));
+  const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`));
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);

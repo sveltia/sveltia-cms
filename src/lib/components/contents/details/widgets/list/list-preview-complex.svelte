@@ -16,12 +16,17 @@
 
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
-   * @import { ListField } from '$lib/types/public';
+   * @import {
+   * ComplexListField,
+   * ListFieldWithSubField,
+   * ListFieldWithSubFields,
+   * ListFieldWithTypes,
+   * } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {ListField} fieldConfig Field configuration.
+   * @property {ComplexListField} fieldConfig Field configuration.
    * @property {string[] | undefined} currentValue Field value.
    */
 
@@ -34,14 +39,10 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const {
-    name: fieldName,
-    // Widget-specific options
-    field,
-    fields,
-    types,
-    typeKey = 'type',
-  } = $derived(fieldConfig);
+  const { name: fieldName } = $derived(fieldConfig);
+  const { field } = $derived(/** @type {ListFieldWithSubField} */ (fieldConfig));
+  const { fields } = $derived(/** @type {ListFieldWithSubFields} */ (fieldConfig));
+  const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`));
   const items = $derived(

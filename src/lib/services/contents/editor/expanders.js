@@ -103,11 +103,14 @@ export const getExpanderKeys = ({
       const parentKeyPath = arr.slice(0, index).join('.');
       const parentConfig = getField({ ...getFieldArgs, keyPath: parentKeyPath });
 
-      if (parentConfig?.widget === 'object' && /** @type {ObjectField} */ (parentConfig).fields) {
+      if (
+        parentConfig?.widget === 'object' &&
+        'fields' in /** @type {ObjectField} */ (parentConfig)
+      ) {
         keys.add(`${parentKeyPath}.${parentConfig.name}#`);
       }
 
-      if (parentConfig?.widget === 'list' && /** @type {ListField} */ (parentConfig).field) {
+      if (parentConfig?.widget === 'list' && 'field' in /** @type {ListField} */ (parentConfig)) {
         keys.add(_keyPath);
       }
     }

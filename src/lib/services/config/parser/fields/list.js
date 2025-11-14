@@ -2,7 +2,11 @@ import { parseFieldConfig, parseFields } from '$lib/services/config/parser/field
 import { addMessage, checkName } from '$lib/services/config/parser/utils/messages';
 
 /**
- * @import { ListField } from '$lib/types/public';
+ * @import {
+ * ListFieldWithSubField,
+ * ListFieldWithSubFields,
+ * ListFieldWithTypes,
+ * } from '$lib/types/public';
  * @import { FieldParserArgs } from '$lib/types/private';
  */
 
@@ -12,7 +16,9 @@ import { addMessage, checkName } from '$lib/services/config/parser/utils/message
  */
 export const parseListFieldConfig = (args) => {
   const { config, context, collectors } = args;
-  const { field: subfield, fields: subfields, types } = /** @type {ListField} */ (config);
+  const { field: subfield } = /** @type {ListFieldWithSubField} */ (config);
+  const { fields: subfields } = /** @type {ListFieldWithSubFields} */ (config);
+  const { types } = /** @type {ListFieldWithTypes} */ (config);
   const { typedKeyPath } = context;
   const checkNameArgs = { nameCounts: {}, strKeyBase: 'variable_type', collectors };
 

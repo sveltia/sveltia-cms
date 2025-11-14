@@ -27,7 +27,11 @@
 
   /**
    * @import { EntryDraft, FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
-   * @import { ObjectField } from '$lib/types/public';
+   * @import {
+   * ObjectField,
+   * ObjectFieldWithSubFields,
+   * ObjectFieldWithTypes,
+   * } from '$lib/types/public';
    */
 
   /**
@@ -60,10 +64,9 @@
     // Widget-specific options
     collapsed,
     summary,
-    fields,
-    types,
-    typeKey = 'type',
   } = $derived(fieldConfig);
+  const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
+  const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
   const collectionName = $derived($entryDraft?.collectionName ?? '');

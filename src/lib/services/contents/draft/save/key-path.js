@@ -2,7 +2,13 @@ import { isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
 
 /**
- * @import { Field, FieldKeyPath, ListField, ObjectField } from '$lib/types/public';
+ * @import {
+ * Field,
+ * FieldKeyPath,
+ * FieldWithSubFields,
+ * FieldWithTypes,
+ * ListFieldWithSubField,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -20,11 +26,8 @@ export const parseField = ({ field, keyPath, keyPathList }) => {
   keyPathList.push(keyPath);
 
   if (isList || widget === 'object') {
-    const {
-      fields: subFields,
-      types,
-      typeKey = 'type',
-    } = /** @type {ListField | ObjectField} */ (field);
+    const { fields: subFields } = /** @type {FieldWithSubFields} */ (field);
+    const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
 
     if (subFields) {
       subFields.forEach((subField) => {
@@ -47,7 +50,7 @@ export const parseField = ({ field, keyPath, keyPathList }) => {
         });
       });
     } else if (isList) {
-      const { field: subField } = /** @type {ListField} */ (field);
+      const { field: subField } = /** @type {ListFieldWithSubField} */ (field);
 
       if (subField) {
         parseField({

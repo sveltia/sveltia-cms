@@ -11,7 +11,11 @@
 
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
-   * @import { ObjectField } from '$lib/types/public';
+   * @import {
+   * ObjectField,
+   * ObjectFieldWithSubFields,
+   * ObjectFieldWithTypes,
+   * } from '$lib/types/public';
    */
 
   /**
@@ -29,12 +33,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const {
-    // Widget-specific options
-    fields,
-    types,
-    typeKey = 'type',
-  } = $derived(fieldConfig);
+  const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
+  const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
   const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
   const hasValues = $derived(
     Object.entries(valueMap).some(

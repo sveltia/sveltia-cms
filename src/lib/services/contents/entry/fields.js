@@ -27,11 +27,15 @@ import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
  * DateTimeField,
  * Field,
  * FieldKeyPath,
- * ListField,
+ * FieldWithSubFields,
+ * FieldWithTypes,
+ * ListFieldWithSubField,
+ * ListFieldWithSubFields,
+ * ListFieldWithTypes,
  * MediaField,
  * MultiValueField,
  * NumberField,
- * ObjectField,
+ * ObjectFieldWithSubFields,
  * RelationField,
  * SelectField,
  * } from '$lib/types/public';
@@ -173,14 +177,11 @@ export const getField = (args) => {
         return;
       }
 
-      // Handle all other widgets (List, Object, etc.)
-      const {
-        field: subField,
-        fields: subFields,
-        types,
-        typeKey = 'type',
-      } = /** @type {ListField} */ (field);
+      const { field: subField } = /** @type {ListFieldWithSubField} */ (field);
+      const { fields: subFields } = /** @type {FieldWithSubFields} */ (field);
+      const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
 
+      // Handle all other widgets (List, Object, etc.)
       if (subField) {
         const subFieldName = isNumericKey || isWildcardKey ? keyPathArray[index + 1] : undefined;
 
@@ -191,7 +192,10 @@ export const getField = (args) => {
           !subFieldName ||
           subField.name === subFieldName ||
           (subField.widget === 'object' &&
-            /** @type {ObjectField} */ (subField).fields?.some((f) => f.name === subFieldName))
+            'fields' in subField &&
+            /** @type {ObjectFieldWithSubFields} */ (subField).fields?.some(
+              (f) => f.name === subFieldName,
+            ))
         ) {
           field = subField;
         } else {
@@ -209,6 +213,7 @@ export const getField = (args) => {
           currentExplicitType ??
           valueMap[[keyPathArray.slice(0, index).join('.'), cleanKey, typeKey].join('.')];
 
+        // @ts-ignore
         field = types.find(({ name }) => name === resolvedType);
 
         // Clear explicit type after using it
@@ -239,12 +244,11 @@ export const getField = (args) => {
 
   // If we have an explicit type but haven’t applied it yet (e.g., for "widget<button>" with no
   // further navigation), apply it now
-  if (currentExplicitType && field) {
-    const { types } = /** @type {ListField} */ (field);
+  if (currentExplicitType && field && 'types' in field) {
+    const { types } = /** @type {FieldWithTypes} */ (field);
 
-    if (types) {
-      field = types.find(({ name }) => name === currentExplicitType);
-    }
+    // @ts-ignore
+    field = types.find(({ name }) => name === currentExplicitType);
   }
 
   fieldConfigCacheMap.set(cacheKey, field);
@@ -326,7 +330,8 @@ export const getFieldDisplayValue = ({
   }
 
   if (fieldConfig?.widget === 'list') {
-    const { fields, types } = /** @type {ListField} */ (fieldConfig);
+    const { fields } = /** @type {ListFieldWithSubFields} */ (fieldConfig);
+    const { types } = /** @type {ListFieldWithTypes} */ (fieldConfig);
 
     if (fields || types) {
       // Ignore

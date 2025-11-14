@@ -93,9 +93,9 @@ export const getListFieldTypes = (fieldConfig) => {
   }
 
   const isListWidget = fieldConfig.widget === 'list';
-  const hasField = isListWidget ? !!(/** @type {ListField} */ (fieldConfig).field) : false;
-  const hasFields = isListWidget ? !!(/** @type {ListField} */ (fieldConfig).fields) : false;
-  const hasTypes = isListWidget ? !!(/** @type {ListField} */ (fieldConfig).types) : false;
+  const hasField = isListWidget ? 'field' in /** @type {ListField} */ (fieldConfig) : false;
+  const hasFields = isListWidget ? 'fields' in /** @type {ListField} */ (fieldConfig) : false;
+  const hasTypes = isListWidget ? 'types' in /** @type {ListField} */ (fieldConfig) : false;
 
   return {
     isSimpleListField: isListWidget && !hasField && !hasFields && !hasTypes,

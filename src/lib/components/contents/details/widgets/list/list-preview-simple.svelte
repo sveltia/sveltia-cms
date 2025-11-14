@@ -8,12 +8,12 @@
 
   /**
    * @import { WidgetPreviewProps } from '$lib/types/private';
-   * @import { ListField } from '$lib/types/public';
+   * @import { SimpleListField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {ListField} fieldConfig Field configuration.
+   * @property {SimpleListField} fieldConfig Field configuration.
    * @property {string[] | undefined} currentValue Field value.
    */
 

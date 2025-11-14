@@ -8,7 +8,7 @@ import {
 
 /**
  * @import { FlattenedEntryContent, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
- * @import { Field, FieldKeyPath, ListField } from '$lib/types/public';
+ * @import { ComplexListField, Field, FieldKeyPath, ListField } from '$lib/types/public';
  */
 
 /**
@@ -24,10 +24,10 @@ import {
  * @param {ListField} field Field.
  * @returns {ListFieldInfo} Field type information.
  */
-export const getListFieldInfo = ({ field, fields, types }) => {
-  const hasSingleSubField = !!field;
-  const hasMultiSubFields = !!fields;
-  const hasVariableTypes = !!types;
+export const getListFieldInfo = (field) => {
+  const hasSingleSubField = 'field' in field;
+  const hasMultiSubFields = 'fields' in field;
+  const hasVariableTypes = 'types' in field;
 
   return {
     hasSingleSubField,
@@ -45,7 +45,8 @@ export const getListFieldInfo = ({ field, fields, types }) => {
 export const hasRootListField = (fields) =>
   fields.length === 1 &&
   fields[0].widget === 'list' &&
-  /** @type {ListField} */ (fields[0]).root === true;
+  'root' in /** @type {ListField} */ (fields[0]) &&
+  /** @type {ComplexListField} */ (fields[0]).root === true;
 
 /**
  * Format the summary template of a List field.
@@ -100,9 +101,8 @@ export const formatSummary = ({
     if (hasSingleSubField) {
       // For single-field lists, check if the requested field name matches the actual field name
       const listFieldConfig = /** @type {ListField} */ (getField({ ...getFieldArgs, keyPath }));
-      const singleFieldConfig = listFieldConfig?.field;
 
-      if (!singleFieldConfig || singleFieldConfig.name !== fieldName) {
+      if (!('field' in listFieldConfig) || listFieldConfig.field.name !== fieldName) {
         return '';
       }
     }

@@ -5,6 +5,7 @@ import TurndownService from 'turndown';
 import { entryDraft } from '$lib/services/contents/draft';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs';
 
@@ -70,7 +71,7 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           !['markdown', 'text', 'string', 'list'].includes(widget) ||
           // prettier-ignore
           (widget === 'list' &&
-          (/** @type {ListField} */ (field).field ?? /** @type {ListField} */ (field).fields)) ||
+          getListFieldInfo(/** @type {ListField} */ (field)).hasSubFields) ||
           (!translate && value === targetLocaleValue) ||
           // Skip populated fields when translating all the fields
           (!keyPath && translate && !!targetLocaleValue)
