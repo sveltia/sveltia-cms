@@ -1611,7 +1611,10 @@ singletons:
             label: GitHub account
 ```
 
-Note: The `root` option is ignored if the file or singleton contains multiple fields. You can still have subfields under the List field.
+Note: The `root` option is ignored in the following cases:
+
+- The file or singleton contains multiple fields. You can still have subfields under the List field.
+- The file format is TOML, because TOML doesn’t support top-level arrays.
 
 ### Changing the input type of a DateTime field
 
