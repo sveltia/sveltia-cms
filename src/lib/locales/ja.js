@@ -64,6 +64,7 @@ export const strings = {
   loading: '読み込み中…',
   later: '後で',
   slug: 'スラッグ',
+  singletons: 'シングルトン',
 
   // Common errors
   clipboard_error: 'データのコピー中に問題が発生しました。',

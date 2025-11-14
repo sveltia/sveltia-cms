@@ -13,15 +13,12 @@ import {
 } from '$lib/services/config/parser/utils/messages';
 
 /**
+ * @import { Collection, CollectionDivider, EntryCollection, SiteConfig } from '$lib/types/public';
  * @import {
- * Collection,
- * CollectionDivider,
- * CollectionFile,
- * EntryCollection,
- * FileCollection,
- * SiteConfig,
- * } from '$lib/types/public';
- * @import { ConfigParserCollectors, UnsupportedOption } from '$lib/types/private';
+ * ConfigParserCollectors,
+ * InternalSingletonCollection,
+ * UnsupportedOption,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -68,18 +65,6 @@ export const parseEntryCollection = (context, collectors) => {
 };
 
 /**
- * Parse and validate a single file collection configuration.
- * @internal
- * @param {object} context Context.
- * @param {SiteConfig} context.siteConfig Raw site configuration.
- * @param {FileCollection} context.collection Collection config to parse.
- * @param {ConfigParserCollectors} collectors Collectors.
- */
-export const parseFileCollection = (context, collectors) => {
-  parseCollectionFiles(context, collectors);
-};
-
-/**
  * Parse and validate a collection or divider configuration.
  * @internal
  * @param {object} context Context.
@@ -116,7 +101,7 @@ export const parseCollection = ({ siteConfig, collection }, collectors) => {
   }
 
   if (hasFiles) {
-    parseFileCollection({ siteConfig, collection }, collectors);
+    parseCollectionFiles({ siteConfig, collection }, collectors);
   } else if (hasFolder) {
     parseEntryCollection({ siteConfig, collection }, collectors);
   }
@@ -131,9 +116,10 @@ export const parseCollection = ({ siteConfig, collection }, collectors) => {
 export const parseCollections = (siteConfig, collectors) => {
   const { collections, singletons } = siteConfig;
   const { errors } = collectors;
+  const $_ = get(_);
 
   if (!Array.isArray(collections) && !Array.isArray(singletons)) {
-    errors.add(get(_)('config.error.no_collection'));
+    errors.add($_('config.error.no_collection'));
 
     return;
   }
@@ -154,11 +140,14 @@ export const parseCollections = (siteConfig, collectors) => {
     }
   });
 
-  const files = /** @type {CollectionFile[]} */ (
-    singletons?.filter((c) => !('divider' in c)) || []
-  );
+  if (Array.isArray(singletons)) {
+    /** @type {InternalSingletonCollection} */
+    const collection = {
+      name: '_singletons',
+      label: $_('singletons'),
+      files: singletons,
+    };
 
-  if (files.length) {
-    parseFileCollection({ siteConfig, collection: { name: '_singletons', files } }, collectors);
+    parseCollectionFiles({ siteConfig, collection }, collectors);
   }
 };

@@ -64,6 +64,7 @@ export const strings = {
   loading: 'Loading…',
   later: 'Later',
   slug: 'Slug',
+  singletons: 'Singletons',
 
   // Common errors
   clipboard_error: 'There was an error while copying data.',

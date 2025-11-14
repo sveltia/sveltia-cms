@@ -6,19 +6,21 @@ import { addMessage, checkName } from '$lib/services/config/parser/utils/message
 
 /**
  * @import { CollectionFile, FileCollection, SiteConfig } from '$lib/types/public';
- * @import { ConfigParserCollectors } from '$lib/types/private';
+ * @import { ConfigParserCollectors, InternalSingletonCollection } from '$lib/types/private';
  */
 
 /**
  * Parse and validate a single collection file configuration.
  * @param {object} context Context.
  * @param {SiteConfig} context.siteConfig Raw site configuration.
- * @param {FileCollection} context.collection Collection config to parse.
+ * @param {FileCollection | InternalSingletonCollection} context.collection Collection config to
+ * parse.
  * @param {CollectionFile} context.collectionFile File config to parse.
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseCollectionFile = (context, collectors) => {
   const { collection, collectionFile } = context;
+  // @ts-ignore singleton files don’t have `format` property on their files
   const { file, format = collection.format, fields } = collectionFile;
   const { extension } = getPathInfo(file);
 
@@ -38,7 +40,8 @@ export const parseCollectionFile = (context, collectors) => {
  * Parse and validate multiple collection file configurations.
  * @param {object} context Context.
  * @param {SiteConfig} context.siteConfig Raw site configuration.
- * @param {FileCollection} context.collection Collection config to parse.
+ * @param {FileCollection | InternalSingletonCollection} context.collection Collection config to
+ * parse.
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseCollectionFiles = (context, collectors) => {
@@ -49,6 +52,9 @@ export const parseCollectionFiles = (context, collectors) => {
   const strKeyBase = 'collection_file_name';
 
   files.forEach((collectionFile, index) => {
+    // Skip file dividers
+    if ('divider' in collectionFile) return;
+
     const { name } = collectionFile;
     const newContext = { siteConfig, collection, collectionFile };
 

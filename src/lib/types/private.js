@@ -4,6 +4,7 @@
  * @import {
  * BackendName,
  * Collection,
+ * CollectionDivider,
  * CollectionFile,
  * EntryCollection,
  * Field,
@@ -494,6 +495,14 @@
  * A file/singleton collection definition.
  * @typedef {FileCollection & FileCollectionExtraProps & CollectionExtraProps
  * } InternalFileCollection
+ */
+
+/**
+ * A singleton collection definition.
+ * @typedef {object} InternalSingletonCollection
+ * @property {'_singletons'} name Collection name.
+ * @property {string} label Collection label.
+ * @property {(CollectionFile | CollectionDivider)[]} files Collection files. Can include dividers.
  */
 
 /**
@@ -1048,7 +1057,7 @@
  * Context for config parsing.
  * @typedef {object} ConfigParserContext
  * @property {SiteConfig} [siteConfig] Raw site config to parse.
- * @property {Collection} [collection] Collection config to parse.
+ * @property {Collection | InternalSingletonCollection} [collection] Collection config to parse.
  * @property {CollectionFile} [collectionFile] File config to parse.
  * @property {string} [componentName] Name of the editor component.
  * @property {boolean} [isIndexFile] Whether the field is part of an index file.
