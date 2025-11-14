@@ -199,6 +199,8 @@ export const serializeContent = ({ draft, locale, valueMap }) => {
     },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
+  const isTomlOutput = ['toml', 'toml-frontmatter'].includes(_file.format);
+
   const content = finalizeContent({
     collectionName,
     fileName: collectionFile?.name,
@@ -207,11 +209,12 @@ export const serializeContent = ({ draft, locale, valueMap }) => {
     valueMap,
     canonicalSlugKey,
     isIndexFile,
-    isTomlOutput: ['toml', 'toml-frontmatter'].includes(_file.format),
+    isTomlOutput,
   });
 
-  // Handle a special case: top-level list field
-  if (hasRootListField(fields)) {
+  // Handle a special case: top-level list field. TOML doesn’t support top-level arrays, so we
+  // ignore the `root` option for such cases.
+  if (!isTomlOutput && hasRootListField(fields)) {
     return content[fields[0].name] ?? [];
   }
 

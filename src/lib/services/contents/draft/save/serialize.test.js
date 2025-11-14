@@ -1243,4 +1243,196 @@ describe('Test serializeContent()', () => {
       items: ['First', 'Second', 'Third'],
     });
   });
+
+  describe('root list field with TOML handling (lines 215-218)', () => {
+    test('returns root list field array when isTomlOutput is false and hasRootListField is true', () => {
+      /** @type {any} */
+      const draft = {
+        collectionName: 'items',
+        collection: {
+          _file: { format: 'json' },
+          _i18n: {
+            canonicalSlug: { key: '' },
+          },
+        },
+        fields: [
+          {
+            name: 'items',
+            widget: 'list',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+        isIndexFile: false,
+      };
+
+      const valueMap = {
+        'items.0.title': 'Item 1',
+        'items.1.title': 'Item 2',
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      // With non-TOML format and root list field, should return the array directly (lines 215-218)
+      expect(result).toEqual([{ title: 'Item 1' }, { title: 'Item 2' }]);
+    });
+
+    test('returns root list field array with empty fallback when array is undefined', () => {
+      /** @type {any} */
+      const draft = {
+        collectionName: 'items',
+        collection: {
+          _file: { format: 'json' },
+          _i18n: {
+            canonicalSlug: { key: '' },
+          },
+        },
+        fields: [
+          {
+            name: 'items',
+            widget: 'list',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+        isIndexFile: false,
+      };
+
+      const valueMap = {};
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      // With no content, should return empty array via the ?? [] fallback
+      expect(result).toEqual([]);
+    });
+
+    test('returns full object when isTomlOutput is true even if hasRootListField is true', () => {
+      /** @type {any} */
+      const draft = {
+        collectionName: 'items',
+        collection: {
+          _file: { format: 'toml' },
+          _i18n: {
+            canonicalSlug: { key: '' },
+          },
+        },
+        fields: [
+          {
+            name: 'items',
+            widget: 'list',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+        isIndexFile: false,
+      };
+
+      const valueMap = {
+        'items.0.title': 'Item 1',
+        'items.1.title': 'Item 2',
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      // With TOML format, should not apply the root list field special case (line 217 condition)
+      // Instead, should return the full object structure
+      expect(Array.isArray(result)).toBe(false);
+      expect(result).toEqual({
+        items: [{ title: 'Item 1' }, { title: 'Item 2' }],
+      });
+    });
+
+    test('returns full object when isTomlOutput is true with toml-frontmatter format and root list field', () => {
+      /** @type {any} */
+      const draft = {
+        collectionName: 'items',
+        collection: {
+          _file: { format: 'toml-frontmatter' },
+          _i18n: {
+            canonicalSlug: { key: '' },
+          },
+        },
+        fields: [
+          {
+            name: 'items',
+            widget: 'list',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+        isIndexFile: false,
+      };
+
+      const valueMap = {
+        'items.0.title': 'Item 1',
+        'items.1.title': 'Item 2',
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      // With TOML-frontmatter format, should not apply the root list field special case
+      // because TOML doesn't support top-level arrays (see comment on lines 216-217)
+      expect(Array.isArray(result)).toBe(false);
+      expect(result).toEqual({
+        items: [{ title: 'Item 1' }, { title: 'Item 2' }],
+      });
+    });
+
+    test('applies special root list handling only for non-TOML formats', () => {
+      /** @type {any} */
+      const draft = {
+        collectionName: 'tags',
+        collection: {
+          _file: { format: 'yaml' },
+          _i18n: {
+            canonicalSlug: { key: '' },
+          },
+        },
+        fields: [
+          {
+            name: 'tags',
+            widget: 'list',
+            fields: [{ name: 'name', widget: 'string' }],
+          },
+        ],
+        isIndexFile: false,
+      };
+
+      const valueMap = {
+        'tags.0.name': 'yaml-tag',
+        'tags.1.name': 'another-tag',
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      // YAML is not TOML, so the special case should apply
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toEqual([{ name: 'yaml-tag' }, { name: 'another-tag' }]);
+    });
+
+    test('respects root list field when content has first field value undefined but with nested items', () => {
+      /** @type {any} */
+      const draft = {
+        collectionName: 'items',
+        collection: {
+          _file: { format: 'json' },
+          _i18n: {
+            canonicalSlug: { key: '' },
+          },
+        },
+        fields: [
+          {
+            name: 'items',
+            widget: 'list',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+        isIndexFile: false,
+      };
+
+      const valueMap = {
+        'items.0.title': 'Item 1',
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      // Should return array extracted from first field (items) due to root list special case
+      expect(result).toEqual([{ title: 'Item 1' }]);
+    });
+  });
 });
