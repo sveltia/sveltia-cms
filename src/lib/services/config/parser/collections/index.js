@@ -143,10 +143,12 @@ export const parseCollections = (siteConfig, collectors) => {
   const strKeyBase = 'collection_name';
 
   collections?.forEach((collection, index) => {
+    // Skip collection dividers
+    if ('divider' in collection) return;
+
     const { name } = collection;
     const newContext = { siteConfig, collection };
 
-    // @ts-ignore
     if (checkName({ name, index, nameCounts, strKeyBase, context: newContext, collectors })) {
       parseCollection(newContext, collectors);
     }
