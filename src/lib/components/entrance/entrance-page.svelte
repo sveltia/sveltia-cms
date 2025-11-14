@@ -122,6 +122,9 @@
       background-color: var(--sui-tertiary-background-color);
       font-size: var(--sui-font-size-default);
       text-align: center;
+      -webkit-user-select: text;
+      user-select: text;
+      cursor: text;
     }
 
     :global {
