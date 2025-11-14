@@ -64,6 +64,7 @@ export const strings = {
   loading: 'Loading…',
   later: 'Later',
   slug: 'Slug',
+  singleton: 'Singleton',
   singletons: 'Singletons',
 
   // Common errors

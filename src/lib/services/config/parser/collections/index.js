@@ -143,6 +143,7 @@ export const parseCollections = (siteConfig, collectors) => {
     const collection = {
       name: '_singletons',
       label: $_('singletons'),
+      label_singular: $_('singleton'),
       files: singletons,
     };
 

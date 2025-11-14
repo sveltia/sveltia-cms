@@ -64,6 +64,7 @@ export const strings = {
   loading: '読み込み中…',
   later: '後で',
   slug: 'スラッグ',
+  singleton: 'シングルトン',
   singletons: 'シングルトン',
 
   // Common errors

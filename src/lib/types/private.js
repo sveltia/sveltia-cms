@@ -502,6 +502,7 @@
  * @typedef {object} InternalSingletonCollection
  * @property {'_singletons'} name Collection name.
  * @property {string} label Collection label.
+ * @property {string} [label_singular] Singular collection label.
  * @property {(CollectionFile | CollectionDivider)[]} files Collection files. Can include dividers.
  */
 

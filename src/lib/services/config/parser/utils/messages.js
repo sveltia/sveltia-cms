@@ -29,7 +29,7 @@ export const addMessage = ({ type = 'error', strKey, values = {}, context = {}, 
   if (collection) {
     locators.push(
       $_('config.error_locator.collection', {
-        values: { collection: collection.label ?? collection.name },
+        values: { collection: collection.label_singular ?? collection.label ?? collection.name },
       }),
     );
   }
