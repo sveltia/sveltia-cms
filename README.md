@@ -284,11 +284,17 @@ We’ve made various improvements to help you get your work done faster and more
 - Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
 - We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253] If you use [deprecated options](#deprecations) in a supported code editor, you should receive a warning.
-- Improved TypeScript support: We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
+- We provide only one package, `@sveltia/cms`, instead of many (`decap-cms`, `decap-cms-app`, `decap-cms-core` and so on), which is simpler and less confusing.
+- Improved TypeScript support
+  - We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
+  - The `SiteConfig` type is exported from the main package, so you can import it directly to construct your configuration object with proper type checking outside of the `CMS.init()` method.
 - Config validation enhancements:
   - Sveltia CMS has additional validation rules designed to prevent common misconfigurations that could lead to runtime errors:
     - Common backend misconfigurations, such as an incorrect repository name or a missing OAuth client ID[^303]
     - A mismatch between the `format` and `extension` options for a collection
+    - Invalid collection, collection file, field, variable type names (e.g. names containing `.` or `*`)
+    - Mutually exclusive config options (e.g. `field`, `fields` and `types` on List fields)
+    - `collection` and `file` references on Relation fields
     - Duplicate variable type names
     - Unsupported widgets and options
     - (more to come)
