@@ -11,6 +11,10 @@ import { BUILTIN_WIDGETS } from './src/lib/services/contents/widgets';
 import svelteConfig from './svelte.config';
 
 /**
+ * Path to the generated main type declaration file.
+ */
+const MAIN_TYPE_PATH = 'package/main.d.ts';
+/**
  * Path to the generated public type declaration file.
  */
 const PUBLIC_TYPE_PATH = 'package/types/public.d.ts';
@@ -83,8 +87,11 @@ const generateTypes = async () => {
     });
   });
 
+  const mainType = await readFile(MAIN_TYPE_PATH, 'utf-8');
   const publicType = await readFile(PUBLIC_TYPE_PATH, 'utf-8');
 
+  // Export the `SiteConfig` type
+  await writeFile(MAIN_TYPE_PATH, mainType.concat('export type { SiteConfig };\n'));
   // Replace `DEPRECATED:` with proper `@deprecated` tag. This is needed because JSDoc comments
   // cannot have the `@deprecated` tag for each property in a typedef.
   await writeFile(PUBLIC_TYPE_PATH, publicType.replaceAll('DEPRECATED:', '@deprecated'));
