@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
 import { existsSync } from 'fs';
-import { cp, mkdir, readFile, writeFile } from 'fs/promises';
+import { appendFile, cp, mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 
 import { svelte } from '@sveltejs/vite-plugin-svelte';
@@ -87,11 +87,11 @@ const generateTypes = async () => {
     });
   });
 
-  const mainType = await readFile(MAIN_TYPE_PATH, 'utf-8');
+  // Export the `SiteConfig` type
+  await appendFile(MAIN_TYPE_PATH, 'export type { SiteConfig };\n');
+
   const publicType = await readFile(PUBLIC_TYPE_PATH, 'utf-8');
 
-  // Export the `SiteConfig` type
-  await writeFile(MAIN_TYPE_PATH, mainType.concat('export type { SiteConfig };\n'));
   // Replace `DEPRECATED:` with proper `@deprecated` tag. This is needed because JSDoc comments
   // cannot have the `@deprecated` tag for each property in a typedef.
   await writeFile(PUBLIC_TYPE_PATH, publicType.replaceAll('DEPRECATED:', '@deprecated'));
