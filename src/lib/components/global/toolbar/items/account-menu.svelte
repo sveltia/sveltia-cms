@@ -59,7 +59,7 @@
       }}
     />
     <MenuItem
-      label={$_('site_config')}
+      label={$_('cms_config')}
       onclick={() => {
         goto('/config', { transitionType: 'forwards' });
       }}

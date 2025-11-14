@@ -7,12 +7,12 @@ vi.mock('$lib/services/config');
 
 describe('Test formatSummary() — comprehensive tests', () => {
   describe('Multiple fields configuration', () => {
-    let siteConfig;
+    let cmsConfig;
 
     beforeAll(async () => {
       const configModule = await import('$lib/services/config');
 
-      siteConfig = writable({
+      cmsConfig = writable({
         backend: { name: 'github' },
         media_folder: 'static/uploads',
         collections: [
@@ -39,7 +39,7 @@ describe('Test formatSummary() — comprehensive tests', () => {
         ],
       });
       // @ts-ignore
-      configModule.siteConfig = siteConfig;
+      configModule.cmsConfig = cmsConfig;
     });
 
     const baseArgs = {
@@ -340,7 +340,7 @@ describe('Test formatSummary() — comprehensive tests', () => {
       collectionCacheMap.clear();
 
       // @ts-ignore
-      (await import('$lib/services/config')).siteConfig = writable({
+      (await import('$lib/services/config')).cmsConfig = writable({
         backend: { name: 'github' },
         media_folder: 'static/uploads',
         collections: [

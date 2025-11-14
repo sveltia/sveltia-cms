@@ -6,7 +6,7 @@ import { parseMediaConfig } from '$lib/services/config/parser/media';
 import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
 
 /**
- * @import { SiteConfig } from '$lib/types/public';
+ * @import { CmsConfig } from '$lib/types/public';
  * @import { ConfigParserCollectors, UnsupportedOption } from '$lib/types/private';
  */
 
@@ -27,22 +27,22 @@ const UNSUPPORTED_OPTIONS = [
 ];
 
 /**
- * Parse and validate the site configuration.
- * @param {SiteConfig} siteConfig Raw site configuration.
+ * Parse and validate the CMS configuration.
+ * @param {CmsConfig} cmsConfig Raw CMS configuration.
  * @param {ConfigParserCollectors} collectors Collectors.
  * @throws {Error} If there is an error in the config.
  * @see https://decapcms.org/docs/configuration-options/
  * @todo Add more validations.
  */
-export const parseSiteConfig = (siteConfig, collectors) => {
-  parseBackendConfig(siteConfig, collectors);
-  parseMediaConfig(siteConfig, collectors);
-  parseCollections(siteConfig, collectors);
+export const parseCmsConfig = (cmsConfig, collectors) => {
+  parseBackendConfig(cmsConfig, collectors);
+  parseMediaConfig(cmsConfig, collectors);
+  parseCollections(cmsConfig, collectors);
 
   checkUnsupportedOptions({
     UNSUPPORTED_OPTIONS,
-    config: siteConfig,
-    context: { siteConfig },
+    config: cmsConfig,
+    context: { cmsConfig },
     collectors,
   });
 };

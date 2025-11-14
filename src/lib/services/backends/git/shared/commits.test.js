@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createCommitMessage } from './commits';
 
 // Mock the get function from svelte/store
-const mockSiteConfig = {
+const mockCmsConfig = {
   backend: {
     commit_messages: {},
     skip_ci: false,
@@ -19,8 +19,8 @@ const mockUser = {
 vi.mock('svelte/store', () => ({
   get: vi.fn((store) => {
     // Mock different returns based on what store is being accessed
-    if (store?.name === 'siteConfig') {
-      return mockSiteConfig;
+    if (store?.name === 'cmsConfig') {
+      return mockCmsConfig;
     }
 
     if (store?.name === 'user') {
@@ -32,7 +32,7 @@ vi.mock('svelte/store', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { name: 'siteConfig' },
+  cmsConfig: { name: 'cmsConfig' },
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -47,7 +47,7 @@ describe('git/shared/commits', () => {
   afterEach(() => {
     vi.clearAllMocks();
     // Reset mock data
-    mockSiteConfig.backend = {
+    mockCmsConfig.backend = {
       commit_messages: {},
       skip_ci: false,
       automatic_deployments: undefined,
@@ -124,7 +124,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should add [skip ci] prefix when automatic deployments are disabled', () => {
-      mockSiteConfig.backend.skip_ci = true;
+      mockCmsConfig.backend.skip_ci = true;
 
       const message = createCommitMessage(mockChanges, {
         commitType: 'create',
@@ -135,7 +135,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should not add [skip ci] prefix for delete operations', () => {
-      mockSiteConfig.backend.skip_ci = true;
+      mockCmsConfig.backend.skip_ci = true;
 
       const message = createCommitMessage(mockChanges, {
         commitType: 'delete',
@@ -166,7 +166,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should add [skip ci] prefix for openAuthoring when enabled', () => {
-      mockSiteConfig.backend.skip_ci = true;
+      mockCmsConfig.backend.skip_ci = true;
 
       const message = createCommitMessage(mockChanges, {
         commitType: 'openAuthoring',
@@ -176,7 +176,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should not add [skip ci] prefix for deleteMedia operations', () => {
-      mockSiteConfig.backend.skip_ci = true;
+      mockCmsConfig.backend.skip_ci = true;
 
       const mediaChanges = [{ path: 'static/images/photo.jpg' }];
 
@@ -188,7 +188,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should add [skip ci] prefix for deleteMedia when skipCI param is true', () => {
-      mockSiteConfig.backend.skip_ci = false;
+      mockCmsConfig.backend.skip_ci = false;
 
       const mediaChanges = [{ path: 'static/images/photo.jpg' }];
 
@@ -201,7 +201,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should use custom commit messages when provided', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {
           create: 'New {{collection}}: {{slug}}',
           update: 'Modified {{collection}}: {{slug}}',
@@ -219,7 +219,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should use custom uploadMedia message when provided', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {
           uploadMedia: 'Uploaded: {{path}}',
         },
@@ -236,7 +236,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should use custom deleteMedia message when provided', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {
           deleteMedia: 'Removed: {{path}}',
         },
@@ -253,7 +253,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should handle automatic_deployments config option', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: undefined,
         automatic_deployments: false,
@@ -268,7 +268,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should use skipCI parameter to override config', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: false,
         automatic_deployments: true,
@@ -309,7 +309,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should handle deleteMedia with multiple files', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: true,
       };
@@ -336,7 +336,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should apply [skip ci] prefix to openAuthoring', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: true,
       };
@@ -349,7 +349,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should not apply [skip ci] when skipCI is explicitly false', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: true,
         automatic_deployments: false,
@@ -365,7 +365,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should not apply [skip ci] when automatic_deployments is true and skip_ci is undefined', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: undefined,
         automatic_deployments: true,
@@ -380,7 +380,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should not apply [skip ci] to deleteMedia even if skip_ci is true', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: true,
       };
@@ -395,7 +395,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should not apply [skip ci] to delete even if skip_ci is true', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: true,
       };
@@ -409,7 +409,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should not add skip ci when skipCI is explicitly false', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: true,
         automatic_deployments: false,
@@ -425,7 +425,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should not add skip ci when autoDeploy is true', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: false,
         automatic_deployments: true,
@@ -466,7 +466,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should handle custom commit message for unknown type', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {
           unknownType: 'Custom message',
         },
@@ -481,7 +481,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should add [skip ci] when autoDeploy is false and skipCIEnabled is undefined', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: undefined,
         automatic_deployments: false,
@@ -496,7 +496,7 @@ describe('git/shared/commits', () => {
     });
 
     it('should add [skip ci] when skipCIEnabled is true but automatic_deployments is undefined', () => {
-      mockSiteConfig.backend = {
+      mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: true,
         automatic_deployments: undefined,

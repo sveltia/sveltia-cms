@@ -27,7 +27,7 @@
     // },
     // {
     //   key: 'config',
-    //   label: $_('site_config'),
+    //   label: $_('cms_config'),
     //   icon: 'settings',
     //   link: '/config',
     // },

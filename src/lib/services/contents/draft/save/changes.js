@@ -5,7 +5,7 @@ import { get } from 'svelte/store';
 
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
@@ -65,7 +65,7 @@ export const createBaseSavingEntryData = async ({
   /** @type {Asset[]} */
   const savingAssets = [];
   const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
-  const { encode_file_path: encodingEnabled = false } = get(siteConfig)?.output ?? {};
+  const { encode_file_path: encodingEnabled = false } = get(cmsConfig)?.output ?? {};
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap: {}, isIndexFile };
 

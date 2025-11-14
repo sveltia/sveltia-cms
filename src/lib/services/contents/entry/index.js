@@ -7,7 +7,7 @@ import { get } from 'svelte/store';
 
 import { backend } from '$lib/services/backends';
 import { fillTemplate } from '$lib/services/common/template';
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { getEntryFoldersByPath } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
@@ -81,7 +81,7 @@ export const extractDateTime = ({ dateFieldName, fields, content }) => {
  * @see https://decapcms.org/docs/deploy-preview-links/
  */
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
-  const { show_preview_links: showLinks = true, _baseURL: baseURL } = get(siteConfig) ?? {};
+  const { show_preview_links: showLinks = true, _baseURL: baseURL } = get(cmsConfig) ?? {};
   const { slug, path: entryFilePath, content } = entry.locales[locale] ?? {};
 
   const {

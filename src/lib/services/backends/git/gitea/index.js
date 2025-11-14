@@ -14,7 +14,7 @@ import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitea/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitea/repository';
 import { apiConfig } from '$lib/services/backends/git/shared/api';
 import { getRepoURL } from '$lib/services/backends/git/shared/repository';
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/user/prefs';
 
 /**
@@ -27,7 +27,7 @@ import { prefs } from '$lib/services/user/prefs';
  * not Gitea/Forgejo.
  */
 export const init = () => {
-  const { backend } = get(siteConfig) ?? {};
+  const { backend } = get(cmsConfig) ?? {};
 
   if (backend?.name !== BACKEND_NAME) {
     return undefined;

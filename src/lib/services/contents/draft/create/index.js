@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { entryDraft } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
@@ -113,7 +113,7 @@ export const createDraft = ({
     indexFile?.editor?.preview ??
     collectionFile?.editor?.preview ??
     collection.editor?.preview ??
-    get(siteConfig)?.editor?.preview ??
+    get(cmsConfig)?.editor?.preview ??
     true;
 
   const {

@@ -72,7 +72,7 @@ export const strings = {
 
   // Entrance
   welcome_to_sveltia_cms: 'Sveltia CMS へようこそ',
-  loading_site_config: 'サイト設定を読み込んでいます…',
+  loading_cms_config: 'CMS 設定を読み込んでいます…',
   loading_site_data: 'サイトデータを読み込んでいます…',
   loading_site_data_error: 'サイトデータの読み込み中にエラーが発生しました。',
   sign_in_with_x: '{service} でログイン',
@@ -138,7 +138,7 @@ export const strings = {
   live_site: '管理対象サイト',
   git_repository: 'Git レポジトリ',
   settings: '設定',
-  site_config: 'サイト設定',
+  cms_config: 'CMS 設定',
   show_help_menu: 'ヘルプメニューを表示',
   help: 'ヘルプ',
   keyboard_shortcuts: 'キーボードショートカット',
@@ -632,8 +632,8 @@ export const strings = {
 
   // Configuration
   config: {
-    one_error: 'サイト設定に問題が見つかりました。問題を解決してから再度お試しください。',
-    many_errors: 'サイト設定に問題が見つかりました。問題を解決してから再度お試しください。',
+    one_error: 'CMS 設定に問題が見つかりました。問題を解決してから再度お試しください。',
+    many_errors: 'CMS 設定に問題が見つかりました。問題を解決してから再度お試しください。',
     error_locator: {
       collection: '{collection} コレクション',
       file: '{file} ファイル',

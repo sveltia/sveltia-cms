@@ -86,7 +86,7 @@ export const populateDefaultValue = ({ content, keyPath, fieldConfig, locale, dy
 
 /**
  * Get the default values for the given fields. If dynamic default values are given, these values
- * take precedence over static default values defined with the site configuration.
+ * take precedence over static default values defined with the CMS configuration.
  * @param {Field[]} fields Field list of a collection.
  * @param {InternalLocaleCode} locale Locale.
  * @param {Record<string, string>} [dynamicValues] Dynamic default values.

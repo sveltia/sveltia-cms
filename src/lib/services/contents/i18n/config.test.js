@@ -21,7 +21,7 @@ import {
 vi.mock('$lib/services/config');
 
 describe('Test normalizeI18nConfig()', () => {
-  const siteConfigBase = {
+  const cmsConfigBase = {
     backend: { name: 'github' },
     media_folder: 'static/images/uploads',
     _siteURL: '',
@@ -98,8 +98,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('no i18n defined at top-level or collection-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       collections: [collectionWithoutI18n],
     });
 
@@ -116,8 +116,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('no i18n defined at collection-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],
@@ -139,8 +139,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with locales, no structure, no default_locale', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         locales: ['en', 'fr'],
       },
@@ -201,8 +201,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with locales, structure and default_locale', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],
@@ -273,8 +273,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('partial config override at collection-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         structure: 'multiple_folders',
         allLocales: ['en', 'de', 'fr'],
@@ -304,8 +304,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('complete config override at collection-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],
@@ -334,8 +334,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('partial config override at file-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],
@@ -409,8 +409,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('complete config override at file-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         structure: 'multiple_folders',
         locales: ['en', 'de', 'fr'],
@@ -489,8 +489,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with `save_all_locales: false`', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         locales: ['en', 'de', 'fr'],
         save_all_locales: false,
@@ -518,8 +518,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with initial locales', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         locales: ['en', 'de', 'fr'],
         initial_locales: ['en', 'de'],
@@ -547,8 +547,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with initial locales with all locales', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         locales: ['en', 'de', 'fr'],
         initial_locales: 'all',
@@ -576,8 +576,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with initial locales with default locale', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         locales: ['en', 'de', 'fr'],
         initial_locales: 'default',
@@ -605,8 +605,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with initial locales without default locale', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         locales: ['en', 'de', 'fr'],
         initial_locales: ['de'],
@@ -634,8 +634,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with omit_default_locale_from_filename in multi-file structure (line 222)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         structure: 'multiple_files',
         locales: ['en', 'de', 'fr'],
@@ -665,8 +665,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with omit_default_locale_from_filename in single-file structure (line 222)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         structure: 'single_file',
         locales: ['en', 'de', 'fr'],
@@ -696,8 +696,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with omit_default_locale_from_filename and file with locale placeholder (line 223)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         structure: 'multiple_folders', // File will change this to multiple_files
         locales: ['en', 'de', 'fr'],
@@ -734,8 +734,8 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with omit_default_locale_from_filename and file without locale placeholder (line 223)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
-      ...siteConfigBase,
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
       i18n: {
         structure: 'multiple_files', // File will change this to single_file
         locales: ['en', 'de', 'fr'],
@@ -799,7 +799,7 @@ describe('Test internal helper functions', () => {
   });
 
   describe('mergeI18nConfigs', () => {
-    const siteConfigBase = {
+    const cmsConfigBase = {
       backend: { name: 'github' },
       media_folder: 'static/images/uploads',
       _siteURL: '',
@@ -808,8 +808,8 @@ describe('Test internal helper functions', () => {
 
     test('should return undefined when site config has no i18n', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).siteConfig = writable({
-        ...siteConfigBase,
+      (await import('$lib/services/config')).cmsConfig = writable({
+        ...cmsConfigBase,
       });
 
       const collection = { name: 'posts', folder: 'content/posts', fields: [] };
@@ -819,8 +819,8 @@ describe('Test internal helper functions', () => {
 
     test('should return undefined when collection has no i18n', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).siteConfig = writable({
-        ...siteConfigBase,
+      (await import('$lib/services/config')).cmsConfig = writable({
+        ...cmsConfigBase,
         i18n: { structure: 'single_file', locales: ['en', 'fr'] },
       });
 
@@ -831,8 +831,8 @@ describe('Test internal helper functions', () => {
 
     test('should return site i18n config for collection with i18n=true', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).siteConfig = writable({
-        ...siteConfigBase,
+      (await import('$lib/services/config')).cmsConfig = writable({
+        ...cmsConfigBase,
         i18n: { structure: 'single_file', locales: ['en', 'fr'] },
       });
 
@@ -844,8 +844,8 @@ describe('Test internal helper functions', () => {
 
     test('should merge collection i18n config over site config', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).siteConfig = writable({
-        ...siteConfigBase,
+      (await import('$lib/services/config')).cmsConfig = writable({
+        ...cmsConfigBase,
         i18n: { structure: 'single_file', locales: ['en', 'fr'] },
       });
 
@@ -865,8 +865,8 @@ describe('Test internal helper functions', () => {
 
     test('should merge file i18n config over collection config', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).siteConfig = writable({
-        ...siteConfigBase,
+      (await import('$lib/services/config')).cmsConfig = writable({
+        ...cmsConfigBase,
         i18n: { structure: 'single_file', locales: ['en', 'fr'] },
       });
 
@@ -895,8 +895,8 @@ describe('Test internal helper functions', () => {
 
     test('should return undefined if file has i18n=false', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).siteConfig = writable({
-        ...siteConfigBase,
+      (await import('$lib/services/config')).cmsConfig = writable({
+        ...cmsConfigBase,
         i18n: { structure: 'single_file', locales: ['en', 'fr'] },
       });
 
@@ -921,8 +921,8 @@ describe('Test internal helper functions', () => {
 
     test('should handle singleton collection', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).siteConfig = writable({
-        ...siteConfigBase,
+      (await import('$lib/services/config')).cmsConfig = writable({
+        ...cmsConfigBase,
         i18n: { structure: 'single_file', locales: ['en', 'fr'] },
       });
 

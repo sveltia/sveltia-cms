@@ -3,13 +3,13 @@
   import { stringify } from 'yaml';
 
   import PageContainer from '$lib/components/common/page-container.svelte';
-  import { rawSiteConfig } from '$lib/services/config';
+  import { rawCmsConfig } from '$lib/services/config';
 </script>
 
 <PageContainer aria-label={$_('site_configuration_editor')}>
   {#snippet main()}
-    <div role="blockquote" aria-label={$_('site_config')}>
-      <pre>{stringify(rawSiteConfig)}</pre>
+    <div role="blockquote" aria-label={$_('cms_config')}>
+      <pre>{stringify(rawCmsConfig)}</pre>
     </div>
   {/snippet}
 </PageContainer>

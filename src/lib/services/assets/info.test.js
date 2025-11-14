@@ -58,9 +58,9 @@ vi.mock('$lib/services/backends', () => ({
   },
 }));
 vi.mock('$lib/services/config', () => ({
-  siteConfig: {
+  cmsConfig: {
     subscribe: vi.fn(),
-    _mockValue: 'siteConfig',
+    _mockValue: 'cmsConfig',
   },
 }));
 vi.mock('$lib/services/assets/folders', () => ({
@@ -88,7 +88,7 @@ describe('assets/info', () => {
   /** @type {any} */
   let mockBackend;
   /** @type {any} */
-  let mockSiteConfig;
+  let mockCmsConfig;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -122,7 +122,7 @@ describe('assets/info', () => {
     };
 
     // Mock site config
-    mockSiteConfig = {
+    mockCmsConfig = {
       _baseURL: 'https://example.com',
       output: {
         encode_file_path: false,
@@ -136,7 +136,7 @@ describe('assets/info', () => {
       // Match the specific store references from the imports
       if (store && typeof store === 'object' && '_mockValue' in store) {
         if (store._mockValue === 'backend') return mockBackend;
-        if (store._mockValue === 'siteConfig') return mockSiteConfig;
+        if (store._mockValue === 'cmsConfig') return mockCmsConfig;
         if (store._mockValue === 'globalAssetFolder') return mockAsset.folder;
       }
 
@@ -446,7 +446,7 @@ describe('assets/info', () => {
       getMock.mockImplementation((store) => {
         if (store && typeof store === 'object' && '_mockValue' in store) {
           if (store._mockValue === 'backend') return mockBackend;
-          if (store._mockValue === 'siteConfig') return mockSiteConfig;
+          if (store._mockValue === 'cmsConfig') return mockCmsConfig;
           if (store._mockValue === 'globalAssetFolder') return mockAsset.folder;
         }
 
@@ -543,7 +543,7 @@ describe('assets/info', () => {
 
       vi.mocked(encodeFilePath).mockReturnValue('/encoded/path/test.jpg');
 
-      mockSiteConfig.output.encode_file_path = true;
+      mockCmsConfig.output.encode_file_path = true;
 
       const result = getAssetPublicURL(mockAsset, { pathOnly: true });
 
@@ -984,8 +984,8 @@ describe('assets/info', () => {
       expect(result).toBeDefined();
     });
 
-    it('should handle undefined baseURL in siteConfig', () => {
-      mockSiteConfig._baseURL = undefined;
+    it('should handle undefined baseURL in cmsConfig', () => {
+      mockCmsConfig._baseURL = undefined;
 
       const result = getAssetPublicURL(mockAsset);
 
@@ -993,16 +993,16 @@ describe('assets/info', () => {
       expect(result).toContain('assets/images/test.jpg');
     });
 
-    it('should handle empty baseURL in siteConfig', () => {
-      mockSiteConfig._baseURL = '';
+    it('should handle empty baseURL in cmsConfig', () => {
+      mockCmsConfig._baseURL = '';
 
       const result = getAssetPublicURL(mockAsset, { pathOnly: true });
 
       expect(result).toBe('/assets/images/test.jpg');
     });
 
-    it('should handle undefined output config in siteConfig', () => {
-      mockSiteConfig.output = undefined;
+    it('should handle undefined output config in cmsConfig', () => {
+      mockCmsConfig.output = undefined;
 
       const result = getAssetPublicURL(mockAsset, { pathOnly: true });
 
@@ -1216,7 +1216,7 @@ describe('assets/info', () => {
     });
 
     it('should include baseURL in the final URL', () => {
-      mockSiteConfig._baseURL = 'https://custom.example.com';
+      mockCmsConfig._baseURL = 'https://custom.example.com';
 
       const result = getAssetPublicURL(mockAsset);
 
@@ -1224,7 +1224,7 @@ describe('assets/info', () => {
     });
 
     it('should return path only without baseURL when pathOnly is true', () => {
-      mockSiteConfig._baseURL = 'https://custom.example.com';
+      mockCmsConfig._baseURL = 'https://custom.example.com';
 
       const result = getAssetPublicURL(mockAsset, { pathOnly: true });
 
@@ -1323,7 +1323,7 @@ describe('assets/info', () => {
     });
 
     it('should return public URL without baseURL for path-only requests', () => {
-      mockSiteConfig._baseURL = 'https://example.org';
+      mockCmsConfig._baseURL = 'https://example.org';
 
       const result = getAssetPublicURL(mockAsset, { pathOnly: true });
 
@@ -1397,7 +1397,7 @@ describe('assets/info', () => {
     it('should not encode path when encoding is disabled', async () => {
       const { encodeFilePath } = await import('$lib/services/utils/file');
 
-      mockSiteConfig.output.encode_file_path = false;
+      mockCmsConfig.output.encode_file_path = false;
 
       const result = getAssetPublicURL(mockAsset, { pathOnly: true });
 

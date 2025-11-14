@@ -2,7 +2,7 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import {
   getValidCollectionFiles,
   isValidCollectionFile,
@@ -109,14 +109,14 @@ export const isValidCollection = (collection, { visible = undefined, type = unde
  * property for file collections.
  * @param {object} [options] Options.
  * @param {(Collection | CollectionDivider)[]} [options.collections] Collection definitions. May
- * include dividers. Defaults to the collections defined in the site configuration.
+ * include dividers. Defaults to the collections defined in the CMS configuration.
  * @param {boolean} [options.visible] Whether to filter out hidden collections. Defaults to `false`.
  * @param {CollectionType} [options.type] Type of collections to filter by. If provided, only
  * collections of this type will be returned.
  * @returns {Collection[]} List of valid collections.
  */
 export const getValidCollections = ({
-  collections = get(siteConfig)?.collections ?? [],
+  collections = get(cmsConfig)?.collections ?? [],
   visible,
   type,
 } = {}) =>
@@ -198,13 +198,13 @@ export const parseFileCollection = (rawCollection, _i18n, files) => ({
 
 /**
  * Get the pseudo singleton file collection. This is a collection that contains all singleton files
- * defined in the site configuration. It is used to handle singletons as a collection, allowing for
+ * defined in the CMS configuration. It is used to handle singletons as a collection, allowing for
  * easier access and management.
  * @returns {InternalCollection | undefined} Singleton collection, or `undefined` if no singletons
  * are defined.
  */
 export const getSingletonCollection = () => {
-  const singletons = get(siteConfig)?.singletons;
+  const singletons = get(cmsConfig)?.singletons;
 
   if (!Array.isArray(singletons)) {
     return undefined;
@@ -324,5 +324,5 @@ export const getCollectionIndex = (collectionName) => {
     return 9999999;
   }
 
-  return get(siteConfig)?.collections?.findIndex(({ name }) => name === collectionName) ?? -1;
+  return get(cmsConfig)?.collections?.findIndex(({ name }) => name === collectionName) ?? -1;
 };

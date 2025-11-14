@@ -8,7 +8,7 @@ import {
 
 vi.mock('$lib/services/assets');
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn((callback) => callback({})) },
+  cmsConfig: { subscribe: vi.fn((callback) => callback({})) },
 }));
 vi.mock('$lib/services/contents/draft/save/key-path', () => ({
   createKeyPathList: vi.fn((fields) => fields.map((/** @type {any} */ f) => f.name)),

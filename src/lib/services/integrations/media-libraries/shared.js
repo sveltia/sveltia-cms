@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 
 /**
  * @import { MediaField, MediaLibraries, MediaLibrary } from '$lib/types/public';
@@ -59,14 +59,14 @@ export const hasMultipleInMediaLibrary = (mediaLibrary) => {
  * @returns {boolean} `true` if the field allows multiple files, `false` otherwise.
  */
 export const isMultiple = (fieldConfig) => {
-  const _siteConfig = get(siteConfig);
+  const _cmsConfig = get(cmsConfig);
 
   return (
     fieldConfig.multiple ??
     hasMultipleInMediaLibraries(fieldConfig.media_libraries) ??
     hasMultipleInMediaLibrary(fieldConfig.media_library) ??
-    hasMultipleInMediaLibraries(_siteConfig?.media_libraries) ??
-    hasMultipleInMediaLibrary(_siteConfig?.media_library) ??
+    hasMultipleInMediaLibraries(_cmsConfig?.media_libraries) ??
+    hasMultipleInMediaLibrary(_cmsConfig?.media_library) ??
     false
   );
 };

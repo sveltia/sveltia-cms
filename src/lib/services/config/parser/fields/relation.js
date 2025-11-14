@@ -26,12 +26,12 @@ export const parseRelationFieldConfig = (args) => {
   const { config, context, collectors } = args;
   const fieldConfig = /** @type {RelationField} */ (config);
   const { collection: collectionName, file: fileName, value_field: valueField } = fieldConfig;
-  const { siteConfig } = context;
+  const { cmsConfig } = context;
 
   const collection =
     collectionName === '_singletons'
-      ? siteConfig?.singletons
-      : siteConfig?.collections?.find((col) => col.name === collectionName);
+      ? cmsConfig?.singletons
+      : cmsConfig?.collections?.find((col) => col.name === collectionName);
 
   /** @type {CollectionFile | undefined} */
   let file = undefined;

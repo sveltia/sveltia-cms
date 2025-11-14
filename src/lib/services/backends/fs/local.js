@@ -3,14 +3,14 @@ import { get } from 'svelte/store';
 
 import { allBackendServices } from '$lib/services/backends';
 import { loadFiles, saveChanges } from '$lib/services/backends/fs/shared/files';
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 
 /**
  * @import {
  * BackendService,
  * CommitResults,
  * FileChange,
- * InternalSiteConfig,
+ * InternalCmsConfig,
  * RepositoryInfo,
  * SignInOptions,
  * User,
@@ -108,7 +108,7 @@ export const getRootDirHandle = async ({ forceReload = false, showPicker = true 
  * @returns {RepositoryInfo | undefined} Repository info.
  */
 const init = () => {
-  const { name: service } = /** @type {InternalSiteConfig} */ (get(siteConfig)).backend;
+  const { name: service } = /** @type {InternalCmsConfig} */ (get(cmsConfig)).backend;
 
   remoteRepository = allBackendServices[service]?.init?.();
 

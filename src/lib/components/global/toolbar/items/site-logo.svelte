@@ -3,10 +3,10 @@
   import { _ } from 'svelte-i18n';
 
   import { openProductionSite } from '$lib/services/app/navigation';
-  import { siteConfig } from '$lib/services/config';
+  import { cmsConfig } from '$lib/services/config';
 
-  const src = $derived($siteConfig?.logo?.src ?? $siteConfig?.logo_url);
-  const showInHeader = $derived($siteConfig?.logo?.show_in_header ?? true);
+  const src = $derived($cmsConfig?.logo?.src ?? $cmsConfig?.logo_url);
+  const showInHeader = $derived($cmsConfig?.logo?.show_in_header ?? true);
 </script>
 
 {#if src && showInHeader}

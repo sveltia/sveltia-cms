@@ -4,7 +4,7 @@ import { sleep } from '@sveltia/utils/misc';
 import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 
 /**
  * @import {
@@ -12,7 +12,7 @@ import { siteConfig } from '$lib/services/config';
  * MediaLibraryFetchOptions,
  * MediaLibraryService,
  * } from '$lib/types/private';
- * @import { CloudinaryMediaLibrary, MediaField, SiteConfig } from '$lib/types/public';
+ * @import { CloudinaryMediaLibrary, CmsConfig, MediaField } from '$lib/types/public';
  */
 
 /**
@@ -78,13 +78,13 @@ export const CONFIG_PROPS = [
 /**
  * Get Cloudinary library options from site config.
  * @internal
- * @param {SiteConfig | MediaField} [config] Site configuration or field configuration.
+ * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
  * @returns {CloudinaryMediaLibrary | undefined} Configuration object.
  */
 export const getLibraryOptions = (config) => {
-  const _siteConfig = get(siteConfig);
+  const _cmsConfig = get(cmsConfig);
 
-  config ??= _siteConfig;
+  config ??= _cmsConfig;
 
   // Check for explicit media_libraries.cloudinary config (preferred)
   if (config?.media_libraries?.cloudinary) {
@@ -99,7 +99,7 @@ export const getLibraryOptions = (config) => {
   const isExplicitlyCloudinary = config.media_library.name === 'cloudinary';
 
   const isImplicitlyCloudinary =
-    !config.media_library.name && _siteConfig?.media_library?.name === 'cloudinary';
+    !config.media_library.name && _cmsConfig?.media_library?.name === 'cloudinary';
 
   if (isExplicitlyCloudinary || isImplicitlyCloudinary) {
     return /** @type {CloudinaryMediaLibrary} */ (config.media_library);

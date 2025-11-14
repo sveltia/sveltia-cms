@@ -12,6 +12,7 @@ import App from './components/app.svelte';
  * @import { ComponentType } from 'react';
  * @import {
  * AppEventListener,
+ * CmsConfig,
  * CustomPreviewTemplateProps,
  * CustomWidgetControlProps,
  * CustomWidgetPreviewProps,
@@ -19,7 +20,6 @@ import App from './components/app.svelte';
  * EditorComponentDefinition,
  * FileFormatter,
  * FileParser,
- * SiteConfig,
  * } from './types/public';
  * // Don’t use `$lib` in `from` above, or type declarations will not be exported
  */
@@ -54,9 +54,9 @@ const COMPATIBILITY_URL = 'https://github.com/sveltia/sveltia-cms#compatibility'
 let initialized = false;
 
 /**
- * Initialize the CMS, optionally with the given site configuration.
+ * Initialize the CMS, optionally with the given CMS configuration.
  * @param {object} [options] Options.
- * @param {SiteConfig} [options.config] Configuration to be merged with `config.yml`. Include
+ * @param {CmsConfig} [options.config] Configuration to be merged with `config.yml`. Include
  * `load_config_file: false` to prevent the configuration file from being loaded.
  * @see https://decapcms.org/docs/manual-initialization/
  */

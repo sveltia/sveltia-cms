@@ -651,14 +651,14 @@ describe('draft/save/changes', () => {
   });
 
   describe('createBaseSavingEntryData with various config scenarios', () => {
-    it('should handle missing siteConfig gracefully', async () => {
+    it('should handle missing cmsConfig gracefully', async () => {
       const { createEntryPath } = await import('./entry-path');
       const { getBlobRegex } = await import('@sveltia/utils/file');
 
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
 
-      // Mock siteConfig to return undefined (Line 69: get(siteConfig)?.output ?? {})
+      // Mock cmsConfig to return undefined (Line 69: get(cmsConfig)?.output ?? {})
       mockGet.mockReturnValue(undefined);
 
       const draft = {
@@ -687,19 +687,19 @@ describe('draft/save/changes', () => {
 
       const result = await createBaseSavingEntryData({ draft, slugs });
 
-      // Line 69: Should handle missing siteConfig by using empty object
+      // Line 69: Should handle missing cmsConfig by using empty object
       expect(result.localizedEntryMap.en).toBeDefined();
       expect(result.localizedEntryMap.en.content.title).toBe('Test Post');
     });
 
-    it('should handle siteConfig with output property', async () => {
+    it('should handle cmsConfig with output property', async () => {
       const { createEntryPath } = await import('./entry-path');
       const { getBlobRegex } = await import('@sveltia/utils/file');
 
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
 
-      // Mock siteConfig to return config with output and encodingEnabled
+      // Mock cmsConfig to return config with output and encodingEnabled
       mockGet.mockReturnValue({
         output: {
           encode_file_path: true,
@@ -732,7 +732,7 @@ describe('draft/save/changes', () => {
 
       const result = await createBaseSavingEntryData({ draft, slugs });
 
-      // Line 69: Should properly extract encodingEnabled from siteConfig
+      // Line 69: Should properly extract encodingEnabled from cmsConfig
       expect(result.localizedEntryMap.en).toBeDefined();
       expect(result.localizedEntryMap.en.content.title).toBe('Test Post');
     });

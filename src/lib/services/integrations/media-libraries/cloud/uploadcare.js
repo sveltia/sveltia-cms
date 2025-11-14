@@ -3,7 +3,7 @@
 import { sleep } from '@sveltia/utils/misc';
 import { get } from 'svelte/store';
 
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { formatFileName } from '$lib/services/utils/file';
 
 /**
@@ -12,7 +12,7 @@ import { formatFileName } from '$lib/services/utils/file';
  * MediaLibraryFetchOptions,
  * MediaLibraryService,
  * } from '$lib/types/private';
- * @import { MediaField, SiteConfig, UploadcareMediaLibrary } from '$lib/types/public';
+ * @import { CmsConfig, MediaField, UploadcareMediaLibrary } from '$lib/types/public';
  */
 
 /**
@@ -40,10 +40,10 @@ import { formatFileName } from '$lib/services/utils/file';
 /**
  * Get Uploadcare library options from site config.
  * @internal
- * @param {SiteConfig | MediaField} [config] Site configuration or field configuration.
+ * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
  * @returns {UploadcareMediaLibrary | undefined} Configuration object.
  */
-export const getLibraryOptions = (config = get(siteConfig)) =>
+export const getLibraryOptions = (config = get(cmsConfig)) =>
   config?.media_libraries?.uploadcare ??
   (config?.media_library?.name === 'uploadcare'
     ? /** @type {UploadcareMediaLibrary} */ (config?.media_library)

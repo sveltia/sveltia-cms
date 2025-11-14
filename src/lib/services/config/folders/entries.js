@@ -9,7 +9,7 @@ import { getLocalePath } from '$lib/services/contents/i18n';
 import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
 
 /**
- * @import { EntryFolderInfo, InternalLocaleCode, InternalSiteConfig } from '$lib/types/private';
+ * @import { EntryFolderInfo, InternalCmsConfig, InternalLocaleCode } from '$lib/types/private';
  * @import { Collection, CollectionFile, EntryCollection, FileCollection } from '$lib/types/public';
  */
 
@@ -63,7 +63,7 @@ export const compareFilePath = (a, b) =>
 
 /**
  * Get entry collection folders.
- * @param {InternalSiteConfig} config Site configuration.
+ * @param {InternalCmsConfig} config CMS configuration.
  * @returns {EntryFolderInfo[]} Entry folders.
  */
 export const getEntryCollectionFolders = ({ collections }) =>
@@ -92,7 +92,7 @@ export const getEntryCollectionFolders = ({ collections }) =>
 
 /**
  * Get file collection folders.
- * @param {InternalSiteConfig} config Site configuration.
+ * @param {InternalCmsConfig} config CMS configuration.
  * @returns {EntryFolderInfo[]} Entry folders.
  */
 export const getFileCollectionFolders = ({ collections }) =>
@@ -109,7 +109,7 @@ export const getFileCollectionFolders = ({ collections }) =>
 
 /**
  * Get singleton collection folders.
- * @param {InternalSiteConfig} config Site configuration.
+ * @param {InternalCmsConfig} config CMS configuration.
  * @returns {EntryFolderInfo[]} Entry folders.
  */
 export const getSingletonCollectionFolders = ({ singletons }) => {
@@ -129,7 +129,7 @@ export const getSingletonCollectionFolders = ({ singletons }) => {
 
 /**
  * Get all entry folders.
- * @param {InternalSiteConfig} config Site configuration.
+ * @param {InternalCmsConfig} config CMS configuration.
  * @returns {EntryFolderInfo[]} Entry folders.
  */
 export const getAllEntryFolders = (config) => [

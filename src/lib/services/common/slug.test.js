@@ -20,7 +20,7 @@ vi.mock('$lib/services/utils/file', () => ({
 describe('Test slugify()', () => {
   test('basic slugification with default settings', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -37,7 +37,7 @@ describe('Test slugify()', () => {
 
   test('special characters and punctuation', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -58,7 +58,7 @@ describe('Test slugify()', () => {
 
   test('consecutive hyphen consolidation', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -83,7 +83,7 @@ describe('Test slugify()', () => {
 
   test('consecutive hyphen consolidation with custom replacement', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -99,7 +99,7 @@ describe('Test slugify()', () => {
 
   test('unicode characters with unicode encoding', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -116,7 +116,7 @@ describe('Test slugify()', () => {
 
   test('ascii encoding', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'ascii',
         clean_accents: false,
@@ -134,7 +134,7 @@ describe('Test slugify()', () => {
 
   test('accent cleaning', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'unicode',
         clean_accents: true,
@@ -154,7 +154,7 @@ describe('Test slugify()', () => {
 
   test('custom sanitize replacement', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -166,7 +166,7 @@ describe('Test slugify()', () => {
     expect(slugify('Hello   World  Test')).toBe('hello_world_test');
 
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -180,7 +180,7 @@ describe('Test slugify()', () => {
 
   test('empty and whitespace strings', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -195,7 +195,7 @@ describe('Test slugify()', () => {
 
   test('no site config', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable(null);
+    (await import('$lib/services/config')).cmsConfig = writable(null);
 
     // Should use default values
     expect(slugify('Hello World')).toBe('hello-world');
@@ -204,7 +204,7 @@ describe('Test slugify()', () => {
 
   test('partial site config', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         clean_accents: true,
         // encoding and sanitize_replacement should use defaults
@@ -218,7 +218,7 @@ describe('Test slugify()', () => {
 
   test('edge cases', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -235,7 +235,7 @@ describe('Test slugify()', () => {
   });
   test('fallback parameter behavior', async () => {
     // @ts-ignore
-    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+    const cmsConfigMock = (await import('$lib/services/config')).cmsConfig;
 
     const originalConfig = {
       backend: { name: 'github' },
@@ -251,7 +251,7 @@ describe('Test slugify()', () => {
     };
 
     // @ts-ignore
-    siteConfigMock.set(originalConfig);
+    cmsConfigMock.set(originalConfig);
 
     // Test with fallback=true (default behavior)
     expect(slugify('', { fallback: true })).toMatch(/[0-9a-f]{12}/); // Should return UUID
@@ -275,11 +275,11 @@ describe('Test slugify()', () => {
 
   test('fallback with different encodings', async () => {
     // @ts-ignore
-    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+    const cmsConfigMock = (await import('$lib/services/config')).cmsConfig;
 
     // Test fallback with ASCII encoding
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'ascii',
         clean_accents: false,
@@ -292,7 +292,7 @@ describe('Test slugify()', () => {
 
     // Test fallback with accent cleaning
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: true,
@@ -307,10 +307,10 @@ describe('Test slugify()', () => {
 
   test('fallback with custom sanitize replacement', async () => {
     // @ts-ignore
-    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+    const cmsConfigMock = (await import('$lib/services/config')).cmsConfig;
 
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -326,11 +326,11 @@ describe('Test slugify()', () => {
 
   test('trim replacement characters option', async () => {
     // @ts-ignore
-    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+    const cmsConfigMock = (await import('$lib/services/config')).cmsConfig;
 
     // Test with trim enabled (default behavior)
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -348,7 +348,7 @@ describe('Test slugify()', () => {
 
     // Test with trim disabled
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -367,11 +367,11 @@ describe('Test slugify()', () => {
 
   test('trim option with custom replacement characters', async () => {
     // @ts-ignore
-    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+    const cmsConfigMock = (await import('$lib/services/config')).cmsConfig;
 
     // Test with underscore replacement and trim enabled
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -388,7 +388,7 @@ describe('Test slugify()', () => {
 
     // Test with underscore replacement and trim disabled
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -406,11 +406,11 @@ describe('Test slugify()', () => {
 
   test('trim option with special replacement characters', async () => {
     // @ts-ignore
-    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+    const cmsConfigMock = (await import('$lib/services/config')).cmsConfig;
 
     // Test with dot replacement character (needs escaping in regex)
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -425,7 +425,7 @@ describe('Test slugify()', () => {
 
     // Test with dot replacement and trim disabled
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -440,11 +440,11 @@ describe('Test slugify()', () => {
 
   test('trim option with empty replacement character', async () => {
     // @ts-ignore
-    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+    const cmsConfigMock = (await import('$lib/services/config')).cmsConfig;
 
     // When replacement is empty, trim option should have no effect
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -457,7 +457,7 @@ describe('Test slugify()', () => {
     expect(slugify(' Hello World ')).toBe('helloworld'); // Spaces removed, no replacement to trim
 
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -472,11 +472,11 @@ describe('Test slugify()', () => {
 
   test('trim option with fallback behavior', async () => {
     // @ts-ignore
-    const siteConfigMock = (await import('$lib/services/config')).siteConfig;
+    const cmsConfigMock = (await import('$lib/services/config')).cmsConfig;
 
     // Test that fallback works correctly with trim enabled
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -493,7 +493,7 @@ describe('Test slugify()', () => {
 
     // Test with trim disabled - replacement characters should be preserved, no fallback needed
     // @ts-ignore
-    siteConfigMock.set({
+    cmsConfigMock.set({
       slug: {
         encoding: 'unicode',
         clean_accents: false,

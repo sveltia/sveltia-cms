@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { getCollectionLabel } from '$lib/services/contents/collection';
 import { user } from '$lib/services/user';
 
@@ -36,7 +36,7 @@ export const createCommitMessage = (
     commit_messages: customCommitMessages = {},
     skip_ci: skipCIEnabled,
     automatic_deployments: autoDeploy,
-  } = /** @type {GitBackend} */ (get(siteConfig)?.backend ?? {});
+  } = /** @type {GitBackend} */ (get(cmsConfig)?.backend ?? {});
 
   const { login = '', name = '' } = /** @type {User} */ (get(user));
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);

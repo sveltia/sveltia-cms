@@ -13,7 +13,7 @@ import {
 } from '$lib/services/config/parser/utils/messages';
 
 /**
- * @import { Collection, CollectionDivider, EntryCollection, SiteConfig } from '$lib/types/public';
+ * @import { CmsConfig, Collection, CollectionDivider, EntryCollection } from '$lib/types/public';
  * @import {
  * ConfigParserCollectors,
  * InternalSingletonCollection,
@@ -34,12 +34,12 @@ const UNSUPPORTED_OPTIONS = [
  * Parse and validate a single entry collection configuration.
  * @internal
  * @param {object} context Context.
- * @param {SiteConfig} context.siteConfig Raw site configuration.
+ * @param {CmsConfig} context.cmsConfig Raw CMS configuration.
  * @param {EntryCollection} context.collection Collection config to parse.
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseEntryCollection = (context, collectors) => {
-  const { siteConfig, collection } = context;
+  const { cmsConfig, collection } = context;
   const { extension, format, fields, index_file } = collection;
 
   if (isFormatMismatch(extension, format)) {
@@ -58,7 +58,7 @@ export const parseEntryCollection = (context, collectors) => {
   if (index_file) {
     parseFields(
       index_file === true ? fields : (index_file.fields ?? fields),
-      { siteConfig, collection, isIndexFile: true },
+      { cmsConfig, collection, isIndexFile: true },
       collectors,
     );
   }
@@ -68,11 +68,11 @@ export const parseEntryCollection = (context, collectors) => {
  * Parse and validate a collection or divider configuration.
  * @internal
  * @param {object} context Context.
- * @param {SiteConfig} context.siteConfig Raw site configuration.
+ * @param {CmsConfig} context.cmsConfig Raw CMS configuration.
  * @param {Collection | CollectionDivider} context.collection Collection config to parse.
  * @param {ConfigParserCollectors} collectors Collectors.
  */
-export const parseCollection = ({ siteConfig, collection }, collectors) => {
+export const parseCollection = ({ cmsConfig, collection }, collectors) => {
   const hasDivider = 'divider' in collection;
   const hasFiles = 'files' in collection;
   const hasFolder = 'folder' in collection;
@@ -81,7 +81,7 @@ export const parseCollection = ({ siteConfig, collection }, collectors) => {
   if (!hasDivider && !hasFiles && !hasFolder) {
     addMessage({
       strKey: 'invalid_collection_no_options',
-      context: { siteConfig, collection },
+      context: { cmsConfig, collection },
       collectors,
     });
 
@@ -93,7 +93,7 @@ export const parseCollection = ({ siteConfig, collection }, collectors) => {
     addMessage({
       strKey: 'invalid_collection_multiple_options',
       // @ts-ignore
-      context: { siteConfig, collection },
+      context: { cmsConfig, collection },
       collectors,
     });
 
@@ -101,20 +101,20 @@ export const parseCollection = ({ siteConfig, collection }, collectors) => {
   }
 
   if (hasFiles) {
-    parseCollectionFiles({ siteConfig, collection }, collectors);
+    parseCollectionFiles({ cmsConfig, collection }, collectors);
   } else if (hasFolder) {
-    parseEntryCollection({ siteConfig, collection }, collectors);
+    parseEntryCollection({ cmsConfig, collection }, collectors);
   }
 };
 
 /**
  * Parse and validate the collections configuration from the site config.
- * @param {SiteConfig} siteConfig Raw site configuration.
+ * @param {CmsConfig} cmsConfig Raw CMS configuration.
  * @param {ConfigParserCollectors} collectors Collectors.
  * @throws {Error} If there is an error in the collections config.
  */
-export const parseCollections = (siteConfig, collectors) => {
-  const { collections, singletons } = siteConfig;
+export const parseCollections = (cmsConfig, collectors) => {
+  const { collections, singletons } = cmsConfig;
   const { errors } = collectors;
   const $_ = get(_);
 
@@ -131,7 +131,7 @@ export const parseCollections = (siteConfig, collectors) => {
     if ('divider' in collection) return;
 
     const { name } = collection;
-    const newContext = { siteConfig, collection };
+    const newContext = { cmsConfig, collection };
 
     if (checkName({ ...checkNameArgs, name, index, context: newContext })) {
       parseCollection(newContext, collectors);
@@ -147,6 +147,6 @@ export const parseCollections = (siteConfig, collectors) => {
       files: singletons,
     };
 
-    parseCollectionFiles({ siteConfig, collection }, collectors);
+    parseCollectionFiles({ cmsConfig, collection }, collectors);
   }
 };

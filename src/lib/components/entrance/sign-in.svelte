@@ -5,7 +5,7 @@
   import { _ } from 'svelte-i18n';
 
   import { allBackendServices } from '$lib/services/backends';
-  import { siteConfig } from '$lib/services/config';
+  import { cmsConfig } from '$lib/services/config';
   import {
     signInAutomatically,
     signInError,
@@ -23,7 +23,7 @@
   let showTokenDialog = $state(false);
   let token = $state('');
 
-  const configuredBackendName = $derived(/** @type {string} */ ($siteConfig?.backend?.name));
+  const configuredBackendName = $derived(/** @type {string} */ ($cmsConfig?.backend?.name));
   const configuredBackend = $derived(
     configuredBackendName ? allBackendServices[configuredBackendName] : null,
   );
@@ -31,7 +31,7 @@
   const repositoryName = $derived(
     isTestRepo
       ? undefined
-      : /** @type {GitBackend} */ ($siteConfig?.backend)?.repo?.split('/').pop(),
+      : /** @type {GitBackend} */ ($cmsConfig?.backend)?.repo?.split('/').pop(),
   );
   const showLocalBackendOption = $derived(isLocalHost && !isTestRepo);
 

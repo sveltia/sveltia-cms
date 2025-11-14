@@ -182,11 +182,11 @@ src/lib/
 import { get } from 'svelte/store';
 
 // Internal with $lib alias
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import Button from '$lib/components/common/button.svelte';
 
 /**
- * @import { SiteConfig } from '$lib/types/public';
+ * @import { CmsConfig } from '$lib/types/public';
  */
 ```
 

@@ -96,7 +96,7 @@ describe('Test getSortConfig()', async () => {
   };
 
   // @ts-ignore
-  (await import('$lib/services/config')).siteConfig = writable({
+  (await import('$lib/services/config')).cmsConfig = writable({
     backend: { name: 'github' },
     media_folder: 'static/uploads',
     collections: [{ ...collectionBase }],

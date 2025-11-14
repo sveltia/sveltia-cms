@@ -9,7 +9,7 @@ import { warnDeprecation } from '$lib/services/config/deprecations';
 import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
 
 /**
- * @import { GitBackend, SiteConfig } from '$lib/types/public';
+ * @import { CmsConfig, GitBackend } from '$lib/types/public';
  * @import { ConfigParserCollectors, UnsupportedOption } from '$lib/types/private';
  */
 
@@ -24,12 +24,12 @@ const UNSUPPORTED_OPTIONS = [
 
 /**
  * Parse and validate the backend configuration from the site config.
- * @param {SiteConfig} siteConfig Raw site configuration.
+ * @param {CmsConfig} cmsConfig Raw CMS configuration.
  * @param {ConfigParserCollectors} collectors Collectors.
  * @throws {Error} If there is an error in the backend config.
  */
-export const parseBackendConfig = (siteConfig, collectors) => {
-  const { backend } = siteConfig;
+export const parseBackendConfig = (cmsConfig, collectors) => {
+  const { backend } = cmsConfig;
   const { errors } = collectors;
 
   if (!isObject(backend)) {
@@ -86,7 +86,7 @@ export const parseBackendConfig = (siteConfig, collectors) => {
     checkUnsupportedOptions({
       UNSUPPORTED_OPTIONS,
       config: backend,
-      context: { siteConfig },
+      context: { cmsConfig },
       collectors,
     });
   }

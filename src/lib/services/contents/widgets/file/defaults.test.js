@@ -14,7 +14,7 @@ vi.mock('$lib/services/integrations/media-libraries/shared', () => ({
 
 // Mock the config store
 vi.mock('$lib/services/config', () => ({
-  siteConfig: writable({}),
+  cmsConfig: writable({}),
 }));
 
 /** @type {Pick<MediaField, 'widget' | 'name'>} */

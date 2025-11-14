@@ -147,9 +147,9 @@ describe('Config Parser', () => {
     );
   });
 
-  describe('parseSiteConfig', () => {
+  describe('parseCmsConfig', () => {
     it('should parse a minimal valid config', async () => {
-      const { parseSiteConfig } = await import('./index.js');
+      const { parseCmsConfig } = await import('./index.js');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -166,13 +166,13 @@ describe('Config Parser', () => {
         ],
       };
 
-      parseSiteConfig(config, collectors);
+      parseCmsConfig(config, collectors);
 
       expect(collectors.errors.size).toBe(0);
     });
 
     it('should collect errors for missing backend', async () => {
-      const { parseSiteConfig } = await import('./index.js');
+      const { parseCmsConfig } = await import('./index.js');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -187,13 +187,13 @@ describe('Config Parser', () => {
         ],
       };
 
-      parseSiteConfig(config, collectors);
+      parseCmsConfig(config, collectors);
 
       expect(collectors.errors.size).toBeGreaterThan(0);
     });
 
     it('should collect warnings for editorial_workflow', async () => {
-      const { parseSiteConfig } = await import('./index.js');
+      const { parseCmsConfig } = await import('./index.js');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -211,7 +211,7 @@ describe('Config Parser', () => {
         ],
       };
 
-      parseSiteConfig(config, collectors);
+      parseCmsConfig(config, collectors);
 
       const warningArray = Array.from(collectors.warnings);
 
@@ -219,7 +219,7 @@ describe('Config Parser', () => {
     });
 
     it('should collect warnings for nested collections', async () => {
-      const { parseSiteConfig } = await import('./index.js');
+      const { parseCmsConfig } = await import('./index.js');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -237,7 +237,7 @@ describe('Config Parser', () => {
         ],
       };
 
-      parseSiteConfig(config, collectors);
+      parseCmsConfig(config, collectors);
 
       const warningArray = Array.from(collectors.warnings);
 
@@ -245,7 +245,7 @@ describe('Config Parser', () => {
     });
 
     it('should collect errors for no collections', async () => {
-      const { parseSiteConfig } = await import('./index.js');
+      const { parseCmsConfig } = await import('./index.js');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -254,7 +254,7 @@ describe('Config Parser', () => {
         media_folder: '/media',
       };
 
-      parseSiteConfig(config, collectors);
+      parseCmsConfig(config, collectors);
 
       const errorArray = Array.from(collectors.errors);
 

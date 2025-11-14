@@ -1,7 +1,7 @@
 import { get, writable } from 'svelte/store';
 
 import { getMediaFieldURL } from '$lib/services/assets/info';
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
@@ -184,7 +184,7 @@ export const getEntriesByAssetURL = async (
   url,
   { entries = get(allEntries), newURL = '' } = {},
 ) => {
-  const baseURL = get(siteConfig)?._baseURL;
+  const baseURL = get(cmsConfig)?._baseURL;
   const assetURL = baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
 
   const results = await Promise.all(

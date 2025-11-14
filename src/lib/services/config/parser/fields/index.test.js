@@ -92,7 +92,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -125,7 +125,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -164,7 +164,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -205,7 +205,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -240,7 +240,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -273,7 +273,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -315,7 +315,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -369,7 +369,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -400,7 +400,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -437,7 +437,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -472,7 +472,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -518,7 +518,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -568,7 +568,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'pages' },
         typedKeyPath: '',
       };
@@ -620,7 +620,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'posts' },
         typedKeyPath: '',
       };
@@ -675,7 +675,7 @@ describe('Field Collectors', () => {
 
       /** @type {any} */
       const context = {
-        siteConfig: {},
+        cmsConfig: {},
         collection: { name: 'pages' },
         typedKeyPath: '',
       };

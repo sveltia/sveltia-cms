@@ -23,7 +23,7 @@ vi.mock('$lib/services/assets/info', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
+  cmsConfig: { subscribe: vi.fn() },
 }));
 
 vi.mock('$lib/services/contents', () => ({

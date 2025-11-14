@@ -72,7 +72,7 @@ export const strings = {
 
   // Entrance
   welcome_to_sveltia_cms: 'Welcome to Sveltia CMS',
-  loading_site_config: 'Loading Site Configuration…',
+  loading_cms_config: 'Loading CMS Configuration…',
   loading_site_data: 'Loading Site Data…',
   loading_site_data_error: 'There was an error while loading site data.',
   sign_in_with_x: 'Sign In with {service}',
@@ -141,7 +141,7 @@ export const strings = {
   live_site: 'Live Site',
   git_repository: 'Git Repository',
   settings: 'Settings',
-  site_config: 'Site Configuration',
+  cms_config: 'CMS Configuration',
   show_help_menu: 'Show Help Menu',
   help: 'Help',
   keyboard_shortcuts: 'Keyboard Shortcuts',
@@ -631,9 +631,9 @@ export const strings = {
 
   // Configuration
   config: {
-    one_error: 'There is an error in the site configuration. Please solve the issue and try again.',
+    one_error: 'There is an error in the CMS configuration. Please solve the issue and try again.',
     many_errors:
-      'There are errors in the site configuration. Please solve the issues and try again.',
+      'There are errors in the CMS configuration. Please solve the issues and try again.',
     error_locator: {
       collection: '{collection} collection',
       file: '{file} file',

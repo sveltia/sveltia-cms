@@ -5,14 +5,14 @@ import { _ } from 'svelte-i18n';
 
 import { goto, parseLocation } from '$lib/services/app/navigation';
 import { backend, backendName } from '$lib/services/backends';
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
 import { user } from '$lib/services/user';
 import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { BackendService, InternalSiteConfig, User } from '$lib/types/private';
+ * @import { BackendService, InternalCmsConfig, User } from '$lib/types/private';
  */
 
 /**
@@ -142,7 +142,7 @@ export const getBackend = (_user) => {
   const _backendName =
     _user?.backendName === 'local' || _user?.backendName === 'proxy'
       ? 'local'
-      : /** @type {InternalSiteConfig} */ (get(siteConfig)).backend.name;
+      : /** @type {InternalCmsConfig} */ (get(cmsConfig)).backend.name;
 
   backendName.set(_backendName);
 
@@ -287,7 +287,7 @@ export const signOut = async () => {
   unauthenticated.set(true);
   dataLoaded.set(false);
 
-  const redirectURL = get(siteConfig)?.logout_redirect_url;
+  const redirectURL = get(cmsConfig)?.logout_redirect_url;
 
   if (redirectURL) {
     window.location.href = redirectURL;

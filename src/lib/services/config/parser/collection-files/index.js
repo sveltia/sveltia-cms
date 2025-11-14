@@ -5,14 +5,14 @@ import { parseFields } from '$lib/services/config/parser/fields';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/messages';
 
 /**
- * @import { CollectionFile, FileCollection, SiteConfig } from '$lib/types/public';
+ * @import { CmsConfig, CollectionFile, FileCollection } from '$lib/types/public';
  * @import { ConfigParserCollectors, InternalSingletonCollection } from '$lib/types/private';
  */
 
 /**
  * Parse and validate a single collection file configuration.
  * @param {object} context Context.
- * @param {SiteConfig} context.siteConfig Raw site configuration.
+ * @param {CmsConfig} context.cmsConfig Raw CMS configuration.
  * @param {FileCollection | InternalSingletonCollection} context.collection Collection config to
  * parse.
  * @param {CollectionFile} context.collectionFile File config to parse.
@@ -39,13 +39,13 @@ export const parseCollectionFile = (context, collectors) => {
 /**
  * Parse and validate multiple collection file configurations.
  * @param {object} context Context.
- * @param {SiteConfig} context.siteConfig Raw site configuration.
+ * @param {CmsConfig} context.cmsConfig Raw CMS configuration.
  * @param {FileCollection | InternalSingletonCollection} context.collection Collection config to
  * parse.
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseCollectionFiles = (context, collectors) => {
-  const { siteConfig, collection } = context;
+  const { cmsConfig, collection } = context;
   const { files } = collection;
   const checkNameArgs = { nameCounts: {}, strKeyBase: 'collection_file_name', collectors };
 
@@ -54,7 +54,7 @@ export const parseCollectionFiles = (context, collectors) => {
     if ('divider' in collectionFile) return;
 
     const { name } = collectionFile;
-    const newContext = { siteConfig, collection, collectionFile };
+    const newContext = { cmsConfig, collection, collectionFile };
 
     if (checkName({ ...checkNameArgs, name, index, context: newContext })) {
       parseCollectionFile(newContext, collectors);

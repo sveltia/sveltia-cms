@@ -93,11 +93,11 @@ export const getConfigPath = (path) => {
 };
 
 /**
- * Fetch the YAML/JSON site configuration file(s) and return a parsed, merged object.
+ * Fetch the YAML/JSON CMS configuration file(s) and return a parsed, merged object.
  * @returns {Promise<object>} Configuration.
  * @throws {Error} When fetching or parsing has failed.
  */
-export const fetchSiteConfig = async () => {
+export const fetchCmsConfig = async () => {
   const links = /** @type {HTMLLinkElement[]} */ ([
     ...document.querySelectorAll('link[rel="cms-config-url"]'),
   ]).map(({ href, type }) => /** @type {{ href: string, type?: string }} */ ({ href, type }));

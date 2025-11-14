@@ -27,7 +27,7 @@ vi.mock('$lib/services/backends/save', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
+  cmsConfig: { subscribe: vi.fn() },
 }));
 
 vi.mock('$lib/services/integrations/media-libraries/default', () => ({
@@ -110,7 +110,7 @@ vi.mock('$lib/services/backends/save', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: {
+  cmsConfig: {
     subscribe: vi.fn((callback) => {
       callback({ backend: { skip_ci: true } });
       return vi.fn();

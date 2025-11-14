@@ -6,18 +6,18 @@ import { _ } from 'svelte-i18n';
 import { CLOUD_MEDIA_LIBRARIES } from '$lib/services/integrations/media-libraries';
 
 /**
- * @import { SiteConfig } from '$lib/types/public';
+ * @import { CmsConfig } from '$lib/types/public';
  * @import { ConfigParserCollectors } from '$lib/types/private';
  */
 
 /**
  * Parse and validate media folder configuration.
- * @param {SiteConfig} siteConfig Raw site configuration.
+ * @param {CmsConfig} cmsConfig Raw CMS configuration.
  * @param {ConfigParserCollectors} collectors Collectors.
  * @throws {Error} If there is an error in the media folder config.
  */
-export const parseMediaConfig = (siteConfig, collectors) => {
-  const { media_folder, public_folder, media_library, media_libraries } = siteConfig;
+export const parseMediaConfig = (cmsConfig, collectors) => {
+  const { media_folder, public_folder, media_library, media_libraries } = cmsConfig;
   const { errors } = collectors;
 
   if (media_folder === undefined) {

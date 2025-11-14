@@ -14,7 +14,7 @@ const mockBackend = {
 };
 
 const mockBackendStore = { subscribe: vi.fn() };
-const mockSiteConfigStore = { subscribe: vi.fn() };
+const mockCmsConfigStore = { subscribe: vi.fn() };
 const mockUser = { set: vi.fn() };
 const mockDataLoaded = { set: vi.fn() };
 
@@ -36,7 +36,7 @@ const mockParseLocation = vi.fn();
 const mockGet = vi.fn();
 const mockGetLocaleText = vi.fn();
 const mockBackendName = { set: vi.fn() };
-const mockSiteConfig = { backend: { name: 'github' } };
+const mockCmsConfig = { backend: { name: 'github' } };
 
 vi.mock('@sveltia/utils/storage', () => ({
   LocalStorage: mockLocalStorage,
@@ -71,7 +71,7 @@ vi.mock('$lib/services/backends', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: mockSiteConfigStore,
+  cmsConfig: mockCmsConfigStore,
 }));
 
 vi.mock('$lib/services/contents', () => ({
@@ -99,9 +99,9 @@ describe('auth service', () => {
         return mockBackend;
       }
 
-      // Handle the siteConfig store
-      if (store === mockSiteConfigStore) {
-        return mockSiteConfig;
+      // Handle the cmsConfig store
+      if (store === mockCmsConfigStore) {
+        return mockCmsConfig;
       }
 
       // Handle the translation function (_)
@@ -109,8 +109,8 @@ describe('auth service', () => {
         return mockGetLocaleText;
       }
 
-      // Default to returning the siteConfig for other store access
-      return mockSiteConfig;
+      // Default to returning the cmsConfig for other store access
+      return mockCmsConfig;
     });
 
     mockGetLocaleText.mockImplementation((/** @type {string} */ key) => {
@@ -367,9 +367,9 @@ describe('auth service', () => {
 
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
 
       const result = authModule.getBackend(_user);
@@ -383,9 +383,9 @@ describe('auth service', () => {
 
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
 
       const result = authModule.getBackend(_user);
@@ -395,29 +395,29 @@ describe('auth service', () => {
       expect(result).toBe(mockBackend);
     });
 
-    it('should use backend name from siteConfig when user has different backendName', () => {
+    it('should use backend name from cmsConfig when user has different backendName', () => {
       const _user = { token: 'test-token', backendName: 'gitlab' };
 
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
 
       const result = authModule.getBackend(_user);
 
-      // Should use the name from siteConfig (github in this case)
+      // Should use the name from cmsConfig (github in this case)
       expect(mockBackendName.set).toHaveBeenCalledWith('github');
       expect(result).toBe(mockBackend);
     });
 
-    it('should use backend name from siteConfig when user is undefined', () => {
+    it('should use backend name from cmsConfig when user is undefined', () => {
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
 
       const result = authModule.getBackend(undefined);
@@ -431,9 +431,9 @@ describe('auth service', () => {
 
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return undefined;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
 
       const result = authModule.getBackend(_user);
@@ -447,14 +447,14 @@ describe('auth service', () => {
 
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
 
       const result = authModule.getBackend(_user);
 
-      // Should use siteConfig backend name, not the user's gitea
+      // Should use cmsConfig backend name, not the user's gitea
       expect(mockBackendName.set).toHaveBeenCalledWith('github');
       expect(result).toBe(mockBackend);
     });
@@ -582,10 +582,10 @@ describe('auth service', () => {
       mockLocalStorage.get.mockResolvedValue(cachedUser);
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockResolvedValue({ token: 'magic-token' });
       mockBackend.fetchFiles.mockResolvedValue(undefined);
@@ -620,10 +620,10 @@ describe('auth service', () => {
       mockLocalStorage.get.mockResolvedValue(cachedUser);
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockResolvedValue(cachedUser);
       mockBackend.fetchFiles.mockResolvedValue(undefined);
@@ -669,10 +669,10 @@ describe('auth service', () => {
 
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockResolvedValue({ token: 'netlify-token' });
       mockBackend.fetchFiles.mockResolvedValue(undefined);
@@ -699,10 +699,10 @@ describe('auth service', () => {
       });
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockResolvedValue(cachedUser);
       mockBackend.fetchFiles.mockResolvedValue(undefined);
@@ -737,10 +737,10 @@ describe('auth service', () => {
       });
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockResolvedValue({ token: 'qr-token' });
       mockBackend.fetchFiles.mockResolvedValue(undefined);
@@ -774,10 +774,10 @@ describe('auth service', () => {
       });
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockResolvedValue({ token: 'qr-token' });
       mockBackend.fetchFiles.mockResolvedValue(undefined);
@@ -804,10 +804,10 @@ describe('auth service', () => {
       });
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
 
       await authModule.signInAutomatically();
@@ -834,10 +834,10 @@ describe('auth service', () => {
       });
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockResolvedValue(cachedUser);
       mockBackend.fetchFiles.mockResolvedValue(undefined);
@@ -862,10 +862,10 @@ describe('auth service', () => {
       });
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
 
       await authModule.signInAutomatically();
@@ -881,10 +881,10 @@ describe('auth service', () => {
       mockLocalStorage.get.mockResolvedValue(cachedUser);
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockRejectedValue(new Error('Sign in failed'));
 
@@ -903,10 +903,10 @@ describe('auth service', () => {
       mockLocalStorage.get.mockResolvedValue(cachedUser);
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockResolvedValue(cachedUser);
 
@@ -926,10 +926,10 @@ describe('auth service', () => {
       mockLocalStorage.get.mockResolvedValue(cachedUser);
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockResolvedValue(cachedUser);
 
@@ -958,10 +958,10 @@ describe('auth service', () => {
       mockLocalStorage.get.mockResolvedValue(cachedUser);
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return undefined; // Backend is undefined
-        if (store === mockSiteConfigStore) return mockSiteConfig;
+        if (store === mockCmsConfigStore) return mockCmsConfig;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
 
       await authModule.signInAutomatically();
@@ -1000,7 +1000,7 @@ describe('auth service', () => {
       mockGet.mockImplementation((store) => {
         if (store === mockBackend) return mockBackend;
         if (store === mockGetLocaleText) return mockGetLocaleText;
-        if (store && typeof store.subscribe === 'function') return mockSiteConfig;
+        if (store && typeof store.subscribe === 'function') return mockCmsConfig;
 
         return mockBackend;
       });
@@ -1021,7 +1021,7 @@ describe('auth service', () => {
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
         if (store === mockGetLocaleText) return mockGetLocaleText;
-        if (store && typeof store.subscribe === 'function') return mockSiteConfig;
+        if (store && typeof store.subscribe === 'function') return mockCmsConfig;
 
         return mockBackend;
       });
@@ -1048,7 +1048,7 @@ describe('auth service', () => {
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
         if (store === mockGetLocaleText) return mockGetLocaleText;
-        if (store && typeof store.subscribe === 'function') return mockSiteConfig;
+        if (store && typeof store.subscribe === 'function') return mockCmsConfig;
 
         return mockBackend;
       });
@@ -1098,7 +1098,7 @@ describe('auth service', () => {
         if (store === mockBackendStore) return mockBackend;
         if (store === mockGetLocaleText) return mockGetLocaleText;
 
-        return mockSiteConfig;
+        return mockCmsConfig;
       });
       mockBackend.signIn.mockResolvedValue(user);
 
@@ -1133,16 +1133,16 @@ describe('auth service', () => {
     });
 
     it('should redirect to logout URL when configured', async () => {
-      const mockSiteConfigWithLogout = {
+      const mockCmsConfigWithLogout = {
         backend: { name: 'github' },
         logout_redirect_url: 'https://example.com/goodbye',
       };
 
       mockGet.mockImplementation((store) => {
         if (store === mockBackendStore) return mockBackend;
-        if (store === mockSiteConfigStore) return mockSiteConfigWithLogout;
+        if (store === mockCmsConfigStore) return mockCmsConfigWithLogout;
 
-        return mockSiteConfigWithLogout;
+        return mockCmsConfigWithLogout;
       });
       mockBackend.signOut.mockResolvedValue(undefined);
 

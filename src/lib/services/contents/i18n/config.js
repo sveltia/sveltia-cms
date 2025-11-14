@@ -1,15 +1,15 @@
 import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { isSingletonCollection } from '$lib/services/contents/collection';
 
 /**
  * @import {
  * I18nFileStructureMap,
+ * InternalCmsConfig,
  * InternalI18nOptions,
- * InternalSiteConfig,
  * } from '$lib/types/private';
  * @import { Collection, CollectionFile, I18nFileStructure, I18nOptions } from '$lib/types/public';
  */
@@ -70,13 +70,13 @@ export const DEFAULT_I18N_CONFIG = {
  * @returns {I18nOptions | undefined} Merged configuration or undefined if i18n is not enabled.
  */
 export const mergeI18nConfigs = (collection, file) => {
-  const siteConfigValue = /** @type {InternalSiteConfig} */ (get(siteConfig));
+  const cmsConfigValue = /** @type {InternalCmsConfig} */ (get(cmsConfig));
 
-  if (!isObject(siteConfigValue.i18n)) {
+  if (!isObject(cmsConfigValue.i18n)) {
     return undefined;
   }
 
-  const config = structuredClone(siteConfigValue.i18n);
+  const config = structuredClone(cmsConfigValue.i18n);
   const hasCollectionI18n = collection.i18n || isSingletonCollection(collection);
 
   // Check if the collection has its own i18n configuration. The singleton collection doesn’t have

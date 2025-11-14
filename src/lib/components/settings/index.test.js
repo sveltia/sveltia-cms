@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 
 import { panels } from './index.js';
 
@@ -98,7 +98,7 @@ describe('Settings panels', () => {
   });
 
   test('should enable i18n panel when multiple locales configured', () => {
-    siteConfig.set({
+    cmsConfig.set({
       backend: { name: 'github', repo: 'test/test' },
       media_folder: 'static/images',
       collections: [],
@@ -118,7 +118,7 @@ describe('Settings panels', () => {
   });
 
   test('should disable i18n panel when single locale configured', () => {
-    siteConfig.set({
+    cmsConfig.set({
       backend: { name: 'github', repo: 'test/test' },
       media_folder: 'static/images',
       collections: [],
@@ -138,7 +138,7 @@ describe('Settings panels', () => {
   });
 
   test('should disable i18n panel when no locales configured', () => {
-    siteConfig.set({
+    cmsConfig.set({
       backend: { name: 'github', repo: 'test/test' },
       media_folder: 'static/images',
       collections: [],

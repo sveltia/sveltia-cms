@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
+  cmsConfig: { subscribe: vi.fn() },
 }));
 
 vi.mock('$lib/services/contents/collection/index-file', () => ({
@@ -36,7 +36,7 @@ const { entryDraft } = await import('$lib/services/contents/draft');
 const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/backup');
 const { createProxy } = await import('$lib/services/contents/draft/create/proxy');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
-const { siteConfig } = await import('$lib/services/config');
+const { cmsConfig } = await import('$lib/services/config');
 const { createDraft } = await import('./index.js');
 
 describe('contents/draft/create/index', () => {
@@ -49,7 +49,7 @@ describe('contents/draft/create/index', () => {
     createProxy.mockImplementation((args) => args.target);
     getDefaultValues.mockReturnValue({});
 
-    siteConfig.subscribe.mockImplementation((callback) => {
+    cmsConfig.subscribe.mockImplementation((callback) => {
       callback({ editor: { preview: true } });
 
       return vi.fn();

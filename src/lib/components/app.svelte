@@ -12,18 +12,18 @@
   import { initAppLocale } from '$lib/services/app/i18n';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
-  import { DEV_SITE_URL, initSiteConfig, siteConfig } from '$lib/services/config';
+  import { cmsConfig, DEV_SITE_URL, initCmsConfig } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { user } from '$lib/services/user';
   import { initUserEnvDetection } from '$lib/services/user/env';
 
   /**
-   * @import { SiteConfig } from '$lib/types/public';
+   * @import { CmsConfig } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {SiteConfig} [config] Configuration specified with manual initialization.
+   * @property {CmsConfig} [config] Configuration specified with manual initialization.
    */
 
   /** @type {Props} */
@@ -38,7 +38,7 @@
   });
 
   onMount(() => {
-    initSiteConfig(config);
+    initCmsConfig(config);
   });
 
   onMount(() => {
@@ -70,8 +70,8 @@
 <svelte:head>
   <meta name="referrer" content="same-origin" />
   <meta name="robots" content="noindex" />
-  {#if $siteConfig}
-    {@const logoURL = $siteConfig.logo?.src ?? $siteConfig.logo_url}
+  {#if $cmsConfig}
+    {@const logoURL = $cmsConfig.logo?.src ?? $cmsConfig.logo_url}
     <link
       rel="icon"
       href={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}

@@ -18,7 +18,7 @@ vi.mock('svelte/store', () => ({
   get: vi.fn(),
 }));
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
+  cmsConfig: { subscribe: vi.fn() },
 }));
 vi.mock('$lib/services/contents', () => ({
   allEntries: { subscribe: vi.fn() },

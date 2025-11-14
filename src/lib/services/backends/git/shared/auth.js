@@ -4,13 +4,13 @@ import { LocalStorage } from '@sveltia/utils/storage';
 import { get, writable } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 
 /**
  * @import {
  * ApiEndpointConfig,
  * AuthTokens,
- * InternalSiteConfig,
+ * InternalCmsConfig,
  * SignInOptions,
  * } from '$lib/types/private';
  * @import { GitBackend } from '$lib/types/public';
@@ -369,7 +369,7 @@ export const handleClientSideAuthPopup = async ({ backendName, clientId, tokenUR
  * the sign-in process is automatic or the flow is being done in a popup window.
  */
 export const handleAuthFlow = async ({ auto, apiConfig }) => {
-  const { backend } = /** @type {InternalSiteConfig} */ (get(siteConfig));
+  const { backend } = /** @type {InternalCmsConfig} */ (get(cmsConfig));
 
   const {
     name: backendName,

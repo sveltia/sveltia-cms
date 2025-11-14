@@ -22,7 +22,7 @@ vi.mock('svelte/store', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
+  cmsConfig: { subscribe: vi.fn() },
 }));
 
 vi.mock('@sveltia/utils/misc', () => ({
@@ -40,7 +40,7 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Mock the siteConfig to return cloudinary config
+    // Mock the cmsConfig to return cloudinary config
     vi.mocked(get).mockReturnValue({
       media_libraries: {
         cloudinary: {

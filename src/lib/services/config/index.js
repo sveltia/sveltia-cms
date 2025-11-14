@@ -9,15 +9,15 @@ import { stringify } from 'yaml';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { getAllAssetFolders } from '$lib/services/config/folders/assets';
 import { getAllEntryFolders } from '$lib/services/config/folders/entries';
-import { fetchSiteConfig } from '$lib/services/config/loader';
-import { parseSiteConfig } from '$lib/services/config/parser';
+import { fetchCmsConfig } from '$lib/services/config/loader';
+import { parseCmsConfig } from '$lib/services/config/parser';
 import { allEntryFolders } from '$lib/services/contents';
 import { prefs } from '$lib/services/user/prefs';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { ConfigParserCollectors, InternalSiteConfig } from '$lib/types/private';
- * @import { SiteConfig } from '$lib/types/public';
+ * @import { ConfigParserCollectors, InternalCmsConfig } from '$lib/types/private';
+ * @import { CmsConfig } from '$lib/types/public';
  */
 
 const { DEV, VITE_SITE_URL } = import.meta.env;
@@ -33,24 +33,24 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
 export const DEV_SITE_URL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
 
 /**
- * @type {Partial<SiteConfig>}
+ * @type {Partial<CmsConfig>}
  */
-export const rawSiteConfig = {};
+export const rawCmsConfig = {};
 
 /**
- * @type {Writable<InternalSiteConfig | undefined>}
+ * @type {Writable<InternalCmsConfig | undefined>}
  */
-export const siteConfig = writable();
+export const cmsConfig = writable();
 
 /**
  * @type {Writable<string | undefined>}
  */
-export const siteConfigVersion = writable();
+export const cmsConfigVersion = writable();
 
 /**
  * @type {Writable<string[]>}
  */
-export const siteConfigErrors = writable([]);
+export const cmsConfigErrors = writable([]);
 
 /**
  * Collectors used during config parsing.
@@ -64,14 +64,14 @@ const collectors = {
 };
 
 /**
- * Initialize the site configuration state by loading the YAML file and optionally merge the object
+ * Initialize the CMS configuration state by loading the YAML file and optionally merge the object
  * with one specified with `CMS.init()`.
- * @param {SiteConfig} [manualConfig] Raw configuration specified with manual initialization.
+ * @param {CmsConfig} [manualConfig] Raw configuration specified with manual initialization.
  * @todo Normalize configuration object.
  */
-export const initSiteConfig = async (manualConfig) => {
-  siteConfig.set(undefined);
-  siteConfigErrors.set([]);
+export const initCmsConfig = async (manualConfig) => {
+  cmsConfig.set(undefined);
+  cmsConfigErrors.set([]);
 
   Object.assign(collectors, {
     errors: new Set(),
@@ -97,16 +97,16 @@ export const initSiteConfig = async (manualConfig) => {
       rawConfig = manualConfig;
 
       if (rawConfig.load_config_file !== false) {
-        rawConfig = merge(await fetchSiteConfig(), rawConfig);
+        rawConfig = merge(await fetchCmsConfig(), rawConfig);
       }
     } else {
-      rawConfig = await fetchSiteConfig();
+      rawConfig = await fetchCmsConfig();
     }
 
     // Store the raw config so it can be used in the parser and config viewer
-    Object.assign(rawSiteConfig, rawConfig);
+    Object.assign(rawCmsConfig, rawConfig);
 
-    parseSiteConfig(rawConfig, collectors);
+    parseCmsConfig(rawConfig, collectors);
 
     if (collectors.errors.size) {
       collectors.errors.forEach((warning) => {
@@ -124,7 +124,7 @@ export const initSiteConfig = async (manualConfig) => {
       });
     }
 
-    /** @type {InternalSiteConfig} */
+    /** @type {InternalCmsConfig} */
     const config = structuredClone(rawConfig);
 
     // Set the site URL for development or production. See also `/src/lib/components/app.svelte`
@@ -138,10 +138,10 @@ export const initSiteConfig = async (manualConfig) => {
       }
     });
 
-    siteConfig.set(config);
-    siteConfigVersion.set(await getHash(stringify(config)));
+    cmsConfig.set(config);
+    cmsConfigVersion.set(await getHash(stringify(config)));
   } catch (/** @type {any} */ ex) {
-    siteConfigErrors.set(
+    cmsConfigErrors.set(
       collectors.errors.size
         ? [...collectors.errors]
         : [ex.name === 'Error' ? ex.message : get(_)('config.error.unexpected')],
@@ -152,10 +152,10 @@ export const initSiteConfig = async (manualConfig) => {
   }
 };
 
-siteConfig.subscribe((config) => {
+cmsConfig.subscribe((config) => {
   if (get(prefs).devModeEnabled) {
     // eslint-disable-next-line no-console
-    console.info('siteConfig', config);
+    console.info('cmsConfig', config);
     // eslint-disable-next-line no-console
     console.info('collectors', collectors);
   }

@@ -8,7 +8,7 @@
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { inAuthPopup } from '$lib/services/backends/git/shared/auth';
-  import { siteConfig, siteConfigErrors } from '$lib/services/config';
+  import { cmsConfig, cmsConfigErrors } from '$lib/services/config';
   import { dataLoaded, dataLoadedProgress } from '$lib/services/contents';
   import { user } from '$lib/services/user';
   import { signInError, unauthenticated } from '$lib/services/user/auth';
@@ -28,18 +28,18 @@
 
 <div role="none" class="container" inert={$user && $dataLoaded}>
   <div role="none" class="inner">
-    {#if $siteConfig || $siteConfigErrors.length}
-      {@const logoURL = $siteConfig?.logo?.src ?? $siteConfig?.logo_url}
+    {#if $cmsConfig || $cmsConfigErrors.length}
+      {@const logoURL = $cmsConfig?.logo?.src ?? $cmsConfig?.logo_url}
       <img src={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`} alt="" class="logo" />
     {/if}
     <h1>Sveltia CMS</h1>
-    {#if $siteConfigErrors.length}
+    {#if $cmsConfigErrors.length}
       <div role="alert" class="message">
         <div role="none">
-          {$_($siteConfigErrors.length === 1 ? 'config.one_error' : 'config.many_errors')}
+          {$_($cmsConfigErrors.length === 1 ? 'config.one_error' : 'config.many_errors')}
         </div>
         <ul class="error">
-          {#each $siteConfigErrors as error}
+          {#each $cmsConfigErrors as error}
             <li>
               {@render parseMarkdown(error)}
             </li>
@@ -50,8 +50,8 @@
       <div role="alert" class="message">
         {$_(`prefs.error.${$prefsError.type}`)}
       </div>
-    {:else if !$siteConfig || !$prefs}
-      <div role="alert" class="message">{$_('loading_site_config')}</div>
+    {:else if !$cmsConfig || !$prefs}
+      <div role="alert" class="message">{$_('loading_cms_config')}</div>
     {:else if $signInError.message && $signInError.context === 'dataFetch'}
       <div role="alert">
         <div role="none" class="message">{$_('loading_site_data_error')}</div>

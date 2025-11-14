@@ -2,7 +2,7 @@
 import { IndexedDB } from '@sveltia/utils/storage';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { siteConfigVersion } from '$lib/services/config';
+import { cmsConfigVersion } from '$lib/services/config';
 import { entryDraftModified } from '$lib/services/contents/draft';
 import { prefs } from '$lib/services/user/prefs';
 
@@ -96,7 +96,7 @@ describe('draft/backup', () => {
         return { useDraftBackup: true };
       }
 
-      if (store === siteConfigVersion) {
+      if (store === cmsConfigVersion) {
         return 'v1.0.0';
       }
 
@@ -136,7 +136,7 @@ describe('draft/backup', () => {
     it('should return backup with matching site config version', async () => {
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -164,7 +164,7 @@ describe('draft/backup', () => {
     it('should delete and return null if site config version mismatch', async () => {
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v0.9.0',
+        cmsConfigVersion: 'v0.9.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -184,7 +184,7 @@ describe('draft/backup', () => {
     it('should handle new entry with empty slug', async () => {
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: '',
         currentLocales: { en: true },
@@ -209,7 +209,7 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
-        if (store === siteConfigVersion) {
+        if (store === cmsConfigVersion) {
           return 'v1.0.0';
         }
 
@@ -234,7 +234,7 @@ describe('draft/backup', () => {
 
       expect(mockBackupDB.put).toHaveBeenCalledWith(
         expect.objectContaining({
-          siteConfigVersion: 'v1.0.0',
+          cmsConfigVersion: 'v1.0.0',
           collectionName: 'posts',
           slug: 'my-post',
           currentLocales: { en: true },
@@ -290,7 +290,7 @@ describe('draft/backup', () => {
 
       const existingBackup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -346,7 +346,7 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
-        if (store === siteConfigVersion) {
+        if (store === cmsConfigVersion) {
           return 'v1.0.0';
         }
 
@@ -383,7 +383,7 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
-        if (store === siteConfigVersion) {
+        if (store === cmsConfigVersion) {
           return 'v1.0.0';
         }
 
@@ -419,7 +419,7 @@ describe('draft/backup', () => {
     it('should restore backup to entry draft without errors', () => {
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -437,7 +437,7 @@ describe('draft/backup', () => {
     it('should handle backup with blob URLs in values', () => {
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -455,7 +455,7 @@ describe('draft/backup', () => {
     it('should handle file collection with fileName', () => {
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'pages',
         slug: '',
         currentLocales: { en: true },
@@ -475,7 +475,7 @@ describe('draft/backup', () => {
 
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -494,7 +494,7 @@ describe('draft/backup', () => {
     it('should skip blob URLs that have no matching file in cache', () => {
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -515,7 +515,7 @@ describe('draft/backup', () => {
 
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -542,7 +542,7 @@ describe('draft/backup', () => {
 
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -613,7 +613,7 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
-        if (store === siteConfigVersion) {
+        if (store === cmsConfigVersion) {
           return 'v1.0.0';
         }
 
@@ -633,7 +633,7 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
-        if (store === siteConfigVersion) {
+        if (store === cmsConfigVersion) {
           return 'v1.0.0';
         }
 
@@ -642,7 +642,7 @@ describe('draft/backup', () => {
 
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -693,7 +693,7 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
-        if (store === siteConfigVersion) {
+        if (store === cmsConfigVersion) {
           return 'v1.0.0';
         }
 
@@ -702,7 +702,7 @@ describe('draft/backup', () => {
 
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },
@@ -755,7 +755,7 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
-        if (store === siteConfigVersion) {
+        if (store === cmsConfigVersion) {
           return 'v1.0.0';
         }
 
@@ -844,7 +844,7 @@ describe('draft/backup', () => {
 
       const backup = {
         timestamp: new Date(),
-        siteConfigVersion: 'v1.0.0',
+        cmsConfigVersion: 'v1.0.0',
         collectionName: 'posts',
         slug: 'my-post',
         currentLocales: { en: true },

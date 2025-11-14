@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 // Mock the config service to prevent issues with uninitialized stores
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn((callback) => callback({})) },
+  cmsConfig: { subscribe: vi.fn((callback) => callback({})) },
 }));
 
 // Mock svelte/store get function to return empty config

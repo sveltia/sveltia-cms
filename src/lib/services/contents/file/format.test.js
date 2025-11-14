@@ -13,9 +13,9 @@ import {
  * @import { FileConfig } from '$lib/types/private';
  */
 
-// Mock the siteConfig store
+// Mock the cmsConfig store
 vi.mock('$lib/services/config', () => ({
-  siteConfig: {
+  cmsConfig: {
     subscribe: vi.fn(),
     set: vi.fn(),
   },
@@ -326,7 +326,7 @@ image:
     );
   });
 
-  test('uses empty options when siteConfig.output.json is undefined (line 20)', () => {
+  test('uses empty options when cmsConfig.output.json is undefined (line 20)', () => {
     // Mock get to return undefined for output.json to test the ?? {} fallback
     vi.mocked(get).mockReturnValueOnce({ output: { json: undefined } });
 

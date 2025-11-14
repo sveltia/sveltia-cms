@@ -87,8 +87,8 @@ const generateTypes = async () => {
     });
   });
 
-  // Export the `SiteConfig` type
-  await appendFile(MAIN_TYPE_PATH, 'export type { SiteConfig };\n');
+  // Export the `CmsConfig` type
+  await appendFile(MAIN_TYPE_PATH, 'export type { CmsConfig };\n');
 
   const publicType = await readFile(PUBLIC_TYPE_PATH, 'utf-8');
 
@@ -98,8 +98,8 @@ const generateTypes = async () => {
 };
 
 /**
- * Generate JSON schema for the Sveltia CMS site configuration from TypeScript types. This schema is
- * used to validate the `config.yml` file within VS Code and other tools that support JSON schema
+ * Generate JSON schema for the Sveltia CMS configuration from TypeScript types. This schema is used
+ * to validate the `config.yml` file within VS Code and other tools that support JSON schema
  * validation.
  * @see https://github.com/vega/ts-json-schema-generator
  * @see https://www.schemastore.org/netlify.json - Legacy Netlify CMS config schema
@@ -108,7 +108,7 @@ const generateTypes = async () => {
 const generateSchema = async () => {
   const config = {
     path: PUBLIC_TYPE_PATH,
-    type: 'SiteConfig',
+    type: 'CmsConfig',
     // `markdownDescription` is a VS Code schema extension
     // https://code.visualstudio.com/docs/languages/json#_json-schemas-and-settings
     markdownDescription: true,
@@ -117,15 +117,15 @@ const generateSchema = async () => {
   const schema = {
     ...createGenerator(config).createSchema(config.type),
     title: 'Sveltia CMS Configuration',
-    description: 'Sveltia CMS site configuration file',
+    description: 'Sveltia CMS configuration file',
   };
 
   // Allow having the `$schema` property at the top of the config file
   // https://json-schema.org/understanding-json-schema/keywords
-  schema.definitions.SiteConfig.properties.$schema = { type: 'string', format: 'uri' };
+  schema.definitions.CmsConfig.properties.$schema = { type: 'string', format: 'uri' };
 
   // Require at least one of `collections` or `singletons`
-  schema.definitions.SiteConfig.oneOf = [
+  schema.definitions.CmsConfig.oneOf = [
     { required: ['collections'] },
     { required: ['singletons'] },
   ];

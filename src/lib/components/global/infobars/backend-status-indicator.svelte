@@ -4,7 +4,7 @@
   import { _ } from 'svelte-i18n';
 
   import { backend } from '$lib/services/backends';
-  import { siteConfig } from '$lib/services/config';
+  import { cmsConfig } from '$lib/services/config';
 
   /**
    * @import { BackendServiceStatus } from '$lib/types/private';
@@ -71,7 +71,7 @@
   });
 
   $effect(() => {
-    void [mounted, $backend, $siteConfig];
+    void [mounted, $backend, $cmsConfig];
     init();
   });
 </script>

@@ -852,7 +852,7 @@ You can now open `https://[hostname]/admin/` as usual to start editing. There is
 
 #### Editing the configuration file
 
-For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the site configuration file in your code editor. If you have the YAML extension installed, VS Code may automatically apply the outdated Netlify CMS config schema to `config.yml`. To use the latest Sveltia CMS config schema instead, you need to specify its URL.
+For a better DX, we recommend [setting up the JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for the CMS configuration file in your code editor. If you have the YAML extension installed, VS Code may automatically apply the outdated Netlify CMS config schema to `config.yml`. To use the latest Sveltia CMS config schema instead, you need to specify its URL.
 
 #### Dealing with unsupported features
 
@@ -899,7 +899,7 @@ You can also generate a personal access token (PAT) on GitHub or GitLab, and use
 
 ### Enabling autocomplete and validation for the configuration file
 
-Sveltia CMS provides a full [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the site configuration. The schema is generated from the source and always up to date with the latest CMS version.
+Sveltia CMS provides a full [JSON schema](https://json-schema.org/) for the configuration file, so you can get autocomplete and validation in your favourite code editor while editing the CMS configuration. The schema is generated from the source and always up to date with the latest CMS version.
 
 If you use VS Code, you can enable it for the YAML configuration file by installing the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) and adding the following comment to the top of `config.yml`:
 
@@ -948,7 +948,7 @@ Alternatively, you can [manually initialize](https://decapcms.org/docs/manual-in
 
 ### Providing multiple configuration files
 
-With Sveltia CMS, developers can modularize the site configuration. Just provide multiple config links and the CMS will automatically merge them in the order of `<link>` tag appearance. It’s possible to use YAML, [JSON](#providing-a-json-configuration-file) or both.
+With Sveltia CMS, developers can modularize the CMS configuration. Just provide multiple config links and the CMS will automatically merge them in the order of `<link>` tag appearance. It’s possible to use YAML, [JSON](#providing-a-json-configuration-file) or both.
 
 ```html
 <link href="/admin/config.yml" type="application/yaml" rel="cms-config-url" />
@@ -1122,7 +1122,7 @@ Note that the special index file is placed right under the `folder`, regardless 
 
 The singleton collection is an unnamed, non-nested variant of a [file collection](https://decapcms.org/docs/collection-file/) that can be used to manage a set of pre-defined data files. Singleton files appear in the content library’s sidebar under the Files group, and users can open the Content Editor directly without navigating to a file list. (If there are no other collections, the singleton collection appears as a regular file collection on desktop.)
 
-To create this special file collection, add the new `singletons` option, along with an array of file definitions, to the root level of your site configuration.
+To create this special file collection, add the new `singletons` option, along with an array of file definitions, to the root level of your CMS configuration.
 
 This is a conventional file collection:
 
@@ -2088,7 +2088,7 @@ Due late 2026
 
 Sveltia CMS is not a service but a client-side application that runs in your web browser. You don’t need an account to use the app, but you do need to authenticate with your Git hosting provider to read and write remote data. All content is stored in your Git repository. No data is sent to any server operated by us.
 
-Depending on your site configuration, you will need to use an OAuth application hosted by yourself or a third party, such as Netlify or Cloudflare, to retrieve an access token from GitHub. Alternatively, you can provide an access token directly on the CMS’s sign-in page. In any case, your token is stored in your browser’s local storage, and subsequent API requests are made directly between your browser and the Git hosting provider.
+Depending on your CMS configuration, you will need to use an OAuth application hosted by yourself or a third party, such as Netlify or Cloudflare, to retrieve an access token from GitHub. Alternatively, you can provide an access token directly on the CMS’s sign-in page. In any case, your token is stored in your browser’s local storage, and subsequent API requests are made directly between your browser and the Git hosting provider.
 
 The CMS also integrates with various third-party services, including stock photo providers and translation services. These are “bring your own key” (BYOK) features that are entirely optional. You provide your own API keys for these services, which are stored in your browser’s local storage, and API requests are then made directly between your browser and the relevant service providers.
 

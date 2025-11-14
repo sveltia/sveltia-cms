@@ -51,9 +51,9 @@ describe('Test fillTemplate()', async () => {
   /**
    * Setup the site config before each test to ensure consistency.
    */
-  const setupSiteConfig = async () => {
+  const setupCmsConfig = async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).siteConfig = writable({
+    (await import('$lib/services/config')).cmsConfig = writable({
       backend: { name: 'github' },
       media_folder: 'static/images/uploads',
       collections: [collection],
@@ -68,7 +68,7 @@ describe('Test fillTemplate()', async () => {
   };
 
   test('short slug', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const title = 'Lorem ipsum dolor sit amet, consectetur';
 
@@ -78,7 +78,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('long slug', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const title =
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam pulvinar scelerisque';
@@ -89,7 +89,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('date/time', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const template = '{{year}}-{{month}}-{{day}}-{{hour}}-{{minute}}-{{second}}';
     const dateTimeParts = getDateTimeParts({ timeZone: 'UTC' });
@@ -102,14 +102,14 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('random ID fallback', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     expect(fillTemplate('{{title}}', { collection, content: {} })).toMatch(/[0-9a-f]{12}/);
     expect(fillTemplate('{{name}}', { collection, content: {} })).toMatch(/[0-9a-f]{12}/);
   });
 
   test('apply filter', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     expect(
       fillTemplate("{{published | date('MMM D, YYYY')}}", {
@@ -164,7 +164,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('UUID tags', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     expect(fillTemplate('{{uuid}}', { collection, content: {} })).toMatch(
       /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/,
@@ -174,7 +174,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('fields prefix', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = {
       title: 'My Title',
@@ -190,7 +190,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('slug field vs slug tag', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     // When 'slug' is used as a field name, it should use getEntrySummaryFromContent
     const content = { title: 'My Title', slug: 'my-slug' };
@@ -208,7 +208,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('multiple field combinations', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = {
       title: 'My Article',
@@ -225,7 +225,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('preview path mode', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = { title: 'My Article' };
 
@@ -261,7 +261,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('media folder mode', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = { title: 'My Article' };
 
@@ -284,7 +284,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('dirname extraction edge cases', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const testCases = [
       {
@@ -327,7 +327,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('file extension extraction', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const testCases = [
       { entryFilePath: 'article.md', expected: 'md' },
@@ -350,7 +350,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('filename extraction', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const testCases = [
       { entryFilePath: 'article.md', expected: 'article' },
@@ -373,7 +373,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('custom identifier field', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const customCollection = {
       ...collection,
@@ -392,7 +392,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('slug length truncation', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const longContent = {
       title:
@@ -414,7 +414,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('slug length with no truncation', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = { title: 'Short Title' };
 
@@ -433,7 +433,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('current slug handling', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = { title: 'My Title' };
     // Without currentSlug, should process normally and call renameIfNeeded
@@ -452,14 +452,14 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('empty template', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     expect(fillTemplate('', { collection, content: {} })).toEqual('');
     expect(fillTemplate('   ', { collection, content: {} })).toEqual('');
   });
 
   test('template with static text', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = { title: 'My Article', category: 'Tech' };
 
@@ -473,7 +473,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('malformed templates', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = { title: 'My Article' };
 
@@ -492,7 +492,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('transformations with undefined values', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = {};
 
@@ -506,7 +506,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('preview path empty slug handling', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = {};
 
@@ -521,7 +521,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('complex nested default transformations', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     // Test simple nested template tags in default transformations
     const content = { title: '', backupSlug: 'backup-slug' };
@@ -548,7 +548,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('date parts without explicit dateTimeParts', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     // Test that date/time parts work without explicitly passing dateTimeParts
     const result = fillTemplate('{{year}}-{{month}}-{{day}}', {
@@ -560,7 +560,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('collection without file configuration', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     /** @type {InternalFileCollection} */
     const fileCollection = {
@@ -583,7 +583,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('whitespace handling in template', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = { title: 'My Article', category: 'Tech' };
 
@@ -595,7 +595,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('index file handling in preview path mode', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     const content = { title: 'Home Page' };
 
@@ -663,7 +663,7 @@ describe('Test fillTemplate()', async () => {
   });
 
   test('default transformation with nested template tag', async () => {
-    await setupSiteConfig();
+    await setupCmsConfig();
 
     // Test with a field that exists but is empty
     const result = fillTemplate("{{emptyField | default('{{fallbackField}}')}}", {
@@ -677,7 +677,7 @@ describe('Test fillTemplate()', async () => {
 
   describe('Internal helper functions coverage', () => {
     test('DATE_TIME_FIELDS constant is used correctly', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       const dateTimeParts = getDateTimeParts({ timeZone: 'UTC' });
 
@@ -703,7 +703,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('TEMPLATE_REGEX correctly matches template tags', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       // Test various template patterns
       expect(fillTemplate('{{title}}-{{slug}}', { collection, content: { title: 'Hello' } })).toBe(
@@ -715,7 +715,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('UUID_TYPES generates UUIDs correctly', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       const uuidResult = fillTemplate('{{uuid}}', { collection, content: {} });
       const uuidShortResult = fillTemplate('{{uuid_short}}', { collection, content: {} });
@@ -730,7 +730,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('getFieldValue handles fields.* pattern', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       // Test fields.* pattern
       expect(fillTemplate('{{fields.title}}', { collection, content: { title: 'My Title' } })).toBe(
@@ -742,7 +742,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('getFieldValue handles slug tag specially', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       // When tag is 'slug', it should call getEntrySummaryFromContent
       const result = fillTemplate('{{slug}}', { collection, content: { title: 'Test' } });
@@ -751,7 +751,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('replaceTemplateTag handles locale for preview_path', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       const result = fillTemplate('{{locale}}', {
         collection,
@@ -764,7 +764,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('processTransformations handles default transformation with nested tag', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       // Test nested template tag in default transformation
       const result = fillTemplate("{{missing | default('{{fields.fallback}}')}}", {
@@ -776,7 +776,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('replaceTemplatePlaceholder falls back to random ID', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       // When a field is missing and no default is provided, should generate UUID
       const result = fillTemplate('{{nonexistent}}', { collection, content: {} });
@@ -785,7 +785,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('getExistingSlugs filters and maps slugs correctly', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
 
@@ -812,7 +812,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('getExistingSlugs with locale returns locale-specific slugs', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
       const { renameIfNeeded } = await import('$lib/services/utils/file');
@@ -871,7 +871,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('processTransformations with nested template tag generates correct default value', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       // This test ensures that line 227 is covered by testing the specific case
       // where a nested template tag exists in a default transformation
@@ -888,7 +888,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('processTransformations with nested fields. prefix in default', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       const content = { title: '', slug: 'example-slug' };
 
@@ -901,7 +901,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('processTransformations nested tag with author field', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       // Test that the nested template tag in default transformation is processed
       const content = { author: '', name: 'John Doe' };
@@ -915,7 +915,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('processTransformations nested tag fallback when primary value is undefined', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       // Test explicitly with a field that doesn't exist, ensuring the default is used
       const content = { fallback: 'fallback-value' };
@@ -931,7 +931,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('fillTemplate handles file path tags in media_folder context', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       const result = fillTemplate('{{dirname}}/uploads', {
         collection,
@@ -944,7 +944,7 @@ describe('Test fillTemplate()', async () => {
     });
 
     test('fillTemplate returns value as-is for preview_path type', async () => {
-      await setupSiteConfig();
+      await setupCmsConfig();
 
       // Test that values are not slugified in preview_path mode
       const result1 = fillTemplate('{{locale}}', {

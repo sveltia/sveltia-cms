@@ -3,6 +3,7 @@
  * @import { Writable } from 'svelte/store';
  * @import {
  * BackendName,
+ * CmsConfig,
  * Collection,
  * CollectionDivider,
  * CollectionFile,
@@ -22,7 +23,6 @@
  * RelationField,
  * SelectField,
  * SelectFieldValue,
- * SiteConfig,
  * } from './public';
  */
 
@@ -41,14 +41,15 @@
  */
 
 /**
- * @typedef {object} SiteConfigExtraProps
+ * CMS configuration extra properties for internal use.
+ * @typedef {object} CmsConfigExtraProps
  * @property {string} _siteURL `site_url` or the current `location.origin` if it’s not set.
  * @property {string} _baseURL The base/origin of `_siteURL`.
  */
 
 /**
- * Site configuration for internal use.
- * @typedef {SiteConfig & SiteConfigExtraProps} InternalSiteConfig
+ * CMS configuration for internal use.
+ * @typedef {CmsConfig & CmsConfigExtraProps} InternalCmsConfig
  */
 
 /**
@@ -244,7 +245,7 @@
  * @property {string} [apiKeyURL] URL of the page that provides an API key.
  * @property {RegExp} [apiKeyPattern] API key pattern.
  * @property {() => boolean} [isEnabled] Whether the service is enabled. It’s determined by whether
- * the service is defined in the site configuration.
+ * the service is defined in the CMS configuration.
  * @property {() => Promise<boolean>} [init] Function to initialize the service.
  * @property {(userName: string, password: string) => Promise<boolean>} [signIn] Function to sign in
  * to the service.
@@ -457,7 +458,7 @@
 /**
  * Collection type. A folder collection in Netlify/Decap CMS is called an entry collection in
  * Sveltia CMS. We also support a special singleton collection type that is used for single files
- * not associated with any collection, such as a site configuration file.
+ * not associated with any collection, such as a CMS configuration file.
  * @typedef {'entry' | 'file' | 'singleton'} CollectionType
  */
 
@@ -663,8 +664,10 @@
  * Entry draft backup, which is a subset of {@link EntryDraft} plus metadata.
  * @typedef {object} EntryDraftBackup
  * @property {Date} timestamp When the backup was created.
- * @property {string} siteConfigVersion The SHA-1 hash of the site configuration file, which is used
+ * @property {string} cmsConfigVersion The SHA-1 hash of the CMS configuration file, which is used
  * to verify that the backup can be safely restored.
+ * @property {string} [siteConfigVersion] Replaced by `cmsConfigVersion`. Remove this before the 1.0
+ * release.
  * @property {string} collectionName Collection name.
  * @property {string} slug Entry slug. An empty string for a new entry.
  * @property {LocaleStateMap} currentLocales Current locale state.
@@ -1057,7 +1060,7 @@
 /**
  * Context for config parsing.
  * @typedef {object} ConfigParserContext
- * @property {SiteConfig} [siteConfig] Raw site config to parse.
+ * @property {CmsConfig} [cmsConfig] Raw site config to parse.
  * @property {Collection | InternalSingletonCollection} [collection] Collection config to parse.
  * @property {CollectionFile} [collectionFile] File config to parse.
  * @property {string} [componentName] Name of the editor component.

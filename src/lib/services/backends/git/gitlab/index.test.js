@@ -44,7 +44,7 @@ vi.mock('$lib/services/backends/git/shared/api', () => ({
   graphqlVars: {},
 }));
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
+  cmsConfig: { subscribe: vi.fn() },
 }));
 vi.mock('$lib/services/user/prefs', () => ({
   prefs: { subscribe: vi.fn() },
@@ -245,7 +245,7 @@ describe('GitLab backend service', () => {
       };
 
       vi.mocked(get)
-        .mockReturnValueOnce(mockConfig) // for siteConfig
+        .mockReturnValueOnce(mockConfig) // for cmsConfig
         .mockReturnValueOnce(mockPrefs); // for prefs
 
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
@@ -269,7 +269,7 @@ describe('GitLab backend service', () => {
       };
 
       vi.mocked(get)
-        .mockReturnValueOnce(mockConfig) // for siteConfig
+        .mockReturnValueOnce(mockConfig) // for cmsConfig
         .mockReturnValueOnce(mockPrefs); // for prefs
 
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});

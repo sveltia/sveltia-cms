@@ -74,7 +74,7 @@ vi.mock('$lib/services/assets/view', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
+  cmsConfig: { subscribe: vi.fn() },
 }));
 
 vi.mock('$lib/services/contents/editor', () => ({

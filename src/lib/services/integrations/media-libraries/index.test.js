@@ -9,21 +9,21 @@ vi.mock('svelte/store', () => ({
   derived: vi.fn(() => ({ subscribe: vi.fn() })),
 }));
 vi.mock('$lib/services/config', () => ({
-  siteConfig: {
+  cmsConfig: {
     subscribe: vi.fn(),
-    _mockValue: 'siteConfig',
+    _mockValue: 'cmsConfig',
   },
 }));
 
 describe('integrations/media-libraries', () => {
   /** @type {any} */
-  let mockSiteConfig;
+  let mockCmsConfig;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     // Mock site config
-    mockSiteConfig = {
+    mockCmsConfig = {
       media_library: {
         name: 'default',
         config: {
@@ -53,7 +53,7 @@ describe('integrations/media-libraries', () => {
 
     getMock.mockImplementation((store) => {
       if (store && typeof store === 'object' && '_mockValue' in store) {
-        if (store._mockValue === 'siteConfig') return mockSiteConfig;
+        if (store._mockValue === 'cmsConfig') return mockCmsConfig;
       }
 
       return undefined;
@@ -349,10 +349,10 @@ describe('integrations/media-libraries', () => {
       });
 
       // Site config should be ignored due to higher priority field config
-      mockSiteConfig.media_libraries = {
+      mockCmsConfig.media_libraries = {
         default: { config: { max_file_size: 3000 } },
       };
-      mockSiteConfig.media_library = {
+      mockCmsConfig.media_library = {
         name: 'default',
         config: { max_file_size: 4000 },
       };

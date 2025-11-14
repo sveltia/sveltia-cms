@@ -31,7 +31,7 @@ export const resetRepositoryInfoCache = () => {
  * Generate base URLs for accessing the repository’s resources.
  * @param {string} repoURL The base URL of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
- * the site configuration.
+ * the CMS configuration.
  * @returns {{ treeBaseURL: string, blobBaseURL: string }} An object containing the tree base URL
  * for browsing files, and the blob base URL for accessing file contents.
  */

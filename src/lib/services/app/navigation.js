@@ -3,13 +3,13 @@ import { flushSync } from 'svelte';
 import { derived, get, writable } from 'svelte/store';
 
 import { showAssetOverlay } from '$lib/services/assets/view';
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
 import { isSmallScreen } from '$lib/services/user/env';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
- * @import { InternalSiteConfig } from '$lib/types/private';
+ * @import { InternalCmsConfig } from '$lib/types/private';
  */
 
 /**
@@ -187,8 +187,8 @@ export const goBack = (path, options = {}) => {
  * Open the production site in a new browser tab.
  */
 export const openProductionSite = () => {
-  const { display_url: displayURL, _siteURL: siteURL } = /** @type {InternalSiteConfig} */ (
-    get(siteConfig)
+  const { display_url: displayURL, _siteURL: siteURL } = /** @type {InternalCmsConfig} */ (
+    get(cmsConfig)
   );
 
   window.open(displayURL || siteURL || '/', '_blank');

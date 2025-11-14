@@ -45,7 +45,7 @@ vi.mock('$lib/services/backends/git/shared/api', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { mockStore: 'siteConfig' },
+  cmsConfig: { mockStore: 'cmsConfig' },
 }));
 
 vi.mock('$lib/services/user/prefs', () => ({
@@ -74,7 +74,7 @@ describe('Gitea Index Service', () => {
 
     // Default mock setup for stores
     getMock.mockImplementation((/** @type {any} */ store) => {
-      if (store && typeof store === 'object' && store.mockStore === 'siteConfig') {
+      if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
         return {
           backend: {
             name: 'gitea',
@@ -130,7 +130,7 @@ describe('Gitea Index Service', () => {
 
     test('should return undefined when backend is not Gitea', () => {
       getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'siteConfig') {
+        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
           return {
             backend: {
               name: 'github', // Different backend
@@ -148,7 +148,7 @@ describe('Gitea Index Service', () => {
 
     test('should return undefined when no backend is configured', () => {
       getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'siteConfig') {
+        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
           return {}; // No backend configured
         }
 
@@ -160,7 +160,7 @@ describe('Gitea Index Service', () => {
       expect(result).toBeUndefined();
     });
 
-    test('should return undefined when siteConfig is null', () => {
+    test('should return undefined when cmsConfig is null', () => {
       getMock.mockImplementation(() => null);
 
       const result = init();
@@ -170,7 +170,7 @@ describe('Gitea Index Service', () => {
 
     test('should handle custom configuration values', () => {
       getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'siteConfig') {
+        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
           return {
             backend: {
               name: 'gitea',
@@ -202,7 +202,7 @@ describe('Gitea Index Service', () => {
 
     test('should set newPatURL correctly for custom Gitea instances', () => {
       getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'siteConfig') {
+        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
           return {
             backend: {
               name: 'gitea',
@@ -244,7 +244,7 @@ describe('Gitea Index Service', () => {
 
     test('should use default values for missing optional configuration', () => {
       getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'siteConfig') {
+        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
           return {
             backend: {
               name: 'gitea',
@@ -271,7 +271,7 @@ describe('Gitea Index Service', () => {
 
     test('should detect self-hosted instances correctly', () => {
       getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'siteConfig') {
+        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
           return {
             backend: {
               name: 'gitea',
@@ -298,7 +298,7 @@ describe('Gitea Index Service', () => {
       const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
       getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'siteConfig') {
+        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
           return {
             backend: {
               name: 'gitea',

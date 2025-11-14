@@ -7,7 +7,7 @@ vi.mock('$lib/services/config', async () => {
   const { writable } = await import('svelte/store');
 
   return {
-    siteConfig: writable(undefined),
+    cmsConfig: writable(undefined),
   };
 });
 
@@ -21,7 +21,7 @@ vi.mock('$lib/services/backends', async () => {
 
 describe('git/shared/integration', () => {
   /** @type {import('svelte/store').Writable<any>} */
-  let siteConfig;
+  let cmsConfig;
   /** @type {import('svelte/store').Writable<any>} */
   let backend;
 
@@ -30,11 +30,11 @@ describe('git/shared/integration', () => {
     const configModule = await import('$lib/services/config');
     const backendModule = await import('$lib/services/backends');
 
-    siteConfig = configModule.siteConfig;
+    cmsConfig = configModule.cmsConfig;
     backend = backendModule.backend;
 
     // Reset to initial state
-    siteConfig.set(undefined);
+    cmsConfig.set(undefined);
     backend.set(undefined);
   });
 
@@ -43,10 +43,10 @@ describe('git/shared/integration', () => {
   });
 
   describe('skipCIConfigured', () => {
-    it('should return false when siteConfig is undefined', async () => {
+    it('should return false when cmsConfig is undefined', async () => {
       const { skipCIConfigured } = await import('./integration');
 
-      siteConfig.set(undefined);
+      cmsConfig.set(undefined);
       backend.set({ isGit: true });
 
       expect(get(skipCIConfigured)).toBe(false);
@@ -55,7 +55,7 @@ describe('git/shared/integration', () => {
     it('should return false when backend is undefined', async () => {
       const { skipCIConfigured } = await import('./integration');
 
-      siteConfig.set({ backend: { name: 'github', repo: 'test/repo' } });
+      cmsConfig.set({ backend: { name: 'github', repo: 'test/repo' } });
       backend.set(undefined);
 
       expect(get(skipCIConfigured)).toBe(false);
@@ -64,7 +64,7 @@ describe('git/shared/integration', () => {
     it('should return false when backend is not Git', async () => {
       const { skipCIConfigured } = await import('./integration');
 
-      siteConfig.set({ backend: { name: 'test-repo' } });
+      cmsConfig.set({ backend: { name: 'test-repo' } });
       backend.set({ isGit: false });
 
       expect(get(skipCIConfigured)).toBe(false);
@@ -73,7 +73,7 @@ describe('git/shared/integration', () => {
     it('should return false when neither skip_ci nor automatic_deployments is set', async () => {
       const { skipCIConfigured } = await import('./integration');
 
-      siteConfig.set({ backend: { name: 'github', repo: 'test/repo' } });
+      cmsConfig.set({ backend: { name: 'github', repo: 'test/repo' } });
       backend.set({ isGit: true });
 
       expect(get(skipCIConfigured)).toBe(false);
@@ -82,7 +82,7 @@ describe('git/shared/integration', () => {
     it('should return true when skip_ci is explicitly set to true', async () => {
       const { skipCIConfigured } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', skip_ci: true },
       });
       backend.set({ isGit: true });
@@ -93,7 +93,7 @@ describe('git/shared/integration', () => {
     it('should return true when skip_ci is explicitly set to false', async () => {
       const { skipCIConfigured } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', skip_ci: false },
       });
       backend.set({ isGit: true });
@@ -104,7 +104,7 @@ describe('git/shared/integration', () => {
     it('should return true when automatic_deployments is explicitly set to true', async () => {
       const { skipCIConfigured } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', automatic_deployments: true },
       });
       backend.set({ isGit: true });
@@ -115,7 +115,7 @@ describe('git/shared/integration', () => {
     it('should return true when automatic_deployments is explicitly set to false', async () => {
       const { skipCIConfigured } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', automatic_deployments: false },
       });
       backend.set({ isGit: true });
@@ -126,7 +126,7 @@ describe('git/shared/integration', () => {
     it('should return true when both skip_ci and automatic_deployments are set', async () => {
       const { skipCIConfigured } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: {
           name: 'github',
           repo: 'test/repo',
@@ -141,10 +141,10 @@ describe('git/shared/integration', () => {
   });
 
   describe('skipCIEnabled', () => {
-    it('should return false when siteConfig is undefined', async () => {
+    it('should return false when cmsConfig is undefined', async () => {
       const { skipCIEnabled } = await import('./integration');
 
-      siteConfig.set(undefined);
+      cmsConfig.set(undefined);
       backend.set({ isGit: true });
 
       expect(get(skipCIEnabled)).toBe(false);
@@ -153,7 +153,7 @@ describe('git/shared/integration', () => {
     it('should return false when backend is undefined', async () => {
       const { skipCIEnabled } = await import('./integration');
 
-      siteConfig.set({ backend: { name: 'github', repo: 'test/repo' } });
+      cmsConfig.set({ backend: { name: 'github', repo: 'test/repo' } });
       backend.set(undefined);
 
       expect(get(skipCIEnabled)).toBe(false);
@@ -162,7 +162,7 @@ describe('git/shared/integration', () => {
     it('should return false when backend is not Git', async () => {
       const { skipCIEnabled } = await import('./integration');
 
-      siteConfig.set({ backend: { name: 'test-repo' } });
+      cmsConfig.set({ backend: { name: 'test-repo' } });
       backend.set({ isGit: false });
 
       expect(get(skipCIEnabled)).toBe(false);
@@ -171,7 +171,7 @@ describe('git/shared/integration', () => {
     it('should return false when neither skip_ci nor automatic_deployments is set', async () => {
       const { skipCIEnabled } = await import('./integration');
 
-      siteConfig.set({ backend: { name: 'github', repo: 'test/repo' } });
+      cmsConfig.set({ backend: { name: 'github', repo: 'test/repo' } });
       backend.set({ isGit: true });
 
       expect(get(skipCIEnabled)).toBe(false);
@@ -180,7 +180,7 @@ describe('git/shared/integration', () => {
     it('should return true when skip_ci is true', async () => {
       const { skipCIEnabled } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', skip_ci: true },
       });
       backend.set({ isGit: true });
@@ -191,7 +191,7 @@ describe('git/shared/integration', () => {
     it('should return false when skip_ci is false', async () => {
       const { skipCIEnabled } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', skip_ci: false },
       });
       backend.set({ isGit: true });
@@ -202,7 +202,7 @@ describe('git/shared/integration', () => {
     it('should return true when automatic_deployments is false', async () => {
       const { skipCIEnabled } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', automatic_deployments: false },
       });
       backend.set({ isGit: true });
@@ -213,7 +213,7 @@ describe('git/shared/integration', () => {
     it('should return false when automatic_deployments is true', async () => {
       const { skipCIEnabled } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', automatic_deployments: true },
       });
       backend.set({ isGit: true });
@@ -224,7 +224,7 @@ describe('git/shared/integration', () => {
     it('should return true when skip_ci is true and automatic_deployments is true', async () => {
       const { skipCIEnabled } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: {
           name: 'github',
           repo: 'test/repo',
@@ -240,7 +240,7 @@ describe('git/shared/integration', () => {
     it('should return true when skip_ci is true and automatic_deployments is false', async () => {
       const { skipCIEnabled } = await import('./integration');
 
-      siteConfig.set({
+      cmsConfig.set({
         backend: {
           name: 'github',
           repo: 'test/repo',
@@ -257,24 +257,24 @@ describe('git/shared/integration', () => {
       const { skipCIEnabled } = await import('./integration');
 
       // Initially disabled
-      siteConfig.set({ backend: { name: 'github', repo: 'test/repo' } });
+      cmsConfig.set({ backend: { name: 'github', repo: 'test/repo' } });
       backend.set({ isGit: true });
       expect(get(skipCIEnabled)).toBe(false);
 
       // Enable skip_ci
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', skip_ci: true },
       });
       expect(get(skipCIEnabled)).toBe(true);
 
       // Disable skip_ci
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', skip_ci: false },
       });
       expect(get(skipCIEnabled)).toBe(false);
 
       // Disable automatic_deployments (should enable skip CI)
-      siteConfig.set({
+      cmsConfig.set({
         backend: { name: 'github', repo: 'test/repo', automatic_deployments: false },
       });
       expect(get(skipCIEnabled)).toBe(true);

@@ -1,7 +1,7 @@
 import { init as initI18n } from 'svelte-i18n';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DEV_SITE_URL, siteConfig, siteConfigErrors, siteConfigVersion } from './index.js';
+import { cmsConfig, cmsConfigErrors, cmsConfigVersion, DEV_SITE_URL } from './index.js';
 
 // Mock external dependencies
 vi.mock('@sveltia/utils/crypto', () => ({
@@ -27,7 +27,7 @@ vi.mock('svelte/store', async () => {
 });
 
 vi.mock('$lib/services/config/loader', () => ({
-  fetchSiteConfig: vi.fn(),
+  fetchCmsConfig: vi.fn(),
 }));
 
 vi.mock('$lib/services/config/deprecations', () => ({
@@ -87,9 +87,9 @@ describe('config/index', () => {
 
   afterEach(() => {
     // Reset stores
-    siteConfig.set(undefined);
-    siteConfigErrors.set([]);
-    siteConfigVersion.set('0');
+    cmsConfig.set(undefined);
+    cmsConfigErrors.set([]);
+    cmsConfigVersion.set('0');
   });
 
   describe('constants', () => {
@@ -101,15 +101,15 @@ describe('config/index', () => {
 
   describe('stores', () => {
     it('should export config stores', () => {
-      expect(siteConfig).toBeDefined();
-      expect(siteConfigErrors).toBeDefined();
-      expect(siteConfigVersion).toBeDefined();
+      expect(cmsConfig).toBeDefined();
+      expect(cmsConfigErrors).toBeDefined();
+      expect(cmsConfigVersion).toBeDefined();
     });
   });
 
-  describe('initSiteConfig', () => {
+  describe('initCmsConfig', () => {
     /** @type {any} */
-    let fetchSiteConfigMock;
+    let fetchcmsConfigMock;
     /** @type {any} */
     let getHashMock;
     /** @type {any} */
@@ -118,10 +118,10 @@ describe('config/index', () => {
     let originalLocation;
 
     beforeEach(async () => {
-      const { fetchSiteConfig } = await import('$lib/services/config/loader');
+      const { fetchCmsConfig } = await import('$lib/services/config/loader');
       const { getHash } = await import('@sveltia/utils/crypto');
 
-      fetchSiteConfigMock = vi.mocked(fetchSiteConfig);
+      fetchcmsConfigMock = vi.mocked(fetchCmsConfig);
       getHashMock = vi.mocked(getHash);
 
       // Mock window if not defined
@@ -163,7 +163,7 @@ describe('config/index', () => {
     });
 
     it('should throw error when not in secure context', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
       if (typeof window !== 'undefined') {
         Object.defineProperty(window, 'isSecureContext', { value: false, writable: true });
@@ -171,14 +171,14 @@ describe('config/index', () => {
         global.window.isSecureContext = false;
       }
 
-      await initSiteConfig();
+      await initCmsConfig();
 
       const errors = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfigErrors.subscribe((err) => {
+        unsubscribe = cmsConfigErrors.subscribe((err) => {
           if (err) {
             unsubscribe?.();
             resolve(err);
@@ -191,7 +191,7 @@ describe('config/index', () => {
     });
 
     it('should load config from file when no manual config provided', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
@@ -199,19 +199,19 @@ describe('config/index', () => {
         collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
       };
 
-      fetchSiteConfigMock.mockResolvedValue(mockConfig);
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
       getHashMock.mockResolvedValue('test-hash');
 
-      await initSiteConfig();
+      await initCmsConfig();
 
-      expect(fetchSiteConfigMock).toHaveBeenCalled();
+      expect(fetchcmsConfigMock).toHaveBeenCalled();
 
       const config = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfig.subscribe((cfg) => {
+        unsubscribe = cmsConfig.subscribe((cfg) => {
           if (cfg) {
             unsubscribe?.();
             resolve(cfg);
@@ -224,7 +224,7 @@ describe('config/index', () => {
     });
 
     it('should use manual config when provided and load_config_file is false', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
       /** @type {any} */
       const manualConfig = {
@@ -234,16 +234,16 @@ describe('config/index', () => {
         load_config_file: false,
       };
 
-      await initSiteConfig(manualConfig);
+      await initCmsConfig(manualConfig);
 
-      expect(fetchSiteConfigMock).not.toHaveBeenCalled();
+      expect(fetchcmsConfigMock).not.toHaveBeenCalled();
 
       const config = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfig.subscribe((cfg) => {
+        unsubscribe = cmsConfig.subscribe((cfg) => {
           if (cfg) {
             unsubscribe?.();
             resolve(cfg);
@@ -256,7 +256,7 @@ describe('config/index', () => {
     });
 
     it('should merge manual config with file config when load_config_file is not false', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
       const fileConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
@@ -270,18 +270,18 @@ describe('config/index', () => {
         site_url: 'https://example.com',
       };
 
-      fetchSiteConfigMock.mockResolvedValue(fileConfig);
+      fetchcmsConfigMock.mockResolvedValue(fileConfig);
 
-      await initSiteConfig(manualConfig);
+      await initCmsConfig(manualConfig);
 
-      expect(fetchSiteConfigMock).toHaveBeenCalled();
+      expect(fetchcmsConfigMock).toHaveBeenCalled();
 
       const config = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfig.subscribe((cfg) => {
+        unsubscribe = cmsConfig.subscribe((cfg) => {
           if (cfg) {
             unsubscribe?.();
             resolve(cfg);
@@ -295,16 +295,16 @@ describe('config/index', () => {
     });
 
     it('should throw error when manual config is not an object', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
-      await initSiteConfig(/** @type {any} */ ('not-an-object'));
+      await initCmsConfig(/** @type {any} */ ('not-an-object'));
 
       const errors = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfigErrors.subscribe((err) => {
+        unsubscribe = cmsConfigErrors.subscribe((err) => {
           if (err) {
             unsubscribe?.();
             resolve(err);
@@ -317,7 +317,7 @@ describe('config/index', () => {
     });
 
     it('should set _siteURL from site_url config', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
@@ -326,16 +326,16 @@ describe('config/index', () => {
         site_url: '  https://example.com  ',
       };
 
-      fetchSiteConfigMock.mockResolvedValue(mockConfig);
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
 
-      await initSiteConfig();
+      await initCmsConfig();
 
       const config = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfig.subscribe((cfg) => {
+        unsubscribe = cmsConfig.subscribe((cfg) => {
           if (cfg) {
             unsubscribe?.();
             resolve(cfg);
@@ -348,7 +348,7 @@ describe('config/index', () => {
     });
 
     it('should use DEV_SITE_URL in development when site_url is not provided', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
@@ -356,16 +356,16 @@ describe('config/index', () => {
         collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
       };
 
-      fetchSiteConfigMock.mockResolvedValue(mockConfig);
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
 
-      await initSiteConfig();
+      await initCmsConfig();
 
       const config = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfig.subscribe((cfg) => {
+        unsubscribe = cmsConfig.subscribe((cfg) => {
           if (cfg) {
             unsubscribe?.();
             resolve(cfg);
@@ -378,7 +378,7 @@ describe('config/index', () => {
     });
 
     it('should set _baseURL to empty string for invalid URL (line 207)', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
@@ -387,16 +387,16 @@ describe('config/index', () => {
         site_url: 'not-a-valid-url',
       };
 
-      fetchSiteConfigMock.mockResolvedValue(mockConfig);
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
 
-      await initSiteConfig();
+      await initCmsConfig();
 
       const config = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfig.subscribe((cfg) => {
+        unsubscribe = cmsConfig.subscribe((cfg) => {
           if (cfg) {
             unsubscribe?.();
             resolve(cfg);
@@ -410,7 +410,7 @@ describe('config/index', () => {
     });
 
     it('should handle root collection folder variants', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
@@ -422,16 +422,16 @@ describe('config/index', () => {
         ],
       };
 
-      fetchSiteConfigMock.mockResolvedValue(mockConfig);
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
 
-      await initSiteConfig();
+      await initCmsConfig();
 
       const config = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfig.subscribe((cfg) => {
+        unsubscribe = cmsConfig.subscribe((cfg) => {
           if (cfg) {
             unsubscribe?.();
             resolve(cfg);
@@ -444,8 +444,8 @@ describe('config/index', () => {
       expect(config?.collections?.[2].folder).toBe('docs');
     });
 
-    it('should set siteConfigVersion with hash of config', async () => {
-      const { initSiteConfig } = await import('./index.js');
+    it('should set cmsConfigVersion with hash of config', async () => {
+      const { initCmsConfig } = await import('./index.js');
 
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
@@ -453,10 +453,10 @@ describe('config/index', () => {
         collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
       };
 
-      fetchSiteConfigMock.mockResolvedValue(mockConfig);
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
       getHashMock.mockResolvedValue('config-hash-123');
 
-      await initSiteConfig();
+      await initCmsConfig();
 
       // Wait for version to be set
       await new Promise((resolve) => {
@@ -468,7 +468,7 @@ describe('config/index', () => {
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfigVersion.subscribe((ver) => {
+        unsubscribe = cmsConfigVersion.subscribe((ver) => {
           if (ver && ver !== '0') {
             unsubscribe?.();
             resolve(ver);
@@ -480,23 +480,23 @@ describe('config/index', () => {
     });
 
     it('should handle validation errors', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
       const invalidConfig = {
         // Missing required fields
         backend: { name: 'github' },
       };
 
-      fetchSiteConfigMock.mockResolvedValue(invalidConfig);
+      fetchcmsConfigMock.mockResolvedValue(invalidConfig);
 
-      await initSiteConfig();
+      await initCmsConfig();
 
       const errors = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfigErrors.subscribe((err) => {
+        unsubscribe = cmsConfigErrors.subscribe((err) => {
           if (err) {
             unsubscribe?.();
             resolve(err);
@@ -508,18 +508,18 @@ describe('config/index', () => {
     });
 
     it('should handle unexpected errors with generic message', async () => {
-      const { initSiteConfig } = await import('./index.js');
+      const { initCmsConfig } = await import('./index.js');
 
-      fetchSiteConfigMock.mockRejectedValue(new TypeError('Network error'));
+      fetchcmsConfigMock.mockRejectedValue(new TypeError('Network error'));
 
-      await initSiteConfig();
+      await initCmsConfig();
 
       const errors = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
         /** @type {() => void} */
         let unsubscribe;
 
-        unsubscribe = siteConfigErrors.subscribe((err) => {
+        unsubscribe = cmsConfigErrors.subscribe((err) => {
           if (err) {
             unsubscribe?.();
             resolve(err);

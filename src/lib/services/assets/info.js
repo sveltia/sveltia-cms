@@ -8,7 +8,7 @@ import { get } from 'svelte/store';
 import { getAssetByPath } from '$lib/services/assets';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
 import { getMediaMetadata } from '$lib/services/utils/media';
@@ -20,8 +20,8 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * Asset,
  * AssetDetails,
  * Entry,
+ * InternalCmsConfig,
  * InternalImageTransformationOptions,
- * InternalSiteConfig,
  * } from '$lib/types/private';
  */
 
@@ -180,7 +180,7 @@ export const getAssetPublicURL = (
   }
 
   const { _baseURL: baseURL = '', output: { encode_file_path: encodingEnabled = false } = {} } =
-    /** @type {InternalSiteConfig} */ (get(siteConfig));
+    /** @type {InternalCmsConfig} */ (get(cmsConfig));
 
   let path = hasTemplateTags
     ? asset.path.replace(

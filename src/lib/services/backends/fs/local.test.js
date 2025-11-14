@@ -36,7 +36,7 @@ vi.mock('$lib/services/backends/fs/shared/files', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
+  cmsConfig: { subscribe: vi.fn() },
 }));
 
 vi.mock('$lib/services/backends', () => ({

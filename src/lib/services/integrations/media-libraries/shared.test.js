@@ -8,14 +8,14 @@ vi.mock('svelte/store', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: {
-    _mockValue: 'siteConfig',
+  cmsConfig: {
+    _mockValue: 'cmsConfig',
   },
 }));
 
 describe('integrations/media-libraries/shared', () => {
   /** @type {any} */
-  let mockSiteConfig;
+  let mockCmsConfig;
   /** @type {any} */
   let getMock;
 
@@ -23,7 +23,7 @@ describe('integrations/media-libraries/shared', () => {
     vi.clearAllMocks();
 
     // Default mock site config
-    mockSiteConfig = {};
+    mockCmsConfig = {};
 
     // Setup get mock
     const { get } = await import('svelte/store');
@@ -32,7 +32,7 @@ describe('integrations/media-libraries/shared', () => {
 
     getMock.mockImplementation((/** @type {any} */ store) => {
       if (store && typeof store === 'object' && '_mockValue' in store) {
-        if (store._mockValue === 'siteConfig') return mockSiteConfig;
+        if (store._mockValue === 'cmsConfig') return mockCmsConfig;
       }
 
       return undefined;
@@ -107,7 +107,7 @@ describe('integrations/media-libraries/shared', () => {
     });
 
     it('should check site-level media_libraries when field-level options are undefined', () => {
-      mockSiteConfig = {
+      mockCmsConfig = {
         media_libraries: {
           default: { config: { multiple: true } },
         },
@@ -120,7 +120,7 @@ describe('integrations/media-libraries/shared', () => {
     });
 
     it('should return false when site-level media_libraries have multiple: false', () => {
-      mockSiteConfig = {
+      mockCmsConfig = {
         media_libraries: {
           default: { config: { multiple: false } },
           custom: { config: { multiple: false } },
@@ -134,7 +134,7 @@ describe('integrations/media-libraries/shared', () => {
     });
 
     it('should check site-level media_library when media_libraries is undefined', () => {
-      mockSiteConfig = {
+      mockCmsConfig = {
         media_library: { config: { multiple: true } },
       };
 
@@ -145,7 +145,7 @@ describe('integrations/media-libraries/shared', () => {
     });
 
     it('should return false when site-level media_library.config.multiple is false', () => {
-      mockSiteConfig = {
+      mockCmsConfig = {
         media_library: { config: { multiple: false } },
       };
 
@@ -163,7 +163,7 @@ describe('integrations/media-libraries/shared', () => {
     });
 
     it('should prioritize field-level multiple over media library configs', () => {
-      mockSiteConfig = {
+      mockCmsConfig = {
         media_libraries: {
           default: { config: { multiple: true } },
         },
@@ -251,7 +251,7 @@ describe('integrations/media-libraries/shared', () => {
     });
 
     it('should follow priority order: field multiple > field media_libraries > field media_library > site media_libraries > site media_library > default', () => {
-      mockSiteConfig = {
+      mockCmsConfig = {
         media_libraries: {
           default: { config: { multiple: true } },
         },
@@ -275,7 +275,7 @@ describe('integrations/media-libraries/shared', () => {
       expect(isMultiple(fieldConfig2)).toBe(false);
 
       // Test site media_libraries has priority over site media_library
-      mockSiteConfig = {
+      mockCmsConfig = {
         media_libraries: {
           default: { config: { multiple: false } },
         },
@@ -287,7 +287,7 @@ describe('integrations/media-libraries/shared', () => {
       expect(isMultiple(fieldConfig3)).toBe(false);
     });
 
-    it('should handle undefined siteConfig', () => {
+    it('should handle undefined cmsConfig', () => {
       getMock.mockReturnValue(undefined);
 
       const fieldConfig = /** @type {any} */ ({});
@@ -296,7 +296,7 @@ describe('integrations/media-libraries/shared', () => {
       expect(result).toBe(false);
     });
 
-    it('should handle null siteConfig', () => {
+    it('should handle null cmsConfig', () => {
       getMock.mockReturnValue(null);
 
       const fieldConfig = /** @type {any} */ ({});

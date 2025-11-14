@@ -58,7 +58,7 @@ vi.mock('$lib/services/backends/save', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: {
+  cmsConfig: {
     subscribe: vi.fn(),
   },
 }));
@@ -431,12 +431,12 @@ describe('assets/data/move', () => {
 
       const savingEntries = [];
       const changes = [];
-      const _siteConfig = { editor: { preview: true } };
+      const _cmsConfig = { editor: { preview: true } };
 
       // Test that the function completes without error
       await expect(
         collectEntryChanges({
-          _siteConfig,
+          _cmsConfig,
           entry: mockEntry,
           savingEntries,
           changes,
@@ -476,12 +476,12 @@ describe('assets/data/move', () => {
 
       const savingEntries = [];
       const changes = [];
-      const _siteConfig = {};
+      const _cmsConfig = {};
 
       // Test that the function completes without error
       await expect(
         collectEntryChanges({
-          _siteConfig,
+          _cmsConfig,
           entry: mockEntry,
           savingEntries,
           changes,
@@ -520,13 +520,13 @@ describe('assets/data/move', () => {
 
       const savingEntries = [];
       const changes = [];
-      const _siteConfig = {};
+      const _cmsConfig = {};
       const _globalAssetFolder = { publicPath: '/global' };
 
       // Test that the function completes without error
       await expect(
         collectEntryChangesFromAsset({
-          _siteConfig,
+          _cmsConfig,
           _globalAssetFolder,
           newPath: 'new-assets/image.jpg',
           asset: mockAsset,
@@ -553,7 +553,7 @@ describe('assets/data/move', () => {
       const changes = [];
 
       await collectEntryChangesFromAsset({
-        _siteConfig: {},
+        _cmsConfig: {},
         _globalAssetFolder: {},
         newPath: 'new-path.jpg',
         asset: mockAsset,
@@ -595,7 +595,7 @@ describe('assets/data/move', () => {
       const changes = [];
 
       await collectEntryChangesFromAsset({
-        _siteConfig: {},
+        _cmsConfig: {},
         _globalAssetFolder: { publicPath: '/global' },
         newPath: 'new-assets/image.jpg',
         asset: mockAsset,

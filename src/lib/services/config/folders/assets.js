@@ -8,7 +8,7 @@ import { getValidCollectionFiles } from '$lib/services/contents/collection/files
  * @import {
  * AssetFolderInfo,
  * CollectedMediaField,
- * InternalSiteConfig,
+ * InternalCmsConfig,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
  * @import { Collection, CollectionDivider, CollectionFile } from '$lib/types/public';
@@ -218,7 +218,7 @@ export const handleFieldMediaFolders = ({ fieldMediaFolders, validCollections, g
 
 /**
  * Get all asset folders.
- * @param {InternalSiteConfig} config Site configuration.
+ * @param {InternalCmsConfig} config CMS configuration.
  * @param {CollectedMediaField[]} [fieldMediaFolders] Collected field-level media folders.
  * @returns {AssetFolderInfo[]} Asset folders.
  */

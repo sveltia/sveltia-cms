@@ -23,7 +23,7 @@ vi.mock('svelte/store', async (importOriginal) => {
 });
 
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
+  cmsConfig: { subscribe: vi.fn() },
 }));
 
 vi.mock('@sveltia/utils/misc', () => ({
@@ -44,7 +44,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Mock the siteConfig to return uploadcare config
+    // Mock the cmsConfig to return uploadcare config
     vi.mocked(get).mockReturnValue({
       media_libraries: {
         uploadcare: {

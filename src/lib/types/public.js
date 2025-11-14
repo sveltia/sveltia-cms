@@ -1376,9 +1376,9 @@
  */
 
 /**
- * Site configuration.
- * @typedef {object} SiteConfig
- * @property {boolean} [load_config_file] Whether to load YAML/JSON site configuration file(s) when
+ * CMS configuration.
+ * @typedef {object} CmsConfig
+ * @property {boolean} [load_config_file] Whether to load YAML/JSON CMS configuration file(s) when
  * [manually initializing the CMS](https://decapcms.org/docs/manual-initialization/). This works
  * only in the `CMS.init()` method’s `config` option. Default: `true`.
  * @property {Backend} backend Backend options.
@@ -1411,7 +1411,7 @@
  * also contain dividers, which are used to group collections in the collection list. Either
  * `collections` or `singletons` option must be defined.
  * @property {(CollectionFile | CollectionDivider)[]} [singletons] Set of singleton files, such as
- * the site configuration file or the homepage file. They are not part of any collection and can be
+ * the CMS configuration file or the homepage file. They are not part of any collection and can be
  * accessed directly through the collection list. The list can also contain dividers. See our
  * [README](https://github.com/sveltia/sveltia-cms#using-singletons) for details.
  * @property {I18nOptions} [i18n] Global i18n options.

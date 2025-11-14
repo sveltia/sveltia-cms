@@ -4,7 +4,7 @@ import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
 
-import { siteConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
@@ -129,7 +129,7 @@ const finalizeContent = ({
   const sortedMap = {};
 
   const { omit_empty_optional_fields: omitEmptyOptionalFields = false } =
-    get(siteConfig)?.output ?? {};
+    get(cmsConfig)?.output ?? {};
 
   const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
   const copyArgs = { locale, unsortedMap, sortedMap, isTomlOutput, omitEmptyOptionalFields };

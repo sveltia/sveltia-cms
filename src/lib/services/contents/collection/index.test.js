@@ -28,7 +28,7 @@ vi.mock('svelte-i18n', () => ({
   _: { subscribe: vi.fn() },
 }));
 vi.mock('$lib/services/config', () => ({
-  siteConfig: { subscribe: vi.fn() },
+  cmsConfig: { subscribe: vi.fn() },
 }));
 vi.mock('$lib/services/contents/collection/files', () => ({
   getValidCollectionFiles: vi.fn(),
@@ -430,7 +430,7 @@ describe('getCollectionIndex()', () => {
     expect(index).toBe(-1);
   });
 
-  test('returns -1 when siteConfig is undefined', () => {
+  test('returns -1 when cmsConfig is undefined', () => {
     vi.mocked(get).mockReturnValue(undefined);
 
     const index = getCollectionIndex('some-collection');
@@ -547,7 +547,7 @@ describe('parseFileCollection()', () => {
     vi.mocked(normalizeI18nConfig).mockReturnValue({ defaultLocale: 'en' });
     vi.mocked(isValidCollectionFile).mockReturnValue(true);
 
-    // Mock siteConfig to include i18n property for normalizeI18nConfig
+    // Mock cmsConfig to include i18n property for normalizeI18nConfig
     vi.mocked(get).mockReturnValue({
       name: 'Test Site',
       i18n: { locales: ['en'], defaultLocale: 'en' },
