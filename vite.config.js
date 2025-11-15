@@ -143,12 +143,7 @@ const generateSchema = async () => {
     .replace(/\\n/g, ' ')
     // Use the proper boolean `deprecated` property instead of a string and append a separate
     // message property. `deprecationMessage` is a VS Code schema extension
-    .replace(
-      /^(?<spaces>\s+)"deprecated": "(?<message>.+)"$/gm,
-      '$<spaces>"deprecated": true,\n$<spaces>"deprecationMessage": "$<message>"',
-    )
-    // Add a newline at the end of the file
-    .concat('\n');
+    .replace(/"deprecated":"(.+?)"/g, '"deprecated":true,"deprecationMessage":"$1"');
 
   await mkdir('package/schema', { recursive: true });
   await writeFile('package/schema/sveltia-cms.json', schemaString);
