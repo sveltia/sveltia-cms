@@ -508,13 +508,13 @@
 
 /**
  * Simple List field definition with primitive item types.
- * @typedef {CommonFieldProps & StandardFieldProps & ListFieldProps} SimpleListField
+ * @typedef {CommonFieldProps & StandardFieldProps & ListFieldProps & MultiValueFieldProps
+ * } SimpleListField
  */
 
 /**
  * Properties for a complex List field with subfields or variable types.
- * @typedef {CommonFieldProps & StandardFieldProps & ListFieldProps & ComplexListFieldBaseProps &
- * MultiValueFieldProps} ComplexListFieldProps
+ * @typedef {SimpleListField & ComplexListFieldBaseProps} ComplexListFieldProps
  */
 
 /**
