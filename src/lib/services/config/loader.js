@@ -2,9 +2,18 @@ import { isObject } from '@sveltia/utils/object';
 import merge from 'deepmerge';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
-import { parse } from 'yaml';
 
-const SUPPORTED_TYPES = ['text/yaml', 'application/yaml', 'application/json'];
+import { parseTOML, parseYAML } from '$lib/services/contents/file/parse';
+
+/**
+ * Supported MIME types for configuration files.
+ */
+const SUPPORTED_TYPES = [
+  'text/yaml', // legacy
+  'application/yaml', // default
+  'application/toml',
+  'application/json',
+];
 
 /**
  * Fetch a single configuration file.
@@ -46,7 +55,13 @@ export const fetchFile = async ({ href, type = 'application/yaml' }) => {
     if (type === 'application/json') {
       result = response.json();
     } else {
-      result = parse(await response.text(), { merge: true, maxAliasCount: -1 });
+      const text = await response.text();
+
+      if (type === 'application/toml') {
+        result = parseTOML(text);
+      } else {
+        result = parseYAML(text, { merge: true, maxAliasCount: -1 });
+      }
     }
   } catch (ex) {
     throw new Error(get(_)('config.error.parse_failed'), { cause: ex });

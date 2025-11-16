@@ -353,6 +353,49 @@ backend:
       await expect(fetchFile({ href: '/config.yml' })).rejects.toThrow();
     });
 
+    test('should fetch and parse TOML file', async () => {
+      const tomlContent = `
+[backend]
+name = "github"
+repo = "test/repo"
+
+[[collections]]
+name = "posts"
+folder = "content/posts"
+
+[[collections]]
+name = "pages"
+folder = "content/pages"
+`;
+
+      fetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(tomlContent),
+      });
+
+      const result = await fetchFile({ href: '/config.toml', type: 'application/toml' });
+
+      expect(fetch).toHaveBeenCalledWith('/config.toml');
+      expect(result).toEqual({
+        backend: { name: 'github', repo: 'test/repo' },
+        collections: [
+          { name: 'posts', folder: 'content/posts' },
+          { name: 'pages', folder: 'content/pages' },
+        ],
+      });
+    });
+
+    test('should throw error for invalid TOML', async () => {
+      fetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve('[invalid toml content'),
+      });
+
+      await expect(fetchFile({ href: '/config.toml', type: 'application/toml' })).rejects.toThrow();
+    });
+
     test('should handle complex nested YAML', async () => {
       const complexYaml = `
 backend:

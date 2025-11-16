@@ -38,9 +38,10 @@ export const parseTOML = (str) => toRaw(libParseTOML(str));
 /**
  * Parse a YAML document using a library.
  * @param {string} str YAML document.
+ * @param {object} [options] Parsing options.
  * @returns {any} Parsed object.
  */
-export const parseYAML = (str) => libParseYAML(str);
+export const parseYAML = (str, options) => libParseYAML(str, options);
 
 /**
  * Detect the Markdown front matter serialization format by checking a delimiter in the content.
