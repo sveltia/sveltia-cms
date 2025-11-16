@@ -93,8 +93,8 @@ importers:
         specifier: ^1.19.0
         version: 1.19.0
       terra-draw-leaflet-adapter:
-        specifier: ^1.1.0
-        version: 1.1.0(leaflet@1.9.4)(terra-draw@1.19.0)
+        specifier: 1.0.3
+        version: 1.0.3(leaflet@1.9.4)(terra-draw@1.19.0)
       turndown:
         specifier: ^7.2.2
         version: 7.2.2
@@ -3424,8 +3424,8 @@ packages:
     resolution: {integrity: sha512-9kY+CygyYM6j02t5YFHbNz2FN5QmYGv9zAjVp4lCDjlCw7amdckXlEt/bjMhUIfj4ThGRE4gCUH5+yGnNuPo5A==}
     engines: {node: '>=10.0.0'}
 
-  terra-draw-leaflet-adapter@1.1.0:
-    resolution: {integrity: sha512-wwCmPGNAxSG2/MH+yzZrlcE6lf7FeeMMETthUjA6aXdQ1uOIQOAIjJnugp9WLzBs9S/UOQsnh53bWss+HsUFig==}
+  terra-draw-leaflet-adapter@1.0.3:
+    resolution: {integrity: sha512-yYUDwyKxGj69pUzd4L2YclXwAxNhuXI01DCm8KbOtGxnf4I+PmFsAQrwA/sU5EbdaOj1AaPrPqadihgFvrSOng==}
     peerDependencies:
       leaflet: ^1.9.4
       terra-draw: ^1.0.0
@@ -7113,7 +7113,7 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
 
-  terra-draw-leaflet-adapter@1.1.0(leaflet@1.9.4)(terra-draw@1.19.0):
+  terra-draw-leaflet-adapter@1.0.3(leaflet@1.9.4)(terra-draw@1.19.0):
     dependencies:
       leaflet: 1.9.4
       terra-draw: 1.19.0

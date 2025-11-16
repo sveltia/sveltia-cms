@@ -4,3 +4,5 @@ reject:
   # https://github.com/airbnb/javascript/issues/2961
   - eslint
   - eslint-plugin-svelte
+  # https://github.com/sveltia/sveltia-cms/issues/540
+  - terra-draw-leaflet-adapter
