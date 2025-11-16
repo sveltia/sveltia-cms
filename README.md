@@ -64,6 +64,7 @@ This free, open source successor to Netlify/Decap CMS is currently in public bet
   - [Moving your site from Netlify to another hosting service](#moving-your-site-from-netlify-to-another-hosting-service)
   - [Enabling autocomplete and validation for the configuration file](#enabling-autocomplete-and-validation-for-the-configuration-file)
   - [Providing a JSON configuration file](#providing-a-json-configuration-file)
+  - [Providing a TOML configuration file](#providing-a-toml-configuration-file)
   - [Providing multiple configuration files](#providing-multiple-configuration-files)
   - [Working around an authentication error](#working-around-an-authentication-error)
   - [Working with a local Git repository](#working-with-a-local-git-repository)
@@ -282,7 +283,7 @@ We’ve made various improvements to help you get your work done faster and more
 ### Better configuration
 
 - We provide comprehensive [compatibility information](#compatibility) to help you avoid unsupported options and configurations that might cause errors. By contrast, the Netlify/Decap CMS documentation does not mention the deprecation of camel case options, the removal of the Date widget and the replacement of Moment.js.
-- Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60]
+- Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60] A [TOML configuration file](#providing-a-toml-configuration-file) is also supported.
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
 - We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253] If you use [deprecated options](#deprecations) in a supported code editor, you should receive a warning.
 - Improved TypeScript support:
@@ -945,6 +946,14 @@ Sveltia CMS supports a configuration file written in the JSON format in addition
 ```
 
 Alternatively, you can [manually initialize](https://decapcms.org/docs/manual-initialization/) the CMS with a JavaScript configuration object.
+
+### Providing a TOML configuration file
+
+Sveltia CMS supports TOML configuration files in addition to YAML and JSON. To use a TOML config file, add a `<link>` tag to your HTML with the type `application/toml`:
+
+```html
+<link href="path/to/config.toml" type="application/toml" rel="cms-config-url" />
+```
 
 ### Providing multiple configuration files
 
