@@ -646,7 +646,7 @@ export const strings = {
       parse_failed: '設定ファイルを解析できませんでした。',
       parse_failed_invalid_object: '設定ファイルが有効な JavaScript オブジェクトではありません。',
       parse_failed_unsupported_type:
-        '設定ファイルが有効なファイル形式ではありません。サポートされているのは YAML と JSON のみです。',
+        '設定ファイルが有効なファイル形式ではありません。サポートされているのは YAML、TOML と JSON のみです。',
       no_collection: 'コレクションが定義されていません。',
       missing_backend: 'バックエンドが定義されていません。',
       missing_backend_name: 'バックエンド名が定義されていません。',

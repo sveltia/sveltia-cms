@@ -646,7 +646,7 @@ export const strings = {
       parse_failed: 'The configuration file could not be parsed.',
       parse_failed_invalid_object: 'The configuration file is not a valid JavaScript object.',
       parse_failed_unsupported_type:
-        'The configuration file is not a valid file type. Only YAML and JSON are supported.',
+        'The configuration file is not a valid file type. Only YAML, TOML and JSON are supported.',
       no_collection: 'Collections are not defined.',
       missing_backend: 'The backend is not defined.',
       missing_backend_name: 'The backend name is not defined.',
