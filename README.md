@@ -908,6 +908,12 @@ If you use VS Code, you can enable it for the YAML configuration file by install
 # yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
 ```
 
+For TOML files, install the [Even Better TOML extension](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) and add the following comment to the top of `config.toml`:
+
+```toml
+#:schema https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
+```
+
 If your configuration is in JSON format (see the [next section](#providing-a-json-configuration-file)), no extension is needed. Just add the following line to the top of `config.json`, within the curly braces:
 
 ```json
