@@ -53,7 +53,7 @@ export const fetchFile = async ({ href, type = 'application/yaml' }) => {
 
   try {
     if (type === 'application/json') {
-      result = response.json();
+      result = await response.json();
     } else {
       const text = await response.text();
 
