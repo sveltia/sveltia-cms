@@ -724,7 +724,7 @@ The following Netlify/Decap CMS features will not be added to Sveltia CMS, prima
   - Global: [`search`](https://decapcms.org/docs/configuration-options/#search)
   - Backend: [`use_graphql`](https://decapcms.org/docs/github-backend/#graphql-api)
   - Relation widget: `options_length`
-- Local proxy server: As [mentioned above](#better-productivity), our [local repository workflow](#working-with-a-local-git-repository) eliminates the need for a proxy server. For security and performance reasons, we don’t support `netlify-cms-proxy-server`, `decap-server` or the `local_backend` option.
+- Local proxy server: As [mentioned above](#better-productivity), our [local repository workflow](#working-with-a-local-git-repository) eliminates the need for a proxy server. For security and performance reasons, we don’t support `netlify-cms-proxy-server` or `decap-server`. The `local_backend` option is ignored.
 - The global [`locale`](https://decapcms.org/docs/configuration-options/#locale) option and `CMS.registerLocale()` method: Sveltia CMS automatically detects the user’s preferred language and changes the UI locale as [mentioned above](#better-localization).
 - [Undocumented methods](https://github.com/sveltia/sveltia-cms/blob/c69446da7bb0bab7405be741c0f92850c5dddfa8/src/main.js#L14-L37) exposed on the `CMS` object: This includes custom backends and custom media libraries, if any. We may support these features in the future, but our implementation would likely be incompatible with Netlify/Decap CMS.
 - Any other undocumented features and options. Exceptions apply.
@@ -1999,7 +1999,6 @@ Due early 2026
 - Accessibility audit
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
 - [Developer documentation](https://github.com/sveltia/sveltia-cms/issues/485) (implementation guide)
-- Marketing site
 - [Live demo site](https://github.com/sveltia/sveltia-cms/issues/1)
 
 See also the [1.0 RC](https://github.com/sveltia/sveltia-cms/milestone/1) and [1.0](https://github.com/sveltia/sveltia-cms/milestone/2) milestones for a list of issues planned for v1.0.
@@ -2010,11 +2009,10 @@ Due mid-2026
 
 - Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections, while addressing a number of bugs in their implementations
   - They will probably first be included as beta features in v1.x releases
-- Tackling even more Netlify/Decap CMS issues:
+- Tackling even more Netlify/Decap CMS issues, including:
   - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
   - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
   - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
-  - and a few more from the TBD list below
 
 See also the [2.0](https://github.com/sveltia/sveltia-cms/milestone/3) milestone.
 
