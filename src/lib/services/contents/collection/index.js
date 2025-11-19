@@ -140,7 +140,12 @@ export const getThumbnailFieldNames = (rawCollection) => {
     return [];
   }
 
-  const { fields, thumbnail } = rawCollection;
+  const { fields, thumbnail = true } = rawCollection;
+
+  // Disable thumbnails
+  if (thumbnail === false) {
+    return [];
+  }
 
   if (typeof thumbnail === 'string') {
     return [thumbnail];

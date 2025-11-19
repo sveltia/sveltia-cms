@@ -486,13 +486,60 @@ describe('getThumbnailFieldNames()', () => {
     expect(getThumbnailFieldNames(collection)).toEqual(['featured', 'attachment']);
   });
 
-  test('returns empty array when no fields and no thumbnail', () => {
+  test('infers image fields by default when thumbnail property is not specified', () => {
     const collection = {
       name: 'posts',
       folder: 'content/posts',
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'featured', widget: 'image' },
+        { name: 'attachment', widget: 'file' },
+      ],
+    };
+
+    expect(getThumbnailFieldNames(collection)).toEqual(['featured', 'attachment']);
+  });
+
+  test('returns empty array when no image/file fields and no explicit thumbnail', () => {
+    const collection = {
+      name: 'posts',
+      folder: 'content/posts',
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'content', widget: 'markdown' },
+      ],
     };
 
     expect(getThumbnailFieldNames(collection)).toEqual([]);
+  });
+
+  test('returns empty array when thumbnail is set to false', () => {
+    const collection = {
+      name: 'posts',
+      folder: 'content/posts',
+      thumbnail: false,
+      fields: [
+        { name: 'featured', widget: 'image' },
+        { name: 'attachment', widget: 'file' },
+      ],
+    };
+
+    expect(getThumbnailFieldNames(collection)).toEqual([]);
+  });
+
+  test('infers image fields when thumbnail is set to true', () => {
+    const collection = {
+      name: 'posts',
+      folder: 'content/posts',
+      thumbnail: true,
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'featured', widget: 'image' },
+        { name: 'attachment', widget: 'file' },
+      ],
+    };
+
+    expect(getThumbnailFieldNames(collection)).toEqual(['featured', 'attachment']);
   });
 });
 

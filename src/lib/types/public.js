@@ -1137,11 +1137,11 @@
  * the default index file name is `_index`, which is used for Hugo’s special index file. See our
  * [README](https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection)
  * for details.
- * @property {FieldKeyPath | FieldKeyPath[]} [thumbnail] A field key path to be used to find an
- * entry thumbnail displayed on the entry list. A nested field can be specified using dot notation,
- * e.g. `heroImage.src`. A wildcard in the key path is also supported, e.g. `images.*.src`. Multiple
- * key paths can be specified as an array for fallbacks. If this option is omitted, the `name` of
- * any non-nested, non-empty field using the Image or File widget is used.
+ * @property {boolean | FieldKeyPath | FieldKeyPath[]} [thumbnail] Whether to show entry thumbnails
+ * in the entry list. Default: `true` (auto-detect image/file fields). Set to `false` to disable, or
+ * provide a field key path (e.g., `heroImage.src`) or an array of paths for fallbacks. Supports
+ * nested fields with dot notation and wildcards (e.g., `images.*.src`). An empty array equals
+ * `false`.
  * @property {number} [limit] The maximum number of entries that can be created in the collection.
  * Default: `Infinity`.
  * @see https://decapcms.org/docs/collection-folder/
