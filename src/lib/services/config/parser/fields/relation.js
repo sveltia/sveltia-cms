@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 
-import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
+import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { CollectionFile, RelationField } from '$lib/types/public';

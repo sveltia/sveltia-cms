@@ -73,7 +73,7 @@ vi.mock('$lib/services/contents/i18n', () => ({
 
 // Must import after mocking
 const { addMessage, checkUnsupportedOptions, isValidName, checkName } = await import(
-  './messages.js'
+  './validator.js'
 );
 
 /**

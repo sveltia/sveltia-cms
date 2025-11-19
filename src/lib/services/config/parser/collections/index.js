@@ -10,7 +10,7 @@ import {
   addMessage,
   checkName,
   checkUnsupportedOptions,
-} from '$lib/services/config/parser/utils/messages';
+} from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { CmsConfig, Collection, CollectionDivider, EntryCollection } from '$lib/types/public';

@@ -3,7 +3,7 @@
 import { parseBackendConfig } from '$lib/services/config/parser/backend';
 import { parseCollections } from '$lib/services/config/parser/collections';
 import { parseMediaConfig } from '$lib/services/config/parser/media';
-import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
+import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { CmsConfig } from '$lib/types/public';

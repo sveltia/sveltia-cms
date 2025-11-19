@@ -5,7 +5,7 @@ import { parseMarkdownFieldConfig } from '$lib/services/config/parser/fields/mar
 import { parseNumberFieldConfig } from '$lib/services/config/parser/fields/number';
 import { parseObjectFieldConfig } from '$lib/services/config/parser/fields/object';
 import { parseRelationFieldConfig } from '$lib/services/config/parser/fields/relation';
-import { addMessage, checkName } from '$lib/services/config/parser/utils/messages';
+import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { Field } from '$lib/types/public';

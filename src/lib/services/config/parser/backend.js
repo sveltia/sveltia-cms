@@ -6,7 +6,7 @@ import { _ } from 'svelte-i18n';
 
 import { gitBackendServices, validBackendNames } from '$lib/services/backends';
 import { warnDeprecation } from '$lib/services/config/deprecations';
-import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
+import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { CmsConfig, GitBackend } from '$lib/types/public';

@@ -1,4 +1,4 @@
-import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
+import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { FieldParserArgs, UnsupportedOption } from '$lib/types/private';

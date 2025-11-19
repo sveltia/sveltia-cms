@@ -2,7 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { parseFields } from '$lib/services/config/parser/fields';
-import { addMessage, checkName } from '$lib/services/config/parser/utils/messages';
+import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { CmsConfig, CollectionFile, FileCollection } from '$lib/types/public';

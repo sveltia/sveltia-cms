@@ -1,5 +1,5 @@
 import { parseFieldConfig, parseFields } from '$lib/services/config/parser/fields';
-import { addMessage, checkName } from '$lib/services/config/parser/utils/messages';
+import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import {

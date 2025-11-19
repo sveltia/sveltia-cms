@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 
-import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/messages';
+import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { FileField } from '$lib/types/public';
