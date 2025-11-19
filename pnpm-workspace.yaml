@@ -1,10 +1,13 @@
 minimumReleaseAge: 1440
+
 minimumReleaseAgeExclude:
   - "@sveltia/*"
-overrides:
-  "esbuild@<=0.24.2": ">=0.25.0"
+
 onlyBuiltDependencies:
   - "@parcel/watcher"
-  - "es5-ext"
-  - "esbuild"
-  - "svelte-preprocess"
+  - es5-ext
+  - esbuild
+  - svelte-preprocess
+
+overrides:
+  esbuild@<=0.24.2: ">=0.25.0"
