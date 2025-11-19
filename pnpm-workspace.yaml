@@ -11,3 +11,4 @@ onlyBuiltDependencies:
 
 overrides:
   esbuild@<=0.24.2: ">=0.25.0"
+  glob@>=11.0.0 <11.1.0: ">=11.1.0"
