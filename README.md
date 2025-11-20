@@ -1,6 +1,6 @@
 # Sveltia CMS: Netlify/Decap CMS successor
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 265 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 270 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows.
 
@@ -127,7 +127,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite**
   - Started in November 2022, first appeared on GitHub in March 2023
   - ✅ Actively developed with frequent releases and numerous improvements
-  - ✅ Solved more than 265 issues reported in the Netlify/Decap CMS repository
+  - ✅ Solved more than 270 issues reported in the Netlify/Decap CMS repository
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
   - ⚠️ Mostly low activity with only occasional releases and a few minor improvements
@@ -165,7 +165,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - Some missing features will be implemented before or shortly after GA
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **265+ issues, or 580+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **270+ issues, or 580+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 400 issues, or 900 if including duplicates, in the future 💪
@@ -179,7 +179,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![265 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251025)<br>
+![270 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251120)<br>
 
 ## Differentiators
 
@@ -324,6 +324,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
   - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
   - We have implemented a workaround for a [GraphQL complexity limit issue](https://github.com/sveltia/sveltia-cms/issues/525) in GitLab 18.4.2, while Netlify/Decap CMS continues to suffer from the same problem.[^301]
 - Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
+- Unlike Netlify/Decap CMS, Sveltia CMS does not have a hardcoded API request timeout of 60 seconds, which can lead to unexpected errors when working with large files or slow networks.[^304] Though users may still experience timeouts due to server-side limitations, at least the client-side won’t impose an arbitrary limit.
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) for a better DX. See the [productivity section](#better-productivity) above.
 - An indicator is displayed in the account menu when using the local repository workflow.[^302]
 - Developers can select the local and remote backends while working on a local server.
@@ -2715,3 +2716,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^302]: Netlify/Decap CMS [#3286](https://github.com/decaporg/decap-cms/issues/3286)
 
 [^303]: Netlify/Decap CMS [#3803](https://github.com/decaporg/decap-cms/issues/3803)
+
+[^304]: Netlify/Decap CMS [#4538](https://github.com/decaporg/decap-cms/issues/4538), [#6371](https://github.com/decaporg/decap-cms/issues/6371)
