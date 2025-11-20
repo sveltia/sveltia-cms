@@ -293,6 +293,7 @@ We’ve made various improvements to help you get your work done faster and more
     - Common backend misconfigurations, such as an incorrect repository name or a missing OAuth client ID[^303]
     - A mismatch between the `format` and `extension` options for a collection
     - Invalid collection, collection file, field, variable type names (e.g. names containing `.` or `*`)
+    - `slug` templates containing slashes
     - Mutually exclusive config options (e.g. `field`, `fields` and `types` on List fields)
     - `collection` and `file` references on Relation fields
     - Duplicate variable type names
