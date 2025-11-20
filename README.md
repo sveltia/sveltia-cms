@@ -743,7 +743,7 @@ There may be other minor differences in behaviour that are not listed here.
 
 Sveltia CMS is also adding various config validation checks to help users identify potential issues, so you may see errors that were not present in Netlify/Decap CMS before. For example, Sveltia CMS raises an error if the `slug` collection option contains slashes (`/`), which is supposed to be invalid.
 
-[Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) if you have encounter any compatibility issues that are not listed here.
+[Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) if you have encounter any compatibility issues not mentioned here. We want to make the migration process as smooth as possible for our users.
 
 ### Framework support
 
