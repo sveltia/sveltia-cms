@@ -669,6 +669,8 @@ export const strings = {
       invalid_collection_multiple_options:
         'コレクションは `folder`、`files`、`divider` オプションを同時に持つことはできません。',
       file_format_mismatch: '拡張子 `{extension}` は `{format}` 形式と一致しません。',
+      invalid_slug_slash:
+        'スラッグテンプレート `{slug}` は無効です。スラッシュを含めることはできません。エントリーをサブフォルダーに整理するには、`slug` の代わりに `path` オプションを使用してください。',
       missing_collection_name:
         'コレクション {count} には `name` オプションを空でない文字列として定義する必要があります。',
       invalid_collection_name:

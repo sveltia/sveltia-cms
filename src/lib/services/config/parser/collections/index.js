@@ -40,7 +40,7 @@ const UNSUPPORTED_OPTIONS = [
  */
 export const parseEntryCollection = (context, collectors) => {
   const { cmsConfig, collection } = context;
-  const { extension, format, fields, index_file } = collection;
+  const { extension, format, fields, index_file, slug } = collection;
 
   if (isFormatMismatch(extension, format)) {
     addMessage({
@@ -61,6 +61,17 @@ export const parseEntryCollection = (context, collectors) => {
       { cmsConfig, collection, isIndexFile: true },
       collectors,
     );
+  }
+
+  // Validate slug template: should not contain slashes to avoid confusion with `path` option.
+  // @see https://github.com/decaporg/decap-cms/issues/513
+  if (slug?.includes('/')) {
+    addMessage({
+      strKey: 'invalid_slug_slash',
+      values: { slug },
+      context,
+      collectors,
+    });
   }
 };
 

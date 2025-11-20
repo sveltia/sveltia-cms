@@ -667,6 +667,8 @@ export const strings = {
       invalid_collection_multiple_options:
         'The collection cannot have the `folder`, `files` and `divider` options together.',
       file_format_mismatch: 'The `{extension}` extension doesn’t match the `{format}` format.',
+      invalid_slug_slash:
+        'The slug template `{slug}` is invalid as it cannot contain slashes. To organize entries in subfolders, use the `path` option instead of `slug`.',
       missing_collection_name:
         'The collection {count} must have the `name` option defined as a non-empty string.',
       invalid_collection_name:
