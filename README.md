@@ -377,7 +377,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
       - A nested field can be specified using dot notation, e.g. `heroImage.src`.
       - A wildcard in the field name is also supported, e.g. `images.*.src`.
       - Multiple field names can be specified as an array for fallback purpose, e.g. `[thumbnail, cover]`.
-      - Occasionally, you may not have suitable images for thumbnails. For example, your images may have subtle differences or varied aspect ratios. In that case, you can disable the thumbnail with `thumbnail: []`.
+      - Occasionally, you may not have suitable images for thumbnails. For example, your images may have subtle differences or varied aspect ratios. In that case, you can disable the thumbnail with `thumbnail: false`.
       - If this option is omitted, any non-nested, non-empty Image or File field will be used.[^173] Sveltia CMS doesn’t have [hardcoded inference fields](https://github.com/decaporg/decap-cms/blob/899dba82d1f396260e0f84c6977c1d2aee809b59/packages/decap-cms-core/src/constants/fieldInference.tsx#L64-L72).[^130]
     - `limit`: Specify the maximum number of entries that can be created in a folder collection.[^185]
     - `divider`: [Add dividers to the collection list](#adding-dividers-to-the-collection-list).
