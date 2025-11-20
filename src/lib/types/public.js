@@ -1104,9 +1104,12 @@
 /**
  * Entry collection properties.
  * @typedef {object} EntryCollectionProps
- * @property {string} folder Base folder path relative to the project root.
+ * @property {string} folder Base folder path relative to the project root. It can contain slashes
+ * to create subfolders.
  * @property {Field[]} fields Set of fields to be included in entries.
- * @property {string} [path] File path relative to `folder`, without a file extension.
+ * @property {string} [path] File path relative to `folder`, without a file extension. It can
+ * contain slashes to create subfolders. Default: `{{slug}}`. To use Hugo’s page bundle, set this to
+ * `{{slug}}/index`.
  * @property {CollectionFilter} [filter] Entry filter.
  * @property {boolean} [create] Whether to allow users to create entries in the collection. Default:
  * `false`.
@@ -1115,10 +1118,11 @@
  * @property {FileExtension} [extension] File extension. Default: `md`.
  * @property {FieldKeyPath} [identifier_field] Field name to be used as the title and slug of an
  * entry. Default: `title`.
- * @property {string} [slug] Item slug template. Default: `identifier_field` option value. It’s
- * possible to [localize the slug](https://github.com/sveltia/sveltia-cms#localizing-entry-slugs) or
- * [use a random ID](https://github.com/sveltia/sveltia-cms#using-a-random-id-for-an-entry-slug).
- * Also, it’s possible to show a special slug editor field in initial entry drafts by using
+ * @property {string} [slug] Item slug template. Default: `identifier_field` option value. It cannot
+ * contain slashes; to organize entries in subfolders, use the `path` option instead. It’s possible
+ * to [localize the slug](https://github.com/sveltia/sveltia-cms#localizing-entry-slugs) or [use a
+ * random ID](https://github.com/sveltia/sveltia-cms#using-a-random-id-for-an-entry-slug). Also,
+ * it’s possible to show a special slug editor field in initial entry drafts by using
  * `{{fields._slug}}` (with an underscore prefix) or `{{fields._slug | localize}}` (to localize the
  * slug).
  * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
