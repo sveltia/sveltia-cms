@@ -43,10 +43,7 @@
   title={$selectedEntries.length === 1 ? $_('delete_entry') : $_('delete_entries')}
   okLabel={$_('delete')}
   onOk={() => {
-    deleteEntries(
-      $selectedEntries.map(({ id }) => id),
-      associatedAssets.map(({ path }) => path),
-    );
+    deleteEntries($selectedEntries, associatedAssets);
   }}
 >
   {#if $selectedEntries.length === 1}

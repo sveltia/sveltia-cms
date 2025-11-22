@@ -348,10 +348,7 @@
   okLabel={$_('delete')}
   onOk={async () => {
     if (originalEntry) {
-      await deleteEntries(
-        [originalEntry.id],
-        associatedAssets.map(({ path }) => path),
-      );
+      await deleteEntries([originalEntry], associatedAssets);
     }
 
     _goBack();

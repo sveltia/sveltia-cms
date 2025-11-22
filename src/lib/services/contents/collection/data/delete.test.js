@@ -30,6 +30,18 @@ vi.mock('$lib/services/contents/collection/data', () => ({
   },
 }));
 
+vi.mock('$lib/services/backends', () => ({
+  backend: writable(null),
+}));
+
+vi.mock('@sveltia/utils/storage', () => ({
+  IndexedDB: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/draft/save/changes', () => ({
+  getPreviousSha: vi.fn().mockResolvedValue('mock-sha-123'),
+}));
+
 describe('Test updateStores()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -117,7 +129,6 @@ describe('Test deleteEntries()', () => {
 
   test('creates file changes for entry deletion', async () => {
     const { saveChanges } = await import('$lib/services/backends/save');
-    const { allEntries } = await import('$lib/services/contents');
     const { selectedCollection } = await import('$lib/services/contents/collection');
 
     const mockEntries = [
@@ -138,16 +149,30 @@ describe('Test deleteEntries()', () => {
       },
     ];
 
-    allEntries.set(/** @type {any} */ (mockEntries));
     selectedCollection.set(/** @type {any} */ ({ name: 'posts' }));
 
-    await deleteEntries(['1', '2']);
+    await deleteEntries(/** @type {any} */ (mockEntries));
 
     expect(vi.mocked(saveChanges)).toHaveBeenCalledWith({
       changes: [
-        { action: 'delete', slug: 'post-1', path: '/content/posts/post-1.md' },
-        { action: 'delete', slug: 'post-1', path: '/content/posts/es/post-1.md' },
-        { action: 'delete', slug: 'post-2', path: '/content/posts/post-2.md' },
+        {
+          action: 'delete',
+          slug: 'post-1',
+          path: '/content/posts/post-1.md',
+          previousSha: 'mock-sha-123',
+        },
+        {
+          action: 'delete',
+          slug: 'post-1',
+          path: '/content/posts/es/post-1.md',
+          previousSha: 'mock-sha-123',
+        },
+        {
+          action: 'delete',
+          slug: 'post-2',
+          path: '/content/posts/post-2.md',
+          previousSha: 'mock-sha-123',
+        },
       ],
       options: {
         commitType: 'delete',
@@ -158,7 +183,6 @@ describe('Test deleteEntries()', () => {
 
   test('includes asset deletions in file changes', async () => {
     const { saveChanges } = await import('$lib/services/backends/save');
-    const { allEntries } = await import('$lib/services/contents');
 
     const mockEntries = [
       {
@@ -170,17 +194,23 @@ describe('Test deleteEntries()', () => {
       },
     ];
 
-    allEntries.set(/** @type {any} */ (mockEntries));
+    const mockAssets = [
+      { path: '/images/image1.jpg', sha: 'asset-sha-1' },
+      { path: '/images/image2.jpg', sha: 'asset-sha-2' },
+    ];
 
-    const assetPaths = ['/images/image1.jpg', '/images/image2.jpg'];
-
-    await deleteEntries(['1'], assetPaths);
+    await deleteEntries(/** @type {any} */ (mockEntries), /** @type {any} */ (mockAssets));
 
     expect(vi.mocked(saveChanges)).toHaveBeenCalledWith({
       changes: [
-        { action: 'delete', slug: 'post-1', path: '/content/posts/post-1.md' },
-        { action: 'delete', path: '/images/image1.jpg' },
-        { action: 'delete', path: '/images/image2.jpg' },
+        {
+          action: 'delete',
+          slug: 'post-1',
+          path: '/content/posts/post-1.md',
+          previousSha: 'mock-sha-123',
+        },
+        { action: 'delete', path: '/images/image1.jpg', previousSha: 'asset-sha-1' },
+        { action: 'delete', path: '/images/image2.jpg', previousSha: 'asset-sha-2' },
       ],
       options: {
         commitType: 'delete',
@@ -191,7 +221,6 @@ describe('Test deleteEntries()', () => {
 
   test('handles entries with duplicate paths for single file i18n', async () => {
     const { saveChanges } = await import('$lib/services/backends/save');
-    const { allEntries } = await import('$lib/services/contents');
 
     const mockEntries = [
       {
@@ -204,13 +233,18 @@ describe('Test deleteEntries()', () => {
       },
     ];
 
-    allEntries.set(/** @type {any} */ (mockEntries));
-
-    await deleteEntries(['1']);
+    await deleteEntries(/** @type {any} */ (mockEntries));
 
     // Should only have one delete change for the duplicate path
     expect(vi.mocked(saveChanges)).toHaveBeenCalledWith({
-      changes: [{ action: 'delete', slug: 'post-1', path: '/content/posts/post-1.md' }],
+      changes: [
+        {
+          action: 'delete',
+          slug: 'post-1',
+          path: '/content/posts/post-1.md',
+          previousSha: 'mock-sha-123',
+        },
+      ],
       options: {
         commitType: 'delete',
         collection: expect.any(Object),
@@ -220,11 +254,9 @@ describe('Test deleteEntries()', () => {
 
   test('handles non-existent entries gracefully', async () => {
     const { saveChanges } = await import('$lib/services/backends/save');
-    const { allEntries } = await import('$lib/services/contents');
+    const mockEntries = /** @type {any[]} */ ([]);
 
-    allEntries.set([]);
-
-    await deleteEntries(['non-existent-1', 'non-existent-2']);
+    await deleteEntries(/** @type {any} */ (mockEntries));
 
     // Should still call saveChanges with empty changes
     expect(vi.mocked(saveChanges)).toHaveBeenCalledWith({
@@ -255,9 +287,11 @@ describe('Test deleteEntries()', () => {
 
     allEntries.set(/** @type {any} */ (mockEntries));
 
-    await deleteEntries(['1'], ['/images/image.jpg']);
+    const mockAssets = [{ path: '/images/image.jpg', sha: 'asset-sha' }];
 
-    // Verify stores are updated
+    await deleteEntries(/** @type {any} */ ([mockEntries[0]]), /** @type {any} */ (mockAssets));
+
+    // Verify stores are updated with correct IDs and asset paths
     expect(get(allEntries)).toEqual([
       {
         id: '2',
@@ -276,10 +310,8 @@ describe('Test deleteEntries()', () => {
 
   test('handles entries without locales', async () => {
     const { saveChanges } = await import('$lib/services/backends/save');
-    const { allEntries } = await import('$lib/services/contents');
 
     const mockEntries = [
-      { id: '1', slug: 'post-1' }, // Entry without locales
       {
         id: '2',
         slug: 'post-2',
@@ -287,12 +319,17 @@ describe('Test deleteEntries()', () => {
       },
     ];
 
-    allEntries.set(/** @type {any} */ (mockEntries));
-
-    await deleteEntries(['1', '2']);
+    await deleteEntries(/** @type {any} */ (mockEntries));
 
     expect(vi.mocked(saveChanges)).toHaveBeenCalledWith({
-      changes: [{ action: 'delete', slug: 'post-2', path: '/content/posts/post-2.md' }],
+      changes: [
+        {
+          action: 'delete',
+          slug: 'post-2',
+          path: '/content/posts/post-2.md',
+          previousSha: 'mock-sha-123',
+        },
+      ],
       options: {
         commitType: 'delete',
         collection: expect.any(Object),

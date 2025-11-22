@@ -1,6 +1,9 @@
+import { unique } from '@sveltia/utils/array';
+import { IndexedDB } from '@sveltia/utils/storage';
 import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
+import { backend } from '$lib/services/backends';
 import { saveChanges } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
@@ -8,9 +11,10 @@ import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
+import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
 
 /**
- * @import { FileChange } from '$lib/types/private';
+ * @import { Asset, Entry, FileChange } from '$lib/types/private';
  */
 
 /**
@@ -37,35 +41,37 @@ export const updateStores = ({ ids, assetPaths }) => {
 
 /**
  * Delete entries by slugs.
- * @param {string[]} ids List of entry IDs.
- * @param {string[]} [assetPaths] List of associated asset paths.
+ * @param {Entry[]} entries List of entries to be deleted.
+ * @param {Asset[]} [assets] List of associated assets to be deleted.
  */
-export const deleteEntries = async (ids, assetPaths = []) => {
-  const _allEntries = get(allEntries);
+export const deleteEntries = async (entries, assets = []) => {
+  const databaseName = get(backend)?.repository?.databaseName;
+  const cacheDB = databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
+  const changes = /** @type {FileChange[]} */ ([]);
+  const action = 'delete';
 
-  const changes = /** @type {FileChange[]} */ (
-    ids
-      .map((id) => {
-        const { locales, slug } = _allEntries.find((e) => e.id === id) ?? {};
-
-        if (locales) {
-          return Object.values(locales).map(
-            ({ path }) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
-          );
-        }
-
-        return undefined;
-      })
-      .flat(1)
+  const ids = await Promise.all(
+    entries.map(async ({ id, locales, slug }) => {
       // Remove duplicate paths for single file i18n
-      .filter((item, index, arr) => item && arr.findIndex((i) => i?.path === item.path) === index)
+      const paths = /** @type {string[]} */ (unique(Object.values(locales).map((l) => l.path)));
+
+      await Promise.all(
+        paths.map(async (path) => {
+          const previousSha = await getPreviousSha({ cacheDB, previousPath: path });
+
+          changes.push({ action, slug, path, previousSha });
+        }),
+      );
+
+      return id;
+    }),
   );
 
-  if (assetPaths.length) {
-    changes.push(
-      ...assetPaths.map((path) => /** @type {FileChange} */ ({ action: 'delete', path })),
-    );
-  }
+  const assetPaths = assets.map(({ path, sha }) => {
+    changes.push({ action, path, previousSha: sha });
+
+    return path;
+  });
 
   await saveChanges({
     changes,
