@@ -23,8 +23,8 @@ vi.mock('$lib/services/backends/git/gitea/repository', () => ({
 }));
 
 vi.mock('$lib/services/backends/git/gitea/constants', () => ({
-  MIN_FORGEJO_VERSION: 11.0,
-  MIN_GITEA_VERSION: 1.22,
+  MIN_FORGEJO_VERSION: 11,
+  MIN_GITEA_VERSION: 1.23,
 }));
 
 describe('Gitea Instance Service', () => {
@@ -51,7 +51,7 @@ describe('Gitea Instance Service', () => {
   describe('checkInstanceVersion', () => {
     test('should detect and accept supported Gitea version', async () => {
       const mockVersionResponse = {
-        version: '1.22.5',
+        version: '1.24.5',
       };
 
       fetchAPIMock.mockResolvedValue(mockVersionResponse);
@@ -62,9 +62,22 @@ describe('Gitea Instance Service', () => {
       expect(fetchAPIMock).toHaveBeenCalledWith('/version');
     });
 
-    test('should detect and accept supported Forgejo version', async () => {
+    test('should detect Forgejo version by +gitea- indicator', async () => {
       const mockVersionResponse = {
-        version: '11.0.1-87-5e379c9+gitea-1.22.0',
+        version: '11.0.1-87-5e379c9+gitea-1.24.0',
+      };
+
+      fetchAPIMock.mockResolvedValue(mockVersionResponse);
+
+      await expect(checkInstanceVersion()).resolves.toBeUndefined();
+
+      expect(instance.isForgejo).toBe(true);
+      expect(fetchAPIMock).toHaveBeenCalledWith('/version');
+    });
+
+    test('should detect Forgejo version by version number > 10', async () => {
+      const mockVersionResponse = {
+        version: '13.0.3',
       };
 
       fetchAPIMock.mockResolvedValue(mockVersionResponse);
@@ -77,7 +90,7 @@ describe('Gitea Instance Service', () => {
 
     test('should reject unsupported Gitea version', async () => {
       const mockVersionResponse = {
-        version: '1.21.0',
+        version: '1.20.0',
       };
 
       fetchAPIMock.mockResolvedValue(mockVersionResponse);
@@ -87,7 +100,7 @@ describe('Gitea Instance Service', () => {
 
     test('should reject unsupported Forgejo version', async () => {
       const mockVersionResponse = {
-        version: '10.5.0+gitea-1.21.0',
+        version: '10.5.0+gitea-1.24.0',
       };
 
       fetchAPIMock.mockResolvedValue(mockVersionResponse);
@@ -97,7 +110,7 @@ describe('Gitea Instance Service', () => {
 
     test('should handle edge case version numbers', async () => {
       const mockVersionResponse = {
-        version: '1.22.0',
+        version: '1.24.0',
       };
 
       fetchAPIMock.mockResolvedValue(mockVersionResponse);
@@ -106,9 +119,20 @@ describe('Gitea Instance Service', () => {
       expect(instance.isForgejo).toBe(false);
     });
 
-    test('should handle Forgejo version at minimum threshold', async () => {
+    test('should handle Forgejo version at minimum threshold (12.0.0)', async () => {
       const mockVersionResponse = {
-        version: '11.0.0+gitea-1.22.0',
+        version: '12.0.0+gitea-1.24.0',
+      };
+
+      fetchAPIMock.mockResolvedValue(mockVersionResponse);
+
+      await expect(checkInstanceVersion()).resolves.toBeUndefined();
+      expect(instance.isForgejo).toBe(true);
+    });
+
+    test('should handle Forgejo version at > 10 threshold without +gitea-', async () => {
+      const mockVersionResponse = {
+        version: '12.0.0',
       };
 
       fetchAPIMock.mockResolvedValue(mockVersionResponse);
@@ -147,7 +171,7 @@ describe('Gitea Instance Service', () => {
 
     test('should handle complex Forgejo version string', async () => {
       const mockVersionResponse = {
-        version: '12.1.5-123-abcdefg+gitea-1.22.8',
+        version: '13.1.5-123-abcdefg+gitea-1.24.8',
       };
 
       fetchAPIMock.mockResolvedValue(mockVersionResponse);
@@ -169,7 +193,7 @@ describe('Gitea Instance Service', () => {
 
     test('should correctly identify Gitea instance', async () => {
       const mockVersionResponse = {
-        version: '1.22.5',
+        version: '1.23.5',
       };
 
       fetchAPIMock.mockResolvedValue(mockVersionResponse);
@@ -181,7 +205,7 @@ describe('Gitea Instance Service', () => {
 
     test('should correctly identify Forgejo instance', async () => {
       const mockVersionResponse = {
-        version: '11.0.1+gitea-1.22.0',
+        version: '12.0.1+gitea-1.24.0',
       };
 
       fetchAPIMock.mockResolvedValue(mockVersionResponse);
