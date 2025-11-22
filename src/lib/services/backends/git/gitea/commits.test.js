@@ -479,5 +479,98 @@ describe('Gitea Commits Service', () => {
         },
       });
     });
+
+    test('should handle null values in savedFiles', async () => {
+      const mockChanges = [
+        {
+          action: /** @type {CommitAction} */ ('create'),
+          path: 'file1.md',
+          data: 'content1',
+        },
+        {
+          action: /** @type {CommitAction} */ ('delete'),
+          path: 'file2.md',
+          previousSha: 'sha2',
+        },
+        {
+          action: /** @type {CommitAction} */ ('update'),
+          path: 'file3.md',
+          previousSha: 'sha3',
+          data: 'content3',
+        },
+      ];
+
+      const mockOptions = {
+        summary: 'Mixed operations',
+        commitType: /** @type {CommitType} */ ('update'),
+      };
+
+      const mockCommitResponse = {
+        commit: {
+          sha: 'null-file-commit-sha',
+          created: '2023-01-15T15:00:00Z',
+        },
+        files: [
+          { path: 'file1.md', sha: 'new-sha1' },
+          null, // Deleted file returns null
+          { path: 'file3.md', sha: 'new-sha3' },
+        ],
+      };
+
+      fetchAPIMock.mockResolvedValue(mockCommitResponse);
+
+      const result = await commitChanges(mockChanges, mockOptions);
+
+      expect(result).toEqual({
+        sha: 'null-file-commit-sha',
+        date: new Date('2023-01-15T15:00:00Z'),
+        files: {
+          'file1.md': { sha: 'new-sha1' },
+          'file2.md': { sha: '' }, // null file uses fallback path and empty sha
+          'file3.md': { sha: 'new-sha3' },
+        },
+      });
+    });
+
+    test('should handle all null savedFiles entries', async () => {
+      const mockChanges = [
+        {
+          action: /** @type {CommitAction} */ ('delete'),
+          path: 'file1.md',
+          previousSha: 'sha1',
+        },
+        {
+          action: /** @type {CommitAction} */ ('delete'),
+          path: 'file2.md',
+          previousSha: 'sha2',
+        },
+      ];
+
+      const mockOptions = {
+        summary: 'Delete multiple files',
+        commitType: /** @type {CommitType} */ ('delete'),
+      };
+
+      const mockCommitResponse = {
+        commit: {
+          sha: 'delete-all-sha',
+          created: '2023-01-15T16:00:00Z',
+        },
+        files: [null, null], // All deleted files return null
+      };
+
+      fetchAPIMock.mockResolvedValue(mockCommitResponse);
+
+      const result = await commitChanges(mockChanges, mockOptions);
+
+      expect(result).toEqual({
+        sha: 'delete-all-sha',
+        date: new Date('2023-01-15T16:00:00Z'),
+        files: {
+          'file1.md': { sha: '' },
+          'file2.md': { sha: '' },
+        },
+      });
+    });
   });
 });
