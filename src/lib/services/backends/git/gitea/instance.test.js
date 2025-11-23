@@ -152,8 +152,9 @@ describe('Gitea Instance Service', () => {
 
       fetchAPIMock.mockResolvedValue(mockVersionResponse);
 
-      // This should throw when trying to access version.includes or parseFloat
-      await expect(checkInstanceVersion()).rejects.toThrow();
+      // parseFloat(undefined) returns NaN, and NaN < any number is false, so this should resolve
+      await expect(checkInstanceVersion()).resolves.toBeUndefined();
+      expect(instance.isForgejo).toBe(false);
     });
 
     test('should handle non-numeric version string', async () => {
