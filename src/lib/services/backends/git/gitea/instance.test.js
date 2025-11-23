@@ -62,8 +62,6 @@ describe('Gitea Instance Service', () => {
       expect(fetchAPIMock).toHaveBeenCalledWith('/version');
     });
 
-
-
     test('should detect Forgejo version by version number > 10', async () => {
       const mockVersionResponse = {
         version: '11.0.1-87-5e379c9+gitea-1.24.0',
