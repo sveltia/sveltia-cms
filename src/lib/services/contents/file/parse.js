@@ -161,7 +161,13 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
     }
 
     if (/^(?:yaml|toml|json)-frontmatter$/.test(format)) {
-      return parseFrontMatter({ collection, collectionFile, format, text });
+      return parseFrontMatter({
+        collection,
+        collectionFile,
+        // eslint-disable-next-line object-shorthand
+        format: /** @type {FrontMatterFormat} */ (format),
+        text,
+      });
     }
   } catch (/** @type {any} */ ex) {
     throw new Error(`${path} could not be parsed due to ${ex.name}: ${ex.message}`);
