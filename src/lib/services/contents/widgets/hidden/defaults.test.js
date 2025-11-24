@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { user } from '$lib/services/user';
+
 import { getDefaultValueMap } from './defaults';
 
 /**
@@ -14,6 +16,20 @@ vi.mock('@sveltia/utils/crypto', () => ({
     return 'full-uuid-1234-5678-90ab-cdef';
   }),
 }));
+
+// Mock user store with default empty values
+vi.mock('$lib/services/user', async () => {
+  const { writable } = await import('svelte/store');
+
+  return {
+    user: writable({
+      backendName: 'github',
+      login: '',
+      name: '',
+      email: '',
+    }),
+  };
+});
 
 /** @type {Pick<HiddenField, 'widget' | 'name'>} */
 const baseFieldConfig = {
@@ -312,6 +328,103 @@ describe('Test getDefaultValueMap()', () => {
       });
 
       expect(result).toEqual({ test_hidden: '' });
+    });
+  });
+
+  describe('author placeholders', () => {
+    test('should replace {{author-login}} placeholder with value', () => {
+      user.set({ backendName: 'github', login: 'johndoe', name: '', email: '' });
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'user-{{author-login}}',
+      };
+
+      const keyPath = 'author_login';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+
+      expect(result).toEqual({ author_login: 'user-johndoe' });
+    });
+
+    test('should replace {{author-name}} placeholder with value', () => {
+      user.set({ backendName: 'github', login: '', name: 'John Doe', email: '' });
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'author-{{author-name}}',
+      };
+
+      const keyPath = 'author_name';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+
+      expect(result).toEqual({ author_name: 'author-John Doe' });
+    });
+
+    test('should replace {{author-email}} placeholder with value', () => {
+      user.set({ backendName: 'github', login: '', name: '', email: 'john@example.com' });
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'email-{{author-email}}',
+      };
+
+      const keyPath = 'author_email';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+
+      expect(result).toEqual({ author_email: 'email-john@example.com' });
+    });
+
+    test('should replace all author placeholders in single string', () => {
+      user.set({
+        backendName: 'github',
+        login: 'johndoe',
+        name: 'John Doe',
+        email: 'john@example.com',
+      });
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'by {{author-name}} ({{author-login}}) <{{author-email}}>',
+      };
+
+      const keyPath = 'author_info';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+
+      expect(result).toEqual({
+        author_info: 'by John Doe (johndoe) <john@example.com>',
+      });
+    });
+
+    test('should handle author placeholders with other placeholders', () => {
+      user.set({
+        backendName: 'github',
+        login: 'johndoe',
+        name: 'John Doe',
+        email: 'john@example.com',
+      });
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default:
+          '{{locale}}-{{author-name}}-{{datetime}}-{{author-login}}-{{uuid_short}}-{{author-email}}',
+      };
+
+      const keyPath = 'composite';
+      const locale = 'en';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+
+      expect(result.composite).toBe(
+        'en-John Doe-2023-06-15T10:30:00.000Z-johndoe-short-uuid-123-john@example.com',
+      );
     });
   });
 });
