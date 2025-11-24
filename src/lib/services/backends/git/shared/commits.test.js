@@ -14,6 +14,7 @@ const mockCmsConfig = {
 const mockUser = {
   login: 'test-user',
   name: 'Test User',
+  email: '',
 };
 
 vi.mock('svelte/store', () => ({
@@ -54,6 +55,7 @@ describe('git/shared/commits', () => {
     };
     mockUser.login = 'test-user';
     mockUser.name = 'Test User';
+    mockUser.email = '';
   });
 
   describe('createCommitMessage', () => {
@@ -495,11 +497,28 @@ describe('git/shared/commits', () => {
       expect(message).toBe('[skip ci] Create Blog Post “my-post”');
     });
 
-    it('should add [skip ci] when skipCIEnabled is true but automatic_deployments is undefined', () => {
+    it('should replace {{author-login}} placeholder in create message', () => {
       mockCmsConfig.backend = {
-        commit_messages: {},
-        skip_ci: true,
-        automatic_deployments: undefined,
+        commit_messages: {
+          create: 'Create {{collection}} "{{slug}}" by {{author-login}}',
+        },
+        skip_ci: false,
+      };
+
+      const message = createCommitMessage(mockChanges, {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe('Create Blog Post "my-post" by test-user');
+    });
+
+    it('should replace {{author-name}} placeholder in update message', () => {
+      mockCmsConfig.backend = {
+        commit_messages: {
+          update: 'Update {{collection}} "{{slug}}" by {{author-name}}',
+        },
+        skip_ci: false,
       };
 
       const message = createCommitMessage(mockChanges, {
@@ -507,7 +526,123 @@ describe('git/shared/commits', () => {
         collection: mockCollection,
       });
 
-      expect(message).toBe('[skip ci] Update Blog Post “my-post”');
+      expect(message).toBe('Update Blog Post "my-post" by Test User');
+    });
+
+    it('should replace {{author-email}} placeholder in delete message', () => {
+      mockUser.email = 'test@example.com';
+
+      mockCmsConfig.backend = {
+        commit_messages: {
+          delete: 'Delete {{collection}} "{{slug}}" ({{author-email}})',
+        },
+        skip_ci: false,
+      };
+
+      const message = createCommitMessage(mockChanges, {
+        commitType: 'delete',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe('Delete Blog Post "my-post" (test@example.com)');
+    });
+
+    it('should replace multiple author placeholders in one message', () => {
+      mockUser.email = 'test@example.com';
+
+      mockCmsConfig.backend = {
+        commit_messages: {
+          create:
+            'Create {{collection}} "{{slug}}" by {{author-name}} ({{author-login}}) <{{author-email}}>',
+        },
+        skip_ci: false,
+      };
+
+      const message = createCommitMessage(mockChanges, {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe(
+        'Create Blog Post "my-post" by Test User (test-user) <test@example.com>',
+      );
+    });
+
+    it('should replace author placeholders in uploadMedia message', () => {
+      mockUser.email = 'test@example.com';
+
+      mockCmsConfig.backend = {
+        commit_messages: {
+          uploadMedia: 'Upload "{{path}}" by {{author-name}} ({{author-email}})',
+        },
+        skip_ci: false,
+      };
+
+      const mediaChanges = [{ path: 'static/images/photo.jpg' }];
+
+      const message = createCommitMessage(mediaChanges, {
+        commitType: 'uploadMedia',
+      });
+
+      expect(message).toBe('Upload "static/images/photo.jpg" by Test User (test@example.com)');
+    });
+
+    it('should replace author placeholders in deleteMedia message', () => {
+      mockUser.email = 'test@example.com';
+
+      mockCmsConfig.backend = {
+        commit_messages: {
+          deleteMedia: 'Delete "{{path}}" by {{author-login}}',
+        },
+        skip_ci: false,
+      };
+
+      const mediaChanges = [{ path: 'static/images/photo.jpg' }];
+
+      const message = createCommitMessage(mediaChanges, {
+        commitType: 'deleteMedia',
+      });
+
+      expect(message).toBe('Delete "static/images/photo.jpg" by test-user');
+    });
+
+    it('should handle missing author properties gracefully', () => {
+      mockUser.login = '';
+      mockUser.name = '';
+      mockUser.email = '';
+
+      mockCmsConfig.backend = {
+        commit_messages: {
+          create:
+            'Create {{collection}} "{{slug}}" by {{author-name}} ({{author-login}}) <{{author-email}}>',
+        },
+        skip_ci: false,
+      };
+
+      const message = createCommitMessage(mockChanges, {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe('Create Blog Post "my-post" by  () <>');
+    });
+
+    it('should replace author placeholders with [skip ci] prefix', () => {
+      mockUser.email = 'test@example.com';
+
+      mockCmsConfig.backend = {
+        commit_messages: {
+          create: 'Create {{collection}} "{{slug}}" by {{author-email}}',
+        },
+        skip_ci: true,
+      };
+
+      const message = createCommitMessage(mockChanges, {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe('[skip ci] Create Blog Post "my-post" by test@example.com');
     });
   });
 });

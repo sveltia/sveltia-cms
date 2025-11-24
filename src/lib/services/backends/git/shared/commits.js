@@ -38,7 +38,7 @@ export const createCommitMessage = (
     automatic_deployments: autoDeploy,
   } = /** @type {GitBackend} */ (get(cmsConfig)?.backend ?? {});
 
-  const { login = '', name = '' } = /** @type {User} */ (get(user));
+  const { email = '', login = '', name = '' } = /** @type {User} */ (get(user));
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const collectionLabel = collection ? getCollectionLabel(collection, { useSingular: true }) : '';
@@ -50,6 +50,7 @@ export const createCommitMessage = (
       .replaceAll('{{slug}}', firstSlug)
       .replaceAll('{{collection}}', collectionLabel)
       .replaceAll('{{path}}', firstPath)
+      .replaceAll('{{author-email}}', email)
       .replaceAll('{{author-login}}', login)
       .replaceAll('{{author-name}}', name);
   }
@@ -57,6 +58,7 @@ export const createCommitMessage = (
   if (['uploadMedia', 'deleteMedia'].includes(commitType)) {
     message = message
       .replaceAll('{{path}}', firstPath)
+      .replaceAll('{{author-email}}', email)
       .replaceAll('{{author-login}}', login)
       .replaceAll('{{author-name}}', name);
 
@@ -68,6 +70,7 @@ export const createCommitMessage = (
   if (['openAuthoring'].includes(commitType)) {
     message = message
       .replaceAll('{{message}}', commitType)
+      .replaceAll('{{author-email}}', email)
       .replaceAll('{{author-login}}', login)
       .replaceAll('{{author-name}}', name);
   }
