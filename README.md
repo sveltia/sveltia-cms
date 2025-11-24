@@ -336,6 +336,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - An indicator is displayed in the account menu when using the local repository workflow.[^302]
 - Developers can select the local and remote backends while working on a local server.
 - The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage support works with all modern browsers [except Safari](https://bugs.webkit.org/show_bug.cgi?id=254726).
+- Commit message template supports the `{{author-email}}` template tag to include the author’s email address.
 
 ### Better i18n support
 
@@ -512,6 +513,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
     - `{{locale}}`: The current locale code.[^101]
     - `{{datetime}}`: The current date/time in [ISO 8601 format](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date#date_time_string_format).[^102]
     - `{{uuid}}`, `{{uuid_short}}` and `{{uuid_shorter}}`: A random UUID or its shorter version, just like the [slug template tags](#using-a-random-id-for-an-entry-slug).[^12]
+    - `{{author-email}}`, `{{author-login}}` and `{{author-name}}`: The signed-in user’s email, login name and display name, respectively.[^305]
   - The `default` value is saved when you create a file collection item, not just a folder collection item.[^78]
 - List
   - It’s possible to [edit data files with a top-level list](#editing-data-files-with-a-top-level-list) using the new `root` option.[^148]
@@ -2725,3 +2727,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^303]: Netlify/Decap CMS [#3803](https://github.com/decaporg/decap-cms/issues/3803)
 
 [^304]: Netlify/Decap CMS [#4538](https://github.com/decaporg/decap-cms/issues/4538), [#6371](https://github.com/decaporg/decap-cms/issues/6371)
+
+[^305]: Netlify/Decap CMS [#1483](https://github.com/decaporg/decap-cms/issues/1483)
