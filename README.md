@@ -135,7 +135,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
   - ⚠️ Mostly low activity with only occasional releases and a few minor improvements
   - ⚠️ Seemingly random issues were closed as stale following the rebranding
   - ⚠️ Bug reports continue to pile up, often without any response
-  - ❌ A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, and fatal crashes remain unaddressed remain unaddressed
+  - ❌ A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities and fatal crashes remain unaddressed
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is **better by design**:
 
