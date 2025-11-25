@@ -127,15 +127,19 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite**
   - Started in November 2022, first appeared on GitHub in March 2023
   - ✅ Actively developed with frequent releases and numerous improvements
-  - ✅ Solved more than 270 issues reported in the Netlify/Decap CMS repository
+  - ✅ Relevant issues are actively being addressed regardless of their age or status
+  - ✅ Most of bug reports are addressed promptly, usually within a day
+  - ✅ No known unpatched security vulnerabilities, with dependencies kept up-to-date
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
   - ⚠️ Mostly low activity with only occasional releases and a few minor improvements
-  - ❌ A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, fatal crashes and many other bugs remain unaddressed
+  - ⚠️ Seemingly random issues were closed as stale following the rebranding
+  - ⚠️ Bug reports continue to pile up, often without any response
+  - ❌ A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities, and fatal crashes remain unaddressed remain unaddressed
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is **better by design**:
 
-- We have rebuilt the app from scratch using a [modern framework](https://svelte.dev/)
+- We rebuilt the app from scratch using a [modern framework](https://svelte.dev/)
 - We don’t reuse any part of the predecessor’s codebase
 - We incorporate i18n support into the core instead of adding it as an afterthought
 - We closely monitor and analyze the predecessor’s issue tracker
@@ -175,7 +179,8 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
     - or every single issue that’s relevant, fixable, and worth dealing with 🔥
   - Issues include everything:
     - Outstanding issues from feature requests to bug reports
-    - [Issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an effective solution
+    - [Issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22)
+    - Issues closed without an optimal solution
     - [Discussions](https://github.com/decaporg/decap-cms/discussions)
     - Stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
   - Many of the bugs, including the annoying crashes, have already been solved
