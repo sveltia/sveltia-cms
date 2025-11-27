@@ -125,7 +125,7 @@ const generateSchema = async () => {
   schema.definitions.CmsConfig.properties.$schema = { type: 'string', format: 'uri' };
 
   // Require at least one of `collections` or `singletons`
-  schema.definitions.CmsConfig.oneOf = [
+  schema.definitions.CmsConfig.anyOf = [
     { required: ['collections'] },
     { required: ['singletons'] },
   ];
