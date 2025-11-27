@@ -4,7 +4,11 @@ import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser
 
 /**
  * @import { CollectionFile, RelationField } from '$lib/types/public';
- * @import { FieldParserArgs, UnsupportedOption } from '$lib/types/private';
+ * @import {
+ * FieldParserArgs,
+ * InternalSingletonCollection,
+ * UnsupportedOption,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -30,7 +34,7 @@ export const parseRelationFieldConfig = (args) => {
 
   const collection =
     collectionName === '_singletons'
-      ? cmsConfig?.singletons
+      ? /** @type {InternalSingletonCollection} */ ({ files: cmsConfig?.singletons })
       : cmsConfig?.collections?.find((col) => col.name === collectionName);
 
   /** @type {CollectionFile | undefined} */
@@ -38,11 +42,15 @@ export const parseRelationFieldConfig = (args) => {
 
   // Check if the collection exists
   if (collection) {
-    const hasFiles = 'files' in collection;
+    const hasFiles = 'files' in collection && Array.isArray(collection.files);
 
     if (fileName) {
       // Check if the file exists in the collection
-      file = hasFiles ? collection.files.find((f) => f.name === fileName) : undefined;
+      if (hasFiles) {
+        file = /** @type {CollectionFile | undefined} */ (
+          collection.files.find((f) => 'file' in f && f.name === fileName)
+        );
+      }
 
       if (!file) {
         addMessage({
