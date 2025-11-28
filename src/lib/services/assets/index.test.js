@@ -110,9 +110,8 @@ describe('assets/index', () => {
     let transformFileMock;
 
     beforeEach(async () => {
-      const { getDefaultMediaLibraryOptions, transformFile } = await import(
-        '$lib/services/integrations/media-libraries/default'
-      );
+      const { getDefaultMediaLibraryOptions, transformFile } =
+        await import('$lib/services/integrations/media-libraries/default');
 
       getDefaultMediaLibraryOptionsMock = vi.mocked(getDefaultMediaLibraryOptions);
       transformFileMock = vi.mocked(transformFile);
@@ -2328,9 +2327,8 @@ describe('assets/index', () => {
       Object.defineProperty(largeFile1, 'size', { value: 1000001 }); // Just over max
       Object.defineProperty(largeFile2, 'size', { value: 10000000 }); // Very large
 
-      const { getDefaultMediaLibraryOptions } = await import(
-        '$lib/services/integrations/media-libraries/default'
-      );
+      const { getDefaultMediaLibraryOptions } =
+        await import('$lib/services/integrations/media-libraries/default');
 
       vi.mocked(getDefaultMediaLibraryOptions).mockReturnValue({
         config: {

@@ -72,9 +72,8 @@ vi.mock('$lib/services/contents/i18n', () => ({
 }));
 
 // Must import after mocking
-const { addMessage, checkUnsupportedOptions, isValidName, checkName } = await import(
-  './validator.js'
-);
+const { addMessage, checkUnsupportedOptions, isValidName, checkName } =
+  await import('./validator.js');
 
 /**
  * Create a fresh collectors object for testing.

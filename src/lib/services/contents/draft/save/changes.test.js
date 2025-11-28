@@ -49,9 +49,8 @@ describe('draft/save/changes', () => {
     mockGet.mockReturnValue(undefined);
 
     // Mock getDefaultMediaLibraryOptions to return expected structure
-    const { getDefaultMediaLibraryOptions } = await import(
-      '$lib/services/integrations/media-libraries/default'
-    );
+    const { getDefaultMediaLibraryOptions } =
+      await import('$lib/services/integrations/media-libraries/default');
 
     vi.mocked(getDefaultMediaLibraryOptions).mockReturnValue({
       config: {

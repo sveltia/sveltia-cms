@@ -700,9 +700,8 @@ describe('getCollection()', () => {
     const { getFileConfig } = await import('$lib/services/contents/file/config');
     const { normalizeI18nConfig } = await import('$lib/services/contents/i18n');
 
-    const { getValidCollectionFiles, isValidCollectionFile } = await import(
-      '$lib/services/contents/collection/files'
-    );
+    const { getValidCollectionFiles, isValidCollectionFile } =
+      await import('$lib/services/contents/collection/files');
 
     vi.mocked(getFileConfig).mockReturnValue({ fullPath: '/content/posts' });
     vi.mocked(normalizeI18nConfig).mockReturnValue({ defaultLocale: 'en' });

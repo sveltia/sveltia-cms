@@ -68,9 +68,8 @@ describe('Test updateStores()', () => {
   });
 
   test('updates contentUpdatesToast with deletion count', async () => {
-    const { contentUpdatesToast, UPDATE_TOAST_DEFAULT_STATE } = await import(
-      '$lib/services/contents/collection/data'
-    );
+    const { contentUpdatesToast, UPDATE_TOAST_DEFAULT_STATE } =
+      await import('$lib/services/contents/collection/data');
 
     updateStores({ ids: ['1', '2', '3'], assetPaths: [] });
 

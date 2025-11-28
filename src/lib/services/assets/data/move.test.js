@@ -408,9 +408,8 @@ describe('assets/data/move', () => {
       const { getAssociatedCollections } = await import('$lib/services/contents/entry');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
-      const { isCollectionIndexFile, getIndexFile } = await import(
-        '$lib/services/contents/collection/index-file'
-      );
+      const { isCollectionIndexFile, getIndexFile } =
+        await import('$lib/services/contents/collection/index-file');
 
       const mockEntry = {
         id: 'test-entry',
@@ -450,9 +449,8 @@ describe('assets/data/move', () => {
       const { getAssociatedCollections } = await import('$lib/services/contents/entry');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
-      const { isCollectionIndexFile } = await import(
-        '$lib/services/contents/collection/index-file'
-      );
+      const { isCollectionIndexFile } =
+        await import('$lib/services/contents/collection/index-file');
 
       const mockEntry = {
         id: 'test-entry',
@@ -642,9 +640,8 @@ describe('assets/data/move', () => {
       const { getAssociatedCollections } = await import('$lib/services/contents/entry');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
-      const { isCollectionIndexFile } = await import(
-        '$lib/services/contents/collection/index-file'
-      );
+      const { isCollectionIndexFile } =
+        await import('$lib/services/contents/collection/index-file');
 
       vi.mocked(getAssociatedCollections).mockReturnValue([]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -726,9 +723,8 @@ describe('assets/data/move', () => {
       const { getAssociatedCollections } = await import('$lib/services/contents/entry');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
-      const { isCollectionIndexFile } = await import(
-        '$lib/services/contents/collection/index-file'
-      );
+      const { isCollectionIndexFile } =
+        await import('$lib/services/contents/collection/index-file');
 
       vi.mocked(getAssociatedCollections).mockReturnValue([]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -782,9 +778,8 @@ describe('assets/data/move', () => {
       const { getAssociatedCollections } = await import('$lib/services/contents/entry');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
-      const { isCollectionIndexFile } = await import(
-        '$lib/services/contents/collection/index-file'
-      );
+      const { isCollectionIndexFile } =
+        await import('$lib/services/contents/collection/index-file');
 
       vi.mocked(getAssociatedCollections).mockReturnValue([]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -838,9 +833,8 @@ describe('assets/data/move', () => {
       const { getAssociatedCollections } = await import('$lib/services/contents/entry');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
-      const { isCollectionIndexFile } = await import(
-        '$lib/services/contents/collection/index-file'
-      );
+      const { isCollectionIndexFile } =
+        await import('$lib/services/contents/collection/index-file');
 
       vi.mocked(getAssociatedCollections).mockReturnValue([]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -894,9 +888,8 @@ describe('assets/data/move', () => {
       const { getAssociatedCollections } = await import('$lib/services/contents/entry');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
-      const { isCollectionIndexFile } = await import(
-        '$lib/services/contents/collection/index-file'
-      );
+      const { isCollectionIndexFile } =
+        await import('$lib/services/contents/collection/index-file');
 
       vi.mocked(getAssociatedCollections).mockReturnValue([]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -959,9 +952,8 @@ describe('assets/data/move', () => {
       const { getAssociatedCollections } = await import('$lib/services/contents/entry');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
-      const { isCollectionIndexFile } = await import(
-        '$lib/services/contents/collection/index-file'
-      );
+      const { isCollectionIndexFile } =
+        await import('$lib/services/contents/collection/index-file');
 
       vi.mocked(getAssociatedCollections).mockReturnValue([]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);

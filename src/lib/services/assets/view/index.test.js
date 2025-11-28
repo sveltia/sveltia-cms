@@ -140,9 +140,8 @@ describe('assets/view/index', () => {
 
   describe('getFolderLabelByCollection', () => {
     it('should return collection name when collection is not found', async () => {
-      const { getCollection, getCollectionLabel } = await import(
-        '$lib/services/contents/collection'
-      );
+      const { getCollection, getCollectionLabel } =
+        await import('$lib/services/contents/collection');
 
       vi.mocked(getCollection).mockReturnValue(undefined);
 
@@ -193,9 +192,8 @@ describe('assets/view/index', () => {
     });
 
     it('should return collection label when collection exists', async () => {
-      const { getCollection, getCollectionLabel } = await import(
-        '$lib/services/contents/collection'
-      );
+      const { getCollection, getCollectionLabel } =
+        await import('$lib/services/contents/collection');
 
       // @ts-ignore - simplified mock for testing
       const mockCollection = { name: 'blog', label: 'Blog Posts' };
@@ -221,13 +219,11 @@ describe('assets/view/index', () => {
     });
 
     it('should return collection and file label when both exist', async () => {
-      const { getCollection, getCollectionLabel } = await import(
-        '$lib/services/contents/collection'
-      );
+      const { getCollection, getCollectionLabel } =
+        await import('$lib/services/contents/collection');
 
-      const { getCollectionFile, getCollectionFileLabel } = await import(
-        '$lib/services/contents/collection/files'
-      );
+      const { getCollectionFile, getCollectionFileLabel } =
+        await import('$lib/services/contents/collection/files');
 
       // @ts-ignore - simplified mock for testing
       const mockCollection = { name: 'blog', label: 'Blog Posts' };
@@ -260,9 +256,8 @@ describe('assets/view/index', () => {
     });
 
     it('should return collection label and fileName when file is not found', async () => {
-      const { getCollection, getCollectionLabel } = await import(
-        '$lib/services/contents/collection'
-      );
+      const { getCollection, getCollectionLabel } =
+        await import('$lib/services/contents/collection');
 
       const { getCollectionFile } = await import('$lib/services/contents/collection/files');
       // @ts-ignore - simplified mock for testing

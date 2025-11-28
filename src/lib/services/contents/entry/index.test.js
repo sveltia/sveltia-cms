@@ -448,9 +448,8 @@ describe('Test getEntryPreviewURL()', () => {
     };
 
     // Mock index file functions
-    const { isCollectionIndexFile, getIndexFile } = await import(
-      '$lib/services/contents/collection/index-file'
-    );
+    const { isCollectionIndexFile, getIndexFile } =
+      await import('$lib/services/contents/collection/index-file');
 
     vi.mocked(isCollectionIndexFile).mockReturnValue(true);
     vi.mocked(getIndexFile).mockReturnValue({

@@ -28,9 +28,8 @@ vi.mock('$lib/services/contents/draft/defaults', () => ({
 }));
 
 // Import mocked modules once at the top level
-const { getIndexFile, isCollectionIndexFile } = await import(
-  '$lib/services/contents/collection/index-file'
-);
+const { getIndexFile, isCollectionIndexFile } =
+  await import('$lib/services/contents/collection/index-file');
 
 const { entryDraft } = await import('$lib/services/contents/draft');
 const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/backup');

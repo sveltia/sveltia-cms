@@ -30,9 +30,8 @@ vi.mock('$lib/services/contents/i18n/config', () => ({
 
 const { getValidCollections } = await import('$lib/services/contents/collection');
 
-const { getValidCollectionFiles, isValidCollectionFile } = await import(
-  '$lib/services/contents/collection/files'
-);
+const { getValidCollectionFiles, isValidCollectionFile } =
+  await import('$lib/services/contents/collection/files');
 
 const { normalizeI18nConfig } = await import('$lib/services/contents/i18n/config');
 
