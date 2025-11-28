@@ -400,45 +400,62 @@ describe('GitLab files service', () => {
       expect(result).toEqual([]);
     });
 
-    test('fetches blobs one-by-one due to complexity scoring', async () => {
-      const paths = Array.from({ length: 3 }, (_, i) => `file${i}.md`);
+    test('fetches blobs in batches of up to 100 paths', async () => {
+      const paths = Array.from({ length: 150 }, (_, i) => `file${i}.md`);
 
-      const mockResponses = Array.from({ length: 3 }, (_, i) => ({
+      const mockResponse1 = {
         project: {
           repository: {
             blobs: {
-              nodes: [{ size: '100', rawTextBlob: `content${i}` }],
+              nodes: Array.from({ length: 100 }, (_, i) => ({
+                size: '100',
+                rawTextBlob: `content${i}`,
+              })),
             },
           },
         },
-      }));
+      };
+
+      const mockResponse2 = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: Array.from({ length: 50 }, (_, i) => ({
+                size: '100',
+                rawTextBlob: `content${i + 100}`,
+              })),
+            },
+          },
+        },
+      };
 
       vi.mocked(fetchGraphQL)
-        .mockResolvedValueOnce(mockResponses[0])
-        .mockResolvedValueOnce(mockResponses[1])
-        .mockResolvedValueOnce(mockResponses[2]);
+        .mockResolvedValueOnce(mockResponse1)
+        .mockResolvedValueOnce(mockResponse2);
 
       const result = await fetchBlobs(paths);
 
-      expect(fetchGraphQL).toHaveBeenCalledTimes(3);
-      expect(result).toHaveLength(3);
-      expect(result[0]).toEqual({ size: '100', rawTextBlob: 'content0' });
-      expect(result[1]).toEqual({ size: '100', rawTextBlob: 'content1' });
-      expect(result[2]).toEqual({ size: '100', rawTextBlob: 'content2' });
-      // Verify each call uses a single path
-      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toEqual({ paths: ['file0.md'] });
-      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]).toEqual({ paths: ['file1.md'] });
-      expect(vi.mocked(fetchGraphQL).mock.calls[2][1]).toEqual({ paths: ['file2.md'] });
+      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+      expect(result).toHaveLength(150);
+      // Verify first batch has 100 paths
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toBeDefined();
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(100);
+      // Verify second batch has 50 paths
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]).toBeDefined();
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toHaveLength(50);
     });
 
-    test('updates progress correctly during single-file fetches', async () => {
-      const paths = Array.from({ length: 5 }, (_, i) => `file${i}.md`);
+    test('fetches all paths in single batch when under 100', async () => {
+      const paths = Array.from({ length: 50 }, (_, i) => `file${i}.md`);
 
       const mockResponse = {
         project: {
           repository: {
             blobs: {
-              nodes: [{ size: '100', rawTextBlob: 'content' }],
+              nodes: Array.from({ length: 50 }, (_, i) => ({
+                size: '100',
+                rawTextBlob: `content${i}`,
+              })),
             },
           },
         },
@@ -448,8 +465,10 @@ describe('GitLab files service', () => {
 
       const result = await fetchBlobs(paths);
 
-      expect(fetchGraphQL).toHaveBeenCalledTimes(5);
-      expect(result).toHaveLength(5);
+      expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+      expect(result).toHaveLength(50);
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toBeDefined();
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(50);
     });
   });
 
