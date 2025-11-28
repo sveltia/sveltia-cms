@@ -6,7 +6,7 @@
   import { _, locale as appLocale } from 'svelte-i18n';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import StaticMap from '$lib/components/common/static-map.svelte';
+  import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { defaultAssetDetails, getAssetDetails } from '$lib/services/assets/info';
   import { isMediaKind } from '$lib/services/assets/kinds';
@@ -187,7 +187,7 @@
   {#if coordinates}
     <section>
       <h4>{$_('location')}</h4>
-      <StaticMap {coordinates} />
+      <LeafletMap {coordinates} />
     </section>
   {/if}
 </div>

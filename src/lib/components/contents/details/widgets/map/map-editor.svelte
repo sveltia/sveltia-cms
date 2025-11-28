@@ -10,17 +10,16 @@
 
   import { AlertDialog, Button, Icon, Listbox, Option, SearchBar } from '@sveltia/ui';
   import { isObject } from '@sveltia/utils/object';
-  import { onMount, untrack } from 'svelte';
+  import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { loadModule } from '$lib/services/app/dependencies';
   import { sendRequest } from '$lib/services/utils/networking';
   import { toFixed } from '$lib/services/utils/number';
 
-  // @todo Copy minimal styles from Leaflet to avoid loading the whole CSS file
-  import 'leaflet/dist/leaflet.css';
-
   /**
+   * @import Leaflet from 'leaflet';
    * @import { GeoJSONStoreGeometries, TerraDraw } from 'terra-draw';
    * @import { GeoCoordinates, WidgetEditorProps } from '$lib/types/private';
    * @import { MapField } from '$lib/types/public';
@@ -74,39 +73,19 @@
 
   /** @type {number} */
   let searchInputTimeout = 0;
-  /** @type {import('leaflet').Map | undefined} */
+  /** @type {Leaflet.Map | undefined} */
   let map = undefined;
 
   /**
-   * Load the Leaflet and Terra Draw libraries and initialize the map. We don’t bundle the libraries
-   * because of the bundle size: the Map widget may not be used often and multiple services/adapters
-   * may be supported in the future.
+   * Load the Terra Draw libraries and initialize the draw instance once the Leaflet map is ready.
+   * We don’t bundle the libraries because of the bundle size: the Map widget may not be used often
+   * and multiple services/adapters may be supported in the future.
+   * @param {object} args Arguments.
+   * @param {Leaflet} args.leaflet Leaflet library.
+   * @param {Leaflet.Map} args.map Leaflet map instance.
    */
-  const init = async () => {
-    if (!mapElement) {
-      return;
-    }
-
-    /** @type {import('leaflet')} */
-    const leaflet = await loadModule('leaflet', 'dist/leaflet-src.esm.js');
-
-    map = leaflet.map(mapElement, { center: [0, 0], zoom: 2 });
-
-    leaflet
-      .tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      })
-      .addTo(map);
-
-    mapElement.querySelectorAll('a[href^="https:"]').forEach((a) => {
-      a.setAttribute('target', '_blank');
-      a.setAttribute('rel', 'noopener noreferrer');
-    });
-
-    new ResizeObserver(() => {
-      map?.invalidateSize();
-    }).observe(mapElement);
+  const onReady = async ({ leaflet, map: mapInstance }) => {
+    map = mapInstance;
 
     /** @type {import('terra-draw')} */
     const { TerraDraw, TerraDrawLineStringMode, TerraDrawPointMode, TerraDrawPolygonMode } =
@@ -342,10 +321,6 @@
     currentValue = '';
   };
 
-  onMount(() => {
-    init();
-  });
-
   $effect(() => {
     void draw;
     void currentValue;
@@ -421,7 +396,9 @@
   {/if}
 {/if}
 
-<div role="application" class="map" inert={readonly} class:invalid bind:this={mapElement}></div>
+<div class="map-wrapper">
+  <LeafletMap bind:mapElement inert={readonly} class={invalid ? 'invalid' : undefined} {onReady} />
+</div>
 
 <AlertDialog bind:open={showAlertDialog} title={$_('geolocation_error_title')}>
   {errorMessage}
@@ -439,46 +416,18 @@
     color: var(--sui-secondary-foreground-color);
   }
 
-  .map {
-    margin: var(--sui-focus-ring-width);
-    border: 1px solid var(--sui-textbox-border-color);
-    border-radius: var(--sui-textbox-border-radius);
-    overflow: hidden;
-    height: 400px;
-    background-clip: text;
+  .map-wrapper {
+    display: contents;
 
-    &.invalid {
-      border-color: var(--sui-error-border-color);
+    :global {
+      .map {
+        aspect-ratio: auto;
+        height: 400px;
+
+        &.invalid {
+          border-color: var(--sui-error-border-color);
+        }
+      }
     }
-  }
-
-  :global(.leaflet-container) {
-    font-family: inherit !important;
-    font-size: var(--sui-font-size-small) !important;
-  }
-
-  :global(.leaflet-container a) {
-    color: var(--sui-primary-accent-color-text) !important;
-    text-decoration: none !important;
-  }
-
-  :global(.leaflet-bar a) {
-    border-color: var(--sui-button-border-color) !important;
-    color: var(--sui-secondary-foreground-color) !important;
-    background-color: var(--sui-button-background-color) !important;
-  }
-
-  :global(.leaflet-control) {
-    color: var(--sui-secondary-foreground-color) !important;
-    background-color: var(--sui-secondary-background-color-translucent) !important;
-  }
-
-  :global(.leaflet-control-attribution) {
-    padding: 4px 8px;
-  }
-
-  // Dark theme: https://stackoverflow.com/q/59819792
-  :global(:root[data-theme='dark'] .leaflet-layer) {
-    filter: invert(100%) hue-rotate(180deg);
   }
 </style>
