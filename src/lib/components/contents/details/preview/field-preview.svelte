@@ -9,7 +9,7 @@
 
   /**
    * @import { InternalLocaleCode, TypedFieldKeyPath } from '$lib/types/private';
-   * @import { Field, FieldKeyPath } from '$lib/types/public';
+   * @import { Field, FieldKeyPath, VisibleField } from '$lib/types/public';
    */
 
   /**
@@ -30,13 +30,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const {
-    name: fieldName,
-    label = '',
-    widget: widgetName = 'string',
-    preview = true,
-    i18n = false,
-  } = $derived(fieldConfig);
+  const { name: fieldName, widget: widgetName = 'string', i18n = false } = $derived(fieldConfig);
+  const { label = '', preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const multiple = $derived(isFieldMultiple(fieldConfig));
   const isList = $derived(widgetName === 'list' || multiple);
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);

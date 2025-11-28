@@ -107,6 +107,7 @@ export const validateAnyField = (args) => {
     return undefined;
   }
 
+  // @ts-ignore Some field types don’t have `pattern` property
   const { widget: widgetName = 'string', i18n = false, pattern: validation } = fieldConfig;
   const multiple = isFieldMultiple(fieldConfig);
 

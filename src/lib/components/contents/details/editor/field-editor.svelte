@@ -39,6 +39,7 @@
    * NumberField,
    * StringField,
    * TextField,
+   * VisibleField,
    * } from '$lib/types/public';
    */
 
@@ -89,16 +90,15 @@
   );
 
   const inEditorComponent = $derived(widgetContext === 'markdown-editor-component');
+  const { name: fieldName, widget: widgetName = 'string', i18n = false } = $derived(fieldConfig);
   const {
-    name: fieldName,
     label = '',
     comment = '',
     hint = '',
-    widget: widgetName = 'string',
-    i18n = false,
+    // @ts-ignore Some field types don’t have `pattern` property
     pattern = /** @type {string[]} */ ([]),
     readonly: readonlyOption = false,
-  } = $derived(fieldConfig);
+  } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const required = $derived(isFieldRequired({ fieldConfig, locale }));
   const { hasSubFields } = $derived(
     widgetName === 'list'

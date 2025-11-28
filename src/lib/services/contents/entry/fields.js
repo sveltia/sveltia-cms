@@ -264,6 +264,7 @@ export const getField = (args) => {
  * @param {InternalLocaleCode} args.locale Current pane’s locale.
  * @returns {boolean} Result.
  */
+// @ts-ignore Hidden field doesn’t have `required` property
 export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
   Array.isArray(required) ? required.includes(locale) : !!required;
 
