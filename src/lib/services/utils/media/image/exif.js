@@ -1,4 +1,5 @@
 import { loadModule } from '$lib/services/app/dependencies';
+import { getAssetBlob } from '$lib/services/assets/info';
 import { toFixed } from '$lib/services/utils/number';
 
 /**
@@ -17,8 +18,9 @@ import { toFixed } from '$lib/services/utils/number';
  */
 export const extractExifData = async (asset, kind) => {
   const isImage = kind === 'image';
+  const blob = isImage ? await getAssetBlob(asset) : null;
 
-  if (!isImage || !asset.file) {
+  if (!blob) {
     return { createdDate: undefined, coordinates: undefined };
   }
 
@@ -30,7 +32,7 @@ export const extractExifData = async (asset, kind) => {
     longitude,
     DateTimeOriginal,
     CreateDate: timestamp = DateTimeOriginal,
-  } = (await parse(asset.file).catch(() => {})) ?? {};
+  } = (await parse(blob).catch(() => {})) ?? {};
 
   return {
     createdDate: timestamp instanceof Date ? timestamp : undefined,
