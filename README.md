@@ -169,10 +169,12 @@ Sveltia CMS is currently in **beta**, with version 1.0 (GA) scheduled for releas
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
 - Ensuring near-complete [compatibility with Netlify/Decap CMS](#compatibility)
+  - The vast majority of existing configurations work out of the box
+  - It works as a drop-in replacement for most use cases
   - Some missing features will be implemented before or shortly after GA
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **270+ issues, or 580+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **270+ issues, or 585+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 450 issues, or 900 if including duplicates, in the future 💪
@@ -187,6 +189,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
     - The remaining bugs are mostly related to [unimplemented features](#current-limitations)
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are [on our table](#roadmap) or already implemented in Sveltia CMS
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
+- Preparing comprehensive, up-to-date, easy-to-understand documentation
 - Implementing our own enhancement ideas for every part of the product
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
@@ -690,7 +693,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 
 We are working to make Sveltia CMS compatible with Netlify/Decap CMS wherever possible so that more users can seamlessly switch to our modern successor. In some casual use cases, Sveltia CMS can be used as a drop-in replacement for Netlify/Decap CMS with [just a one-line code update](#migration).
 
-However, 100% feature parity is never planned, and some features are still missing or will not be added due to performance, deprecation and other factors. Look at the compatibility info below to see if you can migrate now or in the near future.
+However, 100% feature parity is never planned, and some features are still missing or will not be added due to deprecation and other factors. Look at the compatibility info below to see if you can migrate now or in the near future.
 
 ### Current limitations
 
