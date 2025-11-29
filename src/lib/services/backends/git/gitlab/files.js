@@ -218,6 +218,7 @@ const getFetchCommitsInnerQuery = (path, index) => `
  * fixed number of paths at a time, ensuring that the complexity score of the query does not exceed
  * the limit. The commit information includes the author’s GitLab user info, name, email, and
  * committed date.
+ * This function is unused at the moment due to performance concerns but may be used in the future.
  * @param {string[]} paths List of file paths to fetch.
  * @returns {Promise<Record<string, GitLabCommit>>} Fetched commit information for each file.
  */
@@ -259,10 +260,10 @@ export const fetchCommits = async (paths) => {
  * @param {BaseFileListItem[]} args.fetchingFiles Base file list.
  * @param {Record<string, BlobItem>} args.sizes File sizes.
  * @param {Record<string, BlobItem>} args.blobs Raw text blobs.
- * @param {Record<string, GitLabCommit>} args.commits Commit information for each file.
+ * @param {Record<string, GitLabCommit>} [args.commits] Commit information for each file.
  * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
  */
-export const parseFileContents = async ({ fetchingFiles, sizes, blobs, commits }) => {
+export const parseFileContents = async ({ fetchingFiles, sizes, blobs, commits = {} }) => {
   const entries = fetchingFiles.map(({ path, sha }) => {
     const commit = commits[path];
 
@@ -301,27 +302,24 @@ export const parseFileContents = async ({ fetchingFiles, sizes, blobs, commits }
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
 export const fetchFileContents = async (fetchingFiles) => {
-  const allPaths = fetchingFiles.map(({ path }) => path);
-  const textPaths = fetchingFiles.filter(({ type }) => type !== 'asset').map(({ path }) => path);
-
   dataLoadedProgress.set(0);
 
   // Show a fake progressbar because the request waiting time is long
   const dataLoadedProgressInterval = window.setInterval(() => {
     dataLoadedProgress.update((progress = 0) => progress + 1);
-  }, fetchingFiles.length);
+  }, fetchingFiles.length / 2);
 
-  // Fetch sizes for all files
-  const sizes = await fetchBlobs(allPaths, FETCH_BLOBS_QUERY.replace('rawTextBlob', 'size'));
   // Fetch blobs for entry/config files only
+  const textPaths = fetchingFiles.filter(({ type }) => type !== 'asset').map(({ path }) => path);
   const blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY);
-  // Fetch commit info only when there aren’t many files, because it’s costly
-  const commits = allPaths.length < 100 ? await fetchCommits(allPaths) : {};
+  // Fetch sizes for asset files only
+  const assetPaths = fetchingFiles.filter(({ type }) => type === 'asset').map(({ path }) => path);
+  const sizes = await fetchBlobs(assetPaths, FETCH_BLOBS_QUERY.replace('rawTextBlob', 'size'));
 
   window.clearInterval(dataLoadedProgressInterval);
   dataLoadedProgress.set(undefined);
 
-  return parseFileContents({ fetchingFiles, sizes, blobs, commits });
+  return parseFileContents({ fetchingFiles, sizes, blobs });
 };
 
 /**
