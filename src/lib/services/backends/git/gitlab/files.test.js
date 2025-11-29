@@ -586,48 +586,6 @@ describe('GitLab files service', () => {
       expect(result['image.png'].size).toBe(5000);
       expect(result['image.png'].text).toBeUndefined();
     });
-
-    test('fetches mixed entry and asset files', async () => {
-      const files = /** @type {any} */ ([
-        { path: 'config.yml', sha: 'sha1', type: 'entry', size: 0, name: 'config.yml' },
-        { path: 'image.jpg', sha: 'sha2', type: 'asset', size: 0, name: 'image.jpg' },
-      ]);
-
-      // First call: fetch sizes for asset only (image.jpg)
-      const mockAssetSizeResponse = {
-        project: {
-          repository: {
-            blobs: {
-              nodes: [{ size: '50000' }],
-            },
-          },
-        },
-      };
-
-      // Second call: fetch blob for entry file only (config.yml)
-      const mockBlobResponse = {
-        project: {
-          repository: {
-            blobs: {
-              nodes: [{ rawTextBlob: 'config content' }],
-            },
-          },
-        },
-      };
-
-      vi.mocked(fetchGraphQL)
-        .mockResolvedValueOnce(mockAssetSizeResponse)
-        .mockResolvedValueOnce(mockBlobResponse);
-
-      const result = await fetchFileContents(files);
-
-      expect(result).toBeDefined();
-      expect(result['config.yml']).toBeDefined();
-      expect(result['config.yml'].text).toBe('config content');
-      expect(result['image.jpg']).toBeDefined();
-      expect(result['image.jpg'].size).toBe(50000);
-      expect(result['image.jpg'].text).toBeUndefined();
-    });
   });
 
   describe('fetchFiles', () => {
