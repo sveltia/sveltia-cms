@@ -181,8 +181,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
     - or every single issue that’s relevant, fixable, and worth dealing with 🔥
   - Issues include everything:
     - Outstanding issues from feature requests to bug reports
-    - [Issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22)
-    - Issues closed without an optimal solution
+    - [Issues closed as stale](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+%22Closing+as+stale%22) or without an optimal solution
     - [Discussions](https://github.com/decaporg/decap-cms/discussions)
     - Stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
   - Many of the bugs, including the annoying crashes, have already been solved
@@ -713,10 +712,10 @@ We are working hard to implement several missing features from Netlify/Decap CMS
 
 ### Features not to be implemented
 
-The following Netlify/Decap CMS features will not be added to Sveltia CMS, primarily due to deprecation and performance considerations.
+The following Netlify/Decap CMS features will not be added to Sveltia CMS, primarily due to considerations relating to their deprecation.
 
 - **Azure and Bitbucket backends**: For performance reasons. We’ll support these platforms if their APIs improve to allow the CMS to fetch multiple entries at once.
-- **Git Gateway backend**: Also for performance reasons. [Git Gateway](https://github.com/netlify/git-gateway) has not been actively maintained since Netlify CMS was abandoned, and it’s known to be slow and prone to rate limit violations. It’s now officially [deprecated](https://docs.netlify.com/manage/security/secure-access-to-sites/git-gateway/) according to the Netlify documentation. We plan to develop a GraphQL-based high-performance alternative [in the future](#roadmap) to secure a migration path for existing Git Gateway users.
+- **Git Gateway backend**: Git Gateway is now [deprecated](https://docs.netlify.com/manage/security/secure-access-to-sites/git-gateway/) by Netlify. Like the Azure and Bitbucket backends, it also has performance issues. We plan to develop a GraphQL-based high-performance alternative [in the future](#roadmap) to provide a migration path for existing Git Gateway users.
 - **Netlify Identity Widget**: It’s not useful without Git Gateway, and the Netlify Identity service itself is now [deprecated](https://www.netlify.com/changelog/deprecation-netlify-identity/). We plan to develop an alternative solution with role support [in the future](#roadmap), most likely using [Cloudflare Workers](https://workers.cloudflare.com/) and [Auth.js](https://authjs.dev/).
 - [Gatsby plugin](https://github.com/decaporg/gatsby-plugin-decap-cms): In light of Gatsby’s [uncertainty](https://github.com/gatsbyjs/gatsby/discussions/39062), we won’t be investing time in developing a plugin for it. Gatsby users can still create `index.html` themselves. Note: We don’t support Netlify Identity Widget; the favicon can be specified with the `logo.src` option.
 - The deprecated client-side implicit grant for the GitLab backend: It has already been [removed from GitLab 15.0](https://gitlab.com/gitlab-org/gitlab/-/issues/344609). Use the client-side PKCE authorization instead.
