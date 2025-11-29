@@ -127,13 +127,13 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
 - **Sveltia CMS**: not a fork but a **complete rewrite**
   - Started in November 2022, first appeared on GitHub in March 2023
   - ✅ Actively developed with frequent releases and numerous improvements
-  - ✅ Relevant issues are actively being addressed regardless of their age or status
+  - ✅ Relevant issues are being addressed regardless of their age or status
   - ✅ Most of bug reports are addressed promptly, usually within a day
   - ✅ No known unpatched security vulnerabilities, with dependencies kept up-to-date
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
   - ⚠️ Mostly low activity with only occasional releases and a few minor improvements
-  - ⚠️ Seemingly random issues were closed as stale following the rebranding
+  - ⚠️ Seemingly random issues were closed as stale following the takeover
   - ⚠️ Bug reports continue to pile up, often without any response
   - ❌ A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities and fatal crashes remain unaddressed
 
@@ -333,7 +333,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
   - Comes with background [service status](https://status.gitlab.com/) checking, just like GitHub.
   - Supports Git LFS ([documentation](https://docs.gitlab.com/topics/git/lfs/)).[^231]
   - Users won’t get a 404 Not Found error when you sign in to the GitLab backend.[^115]
-  - We have implemented a workaround for a [GraphQL complexity limit issue](https://github.com/sveltia/sveltia-cms/issues/525) in GitLab 18.4.2, while Netlify/Decap CMS continues to suffer from the same problem.[^301] Our workaround was removed after GitHub 18.4.5 fixed the underlying issue.
+  - We implemented a workaround for a [GraphQL complexity limit issue](https://github.com/sveltia/sveltia-cms/issues/525) in GitLab 18.4.2, while Netlify/Decap CMS continued to suffer from the same problem.[^301] Our workaround was removed after GitHub 18.4.5 solved the underlying issue.
 - Our Gitea/Forgejo backend is high-performing because it retrieves multiple entries at once. It also supports Git LFS ([documentation](https://docs.gitea.com/administration/git-lfs-setup)). Additionally, the backend won’t cause 400 Bad Request errors due to the presence of `DRAFT_MEDIA_FILES` in file paths.[^222]
 - Unlike Netlify/Decap CMS, Sveltia CMS does not have a hardcoded API request timeout of 60 seconds, which can lead to unexpected errors when working with large files or slow networks.[^304] Though users may still experience timeouts due to server-side limitations, at least the client-side won’t impose an arbitrary limit.
 - Features the all-new [local repository workflow](#working-with-a-local-git-repository) for a better DX. See the [productivity section](#better-productivity) above.
@@ -694,14 +694,14 @@ However, 100% feature parity is never planned, and some features are still missi
 
 ### Current limitations
 
-There are still some missing features and limitations in Sveltia CMS compared to Netlify/Decap CMS. We are working hard to implement them. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
+We are working hard to implement several missing features from Netlify/Decap CMS. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
 - The following advanced customization features are not yet implemented and will be added before the 1.0 release:
   - Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent) (`CMS.registerEditorComponent`)
   - [Custom widgets](https://decapcms.org/docs/custom-widgets/) (`CMS.registerWidget`)
   - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) (`CMS.registerPreviewTemplate`) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
   - [Event hooks](https://decapcms.org/docs/registering-events/) (`CMS.registerEventListener`) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
-- [Documentation](https://github.com/sveltia/sveltia-cms/issues/485) and site config validation are also under development.
+- [Documentation](https://github.com/sveltia/sveltia-cms/issues/485) and site config validation are under development.
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will follow soon.
 - Due to the complexity, we have decided to **defer the following features to the 1.x or 2.0 release** due mid-2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
   - [Editorial workflow](https://decapcms.org/docs/editorial-workflows/)
@@ -755,7 +755,7 @@ There may be other minor differences in behaviour that are not listed here.
 
 Sveltia CMS is also adding various config validation checks to help users identify potential issues, so you may see errors that were not present in Netlify/Decap CMS before. For example, Sveltia CMS raises an error if the `slug` collection option contains slashes (`/`), which is supposed to be invalid.
 
-[Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) if you have encounter any compatibility issues not mentioned here. We want to make the migration process as smooth as possible for our users.
+[Let us know](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) if you have encounter any compatibility issues not mentioned above. We want to make the migration process as smooth as possible for our users.
 
 ### Framework support
 
