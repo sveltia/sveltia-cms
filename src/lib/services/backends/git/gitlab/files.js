@@ -169,14 +169,10 @@ export const fetchBlobs = async (allPaths) => {
 
   // Fetch all the text contents with the GraphQL API. Pagination would fail if `paths` becomes too
   // long, so we just use a fixed number of paths to iterate. The complexity score of this query is
-  // 15 + (2 * node size) so 50 paths = 115 complexity, giving the following conditions:
-  // 1. The max number of records is 100
-  // 2. The max query complexity is 250 or 300
-  // 3. The total blob size must be under 20 MB (since GitLab 18.4.5)
-  // @see https://github.com/sveltia/sveltia-cms/issues/525
-  // @see https://gitlab.com/gitlab-org/gitlab/-/issues/576497
+  // 15 + (2 * node size) so 100 paths = 215 complexity, where the max number of records is 100 and
+  // max complexity is 250 or 300
   for (;;) {
-    const currentPaths = paths.splice(0, 50);
+    const currentPaths = paths.splice(0, 100);
 
     const result = /** @type {FetchBlobsResponse} */ (
       await fetchGraphQL(FETCH_BLOBS_QUERY, { paths: currentPaths })
