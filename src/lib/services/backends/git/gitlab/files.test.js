@@ -35,6 +35,12 @@ describe('GitLab files service', () => {
     vi.mocked(repository).repo = 'test-repo';
     vi.mocked(repository).branch = 'main';
     vi.mocked(repository).owner = 'test-owner';
+
+    // Create window object with mocked setInterval and clearInterval
+    vi.stubGlobal('window', {
+      setInterval: vi.fn(() => /** @type {any} */ (1)),
+      clearInterval: vi.fn(),
+    });
   });
 
   describe('fetchFileList', () => {
@@ -136,13 +142,13 @@ describe('GitLab files service', () => {
   });
 
   describe('fetchCommits', () => {
-    test('fetches commits for files in batches', async () => {
+    test('fetches commits for files and returns Record mapping paths to commits', async () => {
       const paths = ['file1.md', 'file2.md'];
 
       const mockResponse = {
         project: {
           repository: {
-            tree1: {
+            tree_0: {
               lastCommit: {
                 author: { id: 'user1', username: 'testuser' },
                 authorName: 'Test User',
@@ -150,7 +156,7 @@ describe('GitLab files service', () => {
                 committedDate: '2023-01-01T00:00:00Z',
               },
             },
-            tree2: {
+            tree_1: {
               lastCommit: {
                 author: null,
                 authorName: 'Anonymous',
@@ -167,20 +173,18 @@ describe('GitLab files service', () => {
       const result = await fetchCommits(paths);
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(1);
-      expect(result).toEqual([
-        {
-          author: { id: 'user1', username: 'testuser' },
-          authorName: 'Test User',
-          authorEmail: 'test@example.com',
-          committedDate: '2023-01-01T00:00:00Z',
-        },
-        {
-          author: null,
-          authorName: 'Anonymous',
-          authorEmail: 'anon@example.com',
-          committedDate: '2023-01-02T00:00:00Z',
-        },
-      ]);
+      expect(result['file1.md']).toEqual({
+        author: { id: 'user1', username: 'testuser' },
+        authorName: 'Test User',
+        authorEmail: 'test@example.com',
+        committedDate: '2023-01-01T00:00:00Z',
+      });
+      expect(result['file2.md']).toEqual({
+        author: null,
+        authorName: 'Anonymous',
+        authorEmail: 'anon@example.com',
+        committedDate: '2023-01-02T00:00:00Z',
+      });
     });
 
     test('handles large number of paths with multiple batches', async () => {
@@ -189,7 +193,7 @@ describe('GitLab files service', () => {
       const mockResponse1 = {
         project: {
           repository: Array.from({ length: 13 }, (_, i) => ({
-            [`tree${i + 1}`]: {
+            [`tree_${i}`]: {
               lastCommit: {
                 author: null,
                 authorName: `Author ${i + 1}`,
@@ -204,7 +208,7 @@ describe('GitLab files service', () => {
       const mockResponse2 = {
         project: {
           repository: Array.from({ length: 7 }, (_, i) => ({
-            [`tree${i + 1}`]: {
+            [`tree_${i}`]: {
               lastCommit: {
                 author: null,
                 authorName: `Author ${i + 14}`,
@@ -223,7 +227,9 @@ describe('GitLab files service', () => {
       const result = await fetchCommits(paths);
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(2);
-      expect(result).toHaveLength(20);
+      expect(Object.keys(result)).toHaveLength(20);
+      expect(result['file0.md']).toBeDefined();
+      expect(result['file19.md']).toBeDefined();
     });
   });
 
@@ -233,18 +239,19 @@ describe('GitLab files service', () => {
         { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
       ]);
 
-      const blobs = [{ size: '100', rawTextBlob: 'file content' }];
+      const sizes = { 'file1.md': { size: '100' } };
+      const blobs = { 'file1.md': { rawTextBlob: 'file content' } };
 
-      const commits = [
-        {
+      const commits = {
+        'file1.md': {
           author: { id: 'gid://gitlab/User/123', username: 'testuser' },
           authorName: 'Test User',
           authorEmail: 'test@example.com',
           committedDate: '2023-01-01T00:00:00Z',
         },
-      ];
+      };
 
-      const result = await parseFileContents(fetchingFiles, blobs, commits);
+      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
 
       expect(result['file1.md']).toEqual({
         sha: 'sha1',
@@ -267,18 +274,19 @@ describe('GitLab files service', () => {
         { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
       ]);
 
-      const blobs = [{ size: '200', rawTextBlob: 'content' }];
+      const sizes = { 'file1.md': { size: '200' } };
+      const blobs = { 'file1.md': { rawTextBlob: 'content' } };
 
-      const commits = [
-        {
+      const commits = {
+        'file1.md': {
           author: null,
           authorName: 'Anonymous',
           authorEmail: 'anon@example.com',
           committedDate: '2023-01-02T00:00:00Z',
         },
-      ];
+      };
 
-      const result = await parseFileContents(fetchingFiles, blobs, commits);
+      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
 
       expect(result['file1.md']).toEqual({
         sha: 'sha1',
@@ -300,64 +308,39 @@ describe('GitLab files service', () => {
       const fetchingFiles = /** @type {any[]} */ ([
         { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
         { path: 'file2.md', sha: 'sha2', size: 0, name: 'file2.md' },
-        { path: 'file3.md', sha: 'sha3', size: 0, name: 'file3.md' },
       ]);
 
-      const blobs = [
-        { size: '100', rawTextBlob: 'content1' },
-        { size: '200', rawTextBlob: 'content2' },
-        { size: '300', rawTextBlob: 'content3' },
-      ];
+      const sizes = {
+        'file1.md': { size: '100' },
+        'file2.md': { size: '200' },
+      };
 
-      const commits = [
-        {
-          author: { id: 'gid://gitlab/User/1', username: 'user1' },
+      const blobs = {
+        'file1.md': { rawTextBlob: 'content1' },
+        'file2.md': { rawTextBlob: 'content2' },
+      };
+
+      const commits = {
+        'file1.md': {
+          author: { id: 'user1', username: 'user1name' },
           authorName: 'User 1',
           authorEmail: 'user1@example.com',
           committedDate: '2023-01-01T00:00:00Z',
         },
-        {
+        'file2.md': {
           author: null,
-          authorName: 'User 2',
-          authorEmail: 'user2@example.com',
+          authorName: 'Unknown',
+          authorEmail: 'unknown@example.com',
           committedDate: '2023-01-02T00:00:00Z',
         },
-        {
-          author: { id: 'gid://gitlab/User/999', username: 'user3' },
-          authorName: 'User 3',
-          authorEmail: 'user3@example.com',
-          committedDate: '2023-01-03T00:00:00Z',
-        },
-      ];
+      };
 
-      const result = await parseFileContents(fetchingFiles, blobs, commits);
+      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
 
-      expect(Object.keys(result)).toHaveLength(3);
-      expect(result['file1.md']?.meta?.commitAuthor?.id).toBe(1);
-      expect(result['file2.md']?.meta?.commitAuthor?.id).toBeUndefined();
-      expect(result['file3.md']?.meta?.commitAuthor?.id).toBe(999);
-    });
-
-    test('handles non-numeric author ID extraction', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
-      ]);
-
-      const blobs = [{ size: '100', rawTextBlob: 'content' }];
-
-      const commits = [
-        {
-          author: { id: 'invalid-non-numeric-id', username: 'testuser' },
-          authorName: 'Test User',
-          authorEmail: 'test@example.com',
-          committedDate: '2023-01-01T00:00:00Z',
-        },
-      ];
-
-      const result = await parseFileContents(fetchingFiles, blobs, commits);
-
-      expect(result['file1.md']?.meta?.commitAuthor?.id).toBeUndefined();
-      expect(result['file1.md']?.meta?.commitAuthor?.login).toBe('testuser');
+      expect(result['file1.md']).toBeDefined();
+      expect(result['file2.md']).toBeDefined();
+      expect(result['file1.md'].size).toBe(100);
+      expect(result['file2.md'].size).toBe(200);
     });
 
     test('parses file contents without commits', async () => {
@@ -365,9 +348,10 @@ describe('GitLab files service', () => {
         { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
       ]);
 
-      const blobs = [{ size: '50', rawTextBlob: 'minimal' }];
-      const commits = /** @type {any[]} */ ([]);
-      const result = await parseFileContents(fetchingFiles, blobs, commits);
+      const sizes = { 'file1.md': { size: '50' } };
+      const blobs = { 'file1.md': { rawTextBlob: 'minimal' } };
+      const commits = /** @type {Record<string, any>} */ ({});
+      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
 
       expect(result['file1.md']).toEqual({
         sha: 'sha1',
@@ -382,33 +366,99 @@ describe('GitLab files service', () => {
         { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
       ]);
 
-      const blobs = [{ size: '12345', rawTextBlob: 'content' }];
-      const commits = /** @type {any[]} */ ([]);
-      const result = await parseFileContents(fetchingFiles, blobs, commits);
+      const sizes = { 'file1.md': { size: '12345' } };
+      const blobs = { 'file1.md': { rawTextBlob: 'content' } };
+      const commits = /** @type {Record<string, any>} */ ({});
+      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
 
       expect(result['file1.md'].size).toBe(12345);
       expect(typeof result['file1.md'].size).toBe('number');
     });
+
+    test('handles invalid author id with non-numeric characters', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+      ]);
+
+      const sizes = { 'file1.md': { size: '100' } };
+      const blobs = { 'file1.md': { rawTextBlob: 'content' } };
+
+      const commits = {
+        'file1.md': {
+          author: { id: 'invalid-non-numeric-id', username: 'testuser' },
+          authorName: 'Test User',
+          authorEmail: 'test@example.com',
+          committedDate: '2023-01-01T00:00:00Z',
+        },
+      };
+
+      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
+
+      expect(result['file1.md']?.meta?.commitAuthor?.id).toBeUndefined();
+      expect(result['file1.md']?.meta?.commitAuthor?.login).toBe('testuser');
+    });
+
+    test('handles non-numeric author ID extraction', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+      ]);
+
+      const sizes = { 'file1.md': { size: '100' } };
+      const blobs = { 'file1.md': { rawTextBlob: 'content' } };
+
+      const commits = {
+        'file1.md': {
+          author: { id: 'invalid-non-numeric-id', username: 'testuser' },
+          authorName: 'Test User',
+          authorEmail: 'test@example.com',
+          committedDate: '2023-01-01T00:00:00Z',
+        },
+      };
+
+      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
+
+      expect(result['file1.md']?.meta?.commitAuthor?.id).toBeUndefined();
+      expect(result['file1.md']?.meta?.commitAuthor?.login).toBe('testuser');
+    });
+
+    test('parses file contents without commits', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+      ]);
+
+      const sizes = { 'file1.md': { size: '50' } };
+      const blobs = { 'file1.md': { rawTextBlob: 'minimal' } };
+      const commits = /** @type {Record<string, any>} */ ({});
+      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
+
+      expect(result['file1.md']).toEqual({
+        sha: 'sha1',
+        size: 50,
+        text: 'minimal',
+        meta: {},
+      });
+    });
   });
 
   describe('fetchBlobs', () => {
-    test('returns empty array without API call when paths are empty', async () => {
+    test('returns empty object without API call when paths are empty', async () => {
       const paths = /** @type {any[]} */ ([]);
-      const result = await fetchBlobs(paths);
+      const query = 'query { test }';
+      const result = await fetchBlobs(paths, query);
 
       expect(fetchGraphQL).not.toHaveBeenCalled();
-      expect(result).toEqual([]);
+      expect(result).toEqual({});
     });
 
-    test('fetches blobs in batches of up to 100 paths', async () => {
+    test('fetches blobs in batches and returns Record mapping paths to blobs', async () => {
       const paths = Array.from({ length: 150 }, (_, i) => `file${i}.md`);
+      const query = 'query { blobs { nodes { rawTextBlob } } }';
 
       const mockResponse1 = {
         project: {
           repository: {
             blobs: {
               nodes: Array.from({ length: 100 }, (_, i) => ({
-                size: '100',
                 rawTextBlob: `content${i}`,
               })),
             },
@@ -421,7 +471,6 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 50 }, (_, i) => ({
-                size: '100',
                 rawTextBlob: `content${i + 100}`,
               })),
             },
@@ -433,27 +482,27 @@ describe('GitLab files service', () => {
         .mockResolvedValueOnce(mockResponse1)
         .mockResolvedValueOnce(mockResponse2);
 
-      const result = await fetchBlobs(paths);
+      const result = await fetchBlobs(paths, query);
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(2);
-      expect(result).toHaveLength(150);
-      // Verify first batch has 100 paths
+      expect(Object.keys(result)).toHaveLength(150);
       expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toBeDefined();
       expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(100);
-      // Verify second batch has 50 paths
       expect(vi.mocked(fetchGraphQL).mock.calls[1][1]).toBeDefined();
       expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toHaveLength(50);
+      expect(result['file0.md']).toBeDefined();
+      expect(result['file149.md']).toBeDefined();
     });
 
-    test('fetches all paths in single batch when under 100', async () => {
-      const paths = Array.from({ length: 50 }, (_, i) => `file${i}.md`);
+    test('fetches all paths in single batch when under 100 and returns Record', async () => {
+      const paths = Array.from({ length: 30 }, (_, i) => `file${i}.md`);
+      const query = 'query { blobs { nodes { rawTextBlob } } }';
 
       const mockResponse = {
         project: {
           repository: {
             blobs: {
-              nodes: Array.from({ length: 50 }, (_, i) => ({
-                size: '100',
+              nodes: Array.from({ length: 30 }, (_, i) => ({
                 rawTextBlob: `content${i}`,
               })),
             },
@@ -463,65 +512,57 @@ describe('GitLab files service', () => {
 
       vi.mocked(fetchGraphQL).mockResolvedValue(mockResponse);
 
-      const result = await fetchBlobs(paths);
+      const result = await fetchBlobs(paths, query);
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(1);
-      expect(result).toHaveLength(50);
+      expect(Object.keys(result)).toHaveLength(30);
       expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toBeDefined();
-      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(50);
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(30);
     });
   });
 
   describe('fetchFileContents', () => {
-    test('fetches file contents with small file count including commits', async () => {
+    test('fetches file contents with commit data for small file count', async () => {
       const files = /** @type {any} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+        { path: 'file1.md', sha: 'sha1', type: 'entry', size: 0, name: 'file1.md' },
       ]);
 
-      const mockBlobResponse = {
+      const mockSizeResponse = {
         project: {
           repository: {
             blobs: {
-              nodes: [{ size: 100, rawTextBlob: 'file content' }],
+              nodes: [{ size: '100' }],
             },
           },
         },
       };
 
-      const mockCommit = {
-        author: { id: 'user1', username: 'testuser' },
-        authorName: 'Test User',
-        authorEmail: 'test@example.com',
-        committedDate: '2023-01-01T00:00:00Z',
+      const mockBlobResponse = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: [{ rawTextBlob: 'file content' }],
+            },
+          },
+        },
       };
 
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockBlobResponse);
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce(mockSizeResponse)
+        .mockResolvedValueOnce(mockBlobResponse);
 
-      // Mock fetchCommits by creating a spy on the module
-      const fetchCommitsSpy = vi.fn().mockResolvedValue([mockCommit]);
-
-      vi.doMock(
-        '$lib/services/backends/git/gitlab/files',
-        async (/** @type {any} */ importOriginal) => {
-          const mod = /** @type {any} */ (await importOriginal());
-
-          return {
-            ...mod,
-            fetchCommits: fetchCommitsSpy,
-          };
-        },
+      // Mock window.setInterval and window.clearInterval
+      vi.stubGlobal(
+        'setInterval',
+        vi.fn(() => 1),
       );
+      vi.stubGlobal('clearInterval', vi.fn());
 
       const result = await fetchFileContents(files);
 
-      expect(fetchGraphQL).toHaveBeenCalledWith(
-        expect.stringContaining('query($fullPath: ID!, $branch: String!, $paths: [String!]!)'),
-        { paths: ['file1.md'] },
-      );
-
-      // Since this is a complex function that calls other internal functions,
-      // we mainly test that the GraphQL call is made with correct parameters
+      expect(fetchGraphQL).toHaveBeenCalled();
       expect(result).toBeDefined();
+      expect(result['file1.md']).toBeDefined();
     });
 
     test('fetches file contents with large file count without commits', async () => {
@@ -529,116 +570,102 @@ describe('GitLab files service', () => {
         Array.from({ length: 150 }, (_, i) => ({
           path: `file${i}.md`,
           sha: `sha${i}`,
+          type: 'entry',
           size: 0,
           name: `file${i}.md`,
         }))
       );
 
-      const mockBlobResponse = {
+      const mockSizeResponse = {
         project: {
           repository: {
             blobs: {
-              nodes: files.map(() => ({ size: 100, rawTextBlob: 'content' })),
+              nodes: files.map(() => ({ size: '100' })),
             },
           },
         },
       };
 
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockBlobResponse);
+      const mockBlobResponse = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: files.map(() => ({ rawTextBlob: 'content' })),
+            },
+          },
+        },
+      };
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce(mockSizeResponse)
+        .mockResolvedValueOnce(mockBlobResponse);
 
       const result = await fetchFileContents(files);
 
-      // Should make multiple GraphQL calls for batches
       expect(fetchGraphQL).toHaveBeenCalled();
       expect(result).toBeDefined();
+      expect(Object.keys(result).length).toBeGreaterThan(0);
     });
 
-    test('handles commit with null author in file contents', async () => {
+    test('handles assets without fetching text blobs', async () => {
       const files = /** @type {any} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+        { path: 'image.png', sha: 'sha1', type: 'asset', size: 0, name: 'image.png' },
       ]);
 
-      const mockBlobResponse = {
+      const mockSizeResponse = {
         project: {
           repository: {
             blobs: {
-              nodes: [{ size: 100, rawTextBlob: 'file content' }],
+              nodes: [{ size: '5000' }],
             },
           },
         },
       };
 
-      const mockCommit = {
-        author: null, // No author object
-        authorName: 'Test User',
-        authorEmail: 'test@example.com',
-        committedDate: '2023-01-01T00:00:00Z',
-      };
-
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockBlobResponse);
-
-      // Mock fetchCommits by creating a spy on the module
-      const fetchCommitsSpy = vi.fn().mockResolvedValue([mockCommit]);
-
-      vi.doMock(
-        '$lib/services/backends/git/gitlab/files',
-        async (/** @type {any} */ importOriginal) => {
-          const mod = /** @type {any} */ (await importOriginal());
-
-          return {
-            ...mod,
-            fetchCommits: fetchCommitsSpy,
-          };
-        },
-      );
+      vi.mocked(fetchGraphQL).mockResolvedValue(mockSizeResponse);
 
       const result = await fetchFileContents(files);
 
       expect(result).toBeDefined();
+      expect(result['image.png']).toBeDefined();
+      expect(result['image.png'].text).toBeUndefined();
     });
 
-    test('handles commit with non-numeric author id in file contents', async () => {
+    test('fetches mixed entry and asset files', async () => {
       const files = /** @type {any} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+        { path: 'config.yml', sha: 'sha1', type: 'entry', size: 0, name: 'config.yml' },
+        { path: 'image.jpg', sha: 'sha2', type: 'asset', size: 0, name: 'image.jpg' },
       ]);
 
-      const mockBlobResponse = {
+      const mockSizeResponse = {
         project: {
           repository: {
             blobs: {
-              nodes: [{ size: 100, rawTextBlob: 'file content' }],
+              nodes: [{ size: '200' }, { size: '50000' }],
             },
           },
         },
       };
 
-      const mockCommit = {
-        author: { id: 'non-numeric-id', username: 'testuser' }, // Non-numeric ID
-        authorName: 'Test User',
-        authorEmail: 'test@example.com',
-        committedDate: '2023-01-01T00:00:00Z',
+      const mockBlobResponse = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: [{ rawTextBlob: 'config content' }],
+            },
+          },
+        },
       };
 
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockBlobResponse);
-
-      // Mock fetchCommits by creating a spy on the module
-      const fetchCommitsSpy = vi.fn().mockResolvedValue([mockCommit]);
-
-      vi.doMock(
-        '$lib/services/backends/git/gitlab/files',
-        async (/** @type {any} */ importOriginal) => {
-          const mod = /** @type {any} */ (await importOriginal());
-
-          return {
-            ...mod,
-            fetchCommits: fetchCommitsSpy,
-          };
-        },
-      );
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce(mockSizeResponse)
+        .mockResolvedValueOnce(mockBlobResponse);
 
       const result = await fetchFileContents(files);
 
       expect(result).toBeDefined();
+      expect(result['config.yml']).toBeDefined();
+      expect(result['image.jpg']).toBeDefined();
     });
   });
 
