@@ -458,7 +458,7 @@ describe('GitLab files service', () => {
         project: {
           repository: {
             blobs: {
-              nodes: Array.from({ length: 100 }, (_, i) => ({
+              nodes: Array.from({ length: 50 }, (_, i) => ({
                 rawTextBlob: `content${i}`,
               })),
             },
@@ -467,6 +467,18 @@ describe('GitLab files service', () => {
       };
 
       const mockResponse2 = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: Array.from({ length: 50 }, (_, i) => ({
+                rawTextBlob: `content${i + 50}`,
+              })),
+            },
+          },
+        },
+      };
+
+      const mockResponse3 = {
         project: {
           repository: {
             blobs: {
@@ -480,21 +492,26 @@ describe('GitLab files service', () => {
 
       vi.mocked(fetchGraphQL)
         .mockResolvedValueOnce(mockResponse1)
-        .mockResolvedValueOnce(mockResponse2);
+        .mockResolvedValueOnce(mockResponse2)
+        .mockResolvedValueOnce(mockResponse3);
 
       const result = await fetchBlobs(paths, query);
 
-      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+      expect(fetchGraphQL).toHaveBeenCalledTimes(3);
       expect(Object.keys(result)).toHaveLength(150);
       expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toBeDefined();
-      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(100);
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(50);
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]).toBeDefined();
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toHaveLength(50);
+      expect(vi.mocked(fetchGraphQL).mock.calls[2][1]).toBeDefined();
+      expect(vi.mocked(fetchGraphQL).mock.calls[2][1]?.paths).toHaveLength(50);
       expect(vi.mocked(fetchGraphQL).mock.calls[1][1]).toBeDefined();
       expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toHaveLength(50);
       expect(result['file0.md']).toBeDefined();
       expect(result['file149.md']).toBeDefined();
     });
 
-    test('fetches all paths in single batch when under 100 and returns Record', async () => {
+    test('fetches all paths in single batch when under 50 and returns Record', async () => {
       const paths = Array.from({ length: 30 }, (_, i) => `file${i}.md`);
       const query = 'query { blobs { nodes { rawTextBlob } } }';
 
@@ -547,22 +564,32 @@ describe('GitLab files service', () => {
         },
       };
 
+      const mockCommitResponse = {
+        project: {
+          repository: {
+            tree_0: {
+              lastCommit: {
+                author: { id: '123', username: 'testuser' },
+                authorName: 'Test User',
+                authorEmail: 'test@example.com',
+                committedDate: '2024-01-01T00:00:00Z',
+              },
+            },
+          },
+        },
+      };
+
       vi.mocked(fetchGraphQL)
         .mockResolvedValueOnce(mockSizeResponse)
-        .mockResolvedValueOnce(mockBlobResponse);
-
-      // Mock window.setInterval and window.clearInterval
-      vi.stubGlobal(
-        'setInterval',
-        vi.fn(() => 1),
-      );
-      vi.stubGlobal('clearInterval', vi.fn());
+        .mockResolvedValueOnce(mockBlobResponse)
+        .mockResolvedValueOnce(mockCommitResponse);
 
       const result = await fetchFileContents(files);
 
       expect(fetchGraphQL).toHaveBeenCalled();
       expect(result).toBeDefined();
       expect(result['file1.md']).toBeDefined();
+      expect(result['file1.md'].meta?.commitAuthor?.login).toBe('testuser');
     });
 
     test('fetches file contents with large file count without commits', async () => {

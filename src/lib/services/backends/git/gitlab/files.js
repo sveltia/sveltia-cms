@@ -166,10 +166,14 @@ export const fetchBlobs = async (paths, query) => {
 
   // Fetch all the text contents with the GraphQL API. Pagination would fail if `paths` becomes too
   // long, so we just use a fixed number of paths to iterate. The complexity score of this query is
-  // 15 + (2 * node size) so 100 paths = 215 complexity, where the max number of records is 100 and
-  // max complexity is 250 or 300
+  // 15 + (2 * node size) so 50 paths = 115 complexity, giving the following conditions:
+  // 1. The max number of records is 100
+  // 2. The max query complexity is 250 or 300
+  // 3. The total blob size must be under 20 MB (since GitLab 18.4.5)
+  // @see https://github.com/sveltia/sveltia-cms/issues/525
+  // @see https://gitlab.com/gitlab-org/gitlab/-/issues/576497
   for (;;) {
-    const currentPaths = fetchingPaths.splice(0, 100);
+    const currentPaths = fetchingPaths.splice(0, 50);
 
     const result = /** @type {FetchBlobsResponse} */ (
       await fetchGraphQL(query, { paths: currentPaths })
@@ -307,14 +311,12 @@ export const fetchFileContents = async (fetchingFiles) => {
     dataLoadedProgress.update((progress = 0) => progress + 1);
   }, fetchingFiles.length);
 
-  const [sizes, blobs, commits] = await Promise.all([
-    // Fetch sizes for all files
-    fetchBlobs(allPaths, FETCH_BLOBS_QUERY.replace('rawTextBlob', 'size')),
-    // Fetch blobs for entry/config files only
-    fetchBlobs(textPaths, FETCH_BLOBS_QUERY),
-    // Fetch commit info only when there aren’t many files, because it’s costly
-    allPaths.length < 100 ? fetchCommits(allPaths) : Promise.resolve({}),
-  ]);
+  // Fetch sizes for all files
+  const sizes = await fetchBlobs(allPaths, FETCH_BLOBS_QUERY.replace('rawTextBlob', 'size'));
+  // Fetch blobs for entry/config files only
+  const blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY);
+  // Fetch commit info only when there aren’t many files, because it’s costly
+  const commits = allPaths.length < 100 ? await fetchCommits(allPaths) : {};
 
   window.clearInterval(dataLoadedProgressInterval);
   dataLoadedProgress.set(undefined);
