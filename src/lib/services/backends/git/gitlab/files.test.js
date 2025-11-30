@@ -364,45 +364,30 @@ describe('GitLab files service', () => {
       expect(result['file1.md']?.meta?.commitAuthor?.login).toBe('testuser');
     });
 
-    test('handles non-numeric author ID extraction', async () => {
+    test('handles missing blob text for file', async () => {
       const fetchingFiles = /** @type {any[]} */ ([
         { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
       ]);
 
       const sizes = { 'file1.md': { size: '100' } };
-      const blobs = { 'file1.md': { rawTextBlob: 'content' } };
+      const blobs = /** @type {Record<string, any>} */ ({});
+      const result = await parseFileContents({ fetchingFiles, sizes, blobs });
 
-      const commits = {
-        'file1.md': {
-          author: { id: 'invalid-non-numeric-id', username: 'testuser' },
-          authorName: 'Test User',
-          authorEmail: 'test@example.com',
-          committedDate: '2023-01-01T00:00:00Z',
-        },
-      };
-
-      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
-
-      expect(result['file1.md']?.meta?.commitAuthor?.id).toBeUndefined();
-      expect(result['file1.md']?.meta?.commitAuthor?.login).toBe('testuser');
+      expect(result['file1.md'].text).toBeUndefined();
+      expect(result['file1.md'].size).toBe(100);
     });
 
-    test('parses file contents without commits', async () => {
+    test('handles missing size for file and defaults to 0', async () => {
       const fetchingFiles = /** @type {any[]} */ ([
         { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
       ]);
 
-      const sizes = { 'file1.md': { size: '50' } };
-      const blobs = { 'file1.md': { rawTextBlob: 'minimal' } };
-      const commits = /** @type {Record<string, any>} */ ({});
-      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
+      const sizes = /** @type {Record<string, any>} */ ({});
+      const blobs = { 'file1.md': { rawTextBlob: 'content' } };
+      const result = await parseFileContents({ fetchingFiles, sizes, blobs });
 
-      expect(result['file1.md']).toEqual({
-        sha: 'sha1',
-        size: 50,
-        text: 'minimal',
-        meta: {},
-      });
+      expect(result['file1.md'].size).toBe(0);
+      expect(result['file1.md'].text).toBe('content');
     });
   });
 
@@ -416,15 +401,17 @@ describe('GitLab files service', () => {
       expect(result).toEqual({});
     });
 
-    test('fetches blobs in batches and returns Record mapping paths to blobs', async () => {
-      const paths = Array.from({ length: 150 }, (_, i) => `file${i}.md`);
+    test('fetches blobs in batches of 100 for non-self-hosted and returns Record mapping paths to blobs', async () => {
+      vi.mocked(repository).isSelfHosted = false;
+
+      const paths = Array.from({ length: 250 }, (_, i) => `file${i}.md`);
       const query = 'query { blobs { nodes { rawTextBlob } } }';
 
       const mockResponse1 = {
         project: {
           repository: {
             blobs: {
-              nodes: Array.from({ length: 50 }, (_, i) => ({
+              nodes: Array.from({ length: 100 }, (_, i) => ({
                 rawTextBlob: `content${i}`,
               })),
             },
@@ -436,8 +423,8 @@ describe('GitLab files service', () => {
         project: {
           repository: {
             blobs: {
-              nodes: Array.from({ length: 50 }, (_, i) => ({
-                rawTextBlob: `content${i + 50}`,
+              nodes: Array.from({ length: 100 }, (_, i) => ({
+                rawTextBlob: `content${i + 100}`,
               })),
             },
           },
@@ -449,7 +436,7 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 50 }, (_, i) => ({
-                rawTextBlob: `content${i + 100}`,
+                rawTextBlob: `content${i + 200}`,
               })),
             },
           },
@@ -464,20 +451,81 @@ describe('GitLab files service', () => {
       const result = await fetchBlobs(paths, query);
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(3);
-      expect(Object.keys(result)).toHaveLength(150);
+      expect(Object.keys(result)).toHaveLength(250);
       expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toBeDefined();
-      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(50);
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(100);
       expect(vi.mocked(fetchGraphQL).mock.calls[1][1]).toBeDefined();
-      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toHaveLength(50);
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toHaveLength(100);
       expect(vi.mocked(fetchGraphQL).mock.calls[2][1]).toBeDefined();
       expect(vi.mocked(fetchGraphQL).mock.calls[2][1]?.paths).toHaveLength(50);
-      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]).toBeDefined();
-      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toHaveLength(50);
-      expect(result['file0.md']).toBeDefined();
-      expect(result['file149.md']).toBeDefined();
+      expect(result['file0.md']).toEqual({ rawTextBlob: 'content0' });
+      expect(result['file249.md']).toEqual({ rawTextBlob: 'content249' });
     });
 
-    test('fetches all paths in single batch when under 50 and returns Record', async () => {
+    test('fetches blobs in batches of 20 for self-hosted instances', async () => {
+      vi.mocked(repository).isSelfHosted = true;
+
+      const paths = Array.from({ length: 50 }, (_, i) => `file${i}.md`);
+      const query = 'query { blobs { nodes { rawTextBlob } } }';
+
+      const mockResponse1 = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: Array.from({ length: 20 }, (_, i) => ({
+                rawTextBlob: `content${i}`,
+              })),
+            },
+          },
+        },
+      };
+
+      const mockResponse2 = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: Array.from({ length: 20 }, (_, i) => ({
+                rawTextBlob: `content${i + 20}`,
+              })),
+            },
+          },
+        },
+      };
+
+      const mockResponse3 = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: Array.from({ length: 10 }, (_, i) => ({
+                rawTextBlob: `content${i + 40}`,
+              })),
+            },
+          },
+        },
+      };
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce(mockResponse1)
+        .mockResolvedValueOnce(mockResponse2)
+        .mockResolvedValueOnce(mockResponse3);
+
+      const result = await fetchBlobs(paths, query);
+
+      expect(fetchGraphQL).toHaveBeenCalledTimes(3);
+      expect(Object.keys(result)).toHaveLength(50);
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toBeDefined();
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(20);
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]).toBeDefined();
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toHaveLength(20);
+      expect(vi.mocked(fetchGraphQL).mock.calls[2][1]).toBeDefined();
+      expect(vi.mocked(fetchGraphQL).mock.calls[2][1]?.paths).toHaveLength(10);
+      expect(result['file0.md']).toEqual({ rawTextBlob: 'content0' });
+      expect(result['file49.md']).toEqual({ rawTextBlob: 'content49' });
+    });
+
+    test('fetches all paths in single batch when under 100 and returns Record', async () => {
+      vi.mocked(repository).isSelfHosted = false;
+
       const paths = Array.from({ length: 30 }, (_, i) => `file${i}.md`);
       const query = 'query { blobs { nodes { rawTextBlob } } }';
 
@@ -501,6 +549,8 @@ describe('GitLab files service', () => {
       expect(Object.keys(result)).toHaveLength(30);
       expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toBeDefined();
       expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(30);
+      expect(result['file0.md']).toEqual({ rawTextBlob: 'content0' });
+      expect(result['file29.md']).toEqual({ rawTextBlob: 'content29' });
     });
   });
 
@@ -524,13 +574,20 @@ describe('GitLab files service', () => {
 
       const result = await fetchFileContents(files);
 
-      expect(fetchGraphQL).toHaveBeenCalled();
+      expect(fetchGraphQL).toHaveBeenCalledWith(
+        expect.stringContaining('query($fullPath: ID!, $branch: String!, $paths: [String!]!)'),
+        { paths: ['file1.md'] },
+      );
       expect(result).toBeDefined();
       expect(result['file1.md']).toBeDefined();
       expect(result['file1.md'].text).toBe('file content');
+      expect(result['file1.md'].sha).toBe('sha1');
+      expect(result['file1.md'].size).toBe(0);
     });
 
-    test('fetches file contents with large file count', async () => {
+    test('fetches file contents with large file count in multiple batches', async () => {
+      vi.mocked(repository).isSelfHosted = false;
+
       const files = /** @type {any} */ (
         Array.from({ length: 150 }, (_, i) => ({
           path: `file${i}.md`,
@@ -541,13 +598,70 @@ describe('GitLab files service', () => {
         }))
       );
 
+      const mockBlobResponse1 = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: Array.from({ length: 100 }, (_, i) => ({
+                rawTextBlob: `content${i}`,
+              })),
+            },
+          },
+        },
+      };
+
+      const mockBlobResponse2 = {
+        project: {
+          repository: {
+            blobs: {
+              nodes: Array.from({ length: 50 }, (_, i) => ({
+                rawTextBlob: `content${i + 100}`,
+              })),
+            },
+          },
+        },
+      };
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce(mockBlobResponse1)
+        .mockResolvedValueOnce(mockBlobResponse2);
+
+      const result = await fetchFileContents(files);
+
+      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+      expect(result).toBeDefined();
+      expect(Object.keys(result).length).toBe(150);
+      expect(result['file0.md'].text).toBe('content0');
+      expect(result['file149.md'].text).toBe('content149');
+    });
+
+    test('handles assets without fetching text blobs', async () => {
+      const files = /** @type {any} */ ([
+        { path: 'image.png', sha: 'sha1', type: 'asset', size: 0, name: 'image.png' },
+      ]);
+
+      const result = await fetchFileContents(files);
+
+      // fetchGraphQL should not be called for assets only
+      expect(fetchGraphQL).not.toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result['image.png']).toBeDefined();
+      expect(result['image.png'].size).toBe(0);
+      expect(result['image.png'].text).toBeUndefined();
+    });
+
+    test('handles mixed entry and asset files', async () => {
+      const files = /** @type {any} */ ([
+        { path: 'file1.md', sha: 'sha1', type: 'entry', size: 0, name: 'file1.md' },
+        { path: 'image.png', sha: 'sha2', type: 'asset', size: 0, name: 'image.png' },
+        { path: 'file2.md', sha: 'sha3', type: 'entry', size: 0, name: 'file2.md' },
+      ]);
+
       const mockBlobResponse = {
         project: {
           repository: {
             blobs: {
-              nodes: Array.from({ length: 150 }, (_, i) => ({
-                rawTextBlob: `content${i}`,
-              })),
+              nodes: [{ rawTextBlob: 'content1' }, { rawTextBlob: 'content2' }],
             },
           },
         },
@@ -557,33 +671,13 @@ describe('GitLab files service', () => {
 
       const result = await fetchFileContents(files);
 
-      expect(fetchGraphQL).toHaveBeenCalled();
-      expect(result).toBeDefined();
-      expect(Object.keys(result).length).toBeGreaterThan(0);
-    });
-
-    test('handles assets without fetching text blobs', async () => {
-      const files = /** @type {any} */ ([
-        { path: 'image.png', sha: 'sha1', type: 'asset', size: 0, name: 'image.png' },
-      ]);
-
-      const mockSizeResponse = {
-        project: {
-          repository: {
-            blobs: {
-              nodes: [{ size: '5000' }],
-            },
-          },
-        },
-      };
-
-      vi.mocked(fetchGraphQL).mockResolvedValueOnce(mockSizeResponse);
-
-      const result = await fetchFileContents(files);
-
-      expect(result).toBeDefined();
-      expect(result['image.png']).toBeDefined();
-      expect(result['image.png'].size).toBe(5000);
+      // Only entry files should be fetched
+      expect(fetchGraphQL).toHaveBeenCalledWith(
+        expect.stringContaining('query($fullPath: ID!, $branch: String!, $paths: [String!]!)'),
+        { paths: ['file1.md', 'file2.md'] },
+      );
+      expect(result['file1.md'].text).toBe('content1');
+      expect(result['file2.md'].text).toBe('content2');
       expect(result['image.png'].text).toBeUndefined();
     });
   });

@@ -160,20 +160,24 @@ export const fetchBlobs = async (paths, query) => {
     return {};
   }
 
+  const { isSelfHosted = false } = repository;
+  const batchSize = isSelfHosted ? 20 : 100;
   const fetchingPaths = [...paths];
   /** @type {BlobItem[]} */
   const blobs = [];
 
   // Fetch all the text contents with the GraphQL API. Pagination would fail if `paths` becomes too
   // long, so we just use a fixed number of paths to iterate. The complexity score of this query is
-  // 15 + (2 * node size) so 50 paths = 115 complexity, giving the following conditions:
+  // 15 + (2 * node size) so 100 paths = 215 complexity, giving the following conditions:
   // 1. The max number of records is 100
   // 2. The max query complexity is 250 or 300
   // 3. The total blob size must be under 20 MB (since GitLab 18.4.5)
   // @see https://github.com/sveltia/sveltia-cms/issues/525
   // @see https://gitlab.com/gitlab-org/gitlab/-/issues/576497
+  // The batch size is reduced to 20 for self-hosted instances because they typically run on less
+  // powerful hardware, which may lead to timeout issues.
   for (;;) {
-    const currentPaths = fetchingPaths.splice(0, 50);
+    const currentPaths = fetchingPaths.splice(0, batchSize);
 
     const result = /** @type {FetchBlobsResponse} */ (
       await fetchGraphQL(query, { paths: currentPaths })
@@ -258,12 +262,12 @@ export const fetchCommits = async (paths) => {
  * Parse the file contents from the API response.
  * @param {object} args Arguments.
  * @param {BaseFileListItem[]} args.fetchingFiles Base file list.
- * @param {Record<string, BlobItem>} args.sizes File sizes.
  * @param {Record<string, BlobItem>} args.blobs Raw text blobs.
+ * @param {Record<string, BlobItem>} [args.sizes] File sizes.
  * @param {Record<string, GitLabCommit>} [args.commits] Commit information for each file.
  * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
  */
-export const parseFileContents = async ({ fetchingFiles, sizes, blobs, commits = {} }) => {
+export const parseFileContents = async ({ fetchingFiles, blobs, sizes = {}, commits = {} }) => {
   const entries = fetchingFiles.map(({ path, sha }) => {
     const commit = commits[path];
 
@@ -307,19 +311,16 @@ export const fetchFileContents = async (fetchingFiles) => {
   // Show a fake progressbar because the request waiting time is long
   const dataLoadedProgressInterval = window.setInterval(() => {
     dataLoadedProgress.update((progress = 0) => progress + 1);
-  }, fetchingFiles.length / 2);
+  }, fetchingFiles.length / 10);
 
   // Fetch blobs for entry/config files only
   const textPaths = fetchingFiles.filter(({ type }) => type !== 'asset').map(({ path }) => path);
   const blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY);
-  // Fetch sizes for asset files only
-  const assetPaths = fetchingFiles.filter(({ type }) => type === 'asset').map(({ path }) => path);
-  const sizes = await fetchBlobs(assetPaths, FETCH_BLOBS_QUERY.replace('rawTextBlob', 'size'));
 
   window.clearInterval(dataLoadedProgressInterval);
   dataLoadedProgress.set(undefined);
 
-  return parseFileContents({ fetchingFiles, sizes, blobs });
+  return parseFileContents({ fetchingFiles, blobs });
 };
 
 /**

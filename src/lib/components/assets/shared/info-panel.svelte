@@ -42,6 +42,7 @@
   /** @type {AssetDetails} */
   let details = $state({ ...defaultAssetDetails });
 
+  // @todo Fetch file size and commit info on demand for GitLab
   const { path, size, kind, commitAuthor, commitDate } = $derived(asset);
   const { publicURL, repoBlobURL, dimensions, duration, createdDate, coordinates, usedEntries } =
     $derived(details);
@@ -99,14 +100,16 @@
       })}
     </p>
   </section>
-  <section>
-    <h4>{$_('size')}</h4>
-    <p>
-      {#key $appLocale}
-        {formatSize(size)}
-      {/key}
-    </p>
-  </section>
+  {#if !!size}
+    <section>
+      <h4>{$_('size')}</h4>
+      <p>
+        {#key $appLocale}
+          {formatSize(size)}
+        {/key}
+      </p>
+    </section>
+  {/if}
   {#if canPreview}
     <section>
       <h4>{$_('dimensions')}</h4>
