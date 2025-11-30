@@ -5,11 +5,12 @@ import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
 import { getAssetPublicURL } from '$lib/services/assets/info';
+import { getAssetKind } from '$lib/services/assets/kinds';
 import { transformFile } from '$lib/services/integrations/media-libraries/default';
 import { getGitHash } from '$lib/services/utils/file';
 
 /**
- * @import { EntryDraft, SelectedResource } from '$lib/types/private';
+ * @import { Asset, AssetFolderInfo, EntryDraft, SelectedResource } from '$lib/types/private';
  * @import { DefaultMediaLibraryConfig } from '$lib/types/public';
  */
 
@@ -36,6 +37,45 @@ export const getExistingBlobURL = async ({ draft, file }) => {
 
   return foundURL;
 };
+
+/**
+ * Convert unsaved files to the `Asset` format so these can be browsed just like other assets.
+ * @param {object} args Arguments.
+ * @param {File} args.file Raw file.
+ * @param {string} [args.blobURL] Blob URL of the file.
+ * @param {AssetFolderInfo | undefined} args.folder Asset folder.
+ * @param {string} [args.targetFolderPath] Target folder path.
+ * @returns {Promise<Asset>} Asset.
+ */
+export const convertFileItemToAsset = async ({ file, blobURL, folder, targetFolderPath }) => {
+  const { name, size } = file;
+
+  return /** @type {Asset} */ ({
+    unsaved: true,
+    file,
+    blobURL: blobURL ?? URL.createObjectURL(file),
+    name,
+    path: targetFolderPath ? `${targetFolderPath}/${name}` : name,
+    sha: await getGitHash(file),
+    size,
+    kind: getAssetKind(name),
+    folder,
+  });
+};
+
+/**
+ * Get all the unsaved assets, including already cached for the draft and dropped ones.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft containing the resource.
+ * @param {string} [args.targetFolderPath] Target folder path.
+ * @returns {Promise<Asset[]>} Assets.
+ */
+export const getUnsavedAssets = async ({ draft, targetFolderPath }) =>
+  Promise.all(
+    Object.entries(draft.files).map(async ([blobURL, { file, folder }]) =>
+      convertFileItemToAsset({ file, blobURL, folder, targetFolderPath }),
+    ),
+  );
 
 /**
  * Process a selected resource.
@@ -67,7 +107,12 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
 
       const sha = await getGitHash(file);
       const { folder } = resource;
-      const existingAsset = get(allAssets).find((a) => a.sha === sha && equal(a.folder, folder));
+
+      // Check if the selected file has already been uploaded or is pending upload, otherwise
+      // duplicate files lead to an `each_key_duplicate` error in Svelte
+      const existingAsset = [...get(allAssets), ...(await getUnsavedAssets({ draft }))].find(
+        (a) => a.sha === sha && equal(a.folder, folder),
+      );
 
       if (existingAsset) {
         // If the selected file has already been uploaded, use the existing asset instead of

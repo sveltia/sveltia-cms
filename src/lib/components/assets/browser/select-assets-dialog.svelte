@@ -22,8 +22,11 @@
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { allAssets } from '$lib/services/assets';
-  import { getAssetKind } from '$lib/services/assets/kinds';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
+  import {
+    convertFileItemToAsset,
+    getUnsavedAssets,
+  } from '$lib/services/contents/widgets/file/process';
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import {
     allStockAssetProviders,
@@ -32,7 +35,6 @@
   import { normalize } from '$lib/services/search/util';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
-  import { getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -165,42 +167,6 @@
   const Selector = $derived($isSmallScreen ? Select : Listbox);
 
   /**
-   * Convert unsaved files to the `Asset` format so these can be browsed just like other assets.
-   * @param {object} args Arguments.
-   * @param {File} args.file Raw file.
-   * @param {string} [args.blobURL] Blob URL of the file.
-   * @param {AssetFolderInfo | undefined} args.folder Asset folder.
-   * @returns {Promise<Asset>} Asset.
-   */
-  const convertFileItemToAsset = async ({ file, blobURL, folder }) => {
-    const { name, size } = file;
-
-    return /** @type {Asset} */ ({
-      unsaved: true,
-      file,
-      blobURL: blobURL ?? URL.createObjectURL(file),
-      name,
-      path: `${targetFolderPath}/${name}`,
-      sha: await getGitHash(file),
-      size,
-      kind: getAssetKind(name),
-      folder,
-    });
-  };
-
-  /**
-   * Get all the unsaved assets, including already cached for the draft and dropped ones.
-   * @returns {Promise<Asset[]>} Assets.
-   */
-  const getUnsavedAssets = async () =>
-    Promise.all([
-      ...Object.entries($entryDraft?.files ?? {}).map(async ([blobURL, { file, folder }]) =>
-        convertFileItemToAsset({ file, blobURL, folder }),
-      ),
-      ...Object.values(droppedAssets),
-    ]);
-
-  /**
    * Check if an asset with the same hash and folder already exists in the unsaved assets.
    * @param {object} args Arguments.
    * @param {string} args.hash Hash of the file.
@@ -232,7 +198,7 @@
       return undefined;
     }
 
-    const asset = await convertFileItemToAsset({ file, folder });
+    const asset = await convertFileItemToAsset({ file, folder, targetFolderPath });
 
     droppedAssets.push(asset);
 
@@ -291,10 +257,16 @@
 
   $effect(() => {
     void $entryDraft?.files;
-    void droppedAssets;
+    // Somehow we need to snapshot `droppedAssets` here to make Svelte aware of its changes
+    void $state.snapshot(droppedAssets);
 
     (async () => {
-      unsavedAssets = await getUnsavedAssets();
+      unsavedAssets = [
+        ...($entryDraft?.files
+          ? await getUnsavedAssets({ draft: $entryDraft, targetFolderPath })
+          : []),
+        ...Object.values(droppedAssets),
+      ];
     })();
   });
 
