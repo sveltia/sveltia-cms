@@ -48,3 +48,14 @@
 {:else if value.trim() && !value.startsWith('blob:')}
   <p>{value}</p>
 {/if}
+
+<style lang="scss">
+  // Remove the padding to make the image full-width on small screens
+  @media (width < 768px) {
+    p:has(:global(img)) {
+      :global([role='document'] section) > & {
+        margin-inline: calc(var(--entry-preview-padding-inline) * -1);
+      }
+    }
+  }
+</style>

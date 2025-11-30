@@ -150,4 +150,18 @@
       }
     }
   }
+
+  @media (width < 768px) {
+    :global([role='document']) {
+      & > section:is([data-widget='file'], [data-widget='image']):has(:global(img)),
+      & > section:is([data-widget='string']):has(:global(iframe)) {
+        overflow: visible;
+      }
+
+      & > section:is([data-widget='file'], [data-widget='image']) :global(img) {
+        width: 100%;
+        max-height: none !important;
+      }
+    }
+  }
 </style>

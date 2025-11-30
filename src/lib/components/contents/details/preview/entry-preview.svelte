@@ -51,6 +51,9 @@
 
 <style lang="scss">
   div {
-    padding: 8px 16px;
+    --entry-preview-padding-block: 8px;
+    --entry-preview-padding-inline: 16px;
+    padding-block: var(--entry-preview-padding-block);
+    padding-inline: var(--entry-preview-padding-inline);
   }
 </style>
