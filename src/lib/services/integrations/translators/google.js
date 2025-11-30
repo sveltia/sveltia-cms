@@ -58,6 +58,11 @@ export const normalizeLanguage = (locale) => {
     return normalizedLocale;
   }
 
+  // Traditional Chinese variants: We should not fall back to `zh` because it’s Simplified Chinese
+  if (['zh-HK', 'zh-MO'].includes(normalizedLocale)) {
+    return 'zh-TW';
+  }
+
   const [lang] = normalizedLocale.split('-');
 
   if (SUPPORTED_LANGUAGES.includes(lang)) {

@@ -89,6 +89,18 @@ describe('Google Translator Service', () => {
         ).resolves.toBe(true); // normalized to zh-CN, pt-BR
       });
 
+      it('should support Traditional Chinese variants (Hong Kong, Macanese)', async () => {
+        await expect(availability({ sourceLanguage: 'zh-HK', targetLanguage: 'en' })).resolves.toBe(
+          true,
+        ); // falls back to zh-TW
+        await expect(availability({ sourceLanguage: 'en', targetLanguage: 'zh-MO' })).resolves.toBe(
+          true,
+        ); // falls back to zh-TW
+        await expect(
+          availability({ sourceLanguage: 'zh-HK', targetLanguage: 'zh-MO' }),
+        ).resolves.toBe(true); // both fall back to zh-TW
+      });
+
       it('should handle fallback to base language', async () => {
         await expect(
           availability({ sourceLanguage: 'en-XX', targetLanguage: 'fr-XX' }),
@@ -367,6 +379,13 @@ describe('Google Translator Service', () => {
         expect(normalizeLanguage('zh_CN')).toBe('zh-CN');
         expect(normalizeLanguage('zh_TW')).toBe('zh-TW');
         expect(normalizeLanguage('pt_BR')).toBe('pt-BR');
+      });
+
+      it('should fallback to Traditional Chinese (zh-TW) for Hong Kong and Macanese variants', () => {
+        expect(normalizeLanguage('zh-HK')).toBe('zh-TW');
+        expect(normalizeLanguage('zh-MO')).toBe('zh-TW');
+        expect(normalizeLanguage('zh_HK')).toBe('zh-TW'); // with underscore
+        expect(normalizeLanguage('zh_MO')).toBe('zh-TW'); // with underscore
       });
 
       it('should fallback to language code when region is not supported', () => {
