@@ -569,8 +569,12 @@
 
 /**
  * List field definition.
- * @typedef {SimpleListField | ComplexListField} ListField
+ * @typedef {SimpleListField | ListFieldWithSubField | ListFieldWithSubFields | ListFieldWithTypes
+ * } ListField
  */
+
+// Note: the `typedef` above cannot be `SimpleListField | ComplexListField` because it’s not
+// recognized by the YAML extension in VS Code due to the mixed properties of union types.
 
 /**
  * Map field properties.
