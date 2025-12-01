@@ -2,7 +2,7 @@
 
 Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 270 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
 
-Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows.
+Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows for content editors and developers alike.
 
 This free, open source successor to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026.
 
@@ -188,7 +188,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
     - The remaining bugs are mostly related to [unimplemented features](#current-limitations)
   - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are [on our table](#roadmap) or already implemented in Sveltia CMS
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
-- Preparing comprehensive, up-to-date, easy-to-understand documentation
+- Preparing comprehensive, up-to-date, easy-to-understand [documentation](https://github.com/sveltia/sveltia-cms/issues/485)
 - Implementing our own enhancement ideas for every part of the product
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
@@ -203,14 +203,14 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 
 ### Better UX
 
-- Created and actively maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design, marketing, localization and everything in between. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
+- Created and actively maintained by an [experienced UX engineer](https://github.com/kyoshino) who loves code, design, marketing, localization, documentation and everything in between. You can expect constant improvements to the user experience (UX) and developer experience (DX) across the platform.
 - The maintainer tries to respond to bug reports as quickly as possible. While there are no guarantees, the typical turnaround time for a bug fix is less than 24 hours.
 - Frequent releases deliver new features and enhancements to users more quickly. Meanwhile, the release interval of Decap CMS has been irregular and often long, sometimes exceeding 2 months.
 - Many of our minor [releases](https://github.com/sveltia/sveltia-cms/releases) address one or more Netlify/Decap CMS issues, giving you even more reasons to switch from the legacy predecessor.
 - Offers a modern, intuitive user interface that utilizes the full viewport,[^178] inspired in part by the Netlify CMS v3 prototype.[^1][^211][^212][^213][^214]
 - Provides immersive dark mode.[^2] The UI theme follows the user’s system preference by default and can be changed in the application settings.
 - Users can easily manage content on-the-go with mobile and tablet support.[^18][^215]
-  - For a smoother experience, we even go beyond responsive design with optimized navigation, floating action buttons, smooth [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions), larger buttons, and other tweaks. We’ll continue to fully optimize the app for small screens and touch devices.
+  - For a smoother experience, we even go beyond responsive design with optimized navigation, floating action buttons, [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions), larger buttons, and other tweaks. We’ll continue to fully optimize the app for small screens and touch devices.
   - If you’re already signed in on your desktop, open the Account menu in the top right corner of the CMS, click Sign In with Mobile, and scan the QR code for passwordless sign-in. Your settings will be automatically copied.
 - Made with [Svelte](https://svelte.dev/), not React, means we can spend more time on UX rather than tedious state management. It also allows us to avoid common fatal React application crashes.[^113][^129] Best of all, Svelte offers great performance.
 - Other crashes in Netlify/Decap CMS are also irrelevant to us, making Sveltia CMS much more stable.[^112][^203][^204][^260] Netlify/Decap CMS continues to receive crash reports on a daily basis, with no effective solution in sight.
@@ -698,7 +698,7 @@ However, 100% feature parity is never planned, and some features are still missi
 
 We are working hard to implement several missing features from Netlify/Decap CMS. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates.
 
-- The following advanced customization features are not yet implemented and will be added before the 1.0 release:
+- The following API features are not yet implemented and will be added before the 1.0 release:
   - Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent) (`CMS.registerEditorComponent`)
   - [Custom widgets](https://decapcms.org/docs/custom-widgets/) (`CMS.registerWidget`)
   - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) (`CMS.registerPreviewTemplate`) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
