@@ -3,6 +3,7 @@ import createClass from 'create-react-class';
 import { createElement } from 'react';
 import { mount } from 'svelte';
 
+import { eventHookRegistry, SUPPORTED_EVENT_TYPES } from '$lib/services/contents/draft/events';
 import { customPreviewStyleRegistry } from '$lib/services/contents/editor';
 import { customFileFormatRegistry } from '$lib/services/contents/file/config';
 import { customComponentRegistry } from '$lib/services/contents/widgets/markdown/components/definitions';
@@ -172,12 +173,31 @@ const registerEditorComponent = (definition) => {
 /**
  * Register an event listener.
  * @param {AppEventListener} eventListener Event listener.
+ * @throws {TypeError} If the event listener is not an object, or is missing required properties.
+ * @throws {RangeError} If the event listener name is not supported.
  * @see https://decapcms.org/docs/registering-events/
  */
 const registerEventListener = (eventListener) => {
-  // eslint-disable-next-line no-console
-  console.warn('Event hooks are not yet supported in Sveltia CMS.');
-  void [eventListener];
+  if (!isObject(eventListener)) {
+    throw new TypeError('The event listener must be an object');
+  }
+
+  const { name, handler } = eventListener;
+
+  if (typeof name !== 'string' || typeof handler !== 'function') {
+    throw new TypeError(
+      'The event listener must have a string `name` property and a function `handler` property',
+    );
+  }
+
+  if (!SUPPORTED_EVENT_TYPES.includes(name)) {
+    throw new RangeError(
+      `Unsupported event listener name "${name}". ` +
+        `Supported names are: ${SUPPORTED_EVENT_TYPES.join(', ')}`,
+    );
+  }
+
+  eventHookRegistry.add(eventListener);
 };
 
 /**

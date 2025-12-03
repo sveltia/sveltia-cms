@@ -1,5 +1,6 @@
 /**
  * @import { JSX } from 'react';
+ * @import { MapOf } from 'immutable';
  */
 
 /**
@@ -1494,11 +1495,52 @@
  */
 
 /**
+ * Author information for an event.
+ * @typedef {object} AppEventAuthor
+ * @property {string} [login] Author login name.
+ * @property {string} [name] Author display name.
+ */
+
+/**
+ * Event entry media file data.
+ * @typedef {object} AppEventEntryMedia
+ * @property {string} id Media file ID.
+ * @property {string} path Media file path.
+ * @property {string} name Media file name.
+ * @property {string} url Media file URL.
+ * @property {string} displayURL Media file display URL.
+ * @property {number} size Media file size in bytes.
+ * @property {File} file Media file object.
+ */
+
+/**
+ * Event entry data.
+ * @typedef {object} AppEventEntry
+ * @property {Record<string, any>} data Entry data for the default locale.
+ * @property {Record<string, any>} i18n Entry data for other locales with locale codes as keys.
+ * @property {string} slug Entry slug.
+ * @property {string} path Entry file path.
+ * @property {boolean} newRecord Whether the entry is newly created.
+ * @property {string} collection Name of the collection.
+ * @property {AppEventEntryMedia[]} mediaFiles List of media files associated with the entry.
+ * @property {{ path: string }} meta Entry meta data.
+ * @property {null} isModification Unknown. Always `null`.
+ * @property {null} label Unknown. Always `null`.
+ * @property {boolean} partial Unknown. Always `false`.
+ * @property {string} author Unknown. Always an empty string.
+ * @property {string} raw Unknown. Always an empty string.
+ * @property {string} status Unknown. Always an empty string.
+ * @property {string} updatedOn Unknown. Always an empty string.
+ */
+
+/**
  * Event listener properties.
  * @typedef {object} AppEventListener
  * @property {AppEventType} name Event type.
- * @property {(args: { entry: Record<string, any>, author?: { login: string, name: string } }) =>
- * any} handler Event handler.
+ * @property {(args: { author: AppEventAuthor, entry: MapOf<AppEventEntry> }) => void |
+ * MapOf<AppEventEntry> | Promise<void> | Promise<MapOf<AppEventEntry>>} handler Event handler. For
+ * the `preSave` event, the handler can return a modified entry object in Immutable Map format to
+ * change the data before it is saved. For other events, the return value is ignored.
  * @see https://decapcms.org/docs/registering-events/
  */
 

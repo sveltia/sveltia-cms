@@ -22,6 +22,9 @@ vi.mock('$lib/services/contents/draft/save/serialize');
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/file/format');
 vi.mock('$lib/services/integrations/media-libraries/default');
+vi.mock('$lib/services/contents/draft/events', () => ({
+  callEventHooks: vi.fn(),
+}));
 vi.mock('$lib/services/user/prefs', () => ({
   prefs: { subscribe: vi.fn(() => vi.fn()) },
 }));
@@ -207,6 +210,172 @@ describe('draft/save/changes', () => {
 
       expect(result.savingEntry).toBeDefined();
       expect(result.changes.length).toBeGreaterThan(0);
+    });
+
+    it('should call preSave event hooks before creating file changes', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { callEventHooks } = await import('$lib/services/contents/draft/events');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        id: 'test-uuid',
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: { en: { title: 'Test' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: undefined,
+        localizedSlugs: undefined,
+      };
+
+      await createSavingEntryData({ draft, slugs });
+
+      expect(callEventHooks).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'preSave',
+          draft,
+        }),
+      );
+      expect(callEventHooks).toHaveBeenCalledTimes(1);
+    });
+
+    it('should pass correct savingEntry to preSave event hooks', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { callEventHooks } = await import('$lib/services/contents/draft/events');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Modified in hook' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        id: 'test-uuid-2',
+        isNew: false,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'slug' },
+          },
+        },
+        collectionName: 'articles',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: { en: { slug: 'article-post', title: 'Article' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'article-post',
+        canonicalSlug: undefined,
+        localizedSlugs: undefined,
+      };
+
+      await createSavingEntryData({ draft, slugs });
+
+      expect(callEventHooks).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'preSave',
+          draft,
+          savingEntry: expect.objectContaining({
+            id: 'test-uuid-2',
+            slug: 'article-post',
+            locales: expect.objectContaining({
+              en: expect.objectContaining({
+                path: 'posts/test-post.md',
+              }),
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should call event hooks with correct savingEntry for i18n entries', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { callEventHooks } = await import('$lib/services/contents/draft/events');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        id: 'i18n-test-uuid',
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: true,
+            allLocales: ['en', 'ja'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: true },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true, ja: true },
+        currentValues: {
+          en: { title: 'Test' },
+          ja: { title: 'テスト' },
+        },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: undefined,
+        localizedSlugs: { en: 'test-post', ja: 'test-post' },
+      };
+
+      await createSavingEntryData({ draft, slugs });
+
+      // Verify callEventHooks was called with i18n locales
+      expect(callEventHooks).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'preSave',
+          savingEntry: expect.objectContaining({
+            locales: expect.objectContaining({
+              en: expect.any(Object),
+              ja: expect.any(Object),
+            }),
+          }),
+        }),
+      );
     });
   });
 

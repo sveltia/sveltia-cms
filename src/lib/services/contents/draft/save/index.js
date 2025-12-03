@@ -9,6 +9,7 @@ import {
 } from '$lib/services/contents/collection/data';
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
+import { callEventHooks } from '$lib/services/contents/draft/events';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
@@ -76,6 +77,8 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
     throw new Error('saving_failed', { cause: ex.cause ?? ex });
   }
+
+  await callEventHooks({ type: 'postSave', draft, savingEntry });
 
   updateStores({ skipCI });
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);

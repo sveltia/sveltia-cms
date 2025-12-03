@@ -24,6 +24,9 @@ global.document = {
 // Mock dependencies BEFORE import
 vi.mock('create-react-class');
 vi.mock('react');
+vi.mock('immutable', () => ({
+  Map: class ImmutableMap {},
+}));
 vi.mock('svelte', () => ({
   mount: vi.fn(),
 }));
@@ -35,6 +38,17 @@ vi.mock('$lib/services/contents/file/config', () => ({
 }));
 vi.mock('$lib/services/contents/widgets/markdown/components/definitions', () => ({
   customComponentRegistry: new Map(),
+}));
+vi.mock('$lib/services/contents/draft/events', () => ({
+  eventHookRegistry: new Set(),
+  SUPPORTED_EVENT_TYPES: [
+    'preSave',
+    'postSave',
+    'prePublish',
+    'postPublish',
+    'preUnpublish',
+    'postUnpublish',
+  ],
 }));
 vi.mock('$lib/components/app.svelte', () => ({
   default: {},
@@ -434,7 +448,8 @@ describe('CMS.registerPreviewStyle()', () => {
 });
 
 describe('CMS.registerEventListener()', () => {
-  test('accepts event listener without throwing', () => {
+  test('registers valid event listener', () => {
+    // @ts-ignore
     const listener = {
       name: 'preSave',
       handler: () => {},
@@ -444,18 +459,128 @@ describe('CMS.registerEventListener()', () => {
     expect(() => CMS.registerEventListener(listener)).not.toThrow();
   });
 
-  test('logs warning about unsupported event hooks', () => {
-    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  test('registers all supported event types', () => {
+    const eventTypes = [
+      'preSave',
+      'postSave',
+      'prePublish',
+      'postPublish',
+      'preUnpublish',
+      'postUnpublish',
+    ];
 
-    const listener = {
-      name: 'preSave',
-      handler: () => {},
-    };
+    eventTypes.forEach((eventType) => {
+      // @ts-ignore
+      const listener = {
+        name: eventType,
+        handler: () => {},
+      };
+
+      // @ts-ignore
+      expect(() => CMS.registerEventListener(listener)).not.toThrow();
+    });
+  });
+
+  test('throws TypeError if listener is not an object', () => {
+    // @ts-ignore
+    expect(() => CMS.registerEventListener(null)).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => CMS.registerEventListener(undefined)).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => CMS.registerEventListener('invalid')).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => CMS.registerEventListener(123)).toThrow(TypeError);
+  });
+
+  test('throws with proper error message for non-object listener', () => {
+    // @ts-ignore
+    expect(() => CMS.registerEventListener(null)).toThrow('The event listener must be an object');
+  });
+
+  test('throws TypeError if name is not a string', () => {
+    // @ts-ignore
+    expect(() =>
+      CMS.registerEventListener({
+        // @ts-ignore
+        name: 123,
+        handler: () => {},
+      }),
+    ).toThrow(TypeError);
 
     // @ts-ignore
-    CMS.registerEventListener(listener);
-    expect(consoleSpy).toHaveBeenCalledWith('Event hooks are not yet supported in Sveltia CMS.');
-    consoleSpy.mockRestore();
+    expect(() =>
+      CMS.registerEventListener({
+        // @ts-ignore
+        name: null,
+        handler: () => {},
+      }),
+    ).toThrow(TypeError);
+  });
+
+  test('throws TypeError if handler is not a function', () => {
+    // @ts-ignore
+    expect(() =>
+      CMS.registerEventListener({
+        name: 'preSave',
+        // @ts-ignore
+        handler: 'invalid',
+      }),
+    ).toThrow(TypeError);
+
+    // @ts-ignore
+    expect(() =>
+      CMS.registerEventListener({
+        name: 'preSave',
+        // @ts-ignore
+        handler: {},
+      }),
+    ).toThrow(TypeError);
+  });
+
+  test('throws with proper error message for missing properties', () => {
+    // @ts-ignore
+    expect(() =>
+      CMS.registerEventListener({
+        name: 'preSave',
+        // @ts-ignore
+        handler: 'invalid',
+      }),
+    ).toThrow(
+      'The event listener must have a string `name` property and a function `handler` property',
+    );
+  });
+
+  test('throws RangeError if event type is not supported', () => {
+    // @ts-ignore
+    expect(() =>
+      CMS.registerEventListener({
+        // @ts-ignore
+        name: 'unsupportedEvent',
+        handler: () => {},
+      }),
+    ).toThrow(RangeError);
+  });
+
+  test('throws with proper error message for unsupported event type', () => {
+    // @ts-ignore
+    expect(() =>
+      CMS.registerEventListener({
+        // @ts-ignore
+        name: 'invalidEvent',
+        handler: () => {},
+      }),
+    ).toThrow('Unsupported event listener name "invalidEvent"');
+  });
+
+  test('accepts async handler functions', () => {
+    // @ts-ignore
+    expect(() =>
+      CMS.registerEventListener({
+        name: 'preSave',
+        // @ts-ignore
+        handler: async () => {},
+      }),
+    ).not.toThrow();
   });
 });
 

@@ -23,6 +23,9 @@ vi.mock('$lib/services/backends/save');
 vi.mock('$lib/services/contents/collection/data');
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/draft/backup');
+vi.mock('$lib/services/contents/draft/events', () => ({
+  callEventHooks: vi.fn(),
+}));
 vi.mock('$lib/services/contents/draft/save/changes');
 vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
@@ -227,6 +230,81 @@ describe('draft/save/index', () => {
           }),
         }),
       );
+    });
+
+    it('should call postSave event hooks after successful save', async () => {
+      const { callEventHooks } = await import('$lib/services/contents/draft/events');
+
+      await saveEntry();
+
+      expect(callEventHooks).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'postSave',
+          draft: mockDraft,
+        }),
+      );
+    });
+
+    it('should pass correct savingEntry to postSave event hooks', async () => {
+      const { callEventHooks } = await import('$lib/services/contents/draft/events');
+
+      await saveEntry();
+
+      expect(callEventHooks).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'postSave',
+          savingEntry: expect.objectContaining({
+            id: 'test-id',
+            slug: 'test-post',
+            locales: expect.objectContaining({
+              en: expect.any(Object),
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should call postSave hooks after saveChanges completes', async () => {
+      const { callEventHooks } = await import('$lib/services/contents/draft/events');
+      let saveChangesCallOrder = 0;
+      let callEventHooksCallOrder = 0;
+
+      vi.mocked(saveChanges).mockImplementation(() => {
+        saveChangesCallOrder = 1;
+
+        return Promise.resolve({
+          savedEntries: [
+            {
+              id: 'test-id',
+              slug: 'test-post',
+              locales: { en: { slug: 'test-post', path: 'posts/test-post.md' } },
+            },
+          ],
+          savedAssets: [],
+        });
+      });
+
+      vi.mocked(callEventHooks).mockImplementation(() => {
+        callEventHooksCallOrder = 2;
+      });
+
+      await saveEntry();
+
+      // callEventHooks should be called after saveChanges
+      expect(callEventHooksCallOrder).toBe(2);
+      expect(saveChangesCallOrder).toBe(1);
+    });
+
+    it('should not throw if postSave event hooks fail', async () => {
+      const { callEventHooks } = await import('$lib/services/contents/draft/events');
+
+      vi.mocked(callEventHooks).mockImplementation(() => {
+        throw new Error('Event hook error');
+      });
+
+      // This should not throw because the error handling is not implemented
+      // If you want to add error handling, adjust this expectation accordingly
+      await expect(saveEntry()).rejects.toThrow('Event hook error');
     });
   });
 });

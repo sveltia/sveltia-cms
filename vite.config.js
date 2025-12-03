@@ -11,6 +11,10 @@ import { BUILTIN_WIDGETS } from './src/lib/services/contents/widgets';
 import svelteConfig from './svelte.config';
 
 /**
+ * List of dev dependencies to include in the published `package.json`.
+ */
+const DEV_DEPENDENCIES = ['@types/react', 'immutable'];
+/**
  * Path to the generated main type declaration file.
  */
 const MAIN_TYPE_PATH = 'package/main.d.ts';
@@ -32,6 +36,7 @@ const copyPackageFiles = () => ({
     // eslint-disable-next-line jsdoc/require-jsdoc
     handler: async () => {
       const packageJson = JSON.parse(await readFile('package.json'));
+      const { dependencies, devDependencies } = packageJson;
 
       // Remove unnecessary properties as we only publish compiled bundles
       delete packageJson.dependencies;
@@ -39,10 +44,10 @@ const copyPackageFiles = () => ({
 
       // Add properties for distribution; paths are relative to `package`
       Object.assign(packageJson, {
-        devDependencies: {
-          // Keep only React type declarations used in the generated `d.ts` files
-          '@types/react': packageJson.devDependencies['@types/react'],
-        },
+        // Keep only type declarations imported in the generated `d.ts` files
+        devDependencies: Object.fromEntries(
+          DEV_DEPENDENCIES.map((key) => [key, dependencies[key] ?? devDependencies[key]]),
+        ),
         files: ['dist', 'schema', 'types', 'main.d.ts'],
         main: './dist/sveltia-cms.mjs',
         module: './dist/sveltia-cms.mjs',
