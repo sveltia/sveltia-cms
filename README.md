@@ -680,7 +680,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - No error is raised in the browser console saying `Sent invalid data to remark`[^280] or `onValidate is not a function`.[^281]
 - Enhancements to [event hooks](https://decapcms.org/docs/registering-events/):
   - Missing `identifier_field` won’t cause an error when the `preSave` hook is triggered.[^306]
-  - Content can be modified in the `prePublish` hook (once we support editorial workflow).[^307]
+  <!-- - Content can be modified in the `prePublish` hook (once we support editorial workflow).[^307] -->
 - Async functions can be used for [custom parsers/formatters](https://decapcms.org/docs/custom-formatters/).[^149]
 - The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists.[^109]
 
