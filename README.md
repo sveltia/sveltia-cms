@@ -222,7 +222,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 ### Better performance
 
 - Built completely from scratch with [Svelte](https://svelte.dev/) instead of forking React-based Netlify/Decap CMS. The app starts fast and stays fast with [no virtual DOM overhead](https://svelte.dev/blog/virtual-dom-is-pure-overhead). Note that Svelte is a compiler and Sveltia CMS is framework-agnostic; it’s served as a vanilla JavaScript bundle.
-- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.5 MB) and Static CMS (2.6 MB).[^57][^64] This significant reduction in size is thanks to the combination of [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) and [Vite](https://vite.dev/). Sveltia CMS also dynamically loads certain dependencies only when needed, further reducing the initial load time.
+- Small footprint: The bundle size is less than 500 KB when minified and [brotlied](https://en.wikipedia.org/wiki/Brotli), which is much lighter than Netlify CMS (1.5 MB), Decap CMS (1.5 MB) and Static CMS (2.6 MB).[^57] This significant reduction in size is thanks to the combination of [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive) and [Vite](https://vite.dev/). Sveltia CMS also dynamically loads certain dependencies only when needed, further reducing the initial load time.
 - Uses the GraphQL API for GitHub and GitLab to quickly fetch content at once, so that entries and assets can be listed and searched instantly[^32][^65] (the useless `search` configuration option is therefore ignored). It also avoids the slowness and potential API rate limit violations caused by hundreds of requests with Relation fields.[^14]
 - Saving entries and assets to GitHub is also much faster thanks to the [GraphQL mutation](https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/).
 - The Gitea/Forgejo backend is also faster because it utilizes an efficient API method introduced in Gitea 1.24 and Forgejo 12.0.
@@ -2261,8 +2261,6 @@ This project would not have been possible without the open source Netlify CMS pr
 [^62]: Netlify/Decap CMS [#7192](https://github.com/decaporg/decap-cms/issues/7192)
 
 [^63]: Netlify/Decap CMS [#4877](https://github.com/decaporg/decap-cms/issues/4877)
-
-[^64]: Netlify/Decap CMS [#3853](https://github.com/decaporg/decap-cms/issues/3853)
 
 [^65]: Netlify/Decap CMS [#6034](https://github.com/decaporg/decap-cms/issues/6034)
 
