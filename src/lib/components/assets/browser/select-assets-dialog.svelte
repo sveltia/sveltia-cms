@@ -72,6 +72,7 @@
     open = $bindable(false),
     multiple = false,
     kind,
+    // svelte-ignore state_referenced_locally
     accept = kind === 'image' ? SUPPORTED_IMAGE_TYPES.join(',') : undefined,
     canEnterURL = true,
     entryDraft,

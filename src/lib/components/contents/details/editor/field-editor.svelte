@@ -86,6 +86,7 @@
 
   setContext(
     'field-editor',
+    // svelte-ignore state_referenced_locally
     /** @type {FieldEditorContext} */ ({ widgetContext, extraHint, valueStoreKey }),
   );
 

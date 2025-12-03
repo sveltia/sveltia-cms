@@ -47,6 +47,7 @@
   /** @type {FieldKeyPath} */
   let keyPath = $state('');
   /** @type {boolean} */
+  // svelte-ignore state_referenced_locally
   let expanded = $state(!collapsed);
 
   const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${widgetId}:`);
