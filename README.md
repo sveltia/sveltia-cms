@@ -678,6 +678,9 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Inline components are supported.[^267]
   - Field validation works as expected.[^279]
   - No error is raised in the browser console saying `Sent invalid data to remark`[^280] or `onValidate is not a function`.[^281]
+- Enhancements to [event hooks](https://decapcms.org/docs/registering-events/):
+  - Missing `identifier_field` won’t cause an error when the `preSave` hook is triggered.[^306]
+  - Content can be modified in the `prePublish` hook (once we support editorial workflow).[^307]
 - Async functions can be used for [custom parsers/formatters](https://decapcms.org/docs/custom-formatters/).[^149]
 - The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists.[^109]
 
@@ -702,7 +705,6 @@ We are working hard to implement several missing features from Netlify/Decap CMS
   - Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent) (`CMS.registerEditorComponent`)
   - [Custom widgets](https://decapcms.org/docs/custom-widgets/) (`CMS.registerWidget`)
   - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) (`CMS.registerPreviewTemplate`) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
-  - [Event hooks](https://decapcms.org/docs/registering-events/) (`CMS.registerEventListener`) ([#167](https://github.com/sveltia/sveltia-cms/issues/167))
 - [Documentation](https://github.com/sveltia/sveltia-cms/issues/485) and site config validation are under development.
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will follow soon.
 - Due to the complexity, we have decided to **defer the following features to the 1.x or 2.0 release** due mid-2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
@@ -2735,3 +2737,7 @@ This project would not have been possible without the open source Netlify CMS pr
 [^304]: Netlify/Decap CMS [#4538](https://github.com/decaporg/decap-cms/issues/4538), [#6371](https://github.com/decaporg/decap-cms/issues/6371)
 
 [^305]: Netlify/Decap CMS [#1483](https://github.com/decaporg/decap-cms/issues/1483)
+
+[^306]: Netlify/Decap CMS [#6775](https://github.com/decaporg/decap-cms/issues/6775)
+
+[^307]: Netlify/Decap CMS [#7133](https://github.com/decaporg/decap-cms/issues/7133)
