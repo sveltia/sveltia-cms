@@ -232,6 +232,7 @@ export const strings = {
   hide_info: 'Hide Info',
   all_assets: 'All Assets',
   global_assets: 'Global Assets',
+  entry_not_found: 'Entry not found.',
   creating_entries_disabled_by_admin:
     'Creating new entries in this collection is disabled by the administrator.',
   creating_entries_disabled_by_limit:

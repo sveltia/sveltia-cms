@@ -35,6 +35,7 @@
   /** @type {HTMLElement | undefined} */
   let secondPaneContentArea = $state();
 
+  const notFound = $derived($entryDraft === undefined);
   const isNew = $derived($entryDraft?.isNew ?? true);
   const collection = $derived($entryDraft?.collection);
   const entryCollection = $derived(collection?._type === 'entry' ? collection : undefined);
@@ -196,12 +197,14 @@
 >
   {#key $entryDraft?.id}
     <Toolbar disabled={isNew && createDisabled} />
-    {#if !$entryDraft}
+    {#if $entryDraft === null}
       <!-- Hide the content after saving a draft -->
-    {:else if isNew && createDisabled}
+    {:else if notFound || (isNew && createDisabled)}
       <EmptyState>
         <div role="none">
-          {#if !canCreate}
+          {#if notFound}
+            {$_('entry_not_found')}
+          {:else if !canCreate}
             {$_('creating_entries_disabled_by_admin')}
           {:else}
             {$_('creating_entries_disabled_by_limit', { values: { limit } })}

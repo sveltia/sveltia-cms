@@ -233,6 +233,7 @@ export const strings = {
   hide_info: '情報を隠す',
   all_assets: 'すべてのアセット',
   global_assets: 'グローバルアセット',
+  entry_not_found: 'エントリーが見つかりませんでした。',
   creating_entries_disabled_by_admin:
     'このコレクションへの新しいエントリーの作成は、管理者によって無効化されています。',
   creating_entries_disabled_by_limit:

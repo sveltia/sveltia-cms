@@ -61,6 +61,7 @@
   /** @type {MenuButton | undefined} */
   let menuButton = $state();
 
+  const notFound = $derived($entryDraft === undefined);
   const isNew = $derived($entryDraft?.isNew ?? true);
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
@@ -199,24 +200,26 @@
     }}
   />
   <h2 role="none">
-    <TruncatedText>
-      {#if isNew}
-        {$_('create_entry_title', { values: { name: collectionLabelSingular } })}
-      {:else}
-        {@const entrySummary = collectionFile
-          ? getCollectionFileLabel(collectionFile)
-          : collection && originalEntry && $appLocale
-            ? getEntrySummary(collection, originalEntry)
-            : ''}
-        {#if $isSmallScreen}
-          {entrySummary}
+    {#if !notFound}
+      <TruncatedText>
+        {#if isNew}
+          {$_('create_entry_title', { values: { name: collectionLabelSingular } })}
         {:else}
-          {$_('edit_entry_title', {
-            values: { collection: collectionLabel, entry: entrySummary },
-          })}
+          {@const entrySummary = collectionFile
+            ? getCollectionFileLabel(collectionFile)
+            : collection && originalEntry && $appLocale
+              ? getEntrySummary(collection, originalEntry)
+              : ''}
+          {#if $isSmallScreen}
+            {entrySummary}
+          {:else}
+            {$_('edit_entry_title', {
+              values: { collection: collectionLabel, entry: entrySummary },
+            })}
+          {/if}
         {/if}
-      {/if}
-    </TruncatedText>
+      </TruncatedText>
+    {/if}
   </h2>
   {#if !disabled && previewURL}
     <Button
