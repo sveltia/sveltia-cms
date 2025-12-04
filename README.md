@@ -1,6 +1,6 @@
 # Sveltia CMS: Netlify/Decap CMS successor
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 270 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 275 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows for content editors and developers alike.
 
@@ -174,7 +174,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - Some missing features will be implemented before or shortly after GA
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **270+ issues, or 590+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **275+ issues, or 595+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 450 issues, or 900 if including duplicates, in the future 💪
@@ -193,7 +193,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Responding to requests from the maintainer’s clients
 - Making the code clean and maintainable
 
-![270 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251120)<br>
+![275 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251204)<br>
 
 ## Differentiators
 
@@ -255,7 +255,7 @@ We’ve made various improvements to help you get your work done faster and more
 
 ### Better security
 
-- Avoids vulnerabilities in dependencies through constant updates, Dependabot alerts, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unaddressed for a long time.[^33]
+- Avoids vulnerabilities in dependencies through constant updates, Dependabot alerts, [`pnpm audit`](https://pnpm.io/cli/audit), and frequent releases, unlike Netlify/Decap CMS where a number of high severity vulnerabilities remain unaddressed for a long time.[^33][^313]
   - We also use the [`cooldown`](https://github.com/raineorshine/npm-check-updates#cooldown) option for `ncu` and the [`minimumReleaseAge`](https://pnpm.io/settings#minimumreleaseage) option for `pnpm` to avoid upgrading to a version that was just released. These options help protect against npm supply chain attacks.
 - The **unpatched** [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28) in Decap CMS does not affect Sveltia CMS, as our entry preview implementation is completely different.
   - However, the Markdown widget was potentially vulnerable to XSS attacks because the `sanitize_preview` option was set to `false` by default for compatibility with Netlify/Decap CMS. This behaviour is [documented](https://decapcms.org/docs/widgets/#Markdown) and is not a bug, but it’s definitely not secure. In [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), we changed the default value to `true`, assuming that most users would prefer security over compatibility.
@@ -544,13 +544,15 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - The map’s zoom level is adjusted more intuitively using pinch gestures.
   - The map looks good in dark mode.
 - Markdown
-  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS,[^235] including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124] an extra line break when pasting,[^169] extra HTML comments when pasting,[^229] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
+  - The rich text editor is built with the well-maintained [Lexical](https://lexical.dev/) framework, which solves various issues with a [Slate](https://github.com/ianstormtaylor/slate)-based editor in Netlify/Decap CMS,[^235] including fatal application crashes,[^71][^72][^73][^111] lost formatting when pasting,[^124][^311] an extra line break when pasting,[^169] extra HTML comments when pasting,[^229] backslash injections,[^53] dropdown visibility,[^70] and text input difficulties with IME.[^54]
   - For [better security](#better-security), the `sanitize_preview` option defaults to `true` since [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0).
   - The default editor mode can be set by changing the order of the `modes` option.[^58] If you want to use the plain text editor by default, add `modes: [raw, rich_text]` to the field configuration.
   - A Markdown field plays well with a variable type List field.[^202]
   - The bullet list marker is a hyphen (`-`) rather than an asterisk (`*`), which is the comment form’s default behaviour on GitHub and GitLab.[^296]
   - A combination of bold and italic doesn’t create a confusing 3-asterisk markup.[^160] In our editor, bold is 2 asterisks and italic is an underscore.
   - When deleting a linked text, the link is removed cleanly without leaving behind any unwanted characters.[^298]
+  - Bare URLs are rendered as clickable links in the preview.[^312]
+  - An editor component can be removed with a single click on the Remove button.[^310]
   - The built-in `image` component can be inserted with a single click.
   - The built-in `image` component allows users to add, edit or remove a link on an image.[^171] To disable this feature, add `linked_images: false` to the Markdown field options.
   - It’s possible to paste/drop local/remote images into the rich text editor to insert them as expected. Note: Pasting multiple images is [not supported in Firefox](https://bugzilla.mozilla.org/show_bug.cgi?id=864052). In Netlify/Decap CMS, pasting an image may cause the application to crash.[^284]
@@ -2194,7 +2196,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^28]: Netlify/Decap CMS [#2677](https://github.com/decaporg/decap-cms/issues/2677), [#6836](https://github.com/decaporg/decap-cms/pull/6836)
 
-[^29]: Netlify/Decap CMS [#3750](https://github.com/decaporg/decap-cms/issues/3750), [#4783](https://github.com/decaporg/decap-cms/issues/4783), [#6801](https://github.com/decaporg/decap-cms/issues/6801), [#6806](https://github.com/decaporg/decap-cms/discussions/6806)
+[^29]: Netlify/Decap CMS [#3750](https://github.com/decaporg/decap-cms/issues/3750), [#4735](https://github.com/decaporg/decap-cms/issues/4735), [#4783](https://github.com/decaporg/decap-cms/issues/4783), [#6801](https://github.com/decaporg/decap-cms/issues/6801), [#6806](https://github.com/decaporg/decap-cms/discussions/6806)
 
 [^30]: Netlify/Decap CMS [#565](https://github.com/decaporg/decap-cms/issues/565), [#6733](https://github.com/decaporg/decap-cms/discussions/6733)
 
@@ -2202,7 +2204,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^32]: Netlify/Decap CMS [#302](https://github.com/decaporg/decap-cms/issues/302), [#5549](https://github.com/decaporg/decap-cms/issues/5549)
 
-[^33]: Netlify/Decap CMS [#542](https://github.com/decaporg/decap-cms/issues/542), [#4532](https://github.com/decaporg/decap-cms/issues/4532), [#6513](https://github.com/decaporg/decap-cms/issues/6513), [#7295](https://github.com/decaporg/decap-cms/issues/7295), [#7567](https://github.com/decaporg/decap-cms/issues/7567)
+[^33]: Netlify/Decap CMS [#4532](https://github.com/decaporg/decap-cms/issues/4532), [#6513](https://github.com/decaporg/decap-cms/issues/6513), [#7295](https://github.com/decaporg/decap-cms/issues/7295), [#7567](https://github.com/decaporg/decap-cms/issues/7567)
 
 [^34]: Netlify/Decap CMS [#2138](https://github.com/decaporg/decap-cms/issues/2138), [#2343](https://github.com/decaporg/decap-cms/issues/2343), [#4367](https://github.com/decaporg/decap-cms/issues/4367), [#5932](https://github.com/decaporg/decap-cms/discussions/5932)
 
@@ -2374,7 +2376,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^119]: Netlify/Decap CMS [#5640](https://github.com/decaporg/decap-cms/issues/5640), [#6444](https://github.com/decaporg/decap-cms/issues/6444)
 
-[^120]: Netlify/Decap CMS [#2727](https://github.com/decaporg/decap-cms/issues/2727), [#4884](https://github.com/decaporg/decap-cms/issues/4884), [#6908](https://github.com/decaporg/decap-cms/discussions/6908)
+[^120]: Netlify/Decap CMS [#1245](https://github.com/decaporg/decap-cms/issues/1245), [#2727](https://github.com/decaporg/decap-cms/issues/2727), [#4884](https://github.com/decaporg/decap-cms/issues/4884), [#6908](https://github.com/decaporg/decap-cms/discussions/6908)
 
 [^121]: Netlify/Decap CMS [#7262](https://github.com/decaporg/decap-cms/issues/7262)
 
@@ -2736,7 +2738,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^304]: Netlify/Decap CMS [#4538](https://github.com/decaporg/decap-cms/issues/4538), [#6371](https://github.com/decaporg/decap-cms/issues/6371)
 
-[^305]: Netlify/Decap CMS [#1483](https://github.com/decaporg/decap-cms/issues/1483)
+[^305]: Netlify/Decap CMS [#1235](https://github.com/decaporg/decap-cms/issues/1235), [#1483](https://github.com/decaporg/decap-cms/issues/1483)
 
 [^306]: Netlify/Decap CMS [#6775](https://github.com/decaporg/decap-cms/issues/6775)
 
@@ -2745,3 +2747,11 @@ This project would not have been possible without the open source Netlify CMS pr
 [^308]: Netlify/Decap CMS [#2405](https://github.com/decaporg/decap-cms/issues/2405), [#3816](https://github.com/decaporg/decap-cms/issues/3816)
 
 [^309]: Netlify/Decap CMS [#2827](https://github.com/decaporg/decap-cms/issues/2827)
+
+[^310]: Netlify/Decap CMS [#3531](https://github.com/decaporg/decap-cms/issues/3531)
+
+[^311]: Netlify/Decap CMS [#3437](https://github.com/decaporg/decap-cms/issues/3437)
+
+[^312]: Netlify/Decap CMS [#1004](https://github.com/decaporg/decap-cms/issues/1004)
+
+[^313]: Netlify/Decap CMS [#542](https://github.com/decaporg/decap-cms/issues/542)
