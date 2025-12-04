@@ -174,7 +174,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - Some missing features will be implemented before or shortly after GA
 - Providing partial [compatibility with Static CMS](#compatibility-with-static-cms)
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **270+ issues, or 585+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **270+ issues, or 590+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
     - 450 issues, or 900 if including duplicates, in the future 💪
@@ -343,6 +343,7 @@ The [GitHub](https://decapcms.org/docs/github-backend/), [GitLab](https://decapc
 - Developers can select the local and remote backends while working on a local server.
 - The Test backend saves entries and assets in the browser’s [origin private file system](https://web.dev/articles/origin-private-file-system) (OPFS) so that changes are not discarded when the browser tab is closed or reloaded.[^194] The persistent storage support works with all modern browsers [except Safari](https://bugs.webkit.org/show_bug.cgi?id=254726).
 - Commit message template supports the `{{author-email}}` template tag to include the author’s email address.
+- API error messages are displayed in a user-friendly manner instead of generic messages like `Failed to fetch`.[^309]
 
 ### Better i18n support
 
@@ -575,6 +576,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - A new item created in a referenced collection is immediately available in the options.[^138]
   - A referenced DateTime field value is displayed in the specified format.[^221]
   - It’s possible to refer to a List field with the `field` option, which produces a single subfield but does not output the subfield `name` in the data, using the `value_field: cities.*.name` syntax. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/400))
+  - Supports the `filters` option to filter available options based on field values in the referenced collection.[^308] The implementation is compatible with Decap CMS.
 - Select
   - It’s possible to select an option with value `0`.[^56]
   - `label` is displayed in the Preview Pane instead of `value`.
@@ -2336,7 +2338,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^101]: Netlify/Decap CMS [#5969](https://github.com/decaporg/decap-cms/issues/5969)
 
-[^102]: Netlify/Decap CMS [#1270](https://github.com/decaporg/decap-cms/issues/1270)
+[^102]: Netlify/Decap CMS [#1270](https://github.com/decaporg/decap-cms/issues/1270), [#7425](https://github.com/decaporg/decap-cms/discussions/7425)
 
 [^103]: Netlify/Decap CMS [#6307](https://github.com/decaporg/decap-cms/issues/6307)
 
@@ -2739,3 +2741,7 @@ This project would not have been possible without the open source Netlify CMS pr
 [^306]: Netlify/Decap CMS [#6775](https://github.com/decaporg/decap-cms/issues/6775)
 
 [^307]: Netlify/Decap CMS [#7133](https://github.com/decaporg/decap-cms/issues/7133)
+
+[^308]: Netlify/Decap CMS [#2405](https://github.com/decaporg/decap-cms/issues/2405), [#3816](https://github.com/decaporg/decap-cms/issues/3816)
+
+[^309]: Netlify/Decap CMS [#2827](https://github.com/decaporg/decap-cms/issues/2827)
