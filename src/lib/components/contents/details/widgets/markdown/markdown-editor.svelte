@@ -134,25 +134,42 @@
         src = URL.createObjectURL(file);
       }
 
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      const onUpdate = () => {
+        if (!file) {
+          return;
+        }
+
+        // Wait until the image editor component is added to the DOM
+        const observer = new MutationObserver((records) => {
+          records.forEach(({ addedNodes }) => {
+            addedNodes.forEach((node) => {
+              if (!(node instanceof HTMLElement) || !node.matches('.preview')) {
+                return;
+              }
+
+              // Dispatch `Select` event so the file is processed in `FileEditor`
+              node
+                .closest('.drop-target')
+                ?.dispatchEvent(new CustomEvent('Select', { detail: { files: [file] } }));
+
+              if (src?.startsWith('blob:')) {
+                URL.revokeObjectURL(src);
+              }
+
+              observer.disconnect();
+            });
+          });
+        });
+
+        observer.observe(outer, { childList: true, subtree: true });
+      };
+
       editor.update(
         () => {
           insertNodes([imageComponent.createNode({ src, alt }), createParagraphNode()]);
         },
-        {
-          // eslint-disable-next-line jsdoc/require-jsdoc
-          onUpdate: async () => {
-            if (!file) {
-              return;
-            }
-
-            await sleep(250);
-
-            const dropTarget = outer.querySelector(`img[src="${src}"]`)?.closest('.drop-target');
-
-            // Dispatch `Select` event so the file is processed in `FileEditor`
-            dropTarget?.dispatchEvent(new CustomEvent('Select', { detail: { files: [file] } }));
-          },
-        },
+        { onUpdate },
       );
     });
   };
