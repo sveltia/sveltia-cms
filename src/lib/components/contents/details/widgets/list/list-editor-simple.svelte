@@ -54,10 +54,9 @@
    * Update the value for the List widget w/o subfield(s). This has to be called from the `input`
    * event handler on `<TextArea>`, not a `inputValue` reaction, because it causes an infinite loop
    * due to {@link setInputValue}.
+   * @param {string[]} [listItems] List items to set. If not provided, split {@link inputValue}.
    */
-  const updateSimpleList = () => {
-    const normalizedValue = inputValue.split(/\n/g);
-
+  const updateSimpleList = (listItems = inputValue.split(/\n/g)) => {
     Object.keys($entryDraft?.[valueStoreKey] ?? {}).forEach((_locale) => {
       if (i18n !== 'duplicate' && _locale !== locale) {
         return;
@@ -69,15 +68,31 @@
         }
       });
 
-      normalizedValue.forEach((val, index) => {
+      listItems.forEach((val, index) => {
         /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][`${keyPath}.${index}`] =
           val;
       });
     });
   };
 
+  /**
+   * Remove empty lines from the input value before saving the entry.
+   */
+  const removeEmptyLines = () => {
+    const listItems = inputValue.split(/\n/g).filter((val) => val.trim());
+
+    inputValue = listItems.join('\n');
+    updateSimpleList(listItems);
+  };
+
   onMount(() => {
     mounted = true;
+
+    window.addEventListener('BeforeEntrySave', removeEmptyLines);
+
+    return () => {
+      window.removeEventListener('BeforeEntrySave', removeEmptyLines);
+    };
   });
 
   $effect(() => {
