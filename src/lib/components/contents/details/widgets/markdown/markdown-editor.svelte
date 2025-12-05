@@ -136,7 +136,7 @@
 
       // eslint-disable-next-line jsdoc/require-jsdoc
       const onUpdate = () => {
-        if (!file) {
+        if (!file || !src) {
           return;
         }
 
@@ -144,20 +144,22 @@
         const observer = new MutationObserver((records) => {
           records.forEach(({ addedNodes }) => {
             addedNodes.forEach((node) => {
-              if (!(node instanceof HTMLElement) || !node.matches('.preview')) {
-                return;
+              if (
+                node instanceof HTMLElement &&
+                node.matches('.preview') &&
+                node.querySelector(`img[src="${src}"]`)
+              ) {
+                // Dispatch `Select` event so the file is processed in `FileEditor`
+                node
+                  .closest('.drop-target')
+                  ?.dispatchEvent(new CustomEvent('Select', { detail: { files: [file] } }));
+
+                if (src?.startsWith('blob:')) {
+                  URL.revokeObjectURL(src);
+                }
+
+                observer.disconnect();
               }
-
-              // Dispatch `Select` event so the file is processed in `FileEditor`
-              node
-                .closest('.drop-target')
-                ?.dispatchEvent(new CustomEvent('Select', { detail: { files: [file] } }));
-
-              if (src?.startsWith('blob:')) {
-                URL.revokeObjectURL(src);
-              }
-
-              observer.disconnect();
             });
           });
         });
