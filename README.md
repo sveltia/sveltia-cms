@@ -102,7 +102,6 @@ This free, open source successor to Netlify/Decap CMS is currently in public bet
   - [v3.0](#v30)
   - [TBD](#tbd)
   - [Non-goals](#non-goals)
-- [Trivia](#trivia)
 - [Related Links](#related-links)
   - [As seen on](#as-seen-on)
 - [Privacy](#privacy)
@@ -126,15 +125,17 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
   - ❌ Discontinued in September 2024 after making meaningful improvements
 - **Sveltia CMS**: not a fork but a **complete rewrite**
   - Started in November 2022, first appeared on GitHub in March 2023
+  - ✅ Relevant issues are being resolved regardless of their age or status
   - ✅ Actively developed with frequent releases and numerous improvements
-  - ✅ Relevant issues are being addressed regardless of their age or status
   - ✅ Most of bug reports are addressed promptly, usually within a day
+  - ✅ An extensive roadmap
   - ✅ No known unpatched security vulnerabilities, with dependencies kept up-to-date
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
-  - ⚠️ Mostly low activity with only occasional releases and a few minor improvements
   - ⚠️ Seemingly random issues were closed as stale following the takeover
+  - ⚠️ Mostly low activity with only occasional releases and a few minor improvements
   - ⚠️ Bug reports continue to pile up, often without any response
+  - ⚠️ No roadmap
   - ❌ A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities and fatal crashes remain unaddressed
 
 Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is **better by design**:
@@ -176,7 +177,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
   - So far, **275+ issues, or 595+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
-    - 250 issues, or 500 if including duplicates, by GA — We did it! 🎉
+    - 300 issues, or 600 if including duplicates, by GA — Almost there! 🚀
     - 450 issues, or 900 if including duplicates, in the future 💪
     - or every single issue that’s relevant, fixable, and worth dealing with 🔥
   - Issues include everything:
@@ -190,8 +191,6 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
 - Preparing comprehensive, up-to-date, easy-to-understand [documentation](https://github.com/sveltia/sveltia-cms/issues/485)
 - Implementing our own enhancement ideas for every part of the product
-- Responding to requests from the maintainer’s clients
-- Making the code clean and maintainable
 
 ![275 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251204)<br>
 
@@ -2104,14 +2103,6 @@ Due late 2026
 - Enterprise features. We want to keep Sveltia CMS simple and easy to use for small teams and individual developers.
 - Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
 - Creating the longest README file in the world. 😉
-
-## Trivia
-
-- The [original version of Netlify CMS](https://github.com/netlify/netlify-cms-legacy) was built with Ember before being rewritten in React. There was also an [attempt](https://github.com/decaporg/decap-cms/issues/328) to replace React with Preact. Now we have completely rebuilt it in Svelte 4 and then in Svelte 5. So this is effectively the third/fourth time the application has gone through a framework migration. One more thing: We may migrate to [Ripple](https://www.ripplejs.com/) in the future if it looks promising.
-- We write our code in [TypeScript-flavoured JavaScript](https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html) to maintain readability while enabling strict type checking. During the build process, our type definitions are first converted to a TypeScript declaration file and then to a [JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file). We are not alone: [Svelte](https://devclass.com/2023/05/11/typescript-is-not-worth-it-for-developing-libraries-says-svelte-author-as-team-switches-to-javascript-and-jsdoc/) and [Prism](https://github.com/PrismJS/prism/pull/4000) have both dropped TypeScript in favour of JSDoc.
-- Our [local repository workflow](#working-with-a-local-git-repository) shares implementation with the Test backend, as both utilize the [File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API), allowing us to reduce maintenance costs. The seamless local workflow is critical not only for an improved DX, but also for our rapid application development.
-- What is Sveltia, by the way? It implies something related to Svelte, but it has [another meaning](https://en.wikipedia.org/wiki/Sveltia).
-- The maintainer may look 25 years younger than his actual age. [Here’s why](https://github.com/kyoshino#fun-facts-about-me).
 
 ## Related Links
 
