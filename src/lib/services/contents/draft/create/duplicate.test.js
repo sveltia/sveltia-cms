@@ -178,12 +178,14 @@ describe('contents/draft/create/duplicate', () => {
         fieldConfig: { widget: 'hidden', default: 'new-default-value', i18n: true },
         keyPath: 'hiddenField',
         locale: 'en',
+        defaultLocale: 'en',
       });
 
       expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledWith({
         fieldConfig: { widget: 'hidden', default: 'new-default-value', i18n: true },
         keyPath: 'hiddenField',
         locale: 'ja',
+        defaultLocale: 'en',
       });
     });
 
@@ -239,6 +241,7 @@ describe('contents/draft/create/duplicate', () => {
         fieldConfig: { widget: 'hidden', default: 'new-default-value', i18n: 'duplicate' },
         keyPath: 'hiddenField',
         locale: 'en',
+        defaultLocale: 'en',
       });
 
       // Should not be called for Japanese locale

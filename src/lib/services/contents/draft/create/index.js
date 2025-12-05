@@ -141,7 +141,7 @@ export const createDraft = ({
   const originalValues = Object.fromEntries(
     enabledLocales.map((locale) =>
       isNew
-        ? [locale, getDefaultValues(fields, locale, dynamicValues)]
+        ? [locale, getDefaultValues({ fields, locale, defaultLocale, dynamicValues })]
         : [locale, structuredClone(locales?.[locale]?.content)],
     ),
   );
@@ -158,6 +158,7 @@ export const createDraft = ({
     collectionFile,
     fields,
     originalEntry: isNew ? undefined : originalEntry,
+    defaultLocale,
     originalLocales,
     currentLocales: structuredClone(originalLocales),
     originalSlugs,

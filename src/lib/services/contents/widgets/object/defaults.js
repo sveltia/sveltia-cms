@@ -20,7 +20,7 @@ import { isFieldRequired } from '$lib/services/contents/entry/fields';
  * Object fields do not support dynamic values.
  * @returns {Record<FieldKeyPath, any>} Default value map.
  */
-export const getDefaultValueMap = ({ fieldConfig, keyPath, locale }) => {
+export const getDefaultValueMap = ({ fieldConfig, keyPath, locale, defaultLocale }) => {
   const { default: defaultValue } = /** @type {ObjectField} */ (fieldConfig);
   const { fields: subFields } = /** @type {ObjectFieldWithSubFields} */ (fieldConfig);
   const { types } = /** @type {ObjectFieldWithTypes} */ (fieldConfig);
@@ -54,6 +54,7 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, locale }) => {
         keyPath: [keyPath, _subField.name].join('.'),
         fieldConfig: _subField,
         locale,
+        defaultLocale,
         dynamicValues: {},
       });
     });

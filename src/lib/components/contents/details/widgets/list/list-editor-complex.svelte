@@ -168,7 +168,7 @@
           return structuredClone(valueList[dupIndex]);
         }
 
-        const item = unflatten(getDefaultValues(subFields, locale));
+        const item = unflatten(getDefaultValues({ fields: subFields, locale, defaultLocale }));
 
         return hasSingleSubField && field ? item[field.name] : item;
       })();

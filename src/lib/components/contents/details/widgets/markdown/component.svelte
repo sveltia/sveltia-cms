@@ -117,7 +117,9 @@
 
     untrack(() => {
       if ($entryDraft && locale && keyPath) {
-        values ??= unflatten(getDefaultValues(fields, locale)) ?? {};
+        const { defaultLocale } = $entryDraft;
+
+        values ??= unflatten(getDefaultValues({ fields, locale, defaultLocale })) ?? {};
         values.__sc_component_name = componentName;
 
         if (!equal(values, currentValues)) {

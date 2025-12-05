@@ -42,7 +42,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'metadata.title': '',
@@ -62,7 +68,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({ metadata: null });
     });
@@ -90,7 +102,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'content';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({ content: null });
     });
@@ -127,7 +145,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'metadata.title': 'Default Title',
@@ -149,7 +173,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({});
     });
@@ -178,7 +208,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'settings';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'settings.config.enabled': true,
@@ -202,7 +238,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'metadata.title': '',
@@ -220,7 +262,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'metadata.title': '',
@@ -237,7 +285,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'metadata.title': '',
@@ -256,7 +310,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'simple';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'simple.title': 'Test',
@@ -273,7 +333,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'parent.child.metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'parent.child.metadata.title': 'Test',
@@ -297,6 +363,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '{"title":"Dynamic Title"}',
       });
 
@@ -321,7 +388,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'metadata.title': 'Default Title',
@@ -344,7 +417,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'post';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'post.title': 'Default Title',
@@ -367,7 +446,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'metadata.title': '',
@@ -390,7 +475,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'post';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'post.title': 'Main Title',
@@ -412,7 +503,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'article';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'article.title': 'Post Title',
@@ -435,7 +532,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'entry';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'entry.title': 'Default Title',
@@ -463,7 +566,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'post';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       // Object default should take precedence
       expect(result).toEqual({
@@ -483,7 +592,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'metadata.title': '',
@@ -500,7 +615,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'metadata.title': 'Test',
@@ -526,7 +647,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'root';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         'root.level1.level2.level3.deep': 'value',
@@ -546,7 +673,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'metadata';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({});
     });

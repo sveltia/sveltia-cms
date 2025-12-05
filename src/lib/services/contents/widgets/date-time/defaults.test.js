@@ -20,7 +20,13 @@ describe('getDefaultValueMap', () => {
     };
 
     const keyPath = 'test.field';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ 'test.field': '' });
   });
@@ -33,7 +39,13 @@ describe('getDefaultValueMap', () => {
     };
 
     const keyPath = 'test.field';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ 'test.field': '2023-12-25' });
   });
@@ -46,7 +58,13 @@ describe('getDefaultValueMap', () => {
     };
 
     const keyPath = 'test.field';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result['test.field']).toBeDefined();
     expect(typeof result['test.field']).toBe('string');
@@ -63,7 +81,13 @@ describe('getDefaultValueMap', () => {
     };
 
     const keyPath = 'test.field';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ 'test.field': '' });
   });
@@ -82,6 +106,7 @@ describe('getDefaultValueMap', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '2024-01-01',
       });
 
@@ -101,6 +126,7 @@ describe('getDefaultValueMap', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '{{now}}',
       });
 
@@ -122,6 +148,7 @@ describe('getDefaultValueMap', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '',
       });
 
@@ -141,6 +168,7 @@ describe('getDefaultValueMap', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: undefined,
       });
 
@@ -160,6 +188,7 @@ describe('getDefaultValueMap', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '2024-01-01T10:30:00.000Z',
       });
 

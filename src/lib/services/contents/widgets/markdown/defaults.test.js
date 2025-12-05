@@ -22,7 +22,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'content';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({
         content: '# Hello World\n\nThis is a **markdown** document.',
@@ -36,7 +42,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'content';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({ content: '' });
     });
@@ -50,7 +62,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'content';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({ content: '' });
     });
@@ -63,7 +81,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'content';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({ content: '' });
     });
@@ -76,7 +100,13 @@ describe('Test getDefaultValueMap()', () => {
       };
 
       const keyPath = 'article.body';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
 
       expect(result).toEqual({ 'article.body': 'Sample content' });
     });
@@ -96,6 +126,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '# Dynamic Content\n\nThis is dynamic.',
       });
 
@@ -117,6 +148,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue:
           '<script>alert("xss")</script># Safe Content\n\n<img src="x" onerror="alert(1)">Safe text',
       });
@@ -141,6 +173,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '',
       });
 
@@ -159,6 +192,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: 'Dynamic markdown content',
       });
 
@@ -178,6 +212,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '# Title\n\n**Bold** and *italic* text\n\n- List item 1\n- List item 2',
       });
 
@@ -199,6 +234,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: undefined,
       });
 

@@ -131,7 +131,7 @@
     }
 
     const newContent = Object.fromEntries(
-      Object.entries(getDefaultValues(subFields, locale)) //
+      Object.entries(getDefaultValues({ fields: subFields, locale, defaultLocale })) //
         .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
     );
 

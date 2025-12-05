@@ -45,7 +45,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'attachment';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ attachment: '' });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -61,7 +67,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'attachment';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ attachment: '/path/to/default-file.pdf' });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -77,7 +89,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'attachment';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ attachment: '' });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -93,7 +111,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'attachment';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ attachment: '' });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -109,7 +133,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'attachments';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({});
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -126,7 +156,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'attachments';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       attachments: [],
@@ -147,7 +183,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'attachments';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({});
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -164,7 +206,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'attachments';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       attachments: [],
@@ -184,7 +232,14 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'attachment';
     const dynamicValue = '/dynamic/path/file.pdf';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default', dynamicValue });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+      dynamicValue,
+    });
 
     expect(result).toEqual({ attachment: '/dynamic/path/file.pdf' });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -200,7 +255,14 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'attachment';
     const dynamicValue = '';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default', dynamicValue });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+      dynamicValue,
+    });
 
     expect(result).toEqual({ attachment: '' });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -217,7 +279,14 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'attachments';
     const dynamicValue = '/path/to/file1.pdf, /path/to/file2.jpg, /path/to/file3.png';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default', dynamicValue });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+      dynamicValue,
+    });
 
     expect(result).toEqual({
       attachments: [],
@@ -239,7 +308,14 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'attachments';
     const dynamicValue = '/path/to/file1.pdf, , /path/to/file2.jpg,   , /path/to/file3.png';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default', dynamicValue });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+      dynamicValue,
+    });
 
     expect(result).toEqual({
       attachments: [],
@@ -261,7 +337,14 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'attachments';
     const dynamicValue = '';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default', dynamicValue });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+      dynamicValue,
+    });
 
     expect(result).toEqual({});
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -278,7 +361,14 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'attachments';
     const dynamicValue = '/path/to/single-file.pdf';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default', dynamicValue });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+      dynamicValue,
+    });
 
     expect(result).toEqual({
       attachments: [],
@@ -298,7 +388,14 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'attachment';
     const dynamicValue = '/path/to/dynamic-file.pdf';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default', dynamicValue });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+      dynamicValue,
+    });
 
     expect(result).toEqual({ attachment: '/path/to/dynamic-file.pdf' });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -316,7 +413,14 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'attachments';
     const dynamicValue = '/path/to/dynamic1.pdf, /path/to/dynamic2.jpg';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default', dynamicValue });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+      dynamicValue,
+    });
 
     expect(result).toEqual({
       attachments: [],
@@ -337,7 +441,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'attachment';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ attachment: '' });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
@@ -355,7 +465,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'attachments';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({});
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);

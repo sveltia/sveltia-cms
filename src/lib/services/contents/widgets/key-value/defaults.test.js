@@ -31,7 +31,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'metadata';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       'metadata.key1': 'value1',
@@ -47,7 +53,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'metadata';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       'metadata.': '',
@@ -62,7 +74,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'metadata';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({});
   });
@@ -74,7 +92,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'metadata';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ 'metadata.': '' });
   });
@@ -92,7 +116,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'config';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       'config.count': '42',
@@ -118,6 +148,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '{"key1": "dynamic1", "key3": "dynamic3"}',
       });
 
@@ -142,6 +173,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: 'invalid-json',
       });
 
@@ -165,6 +197,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '"string-value"',
       });
 
@@ -188,6 +221,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '["array", "value"]',
       });
 
@@ -208,6 +242,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '{"str": "value", "num": 42, "bool": true, "null": null}',
       });
 
@@ -229,6 +264,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '{}',
       });
 
@@ -248,6 +284,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '{"key1": "value1", "key2": "value2"}',
       });
 
@@ -272,6 +309,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: undefined,
       });
 

@@ -21,7 +21,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ isEnabled: true });
   });
@@ -34,7 +40,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -46,7 +58,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -60,7 +78,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -74,7 +98,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -88,7 +118,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -102,7 +138,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'isEnabled';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ isEnabled: false });
   });
@@ -116,7 +158,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'settings.notifications.email';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({ 'settings.notifications.email': true });
   });
@@ -135,6 +183,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: 'true',
       });
 
@@ -154,6 +203,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: 'false',
       });
 
@@ -173,6 +223,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: 'something-else',
       });
 
@@ -192,6 +243,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: 'true',
       });
 
@@ -210,6 +262,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: 'true',
       });
 
@@ -229,6 +282,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '',
       });
 
@@ -248,6 +302,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: undefined,
       });
 

@@ -58,7 +58,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'count';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ count: 42 });
   });
@@ -72,7 +72,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'enabled';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ enabled: true });
   });
@@ -86,7 +86,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'config';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ config: { key: 'value' } });
   });
@@ -100,7 +100,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'identifier';
     const locale = 'en';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ identifier: 'prefix-en-suffix' });
   });
@@ -114,7 +114,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'timestamp';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ timestamp: 'created-2023-06-15T10:30:00.000Z' });
   });
@@ -128,7 +128,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'identifier';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ identifier: 'id-full-uuid-1234-5678-90ab-cdef' });
   });
@@ -142,7 +142,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'identifier';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ identifier: 'id-short-uuid-123' });
   });
@@ -156,7 +156,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'identifier';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ identifier: 'id-shorter-uuid' });
   });
@@ -170,7 +170,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'composite';
     const locale = 'fr';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({
       composite: 'fr-2023-06-15T10:30:00.000Z-short-uuid-123',
@@ -186,7 +186,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'test';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ test: 'prefix--suffix' });
   });
@@ -200,7 +200,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'static';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ static: 'static-value' });
   });
@@ -214,7 +214,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'empty';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ empty: '' });
   });
@@ -227,7 +227,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'undefined';
     const locale = '_default';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ undefined });
   });
@@ -241,7 +241,7 @@ describe('Test getDefaultValueMap()', () => {
 
     const keyPath = 'meta.hidden.id';
     const locale = 'ja';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
     expect(result).toEqual({ 'meta.hidden.id': 'ja-value' });
   });
@@ -261,6 +261,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale,
+        defaultLocale: locale,
         dynamicValue: 'dynamic-value',
       });
 
@@ -281,6 +282,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale,
+        defaultLocale: locale,
         dynamicValue: 'created-{{datetime}}-{{locale}}',
       });
 
@@ -302,6 +304,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale,
+        defaultLocale: locale,
         dynamicValue: '{{locale}}-{{datetime}}-{{uuid}}-{{uuid_short}}-{{uuid_shorter}}',
       });
 
@@ -324,6 +327,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale,
+        defaultLocale: locale,
         dynamicValue: '',
       });
 
@@ -343,7 +347,7 @@ describe('Test getDefaultValueMap()', () => {
 
       const keyPath = 'author_login';
       const locale = '_default';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
       expect(result).toEqual({ author_login: 'user-johndoe' });
     });
@@ -359,7 +363,7 @@ describe('Test getDefaultValueMap()', () => {
 
       const keyPath = 'author_name';
       const locale = '_default';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
       expect(result).toEqual({ author_name: 'author-John Doe' });
     });
@@ -375,7 +379,7 @@ describe('Test getDefaultValueMap()', () => {
 
       const keyPath = 'author_email';
       const locale = '_default';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
       expect(result).toEqual({ author_email: 'email-john@example.com' });
     });
@@ -396,7 +400,7 @@ describe('Test getDefaultValueMap()', () => {
 
       const keyPath = 'author_info';
       const locale = '_default';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
       expect(result).toEqual({
         author_info: 'by John Doe (johndoe) <john@example.com>',
@@ -420,7 +424,7 @@ describe('Test getDefaultValueMap()', () => {
 
       const keyPath = 'composite';
       const locale = 'en';
-      const result = getDefaultValueMap({ fieldConfig, keyPath, locale });
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
       expect(result.composite).toBe(
         'en-John Doe-2023-06-15T10:30:00.000Z-johndoe-short-uuid-123-john@example.com',

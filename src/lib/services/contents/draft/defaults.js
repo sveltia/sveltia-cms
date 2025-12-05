@@ -48,12 +48,25 @@ export const GET_DEFAULT_VALUE_MAP_FUNCTIONS = {
  * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
  * @param {Field} args.fieldConfig Field configuration.
  * @param {InternalLocaleCode} args.locale Locale.
+ * @param {InternalLocaleCode} args.defaultLocale Default locale of the entry draft.
  * @param {Record<string, string>} args.dynamicValues Dynamic default values.
  * @returns {void} The `content` object is modified in place.
  */
-export const populateDefaultValue = ({ content, keyPath, fieldConfig, locale, dynamicValues }) => {
+export const populateDefaultValue = ({
+  content,
+  keyPath,
+  fieldConfig,
+  locale,
+  defaultLocale,
+  dynamicValues,
+}) => {
   // @ts-ignore `default` is not defined in the Compute and custom field types
-  const { widget: widgetName = 'string', default: defaultValue } = fieldConfig;
+  const { widget: widgetName = 'string', default: defaultValue, i18n = false } = fieldConfig;
+
+  // For non-default locales, only set the default value if the field is i18n-enabled
+  if (locale !== defaultLocale && [false, 'none'].includes(i18n)) {
+    return;
+  }
 
   // The `compute` widget doesn’t have the `default` option, so we just set an empty string,
   // otherwise the field won’t work properly
@@ -70,10 +83,12 @@ export const populateDefaultValue = ({ content, keyPath, fieldConfig, locale, dy
       ? dynamicValues[keyPath].trim() || undefined
       : undefined;
 
-  if (widgetName in GET_DEFAULT_VALUE_MAP_FUNCTIONS) {
+  const getDefaultValue = GET_DEFAULT_VALUE_MAP_FUNCTIONS[widgetName];
+
+  if (getDefaultValue) {
     Object.assign(
       content,
-      GET_DEFAULT_VALUE_MAP_FUNCTIONS[widgetName]({ fieldConfig, keyPath, locale, dynamicValue }),
+      getDefaultValue({ fieldConfig, keyPath, locale, defaultLocale, dynamicValue }),
     );
 
     return;
@@ -87,13 +102,15 @@ export const populateDefaultValue = ({ content, keyPath, fieldConfig, locale, dy
 /**
  * Get the default values for the given fields. If dynamic default values are given, these values
  * take precedence over static default values defined with the CMS configuration.
- * @param {Field[]} fields Field list of a collection.
- * @param {InternalLocaleCode} locale Locale.
- * @param {Record<string, string>} [dynamicValues] Dynamic default values.
+ * @param {object} args Arguments.
+ * @param {Field[]} args.fields Field list of a collection.
+ * @param {InternalLocaleCode} args.locale Locale.
+ * @param {InternalLocaleCode} args.defaultLocale Default locale of the entry draft.
+ * @param {Record<string, string>} [args.dynamicValues] Dynamic default values.
  * @returns {FlattenedEntryContent} Flattened entry content for creating a new draft content or
  * adding a new list item.
  */
-export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
+export const getDefaultValues = ({ fields, locale, defaultLocale, dynamicValues = {} }) => {
   /** @type {FlattenedEntryContent} */
   const content = {};
 
@@ -103,6 +120,7 @@ export const getDefaultValues = (fields, locale, dynamicValues = {}) => {
       keyPath: fieldConfig.name,
       fieldConfig,
       locale,
+      defaultLocale,
       dynamicValues,
     });
   });

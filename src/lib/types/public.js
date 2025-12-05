@@ -440,8 +440,8 @@
  * @property {'hidden'} widget Widget name.
  * @property {any} [default] Default value. Accepts any data type that can be stored with the
  * configured file format.
- * @property {false | 'duplicate'} [i18n] Whether to enable the field in locales other than the
- * default. Unlike other visible fields, hidden fields can be configured to be enabled in
+ * @property {false | 'duplicate' | 'none'} [i18n] Whether to enable the field in locales other than
+ * the default. Unlike other visible fields, hidden fields can be configured to be enabled in
  * non-default locales only when set to `duplicate`. In that case, the default locale’s value is
  * automatically copied to other locales. Default: `false`. This option only works when i18n is set
  * up with the global and collection-level `i18n` option.

@@ -641,6 +641,7 @@
  * @property {Field[]} fields Field definition for the collection or collection file. If index file
  * inclusion is enabled and the draft is the index file, it will be the index file’s fields.
  * @property {Entry} [originalEntry] Original entry or `undefined` if it’s a new entry draft.
+ * @property {InternalLocaleCode} defaultLocale Default locale code.
  * @property {LocaleStateMap} originalLocales Original locale state at the time of draft creation.
  * @property {LocaleStateMap} currentLocales Current locale state.
  * @property {LocaleSlugMap} originalSlugs Key is a locale code, value is the original slug.
@@ -989,6 +990,7 @@
  * @property {Field} fieldConfig Field configuration.
  * @property {FieldKeyPath} keyPath Field key path, e.g. `author.name`.
  * @property {LocaleCode} locale Locale code.
+ * @property {InternalLocaleCode} defaultLocale Default locale of the entry draft.
  * @property {string} [dynamicValue] Dynamic default value parsed from the URL query string.
  * @see https://decapcms.org/docs/dynamic-default-values/
  */

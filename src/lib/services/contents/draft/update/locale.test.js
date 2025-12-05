@@ -45,6 +45,7 @@ describe('draft/update/locale', () => {
         { name: 'body', widget: 'markdown', i18n: true },
         { name: 'date', widget: 'datetime', i18n: false },
       ],
+      defaultLocale: 'en',
       collection: {
         _i18n: { defaultLocale: 'en' },
       },
@@ -227,7 +228,11 @@ describe('draft/update/locale', () => {
       toggleLocale('ja');
 
       expect(mockUpdate).toHaveBeenCalled();
-      expect(vi.mocked(getDefaultValues)).toHaveBeenCalled();
+      expect(vi.mocked(getDefaultValues)).toHaveBeenCalledWith({
+        fields: mockEntryDraft.fields,
+        locale: 'ja',
+        defaultLocale: 'en',
+      });
       expect(vi.mocked(createProxy)).toHaveBeenCalled();
     });
 

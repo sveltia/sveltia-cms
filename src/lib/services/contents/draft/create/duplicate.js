@@ -67,6 +67,7 @@ export const duplicateDraft = () => {
               fieldConfig: /** @type {HiddenField} */ (fieldConfig),
               keyPath,
               locale,
+              defaultLocale,
             }),
           );
         }

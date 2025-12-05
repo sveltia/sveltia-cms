@@ -64,13 +64,13 @@ export const copyDefaultLocaleValues = (content) => {
  */
 export const toggleLocale = (locale) => {
   /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
-    const { fields, currentLocales, currentValues, validities } = _draft;
+    const { fields, defaultLocale, currentLocales, currentValues, validities } = _draft;
     const enabled = !currentLocales[locale];
 
     // Initialize the content for the locale
     if (enabled && !currentValues[locale]) {
       const { collectionName, fileName, originalValues } = _draft;
-      const newContent = getDefaultValues(fields, locale);
+      const newContent = getDefaultValues({ fields, locale, defaultLocale });
 
       return {
         ..._draft,

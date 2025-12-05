@@ -22,7 +22,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: 'console.log("hello");',
@@ -38,7 +44,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: '',
@@ -55,7 +67,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: {},
@@ -77,7 +95,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: {},
@@ -99,7 +123,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: {},
@@ -120,7 +150,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: {},
@@ -141,7 +177,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: {},
@@ -162,7 +204,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: {},
@@ -180,7 +228,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: {},
@@ -197,7 +251,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: {},
@@ -221,7 +281,13 @@ describe('Test getDefaultValueMap()', () => {
     };
 
     const keyPath = 'script';
-    const result = getDefaultValueMap({ fieldConfig, keyPath, locale: '_default' });
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath,
+      locale: '_default',
+      defaultLocale: '_default',
+    });
 
     expect(result).toEqual({
       script: {},
@@ -245,6 +311,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: 'console.log("dynamic");',
       });
 
@@ -267,6 +334,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: 'console.log("dynamic");',
       });
 
@@ -290,6 +358,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: 'console.log("new");',
       });
 
@@ -312,6 +381,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: undefined,
       });
 
@@ -334,6 +404,7 @@ describe('Test getDefaultValueMap()', () => {
         fieldConfig,
         keyPath,
         locale: '_default',
+        defaultLocale: '_default',
         dynamicValue: '',
       });
 
