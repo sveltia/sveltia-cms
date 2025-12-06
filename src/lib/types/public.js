@@ -1141,7 +1141,8 @@
  * `{{slug}}/index`.
  * @property {CollectionFilter} [filter] Entry filter.
  * @property {boolean} [create] Whether to allow users to create entries in the collection. Default:
- * `false`.
+ * `true`. Note that the default value is `false` in Netlify/Decap CMS, whereas Sveltia CMS sets it
+ * to `true` to provide a better out-of-the-box experience.
  * @property {boolean} [delete] Whether to allow users to delete entries in the collection. Default:
  * `true`.
  * @property {FileExtension} [extension] File extension. Default: `md`.

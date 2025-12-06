@@ -91,7 +91,7 @@ export const canCreateEntry = (collection) => {
     return true;
   }
 
-  const { create = false, limit = Infinity } = collection;
+  const { create = true, limit = Infinity } = collection;
 
   return create && getEntriesByCollection(collection.name).length < limit;
 };

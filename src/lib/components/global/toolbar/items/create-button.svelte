@@ -34,7 +34,7 @@
             name,
             label,
             label_singular: labelSingular,
-            create = false,
+            create = true,
             limit = Infinity,
           } = collection}
           <MenuItem

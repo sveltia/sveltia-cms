@@ -338,12 +338,29 @@ describe('canCreateEntry()', () => {
     const collection = {
       name: 'posts',
       _type: 'entry',
-      create: true,
       _i18n: { defaultLocale: 'en' },
     };
 
     // Mock allEntries store to return many entries (no limit, so should still return true)
     vi.mocked(get).mockReturnValue(Array.from({ length: 1000 }, (_, i) => ({ id: String(i + 1) })));
+
+    expect(canCreateEntry(collection)).toBe(true);
+  });
+
+  test('returns true for entry collection when create is not specified (defaults to true)', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    // Mock allEntries store to return entries under default limit
+    const entries = [{ id: '1' }, { id: '2' }];
+
+    vi.mocked(get).mockReturnValue(entries);
+    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
 
     expect(canCreateEntry(collection)).toBe(true);
   });
