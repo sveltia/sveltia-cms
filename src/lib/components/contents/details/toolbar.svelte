@@ -14,7 +14,6 @@
     Toolbar,
     TruncatedText,
   } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import { _, locale as appLocale } from 'svelte-i18n';
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
@@ -118,10 +117,6 @@
     if (!collection) {
       return;
     }
-
-    // Notify widgets to update the draft before saving
-    window.dispatchEvent(new CustomEvent('BeforeEntrySave'));
-    await sleep(50);
 
     try {
       const savedEntry = await saveEntry({ skipCI });

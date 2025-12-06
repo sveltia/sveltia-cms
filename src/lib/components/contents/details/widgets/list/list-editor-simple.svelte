@@ -87,12 +87,6 @@
 
   onMount(() => {
     mounted = true;
-
-    window.addEventListener('BeforeEntrySave', removeEmptyLines);
-
-    return () => {
-      window.removeEventListener('BeforeEntrySave', removeEmptyLines);
-    };
   });
 
   $effect(() => {
@@ -116,5 +110,8 @@
   aria-errormessage="{fieldId}-error"
   oninput={() => {
     updateSimpleList();
+  }}
+  onblur={() => {
+    removeEmptyLines();
   }}
 />
