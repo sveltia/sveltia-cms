@@ -146,12 +146,11 @@ Sveltia CMS is the only project that doesn’t inherit the complexity, technical
 - We closely monitor and analyze the predecessor’s issue tracker
 - We rearchitect the entire user experience (UX) and developer experience (DX)
 
-This “total reboot” has enabled us to implement hundreds of improvements without getting stuck in a legacy system. We are fully committed to making Sveltia CMS the best successor to Netlify CMS:
+This “total reboot” has enabled us to implement hundreds of improvements without getting stuck in a legacy system. Furthermore:
 
 - We dedicate significant time and effort to modernizing the platform
 - We continue to address [issues](https://github.com/decaporg/decap-cms/issues) reported in the predecessor’s repository
 - We materialize the enhancements that Netlify CMS users have long desired
-- We deliver [regular updates](https://github.com/sveltia/sveltia-cms/releases) and [clear goals](#roadmap)
 
 For that reason, Sveltia CMS is the **true successor to Netlify CMS** — not just a spiritual successor or a mere alternative — and the best choice for users looking to migrate from the predecessor, other successors, or even other CMS solutions.
 
@@ -298,7 +297,7 @@ We’ve made various improvements to help you get your work done faster and more
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
 - We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253] If you use [deprecated options](#deprecations) in a supported code editor, you should receive a warning.
 - Improved TypeScript support:
-  - We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a site config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
+  - We keep our type definitions for `CMS.init()` and other methods complete, accurate, up-to-date and annotated.[^190][^191][^192][^193][^227] This makes it easier to provide a config object when [manually initializing](https://decapcms.org/docs/manual-initialization/) the CMS.
 - Config validation enhancements:
   - Sveltia CMS has additional validation rules designed to prevent common misconfigurations that could lead to runtime errors:
     - Common backend misconfigurations, such as an incorrect repository name or a missing OAuth client ID[^303]
@@ -707,7 +706,7 @@ We are working hard to implement several missing features from Netlify/Decap CMS
   - Preview for [custom editor components](https://decapcms.org/docs/custom-widgets/#registereditorcomponent) (`CMS.registerEditorComponent`)
   - [Custom widgets](https://decapcms.org/docs/custom-widgets/) (`CMS.registerWidget`)
   - [Custom preview templates](https://decapcms.org/docs/customization/#registerpreviewtemplate) (`CMS.registerPreviewTemplate`) ([#51](https://github.com/sveltia/sveltia-cms/issues/51))
-- [Documentation](https://github.com/sveltia/sveltia-cms/issues/485) and site config validation are under development.
+- [Documentation](https://github.com/sveltia/sveltia-cms/issues/485) and config validation are under development.
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md) and a [demo site](https://github.com/sveltia/sveltia-cms/issues/1) will follow soon.
 - Due to the complexity, we have decided to **defer the following features to the 1.x or 2.0 release** due mid-2026. Netlify/Decap CMS has dozens of open issues with these collaboration and beta features — we want to implement them the right way.
   - [Editorial workflow](https://decapcms.org/docs/editorial-workflows/)
@@ -2019,7 +2018,7 @@ Due early 2026
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling some more Netlify/Decap CMS issues:
   - PKCE for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub but is [planned for Q4 2025](https://github.com/github/roadmap/issues/1153)
-  - Thorough site config validation[^246]
+  - Thorough config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
 - Accessibility audit
 - [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
