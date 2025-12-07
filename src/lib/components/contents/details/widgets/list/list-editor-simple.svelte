@@ -76,13 +76,15 @@
   };
 
   /**
-   * Remove empty lines from the input value before saving the entry.
+   * Trim spaces on each line and remove any empty lines from the list.
    */
-  const removeEmptyLines = () => {
-    const listItems = inputValue.split(/\n/g).filter((val) => val.trim());
+  const cleanUpValue = () => {
+    currentValue = inputValue
+      .split(/\n/g)
+      .map((val) => val.trim())
+      .filter((val) => !!val);
 
-    inputValue = listItems.join('\n');
-    updateSimpleList(listItems);
+    updateSimpleList(currentValue);
   };
 
   onMount(() => {
@@ -112,6 +114,6 @@
     updateSimpleList();
   }}
   onblur={() => {
-    removeEmptyLines();
+    cleanUpValue();
   }}
 />
