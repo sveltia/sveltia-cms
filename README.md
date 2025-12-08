@@ -352,7 +352,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - The List and Object widgets support the `i18n: duplicate` field configuration so that changes made with these widgets are duplicated between locales.[^7][^68] The `i18n` configuration can normally be used for the subfields.
   - Gives more control over [entry file paths](#controlling-entry-file-paths):
     - The new `multiple_folders_i18n_root` i18n structure allows to have locale folders below the project root: `/<locale>/<folder>/<path>.<extension>`.[^182]
-    - The new `omit_default_locale_from_filename` i18n option allows to exclude the default locale from filenames. This option applies to entry collections with the `multiple_files` i18n structure enabled, as well as to file collection items with the `file` path ending with `.{{locale}}.<extension>`, aiming to support [Zola’s multilingual sites](https://www.getzola.org/documentation/content/multilingual/). ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/394))
+    - The new `omit_default_locale_from_filename` i18n option allows to exclude the default locale from filenames. This option applies to folder collections with the `multiple_files` i18n structure enabled, as well as to file collection items with the `file` path ending with `.{{locale}}.<extension>`, aiming to support [Zola’s multilingual sites](https://www.getzola.org/documentation/content/multilingual/). ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/394))
     - [Entry-relative media folders](https://decapcms.org/docs/collection-folder/#media-and-public-folder) can be used in conjunction with the `multiple_folders` i18n structure.[^21]
   - Entry slug enhancements:
     - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug), which is a good option for locales that write in non-Latin characters.
@@ -412,6 +412,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - Sveltia CMS supports [singletons](#using-singletons), a simple form of a file collection.[^233]
     - File collections support files without extensions.[^255] This is useful for [editing site deployment configuration files](#editing-site-deployment-configuration-files), such as `_headers` and `_redirects`.
     - Each file in a file collection has the `format` and `frontmatter_delimiter` options, which can be used to specify the file format, making it possible to have `yaml-frontmatter`, `toml-frontmatter` and `json-frontmatter` side by side.[^218]
+  - The `create` option for folder collections defaults to `true`, providing a better out-of-the-box experience.
   - The collection `label` defaults to the `name` value according to the [Decap CMS document](https://decapcms.org/docs/configuration-options/#collections), while Netlify/Decap CMS actually throws a configuration error if the `label` option is omitted.
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
@@ -755,6 +756,7 @@ There are some differences in behaviour between Sveltia CMS and Netlify/Decap CM
 - In some cases, the [data output](#better-data-output) of Sveltia CMS may differ from that of Netlify/Decap CMS. Notably, Sveltia CMS does not omit empty optional fields by default. If you have data validation in your site generator, this could cause issues. Use the `omit_empty_optional_fields` [output option](#controlling-data-output) if needed.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running your own remote server and serving content over HTTP, the CMS will not work. We recommend obtaining a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - As of [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), the `sanitize_preview` option for the [Markdown](https://decapcms.org/docs/widgets/#Markdown) widget is set to `true` by default to prevent potential XSS attacks via entry previews. We recommend keeping this option enabled unless disabling it fixes a broken preview and you fully trust all users of your CMS.
+- As of [Sveltia CMS 0.123.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.123.0), the `create` option for folder collections defaults to `true` because, in 99.99% of cases, users want to create new entries and adding `create: true` to every folder collection is redundant. To disable entry creation, set `create: false` explicitly.
 
 There may be other minor differences in behaviour that are not listed here.
 
