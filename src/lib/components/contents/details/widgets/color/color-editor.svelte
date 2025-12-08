@@ -164,7 +164,7 @@
 
       :global {
         .sui.text-input {
-          width: 80px;
+          width: 88px;
           min-width: 0;
         }
 
