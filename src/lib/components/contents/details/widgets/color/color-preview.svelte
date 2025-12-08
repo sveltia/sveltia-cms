@@ -32,7 +32,7 @@
    */
   const hexToInt = (hex) => Number.parseInt(`0x${hex}`, 16);
 
-  const RGBA_REGEX = /^#(?<r>[0-9a-f]{2})(?<g>[0-9a-f]{2})(?<b>[0-9a-f]{2})(?<a>[0-9a-f]{2})?$/;
+  const RGBA_REGEX = /^#(?<r>[0-9a-f]{2})(?<g>[0-9a-f]{2})(?<b>[0-9a-f]{2})(?<a>[0-9a-f]{2})?$/i;
 
   const rgb = $derived.by(() => {
     const { r, g, b, a } = currentValue?.match(RGBA_REGEX)?.groups ?? {};

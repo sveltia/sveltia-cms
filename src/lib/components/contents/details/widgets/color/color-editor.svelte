@@ -38,8 +38,8 @@
   const { allowInput = false, enableAlpha = false } = $derived(fieldConfig);
 
   const id = $props.id();
-  const RGB_REGEX = /^#[0-9a-f]{6}$/;
-  const RGBA_REGEX = /^(?<rgb>#[0-9a-f]{6})(?<a>[0-9a-f]{2})?$/;
+  const RGB_REGEX = /^#[0-9a-f]{6}$/i;
+  const RGBA_REGEX = /^(?<rgb>#[0-9a-f]{6})(?<a>[0-9a-f]{2})?$/i;
 
   /**
    * Update {@link inputValue} and {@link inputAlphaValue} based on {@link currentValue}.
