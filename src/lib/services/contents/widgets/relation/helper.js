@@ -414,10 +414,11 @@ export const processSingleSubfieldList = ({
 };
 
 /**
- * Regex to match complex list fields with subfields (e.g., `cities.*.name`).
+ * Regex to match complex list fields with subfields.
+ * Examples: `cities.*.name` or `colors.customColors.*.colorName`.
  * @type {RegExp}
  */
-const COMPLEX_LIST_FIELD_REGEX = /^([^.]+)\.\*\.([^.]+)$/;
+const COMPLEX_LIST_FIELD_REGEX = /^(.+)\.\*\.(.+)$/;
 
 /**
  * Get the subfield match from group entries.
@@ -492,11 +493,11 @@ export const processComplexListField = ({
     };
 
     groupEntries.forEach(([wildcardFieldName]) => {
-      const wildcardMatch = wildcardFieldName.match(/^([^.]+)\.\*\.([^.]+)$/);
+      const wildcardMatch = wildcardFieldName.match(/^(.+)\.\*\.(.+)$/);
 
       if (wildcardMatch) {
-        const [, , subFieldKey] = wildcardMatch;
-        const currentItemValue = content[`${baseFieldNameForList}.${index}.${subFieldKey}`] || '';
+        const [, baseFieldName, subFieldKey] = wildcardMatch;
+        const currentItemValue = content[`${baseFieldName}.${index}.${subFieldKey}`] || '';
 
         processedTemplates.label = processedTemplates.label.replaceAll(
           `{{${wildcardFieldName}}}`,

@@ -865,6 +865,7 @@ describe('Test getOptions()', async () => {
           return undefined;
         });
       });
+
       test('should correctly parse file collection list field example from Decap CMS docs', () => {
         // Use the same field config as working tests but for file collection
         vi.mocked(getField).mockReturnValue({
@@ -1022,6 +1023,179 @@ describe('Test getOptions()', async () => {
         // This tests the fallback behavior when field config is missing
         expect(result).toBeDefined();
         expect(Array.isArray(result)).toBe(true);
+      });
+    });
+
+    describe('Deeply nested list fields (colors.customColors.*.colorName)', () => {
+      // Test case for the sample configuration with deeply nested list fields
+      /** @type {Entry[]} */
+      const themeFileCollectionEntries = [
+        {
+          id: 'theme-file',
+          slug: 'theme',
+          subPath: 'theme',
+          locales: {
+            _default: {
+              ...localizedEntryProps,
+              content: flatten({
+                colors: {
+                  customColors: [
+                    { colorName: 'Primary Blue', colorValue: '#0066cc' },
+                    { colorName: 'Secondary Green', colorValue: '#00cc66' },
+                    { colorName: 'Accent Red', colorValue: '#cc0000' },
+                  ],
+                },
+              }),
+            },
+          },
+        },
+      ];
+
+      /** @type {InternalFileCollection} */
+      const themeFileCollection = {
+        name: 'options',
+        files: [],
+        _type: 'file',
+        _fileMap: {},
+        _i18n: {
+          defaultLocale: '_default',
+          i18nEnabled: false,
+          allLocales: ['_default'],
+          initialLocales: ['_default'],
+          structure: 'single_file',
+          structureMap: {
+            i18nSingleFile: true,
+            i18nMultiFile: false,
+            i18nMultiFolder: false,
+            i18nRootMultiFolder: false,
+          },
+          canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+          omitDefaultLocaleFromFileName: false,
+        },
+      };
+
+      beforeEach(() => {
+        vi.mocked(getCollection).mockReturnValue(themeFileCollection);
+        vi.mocked(getEntriesByCollection).mockReturnValue(themeFileCollectionEntries);
+        vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+        vi.mocked(getEntrySummaryFromContent).mockReturnValue('theme-summary');
+
+        // Mock getField to return appropriate field config
+        vi.mocked(getField).mockImplementation(({ keyPath }) => {
+          if (keyPath === 'colors.customColors') {
+            return {
+              widget: 'list',
+              name: 'customColors',
+              fields: [
+                { widget: 'string', name: 'colorName' },
+                { widget: 'color', name: 'colorValue' },
+              ],
+            };
+          }
+
+          return undefined;
+        });
+
+        // Mock getFieldDisplayValue to return actual values
+        vi.mocked(getFieldDisplayValue).mockImplementation(({ keyPath, valueMap }) => {
+          if (valueMap && keyPath in valueMap) {
+            return String(valueMap[keyPath]);
+          }
+
+          return '';
+        });
+      });
+
+      test('should handle deeply nested list fields with multiple levels', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          widget: 'relation',
+          name: 'backgroundColor',
+          collection: 'options',
+          file: 'theme',
+          search_fields: ['colors.customColors.*.colorName'],
+          display_fields: ['colors.customColors.*.colorName'],
+          value_field: 'colors.customColors.*.colorName',
+        };
+
+        const result = getOptions(locale, fieldConfig, themeFileCollectionEntries);
+
+        expect(result).toHaveLength(3);
+        expect(result[0]).toEqual({
+          label: 'Accent Red',
+          value: 'Accent Red',
+          searchValue: 'Accent Red',
+        });
+        expect(result[1]).toEqual({
+          label: 'Primary Blue',
+          value: 'Primary Blue',
+          searchValue: 'Primary Blue',
+        });
+        expect(result[2]).toEqual({
+          label: 'Secondary Green',
+          value: 'Secondary Green',
+          searchValue: 'Secondary Green',
+        });
+      });
+
+      test('should handle deeply nested list fields with template syntax', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          widget: 'relation',
+          name: 'backgroundColor',
+          collection: 'options',
+          file: 'theme',
+          display_fields: [
+            '{{colors.customColors.*.colorName}} ({{colors.customColors.*.colorValue}})',
+          ],
+          value_field: 'colors.customColors.*.colorName',
+        };
+
+        const result = getOptions(locale, fieldConfig, themeFileCollectionEntries);
+
+        expect(result).toHaveLength(3);
+        expect(result[0].label).toBe('Accent Red (#cc0000)');
+        expect(result[0].value).toBe('Accent Red');
+        expect(result[1].label).toBe('Primary Blue (#0066cc)');
+        expect(result[1].value).toBe('Primary Blue');
+        expect(result[2].label).toBe('Secondary Green (#00cc66)');
+        expect(result[2].value).toBe('Secondary Green');
+      });
+
+      test('should handle empty deeply nested list', () => {
+        /** @type {Entry[]} */
+        const emptyThemeEntries = [
+          {
+            id: 'theme-file',
+            slug: 'theme',
+            subPath: 'theme',
+            locales: {
+              _default: {
+                ...localizedEntryProps,
+                content: flatten({
+                  colors: {
+                    customColors: [],
+                  },
+                }),
+              },
+            },
+          },
+        ];
+
+        /** @type {RelationField} */
+        const fieldConfig = {
+          widget: 'relation',
+          name: 'backgroundColor',
+          collection: 'options',
+          file: 'theme',
+          display_fields: ['colors.customColors.*.colorName'],
+          value_field: 'colors.customColors.*.colorName',
+        };
+
+        const result = getOptions(locale, fieldConfig, emptyThemeEntries);
+
+        // Should return empty array when no list items found
+        expect(result).toHaveLength(0);
       });
     });
   });
