@@ -493,7 +493,7 @@ export const processComplexListField = ({
     };
 
     groupEntries.forEach(([wildcardFieldName]) => {
-      const wildcardMatch = wildcardFieldName.match(/^(.+)\.\*\.(.+)$/);
+      const wildcardMatch = wildcardFieldName.match(COMPLEX_LIST_FIELD_REGEX);
 
       if (wildcardMatch) {
         const [, baseFieldName, subFieldKey] = wildcardMatch;
