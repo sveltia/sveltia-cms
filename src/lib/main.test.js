@@ -619,7 +619,9 @@ describe('CMS.registerFieldType()', () => {
 
     // @ts-ignore
     CMS.registerFieldType('test', control);
-    expect(consoleSpy).toHaveBeenCalledWith('Custom field types (widgets) are not yet supported in Sveltia CMS.');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Custom field types (widgets) are not yet supported in Sveltia CMS.',
+    );
     consoleSpy.mockRestore();
   });
 
