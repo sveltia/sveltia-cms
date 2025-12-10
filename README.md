@@ -756,7 +756,7 @@ There are some differences in behaviour between Sveltia CMS and Netlify/Decap CM
 - In some cases, the [data output](#better-data-output) of Sveltia CMS may differ from that of Netlify/Decap CMS. Notably, Sveltia CMS does not omit empty optional fields by default. If you have data validation in your site generator, this could cause issues. Use the `omit_empty_optional_fields` [output option](#controlling-data-output) if needed.
 - Sveltia CMS requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), meaning it only works with HTTPS, `localhost` or `127.0.0.1` URLs. If you’re running your own remote server and serving content over HTTP, the CMS will not work. We recommend obtaining a TLS certificate from [Let’s Encrypt](https://letsencrypt.org/).
 - As of [Sveltia CMS 0.105.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.105.0), the `sanitize_preview` option for the [Markdown](https://decapcms.org/docs/widgets/#Markdown) widget is set to `true` by default to prevent potential XSS attacks via entry previews. We recommend keeping this option enabled unless disabling it fixes a broken preview and you fully trust all users of your CMS.
-- As of [Sveltia CMS 0.123.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.123.0), the `create` option for folder collections defaults to `true` because, in 99.99% of cases, users want to create new entries and adding `create: true` to every folder collection is redundant. To disable entry creation, set `create: false` explicitly.
+- As of [Sveltia CMS 0.123.0](https://github.com/sveltia/sveltia-cms/releases/tag/v0.123.0), the `create` option for folder collections defaults to `true` because, in 99.99% of cases, users want to create new entries and adding `create: true` to every collection is redundant. To disable entry creation, set `create: false` explicitly.
 
 There may be other minor differences in behaviour that are not listed here.
 
@@ -2050,7 +2050,6 @@ Due late 2026
   - User management (Netlify Identity alternative) with roles[^23]
   - Commits without a Git service account (Git Gateway alternative)
   - more enhancements are planned for the future; see the TBD list below
-- End-user documentation
 - Contributor documentation
 
 ### TBD
@@ -2068,7 +2067,6 @@ Due late 2026
     - Advanced Relation fields[^242]
       - Cascade updates/deletes[^243]
       - [Quick item additions](https://github.com/sveltia/sveltia-cms/issues/493)[^266]
-      - [Reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
     - Autoincrement fields[^286]
     - Unique constraints[^287]
     - Data integrity checks
@@ -2081,13 +2079,25 @@ Due late 2026
   - Proxy for services that don’t support [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS):
     - [DeepL Translate](https://github.com/sveltia/sveltia-cms/issues/437)
     - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
+- Content editor enhancements:
+  - Field navigator
+  - Sidebar
+    - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
+    - [Reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
+    - Validation errors
+- Input UI improvements
+  - Slider input for number fields
+  - Custom color picker
+  - Custom date/time picker
+  - Image field enhancements:
+    - Camera input, screen capture, QR code generation, AI image generation, etc.
+    - Quick cropping and resizing
 - Search enhancements:
   - Customizable search fields[^274]
   - Advanced search options
   - [Fuzzy search](https://www.fusejs.io/)
 - [Local repository workflow](#working-with-a-local-git-repository) improvements: Git mode[^131] and change detection
 - [Preact+HTM](https://github.com/sveltia/sveltia-cms/discussions/153) or Vue support for custom widgets, editor components and preview templates[^289]
-- View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
 - More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
 - More AI features for image generation, content writing, etc.
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
@@ -2341,7 +2351,7 @@ This project would not have been possible without the open source Netlify CMS pr
 
 [^106]: Netlify/Decap CMS [#2822](https://github.com/decaporg/decap-cms/issues/2822)
 
-[^107]: Netlify/Decap CMS [#332](https://github.com/decaporg/decap-cms/issues/332), [#683](https://github.com/decaporg/decap-cms/issues/683), [#999](https://github.com/decaporg/decap-cms/issues/999), [#1456](https://github.com/decaporg/decap-cms/issues/1456), [#4175](https://github.com/decaporg/decap-cms/issues/4175), [#4818](https://github.com/decaporg/decap-cms/issues/4818), [#5688](https://github.com/decaporg/decap-cms/issues/5688), [#6828](https://github.com/decaporg/decap-cms/issues/6828), [#6829](https://github.com/decaporg/decap-cms/issues/6829), [#6862](https://github.com/decaporg/decap-cms/issues/6862), [#7023](https://github.com/decaporg/decap-cms/issues/7023)
+[^107]: Netlify/Decap CMS [#332](https://github.com/decaporg/decap-cms/issues/332), [#683](https://github.com/decaporg/decap-cms/issues/683), [#999](https://github.com/decaporg/decap-cms/issues/999), [#1456](https://github.com/decaporg/decap-cms/issues/1456), [#4175](https://github.com/decaporg/decap-cms/issues/4175), [#4818](https://github.com/decaporg/decap-cms/issues/4818), [#5688](https://github.com/decaporg/decap-cms/issues/5688), [#6828](https://github.com/decaporg/decap-cms/issues/6828), [#6829](https://github.com/decaporg/decap-cms/issues/6829), [#6862](https://github.com/decaporg/decap-cms/issues/6862), [#7023](https://github.com/decaporg/decap-cms/issues/7023), [#7680](https://github.com/decaporg/decap-cms/issues/7680)
 
 [^108]: Netlify/Decap CMS [#6879](https://github.com/decaporg/decap-cms/discussions/6879)
 
