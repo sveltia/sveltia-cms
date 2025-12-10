@@ -15,10 +15,10 @@ import App from './components/app.svelte';
  * @import {
  * AppEventListener,
  * CmsConfig,
+ * CustomFieldControlProps,
+ * CustomFieldPreviewProps,
+ * CustomFieldSchema,
  * CustomPreviewTemplateProps,
- * CustomWidgetControlProps,
- * CustomWidgetPreviewProps,
- * CustomWidgetSchema,
  * EditorComponentDefinition,
  * FileFormatter,
  * FileParser,
@@ -235,16 +235,16 @@ const registerPreviewTemplate = (name, component) => {
 };
 
 /**
- * Register a custom widget.
- * @param {string} name Widget name.
- * @param {ComponentType<CustomWidgetControlProps> | string} control Component for the edit pane.
- * @param {ComponentType<CustomWidgetPreviewProps>} [preview] Component for the preview pane.
- * @param {CustomWidgetSchema} [schema] Field schema.
+ * Register a custom field type (widget).
+ * @param {string} name Field type name.
+ * @param {ComponentType<CustomFieldControlProps> | string} control Component for the edit pane.
+ * @param {ComponentType<CustomFieldPreviewProps>} [preview] Component for the preview pane.
+ * @param {CustomFieldSchema} [schema] Field schema.
  * @see https://decapcms.org/docs/custom-widgets/
  */
-const registerWidget = (name, control, preview, schema) => {
+const registerFieldType = (name, control, preview, schema) => {
   // eslint-disable-next-line no-console
-  console.warn('Custom widgets are not yet supported in Sveltia CMS.');
+  console.warn('Custom field types (widgets) are not yet supported in Sveltia CMS.');
   void [name, control, preview, schema];
 };
 
@@ -254,9 +254,10 @@ const CMS = new Proxy(
     registerCustomFormat,
     registerEditorComponent,
     registerEventListener,
+    registerFieldType,
     registerPreviewStyle,
     registerPreviewTemplate,
-    registerWidget,
+    registerWidget: registerFieldType, // alias for backward compatibility with Netlify/Decap CMS
   },
   {
     // eslint-disable-next-line jsdoc/require-jsdoc

@@ -1561,7 +1561,7 @@
  */
 
 /**
- * @typedef {object} CustomWidgetControlProps
+ * @typedef {object} CustomFieldControlProps
  * @property {any} value
  * @property {Record<string, any>} field
  * @property {string} forID
@@ -1571,7 +1571,7 @@
  */
 
 /**
- * @typedef {object} CustomWidgetPreviewProps
+ * @typedef {object} CustomFieldPreviewProps
  * @property {any} value
  * @property {Record<string, any>} field
  * @property {Record<string, any>} metadata
@@ -1582,7 +1582,7 @@
  */
 
 /**
- * @typedef {object} CustomWidgetSchema
+ * @typedef {object} CustomFieldSchema
  * @property {Record<string, any>} properties
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  */
