@@ -605,22 +605,26 @@ describe('CMS.registerPreviewTemplate()', () => {
   });
 });
 
-describe('CMS.registerWidget()', () => {
-  test('accepts widget registration without throwing', () => {
+describe('CMS.registerFieldType()', () => {
+  test('accepts field type registration without throwing', () => {
     const control = () => null;
 
     // @ts-ignore
-    expect(() => CMS.registerWidget('test', control)).not.toThrow();
+    expect(() => CMS.registerFieldType('test', control)).not.toThrow();
   });
 
-  test('logs warning about unsupported custom widgets', () => {
+  test('logs warning about unsupported custom field types', () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const control = () => null;
 
     // @ts-ignore
-    CMS.registerWidget('test', control);
-    expect(consoleSpy).toHaveBeenCalledWith('Custom widgets are not yet supported in Sveltia CMS.');
+    CMS.registerFieldType('test', control);
+    expect(consoleSpy).toHaveBeenCalledWith('Custom field types (widgets) are not yet supported in Sveltia CMS.');
     consoleSpy.mockRestore();
+  });
+
+  test('registerWidget is an alias for registerFieldType', () => {
+    expect(CMS.registerWidget).toBe(CMS.registerFieldType);
   });
 });
 
@@ -669,6 +673,10 @@ describe('CMS - supported methods', () => {
 
   test('registerPreviewTemplate method is accessible', () => {
     expect(typeof CMS.registerPreviewTemplate).toBe('function');
+  });
+
+  test('registerFieldType method is accessible', () => {
+    expect(typeof CMS.registerFieldType).toBe('function');
   });
 
   test('registerWidget method is accessible', () => {
