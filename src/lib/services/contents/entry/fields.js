@@ -202,9 +202,9 @@ export const getField = (args) => {
           field = undefined;
         }
       } else if (subFields && (isNumericKey || isWildcardKey)) {
-        // For list field types with multiple fields, numeric keys (like "0") should be skipped Keep
-        // the current field (the list field type) and continue to the next part of the path field
-        // remains unchanged
+        // For list field types with multiple fields, numeric keys (like "0") should be skipped.
+        // Keep the current field (the list field type) and continue to the next part of the path
+        // field remains unchanged.
       } else if (subFields && !isNumericKey && cleanKey !== '') {
         field = subFields.find(({ name }) => name === cleanKey);
       } else if (types && (isNumericKey || isWildcardKey)) {
