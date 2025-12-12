@@ -830,13 +830,14 @@ Currently, Sveltia CMS is primarily intended for existing Netlify/Decap CMS user
 Or try one of the starter kits for popular frameworks created by community:
 
 - Astro
-  - [astros](https://github.com/zankhq/astros) by [@zanhk](https://github.com/zanhk)
+  - [Astros](https://github.com/zankhq/astros) by [@zanhk](https://github.com/zanhk)
   - [Astro i18n Starter](https://github.com/yacosta738/astro-cms) by [@yacosta738](https://github.com/yacosta738)
 - Eleventy (11ty)
   - [Eleventy starter template](https://github.com/danurbanowicz/eleventy-sveltia-cms-starter) by [@danurbanowicz](https://github.com/danurbanowicz)
+  - [ZeroPoint](https://getzeropoint.com/) by [@MWDelaney](https://github.com/MWDelaney)
 - Hugo
   - [Hugo module](https://github.com/privatemaker/headless-cms) by [@privatemaker](https://github.com/privatemaker)
-  - [hugolify-admin](https://github.com/Hugolify/hugolify-admin) by [@sebousan](https://github.com/sebousan)
+  - [Hugolify](https://www.hugolify.io/) by [@sebousan](https://github.com/sebousan)
 
 The Netlify/Decap CMS website has more [templates](https://decapcms.org/docs/start-with-a-template/) and [examples](https://decapcms.org/docs/examples/). You can probably use one of them and switch to Sveltia CMS. (Note: These third-party resources are not necessarily reviewed by the Sveltia CMS team.)
 
@@ -2057,7 +2058,7 @@ Due late 2026
 - Tackling the remaining relevant Netlify/Decap CMS issues (some may be included in v2.0 or v3.0):
   - Their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including:
     - MDX support[^122]
-    - [Saving drafts without editorial workflow](https://github.com/sveltia/sveltia-cms/discussions/440)[^261]
+    - [Preview Workflow](https://github.com/sveltia/sveltia-cms/discussions/440)[^261]
     - [Tables in Markdown](https://github.com/sveltia/sveltia-cms/issues/455)[^256]
     - [Config editor](https://github.com/sveltia/sveltia-cms/discussions/452)[^10]
     - [Theming](https://github.com/sveltia/sveltia-cms/issues/29)[^262]
