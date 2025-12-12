@@ -18,10 +18,10 @@ import {
 
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/draft');
-vi.mock('$lib/services/contents/widgets/key-value/helper');
-vi.mock('$lib/services/contents/widgets/list/helper');
-vi.mock('$lib/services/contents/widgets/markdown');
-vi.mock('$lib/services/contents/widgets/string/validate');
+vi.mock('$lib/services/contents/fields/key-value/helper');
+vi.mock('$lib/services/contents/fields/list/helper');
+vi.mock('$lib/services/contents/fields/markdown');
+vi.mock('$lib/services/contents/fields/string/validate');
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/utils/misc');
@@ -81,7 +81,7 @@ describe('draft/validate', () => {
     vi.mocked(isFieldMultiple).mockReturnValue(false);
 
     // Mock validation functions
-    const { validateStringField } = await import('$lib/services/contents/widgets/string/validate');
+    const { validateStringField } = await import('$lib/services/contents/fields/string/validate');
     const validateStringFieldMock = vi.mocked(validateStringField);
 
     validateStringFieldMock.mockReturnValue({
@@ -90,7 +90,7 @@ describe('draft/validate', () => {
     });
 
     // Mock getListFieldInfo
-    const { getListFieldInfo } = await import('$lib/services/contents/widgets/list/helper');
+    const { getListFieldInfo } = await import('$lib/services/contents/fields/list/helper');
     const getListFieldInfoMock = vi.mocked(getListFieldInfo);
 
     getListFieldInfoMock.mockReturnValue({
@@ -586,7 +586,7 @@ describe('draft/validate', () => {
         };
 
         const { getListFieldInfo } = vi.mocked(
-          await import('$lib/services/contents/widgets/list/helper'),
+          await import('$lib/services/contents/fields/list/helper'),
         );
 
         getListFieldInfo.mockReturnValue({ hasSubFields: false });
@@ -617,7 +617,7 @@ describe('draft/validate', () => {
         };
 
         const { getListFieldInfo } = vi.mocked(
-          await import('$lib/services/contents/widgets/list/helper'),
+          await import('$lib/services/contents/fields/list/helper'),
         );
 
         getListFieldInfo.mockReturnValue({ hasSubFields: true });

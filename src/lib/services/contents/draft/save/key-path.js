@@ -1,5 +1,5 @@
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
-import { MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/widgets';
+import { MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 
 /**
  * @import {

@@ -4,7 +4,7 @@ import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
 import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjsUTC from 'dayjs/plugin/utc';
 
-import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
+import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
 
 /**
  * @import { DateTimeField, Field } from '$lib/types/public';

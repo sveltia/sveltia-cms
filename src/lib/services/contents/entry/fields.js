@@ -7,12 +7,12 @@ import {
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import { MEDIA_FIELD_TYPES, MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helper';
+import { getComponentDef } from '$lib/services/contents/fields/markdown/components/definitions';
+import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helper';
+import { getOptionLabel } from '$lib/services/contents/fields/select/helper';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
-import { MEDIA_FIELD_TYPES, MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/widgets';
-import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
-import { getComponentDef } from '$lib/services/contents/widgets/markdown/components/definitions';
-import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
-import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 
 /**

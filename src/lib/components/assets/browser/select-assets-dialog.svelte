@@ -26,7 +26,7 @@
   import {
     convertFileItemToAsset,
     getUnsavedAssets,
-  } from '$lib/services/contents/widgets/file/process';
+  } from '$lib/services/contents/fields/file/process';
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import {
     allStockAssetProviders,

@@ -7,8 +7,8 @@ import { get } from 'svelte/store';
 import { cmsConfig } from '$lib/services/config';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
-import { parseDateTimeConfig } from '$lib/services/contents/widgets/date-time/helper';
-import { hasRootListField } from '$lib/services/contents/widgets/list/helper';
+import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
+import { hasRootListField } from '$lib/services/contents/fields/list/helper';
 import { FULL_DATE_TIME_REGEX } from '$lib/services/utils/date';
 
 /**

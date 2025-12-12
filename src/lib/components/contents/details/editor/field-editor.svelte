@@ -12,12 +12,12 @@
   import FieldEditorGroup from '$lib/components/contents/details/editor/field-editor-group.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
-  import { editors } from '$lib/components/contents/details/widgets';
+  import { editors } from '$lib/components/contents/details/fields';
   import { entryDraft } from '$lib/services/contents/draft';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
+  import { MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/widgets';
 
   /**
    * @import { Component } from 'svelte';

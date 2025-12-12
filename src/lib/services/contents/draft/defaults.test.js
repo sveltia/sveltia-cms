@@ -12,70 +12,70 @@ import {
  */
 
 // Mock the field helper modules
-vi.mock('$lib/services/contents/widgets/boolean/defaults', () => ({
+vi.mock('$lib/services/contents/fields/boolean/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue === 'true' ? true : (fieldConfig.default ?? false),
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/code/defaults', () => ({
+vi.mock('$lib/services/contents/fields/code/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/date-time/defaults', () => ({
+vi.mock('$lib/services/contents/fields/date-time/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/hidden/defaults', () => ({
+vi.mock('$lib/services/contents/fields/hidden/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/key-value/defaults', () => ({
+vi.mock('$lib/services/contents/fields/key-value/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || {},
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/list/defaults', () => ({
+vi.mock('$lib/services/contents/fields/list/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || [],
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/markdown/defaults', () => ({
+vi.mock('$lib/services/contents/fields/markdown/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/number/defaults', () => ({
+vi.mock('$lib/services/contents/fields/number/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue ? parseFloat(dynamicValue) : (fieldConfig.default ?? 0),
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/object/defaults', () => ({
+vi.mock('$lib/services/contents/fields/object/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || {},
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets/select/defaults', () => ({
+vi.mock('$lib/services/contents/fields/select/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',

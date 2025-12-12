@@ -35,7 +35,7 @@ vi.mock('$lib/services/contents/file/parse', () => ({
   parseEntryFile: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/widgets/list/helper', () => ({
+vi.mock('$lib/services/contents/fields/list/helper', () => ({
   hasRootListField: vi.fn(),
 }));
 
@@ -282,7 +282,7 @@ describe('Test transformRawContent()', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    const helperModule = await import('$lib/services/contents/widgets/list/helper');
+    const helperModule = await import('$lib/services/contents/fields/list/helper');
 
     hasRootListField = helperModule.hasRootListField;
   });
@@ -1114,7 +1114,7 @@ describe('Test prepareEntry()', () => {
     const collectionModule = await import('$lib/services/contents/collection');
     const collectionFilesModule = await import('$lib/services/contents/collection/files');
     const parseModule = await import('$lib/services/contents/file/parse');
-    const listHelperModule = await import('$lib/services/contents/widgets/list/helper');
+    const listHelperModule = await import('$lib/services/contents/fields/list/helper');
 
     getCollection = collectionModule.getCollection;
     getCollectionFile = collectionFilesModule.getCollectionFile;

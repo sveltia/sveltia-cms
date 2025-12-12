@@ -5,7 +5,7 @@ import TurndownService from 'turndown';
 import { entryDraft } from '$lib/services/contents/draft';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
-import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
+import { getListFieldInfo } from '$lib/services/contents/fields/list/helper';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs';
 

@@ -7,7 +7,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { createGenerator } from 'ts-json-schema-generator';
 import { defineConfig } from 'vite';
 
-import { BUILTIN_FIELD_TYPES } from './src/lib/services/contents/widgets';
+import { BUILTIN_FIELD_TYPES } from './src/lib/services/contents/fields';
 import svelteConfig from './svelte.config';
 
 /**

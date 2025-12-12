@@ -1,0 +1,69 @@
+<!--
+  @component
+  Implement the preview for an Object field.
+  @see https://decapcms.org/docs/widgets/#Object
+-->
+<script>
+  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
+  import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
+  import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
+  import { entryDraft } from '$lib/services/contents/draft';
+
+  /**
+   * @import { FieldPreviewProps } from '$lib/types/private';
+   * @import {
+   * ObjectField,
+   * ObjectFieldWithSubFields,
+   * ObjectFieldWithTypes,
+   * } from '$lib/types/public';
+   */
+
+  /**
+   * @typedef {object} Props
+   * @property {ObjectField} fieldConfig Field configuration.
+   * @property {object | undefined} currentValue Field value.
+   */
+
+  /** @type {FieldPreviewProps & Props} */
+  let {
+    /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    fieldConfig,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
+  const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
+  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale]) ?? {});
+  const hasValues = $derived(
+    Object.entries(valueMap).some(
+      ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && !!value,
+    ),
+  );
+  const hasVariableTypes = $derived(Array.isArray(types));
+  const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
+  const typeConfig = $derived(
+    hasVariableTypes ? types?.find(({ name }) => name === valueMap[typeKeyPath]) : undefined,
+  );
+  const label = $derived(typeConfig ? typeConfig.label || typeConfig.name : undefined);
+  const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
+</script>
+
+{#if hasValues}
+  <Subsection {label}>
+    {#each subFields as subField (subField.name)}
+      {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
+      <VisibilityObserver>
+        <FieldPreview
+          keyPath={subFieldKeyPath}
+          typedKeyPath={hasVariableTypes && typeConfig?.name
+            ? `${keyPath}<${typeConfig.name}>.${subField.name}`
+            : subFieldKeyPath}
+          {locale}
+          fieldConfig={subField}
+        />
+      </VisibilityObserver>
+    {/each}
+  </Subsection>
+{/if}

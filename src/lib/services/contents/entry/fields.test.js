@@ -11,10 +11,10 @@ import {
   isFieldMultiple,
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
-import { getDateTimeFieldDisplayValue } from '$lib/services/contents/widgets/date-time/helper';
-import { getComponentDef } from '$lib/services/contents/widgets/markdown/components/definitions';
-import { getReferencedOptionLabel } from '$lib/services/contents/widgets/relation/helper';
-import { getOptionLabel } from '$lib/services/contents/widgets/select/helper';
+import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helper';
+import { getComponentDef } from '$lib/services/contents/fields/markdown/components/definitions';
+import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helper';
+import { getOptionLabel } from '$lib/services/contents/fields/select/helper';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 
 // Mock dependencies
@@ -35,24 +35,24 @@ vi.mock('$lib/services/contents/i18n', () => ({
   })),
 }));
 
-vi.mock('$lib/services/contents/widgets', () => ({
+vi.mock('$lib/services/contents/fields', () => ({
   MEDIA_FIELD_TYPES: ['file', 'image'],
   MULTI_VALUE_FIELD_TYPES: ['file', 'image', 'relation', 'select'],
 }));
 
-vi.mock('$lib/services/contents/widgets/markdown/components/definitions', () => ({
+vi.mock('$lib/services/contents/fields/markdown/components/definitions', () => ({
   getComponentDef: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/widgets/date-time/helper', () => ({
+vi.mock('$lib/services/contents/fields/date-time/helper', () => ({
   getDateTimeFieldDisplayValue: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/widgets/relation/helper', () => ({
+vi.mock('$lib/services/contents/fields/relation/helper', () => ({
   getReferencedOptionLabel: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/widgets/select/helper', () => ({
+vi.mock('$lib/services/contents/fields/select/helper', () => ({
   getOptionLabel: vi.fn(),
 }));
 

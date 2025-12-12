@@ -13,7 +13,7 @@ vi.mock('$lib/services/config', () => ({
 vi.mock('$lib/services/contents/draft/save/key-path', () => ({
   createKeyPathList: vi.fn((fields) => fields.map((/** @type {any} */ f) => f.name)),
 }));
-vi.mock('$lib/services/contents/widgets/list/helper', () => ({
+vi.mock('$lib/services/contents/fields/list/helper', () => ({
   hasRootListField: vi.fn((fields) => fields.length === 1 && fields[0].widget === 'list'),
 }));
 vi.mock('svelte/store', async () => {
@@ -49,7 +49,7 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
   getField,
 }));
 
-vi.mock('$lib/services/contents/widgets/date-time/helper', () => ({
+vi.mock('$lib/services/contents/fields/date-time/helper', () => ({
   parseDateTimeConfig,
 }));
 

@@ -3,7 +3,7 @@ import { compare } from '@sveltia/utils/string';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
-import { getDate } from '$lib/services/contents/widgets/date-time/helper';
+import { getDate } from '$lib/services/contents/fields/date-time/helper';
 import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
 
 /**
