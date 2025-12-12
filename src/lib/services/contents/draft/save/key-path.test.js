@@ -196,7 +196,7 @@ describe('contents/draft/save/key-path', () => {
       expect(result).toEqual(['sections', 'sections.*.component', 'sections.*.title']);
     });
 
-    it('should handle select widget with multiple', () => {
+    it('should handle select field with multiple', () => {
       const fields = [
         {
           name: 'categories',
@@ -211,7 +211,7 @@ describe('contents/draft/save/key-path', () => {
       expect(result).toEqual(['categories', 'categories.*']);
     });
 
-    it('should handle select widget without multiple', () => {
+    it('should handle select field without multiple', () => {
       const fields = [
         {
           name: 'category',
@@ -226,7 +226,7 @@ describe('contents/draft/save/key-path', () => {
       expect(result).toEqual(['category']);
     });
 
-    it('should handle relation widget with multiple', () => {
+    it('should handle relation field with multiple', () => {
       const fields = [
         {
           name: 'related',
@@ -289,7 +289,7 @@ describe('contents/draft/save/key-path', () => {
       expect(result).toEqual([]);
     });
 
-    it('should handle keyvalue widget', () => {
+    it('should handle keyvalue field', () => {
       const fields = [
         {
           name: 'metadata',

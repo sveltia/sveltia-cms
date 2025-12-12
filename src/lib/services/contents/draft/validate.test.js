@@ -236,7 +236,7 @@ describe('draft/validate', () => {
       expect(result.validities.en.metadata.valid).toBe(false);
     });
 
-    it('should skip validation for compute widget', () => {
+    it('should skip validation for compute field', () => {
       mockEntryDraft.currentValues = {
         en: {
           computed: '',

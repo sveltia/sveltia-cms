@@ -19,7 +19,7 @@
    * @typedef {object} Props
    * @property {string} value The file value (URL, blob URL, or file path).
    * @property {string} fieldId The field ID for accessibility.
-   * @property {string} widgetName The widget name for i18n.
+   * @property {string} fieldType The field type for i18n.
    * @property {boolean} readonly Whether the field is readonly.
    * @property {boolean} invalid Whether the field is invalid.
    * @property {boolean} required Whether the field is required.
@@ -36,7 +36,7 @@
   const {
     value,
     fieldId,
-    widgetName,
+    fieldType,
     readonly = false,
     invalid = false,
     required = false,
@@ -58,7 +58,7 @@
   /** @type {string | undefined} */
   let src = $state();
 
-  const isImageWidget = $derived(widgetName === 'image');
+  const isImageField = $derived(fieldType === 'image');
 
   /**
    * Get the path to display for the asset or file. For an unsaved file, this will be the same as
@@ -118,7 +118,7 @@
         kind = value ? await getMediaKind(value) : undefined;
         src =
           value && kind ? await getMediaFieldURL({ ...getURLArgs, thumbnail: true }) : undefined;
-      } else if (isImageWidget && /^https?:/.test(value)) {
+      } else if (isImageField && /^https?:/.test(value)) {
         asset = undefined;
         kind = 'image';
         src = value;
@@ -209,7 +209,7 @@
           variant="tertiary"
           size="small"
           label={$_('replace')}
-          aria-label={$_(`replace_${widgetName}`)}
+          aria-label={$_(`replace_${fieldType}`)}
           aria-controls="{fieldId}-value"
           onclick={() => {
             onReplace();
@@ -222,7 +222,7 @@
           variant="tertiary"
           size="small"
           label={$_('remove')}
-          aria-label={$_(`remove_${widgetName}`)}
+          aria-label={$_(`remove_${fieldType}`)}
           aria-controls="{fieldId}-value"
           onclick={() => {
             onRemove();

@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the preview for the Object widget.
+  Implement the preview for an Object field.
   @see https://decapcms.org/docs/widgets/#Object
 -->
 <script>
@@ -10,7 +10,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import {
    * ObjectField,
    * ObjectFieldWithSubFields,
@@ -24,7 +24,7 @@
    * @property {object | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

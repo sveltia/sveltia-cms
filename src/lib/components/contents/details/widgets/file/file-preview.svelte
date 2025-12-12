@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the preview for the File and Image widgets.
+  Implement the preview for the File and Image field types.
   @see https://decapcms.org/docs/widgets/#File
   @see https://decapcms.org/docs/widgets/#Image
 -->
@@ -9,7 +9,7 @@
   import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { MediaField } from '$lib/types/public';
    */
 
@@ -19,7 +19,7 @@
    * @property {string | string[] | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldConfig,

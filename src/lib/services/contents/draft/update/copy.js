@@ -20,8 +20,8 @@ import { prefs } from '$lib/services/user/prefs';
  * @property {InternalLocaleCode} sourceLanguage Source locale, e.g. `en`.
  * @property {InternalLocaleCode} targetLanguage Target locale, e.g. `ja`.
  * @property {FieldKeyPath} [keyPath] Flattened (dot-notated) object keys that will be used for
- * searching the source values. Omit this if copying all the fields. If the triggered widget is List
- * or Object, this will likely match multiple fields.
+ * searching the source values. Omit this if copying all the fields. If the triggered field type is
+ * List or Object, this will likely match multiple fields.
  * @property {boolean} [translate] Whether to translate the copied text fields.
  */
 
@@ -62,15 +62,15 @@ export const getCopyingFieldMap = ({ draft, options }) => {
       .map(([_keyPath, value]) => {
         const targetLocaleValue = currentValues[targetLanguage][_keyPath];
         const field = getField({ ...getFieldArgs, keyPath: _keyPath });
-        const widget = field?.widget ?? 'string';
+        const fieldType = field?.widget ?? 'string';
 
         if (
           (keyPath && !_keyPath.startsWith(keyPath)) ||
           typeof value !== 'string' ||
           !value ||
-          !['markdown', 'text', 'string', 'list'].includes(widget) ||
+          !['markdown', 'text', 'string', 'list'].includes(fieldType) ||
           // prettier-ignore
-          (widget === 'list' &&
+          (fieldType === 'list' &&
           getListFieldInfo(/** @type {ListField} */ (field)).hasSubFields) ||
           (!translate && value === targetLocaleValue) ||
           // Skip populated fields when translating all the fields
@@ -79,7 +79,7 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           return null;
         }
 
-        return [_keyPath, { value, isMarkdown: widget === 'markdown' }];
+        return [_keyPath, { value, isMarkdown: fieldType === 'markdown' }];
       })
       .filter((entry) => !!entry),
   );

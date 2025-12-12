@@ -7,7 +7,7 @@ import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders'
  */
 
 /**
- * Get the default library folder map for a File/Image widget.
+ * Get the default library folder map for a File/Image field.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.

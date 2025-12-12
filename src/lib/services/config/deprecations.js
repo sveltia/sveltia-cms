@@ -22,8 +22,8 @@ export const warningMessages = {
     'Use the global `output.yaml.quote` option instead. `yaml_quote: true` is equivalent to ' +
     '`quote: double`. https://github.com/sveltia/sveltia-cms#controlling-data-output',
   uuid_read_only:
-    'The `read_only` option for the UUID widget is deprecated and will be removed in Sveltia CMS ' +
-    '1.0. Use the `readonly` option instead.',
+    'The `read_only` option for the UUID field type is deprecated and will be removed in Sveltia ' +
+    'CMS 1.0. Use the `readonly` option instead.',
   save_all_locales:
     'The `save_all_locales` i18n option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the `initial_locales` option instead. `save_all_locales: false` is equivalent to ' +

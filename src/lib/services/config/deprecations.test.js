@@ -45,7 +45,7 @@ describe('Test warningMessages', () => {
   test('should contain useful information in uuid_read_only message', () => {
     expect(warningMessages.uuid_read_only).toContain('read_only');
     expect(warningMessages.uuid_read_only).toContain('readonly');
-    expect(warningMessages.uuid_read_only).toContain('UUID widget');
+    expect(warningMessages.uuid_read_only).toContain('UUID field type');
   });
 
   test('should contain useful information in save_all_locales message', () => {

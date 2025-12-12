@@ -96,8 +96,8 @@ export const revertLocale = ({ draft, keyPath, locale }) => {
  * @param {InternalLocaleCode} [args.locale] Target locale, e.g. `ja`. Can be empty if reverting
  * everything.
  * @param {FieldKeyPath} [args.keyPath] Flattened (dot-notated) object keys that will be used for
- * searching the source values. Omit this if copying all the fields. If the triggered widget is List
- * or Object, this will likely match multiple fields.
+ * searching the source values. Omit this if copying all the fields. If the triggered field type is
+ * List or Object, this will likely match multiple fields.
  */
 export const revertChanges = ({ locale: targetLanguage = '', keyPath = '' } = {}) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));

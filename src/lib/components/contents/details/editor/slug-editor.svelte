@@ -64,7 +64,7 @@
         {/if}
       </ValidationError>
     {/if}
-    <div role="none" class="widget-wrapper">
+    <div role="none" class="field-wrapper">
       <TextInput
         bind:value={inputValue}
         flex

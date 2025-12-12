@@ -1,13 +1,13 @@
 <!--
   @component
-  Implement the preview for the Number widget.
+  Implement the preview for a Number field.
   @see https://decapcms.org/docs/widgets/#Number
 -->
 <script>
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { NumberField } from '$lib/types/public';
    */
 
@@ -17,7 +17,7 @@
    * @property {string | number | null | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

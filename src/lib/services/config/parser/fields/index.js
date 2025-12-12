@@ -17,7 +17,7 @@ import { addMessage, checkName } from '$lib/services/config/parser/utils/validat
  */
 
 /**
- * Parsers for each field widget type.
+ * Parsers for each field type.
  * @type {Record<string, (args: FieldParserArgs) => void>}
  */
 const parsers = {
@@ -37,7 +37,7 @@ const parsers = {
  */
 export const parseFieldConfig = (args) => {
   const { config, context } = args;
-  const { name, widget = 'string' } = config;
+  const { name, widget: fieldType = 'string' } = config;
   const { typedKeyPath } = context;
 
   const newArgs = {
@@ -48,10 +48,10 @@ export const parseFieldConfig = (args) => {
     },
   };
 
-  parsers[widget]?.(newArgs);
+  parsers[fieldType]?.(newArgs);
 
-  if (widget === 'date') {
-    addMessage({ ...newArgs, strKey: 'date_widget' });
+  if (fieldType === 'date') {
+    addMessage({ ...newArgs, strKey: 'date_field_type' });
   }
 };
 

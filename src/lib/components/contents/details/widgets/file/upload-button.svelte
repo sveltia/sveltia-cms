@@ -10,7 +10,7 @@
    * @property {boolean} invalid Whether the field is invalid.
    * @property {boolean} readonly Whether the field is readonly.
    * @property {boolean} processing Whether the field is processing.
-   * @property {boolean} isImageWidget Whether the widget is an image widget.
+   * @property {boolean} isImageField Whether the field is an image field.
    * @property {boolean} multiple Whether the field allows multiple files.
    * @property {boolean} showSelectAssetsDialog Whether to show the select assets dialog.
    * @property {boolean} replaceMode Whether the dialog is in replace mode.
@@ -23,7 +23,7 @@
     invalid,
     readonly,
     processing,
-    isImageWidget,
+    isImageField,
     multiple,
     showSelectAssetsDialog = $bindable(false),
     replaceMode = $bindable(false),
@@ -54,7 +54,7 @@
       {:else if $hasMouse}
         {#if !allowDrop}
           {$_('click_to_browse')}
-        {:else if isImageWidget}
+        {:else if isImageField}
           {$_(`drop_image_${multiple ? 'files' : 'file'}_or_click_to_browse`)}
         {:else}
           {$_(`drop_${multiple ? 'files' : 'file'}_or_click_to_browse`)}

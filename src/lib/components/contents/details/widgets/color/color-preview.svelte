@@ -1,11 +1,11 @@
 <!--
   @component
-  Implement the preview for the Color widget.
+  Implement the preview for a Color field.
   @see https://decapcms.org/docs/widgets/#color
 -->
 <script>
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { ColorField } from '$lib/types/public';
    */
 
@@ -15,7 +15,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldConfig,

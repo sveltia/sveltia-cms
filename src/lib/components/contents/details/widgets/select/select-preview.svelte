@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the preview for the Select widget.
+  Implement the preview for a Select field.
   @see https://decapcms.org/docs/widgets/#Select
 -->
 <script>
@@ -9,7 +9,7 @@
   import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { SelectField, SelectFieldValue } from '$lib/types/public';
    */
 
@@ -19,7 +19,7 @@
    * @property {SelectFieldValue | SelectFieldValue[] | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

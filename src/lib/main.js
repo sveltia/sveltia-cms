@@ -294,7 +294,7 @@ export { init };
 window.CMS = CMS;
 window.initCMS = init;
 
-// Expose React APIs for custom widgets, custom preview templates and custom editor components
+// Expose React APIs for custom field types, custom preview templates and custom editor components
 // @see https://decapcms.org/docs/custom-widgets/
 // @see https://decapcms.org/docs/customization/
 window.createClass = createClass;

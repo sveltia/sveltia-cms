@@ -368,7 +368,7 @@ describe('sortEntries', () => {
     expect(result.map((e) => e.slug)).toEqual(['entry-2', 'entry-3', 'entry-1']);
   });
 
-  test('should strip markdown syntax when sorting markdown widget fields', () => {
+  test('should strip markdown syntax when sorting markdown fields', () => {
     const conditions = { key: 'title', order: 'ascending' };
 
     // Use simple markdown values that sort differently with vs without **

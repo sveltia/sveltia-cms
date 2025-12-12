@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the Select widget.
+  Implement the editor for a Select field.
   @see https://decapcms.org/docs/widgets/#Select
 -->
 <script>
@@ -11,7 +11,7 @@
   import SelectSingle from '$lib/components/contents/details/widgets/select/select-single.svelte';
 
   /**
-   * @import { SelectFieldSelectorOption, WidgetEditorProps } from '$lib/types/private';
+   * @import { SelectFieldSelectorOption, FieldEditorProps } from '$lib/types/private';
    * @import { SelectField } from '$lib/types/public';
    */
 
@@ -22,7 +22,7 @@
    * @property {boolean} [sortOptions] Whether to sort the options by label.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -38,7 +38,7 @@
   } = $props();
 
   const {
-    // Widget-specific options
+    // Field-specific options
     options: fieldOptions,
     multiple,
   } = $derived(fieldConfig);

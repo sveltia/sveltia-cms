@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the preview for the Relation widget.
+  Implement the preview for a Relation field.
   @see https://decapcms.org/docs/widgets/#Relation
 -->
 <script>
@@ -10,7 +10,7 @@
   import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { RelationField } from '$lib/types/public';
    */
 
@@ -20,7 +20,7 @@
    * @property {string | string[] | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -30,7 +30,7 @@
   } = $props();
 
   const {
-    // Widget-specific options
+    // Field-specific options
     collection: collectionName,
     file: fileName,
     multiple = false,

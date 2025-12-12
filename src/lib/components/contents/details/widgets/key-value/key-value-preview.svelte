@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the preview for the KeyValue widget compatible with Static CMS.
+  Implement the preview for a KeyValue field compatible with Static CMS.
   @see https://staticjscms.netlify.app/docs/widget-keyvalue
 -->
 <script>
@@ -13,7 +13,7 @@
 
   /**
    * @import { Writable } from 'svelte/store';
-   * @import { EntryDraft, WidgetPreviewProps } from '$lib/types/private';
+   * @import { EntryDraft, FieldPreviewProps } from '$lib/types/private';
    * @import { KeyValueField } from '$lib/types/public';
    */
 
@@ -23,7 +23,7 @@
    * @property {Record<string, string> | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -33,7 +33,7 @@
   } = $props();
 
   const {
-    // Widget-specific options
+    // Field-specific options
     key_label: _keyLabel,
     value_label: _valueLabel,
   } = $derived(fieldConfig);

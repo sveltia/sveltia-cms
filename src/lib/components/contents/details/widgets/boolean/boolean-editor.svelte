@@ -1,13 +1,13 @@
 <!--
   @component
-  Implement the editor for the Boolean widget.
+  Implement the editor for a Boolean field.
   @see https://decapcms.org/docs/widgets/#Boolean
 -->
 <script>
   import { Switch } from '@sveltia/ui';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { BooleanField } from '$lib/types/public';
    */
 
@@ -17,7 +17,7 @@
    * @property {boolean | 'mixed' | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

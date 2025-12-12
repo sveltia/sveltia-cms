@@ -1,13 +1,13 @@
 <!--
   @component
-  Implement the preview for the Code widget.
+  Implement the preview for a Code field.
   @see https://decapcms.org/docs/widgets/#Code
 -->
 <script>
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { CodeField } from '$lib/types/public';
    */
 
@@ -17,7 +17,7 @@
    * @property {string | Record<string, string> | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

@@ -1,13 +1,13 @@
 <!--
   @component
-  Implement the preview for the Boolean widget.
+  Implement the preview for a Boolean field.
   @see https://decapcms.org/docs/widgets/#Boolean
 -->
 <script>
   import { _ } from 'svelte-i18n';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { BooleanField } from '$lib/types/public';
    */
 
@@ -17,7 +17,7 @@
    * @property {boolean | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     currentValue = false,

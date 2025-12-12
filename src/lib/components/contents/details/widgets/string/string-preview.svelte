@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the preview for the String widget.
+  Implement the preview for a String field.
   @see https://decapcms.org/docs/widgets/#String
 -->
 <script>
@@ -11,7 +11,7 @@
   import { isYouTubeVideoURL } from '$lib/services/utils/media/video/youtube';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { StringField } from '$lib/types/public';
    */
 
@@ -21,7 +21,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

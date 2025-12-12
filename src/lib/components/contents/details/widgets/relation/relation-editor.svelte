@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the Relation widget.
+  Implement the editor for a Relation field.
   @see https://decapcms.org/docs/widgets/#Relation
 -->
 <script>
@@ -10,7 +10,7 @@
   import { getOptions } from '$lib/services/contents/widgets/relation/helper';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { RelationField, SelectField } from '$lib/types/public';
    */
 
@@ -20,7 +20,7 @@
    * @property {string | string[] | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -37,7 +37,7 @@
   } = $props();
 
   const {
-    // Widget-specific options
+    // Field-specific options
     collection: collectionName,
     file: fileName,
   } = $derived(fieldConfig);

@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the Text widget.
+  Implement the editor for a Text field.
   @see https://decapcms.org/docs/widgets/#Text
 -->
 <script>
@@ -11,7 +11,7 @@
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
-   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { TextField } from '$lib/types/public';
    */
 
@@ -24,7 +24,7 @@
   /** @type {FieldEditorContext} */
   const { extraHint } = getContext('field-editor') ?? {};
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

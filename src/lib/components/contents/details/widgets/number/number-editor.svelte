@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the Number widget.
+  Implement the editor for a Number field.
   @see https://decapcms.org/docs/widgets/#Number
 -->
 <script>
@@ -8,7 +8,7 @@
   import { untrack } from 'svelte';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { NumberField } from '$lib/types/public';
    */
 
@@ -18,7 +18,7 @@
    * @property {string | number | null | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

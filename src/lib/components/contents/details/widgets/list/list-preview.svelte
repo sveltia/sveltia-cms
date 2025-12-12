@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the preview for the List widget.
+  Implement the preview for a List field.
   @see https://decapcms.org/docs/widgets/#List
 -->
 <script>
@@ -9,7 +9,7 @@
   import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { ComplexListField, SimpleListField, ListField } from '$lib/types/public';
    */
 
@@ -19,7 +19,7 @@
    * @property {string[] | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldConfig: config,

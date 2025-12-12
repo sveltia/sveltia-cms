@@ -1,13 +1,13 @@
 <!--
   @component
-  Implement the preview for the Text widget.
+  Implement the preview for a Text field.
   @see https://decapcms.org/docs/widgets/#Text
 -->
 <script>
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { TextField } from '$lib/types/public';
    */
 
@@ -17,7 +17,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

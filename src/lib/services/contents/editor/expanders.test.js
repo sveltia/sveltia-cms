@@ -448,8 +448,8 @@ describe('editor/expanders', () => {
     });
   });
 
-  describe('getExpanderKeys - widget types', () => {
-    it('should handle object widget', () => {
+  describe('getExpanderKeys - field types', () => {
+    it('should handle object field', () => {
       vi.mocked(getField).mockReturnValue({
         name: 'details',
         widget: 'object',
@@ -465,7 +465,7 @@ describe('editor/expanders', () => {
       expect(Array.isArray(keys)).toBe(true);
     });
 
-    it('should handle list widget', () => {
+    it('should handle list field', () => {
       vi.mocked(getField).mockReturnValue({
         name: 'items',
         widget: 'list',

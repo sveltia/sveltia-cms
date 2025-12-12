@@ -544,7 +544,7 @@ describe('definitions', () => {
         expect(field).toHaveProperty('name');
         expect(field).toHaveProperty('label');
 
-        // Not all fields have a widget property, so just check it exists if present
+        // Not all fields have the `widget` property, so just check it exists if present
         if (field.widget) {
           expect(typeof field.widget).toBe('string');
         }

@@ -109,7 +109,7 @@ export const getCurrentDateTime = (fieldConfig) => {
 
 /**
  * Get the current value given the input value.
- * @param {string | undefined} inputValue Value on the date/time input widget.
+ * @param {string | undefined} inputValue Value on the date/time input control.
  * @param {string | undefined} currentValue Value in the entry draft datastore.
  * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {string | undefined} New value.

@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the Map widget.
+  Implement the editor for a Map field.
   @see https://decapcms.org/docs/widgets/#Map
   @see https://leafletjs.com/
   @see https://github.com/JamesLMilner/terra-draw
@@ -21,7 +21,7 @@
   /**
    * @import Leaflet from 'leaflet';
    * @import { GeoJSONStoreGeometries, TerraDraw } from 'terra-draw';
-   * @import { GeoCoordinates, WidgetEditorProps } from '$lib/types/private';
+   * @import { GeoCoordinates, FieldEditorProps } from '$lib/types/private';
    * @import { MapField } from '$lib/types/public';
    */
 
@@ -40,7 +40,7 @@
    * @see https://nominatim.org/release-docs/develop/api/Search/
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldConfig,
@@ -78,8 +78,8 @@
 
   /**
    * Load the Terra Draw libraries and initialize the draw instance once the Leaflet map is ready.
-   * We don’t bundle the libraries because of the bundle size: the Map widget may not be used often
-   * and multiple services/adapters may be supported in the future.
+   * We don’t bundle the libraries because of the bundle size: a Map field may not be used often and
+   * multiple services/adapters may be supported in the future.
    * @param {object} args Arguments.
    * @param {Leaflet} args.leaflet Leaflet library.
    * @param {Leaflet.Map} args.map Leaflet map instance.

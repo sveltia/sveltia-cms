@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the String widget.
+  Implement the editor for a String field.
   @see https://decapcms.org/docs/widgets/#String
 -->
 <script>
@@ -11,7 +11,7 @@
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
-   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { StringField } from '$lib/types/public';
    */
 
@@ -21,7 +21,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

@@ -36,8 +36,8 @@ vi.mock('$lib/services/contents/i18n', () => ({
 }));
 
 vi.mock('$lib/services/contents/widgets', () => ({
-  MEDIA_WIDGETS: ['file', 'image'],
-  MULTI_VALUE_WIDGETS: ['file', 'image', 'relation', 'select'],
+  MEDIA_FIELD_TYPES: ['file', 'image'],
+  MULTI_VALUE_FIELD_TYPES: ['file', 'image', 'relation', 'select'],
 }));
 
 vi.mock('$lib/services/contents/widgets/markdown/components/definitions', () => ({
@@ -1211,8 +1211,8 @@ describe('Test getField()', () => {
     });
   });
 
-  describe('Select widget tests', () => {
-    test('should return field config for single select widget', () => {
+  describe('Select field tests', () => {
+    test('should return field config for single select field', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
@@ -1229,7 +1229,7 @@ describe('Test getField()', () => {
       });
     });
 
-    test('should return field config for multiple select widget', () => {
+    test('should return field config for multiple select field', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
@@ -1247,7 +1247,7 @@ describe('Test getField()', () => {
       });
     });
 
-    test('should return field config for multiple select widget accessed by index', () => {
+    test('should return field config for multiple select field accessed by index', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
@@ -1266,7 +1266,7 @@ describe('Test getField()', () => {
       });
     });
 
-    test('should return field config for multiple select widget accessed by higher index', () => {
+    test('should return field config for multiple select field accessed by higher index', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
@@ -1285,7 +1285,7 @@ describe('Test getField()', () => {
       });
     });
 
-    test('should return undefined for single select widget accessed by index', () => {
+    test('should return undefined for single select field accessed by index', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollection);
 
@@ -1324,8 +1324,8 @@ describe('Test isFieldMultiple()', () => {
     vi.restoreAllMocks();
   });
 
-  describe('Media widgets', () => {
-    test('should call isMultiple for file widget', () => {
+  describe('Media field types', () => {
+    test('should call isMultiple for file field type', () => {
       const fieldConfig = { name: 'test', widget: 'file', multiple: true };
 
       mockIsMultiple.mockReturnValue(true);
@@ -1336,7 +1336,7 @@ describe('Test isFieldMultiple()', () => {
       expect(result).toBe(true);
     });
 
-    test('should call isMultiple for image widget', () => {
+    test('should call isMultiple for image field', () => {
       const fieldConfig = { name: 'test', widget: 'image', multiple: false };
 
       mockIsMultiple.mockReturnValue(false);
@@ -1347,7 +1347,7 @@ describe('Test isFieldMultiple()', () => {
       expect(result).toBe(false);
     });
 
-    test('should handle when isMultiple returns true for media widgets', () => {
+    test('should handle when isMultiple returns true for media field types', () => {
       const fieldConfig = { name: 'test', widget: 'file' };
 
       mockIsMultiple.mockReturnValue(true);
@@ -1357,7 +1357,7 @@ describe('Test isFieldMultiple()', () => {
       expect(result).toBe(true);
     });
 
-    test('should handle when isMultiple returns false for media widgets', () => {
+    test('should handle when isMultiple returns false for media field types', () => {
       const fieldConfig = { name: 'test', widget: 'image' };
 
       mockIsMultiple.mockReturnValue(false);
@@ -1368,8 +1368,8 @@ describe('Test isFieldMultiple()', () => {
     });
   });
 
-  describe('Multi-value widgets', () => {
-    test('should return true for relation widget with multiple=true', () => {
+  describe('Multi-value field types', () => {
+    test('should return true for relation field type with multiple=true', () => {
       const fieldConfig = { name: 'test', widget: 'relation', multiple: true };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1377,7 +1377,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for relation widget with multiple=false', () => {
+    test('should return false for relation field with multiple=false', () => {
       const fieldConfig = { name: 'test', widget: 'relation', multiple: false };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1385,7 +1385,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for relation widget with multiple=undefined', () => {
+    test('should return false for relation field with multiple=undefined', () => {
       const fieldConfig = { name: 'test', widget: 'relation' };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1393,7 +1393,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return true for select widget with multiple=true', () => {
+    test('should return true for select field with multiple=true', () => {
       const fieldConfig = { name: 'test', widget: 'select', multiple: true };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1401,7 +1401,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for select widget with multiple=false', () => {
+    test('should return false for select field with multiple=false', () => {
       const fieldConfig = { name: 'test', widget: 'select', multiple: false };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1409,7 +1409,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for select widget with multiple=undefined', () => {
+    test('should return false for select field with multiple=undefined', () => {
       const fieldConfig = { name: 'test', widget: 'select' };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1432,8 +1432,8 @@ describe('Test isFieldMultiple()', () => {
     });
   });
 
-  describe('Other widgets', () => {
-    test('should return false for string widget', () => {
+  describe('Other field types', () => {
+    test('should return false for string field type', () => {
       const fieldConfig = { name: 'test', widget: 'string' };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1441,7 +1441,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for text widget', () => {
+    test('should return false for text field', () => {
       const fieldConfig = { name: 'test', widget: 'text' };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1449,7 +1449,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for markdown widget', () => {
+    test('should return false for markdown field', () => {
       const fieldConfig = { name: 'test', widget: 'markdown' };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1457,7 +1457,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for number widget', () => {
+    test('should return false for number field', () => {
       const fieldConfig = { name: 'test', widget: 'number' };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1465,7 +1465,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for boolean widget', () => {
+    test('should return false for boolean field', () => {
       const fieldConfig = { name: 'test', widget: 'boolean' };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1473,7 +1473,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for datetime widget', () => {
+    test('should return false for datetime field', () => {
       const fieldConfig = { name: 'test', widget: 'datetime' };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1481,7 +1481,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for list widget', () => {
+    test('should return false for list field', () => {
       const fieldConfig = { name: 'test', widget: 'list' };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1489,7 +1489,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should return false for object widget', () => {
+    test('should return false for object field', () => {
       const fieldConfig = { name: 'test', widget: 'object' };
       const result = isFieldMultiple(fieldConfig);
 
@@ -1498,8 +1498,8 @@ describe('Test isFieldMultiple()', () => {
     });
   });
 
-  describe('Default widget behavior', () => {
-    test('should default to string widget when widget is undefined', () => {
+  describe('Default field behavior', () => {
+    test('should default to string field when `widget` is undefined', () => {
       const fieldConfig = {};
       // @ts-ignore - Testing edge case with incomplete field config
       const result = isFieldMultiple(fieldConfig);
@@ -1508,7 +1508,7 @@ describe('Test isFieldMultiple()', () => {
       expect(mockIsMultiple).not.toHaveBeenCalled();
     });
 
-    test('should handle null widget value', () => {
+    test('should handle null `widget` value', () => {
       const fieldConfig = { widget: null };
       // @ts-ignore - Testing edge case with incomplete field config
       const result = isFieldMultiple(fieldConfig);
@@ -1527,9 +1527,9 @@ describe('Test isFieldMultiple()', () => {
       expect(result).toBe(false);
     });
 
-    test('should handle media widget that is also multi-value widget', () => {
-      // file and image widgets are in both MEDIA_WIDGETS and MULTI_VALUE_WIDGETS
-      // The function should prioritize MEDIA_WIDGETS (call isMultiple function)
+    test('should handle media field type that is also multi-value field type', () => {
+      // file and image field types are in both MEDIA_FIELD_TYPES and MULTI_VALUE_FIELD_TYPES
+      // The function should prioritize MEDIA_FIELD_TYPES (call isMultiple function)
       const fieldConfig = { name: 'test', widget: 'file', multiple: true };
 
       mockIsMultiple.mockReturnValue(true);
@@ -1540,12 +1540,12 @@ describe('Test isFieldMultiple()', () => {
       expect(result).toBe(true);
     });
 
-    test('should handle widget name with different casing', () => {
-      // The function should work with exact widget names
+    test('should handle field type with different casing', () => {
+      // The function should work with exact field types
       const fieldConfig = { name: 'test', widget: 'SELECT' }; // Different case
       const result = isFieldMultiple(fieldConfig);
 
-      expect(result).toBe(false); // Not in MULTI_VALUE_WIDGETS
+      expect(result).toBe(false); // Not in MULTI_VALUE_FIELD_TYPES
     });
 
     test('should handle additional properties in field config', () => {
@@ -1672,7 +1672,7 @@ describe('Test getFieldDisplayValue()', () => {
           { name: 'alt', widget: 'string' },
         ],
       },
-      // Number widget fields for testing
+      // Number fields for testing
       { name: 'intNumber', widget: 'number', value_type: 'int' },
       { name: 'floatNumber', widget: 'number', value_type: 'float' },
       { name: 'defaultNumber', widget: 'number' }, // Defaults to 'int'
@@ -1844,7 +1844,7 @@ describe('Test getFieldDisplayValue()', () => {
     });
   });
 
-  describe('List widget handling', () => {
+  describe('List field handling', () => {
     test('should format simple list values', () => {
       const valueMap = {
         'simpleTags.0': 'javascript',
@@ -1864,7 +1864,7 @@ describe('Test getFieldDisplayValue()', () => {
       expect(result).toContain('tutorial');
     });
 
-    test('should ignore complex list widgets (with fields or types)', () => {
+    test('should ignore complex list field types (with fields or types)', () => {
       const valueMap = {
         'images.0.src': 'image1.jpg',
         'images.0.alt': 'First image',
@@ -1879,11 +1879,11 @@ describe('Test getFieldDisplayValue()', () => {
         locale: 'en',
       });
 
-      // Complex list widgets should not be formatted as simple lists
+      // Complex list field types should not be formatted as simple lists
       expect(result).toBe('');
     });
 
-    test('should format list widgets with field property', () => {
+    test('should format list field types with field property', () => {
       const valueMap = {
         'tags.0': 'javascript',
         'tags.1': 'web development',
@@ -1896,15 +1896,15 @@ describe('Test getFieldDisplayValue()', () => {
         locale: 'en',
       });
 
-      // List widgets with field property should be formatted as simple lists
+      // List field types with field property should be formatted as simple lists
       expect(result).toContain('javascript');
       expect(result).toContain('web development');
     });
   });
 
-  describe('Relation widget handling', () => {
+  describe('Relation field handling', () => {
     test('should handle relation field type recognition (line 243-250)', () => {
-      // This test ensures the relation widget branch is tested
+      // This test ensures the relation field branch is tested
       // The actual relation handling is tested in other test files
       const mockCollectionWithRelation = {
         ...mockCollection,
@@ -1931,7 +1931,7 @@ describe('Test getFieldDisplayValue()', () => {
       expect(fieldConfig?.widget).toBe('relation');
     });
 
-    test('should call getReferencedOptionLabel for relation widget (line 243-250)', () => {
+    test('should call getReferencedOptionLabel for relation field (line 243-250)', () => {
       const mockCollectionWithRelation = {
         ...mockCollection,
         fields: [
@@ -1972,9 +1972,9 @@ describe('Test getFieldDisplayValue()', () => {
     });
   });
 
-  describe('Select widget handling', () => {
+  describe('Select field handling', () => {
     test('should handle select field type recognition (line 253-259)', () => {
-      // Verify select widget branch is recognized
+      // Verify select field branch is recognized
       const mockCollectionWithSelect = {
         ...mockCollection,
         fields: [
@@ -2000,7 +2000,7 @@ describe('Test getFieldDisplayValue()', () => {
       expect(fieldConfig?.widget).toBe('select');
     });
 
-    test('should call getOptionLabel for select widget (line 253-259)', () => {
+    test('should call getOptionLabel for select field (line 253-259)', () => {
       const mockCollectionWithSelect = {
         ...mockCollection,
         fields: [
@@ -2041,9 +2041,9 @@ describe('Test getFieldDisplayValue()', () => {
     });
   });
 
-  describe('Datetime widget handling', () => {
+  describe('Datetime field handling', () => {
     test('should recognize datetime field type (lines 230-240)', () => {
-      // Verify datetime widget branch is recognized
+      // Verify datetime field branch is recognized
       const mockCollectionWithDatetime = {
         ...mockCollection,
         fields: [
@@ -2069,7 +2069,7 @@ describe('Test getFieldDisplayValue()', () => {
       expect(fieldConfig?.widget).toBe('datetime');
     });
 
-    test('should call getDateTimeFieldDisplayValue when datetime widget has no date transformation (line 230-240)', () => {
+    test('should call getDateTimeFieldDisplayValue when datetime field has no date transformation (line 230-240)', () => {
       const mockCollectionWithDatetime = {
         ...mockCollection,
         fields: [
@@ -2295,7 +2295,7 @@ describe('Test getFieldDisplayValue()', () => {
     });
   });
 
-  describe('Number widget handling', () => {
+  describe('Number field handling', () => {
     beforeEach(() => {
       // Mock Intl.NumberFormat to return predictable values for testing
       vi.spyOn(Intl, 'NumberFormat').mockImplementation((locale) => ({
@@ -3478,7 +3478,7 @@ describe('Test getField() with explicit variable type syntax', () => {
         ],
       },
       {
-        name: 'widget',
+        name: 'field_1',
         widget: 'object',
         types: [
           {
@@ -3621,7 +3621,7 @@ describe('Test getField() with explicit variable type syntax', () => {
 
       const result = getField({
         collectionName: 'posts',
-        keyPath: 'widget<button>.label',
+        keyPath: 'field_1<button>.label',
         valueMap: undefined,
       });
 
@@ -3634,7 +3634,7 @@ describe('Test getField() with explicit variable type syntax', () => {
 
       const result = getField({
         collectionName: 'posts',
-        keyPath: 'widget<link>.url',
+        keyPath: 'field_1<link>.url',
         valueMap: undefined,
       });
 
@@ -3647,7 +3647,7 @@ describe('Test getField() with explicit variable type syntax', () => {
 
       const result = getField({
         collectionName: 'posts',
-        keyPath: 'widget<button>.nonexistent',
+        keyPath: 'field_1<button>.nonexistent',
         valueMap: undefined,
       });
 
@@ -3660,7 +3660,7 @@ describe('Test getField() with explicit variable type syntax', () => {
 
       const result = getField({
         collectionName: 'posts',
-        keyPath: 'widget<unknown>.label',
+        keyPath: 'field_1<unknown>.label',
         valueMap: undefined,
       });
 
@@ -3673,7 +3673,7 @@ describe('Test getField() with explicit variable type syntax', () => {
 
       const result = getField({
         collectionName: 'posts',
-        keyPath: 'widget<button>',
+        keyPath: 'field_1<button>',
         valueMap: undefined,
       });
 
@@ -3725,13 +3725,13 @@ describe('Test getField() with explicit variable type syntax', () => {
 
     test('should handle malformed explicit type with suffix (line 81 if suffix)', () => {
       // Test malformed explicit type syntax with content after bracket
-      // e.g., "widget<button>extra" - the suffix "extra" makes it malformed
+      // e.g., "field_1<button>extra" - the suffix "extra" makes it malformed
       // This should NOT parse as explicit type and return { cleanKey: key }
       const mockCollection = {
         _type: 'entry',
         fields: [
           {
-            name: 'widget<button>extra', // Literal field name, malformed explicit type
+            name: 'field_1<button>extra', // Literal field name, malformed explicit type
             widget: 'string',
           },
         ],
@@ -3744,12 +3744,12 @@ describe('Test getField() with explicit variable type syntax', () => {
       // parseExplicitType returns { cleanKey: key } unchanged
       const result = getField({
         collectionName: 'posts',
-        keyPath: 'widget<button>extra',
+        keyPath: 'field_1<button>extra',
         valueMap: {},
       });
 
       // Should find the field with the literal name including the malformed syntax
-      expect(result).toEqual({ name: 'widget<button>extra', widget: 'string' });
+      expect(result).toEqual({ name: 'field_1<button>extra', widget: 'string' });
     });
 
     test('should parse valid explicit type and resolve field (line 85)', () => {
@@ -4098,7 +4098,7 @@ describe('Test getField() with explicit variable type syntax', () => {
         _type: 'entry',
         fields: [
           {
-            name: 'widget',
+            name: 'field_1',
             widget: 'object',
             types: [
               {
@@ -4136,7 +4136,7 @@ describe('Test getField() with explicit variable type syntax', () => {
       // Test accessing shared 'label' field across different types
       const buttonLabel = getField({
         collectionName: 'posts',
-        keyPath: 'widget<button>.label',
+        keyPath: 'field_1<button>.label',
         valueMap: undefined,
       });
 
@@ -4144,7 +4144,7 @@ describe('Test getField() with explicit variable type syntax', () => {
 
       const linkLabel = getField({
         collectionName: 'posts',
-        keyPath: 'widget<link>.label',
+        keyPath: 'field_1<link>.label',
         valueMap: undefined,
       });
 
@@ -4152,7 +4152,7 @@ describe('Test getField() with explicit variable type syntax', () => {
 
       const dropdownLabel = getField({
         collectionName: 'posts',
-        keyPath: 'widget<dropdown>.label',
+        keyPath: 'field_1<dropdown>.label',
         valueMap: undefined,
       });
 
@@ -4161,7 +4161,7 @@ describe('Test getField() with explicit variable type syntax', () => {
       // Test accessing type-specific fields
       const buttonAction = getField({
         collectionName: 'posts',
-        keyPath: 'widget<button>.action',
+        keyPath: 'field_1<button>.action',
         valueMap: undefined,
       });
 
@@ -4169,7 +4169,7 @@ describe('Test getField() with explicit variable type syntax', () => {
 
       const linkUrl = getField({
         collectionName: 'posts',
-        keyPath: 'widget<link>.url',
+        keyPath: 'field_1<link>.url',
         valueMap: undefined,
       });
 

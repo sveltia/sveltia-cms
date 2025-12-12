@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the List widget without subfield(s).
+  Implement the editor for a List field without subfield(s).
   @see https://decapcms.org/docs/widgets/#List
 -->
 <script>
@@ -11,7 +11,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { EntryDraft, FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { EntryDraft, FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { SimpleListField } from '$lib/types/public';
    */
 
@@ -24,7 +24,7 @@
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -51,7 +51,7 @@
   };
 
   /**
-   * Update the value for the List widget w/o subfield(s). This has to be called from the `input`
+   * Update the value for the List field without subfield(s). This has to be called from the `input`
    * event handler on `<TextArea>`, not a `inputValue` reaction, because it causes an infinite loop
    * due to {@link setInputValue}.
    * @param {string[]} [listItems] List items to set. If not provided, split {@link inputValue}.

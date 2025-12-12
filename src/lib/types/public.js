@@ -107,7 +107,7 @@
  * @typedef {object} DefaultMediaLibraryConfig
  * @property {boolean} [multiple] Whether to allow multiple file selection in the media library.
  * This option is available for compatibility with the Cloudinary and Uploadcare media libraries,
- * but you can simply use the `multiple` option for the File/Image widgets instead.
+ * but you can simply use the `multiple` option for the File/Image field types instead.
  * @property {number} [max_file_size] Maximum file size in bytes that can be accepted for uploading.
  * @property {boolean} [slugify_filename] Whether to rename an original asset file when saving it,
  * according to the global `slug` option. Default: `false`, meaning that the original file name is
@@ -200,7 +200,7 @@
  */
 
 /**
- * Standard field properties for a built-in widget.
+ * Standard field properties for a built-in field type.
  * @typedef {object} StandardFieldProps
  * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
  * field value.
@@ -296,7 +296,7 @@
  * @property {string} name Unique identifier for the type.
  * @property {string} [label] Label of the type to be displayed in the editor UI. Default: `name`
  * field value.
- * @property {'object'} [widget] Widget name. Values other than `object` are ignored.
+ * @property {'object'} [widget] Field type. Values other than `object` are ignored.
  * @property {string} [summary] Template of a label to be displayed on a collapsed object.
  * @property {Field[]} [fields] Set of subfields. This option can be omitted; in that case, only the
  * `type` property will be saved.
@@ -335,7 +335,7 @@
 /**
  * Boolean field properties.
  * @typedef {object} BooleanFieldProps
- * @property {'boolean'} widget Widget name.
+ * @property {'boolean'} widget Field type.
  * @property {boolean} [default] Default value. Accepts `true` or `false`.
  * @see https://decapcms.org/docs/widgets/#Boolean
  */
@@ -348,7 +348,7 @@
 /**
  * Code field properties.
  * @typedef {object} CodeFieldProps
- * @property {'code'} widget Widget name.
+ * @property {'code'} widget Field type.
  * @property {string | Record<string, string>} [default] Default value. It must be a string if
  * `output_code_only` is `false`. Otherwise it must be an object that match the `keys` option.
  * @property {string} [default_language] Default language to be selected, like `js`. See the [Prism
@@ -370,7 +370,7 @@
 /**
  * Color field properties.
  * @typedef {object} ColorFieldProps
- * @property {'color'} widget Widget name.
+ * @property {'color'} widget Field type.
  * @property {string} [default] Default value. Accepts a Hex color code in the six-value (`#RRGGBB`)
  * or eight-value (`#RRGGBBAA`) syntax.
  * @property {boolean} [allowInput] Whether to show a textbox that allows users to manually edit the
@@ -387,7 +387,7 @@
 /**
  * Compute field properties.
  * @typedef {object} ComputeFieldProps
- * @property {'compute'} widget Widget name.
+ * @property {'compute'} widget Field type.
  * @property {string} value Value template, like `posts-{{fields.slug}}`.
  * @see https://github.com/sveltia/sveltia-cms/issues/111
  */
@@ -400,7 +400,7 @@
 /**
  * DateTime field properties.
  * @typedef {object} DateTimeFieldProps
- * @property {'datetime'} widget Widget name.
+ * @property {'datetime'} widget Field type.
  * @property {string} [default] Default value. Accepts a date/time string that matches the `format`,
  * or `{{now}}` to populate the current date/time. Default: empty string.
  * @property {string} [format] Storage format written in [Day.js
@@ -425,7 +425,7 @@
 /**
  * File field properties.
  * @typedef {object} FileFieldProps
- * @property {'file'} widget Widget name.
+ * @property {'file'} widget Field type.
  * @see https://decapcms.org/docs/widgets/#File
  */
 
@@ -437,7 +437,7 @@
 /**
  * Hidden field properties.
  * @typedef {object} HiddenFieldProps
- * @property {'hidden'} widget Widget name.
+ * @property {'hidden'} widget Field type.
  * @property {any} [default] Default value. Accepts any data type that can be stored with the
  * configured file format.
  * @property {false | 'duplicate' | 'none'} [i18n] Whether to enable the field in locales other than
@@ -456,7 +456,7 @@
 /**
  * Image field properties.
  * @typedef {object} ImageFieldProps
- * @property {'image'} widget Widget name.
+ * @property {'image'} widget Field type.
  * @see https://decapcms.org/docs/widgets/#Image
  */
 
@@ -469,7 +469,7 @@
 /**
  * KeyValue field properties compatible with Static CMS.
  * @typedef {object} KeyValueFieldProps
- * @property {'keyvalue'} widget Widget name.
+ * @property {'keyvalue'} widget Field type.
  * @property {Record<string, string>} [default] Default key-value pairs.
  * @property {string} [key_label] Label for the key column. Default: Key.
  * @property {string} [value_label] Label for the value column. Default: Value.
@@ -484,7 +484,7 @@
 /**
  * List field properties.
  * @typedef {object} ListFieldProps
- * @property {'list'} widget Widget name.
+ * @property {'list'} widget Field type.
  * @property {string[] | Record<string, any>[] | Record<string, any>} [default] Default value. The
  * format depends on how the field is configured, with or without `field`, `fields` or `types`. See
  * the document for details.
@@ -580,7 +580,7 @@
 /**
  * Map field properties.
  * @typedef {object} MapFieldProps
- * @property {'map'} widget Widget name.
+ * @property {'map'} widget Field type.
  * @property {string} [default] Default value. Accepts a stringified single
  * [GeoJSON](https://geojson.org/) geometry object that contains `type` and `coordinates`
  * properties.
@@ -617,7 +617,7 @@
 /**
  * Markdown field properties.
  * @typedef {object} MarkdownFieldProps
- * @property {'markdown'} widget Widget name.
+ * @property {'markdown'} widget Field type.
  * @property {string} [default] Default value.
  * @property {boolean} [minimal] Whether to minimize the toolbar height.
  * @property {RichTextEditorButtonName[]} [buttons] Names of formatting buttons and menu items to be
@@ -647,7 +647,7 @@
 /**
  * Number field properties.
  * @typedef {object} NumberFieldProps
- * @property {'number'} widget Widget name.
+ * @property {'number'} widget Field type.
  * @property {number | string} [default] Default value.
  * @property {'int' | 'float' | string} [value_type] Type of value to be saved. Default: `int`.
  * @property {number} [min] Minimum value that can be entered in the input. Default: `-Infinity`.
@@ -665,7 +665,7 @@
 /**
  * Object field properties.
  * @typedef {object} ObjectFieldProps
- * @property {'object'} widget Widget name.
+ * @property {'object'} widget Field type.
  * @property {Record<string, any>} [default] Default values.
  * @property {boolean | 'auto'} [collapsed] Whether to collapse the object by default. Default:
  * `false`. If set to `auto`, the UI is collapsed if the object has any filled subfields and
@@ -710,7 +710,7 @@
 /**
  * Relation field properties.
  * @typedef {object} RelationFieldProps
- * @property {'relation'} widget Widget name.
+ * @property {'relation'} widget Field type.
  * @property {any | any[]} [default] Default value(s), which should match the options. When
  * `multiple` is `false`, it should be a single value that matches the `value_field` option.
  * @property {string} collection Referenced collection name. Use `_singletons` for the singleton
@@ -743,7 +743,7 @@
 /**
  * Select field properties.
  * @typedef {object} SelectFieldProps
- * @property {'select'} widget Widget name.
+ * @property {'select'} widget Field type.
  * @property {SelectFieldValue | SelectFieldValue[]} [default] Default value that matches one of the
  * options. When `multiple` is `true`, it should be an array of valid values.
  * @property {SelectFieldValue[] | { label: string, value: SelectFieldValue }[]} options Options.
@@ -759,7 +759,7 @@
 /**
  * String field properties.
  * @typedef {object} StringFieldProps
- * @property {'string'} [widget] Widget name.
+ * @property {'string'} [widget] Field type.
  * @property {string} [default] Default value.
  * @property {'text' | 'url' | 'email'} [type] Data type. It’s useful when the input value needs a
  * validation. Default: `text`.
@@ -777,7 +777,7 @@
 /**
  * Text field properties.
  * @typedef {object} TextFieldProps
- * @property {'text'} widget Widget name.
+ * @property {'text'} widget Field type.
  * @property {string} [default] Default value.
  * @see https://decapcms.org/docs/widgets/#Text
  */
@@ -790,13 +790,13 @@
 /**
  * UUID field properties.
  * @typedef {object} UuidFieldProps
- * @property {'uuid'} widget Widget name.
+ * @property {'uuid'} widget Field type.
  * @property {string} [default] Default value.
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {boolean} [use_b32_encoding] Whether to encode the value with Base32. Default: `false`.
  * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`.
  * DEPRECATED: Use the `readonly` common field option instead, which defaults to `true` for the
- * UUID widget.
+ * UUID field type.
  * @see https://github.com/decaporg/decap-cms/pull/6675
  */
 
@@ -813,7 +813,7 @@
  */
 
 /**
- * Entry field using a built-in widget.
+ * Entry field using a built-in field type.
  * @typedef {VisibleField | HiddenField} StandardField
  * @see https://decapcms.org/docs/widgets/
  */
@@ -844,23 +844,23 @@
  */
 
 /**
- * Name of a built-in widget. Sveltia CMS supports all the built-in widgets provided by Decap CMS as
- * well as some new widgets.
+ * Name of a built-in field type. Sveltia CMS supports all the built-in field types provided by
+ * Decap CMS as well as some new field types.
  * @typedef {'boolean' | 'code' | 'color' | 'compute' | 'datetime' | 'file' | 'hidden' | 'image' |
  * 'keyvalue' | 'list' | 'map' | 'markdown' | 'number' | 'object' | 'relation' | 'select' | 'string'
- * | 'text' | 'uuid'} BuiltInWidgetName
+ * | 'text' | 'uuid'} BuiltInFieldType
  * @see https://decapcms.org/docs/widgets/
  */
 
 /**
  * Custom field properties.
  * @typedef {object} CustomFieldProps
- * @property {Exclude<string, BuiltInWidgetName | ''>} widget Widget name.
+ * @property {Exclude<string, BuiltInFieldType | ''>} widget Field type.
  * @see https://decapcms.org/docs/custom-widgets/
  */
 
 /**
- * Entry field using a custom widget.
+ * Entry field using a custom field type.
  * @typedef {CommonFieldProps & CustomFieldProps & Record<string, any>} CustomField
  */
 
@@ -1046,7 +1046,7 @@
 /**
  * Collection meta data’s path options.
  * @typedef {object} CollectionMetaDataPath
- * @property {'string'} [widget] Widget for editing the path name.
+ * @property {'string'} [widget] Field type for editing the path name.
  * @property {string} [label] Label for the path editor.
  * @property {string} [index_file] Index file name to be used.
  * @see https://decapcms.org/docs/collection-nested/

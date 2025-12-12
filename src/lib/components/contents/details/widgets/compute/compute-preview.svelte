@@ -1,12 +1,12 @@
 <!--
   @component
-  Implement the preview for the experimental Compute widget.
+  Implement the preview for a Compute field.
 -->
 <script>
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { StringField } from '$lib/types/public';
    */
 
@@ -16,7 +16,7 @@
    * @property {string | number | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

@@ -132,9 +132,9 @@ export const hasAsset = async ({
 
   const isBlobURL = assetURL.startsWith('blob:');
   const getURLArgs = { entry, collectionName, fileName };
-  const { widget: widgetName = 'string' } = field;
+  const { widget: fieldType = 'string' } = field;
 
-  if (['image', 'file'].includes(widgetName)) {
+  if (['image', 'file'].includes(fieldType)) {
     const match = isBlobURL
       ? (await getMediaFieldURL({ ...getURLArgs, value })) === assetURL
       : value === assetURL;
@@ -147,7 +147,7 @@ export const hasAsset = async ({
   }
 
   // Search images in markdown body
-  if (widgetName === 'markdown') {
+  if (fieldType === 'markdown') {
     const matches = [...value.matchAll(MARKDOWN_IMAGE_REGEX)];
 
     if (matches.length) {

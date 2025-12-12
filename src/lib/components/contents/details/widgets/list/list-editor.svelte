@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the List widget.
+  Implement the editor for a List field.
   @see https://decapcms.org/docs/widgets/#List
 -->
 <script>
@@ -11,7 +11,7 @@
   import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { ComplexListField, SimpleListField, ListField } from '$lib/types/public';
    */
 
@@ -21,7 +21,7 @@
    * @property {string[]} currentValue Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldConfig: config,
@@ -29,10 +29,10 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const widgetId = $props.id();
+  const fieldId = $props.id();
 </script>
 
-<Group aria-labelledby="list-{widgetId}-summary">
+<Group aria-labelledby="list-{fieldId}-summary">
   {#if getListFieldInfo(config).hasSubFields}
     <ListEditorComplex {...{ ...rest, fieldConfig: /** @type {ComplexListField} */ (config) }} />
   {:else}

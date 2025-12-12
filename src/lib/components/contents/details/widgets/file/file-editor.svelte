@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the File and Image widgets.
+  Implement the editor for the File and Image field types.
   @see https://decapcms.org/docs/widgets/#File
   @see https://decapcms.org/docs/widgets/#Image
 -->
@@ -27,7 +27,7 @@
    * AssetFolderInfo,
    * FieldEditorContext,
    * SelectedResource,
-   * WidgetEditorProps,
+   * FieldEditorProps,
    * } from '$lib/types/private';
    * @import { MediaField } from '$lib/types/public';
    */
@@ -39,10 +39,10 @@
    */
 
   /** @type {FieldEditorContext} */
-  const { widgetContext = undefined } = getContext('field-editor') ?? {};
-  const inEditorComponent = widgetContext === 'markdown-editor-component';
+  const { fieldContext = undefined } = getContext('field-editor') ?? {};
+  const inEditorComponent = fieldContext === 'markdown-editor-component';
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -68,8 +68,8 @@
   let processing = $state(false);
 
   const {
-    widget: widgetName,
-    // Widget-specific options
+    widget: fieldType,
+    // Field-specific options
     max = Infinity,
     accept,
     choose_url: canEnterURL = true,
@@ -78,7 +78,7 @@
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
-  const isImageWidget = $derived(widgetName === 'image');
+  const isImageField = $derived(fieldType === 'image');
   const libraryConfig = $derived(getDefaultMediaLibraryOptions({ fieldConfig }).config);
   const assetLibraryFolderMap = $derived(
     getAssetLibraryFolderMap({ collectionName, fileName, typedKeyPath, isIndexFile }),
@@ -88,16 +88,16 @@
       Object.values(assetLibraryFolderMap).find(({ enabled }) => enabled)?.folder
     ),
   );
-  // Ignore the `multiple` option when the widget is use in a Markdown editor component
+  // Ignore the `multiple` option when the field is used in a Markdown editor component
   const multiple = $derived(isMultiple(fieldConfig) && !inEditorComponent);
   const maxSize = $derived(/** @type {number} */ (libraryConfig.max_file_size));
   const showRemoveButton = $derived(
     !required &&
-      (!widgetContext ||
-        !['markdown-editor-component', 'single-subfield-list-widget'].includes(widgetContext)),
+      (!fieldContext ||
+        !['markdown-editor-component', 'single-subfield-list-field'].includes(fieldContext)),
   );
   const itemArgs = $derived({
-    widgetName,
+    fieldType,
     readonly,
     invalid,
     required,
@@ -163,7 +163,7 @@
 
           $entryDraft.currentValues[locale][`${keyPath}.${targetIndex}`] = value;
         } else {
-          // Encode spaces as `%20` when the widget is used in the Markdown editor component to
+          // Encode spaces as `%20` when the field is used in the Markdown editor component to
           // avoid issues with Markdown parsers that do not support unencoded spaces in URLs.
           currentValue = inEditorComponent ? value.replaceAll(' ', '%20') : value;
         }
@@ -262,7 +262,7 @@
     {invalid}
     {readonly}
     {processing}
-    {isImageWidget}
+    {isImageField}
     {multiple}
     bind:showSelectAssetsDialog
     bind:replaceMode
@@ -316,7 +316,7 @@
     bind:this={dropZone}
     {multiple}
     disabled={readonly}
-    accept={accept ?? (isImageWidget ? SUPPORTED_IMAGE_TYPES.join(',') : undefined)}
+    accept={accept ?? (isImageField ? SUPPORTED_IMAGE_TYPES.join(',') : undefined)}
     {onDrop}
   >
     {@render content()}
@@ -326,7 +326,7 @@
 {/if}
 
 <SelectAssetsDialog
-  kind={isImageWidget ? 'image' : undefined}
+  kind={isImageField ? 'image' : undefined}
   multiple={replaceMode ? false : multiple}
   {accept}
   {canEnterURL}

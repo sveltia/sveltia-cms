@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the DataTime widget.
+  Implement the editor for a DateTime field.
   @see https://decapcms.org/docs/widgets/#Datetime
   @todo Replace the native `<input>` with a custom component.
 -->
@@ -18,7 +18,7 @@
   } from '$lib/services/contents/widgets/date-time/helper';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { DateTimeField } from '$lib/types/public';
    */
 
@@ -28,7 +28,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

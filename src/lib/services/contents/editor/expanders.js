@@ -19,8 +19,8 @@ import { getField } from '$lib/services/contents/entry/fields';
  * to `auto`, it checks if there are any values in the object. Otherwise, it uses the `collapsed`
  * option directly, which defaults to `false` (expanded).
  * @param {object} args Arguments.
- * @param {string} args.key Key path of the item. For the List widget, it’s a key path of the list
- * item, e.g. `authors.0`. For the Object widget, it’s a key path of the object with the `#` suffix,
+ * @param {string} args.key Key path of the item. For a List field, it’s a key path of the list
+ * item, e.g. `authors.0`. For an Object field, it’s a key path of the object with the `#` suffix,
  * e.g. `details#`.
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {boolean | 'auto'} [args.collapsed] The `collapsed` option value.

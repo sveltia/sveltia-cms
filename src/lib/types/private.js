@@ -29,7 +29,7 @@
 /**
  * A variant of {@link FieldKeyPath} that can include type information for fields with variable
  * types. The syntax uses angle brackets to enclose the type, e.g. `blocks.*<image>.src` (for a
- * variable type List field; a list index is replaced with an asterisk) or `widget<button>.label`
+ * variable type List field; a list index is replaced with an asterisk) or `field<button>.label`
  * (for a variable type Object field).
  * @typedef {string} TypedFieldKeyPath
  */
@@ -920,21 +920,21 @@
 
 /**
  * Context for a field, which may change the behavior of the editor/preview.
- * @typedef {'markdown-editor-component' | 'single-subfield-list-widget'} WidgetContext
+ * @typedef {'markdown-editor-component' | 'single-subfield-list-field'} FieldContext
  */
 
 /**
  * Context for a field editor.
  * @typedef {object} FieldEditorContext
- * @property {WidgetContext} [widgetContext] Where the field is rendered.
+ * @property {FieldContext} [fieldContext] Where the field is rendered.
  * @property {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
  * @property {Writable<Component>} [extraHint] Component to render an extra hint in the field
  * editor.
  */
 
 /**
- * Common properties to be passed to a field widget’s editor component.
- * @typedef {object} WidgetEditorProps
+ * Common properties to be passed to a field’s editor component.
+ * @typedef {object} FieldEditorProps
  * @property {InternalLocaleCode} locale Current pane’s locale.
  * @property {FieldKeyPath} keyPath Field key path.
  * @property {TypedFieldKeyPath} typedKeyPath Typed field key path.
@@ -946,8 +946,8 @@
  */
 
 /**
- * Common properties to be passed to a field widget’s preview component.
- * @typedef {object} WidgetPreviewProps
+ * Common properties to be passed to a field’s preview component.
+ * @typedef {object} FieldPreviewProps
  * @property {InternalLocaleCode} locale Current pane’s locale.
  * @property {FieldKeyPath} keyPath Field key path.
  * @property {TypedFieldKeyPath} typedKeyPath Typed field key path.
@@ -1053,7 +1053,7 @@
  * @property {string} [fileName] Collection file name. File/singleton collection only.
  * @property {string} [componentName] Markdown editor component name.
  * @property {FlattenedEntryContent} [valueMap] Object holding current entry values. This is
- * required when working with list/object widget variable types.
+ * required when working with list/object field variable types.
  * @property {FieldKeyPath | TypedFieldKeyPath} keyPath Field key path or typed key path.
  * @property {boolean} [isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.

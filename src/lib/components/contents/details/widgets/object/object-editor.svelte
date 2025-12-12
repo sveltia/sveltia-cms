@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the Object widget.
+  Implement the editor for an Object field.
   @see https://decapcms.org/docs/widgets/#Object
 -->
 <script>
@@ -26,7 +26,7 @@
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**
-   * @import { EntryDraft, FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { EntryDraft, FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import {
    * ObjectField,
    * ObjectFieldWithSubFields,
@@ -41,11 +41,11 @@
    */
 
   /** @type {FieldEditorContext} */
-  const { widgetContext, valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
-  // Hide the header/expander if in a single subfield list widget because it’s redundant
-  const hideHeader = widgetContext === 'single-subfield-list-widget';
+  const { fieldContext, valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  // Hide the header/expander if in a single subfield list field because it’s redundant
+  const hideHeader = fieldContext === 'single-subfield-list-field';
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -56,12 +56,12 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const widgetId = $props.id();
+  const fieldId = $props.id();
 
   const {
     name: fieldName,
     i18n = false,
-    // Widget-specific options
+    // Field-specific options
     collapsed,
     summary,
   } = $derived(fieldConfig);
@@ -83,7 +83,7 @@
     ),
   );
   const canEdit = $derived(
-    widgetContext === 'markdown-editor-component' || locale === defaultLocale || i18n !== false,
+    fieldContext === 'markdown-editor-component' || locale === defaultLocale || i18n !== false,
   );
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
@@ -210,12 +210,12 @@
   <div
     role="group"
     class="wrapper"
-    aria-labelledby={parentExpanded ? undefined : `object-${widgetId}-summary`}
+    aria-labelledby={parentExpanded ? undefined : `object-${fieldId}-summary`}
   >
     {#if !hideHeader}
       <ObjectHeader
         label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
-        controlId="object-{widgetId}-item-list"
+        controlId="object-{fieldId}-item-list"
         expanded={parentExpanded}
         toggleExpanded={subFields.length
           ? () => syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded })
@@ -240,7 +240,7 @@
         {/snippet}
       </ObjectHeader>
     {/if}
-    <div role="none" class="item-list" id="object-{widgetId}-item-list">
+    <div role="none" class="item-list" id="object-{fieldId}-item-list">
       {#if parentExpanded}
         {#each subFields as subField (subField.name)}
           {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
@@ -258,7 +258,7 @@
       {:else}
         {@const formattedSummary = _formatSummary()}
         {#if formattedSummary}
-          <div role="none" class="summary" id="object-{widgetId}-summary">
+          <div role="none" class="summary" id="object-{fieldId}-summary">
             <TruncatedText lines={$isSmallScreen ? 2 : 1}>
               {formattedSummary}
             </TruncatedText>

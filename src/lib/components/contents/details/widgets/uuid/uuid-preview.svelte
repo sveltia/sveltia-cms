@@ -1,11 +1,11 @@
 <!--
   @component
-  Implement the preview for the UUID widget.
+  Implement the preview for a UUID field.
   @see https://decapcms.org/docs/widgets/#uuid
 -->
 <script>
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { UuidField } from '$lib/types/public';
    */
 
@@ -15,7 +15,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     currentValue,

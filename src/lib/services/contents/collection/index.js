@@ -159,7 +159,7 @@ export const getThumbnailFieldNames = (rawCollection) => {
   // Collect the names of all non-nested Image/File fields for inference
   if (fields?.length) {
     return fields
-      .filter(({ widget = 'string' }) => ['image', 'file'].includes(widget))
+      .filter(({ widget: fieldType = 'string' }) => ['image', 'file'].includes(fieldType))
       .map(({ name }) => name);
   }
 

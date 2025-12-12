@@ -38,7 +38,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const widgetId = $props.id();
+  const fieldId = $props.id();
 
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
@@ -50,7 +50,7 @@
   // svelte-ignore state_referenced_locally
   let expanded = $state(!collapsed);
 
-  const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${widgetId}:`);
+  const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${fieldId}:`);
 
   /**
    * Get the wrapper element.
@@ -176,7 +176,7 @@
     }
   }}
 >
-  <ObjectHeader {label} controlId="object-{widgetId}-item-list" bind:expanded>
+  <ObjectHeader {label} controlId="object-{fieldId}-item-list" bind:expanded>
     {#snippet endContent()}
       <Button
         size="small"
@@ -192,7 +192,7 @@
       </Button>
     {/snippet}
   </ObjectHeader>
-  <div role="none" class="item-list" id="object-{widgetId}-item-list">
+  <div role="none" class="item-list" id="object-{fieldId}-item-list">
     {#if locale && keyPath && expanded}
       {#each fields as fieldConfig (fieldConfig.name)}
         <VisibilityObserver>
@@ -230,11 +230,11 @@
     &:is([data-component-name='image'], [data-component-name='linked-image']) {
       :global {
         @media (768px <= width) {
-          [data-widget] {
+          [data-field-type] {
             border-width: 0;
           }
 
-          [data-widget='string'] {
+          [data-field-type='string'] {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -244,7 +244,7 @@
               margin-bottom: 0 !important;
             }
 
-            .widget-wrapper {
+            .field-wrapper {
               flex: auto;
             }
           }

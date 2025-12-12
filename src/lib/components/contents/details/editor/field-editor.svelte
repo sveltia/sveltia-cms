@@ -17,7 +17,7 @@
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { MIN_MAX_VALUE_WIDGETS } from '$lib/services/contents/widgets';
+  import { MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/widgets';
 
   /**
    * @import { Component } from 'svelte';
@@ -27,7 +27,7 @@
    * FieldEditorContext,
    * InternalLocaleCode,
    * TypedFieldKeyPath,
-   * WidgetContext,
+   * FieldContext,
    * } from '$lib/types/private';
    * @import {
    * BooleanField,
@@ -50,7 +50,7 @@
    * @property {FieldKeyPath} keyPath Field key path.
    * @property {TypedFieldKeyPath} typedKeyPath Typed field key path.
    * @property {Field} fieldConfig Field configuration.
-   * @property {WidgetContext} [context] Where the widget is rendered.
+   * @property {FieldContext} [context] Where the field is rendered.
    * @property {DraftValueStoreKey} [valueStoreKey] Key to store the values in {@link EntryDraft}.
    */
 
@@ -61,7 +61,7 @@
     keyPath,
     typedKeyPath,
     fieldConfig,
-    context: widgetContext = parent.widgetContext ?? undefined,
+    context: fieldContext = parent.fieldContext ?? undefined,
     valueStoreKey = parent.valueStoreKey ?? 'currentValues',
     /* eslint-enable prefer-const */
   } = $props();
@@ -85,11 +85,11 @@
   setContext(
     'field-editor',
     // svelte-ignore state_referenced_locally
-    /** @type {FieldEditorContext} */ ({ widgetContext, extraHint, valueStoreKey }),
+    /** @type {FieldEditorContext} */ ({ fieldContext, extraHint, valueStoreKey }),
   );
 
-  const inEditorComponent = $derived(widgetContext === 'markdown-editor-component');
-  const { name: fieldName, widget: widgetName = 'string', i18n = false } = $derived(fieldConfig);
+  const inEditorComponent = $derived(fieldContext === 'markdown-editor-component');
+  const { name: fieldName, widget: fieldType = 'string', i18n = false } = $derived(fieldConfig);
   const {
     label = '',
     comment = '',
@@ -101,24 +101,26 @@
   const required = $derived(isFieldRequired({ fieldConfig, locale }));
   const multiple = $derived(isFieldMultiple(fieldConfig));
   const { min = 0, max = Infinity } = $derived(
-    /** @type {MinMaxValueField} */ (MIN_MAX_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}),
+    /** @type {MinMaxValueField} */ (
+      MIN_MAX_VALUE_FIELD_TYPES.includes(fieldType) ? fieldConfig : {}
+    ),
   );
   const type = $derived(
     // prettier-ignore
-    widgetName === 'string'
+    fieldType === 'string'
       ? /** @type {StringField} */ (fieldConfig).type ?? 'text'
-      : widgetName === 'number'
+      : fieldType === 'number'
         ? 'number'
         : undefined,
   );
-  const allowPrefix = $derived(['string'].includes(widgetName));
+  const allowPrefix = $derived(['string'].includes(fieldType));
   const prefix = $derived(
     allowPrefix ? /** @type {StringField} */ (fieldConfig).prefix : undefined,
   );
   const suffix = $derived(
     allowPrefix ? /** @type {StringField} */ (fieldConfig).suffix : undefined,
   );
-  const allowExtraLabels = $derived(['boolean', 'number', 'string'].includes(widgetName));
+  const allowExtraLabels = $derived(['boolean', 'number', 'string'].includes(fieldType));
   const beforeInputLabel = $derived(
     allowExtraLabels
       ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).before_input
@@ -130,8 +132,8 @@
       : undefined,
   );
   const hasExtraLabels = $derived(!!(prefix || suffix || beforeInputLabel || afterInputLabel));
-  const canAddMultiValue = $derived(widgetName === 'list' || widgetName === 'keyvalue' || multiple);
-  const isList = $derived(widgetName === 'list' || multiple);
+  const canAddMultiValue = $derived(fieldType === 'list' || fieldType === 'keyvalue' || multiple);
+  const isList = $derived(fieldType === 'list' || multiple);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalValues = $derived($entryDraft?.originalValues);
@@ -184,8 +186,8 @@
   const readonly = $derived(
     readonlyOption ||
       (i18n === 'duplicate' && locale !== defaultLocale) ||
-      widgetName === 'compute' ||
-      widgetName === 'uuid',
+      fieldType === 'compute' ||
+      fieldType === 'uuid',
   );
   const invalid = $derived(validity?.valid === false);
 
@@ -224,13 +226,13 @@
   });
 </script>
 
-{#if $entryDraft && canEdit && widgetName !== 'hidden'}
+{#if $entryDraft && canEdit && fieldType !== 'hidden'}
   <FieldEditorGroup
     aria-label={$_('x_field', { values: { field: fieldLabel } })}
-    data-widget={widgetName}
+    data-field-type={fieldType}
     data-key-path={keyPath}
     data-typed-key-path={typedKeyPath}
-    hidden={widgetName === 'compute'}
+    hidden={fieldType === 'compute'}
   >
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{fieldLabel}</h4>
@@ -238,7 +240,7 @@
         <div class="required" aria-label={$_('required')}>*</div>
       {/if}
       <Spacer flex />
-      {#if canCopy && ['markdown', 'string', 'text', 'list', 'object'].includes(widgetName)}
+      {#if canCopy && ['markdown', 'string', 'text', 'list', 'object'].includes(fieldType)}
         <TranslateButton size="small" {locale} {otherLocales} {keyPath} />
       {/if}
       {#if canCopy || canRevert}
@@ -292,7 +294,7 @@
         {/if}
         {#if validity.rangeUnderflow}
           {@const quantity = min === 1 ? 'one' : 'many'}
-          {#if widgetName === 'number'}
+          {#if fieldType === 'number'}
             {$_('validation.range_underflow.number', { values: { min } })}
           {:else if canAddMultiValue}
             {$_(`validation.range_underflow.add_${quantity}`, { values: { min } })}
@@ -302,7 +304,7 @@
         {/if}
         {#if validity.rangeOverflow}
           {@const quantity = max === 1 ? 'one' : 'many'}
-          {#if widgetName === 'number'}
+          {#if fieldType === 'number'}
             {$_('validation.range_overflow.number', { values: { max } })}
           {:else if canAddMultiValue}
             {$_(`validation.range_overflow.add_${quantity}`, { values: { max } })}
@@ -318,11 +320,11 @@
         {/if}
       </ValidationError>
     {/if}
-    <div role="none" class="widget-wrapper" class:has-extra-labels={hasExtraLabels}>
-      {#if !(widgetName in editors)}
-        <div role="none">{$_('unsupported_widget_x', { values: { name: widgetName } })}</div>
+    <div role="none" class="field-wrapper" class:has-extra-labels={hasExtraLabels}>
+      {#if !(fieldType in editors)}
+        <div role="none">{$_('unsupported_field_type_x', { values: { name: fieldType } })}</div>
       {:else if isList}
-        {@const Editor = editors[widgetName]}
+        {@const Editor = editors[fieldType]}
         <Editor
           {locale}
           {keyPath}
@@ -342,7 +344,7 @@
         {#if prefix}
           <div role="none" class="prefix">{prefix}</div>
         {/if}
-        {@const Editor = editors[widgetName]}
+        {@const Editor = editors[fieldType]}
         <Editor
           {locale}
           {keyPath}
@@ -376,7 +378,7 @@
 {/if}
 
 <style lang="scss">
-  .widget-wrapper {
+  .field-wrapper {
     &.has-extra-labels {
       display: flex;
       align-items: center;

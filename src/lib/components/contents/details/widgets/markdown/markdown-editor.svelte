@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the Markdown widget.
+  Implement the editor for a Markdown field.
   @see https://decapcms.org/docs/widgets/#Markdown
 -->
 <script>
@@ -36,7 +36,7 @@
   } from '$lib/services/utils/media/image';
 
   /**
-   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { MarkdownField } from '$lib/types/public';
    */
 
@@ -51,10 +51,10 @@
    */
 
   /** @type {FieldEditorContext} */
-  const { widgetContext = undefined } = getContext('field-editor') ?? {};
-  const inEditorComponent = widgetContext === 'markdown-editor-component';
+  const { fieldContext = undefined } = getContext('field-editor') ?? {};
+  const inEditorComponent = fieldContext === 'markdown-editor-component';
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -75,7 +75,7 @@
   let cleanupTimeout = 0;
 
   const {
-    // Widget-specific options
+    // Field-specific options
     modes: _modes = [...DEFAULT_MODES],
     buttons: _buttons = [...DEFAULT_BUTTONS],
     editor_components:

@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the KeyValue widget compatible with Static CMS.
+  Implement the editor for a KeyValue field compatible with Static CMS.
   @see https://staticjscms.netlify.app/docs/widget-keyvalue
 -->
 <script>
@@ -19,7 +19,7 @@
 
   /**
    * @import { Writable } from 'svelte/store';
-   * @import { EntryDraft, FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { EntryDraft, FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { KeyValueField } from '$lib/types/public';
    */
 
@@ -32,7 +32,7 @@
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -45,7 +45,7 @@
 
   const {
     i18n = false,
-    // Widget-specific options
+    // Field-specific options
     key_label: _keyLabel,
     value_label: _valueLabel,
     max = Infinity,

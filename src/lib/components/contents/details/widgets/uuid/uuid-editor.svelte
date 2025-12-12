@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the UUID widget.
+  Implement the editor for a UUID field.
   @see https://decapcms.org/docs/widgets/#uuid
 -->
 <script>
@@ -13,7 +13,7 @@
   import { getInitialValue } from '$lib/services/contents/widgets/uuid/helper';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { UuidField } from '$lib/types/public';
    */
 
@@ -23,7 +23,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

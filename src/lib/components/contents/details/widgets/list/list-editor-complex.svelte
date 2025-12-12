@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the List widget with subfield(s).
+  Implement the editor for a List field with subfield(s).
   @see https://decapcms.org/docs/widgets/#List
 -->
 <script>
@@ -31,7 +31,7 @@
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**
-   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import {
    * ComplexListField,
    * ListFieldWithSubField,
@@ -49,7 +49,7 @@
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
@@ -58,13 +58,13 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const widgetId = $props.id();
+  const fieldId = $props.id();
 
   const {
     name: fieldName,
     label,
     i18n,
-    // Widget-specific options
+    // Field-specific options
     allow_add: allowAdd = true,
     allow_remove: allowRemove = true,
     allow_reorder: allowReorder = true,
@@ -136,7 +136,7 @@
   };
 
   /**
-   * Update the value for the List widget with subfield(s).
+   * Update the value for the List field with subfield(s).
    * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) => void} manipulate
    * See {@link updateListField}.
    */
@@ -316,7 +316,7 @@
     disabled={!items.length}
     aria-label={parentExpanded ? $_('collapse') : $_('expand')}
     aria-expanded={parentExpanded}
-    aria-controls="list-{widgetId}-item-list"
+    aria-controls="list-{fieldId}-item-list"
     onclick={() => {
       syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
     }}
@@ -325,7 +325,7 @@
       <ExpandIcon expanded={parentExpanded} />
     {/snippet}
   </Button>
-  <div role="none" class="summary" id="object-{widgetId}-summary">
+  <div role="none" class="summary" id="object-{fieldId}-summary">
     {items.length}
     {(items.length === 1 ? labelSingular : undefined) || label || fieldName}
   </div>
@@ -356,7 +356,7 @@
     <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
   </div>
 {/if}
-<div role="none" id="list-{widgetId}-item-list" class="item-list" class:collapsed={!parentExpanded}>
+<div role="none" id="list-{fieldId}-item-list" class="item-list" class:collapsed={!parentExpanded}>
   {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
     <VisibilityObserver>
       {@const itemKeyPath = `${keyPath}.${index}`}
@@ -372,7 +372,7 @@
       <div role="none" class="item">
         <ObjectHeader
           label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
-          controlId="list-{widgetId}-item-{index}-body"
+          controlId="list-{fieldId}-item-{index}-body"
           {expanded}
           toggleExpanded={subFields.length
             ? () => syncExpanderStates({ [itemKeyPath]: !expanded })
@@ -476,7 +476,7 @@
             {/if}
           {/snippet}
         </ObjectHeader>
-        <div role="none" class="item-body" id="list-{widgetId}-item-{index}-body">
+        <div role="none" class="item-body" id="list-{fieldId}-item-{index}-body">
           {#if expanded}
             {#each subFields as subField (subField.name)}
               <VisibilityObserver>
@@ -487,7 +487,7 @@
                     : `${keyPath}.*.${subField.name}`}
                   {locale}
                   fieldConfig={subField}
-                  context={hasSingleSubField ? 'single-subfield-list-widget' : undefined}
+                  context={hasSingleSubField ? 'single-subfield-list-field' : undefined}
                 />
               </VisibilityObserver>
             {/each}

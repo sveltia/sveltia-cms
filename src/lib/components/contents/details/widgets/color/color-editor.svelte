@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the Color widget.
+  Implement the editor for a Color field.
   @see https://decapcms.org/docs/widgets/#color
   @todo Replace the native `<input>` with a custom component.
 -->
@@ -10,7 +10,7 @@
   import { _ } from 'svelte-i18n';
 
   /**
-   * @import { WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { ColorField } from '$lib/types/public';
    */
 
@@ -20,7 +20,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldId,

@@ -1,5 +1,5 @@
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
-import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
+import { MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/widgets';
 
 /**
  * @import {
@@ -20,12 +20,12 @@ import { MULTI_VALUE_WIDGETS } from '$lib/services/contents/widgets';
  * @param {FieldKeyPath[]} args.keyPathList Key path list.
  */
 export const parseField = ({ field, keyPath, keyPathList }) => {
-  const { widget } = field;
-  const isList = widget === 'list';
+  const { widget: fieldType } = field;
+  const isList = fieldType === 'list';
 
   keyPathList.push(keyPath);
 
-  if (isList || widget === 'object') {
+  if (isList || fieldType === 'object') {
     const { fields: subFields } = /** @type {FieldWithSubFields} */ (field);
     const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
 
@@ -62,8 +62,8 @@ export const parseField = ({ field, keyPath, keyPathList }) => {
         keyPathList.push(`${keyPath}.*`);
       }
     }
-  } else if (widget && MULTI_VALUE_WIDGETS.includes(widget) && isFieldMultiple(field)) {
-    // Only add wildcard path for multi-value widgets that aren't list/object
+  } else if (fieldType && MULTI_VALUE_FIELD_TYPES.includes(fieldType) && isFieldMultiple(field)) {
+    // Only add wildcard path for multi-value field types that aren't list/object
     keyPathList.push(`${keyPath}.*`);
   }
 };

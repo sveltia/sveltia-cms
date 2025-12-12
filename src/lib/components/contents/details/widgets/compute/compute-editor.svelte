@@ -1,7 +1,7 @@
 <!--
   @component
-  Implement the editor for the experimental Compute widget. Note that this editor is hidden in
-  `FieldEditor` but still needed to compute the value.
+  Implement the editor for a Compute field. Note that this editor is hidden in `FieldEditor` but
+  still needed to compute the value.
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
@@ -12,7 +12,7 @@
   import { getListFormatter } from '$lib/services/contents/i18n';
 
   /**
-   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { ComputeField } from '$lib/types/public';
    */
 
@@ -25,7 +25,7 @@
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

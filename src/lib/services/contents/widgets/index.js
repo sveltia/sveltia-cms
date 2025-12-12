@@ -1,12 +1,12 @@
 /**
- * @import { BuiltInWidgetName } from '$lib/types/public';
+ * @import { BuiltInFieldType } from '$lib/types/public';
  */
 
 /**
- * List of built-in widget names.
- * @type {BuiltInWidgetName[]}
+ * List of built-in field types.
+ * @type {BuiltInFieldType[]}
  */
-export const BUILTIN_WIDGETS = [
+export const BUILTIN_FIELD_TYPES = [
   'boolean',
   'code',
   'color',
@@ -29,10 +29,10 @@ export const BUILTIN_WIDGETS = [
 ];
 
 /**
- * List of widgets that support a simple value: boolean, number or string.
+ * List of field types that support a simple value: boolean, number or string.
  * @type {string[]}
  */
-export const SIMPLE_VALUE_WIDGETS = [
+export const SIMPLE_VALUE_FIELD_TYPES = [
   'boolean',
   'color',
   'compute',
@@ -46,19 +46,19 @@ export const SIMPLE_VALUE_WIDGETS = [
 ];
 
 /**
- * List of widgets that support media files.
+ * List of field types that support media files.
  * @type {string[]}
  */
-export const MEDIA_WIDGETS = ['file', 'image'];
+export const MEDIA_FIELD_TYPES = ['file', 'image'];
 
 /**
- * List of widgets that support the `multiple` option.
+ * List of field types that support the `multiple` option.
  * @type {string[]}
  */
-export const MULTI_VALUE_WIDGETS = [...MEDIA_WIDGETS, 'relation', 'select'];
+export const MULTI_VALUE_FIELD_TYPES = [...MEDIA_FIELD_TYPES, 'relation', 'select'];
 
 /**
- * List of widgets that support the `min` and `max` options.
+ * List of field types that support the `min` and `max` options.
  * @type {string[]}
  */
-export const MIN_MAX_VALUE_WIDGETS = [...MULTI_VALUE_WIDGETS, 'list', 'number'];
+export const MIN_MAX_VALUE_FIELD_TYPES = [...MULTI_VALUE_FIELD_TYPES, 'list', 'number'];

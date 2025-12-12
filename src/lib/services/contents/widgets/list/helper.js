@@ -38,7 +38,7 @@ export const getListFieldInfo = (field) => {
 };
 
 /**
- * Check if the given fields contain a single List widget with the `root` option enabled.
+ * Check if the given fields contain a single List field with the `root` option enabled.
  * @param {Field[]} fields Field list.
  * @returns {boolean} Result.
  */

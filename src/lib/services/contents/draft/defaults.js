@@ -61,16 +61,16 @@ export const populateDefaultValue = ({
   dynamicValues,
 }) => {
   // @ts-ignore `default` is not defined in the Compute and custom field types
-  const { widget: widgetName = 'string', default: defaultValue, i18n = false } = fieldConfig;
+  const { widget: fieldType = 'string', default: defaultValue, i18n = false } = fieldConfig;
 
   // For non-default locales, only set the default value if the field is i18n-enabled
   if (locale !== defaultLocale && [false, 'none'].includes(i18n)) {
     return;
   }
 
-  // The `compute` widget doesn’t have the `default` option, so we just set an empty string,
+  // The `compute` field type doesn’t have the `default` option, so we just set an empty string,
   // otherwise the field won’t work properly
-  if (widgetName === 'compute') {
+  if (fieldType === 'compute') {
     content[keyPath] = '';
 
     return;
@@ -83,7 +83,7 @@ export const populateDefaultValue = ({
       ? dynamicValues[keyPath].trim() || undefined
       : undefined;
 
-  const getDefaultValue = GET_DEFAULT_VALUE_MAP_FUNCTIONS[widgetName];
+  const getDefaultValue = GET_DEFAULT_VALUE_MAP_FUNCTIONS[fieldType];
 
   if (getDefaultValue) {
     Object.assign(
@@ -95,7 +95,7 @@ export const populateDefaultValue = ({
   }
 
   // Handle simple string-type fields, including the built-in `color`, `uuid`, `string` and `text`
-  // widgets as well as custom widgets
+  // field types as well as custom field types
   content[keyPath] = dynamicValue || defaultValue || '';
 };
 

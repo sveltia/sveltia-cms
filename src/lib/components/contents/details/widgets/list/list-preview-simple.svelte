@@ -1,13 +1,13 @@
 <!--
   @component
-  Implement the preview for the List widget without subfield(s).
+  Implement the preview for a List field without subfield(s).
   @see https://decapcms.org/docs/widgets/#List
 -->
 <script>
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
 
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { SimpleListField } from '$lib/types/public';
    */
 
@@ -17,7 +17,7 @@
    * @property {string[] | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

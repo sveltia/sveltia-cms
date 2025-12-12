@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the preview for the Markdown widget.
+  Implement the preview for a Markdown field.
   @see https://decapcms.org/docs/widgets/#Markdown
 -->
 <script>
@@ -15,7 +15,7 @@
 
   /**
    * @import DOMPurify from 'isomorphic-dompurify';
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { MarkdownField } from '$lib/types/public';
    */
 
@@ -25,7 +25,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldConfig,

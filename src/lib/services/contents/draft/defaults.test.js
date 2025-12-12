@@ -11,7 +11,7 @@ import {
  * @import { Field } from '$lib/types/public';
  */
 
-// Mock the widget helper modules
+// Mock the field helper modules
 vi.mock('$lib/services/contents/widgets/boolean/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
@@ -83,7 +83,7 @@ vi.mock('$lib/services/contents/widgets/select/defaults', () => ({
 }));
 
 describe('Test populateDefaultValue()', () => {
-  test('should set empty string for compute widget', () => {
+  test('should set empty string for compute field', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -109,7 +109,7 @@ describe('Test populateDefaultValue()', () => {
     });
   });
 
-  test('should ignore dynamic values and default for compute widget', () => {
+  test('should ignore dynamic values and default for compute field', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -250,7 +250,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.title).toBe('Default Title');
   });
 
-  test('should use widget-specific default value map for boolean widget', () => {
+  test('should use field-specific default value map for boolean field', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -273,7 +273,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.published).toBe(true);
   });
 
-  test('should use widget-specific default value map for number widget', () => {
+  test('should use field-specific default value map for number field', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -296,7 +296,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.rating).toBe(5);
   });
 
-  test('should use widget-specific default value map for list widget', () => {
+  test('should use field-specific default value map for list field', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -319,7 +319,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.tags).toEqual(['tag1', 'tag2']);
   });
 
-  test('should use widget-specific default value map for object widget', () => {
+  test('should use field-specific default value map for object field', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -342,7 +342,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.author).toEqual({ name: 'John Doe', email: 'john@example.com' });
   });
 
-  test('should use widget-specific default value map for select widget', () => {
+  test('should use field-specific default value map for select field', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -366,7 +366,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.category).toBe('technology');
   });
 
-  test('should use widget-specific default value map for relation widget (alias for select)', () => {
+  test('should use field-specific default value map for relation field (alias for select)', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -392,7 +392,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.related_post).toBe('post-1');
   });
 
-  test('should handle unknown widget types as string fields', () => {
+  test('should handle unknown field types as string fields', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -415,7 +415,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.custom_field).toBe('Custom Default');
   });
 
-  test('should use empty string for unknown widget without default', () => {
+  test('should use empty string for unknown field without default', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -437,7 +437,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.custom_field).toBe('');
   });
 
-  test('should default to string widget when widget is not specified', () => {
+  test('should default to string field when `widget` is not specified', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -459,7 +459,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.title).toBe('Default Title');
   });
 
-  test('should handle dynamic value with boolean widget', () => {
+  test('should handle dynamic value with boolean field', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -482,7 +482,7 @@ describe('Test populateDefaultValue()', () => {
     expect(content.published).toBe(true);
   });
 
-  test('should handle dynamic value with number widget', () => {
+  test('should handle dynamic value with number field', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
 
@@ -577,7 +577,7 @@ describe('Test getDefaultValues()', () => {
     });
   });
 
-  test('should handle fields without widget specified', () => {
+  test('should handle fields without `widget` specified', () => {
     /** @type {Field[]} */
     const fields = [
       {
@@ -599,7 +599,7 @@ describe('Test getDefaultValues()', () => {
     });
   });
 
-  test('should handle compute widgets', () => {
+  test('should handle compute field types', () => {
     /** @type {Field[]} */
     const fields = [
       {
@@ -955,8 +955,8 @@ describe('Test getDefaultValues()', () => {
 });
 
 describe('Test GET_DEFAULT_VALUE_MAP_FUNCTIONS (internal helper)', () => {
-  test('should contain all widget types', () => {
-    const expectedWidgets = [
+  test('should contain all field types', () => {
+    const expectedFieldTypes = [
       'boolean',
       'code',
       'datetime',
@@ -972,38 +972,38 @@ describe('Test GET_DEFAULT_VALUE_MAP_FUNCTIONS (internal helper)', () => {
       'select',
     ];
 
-    expectedWidgets.forEach((widget) => {
-      expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS).toHaveProperty(widget);
-      expect(typeof GET_DEFAULT_VALUE_MAP_FUNCTIONS[widget]).toBe('function');
+    expectedFieldTypes.forEach((fieldType) => {
+      expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS).toHaveProperty(fieldType);
+      expect(typeof GET_DEFAULT_VALUE_MAP_FUNCTIONS[fieldType]).toBe('function');
     });
   });
 
-  test('should map image widget to file widget handler', () => {
+  test('should map image field type to file field type handler', () => {
     expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS.image).toBe(GET_DEFAULT_VALUE_MAP_FUNCTIONS.file);
   });
 
-  test('should map relation widget to select widget handler', () => {
+  test('should map relation field type to select field type handler', () => {
     expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS.relation).toBe(GET_DEFAULT_VALUE_MAP_FUNCTIONS.select);
   });
 
-  test('should have function values for all widget types', () => {
+  test('should have function values for all field types', () => {
     Object.entries(GET_DEFAULT_VALUE_MAP_FUNCTIONS).forEach(([, func]) => {
       expect(typeof func).toBe('function');
     });
   });
 
-  test('should return expected number of widget types', () => {
+  test('should return expected number of field types', () => {
     // 13 total: boolean, code, datetime, file, hidden, image (alias), keyvalue, list,
     // markdown, number, object, relation (alias), select
     expect(Object.keys(GET_DEFAULT_VALUE_MAP_FUNCTIONS)).toHaveLength(13);
   });
 
-  test('should not contain string or text widgets (handled as default)', () => {
+  test('should not contain string or text field types (handled as default)', () => {
     expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS).not.toHaveProperty('string');
     expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS).not.toHaveProperty('text');
   });
 
-  test('should not contain compute widget (handled separately)', () => {
+  test('should not contain compute field type (handled separately)', () => {
     expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS).not.toHaveProperty('compute');
   });
 });

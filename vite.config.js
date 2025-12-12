@@ -7,7 +7,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { createGenerator } from 'ts-json-schema-generator';
 import { defineConfig } from 'vite';
 
-import { BUILTIN_WIDGETS } from './src/lib/services/contents/widgets';
+import { BUILTIN_FIELD_TYPES } from './src/lib/services/contents/widgets';
 import svelteConfig from './svelte.config';
 
 /**
@@ -135,12 +135,12 @@ const generateSchema = async () => {
     { required: ['singletons'] },
   ];
 
-  // Disallow built-in widget names for custom widgets. We need this because the `Exclude` type
+  // Disallow built-in field types for custom fields. We need this because the `Exclude` type
   // utility used in the TypeScript definition is not converted to JSON schema.
   // @see https://github.com/vega/ts-json-schema-generator/issues/993
   Object.assign(schema.definitions.CustomField.properties.widget, {
     minLength: 1,
-    not: { enum: BUILTIN_WIDGETS },
+    not: { enum: BUILTIN_FIELD_TYPES },
   });
 
   const schemaString = JSON.stringify(schema)

@@ -671,7 +671,7 @@ describe('Test hasRootListField()', () => {
     expect(hasRootListField(fields)).toBe(false);
   });
 
-  test('should return false when field is not a list widget', () => {
+  test('should return false when field is not a list field', () => {
     /** @type {import('$lib/types/public').Field[]} */
     const fields = [
       {

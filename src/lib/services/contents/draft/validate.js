@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField, isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
-import { MEDIA_WIDGETS, MIN_MAX_VALUE_WIDGETS } from '$lib/services/contents/widgets';
+import { MEDIA_FIELD_TYPES, MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/widgets';
 import { getPairs } from '$lib/services/contents/widgets/key-value/helper';
 import { getListFieldInfo } from '$lib/services/contents/widgets/list/helper';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/widgets/markdown';
@@ -108,11 +108,11 @@ export const validateAnyField = (args) => {
   }
 
   // @ts-ignore Some field types don’t have `pattern` property
-  const { widget: widgetName = 'string', i18n = false, pattern: validation } = fieldConfig;
+  const { widget: fieldType = 'string', i18n = false, pattern: validation } = fieldConfig;
   const multiple = isFieldMultiple(fieldConfig);
 
   const { min = 0, max = Infinity } = /** @type {MinMaxValueField} */ (
-    MIN_MAX_VALUE_WIDGETS.includes(widgetName) ? fieldConfig : {}
+    MIN_MAX_VALUE_FIELD_TYPES.includes(fieldType) ? fieldConfig : {}
   );
 
   const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
@@ -131,7 +131,7 @@ export const validateAnyField = (args) => {
   /** @type {EntryValidityState} */
   const validity = { ...DEFAULT_VALIDITY };
 
-  if (widgetName === 'list' || multiple) {
+  if (fieldType === 'list' || multiple) {
     // Given that values for an array field are flatten into `field.0`, `field.1` ... `field.N`,
     // we should validate only once against all these values
     if (keyPath in validities[locale]) {
@@ -159,13 +159,13 @@ export const validateAnyField = (args) => {
     }
   }
 
-  if (widgetName === 'object') {
+  if (fieldType === 'object') {
     if (required && !value) {
       validity.valueMissing = true;
     }
   }
 
-  if (widgetName === 'keyvalue') {
+  if (fieldType === 'keyvalue') {
     // Given that values for a KeyValue field are flatten into `field.key1`, `field.key2` ...
     // `field.keyN`, we should validate only once against all these values. The key can be
     // empty, so use `.*` in the regex instead of `.+`
@@ -194,7 +194,7 @@ export const validateAnyField = (args) => {
     }
   }
 
-  if (widgetName === 'code') {
+  if (fieldType === 'code') {
     const {
       output_code_only: outputCodeOnly = false,
       keys: outputKeys = { code: 'code', lang: 'lang' },
@@ -216,7 +216,7 @@ export const validateAnyField = (args) => {
   }
 
   if (
-    MEDIA_WIDGETS.includes(widgetName) &&
+    MEDIA_FIELD_TYPES.includes(fieldType) &&
     typeof value === 'string' &&
     value.startsWith('blob:')
   ) {
@@ -224,7 +224,7 @@ export const validateAnyField = (args) => {
     value = files[value]?.file?.name;
   }
 
-  if (!(['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(widgetName) || multiple)) {
+  if (!(['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(fieldType) || multiple)) {
     if (typeof value === 'string') {
       value = value.trim();
     }
@@ -246,7 +246,7 @@ export const validateAnyField = (args) => {
   }
 
   // Check the number of characters
-  if (['string', 'text'].includes(widgetName)) {
+  if (['string', 'text'].includes(fieldType)) {
     const result = validateStringField({
       // eslint-disable-next-line object-shorthand
       fieldConfig: /** @type {StringField | TextField} */ (fieldConfig),
@@ -258,7 +258,7 @@ export const validateAnyField = (args) => {
   }
 
   // Check the URL or email with native form validation
-  if (widgetName === 'string' && value) {
+  if (fieldType === 'string' && value) {
     const { type = 'text' } = /** @type {StringField} */ (fieldConfig);
 
     if (type !== 'text') {
@@ -274,7 +274,7 @@ export const validateAnyField = (args) => {
     }
   }
 
-  if (widgetName === 'number') {
+  if (fieldType === 'number') {
     const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
 
     if (typeof min === 'number' && value !== null && Number(value) < min) {
@@ -326,9 +326,9 @@ export const validateField = (args) => {
 export const validateList = ({ fieldConfig, validateArgs }) => {
   const { validities, locale, keyPath } = validateArgs;
   const valid = validities[locale][keyPath]?.valid ?? validateField(validateArgs);
-  const { widget: widgetName = 'string' } = fieldConfig;
+  const { widget: fieldType = 'string' } = fieldConfig;
 
-  if (widgetName === 'list') {
+  if (fieldType === 'list') {
     if (!getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields) {
       // Simple list field, so we don’t need to validate items
       return { valid, validateItems: false };

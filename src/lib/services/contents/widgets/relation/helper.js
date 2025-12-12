@@ -92,14 +92,14 @@ export const getListFieldTypes = (fieldConfig) => {
     };
   }
 
-  const isListWidget = fieldConfig.widget === 'list';
-  const hasField = isListWidget ? 'field' in /** @type {ListField} */ (fieldConfig) : false;
-  const hasFields = isListWidget ? 'fields' in /** @type {ListField} */ (fieldConfig) : false;
-  const hasTypes = isListWidget ? 'types' in /** @type {ListField} */ (fieldConfig) : false;
+  const isListField = fieldConfig.widget === 'list';
+  const hasField = isListField ? 'field' in /** @type {ListField} */ (fieldConfig) : false;
+  const hasFields = isListField ? 'fields' in /** @type {ListField} */ (fieldConfig) : false;
+  const hasTypes = isListField ? 'types' in /** @type {ListField} */ (fieldConfig) : false;
 
   return {
-    isSimpleListField: isListWidget && !hasField && !hasFields && !hasTypes,
-    isSingleSubfieldListField: isListWidget && hasField && !hasFields && !hasTypes,
+    isSimpleListField: isListField && !hasField && !hasFields && !hasTypes,
+    isSingleSubfieldListField: isListField && hasField && !hasFields && !hasTypes,
   };
 };
 

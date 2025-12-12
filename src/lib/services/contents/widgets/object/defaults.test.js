@@ -461,7 +461,7 @@ describe('Test getDefaultValueMap()', () => {
       });
     });
 
-    test('should handle subfields with different widget types and defaults', () => {
+    test('should handle subfields with different field types and defaults', () => {
       /** @type {ObjectField} */
       const fieldConfig = {
         ...baseFieldConfig,

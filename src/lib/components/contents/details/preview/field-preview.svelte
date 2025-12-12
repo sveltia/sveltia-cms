@@ -30,10 +30,10 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { name: fieldName, widget: widgetName = 'string', i18n = false } = $derived(fieldConfig);
+  const { name: fieldName, widget: fieldType = 'string', i18n = false } = $derived(fieldConfig);
   const { label = '', preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const multiple = $derived(isFieldMultiple(fieldConfig));
-  const isList = $derived(widgetName === 'list' || multiple);
+  const isList = $derived(fieldType === 'list' || multiple);
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
@@ -79,7 +79,7 @@
           targetField.scrollIntoView();
         }
 
-        const widgetWrapper = targetField.querySelector('.widget-wrapper');
+        const widgetWrapper = targetField.querySelector('.field-wrapper');
 
         /** @type {HTMLElement | null} */ (
           widgetWrapper?.querySelector('[contenteditable="true"], [tabindex="0"]') ??
@@ -90,12 +90,12 @@
   };
 </script>
 
-{#if widgetName !== 'hidden' && preview && (locale === defaultLocale || canTranslate || canDuplicate)}
+{#if fieldType !== 'hidden' && preview && (locale === defaultLocale || canTranslate || canDuplicate)}
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <section
     role="group"
-    data-widget={widgetName}
+    data-field-type={fieldType}
     data-key-path={keyPath}
     data-typed-key-path={typedKeyPath}
     tabindex="0"
@@ -111,8 +111,8 @@
     }}
   >
     <h4>{label || fieldName}</h4>
-    {#if widgetName in previews}
-      {@const Preview = previews[widgetName]}
+    {#if fieldType in previews}
+      {@const Preview = previews[fieldType]}
       <Preview {keyPath} {typedKeyPath} {locale} {fieldConfig} {currentValue} />
     {/if}
   </section>
@@ -153,12 +153,12 @@
 
   @media (width < 768px) {
     :global([role='document']) {
-      & > section:is([data-widget='file'], [data-widget='image']):has(:global(img)),
-      & > section:is([data-widget='string']):has(:global(iframe)) {
+      & > section:is([data-field-type='file'], [data-field-type='image']):has(:global(img)),
+      & > section:is([data-field-type='string']):has(:global(iframe)) {
         overflow: visible;
       }
 
-      & > section:is([data-widget='file'], [data-widget='image']) :global(img) {
+      & > section:is([data-field-type='file'], [data-field-type='image']) :global(img) {
         width: 100%;
         max-height: none !important;
       }

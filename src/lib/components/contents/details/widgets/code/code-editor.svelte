@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for the Code widget.
+  Implement the editor for a Code field.
   @see https://decapcms.org/docs/widgets/#Code
 -->
 <script>
@@ -11,7 +11,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
 
   /**
-   * @import { FieldEditorContext, WidgetEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { CodeField } from '$lib/types/public';
    */
 
@@ -24,7 +24,7 @@
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
-  /** @type {WidgetEditorProps & Props} */
+  /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,

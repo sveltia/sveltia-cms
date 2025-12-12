@@ -1,11 +1,11 @@
 <!--
   @component
-  Implement the preview for the Map widget.
+  Implement the preview for a Map field.
   @see https://decapcms.org/docs/widgets/#Map
 -->
 <script>
   /**
-   * @import { WidgetPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { MapField } from '$lib/types/public';
    */
 
@@ -15,7 +15,7 @@
    * @property {string | undefined} currentValue Field value. Stringified GeoJSON geometry object.
    */
 
-  /** @type {WidgetPreviewProps & Props} */
+  /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
     currentValue,
