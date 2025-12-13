@@ -61,7 +61,7 @@
   const {
     name: fieldName,
     i18n = false,
-    // Field-specific options
+    // Field type-specific options
     collapsed,
     summary,
   } = $derived(fieldConfig);

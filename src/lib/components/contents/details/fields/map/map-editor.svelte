@@ -21,7 +21,7 @@
   /**
    * @import Leaflet from 'leaflet';
    * @import { GeoJSONStoreGeometries, TerraDraw } from 'terra-draw';
-   * @import { GeoCoordinates, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps, GeoCoordinates } from '$lib/types/private';
    * @import { MapField } from '$lib/types/public';
    */
 

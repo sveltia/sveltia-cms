@@ -64,7 +64,7 @@
     name: fieldName,
     label,
     i18n,
-    // Field-specific options
+    // Field type-specific options
     allow_add: allowAdd = true,
     allow_remove: allowRemove = true,
     allow_reorder: allowReorder = true,

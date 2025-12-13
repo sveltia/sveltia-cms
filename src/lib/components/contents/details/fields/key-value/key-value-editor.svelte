@@ -45,7 +45,7 @@
 
   const {
     i18n = false,
-    // Field-specific options
+    // Field type-specific options
     key_label: _keyLabel,
     value_label: _valueLabel,
     max = Infinity,

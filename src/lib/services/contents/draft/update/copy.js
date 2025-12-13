@@ -20,8 +20,8 @@ import { prefs } from '$lib/services/user/prefs';
  * @property {InternalLocaleCode} sourceLanguage Source locale, e.g. `en`.
  * @property {InternalLocaleCode} targetLanguage Target locale, e.g. `ja`.
  * @property {FieldKeyPath} [keyPath] Flattened (dot-notated) object keys that will be used for
- * searching the source values. Omit this if copying all the fields. If the triggered field type is
- * List or Object, this will likely match multiple fields.
+ * searching the source values. Omit this if copying all the fields. If the triggered field is the
+ * List or Object type, this will likely match multiple fields.
  * @property {boolean} [translate] Whether to translate the copied text fields.
  */
 

@@ -26,8 +26,8 @@
    * @import {
    * AssetFolderInfo,
    * FieldEditorContext,
-   * SelectedResource,
    * FieldEditorProps,
+   * SelectedResource,
    * } from '$lib/types/private';
    * @import { MediaField } from '$lib/types/public';
    */
@@ -69,7 +69,7 @@
 
   const {
     widget: fieldType,
-    // Field-specific options
+    // Field type-specific options
     max = Infinity,
     accept,
     choose_url: canEnterURL = true,

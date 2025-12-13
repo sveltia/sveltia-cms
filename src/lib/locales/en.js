@@ -422,7 +422,7 @@ export const strings = {
   revert_all_changes: 'Revert All Changes',
   edit_slug: 'Edit Slug',
   edit_slug_warning:
-    'Changing the slug may break internal and external links to the entry. Currently, Sveltia CMS does not update references created with the Relation field, so you’ll need to manually update such references along with other links.',
+    'Changing the slug may break internal and external links to the entry. Currently, Sveltia CMS does not update references created with Relation fields, so you’ll need to manually update such references along with other links.',
   edit_slug_error: {
     empty: 'The slug cannot be empty.',
     duplicate: 'This slug is used for another entry.',
@@ -694,7 +694,7 @@ export const strings = {
       duplicate_variable_type:
         'Variable type names must be unique, but `{name}` is used more than once.',
       date_field_type:
-        'The deprecated `date` field type is not supported in Sveltia CMS. Use the `datetime` field type with the `time_format:false` option instead.',
+        'The deprecated Date field type is not supported in Sveltia CMS. Use the DateTime field type with the `time_format:false` option instead.',
       unsupported_deprecated_option:
         'The deprecated `{prop}` option is not supported in Sveltia CMS. Use the `{newProp}` option instead.',
       allow_multiple:

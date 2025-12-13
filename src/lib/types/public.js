@@ -844,8 +844,8 @@
  */
 
 /**
- * Name of a built-in field type. Sveltia CMS supports all the built-in field types provided by
- * Decap CMS as well as some new field types.
+ * Built-in field type name. Sveltia CMS supports all the built-in field types provided by Decap CMS
+ * as well as some new field types.
  * @typedef {'boolean' | 'code' | 'color' | 'compute' | 'datetime' | 'file' | 'hidden' | 'image' |
  * 'keyvalue' | 'list' | 'map' | 'markdown' | 'number' | 'object' | 'relation' | 'select' | 'string'
  * | 'text' | 'uuid'} BuiltInFieldType

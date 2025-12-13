@@ -135,7 +135,7 @@ const generateSchema = async () => {
     { required: ['singletons'] },
   ];
 
-  // Disallow built-in field types for custom fields. We need this because the `Exclude` type
+  // Disallow built-in field type names for custom fields. We need this because the `Exclude` type
   // utility used in the TypeScript definition is not converted to JSON schema.
   // @see https://github.com/vega/ts-json-schema-generator/issues/993
   Object.assign(schema.definitions.CustomField.properties.widget, {

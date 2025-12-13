@@ -11,7 +11,7 @@
   import SelectSingle from '$lib/components/contents/details/fields/select/select-single.svelte';
 
   /**
-   * @import { SelectFieldSelectorOption, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps, SelectFieldSelectorOption } from '$lib/types/private';
    * @import { SelectField } from '$lib/types/public';
    */
 
@@ -38,7 +38,7 @@
   } = $props();
 
   const {
-    // Field-specific options
+    // Field type-specific options
     options: fieldOptions,
     multiple,
   } = $derived(fieldConfig);

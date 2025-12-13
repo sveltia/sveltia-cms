@@ -24,10 +24,10 @@
    * @import { Writable } from 'svelte/store';
    * @import {
    * DraftValueStoreKey,
+   * FieldContext,
    * FieldEditorContext,
    * InternalLocaleCode,
    * TypedFieldKeyPath,
-   * FieldContext,
    * } from '$lib/types/private';
    * @import {
    * BooleanField,

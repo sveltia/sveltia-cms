@@ -37,7 +37,7 @@
   } = $props();
 
   const {
-    // Field-specific options
+    // Field type-specific options
     collection: collectionName,
     file: fileName,
   } = $derived(fieldConfig);

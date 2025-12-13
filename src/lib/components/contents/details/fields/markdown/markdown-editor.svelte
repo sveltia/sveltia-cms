@@ -75,7 +75,7 @@
   let cleanupTimeout = 0;
 
   const {
-    // Field-specific options
+    // Field type-specific options
     modes: _modes = [...DEFAULT_MODES],
     buttons: _buttons = [...DEFAULT_BUTTONS],
     editor_components:

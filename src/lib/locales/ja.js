@@ -695,7 +695,7 @@ export const strings = {
       duplicate_variable_type:
         '変数タイプ名は一意でなければなりませんが、`{name}` が複数回使用されています。',
       date_field_type:
-        'Sveltia CMS では非推奨の `date` フィールドタイプはサポートされていません。代わりに `time_format:false` オプション付きの `datetime` フィールドタイプを使用してください。',
+        'Sveltia CMS では非推奨の Date フィールドタイプはサポートされていません。代わりに `time_format:false` オプション付きの DateTime フィールドタイプを使用してください。',
       unsupported_deprecated_option:
         'Sveltia CMS では非推奨の `{prop}` オプションはサポートされていません。代わりに `{newProp}` オプションを使用してください。',
       allow_multiple:
