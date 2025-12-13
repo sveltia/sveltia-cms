@@ -253,25 +253,7 @@ export const validateAnyField = (args) => {
       value,
     });
 
-    validity.tooShort = result.tooShort;
-    validity.tooLong = result.tooLong;
-  }
-
-  // Check the URL or email with native form validation
-  if (fieldType === 'string' && value) {
-    const { type = 'text' } = /** @type {StringField} */ (fieldConfig);
-
-    if (type !== 'text') {
-      const inputElement = Object.assign(document.createElement('input'), { type, value });
-
-      validity.typeMismatch = inputElement.validity.typeMismatch;
-    }
-
-    // Check if the email’s domain part contains a dot, because native validation marks
-    // `me@example` valid but it’s not valid in the real world
-    if (type === 'email' && !validity.typeMismatch && !value.split('@')[1]?.includes('.')) {
-      validity.typeMismatch = true;
-    }
+    Object.assign(validity, result.validity);
   }
 
   if (fieldType === 'number') {

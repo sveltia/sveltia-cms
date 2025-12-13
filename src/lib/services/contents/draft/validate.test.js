@@ -734,15 +734,24 @@ describe('draft/validate', () => {
         expect(result.valid).toBe(false);
       });
 
-      it('should validate email field with type mismatch', () => {
-        // Mock document.createElement for email validation
-        const mockInput = {
-          validity: { typeMismatch: true },
-        };
+      it('should validate email field with type mismatch', async () => {
+        // Override the beforeEach mock for this specific test
+        const { validateStringField } =
+          await import('$lib/services/contents/fields/string/validate');
 
-        global.document = {
-          createElement: vi.fn(() => mockInput),
-        };
+        const validateStringFieldMock = vi.mocked(validateStringField);
+
+        validateStringFieldMock.mockReturnValueOnce({
+          count: 14,
+          hasMin: undefined,
+          hasMax: undefined,
+          invalid: false,
+          validity: {
+            tooShort: false,
+            tooLong: false,
+            typeMismatch: true,
+          },
+        });
 
         const validities = { en: {} };
 
@@ -765,9 +774,6 @@ describe('draft/validate', () => {
 
         expect(result).toBeDefined();
         expect(result.typeMismatch).toBe(true);
-
-        // Clean up
-        delete global.document;
       });
 
       it('should validate number field with range constraints', () => {
