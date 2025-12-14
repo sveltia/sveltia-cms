@@ -43,6 +43,7 @@ This free, open source successor to Netlify/Decap CMS is currently in public bet
   - [Better asset management](#better-asset-management)
   - [Better customization](#better-customization)
   - [Better localization](#better-localization)
+  - [Better documentation](#better-documentation)
 - [Compatibility](#compatibility)
   - [Current limitations](#current-limitations)
   - [Features not to be implemented](#features-not-to-be-implemented)
@@ -292,7 +293,6 @@ We’ve made various improvements to help you get your work done faster and more
 
 ### Better configuration
 
-- We provide comprehensive [compatibility information](#compatibility) to help you avoid unsupported options and configurations that might cause errors. By contrast, the Netlify/Decap CMS documentation does not mention the deprecation of camel case options, the removal of the Date widget and the replacement of Moment.js.
 - Sveltia CMS supports a [JSON configuration file](#providing-a-json-configuration-file) that can be generated for bulk or complex collections.[^60] A [TOML configuration file](#providing-a-toml-configuration-file) is also supported.
 - Also supports [multiple configuration files](#providing-multiple-configuration-files) to allow developers to modularize the configuration.[^197]
 - We provide an [up-to-date JSON schema](#enabling-autocomplete-and-validation-for-the-configuration-file) for YAML/JSON configuration files, which enables autocomplete and validation in VS Code and other editors.[^253] If you use [deprecated options](#deprecations) in a supported code editor, you should receive a warning.
@@ -624,6 +624,8 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 - KeyValue (Dictionary)
   - The new `keyvalue` widget allows users to add arbitrary key-value string pairs to a field.[^123]
   - While the implementation is compatible with [Static CMS](https://staticjscms.netlify.app/docs/widget-keyvalue), we provide a more intuitive UI. You can press Enter to move focus or add a new row while editing, and the preview is displayed in a clean table.
+- RichText
+  - Currently, the `richtext` widget is a simple alias of `markdown`. We plan to add HTML output support in the future.
 - UUID
   - In addition to [generating UUIDs for entry slugs](#using-a-random-id-for-an-entry-slug), Sveltia CMS supports the proposed `uuid` widget with the following properties:[^12]
     - `prefix`: A string to be prepended to the value. Default: an empty string.
@@ -683,6 +685,8 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 - Enhancements to [event hooks](https://decapcms.org/docs/registering-events/):
   - Missing `identifier_field` won’t cause an error when the `preSave` hook is triggered.[^306]
   <!-- - Content can be modified in the `prePublish` hook (once we support editorial workflow).[^307] -->
+- Enhancements to custom field types (widgets):
+  - The API method has been renamed from `CMS.registerWidget()` to `CMS.registerFieldType()` for better clarity, while keeping the old name for backward compatibility.[^314]
 - Async functions can be used for [custom parsers/formatters](https://decapcms.org/docs/custom-formatters/).[^149]
 - The application renders within the dimensions of a [custom mount element](https://decapcms.org/docs/custom-mounting/), if exists.[^109]
 
@@ -692,6 +696,10 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 - The application UI is ready to be localized into RTL languages like Arabic, Hebrew and Persian.[^245]
 - The List widget’s `label` and `label_singular` are not converted to lowercase, which is especially problematic in German, where all nouns are capitalized.[^98]
 - Long menu item labels, especially in non-English locales, don’t overflow the dropdown container.[^117][^265]
+
+### Better documentation
+
+- Our [compatibility information](#compatibility) to help you avoid unsupported options and configurations that might cause errors. By contrast, the Netlify/Decap CMS documentation does not mention anything about the deprecation of camel case options, the removal of the Date widget and the replacement of Moment.js. Furthermore, the [Decap blog](https://decapcms.org/blog/decap-3/) claims that Decap CMS 3.0 is ”fully backward compatible” even though it removed the Date widget.
 
 ## Compatibility
 
@@ -2757,3 +2765,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^312]: Netlify/Decap CMS [#1004](https://github.com/decaporg/decap-cms/issues/1004)
 
 [^313]: Netlify/Decap CMS [#542](https://github.com/decaporg/decap-cms/issues/542)
+
+[^314]: Netlify/Decap CMS [#3719](https://github.com/decaporg/decap-cms/issues/3719)
