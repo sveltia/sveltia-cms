@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the preview for a Markdown field.
+  Implement the preview for a Markdown/RichText field.
   @see https://decapcms.org/docs/widgets/#Markdown
 -->
 <script>
@@ -10,8 +10,8 @@
 
   import { getMediaFieldURL } from '$lib/services/assets/info';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { GLOBAL_IMAGE_REGEX } from '$lib/services/contents/fields/markdown/constants';
-  import { encodeImageSrc } from '$lib/services/contents/fields/markdown/helper';
+  import { GLOBAL_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
+  import { encodeImageSrc } from '$lib/services/contents/fields/rich-text/helper';
 
   /**
    * @import DOMPurify from 'isomorphic-dompurify';

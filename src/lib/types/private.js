@@ -651,7 +651,7 @@
  * @property {LocaleContentMap} currentValues Key is a locale code, value is a flattened, proxified
  * object containing all the current field values while editing.
  * @property {LocaleContentMap} extraValues Key is a locale code, value is a flattened object
- * containing field values in Markdown editor components.
+ * containing field values in rich text editor components.
  * @property {EntryFileMap} files Files to be uploaded.
  * @property {LocaleValidityMap} validities Key is a locale code, value is a flattened object
  * containing validation results of all the current field values while editing.
@@ -914,13 +914,13 @@
 
 /**
  * Key to store the current values in the {@link EntryDraft}. Usually `currentValues`, but can be
- * `extraValues` to store extra values for a Markdown editor component.
+ * `extraValues` to store extra values for a rich text editor component.
  * @typedef {'currentValues' | 'extraValues'} DraftValueStoreKey
  */
 
 /**
  * Context for a field, which may change the behavior of the editor/preview.
- * @typedef {'markdown-editor-component' | 'single-subfield-list-field'} FieldContext
+ * @typedef {'rich-text-editor-component' | 'single-subfield-list-field'} FieldContext
  */
 
 /**
@@ -1051,7 +1051,7 @@
  * @typedef {object} GetFieldArgs
  * @property {string} collectionName Collection name.
  * @property {string} [fileName] Collection file name. File/singleton collection only.
- * @property {string} [componentName] Markdown editor component name.
+ * @property {string} [componentName] Rich text editor component name.
  * @property {FlattenedEntryContent} [valueMap] Object holding current entry values. This is
  * required when working with list/object field variable types.
  * @property {FieldKeyPath | TypedFieldKeyPath} keyPath Field key path or typed key path.

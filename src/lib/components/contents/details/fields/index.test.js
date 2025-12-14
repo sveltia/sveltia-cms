@@ -58,10 +58,10 @@ vi.mock('$lib/components/contents/details/fields/map/map-editor.svelte', () => (
 vi.mock('$lib/components/contents/details/fields/map/map-preview.svelte', () => ({
   default: {},
 }));
-vi.mock('$lib/components/contents/details/fields/markdown/markdown-editor.svelte', () => ({
+vi.mock('$lib/components/contents/details/fields/rich-text/rich-text-editor.svelte', () => ({
   default: {},
 }));
-vi.mock('$lib/components/contents/details/fields/markdown/markdown-preview.svelte', () => ({
+vi.mock('$lib/components/contents/details/fields/rich-text/rich-text-preview.svelte', () => ({
   default: {},
 }));
 vi.mock('$lib/components/contents/details/fields/number/number-editor.svelte', () => ({
@@ -111,7 +111,7 @@ describe('Widget components', () => {
   describe('editors', () => {
     test('should export all editor components', () => {
       expect(editors).toBeDefined();
-      expect(Object.keys(editors)).toHaveLength(18);
+      expect(Object.keys(editors)).toHaveLength(19);
     });
 
     test('should have boolean editor', () => {
@@ -155,8 +155,13 @@ describe('Widget components', () => {
       expect(editors.map).toBeDefined();
     });
 
-    test('should have markdown editor', () => {
+    test('should have richtext editor', () => {
+      expect(editors.richtext).toBeDefined();
+    });
+
+    test('should have markdown editor as alias to richtext editor', () => {
       expect(editors.markdown).toBeDefined();
+      expect(editors.markdown).toBe(editors.richtext);
     });
 
     test('should have number editor', () => {
@@ -191,7 +196,7 @@ describe('Widget components', () => {
   describe('previews', () => {
     test('should export all preview components', () => {
       expect(previews).toBeDefined();
-      expect(Object.keys(previews)).toHaveLength(18);
+      expect(Object.keys(previews)).toHaveLength(19);
     });
 
     test('should have boolean preview', () => {
@@ -235,8 +240,13 @@ describe('Widget components', () => {
       expect(previews.map).toBeDefined();
     });
 
-    test('should have markdown preview', () => {
+    test('should have richtext preview', () => {
+      expect(previews.richtext).toBeDefined();
+    });
+
+    test('should have markdown preview as alias to richtext preview', () => {
       expect(previews.markdown).toBeDefined();
+      expect(previews.markdown).toBe(previews.richtext);
     });
 
     test('should have number preview', () => {

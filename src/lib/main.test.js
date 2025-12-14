@@ -36,7 +36,7 @@ vi.mock('$lib/services/contents/editor', () => ({
 vi.mock('$lib/services/contents/file/config', () => ({
   customFileFormatRegistry: new Map(),
 }));
-vi.mock('$lib/services/contents/fields/markdown/components/definitions', () => ({
+vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => ({
   customComponentRegistry: new Map(),
 }));
 vi.mock('$lib/services/contents/draft/events', () => ({

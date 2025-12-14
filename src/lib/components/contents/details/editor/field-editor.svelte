@@ -88,7 +88,7 @@
     /** @type {FieldEditorContext} */ ({ fieldContext, extraHint, valueStoreKey }),
   );
 
-  const inEditorComponent = $derived(fieldContext === 'markdown-editor-component');
+  const inEditorComponent = $derived(fieldContext === 'rich-text-editor-component');
   const { name: fieldName, widget: fieldType = 'string', i18n = false } = $derived(fieldConfig);
   const {
     label = '',
@@ -240,7 +240,7 @@
         <div class="required" aria-label={$_('required')}>*</div>
       {/if}
       <Spacer flex />
-      {#if canCopy && ['markdown', 'string', 'text', 'list', 'object'].includes(fieldType)}
+      {#if canCopy && ['richtext', 'markdown', 'string', 'text', 'list', 'object'].includes(fieldType)}
         <TranslateButton size="small" {locale} {otherLocales} {keyPath} />
       {/if}
       {#if canCopy || canRevert}

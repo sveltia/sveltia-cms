@@ -68,7 +68,7 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           (keyPath && !_keyPath.startsWith(keyPath)) ||
           typeof value !== 'string' ||
           !value ||
-          !['markdown', 'text', 'string', 'list'].includes(fieldType) ||
+          !['richtext', 'markdown', 'text', 'string', 'list'].includes(fieldType) ||
           // prettier-ignore
           (fieldType === 'list' &&
           getListFieldInfo(/** @type {ListField} */ (field)).hasSubFields) ||
@@ -79,7 +79,9 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           return null;
         }
 
-        return [_keyPath, { value, isMarkdown: fieldType === 'markdown' }];
+        const isMarkdown = fieldType === 'richtext' || fieldType === 'markdown';
+
+        return [_keyPath, { value, isMarkdown }];
       })
       .filter((entry) => !!entry),
   );

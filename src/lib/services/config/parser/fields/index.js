@@ -1,10 +1,10 @@
 import { parseDateTimeFieldConfig } from '$lib/services/config/parser/fields/datetime';
 import { parseFileFieldConfig } from '$lib/services/config/parser/fields/file';
 import { parseListFieldConfig } from '$lib/services/config/parser/fields/list';
-import { parseMarkdownFieldConfig } from '$lib/services/config/parser/fields/markdown';
 import { parseNumberFieldConfig } from '$lib/services/config/parser/fields/number';
 import { parseObjectFieldConfig } from '$lib/services/config/parser/fields/object';
 import { parseRelationFieldConfig } from '$lib/services/config/parser/fields/relation';
+import { parseRichTextFieldConfig } from '$lib/services/config/parser/fields/rich-text';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 
 /**
@@ -25,10 +25,11 @@ const parsers = {
   file: parseFileFieldConfig,
   image: parseFileFieldConfig, // alias
   list: parseListFieldConfig,
-  markdown: parseMarkdownFieldConfig,
+  markdown: parseRichTextFieldConfig, // alias
   number: parseNumberFieldConfig,
   object: parseObjectFieldConfig,
   relation: parseRelationFieldConfig,
+  richtext: parseRichTextFieldConfig,
 };
 
 /**

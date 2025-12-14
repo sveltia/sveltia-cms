@@ -345,6 +345,34 @@ describe('draft/update/copy', () => {
 
       expect(result).not.toHaveProperty('title');
     });
+
+    it('should mark richtext fields as markdown', () => {
+      const draft = mockEntryDraft;
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string' };
+        }
+
+        if (keyPath === 'body') {
+          return { name: 'body', widget: 'richtext' };
+        }
+
+        return undefined;
+      });
+
+      const result = getCopyingFieldMap({
+        draft,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+          translate: false,
+        },
+      });
+
+      expect(result).toHaveProperty('body');
+      expect(result.body).toEqual({ value: 'English Body', isMarkdown: true });
+    });
   });
 
   describe('updateToast (internal)', () => {

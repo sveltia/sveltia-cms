@@ -18,7 +18,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {string} componentName Markdown editor component name.
+   * @property {string} componentName Rich text editor component name.
    * @property {string} label Field label.
    * @property {boolean} [collapsed] Whether to collapse the object by default. Default: `false`.
    * @property {Field[]} fields Subfield definitions.
@@ -60,7 +60,7 @@
 
   /**
    * Key to store the current values in the {@link entryDraft}. Usually `currentValues`, but we use
-   * `extraValues` here to store additional values for a Markdown editor component.
+   * `extraValues` here to store additional values for a rich text editor component.
    * @type {DraftValueStoreKey}
    */
   const valueStoreKey = 'extraValues';
@@ -201,7 +201,7 @@
             keyPath="{keyPathPrefix}{fieldConfig.name}"
             typedKeyPath="{keyPathPrefix}{fieldConfig.name}"
             {fieldConfig}
-            context="markdown-editor-component"
+            context="rich-text-editor-component"
             {valueStoreKey}
           />
         </VisibilityObserver>

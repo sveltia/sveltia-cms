@@ -5,15 +5,15 @@ import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/valid
  */
 
 /**
- * Unsupported options for Markdown fields.
+ * Unsupported options for RichText fields.
  * @type {UnsupportedOption[]}
  */
 const UNSUPPORTED_OPTIONS = [{ prop: 'editorComponents', newProp: 'editor_components' }];
 
 /**
- * Parse and validate a Markdown field configuration.
+ * Parse and validate a RichText field configuration.
  * @param {FieldParserArgs} args Arguments.
  */
-export const parseMarkdownFieldConfig = (args) => {
+export const parseRichTextFieldConfig = (args) => {
   checkUnsupportedOptions({ ...args, UNSUPPORTED_OPTIONS });
 };

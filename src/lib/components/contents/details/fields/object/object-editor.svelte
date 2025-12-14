@@ -83,7 +83,7 @@
     ),
   );
   const canEdit = $derived(
-    fieldContext === 'markdown-editor-component' || locale === defaultLocale || i18n !== false,
+    fieldContext === 'rich-text-editor-component' || locale === defaultLocale || i18n !== false,
   );
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);

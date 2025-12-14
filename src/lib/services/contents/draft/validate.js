@@ -6,7 +6,7 @@ import { getField, isFieldMultiple, isFieldRequired } from '$lib/services/conten
 import { MEDIA_FIELD_TYPES, MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getPairs } from '$lib/services/contents/fields/key-value/helper';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helper';
-import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/markdown';
+import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { validateStringField } from '$lib/services/contents/fields/string/validate';
 import { getRegex } from '$lib/services/utils/misc';
 
@@ -40,7 +40,7 @@ import { getRegex } from '$lib/services/utils/misc';
  * @property {string} keyPath Field key path.
  * @property {FlattenedEntryContent} valueMap Entry values.
  * @property {any} value Field value.
- * @property {string} [componentName] Markdown editor component name.
+ * @property {string} [componentName] Rich text editor component name.
  */
 
 /**
@@ -119,7 +119,7 @@ export const validateAnyField = (args) => {
 
   // Skip validation on non-editable fields
   if (
-    !componentName && // Don’t skip validation if the field is within a Markdown editor component
+    !componentName && // Don’t skip validation if the field is within a rich text editor component
     locale !== defaultLocale &&
     (!i18nEnabled || i18n === false || i18n === 'none' || i18n === 'duplicate')
   ) {

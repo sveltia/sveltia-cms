@@ -12,8 +12,8 @@ import {
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helper';
-import { getComponentDef } from '$lib/services/contents/fields/markdown/components/definitions';
 import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helper';
+import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { getOptionLabel } from '$lib/services/contents/fields/select/helper';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 
@@ -40,7 +40,7 @@ vi.mock('$lib/services/contents/fields', () => ({
   MULTI_VALUE_FIELD_TYPES: ['file', 'image', 'relation', 'select'],
 }));
 
-vi.mock('$lib/services/contents/fields/markdown/components/definitions', () => ({
+vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => ({
   getComponentDef: vi.fn(),
 }));
 

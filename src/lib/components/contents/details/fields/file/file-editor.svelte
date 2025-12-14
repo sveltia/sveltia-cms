@@ -40,7 +40,7 @@
 
   /** @type {FieldEditorContext} */
   const { fieldContext = undefined } = getContext('field-editor') ?? {};
-  const inEditorComponent = fieldContext === 'markdown-editor-component';
+  const inEditorComponent = fieldContext === 'rich-text-editor-component';
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -88,13 +88,13 @@
       Object.values(assetLibraryFolderMap).find(({ enabled }) => enabled)?.folder
     ),
   );
-  // Ignore the `multiple` option when the field is used in a Markdown editor component
+  // Ignore the `multiple` option when the field is used in a rich text editor component
   const multiple = $derived(isMultiple(fieldConfig) && !inEditorComponent);
   const maxSize = $derived(/** @type {number} */ (libraryConfig.max_file_size));
   const showRemoveButton = $derived(
     !required &&
       (!fieldContext ||
-        !['markdown-editor-component', 'single-subfield-list-field'].includes(fieldContext)),
+        !['rich-text-editor-component', 'single-subfield-list-field'].includes(fieldContext)),
   );
   const itemArgs = $derived({
     fieldType,
@@ -163,7 +163,7 @@
 
           $entryDraft.currentValues[locale][`${keyPath}.${targetIndex}`] = value;
         } else {
-          // Encode spaces as `%20` when the field is used in the Markdown editor component to
+          // Encode spaces as `%20` when the field is used in the rich text editor component to
           // avoid issues with Markdown parsers that do not support unencoded spaces in URLs.
           currentValue = inEditorComponent ? value.replaceAll(' ', '%20') : value;
         }

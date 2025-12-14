@@ -121,7 +121,10 @@ export const createBaseSavingEntryData = async ({
               keyPath,
               content,
               // Enable encoding for markdown fields to support embedded images
-              encodingEnabled: field?.widget === 'markdown' ? true : encodingEnabled,
+              encodingEnabled:
+                field?.widget === 'richtext' || field?.widget === 'markdown'
+                  ? true
+                  : encodingEnabled,
             };
 
             // Replace blob URLs in File/Image fields with asset paths

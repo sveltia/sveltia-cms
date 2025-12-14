@@ -4,11 +4,11 @@ import { _ } from 'svelte-i18n';
 import {
   encodeQuotes,
   replaceQuotes,
-} from '$lib/services/contents/fields/markdown/components/utils';
+} from '$lib/services/contents/fields/rich-text/components/utils';
 import {
   IMAGE_OR_LINKED_IMAGE_REGEX,
   IMAGE_REGEX,
-} from '$lib/services/contents/fields/markdown/constants';
+} from '$lib/services/contents/fields/rich-text/constants';
 
 /**
  * @import { EditorComponentDefinition } from '$lib/types/public';

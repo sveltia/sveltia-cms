@@ -5,7 +5,7 @@ import { mount } from 'svelte';
 
 import { eventHookRegistry, SUPPORTED_EVENT_TYPES } from '$lib/services/contents/draft/events';
 import { customPreviewStyleRegistry } from '$lib/services/contents/editor';
-import { customComponentRegistry } from '$lib/services/contents/fields/markdown/components/definitions';
+import { customComponentRegistry } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { customFileFormatRegistry } from '$lib/services/contents/file/config';
 
 import App from './components/app.svelte';

@@ -28,7 +28,7 @@ vi.mock('./utils.js', () => ({
   replaceQuotes: vi.fn((str) => str.replace(/"/g, "'")),
 }));
 
-vi.mock('$lib/services/contents/fields/markdown/constants', () => ({
+vi.mock('$lib/services/contents/fields/rich-text/constants', () => ({
   IMAGE_OR_LINKED_IMAGE_REGEX: /!\[([^\]]*)\]\(([^)]+)\)/g,
   IMAGE_REGEX: /!\[([^\]]*)\]\(([^)]+)\)/,
 }));

@@ -54,7 +54,7 @@ vi.mock('$lib/services/contents/fields/list/defaults', () => ({
   })),
 }));
 
-vi.mock('$lib/services/contents/fields/markdown/defaults', () => ({
+vi.mock('$lib/services/contents/fields/rich-text/defaults', () => ({
   // eslint-disable-next-line no-unused-vars
   getDefaultValueMap: vi.fn(({ keyPath, fieldConfig, _locale, _defaultLocale, dynamicValue }) => ({
     [keyPath]: dynamicValue || fieldConfig.default || '',
@@ -969,6 +969,7 @@ describe('Test GET_DEFAULT_VALUE_MAP_FUNCTIONS (internal helper)', () => {
       'number',
       'object',
       'relation',
+      'richtext',
       'select',
     ];
 
@@ -986,6 +987,10 @@ describe('Test GET_DEFAULT_VALUE_MAP_FUNCTIONS (internal helper)', () => {
     expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS.relation).toBe(GET_DEFAULT_VALUE_MAP_FUNCTIONS.select);
   });
 
+  test('should map markdown field type to richtext field type handler', () => {
+    expect(GET_DEFAULT_VALUE_MAP_FUNCTIONS.markdown).toBe(GET_DEFAULT_VALUE_MAP_FUNCTIONS.richtext);
+  });
+
   test('should have function values for all field types', () => {
     Object.entries(GET_DEFAULT_VALUE_MAP_FUNCTIONS).forEach(([, func]) => {
       expect(typeof func).toBe('function');
@@ -993,9 +998,9 @@ describe('Test GET_DEFAULT_VALUE_MAP_FUNCTIONS (internal helper)', () => {
   });
 
   test('should return expected number of field types', () => {
-    // 13 total: boolean, code, datetime, file, hidden, image (alias), keyvalue, list,
-    // markdown, number, object, relation (alias), select
-    expect(Object.keys(GET_DEFAULT_VALUE_MAP_FUNCTIONS)).toHaveLength(13);
+    // 14 total: boolean, code, datetime, file, hidden, image (alias), keyvalue, list,
+    // markdown (alias), number, object, relation (alias), richtext, select
+    expect(Object.keys(GET_DEFAULT_VALUE_MAP_FUNCTIONS)).toHaveLength(14);
   });
 
   test('should not contain string or text field types (handled as default)', () => {

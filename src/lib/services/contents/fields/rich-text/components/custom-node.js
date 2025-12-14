@@ -1,11 +1,11 @@
 import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
-import Component from '$lib/components/contents/details/fields/markdown/component.svelte';
+import Component from '$lib/components/contents/details/fields/rich-text/component.svelte';
 import {
   isMultiLinePattern,
   normalizeProps,
-} from '$lib/services/contents/fields/markdown/components/utils';
+} from '$lib/services/contents/fields/rich-text/components/utils';
 
 /**
  * @import {

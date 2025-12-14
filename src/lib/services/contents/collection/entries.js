@@ -147,7 +147,7 @@ export const hasAsset = async ({
   }
 
   // Search images in markdown body
-  if (fieldType === 'markdown') {
+  if (['richtext', 'markdown'].includes(fieldType)) {
     const matches = [...value.matchAll(MARKDOWN_IMAGE_REGEX)];
 
     if (matches.length) {

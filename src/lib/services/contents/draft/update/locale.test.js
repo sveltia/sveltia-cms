@@ -162,6 +162,47 @@ describe('draft/update/locale', () => {
       expect(result.body).toBe('');
     });
 
+    it('should reset richtext fields to empty for translation (line 48)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        if (keyPath === 'body') {
+          return { name: 'body', widget: 'richtext', i18n: true };
+        }
+
+        return undefined;
+      });
+
+      const content = {};
+      const result = copyDefaultLocaleValues(content);
+
+      // Richtext fields with i18n enabled should be reset to empty string
+      expect(result.title).toBe('');
+      expect(result.body).toBe('');
+    });
+
+    it('should preserve existing richtext values for translation', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        if (keyPath === 'body') {
+          return { name: 'body', widget: 'richtext', i18n: true };
+        }
+
+        return undefined;
+      });
+
+      const content = { body: 'Existing Richtext Translation' };
+      const result = copyDefaultLocaleValues(content);
+
+      // Existing richtext values should be preserved
+      expect(result.body).toBe('Existing Richtext Translation');
+    });
+
     it('should remove nested non-i18n fields matching parent key pattern (line 51)', () => {
       vi.mocked(getField).mockImplementation(({ keyPath }) => {
         if (keyPath === 'date') {

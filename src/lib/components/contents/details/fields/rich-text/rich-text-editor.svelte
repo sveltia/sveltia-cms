@@ -1,6 +1,6 @@
 <!--
   @component
-  Implement the editor for a Markdown field.
+  Implement the editor for a Markdown/RichText field.
   @see https://decapcms.org/docs/widgets/#Markdown
 -->
 <script>
@@ -22,12 +22,12 @@
     DEFAULT_BUTTONS,
     DEFAULT_MODES,
     NODE_NAME_MAP,
-  } from '$lib/services/contents/fields/markdown';
-  import { EditorComponent } from '$lib/services/contents/fields/markdown/components';
+  } from '$lib/services/contents/fields/rich-text';
+  import { EditorComponent } from '$lib/services/contents/fields/rich-text/components';
   import {
     customComponentRegistry,
     getComponentDef,
-  } from '$lib/services/contents/fields/markdown/components/definitions';
+  } from '$lib/services/contents/fields/rich-text/components/definitions';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
   import {
     RASTER_IMAGE_EXTENSION_REGEX,
@@ -52,7 +52,7 @@
 
   /** @type {FieldEditorContext} */
   const { fieldContext = undefined } = getContext('field-editor') ?? {};
-  const inEditorComponent = fieldContext === 'markdown-editor-component';
+  const inEditorComponent = fieldContext === 'rich-text-editor-component';
 
   /** @type {FieldEditorProps & Props} */
   let {

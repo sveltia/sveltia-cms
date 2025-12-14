@@ -16,14 +16,14 @@ import ListEditor from '$lib/components/contents/details/fields/list/list-editor
 import ListPreview from '$lib/components/contents/details/fields/list/list-preview.svelte';
 import MapEditor from '$lib/components/contents/details/fields/map/map-editor.svelte';
 import MapPreview from '$lib/components/contents/details/fields/map/map-preview.svelte';
-import MarkdownEditor from '$lib/components/contents/details/fields/markdown/markdown-editor.svelte';
-import MarkdownPreview from '$lib/components/contents/details/fields/markdown/markdown-preview.svelte';
 import NumberEditor from '$lib/components/contents/details/fields/number/number-editor.svelte';
 import NumberPreview from '$lib/components/contents/details/fields/number/number-preview.svelte';
 import ObjectEditor from '$lib/components/contents/details/fields/object/object-editor.svelte';
 import ObjectPreview from '$lib/components/contents/details/fields/object/object-preview.svelte';
 import RelationEditor from '$lib/components/contents/details/fields/relation/relation-editor.svelte';
 import RelationPreview from '$lib/components/contents/details/fields/relation/relation-preview.svelte';
+import RichTextEditor from '$lib/components/contents/details/fields/rich-text/rich-text-editor.svelte';
+import RichTextPreview from '$lib/components/contents/details/fields/rich-text/rich-text-preview.svelte';
 import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
 import SelectPreview from '$lib/components/contents/details/fields/select/select-preview.svelte';
 import StringEditor from '$lib/components/contents/details/fields/string/string-editor.svelte';
@@ -51,10 +51,11 @@ export const editors = {
   keyvalue: KeyValueEditor,
   list: ListEditor,
   map: MapEditor,
-  markdown: MarkdownEditor,
+  markdown: RichTextEditor, // alias
   number: NumberEditor,
   object: ObjectEditor,
   relation: RelationEditor,
+  richtext: RichTextEditor,
   select: SelectEditor,
   string: StringEditor,
   text: TextEditor,
@@ -75,10 +76,11 @@ export const previews = {
   keyvalue: KeyValuePreview,
   list: ListPreview,
   map: MapPreview,
-  markdown: MarkdownPreview,
+  markdown: RichTextPreview, // alias
   number: NumberPreview,
   object: ObjectPreview,
   relation: RelationPreview,
+  richtext: RichTextPreview,
   select: SelectPreview,
   string: StringPreview,
   text: TextPreview,

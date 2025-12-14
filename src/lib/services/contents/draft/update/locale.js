@@ -41,7 +41,10 @@ export const copyDefaultLocaleValues = (content) => {
     // Reset the field value to the default value or an empty string if the field is a text-like
     // field type and i18n is enabled, because the content would likely be translated by the user.
     // Otherwise, the content would be copied from the default locale.
-    if (['text', 'string', 'markdown'].includes(fieldType) && [true, 'translate'].includes(i18n)) {
+    if (
+      ['text', 'string', 'richtext', 'markdown'].includes(fieldType) &&
+      [true, 'translate'].includes(i18n)
+    ) {
       newContent[keyPath] = content[keyPath] ?? '';
     }
 

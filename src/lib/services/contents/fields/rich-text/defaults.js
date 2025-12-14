@@ -6,7 +6,7 @@ import { stripTags } from '@sveltia/utils/string';
  */
 
 /**
- * Get the default value map for a Markdown field.
+ * Get the default value map for a RichText/Markdown field.
  * @param {GetDefaultValueMapFuncArgs} args Arguments.
  * @returns {Record<string, string>} Default value map.
  */

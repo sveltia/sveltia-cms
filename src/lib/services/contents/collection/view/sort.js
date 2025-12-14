@@ -48,9 +48,12 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
   const dateFieldConfig =
     fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
 
-  // Check if the field is a Markdown field: we use both the field config and a hardcoded key list
-  // to determine this, as some fields may be text fields that contain Markdown syntax.
-  const isMarkdownField = fieldConfig?.widget === 'markdown' || markdownFieldKeys.includes(key);
+  // Check if the field is a Markdown-enabled field: we use both the field config and a hardcoded
+  // key list to determine this, as some fields may be text fields that contain Markdown syntax.
+  const isMarkdownField =
+    fieldConfig?.widget === 'richtext' ||
+    fieldConfig?.widget === 'markdown' ||
+    markdownFieldKeys.includes(key);
 
   _entries.sort((a, b) => {
     const aValue = valueMap[a.slug];

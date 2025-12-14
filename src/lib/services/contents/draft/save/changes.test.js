@@ -1007,6 +1007,56 @@ describe('draft/save/changes', () => {
       );
     });
 
+    it('should handle richtext fields with blob URLs and enable encoding', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { getField } = await import('$lib/services/contents/entry/fields');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getField).mockReturnValue({ widget: 'richtext' });
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: { title: 'Test', body: 'blob:http://localhost:5000/xyz789' },
+        },
+        files: {
+          'blob:http://localhost:5000/xyz789': {
+            file: { name: 'image.jpg', size: 2048 },
+          },
+        },
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      expect(result.localizedEntryMap.en).toBeDefined();
+      expect(result.localizedEntryMap.en.content).toBeDefined();
+
+      // Verify that getField was called for the richtext body field
+      expect(vi.mocked(getField)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          keyPath: 'body',
+        }),
+      );
+    });
+
     it('should trim whitespace from string values', async () => {
       const { createEntryPath } = await import('./entry-path');
       const { getBlobRegex } = await import('@sveltia/utils/file');

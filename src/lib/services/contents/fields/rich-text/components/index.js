@@ -1,5 +1,5 @@
-import { createCustomNodeClass } from '$lib/services/contents/fields/markdown/components/custom-node';
-import { createTransformer } from '$lib/services/contents/fields/markdown/components/transformers';
+import { createCustomNodeClass } from '$lib/services/contents/fields/rich-text/components/custom-node';
+import { createTransformer } from '$lib/services/contents/fields/rich-text/components/transformers';
 
 /**
  * @import { LexicalNode } from 'lexical';
@@ -25,7 +25,7 @@ export const featureCacheMap = new Map();
 
 /**
  * Dynamically create a custom {@link DecoratorNode} class and related features for the Lexical
- * editor to enable support for editor components in Markdown.
+ * editor to enable support for rich text editor components.
  * @param {EditorComponentDefinition} componentDef Component definition passed with the
  * `CMS.registerEditorComponent()` API.
  * @returns {LexicalNodeFeatures} The {@link CustomNode} class, a method to create a new node, and

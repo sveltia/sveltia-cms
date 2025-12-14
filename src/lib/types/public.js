@@ -615,9 +615,8 @@
  */
 
 /**
- * Markdown field properties.
- * @typedef {object} MarkdownFieldProps
- * @property {'markdown'} widget Field type.
+ * RichText field base properties.
+ * @typedef {object} RichTextFieldBaseProps
  * @property {string} [default] Default value.
  * @property {boolean} [minimal] Whether to minimize the toolbar height.
  * @property {RichTextEditorButtonName[]} [buttons] Names of formatting buttons and menu items to be
@@ -640,8 +639,28 @@
  */
 
 /**
+ * RichText field properties.
+ * @typedef {object} RichTextFieldProps
+ * @property {'richtext'} widget Field type.
+ * @todo Add the `format` option for HTML output.
+ */
+
+/**
+ * RichText field definition.
+ * @typedef {VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps & RichTextFieldProps
+ * } RichTextField
+ */
+
+/**
+ * Markdown field properties.
+ * @typedef {object} MarkdownFieldProps
+ * @property {'markdown'} widget Field type.
+ */
+
+/**
  * Markdown field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & MarkdownFieldProps} MarkdownField
+ * @typedef {VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps & MarkdownFieldProps
+ * } MarkdownField
  */
 
 /**
@@ -809,7 +828,7 @@
  * Visible field types.
  * @typedef {BooleanField | CodeField | ColorField | ComputeField | DateTimeField | FileField |
  * ImageField | KeyValueField | ListField | MapField | MarkdownField | NumberField | ObjectField |
- * RelationField | SelectField | StringField | TextField | UuidField} VisibleField
+ * RelationField | RichTextField | SelectField | StringField | TextField | UuidField} VisibleField
  */
 
 /**
@@ -847,8 +866,8 @@
  * Built-in field type name. Sveltia CMS supports all the built-in field types provided by Decap CMS
  * as well as some new field types.
  * @typedef {'boolean' | 'code' | 'color' | 'compute' | 'datetime' | 'file' | 'hidden' | 'image' |
- * 'keyvalue' | 'list' | 'map' | 'markdown' | 'number' | 'object' | 'relation' | 'select' | 'string'
- * | 'text' | 'uuid'} BuiltInFieldType
+ * 'keyvalue' | 'list' | 'map' | 'markdown' | 'number' | 'object' | 'relation' | 'richtext' |
+ * 'select' | 'string' | 'text' | 'uuid'} BuiltInFieldType
  * @see https://decapcms.org/docs/widgets/
  */
 
@@ -1469,7 +1488,7 @@
  */
 
 /**
- * Custom editor component options.
+ * Custom rich text editor component options.
  * @typedef {object} EditorComponentDefinition
  * @property {string} id Unique identifier for the component.
  * @property {string} label Label of the component to be displayed in the editor UI.

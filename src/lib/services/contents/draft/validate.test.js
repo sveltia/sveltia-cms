@@ -20,7 +20,7 @@ vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/fields/key-value/helper');
 vi.mock('$lib/services/contents/fields/list/helper');
-vi.mock('$lib/services/contents/fields/markdown');
+vi.mock('$lib/services/contents/fields/rich-text');
 vi.mock('$lib/services/contents/fields/string/validate');
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/config');

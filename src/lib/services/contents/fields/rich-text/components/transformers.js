@@ -1,7 +1,7 @@
 import {
   isMultiLinePattern,
   normalizeProps,
-} from '$lib/services/contents/fields/markdown/components/utils';
+} from '$lib/services/contents/fields/rich-text/components/utils';
 
 /**
  * @import { LexicalNode } from 'lexical';
