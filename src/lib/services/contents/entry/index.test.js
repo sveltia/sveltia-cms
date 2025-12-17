@@ -839,6 +839,83 @@ describe('Test extractDateTime()', () => {
       }),
     );
   });
+
+  test('should handle date value that does not match format (fallback parsing)', () => {
+    const fields = [{ name: 'date', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ss' }];
+
+    const content = {
+      // Value is ISO datetime but format expects space instead of T
+      date: '2024-01-15T10:30:00',
+    };
+
+    const result = extractDateTime({
+      fields,
+      content,
+    });
+
+    // Should still extract datetime via fallback native Date parsing
+    expect(result).toEqual(
+      expect.objectContaining({
+        year: '2024',
+        month: '01',
+        day: '15',
+        hour: '10',
+        minute: '30',
+        second: '00',
+      }),
+    );
+  });
+
+  test('should return undefined when fallback parsing also fails', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const fields = [{ name: 'date', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ss' }];
+
+    const content = {
+      // Completely invalid date string that neither day.js nor native Date can parse
+      date: 'not-a-valid-date-at-all',
+    };
+
+    const result = extractDateTime({
+      fields,
+      content,
+    });
+
+    // Should return undefined when date cannot be parsed
+    expect(result).toBeUndefined();
+    consoleSpy.mockRestore();
+  });
+
+  test('should extract datetime with UTC when format mismatch falls back to native parsing', () => {
+    const fields = [
+      {
+        name: 'date',
+        widget: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        picker_utc: true,
+      },
+    ];
+
+    const content = {
+      // ISO datetime with Z doesn't match space-separated format
+      date: '2024-01-15T10:30:00Z',
+    };
+
+    const result = extractDateTime({
+      fields,
+      content,
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        year: '2024',
+        month: '01',
+        day: '15',
+        hour: '10',
+        minute: '30',
+        second: '00',
+      }),
+    );
+  });
 });
 
 describe('Test getEntryRepoBlobURL()', () => {

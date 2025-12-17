@@ -11,6 +11,7 @@ import { cmsConfig } from '$lib/services/config';
 import { getEntryFoldersByPath } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import { getDate } from '$lib/services/contents/fields/date-time/helper';
 
 /**
  * @import {
@@ -63,12 +64,15 @@ export const extractDateTime = ({ dateFieldName, fields, content }) => {
     return undefined;
   }
 
-  const { format, picker_utc: utc = false } = /** @type {DateTimeField} */ (fieldConfig);
+  const config = /** @type {DateTimeField} */ (fieldConfig);
+  const { picker_utc: utc = false } = config;
+  const date = getDate(fieldValue, config);
 
-  return getDateTimeParts({
-    date: (utc ? dayjs.utc : dayjs)(fieldValue, format).toDate(),
-    timeZone: utc ? 'UTC' : undefined,
-  });
+  if (!date || Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  return getDateTimeParts({ date, timeZone: utc ? 'UTC' : undefined });
 };
 
 /**
