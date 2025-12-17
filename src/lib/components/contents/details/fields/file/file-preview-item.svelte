@@ -13,12 +13,14 @@
   /**
    * @typedef {object} Props
    * @property {string} value Field value, either a URL or a file path.
+   * @property {boolean} [isImageField] Whether the field is an image field.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     value,
+    isImageField = false,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -35,7 +37,9 @@
     void [value];
 
     untrack(async () => {
-      kind = value ? await getMediaKind(value) : undefined;
+      // Determine the kind and source URL of the media. Skip if it’s an image field because we
+      // already know it’s an image. It’s rather problematic if the path doesn’t have an extension.
+      kind = value ? (isImageField ? 'image' : await getMediaKind(value)) : undefined;
       src = kind ? await getMediaFieldURL({ value, entry, collectionName, fileName }) : undefined;
     });
   });

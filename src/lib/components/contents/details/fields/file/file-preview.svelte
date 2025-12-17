@@ -26,14 +26,17 @@
     currentValue,
     /* eslint-enable prefer-const */
   } = $props();
+
+  const { widget: fieldType } = $derived(fieldConfig);
+  const isImageField = $derived(fieldType === 'image');
 </script>
 
 {#if isMultiple(fieldConfig)}
   {#if Array.isArray(currentValue)}
     {#each currentValue as value}
-      <FilePreviewItem {value} />
+      <FilePreviewItem {value} {isImageField} />
     {/each}
   {/if}
 {:else if typeof currentValue === 'string' && currentValue}
-  <FilePreviewItem value={currentValue} />
+  <FilePreviewItem value={currentValue} {isImageField} />
 {/if}
