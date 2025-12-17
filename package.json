@@ -68,7 +68,7 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
     "@types/leaflet": "^1.9.21",
-    "@types/node": "^24.10.3",
+    "@types/node": "^24.10.4",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.7",
     "@vitest/coverage-v8": "^4.0.15",
@@ -82,11 +82,11 @@
     "eslint-plugin-svelte": "^2.46.1",
     "eslint-plugin-unused-imports": "^4.3.0",
     "jsonc-eslint-parser": "^2.4.2",
-    "oxlint": "^1.32.0",
+    "oxlint": "^1.33.0",
     "postcss": "^8.5.6",
     "postcss-html": "^1.8.0",
     "prettier": "^3.7.4",
-    "prettier-plugin-svelte": "^3.4.0",
+    "prettier-plugin-svelte": "^3.4.1",
     "sass": "^1.96.0",
     "stylelint": "^16.26.1",
     "stylelint-config-recommended-scss": "^16.0.2",
@@ -96,7 +96,7 @@
     "svelte-preprocess": "^6.0.3",
     "ts-json-schema-generator": "^2.4.0",
     "typescript": "^5.9.3",
-    "vite": "^7.2.7",
+    "vite": "^7.3.0",
     "vitest": "^4.0.15"
   },
   "publishConfig": {
