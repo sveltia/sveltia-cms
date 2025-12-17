@@ -1322,6 +1322,8 @@
  * @property {string} [app_id] OAuth application ID. Required when using PKCE authorization.
  * @property {string} [cms_label_prefix] Pull request label prefix for Editorial Workflow. Default:
  * `sveltia-cms/`.
+ * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Default:
+ * `false`.
  * @see https://decapcms.org/docs/gitlab-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
  */
