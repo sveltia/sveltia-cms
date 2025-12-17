@@ -60,7 +60,14 @@ export const getDate = (currentValue, fieldConfig) => {
 
   try {
     if (format) {
-      return (utc ? dayjs.utc : dayjs)(currentValue, format).toDate();
+      try {
+        return (utc ? dayjs.utc : dayjs)(currentValue, format).toDate();
+      } catch {
+        // Day.js parsing may fail when the stored value doesn’t match the expected format. Then
+        // fall back to native, permissive Date parsing. This may still fail, in which case we
+        // return `undefined` in the catch block below.
+        return new Date(currentValue);
+      }
     }
 
     if (timeOnly) {
