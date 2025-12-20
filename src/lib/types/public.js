@@ -668,7 +668,11 @@
  * @typedef {object} NumberFieldProps
  * @property {'number'} widget Field type.
  * @property {number | string} [default] Default value.
- * @property {'int' | 'float' | string} [value_type] Type of value to be saved. Default: `int`.
+ * @property {'int' | 'float' | 'int/string' | 'float/string'} [value_type] Type of the value. `int`
+ * makes the input accept only an integer value and saves it as a number. `float` makes the input
+ * accept only a floating-point value and saves it as a number. `int/string` and `float/string` make
+ * the input accept only an integer or floating-point value, respectively, but save it as a string.
+ * Default: `int`.
  * @property {number} [min] Minimum value that can be entered in the input. Default: `-Infinity`.
  * @property {number} [max] Maximum value that can be entered in the input. Default: `Infinity`.
  * @property {number} [step] Number to increase/decrease with the arrow key/button. Default: `1`.
