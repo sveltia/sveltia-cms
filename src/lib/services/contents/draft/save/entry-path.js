@@ -3,6 +3,7 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { fillTemplate } from '$lib/services/common/template';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getLocalePath } from '$lib/services/contents/i18n';
+import { createPath } from '$lib/services/utils/file';
 
 /**
  * @import { EntryDraft, InternalEntryCollection, InternalLocaleCode } from '$lib/types/private';
@@ -71,6 +72,6 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     single_file: `${basePath}/${path}.${extension}`,
   };
 
-  // Remove a leading slash in case `basePath` is empty
-  return stripSlashes(pathOptions[structure] ?? pathOptions.single_file);
+  // Remove unnecessary slashes in case `basePath` is empty
+  return createPath((pathOptions[structure] ?? pathOptions.single_file).split('/'));
 };
