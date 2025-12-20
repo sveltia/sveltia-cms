@@ -363,6 +363,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - It’s possible to embed the locale code in an entry by using `widget: hidden` along with `default: '{{locale}}'`.[^101]
   - The `value_field` Relation field option can contain a locale prefix like `{{locale}}/{{slug}}`, which will be replaced with the current locale. It’s intended to support i18n in Astro. ([Discussion](https://github.com/sveltia/sveltia-cms/discussions/302))
   - The collection filters are applied correctly regardless of the i18n structure.[^291]
+  - The `summary` collection options supports the `{{locale}}` template tag to show enabled entry locales in the entry list.
 - User interface
   - Eliminates UI confusion: The Preview Pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list when there are less than 5 locales.
@@ -560,7 +561,8 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Soft line breaks are [rendered as hard line breaks](#rendering-soft-line-breaks-as-hard-line-breaks-in-markdown) in the Preview Pane.
   - Uploaded images will not disappear while editing an entry.[^278][^294]
 - Number
-  - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157] If `value_type` is anything else, the data type will remain a string.
+  - If the `value_type` option is `int` (default) or `float`, the `required` option is `false`, and the value is not entered, the field will be saved as `null` instead of an empty string.[^157]
+  - The `value_type` option accepts `int/string` and `float/string` to save the number as a string instead of a number.
 - Object
   - Sveltia CMS offers two ways to have conditional fields in a collection:[^30]
     - The Object widget supports [variable types](https://decapcms.org/docs/variable-type-widgets/) (the `types` and `typeKey` options) just like the List widget.[^226]
