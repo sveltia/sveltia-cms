@@ -28,6 +28,7 @@ import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fie
  * @property {string} slug Entry slug.
  * @property {string} entryPath Entry path.
  * @property {string | undefined} basePath Base path for the entry.
+ * @property {string[]} locales Enabled locales for the entry.
  * @property {Date | undefined} commitDate Commit date.
  * @property {CommitAuthor | undefined} commitAuthor Commit author.
  */
@@ -95,10 +96,14 @@ export const getEntrySummaryFromContent = (
  * @returns {string | Date | undefined} Replaced value or `undefined` if the tag is not recognized.
  */
 export const replaceSub = (tag, context) => {
-  const { slug, entryPath, basePath, commitDate, commitAuthor } = context;
+  const { slug, entryPath, basePath, locales, commitDate, commitAuthor } = context;
 
   if (tag === 'slug') {
     return slug;
+  }
+
+  if (tag === 'locales') {
+    return locales.sort((a, b) => a.localeCompare(b)).join(', ');
   }
 
   if (tag === 'dirname') {
@@ -234,7 +239,14 @@ export const getEntrySummary = (
   const replaceContext = {
     content,
     collectionName,
-    replaceSubContext: { slug, entryPath, commitDate, commitAuthor, basePath },
+    replaceSubContext: {
+      slug,
+      entryPath,
+      basePath,
+      locales: Object.keys(locales),
+      commitDate,
+      commitAuthor,
+    },
     defaultLocale,
   };
 
