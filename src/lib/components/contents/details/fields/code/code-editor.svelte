@@ -42,7 +42,7 @@
   let lang = $state('');
 
   const {
-    default_language: defaultLanguage = '',
+    default_language: defaultLanguage = 'plain',
     allow_language_selection: showLanguageSwitcher = true,
     output_code_only: outputCodeOnly = false,
     keys: outputKeys = { code: 'code', lang: 'lang' },
@@ -61,6 +61,8 @@
       } else if (code !== currentValue) {
         code = currentValue;
       }
+
+      lang = defaultLanguage;
     } else {
       const _code = valueMap[codeKeyPath];
       const _lang = valueMap[langKeyPath] || defaultLanguage;
