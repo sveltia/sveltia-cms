@@ -702,6 +702,8 @@ export const strings = {
         'Sveltia CMS では `allow_multiple` オプションはサポートされていません。代わりにデフォルトで `false` の `multiple` オプションを使用してください。',
       invalid_list_field:
         'List フィールドは `field`、`fields`、`types` オプションを同時に持つことはできません。',
+      invalid_list_variable_type:
+        'List フィールドの変数タイプが無効です。`widget` オプションは `{widget}` に設定されていますが、`object` でなければなりません。',
       invalid_object_field:
         'Object フィールドは `fields` と `types` オプションを同時に持つことはできません。',
       object_field_missing_fields:

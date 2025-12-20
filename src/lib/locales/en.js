@@ -701,6 +701,8 @@ export const strings = {
         'The `allow_multiple` option is not supported in Sveltia CMS. Use the `multiple` option instead, which defaults to `false`.',
       invalid_list_field:
         'The List field cannot have the `field`, `fields` and `types` options together.',
+      invalid_list_variable_type:
+        'The List field’s variable type is invalid. The `widget` option is set to `{widget}` but it must be `object`.',
       invalid_object_field:
         'The Object field cannot have the `fields` and `types` options together.',
       object_field_missing_fields:

@@ -7,8 +7,34 @@ import { addMessage, checkName } from '$lib/services/config/parser/utils/validat
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
  * } from '$lib/types/public';
- * @import { FieldParserArgs } from '$lib/types/private';
+ * @import {
+ * ConfigParserCollectors,
+ * ConfigParserContext,
+ * FieldParserArgs,
+ * } from '$lib/types/private';
  */
+
+/**
+ * Check if the field type is valid for a List field’s variable type.
+ * @param {string} fieldType Field type.
+ * @param {ConfigParserContext} context Context.
+ * @param {ConfigParserCollectors} collectors Collectors.
+ * @returns {boolean} Whether the field type is valid.
+ */
+export const checkFieldType = (fieldType, context, collectors) => {
+  if (fieldType !== 'object') {
+    addMessage({
+      strKey: 'invalid_list_variable_type',
+      context,
+      values: { widget: fieldType },
+      collectors,
+    });
+
+    return false;
+  }
+
+  return true;
+};
 
 /**
  * Parse and validate a List field configuration.
@@ -48,10 +74,14 @@ export const parseListFieldConfig = (args) => {
   }
 
   // Handle variable types
-  types?.forEach(({ name, fields: typedFields }, index) => {
+  types?.forEach(({ name, widget: fieldType = 'object', fields: typedFields }, index) => {
     const newContext = { ...context, typedKeyPath: `${typedKeyPath}.*<${name}>` };
 
-    if (checkName({ ...checkNameArgs, name, index, context: newContext }) && typedFields) {
+    if (
+      checkName({ ...checkNameArgs, name, index, context: newContext }) &&
+      checkFieldType(fieldType, newContext, collectors) &&
+      typedFields
+    ) {
       parseFields(typedFields, newContext, collectors);
     }
   });
