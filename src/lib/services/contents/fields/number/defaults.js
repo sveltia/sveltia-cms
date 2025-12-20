@@ -24,21 +24,16 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
     return { [keyPath]: '' };
   }
 
-  if (valueType === 'int') {
+  if (['int', 'int/string'].includes(valueType)) {
     const parsedValue = isString ? Number.parseInt(value, 10) : value;
 
     return Number.isInteger(parsedValue) ? { [keyPath]: parsedValue } : {};
   }
 
-  if (valueType === 'float') {
+  if (['float', 'float/string'].includes(valueType)) {
     const parsedValue = isString ? Number.parseFloat(value) : value;
 
     return Number.isFinite(parsedValue) ? { [keyPath]: parsedValue } : {};
-  }
-
-  // For custom value_type (not 'int' or 'float'), return string as-is
-  if (isString) {
-    return { [keyPath]: value };
   }
 
   return {};

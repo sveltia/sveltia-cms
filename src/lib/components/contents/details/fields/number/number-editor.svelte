@@ -35,6 +35,7 @@
 
   const { value_type: valueType = 'int', min, max, step = 1 } = $derived(fieldConfig);
   const isStringOutput = $derived(!['int', 'float'].includes(valueType));
+  const isFloatType = $derived(['float', 'float/string'].includes(valueType));
 
   /**
    * Update {@link inputValue} based on {@link currentValue}.
@@ -46,9 +47,15 @@
       if (typeof currentValue === 'number') {
         newValue = currentValue;
       } else if (typeof currentValue === 'string') {
-        const value = currentValue.trim() ? Number(currentValue) : NaN;
+        if (!currentValue.trim()) {
+          newValue = NaN;
+        } else if (isFloatType) {
+          newValue = Number.parseFloat(currentValue);
+        } else {
+          newValue = Number.parseInt(currentValue, 10);
+        }
 
-        newValue = !Number.isNaN(value) ? value : undefined;
+        newValue = !Number.isNaN(newValue) ? newValue : undefined;
       }
     }
 
@@ -67,10 +74,10 @@
 
     if (inputValue === undefined) {
       newValue = NaN;
-    } else if (['int', 'int/string'].includes(valueType)) {
-      newValue = Number.parseInt(String(inputValue), 10);
-    } else {
+    } else if (isFloatType) {
       newValue = Number.parseFloat(String(inputValue));
+    } else {
+      newValue = Number.parseInt(String(inputValue), 10);
     }
 
     if (isStringOutput) {

@@ -132,11 +132,11 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({ ratio: null });
     });
 
-    test('should return empty string when default is undefined for custom value_type', () => {
+    test('should return empty string when default is undefined for int/string type', () => {
       /** @type {NumberField} */
       const fieldConfig = {
         ...baseFieldConfig,
-        value_type: 'custom',
+        value_type: 'int/string',
       };
 
       const keyPath = 'value';
@@ -149,6 +149,25 @@ describe('Test getDefaultValueMap()', () => {
       });
 
       expect(result).toEqual({ value: '' });
+    });
+
+    test('should return empty string when default is undefined for float/string type', () => {
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        value_type: 'float/string',
+      };
+
+      const keyPath = 'ratio';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
+
+      expect(result).toEqual({ ratio: '' });
     });
 
     test('should return null when default is undefined and no value_type specified (defaults to int)', () => {
@@ -375,12 +394,12 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({ value: 123 });
     });
 
-    test('should handle string values with custom value_type', () => {
+    test('should parse string as integer for int/string type', () => {
       /** @type {NumberField} */
       const fieldConfig = {
         ...baseFieldConfig,
-        default: 'string-value',
-        value_type: 'custom', // Custom type, not 'int' or 'float'
+        default: '42',
+        value_type: 'int/string',
       };
 
       const keyPath = 'value';
@@ -392,15 +411,15 @@ describe('Test getDefaultValueMap()', () => {
         defaultLocale: '_default',
       });
 
-      expect(result).toEqual({ value: 'string-value' });
+      expect(result).toEqual({ value: 42 });
     });
 
-    test('should handle string dynamicValue with custom value_type', () => {
+    test('should parse string as float for float/string type', () => {
       /** @type {NumberField} */
       const fieldConfig = {
         ...baseFieldConfig,
-        default: 'default-value',
-        value_type: 'custom', // Custom type, not 'int' or 'float'
+        default: '3.14',
+        value_type: 'float/string',
       };
 
       const keyPath = 'value';
@@ -410,10 +429,51 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
-        dynamicValue: 'dynamic-value',
       });
 
-      expect(result).toEqual({ value: 'dynamic-value' });
+      expect(result).toEqual({ value: 3.14 });
+    });
+
+    test('should parse string dynamicValue as integer for int/string type', () => {
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '10',
+        value_type: 'int/string',
+      };
+
+      const keyPath = 'value';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue: '50',
+      });
+
+      expect(result).toEqual({ value: 50 });
+    });
+
+    test('should parse string dynamicValue as float for float/string type', () => {
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '2.5',
+        value_type: 'float/string',
+      };
+
+      const keyPath = 'value';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue: '3.5',
+      });
+
+      expect(result).toEqual({ value: 3.5 });
     });
 
     test('should return null when dynamicValue is undefined and no default exists for int type', () => {
@@ -458,12 +518,12 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({ ratio: null });
     });
 
-    test('should return empty string when dynamicValue is undefined and no default exists for custom value_type', () => {
+    test('should return empty object when dynamicValue is undefined and no default exists (non-numeric type)', () => {
       /** @type {NumberField} */
       const fieldConfig = {
         ...baseFieldConfig,
         // No default value
-        value_type: 'custom',
+        value_type: 'int/string',
       };
 
       const keyPath = 'value';
@@ -476,19 +536,21 @@ describe('Test getDefaultValueMap()', () => {
         dynamicValue: undefined, // Explicitly undefined
       });
 
+      // Falls through to return empty string because value is undefined
+      // and value_type is not 'int' or 'float'
       expect(result).toEqual({ value: '' });
     });
 
-    test('should return custom value_type string without modification (lines 44-45)', () => {
-      // Test when value is a string and value_type is custom
+    test('should handle invalid string for int/string type', () => {
+      // Test when string cannot be parsed as integer
       /** @type {NumberField} */
       const fieldConfig = {
         ...baseFieldConfig,
-        default: 'my-custom-value',
-        value_type: 'custom-enum', // Custom type
+        default: 'not-a-number',
+        value_type: 'int/string',
       };
 
-      const keyPath = 'customField';
+      const keyPath = 'field';
 
       const result = getDefaultValueMap({
         fieldConfig,
@@ -497,40 +559,55 @@ describe('Test getDefaultValueMap()', () => {
         defaultLocale: '_default',
       });
 
-      // For custom value_type with string value, return as-is
-      expect(result).toEqual({ customField: 'my-custom-value' });
-    });
-
-    test('should return empty object when custom value_type has non-string value', () => {
-      // Test line 45: return {} when not a string for custom type
-      /** @type {NumberField} */
-      const fieldConfig = {
-        ...baseFieldConfig,
-        default: 123, // Non-string value
-        value_type: 'custom-type',
-      };
-
-      const keyPath = 'customField';
-
-      const result = getDefaultValueMap({
-        fieldConfig,
-        keyPath,
-        locale: '_default',
-        defaultLocale: '_default',
-      });
-
-      // For custom value_type with non-string value, return empty object
+      // Returns empty object when parsing fails
       expect(result).toEqual({});
     });
 
-    test('should handle multiple custom value types', () => {
-      const customTypes = ['hex', 'rgb', 'hsl', 'custom-unit'];
+    test('should handle invalid string for float/string type', () => {
+      // Test when string cannot be parsed as float
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'not-a-number',
+        value_type: 'float/string',
+      };
 
-      customTypes.forEach((valueType) => {
+      const keyPath = 'field';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
+
+      // Returns empty object when parsing fails
+      expect(result).toEqual({});
+    });
+
+    test('should handle all valid value_type variants', () => {
+      /**
+       * @typedef {object} TestCase
+       * @property {'int' | 'int/string' | 'float' | 'float/string'} valueType
+       * The value type.
+       * @property {number | string} input
+       * The input value.
+       * @property {number} expected
+       * The expected result.
+       */
+      /** @type {TestCase[]} */
+      const testCases = [
+        { valueType: 'int', input: 42, expected: 42 },
+        { valueType: 'int/string', input: '42', expected: 42 },
+        { valueType: 'float', input: 3.14, expected: 3.14 },
+        { valueType: 'float/string', input: '3.14', expected: 3.14 },
+      ];
+
+      testCases.forEach(({ valueType, input, expected }) => {
         /** @type {NumberField} */
         const fieldConfig = {
           ...baseFieldConfig,
-          default: `value-${valueType}`,
+          default: input,
           value_type: valueType,
         };
 
@@ -543,7 +620,7 @@ describe('Test getDefaultValueMap()', () => {
           defaultLocale: '_default',
         });
 
-        expect(result).toEqual({ field: `value-${valueType}` });
+        expect(result).toEqual({ field: expected });
       });
     });
   });

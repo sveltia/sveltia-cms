@@ -21,22 +21,16 @@
   let {
     /* eslint-disable prefer-const */
     locale,
-    fieldConfig,
     currentValue,
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { value_type: valueType = 'int' } = $derived(fieldConfig);
   const canonicalLocale = $derived(getCanonicalLocale(locale));
   const numberFormatter = $derived(Intl.NumberFormat(canonicalLocale));
 </script>
 
 {#if currentValue !== undefined && currentValue !== null && currentValue !== ''}
   <p lang={canonicalLocale} dir="auto">
-    {#if valueType === 'int' || valueType === 'float'}
-      {numberFormatter.format(Number(currentValue))}
-    {:else}
-      {currentValue}
-    {/if}
+    {numberFormatter.format(Number(currentValue))}
   </p>
 {/if}
