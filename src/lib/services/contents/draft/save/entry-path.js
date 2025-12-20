@@ -71,5 +71,6 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     single_file: `${basePath}/${path}.${extension}`,
   };
 
-  return pathOptions[structure] ?? pathOptions.single_file;
+  // Remove a leading slash in case `basePath` is empty
+  return stripSlashes(pathOptions[structure] ?? pathOptions.single_file);
 };
