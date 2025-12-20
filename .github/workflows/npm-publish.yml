@@ -38,6 +38,4 @@ jobs:
         uses: SethCohen/github-releases-to-discord@v1
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          username: "Sveltia CMS Releases"
-          avatar_url: "https://cdn.discordapp.com/icons/1282801222474272859/136faa1fa7d8c38c6c43906bbc3dc7f2.webp?size=160&quality=lossless"
           reduce_headings: true
