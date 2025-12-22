@@ -94,8 +94,8 @@ vi.mock('$lib/services/config/deprecations', () => ({
   warnDeprecation: vi.fn(),
 }));
 
-vi.mock('$lib/services/integrations/media-libraries', () => ({
-  CLOUD_MEDIA_LIBRARIES: [],
+vi.mock('$lib/services/integrations/media-libraries/cloud', () => ({
+  CLOUD_MEDIA_LIBRARY_NAMES: [],
 }));
 
 /**

@@ -3,6 +3,7 @@ import uploadcare from './uploadcare';
 
 /**
  * @import { MediaLibraryService } from '$lib/types/private';
+ * @import { CloudMediaLibraryName } from '$lib/types/public';
  */
 
 /**
@@ -13,3 +14,9 @@ export const allCloudStorageServices = {
   cloudinary,
   uploadcare,
 };
+
+/**
+ * List of all supported cloud media library names.
+ * @type {CloudMediaLibraryName[]}
+ */
+export const CLOUD_MEDIA_LIBRARY_NAMES = /** @type {any} */ (Object.keys(allCloudStorageServices));

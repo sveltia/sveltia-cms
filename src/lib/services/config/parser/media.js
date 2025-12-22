@@ -3,7 +3,7 @@
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
-import { CLOUD_MEDIA_LIBRARIES } from '$lib/services/integrations/media-libraries';
+import { CLOUD_MEDIA_LIBRARY_NAMES } from '$lib/services/integrations/media-libraries/cloud';
 
 /**
  * @import { CmsConfig } from '$lib/types/public';
@@ -23,9 +23,9 @@ export const parseMediaConfig = (cmsConfig, collectors) => {
   if (media_folder === undefined) {
     // Require `media_folder` unless a cloud media library is configured
     if (
-      !CLOUD_MEDIA_LIBRARIES.includes(/** @type {any} */ (media_library?.name ?? '')) &&
+      !CLOUD_MEDIA_LIBRARY_NAMES.includes(/** @type {any} */ (media_library?.name ?? '')) &&
       !Object.keys(media_libraries || {}).some((name) =>
-        CLOUD_MEDIA_LIBRARIES.includes(/** @type {any} */ (name)),
+        CLOUD_MEDIA_LIBRARY_NAMES.includes(/** @type {any} */ (name)),
       )
     ) {
       errors.add(get(_)('config.error.missing_media_folder'));
