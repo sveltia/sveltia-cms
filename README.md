@@ -2059,12 +2059,12 @@ We cannot promise any specific release dates, but here is a rough roadmap for th
 
 ### v1.0
 
-Due early 2026
+Due early 2026. This will be the first stable release of Sveltia CMS, suitable for production use in many scenarios. This release also [solves 300 issues](#project-status) of Netlify/Decap CMS, including many highly requested features and important bug fixes.
 
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling some more Netlify/Decap CMS issues:
   - PKCE for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub but is [planned for Q4 2025](https://github.com/github/roadmap/issues/1153)
-  - [Amazon S3 and Cloudflare R2 media library backend](https://github.com/sveltia/sveltia-cms/discussions/584)[^315]
+  - [Amazon S3 and Cloudflare R2 media library backend](https://github.com/sveltia/sveltia-cms/issues/586)[^315]
   - Thorough config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
 - Accessibility audit
@@ -2076,7 +2076,7 @@ See also the [1.0 RC](https://github.com/sveltia/sveltia-cms/milestone/1) and [1
 
 ### v2.0
 
-Due mid-2026
+Due mid-2026. This release completes the core features of Sveltia CMS as a successor to Netlify/Decap CMS.
 
 - Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections, while addressing a number of bugs in their implementations
   - They will probably first be included as beta features in v1.x releases
@@ -2089,7 +2089,7 @@ See also the [2.0](https://github.com/sveltia/sveltia-cms/milestone/3) milestone
 
 ### v3.0
 
-Due late 2026
+Due late 2026. This release provides an alternative to the deprecated Netlify Identity and Git Gateway services used by Netlify/Decap CMS.
 
 - **Sveltia CMS Additions**: Edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
   - User management (Netlify Identity alternative) with roles[^23]
