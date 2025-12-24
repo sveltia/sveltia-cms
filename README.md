@@ -792,7 +792,7 @@ Sveltia CMS supports the GitHub, GitLab and Gitea/Forgejo [backends](#better-bac
 
 ### Browser support
 
-Sveitia CMS works with all modern browsers, but there are a few limitations because it utilizes some new web technologies:
+Sveltia CMS works with all modern browsers, but there are a few limitations because it utilizes some new web technologies:
 
 - The [local repository workflow](#working-with-a-local-git-repository) requires a Chromium-based browser, including Chrome, Edge and Brave.
 - Safari: The Test backend doesn’t save changes locally; [image optimization](#optimizing-images-for-upload) is slower than in other browsers.
@@ -821,7 +821,7 @@ Static CMS made [some breaking changes](https://staticjscms.netlify.app/docs/dec
   - The `logo_link` global option will not be supported. Use `display_url` or `site_url` instead.
   - The `yaml` global option will not be supported, as Sveltia CMS doesn’t expose the underlying `yaml` library options for forward compatibility reasons. However, we do have some [data output options](#controlling-data-output), including YAML indentation and quotes.
 - I18n support
-  - The `enforce_required_non_default` i18n option will not be supported. Sveitia CMS enforces required fields in all locales by default. However, the `initial_locales` i18n option allows users to [disable non-default locales](#disabling-non-default-locale-content) if needed. Developers can also specify a subset of locales with the `required` field option, e.g. `required: [en]`.
+  - The `enforce_required_non_default` i18n option will not be supported. Sveltia CMS enforces required fields in all locales by default. However, the `initial_locales` i18n option allows users to [disable non-default locales](#disabling-non-default-locale-content) if needed. Developers can also specify a subset of locales with the `required` field option, e.g. `required: [en]`.
 - Widgets
   - The date/time format options for the DateTime widget are **not compatible** since Static CMS [switched to date-fns](https://staticjscms.netlify.app/docs/decap-migration-guide#dates) while Decap CMS and Sveltia CMS have replaced Moment.js with Day.js. Update your formats accordingly.
   - The [KeyValue widget](#new-widgets) is implemented in Sveltia CMS with the same options.
