@@ -1027,6 +1027,50 @@ describe('parseTextFileInfo', () => {
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
+
+  test('should skip files larger than 10MB', async () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const handle = createMockFileHandle('large.txt');
+    // Create a file larger than 10MB
+
+    const largeFile = new File(['x'.repeat(11 * 1024 * 1024)], 'large.txt', {
+      type: 'text/plain',
+    });
+
+    handle.getFile = vi.fn(async () => largeFile);
+
+    const result = await parseTextFileInfo({
+      handle,
+      path: 'large.txt',
+      name: 'large.txt',
+      sha: '',
+      size: 0,
+      type: 'config',
+    });
+
+    expect(result.text).toBe('');
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('is too large'));
+    consoleWarnSpy.mockRestore();
+  });
+
+  test('should process files under 10MB limit', async () => {
+    const handle = createMockFileHandle('normal.txt');
+    // Create a file under 10MB
+    const normalFile = new File(['normal content'], 'normal.txt', { type: 'text/plain' });
+
+    handle.getFile = vi.fn(async () => normalFile);
+
+    const result = await parseTextFileInfo({
+      handle,
+      path: 'normal.txt',
+      name: 'normal.txt',
+      sha: '',
+      size: 0,
+      type: 'config',
+    });
+
+    expect(result.text).toBe('normal content');
+  });
 });
 
 describe('moveFile', () => {
@@ -1235,40 +1279,50 @@ describe('deleteEmptyParentDirs', () => {
   test('should stop when directory is not empty', async () => {
     const dirHandle = createMockDirectoryHandle('folder');
 
-    // Mock keys() method for async iteration
+    // Mock entries() method for async iteration
     // @ts-ignore - Mock async iterator
     // eslint-disable-next-line jsdoc/require-jsdoc
-    dirHandle.keys = vi.fn(() => ({
+    dirHandle.entries = vi.fn(() => ({
       // eslint-disable-next-line jsdoc/require-jsdoc, func-names, object-shorthand
       [Symbol.asyncIterator]: async function* () {
-        yield 'file1.txt';
-        yield 'file2.txt';
+        yield ['file1.txt', createMockFileHandle('file1.txt')];
+        yield ['file2.txt', createMockFileHandle('file2.txt')];
       },
     }));
 
     /** @type {import('vitest').MockedFunction<any>} */ (
       rootDirHandle.getDirectoryHandle
-    ).mockResolvedValue(dirHandle);
+    ).mockImplementation(async (name) => {
+      if (name === '') return rootDirHandle;
+      if (name === 'folder') return dirHandle;
+
+      return createMockDirectoryHandle(/** @type {string} */ (name));
+    });
 
     await deleteEmptyParentDirs(rootDirHandle, ['folder']);
 
-    expect(dirHandle.removeEntry).not.toHaveBeenCalled();
+    expect(rootDirHandle.removeEntry).not.toHaveBeenCalled();
   });
 
   test('should delete empty directory when pathSegments has single item', async () => {
     const emptyDir = createMockDirectoryHandle('folder');
 
-    // Mock empty directory
+    // Mock empty directory with entries() returning nothing
     // @ts-ignore - Mock async iterator
-    emptyDir.keys = vi.fn(() => ({
+    emptyDir.entries = vi.fn(() => ({
       [Symbol.asyncIterator]: async function* () {
-        // empty
+        // empty - no entries
       },
     }));
 
     /** @type {import('vitest').MockedFunction<any>} */ (
       rootDirHandle.getDirectoryHandle
-    ).mockResolvedValue(emptyDir);
+    ).mockImplementation(async (name) => {
+      if (name === '') return rootDirHandle;
+      if (name === 'folder') return emptyDir;
+
+      return createMockDirectoryHandle(/** @type {string} */ (name));
+    });
 
     await deleteEmptyParentDirs(rootDirHandle, ['folder']);
 
@@ -1523,6 +1577,7 @@ describe('scanDir', () => {
       scanningPaths: ['error.txt'],
       scanningPathsRegEx: [/error\.txt/],
       fileHandles,
+      pathRegexCache: new Map(),
     });
 
     // File handle is stored during scan; errors will occur later in parseFileHandleItem
@@ -1551,6 +1606,7 @@ describe('scanDir', () => {
         scanningPaths: ['other/path'],
         scanningPathsRegEx: [/^other\/path/],
         fileHandles,
+        pathRegexCache: new Map(),
       },
       'parent',
     );
@@ -1579,6 +1635,7 @@ describe('scanDir', () => {
       scanningPaths: ['.hidden', '.gitignore'],
       scanningPathsRegEx: [/.*/],
       fileHandles,
+      pathRegexCache: new Map(),
     });
 
     // Only .gitignore should be included, .hidden should be skipped
@@ -1629,6 +1686,7 @@ describe('scanDir', () => {
         scanningPaths: ['parent/nested/file.txt'],
         scanningPathsRegEx: [/parent\/nested\/file\.txt/],
         fileHandles,
+        pathRegexCache: new Map(),
       },
       'parent',
     );
@@ -1865,6 +1923,7 @@ describe('scanDir - directory recursion scenarios', () => {
       scanningPaths: ['level1/level2/file.txt'],
       scanningPathsRegEx: [/level1\/level2\/file\.txt/],
       fileHandles,
+      pathRegexCache: new Map(),
     });
 
     expect(fileHandles).toHaveLength(1);
@@ -1899,6 +1958,7 @@ describe('scanDir - directory recursion scenarios', () => {
         scanningPaths: ['parent/posts/{{slug}}/index.md'],
         scanningPathsRegEx: [/parent\/posts\/.+?\/index\.md/],
         fileHandles,
+        pathRegexCache: new Map(),
       },
       'parent',
     );
@@ -1926,6 +1986,7 @@ describe('scanDir - directory recursion scenarios', () => {
         scanningPaths: ['parent/.hidden/file.txt'],
         scanningPathsRegEx: [/parent\/\.hidden\/file\.txt/],
         fileHandles,
+        pathRegexCache: new Map(),
       },
       'parent',
     );
@@ -1950,6 +2011,7 @@ describe('scanDir - directory recursion scenarios', () => {
       scanningPaths: ['file.txt'],
       scanningPathsRegEx: [/^file\.txt$/],
       fileHandles,
+      pathRegexCache: new Map(),
     });
 
     // Should find the file since the regex matches
