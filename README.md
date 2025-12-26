@@ -369,6 +369,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Eliminates UI confusion: The Preview Pane can be displayed without toggling i18n in the Content Editor. Both panes are scrollable. There is no condition where both panes are edited in the same language at the same time.
   - Users can easily switch between locales while editing by clicking a button instead of a dropdown list when there are less than 5 locales.
   - Language labels appear in human-readable display names instead of ISO 639 language codes because it’s not easy for everyone to recognize `DE` as German, `NL` as Dutch, `ZH` as Chinese, and so on.
+  - It’s possible to set the editor pane locale via a URL query parameter, e.g. `?_locale=fr`.
 - Content editing
   - [Integrates translation services](#translating-entry-fields-with-one-click) to allow translation of text fields from another locale with one click.
   - The Content Editor supports [RTL scripts](https://en.wikipedia.org/wiki/Right-to-left_script) such as Arabic, Hebrew and Persian.[^146]
@@ -414,6 +415,7 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
     - Sveltia CMS supports [singletons](#using-singletons), a simple form of a file collection.[^233]
     - File collections support files without extensions.[^255] This is useful for [editing site deployment configuration files](#editing-site-deployment-configuration-files), such as `_headers` and `_redirects`.
     - Each file in a file collection has the `format` and `frontmatter_delimiter` options, which can be used to specify the file format, making it possible to have `yaml-frontmatter`, `toml-frontmatter` and `json-frontmatter` side by side.[^218]
+    - The new `raw` format allows you to edit raw files without front matter, such as plain text files, CSV files, JSON files and YAML files.[^316] When using this format, make sure to have only one field named `body` with the `widget` type set to `code`, `markdown`, `richtext` or `text`.
   - The `create` option for folder collections defaults to `true`, providing a better out-of-the-box experience.
   - The collection `label` defaults to the `name` value according to the [Decap CMS document](https://decapcms.org/docs/configuration-options/#collections), while Netlify/Decap CMS actually throws a configuration error if the `label` option is omitted.
   - Nested fields (dot notation) can be used in the `path` option for a folder collection, e.g. `{{fields.state.name}}/{{slug}}`.[^62]
@@ -2806,3 +2808,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^314]: Netlify/Decap CMS [#3719](https://github.com/decaporg/decap-cms/issues/3719)
 
 [^315]: Netlify/Decap CMS [#2035](https://github.com/decaporg/decap-cms/issues/2035), [#7362](https://github.com/decaporg/decap-cms/issues/7362), [#7543](https://github.com/decaporg/decap-cms/issues/7543)
+
+[^316]: Netlify/Decap CMS [#1152](https://github.com/decaporg/decap-cms/issues/1152)
