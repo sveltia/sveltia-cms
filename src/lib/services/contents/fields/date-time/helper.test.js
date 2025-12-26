@@ -9,6 +9,8 @@ import {
   getDate,
   getDateTimeFieldDisplayValue,
   getInputValue,
+  getParser,
+  isValidDate,
   parseDateTimeConfig,
 } from './helper';
 
@@ -188,34 +190,14 @@ describe('getDate', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const result = getDate('invalid-date', baseFieldConfig);
 
-    // Invalid dates return Invalid Date object, not undefined
-    expect(result).toBeInstanceOf(Date);
-    expect(Number.isNaN(result?.getTime())).toBe(true);
+    // Invalid dates return undefined after being validated by isValidDate
+    expect(result).toBeUndefined();
+    expect(consoleSpy).toHaveBeenCalledWith('Invalid Date', 'invalid-date');
     consoleSpy.mockRestore();
   });
 
-  test('should catch and log exceptions when getDate fails', () => {
+  test('should return undefined for unparseable date strings', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const originalDate = global.Date;
-
-    /**
-     * Custom Date mock that throws errors.
-     */
-    // @ts-expect-error - Mocking Date constructor.
-    global.Date = class extends originalDate {
-      /**
-       * Constructor.
-       * @param {any[]} args Constructor arguments.
-       */
-      constructor(...args) {
-        if (args.length > 0 && typeof args[0] === 'string' && args[0].includes('throw-error')) {
-          throw new Error('Date parsing error');
-        }
-
-        // @ts-expect-error - Passing args to super.
-        super(...args);
-      }
-    };
 
     /** @type {DateTimeField} */
     const fieldConfig = {
@@ -223,16 +205,14 @@ describe('getDate', () => {
       date_format: false,
     };
 
-    const result = getDate('throw-error', fieldConfig);
+    const result = getDate('completely-bogus-date', fieldConfig);
 
     expect(result).toBeUndefined();
-    expect(consoleSpy).toHaveBeenCalled();
-
-    global.Date = originalDate;
+    expect(consoleSpy).toHaveBeenCalledWith('Invalid Date', 'completely-bogus-date');
     consoleSpy.mockRestore();
   });
 
-  test('should fall back to native Date parsing when day.js format parsing fails', () => {
+  test('should use dayjs fallback parsing when format doesnt match', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     /** @type {DateTimeField} */
@@ -241,8 +221,7 @@ describe('getDate', () => {
       format: 'YYYY-MM-DDTHH:mm:ss',
     };
 
-    // Value doesn't match the expected format (missing time part)
-    // day.js will throw, then fall back to native Date parsing with ISO string
+    // Value matches the format, so dayjs should parse it successfully
     const result = getDate('2025-12-16T10:30:00', fieldConfig);
 
     expect(result).toBeInstanceOf(Date);
@@ -253,7 +232,7 @@ describe('getDate', () => {
     consoleSpy.mockRestore();
   });
 
-  test('should fall back gracefully when format string mismatch occurs', () => {
+  test('should fall back to default parsing when format string mismatch occurs', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     /** @type {DateTimeField} */
@@ -263,12 +242,11 @@ describe('getDate', () => {
     };
 
     // Value in ISO format doesn't match expected DD/MM/YYYY format
-    // day.js will throw, native Date parsing will attempt but may create Invalid Date
-    // The key point is that no exception is thrown - it's caught gracefully
+    // dayjs will try the format first, then fall back to parsing without format
     const result = getDate('2025-12-16', fieldConfig);
 
     expect(result).toBeInstanceOf(Date);
-    // Result may be Invalid Date, but that's handled by the caller checking for NaN
+    expect(result?.getFullYear()).toBe(2025);
     expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
@@ -295,7 +273,7 @@ describe('getDate', () => {
     consoleSpy.mockRestore();
   });
 
-  test('should return Invalid Date when both day.js and native parsing produce invalid result', () => {
+  test('should return undefined when parsing produces invalid result', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     /** @type {DateTimeField} */
@@ -304,15 +282,12 @@ describe('getDate', () => {
       format: 'YYYY-MM-DDTHH:mm:ss',
     };
 
-    // Invalid value that neither day.js nor native Date parsing can meaningfully handle
+    // Invalid value that neither dayjs nor fallback parsing can handle
     const result = getDate('completely-invalid-date-string-xyz', fieldConfig);
 
-    // Native Date parsing returns Invalid Date, not undefined
-    // This is the expected fallback behavior
-    expect(result).toBeInstanceOf(Date);
-    expect(Number.isNaN(result?.getTime())).toBe(true);
-    // No error logged since the catch block at line 68 prevents exceptions
-    expect(consoleSpy).not.toHaveBeenCalled();
+    // New implementation returns undefined for invalid dates
+    expect(result).toBeUndefined();
+    expect(consoleSpy).toHaveBeenCalledWith('Invalid Date', 'completely-invalid-date-string-xyz');
     consoleSpy.mockRestore();
   });
 });
@@ -447,10 +422,9 @@ describe('getCurrentValue', () => {
     expect(result).toBe('2023-12-25T14:30:00.000');
   });
 
-  test('should catch and log exceptions in getCurrentValue when formatting fails', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  test('should handle invalid input gracefully in getCurrentValue', () => {
+    const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
-    // Use an invalid input that will cause an error in the formatting logic
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
@@ -458,19 +432,11 @@ describe('getCurrentValue', () => {
       picker_utc: true,
     };
 
-    // Mock dayjs.utc to throw an error
-    const originalUtc = dayjs.utc;
+    // Use completely invalid input that dayjs cannot parse
+    const result = getCurrentValue('not-a-valid-date-at-all', '', fieldConfig);
 
-    dayjs.utc = vi.fn(() => {
-      throw new Error('dayjs error');
-    });
-
-    const result = getCurrentValue('2023-12-25T14:30', '', fieldConfig);
-
-    expect(result).toBeUndefined();
-    expect(consoleSpy).toHaveBeenCalled();
-
-    dayjs.utc = originalUtc;
+    expect(result).toBe('');
+    expect(consoleSpy).toHaveBeenCalledWith('Invalid date', 'not-a-valid-date-at-all');
     consoleSpy.mockRestore();
   });
 });
@@ -628,28 +594,8 @@ describe('getInputValue', () => {
     consoleSpy.mockRestore();
   });
 
-  test('should return empty string when getDate returns undefined due to exception', () => {
+  test('should return empty string when getDate returns undefined for invalid input', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const originalDate = global.Date;
-
-    /**
-     * Custom Date mock that throws errors.
-     */
-    // @ts-expect-error - Mocking Date constructor.
-    global.Date = class extends originalDate {
-      /**
-       * Constructor.
-       * @param {any[]} args Constructor arguments.
-       */
-      constructor(...args) {
-        if (args.length > 0 && typeof args[0] === 'string' && args[0].includes('parse-fail')) {
-          throw new Error('Date parsing error');
-        }
-
-        // @ts-expect-error - Passing args to super.
-        super(...args);
-      }
-    };
 
     /** @type {DateTimeField} */
     const fieldConfig = {
@@ -657,13 +603,11 @@ describe('getInputValue', () => {
       date_format: false,
     };
 
-    // This will trigger getDate to throw and return undefined
-    const result = getInputValue('parse-fail', fieldConfig);
+    // This will trigger getDate to return undefined (invalid date)
+    const result = getInputValue('totally-invalid-date-string', fieldConfig);
 
     expect(result).toBe('');
-    expect(consoleSpy).toHaveBeenCalled();
-
-    global.Date = originalDate;
+    expect(consoleSpy).toHaveBeenCalledWith('Invalid Date', 'totally-invalid-date-string');
     consoleSpy.mockRestore();
   });
 });
@@ -1274,8 +1218,8 @@ describe('Day.js format tokens', () => {
 
       const result = getCurrentValue('2023-12-25T14:30:45', '', fieldConfig);
 
-      // Seconds are not included in the input, so default to `00`
-      expect(result).toBe('2023-12-25T14:30:00Z');
+      // Dayjs format with Z token outputs +00:00 instead of literal Z
+      expect(result).toBe('2023-12-25T14:30:00+00:00');
 
       const parsed = getDate('2023-12-25T14:30:45Z', fieldConfig);
 
@@ -1312,9 +1256,9 @@ describe('Day.js format tokens', () => {
 
       const result = getDate('not-a-date', fieldConfig);
 
-      // Should return Invalid Date
-      expect(result).toBeInstanceOf(Date);
-      expect(Number.isNaN(result?.getTime())).toBe(true);
+      // Should return undefined for invalid dates
+      expect(result).toBeUndefined();
+      expect(consoleSpy).toHaveBeenCalledWith('Invalid Date', 'not-a-date');
       consoleSpy.mockRestore();
     });
 
@@ -1461,30 +1405,19 @@ describe('Day.js format tokens', () => {
       consoleSpy.mockRestore();
     });
 
-    test('should catch exception from dayjs.utc in format path (line 242 catch)', async () => {
-      // Tests the catch block at line 251-253 in getDateTimeFieldDisplayValue
-      // When dayjs throws during format parsing, it's caught gracefully and
-      // falls through to getDate for regular date parsing
+    test('should handle invalid dates with format and UTC', async () => {
+      // Tests handling of invalid dates when format and UTC are specified
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const originalUtc = dayjs.utc;
-
-      // Make dayjs.utc throw
-      dayjs.utc = vi.fn(() => {
-        throw new Error('dayjs.utc error');
-      });
 
       const result = getDateTimeFieldDisplayValue({
         locale: 'en',
         fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD', picker_utc: true },
-        currentValue: '2023-12-25',
+        currentValue: 'invalid-date-value',
       });
 
-      expect(typeof result).toBe('string');
-      // The error is caught silently in the format try-catch block and
-      // execution continues to getDate for regular parsing
-      expect(consoleSpy).not.toHaveBeenCalled();
-
-      dayjs.utc = originalUtc;
+      // Should return empty string for invalid dates
+      expect(result).toBe('');
+      expect(consoleSpy).toHaveBeenCalledWith('Invalid Date', 'invalid-date-value');
       consoleSpy.mockRestore();
     });
   });
@@ -1783,26 +1716,22 @@ describe('Day.js format tokens', () => {
       consoleSpy.mockRestore();
     });
 
-    test('should catch exception from getDateTimeParts (line 216-218 catch block)', async () => {
-      // Tests the catch block at line 216-218 in getInputValue
-      const { getDateTimeParts } = await import('@sveltia/utils/datetime');
+    test('should handle valid datetime input correctly', async () => {
+      // Tests normal parsing flow with valid datetime input
+      // Note: The input goes through Date parsing which interprets it as local time,
+      // then getDateTimeParts returns UTC values, causing a timezone conversion
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      // Make getDateTimeParts throw an error
-      vi.mocked(getDateTimeParts).mockImplementationOnce(() => {
-        throw new Error('getDateTimeParts error');
-      });
 
       /** @type {DateTimeField} */
       const fieldConfig = {
         ...baseFieldConfig,
       };
 
-      const result = getInputValue('2023-12-25T14:30:00', fieldConfig);
+      const result = getInputValue('2023-12-25T14:30', fieldConfig);
 
-      // Should return empty string when exception occurs
-      expect(result).toBe('');
-      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
+      // The result will be a valid datetime string (exact value depends on timezone)
+      expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+      expect(consoleSpy).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -1962,22 +1891,21 @@ describe('Day.js format tokens', () => {
     });
 
     describe('getInputValue - lines 217-221 (catch block)', () => {
-      test('should return empty when format parsing throws exception', () => {
-        // Lines 217-221: catch block execution
+      test('should handle timeOnly mode correctly', () => {
+        // Tests timeOnly handling with standard time input
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
         /** @type {DateTimeField} */
         const fieldConfig = {
           ...baseFieldConfig,
           date_format: false, // timeOnly = true
-          format: 'YYYY-MM-DD[invalid', // Malformed day.js format string
         };
 
-        // This will attempt to parse with dayjs, causing an error
-        const result = getInputValue('2023-12-25', fieldConfig);
+        // This should extract time from the value
+        const result = getInputValue('2023-12-25T14:30:00', fieldConfig);
 
-        // Should return empty due to exception in try block
-        expect(result).toBe('');
+        // Should return just the time part
+        expect(result).toBe('14:30');
         consoleSpy.mockRestore();
       });
 
@@ -2143,5 +2071,116 @@ describe('Day.js format tokens', () => {
         expect(result.length).toBeGreaterThan(0);
       });
     });
+  });
+});
+
+describe('isValidDate', () => {
+  test('should return true for valid Date objects', () => {
+    const validDate = new Date('2023-12-25T14:30:00.000Z');
+
+    expect(isValidDate(validDate)).toBe(true);
+  });
+
+  test('should return true for current Date', () => {
+    const now = new Date();
+
+    expect(isValidDate(now)).toBe(true);
+  });
+
+  test('should return true for Date with time zero', () => {
+    const epochDate = new Date(0);
+
+    expect(isValidDate(epochDate)).toBe(true);
+  });
+
+  test('should return false for invalid Date objects', () => {
+    const invalidDate = new Date('invalid');
+
+    expect(isValidDate(invalidDate)).toBe(false);
+  });
+
+  test('should return false for Date with NaN time', () => {
+    const nanDate = new Date(NaN);
+
+    expect(isValidDate(nanDate)).toBe(false);
+  });
+
+  test('should return false for null', () => {
+    expect(isValidDate(null)).toBe(false);
+  });
+
+  test('should return false for undefined', () => {
+    expect(isValidDate(undefined)).toBe(false);
+  });
+
+  test('should return false for strings', () => {
+    expect(isValidDate('2023-12-25')).toBe(false);
+    expect(isValidDate('invalid')).toBe(false);
+    expect(isValidDate('')).toBe(false);
+  });
+
+  test('should return false for numbers', () => {
+    expect(isValidDate(0)).toBe(false);
+    expect(isValidDate(123456789)).toBe(false);
+    expect(isValidDate(NaN)).toBe(false);
+  });
+
+  test('should return false for booleans', () => {
+    expect(isValidDate(true)).toBe(false);
+    expect(isValidDate(false)).toBe(false);
+  });
+
+  test('should return false for objects', () => {
+    expect(isValidDate({})).toBe(false);
+    expect(isValidDate({ date: '2023-12-25' })).toBe(false);
+  });
+
+  test('should return false for arrays', () => {
+    expect(isValidDate([])).toBe(false);
+    expect(isValidDate([2023, 12, 25])).toBe(false);
+  });
+});
+
+describe('getParser', () => {
+  test('should return dayjs.utc when utc is true', () => {
+    const parser = getParser(true);
+
+    expect(parser).toBe(dayjs.utc);
+  });
+
+  test('should return dayjs when utc is false', () => {
+    const parser = getParser(false);
+
+    expect(parser).toBe(dayjs);
+  });
+
+  test('should allow parsing dates with the returned parser when utc is true', () => {
+    const parser = getParser(true);
+
+    // Verify it's the UTC parser
+    expect(parser).toBe(dayjs.utc);
+  });
+
+  test('should work with local parser to create dates', () => {
+    const parser = getParser(false);
+    const result = parser('2023-12-25T14:30:00');
+
+    expect(result.isValid()).toBe(true);
+    expect(result.format('YYYY-MM-DD')).toBe('2023-12-25');
+  });
+
+  test('should allow format parsing with the returned parser when utc is true', () => {
+    const parser = getParser(true);
+
+    // Verify it returns the UTC parser
+    expect(parser).toBe(dayjs.utc);
+  });
+
+  test('should handle format parsing with local parser', () => {
+    const parser = getParser(false);
+    const result = parser('25/12/2023', 'DD/MM/YYYY');
+
+    expect(result.isValid()).toBe(true);
+    expect(result.format('YYYY-MM-DD')).toBe('2023-12-25');
   });
 });

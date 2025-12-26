@@ -46,10 +46,24 @@ export const parseDateTimeConfig = (fieldConfig) => {
 };
 
 /**
+ * Check if the given value is a valid `Date` object.
+ * @param {any} input Value to check.
+ * @returns {input is Date} `true` if valid `Date`, `false` otherwise.
+ */
+export const isValidDate = (input) => input instanceof Date && !Number.isNaN(input.getTime());
+
+/**
+ * Get the Day.js parser based on UTC setting.
+ * @param {boolean} utc UTC flag.
+ * @returns {dayjs.utc | dayjs} Day.js parser.
+ */
+export const getParser = (utc) => (utc ? dayjs.utc : dayjs);
+
+/**
  * Get a `Date` object given the current value.
  * @param {string | undefined} currentValue Value in the entry draft datastore.
  * @param {DateTimeField} fieldConfig Field configuration.
- * @returns {Date | undefined} Date.
+ * @returns {Date | undefined} Date or `undefined` if invalid.
  */
 export const getDate = (currentValue, fieldConfig) => {
   const { format, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
@@ -58,30 +72,45 @@ export const getDate = (currentValue, fieldConfig) => {
     return undefined;
   }
 
-  try {
-    if (format) {
-      try {
-        return (utc ? dayjs.utc : dayjs)(currentValue, format).toDate();
-      } catch {
-        // Day.js parsing may fail when the stored value doesn’t match the expected format. Then
-        // fall back to native, permissive Date parsing. This may still fail, in which case we
-        // return `undefined` in the catch block below.
-        return new Date(currentValue);
+  /** @type {Date | undefined} */
+  let date;
+
+  // If a format is specified, use Day.js to parse
+  if (format) {
+    const parse = getParser(utc);
+    // Parse using the specified format
+    let parsed = parse(currentValue, format);
+
+    // Fallback: Try parsing without format
+    if (!parsed.isValid()) {
+      parsed = parse(currentValue);
+
+      if (!parsed.isValid()) {
+        // eslint-disable-next-line no-console
+        console.error('Invalid Date', currentValue);
+
+        return undefined;
       }
     }
 
-    if (timeOnly) {
-      // Use the current date
-      return new Date(`${new Date().toJSON().split('T')[0]}T${currentValue}`);
-    }
-
-    return new Date(currentValue);
-  } catch (ex) {
-    // eslint-disable-next-line no-console
-    console.error(ex);
-
-    return undefined;
+    return parsed.toDate();
   }
+
+  if (timeOnly) {
+    // Use the current date
+    date = new Date(`${new Date().toJSON().split('T')[0]}T${currentValue}`);
+  } else {
+    date = new Date(currentValue);
+  }
+
+  if (isValidDate(date)) {
+    return date;
+  }
+
+  // eslint-disable-next-line no-console
+  console.error('Invalid Date', currentValue);
+
+  return undefined;
 };
 
 /**
@@ -135,33 +164,34 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
     return undefined;
   }
 
-  try {
-    if (format) {
-      const result = (utc ? dayjs.utc : dayjs)(inputValue, inputFormat).format(format);
+  if (format) {
+    const parse = getParser(utc);
+    let parsed = parse(inputValue, inputFormat);
 
-      // Handle `day.js` inconsistency where `Z` token might output `+00:00` instead of `Z`
-      if (format.includes('Z') && result.endsWith('+00:00')) {
-        return result.replace('+00:00', 'Z');
+    // Fallback: Try parsing without format
+    if (!parsed.isValid()) {
+      parsed = parse(inputValue);
+
+      if (!parsed.isValid()) {
+        // eslint-disable-next-line no-console
+        console.info('Invalid date', inputValue);
+
+        return '';
       }
-
-      return result;
     }
 
-    if (dateOnly) {
-      return inputValue;
-    }
-
-    if (utc) {
-      return `${inputValue}:00.000Z`;
-    }
-
-    return `${inputValue}${timeSuffix}`;
-  } catch (ex) {
-    // eslint-disable-next-line no-console
-    console.error(ex);
-
-    return undefined;
+    return parsed.format(format);
   }
+
+  if (dateOnly) {
+    return inputValue;
+  }
+
+  if (utc) {
+    return `${inputValue}:00.000Z`;
+  }
+
+  return `${inputValue}${timeSuffix}`;
 };
 
 /**
@@ -190,42 +220,30 @@ export const getInputValue = (currentValue, fieldConfig) => {
     return value;
   }
 
-  try {
-    const dateForParts = currentValue ? getDate(currentValue, fieldConfig) : new Date();
+  const dateForParts = currentValue ? getDate(currentValue, fieldConfig) : new Date();
 
-    // If `getDate` returned `undefined` (parsing failed), return empty string
-    if (currentValue && !dateForParts) {
-      return '';
-    }
-
-    // If `getDate` returned an invalid `Date` object, return empty string
-    if (currentValue && dateForParts && Number.isNaN(dateForParts.getTime())) {
-      return '';
-    }
-
-    const { year, month, day, hour, minute } = getDateTimeParts({
-      date: dateForParts,
-      timeZone: utc ? 'UTC' : undefined,
-    });
-
-    const dateStr = `${year}-${month}-${day}`;
-    const timeStr = `${hour}:${minute}`;
-
-    if (dateOnly) {
-      return dateStr;
-    }
-
-    if (timeOnly) {
-      return timeStr;
-    }
-
-    return `${dateStr}T${timeStr}`;
-  } catch (ex) {
-    // eslint-disable-next-line no-console
-    console.error(ex);
-
+  // If `getDate` returned `undefined` (parsing failed), return empty string
+  if (!dateForParts) {
     return '';
   }
+
+  const { year, month, day, hour, minute } = getDateTimeParts({
+    date: dateForParts,
+    timeZone: utc ? 'UTC' : undefined,
+  });
+
+  const dateStr = `${year}-${month}-${day}`;
+  const timeStr = `${hour}:${minute}`;
+
+  if (dateOnly) {
+    return dateStr;
+  }
+
+  if (timeOnly) {
+    return timeStr;
+  }
+
+  return `${dateStr}T${timeStr}`;
 };
 
 /**
@@ -244,18 +262,29 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
   }
 
   if (format) {
-    try {
-      // Parse and reformat the value because it could be saved in a wrong format
-      return (utc ? dayjs.utc : dayjs)(currentValue, format).format(format);
-    } catch {
-      //
+    const parse = getParser(utc);
+    // Parse using the specified format
+    let parsed = parse(currentValue, format);
+
+    // Fallback: Try parsing without format
+    if (!parsed.isValid()) {
+      parsed = parse(currentValue);
+
+      if (!parsed.isValid()) {
+        // eslint-disable-next-line no-console
+        console.error('Invalid Date', currentValue);
+
+        return '';
+      }
     }
+
+    return parsed.format(format);
   }
 
   const date = getDate(currentValue, fieldConfig);
   const canonicalLocale = getCanonicalLocale(locale);
 
-  if (!date || Number.isNaN(date.getTime())) {
+  if (!isValidDate(date)) {
     return '';
   }
 

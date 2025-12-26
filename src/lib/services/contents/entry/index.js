@@ -11,7 +11,7 @@ import { cmsConfig } from '$lib/services/config';
 import { getEntryFoldersByPath } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
-import { getDate } from '$lib/services/contents/fields/date-time/helper';
+import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/helper';
 
 /**
  * @import {
@@ -68,7 +68,7 @@ export const extractDateTime = ({ dateFieldName, fields, content }) => {
   const { picker_utc: utc = false } = config;
   const date = getDate(fieldValue, config);
 
-  if (!date || Number.isNaN(date.getTime())) {
+  if (!isValidDate(date)) {
     return undefined;
   }
 
