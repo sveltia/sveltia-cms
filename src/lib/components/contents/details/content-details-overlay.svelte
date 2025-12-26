@@ -25,6 +25,18 @@
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
+  /**
+   * @typedef {object} Props
+   * @property {string | undefined} [editorLocale] The locale to open the editor in.
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    editorLocale = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
   let restoring = false;
 
   let hidden = $state(true);
@@ -57,8 +69,14 @@
    * @returns {Promise<boolean>} Whether the panes are restored.
    */
   const restorePanes = async () => {
-    const [_editorFirstPane, _editorSecondPane] =
+    let [_editorFirstPane, _editorSecondPane] =
       $entryEditorSettings?.paneStates?.[paneStateKey ?? ''] ?? [];
+
+    // Override the locale if specified
+    if (editorLocale) {
+      _editorFirstPane = { mode: 'edit', locale: editorLocale };
+      _editorSecondPane = { mode: 'preview', locale: editorLocale };
+    }
 
     if (
       restoring ||
