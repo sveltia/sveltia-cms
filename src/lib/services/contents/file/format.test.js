@@ -902,4 +902,52 @@ describe('Test formatEntryFile()', () => {
     expect(content).not.toHaveProperty('body');
     expect(content.title).toBe('Test Post');
   });
+
+  test('formats raw content with string body', async () => {
+    const content = {
+      body: 'This is raw content without any formatting.',
+    };
+
+    const _file = /** @type {FileConfig} */ ({
+      format: /** @type {any} */ ('raw'),
+      extension: 'txt',
+      yamlQuote: false,
+    });
+
+    const result = await formatEntryFile({ content, _file });
+
+    expect(result).toBe('This is raw content without any formatting.\n');
+  });
+
+  test('formats raw content without body property', async () => {
+    const content = {
+      title: 'Test Post',
+    };
+
+    const _file = /** @type {FileConfig} */ ({
+      format: /** @type {any} */ ('raw'),
+      extension: 'txt',
+      yamlQuote: false,
+    });
+
+    const result = await formatEntryFile({ content, _file });
+
+    expect(result).toBe('');
+  });
+
+  test('formats raw content with non-string body', async () => {
+    const content = {
+      body: null,
+    };
+
+    const _file = /** @type {FileConfig} */ ({
+      format: /** @type {any} */ ('raw'),
+      extension: 'txt',
+      yamlQuote: false,
+    });
+
+    const result = await formatEntryFile({ content, _file });
+
+    expect(result).toBe('');
+  });
 });

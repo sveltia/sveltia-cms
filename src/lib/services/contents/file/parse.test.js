@@ -741,6 +741,64 @@ describe('Test parseEntryFile()', () => {
     expect(result).toEqual({ custom: 'result' });
   });
 
+  test('parses raw format and returns content as-is', async () => {
+    getCollection.mockReturnValue({
+      _file: { format: 'raw' },
+    });
+    getCollectionFile.mockReturnValue({
+      _file: { format: 'raw' },
+    });
+
+    const entry = {
+      ...entryBase,
+      text: 'This is raw content\nwith multiple lines\nand no parsing',
+    };
+
+    const result = await parseEntryFile(entry);
+
+    expect(result).toEqual({ body: 'This is raw content\nwith multiple lines\nand no parsing' });
+  });
+
+  test('parses raw format with HTML content', async () => {
+    getCollection.mockReturnValue({
+      _file: { format: 'raw' },
+    });
+    getCollectionFile.mockReturnValue({
+      _file: { format: 'raw' },
+    });
+
+    const entry = {
+      ...entryBase,
+      text: '<html><body><h1>Test</h1><p>Raw HTML content</p></body></html>',
+    };
+
+    const result = await parseEntryFile(entry);
+
+    expect(result).toEqual({
+      body: '<html><body><h1>Test</h1><p>Raw HTML content</p></body></html>',
+    });
+  });
+
+  test('parses raw format with special characters', async () => {
+    getCollection.mockReturnValue({
+      _file: { format: 'raw' },
+    });
+    getCollectionFile.mockReturnValue({
+      _file: { format: 'raw' },
+    });
+
+    const entry = {
+      ...entryBase,
+      text: '{"not": "json"}\n---\nnot: yaml\n+++\nSpecial chars: @#$%^&*()',
+    };
+
+    const result = await parseEntryFile(entry);
+
+    expect(result).toEqual({
+      body: '{"not": "json"}\n---\nnot: yaml\n+++\nSpecial chars: @#$%^&*()',
+    });
+  });
+
   test('normalizes line breaks', async () => {
     getCollection.mockReturnValue({
       _file: { format: 'yaml' },

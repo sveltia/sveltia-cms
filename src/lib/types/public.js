@@ -977,7 +977,7 @@
 
 /**
  * Supported file format. Actually it can be any string because of custom formats.
- * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'frontmatter' | FrontMatterFormat | string
+ * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'frontmatter' | FrontMatterFormat | 'raw' | string
  * } FileFormat
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */

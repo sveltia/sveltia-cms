@@ -127,6 +127,10 @@ export const formatEntryFile = async ({ content, _file }) => {
     return `${(await customFormatter(content)).trim()}\n`;
   }
 
+  if (format === 'raw') {
+    return typeof content.body === 'string' ? `${content.body}\n` : '';
+  }
+
   try {
     if (/^ya?ml$/.test(format)) {
       return `${formatYAML(content, undefined, { quote: yamlQuote })}\n`;

@@ -22,6 +22,11 @@ export const isFormatMismatch = (extension, format, fields = []) => {
     return false;
   }
 
+  // Raw format never mismatches
+  if (format === 'raw') {
+    return false;
+  }
+
   const isFrontMatterFormat = format.endsWith('-frontmatter') || format === 'frontmatter';
 
   // Special case: single `body` code or rich text field in a front-matter format. Treat as no

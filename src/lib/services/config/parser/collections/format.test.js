@@ -328,6 +328,24 @@ describe('isFormatMismatch', () => {
     });
   });
 
+  describe('raw format', () => {
+    it('should return false for raw format with any extension and fields', () => {
+      const fields = [{ name: 'body', widget: 'code' }];
+
+      expect(isFormatMismatch('json', 'raw', fields)).toBe(false);
+    });
+
+    it('should return false for raw format regardless of field configuration', () => {
+      const fields = [{ name: 'title', widget: 'string' }];
+
+      expect(isFormatMismatch('txt', 'raw', fields)).toBe(false);
+    });
+
+    it('should return false for raw format with no fields', () => {
+      expect(isFormatMismatch('html', 'raw', [])).toBe(false);
+    });
+  });
+
   describe('special case: single body field with front-matter format', () => {
     it('should return false when body code field with yaml-frontmatter format', () => {
       const fields = [{ name: 'body', widget: 'code' }];
@@ -360,6 +378,13 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('json', 'yaml', fields)).toBe(true);
     });
 
+    it('should return false when body field with string widget and raw format', () => {
+      const fields = [{ name: 'body', widget: 'string' }];
+
+      // raw format never triggers mismatch regardless of field configuration
+      expect(isFormatMismatch('json', 'raw', fields)).toBe(false);
+    });
+
     it('should return true when body field with string widget and frontmatter format', () => {
       const fields = [{ name: 'body', widget: 'string' }];
 
@@ -367,11 +392,28 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('json', 'yaml-frontmatter', fields)).toBe(true);
     });
 
+    it('should return false when non-body field with code widget and raw format', () => {
+      const fields = [{ name: 'content', widget: 'code' }];
+
+      // raw format never triggers mismatch regardless of field configuration
+      expect(isFormatMismatch('json', 'raw', fields)).toBe(false);
+    });
+
     it('should return true when non-body field with code widget and frontmatter format', () => {
       const fields = [{ name: 'content', widget: 'code' }];
 
       // Not named 'body', so normal rules apply
       expect(isFormatMismatch('json', 'yaml-frontmatter', fields)).toBe(true);
+    });
+
+    it('should return false when multiple fields including body code field with raw format', () => {
+      const fields = [
+        { name: 'body', widget: 'code' },
+        { name: 'title', widget: 'string' },
+      ];
+
+      // raw format never triggers mismatch regardless of field configuration
+      expect(isFormatMismatch('json', 'raw', fields)).toBe(false);
     });
 
     it('should return true when multiple fields including body code field with frontmatter', () => {
@@ -382,6 +424,13 @@ describe('isFormatMismatch', () => {
 
       // More than one field, so normal rules apply
       expect(isFormatMismatch('json', 'yaml-frontmatter', fields)).toBe(true);
+    });
+
+    it('should return false when body field with undefined widget and raw format', () => {
+      const fields = [{ name: 'body' }];
+
+      // raw format never triggers mismatch regardless of field configuration
+      expect(isFormatMismatch('json', 'raw', fields)).toBe(false);
     });
 
     it('should return true when body field with undefined widget and frontmatter format', () => {
