@@ -6,7 +6,7 @@
  * Field types that can be used for the single `body` field special case.
  * @type {string[]}
  */
-const bodyFieldType = ['code', 'markdown', 'richtext'];
+const bodyFieldType = ['code', 'markdown', 'richtext', 'text'];
 
 /**
  * Check if there is a mismatch between the file extension and format.

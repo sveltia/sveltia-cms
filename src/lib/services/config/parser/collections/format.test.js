@@ -365,6 +365,12 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('toml', 'json-frontmatter', fields)).toBe(false);
     });
 
+    it('should return false when body text field with yaml-frontmatter format', () => {
+      const fields = [{ name: 'body', widget: 'text' }];
+
+      expect(isFormatMismatch('json', 'yaml-frontmatter', fields)).toBe(false);
+    });
+
     it('should return false when body code field with frontmatter auto-detect format', () => {
       const fields = [{ name: 'body', widget: 'code' }];
 
