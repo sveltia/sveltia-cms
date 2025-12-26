@@ -24,7 +24,7 @@ export const parseCollectionFile = (context, collectors) => {
   const { file, format = collection.format, fields } = collectionFile;
   const { extension } = getPathInfo(file);
 
-  if (isFormatMismatch(extension, format)) {
+  if (isFormatMismatch(extension, format, fields)) {
     addMessage({
       strKey: 'file_format_mismatch',
       context,
