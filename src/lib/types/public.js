@@ -965,7 +965,8 @@
 
 /**
  * Supported file extension. Actually it can be any string.
- * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'md' | 'markdown' | 'html' | string} FileExtension
+ * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'md' | 'markdown' | 'html' | 'txt' | string
+ * } FileExtension
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
  */
 

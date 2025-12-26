@@ -44,6 +44,10 @@ describe('Test detectFileExtension()', () => {
     expect(detectFileExtension({ format: 'json' })).toBe('json');
   });
 
+  test('returns txt for raw format', () => {
+    expect(detectFileExtension({ format: /** @type {any} */ ('raw') })).toBe('txt');
+  });
+
   test('returns md as default', () => {
     expect(detectFileExtension({})).toBe('md');
     expect(detectFileExtension({ format: /** @type {any} */ ('unknown') })).toBe('md');

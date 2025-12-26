@@ -35,6 +35,10 @@ export const detectFileExtension = ({ extension, format }) => {
     return extension;
   }
 
+  if (format === 'raw') {
+    return 'txt';
+  }
+
   if (format === 'yaml' || format === 'yml') {
     return 'yml';
   }
