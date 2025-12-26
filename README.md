@@ -851,6 +851,8 @@ Or try one of the starter kits for popular frameworks created by community:
 - Hugo
   - [Hugo module](https://github.com/privatemaker/headless-cms) by [@privatemaker](https://github.com/privatemaker)
   - [Hugolify](https://www.hugolify.io/) by [@sebousan](https://github.com/sebousan)
+- Zola
+  - [Zola Sveltia Source](https://github.com/unicornfantasian/zola-sveltia-source) by [@husenunicorn](https://github.com/husenunicorn)
 
 The Netlify/Decap CMS website has more [templates](https://decapcms.org/docs/start-with-a-template/) and [examples](https://decapcms.org/docs/examples/). You can probably use one of them and switch to Sveltia CMS. (Note: These third-party resources are not necessarily reviewed by the Sveltia CMS team.)
 
@@ -2029,7 +2031,7 @@ Sveltia CMS powers hundreds of websites around the world. Here are some examples
 
 <!-- cSpell:enable -->
 
-More projects, including small personal blogs and portfolios, can be found by [searching GitHub](https://github.com/search?q=sveltia/cms&type=pullrequests). Please note that the code search only returns 100 results, and private repositories are not included. We’ll continue to update this list as we discover more projects!
+More projects, including small personal blogs and portfolios, can be found by [searching GitHub](https://github.com/search?q=sveltia+cms&type=commits&s=committer-date&o=desc). Please note that the code search only returns 100 results, and private repositories are not included. We’ll continue to update this list as we discover more projects!
 
 ## Support & Feedback
 
