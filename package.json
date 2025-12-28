@@ -60,7 +60,7 @@
     "smol-toml": "^1.6.0",
     "svelte-i18n": "^4.0.1",
     "svgo": "^4.0.0",
-    "terra-draw": "^1.20.0",
+    "terra-draw": "^1.21.0",
     "terra-draw-leaflet-adapter": "1.0.3",
     "turndown": "^7.2.2",
     "yaml": "^2.8.2"
