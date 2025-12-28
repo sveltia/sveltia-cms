@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getPatURL, signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
+import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
 import { getUserProfile } from '$lib/services/backends/git/gitlab/user';
 import { getTokens } from '$lib/services/backends/git/shared/auth';
 
@@ -30,10 +30,10 @@ describe('GitLab auth service', () => {
     });
   });
 
-  describe('getPatURL', () => {
+  describe('getTokenPageURL', () => {
     test('returns correct GitLab Personal Access Token URL', () => {
       const repoURL = 'https://gitlab.com/owner/repo';
-      const result = getPatURL(repoURL);
+      const result = getTokenPageURL(repoURL);
 
       expect(result).toBe(
         'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
@@ -42,7 +42,7 @@ describe('GitLab auth service', () => {
 
     test('handles GitLab self-hosted instance URLs', () => {
       const repoURL = 'https://gitlab.example.com/owner/repo';
-      const result = getPatURL(repoURL);
+      const result = getTokenPageURL(repoURL);
 
       expect(result).toBe(
         'https://gitlab.example.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
@@ -51,7 +51,7 @@ describe('GitLab auth service', () => {
 
     test('handles different repository paths', () => {
       const repoURL = 'https://gitlab.com/group/subgroup/project';
-      const result = getPatURL(repoURL);
+      const result = getTokenPageURL(repoURL);
 
       expect(result).toBe(
         'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',

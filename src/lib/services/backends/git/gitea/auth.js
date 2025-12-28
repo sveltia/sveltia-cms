@@ -11,7 +11,7 @@ import { getTokens } from '$lib/services/backends/git/shared/auth';
  * @param {string} repoURL Repository URL, e.g. `https://gitea.com/owner/repo`.
  * @returns {string} URL to create a new PAT.
  */
-export const getPatURL = (repoURL) => {
+export const getTokenPageURL = (repoURL) => {
   const { origin } = new URL(repoURL);
 
   return `${origin}/user/settings/applications`;

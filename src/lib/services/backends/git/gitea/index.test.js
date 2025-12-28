@@ -13,7 +13,7 @@ vi.mock('@sveltia/utils/string', () => ({
 }));
 
 vi.mock('$lib/services/backends/git/gitea/auth', () => ({
-  getPatURL: vi.fn(),
+  getTokenPageURL: vi.fn(),
   signIn: vi.fn(),
   signOut: vi.fn(),
 }));
@@ -54,7 +54,7 @@ vi.mock('$lib/services/user/prefs', () => ({
 
 // Import after mocks
 const { init } = await import('./index.js');
-const { getPatURL } = await import('./auth.js');
+const { getTokenPageURL } = await import('./auth.js');
 
 describe('Gitea Index Service', () => {
   beforeEach(() => {
@@ -65,8 +65,8 @@ describe('Gitea Index Service', () => {
       str.replace(/^\/+|\/+$/g, ''),
     );
 
-    // Mock getPatURL dynamically based on the input
-    vi.mocked(getPatURL).mockImplementation((repoURL) => {
+    // Mock getTokenPageURL dynamically based on the input
+    vi.mocked(getTokenPageURL).mockImplementation((repoURL) => {
       const { origin } = new URL(repoURL);
 
       return `${origin}/user/settings/applications`;

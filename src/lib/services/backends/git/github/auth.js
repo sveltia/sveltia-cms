@@ -13,7 +13,7 @@ import { getTokens } from '$lib/services/backends/git/shared/auth';
  * @see https://github.blog/changelog/2025-08-26-template-urls-for-fine-grained-pats-and-updated-permissions-ui/
  * @see https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
  */
-export const getPatURL = (repoURL) => {
+export const getTokenPageURL = (repoURL) => {
   const { origin } = new URL(repoURL);
 
   const params = new URLSearchParams({

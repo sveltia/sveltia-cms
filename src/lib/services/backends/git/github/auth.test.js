@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getPatURL, signIn, signOut } from '$lib/services/backends/git/github/auth';
+import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/github/auth';
 import { getUserProfile } from '$lib/services/backends/git/github/user';
 import { getTokens } from '$lib/services/backends/git/shared/auth';
 
@@ -16,10 +16,10 @@ describe('GitHub auth service', () => {
     vi.clearAllMocks();
   });
 
-  describe('getPatURL', () => {
+  describe('getTokenPageURL', () => {
     test('returns correct GitHub Personal Access Token URL', () => {
       const repoURL = 'https://github.com/owner/repo';
-      const result = getPatURL(repoURL);
+      const result = getTokenPageURL(repoURL);
 
       expect(result).toBe(
         'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
@@ -28,7 +28,7 @@ describe('GitHub auth service', () => {
 
     test('handles GitHub Enterprise Server URLs', () => {
       const repoURL = 'https://github.enterprise.com/owner/repo';
-      const result = getPatURL(repoURL);
+      const result = getTokenPageURL(repoURL);
 
       expect(result).toBe(
         'https://github.enterprise.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
@@ -37,7 +37,7 @@ describe('GitHub auth service', () => {
 
     test('handles different repository paths', () => {
       const repoURL = 'https://github.com/different-owner/different-repo';
-      const result = getPatURL(repoURL);
+      const result = getTokenPageURL(repoURL);
 
       expect(result).toBe(
         'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',

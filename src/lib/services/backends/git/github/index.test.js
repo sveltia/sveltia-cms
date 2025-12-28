@@ -2,7 +2,7 @@ import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import githubBackend, { init } from '$lib/services/backends/git/github';
-import { getPatURL } from '$lib/services/backends/git/github/auth';
+import { getTokenPageURL } from '$lib/services/backends/git/github/auth';
 import {
   BACKEND_LABEL,
   BACKEND_NAME,
@@ -34,7 +34,7 @@ vi.mock('svelte-i18n', () => ({
   _: { subscribe: vi.fn() },
 }));
 vi.mock('$lib/services/backends/git/github/auth', () => ({
-  getPatURL: vi.fn(),
+  getTokenPageURL: vi.fn(),
   signIn: vi.fn(),
   signOut: vi.fn(),
 }));
@@ -66,8 +66,8 @@ describe('GitHub backend service', () => {
     vi.clearAllMocks();
     // Mock Object.assign used in the init function
     vi.spyOn(Object, 'assign').mockImplementation(() => ({}));
-    // Mock getPatURL
-    vi.mocked(getPatURL).mockReturnValue(
+    // Mock getTokenPageURL
+    vi.mocked(getTokenPageURL).mockReturnValue(
       'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
     );
   });

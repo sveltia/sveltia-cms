@@ -12,7 +12,7 @@ import { getTokens } from '$lib/services/backends/git/shared/auth';
  * @returns {string} URL to create a new PAT.
  * @see https://docs.gitlab.com/user/profile/personal_access_tokens/
  */
-export const getPatURL = (repoURL) => {
+export const getTokenPageURL = (repoURL) => {
   const { origin } = new URL(repoURL);
 
   const params = new URLSearchParams({

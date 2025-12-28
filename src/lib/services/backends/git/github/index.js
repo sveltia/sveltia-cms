@@ -5,7 +5,7 @@ import {
   normalizeGraphQLBaseURL,
   normalizeRestBaseURL,
 } from '$lib/services/backends/git/github/api';
-import { getPatURL, signIn, signOut } from '$lib/services/backends/git/github/auth';
+import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/github/auth';
 import { commitChanges } from '$lib/services/backends/git/github/commits';
 import {
   BACKEND_LABEL,
@@ -68,7 +68,7 @@ export const init = () => {
       repo,
       branch,
       repoURL,
-      tokenPageURL: getPatURL(repoURL),
+      tokenPageURL: getTokenPageURL(repoURL),
       databaseName: `${BACKEND_NAME}:${repoPath}`,
       isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),
