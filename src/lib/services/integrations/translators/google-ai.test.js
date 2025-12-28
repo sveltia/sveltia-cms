@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import geminiTranslator, { availability } from './gemini.js';
+import geminiTranslator, { availability } from './google-ai.js';
 
 // Mock the i18n functions
 vi.mock('$lib/services/contents/i18n', () => ({
@@ -56,7 +56,7 @@ describe('Gemini Translator Service', () => {
 
   describe('Service Configuration', () => {
     it('should have correct service metadata', () => {
-      expect(geminiTranslator.serviceId).toBe('gemini');
+      expect(geminiTranslator.serviceId).toBe('google-ai');
       expect(geminiTranslator.serviceLabel).toBe('Google Gemini');
       expect(geminiTranslator.apiLabel).toBe('Google AI Studio API');
       expect(geminiTranslator.developerURL).toBe('https://ai.google.dev/gemini-api/docs');

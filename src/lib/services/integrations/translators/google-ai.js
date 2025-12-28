@@ -8,7 +8,7 @@ import {
  * @import { LanguagePair, TranslationOptions, TranslationService } from '$lib/types/private';
  */
 
-const serviceId = 'gemini';
+const serviceId = 'google-ai';
 const serviceLabel = 'Google Gemini';
 const apiLabel = 'Google AI Studio API';
 const developerURL = 'https://ai.google.dev/gemini-api/docs';
