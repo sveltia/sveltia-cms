@@ -17,6 +17,20 @@ vi.mock('./google.js', () => ({
   },
 }));
 
+vi.mock('./gemini.js', () => ({
+  default: {
+    serviceId: 'gemini',
+    serviceLabel: 'Google Gemini',
+    apiLabel: 'Google AI Studio API',
+    developerURL: 'https://ai.google.dev/gemini-api/docs',
+    apiKeyURL: 'https://aistudio.google.com/api-keys',
+    apiKeyPattern: /AIza[a-zA-Z0-9_-]{35}/,
+    markdownSupported: true,
+    availability: vi.fn(),
+    translate: vi.fn(),
+  },
+}));
+
 vi.mock('./openai.js', () => ({
   default: {
     serviceId: 'openai',
@@ -78,6 +92,12 @@ describe('Translator Services Index', () => {
       expect(allTranslationServices).toHaveProperty('google');
       expect(allTranslationServices.google).toBeDefined();
       expect(allTranslationServices.google.serviceId).toBe('google');
+    });
+
+    it('should include Gemini translator service', () => {
+      expect(allTranslationServices).toHaveProperty('gemini');
+      expect(allTranslationServices.gemini).toBeDefined();
+      expect(allTranslationServices.gemini.serviceId).toBe('gemini');
     });
 
     it('should include OpenAI translator service', () => {
