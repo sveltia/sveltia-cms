@@ -114,7 +114,7 @@
     {#if !isTestRepo}
       <Button
         variant="secondary"
-        label={$_('sign_in_with_x_using_pat', { values: { service: configuredBackend.label } })}
+        label={$_('sign_in_with_x_using_token', { values: { service: configuredBackend.label } })}
         onclick={() => {
           showTokenDialog = true;
         }}

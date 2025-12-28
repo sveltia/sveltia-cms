@@ -76,7 +76,7 @@ export const strings = {
   loading_site_data: 'Loading Site Data…',
   loading_site_data_error: 'There was an error while loading site data.',
   sign_in_with_x: 'Sign In with {service}',
-  sign_in_with_x_using_pat: 'Sign In with {service} Using PAT',
+  sign_in_with_x_using_token: 'Sign In with {service} Using Token',
   sign_in_using_pat_title: 'Sign In Using Personal Access Token',
   sign_in_using_pat_description:
     'Enter your token below. It must have read/write access to the repository content.',

@@ -76,7 +76,7 @@ export const strings = {
   loading_site_data: 'サイトデータを読み込んでいます…',
   loading_site_data_error: 'サイトデータの読み込み中にエラーが発生しました。',
   sign_in_with_x: '{service} でログイン',
-  sign_in_with_x_using_pat: '{service} で PAT を使用してログイン',
+  sign_in_with_x_using_token: '{service} でトークンを使用してログイン',
   sign_in_using_pat_title: '個人用アクセストークンでログイン',
   sign_in_using_pat_description:
     '以下にトークンを入力してください。レポジトリコンテンツへの読み取り・書き込みアクセスが必要です。',
