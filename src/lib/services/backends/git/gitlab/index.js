@@ -69,7 +69,7 @@ export const init = () => {
       repo,
       branch,
       repoURL,
-      newPatURL: getPatURL(repoURL),
+      tokenPageURL: getPatURL(repoURL),
       databaseName: `${BACKEND_NAME}:${repoPath}`,
       isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
     }),

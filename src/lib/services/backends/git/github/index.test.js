@@ -131,7 +131,7 @@ describe('GitHub backend service', () => {
           repo: 'repo',
           branch: 'main',
           repoURL: 'https://github.com/owner/repo',
-          newPatURL:
+          tokenPageURL:
             'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
           databaseName: `${BACKEND_NAME}:owner/repo`,
           isSelfHosted: false,
@@ -192,7 +192,7 @@ describe('GitHub backend service', () => {
           repo: 'repo',
           branch: 'develop',
           repoURL: 'https://github.example.com/owner/repo',
-          newPatURL:
+          tokenPageURL:
             'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
           databaseName: `${BACKEND_NAME}:owner/repo`,
           isSelfHosted: true,

@@ -97,7 +97,7 @@ describe('GitLab backend service', () => {
           repo: 'repo',
           branch: 'main',
           repoURL: 'https://gitlab.com/owner/repo',
-          newPatURL:
+          tokenPageURL:
             'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
           databaseName: 'gitlab:owner/repo',
           isSelfHosted: false,
@@ -148,7 +148,7 @@ describe('GitLab backend service', () => {
           repo: 'project',
           branch: 'develop',
           repoURL: 'https://custom-gitlab.com/group/subgroup/project',
-          newPatURL:
+          tokenPageURL:
             'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
           databaseName: 'gitlab:group/subgroup/project',
           isSelfHosted: true,

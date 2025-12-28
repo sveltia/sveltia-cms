@@ -108,7 +108,7 @@ describe('Gitea Index Service', () => {
       expect(stripSlashesMock).toHaveBeenCalledWith('login/oauth/authorize');
     });
 
-    test('should set repository object with complete configuration including newPatURL', () => {
+    test('should set repository object with complete configuration including tokenPageURL', () => {
       const result = init();
 
       expect(result).toEqual(
@@ -119,7 +119,7 @@ describe('Gitea Index Service', () => {
           repo: 'repo-name',
           branch: 'main',
           repoURL: 'https://gitea.com/owner/repo-name',
-          newPatURL: 'https://gitea.com/user/settings/applications',
+          tokenPageURL: 'https://gitea.com/user/settings/applications',
           databaseName: 'gitea:owner/repo-name',
           isSelfHosted: false,
           treeBaseURL: 'tree-url',
@@ -200,7 +200,7 @@ describe('Gitea Index Service', () => {
       expect(stripSlashesMock).toHaveBeenCalledWith('custom/oauth/authorize');
     });
 
-    test('should set newPatURL correctly for custom Gitea instances', () => {
+    test('should set tokenPageURL correctly for custom Gitea instances', () => {
       getMock.mockImplementation((/** @type {any} */ store) => {
         if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
           return {
@@ -233,7 +233,7 @@ describe('Gitea Index Service', () => {
           repo: 'custom-repo',
           branch: 'develop',
           repoURL: 'https://custom-api.gitea.com/custom-owner/custom-repo',
-          newPatURL: 'https://custom-api.gitea.com/user/settings/applications',
+          tokenPageURL: 'https://custom-api.gitea.com/user/settings/applications',
           databaseName: 'gitea:custom-owner/custom-repo',
           isSelfHosted: true,
           treeBaseURL: 'tree-url',

@@ -99,8 +99,8 @@
  * @property {string} [branch] Branch name, e.g. `master` or `main`.
  * @property {string} [repoURL] The repository’s web-accessible URL that can be linked from the CMS
  * UI to the backend service. Git backends only.
- * @property {string} [newPatURL] URL of the page where the user can create a personal access token
- * (PAT). Git backends only.
+ * @property {string} [tokenPageURL] URL of the page where the user can create a personal access
+ * token (PAT). Git backends only.
  * @property {string} [treeBaseURL] Repository’s tree base URL with a branch name. It’s the same as
  * `baseURL` when the default branch is used. Git backends only.
  * @property {string} [blobBaseURL] Repository’s blob base URL with a branch name. Git backends

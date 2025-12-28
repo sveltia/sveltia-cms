@@ -141,11 +141,11 @@
   }}
 >
   {$_('sign_in_using_pat_description')}
-  {#if configuredBackend?.repository?.newPatURL}
+  {#if configuredBackend?.repository?.tokenPageURL}
     {@html getLinkedString({
       key: 'sign_in_using_pat_link',
       values: { service: configuredBackend.label },
-      link: configuredBackend.repository.newPatURL,
+      link: configuredBackend.repository.tokenPageURL,
     })}
   {/if}
 </PromptDialog>
