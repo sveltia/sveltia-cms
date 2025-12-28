@@ -1,12 +1,12 @@
-/**
- * @import { LanguagePair, TranslationOptions, TranslationService } from '$lib/types/private';
- */
-
 import {
   createTranslationSystemPrompt,
   createTranslationUserPrompt,
   normalizeLanguage,
 } from './shared.js';
+
+/**
+ * @import { LanguagePair, TranslationOptions, TranslationService } from '$lib/types/private';
+ */
 
 const serviceId = 'openai';
 const serviceLabel = 'OpenAI GPT';
@@ -14,6 +14,7 @@ const apiLabel = 'OpenAI API';
 const developerURL = 'https://platform.openai.com/docs/overview';
 const apiKeyURL = 'https://platform.openai.com/api-keys';
 const apiKeyPattern = /sk-[a-zA-Z0-9-_]{40,}/;
+const model = 'gpt-4o-mini';
 
 /**
  * Check if the given source and target languages are supported.
@@ -50,7 +51,7 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
   const userPrompt = createTranslationUserPrompt(texts);
 
   const requestBody = {
-    model: 'gpt-4o-mini',
+    model,
     messages: [
       {
         role: 'system',
