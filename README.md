@@ -1,6 +1,6 @@
 # Sveltia CMS: Netlify/Decap CMS successor
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 275 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 280 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows for content editors and developers alike.
 
@@ -175,7 +175,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - It works as a drop-in replacement for most use cases
   - Some missing features will be implemented before or shortly after GA
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **275+ issues, or 600+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **280+ issues, or 600+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 300 issues, or 600 if including duplicates, by GA — Almost there! 🚀
     - 450 issues, or 900 if including duplicates, in the future 💪
@@ -192,7 +192,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Preparing top-notch [documentation](https://github.com/sveltia/sveltia-cms/issues/485)
 - Implementing our own enhancement ideas for every part of the product
 
-![275 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251204)<br>
+![280 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251228)<br>
 
 ## Differentiators
 
@@ -687,6 +687,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
   - Inline components are supported.[^267]
   - Field validation works as expected.[^279]
   - No error is raised in the browser console saying `Sent invalid data to remark`[^280] or `onValidate is not a function`.[^281]
+  - A link with kramdown inline attributes (e.g. `{:.class}`) is parsed correctly.[^317]
 - Enhancements to [event hooks](https://decapcms.org/docs/registering-events/):
   - Missing `identifier_field` won’t cause an error when the `preSave` hook is triggered.[^306]
   <!-- - Content can be modified in the `prePublish` hook (once we support editorial workflow).[^307] -->
@@ -2812,3 +2813,5 @@ This project would not have been possible without the open source Netlify CMS pr
 [^315]: Netlify/Decap CMS [#2035](https://github.com/decaporg/decap-cms/issues/2035), [#7362](https://github.com/decaporg/decap-cms/issues/7362), [#7543](https://github.com/decaporg/decap-cms/issues/7543)
 
 [^316]: Netlify/Decap CMS [#1152](https://github.com/decaporg/decap-cms/issues/1152)
+
+[^317]: Netlify/Decap CMS [#1464](https://github.com/decaporg/decap-cms/issues/1464)
