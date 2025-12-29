@@ -1970,6 +1970,11 @@ Then, add the following origins depending on your Git backend and enabled integr
     ```
     https://translation.googleapis.com
     ```
+- Google Gemini:
+  - `connect-src`
+    ```
+    https://generativelanguage.googleapis.com
+    ```
 - Anthropic:
   - `connect-src`
     ```
