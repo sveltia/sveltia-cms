@@ -1181,6 +1181,7 @@
  * slug).
  * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
  * Default: `Infinity`.
+ * DEPRECATED: Use the global `slug.maxlength` option instead.
  * @property {string} [summary] Entry summary template. Default: `identifier_field`.
  * @property {FieldKeyPath[] | SortableFields} [sortable_fields] Custom sortable fields. Default:
  * `title`, `name`, `date`, `author` and `description`. For a Git backend, commit author and commit
@@ -1396,6 +1397,8 @@
  * @property {'unicode' | 'ascii'} [encoding] Encoding option. Default: `unicode`.
  * @property {boolean} [clean_accents] Whether to remove accents. Default: `false`.
  * @property {string} [sanitize_replacement] String to replace sanitized characters. Default: `-`.
+ * @property {number} [maxlength] The maximum number of characters allowed for an entry slug.
+ * Default: `Infinity`.
  * @property {boolean} [trim] Whether to trim leading and trailing replacement characters. Default:
  * `true`.
  * @see https://decapcms.org/docs/configuration-options/#slug-type

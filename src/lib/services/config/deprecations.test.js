@@ -6,6 +6,7 @@ import { warnDeprecation, warnedOnceMap, warningMessages } from './deprecations'
 describe('Test warnedOnceMap', () => {
   test('should have all deprecation keys set to false initially', () => {
     expect(warnedOnceMap).toEqual({
+      slug_length: false,
       yaml_quote: false,
       uuid_read_only: false,
       save_all_locales: false,
@@ -23,6 +24,7 @@ describe('Test warnedOnceMap', () => {
 
 describe('Test warningMessages', () => {
   test('should contain all deprecation warning messages', () => {
+    expect(warningMessages).toHaveProperty('slug_length');
     expect(warningMessages).toHaveProperty('yaml_quote');
     expect(warningMessages).toHaveProperty('uuid_read_only');
     expect(warningMessages).toHaveProperty('save_all_locales');
@@ -34,6 +36,12 @@ describe('Test warningMessages', () => {
       expect(typeof message).toBe('string');
       expect(message.length).toBeGreaterThan(0);
     });
+  });
+
+  test('should contain useful information in slug_length message', () => {
+    expect(warningMessages.slug_length).toContain('slug_length');
+    expect(warningMessages.slug_length).toContain('deprecated');
+    expect(warningMessages.slug_length).toContain('slug.maxlength');
   });
 
   test('should contain useful information in yaml_quote message', () => {
@@ -85,6 +93,7 @@ describe('Test warnDeprecation()', () => {
 
   test('should reset warnedOnceMap between tests', () => {
     // This test verifies that beforeEach properly resets the map
+    expect(warnedOnceMap.slug_length).toBe(false);
     expect(warnedOnceMap.yaml_quote).toBe(false);
     expect(warnedOnceMap.uuid_read_only).toBe(false);
     expect(warnedOnceMap.save_all_locales).toBe(false);
@@ -93,6 +102,7 @@ describe('Test warnDeprecation()', () => {
 
   test('should handle different keys without errors', () => {
     // Even though warnings won't be displayed in tests, the function should not throw
+    expect(() => warnDeprecation('slug_length')).not.toThrow();
     expect(() => warnDeprecation('yaml_quote')).not.toThrow();
     expect(() => warnDeprecation('uuid_read_only')).not.toThrow();
     expect(() => warnDeprecation('save_all_locales')).not.toThrow();

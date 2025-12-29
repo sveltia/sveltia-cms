@@ -5,6 +5,7 @@
  * @internal
  */
 export const warnedOnceMap = {
+  slug_length: false,
   yaml_quote: false,
   uuid_read_only: false,
   save_all_locales: false,
@@ -17,6 +18,9 @@ export const warnedOnceMap = {
  * @internal
  */
 export const warningMessages = {
+  slug_length:
+    'The `slug_length` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
+    'Use the global `slug.maxlength` option instead. ',
   yaml_quote:
     'The `yaml_quote` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the global `output.yaml.quote` option instead. `yaml_quote: true` is equivalent to ' +

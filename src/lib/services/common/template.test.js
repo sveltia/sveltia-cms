@@ -18,6 +18,9 @@ import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
  */
 
 vi.mock('$lib/services/config');
+vi.mock('$lib/services/config/deprecations', () => ({
+  warnDeprecation: vi.fn(),
+}));
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
 }));
@@ -430,6 +433,139 @@ describe('Test fillTemplate()', async () => {
         content,
       }),
     ).toEqual('short-title');
+  });
+
+  test('legacy slug_length option triggers deprecation warning', async () => {
+    await setupCmsConfig();
+
+    vi.clearAllMocks();
+
+    const longContent = {
+      title:
+        'This is a very long title that should be truncated when the slug length limit is applied',
+    };
+
+    const legacyCollection = {
+      ...collection,
+      slug_length: 25,
+    };
+
+    // Test with legacy slug_length option defined
+    fillTemplate('{{title}}', {
+      collection: legacyCollection,
+      content: longContent,
+    });
+
+    // Should still apply the truncation from legacy option
+    const result = fillTemplate('{{title}}', {
+      collection: legacyCollection,
+      content: longContent,
+    });
+
+    expect(result.length).toBeLessThanOrEqual(25);
+  });
+
+  test('slug max length from config when legacy option not defined', async () => {
+    await setupCmsConfig();
+
+    const { warnDeprecation } = await import('$lib/services/config/deprecations');
+
+    vi.clearAllMocks();
+
+    const longContent = {
+      title:
+        'This is a very long title that should be truncated when the slug length limit is applied',
+    };
+
+    const collectionWithoutLegacy = {
+      ...collection,
+      slug_length: undefined,
+    };
+
+    const result = fillTemplate('{{title}}', {
+      collection: collectionWithoutLegacy,
+      content: longContent,
+    });
+
+    // Should NOT call warnDeprecation when slug_length is undefined
+    expect(warnDeprecation).not.toHaveBeenCalled();
+
+    // Should use the config value (no maxlength in test config, so no truncation)
+    expect(result).toBeDefined();
+  });
+
+  test('slug max length from new maxlength config option', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      backend: { name: 'github' },
+      media_folder: 'static/images/uploads',
+      collections: [collection],
+      _siteURL: '',
+      _baseURL: '',
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        maxlength: 30,
+      },
+    });
+
+    const longContent = {
+      title:
+        'This is a very long title that should be truncated when the slug length limit is applied',
+    };
+
+    const collectionWithoutLegacy = {
+      ...collection,
+      slug_length: undefined,
+    };
+
+    const result = fillTemplate('{{title}}', {
+      collection: collectionWithoutLegacy,
+      content: longContent,
+    });
+
+    expect(result.length).toBeLessThanOrEqual(30);
+    expect(result).not.toMatch(/-$/); // Should remove trailing hyphens
+  });
+
+  test('legacy slug_length overrides config maxlength option', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      backend: { name: 'github' },
+      media_folder: 'static/images/uploads',
+      collections: [collection],
+      _siteURL: '',
+      _baseURL: '',
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        maxlength: 50,
+      },
+    });
+
+    vi.clearAllMocks();
+
+    const longContent = {
+      title:
+        'This is a very long title that should be truncated when the slug length limit is applied',
+    };
+
+    // Legacy slug_length should take precedence over config maxlength
+    const legacyCollection = {
+      ...collection,
+      slug_length: 20,
+    };
+
+    const result = fillTemplate('{{title}}', {
+      collection: legacyCollection,
+      content: longContent,
+    });
+
+    // Should use legacy slug_length (20), not config maxlength (50)
+    expect(result.length).toBeLessThanOrEqual(20);
+    expect(result).not.toMatch(/-$/); // Should remove trailing hyphens
   });
 
   test('current slug handling', async () => {

@@ -1,12 +1,14 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { truncate } from '@sveltia/utils/string';
+import { get } from 'svelte/store';
 
 import { slugify } from '$lib/services/common/slug';
 import {
   applyTransformations,
   DEFAULT_TRANSFORMATION_REGEX,
 } from '$lib/services/common/transformations';
+import { cmsConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
@@ -265,8 +267,9 @@ const replaceTemplatePlaceholder = (placeholder, { replaceSubContext, getFieldAr
     return String(value);
   }
 
-  // Slugify the value for a slug or filename
-  return slugify(String(value));
+  // Slugify the value for a slug or filename. Don’t limit the length here; it will be handled later
+  // in `fillTemplate`.
+  return slugify(String(value), { maxLength: Infinity });
 };
 
 /**
@@ -295,9 +298,12 @@ export const fillTemplate = (template, options) => {
 
   const {
     identifier_field: identifierField = 'title',
-    slug_length: slugMaxLength = undefined,
+    slug_length: legacySlugLength = undefined,
     _file: { basePath } = {},
   } = _type === 'entry' ? collection : {};
+
+  // @todo Remove the legacy option prior to the 1.0 release.
+  const slugMaxLength = legacySlugLength ?? get(cmsConfig)?.slug?.maxlength;
 
   /** @type {ReplaceContext} */
   const context = {

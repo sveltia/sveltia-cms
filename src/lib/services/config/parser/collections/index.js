@@ -3,6 +3,7 @@
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
+import { warnDeprecation } from '$lib/services/config/deprecations';
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { parseFields } from '$lib/services/config/parser/fields';
@@ -40,7 +41,7 @@ const UNSUPPORTED_OPTIONS = [
  */
 export const parseEntryCollection = (context, collectors) => {
   const { cmsConfig, collection } = context;
-  const { extension, format, fields, index_file, slug } = collection;
+  const { extension, format, fields, index_file, slug, slug_length: legacySlugLength } = collection;
 
   if (isFormatMismatch(extension, format)) {
     addMessage({
@@ -49,6 +50,11 @@ export const parseEntryCollection = (context, collectors) => {
       context,
       collectors,
     });
+  }
+
+  // @todo Remove the legacy option prior to the 1.0 release.
+  if (legacySlugLength !== undefined) {
+    warnDeprecation('slug_length');
   }
 
   checkUnsupportedOptions({ UNSUPPORTED_OPTIONS, config: collection, context, collectors });

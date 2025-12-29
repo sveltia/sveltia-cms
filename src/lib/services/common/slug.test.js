@@ -507,4 +507,218 @@ describe('Test slugify()', () => {
     expect(slugify('-', { fallback: false })).toBe('-'); // Same result regardless of fallback
     expect(slugify('---', { fallback: false })).toBe('-'); // Same result regardless of fallback
   });
+
+  test('maxLength parameter option', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+      },
+    });
+
+    // Test with parameter option
+    expect(slugify('hello-world', { maxLength: 5 })).toBe('hello');
+    expect(slugify('hello-world', { maxLength: 11 })).toBe('hello-world');
+    expect(slugify('hello-world', { maxLength: 15 })).toBe('hello-world');
+    expect(slugify('very-long-slug-name', { maxLength: 8 })).toBe('very-lon');
+    expect(slugify('a', { maxLength: 1 })).toBe('a');
+    expect(slugify('ab', { maxLength: 1 })).toBe('a');
+  });
+
+  test('maxLength config option', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        maxlength: 10,
+      },
+    });
+
+    // Test with config option
+    expect(slugify('hello-world')).toBe('hello-worl');
+    expect(slugify('hello')).toBe('hello');
+    expect(slugify('very-long-slug-name')).toBe('very-long-');
+  });
+
+  test('maxLength parameter overrides config option', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        maxlength: 10,
+      },
+    });
+
+    // Parameter should override config
+    expect(slugify('hello-world', { maxLength: 5 })).toBe('hello');
+    expect(slugify('hello-world', { maxLength: 20 })).toBe('hello-world');
+    expect(slugify('very-long-slug-name', { maxLength: 8 })).toBe('very-lon');
+  });
+
+  test('maxLength with special characters and transformations', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+      },
+    });
+
+    // Test that maxLength is applied after all transformations
+    expect(slugify('Hello, World!', { maxLength: 8 })).toBe('hello-wo');
+    expect(slugify('Hello   World', { maxLength: 10 })).toBe('hello-worl');
+    expect(slugify('HELLO WORLD', { maxLength: 6 })).toBe('hello-');
+  });
+
+  test('maxLength with accent cleaning', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: true,
+        sanitize_replacement: '-',
+        maxlength: 10,
+      },
+    });
+
+    // Test that maxLength is applied after accent cleaning
+    expect(slugify('Café-Paris')).toBe('cafe-paris'); // Without maxLength constraint (10 chars)
+    expect(slugify('Café-Montréal', { maxLength: 9 })).toBe('cafe-mont');
+    expect(slugify('résumé-2024', { maxLength: 8 })).toBe('resume-2');
+  });
+
+  test('maxLength with ASCII encoding', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'ascii',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        maxlength: 12,
+      },
+    });
+
+    // Test maxLength with ASCII encoding
+    expect(slugify('Hello World')).toBe('hello-world'); // 11 chars, within limit
+    expect(slugify('Hello World', { maxLength: 8 })).toBe('hello-wo');
+    expect(slugify('Very Long String', { maxLength: 10 })).toBe('very-long-');
+  });
+
+  test('maxLength with custom replacement character', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '_',
+        maxlength: 10,
+      },
+    });
+
+    expect(slugify('Hello World')).toBe('hello_worl');
+    expect(slugify('Hello World', { maxLength: 5 })).toBe('hello');
+    expect(slugify('a_b_c_d_e_f', { maxLength: 6 })).toBe('a_b_c_');
+  });
+
+  test('maxLength with trim option', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        trim: true,
+        maxlength: 10,
+      },
+    });
+
+    // Note: trim is applied before maxLength, so we get the character at position 10
+    expect(slugify('hello-world-test')).toBe('hello-worl');
+
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        trim: false,
+        maxlength: 10,
+      },
+    });
+
+    expect(slugify('-hello-world-')).toBe('-hello-wor');
+  });
+
+  test('maxLength with fallback', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        maxlength: 8,
+      },
+    });
+
+    // Valid content should be truncated
+    expect(slugify('hello-world', { fallback: true })).toBe('hello-wo');
+    expect(slugify('hello-world', { fallback: false })).toBe('hello-wo');
+
+    // Empty/whitespace should fall back to UUID and then be truncated to maxLength
+    const resultWithFallback = slugify('', { fallback: true });
+
+    expect(resultWithFallback).toMatch(/[0-9a-f]{8}/); // UUID truncated to maxLength: 8
+
+    expect(slugify('', { fallback: false })).toBe('');
+    expect(slugify('   ', { fallback: false })).toBe('');
+  });
+
+  test('maxLength edge cases', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+      },
+    });
+
+    // Zero maxLength
+    expect(slugify('hello', { maxLength: 0 })).toBe('');
+
+    // Very small maxLength
+    expect(slugify('hello-world', { maxLength: 1 })).toBe('h');
+    expect(slugify('hello-world', { maxLength: 2 })).toBe('he');
+
+    // maxLength equal to slug length
+    expect(slugify('hello', { maxLength: 5 })).toBe('hello');
+
+    // maxLength larger than slug
+    expect(slugify('hello', { maxLength: 100 })).toBe('hello');
+  });
+
+  test('maxLength with unicode characters', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        maxlength: 10,
+      },
+    });
+
+    // Unicode characters (including emoji) should be counted by grapheme clusters
+    // 'こんにちは-世界' is 8 graphemes, within maxlength: 10 config
+    expect(slugify('こんにちは-世界')).toBe('こんにちは-世界');
+    expect(slugify('こんにちは-世界', { maxLength: 5 })).toBe('こんにちは');
+    expect(slugify('Hello-🌍-World', { maxLength: 8 })).toBe('hello-🌍-');
+  });
 });
