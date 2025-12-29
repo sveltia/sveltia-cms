@@ -422,6 +422,9 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - Markdown is supported in the `description` collection option.[^79] Bold, italic, strikethrough, code and links are allowed.
   - The collection `folder` can be an empty string (or `.` or `/`) if you want to store entries in the root folder. This supports a typical VitePress setup.
 - Entry slugs
+  - The [global slug options](https://decapcms.org/docs/configuration-options/#slug-type) have the following new options:
+    - `trim`: Remove leading and trailing replacement characters, such as hyphens, from an entry slug. The default value is `true`. Set to `false` to keep them.
+    - `maxlength`: The maximum number of characters for an entry slug; avoid deployment errors with Netlify or other platforms.[^25] Default to `undefined`, meaning no limit.
   - It’s possible to [use a random UUID for an entry slug](#using-a-random-id-for-an-entry-slug).
   - Entry slugs are editable.[^184]
     - To allow users to explicitly edit the entry slug in an initial entry draft, add `{{fields._slug}}` to the `slug` collection option. This will display a special slug editor UI that looks like a standard string field, but the value will be used as the entry slug.
@@ -432,8 +435,6 @@ Sveltia CMS has been built with a multilingual architecture from the very beginn
   - If a collection only has the Markdown `body` field, an entry slug will be generated from a header in the `body`, if exists. This supports a typical VitePress setup.
   - Entry slug template tags support [transformations](https://decapcms.org/docs/summary-strings/) just like summary string template tags.[^29] For example, you can use `{{fields.date | date('YYYY-MM-DD')}}` to generate a slug like `2025-01-23` from a DateTime field.
   - Single quotes (apostrophes) in a slug will be replaced with `sanitize_replacement` (default: hyphen) rather than being removed.[^52]
-  - The [global `slug` option](https://decapcms.org/docs/configuration-options/#slug-type) accepts the `trim` option to remove leading and trailing replacement characters, such as hyphens, from an entry slug. The default value is `true`. Set to `false` to keep them.
-  - The maximum number of characters for an entry slug can be set with the new `slug_length` collection option to avoid deployment errors with Netlify or other platforms.[^25]
   - Setting the collection `path` doesn’t affect the entry slugs stored with the Relation widget.[^137]
 - Entry listing
   - The [default sort field and direction](#specifying-default-entry-sort-field-and-direction) can be specified.[^172]
@@ -807,6 +808,7 @@ These options were added to Sveltia CMS 0.x but are now deprecated and will be r
 
 - The `automatic_deployments` backend option: Use the new [`skip_ci` option](#disabling-automatic-deployments) instead, which is more intuitive. `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments: true` is equivalent to `skip_ci: false`.
 - The `save_all_locales` i18n option: Use the [`initial_locales` option](#disabling-non-default-locale-content) instead, which provides more flexibility. `save_all_locales: false` is equivalent to `initial_locales: all`.
+- The `slug_length` collection option: Use the `maxlength` option in the [global slug options](/en/docs/collections/entries#global-slug-options) instead.
 - The `yaml_quote` collection option: `yaml_quote: true` is equivalent to `quote: double` in the [new YAML format options](#controlling-data-output).
 - The `read_only` UUID widget option: Use the `readonly` common field option instead, which defaults to `true` for the UUID widget.
 
@@ -1283,20 +1285,31 @@ The configuration for a [file collection](https://decapcms.org/docs/collection-f
 
 Sveltia CMS comes with a handy translation API integration so that you can translate any text field from another locale without leaving the Content Editor. Currently, the following services are supported:
 
-- Google’s [Cloud Translation](https://cloud.google.com/translate)
-- Anthropic’s [Claude Haiku 4.5](https://www.anthropic.com/claude/haiku)
-- OpenAI’s [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini)
+- Neural Machine Translation (NMT)
+  - Google: [Cloud Translation](https://cloud.google.com/translate)
+- Large Language Models (LLMs)
+  - Anthropic: [Claude Haiku 4.5](https://www.anthropic.com/claude/haiku)
+  - Google: [Gemini 2.5 Flash-Lite](https://deepmind.google/models/gemini/flash-lite/)
+  - OpenAI: [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini)
 
-Google’s API is very fast and offers a free tier. Other LLMs may produce more natural translations, but they are slower and require a paid plan. Choose the one that best fits your needs.
+A few notes to help you choose a service:
+
+- NMT is specialized for translations, while LLMs are more general-purpose.
+- NMT is fast, while LLMs may produce more natural, context-aware translations.
+- Google offers free tiers, while Anthropic and OpenAI require a paid plan.
+- With [Gemini’s free tier](https://ai.google.dev/gemini-api/docs/pricing), API input and output may be used to improve their products. As their terms state, do not send sensitive or confidential information while using the free tier. Consider using the paid plan or other services if this is a concern.
 
 To enable the quick translation feature:
 
 1. Update your configuration file to enable the [i18n support](https://decapcms.org/docs/i18n/) with multiple locales.
 1. Create a new API key for the translation service of your choice:
-   - Google
+   - Google Cloud Translation
      1. Sign in or sign up for [Google Cloud](https://cloud.google.com/) and create a new project.
      1. Enable the [Cloud Translation API](https://console.cloud.google.com/apis/library/translate.googleapis.com). It’s free up to 500,000 characters per month.
      1. Create a [new API key](https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials) and copy it.
+   - Google Gemini
+     1. Sign in or sign up for [Google AI Studio](https://aistudio.google.com/).
+     1. A new [API key](https://aistudio.google.com/api-keys) is created automatically for your account. Or create a new one if needed, and copy it.
    - Anthropic
      1. Sign in or sign up for [Claude Developer Platform](https://docs.claude.com/en/api/overview).
      1. Add a credit balance (minimum $5) to your account.
@@ -1321,7 +1334,7 @@ If you don’t want some text to be translated, use the HTML [`translate`](https
 <span class="notranslate">...</span>
 ```
 
-For Anthropic and OpenAI, you can also use the `notranslate` comment to exclude specific parts of Markdown content from translation:
+For LLMs, you can also use the `notranslate` comment to exclude specific parts of Markdown content from translation:
 
 ```html
 <!-- notranslate -->...<!-- /notranslate -->
