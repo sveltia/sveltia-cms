@@ -530,5 +530,82 @@ describe('config/index', () => {
       expect(errors).toBeDefined();
       expect(errors).toContain('config.error.unexpected');
     });
+
+    it('should handle folder normalization for root folders', async () => {
+      const { initCmsConfig } = await import('./index.js');
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          { name: 'posts', label: 'Posts', folder: '.' },
+          { name: 'pages', label: 'Pages', folder: '/' },
+          { name: 'drafts', label: 'Drafts', folder: 'drafts' },
+        ],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+      getHashMock.mockResolvedValue('test-hash');
+
+      await initCmsConfig();
+
+      const config = await new Promise((resolve) => {
+        /* eslint-disable prefer-const */
+        /** @type {() => void} */
+        let unsubscribe;
+
+        unsubscribe = cmsConfig.subscribe((cfg) => {
+          if (cfg) {
+            unsubscribe?.();
+            resolve(cfg);
+          }
+        });
+      });
+
+      expect(config?.collections?.[0]?.folder).toBe('');
+      expect(config?.collections?.[1]?.folder).toBe('');
+      expect(config?.collections?.[2]?.folder).toBe('drafts');
+    });
+
+    it('should log config to console in dev mode', async () => {
+      const { initCmsConfig } = await import('./index.js');
+      const { get } = await import('svelte/store');
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+      getHashMock.mockResolvedValue('test-hash');
+
+      // Mock get to return devModeEnabled: true for prefs store
+      vi.mocked(get).mockImplementation((store) => {
+        if (store && typeof store === 'function') {
+          return (/** @type {string} */ key) => key;
+        }
+
+        // Return devModeEnabled: true for prefs check
+        return { devModeEnabled: true };
+      });
+
+      await initCmsConfig();
+
+      // Wait for subscription to trigger
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      // Check that console.info was called with config
+      const calls = consoleSpy.mock.calls.filter(
+        (c) => c[0] === 'cmsConfig' || c[0] === 'allEntryFolders',
+      );
+
+      expect(calls.length).toBeGreaterThan(0);
+
+      consoleSpy.mockRestore();
+    });
   });
 });
