@@ -405,6 +405,37 @@ describe('draft/slugs', () => {
 
       expect(result).toBe('default-slug');
     });
+
+    it('should handle file type collection (non-entry)', async () => {
+      const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
+
+      fillTemplate.mockReturnValue('some-file-slug');
+
+      const draft = {
+        isNew: true,
+        collection: {
+          _type: 'file',
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: undefined,
+        currentSlugs: {},
+        currentValues: {
+          en: { title: 'Some File' },
+          fr: { title: 'Un Fichier' },
+        },
+        isIndexFile: false,
+      };
+
+      const result = getLocalizedSlug({
+        draft,
+        locale: 'fr',
+        localizingKeyPaths: ['title'],
+      });
+
+      expect(result).toBe('some-file-slug');
+      // For file type, fillTemplate is called with default slug template
+      expect(fillTemplate).toHaveBeenCalled();
+    });
   });
 
   describe('getLocalizedSlugs (internal)', () => {

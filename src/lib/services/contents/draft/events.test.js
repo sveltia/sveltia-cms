@@ -836,5 +836,263 @@ describe('events module', () => {
         fileName: null,
       });
     });
+
+    it('should handle preSave hook returning updated entry with data and i18n', async () => {
+      const updatedData = { title: 'Updated Title', body: 'Updated content' };
+
+      const updatedI18n = {
+        ja: { data: { title: '更新されたタイトル', body: '更新されたコンテンツ' } },
+      };
+
+      const handler = vi.fn(async () =>
+        // Return an Immutable.js Map with updated data
+        fromJS({
+          data: updatedData,
+          i18n: updatedI18n,
+        }),
+      );
+
+      // @ts-expect-error - test mock handler returns modified entry
+      eventHookRegistry.add({ name: 'preSave', handler });
+
+      const draft = {
+        collection: {
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: null,
+        isNew: false,
+        collectionName: 'posts',
+        fileName: null,
+      };
+
+      const savingEntry = {
+        slug: 'test-post',
+        locales: {
+          en: {
+            content: { title: 'Original Title', body: 'Original content' },
+            path: 'posts/test-post.md',
+          },
+          ja: {
+            content: { title: '元のタイトル', body: '元のコンテンツ' },
+            path: 'posts/test-post.ja.md',
+          },
+        },
+      };
+
+      // @ts-expect-error
+      await callEventHooks({ type: 'preSave', draft, savingEntry });
+
+      // Verify the entry data was updated from the hook
+      expect(savingEntry.locales.en.content).toEqual(expect.objectContaining(updatedData));
+      expect(savingEntry.locales.ja.content).toBeDefined();
+    });
+
+    it('should handle preSave hook returning object with only data (no i18n)', async () => {
+      const updatedData = { title: 'Updated Title', body: 'Updated content' };
+
+      const handler = vi.fn(async () =>
+        // Return an Immutable.js Map with only data property
+        fromJS(updatedData),
+      );
+
+      // @ts-expect-error - test mock handler returns modified entry
+      eventHookRegistry.add({ name: 'preSave', handler });
+
+      const draft = {
+        collection: {
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: null,
+        isNew: false,
+        collectionName: 'posts',
+        fileName: null,
+      };
+
+      const savingEntry = {
+        slug: 'test-post',
+        locales: {
+          en: {
+            content: { title: 'Original Title', body: 'Original content' },
+            path: 'posts/test-post.md',
+          },
+        },
+      };
+
+      // @ts-expect-error
+      await callEventHooks({ type: 'preSave', draft, savingEntry });
+
+      // Verify the entry data was updated
+      expect(savingEntry.locales.en.content).toEqual(expect.objectContaining(updatedData));
+    });
+
+    it('should not update entry for postSave hook even if it returns data', async () => {
+      const originalContent = { title: 'Original Title', body: 'Original content' };
+
+      const handler = vi.fn(async () =>
+        // postSave is not an UPDATABLE_EVENT_TYPE, so return should be ignored
+        fromJS({
+          data: { title: 'Updated Title', body: 'Updated content' },
+        }),
+      );
+
+      // @ts-expect-error - test mock handler returns data for non-updatable event
+      eventHookRegistry.add({ name: 'postSave', handler });
+
+      const draft = {
+        collection: {
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: null,
+        isNew: false,
+        collectionName: 'posts',
+        fileName: null,
+      };
+
+      const savingEntry = {
+        slug: 'test-post',
+        locales: {
+          en: {
+            content: { ...originalContent },
+            path: 'posts/test-post.md',
+          },
+        },
+      };
+
+      // @ts-expect-error
+      await callEventHooks({ type: 'postSave', draft, savingEntry });
+
+      // Entry should not be modified for non-updatable event types
+      expect(savingEntry.locales.en.content).toEqual(originalContent);
+    });
+
+    it('should handle hook returning non-Map value for updatable events', async () => {
+      const handler = vi.fn(
+        async () =>
+          // Return null instead of Immutable.js Map
+          null,
+      );
+
+      // @ts-expect-error - test mock handler returns null
+      eventHookRegistry.add({ name: 'preSave', handler });
+
+      const draft = {
+        collection: {
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: null,
+        isNew: false,
+        collectionName: 'posts',
+        fileName: null,
+      };
+
+      const originalContent = { title: 'Original Title', body: 'Original content' };
+
+      const savingEntry = {
+        slug: 'test-post',
+        locales: {
+          en: {
+            content: { ...originalContent },
+            path: 'posts/test-post.md',
+          },
+        },
+      };
+
+      // @ts-expect-error
+      await callEventHooks({ type: 'preSave', draft, savingEntry });
+
+      // Entry should not be modified if hook returns non-Map
+      expect(savingEntry.locales.en.content).toEqual(originalContent);
+    });
+
+    it('should handle prePublish hook returning updated entry', async () => {
+      const updatedData = { title: 'Published Title' };
+
+      const handler = vi.fn(async () =>
+        fromJS({
+          data: updatedData,
+          i18n: {},
+        }),
+      );
+
+      // @ts-expect-error - test mock handler returns modified entry
+      eventHookRegistry.add({ name: 'prePublish', handler });
+
+      const draft = {
+        collection: {
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: null,
+        isNew: false,
+        collectionName: 'posts',
+        fileName: null,
+      };
+
+      const savingEntry = {
+        slug: 'test-post',
+        locales: {
+          en: {
+            content: { title: 'Draft Title', body: 'Content' },
+            path: 'posts/test-post.md',
+          },
+        },
+      };
+
+      // @ts-expect-error
+      await callEventHooks({ type: 'prePublish', draft, savingEntry });
+
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('should handle partial i18n updates from hook', async () => {
+      const handler = vi.fn(async () =>
+        // Only provide i18n for ja locale
+        fromJS({
+          data: { title: 'Updated Title' },
+          i18n: {
+            ja: { data: { title: '更新されたタイトル' } },
+            // fr is not provided, so it should be skipped
+          },
+        }),
+      );
+
+      // @ts-expect-error - test mock handler returns modified entry
+      eventHookRegistry.add({ name: 'preSave', handler });
+
+      const draft = {
+        collection: {
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: null,
+        isNew: false,
+        collectionName: 'posts',
+        fileName: null,
+      };
+
+      const savingEntry = {
+        slug: 'test-post',
+        locales: {
+          en: {
+            content: { title: 'Original Title' },
+            path: 'posts/test-post.md',
+          },
+          ja: {
+            content: { title: '元のタイトル' },
+            path: 'posts/test-post.ja.md',
+          },
+          fr: {
+            content: { title: 'Titre original' },
+            path: 'posts/test-post.fr.md',
+          },
+        },
+      };
+
+      // @ts-expect-error
+      await callEventHooks({ type: 'preSave', draft, savingEntry });
+
+      expect(savingEntry.locales.en.content).toEqual({ title: 'Updated Title' });
+      expect(savingEntry.locales.ja.content).toEqual({ title: '更新されたタイトル' });
+      // fr should remain unchanged as the hook didn't provide an update
+      expect(savingEntry.locales.fr.content).toEqual({ title: 'Titre original' });
+    });
   });
 });

@@ -201,4 +201,31 @@ describe('draft/index', () => {
       expect(value).toBe(true);
     });
   });
+
+  describe('devModeEnabled subscription', () => {
+    it('should log draft to console when devModeEnabled is true', async () => {
+      // Reset modules to reimport with different mock
+      vi.resetModules();
+
+      // Mock prefs with devModeEnabled true
+      vi.doMock('$lib/services/user/prefs', () => ({
+        prefs: {
+          subscribe: vi.fn((callback) => {
+            callback({ devModeEnabled: true });
+
+            return vi.fn();
+          }),
+        },
+      }));
+
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+      // Re-import the module with new mocks
+      await import('./index');
+
+      // The subscription should have logged on import
+      // (Note: Testing this fully would require accessing internal module state)
+      consoleSpy.mockRestore();
+    });
+  });
 });

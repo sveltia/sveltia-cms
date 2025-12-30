@@ -364,5 +364,127 @@ describe('contents/draft/create/duplicate', () => {
       expect(setCallArg.currentValues.en.title).toBe('Test Post');
       expect(setCallArg.currentValues.ja.title).toBe('テスト記事');
     });
+
+    it('should reset uuid field with i18n translate for non-default locale', async () => {
+      mockEntryDraft.currentValues.en.uuid = 'en-uuid-value';
+      mockEntryDraft.currentValues.ja.uuid = 'ja-uuid-value';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'uuid') {
+          return { widget: 'uuid', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      mockGetInitialUuidValue.mockReturnValue('new-uuid-value');
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.currentValues.en.uuid).toBe('new-uuid-value');
+      expect(setCallArg.currentValues.ja.uuid).toBe('new-uuid-value');
+    });
+
+    it('should reset hidden field with i18n translate for non-default locale', async () => {
+      mockEntryDraft.currentValues.en.hiddenField = 'en-value';
+      mockEntryDraft.currentValues.ja.hiddenField = 'ja-value';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'hiddenField') {
+          return { widget: 'hidden', default: 'new-default-value', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      mockGetHiddenFieldDefaultValueMap.mockReturnValue({ hiddenField: 'new-default-value' });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      // Should be called for both locales
+      expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledWith({
+        fieldConfig: { widget: 'hidden', default: 'new-default-value', i18n: 'translate' },
+        keyPath: 'hiddenField',
+        locale: 'en',
+        defaultLocale: 'en',
+      });
+
+      expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledWith({
+        fieldConfig: { widget: 'hidden', default: 'new-default-value', i18n: 'translate' },
+        keyPath: 'hiddenField',
+        locale: 'ja',
+        defaultLocale: 'en',
+      });
+    });
+
+    it('should handle hidden array field and skip further processing when normalized key path already exists', async () => {
+      // This test covers the branch at line 46 (early return)
+      mockEntryDraft.currentValues.en = {
+        tags: [], // Parent array already exists
+        'tags.0': 'tag1',
+        'tags.1': 'tag2',
+      };
+
+      mockEntryDraft.currentValues.ja = {
+        tags: [],
+        'tags.0': 'tag1',
+        'tags.1': 'tag2',
+      };
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'tags' || keyPath === 'tags.0' || keyPath === 'tags.1') {
+          return { widget: 'hidden', default: ['default1', 'default2'], i18n: true };
+        }
+
+        return undefined;
+      });
+
+      mockGetHiddenFieldDefaultValueMap.mockReturnValue({
+        tags: ['default1', 'default2'],
+      });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      // The 'tags' key should exist (or be re-assigned), and 'tags.0', 'tags.1' should be deleted
+      expect(setCallArg.currentValues.en['tags.0']).toBeUndefined();
+      expect(setCallArg.currentValues.en['tags.1']).toBeUndefined();
+      expect(setCallArg.currentValues.en.tags).toBeDefined();
+    });
+
+    it('should reset hidden field for non-default locale when i18n is true or translate', async () => {
+      // This test covers branches where i18n can be various values
+      mockEntryDraft.currentValues.en.hiddenField = 'en-value';
+      mockEntryDraft.currentValues.ja.hiddenField = 'ja-value';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'hiddenField') {
+          return { widget: 'hidden', default: 'new-default-value', i18n: 'duplicate' };
+        }
+
+        return undefined;
+      });
+
+      mockGetHiddenFieldDefaultValueMap.mockReturnValue({ hiddenField: 'new-default-value' });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      // When i18n is 'duplicate', should only be called for default locale
+      const { calls } = mockGetHiddenFieldDefaultValueMap.mock;
+      const jaLocaleCall = (calls ?? []).filter((/** @type {any} */ c) => c[0].locale === 'ja');
+
+      expect(jaLocaleCall).toHaveLength(0);
+    });
   });
 });

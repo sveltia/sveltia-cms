@@ -910,6 +910,26 @@ describe('draft/backup', () => {
     });
   });
 
+  describe('additional backup tests', () => {
+    it('should successfully get a null backup when none exists', async () => {
+      mockBackupDB.get.mockResolvedValue(null);
+
+      const result = await getBackup('posts', 'my-post');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getBackup with null backupDB', () => {
+    it('should handle null database gracefully', async () => {
+      vi.mocked(IndexedDB).mockReturnValue(null);
+
+      const result = await getBackup('posts', 'my-post');
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('entryDraft subscription', () => {
     it('should call saveBackup after timeout when draft exists', async () => {
       vi.useFakeTimers();
