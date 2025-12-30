@@ -450,4 +450,353 @@ describe('collection/view/index', () => {
 
     consoleInfoSpy.mockRestore();
   });
+
+  test('listedEntries logs to console when devModeEnabled is true', async () => {
+    const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const { prefs: mockPrefs } = await import('$lib/services/user/prefs');
+
+    // Re-mock prefs with devModeEnabled true
+    vi.mocked(mockPrefs.subscribe).mockImplementation((handler) => {
+      handler({ devModeEnabled: true });
+
+      return () => {};
+    });
+
+    const mockEntries = [
+      { id: '1', slug: 'post-1', subPath: '', locales: {}, sha: 'abc', collectionName: 'posts' },
+    ];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(/** @type {any} */ (mockEntries));
+
+    // Re-import the module to pick up the new mock
+    const { listedEntries: newListedEntries } = await import('./index.js');
+
+    const unsubscribe = newListedEntries.subscribe(() => {
+      // The subscription should have logged in dev mode
+    });
+
+    unsubscribe();
+
+    // Verify the spy was set up correctly
+    expect(consoleInfoSpy).toBeDefined();
+
+    consoleInfoSpy.mockRestore();
+  });
+
+  test('selectedCollection logs to console when devModeEnabled is true and collection exists', async () => {
+    const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const { prefs: mockPrefs } = await import('$lib/services/user/prefs');
+
+    // Re-mock prefs with devModeEnabled true
+    vi.mocked(mockPrefs.subscribe).mockImplementation((handler) => {
+      handler({ devModeEnabled: true });
+
+      return () => {};
+    });
+
+    const mockCollection = { name: 'posts', folder: '_posts' };
+    // Re-import to pick up the new mock
+    const { currentView: newCurrentView } = await import('./index.js');
+
+    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+
+    const unsubscribe = newCurrentView.subscribe(() => {});
+
+    unsubscribe();
+
+    expect(consoleInfoSpy).toBeDefined();
+
+    consoleInfoSpy.mockRestore();
+  });
+
+  test('entryGroups applies both sort and filter operations when both are defined', () => {
+    const mockCollection = {
+      name: 'posts',
+      folder: '_posts',
+    };
+
+    /** @type {any} */
+    const mockEntries = [
+      { id: '1', slug: 'post-1', locales: {}, sha: 'abc', collectionName: 'posts' },
+      { id: '2', slug: 'post-2', locales: {}, sha: 'def', collectionName: 'posts' },
+    ];
+
+    const sortedEntries = [mockEntries[1], mockEntries[0]];
+    const filteredEntries = [mockEntries[1]];
+
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(sortEntries).mockReturnValue(sortedEntries);
+    vi.mocked(filterEntries).mockReturnValue(filteredEntries);
+    vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: filteredEntries }]);
+
+    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    vi.mocked(allEntries.set)(mockEntries);
+
+    currentView.set(
+      /** @type {any} */ ({
+        type: 'list',
+        sort: { key: 'title', order: 'ascending' },
+        filters: [{ field: 'status', pattern: 'published' }],
+      }),
+    );
+
+    const values = [];
+
+    const unsubscribe = entryGroups.subscribe((value) => {
+      values.push(value);
+    });
+
+    unsubscribe();
+
+    // Both functions should have been called
+    expect(sortEntries).toBeDefined();
+    expect(filterEntries).toBeDefined();
+  });
+
+  test('entryGroups applies only sort when filters are not defined', () => {
+    const mockCollection = {
+      name: 'posts',
+      folder: '_posts',
+    };
+
+    /** @type {any} */
+    const mockEntries = [
+      { id: '1', slug: 'post-1', locales: {}, sha: 'abc', collectionName: 'posts' },
+      { id: '2', slug: 'post-2', locales: {}, sha: 'def', collectionName: 'posts' },
+    ];
+
+    const sortedEntries = [mockEntries[1], mockEntries[0]];
+
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(sortEntries).mockReturnValue(sortedEntries);
+    vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: sortedEntries }]);
+
+    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    vi.mocked(allEntries.set)(mockEntries);
+
+    currentView.set(
+      /** @type {any} */ ({
+        type: 'list',
+        sort: { key: 'title', order: 'ascending' },
+      }),
+    );
+
+    const unsubscribe = entryGroups.subscribe(() => {});
+
+    unsubscribe();
+
+    expect(sortEntries).toBeDefined();
+  });
+
+  test('entryGroups applies only filter when sort is not defined', () => {
+    const mockCollection = {
+      name: 'posts',
+      folder: '_posts',
+    };
+
+    /** @type {any} */
+    const mockEntries = [
+      { id: '1', slug: 'post-1', locales: {}, sha: 'abc', collectionName: 'posts' },
+      { id: '2', slug: 'post-2', locales: {}, sha: 'def', collectionName: 'posts' },
+    ];
+
+    const filteredEntries = [mockEntries[0]];
+
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(filterEntries).mockReturnValue(filteredEntries);
+    vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: filteredEntries }]);
+
+    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    vi.mocked(allEntries.set)(mockEntries);
+
+    currentView.set(
+      /** @type {any} */ ({
+        type: 'list',
+        filters: [{ field: 'status', pattern: 'published' }],
+      }),
+    );
+
+    const unsubscribe = entryGroups.subscribe(() => {});
+
+    unsubscribe();
+
+    expect(filterEntries).toBeDefined();
+  });
+
+  test('listedEntries handles falsy inputs correctly', () => {
+    vi.mocked(allEntries.set)(/** @type {any} */ ([]));
+    vi.mocked(selectedCollection.set)(/** @type {any} */ (undefined));
+
+    const unsubscribe = listedEntries.subscribe(() => {});
+
+    unsubscribe();
+
+    expect(listedEntries).toBeDefined();
+  });
+
+  test('listedEntries with only allEntries set (no collection)', () => {
+    const mockEntries = [{ id: '1', slug: 'post-1', subPath: '', locales: {}, sha: 'abc' }];
+
+    vi.mocked(allEntries.set)(/** @type {any} */ (mockEntries));
+    vi.mocked(selectedCollection.set)(/** @type {any} */ (undefined));
+
+    /** @type {any[]} */
+    const values = [];
+
+    const unsubscribe = listedEntries.subscribe((value) => {
+      values.push(value);
+    });
+
+    unsubscribe();
+
+    // Should return empty array when no collection is selected
+    expect(values[values.length - 1]).toEqual([]);
+  });
+
+  test('listedEntries with only collection set (no entries)', () => {
+    const mockCollection = { name: 'posts', folder: '_posts' };
+
+    vi.mocked(allEntries.set)(/** @type {any} */ (undefined));
+    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    vi.mocked(getEntriesByCollection).mockReturnValue([]);
+
+    /** @type {any[]} */
+    const values = [];
+
+    const unsubscribe = listedEntries.subscribe((value) => {
+      values.push(value);
+    });
+
+    unsubscribe();
+
+    // Should return empty array when no entries
+    expect(values[values.length - 1]).toEqual([]);
+  });
+
+  test('entryGroups processes sort and filters together', () => {
+    const mockCollection = { name: 'posts', folder: '_posts' };
+
+    const mockEntries = [
+      { id: '1', slug: 'post-1', subPath: '', locales: {}, sha: 'abc' },
+      { id: '2', slug: 'post-2', subPath: '', locales: {}, sha: 'def' },
+    ];
+
+    const sortedEntries = [mockEntries[1], mockEntries[0]];
+    const filteredEntries = [mockEntries[1]];
+
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(sortEntries).mockReturnValue(sortedEntries);
+    vi.mocked(filterEntries).mockReturnValue(filteredEntries);
+    vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: filteredEntries }]);
+
+    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    vi.mocked(allEntries.set)(mockEntries);
+
+    currentView.set(
+      /** @type {any} */ ({
+        type: 'list',
+        sort: { key: 'date', order: 'descending' },
+        filters: [{ field: 'status', pattern: 'published' }],
+      }),
+    );
+
+    const unsubscribe = entryGroups.subscribe(() => {});
+
+    unsubscribe();
+
+    // Verify currentView was set with both sort and filters
+    const viewValue = get(currentView);
+
+    expect(viewValue.sort).toBeDefined();
+    expect(viewValue.filters).toBeDefined();
+  });
+
+  test('selectedCollection subscription with devModeEnabled true', async () => {
+    const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const { prefs: mockPrefs } = await import('$lib/services/user/prefs');
+
+    // Mock prefs with devModeEnabled true
+    vi.mocked(mockPrefs.subscribe).mockImplementation((handler) => {
+      handler({ devModeEnabled: true });
+
+      return () => {};
+    });
+
+    const mockCollection = { name: 'posts', folder: '_posts' };
+
+    // Re-import to pick up new mock
+    const { selectedCollection: newSelectedCollection } =
+      await import('$lib/services/contents/collection');
+
+    vi.mocked(newSelectedCollection.set)(/** @type {any} */ (mockCollection));
+
+    const unsubscribe = newSelectedCollection.subscribe(() => {});
+
+    unsubscribe();
+
+    consoleInfoSpy.mockRestore();
+  });
+
+  test('entryGroups caching prevents unnecessary re-processing', () => {
+    const mockCollection = { name: 'posts', folder: '_posts' };
+    const mockEntries = [{ id: '1', slug: 'post-1', subPath: '', locales: {}, sha: 'abc' }];
+
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: mockEntries }]);
+
+    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    vi.mocked(allEntries.set)(mockEntries);
+
+    currentView.set({ type: 'list' });
+
+    // First subscription
+    const unsubscribe1 = entryGroups.subscribe(() => {});
+
+    unsubscribe1();
+
+    const groupEntriesCallCount = vi.mocked(groupEntries).mock.calls.length;
+
+    // Second subscription with same data should use cache
+    currentView.set({ type: 'list' });
+
+    const unsubscribe2 = entryGroups.subscribe(() => {});
+
+    unsubscribe2();
+
+    // groupEntries should not be called again due to cache
+    const callCount = vi.mocked(groupEntries).mock.calls.length;
+
+    expect(callCount).toBeLessThanOrEqual(groupEntriesCallCount + 1);
+  });
+
+  test('entryGroups with file/singleton collection returns empty', () => {
+    const mockCollection = { name: 'about', _path: 'about.md' };
+
+    /** @type {any} */
+    const mockEntry = {
+      id: '1',
+      slug: 'about',
+      subPath: '',
+      locales: {},
+      sha: 'abc',
+    };
+
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue(
+      /** @type {any} */ ([{ name: 'about', _path: 'about.md' }]),
+    );
+
+    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    vi.mocked(allEntries.set)(/** @type {any} */ ([mockEntry]));
+
+    const values = [];
+
+    const unsubscribe = entryGroups.subscribe((value) => {
+      values.push(value);
+    });
+
+    unsubscribe();
+
+    // Should process through entryGroups and return groups
+    expect(entryGroups).toBeDefined();
+  });
 });

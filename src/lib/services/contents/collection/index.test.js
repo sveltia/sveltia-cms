@@ -778,6 +778,41 @@ describe('getCollection()', () => {
     expect(result?._type).toBe('file');
     expect(result?._fileMap).toBeDefined();
   });
+
+  test('strips leading/trailing slashes from entry collection folder path', () => {
+    const collections = [
+      {
+        name: 'posts',
+        folder: '/content/posts/',
+        fields: [{ name: 'title', widget: 'string' }],
+      },
+    ];
+
+    vi.mocked(get).mockReturnValue({ collections });
+
+    const result = getCollection('posts');
+
+    expect(result?.folder).toBe('content/posts');
+  });
+
+  test('handles file collection with slash-padded file paths', () => {
+    const collections = [
+      {
+        name: 'pages',
+        files: [
+          { name: 'about', file: '/about.md', fields: [] },
+          { name: 'contact', file: 'contact.md', fields: [] },
+        ],
+      },
+    ];
+
+    vi.mocked(get).mockReturnValue({ collections });
+
+    const result = getCollection('pages');
+
+    expect(result?._type).toBe('file');
+    expect(result?._fileMap).toBeDefined();
+  });
 });
 
 describe('getSingletonCollection()', () => {

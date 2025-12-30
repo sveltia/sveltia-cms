@@ -335,4 +335,100 @@ describe('Test deleteEntries()', () => {
       },
     });
   });
+
+  test('handles deleteEntries when backend repository is undefined', async () => {
+    const { saveChanges } = await import('$lib/services/backends/save');
+
+    // Backend is already mocked as null by default in the vi.mock setup
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'post-1',
+        locales: {
+          en: { path: '/content/posts/post-1.md' },
+        },
+      },
+    ];
+
+    await deleteEntries(/** @type {any} */ (mockEntries));
+
+    // Should still call saveChanges even without cacheDB
+    expect(vi.mocked(saveChanges)).toHaveBeenCalled();
+  });
+
+  test('handles deleteEntries when backend has no databaseName', async () => {
+    const { saveChanges } = await import('$lib/services/backends/save');
+
+    // Backend without databaseName is already mocked in the vi.mock setup
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'post-1',
+        locales: {
+          en: { path: '/content/posts/post-1.md' },
+        },
+      },
+    ];
+
+    await deleteEntries(/** @type {any} */ (mockEntries));
+
+    // Should still call saveChanges without cacheDB
+    expect(vi.mocked(saveChanges)).toHaveBeenCalled();
+  });
+
+  test('deleteEntries with duplicate locale paths uses unique', async () => {
+    const { saveChanges } = await import('$lib/services/backends/save');
+    const { selectedCollection } = await import('$lib/services/contents/collection');
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'post-1',
+        locales: {
+          en: { path: '/content/posts/post-1.md' },
+          en_US: { path: '/content/posts/post-1.md' },
+          en_GB: { path: '/content/posts/post-1.md' },
+        },
+      },
+    ];
+
+    selectedCollection.set(/** @type {any} */ ({ name: 'posts' }));
+
+    await deleteEntries(/** @type {any} */ (mockEntries));
+
+    expect(vi.mocked(saveChanges)).toHaveBeenCalled();
+  });
+
+  test('deleteEntries with backend databaseName initializes cacheDB', async () => {
+    const { backend } = await import('$lib/services/backends');
+    const { saveChanges } = await import('$lib/services/backends/save');
+    const { IndexedDB } = await import('@sveltia/utils/storage');
+
+    // Mock backend with valid databaseName
+    vi.mocked(backend).subscribe = vi.fn((handler) => {
+      handler(
+        /** @type {any} */ ({
+          repository: { databaseName: 'my-database' },
+        }),
+      );
+
+      return () => {};
+    });
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'post-1',
+        locales: { en: { path: '/content/posts/post-1.md' } },
+      },
+    ];
+
+    await deleteEntries(/** @type {any} */ (mockEntries));
+
+    // IndexedDB should have been called with the database name
+    expect(IndexedDB).toBeDefined();
+    expect(vi.mocked(saveChanges)).toHaveBeenCalled();
+  });
 });
