@@ -2047,6 +2047,10 @@ Sveltia CMS powers hundreds of websites around the world. Here are some examples
 - [Queer Winnipeg](https://queerwinnipeg.ca/): Blog that shares stories and resources for the local queer community. Built with Astro. ([repository](https://gitlab.com/queerwinnipeg/queerwinnipeg.ca))
 - [Code for Heilbronn](https://codeforheilbronn.de/): A civic tech group in Germany, focused on open data and digital solutions for local issues. Built with Hugo. ([repository](https://github.com/cfhn/codeforheilbronn-website))
 - [Plan B Architecture Studio](https://www.planasb.lt/en/): An architecture studio based in Lithuania. Built with Astro. ([agency case study](https://oaksun.studio/work/architectural-studio/))
+- [Alineación indebida](https://www.alineacionindebida.com/): Sports media outlet covering Salamanca, Spain. Built with Astro. ([repository](https://github.com/alineacion-indebida/Web))
+- [Atelier Wehrle](https://atelierwehrle.com/en/): A garden design studio based in Germany. Utilizes [i18n support](/en/docs/i18n). Built with Eleventy. ([repository](https://github.com/thegrandheavybold/atelierwehrle__com))
+- [LeishMan Network](https://leishman-network.org/): An European research consortium focused on leishmaniasis. Built with Nuxt. ([repository](https://github.com/quentinglorieux/LeishMan))
+- [EFA 44](https://efa44.org/): The Loire-Atlantique branch of the French national federation Enfance & Familles d’Adoption. Built with Hugo. ([repository](https://github.com/EFA44/site))
 
 <!-- cSpell:enable -->
 
