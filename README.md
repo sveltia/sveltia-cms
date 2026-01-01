@@ -2138,7 +2138,7 @@ Due late 2026. This release provides an alternative to the deprecated Netlify Id
 - More AI features for image generation, content writing, etc.
 - Advanced digital asset management (DAM) features, including image editing and tagging[^114]
 - Marketplace for custom widgets, etc.[^273]
-- Official starter templates for the most popular frameworks, including SvelteKit and Next.js
+- Official starter templates for the most popular frameworks, including Astro, Eleventy and Hugo
 - and so much more!
 
 ### Non-goals
