@@ -4,7 +4,7 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows for content editors and developers alike.
 
-This free, open source successor to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026. Despite being in beta, it’s already [used in production](#showcase) by hundreds of individuals and organizations worldwide.
+This free, open source successor to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026. Despite being in beta, it’s already [used in production](https://sveltia-cms-site.pages.dev/en/showcase) by hundreds of individuals and organizations worldwide.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -95,7 +95,6 @@ This free, open source successor to Netlify/Decap CMS is currently in public bet
   - [Disabling automatic deployments](#disabling-automatic-deployments)
   - [Setting up Content Security Policy](#setting-up-content-security-policy)
   - [Showing the CMS version](#showing-the-cms-version)
-- [Showcase](#showcase)
 - [Support \& Feedback](#support--feedback)
 - [Contributions](#contributions)
 - [Roadmap](#roadmap)
@@ -2020,44 +2019,6 @@ img-src 'self' blob: data: https://*;
 
 A Release Notes link will now appear under the Account menu with the current application version.
 
-## Showcase
-
-Sveltia CMS powers hundreds of websites around the world. Here are some examples of websites using Sveltia CMS. Many of them are switching from Netlify/Decap CMS for a better UX and DX 🎉
-
-<!-- cSpell:disable -->
-
-| Project | Description |
-| --- | --- |
-| [Anil Dash](https://www.anildash.com/) | Personal blog of Anil Dash, a prominent tech writer and entrepreneur, who created once-popular CMSs called [Movable Type](https://en.wikipedia.org/wiki/Movable_Type) and [TypePad](https://en.wikipedia.org/wiki/Typepad). Built with Eleventy. ([repository](https://github.com/anildash/anildash-dot-com-netlify)) ([Bluesky post](https://bsky.app/profile/anildash.com/post/3m7osuyipnc22)) |
-| [Dutch Institute for Vulnerability Disclosure](https://www.divd.nl/) | An institute focused on responsible vulnerability disclosure in the Netherlands. Utilizes [i18n support](#better-i18n-support). Built with Hugo. ([repository](https://github.com/DIVD-NL/web-www-v2)) |
-| [Inclusive Design Research Centre](https://idrc.ocadu.ca/) | A research center at OCAD University focused on inclusive design practices. Built with Eleventy. ([repository](https://github.com/inclusive-design/idrc)) |
-| [FLOE](https://floeproject.org/) | An open education project focused on accessibility and inclusive learning technologies. Built with Eleventy. ([repository](https://github.com/fluid-project/floeproject.org)) ([blog post](https://floeproject.org/news/2024-06-24-evaluating-static-content-management-systems/)) |
-| [SIGPwny](https://sigpwny.com/) | A student-run cybersecurity club at the University of Illinois Urbana-Champaign. Built with Astro. ([repository](https://github.com/sigpwny/websites)) |
-| [Critical Mass Portugal](https://massacritica.pt/en/) | The Portuguese chapter of the global Critical Mass movement promoting cycling. Utilizes [i18n support](#better-i18n-support). Built with Astro. ([repository](https://github.com/afonsojramos/critical-mass)) |
-| [Dylan Beattie](https://dylanbeattie.net/) | Personal website of Dylan Beattie, a well-known software developer and speaker. Built with Jekyll. ([repository](https://github.com/dylanbeattie/dylanbeattie.net)) ([blog post](https://dylanbeattie.net/2025/02/13/sveltiacms-jekyll-and-github-pages.html)) |
-| [The Forgotten Europe Project](https://forgotteneurope.org/) | A project dedicated to exploring and documenting lesser-known parts of Europe. Built with SvelteKit. ([repository](https://github.com/refact0r/forgotten-europe-website)) |
-| [Chris’s Tech ADHD](https://chris-ayers.com/) | Personal website of Chris Ayers, a senior software engineer and speaker. Built with Jekyll. ([repository](https://github.com/codebytes/codebytes.github.io)) ([blog post](https://chris-ayers.com/2025/06/26/mobile-cms-on-github-pages/)) |
-| [Bilgin Dictionary](https://sozluk.ulug.tr/) | An etymological dictionary of Turkish. Built with Astro. ([repository](https://github.com/ulughann/sozluk)) |
-| [Woogles Blog](https://blog.woogles.io/) | Blog of a non-profit organization specializing in word games and education. Built with Hugo. ([repository](https://github.com/woogles-io/liwords-static)) |
-| [The Living Glossary of Digital Narrative](https://glossary.cdn.uib.no/) | A collaborative glossary for digital narrative studies. Built with Astro. ([repository](https://github.com/Center-for-Digital-Narrative/Living-Glossary-of-Digital-Narrative)) |
-| [IA·rbre](https://iarbre.fr/) | Collaborative platform for territorial data on urban climate adaptation. Built with MkDocs. ([repository](https://github.com/TelesCoop/iarbre)) |
-| [Melbourne Disc Golf Club](https://www.melbournediscgolf.com/) | A disc golf club in Australia. Built with Astro. ([repository](https://github.com/melbourne-disc-golf/mdgc-website)) |
-| [ACM Gazi](https://acmgazi.com/) | Gazi University Association for Computing Machinery community site. Built with Hugo. ([repository](https://github.com/ACM-Gazi/acm-gazi.github.io)) |
-| [Volley Club Nogentais](https://volley-club-nogent.fr/) | A volleyball club in France. Built with Hugo. ([repository](https://github.com/Volley-Club-Nogentais/vcn-website)) |
-| [The Scalable Way](https://thescalableway.com/) | A consultancy specializing in data platform engineering, analytics, and data science. Built with Eleventy. ([repository](https://github.com/dyvenia/site-thescalableway)) |
-| [Medieval Scrolls Digital Archive](https://medievalscrolls.fas.harvard.edu/) | A comprehensive resource for medieval scrolls at Harvard University. Built with Astro. ([repository](https://github.com/artshumrc/scrolls-astro)) |
-| [Queer Winnipeg](https://queerwinnipeg.ca/) | Blog that shares stories and resources for the local queer community. Built with Astro. ([repository](https://gitlab.com/queerwinnipeg/queerwinnipeg.ca)) |
-| [Code for Heilbronn](https://codeforheilbronn.de/) | A civic tech group in Germany, focused on open data and digital solutions for local issues. Built with Hugo. ([repository](https://github.com/cfhn/codeforheilbronn-website)) |
-| [Plan B Architecture Studio](https://www.planasb.lt/en/) | An architecture studio based in Lithuania. Built with Astro. ([agency case study](https://oaksun.studio/work/architectural-studio/)) |
-| [Alineación indebida](https://www.alineacionindebida.com/) | Sports media outlet covering Salamanca, Spain. Built with Astro. ([repository](https://github.com/alineacion-indebida/Web)) |
-| [Atelier Wehrle](https://atelierwehrle.com/en/) | A garden design studio based in Germany. Utilizes [i18n support](/en/docs/i18n). Built with Eleventy. ([repository](https://github.com/thegrandheavybold/atelierwehrle__com)) |
-| [LeishMan Network](https://leishman-network.org/) | An European research consortium focused on leishmaniasis. Built with Nuxt. ([repository](https://github.com/quentinglorieux/LeishMan)) |
-| [EFA 44](https://efa44.org/) | The Loire-Atlantique branch of the French national federation Enfance & Familles d’Adoption. Built with Hugo. ([repository](https://github.com/EFA44/site)) |
-
-<!-- cSpell:enable -->
-
-More projects, including small personal blogs and portfolios, can be found by [searching GitHub](https://github.com/search?q=sveltia+cms&type=commits&s=committer-date&o=desc). Please note that the code search only returns 100 results, and private repositories are not included. We’ll continue to update this list as we discover more projects!
-
 ## Support & Feedback
 
 While we don’t have dedicated developer/user support resources, you can post [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. [Feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=ideas) is also welcome, but please check the [Compatibility](#compatibility) and [Roadmap](#roadmap) sections of this README before starting a new discussion — your idea may already be covered.
@@ -2092,7 +2053,7 @@ Due early 2026. This will be the first stable release of Sveltia CMS, suitable f
 
 - Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
 - Tackling some more Netlify/Decap CMS issues:
-  - PKCE for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub but is [planned for Q4 2025](https://github.com/github/roadmap/issues/1153)
+  - PKCE for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub, was [planned for Q4 2025](https://github.com/github/roadmap/issues/1153)
   - [Amazon S3 and Cloudflare R2 media library backend](https://github.com/sveltia/sveltia-cms/issues/586)[^315]
   - Thorough config validation[^246]
   - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
