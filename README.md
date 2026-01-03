@@ -4,7 +4,7 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows for content editors and developers alike.
 
-This free, open source successor to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026. Despite being in beta, it’s already [used in production](https://sveltia-cms-site.pages.dev/en/showcase) by hundreds of individuals and organizations worldwide.
+This free, open source successor to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026. Despite being in beta, it’s already used by hundreds of individuals and organizations worldwide in production. Check out the [Showcase](https://sveltiacms.app/en/showcase) page for some examples.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -169,7 +169,7 @@ Sveltia CMS is currently in **beta**, with version 1.0 (GA) scheduled for releas
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
-- Ensuring near-complete [compatibility with Netlify/Decap CMS](#compatibility)
+- Ensuring high [compatibility with Netlify/Decap CMS](#compatibility)
   - The vast majority of existing configurations work out of the box
   - It works as a drop-in replacement for most use cases
   - Some missing features will be implemented before or shortly after GA
@@ -2043,112 +2043,7 @@ See [Contributing to Sveltia CMS](https://github.com/sveltia/sveltia-cms/blob/ma
 
 ## Roadmap
 
-As mentioned in the [Project Status](#project-status) section, our goal is to solve most of the [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) over the course of this project. We also have lots of ideas to make Sveltia CMS a great product.
-
-We cannot promise any specific release dates, but here is a rough roadmap for the next few years.
-
-### v1.0
-
-Due early 2026. This will be the first stable release of Sveltia CMS, suitable for production use in many scenarios. This release also [solves 300 issues](#project-status) of Netlify/Decap CMS, including many highly requested features and important bug fixes.
-
-- Enhanced [compatibility with Netlify/Decap CMS](#compatibility)
-- Tackling some more Netlify/Decap CMS issues:
-  - PKCE for GitHub[^285] — It’s [not yet supported](https://github.com/orgs/community/discussions/15752) by GitHub, was [planned for Q4 2025](https://github.com/github/roadmap/issues/1153)
-  - [Amazon S3 and Cloudflare R2 media library backend](https://github.com/sveltia/sveltia-cms/issues/586)[^315]
-  - Thorough config validation[^246]
-  - [Entry pre-validation/normalization](https://github.com/sveltia/sveltia-cms/issues/395)[^248]
-- Accessibility audit
-- [Localization](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md)
-- [Developer documentation](https://github.com/sveltia/sveltia-cms/issues/485) (implementation guide)
-- [Live demo site](https://github.com/sveltia/sveltia-cms/issues/1)
-
-See also the [1.0 RC](https://github.com/sveltia/sveltia-cms/milestone/1) and [1.0](https://github.com/sveltia/sveltia-cms/milestone/2) milestones for a list of issues planned for v1.0.
-
-### v2.0
-
-Due mid-2026. This release completes the core features of Sveltia CMS as a successor to Netlify/Decap CMS.
-
-- Implementing [a few deferred Netlify/Decap CMS features](#current-limitations), including editorial workflow and nested collections, while addressing a number of bugs in their implementations
-  - They will probably first be included as beta features in v1.x releases
-- Tackling even more Netlify/Decap CMS issues, including:
-  - [Manual entry sorting](https://github.com/sveltia/sveltia-cms/issues/214)[^125]
-  - [Directory navigation in the Asset Library](https://github.com/sveltia/sveltia-cms/issues/420)[^240]
-  - [Asset collections](https://github.com/sveltia/sveltia-cms/issues/301)[^271]
-
-See also the [2.0](https://github.com/sveltia/sveltia-cms/milestone/3) milestone.
-
-### v3.0
-
-Due late 2026. This release provides an alternative to the deprecated Netlify Identity and Git Gateway services used by Netlify/Decap CMS.
-
-- **Sveltia CMS Additions**: Edge functions for Cloudflare Workers and possibly other platforms that provide features that cannot be implemented client-side:
-  - User management (Netlify Identity alternative) with roles[^23]
-  - Commits without a Git service account (Git Gateway alternative)
-  - more enhancements are planned for the future; see the TBD list below
-- Contributor documentation
-
-### TBD
-
-- Tackling the remaining relevant Netlify/Decap CMS issues (some may be included in v2.0 or v3.0):
-  - Their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc), including:
-    - MDX support[^122]
-    - [Preview Workflow](https://github.com/sveltia/sveltia-cms/discussions/440)[^261]
-    - [Tables in Markdown](https://github.com/sveltia/sveltia-cms/issues/455)[^256]
-    - [Config editor](https://github.com/sveltia/sveltia-cms/discussions/452)[^10]
-    - [Theming](https://github.com/sveltia/sveltia-cms/issues/29)[^262]
-    - [Reusable field groups](https://github.com/sveltia/sveltia-cms/discussions/463)[^263]
-    - Offline support[^238]
-  - Features to turn the CMS into a powerful NoSQL database management system (DBMS):
-    - Advanced Relation fields[^242]
-      - Cascade updates/deletes[^243]
-      - [Quick item additions](https://github.com/sveltia/sveltia-cms/issues/493)[^266]
-    - Autoincrement fields[^286]
-    - Unique constraints[^287]
-    - Data integrity checks
-  - [Automatic asset file renaming with templates](https://github.com/sveltia/sveltia-cms/issues/422)[^241]
-  - and many more (100+ issues and discussions)
-- Enhancements to **Sveltia CMS Additions** (some may be included in v3.0):
-  - Post locking[^166] (like [WordPress](https://codex.wordpress.org/Post_Locking))
-  - Scheduled posts[^167]
-  - [Private configuration](https://github.com/sveltia/sveltia-cms/discussions/576)
-  - [Credential management](https://github.com/sveltia/sveltia-cms/issues/444) for service API keys, deploy hook URL, etc.
-  - Proxy for services that don’t support [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS):
-    - [DeepL Translate](https://github.com/sveltia/sveltia-cms/issues/437)
-    - [Git LFS support for GitHub](https://github.com/sveltia/sveltia-cms/discussions/353)[^244]
-- Content editor enhancements:
-  - Field navigator
-  - Sidebar
-    - View, compare and restore revisions (like [WordPress](https://wordpress.com/support/page-post-revisions/))
-    - [Reverse reference lists](https://github.com/sveltia/sveltia-cms/discussions/416)
-    - Validation errors
-- Input UI improvements
-  - Slider input for number fields
-  - Custom color picker
-  - Custom date/time picker
-  - Image field enhancements:
-    - Camera input, screen capture, QR code generation, AI image generation, etc.
-    - Quick cropping and resizing
-- Search enhancements:
-  - Customizable search fields[^274]
-  - Advanced search options
-  - [Fuzzy search](https://www.fusejs.io/)
-- [Local repository workflow](#working-with-a-local-git-repository) improvements: Git mode[^131] and change detection
-- [Preact+HTM](https://github.com/sveltia/sveltia-cms/discussions/153) or Vue support for custom widgets, editor components and preview templates[^289]
-- More integration options: stock photos, stock videos, cloud storage providers, translation services, maps, analytics tools, etc.
-- More AI features for image generation, content writing, etc.
-- Advanced digital asset management (DAM) features, including image editing and tagging[^114]
-- Marketplace for custom widgets, etc.[^273]
-- Official starter templates for the most popular frameworks, including Astro, Eleventy and Hugo
-- and so much more!
-
-### Non-goals
-
-- Serving 100% of the existing Netlify/Decap CMS user base. While we aim to support most use cases, some users may be unable to migrate to Sveltia CMS due to unsupported features or technical limitations. See the [Compatibility](#compatibility) section for details.
-- Support for non-Git backends. Sveltia CMS is a Git-based headless CMS and will remain so to avoid feature creep and increased maintenance costs. We may support custom backends through an API in the future, but it’s not a priority right now.
-- Framework-specific integrations, including a WYSIWYG editor and out-of-the-box live site preview. We will focus on framework-agnostic core features that are essential for succeeding Netlify/Decap CMS and modernizing the platform.
-- Enterprise features. We want to keep Sveltia CMS simple and easy to use for small teams and individual developers.
-- Monetization. We may offer an affordable cloud version in the future since self-hosting the CMS can be a hassle. However, we will not charge for the CMS itself. We want to keep it free and open source forever.
-- Creating the longest README file in the world. 😉
+Moved to the [Roadmap](https://sveltiacms.app/en/roadmap) page.
 
 ## Related Links
 
