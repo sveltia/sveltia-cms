@@ -2016,21 +2016,7 @@ A Release Notes link will now appear under the Account menu with the current app
 
 ## Support & Feedback
 
-While we don’t have dedicated developer/user support resources, you can post [quick questions](https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a) on the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page of our GitHub repository. [Feedback](https://github.com/sveltia/sveltia-cms/discussions/new?category=ideas) is also welcome, but please check the [Compatibility](#compatibility) and [Roadmap](#roadmap) sections of this README before starting a new discussion — your idea may already be covered.
-
-Join us on [Discord](https://discord.gg/5hwCGqup5b) or ping us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for a casual chat.
-
-<!-- prettier-ignore-start -->
-> [!IMPORTANT]
-> Sveltia CMS is specifically designed as a replacement for Netlify/Decap CMS. We are happy to help you migrate from the legacy product, but **we cannot help you set up Sveltia CMS from scratch** through our free support channels. Questions about installation or initial configuration may go unanswered.
-<!-- prettier-ignore-end -->
-
-Planning to build a website with Sveltia CMS? Looking for professional support? Maintainer [@kyoshino](https://github.com/kyoshino) is available for hire depending on your needs. Feel free to reach out!
-
-<!-- prettier-ignore-start -->
-> [!IMPORTANT]
-> Please do not email the maintainer for free support. Your emails will be ignored. Instead, use the [Discussions](https://github.com/sveltia/sveltia-cms/discussions) page.
-<!-- prettier-ignore-end -->
+Moved to the [Support](https://sveltiacms.app/en/support) and [Feedback](https://sveltiacms.app/en/feedback) pages.
 
 ## Contributions
 
