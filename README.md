@@ -4,7 +4,7 @@ Sveltia CMS is a Git-based lightweight headless CMS under active development as 
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows for content editors and developers alike.
 
-This free, open source successor to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026. Despite being in beta, it’s already used by hundreds of individuals and organizations worldwide in production. Check out the [Showcase](https://sveltiacms.app/en/showcase) page for some examples.
+This free, open source successor to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026. Despite the beta status, it’s already used by hundreds of individuals and organizations worldwide in production. Check out the [Showcase](https://sveltiacms.app/en/showcase) page for some examples.
 
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
@@ -231,7 +231,7 @@ Note: This lengthy section compares Sveltia CMS with both Netlify CMS and Decap 
 We’ve made various improvements to help you get your work done faster and more efficiently:
 
 - Developers can [work with a local Git repository](#working-with-a-local-git-repository) without any additional configuration or proxy server, resulting in a streamlined workflow and improved performance.[^26]
-  - It also avoids a number of issues, including potential security risks,[^158][^282] a 30 MB file size limit,[^51] an unknown error with `publish_mode`,[^75] and an unused `logo_url`.[^49]
+  - It also avoids a number of issues, including potential security risks,[^158][^282][^318] a 30 MB file size limit,[^51] an unknown error with `publish_mode`,[^75] and an unused `logo_url`.[^49]
   - When you delete an entry or an asset file, the empty folder that contains it is also deleted, so you don’t have to delete it manually.
 - Provides a smoother user experience in the Content Editor:
   - Users can upload multiple files at once to File/Image fields when the `multiple` option is enabled.[^239]
@@ -511,7 +511,7 @@ Sveltia CMS supports all the [built-in widgets](https://decapcms.org/docs/widget
 - DateTime
   - A DateTime field doesn’t trigger a change in the content draft status when you’ve just started editing a new entry.[^90]
   - User’s local time is not saved in UTC unless the `picker_utc` option is `true`.[^150]
-  - The widget doesn’t throw a `RangeError` for formatting days of the month.[^250]
+  - The widget doesn’t throw a `RangeError` for formatting days of the month.[^250][^319]
 - Hidden
   - The `default` value supports the following template tags:
     - `{{locale}}`: The current locale code.[^101]
@@ -2690,3 +2690,7 @@ This project would not have been possible without the open source Netlify CMS pr
 [^316]: Netlify/Decap CMS [#1152](https://github.com/decaporg/decap-cms/issues/1152)
 
 [^317]: Netlify/Decap CMS [#1464](https://github.com/decaporg/decap-cms/issues/1464)
+
+[^318]: Netlify/Decap CMS [#7692](https://github.com/decaporg/decap-cms/issues/7692)
+
+[^319]: Netlify/Decap CMS [#7206](https://github.com/decaporg/decap-cms/issues/7206), [#7577](https://github.com/decaporg/decap-cms/issues/7577), [#7619](https://github.com/decaporg/decap-cms/issues/7619), [#7691](https://github.com/decaporg/decap-cms/issues/7691),
