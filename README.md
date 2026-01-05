@@ -36,57 +36,7 @@ This free, open source successor to Netlify/Decap CMS is currently in public bet
 
 ## Motivation
 
-Sveltia CMS was born in November 2022, when the progress of Netlify CMS was stalled for more than six months. [@kyoshino](https://github.com/kyoshino)’s clients wanted to replace their Netlify CMS instances without much effort, mainly to get better internationalization (i18n) support.
-
-To achieve radical improvements in UX, performance, i18n and other areas, it was ultimately decided to build an alternative from the ground up, while ensuring an easy migration path from the other. After proving the idea with a rapid [Svelte](https://svelte.dev/) prototype, development was accelerated to address their primary use cases. The new product has since been named Sveltia CMS and released as open source software to encourage wider adoption.
-
-We loved the simple, unique setup of Netlify CMS that turned a Git repository into a database with a single page app served from a CDN plus a plain YAML config file. In support of the [Jamstack](https://jamstack.org/) concept, we wanted to revive it, modernize it, and take it to the next level.
-
-### Our advantage
-
-Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successors:
-
-- [Static CMS](https://github.com/StaticJsCMS/static-cms): a community fork
-  - Initial commit made in September 2022
-  - ❌ Discontinued in September 2024 after making meaningful improvements
-- **Sveltia CMS**: not a fork but a **complete rewrite**
-  - Started in November 2022, first appeared on GitHub in March 2023
-  - ✅ Actively developed with frequent releases and numerous improvements
-  - ✅ Relevant issues are being resolved regardless of their age or status
-  - ✅ Most of new bug reports are addressed promptly, usually within a day
-  - ✅ An [extensive roadmap](https://sveltiacms.app/en/roadmap) is available to keep users informed
-  - ✅ No known unpatched security vulnerabilities, with dependencies kept up-to-date
-- [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
-  - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
-  - ⚠️ Mostly low activity with only occasional releases and a few minor improvements
-  - ⚠️ Seemingly random issues were closed as stale following the takeover
-  - ⚠️ Bug reports continue to pile up, often without any response
-  - ⚠️ No public roadmap is available, leaving users in the dark
-  - ❌ A moderate severity [XSS vulnerability](https://github.com/advisories/GHSA-xp8g-32qh-mv28), high severity dependency vulnerabilities and fatal crashes remain unaddressed
-
-Sveltia CMS is the only project that doesn’t inherit the complexity, technical debt, and numerous bugs of Netlify CMS, which was launched in 2015. Our product is **better by design**:
-
-- We rebuilt the app from scratch using a [modern framework](https://svelte.dev/)
-- We don’t reuse any part of the predecessor’s codebase
-- We incorporate i18n support into the core instead of adding it as an afterthought
-- We closely monitor and analyze the predecessor’s issue tracker
-- We rearchitect the entire user experience (UX) and developer experience (DX)
-
-This “total reboot” has enabled us to implement hundreds of improvements without getting stuck in a legacy system. Furthermore:
-
-- We dedicate significant time and effort to modernizing the platform
-- We continue to address [issues](https://github.com/decaporg/decap-cms/issues) reported in the predecessor’s repository
-- We materialize the enhancements that Netlify CMS users have long desired
-
-For that reason, Sveltia CMS is the **true successor to Netlify CMS** — not just a spiritual successor or a mere alternative — and the best choice for users looking to migrate from the predecessor, other successors, or even other CMS solutions.
-
-### Our goals
-
-- Making Sveltia CMS a viable, definitive successor to Netlify CMS
-- Empowering SMBs and individuals who need a free, yet powerful, high-quality CMS solution
-- Emerging as the leading open source offering in the Git-based CMS market
-- Extending its capabilities as digital asset management (DAM) software
-- Showcasing the power of Svelte and UX engineering
+See the [Successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms#motivation) page.
 
 ## Project Status
 
