@@ -131,7 +131,7 @@ See the [Successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-n
 
 ## Compatibility
 
-See the [Migrating from Netlify CMS or Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) page.
+See the [Migrating from Netlify CMS or Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility) page.
 
 ### Deprecations
 
