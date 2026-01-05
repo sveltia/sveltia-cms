@@ -21,22 +21,15 @@ This free, open source successor to Netlify/Decap CMS is currently in public bet
 ## Table of contents
 
 - [Motivation](#motivation)
-  - [Our advantage](#our-advantage)
-  - [Our goals](#our-goals)
 - [Project Status](#project-status)
 - [Differentiators](#differentiators)
 - [Compatibility](#compatibility)
-  - [Deprecations](#deprecations)
-  - [Compatibility with Static CMS](#compatibility-with-static-cms)
 - [Getting Started](#getting-started)
-  - [Installation \& setup](#installation--setup)
-  - [Migration](#migration)
 - [Tips \& Tricks](#tips--tricks)
 - [Support \& Feedback](#support--feedback)
 - [Contributions](#contributions)
 - [Roadmap](#roadmap)
 - [Related Links](#related-links)
-  - [As seen on](#as-seen-on)
 - [Privacy](#privacy)
 - [Disclaimer](#disclaimer)
 - [Acknowledgements](#acknowledgements)
@@ -139,7 +132,7 @@ See the [Migrating from Earlier Versions of Sveltia CMS](https://sveltiacms.app/
 
 ### Compatibility with Static CMS
 
-See the [Migrating from Static CMS](https://sveltiacms.app/en/docs/migration/static-cms) page.
+See the [Migrating from Static CMS](https://sveltiacms.app/en/docs/migration/static-cms#compatibility) page.
 
 ## Getting Started
 
