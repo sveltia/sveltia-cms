@@ -135,7 +135,7 @@ See the [Migrating from Netlify CMS or Decap CMS](https://sveltiacms.app/en/docs
 
 ### Deprecations
 
-See the [Migrating from Earlier Versions of Sveltia CMS](https://sveltiacms.app/en/docs/migration/earlier-versions) page.
+See the [Migrating from Earlier Versions of Sveltia CMS](https://sveltiacms.app/en/docs/migration/earlier-versions#deprecations) page.
 
 ### Compatibility with Static CMS
 
