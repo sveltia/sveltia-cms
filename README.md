@@ -22,7 +22,7 @@ This free, open source successor to Netlify/Decap CMS is currently in public bet
 
 <!-- prettier-ignore-start -->
 > [!NOTE]
-> We are migrating this README content to the [new documentation site](https://sveltiacms.app/en/), which is currently a work in progress. Please note that some information may be inaccurate or incomplete. We appreciate your patience during this transition.
+> We are in the process of migrating the README content to the [new documentation site](https://sveltiacms.app/en/), which is still a work in progress. Please note that some of the information may be inaccurate or incomplete. Thank you for your patience during this transition.
 <!-- prettier-ignore-end -->
 
 - [Motivation](#motivation)
@@ -1032,149 +1032,7 @@ If the `skip_ci` property is defined, you can manually trigger a deployment by c
 
 ### Setting up Content Security Policy
 
-If your site adopts Content Security Policy (CSP), use the following policy for Sveltia CMS, or some features may not work.
-
-```csp
-style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-font-src 'self' https://fonts.gstatic.com;
-img-src 'self' blob: data:;
-media-src blob:;
-frame-src blob:;
-script-src 'self' https://unpkg.com;
-connect-src 'self' blob: data: https://unpkg.com;
-```
-
-(UNPKG is used not only to download the CMS script bundle, but also to check for the latest version and retrieve additional dependencies such as [PDF.js](https://github.com/mozilla/pdf.js) and [Prism](https://prismjs.com/) language definitions)
-
-Then, add the following origins depending on your Git backend and enabled integrations.
-
-- GitHub: (If you’re running a GitHub Enterprise Server, you’ll also need to add the origin to these directives.)
-  - `img-src`
-    ```
-    https://*.githubusercontent.com
-    ```
-  - `connect-src`
-    ```
-    https://api.github.com https://www.githubstatus.com
-    ```
-- GitLab: (If you’re running a self-hosted instance, you’ll also need to add the origin to these directives.)
-  - `img-src`
-    ```
-    https://gitlab.com https://secure.gravatar.com
-    ```
-  - `connect-src`
-    ```
-    https://gitlab.com https://status-api.hostedstatus.com
-    ```
-- Gitea/Forgejo: (If you’re running a self-hosted instance, use the origin instead.)
-  - `img-src`
-    ```
-    https://gitea.com
-    ```
-  - `connect-src`
-    ```
-    https://gitea.com
-    ```
-- OpenStreetMap: (used in the built-in Map widget)
-  - `img-src`
-    ```
-    https://*.openstreetmap.org
-    ```
-  - `connect-src`
-    ```
-    https://*.openstreetmap.org
-    ```
-- Cloudinary:
-  - `img-src`
-    ```
-    https://res.cloudinary.com
-    ```
-    or a custom domain if configured
-  - `frame-src`
-    ```
-    https://console.cloudinary.com
-    ```
-- Uploadcare:
-  - `img-src`
-    ```
-    https://*.ucarecd.net https://ucarecdn.com
-    ```
-    or a custom domain if configured
-  - `connect-src`
-    ```
-    https://upload.uploadcare.com https://api.uploadcare.com
-    ```
-- Pexels:
-  - `img-src`
-    ```
-    https://images.pexels.com
-    ```
-  - `connect-src`
-    ```
-    https://images.pexels.com https://api.pexels.com
-    ```
-- Pixabay:
-  - `img-src`
-    ```
-    https://pixabay.com
-    ```
-  - `connect-src`
-    ```
-    https://pixabay.com
-    ```
-- Unsplash:
-  - `img-src`
-    ```
-    https://images.unsplash.com
-    ```
-  - `connect-src`
-    ```
-    https://images.unsplash.com https://api.unsplash.com
-    ```
-- Google Cloud Translation:
-  - `connect-src`
-    ```
-    https://translation.googleapis.com
-    ```
-- Google Gemini:
-  - `connect-src`
-    ```
-    https://generativelanguage.googleapis.com
-    ```
-- Anthropic:
-  - `connect-src`
-    ```
-    https://api.anthropic.com
-    ```
-- OpenAI:
-  - `connect-src`
-    ```
-    https://api.openai.com
-    ```
-- YouTube:
-  - `frame-src`
-    ```
-    https://www.youtube-nocookie.com
-    ```
-
-If you choose to [disable automatic deployments](#disabling-automatic-deployments) and have configured a webhook URL, you may need to add the origin to the `connect-src` directive. For example,
-
-- Netlify:
-  - `connect-src`
-    ```csp
-    https://api.netlify.com
-    ```
-- Cloudflare Pages
-  - `connect-src`
-    ```csp
-    https://api.cloudflare.com
-    ```
-
-If you have image field(s) and expect that images will be inserted as URLs, you may want to allow any source using a wildcard instead of specifying individual origins:
-
-```csp
-img-src 'self' blob: data: https://*;
-```
+See the [Security](https://sveltiacms.app/en/docs/security#setting-up-content-security-policy) page.
 
 ### Showing the CMS version
 
@@ -1211,13 +1069,7 @@ See the [Roadmap](https://sveltiacms.app/en/roadmap) page.
 
 ## Privacy
 
-Sveltia CMS is not a service but a client-side application that runs in your web browser. You don’t need an account to use the app, but you do need to authenticate with your Git hosting provider to read and write remote data. All content is stored in your Git repository. No data is sent to any server operated by us.
-
-Depending on your CMS configuration, you will need to use an OAuth application hosted by yourself or a third party, such as Netlify or Cloudflare, to retrieve an access token from GitHub. Alternatively, you can provide an access token directly on the CMS’s sign-in page. In any case, your token is stored in your browser’s local storage, and subsequent API requests are made directly between your browser and the Git hosting provider.
-
-The CMS also integrates with various third-party services, including stock photo providers and translation services. These are “bring your own key” (BYOK) features that are entirely optional. You provide your own API keys for these services, which are stored in your browser’s local storage, and API requests are then made directly between your browser and the relevant service providers.
-
-As we don’t collect any analytics data either, we don’t have a privacy policy. For third-party services, please refer to their respective privacy policies.
+See the [Privacy](https://sveltiacms.app/en/docs/privacy) page.
 
 ## Disclaimer
 
