@@ -32,39 +32,6 @@ This free, open source successor to Netlify/Decap CMS is currently in public bet
   - [Installation \& setup](#installation--setup)
   - [Migration](#migration)
 - [Tips \& Tricks](#tips--tricks)
-  - [Moving your site from Netlify to another hosting service](#moving-your-site-from-netlify-to-another-hosting-service)
-  - [Enabling autocomplete and validation for the configuration file](#enabling-autocomplete-and-validation-for-the-configuration-file)
-  - [Providing a JSON configuration file](#providing-a-json-configuration-file)
-  - [Providing a TOML configuration file](#providing-a-toml-configuration-file)
-  - [Providing multiple configuration files](#providing-multiple-configuration-files)
-  - [Working around an authentication error](#working-around-an-authentication-error)
-  - [Working with a local Git repository](#working-with-a-local-git-repository)
-  - [Enabling local development in Brave](#enabling-local-development-in-brave)
-  - [Using a custom icon for a collection](#using-a-custom-icon-for-a-collection)
-  - [Adding dividers to the collection list](#adding-dividers-to-the-collection-list)
-  - [Using a custom media folder for a collection](#using-a-custom-media-folder-for-a-collection)
-  - [Specifying default sort field and direction](#specifying-default-sort-field-and-direction)
-  - [Including Hugo’s special index file in a folder collection](#including-hugos-special-index-file-in-a-folder-collection)
-  - [Using singletons](#using-singletons)
-  - [Using keyboard shortcuts](#using-keyboard-shortcuts)
-  - [Controlling entry file paths](#controlling-entry-file-paths)
-  - [Translating entry fields with one click](#translating-entry-fields-with-one-click)
-  - [Localizing entry slugs](#localizing-entry-slugs)
-  - [Disabling non-default locale content](#disabling-non-default-locale-content)
-  - [Using a random ID for an entry slug](#using-a-random-id-for-an-entry-slug)
-  - [Configuring multiple media libraries](#configuring-multiple-media-libraries)
-  - [Optimizing images for upload](#optimizing-images-for-upload)
-  - [Disabling stock assets](#disabling-stock-assets)
-  - [Using entry tags for categorization](#using-entry-tags-for-categorization)
-  - [Editing site deployment configuration files](#editing-site-deployment-configuration-files)
-  - [Editing data files with a top-level list](#editing-data-files-with-a-top-level-list)
-  - [Changing the input type of a DateTime field](#changing-the-input-type-of-a-datetime-field)
-  - [Rendering soft line breaks as hard line breaks in Markdown](#rendering-soft-line-breaks-as-hard-line-breaks-in-markdown)
-  - [Controlling data output](#controlling-data-output)
-  - [Understanding exceptions in data output](#understanding-exceptions-in-data-output)
-  - [Disabling automatic deployments](#disabling-automatic-deployments)
-  - [Setting up Content Security Policy](#setting-up-content-security-policy)
-  - [Showing the CMS version](#showing-the-cms-version)
 - [Support \& Feedback](#support--feedback)
 - [Contributions](#contributions)
 - [Roadmap](#roadmap)
@@ -94,7 +61,7 @@ Due to its unfortunate abandonment in early 2022, Netlify CMS spawned 3 successo
   - ✅ Actively developed with frequent releases and numerous improvements
   - ✅ Relevant issues are being resolved regardless of their age or status
   - ✅ Most of new bug reports are addressed promptly, usually within a day
-  - ✅ An [extensive roadmap](#roadmap) is available to keep users informed
+  - ✅ An [extensive roadmap](https://sveltiacms.app/en/roadmap) is available to keep users informed
   - ✅ No known unpatched security vulnerabilities, with dependencies kept up-to-date
 - [Decap CMS](https://github.com/decaporg/decap-cms): a rebranded version
   - [Announced in February 2023](https://www.netlify.com/blog/netlify-cms-to-become-decap-cms/) as an official continuation with a Netlify agency partner taking ownership
@@ -130,11 +97,11 @@ For that reason, Sveltia CMS is the **true successor to Netlify CMS** — not ju
 
 ## Project Status
 
-Sveltia CMS is currently in **beta**, with version 1.0 (GA) scheduled for release in early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](#roadmap).
+Sveltia CMS is currently in **beta**, with version 1.0 (GA) scheduled for release in early 2026. Check our [release notes](https://github.com/sveltia/sveltia-cms/releases) and follow us on [Bluesky](https://bsky.app/profile/sveltiacms.app) for updates. See also our [roadmap](https://sveltiacms.app/en/roadmap).
 
 While we fix reported bugs as quickly as possible, usually within 24 hours, our overall progress may be slower than you think. The thing is, it’s not just a personal project of [@kyoshino](https://github.com/kyoshino), but also a complicated system involving various kinds of activities that require considerable effort:
 
-- Ensuring high [compatibility with Netlify/Decap CMS](#compatibility)
+- Ensuring high [compatibility with Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility)
   - The vast majority of existing configurations work out of the box
   - It works as a drop-in replacement for most use cases
   - Some missing features will be implemented before or shortly after GA
@@ -151,7 +118,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
     - Stalled [pull requests](https://github.com/decaporg/decap-cms/pulls)
   - Many of the bugs, including the annoying crashes, have already been solved
     - The remaining bugs are mostly related to [unimplemented features](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#current-limitations)
-  - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are [on our table](#roadmap) or already implemented in Sveltia CMS
+  - Many of their [top-voted features](https://github.com/decaporg/decap-cms/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) are [on our table](https://sveltiacms.app/en/roadmap) or already implemented in Sveltia CMS
 - Solving [our own issues](https://github.com/sveltia/sveltia-cms/issues)
 - Preparing top-notch [documentation](https://github.com/sveltia/sveltia-cms/issues/485)
 - Implementing our own enhancement ideas for every part of the product
