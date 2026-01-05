@@ -20,6 +20,11 @@ This free, open source successor to Netlify/Decap CMS is currently in public bet
 
 ## Table of contents
 
+<!-- prettier-ignore-start -->
+> [!NOTE]
+> We are migrating this README content to the [new documentation site](https://sveltiacms.app/en/), which is currently a work in progress. Please note that some information may be inaccurate or incomplete. We appreciate your patience during this transition.
+<!-- prettier-ignore-end -->
+
 - [Motivation](#motivation)
 - [Project Status](#project-status)
 - [Differentiators](#differentiators)
@@ -49,7 +54,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - It works as a drop-in replacement for most use cases
   - Some missing features will be implemented before or shortly after GA
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **280+ issues, or 600+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **280+ issues, or 610+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 300 issues, or 600 if including duplicates, by GA — Almost there! 🚀
     - 450 issues, or 900 if including duplicates, in the future 💪
