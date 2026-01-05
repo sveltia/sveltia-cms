@@ -6,6 +6,11 @@ Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, secu
 
 This free, open source successor to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026. Despite the beta status, it’s already used by hundreds of individuals and organizations worldwide in production. Check out the [Showcase](https://sveltiacms.app/en/showcase) page for some examples.
 
+<!-- prettier-ignore-start -->
+> [!NOTE]
+> We are in the process of migrating the README content to the [new documentation site](https://sveltiacms.app/en/), which is still a work in progress. Please note that some of the information may be inaccurate or incomplete. Thank you for your patience during this transition.
+<!-- prettier-ignore-end -->
+
 ![Git-based headless CMS made right](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-1.webp?20250405)<br>
 
 ![Fast and lightweight; modern UX/UI with dark mode](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-2.webp?20250405)<br>
@@ -19,11 +24,6 @@ This free, open source successor to Netlify/Decap CMS is currently in public bet
 ![Streamlined local and remote workflow; GitHub, GitLab, Gitea & Forgejo support; single-line migration from Netlify/Decap CMS (depending on your current setup); Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/screenshot-6.webp?20250712)<br>
 
 ## Table of contents
-
-<!-- prettier-ignore-start -->
-> [!NOTE]
-> We are in the process of migrating the README content to the [new documentation site](https://sveltiacms.app/en/), which is still a work in progress. Please note that some of the information may be inaccurate or incomplete. Thank you for your patience during this transition.
-<!-- prettier-ignore-end -->
 
 - [Motivation](#motivation)
 - [Project Status](#project-status)
