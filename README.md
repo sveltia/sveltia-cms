@@ -1,6 +1,6 @@
 # Sveltia CMS: Netlify/Decap CMS successor
 
-Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 280 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
+Sveltia CMS is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved over 285 issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows for content editors and developers alike.
 
@@ -28,10 +28,10 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
   - It works as a drop-in replacement for most use cases
   - Some missing features will be implemented before or shortly after GA
 - Tackling as many [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues) as possible
-  - So far, **280+ issues, or 610+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
+  - So far, **285+ issues, or 610+ if including duplicates, have been effectively solved** in Sveltia CMS (Yes, you read it right)
   - Target:
     - 300 issues, or 600 if including duplicates, by GA — Almost there! 🚀
-    - 450 issues, or 900 if including duplicates, in the future 💪
+    - 450 issues, or 950 if including duplicates, in the future 💪
     - or every single issue that’s relevant, fixable, and worth dealing with 🔥
   - Issues include everything:
     - Outstanding issues from feature requests to bug reports
@@ -45,7 +45,7 @@ While we fix reported bugs as quickly as possible, usually within 24 hours, our 
 - Preparing top-notch [documentation](https://github.com/sveltia/sveltia-cms/issues/485)
 - Implementing our own enhancement ideas for every part of the product
 
-[![280 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20251228)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
+[![285 Netlify/Decap CMS issues solved in Sveltia CMS](https://raw.githubusercontent.com/sveltia/sveltia-cms/main/docs/headline-1.webp?20260107)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
 
 ## Getting Started
 
