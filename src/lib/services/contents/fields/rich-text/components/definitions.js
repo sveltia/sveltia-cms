@@ -24,6 +24,7 @@ export const customComponentRegistry = new Map();
  * Built-in image component definition. The labels are localized in `getComponentDef()`.
  * @type {EditorComponentDefinition}
  * @see https://decapcms.org/docs/widgets/#Markdown
+ * @see https://sveltiacms.app/en/docs/fields/richtext
  */
 export const IMAGE_COMPONENT = {
   /* eslint-disable jsdoc/require-jsdoc */

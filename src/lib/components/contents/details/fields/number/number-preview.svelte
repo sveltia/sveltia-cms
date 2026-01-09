@@ -2,6 +2,7 @@
   @component
   Implement the preview for a Number field.
   @see https://decapcms.org/docs/widgets/#Number
+  @see https://sveltiacms.app/en/docs/fields/number
 -->
 <script>
   import { getCanonicalLocale } from '$lib/services/contents/i18n';

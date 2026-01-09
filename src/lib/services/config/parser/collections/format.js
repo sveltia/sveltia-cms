@@ -15,6 +15,7 @@ const bodyFieldType = ['code', 'markdown', 'richtext', 'text'];
  * @param {Field[]} [fields] Fields.
  * @returns {boolean} Whether there is a mismatch between the file extension and format.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
+ * @see https://sveltiacms.app/en/docs/collections/entries#file-format-and-extension
  */
 export const isFormatMismatch = (extension, format, fields = []) => {
   // If either is undefined, there’s no mismatch

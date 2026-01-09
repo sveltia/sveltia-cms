@@ -201,6 +201,7 @@ export const replace = (placeholder, context) => {
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @returns {string} Formatted entry summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
+ * @see https://sveltiacms.app/en/docs/collections/entries#summaries
  */
 export const getEntrySummary = (
   collection,

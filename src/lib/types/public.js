@@ -30,12 +30,12 @@
  */
 
 /**
- * Cloud media library name.
+ * Cloud media storage name.
  * @typedef {'cloudinary' | 'uploadcare'} CloudMediaLibraryName
  */
 
 /**
- * Supported media library name.
+ * Supported media storage name.
  * @typedef {'default' | CloudMediaLibraryName | 'stock_assets'} MediaLibraryName
  */
 
@@ -60,7 +60,7 @@
 
 /**
  * Raster image transformation options. See our
- * [README](https://github.com/sveltia/sveltia-cms#optimizing-images-for-upload) for details.
+ * [documentation](https://sveltiacms.app/en/docs/media/internal#image-optimization) for details.
  * @typedef {object} RasterImageTransformationOptions
  * @property {RasterImageConversionFormat} [format] New format. Default: `webp`.
  * @property {number} [quality] Image quality between 0 and 100. Default: `85`.
@@ -103,11 +103,11 @@
  */
 
 /**
- * Configuration for the default media library.
+ * Configuration for the default media storage.
  * @typedef {object} DefaultMediaLibraryConfig
- * @property {boolean} [multiple] Whether to allow multiple file selection in the media library.
- * This option is available for compatibility with the Cloudinary and Uploadcare media libraries,
- * but you can simply use the `multiple` option for the File/Image field types instead.
+ * @property {boolean} [multiple] Whether to allow multiple file selection in the media storage.
+ * This option is available for compatibility with the Cloudinary and Uploadcare media storage
+ * providers, but you can simply use the `multiple` option for the File/Image field types instead.
  * @property {number} [max_file_size] Maximum file size in bytes that can be accepted for uploading.
  * @property {boolean} [slugify_filename] Whether to rename an original asset file when saving it,
  * according to the global `slug` option. Default: `false`, meaning that the original file name is
@@ -116,19 +116,21 @@
  * @property {FileTransformations} [transformations] File transformation option map. The key is an
  * original format like `png` or `jpeg`. It can also be `raster_image` that matches any supported
  * raster image format. See our
- * [README](https://github.com/sveltia/sveltia-cms#optimizing-images-for-upload) for details.
+ * [documentation](https://sveltiacms.app/en/docs/media/internal#image-optimization) for details.
  * @see https://decapcms.org/docs/widgets/#File
  * @see https://decapcms.org/docs/widgets/#Image
+ * @see https://sveltiacms.app/en/docs/fields/file
+ * @see https://sveltiacms.app/en/docs/fields/image
  */
 
 /**
- * Options for the default media library.
+ * Options for the default media storage.
  * @typedef {object} DefaultMediaLibrary
- * @property {DefaultMediaLibraryConfig} [config] Configuration for the default media library.
+ * @property {DefaultMediaLibraryConfig} [config] Configuration for the default media storage.
  */
 
 /**
- * Options for the [Cloudinary media library](https://decapcms.org/docs/cloudinary/).
+ * Options for the [Cloudinary media storage](https://sveltiacms.app/en/docs/media/cloudinary).
  * @typedef {object} CloudinaryMediaLibrary
  * @property {boolean} [output_filename_only] Whether to output a file name instead of a full URL.
  * Default: `false`.
@@ -143,7 +145,7 @@
  */
 
 /**
- * Settings for the [Uploadcare media library](https://decapcms.org/docs/uploadcare/).
+ * Settings for the [Uploadcare media storage](https://sveltiacms.app/en/docs/media/uploadcare).
  * @typedef {object} UploadcareMediaLibrarySettings
  * @property {boolean} [autoFilename] Whether to append a file name to an output URL. Default:
  * `false`.
@@ -152,7 +154,7 @@
  */
 
 /**
- * Options for the [Uploadcare media library](https://decapcms.org/docs/uploadcare/).
+ * Options for the [Uploadcare media storage](https://sveltiacms.app/en/docs/media/uploadcare).
  * @typedef {object} UploadcareMediaLibrary
  * @property {Record<string, any>} [config] Options to be passed to Uploadcare, such as `multiple`.
  * The `publicKey` option is required for the global `media_library` option. See the [Uploadcare
@@ -168,7 +170,7 @@
  */
 
 /**
- * Options for the unified stock photo/video media library.
+ * Options for the unified stock photo/video providers.
  * @typedef {object} StockAssetMediaLibrary
  * @property {StockAssetProviderName[]} [providers] Enabled stock photo/video providers. The stock
  * photo/video section in the asset browser is hidden if an empty array is given. Default: all
@@ -176,19 +178,18 @@
  */
 
 /**
- * Supported [media library](https://decapcms.org/docs/configuration-options/#media-library).
+ * Supported [media storage](https://sveltiacms.app/en/docs/media).
  * @typedef {DefaultMediaLibrary | CloudinaryMediaLibrary | UploadcareMediaLibrary |
  * StockAssetMediaLibrary} MediaLibrary
  */
 
 /**
- * Unified media library option that supports multiple libraries. See our
- * [README](https://github.com/sveltia/sveltia-cms#configuring-multiple-media-libraries) for
- * details.
+ * Unified media storage option that supports multiple storage providers. See our
+ * [documentation](https://sveltiacms.app/en/docs/media#configuration) for details.
  * @typedef {object} MediaLibraries
- * @property {DefaultMediaLibrary} [default] Options for the default media library.
- * @property {CloudinaryMediaLibrary} [cloudinary] Options for the Cloudinary media library.
- * @property {UploadcareMediaLibrary} [uploadcare] Options for the Uploadcare media library.
+ * @property {DefaultMediaLibrary} [default] Options for the default media storage.
+ * @property {CloudinaryMediaLibrary} [cloudinary] Options for the Cloudinary media storage.
+ * @property {UploadcareMediaLibrary} [uploadcare] Options for the Uploadcare media storage.
  * @property {StockAssetMediaLibrary} [stock_assets] Options for the unified stock photo/video media
  * library.
  */
@@ -221,6 +222,7 @@
  * useful when a `default` value is provided and the field should not be editable by users.
  * @see https://decapcms.org/docs/configuration-options/#fields
  * @see https://decapcms.org/docs/widgets/
+ * @see https://sveltiacms.app/en/docs/fields
  */
 
 /**
@@ -237,7 +239,7 @@
  */
 
 /**
- * Field-level media library options.
+ * Field-level media storage options.
  * @typedef {object} FieldMediaLibraryOptions
  * @property {MediaLibraryName} [name] Library name.
  */
@@ -262,13 +264,15 @@
  * collection-level `media_folder` value.
  * @property {string} [public_folder] Public media folder path for the field. Default:
  * `media_folder` option value.
- * @property {MediaLibrary & FieldMediaLibraryOptions} [media_library] Legacy media library option
+ * @property {MediaLibrary & FieldMediaLibraryOptions} [media_library] Legacy media storage option
  * that allows only one library. This overrides the global `media_library` option. Use
  * `media_libraries` instead to support multiple libraries.
- * @property {MediaLibraries} [media_libraries] Unified media library option that supports multiple
+ * @property {MediaLibraries} [media_libraries] Unified media storage option that supports multiple
  * libraries. This overrides the global `media_libraries` option.
  * @see https://decapcms.org/docs/widgets/#File
  * @see https://decapcms.org/docs/widgets/#Image
+ * @see https://sveltiacms.app/en/docs/fields/file
+ * @see https://sveltiacms.app/en/docs/fields/image
  */
 
 /**
@@ -301,6 +305,7 @@
  * @property {Field[]} [fields] Set of subfields. This option can be omitted; in that case, only the
  * `type` property will be saved.
  * @see https://decapcms.org/docs/variable-type-widgets/
+ * @see https://sveltiacms.app/en/docs/fields/list#variable-type
  */
 
 /**
@@ -310,6 +315,7 @@
  * @property {string} [typeKey] Property name to store the type name in nested objects. Default:
  * `type`.
  * @see https://decapcms.org/docs/variable-type-widgets/
+ * @see https://sveltiacms.app/en/docs/fields/list#variable-type
  */
 
 /**
@@ -338,6 +344,7 @@
  * @property {'boolean'} widget Field type.
  * @property {boolean} [default] Default value. Accepts `true` or `false`.
  * @see https://decapcms.org/docs/widgets/#Boolean
+ * @see https://sveltiacms.app/en/docs/fields/boolean
  */
 
 /**
@@ -360,6 +367,7 @@
  * @property {{ code: string, lang: string }} [keys] Output property names. It has no effect if
  * `output_code_only` is `true`. Default: `{ code: 'code', lang: 'lang' }`.
  * @see https://decapcms.org/docs/widgets/#Code
+ * @see https://sveltiacms.app/en/docs/fields/code
  */
 
 /**
@@ -377,6 +385,7 @@
  * value. Default: `false`.
  * @property {boolean} [enableAlpha] Whether to edit/save the alpha channel value. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#color
+ * @see https://sveltiacms.app/en/docs/fields/color
  */
 
 /**
@@ -415,6 +424,7 @@
  * If `false`, time input/output is disabled.
  * @property {boolean} [picker_utc] Whether to make the date input/output UTC. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#Datetime
+ * @see https://sveltiacms.app/en/docs/fields/datetime
  */
 
 /**
@@ -427,6 +437,7 @@
  * @typedef {object} FileFieldProps
  * @property {'file'} widget Field type.
  * @see https://decapcms.org/docs/widgets/#File
+ * @see https://sveltiacms.app/en/docs/fields/file
  */
 
 /**
@@ -446,6 +457,7 @@
  * automatically copied to other locales. Default: `false`. This option only works when i18n is set
  * up with the global and collection-level `i18n` option.
  * @see https://decapcms.org/docs/widgets/#Hidden
+ * @see https://sveltiacms.app/en/docs/fields/hidden
  */
 
 /**
@@ -458,6 +470,7 @@
  * @typedef {object} ImageFieldProps
  * @property {'image'} widget Field type.
  * @see https://decapcms.org/docs/widgets/#Image
+ * @see https://sveltiacms.app/en/docs/fields/image
  */
 
 /**
@@ -474,6 +487,7 @@
  * @property {string} [key_label] Label for the key column. Default: Key.
  * @property {string} [value_label] Label for the value column. Default: Value.
  * @see https://staticjscms.netlify.app/docs/widget-keyvalue
+ * @see https://sveltiacms.app/en/docs/fields/keyvalue
  */
 
 /**
@@ -489,6 +503,7 @@
  * format depends on how the field is configured, with or without `field`, `fields` or `types`. See
  * the document for details.
  * @see https://decapcms.org/docs/widgets/#List
+ * @see https://sveltiacms.app/en/docs/fields/list
  */
 
 /**
@@ -527,8 +542,7 @@
  * @property {boolean} [root] Whether to save the field value at the top-level of the data file
  * without the field name. If the `single_file` i18n structure is enabled, the lists will still be
  * saved under locale keys. Default: `false`. See our
- * [README](https://github.com/sveltia/sveltia-cms#editing-data-files-with-a-top-level-list) for
- * details.
+ * [documentation](https://sveltiacms.app/en/docs/fields/list#top-level-list) for details.
  */
 
 /**
@@ -587,6 +601,7 @@
  * @property {number} [decimals] Precision of coordinates to be saved. Default: `7`.
  * @property {'Point' | 'LineString' | 'Polygon'} [type] Geometry type. Default: `Point`.
  * @see https://decapcms.org/docs/widgets/#Map
+ * @see https://sveltiacms.app/en/docs/fields/map
  */
 
 /**
@@ -600,18 +615,21 @@
  * 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'quote' | 'bulleted-list' |
  * 'numbered-list'} RichTextEditorButtonName
  * @see https://decapcms.org/docs/widgets/#Markdown
+ * @see https://sveltiacms.app/en/docs/fields/richtext
  */
 
 /**
  * Built-in editor component name for the rich text editor.
  * @typedef {'code-block' | 'image'} RichTextEditorComponentName
  * @see https://decapcms.org/docs/widgets/#Markdown
+ * @see https://sveltiacms.app/en/docs/fields/richtext
  */
 
 /**
  * Supported mode name for the rich text editor.
  * @typedef {'rich_text' | 'raw'} RichTextEditorMode
  * @see https://decapcms.org/docs/widgets/#Markdown
+ * @see https://sveltiacms.app/en/docs/fields/richtext
  */
 
 /**
@@ -636,6 +654,7 @@
  * the format `[![alt](src)](link)`, where clicking the image navigates to the provided link. This
  * feature can be disabled if it causes conflicts with certain frameworks.
  * @see https://decapcms.org/docs/widgets/#Markdown
+ * @see https://sveltiacms.app/en/docs/fields/richtext
  */
 
 /**
@@ -677,6 +696,7 @@
  * @property {number} [max] Maximum value that can be entered in the input. Default: `Infinity`.
  * @property {number} [step] Number to increase/decrease with the arrow key/button. Default: `1`.
  * @see https://decapcms.org/docs/widgets/#Number
+ * @see https://sveltiacms.app/en/docs/fields/number
  */
 
 /**
@@ -695,6 +715,7 @@
  * expanded if all the subfields are empty.
  * @property {string} [summary] Template of a label to be displayed on a collapsed object.
  * @see https://decapcms.org/docs/widgets/#Object
+ * @see https://sveltiacms.app/en/docs/fields/object
  */
 
 /**
@@ -750,6 +771,7 @@
  * `display_fields` field value.
  * @property {RelationFieldFilterOptions[]} [filters] Entry filter options.
  * @see https://decapcms.org/docs/widgets/#Relation
+ * @see https://sveltiacms.app/en/docs/fields/relation
  */
 
 /**
@@ -771,6 +793,7 @@
  * options. When `multiple` is `true`, it should be an array of valid values.
  * @property {SelectFieldValue[] | { label: string, value: SelectFieldValue }[]} options Options.
  * @see https://decapcms.org/docs/widgets/#Select
+ * @see https://sveltiacms.app/en/docs/fields/select
  */
 
 /**
@@ -789,6 +812,7 @@
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {string} [suffix] A string to be appended to the value. Default: empty string.
  * @see https://decapcms.org/docs/widgets/#String
+ * @see https://sveltiacms.app/en/docs/fields/string
  */
 
 /**
@@ -803,6 +827,7 @@
  * @property {'text'} widget Field type.
  * @property {string} [default] Default value.
  * @see https://decapcms.org/docs/widgets/#Text
+ * @see https://sveltiacms.app/en/docs/fields/text
  */
 
 /**
@@ -839,6 +864,7 @@
  * Entry field using a built-in field type.
  * @typedef {VisibleField | HiddenField} StandardField
  * @see https://decapcms.org/docs/widgets/
+ * @see https://sveltiacms.app/en/docs/fields
  */
 
 /**
@@ -873,6 +899,7 @@
  * 'keyvalue' | 'list' | 'map' | 'markdown' | 'number' | 'object' | 'relation' | 'richtext' |
  * 'select' | 'string' | 'text' | 'uuid'} BuiltInFieldType
  * @see https://decapcms.org/docs/widgets/
+ * @see https://sveltiacms.app/en/docs/fields
  */
 
 /**
@@ -880,6 +907,7 @@
  * @typedef {object} CustomFieldProps
  * @property {Exclude<string, BuiltInFieldType | ''>} widget Field type.
  * @see https://decapcms.org/docs/custom-widgets/
+ * @see https://sveltiacms.app/en/docs/api/field-types
  */
 
 /**
@@ -897,6 +925,7 @@
  * @typedef {'single_file' | 'multiple_files' | 'multiple_folders' | 'multiple_folders_i18n_root'
  * } I18nFileStructure
  * @see https://decapcms.org/docs/i18n/
+ * @see https://sveltiacms.app/en/docs/i18n
  * @see https://github.com/decaporg/decap-cms/pull/7400
  */
 
@@ -911,24 +940,25 @@
  * @property {LocaleCode[] | 'all' | 'default'} [initial_locales] Locales to be enabled when
  * creating a new entry draft. If this option is used, users will be able to disable the output of
  * non-default locales through the UI. See our
- * [README](https://github.com/sveltia/sveltia-cms#disabling-non-default-locale-content) for
+ * [documentation](https://sveltiacms.app/en/docs/i18n#disabling-non-default-locale-content) for
  * details.
  * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales.
  * Default: `true`.
  * DEPRECATED: Use the `initial_locales` option instead, which provides more flexibility.
- * `save_all_locales: false` is equivalent to `initial_locales: all`. See our README
- * https://github.com/sveltia/sveltia-cms#disabling-non-default-locale-content for details.
+ * `save_all_locales: false` is equivalent to `initial_locales: all`. See our documentation
+ * https://sveltiacms.app/en/docs/i18n#disabling-non-default-locale-content for details.
  * @property {{ key?: string, value?: string }} [canonical_slug] Property name and value template
  * used to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
  * localized files when entry slugs are localized. The default property name is `translationKey`
  * used in Hugo’s multilingual support, and the default value is the default locale’s slug. See our
- * [README](https://github.com/sveltia/sveltia-cms#localizing-entry-slugs) for details.
+ * [documentation](https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs) for details.
  * @property {boolean} [omit_default_locale_from_filename] Whether to exclude the default locale
  * from entry filenames. Default: `false`. This option applies to entry collections with the
  * `multiple_files` i18n structure enabled, as well as to file/singleton collection items with the
  * `file` path ending with `.{{locale}}.<extension>`, aiming to support [Zola’s multilingual
  * sites](https://www.getzola.org/documentation/content/multilingual/).
  * @see https://decapcms.org/docs/i18n/
+ * @see https://sveltiacms.app/en/docs/i18n
  * @see https://github.com/decaporg/decap-cms/issues/6932
  */
 
@@ -940,8 +970,7 @@
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the collection
  * file list and other places. See our
- * [README](https://github.com/sveltia/sveltia-cms#using-a-custom-icon-for-a-collection) for
- * details.
+ * [documentation](https://sveltiacms.app/en/docs/collections#icons) for details.
  * @property {string} file File path relative to the project root.
  * @property {Field[]} fields Set of fields to be included in the file.
  * @property {string} [media_folder] Internal media folder path for the collection. This overrides
@@ -960,7 +989,7 @@
  * @property {EditorOptions} [editor] Editor view options.
  * @see https://decapcms.org/docs/collection-file/
  * @see https://decapcms.org/docs/deploy-preview-links/
- * @see https://github.com/sveltia/sveltia-cms#using-singletons
+ * @see https://sveltiacms.app/en/docs/collections/files
  */
 
 /**
@@ -968,12 +997,14 @@
  * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'md' | 'markdown' | 'html' | 'txt' | string
  * } FileExtension
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
+ * @see https://sveltiacms.app/en/docs/collections/entries#file-format-and-extension
  */
 
 /**
  * Supported Markdown front matter format.
  * @typedef {'yaml-frontmatter' | 'toml-frontmatter' | 'json-frontmatter'} FrontMatterFormat
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
+ * @see https://sveltiacms.app/en/docs/collections/entries#file-format-and-extension
  */
 
 /**
@@ -981,6 +1012,7 @@
  * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'frontmatter' | FrontMatterFormat | 'raw' | string
  * } FileFormat
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
+ * @see https://sveltiacms.app/en/docs/collections/entries#file-format-and-extension
  */
 
 /**
@@ -991,6 +1023,7 @@
  * Multiple values can be defined with an array. This option or `pattern` is required.
  * @property {string | RegExp} [pattern] Regular expression matching pattern.
  * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
  * @see https://github.com/decaporg/decap-cms/issues/7347
  */
 
@@ -1008,8 +1041,7 @@
  * @typedef {object} SortableFields
  * @property {FieldKeyPath[]} fields A list of sortable field names.
  * @property {SortableFieldsDefaultOptions} [default] Default sort settings. See our
- * [README](https://github.com/sveltia/sveltia-cms#specifying-default-sort-field-and-direction) for
- * details.
+ * [documentation](https://sveltiacms.app/en/docs/collections/entries#sorting) for details.
  * @see https://staticjscms.netlify.app/docs/collection-overview#sortable-fields
  */
 
@@ -1021,6 +1053,7 @@
  * @property {FieldKeyPath} field Field name.
  * @property {string | RegExp | boolean} pattern Regular expression matching pattern or exact value.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering
  */
 
 /**
@@ -1029,6 +1062,7 @@
  * @property {ViewFilter[]} filters A list of view filters.
  * @property {string} [default] Default filter name.
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-filters
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering
  */
 
 /**
@@ -1040,6 +1074,7 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
+ * @see https://sveltiacms.app/en/docs/collections/entries#grouping
  */
 
 /**
@@ -1048,6 +1083,7 @@
  * @property {ViewGroup[]} groups A list of view groups.
  * @property {string} [default] Default group name.
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-groups
+ * @see https://sveltiacms.app/en/docs/collections/entries#grouping
  */
 
 /**
@@ -1085,7 +1121,7 @@
 
 /**
  * Index file inclusion options. See our
- * [README](https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection)
+ * [documentation](https://sveltiacms.app/en/docs/collections/entries#managing-hugo-s-special-index-file)
  * for details.
  * @typedef {object} CollectionIndexFile
  * @property {string} [name] Index file name without a locale or file extension. Default: `_index`,
@@ -1103,8 +1139,7 @@
 
 /**
  * A divider in the collection list and singleton list. See our
- * [README](https://github.com/sveltia/sveltia-cms#adding-dividers-to-the-collection-list) for
- * details.
+ * [documentation](https://sveltiacms.app/en/docs/collections#dividers) for details.
  * @typedef {object} CollectionDivider
  * @property {string} [name] Unique identifier for the divider. Can be omitted, but it must be
  * unique across all the collections and singletons. This property is included here because in the
@@ -1131,7 +1166,7 @@
  * the global `media_folder` option. It can be a relative path from the project root if it starts
  * with a slash. Otherwise it’s a path relative to the entry. If this option is omitted, the global
  * `media_folder` option value is used. See our
- * [README](https://github.com/sveltia/sveltia-cms#using-a-custom-media-folder-for-a-collection) for
+ * [documentation](https://sveltiacms.app/en/docs/media/internal#collection-level-configuration) for
  * details.
  * @property {string} [public_folder] Public media folder path for an entry collection. This
  * overrides the global `public_folder` option. Default: `media_folder` option value.
@@ -1149,9 +1184,11 @@
  * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
  * format is used for file output. Default: `false`.
  * DEPRECATED: Use the global YAML format options. `yaml_quote: true` is equivalent to `quote:
- * double`. See our README https://github.com/sveltia/sveltia-cms#controlling-data-output for
- * details.
+ * double`. See our documentation https://sveltiacms.app/en/docs/data-output#controlling-data-output
+ * for details.
  * @see https://decapcms.org/docs/configuration-options/#collections
+ * @see https://sveltiacms.app/en/docs/collections/entries
+ * @see https://sveltiacms.app/en/docs/collections/files
  */
 
 /**
@@ -1174,11 +1211,10 @@
  * entry. Default: `title`.
  * @property {string} [slug] Item slug template. Default: `identifier_field` option value. It cannot
  * contain slashes; to organize entries in subfolders, use the `path` option instead. It’s possible
- * to [localize the slug](https://github.com/sveltia/sveltia-cms#localizing-entry-slugs) or [use a
- * random ID](https://github.com/sveltia/sveltia-cms#using-a-random-id-for-an-entry-slug). Also,
- * it’s possible to show a special slug editor field in initial entry drafts by using
- * `{{fields._slug}}` (with an underscore prefix) or `{{fields._slug | localize}}` (to localize the
- * slug).
+ * to [localize the slug](https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs) or [use a
+ * random ID](https://sveltiacms.app/en/docs/collections/entries#slug-template-tags). Also, it’s
+ * possible to show a special slug editor field in initial entry drafts by using `{{fields._slug}}`
+ * (with an underscore prefix) or `{{fields._slug | localize}}` (to localize the slug).
  * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
  * Default: `Infinity`.
  * DEPRECATED: Use the global `slug.maxlength` option instead.
@@ -1186,15 +1222,14 @@
  * @property {FieldKeyPath[] | SortableFields} [sortable_fields] Custom sortable fields. Default:
  * `title`, `name`, `date`, `author` and `description`. For a Git backend, commit author and commit
  * date are also included by default. See our
- * [README](https://github.com/sveltia/sveltia-cms#specifying-default-sort-field-and-direction) for
- * details.
+ * [documentation](https://sveltiacms.app/en/docs/collections/entries#sorting) for details.
  * @property {ViewFilter[] | ViewFilters} [view_filters] View filters to be used in the entry list.
  * @property {ViewGroup[] | ViewGroups} [view_groups] View groups to be used in the entry list.
  * @property {NestedCollectionOptions} [nested] Options for a nested collection.
  * @property {CollectionMetaData} [meta] Meta data for a nested collection.
  * @property {CollectionIndexFile | boolean} [index_file] Index file inclusion options. If `true`,
  * the default index file name is `_index`, which is used for Hugo’s special index file. See our
- * [README](https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection)
+ * [documentation](https://sveltiacms.app/en/docs/collections/entries#managing-hugo-s-special-index-file)
  * for details.
  * @property {boolean | FieldKeyPath | FieldKeyPath[]} [thumbnail] Whether to show entry thumbnails
  * in the entry list. Default: `true` (auto-detect image/file fields). Set to `false` to disable, or
@@ -1204,6 +1239,7 @@
  * @property {number} [limit] The maximum number of entries that can be created in the collection.
  * Default: `Infinity`.
  * @see https://decapcms.org/docs/collection-folder/
+ * @see https://sveltiacms.app/en/docs/collections/entries
  */
 
 /**
@@ -1217,6 +1253,7 @@
  * @typedef {object} FileCollectionProps
  * @property {CollectionFile[]} files A set of files.
  * @see https://decapcms.org/docs/collection-file/
+ * @see https://sveltiacms.app/en/docs/collections/files
  */
 
 /**
@@ -1249,6 +1286,7 @@
  * @property {string} [deleteMedia] Message to be used when existing files are deleted.
  * @property {string} [openAuthoring] Message to be used when committed via a forked repository.
  * @see https://decapcms.org/docs/configuration-options/#commit-message-templates
+ * @see https://sveltiacms.app/en/docs/backends#commit-messages
  */
 
 /**
@@ -1265,13 +1303,15 @@
  * with any connected CI/CD provider. Default: `undefined`.
  * DEPRECATED: Use the new `skip_ci` option instead, which is more intuitive.
  * `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments:
- * true` is equivalent to `skip_ci: false`. See our README
- * https://github.com/sveltia/sveltia-cms#disabling-automatic-deployments for details.
+ * true` is equivalent to `skip_ci: false`. See our documentation
+ * https://sveltiacms.app/en/docs/deployments#disabling-automatic-deployments for details.
  * @property {boolean} [skip_ci] Whether to enable or disable automatic deployments with any
  * connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `true`, the `[skip ci]`
  * prefix will be added to commit messages. Default: `undefined`. See our
- * [README](https://github.com/sveltia/sveltia-cms#disabling-automatic-deployments) for details.
+ * [documentation](https://sveltiacms.app/en/docs/deployments#disabling-automatic-deployments) for
+ * details.
  * @see https://decapcms.org/docs/backends-overview/
+ * @see https://sveltiacms.app/en/docs/backends
  */
 
 /**
@@ -1301,6 +1341,9 @@
  * @see https://decapcms.org/docs/github-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
  * @see https://decapcms.org/docs/open-authoring/
+ * @see https://sveltiacms.app/en/docs/backends/github
+ * @see https://sveltiacms.app/en/docs/workflows/editorial
+ * @see https://sveltiacms.app/en/docs/workflows/open
  */
 
 /**
@@ -1332,6 +1375,8 @@
  * `false`.
  * @see https://decapcms.org/docs/gitlab-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
+ * @see https://sveltiacms.app/en/docs/backends/gitlab
+ * @see https://sveltiacms.app/en/docs/workflows/editorial
  */
 
 /**
@@ -1353,6 +1398,7 @@
  * @property {string} [auth_endpoint] OAuth base URL path. Default: `login/oauth/authorize`.
  * @property {string} app_id OAuth application ID.
  * @see https://decapcms.org/docs/gitea-backend/
+ * @see https://sveltiacms.app/en/docs/backends/gitea
  */
 
 /**
@@ -1370,6 +1416,7 @@
  * @typedef {object} TestBackend
  * @property {'test-repo'} name Backend name.
  * @see https://decapcms.org/docs/test-backend/
+ * @see https://sveltiacms.app/en/docs/backends/test
  */
 
 /**
@@ -1378,7 +1425,7 @@
  */
 
 /**
- * Global media library options.
+ * Global media storage options.
  * @typedef {object} GlobalMediaLibraryOptions
  * @property {MediaLibraryName} name Library name.
  */
@@ -1402,6 +1449,7 @@
  * @property {boolean} [trim] Whether to trim leading and trailing replacement characters. Default:
  * `true`.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
+ * @see https://sveltiacms.app/en/docs/collections/entries#global-slug-options
  */
 
 /**
@@ -1409,7 +1457,7 @@
  * @typedef {object} JsonFormatOptions
  * @property {'space' | 'tab'} [indent_style] Indent style. Default: 'space'.
  * @property {number} [indent_size] Indent size. Default: `2`.
- * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
+ * @see https://sveltiacms.app/en/docs/data-output#controlling-data-output
  */
 
 /**
@@ -1419,7 +1467,7 @@
  * @property {boolean} [indent_sequences] Whether to indent block sequences. Default: `true`.
  * @property {'none' | 'single' | 'double'} [quote] String value’s default quote type. Default:
  * 'none'.
- * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
+ * @see https://sveltiacms.app/en/docs/data-output#controlling-data-output
  * @see https://eemeli.org/yaml/#tostring-options
  */
 
@@ -1435,28 +1483,27 @@
  * path, and web-specific encoding should be done in the front-end code.
  * @property {JsonFormatOptions} [json] JSON format options.
  * @property {YamlFormatOptions} [yaml] YAML format options.
- * @see https://github.com/sveltia/sveltia-cms#controlling-data-output
+ * @see https://sveltiacms.app/en/docs/data-output#controlling-data-output
  */
 
 /**
  * CMS configuration.
  * @typedef {object} CmsConfig
  * @property {boolean} [load_config_file] Whether to load YAML/JSON CMS configuration file(s) when
- * [manually initializing the CMS](https://decapcms.org/docs/manual-initialization/). This works
+ * [manually initializing the CMS](https://sveltiacms.app/en/docs/api/initialization). This works
  * only in the `CMS.init()` method’s `config` option. Default: `true`.
  * @property {Backend} backend Backend options.
  * @property {'' | 'simple' | 'editorial_workflow'} [publish_mode] Publish mode. An empty string is
  * the same as `simple`. Default: `simple`.
  * @property {string} [media_folder] Global internal media folder path, relative to the project’s
- * root directory. Required unless a cloud media library is configured.
+ * root directory. Required unless a cloud media storage is configured.
  * @property {string} [public_folder] Global public media folder path, relative to the project’s
  * public URL. It must be an absolute path starting with `/`. Default: `media_folder` option value.
- * @property {MediaLibrary & GlobalMediaLibraryOptions} [media_library] Legacy media library option
+ * @property {MediaLibrary & GlobalMediaLibraryOptions} [media_library] Legacy media storage option
  * that allows only one library. This overrides the global `media_library` option. Use
- * `media_libraries` instead to support multiple libraries.
- * @property {MediaLibraries} [media_libraries] Unified media library option that supports multiple
- * libraries. See our
- * [README](https://github.com/sveltia/sveltia-cms#configuring-multiple-media-libraries) for
+ * `media_libraries` instead to support multiple storage providers.
+ * @property {MediaLibraries} [media_libraries] Unified media storage option that supports multiple
+ * libraries. See our [documentation](https://sveltiacms.app/en/docs/media#configuration) for
  * details.
  * @property {string} [site_url] Site URL. Default: current site’s origin
  * ([`location.origin`](https://developer.mozilla.org/en-US/docs/Web/API/Location/origin)).
@@ -1476,25 +1523,28 @@
  * @property {(CollectionFile | CollectionDivider)[]} [singletons] Set of singleton files, such as
  * the CMS configuration file or the homepage file. They are not part of any collection and can be
  * accessed directly through the collection list. The list can also contain dividers. See our
- * [README](https://github.com/sveltia/sveltia-cms#using-singletons) for details.
+ * [documentation](https://sveltiacms.app/en/docs/collections/singletons) for details.
  * @property {I18nOptions} [i18n] Global i18n options.
  * @property {EditorOptions} [editor] Editor view options.
  * @property {OutputOptions} [output] Data output options. See our
- * [README](https://github.com/sveltia/sveltia-cms#controlling-data-output) for details.
+ * [documentation](https://sveltiacms.app/en/docs/data-output#controlling-data-output) for details.
  * @see https://decapcms.org/docs/configuration-options/
  * @see https://decapcms.org/docs/i18n/
+ * @see https://sveltiacms.app/en/docs/i18n
  */
 
 /**
  * Entry file Parser.
  * @typedef {(text: string) => any | Promise<any>} FileParser
  * @see https://decapcms.org/docs/custom-formatters/
+ * @see https://sveltiacms.app/en/docs/api/file-formats
  */
 
 /**
  * Entry file formatter.
  * @typedef {(value: any) => string | Promise<string>} FileFormatter
  * @see https://decapcms.org/docs/custom-formatters/
+ * @see https://sveltiacms.app/en/docs/api/file-formats
  */
 
 /**
@@ -1515,6 +1565,7 @@
  * @property {(props: { [key: string]: any }) => string | JSX.Element} toPreview Function to convert
  * field properties to field preview.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ * @see https://sveltiacms.app/en/docs/api/editor-components
  */
 
 /**
@@ -1522,6 +1573,7 @@
  * @typedef {'prePublish' | 'postPublish' | 'preUnpublish' | 'postUnpublish' | 'preSave' |
  * 'postSave'} AppEventType
  * @see https://decapcms.org/docs/registering-events/
+ * @see https://sveltiacms.app/en/docs/api/events
  */
 
 /**
@@ -1572,6 +1624,7 @@
  * the `preSave` event, the handler can return a modified entry object in Immutable Map format to
  * change the data before it is saved. For other events, the return value is ignored.
  * @see https://decapcms.org/docs/registering-events/
+ * @see https://sveltiacms.app/en/docs/api/events
  */
 
 // @todo Write descriptions for the options below
@@ -1587,6 +1640,7 @@
  * @property {Document} document
  * @property {Window} window
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
+ * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
 
 /**
@@ -1597,6 +1651,7 @@
  * @property {string} classNameWrapper
  * @property {(value: any) => void} onChange
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
+ * @see https://sveltiacms.app/en/docs/api/field-types
  */
 
 /**
@@ -1608,12 +1663,14 @@
  * @property {(name: string) => any} getAsset
  * @property {Record<string, any>} fieldsMetaData
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
+ * @see https://sveltiacms.app/en/docs/api/field-types
  */
 
 /**
  * @typedef {object} CustomFieldSchema
  * @property {Record<string, any>} properties
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
+ * @see https://sveltiacms.app/en/docs/api/field-types
  */
 
 export {};

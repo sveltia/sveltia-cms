@@ -2,6 +2,7 @@
   @component
   Implement the editor for a Relation field.
   @see https://decapcms.org/docs/widgets/#Relation
+  @see https://sveltiacms.app/en/docs/fields/relation
 -->
 <script>
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';

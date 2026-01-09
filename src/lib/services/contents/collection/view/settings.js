@@ -12,7 +12,7 @@ import { currentView } from '$lib/services/contents/collection/view';
  */
 
 /**
- * View settings for all the folder collections.
+ * View settings for all the entry collections.
  * @type {Writable<Record<string, EntryListView> | undefined>}
  */
 export const entryListSettings = writable();

@@ -36,6 +36,7 @@ export const selectedEntries = writable([]);
  * @param {string} collectionName Collection name.
  * @returns {Entry[]} Entries.
  * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
  */
 export const getEntriesByCollection = (collectionName) => {
   const collection = getCollection(collectionName);

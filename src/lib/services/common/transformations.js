@@ -127,6 +127,7 @@ export const applyTruncateTransformation = (value, { max, ellipsis = '…' }) =>
  * @param {string} args.transformation Transformation, e.g `upper`, `truncate(10)`.
  * @returns {string} Transformed value.
  * @see https://decapcms.org/docs/summary-strings/
+ * @see https://sveltiacms.app/en/docs/string-transformations
  */
 export const applyTransformation = ({ fieldConfig, value, transformation }) => {
   if (transformation === 'upper') {

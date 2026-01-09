@@ -47,6 +47,7 @@
 
   // Fix the position of the custom mount element if needed
   // @see https://decapcms.org/docs/custom-mounting/
+  // @see https://sveltiacms.app/en/docs/customization#custom-mount-element
   onMount(() => {
     const ncRoot = /** @type {HTMLElement | null} */ (document.querySelector('#nc-root'));
 

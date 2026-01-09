@@ -32,12 +32,13 @@ export const isIndexFile = (path) => /\/_index(?:\.[\w-]+)?\.md$/.test(path);
  * Determine the slug for the given entry content.
  * @param {object} args Arguments.
  * @param {string} args.subPath File path without the collection folder, locale and extension. It’s
- * a slug in most cases, but it may be a path containing slash(es) when the Folder Collections Path
- * is configured.
+ * a slug in most cases, but it may be a path containing slash(es) when the entry collection’s
+ * subpath is configured.
  * @param {string | undefined} args.subPathTemplate Collection’s `subPath` configuration.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
+ * @see https://sveltiacms.app/en/docs/collections/entries
  */
 export const getSlug = ({ subPath, subPathTemplate }) => {
   if (subPathTemplate?.includes('{{slug}}')) {

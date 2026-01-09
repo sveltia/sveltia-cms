@@ -2,6 +2,7 @@
   @component
   Implement the preview for a Code field.
   @see https://decapcms.org/docs/widgets/#Code
+  @see https://sveltiacms.app/en/docs/fields/code
 -->
 <script>
   import { entryDraft } from '$lib/services/contents/draft';

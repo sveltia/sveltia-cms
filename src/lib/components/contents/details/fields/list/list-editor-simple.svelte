@@ -2,6 +2,7 @@
   @component
   Implement the editor for a List field without subfield(s).
   @see https://decapcms.org/docs/widgets/#List
+  @see https://sveltiacms.app/en/docs/fields/list
 -->
 <script>
   import { TextArea } from '@sveltia/ui';

@@ -2,6 +2,7 @@
   @component
   Implement the preview for a List field.
   @see https://decapcms.org/docs/widgets/#List
+  @see https://sveltiacms.app/en/docs/fields/list
 -->
 <script>
   import ListPreviewComplex from '$lib/components/contents/details/fields/list/list-preview-complex.svelte';

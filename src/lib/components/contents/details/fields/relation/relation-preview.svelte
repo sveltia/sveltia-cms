@@ -2,6 +2,7 @@
   @component
   Implement the preview for a Relation field.
   @see https://decapcms.org/docs/widgets/#Relation
+  @see https://sveltiacms.app/en/docs/fields/relation
 -->
 <script>
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';

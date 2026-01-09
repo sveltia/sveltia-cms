@@ -2,6 +2,7 @@
   @component
   Implement the editor for a String field.
   @see https://decapcms.org/docs/widgets/#String
+  @see https://sveltiacms.app/en/docs/fields/string
 -->
 <script>
   import { TextInput } from '@sveltia/ui';

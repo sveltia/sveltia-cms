@@ -52,7 +52,9 @@ const unsupportedFuncNames = [
   'resolveWidget',
 ];
 
-const COMPATIBILITY_URL = 'https://github.com/sveltia/sveltia-cms#compatibility';
+const COMPATIBILITY_URL =
+  'https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility';
+
 let initialized = false;
 
 /**
@@ -62,6 +64,7 @@ let initialized = false;
  * `load_config_file: false` to prevent the configuration file from being loaded.
  * @throws {TypeError} If `config` is not an object or undefined.
  * @see https://decapcms.org/docs/manual-initialization/
+ * @see https://sveltiacms.app/en/docs/api/initialization
  */
 const init = async ({ config } = {}) => {
   if (config !== undefined && !isObject(config)) {
@@ -76,7 +79,9 @@ const init = async ({ config } = {}) => {
 
   if (document.readyState === 'loading' && !document.querySelector('#nc-root')) {
     // A custom mount element (`<div id="nc-root">`) could appear after the CMS `<script>`, so just
-    // wait until the page content is loaded. https://decapcms.org/docs/custom-mounting/
+    // wait until the page content is loaded.
+    // @see https://decapcms.org/docs/custom-mounting/
+    // @see https://sveltiacms.app/en/docs/customization#custom-mount-element
     await new Promise((resolve) => {
       window.addEventListener('DOMContentLoaded', () => resolve(undefined), { once: true });
     });
@@ -98,6 +103,7 @@ const init = async ({ config } = {}) => {
  * @throws {TypeError} If `name` or `extension` is not a string, or if `methods` is not an object.
  * @throws {Error} If at least one of `fromFile` or `toFile` is not provided.
  * @see https://decapcms.org/docs/custom-formatters/
+ * @see https://sveltiacms.app/en/docs/api/file-formats
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile } = {}) => {
   if (typeof name !== 'string') {
@@ -132,6 +138,7 @@ const registerCustomFormat = (name, extension, { fromFile, toFile } = {}) => {
  * @param {EditorComponentDefinition} definition Component definition.
  * @throws {TypeError} If `definition` is not an object, or if required properties are invalid.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ * @see https://sveltiacms.app/en/docs/api/editor-components
  */
 const registerEditorComponent = (definition) => {
   if (!definition || typeof definition !== 'object') {
@@ -176,6 +183,7 @@ const registerEditorComponent = (definition) => {
  * @throws {TypeError} If the event listener is not an object, or is missing required properties.
  * @throws {RangeError} If the event listener name is not supported.
  * @see https://decapcms.org/docs/registering-events/
+ * @see https://sveltiacms.app/en/docs/api/events
  */
 const registerEventListener = (eventListener) => {
   if (!isObject(eventListener)) {
@@ -207,6 +215,7 @@ const registerEventListener = (eventListener) => {
  * @param {boolean} [options.raw] Whether to use a CSS string.
  * @throws {TypeError} If `style` is not a string, or `raw` is not a boolean.
  * @see https://decapcms.org/docs/customization/#registerpreviewstyle
+ * @see https://sveltiacms.app/en/docs/api/preview-styles
  */
 const registerPreviewStyle = (style, { raw = false } = {}) => {
   if (typeof style !== 'string') {
@@ -227,6 +236,7 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
  * @param {string} name Template name.
  * @param {ComponentType<CustomPreviewTemplateProps>} component React component.
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
+ * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
 const registerPreviewTemplate = (name, component) => {
   // eslint-disable-next-line no-console
@@ -241,6 +251,7 @@ const registerPreviewTemplate = (name, component) => {
  * @param {ComponentType<CustomFieldPreviewProps>} [preview] Component for the preview pane.
  * @param {CustomFieldSchema} [schema] Field schema.
  * @see https://decapcms.org/docs/custom-widgets/
+ * @see https://sveltiacms.app/en/docs/api/field-types
  */
 const registerFieldType = (name, control, preview, schema) => {
   // eslint-disable-next-line no-console
@@ -297,6 +308,8 @@ window.initCMS = init;
 // Expose React APIs for custom field types, custom preview templates and custom editor components
 // @see https://decapcms.org/docs/custom-widgets/
 // @see https://decapcms.org/docs/customization/
+// @see https://sveltiacms.app/en/docs/api/field-types
+// @see https://sveltiacms.app/en/docs/api/preview-templates
 window.createClass = createClass;
 window.createElement = createElement;
 window.h = createElement;

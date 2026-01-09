@@ -1,7 +1,8 @@
 <!--
   @component
   Implement the preview for a UUID field.
-  @see https://decapcms.org/docs/widgets/#uuid
+  @see https://staticjscms.netlify.app/docs/widget-uuid
+  @see https://sveltiacms.app/en/docs/fields/uuid
 -->
 <script>
   /**

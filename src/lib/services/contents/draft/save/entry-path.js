@@ -11,13 +11,14 @@ import { createPath } from '$lib/services/utils/file';
 
 /**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
- * and folder collections path.
+ * and entry collection’s subpath.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {string} args.slug Entry slug.
  * @returns {string} Complete path, including the folder, slug, extension and possibly locale.
  * @see https://decapcms.org/docs/i18n/
+ * @see https://sveltiacms.app/en/docs/i18n
  */
 export const createEntryPath = ({ draft, locale, slug }) => {
   const { collection, collectionFile, originalEntry, currentValues, isIndexFile } = draft;
@@ -43,8 +44,9 @@ export const createEntryPath = ({ draft, locale, slug }) => {
   } = entryCollection;
 
   /**
-   * Support folder collections path.
+   * Support entry collection’s subpath.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
+   * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-file-paths
    */
   let path = isIndexFile
     ? /** @type {string} */ (getIndexFile(entryCollection)?.name)

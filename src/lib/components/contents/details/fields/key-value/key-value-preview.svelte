@@ -2,6 +2,7 @@
   @component
   Implement the preview for a KeyValue field compatible with Static CMS.
   @see https://staticjscms.netlify.app/docs/widget-keyvalue
+  @see https://sveltiacms.app/en/docs/fields/keyvalue
 -->
 <script>
   import equal from 'fast-deep-equal';

@@ -63,5 +63,6 @@ export const selectAssetsView = writable();
  * Custom entry preview stylesheet URLs registered with the `CMS.registerPreviewStyle()` API.
  * @type {Set<string>}
  * @see https://decapcms.org/docs/customization/
+ * @see https://sveltiacms.app/en/docs/api/preview-styles
  */
 export const customPreviewStyleRegistry = new Set();

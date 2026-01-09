@@ -2,6 +2,7 @@
   @component
   Implement the editor for a Number field.
   @see https://decapcms.org/docs/widgets/#Number
+  @see https://sveltiacms.app/en/docs/fields/number
 -->
 <script>
   import { NumberInput } from '@sveltia/ui';

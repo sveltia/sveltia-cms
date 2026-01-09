@@ -156,7 +156,7 @@
         });
       }
     } else {
-      // Folder collection
+      // Entry collection
       if (routeType === 'new' && !subPath) {
         createDraft({
           collection,

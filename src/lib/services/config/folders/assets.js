@@ -38,6 +38,7 @@ import { getValidCollectionFiles } from '$lib/services/contents/collection/files
  * Collection-level and file-level asset folders.
  * @type {AssetFolderInfo[]}
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
+ * @see https://sveltiacms.app/en/docs/media/internal
  */
 const assetFolders = [];
 

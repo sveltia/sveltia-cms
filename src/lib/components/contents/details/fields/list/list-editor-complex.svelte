@@ -2,6 +2,8 @@
   @component
   Implement the editor for a List field with subfield(s).
   @see https://decapcms.org/docs/widgets/#List
+  @see https://decapcms.org/docs/variable-type-widgets/
+  @see https://sveltiacms.app/en/docs/fields/list
 -->
 <script>
   import { Button, Icon, Menu, MenuButton, MenuItem, Spacer, TruncatedText } from '@sveltia/ui';
@@ -155,7 +157,6 @@
    * @param {number} [args.dupIndex] List index of an item to be duplicated.
    * @param {string} [args.type] Variable type name. If the field doesn’t have variable types, it
    * will be `undefined`.
-   * @see https://decapcms.org/docs/variable-type-widgets/
    */
   const addItem = ({ index = addToTop ? 0 : items.length, dupIndex, type } = {}) => {
     updateComplexList(({ valueList, expanderStateList }) => {

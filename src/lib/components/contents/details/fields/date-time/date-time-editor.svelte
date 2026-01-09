@@ -2,6 +2,7 @@
   @component
   Implement the editor for a DateTime field.
   @see https://decapcms.org/docs/widgets/#Datetime
+  @see https://sveltiacms.app/en/docs/fields/datetime
   @todo Replace the native `<input>` with a custom component.
 -->
 <script>

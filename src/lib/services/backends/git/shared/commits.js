@@ -12,6 +12,7 @@ import { user } from '$lib/services/user';
 /**
  * Default commit message templates.
  * @see https://decapcms.org/docs/configuration-options/#commit-message-templates
+ * @see https://sveltiacms.app/en/docs/backends#commit-messages
  */
 const DEFAULT_COMMIT_MESSAGES = {
   create: 'Create {{collection}} “{{slug}}”',

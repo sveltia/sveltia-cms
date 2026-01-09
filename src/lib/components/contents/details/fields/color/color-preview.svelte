@@ -2,6 +2,7 @@
   @component
   Implement the preview for a Color field.
   @see https://decapcms.org/docs/widgets/#color
+  @see https://sveltiacms.app/en/docs/fields/color
 -->
 <script>
   /**

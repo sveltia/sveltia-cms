@@ -396,6 +396,7 @@
  * @property {boolean} hasTemplateTags Whether the `internalPath` contains template tags like
  * `/assets/images/{{slug}}`, which require special handling like `entryRelative`.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
+ * @see https://sveltiacms.app/en/docs/media/internal#configuring-folder-paths
  */
 
 /**
@@ -833,6 +834,7 @@
  * @property {string} [key] Target field name.
  * @property {SortOrder} [order] Sort order.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
+ * @see https://sveltiacms.app/en/docs/collections/entries#sorting
  */
 
 /**
@@ -841,6 +843,7 @@
  * @property {FieldKeyPath} field Target field name.
  * @property {string | RegExp | boolean} pattern Regular expression matching pattern or exact value.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering
  */
 
 /**
@@ -850,6 +853,7 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
+ * @see https://sveltiacms.app/en/docs/collections/entries#grouping
  */
 
 /**
@@ -993,6 +997,7 @@
  * @property {InternalLocaleCode} defaultLocale Default locale of the entry draft.
  * @property {string} [dynamicValue] Dynamic default value parsed from the URL query string.
  * @see https://decapcms.org/docs/dynamic-default-values/
+ * @see https://sveltiacms.app/en/docs/ui/content-editor#dynamic-default-values
  */
 
 /**

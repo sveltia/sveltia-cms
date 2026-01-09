@@ -31,6 +31,7 @@ export const featureCacheMap = new Map();
  * @returns {LexicalNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
  * the transformer definition.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ * @see https://sveltiacms.app/en/docs/api/editor-components
  */
 export const createLexicalNodeFeatures = (componentDef) => {
   const CustomNode = createCustomNodeClass(componentDef);

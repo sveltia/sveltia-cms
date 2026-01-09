@@ -18,6 +18,7 @@ import { getRegex } from '$lib/services/utils/misc';
  * @returns {{ options: ViewFilter[], default?: FilteringConditions }} Parsed view filters.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-filters
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering
  */
 export const parseFilterConfig = (filters) => {
   if (Array.isArray(filters)) {
@@ -51,6 +52,7 @@ export const parseFilterConfig = (filters) => {
  * @param {FilteringConditions[]} filters One or more filtering conditions.
  * @returns {Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering
  */
 export const filterEntries = (entries, collection, filters) => {
   const {

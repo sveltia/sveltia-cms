@@ -2,6 +2,7 @@
   @component
   Implement the editor for a List field.
   @see https://decapcms.org/docs/widgets/#List
+  @see https://sveltiacms.app/en/docs/fields/list
 -->
 <script>
   import { Group } from '@sveltia/ui';

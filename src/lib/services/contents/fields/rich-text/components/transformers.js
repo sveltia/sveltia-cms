@@ -21,6 +21,7 @@ import {
  * @param {any} args.CustomNode Lexical node class implementation.
  * @returns {Transformer} Transformer.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ * @see https://sveltiacms.app/en/docs/api/editor-components
  * @see https://lexical.dev/docs/packages/lexical-markdown#transformers
  * @see https://lexical.dev/docs/api/modules/lexical_markdown
  * @see https://github.com/sveltia/sveltia-cms/issues/410

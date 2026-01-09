@@ -2,6 +2,7 @@
   @component
   Implement the preview for a Map field.
   @see https://decapcms.org/docs/widgets/#Map
+  @see https://sveltiacms.app/en/docs/fields/map
 -->
 <script>
   /**

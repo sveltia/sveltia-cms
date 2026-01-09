@@ -20,6 +20,7 @@ import { getRegex } from '$lib/services/utils/misc';
  * @returns {{ options: ViewGroup[], default?: GroupingConditions }} Parsed view groups.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-groups
+ * @see https://sveltiacms.app/en/docs/collections/entries#grouping
  */
 export const parseGroupConfig = (filters) => {
   if (Array.isArray(filters)) {
@@ -54,6 +55,7 @@ export const parseGroupConfig = (filters) => {
  * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
  * a name and an entry list. When ungrouped, there will still be one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
+ * @see https://sveltiacms.app/en/docs/collections/entries#grouping
  */
 export const groupEntries = (entries, collection, conditions) => {
   const { field, pattern } = conditions ?? { field: '', pattern: undefined };

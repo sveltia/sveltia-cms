@@ -157,6 +157,7 @@ export const isEnabled = () => {
  * @returns {string} Transformation string. E.g. `w_400,c_scale`.
  * @see https://cloudinary.com/documentation/transformation_reference
  * @see https://decapcms.org/docs/cloudinary/#image-transformations
+ * @see https://sveltiacms.app/en/docs/media/cloudinary#image-transformations
  */
 export const transformationToString = (transformation) => {
   // Mapping from full parameter names to Cloudinary URL abbreviations
@@ -239,6 +240,7 @@ export const transformationToString = (transformation) => {
  * @param {MediaField} [options.fieldConfig] Field configuration for custom handling.
  * @returns {ExternalAsset[]} Assets.
  * @see https://decapcms.org/docs/cloudinary/#decap-cms-configuration-options
+ * @see https://sveltiacms.app/en/docs/media/cloudinary#configuration
  */
 export const parseResults = (results, { fieldConfig } = {}) => {
   const {

@@ -2,6 +2,7 @@
   @component
   Implement the preview for an Object field.
   @see https://decapcms.org/docs/widgets/#Object
+  @see https://sveltiacms.app/en/docs/fields/object
 -->
 <script>
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';

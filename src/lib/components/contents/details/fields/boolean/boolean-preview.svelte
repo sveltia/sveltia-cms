@@ -2,6 +2,7 @@
   @component
   Implement the preview for a Boolean field.
   @see https://decapcms.org/docs/widgets/#Boolean
+  @see https://sveltiacms.app/en/docs/fields/boolean
 -->
 <script>
   import { _ } from 'svelte-i18n';

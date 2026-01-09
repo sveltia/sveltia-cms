@@ -1,6 +1,7 @@
 <!--
   @component Implement iframe for custom preview styles.
   @see https://decapcms.org/docs/customization/
+  @see https://sveltiacms.app/en/docs/api/preview-styles
 -->
 <script>
   import { sanitize } from 'isomorphic-dompurify';

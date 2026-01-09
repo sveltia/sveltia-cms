@@ -84,6 +84,7 @@ export const getCollectionFilesByEntry = (collection, entry) => {
  * @param {string} fileName Collection file name.
  * @returns {Entry | undefined} File.
  * @see https://decapcms.org/docs/collection-file/
+ * @see https://sveltiacms.app/en/docs/collections/files
  */
 export const getCollectionFileEntry = (collectionName, fileName) =>
   get(allEntries).find((entry) =>

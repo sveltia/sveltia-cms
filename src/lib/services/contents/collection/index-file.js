@@ -32,7 +32,7 @@ export const getLocalizedLabel = () => {
  * enabled for the collection, otherwise `undefined`.
  * @see https://gohugo.io/content-management/organization/#index-pages-_indexmd
  * @see https://github.com/decaporg/decap-cms/issues/7381
- * @see https://github.com/sveltia/sveltia-cms#including-hugos-special-index-file-in-a-folder-collection
+ * @see https://sveltiacms.app/en/docs/collections/entries#managing-hugo-s-special-index-file
  */
 export const getIndexFile = (collection) => {
   if (!isEntryCollection(collection)) {

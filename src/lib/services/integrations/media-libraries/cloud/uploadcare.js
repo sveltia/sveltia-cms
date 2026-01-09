@@ -69,6 +69,7 @@ export const isEnabled = () => !!getPublicKey();
  * @param {MediaField} [options.fieldConfig] Field configuration for custom handling.
  * @returns {ExternalAsset[]} Assets.
  * @see https://decapcms.org/docs/uploadcare/#integration-settings
+ * @see https://sveltiacms.app/en/docs/media/uploadcare
  */
 export const parseResults = (results, { fieldConfig } = {}) => {
   const {

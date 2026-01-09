@@ -85,7 +85,7 @@
           {#if isBrave}
             {@html getLinkedString({
               key: 'local_backend.disabled',
-              link: 'https://github.com/sveltia/sveltia-cms#enabling-local-development-in-brave',
+              link: 'https://sveltiacms.app/en/docs/workflows/local#enabling-file-system-access-api-in-brave',
             })}
           {:else}
             {$_('local_backend.unsupported_browser')}

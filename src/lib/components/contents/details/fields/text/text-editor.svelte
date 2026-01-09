@@ -2,6 +2,7 @@
   @component
   Implement the editor for a Text field.
   @see https://decapcms.org/docs/widgets/#Text
+  @see https://sveltiacms.app/en/docs/fields/text
 -->
 <script>
   import { TextArea } from '@sveltia/ui';

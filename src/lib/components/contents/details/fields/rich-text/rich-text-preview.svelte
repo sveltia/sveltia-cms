@@ -2,6 +2,7 @@
   @component
   Implement the preview for a Markdown/RichText field.
   @see https://decapcms.org/docs/widgets/#Markdown
+  @see https://sveltiacms.app/en/docs/fields/richtext
 -->
 <script>
   import { sanitize } from 'isomorphic-dompurify';

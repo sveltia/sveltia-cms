@@ -19,6 +19,7 @@ import { cmsConfig } from '$lib/services/config';
  * @param {number} [options.maxLength] Maximum length of the slug.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
+ * @see https://sveltiacms.app/en/docs/collections/entries#global-slug-options
  */
 export const slugify = (
   string,

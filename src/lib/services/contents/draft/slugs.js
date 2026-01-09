@@ -140,7 +140,7 @@ export const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
  * @param {LocaleSlugMap | undefined} args.localizedSlugs Localized slug map.
  * @param {FillTemplateOptions} args.fillSlugOptions Arguments for {@link fillTemplate}.
  * @returns {string | undefined} Canonical slug.
- * @see https://github.com/sveltia/sveltia-cms#localizing-entry-slugs
+ * @see https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs
  * @see https://gohugo.io/content-management/multilingual/#bypassing-default-linking
  */
 export const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fillSlugOptions }) => {

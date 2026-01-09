@@ -16,6 +16,7 @@ import gitlab from '$lib/services/backends/git/gitlab';
  * List of all the supported backend services.
  * @type {Record<string, BackendService>}
  * @see https://decapcms.org/docs/backends-overview/
+ * @see https://sveltiacms.app/en/docs/backends
  */
 export const allBackendServices = {
   github,

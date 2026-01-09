@@ -23,6 +23,7 @@ export const customFileFormatRegistry = new Map();
  * @param {FileFormat} [args.format] Developer-defined file format.
  * @returns {FileExtension} Determined extension.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
+ * @see https://sveltiacms.app/en/docs/collections/entries#file-format-and-extension
  */
 export const detectFileExtension = ({ extension, format }) => {
   const customExtension = format ? customFileFormatRegistry.get(format)?.extension : undefined;
@@ -61,6 +62,7 @@ export const detectFileExtension = ({ extension, format }) => {
  * @param {FileFormat} [args.format] Developer-defined file format.
  * @returns {FileFormat} Determined format.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
+ * @see https://sveltiacms.app/en/docs/collections/entries#file-format-and-extension
  */
 export const detectFileFormat = ({ extension, format }) => {
   if (format) {
@@ -118,6 +120,7 @@ export const getEntryPathRegEx = ({
    * possibly with the parent directory. If the collection’s `path` is configured, use it to
    * generate a pattern, so that unrelated files are excluded.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
+   * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-file-paths
    */
   const filePathMatcher = subPath
     ? `(?<subPath>${subPath
@@ -154,6 +157,7 @@ export const getEntryPathRegEx = ({
  * @returns {[string, string] | undefined} Start and end delimiters. If `undefined`, the parser
  * automatically detects the delimiters, while the formatter uses the YAML delimiters.
  * @see https://decapcms.org/docs/configuration-options/#frontmatter_delimiter
+ * @see https://sveltiacms.app/en/docs/collections/entries#front-matter-delimiter
  */
 export const getFrontMatterDelimiters = ({ format, delimiter }) => {
   if (typeof delimiter === 'string' && delimiter.trim()) {

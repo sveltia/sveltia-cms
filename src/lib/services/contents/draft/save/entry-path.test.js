@@ -239,7 +239,7 @@ describe('contents/draft/save/entry-path', () => {
       expect(resultJa).toBe('posts/my-post.ja.md');
     });
 
-    it('should handle folder collections path with subPath', async () => {
+    it('should handle entry collections path with subPath', async () => {
       const { createEntryPath } = await import('./entry-path.js');
 
       mockFillTemplate.mockImplementation((template) => {

@@ -2,6 +2,7 @@
   @component
   Implement the editor for a Color field.
   @see https://decapcms.org/docs/widgets/#color
+  @see https://sveltiacms.app/en/docs/fields/color
   @todo Replace the native `<input>` with a custom component.
 -->
 <script>
