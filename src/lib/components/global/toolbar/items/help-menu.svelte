@@ -4,6 +4,7 @@
 
   import ReleaseNotesMenuItem from '$lib/components/help/release-notes-menu-item.svelte';
   import ShortcutsMenuItem from '$lib/components/help/shortcuts-menu-item.svelte';
+  import { prefs } from '$lib/services/user/prefs';
 
   /**
    * @typedef {object} Props
@@ -29,15 +30,18 @@
 
 <Menu aria-label={$_('help')}>
   <ShortcutsMenuItem {menuButton} />
-  {@render link('documentation', 'https://github.com/sveltia/sveltia-cms/blob/main/README.md')}
-  <ReleaseNotesMenuItem />
-  <Divider />
-  {@render link('report_issue', 'https://github.com/sveltia/sveltia-cms/issues/new?type=bug')}
-  {@render link(
-    'share_feedback',
-    'https://github.com/sveltia/sveltia-cms/discussions/new?category=general',
-  )}
-  {@render link('get_help', 'https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a')}
-  <Divider />
-  {@render link('join_discord', 'https://discord.gg/5hwCGqup5b')}
+  {#if $prefs.devModeEnabled}
+    {@render link('documentation', 'https://sveltiacms.app/en/docs')}
+    <ReleaseNotesMenuItem />
+    <Divider />
+    {@render link('report_issue', 'https://github.com/sveltia/sveltia-cms/issues')}
+    {@render link(
+      'share_feedback',
+      'https://github.com/sveltia/sveltia-cms/discussions/categories/ideas',
+    )}
+    {@render link('get_help', 'https://github.com/sveltia/sveltia-cms/discussions/categories/q-a')}
+    <Divider />
+    {@render link('bluesky', 'https://bsky.app/profile/sveltiacms.app')}
+    {@render link('join_discord', 'https://discord.com/invite/5hwCGqup5b')}
+  {/if}
 </Menu>

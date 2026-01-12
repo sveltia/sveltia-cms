@@ -152,6 +152,7 @@ export const strings = {
   share_feedback: 'Share Feedback',
   get_help: 'Get Help',
   join_discord: 'Join Us on Discord',
+  bluesky: 'Follow Us on Bluesky',
 
   // Update notification
   update_available: 'The latest version of Sveltia CMS is available.',

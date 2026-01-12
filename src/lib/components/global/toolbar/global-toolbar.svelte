@@ -11,6 +11,7 @@
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import SiteLogo from '$lib/components/global/toolbar/items/site-logo.svelte';
   import { hasOverlay } from '$lib/services/app/navigation';
+  import { prefs } from '$lib/services/user/prefs';
 </script>
 
 <div role="none" class="toolbar-wrapper" inert={$hasOverlay}>
@@ -24,8 +25,7 @@
       <PublishButton />
       <CreateButton />
       <NotificationsButton />
-      <!-- @todo Show the Help menu when end user resources are prepared -->
-      {#if 0}
+      {#if $prefs.devModeEnabled}
         <HelpButton />
       {/if}
       <AccountButton />

@@ -149,6 +149,7 @@ export const strings = {
   share_feedback: 'フィードバックを共有',
   get_help: 'サポート',
   join_discord: 'Discord チャンネルに参加',
+  bluesky: 'Bluesky でフォロー',
 
   // Onboarding
   mobile_promo_title: 'Sveltia CMS がモバイルに対応しました！',
