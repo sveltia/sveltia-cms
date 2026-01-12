@@ -721,4 +721,274 @@ describe('Test slugify()', () => {
     expect(slugify('こんにちは-世界', { maxLength: 5 })).toBe('こんにちは');
     expect(slugify('Hello-🌍-World', { maxLength: 8 })).toBe('hello-🌍-');
   });
+
+  test('lowercase option enabled (default)', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        lowercase: true,
+      },
+    });
+
+    expect(slugify('Hello World')).toBe('hello-world');
+    expect(slugify('HELLO WORLD')).toBe('hello-world');
+    expect(slugify('HeLLo WoRLd')).toBe('hello-world');
+    expect(slugify('CAFÉ')).toBe('café');
+    expect(slugify('CafeVIlla')).toBe('cafevilla');
+  });
+
+  test('lowercase option disabled', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        lowercase: false,
+      },
+    });
+
+    expect(slugify('Hello World')).toBe('Hello-World');
+    expect(slugify('HELLO WORLD')).toBe('HELLO-WORLD');
+    expect(slugify('HeLLo WoRLd')).toBe('HeLLo-WoRLd');
+    expect(slugify('CAFÉ')).toBe('CAFÉ');
+    expect(slugify('CafeVIlla')).toBe('CafeVIlla');
+  });
+
+  test('lowercase with accent cleaning', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: true,
+        sanitize_replacement: '-',
+        lowercase: true,
+      },
+    });
+
+    expect(slugify('CAFÉ')).toBe('cafe');
+    expect(slugify('Montréal')).toBe('montreal');
+    expect(slugify('SÃO PAULO')).toBe('sao-paulo');
+    expect(slugify('Zürich')).toBe('zuerich');
+    expect(slugify('François')).toBe('francois');
+  });
+
+  test('lowercase false with accent cleaning', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: true,
+        sanitize_replacement: '-',
+        lowercase: false,
+      },
+    });
+
+    expect(slugify('CAFÉ')).toBe('CAFE');
+    expect(slugify('Montréal')).toBe('Montreal');
+    expect(slugify('SÃO PAULO')).toBe('SAO-PAULO');
+    expect(slugify('Zürich')).toBe('Zuerich');
+    expect(slugify('François')).toBe('Francois');
+  });
+
+  test('lowercase with ASCII encoding', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'ascii',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        lowercase: true,
+      },
+    });
+
+    expect(slugify('HELLO WORLD')).toBe('hello-world');
+    expect(slugify('File123TEST')).toBe('file123test');
+    expect(slugify('Hello_World_123')).toBe('hello_world_123');
+  });
+
+  test('lowercase false with ASCII encoding', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'ascii',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        lowercase: false,
+      },
+    });
+
+    expect(slugify('HELLO WORLD')).toBe('HELLO-WORLD');
+    expect(slugify('File123TEST')).toBe('File123TEST');
+    expect(slugify('Hello_World_123')).toBe('Hello_World_123');
+  });
+
+  test('lowercase with custom sanitize replacement', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '_',
+        lowercase: true,
+      },
+    });
+
+    expect(slugify('Hello World')).toBe('hello_world');
+    expect(slugify('HELLO WORLD')).toBe('hello_world');
+
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '_',
+        lowercase: false,
+      },
+    });
+
+    expect(slugify('Hello World')).toBe('Hello_World');
+    expect(slugify('HELLO WORLD')).toBe('HELLO_WORLD');
+  });
+
+  test('lowercase with maxLength', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        lowercase: true,
+        maxlength: 10,
+      },
+    });
+
+    expect(slugify('HELLO WORLD')).toBe('hello-worl');
+    expect(slugify('HELLO-WORLD', { maxLength: 5 })).toBe('hello');
+
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        lowercase: false,
+        maxlength: 10,
+      },
+    });
+
+    expect(slugify('HELLO WORLD')).toBe('HELLO-WORL');
+    expect(slugify('HELLO-WORLD', { maxLength: 5 })).toBe('HELLO');
+  });
+
+  test('lowercase with trim option', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        trim: true,
+        lowercase: true,
+      },
+    });
+
+    expect(slugify('-HELLO WORLD-')).toBe('hello-world');
+    expect(slugify('---HELLO-WORLD---')).toBe('hello-world');
+
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        trim: true,
+        lowercase: false,
+      },
+    });
+
+    expect(slugify('-HELLO WORLD-')).toBe('HELLO-WORLD');
+    expect(slugify('---HELLO-WORLD---')).toBe('HELLO-WORLD');
+  });
+
+  test('lowercase with unicode characters', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        lowercase: true,
+      },
+    });
+
+    expect(slugify('Привет Мир')).toBe('привет-мир'); // Russian
+    expect(slugify('ПРИВЕТ МИР')).toBe('привет-мир'); // Russian uppercase
+    expect(slugify('こんにちは 世界')).toBe('こんにちは-世界'); // Japanese (no case distinction)
+    expect(slugify('HELLO 🌍 WORLD')).toBe('hello-🌍-world'); // Emoji
+
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        lowercase: false,
+      },
+    });
+
+    expect(slugify('Привет Мир')).toBe('Привет-Мир'); // Russian
+    expect(slugify('ПРИВЕТ МИР')).toBe('ПРИВЕТ-МИР'); // Russian uppercase
+    expect(slugify('HELLO 🌍 WORLD')).toBe('HELLO-🌍-WORLD'); // Emoji
+  });
+
+  test('lowercase default behavior', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        // lowercase not specified, should default to true
+      },
+    });
+
+    expect(slugify('Hello World')).toBe('hello-world');
+    expect(slugify('HELLO WORLD')).toBe('hello-world');
+  });
+
+  test('lowercase with fallback', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        lowercase: true,
+      },
+    });
+
+    // Fallback UUID should be lowercase
+    const resultLowercase = slugify('', { fallback: true });
+
+    expect(resultLowercase).toMatch(/^[0-9a-f]{12}$/); // All lowercase
+
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        lowercase: false,
+      },
+    });
+
+    // Fallback UUID should be lowercase (UUID is always lowercase)
+    const resultPreserveCase = slugify('', { fallback: true });
+
+    expect(resultPreserveCase).toMatch(/^[0-9a-f]{12}$/); // UUIDs are always lowercase
+  });
 });

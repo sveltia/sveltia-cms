@@ -1448,6 +1448,7 @@
  * Default: `Infinity`.
  * @property {boolean} [trim] Whether to trim leading and trailing replacement characters. Default:
  * `true`.
+ * @property {boolean} [lowercase] Whether to convert the slug to lowercase. Default: `true`.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://sveltiacms.app/en/docs/collections/entries#global-slug-options
  */

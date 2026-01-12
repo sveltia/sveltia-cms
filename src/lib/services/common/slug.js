@@ -32,6 +32,7 @@ export const slugify = (
       sanitize_replacement: sanitizeReplacement = '-',
       maxlength: maxLengthOption = undefined,
       trim: trimReplacement = true,
+      lowercase = true,
     } = {},
   } = /** @type {InternalCmsConfig} */ (get(cmsConfig)) ?? {};
 
@@ -52,8 +53,8 @@ export const slugify = (
     slug = slug.replaceAll(/[\p{Z}\p{C}!"#$&'()*+,/:;<=>?@[\]^`{|}]/gu, ' ');
   }
 
-  // Make the string lowercase; replace all the spaces with replacers (hyphens by default)
-  slug = slug.toLocaleLowerCase().trim().replaceAll(/\s+/g, sanitizeReplacement);
+  // Replace all the spaces with replacers (hyphens by default)
+  slug = slug.trim().replaceAll(/\s+/g, sanitizeReplacement);
 
   // Consolidate consecutive replacement characters into a single one and trim them from ends
   if (sanitizeReplacement) {
@@ -74,6 +75,10 @@ export const slugify = (
 
   if (typeof maxLength === 'number' && slug.length > maxLength) {
     slug = truncate(slug, maxLength, { ellipsis: '' });
+  }
+
+  if (lowercase) {
+    slug = slug.toLocaleLowerCase();
   }
 
   return slug;
