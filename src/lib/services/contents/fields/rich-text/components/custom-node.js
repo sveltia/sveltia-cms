@@ -29,7 +29,7 @@ import {
 export const createCustomNodeClass = (componentDef) => {
   const { id: componentName, label, collapsed, fields, pattern, toBlock, toPreview } = componentDef;
   const isMultiLine = isMultiLinePattern(pattern);
-  const preview = toPreview({});
+  const preview = toPreview?.({});
   const block = toBlock({});
 
   const tagName =

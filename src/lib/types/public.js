@@ -1563,8 +1563,8 @@
  * named capturing group(s) that will be passed directly to the internal `createNode` method.
  * @property {(props: { [key: string]: any }) => string} toBlock Function to convert field
  * properties to Markdown content.
- * @property {(props: { [key: string]: any }) => string | JSX.Element} toPreview Function to convert
- * field properties to field preview.
+ * @property {(props: { [key: string]: any }) => string | JSX.Element} [toPreview] Function to
+ * convert field properties to field preview.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
