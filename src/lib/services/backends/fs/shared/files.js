@@ -4,7 +4,7 @@
 
 import { unique } from '@sveltia/utils/array';
 import { getPathInfo, readAsText } from '@sveltia/utils/file';
-import { stripSlashes } from '@sveltia/utils/string';
+import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
@@ -116,7 +116,7 @@ export const getDirectoryHandle = (rootDirHandle, path) =>
  * @returns {RegExp} RegEx.
  */
 export const getPathRegex = (path) =>
-  createPathRegEx(path, (segment) => segment.replace(/{{.+?}}/, '.+?'));
+  createPathRegEx(path, (segment) => escapeRegExp(segment).replace(/\\\{\\\{.+?\\\}\\\}/g, '.+?'));
 
 /**
  * Retrieve all the files under the given directory recursively.

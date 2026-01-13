@@ -299,6 +299,90 @@ describe('Test getEntryPathRegEx()', () => {
     expect(regex.source).toBe('^(?<subPath>[^/]+?)\\.md$');
     expect('my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
   });
+
+  test('handles brackets in subPath', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'app/(content)/(writing)',
+      subPath: '{{slug}}/page',
+      _i18n,
+    });
+
+    // Brackets should be escaped literally in the regex
+    expect(regex.source).toBe(
+      '^app\\/\\(content\\)\\/\\(writing\\)\\/(?<subPath>[^/]+?\\/page)\\.md$',
+    );
+    expect('app/(content)/(writing)/my-post/page.md'.match(regex)?.groups?.subPath).toBe(
+      'my-post/page',
+    );
+    // Should not match without the brackets
+    expect('app/content/writing/my-post/page.md'.match(regex)).toBeNull();
+  });
+
+  test('handles mixed brackets and placeholders in subPath', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content',
+      subPath: '(draft)/{{status}}/{{slug}}',
+      _i18n,
+    });
+
+    // Brackets should be escaped, placeholders should become wildcard patterns
+    expect(regex.source).toBe('^content\\/(?<subPath>\\(draft\\)\\/[^/]+?\\/[^/]+?)\\.md$');
+    expect('content/(draft)/published/my-post.md'.match(regex)?.groups?.subPath).toBe(
+      '(draft)/published/my-post',
+    );
+    // Should not match with different structure
+    expect('content/draft/published/my-post.md'.match(regex)).toBeNull();
+  });
+
+  test('handles brackets in both basePath and subPath', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nRootMultiFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'mdx',
+      format: 'frontmatter',
+      basePath: 'app/(pages)',
+      subPath: '{{slug}}/page',
+      _i18n,
+    });
+
+    // Both basePath and subPath brackets should be escaped
+    expect(regex.source).toBe('^app\\/\\(pages\\)\\/(?<subPath>[^/]+?\\/page)\\.mdx$');
+    expect('app/(pages)/my-article/page.mdx'.match(regex)?.groups?.subPath).toBe('my-article/page');
+    // Should not match without brackets in basePath
+    expect('app/pages/my-article/page.md'.match(regex)).toBeNull();
+  });
 });
 
 describe('Test getFrontMatterDelimiters()', () => {

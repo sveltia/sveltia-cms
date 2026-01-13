@@ -871,6 +871,29 @@ describe('getPathRegex', () => {
     expect(regex.test('Folder/File.txt')).toBe(true);
     expect(regex.test('folder/file.txt')).toBe(false);
   });
+
+  test('should handle brackets in path', () => {
+    const regex = getPathRegex('app/(pages)/index.md');
+
+    expect(regex.test('app/(pages)/index.md')).toBe(true);
+    expect(regex.test('app/pages/index.md')).toBe(false);
+  });
+
+  test('should handle brackets with template tags', () => {
+    const regex = getPathRegex('app/(pages)/{{slug}}.md');
+
+    expect(regex.test('app/(pages)/my-post.md')).toBe(true);
+    expect(regex.test('app/(pages)/another.md')).toBe(true);
+    expect(regex.test('app/pages/my-post.md')).toBe(false);
+  });
+
+  test('should handle multiple bracket groups with templates', () => {
+    const regex = getPathRegex('app/(content)/(writing)/{{slug}}/page.md');
+
+    expect(regex.test('app/(content)/(writing)/my-article/page.md')).toBe(true);
+    expect(regex.test('app/(content)/(writing)/another/page.md')).toBe(true);
+    expect(regex.test('app/content/writing/my-article/page.md')).toBe(false);
+  });
 });
 
 describe('parseTextFileInfo', () => {

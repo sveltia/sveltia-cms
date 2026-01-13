@@ -14,7 +14,7 @@ import { slugify } from '$lib/services/common/slug';
  * @returns {RegExp} Regular expression.
  */
 export const createPathRegEx = (path, replacer) =>
-  new RegExp(`^${path.split('/').map(replacer).join('\\/')}\\b`);
+  new RegExp(`^${path.split('/').map(replacer).join('\\/')}(?:\\/|$)`);
 
 /**
  * Encode the given (partial) file path or file name. Since {@link encodeURIComponent} encodes

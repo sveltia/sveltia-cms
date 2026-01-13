@@ -89,6 +89,31 @@ export const detectFileFormat = ({ extension, format }) => {
 };
 
 /**
+ * Get the file path matcher pattern for the regex. The path pattern in the middle should match the
+ * filename (without extension), possibly with the parent directory. If the collection's `path` is
+ * configured, use it to generate a pattern, so that unrelated files are excluded. Note that the
+ * `path` may contain `{{variable}}` placeholders, which should be replaced with a non-greedy
+ * wildcard that excludes slashes. It may also contain brackets, like `app/(pages)`, which are used
+ * for route groups in frameworks like SvelteKit or Next.js, and should be matched literally.
+ * @param {string} [subPath] Normalized `path` collection option.
+ * @param {string} [indexFileName] File name for index file inclusion. Typically `_index`.
+ * @returns {string} File path matcher pattern.
+ * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
+ * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-file-paths
+ */
+const getFilePathMatcher = (subPath, indexFileName) => {
+  if (!subPath) {
+    return '(?<subPath>[^/]+?)';
+  }
+
+  const placeholderRegex = /\\\{\\\{.+?\\\}\\\}/g;
+  const escapedSubPath = escapeRegExp(subPath).replace(placeholderRegex, '[^/]+?');
+  const indexFileAlternative = indexFileName ? `|${indexFileName}` : '';
+
+  return `(?<subPath>${escapedSubPath}${indexFileAlternative})`;
+};
+
+/**
  * Get a regular expression that matches the entry paths of the given entry collection, taking the
  * i18n structure into account.
  * @param {object} args Arguments.
@@ -115,19 +140,6 @@ export const getEntryPathRegEx = ({
     structureMap: { i18nMultiFile, i18nMultiFolder, i18nRootMultiFolder },
   } = _i18n;
 
-  /**
-   * The path pattern in the middle, which should match the filename (without extension),
-   * possibly with the parent directory. If the collection’s `path` is configured, use it to
-   * generate a pattern, so that unrelated files are excluded.
-   * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
-   * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-file-paths
-   */
-  const filePathMatcher = subPath
-    ? `(?<subPath>${subPath
-        .replace(/\//g, '\\/')
-        .replace(/{{.+?}}/g, '[^/]+?')}${indexFileName ? `|${indexFileName}` : ''})`
-    : '(?<subPath>[^/]+?)';
-
   const localeMatcher = `(?<locale>${allLocales.join('|')})`;
 
   const pattern = [
@@ -135,7 +147,7 @@ export const getEntryPathRegEx = ({
     i18nRootMultiFolder ? `${localeMatcher}\\/` : '',
     basePath ? `${escapeRegExp(basePath)}\\/` : '',
     i18nMultiFolder ? `${localeMatcher}\\/` : '',
-    filePathMatcher,
+    getFilePathMatcher(subPath, indexFileName),
     i18nMultiFile
       ? omitDefaultLocaleFromFileName
         ? `(?:\\.(?<locale>${allLocales.filter((locale) => locale !== defaultLocale).join('|')}))?`
