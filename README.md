@@ -1,10 +1,10 @@
 # Sveltia CMS
 
-[Sveltia CMS](https://sveltiacms.app/en/) is a Git-based lightweight headless CMS under active development as a modern, powerful, direct replacement for Netlify CMS (now Decap CMS). We have picked up where they left off and have already solved hundreds of issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
+[Sveltia CMS](https://sveltiacms.app/en/) is a Git-based lightweight headless CMS under active development as a modern, powerful, direct [replacement for Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms) (now Decap CMS). We have picked up where they left off and have already solved hundreds of issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows for content editors and developers alike.
 
-This free, open source [successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms) is currently in public beta, with version 1.0 expected in early 2026. Check out the [Release Notes](https://github.com/sveltia/sveltia-cms/releases) for the latest updates.
+This free, open source successor to Netlify CMS is currently in public beta, with version 1.0 expected in early 2026. Check out the [Release Notes](https://github.com/sveltia/sveltia-cms/releases) for the latest updates.
 
 Despite the beta status, more and more people are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS every day. It’s already being used in production by hundreds of individuals and organizations worldwide. See our [Showcase](https://sveltiacms.app/en/showcase) for examples.
 
@@ -14,9 +14,9 @@ Despite the beta status, more and more people are [switching from Netlify/Decap 
 
 ## Documentation
 
-- [Introduction](https://sveltiacms.app/en/docs/intro): Product highlights, use cases, target audience, project goals
+- [Introduction](https://sveltiacms.app/en/docs/intro): Product highlights, use cases, project goals
 - [Getting Started](https://sveltiacms.app/en/docs/start): Step-by-step setup instructions
-- [Migration Guides](https://sveltiacms.app/en/docs/migration): Instructions for migrating from other CMSs, including Netlify CMS and Decap CMS
+- [Migration Guides](https://sveltiacms.app/en/docs/migration): Instructions for migrating from other CMSs
 - [Roadmap](https://sveltiacms.app/en/docs/roadmap): Upcoming features and improvements
 
 ## Community
