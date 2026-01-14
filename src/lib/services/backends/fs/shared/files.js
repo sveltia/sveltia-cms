@@ -13,6 +13,7 @@ import { getAssetKind } from '$lib/services/assets/kinds';
 import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
+import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/contents/file/config';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { createPathRegEx, getBlob, getGitHash } from '$lib/services/utils/file';
 
@@ -116,7 +117,9 @@ export const getDirectoryHandle = (rootDirHandle, path) =>
  * @returns {RegExp} RegEx.
  */
 export const getPathRegex = (path) =>
-  createPathRegEx(path, (segment) => escapeRegExp(segment).replace(/\\\{\\\{.+?\\\}\\\}/g, '.+?'));
+  createPathRegEx(path, (segment) =>
+    escapeRegExp(segment).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?'),
+  );
 
 /**
  * Retrieve all the files under the given directory recursively.

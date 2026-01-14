@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/contents/file/config';
 import {
   createPath,
   createPathRegEx,
@@ -622,7 +623,7 @@ describe('Test createPathRegEx()', () => {
       let escaped = segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
       // Then replace escaped template placeholders with wildcard
-      escaped = escaped.replace(/\\\{\\\{.+?\\\}\\\}/g, '.+?');
+      escaped = escaped.replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
       return escaped;
     });
 

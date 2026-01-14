@@ -12,6 +12,11 @@ import { getLocalePath } from '$lib/services/contents/i18n';
  */
 
 /**
+ * Regex to match escaped `{{variable}}` placeholders.
+ */
+export const ESCAPED_PLACEHOLDER_REGEX = /\\\{\\\{.+?\\\}\\\}/g;
+
+/**
  * @type {Map<string, CustomFileFormat>}
  */
 export const customFileFormatRegistry = new Map();
@@ -106,8 +111,7 @@ const getFilePathMatcher = (subPath, indexFileName) => {
     return '(?<subPath>[^/]+?)';
   }
 
-  const placeholderRegex = /\\\{\\\{.+?\\\}\\\}/g;
-  const escapedSubPath = escapeRegExp(subPath).replace(placeholderRegex, '[^/]+?');
+  const escapedSubPath = escapeRegExp(subPath).replace(ESCAPED_PLACEHOLDER_REGEX, '[^/]+?');
   const indexFileAlternative = indexFileName ? `|${indexFileName}` : '';
 
   return `(?<subPath>${escapedSubPath}${indexFileAlternative})`;
