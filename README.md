@@ -12,17 +12,16 @@ This free, open source [successor to Netlify/Decap CMS](https://sveltiacms.app/e
 
 ## Documentation
 
-- [Introduction](https://sveltiacms.app/en/docs/intro): Product highlights, use cases, target audience, project status
+- [Introduction](https://sveltiacms.app/en/docs/intro): Product highlights, use cases, target audience, project goals
 - [Getting Started](https://sveltiacms.app/en/docs/start): Step-by-step setup instructions
 - [Migration Guides](https://sveltiacms.app/en/docs/migration): Instructions for migrating from other CMSs, including Netlify CMS and Decap CMS
-- [Showcase](https://sveltiacms.app/en/showcase): Examples of websites using Sveltia CMS
+- [Showcase](https://sveltiacms.app/en/showcase): Examples of websites using Sveltia CMS, with links to source code
 - [Release Notes](https://github.com/sveltia/sveltia-cms/releases): Latest changes and updates
-- [Roadmap](https://sveltiacms.app/en/roadmap): Upcoming features and improvements
+- [Roadmap](https://sveltiacms.app/en/docs/roadmap): Upcoming features and improvements
 
 ## Community
 
 - [Bluesky](https://bsky.app/profile/sveltiacms.app): Follow us for news and updates
 - [Discord](https://discord.com/invite/5hwCGqup5b): Join the community and chat with us
-- [Support](https://sveltiacms.app/en/support): Get help with your setup
-- [Feedback](https://sveltiacms.app/en/feedback): Share your ideas and suggestions
+- [GitHub Discussions](https://github.com/sveltia/sveltia-cms/discussions): Ask questions and share ideas
 - [Contribute](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md): Learn how to contribute to the project
