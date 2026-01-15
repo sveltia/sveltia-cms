@@ -1,6 +1,9 @@
 minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
+  - devalue
+  - svelte
+  - "@sveltejs/*"
   - "@sveltia/*"
 
 onlyBuiltDependencies:
