@@ -204,9 +204,9 @@
  * @property {() => Promise<void>} fetchFiles Function to fetch files.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
  * backends only.
- * @property {(changes: FileChange[], options: CommitOptions) => Promise<CommitResults>
- * } commitChanges Function to save file changes, including additions and deletions, and return the
- * commit hash and a map of committed files.
+ * @property {(changes: FileChange[], options: CommitOptions) =>
+ * Promise<CommitResults>} commitChanges Function to save file changes, including additions and
+ * deletions, and return the commit hash and a map of committed files.
  * @property {() => Promise<Response>} [triggerDeployment] Function to manually trigger a new
  * deployment on any connected CI/CD provider. GitHub only.
  */
@@ -249,12 +249,12 @@
  * @property {() => Promise<boolean>} [init] Function to initialize the service.
  * @property {(userName: string, password: string) => Promise<boolean>} [signIn] Function to sign in
  * to the service.
- * @property {(query: string, options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>
- * } [search] Function to search files.
+ * @property {(query: string, options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalAsset[]>} [search] Function to search files.
  * @property {(options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>} [list] Function to
  * list files. For stock asset services, it should return popular or curated images.
- * @property {(files: File[], options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>
- * } [upload] Function to upload files to the cloud storage service.
+ * @property {(files: File[], options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalAsset[]>} [upload] Function to upload files to the cloud storage service.
  */
 
 /**
@@ -299,8 +299,8 @@
 
 /**
  * Git commit type.
- * @typedef {'create' | 'update' | 'delete' | 'uploadMedia' | 'deleteMedia' | 'openAuthoring'
- * } CommitType
+ * @typedef {'create' | 'update' | 'delete' | 'uploadMedia' | 'deleteMedia' |
+ * 'openAuthoring'} CommitType
  */
 
 /**
@@ -481,8 +481,8 @@
 
 /**
  * An entry collection definition.
- * @typedef {EntryCollection & EntryCollectionExtraProps & CollectionExtraProps
- * } InternalEntryCollection
+ * @typedef {EntryCollection & EntryCollectionExtraProps &
+ * CollectionExtraProps} InternalEntryCollection
  */
 
 /**
@@ -495,8 +495,8 @@
 
 /**
  * A file/singleton collection definition.
- * @typedef {FileCollection & FileCollectionExtraProps & CollectionExtraProps
- * } InternalFileCollection
+ * @typedef {FileCollection & FileCollectionExtraProps &
+ * CollectionExtraProps} InternalFileCollection
  */
 
 /**
