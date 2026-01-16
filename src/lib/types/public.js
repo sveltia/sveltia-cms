@@ -206,7 +206,7 @@
  */
 
 /**
- * Standard field properties for a built-in field type.
+ * Properties for a field that is visible in the editor UI.
  * @typedef {object} VisibleFieldProps
  * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
  * field value.
