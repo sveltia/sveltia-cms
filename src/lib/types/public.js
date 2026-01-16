@@ -198,22 +198,22 @@
  * Common field properties that are shared among all field types.
  * @typedef {object} CommonFieldProps
  * @property {string} name Unique identifier for the field. It cannot include periods and spaces.
+ * @property {boolean | 'duplicate' | 'translate' | 'none'} [i18n] Whether to enable the editor UI
+ * in locales other than the default locale. Default: `false`. `duplicate` disables the UI in
+ * non-default like `false` but automatically copies the default locale’s value to other locales.
+ * `translate` and `none` are aliases of `true` and `false`, respectively. This option only works
+ * when i18n is set up with the global and collection-level `i18n` option.
  */
 
 /**
  * Standard field properties for a built-in field type.
- * @typedef {object} StandardFieldProps
+ * @typedef {object} VisibleFieldProps
  * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
  * field value.
  * @property {string} [comment] Short description of the field to be displayed in the editor UI.
  * @property {string} [hint] Help message to be displayed below the input UI. Limited Markdown
  * formatting is supported: bold, italic, strikethrough and links.
  * @property {boolean} [preview] Whether to show the preview of the field. Default: `true`.
- * @property {boolean | 'duplicate' | 'translate' | 'none'} [i18n] Whether to enable the editor UI
- * in locales other than the default locale. Default: `false`. `duplicate` disables the UI in
- * non-default like `false` but automatically copies the default locale’s value to other locales.
- * `translate` and `none` are aliases of `true` and `false`, respectively. This option only works
- * when i18n is set up with the global and collection-level `i18n` option.
  * @property {boolean | LocaleCode[]} [required] Whether to make data input on the field required.
  * Default: `true`. This option also affects data output if the `omit_empty_optional_fields` global
  * output option is `true`. If i18n is enabled and the field doesn’t require input in all locales,
@@ -223,11 +223,6 @@
  * @see https://decapcms.org/docs/configuration-options/#fields
  * @see https://decapcms.org/docs/widgets/
  * @see https://sveltiacms.app/en/docs/fields
- */
-
-/**
- * Properties for a field that is visible in the editor UI.
- * @typedef {CommonFieldProps & StandardFieldProps} VisibleFieldProps
  */
 
 /**
@@ -349,7 +344,8 @@
 
 /**
  * Boolean field definition.
- * @typedef {VisibleFieldProps & BooleanFieldProps & AdjacentLabelProps} BooleanField
+ * @typedef {CommonFieldProps & VisibleFieldProps & BooleanFieldProps &
+ * AdjacentLabelProps} BooleanField
  */
 
 /**
@@ -372,7 +368,7 @@
 
 /**
  * Code field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & CodeFieldProps} CodeField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & CodeFieldProps} CodeField
  */
 
 /**
@@ -390,7 +386,8 @@
 
 /**
  * Color field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & ColorFieldProps} ColorField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps &
+ * ColorFieldProps} ColorField
  */
 
 /**
@@ -403,7 +400,7 @@
 
 /**
  * Compute field definition.
- * @typedef {VisibleFieldProps & ComputeFieldProps} ComputeField
+ * @typedef {CommonFieldProps & VisibleFieldProps & ComputeFieldProps} ComputeField
  */
 
 /**
@@ -429,7 +426,8 @@
 
 /**
  * DateTime field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & DateTimeFieldProps} DateTimeField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps &
+ * DateTimeFieldProps} DateTimeField
  */
 
 /**
@@ -442,7 +440,8 @@
 
 /**
  * File field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & MediaFieldProps & FileFieldProps } FileField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & MediaFieldProps &
+ * FileFieldProps} FileField
  */
 
 /**
@@ -451,11 +450,6 @@
  * @property {'hidden'} widget Field type.
  * @property {any} [default] Default value. Accepts any data type that can be stored with the
  * configured file format.
- * @property {false | 'duplicate' | 'none'} [i18n] Whether to enable the field in locales other than
- * the default. Unlike other visible fields, hidden fields can be configured to be enabled in
- * non-default locales only when set to `duplicate`. In that case, the default locale’s value is
- * automatically copied to other locales. Default: `false`. This option only works when i18n is set
- * up with the global and collection-level `i18n` option.
  * @see https://decapcms.org/docs/widgets/#Hidden
  * @see https://sveltiacms.app/en/docs/fields/hidden
  */
@@ -475,8 +469,8 @@
 
 /**
  * Image field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & MediaFieldProps & ImageFieldProps
- * } ImageField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & MediaFieldProps &
+ * ImageFieldProps} ImageField
  */
 
 /**
@@ -492,7 +486,8 @@
 
 /**
  * KeyValue field definition.
- * @typedef {VisibleFieldProps & KeyValueFieldProps & MultiValueFieldProps} KeyValueField
+ * @typedef {CommonFieldProps & VisibleFieldProps & KeyValueFieldProps &
+ * MultiValueFieldProps} KeyValueField
  */
 
 /**
@@ -508,7 +503,8 @@
 
 /**
  * Base properties for a List field.
- * @typedef {VisibleFieldProps & ListFieldProps & MultiValueFieldProps} ListFieldBaseProps
+ * @typedef {CommonFieldProps & VisibleFieldProps & ListFieldProps &
+ * MultiValueFieldProps} ListFieldBaseProps
  */
 
 /**
@@ -606,7 +602,7 @@
 
 /**
  * Map field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & MapFieldProps} MapField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & MapFieldProps} MapField
  */
 
 /**
@@ -666,8 +662,8 @@
 
 /**
  * RichText field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps & RichTextFieldProps
- * } RichTextField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps &
+ * RichTextFieldProps} RichTextField
  */
 
 /**
@@ -678,8 +674,8 @@
 
 /**
  * Markdown field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps & MarkdownFieldProps
- * } MarkdownField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps &
+ * MarkdownFieldProps} MarkdownField
  */
 
 /**
@@ -701,8 +697,8 @@
 
 /**
  * Number field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & NumberFieldProps & AdjacentLabelProps
- * } NumberField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & NumberFieldProps &
+ * AdjacentLabelProps} NumberField
  */
 
 /**
@@ -720,7 +716,7 @@
 
 /**
  * Base properties for a complex Object field with subfields or variable types.
- * @typedef {VisibleFieldProps & ObjectFieldProps} ComplexObjectFieldProps
+ * @typedef {CommonFieldProps & VisibleFieldProps & ObjectFieldProps} ComplexObjectFieldProps
  */
 
 /**
@@ -776,8 +772,8 @@
 
 /**
  * Relation field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & RelationFieldProps & MultiOptionFieldProps
- * } RelationField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & RelationFieldProps &
+ * MultiOptionFieldProps} RelationField
  */
 
 /**
@@ -798,8 +794,8 @@
 
 /**
  * Select field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & SelectFieldProps & MultiOptionFieldProps
- * } SelectField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & SelectFieldProps &
+ * MultiOptionFieldProps} SelectField
  */
 
 /**
@@ -817,8 +813,8 @@
 
 /**
  * String field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & StringFieldProps & AdjacentLabelProps &
- * CharCountProps} StringField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & StringFieldProps &
+ * AdjacentLabelProps & CharCountProps} StringField
  */
 
 /**
@@ -832,7 +828,8 @@
 
 /**
  * Text field definition.
- * @typedef {VisibleFieldProps & FieldValidationProps & TextFieldProps & CharCountProps } TextField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & TextFieldProps &
+ * CharCountProps} TextField
  */
 
 /**
@@ -850,7 +847,7 @@
 
 /**
  * UUID field definition.
- * @typedef {VisibleFieldProps & UuidFieldProps} UuidField
+ * @typedef {CommonFieldProps & VisibleFieldProps & UuidFieldProps} UuidField
  */
 
 /**
@@ -912,7 +909,8 @@
 
 /**
  * Entry field using a custom field type.
- * @typedef {CommonFieldProps & CustomFieldProps & Record<string, any>} CustomField
+ * @typedef {CommonFieldProps & VisibleFieldProps & CustomFieldProps &
+ * Record<string, any>} CustomField
  */
 
 /**
