@@ -234,7 +234,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     singletons,
   } = config;
 
-  const isGlobalFolderConfigured = !!_globalMediaFolder;
+  const isGlobalFolderConfigured = _globalMediaFolder !== undefined;
 
   // Normalize the media folder: an empty string, `/` and `.` are all considered as the root folder
   const globalMediaFolder = isGlobalFolderConfigured
@@ -289,7 +289,10 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     } = collection;
 
     // When specifying a `path` on an entry collection, `media_folder` defaults to an empty string
-    const mediaFolder = _mediaFolder === undefined && entryPath !== undefined ? '' : _mediaFolder;
+    const mediaFolder =
+      isGlobalFolderConfigured && _mediaFolder === undefined && entryPath !== undefined
+        ? ''
+        : _mediaFolder;
 
     addFolderIfNeeded({
       collectionName,

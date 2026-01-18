@@ -298,6 +298,84 @@ describe('config/folders/assets', () => {
       expect(result).toHaveLength(2);
     });
 
+    it('should handle empty string as configured media_folder', () => {
+      vi.mocked(getValidCollections).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: '', // empty string should be treated as configured
+        public_folder: '/',
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      // Should have the global asset folder even with empty string
+      expect(result).toHaveLength(2);
+      expect(result[1]).toEqual({
+        collectionName: undefined,
+        internalPath: '',
+        internalSubPath: undefined,
+        publicPath: '/',
+        entryRelative: false,
+        hasTemplateTags: false,
+      });
+    });
+
+    it('should handle entry path with media_folder defaulting to empty string when global folder is configured', () => {
+      vi.mocked(getValidCollections).mockReturnValue([
+        // @ts-ignore - simplified collection for testing
+        {
+          name: 'blog',
+          folder: 'content/blog',
+          path: '{{slug}}/index', // entry-relative path
+          // media_folder is undefined, should default to empty string because global is configured
+        },
+      ]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static',
+        public_folder: '/assets',
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+      // Should have the blog collection folder with media_folder defaulting to empty string
+      const blogFolder = result.find((f) => f.collectionName === 'blog');
+
+      expect(blogFolder).toBeDefined();
+      expect(blogFolder?.internalPath).toBe('content/blog');
+      expect(blogFolder?.internalSubPath).toBe('');
+    });
+
+    it('should NOT default media_folder to empty string for entry path when global folder is not configured', () => {
+      vi.mocked(getValidCollections).mockReturnValue([
+        // @ts-ignore - simplified collection for testing
+        {
+          name: 'blog',
+          folder: 'content/blog',
+          path: '{{slug}}/index', // entry-relative path
+          // media_folder is undefined
+        },
+      ]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        // NO global media_folder configured
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+      // Should NOT have the blog collection folder since media_folder stays undefined
+      const blogFolder = result.find((f) => f.collectionName === 'blog');
+
+      expect(blogFolder).toBeUndefined();
+    });
+
     it('should handle framework-specific public paths', () => {
       vi.mocked(getValidCollections).mockReturnValue([
         // @ts-ignore - simplified collection for testing
