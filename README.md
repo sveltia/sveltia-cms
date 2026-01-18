@@ -4,7 +4,7 @@
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows for content editors and developers alike.
 
-This free, open source, framework-agnostic successor to Netlify/Decap CMS is currently in public beta, with version 1.0 expected in early 2026. Check out the [Release Notes](https://github.com/sveltia/sveltia-cms/releases) for the latest updates.
+This free, open source successor to Netlify CMS is currently in public beta, with version 1.0 expected in early 2026. Check out the [Release Notes](https://github.com/sveltia/sveltia-cms/releases) for the latest updates.
 
 Despite the beta status, more and more people are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS every day. It’s already being used in production by hundreds of individuals and organizations worldwide. See our [Showcase](https://sveltiacms.app/en/showcase) for examples.
 
