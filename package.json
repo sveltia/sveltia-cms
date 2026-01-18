@@ -60,7 +60,7 @@
     "smol-toml": "^1.6.0",
     "svelte-i18n": "^4.0.1",
     "svgo": "^4.0.0",
-    "terra-draw": "^1.23.0",
+    "terra-draw": "^1.23.1",
     "terra-draw-leaflet-adapter": "1.0.3",
     "turndown": "^7.2.2",
     "yaml": "^2.8.2"
@@ -77,7 +77,7 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jsdoc": "^62.0.0",
+    "eslint-plugin-jsdoc": "^62.0.1",
     "eslint-plugin-package-json": "^0.88.1",
     "eslint-plugin-svelte": "^2.46.1",
     "eslint-plugin-unused-imports": "^4.3.0",
