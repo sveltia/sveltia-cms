@@ -652,18 +652,20 @@ export const strings = {
       no_collection: 'Collections are not defined.',
       missing_backend: 'The backend is not defined.',
       missing_backend_name: 'The backend name is not defined.',
-      unsupported_backend: 'The configured “{name}” backend is not supported.',
+      unsupported_backend: 'The configured “{name}” backend is not supported in Sveltia CMS.',
       missing_repository: 'The repository is not defined.',
       invalid_repository:
         'The configured repository is invalid. It must be in “owner/repo” format.',
-      oauth_implicit_flow: 'The configured authentication method (implicit flow) is not supported.',
+      oauth_implicit_flow:
+        'The configured authentication method (implicit flow) is not supported in Sveltia CMS. Use PKCE authorization instead.',
       oauth_no_app_id: 'OAuth application ID is not defined.',
       missing_media_folder: 'The media folder is not defined.',
       invalid_media_folder: 'The configured media folder is invalid. It must be a string.',
       invalid_public_folder: 'The configured public folder is invalid. It must be a string.',
       public_folder_relative_path:
         'The configured public folder is invalid. It must be an absolute path starting with “/”.',
-      public_folder_absolute_url: 'An absolute URL for the public folder option is not supported.',
+      public_folder_absolute_url:
+        'An absolute URL for the public folder option is not supported in Sveltia CMS.',
       invalid_collection_no_options:
         'The collection must have either the `folder`, `files` or `divider` option defined.',
       invalid_collection_multiple_options:

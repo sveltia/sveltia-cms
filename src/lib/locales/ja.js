@@ -652,11 +652,12 @@ export const strings = {
       no_collection: 'コレクションが定義されていません。',
       missing_backend: 'バックエンドが定義されていません。',
       missing_backend_name: 'バックエンド名が定義されていません。',
-      unsupported_backend: '設定されている「{name}」バックエンドは非対応です。',
+      unsupported_backend: '設定されている「{name}」バックエンドは Sveltia CMS では非対応です。',
       missing_repository: 'レポジトリが定義されていません。',
       invalid_repository:
         '設定されているレポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。',
-      oauth_implicit_flow: '設定されている認証方式 (暗黙的フロー) は非対応です。',
+      oauth_implicit_flow:
+        '設定されている認証方式 (暗黙的フロー) は Sveltia CMS では非対応です。代わりに PKCE 認証を使用してください。',
       oauth_no_app_id: ' OAuth アプリケーション ID が定義されていません。',
       missing_media_folder: 'メディアフォルダーが定義されていません。',
       invalid_media_folder:
@@ -665,7 +666,8 @@ export const strings = {
         '設定されているパブリックフォルダーが正しくありません。この設定は文字列でなければなりません。',
       public_folder_relative_path:
         '設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。',
-      public_folder_absolute_url: 'パブリックフォルダーオプションの絶対 URL は非対応です。',
+      public_folder_absolute_url:
+        'パブリックフォルダーオプションの絶対 URL は Sveltia CMS では非対応です。',
       invalid_collection_no_options:
         'コレクションは `folder`、`files`、`divider` オプションのいずれかを定義する必要があります。',
       invalid_collection_multiple_options:
