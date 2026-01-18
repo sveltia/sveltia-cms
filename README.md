@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-[Sveltia CMS](https://sveltiacms.app/en/) is a Git-based lightweight headless CMS under active development as a modern, powerful, direct [replacement for Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms) (now Decap CMS). We have picked up where they left off and have already solved hundreds of issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests.
+[Sveltia CMS](https://sveltiacms.app/en/) is a Git-based lightweight headless CMS under active development as a modern, powerful, direct [replacement for Netlify CMS and Decap CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms). We have solved hundreds of issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests, while maintaining compatibility with its configuration and API.
 
 Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements across the board ensure smooth daily workflows for content editors and developers alike.
 
