@@ -43,7 +43,7 @@
         height: var(--sui-button-small-height);
 
         h4 {
-          margin-inline: 8px 0;
+          margin-inline: var(--sui-focus-ring-width) 0;
           font-size: var(--sui-font-size-small);
           font-weight: var(--sui-font-weight-bold);
           color: var(--sui-secondary-foreground-color);

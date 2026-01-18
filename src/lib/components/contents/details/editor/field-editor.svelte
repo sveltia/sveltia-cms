@@ -455,9 +455,21 @@
     white-space: nowrap;
   }
 
-  .comment {
-    margin-block: 4px;
+  .comment,
+  .hint {
+    margin-inline: var(--sui-focus-ring-width) !important;
+    font-size: var(--sui-font-size-small);
     line-height: var(--sui-line-height-compact);
+  }
+
+  .comment {
+    margin-block: var(--sui-focus-ring-width) !important;
+  }
+
+  .hint {
+    flex: auto;
+    margin-block: var(--sui-focus-ring-width) 0 !important;
+    color: var(--sui-tertiary-foreground-color);
   }
 
   .footer {
@@ -465,13 +477,5 @@
     gap: 16px;
     justify-content: flex-end;
     margin-top: 4px;
-  }
-
-  .hint {
-    flex: auto;
-    margin: 0;
-    font-size: var(--sui-font-size-small);
-    line-height: var(--sui-line-height-compact);
-    opacity: 0.75;
   }
 </style>
