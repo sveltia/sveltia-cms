@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
 
   import { goto, selectedPageName } from '$lib/services/app/navigation';
-  import { selectedAssetFolder } from '$lib/services/assets/folders';
+  import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import { backendName } from '$lib/services/backends';
   import { cmsConfig } from '$lib/services/config';
   import { isSmallScreen } from '$lib/services/user/env';
@@ -16,15 +16,20 @@
         icon: 'library_books',
         link: '/collections',
       },
-      {
+    ];
+
+    // Hide Assets page if there is no asset folder configured
+    // @todo Remove this condition when the Asset Library supports external storage providers
+    if ($allAssetFolders.length) {
+      _pages.push({
         key: 'assets',
         label: $_('assets'),
         icon: 'photo_library',
         link: $isSmallScreen
           ? '/assets'
           : `/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`,
-      },
-    ];
+      });
+    }
 
     if ($cmsConfig?.publish_mode === 'editorial_workflow') {
       // _pages.push({
