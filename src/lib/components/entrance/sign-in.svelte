@@ -66,11 +66,7 @@
 <div role="none" class="buttons">
   {#if $signingIn}
     <div role="alert" class="message">{$_('signing_in')}</div>
-  {:else if !configuredBackend}
-    <div role="alert">
-      {$_('config.error.unsupported_backend', { values: { name: configuredBackendName } })}
-    </div>
-  {:else}
+  {:else if configuredBackend}
     {#if showLocalBackendOption}
       <Button
         variant="primary"

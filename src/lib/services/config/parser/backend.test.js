@@ -11,7 +11,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockI18nStrings = {
   'config.error.missing_backend': 'Missing backend configuration',
   'config.error.missing_backend_name': 'Backend name is required',
-  'config.error.unsupported_backend': 'Unsupported backend: {name}',
+  'config.error.unsupported_known_backend': 'Unsupported backend: {name}',
+  'config.error.unsupported_custom_backend': 'Unsupported backend: {name}',
+  'config.error.unsupported_backend_suggestion': 'Please check the supported backends.',
   'config.error.missing_repository': 'Missing repository',
   'config.error.invalid_repository': 'Invalid repository format',
   'config.error.oauth_implicit_flow': 'OAuth implicit flow is not supported',
@@ -78,6 +80,11 @@ vi.mock('$lib/services/backends', () => ({
     gitea: { name: 'gitea' },
   },
   validBackendNames: ['github', 'gitlab', 'gitea', 'local'],
+  unsupportedBackends: {
+    azure: { label: 'Azure DevOps' },
+    bitbucket: { label: 'Bitbucket' },
+    'git-gateway': { label: 'Git Gateway' },
+  },
 }));
 
 const mockCheckUnsupportedOptions = vi.fn();
@@ -201,7 +208,8 @@ describe('parseBackendConfig', () => {
 
       const [error] = [...collectors.errors];
 
-      expect(error).toBe('Unsupported backend: bitbucket');
+      expect(error).toContain('Unsupported backend: Bitbucket');
+      expect(error).toContain('Please check the supported backends');
     });
   });
 

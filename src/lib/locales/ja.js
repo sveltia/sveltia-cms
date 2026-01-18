@@ -652,7 +652,12 @@ export const strings = {
       no_collection: 'コレクションが定義されていません。',
       missing_backend: 'バックエンドが定義されていません。',
       missing_backend_name: 'バックエンド名が定義されていません。',
-      unsupported_backend: '設定されている「{name}」バックエンドは Sveltia CMS では非対応です。',
+      unsupported_known_backend:
+        '{name} バックエンドは Sveltia CMS では [非対応です](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility)。',
+      unsupported_custom_backend:
+        'カスタムバックエンドは Sveltia CMS では [非対応です](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility)。',
+      unsupported_backend_suggestion:
+        '[サポートされているバックエンド](https://sveltiacms.app/en/docs/backends#supported-backends) のいずれかを使用してください。',
       missing_repository: 'レポジトリが定義されていません。',
       invalid_repository:
         '設定されているレポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。',

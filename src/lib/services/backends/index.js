@@ -27,6 +27,18 @@ export const allBackendServices = {
 };
 
 /**
+ * List of backend services that are implemented in Netlify/Decap CMS but are not supported in
+ * Sveltia CMS for performance and/or deprecation reasons.
+ * @type {Record<string, { label: string }>}
+ * @see https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility
+ */
+export const unsupportedBackends = {
+  azure: { label: 'Azure DevOps' },
+  bitbucket: { label: 'Bitbucket' },
+  'git-gateway': { label: 'Git Gateway' },
+};
+
+/**
  * List of valid backend service names. This is used to validate the backend name in the site
  * configuration. Note that the `local` backend is not included here, as it’s a special case that
  * requires a Git backend service to be configured.

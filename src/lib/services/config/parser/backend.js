@@ -4,7 +4,7 @@ import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
-import { gitBackendServices, validBackendNames } from '$lib/services/backends';
+import { gitBackendServices, unsupportedBackends, validBackendNames } from '$lib/services/backends';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
@@ -47,7 +47,14 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
   }
 
   if (!validBackendNames.includes(name)) {
-    errors.add(get(_)('config.error.unsupported_backend', { values: { name } }));
+    const unsupportedBackend = unsupportedBackends[name];
+
+    const message = get(_)(
+      `config.error.unsupported_${unsupportedBackend ? 'known' : 'custom'}_backend`,
+      { values: { name: unsupportedBackend?.label } },
+    );
+
+    errors.add(`${message} ${get(_)('config.error.unsupported_backend_suggestion')}`);
 
     return;
   }
