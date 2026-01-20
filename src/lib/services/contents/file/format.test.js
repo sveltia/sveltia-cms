@@ -376,6 +376,7 @@ tags:
   - test
   - vitest
 ---
+
 This is the body content of the post.
 `,
     );
@@ -395,6 +396,7 @@ tags:
   - test
   - vitest
 ---
+
 This is the body content of the post.
 `,
     );
@@ -414,6 +416,7 @@ tags:
   - test
   - vitest
 +++
+
 This is the body content of the post.
 `,
     );
@@ -433,6 +436,7 @@ tags:
   - "test"
   - "vitest"
 ---
+
 This is the body content of the post.
 `,
     );
@@ -450,6 +454,7 @@ title = "My Post"
 published = true
 tags = [ "test", "vitest" ]
 ---
+
 This is the body content of the post.
 `,
     );
@@ -467,6 +472,7 @@ title = "My Post"
 published = true
 tags = [ "test", "vitest" ]
 +++
+
 This is the body content of the post.
 `,
     );
@@ -489,6 +495,7 @@ This is the body content of the post.
   ]
 }
 ---
+
 This is the body content of the post.
 `,
     );
@@ -511,6 +518,7 @@ This is the body content of the post.
   ]
 }
 }
+
 This is the body content of the post.
 `,
     );
@@ -536,7 +544,6 @@ This is the body content of the post.
 title: My Post
 published: true
 ---
-
 `,
     );
   });
@@ -551,7 +558,6 @@ published: true
       `---
 title: My Post
 ---
-
 `,
     );
   });

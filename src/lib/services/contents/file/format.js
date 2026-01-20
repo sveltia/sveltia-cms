@@ -91,17 +91,19 @@ export const formatFrontMatter = ({ content, _file }) => {
   }
 
   try {
+    let head = '';
+
     if (format === 'frontmatter' || format === 'yaml-frontmatter') {
-      return `${sd}\n${formatYAML(content, undefined, { quote: yamlQuote })}\n${ed}\n${body}\n`;
+      head = formatYAML(content, undefined, { quote: yamlQuote });
+    } else if (format === 'toml-frontmatter') {
+      head = formatTOML(content);
+    } else if (format === 'json-frontmatter') {
+      head = formatJSON(content);
+    } else {
+      return '';
     }
 
-    if (format === 'toml-frontmatter') {
-      return `${sd}\n${formatTOML(content)}\n${ed}\n${body}\n`;
-    }
-
-    if (format === 'json-frontmatter') {
-      return `${sd}\n${formatJSON(content)}\n${ed}\n${body}\n`;
-    }
+    return `${sd}\n${head}\n${ed}\n${body ? `\n${body}\n` : ''}`;
   } catch (ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
