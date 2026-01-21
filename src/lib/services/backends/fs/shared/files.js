@@ -116,10 +116,16 @@ export const getDirectoryHandle = (rootDirHandle, path) =>
  * @param {string} path Path.
  * @returns {RegExp} RegEx.
  */
-export const getPathRegex = (path) =>
-  createPathRegEx(path, (segment) =>
+export const getPathRegex = (path) => {
+  // Handle empty path (root folder) - match any file
+  if (!path) {
+    return /^.+$/;
+  }
+
+  return createPathRegEx(path, (segment) =>
     escapeRegExp(segment).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?'),
   );
+};
 
 /**
  * Retrieve all the files under the given directory recursively.

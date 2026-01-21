@@ -894,6 +894,17 @@ describe('getPathRegex', () => {
     expect(regex.test('app/(content)/(writing)/another/page.md')).toBe(true);
     expect(regex.test('app/content/writing/my-article/page.md')).toBe(false);
   });
+
+  test('should handle empty path (root folder)', () => {
+    const regex = getPathRegex('');
+
+    // Should match any file at root
+    expect(regex.test('my-post.md')).toBe(true);
+    expect(regex.test('index.html')).toBe(true);
+    expect(regex.test('hello.txt')).toBe(true);
+    // Should not match empty path
+    expect(regex.test('')).toBe(false);
+  });
 });
 
 describe('parseTextFileInfo', () => {

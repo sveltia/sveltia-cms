@@ -1533,4 +1533,24 @@ describe('Test getFileConfig()', () => {
     // The regex should contain the pattern: (?<subPath>{{slug}}|_index)
     expect(result.fullPathRegEx?.toString()).toContain('_index');
   });
+
+  test('entry collection with empty folder (root)', () => {
+    const result = getFileConfig({
+      rawCollection: {
+        name: 'root-posts',
+        folder: '',
+        fields: [],
+      },
+      _i18n: i18nDisabled,
+    });
+
+    // Should generate regex that matches files at root
+    expect(result.basePath).toBe('');
+    expect(result.fullPathRegEx).toBeDefined();
+    // The regex pattern for empty basePath should be: ^(?<subPath>[^/]+?)\.md$
+    expect(result.fullPathRegEx?.source).toBe('^(?<subPath>[^/]+?)\\.md$');
+    // The regex should match root-level files
+    expect(result.fullPathRegEx?.test('my-post.md')).toBe(true);
+    expect(result.fullPathRegEx?.test('index.md')).toBe(true);
+  });
 });
