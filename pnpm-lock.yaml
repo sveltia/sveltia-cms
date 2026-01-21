@@ -119,8 +119,8 @@ importers:
         specifier: ^1.5.6
         version: 1.5.6
       '@types/react':
-        specifier: ^19.2.8
-        version: 19.2.8
+        specifier: ^19.2.9
+        version: 19.2.9
       '@vitest/coverage-v8':
         specifier: ^4.0.17
         version: 4.0.17(vitest@4.0.17(@types/node@25.0.9)(jsdom@27.4.0)(sass@1.97.2)(yaml@2.8.2))
@@ -140,8 +140,8 @@ importers:
         specifier: ^2.32.0
         version: 2.32.0(eslint@8.57.1)
       eslint-plugin-jsdoc:
-        specifier: ^62.2.0
-        version: 62.2.0(eslint@8.57.1)
+        specifier: ^62.3.0
+        version: 62.3.0(eslint@8.57.1)
       eslint-plugin-package-json:
         specifier: ^0.88.1
         version: 0.88.1(@types/estree@1.0.8)(eslint@8.57.1)(jsonc-eslint-parser@2.4.2)
@@ -535,8 +535,8 @@ packages:
     peerDependencies:
       postcss-selector-parser: ^7.1.1
 
-  '@es-joy/jsdoccomment@0.81.0':
-    resolution: {integrity: sha512-4V4A0hFAB19id7w9iwiosV/rqwlH+PXEuYnnu1Cyc5jUjTwsE2G1qsX9TOCmfCmsWYBg6xeDC/XDFUzXAxDg3A==}
+  '@es-joy/jsdoccomment@0.82.0':
+    resolution: {integrity: sha512-xs3OTxPefjTZaoDS7H1X2pV33enAmZg+8YldjmeYk7XZnq420phdnp6o0JtrsHBdSRJ5+RTocgyED9TL3epgpw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
   '@es-joy/resolve.exports@1.2.0':
@@ -1054,8 +1054,8 @@ packages:
     resolution: {integrity: sha512-WYa2tUVV5HiArWPB3ydlOc4R2ivq0IDrlqhMi3l7mVsFEXNcTfxYFPIHXHXIh/ca/y/V5N4E1zecyxdIBjYnkQ==}
     engines: {node: '>= 10.0.0'}
 
-  '@preact/signals-core@1.12.1':
-    resolution: {integrity: sha512-BwbTXpj+9QutoZLQvbttRg5x3l5468qaV2kufh+51yha1c53ep5dY4kTuZR35+3pAZxpfQerGJiQqg34ZNZ6uA==}
+  '@preact/signals-core@1.12.2':
+    resolution: {integrity: sha512-5Yf8h1Ke3SMHr15xl630KtwPTW4sYDFkkxS0vQ8UiQLWwZQnrF9IKaVG1mN5VcJz52EcWs2acsc/Npjha/7ysA==}
 
   '@rollup/rollup-android-arm-eabi@4.55.2':
     resolution: {integrity: sha512-21J6xzayjy3O6NdnlO6aXi/urvSRjm6nCI6+nF6ra2YofKruGixN9kfT+dt55HVNwfDmpDHJcaS3JuP/boNnlA==}
@@ -1268,8 +1268,8 @@ packages:
   '@types/qrcode@1.5.6':
     resolution: {integrity: sha512-te7NQcV2BOvdj2b1hCAHzAoMNuj65kNBMz0KBaxM6c3VGBOhU0dURQKOtH8CFNI/dsKkwlv32p26qYQTWoB5bw==}
 
-  '@types/react@19.2.8':
-    resolution: {integrity: sha512-3MbSL37jEchWZz2p2mjntRZtPt837ij10ApxKfgmXCTuHWagYg7iA5bqPw6C8BMPfwidlvfPI/fxOc42HLhcyg==}
+  '@types/react@19.2.9':
+    resolution: {integrity: sha512-Lpo8kgb/igvMIPeNV2rsYKTgaORYdO1XGVZ4Qz3akwOj0ySGYMPlQWa8BaLn0G63D1aSaAQ5ldR06wCpChQCjA==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -1652,8 +1652,8 @@ packages:
     resolution: {integrity: sha512-MOqHvMWF9/9MX6nza0KgvFH4HpMU0EF5uUDXqX/BtxtU8NfB0QzRtJ8Oe/6SuS4kbhyzVJwjd97EA4PKrzJ8bw==}
     engines: {node: '>=0.12'}
 
-  data-urls@6.0.0:
-    resolution: {integrity: sha512-BnBS08aLUM+DKamupXs3w2tJJoqU+AkaE/+6vQxi/G/DPmIZFJJp9Dkb1kM03AZx8ADehDUZgsNxju3mPXZYIA==}
+  data-urls@6.0.1:
+    resolution: {integrity: sha512-euIQENZg6x8mj3fO6o9+fOW8MimUI4PpD/fZBhJfeioZVy9TUpM4UY7KjQNVZFlqwJ0UdzRDzkycB997HEq1BQ==}
     engines: {node: '>=20'}
 
   data-view-buffer@1.0.2:
@@ -1905,8 +1905,8 @@ packages:
       '@typescript-eslint/parser':
         optional: true
 
-  eslint-plugin-jsdoc@62.2.0:
-    resolution: {integrity: sha512-juIekE88Gy1FnjsQuwkrZ3OW4UCkQuhiBf9QqF9U1xgqtan4rQFCOUn4cKeHR1ObBqJ8/pG8a0lZlAuKlDLpdw==}
+  eslint-plugin-jsdoc@62.3.0:
+    resolution: {integrity: sha512-Gc5Ls5qQC6NwqtQTtJ2JE5BwvX348ZCZ+4+QiZ9RpoQ1TCcxFF8Z0E5jaLkTyYNqyhx+uKAvljNHE0B7PBw+iw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
@@ -1979,8 +1979,8 @@ packages:
     resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
     engines: {node: '>=0.10'}
 
-  esrap@2.2.1:
-    resolution: {integrity: sha512-GiYWG34AN/4CUyaWAgunGt0Rxvr1PTMlGC0vvEov/uOQYWne2bpN03Um+k8jT+q3op33mKouP2zeJ6OlM+qeUg==}
+  esrap@2.2.2:
+    resolution: {integrity: sha512-zA6497ha+qKvoWIK+WM9NAh5ni17sKZKhbS5B3PoYbBvaYHZWoS33zmFybmyqpn07RLUxSmn+RCls2/XF+d0oQ==}
 
   esrecurse@4.3.0:
     resolution: {integrity: sha512-KmfKL3b6G+RXvP8N1vr3Tq1kL/oCFgn2NYXEtqP8/L3pKapUA4G8cFVaoF3SU323CD4XypR/ffioHmkti6/Tag==}
@@ -2475,8 +2475,8 @@ packages:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
     hasBin: true
 
-  jsdoc-type-pratt-parser@7.0.0:
-    resolution: {integrity: sha512-c7YbokssPOSHmqTbSAmTtnVgAVa/7lumWNYqomgd5KOMyPrRve2anx6lonfOsXEQacqF9FKVUj7bLg4vRSvdYA==}
+  jsdoc-type-pratt-parser@7.1.0:
+    resolution: {integrity: sha512-SX7q7XyCwzM/MEDCYz0l8GgGbJAACGFII9+WfNYr5SLEKukHWRy2Jk3iWRe7P+lpYJNs7oQ+OSei4JtKGUjd7A==}
     engines: {node: '>=20.0.0'}
 
   jsdom@27.4.0:
@@ -3531,6 +3531,10 @@ packages:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
     engines: {node: '>=18'}
 
+  whatwg-mimetype@5.0.0:
+    resolution: {integrity: sha512-sXcNcHOC51uPGF0P/D4NVtrkjSU2fNsm9iog4ZvZJsL3rjoDAzXZhkm2MWt1y+PUdggKAYVoMAIYcs78wJ51Cw==}
+    engines: {node: '>=20'}
+
   whatwg-url@15.1.0:
     resolution: {integrity: sha512-2ytDk0kiEj/yu90JOAp44PVPUkO9+jVhyf+SybKlRHSDlvOOZhdPIrr7xTH64l4WixO2cP+wQIcgujkGBPPz6g==}
     engines: {node: '>=20'}
@@ -3961,13 +3965,13 @@ snapshots:
     dependencies:
       postcss-selector-parser: 7.1.1
 
-  '@es-joy/jsdoccomment@0.81.0':
+  '@es-joy/jsdoccomment@0.82.0':
     dependencies:
       '@types/estree': 1.0.8
       '@typescript-eslint/types': 8.53.1
       comment-parser: 1.4.4
       esquery: 1.7.0
-      jsdoc-type-pratt-parser: 7.0.0
+      jsdoc-type-pratt-parser: 7.1.0
 
   '@es-joy/resolve.exports@1.2.0': {}
 
@@ -4171,7 +4175,7 @@ snapshots:
   '@lexical/extension@0.39.0':
     dependencies:
       '@lexical/utils': 0.39.0
-      '@preact/signals-core': 1.12.1
+      '@preact/signals-core': 1.12.2
       lexical: 0.39.0
 
   '@lexical/history@0.39.0':
@@ -4386,7 +4390,7 @@ snapshots:
       '@parcel/watcher-win32-x64': 2.5.4
     optional: true
 
-  '@preact/signals-core@1.12.1': {}
+  '@preact/signals-core@1.12.2': {}
 
   '@rollup/rollup-android-arm-eabi@4.55.2':
     optional: true
@@ -4543,7 +4547,7 @@ snapshots:
     dependencies:
       '@types/node': 25.0.9
 
-  '@types/react@19.2.8':
+  '@types/react@19.2.9':
     dependencies:
       csstype: 3.2.3
 
@@ -4997,9 +5001,9 @@ snapshots:
       es5-ext: 0.10.64
       type: 2.7.3
 
-  data-urls@6.0.0:
+  data-urls@6.0.1:
     dependencies:
-      whatwg-mimetype: 4.0.0
+      whatwg-mimetype: 5.0.0
       whatwg-url: 15.1.0
 
   data-view-buffer@1.0.2:
@@ -5327,9 +5331,9 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-jsdoc@62.2.0(eslint@8.57.1):
+  eslint-plugin-jsdoc@62.3.0(eslint@8.57.1):
     dependencies:
-      '@es-joy/jsdoccomment': 0.81.0
+      '@es-joy/jsdoccomment': 0.82.0
       '@es-joy/resolve.exports': 1.2.0
       are-docs-informative: 0.0.2
       comment-parser: 1.4.4
@@ -5466,7 +5470,7 @@ snapshots:
     dependencies:
       estraverse: 5.3.0
 
-  esrap@2.2.1:
+  esrap@2.2.2:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
@@ -5961,7 +5965,7 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsdoc-type-pratt-parser@7.0.0: {}
+  jsdoc-type-pratt-parser@7.1.0: {}
 
   jsdom@27.4.0:
     dependencies:
@@ -5969,7 +5973,7 @@ snapshots:
       '@asamuzakjp/dom-selector': 6.7.6
       '@exodus/bytes': 1.9.0
       cssstyle: 5.3.7
-      data-urls: 6.0.0
+      data-urls: 6.0.1
       decimal.js: 10.6.0
       html-encoding-sniffer: 6.0.0
       http-proxy-agent: 7.0.2
@@ -6825,7 +6829,7 @@ snapshots:
       clsx: 2.1.1
       devalue: 5.6.2
       esm-env: 1.2.2
-      esrap: 2.2.1
+      esrap: 2.2.2
       is-reference: 3.0.3
       locate-character: 3.0.0
       magic-string: 0.30.21
@@ -7074,6 +7078,8 @@ snapshots:
   webidl-conversions@8.0.1: {}
 
   whatwg-mimetype@4.0.0: {}
+
+  whatwg-mimetype@5.0.0: {}
 
   whatwg-url@15.1.0:
     dependencies:
