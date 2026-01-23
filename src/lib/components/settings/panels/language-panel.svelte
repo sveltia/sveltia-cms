@@ -19,7 +19,7 @@
 </script>
 
 <section>
-  <h4>{$_('prefs.language.ui_language.title')}</h4>
+  <h3>{$_('prefs.language.ui_language.title')}</h3>
   <div role="none">
     {#key $appLocale}
       <Select

@@ -18,7 +18,7 @@
 </script>
 
 <section>
-  <h4>{$_('prefs.appearance.theme')}</h4>
+  <h3>{$_('prefs.appearance.theme')}</h3>
   <div role="none">
     <SelectButtonGroup
       aria-label={$_('prefs.appearance.select_theme')}

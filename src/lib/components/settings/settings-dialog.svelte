@@ -92,7 +92,7 @@
           margin-top: 0;
         }
 
-        h4 {
+        h3 {
           font-size: inherit;
 
           & ~ div {

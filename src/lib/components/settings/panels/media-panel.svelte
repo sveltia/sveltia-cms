@@ -69,7 +69,7 @@
     {#each enabledCloudServiceEntries as [serviceId, service] (serviceId)}
       {@const { serviceLabel } = service}
       <section>
-        <h4>{serviceLabel}</h4>
+        <h3>{serviceLabel}</h3>
         <p>
           {@html _sanitize(
             $_('prefs.media.cloud_storage.description', {
@@ -94,7 +94,7 @@
     {#each enabledStockAssetProviderEntries as [serviceId, service] (serviceId)}
       {@const { serviceLabel, developerURL, apiKeyURL } = service}
       <section>
-        <h4>{$_('prefs.media.stock_photos.title', { values: { service: serviceLabel } })}</h4>
+        <h3>{$_('prefs.media.stock_photos.title', { values: { service: serviceLabel } })}</h3>
         <p>
           {@html _sanitize(
             $_('prefs.media.stock_photos.description', {

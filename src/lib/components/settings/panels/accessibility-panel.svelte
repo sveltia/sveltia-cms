@@ -17,9 +17,9 @@
 </script>
 
 <section>
-  <h4>
+  <h3>
     {$_('prefs.accessibility.underline_links.title')}
-  </h4>
+  </h3>
   <p>
     {$_('prefs.accessibility.underline_links.description')}
   </p>

@@ -21,7 +21,7 @@
 </script>
 
 <section>
-  <h4>{$_('prefs.i18n.default_translator.title')}</h4>
+  <h3>{$_('prefs.i18n.default_translator.title')}</h3>
   <div role="none">
     <TranslatorSelector />
   </div>
@@ -30,7 +30,7 @@
 {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}
   {@const { serviceLabel, apiLabel, developerURL, apiKeyURL } = service}
   <section>
-    <h4>{serviceLabel}</h4>
+    <h3>{serviceLabel}</h3>
     <p>
       {@html sanitize(
         $_('prefs.i18n.translator.description', {

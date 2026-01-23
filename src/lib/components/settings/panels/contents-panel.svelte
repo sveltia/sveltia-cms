@@ -17,7 +17,7 @@
 </script>
 
 <section>
-  <h4>{$_('prefs.contents.editor.title')}</h4>
+  <h3>{$_('prefs.contents.editor.title')}</h3>
   <div role="none">
     <PrefSwitch
       key="useDraftBackup"

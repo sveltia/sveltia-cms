@@ -20,9 +20,9 @@
 </script>
 
 <section>
-  <h4>
+  <h3>
     {$_('prefs.advanced.beta.title')}
-  </h4>
+  </h3>
   <p>
     {$_('prefs.advanced.beta.description')}
   </p>
@@ -31,9 +31,9 @@
   </div>
 </section>
 <section>
-  <h4>
+  <h3>
     {$_('prefs.advanced.developer_mode.title')}
-  </h4>
+  </h3>
   <p>
     {$_('prefs.advanced.developer_mode.description')}
   </p>
@@ -47,9 +47,9 @@
 </section>
 {#if $skipCIConfigured}
   <section>
-    <h4>
+    <h3>
       {$_('prefs.advanced.deploy_hook.title')}
-    </h4>
+    </h3>
     <p>
       {$_('prefs.advanced.deploy_hook.description')}
     </p>
