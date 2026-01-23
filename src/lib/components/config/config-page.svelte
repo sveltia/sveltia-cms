@@ -25,6 +25,9 @@
     padding: 16px;
     width: 100%;
     min-width: fit-content;
+    min-height: -moz-available;
+    min-height: -webkit-fill-available;
+    min-height: stretch;
     background-color: var(--sui-primary-background-color);
   }
 </style>
