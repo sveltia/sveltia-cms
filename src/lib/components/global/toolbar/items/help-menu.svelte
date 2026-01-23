@@ -33,6 +33,10 @@
   {#if $prefs.devModeEnabled}
     {@render link('documentation', 'https://sveltiacms.app/en/docs')}
     <ReleaseNotesMenuItem />
+    {@render link(
+      'announcements',
+      'https://github.com/sveltia/sveltia-cms/discussions/categories/announcements',
+    )}
     <Divider />
     {@render link('report_issue', 'https://github.com/sveltia/sveltia-cms/issues')}
     {@render link(

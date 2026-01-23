@@ -144,6 +144,7 @@ export const strings = {
   keyboard_shortcuts: 'キーボードショートカット',
   documentation: 'ドキュメンテーション',
   release_notes: 'リリースノート',
+  announcements: 'お知らせ',
   version_x: 'バージョン {version}',
   report_issue: '問題を報告',
   share_feedback: 'フィードバックを共有',

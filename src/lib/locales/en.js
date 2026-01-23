@@ -147,6 +147,7 @@ export const strings = {
   keyboard_shortcuts: 'Keyboard Shortcuts',
   documentation: 'Documentation',
   release_notes: 'Release Notes',
+  announcements: 'Announcements',
   version_x: 'Version {version}',
   report_issue: 'Report Issue',
   share_feedback: 'Share Feedback',
