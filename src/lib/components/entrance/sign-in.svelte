@@ -1,6 +1,5 @@
 <script>
   import { Button, Icon, PromptDialog, Spacer } from '@sveltia/ui';
-  import { sanitize } from 'isomorphic-dompurify';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
 
@@ -12,6 +11,7 @@
     signingIn,
     signInManually,
   } from '$lib/services/user/auth';
+  import { makeLink } from '$lib/services/utils/string';
 
   /**
    * @import { GitBackend } from '$lib/types/public';
@@ -34,20 +34,6 @@
       : /** @type {GitBackend} */ ($cmsConfig?.backend)?.repo?.split('/').pop(),
   );
   const showLocalBackendOption = $derived(isLocalHost && !isTestRepo);
-
-  /**
-   * Replace `<a>` tag in a localization string, and sanitize the result.
-   * @param {object} args Arguments.
-   * @param {string} args.key Localization key.
-   * @param {Record<string, string>} [args.values] Values for interpolation.
-   * @param {string} args.link Link URL.
-   * @returns {string} Linked and sanitized HTML string.
-   */
-  const getLinkedString = ({ key, values, link }) =>
-    sanitize($_(key, { values }).replace('<a>', `<a href="${link}" target="_blank">`), {
-      ALLOWED_TAGS: ['a'],
-      ALLOWED_ATTR: ['href', 'target'],
-    });
 
   onMount(() => {
     const { hostname } = window.location;
@@ -79,10 +65,10 @@
       {#if !isLocalBackendSupported}
         <div role="alert">
           {#if isBrave}
-            {@html getLinkedString({
-              key: 'local_backend.disabled',
-              link: 'https://sveltiacms.app/en/docs/workflows/local#enabling-file-system-access-api-in-brave',
-            })}
+            {@html makeLink(
+              $_('local_backend.disabled'),
+              'https://sveltiacms.app/en/docs/workflows/local#enabling-file-system-access-api-in-brave',
+            )}
           {:else}
             {$_('local_backend.unsupported_browser')}
           {/if}
@@ -138,11 +124,10 @@
 >
   {$_('sign_in_using_pat_description')}
   {#if configuredBackend?.repository?.tokenPageURL}
-    {@html getLinkedString({
-      key: 'sign_in_using_pat_link',
-      values: { service: configuredBackend.label },
-      link: configuredBackend.repository.tokenPageURL,
-    })}
+    {@html makeLink(
+      $_('sign_in_using_pat_link', { values: { service: configuredBackend.label } }),
+      configuredBackend.repository.tokenPageURL,
+    )}
   {/if}
 </PromptDialog>
 
