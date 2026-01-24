@@ -5,7 +5,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import mime from 'mime';
 import { get } from 'svelte/store';
 
-import { getAssetByPath } from '$lib/services/assets';
+import { getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
@@ -264,7 +264,7 @@ export const getMediaFieldURL = async ({
 
   // If the value is a relative path, try to get the asset base URL from the field config. This is a
   // special case for Cloudinary assets.
-  if (!value.startsWith('/')) {
+  if (isRelativePath(value)) {
     const assetBaseURL = getAssetBaseURL(fieldConfig);
 
     if (assetBaseURL) {

@@ -47,6 +47,7 @@ vi.mock('svelte-i18n', () => ({
 }));
 vi.mock('$lib/services/assets', () => ({
   getAssetByPath: vi.fn(),
+  isRelativePath: vi.fn((path) => !/^[/@]/.test(path)),
   focusedAsset: {
     set: vi.fn(),
     subscribe: vi.fn(),
@@ -857,6 +858,82 @@ describe('assets/info', () => {
         fileName: undefined,
       });
     });
+
+    it('should treat paths starting with @ as absolute paths', async () => {
+      // @ts-ignore
+      vi.mocked(cloudStorageModule.allCloudStorageServices.cloudinary.isEnabled).mockReturnValue(
+        true,
+      );
+      vi.mocked(cloudinaryModule.getMergedLibraryOptions).mockReturnValue({
+        output_filename_only: true,
+        config: {
+          cloud_name: 'my-cloud',
+        },
+      });
+
+      const { getAssetByPath } = await import('$lib/services/assets');
+
+      // Set up asset with blobURL to avoid blob retrieval
+      const assetWithBlobURL = {
+        ...mockAsset,
+        blobURL: 'blob:existing-url',
+      };
+
+      vi.mocked(getAssetByPath).mockReturnValue(assetWithBlobURL);
+
+      const fieldConfig = /** @type {any} */ ({ type: 'image' });
+      const aliasPath = '@assets/images/image.jpg';
+
+      const result = await getMediaFieldURL({
+        value: aliasPath,
+        collectionName: 'posts',
+        fieldConfig,
+      });
+
+      expect(result).toBe('blob:existing-url');
+      // getAssetByPath should be called, not Cloudinary URL
+      expect(vi.mocked(getAssetByPath)).toHaveBeenCalledWith({
+        value: aliasPath,
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+    });
+
+    it('should not use Cloudinary URL for paths starting with @media', async () => {
+      // @ts-ignore
+      vi.mocked(cloudStorageModule.allCloudStorageServices.cloudinary.isEnabled).mockReturnValue(
+        true,
+      );
+      vi.mocked(cloudinaryModule.getMergedLibraryOptions).mockReturnValue({
+        output_filename_only: true,
+        config: {
+          cloud_name: 'my-cloud',
+        },
+      });
+
+      const { getAssetByPath } = await import('$lib/services/assets');
+
+      // Set up asset with blobURL to avoid blob retrieval
+      const assetWithBlobURL = {
+        ...mockAsset,
+        blobURL: 'blob:existing-url',
+      };
+
+      vi.mocked(getAssetByPath).mockReturnValue(assetWithBlobURL);
+
+      const fieldConfig = /** @type {any} */ ({ type: 'image' });
+      const aliasPath = '@media/uploads/photo.jpg';
+
+      const result = await getMediaFieldURL({
+        value: aliasPath,
+        collectionName: 'posts',
+        fieldConfig,
+      });
+
+      expect(result).toBe('blob:existing-url');
+      expect(vi.mocked(getAssetByPath)).toHaveBeenCalled();
+    });
   });
 
   describe('getAssetDetails', () => {
@@ -1061,6 +1138,12 @@ describe('assets/info', () => {
     it('should return undefined blobURL when getAssetBlob returns without setting blobURL', async () => {
       const { getAssetByPath } = await import('$lib/services/assets');
 
+      // Disable Cloudinary to test asset blob retrieval
+      // @ts-ignore
+      vi.mocked(cloudStorageModule.allCloudStorageServices.cloudinary.isEnabled).mockReturnValue(
+        false,
+      );
+
       // Create an asset that would fail blobURL generation
       const assetWithNoBlob = {
         ...mockAsset,
@@ -1235,6 +1318,12 @@ describe('assets/info', () => {
     it('should return thumbnail or fallback to public URL', async () => {
       const { getAssetByPath } = await import('$lib/services/assets');
       const { transformImage } = await import('$lib/services/utils/media/image/transform');
+
+      // Disable Cloudinary to test thumbnail generation for relative paths
+      // @ts-ignore
+      vi.mocked(cloudStorageModule.allCloudStorageServices.cloudinary.isEnabled).mockReturnValue(
+        false,
+      );
 
       const mockHandle = {
         getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),

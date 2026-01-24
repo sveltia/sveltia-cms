@@ -28,6 +28,12 @@ const {
 // Mock the dependencies with hoisted functions
 vi.mock('$lib/services/assets', () => ({
   getAssetByPath: mockGetAssetByPath,
+  /**
+   * Check if a path is a relative path.
+   * @param {string} path Path.
+   * @returns {boolean} `true` if the path is relative.
+   */
+  isRelativePath: (path) => !/^[/@]/.test(path),
   allAssets: mockAllAssets,
 }));
 
@@ -728,5 +734,112 @@ describe('getAssociatedAssets', () => {
 
     // Should not include orphaned assets when relative is false
     expect(result).not.toContain(mockAsset);
+  });
+
+  test('treats paths starting with @ as absolute paths', () => {
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    /** @type {Asset} */
+    const mockAsset = {
+      path: '/media/image.jpg',
+      name: 'image.jpg',
+      kind: 'image',
+      size: 1024,
+      text: '',
+      sha: 'abc123',
+      folder: {
+        collectionName: 'posts',
+        internalPath: 'media',
+        publicPath: '/media',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+    };
+
+    const entryWithAliasPath = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'test.md',
+          content: {
+            image1: '@assets/image.jpg', // Alias path - should be treated as absolute
+            image2: 'relative/image.jpg', // Relative path
+          },
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+
+    mockGetField.mockImplementation(({ keyPath }) => {
+      if (keyPath === 'image1' || keyPath === 'image2') {
+        return { widget: 'image' };
+      }
+
+      return undefined;
+    });
+
+    mockGetAssetByPath.mockImplementation(({ value }) => {
+      if (value === 'relative/image.jpg') {
+        return mockAsset;
+      }
+
+      return undefined;
+    });
+
+    mockGetAssetFoldersByPath.mockReturnValue([
+      { collectionName: 'posts', fileName: undefined, entryRelative: true },
+    ]);
+
+    const result = getAssociatedAssets({
+      entry: entryWithAliasPath,
+      collectionName: 'posts',
+      relative: true,
+    });
+
+    // Should only include the relative path asset, not the @assets path
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('/media/image.jpg');
+  });
+
+  test('excludes paths starting with @ when filtering relative paths', () => {
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    const entryWithMixedPaths = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'test.md',
+          content: {
+            image1: '@assets/image.jpg', // Alias - absolute
+            image2: '@media/uploads/photo.jpg', // Alias - absolute
+            image3: 'relative/image.jpg', // Relative
+          },
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+
+    mockGetField.mockReturnValue({ widget: 'image' });
+    mockGetAssetByPath.mockReturnValue(undefined);
+    mockGetAssetFoldersByPath.mockReturnValue([
+      { collectionName: 'posts', fileName: undefined, entryRelative: true },
+    ]);
+
+    const result = getAssociatedAssets({
+      entry: entryWithMixedPaths,
+      collectionName: 'posts',
+      relative: true,
+    });
+
+    // Paths starting with @ should be treated as absolute and not included in relative filtering
+    expect(result).toHaveLength(0);
+    expect(
+      mockGetAssetByPath.mock.calls.some((call) => call[0].value === '@assets/image.jpg'),
+    ).toBe(false);
+    expect(
+      mockGetAssetByPath.mock.calls.some((call) => call[0].value === '@media/uploads/photo.jpg'),
+    ).toBe(false);
   });
 });

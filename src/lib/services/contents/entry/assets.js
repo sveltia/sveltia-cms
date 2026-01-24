@@ -2,7 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
-import { allAssets, getAssetByPath } from '$lib/services/assets';
+import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { getMediaFieldURL } from '$lib/services/assets/info';
 import { getCollection } from '$lib/services/contents/collection';
@@ -89,7 +89,7 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
         Object.entries(content ?? {}).map(([keyPath, value]) => {
           if (
             typeof value === 'string' &&
-            (relative ? !/^[/@]/.test(value) : true) &&
+            (relative ? isRelativePath(value) : true) &&
             ['image', 'file'].includes(
               getField({ collectionName, keyPath, isIndexFile })?.widget ?? 'string',
             )

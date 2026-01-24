@@ -263,6 +263,14 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }
 };
 
 /**
+ * Check if a path is a relative path. A path starting with `@`, like `@assets/images/...` is a
+ * special case, considered as an absolute path.
+ * @param {string} path Path to check.
+ * @returns {boolean} `true` if the path is relative.
+ */
+export const isRelativePath = (path) => !/^[/@]/.test(path);
+
+/**
  * Get an asset by a public path typically stored as an image field value.
  * @param {object} args Arguments.
  * @param {string} args.value Saved absolute path or relative path.
@@ -276,9 +284,8 @@ export const getAssetByPath = ({ value, entry, collectionName, fileName }) => {
   // Remove potential fragment before decoding
   const path = decodeFilePath(value.split('#')[0]);
 
-  // Handle a relative path. A path starting with `@`, like `@assets/images/...` is a special case,
-  // considered as an absolute path.
-  if (!/^[/@]/.test(path)) {
+  // Handle a relative path
+  if (isRelativePath(path)) {
     return getAssetByRelativePath({ path, entry });
   }
 

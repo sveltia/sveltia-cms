@@ -11,6 +11,7 @@ import {
   getAssetByRelativePathAndCollection,
   getAssetsByDirName,
   getAssetsByFolder,
+  isRelativePath,
   overlaidAsset,
   processedAssets,
   renamingAsset,
@@ -2556,6 +2557,43 @@ describe('assets/index', () => {
       });
 
       expect(result).toEqual(mockAsset);
+    });
+  });
+
+  describe('isRelativePath', () => {
+    it('should return true for simple filenames', () => {
+      expect(isRelativePath('image.jpg')).toBe(true);
+      expect(isRelativePath('document.pdf')).toBe(true);
+      expect(isRelativePath('photo.png')).toBe(true);
+    });
+
+    it('should return true for relative paths with subdirectories', () => {
+      expect(isRelativePath('images/photo.jpg')).toBe(true);
+      expect(isRelativePath('assets/images/icon.svg')).toBe(true);
+      expect(isRelativePath('folder/subfolder/file.txt')).toBe(true);
+    });
+
+    it('should return true for paths starting with . or ..', () => {
+      expect(isRelativePath('./image.jpg')).toBe(true);
+      expect(isRelativePath('../image.jpg')).toBe(true);
+      expect(isRelativePath('./images/photo.jpg')).toBe(true);
+      expect(isRelativePath('../../parent/image.jpg')).toBe(true);
+    });
+
+    it('should return true for empty string', () => {
+      expect(isRelativePath('')).toBe(true);
+    });
+
+    it('should return false for absolute paths starting with /', () => {
+      expect(isRelativePath('/images/photo.jpg')).toBe(false);
+      expect(isRelativePath('/assets/document.pdf')).toBe(false);
+      expect(isRelativePath('/')).toBe(false);
+    });
+
+    it('should return false for paths starting with @ (special case)', () => {
+      expect(isRelativePath('@assets/images/photo.jpg')).toBe(false);
+      expect(isRelativePath('@/images/icon.svg')).toBe(false);
+      expect(isRelativePath('@media/file.txt')).toBe(false);
     });
   });
 });
