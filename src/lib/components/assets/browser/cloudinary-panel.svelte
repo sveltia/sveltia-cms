@@ -193,7 +193,7 @@
 >
 </iframe>
 
-{#if !authenticated}
+{#if !hidden && !authenticated}
   <EmptyState>
     <Button
       variant="primary"
