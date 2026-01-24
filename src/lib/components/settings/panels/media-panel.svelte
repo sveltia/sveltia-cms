@@ -1,6 +1,5 @@
 <script>
   import { EmptyState, PasswordInput } from '@sveltia/ui';
-  import { sanitize } from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
@@ -9,6 +8,7 @@
     getStockAssetMediaLibraryOptions,
   } from '$lib/services/integrations/media-libraries/stock';
   import { prefs } from '$lib/services/user/prefs';
+  import { makeLink } from '$lib/services/utils/string';
 
   /**
    * @import { MediaLibraryService } from '$lib/types/private';
@@ -42,14 +42,6 @@
   );
 
   /**
-   * Sanitize the given string to allow only safe HTML tags and attributes.
-   * @param {string} str The string to sanitize.
-   * @returns {string} The sanitized string.
-   */
-  const _sanitize = (str) =>
-    sanitize(str, { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] });
-
-  /**
    * Handler for `change` event of the text input.
    * @param {string} serviceId The service ID whose API key has changed.
    */
@@ -66,60 +58,62 @@
 
 {#if enabledStockAssetProviderEntries.length || enabledCloudServiceEntries.length}
   {#if $prefs.apiKeys}
-    {#each enabledCloudServiceEntries as [serviceId, service] (serviceId)}
-      {@const { serviceLabel } = service}
+    {#if enabledCloudServiceEntries.length}
       <section>
-        <h3>{serviceLabel}</h3>
+        <h3>{$_('prefs.media.cloud_storage.api_keys.title')}</h3>
         <p>
-          {@html _sanitize(
-            $_('prefs.media.cloud_storage.description', {
-              values: { service: serviceLabel },
-            }),
+          {@html makeLink(
+            $_('prefs.media.cloud_storage.api_keys.description'),
+            'https://sveltiacms.app/en/docs/media',
           )}
         </p>
-        <div role="none">
-          <PasswordInput
-            bind:value={$prefs.apiKeys[serviceId]}
-            flex
-            autocomplete="off"
-            spellcheck="false"
-            aria-label={$_('prefs.media.cloud_storage.field_label', {
-              values: { service: serviceLabel },
-            })}
-            onchange={() => onchange(serviceId)}
-          />
-        </div>
+        {#each enabledCloudServiceEntries as [serviceId, { serviceLabel }] (serviceId)}
+          <section>
+            <h4>{serviceLabel}</h4>
+            <div role="none">
+              <PasswordInput
+                bind:value={$prefs.apiKeys[serviceId]}
+                flex
+                autocomplete="off"
+                spellcheck="false"
+                aria-label={$_('prefs.media.cloud_storage.field_label', {
+                  values: { service: serviceLabel },
+                })}
+                onchange={() => onchange(serviceId)}
+              />
+            </div>
+          </section>
+        {/each}
       </section>
-    {/each}
-    {#each enabledStockAssetProviderEntries as [serviceId, service] (serviceId)}
-      {@const { serviceLabel, developerURL, apiKeyURL } = service}
+    {/if}
+    {#if enabledStockAssetProviderEntries.length}
       <section>
-        <h3>{$_('prefs.media.stock_photos.title', { values: { service: serviceLabel } })}</h3>
+        <h3>{$_('prefs.media.stock_photos.api_keys.title')}</h3>
         <p>
-          {@html _sanitize(
-            $_('prefs.media.stock_photos.description', {
-              values: {
-                service: serviceLabel,
-                homeHref: `href="${developerURL}"`,
-                apiKeyHref: `href="${apiKeyURL}"`,
-              },
-            }),
+          {@html makeLink(
+            $_('prefs.media.stock_photos.api_keys.description'),
+            'https://sveltiacms.app/en/docs/integrations/stock-photos',
           )}
         </p>
-        <div role="none">
-          <PasswordInput
-            bind:value={$prefs.apiKeys[serviceId]}
-            flex
-            autocomplete="off"
-            spellcheck="false"
-            aria-label={$_('prefs.media.stock_photos.field_label', {
-              values: { service: serviceLabel },
-            })}
-            onchange={() => onchange(serviceId)}
-          />
-        </div>
+        {#each enabledStockAssetProviderEntries as [serviceId, { serviceLabel }] (serviceId)}
+          <section>
+            <h4>{serviceLabel}</h4>
+            <div role="none">
+              <PasswordInput
+                bind:value={$prefs.apiKeys[serviceId]}
+                flex
+                autocomplete="off"
+                spellcheck="false"
+                aria-label={$_('prefs.media.stock_photos.field_label', {
+                  values: { service: serviceLabel },
+                })}
+                onchange={() => onchange(serviceId)}
+              />
+            </div>
+          </section>
+        {/each}
       </section>
-    {/each}
+    {/if}
   {/if}
 {:else}
   <EmptyState>

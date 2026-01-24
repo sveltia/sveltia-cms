@@ -800,11 +800,15 @@ export const strings = {
     },
     i18n: {
       title: '国際化',
-      default_translator: {
-        title: 'デフォルト翻訳サービス',
-        select_service: 'サービスを選択',
-      },
-      translator: {
+      translators: {
+        default: {
+          title: 'デフォルト翻訳サービス',
+          select_service: 'サービスを選択',
+        },
+        api_keys: {
+          title: '翻訳サービス API キー',
+          description: '<a>翻訳サービス</a> の API キーを管理します。',
+        },
         field_label: '{service} キー',
         description:
           '<a {homeHref}>{service}</a> にユーザー登録して、<a {apiKeyHref}>発行されたキー</a> をここに入力すると、テキストエントリー項目の素早い翻訳が可能となります。',
@@ -813,16 +817,21 @@ export const strings = {
     media: {
       title: 'メディア',
       stock_photos: {
-        title: '{service} 無料画像素材',
+        api_keys: {
+          title: '無料画像素材サービス API キー',
+          description: '<a>無料画像素材サービス</a> の API キーを管理します。',
+        },
         field_label: '{service} API キー',
         description:
           '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行された API キー</a> をここに入力すると、画像エントリー項目に無料のストックフォトを挿入できます。',
         credit: '写真提供: {service}',
       },
       cloud_storage: {
+        api_keys: {
+          title: 'クラウドストレージサービス API キー',
+          description: '<a>クラウドストレージサービス</a> の API キーを管理します。',
+        },
         field_label: '{service} API キー',
-        description:
-          'アセットを {service} にアップロードできるようにするには、{service} の API キーを入力してください。',
       },
       libraries_disabled: '外部メディアライブラリは管理者によって無効化されています。',
     },

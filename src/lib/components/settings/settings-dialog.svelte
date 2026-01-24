@@ -105,6 +105,11 @@
             font-size: var(--sui-font-size-small);
           }
         }
+
+        h4 {
+          margin-bottom: 4px;
+          font-size: var(--sui-font-size-small);
+        }
       }
     }
   }

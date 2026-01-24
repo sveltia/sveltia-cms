@@ -795,11 +795,15 @@ export const strings = {
     },
     i18n: {
       title: 'Internationalization',
-      default_translator: {
-        title: 'Default Translation Service',
-        select_service: 'Select Service',
-      },
-      translator: {
+      translators: {
+        default: {
+          title: 'Default Translation Service',
+          select_service: 'Select Service',
+        },
+        api_keys: {
+          title: 'Translation Service API Keys',
+          description: 'Manage API keys for <a>translation services</a>.',
+        },
         field_label: '{service} Key',
         description:
           'Sign up for <a {homeHref}>{service}</a> and enter <a {apiKeyHref}>your API Key</a> here to enable quick translation of text entry fields.',
@@ -808,15 +812,21 @@ export const strings = {
     media: {
       title: 'Media',
       stock_photos: {
-        title: '{service} Free Images',
+        api_keys: {
+          title: 'Stock Photo Service API Keys',
+          description: 'Manage API keys for <a>stock photo services</a>.',
+        },
         field_label: '{service} API Key',
         description:
           'Sign up for <a {homeHref}>{service} API</a> and enter <a {apiKeyHref}>your API Key</a> here to insert free stock photos to image entry fields.',
         credit: 'Photos provided by {service}',
       },
       cloud_storage: {
+        api_keys: {
+          title: 'Cloud Storage Service API Keys',
+          description: 'Manage API keys for <a>cloud storage services</a>.',
+        },
         field_label: '{service} API Key',
-        description: 'Enter your {service} API key to enable uploading assets to {service}.',
       },
       libraries_disabled: 'External media libraries are disabled by the administrator.',
     },

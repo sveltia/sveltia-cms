@@ -45,7 +45,7 @@
   <TranslatorSelector />
   <Spacer />
   {@html sanitize(
-    $_('prefs.i18n.translator.description', {
+    $_('prefs.i18n.translators.description', {
       values: {
         service: apiLabel,
         homeHref: `href="${developerURL}"`,
