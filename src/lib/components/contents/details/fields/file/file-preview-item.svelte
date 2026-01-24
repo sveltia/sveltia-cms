@@ -8,19 +8,20 @@
 
   /**
    * @import { AssetKind } from '$lib/types/private';
+   * @import { MediaField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
    * @property {string} value Field value, either a URL or a file path.
-   * @property {boolean} [isImageField] Whether the field is an image field.
+   * @property {MediaField} fieldConfig Field configuration.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     value,
-    isImageField = false,
+    fieldConfig,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -29,6 +30,8 @@
   /** @type {string | undefined} */
   let src = $state();
 
+  const { widget: fieldType } = $derived(fieldConfig);
+  const isImageField = $derived(fieldType === 'image');
   const entry = $derived($entryDraft?.originalEntry);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
@@ -40,7 +43,9 @@
       // Determine the kind and source URL of the media. Skip if it’s an image field because we
       // already know it’s an image. It’s rather problematic if the path doesn’t have an extension.
       kind = value ? (isImageField ? 'image' : await getMediaKind(value)) : undefined;
-      src = kind ? await getMediaFieldURL({ value, entry, collectionName, fileName }) : undefined;
+      src = kind
+        ? await getMediaFieldURL({ value, entry, collectionName, fileName, fieldConfig })
+        : undefined;
     });
   });
 </script>

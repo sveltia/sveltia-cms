@@ -99,7 +99,7 @@
         !['rich-text-editor-component', 'single-subfield-list-field'].includes(fieldContext)),
   );
   const itemArgs = $derived({
-    fieldType,
+    fieldConfig,
     readonly,
     invalid,
     required,
