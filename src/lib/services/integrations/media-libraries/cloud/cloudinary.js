@@ -109,16 +109,28 @@ export const getLibraryOptions = (config) => {
 };
 
 /**
+ * @type {Map<string, CloudinaryMediaLibrary>}
+ */
+export const optionCacheMap = new Map();
+
+/**
  * Get merged Cloudinary library options from site and field config.
  * Field config options override site config options.
  * @param {MediaField} [fieldConfig] Field configuration.
  * @returns {CloudinaryMediaLibrary} Merged configuration object.
  */
 export const getMergedLibraryOptions = (fieldConfig) => {
+  const cacheKey = fieldConfig ? JSON.stringify(fieldConfig) : 'global';
+  const cache = optionCacheMap.get(cacheKey);
+
+  if (cache) {
+    return cache;
+  }
+
   const siteOptions = getLibraryOptions() ?? { config: {} };
   const fieldOptions = getLibraryOptions(fieldConfig) ?? { config: {} };
 
-  return {
+  const options = {
     ...siteOptions,
     ...fieldOptions,
     config: {
@@ -126,6 +138,10 @@ export const getMergedLibraryOptions = (fieldConfig) => {
       ...fieldOptions.config,
     },
   };
+
+  optionCacheMap.set(cacheKey, options);
+
+  return options;
 };
 
 /**

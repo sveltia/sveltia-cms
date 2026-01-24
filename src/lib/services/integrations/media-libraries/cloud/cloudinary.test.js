@@ -10,6 +10,7 @@ import cloudinaryService, {
   getMergedLibraryOptions,
   isEnabled,
   list,
+  optionCacheMap,
   parseResults,
   search,
   transformationToString,
@@ -232,6 +233,11 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
   });
 
   describe('getMergedLibraryOptions', () => {
+    beforeEach(() => {
+      // Clear the cache before each test
+      optionCacheMap.clear();
+    });
+
     it('should return site config when field config has no cloudinary options', () => {
       vi.mocked(get).mockReturnValue({
         media_libraries: {
@@ -363,6 +369,91 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       expect(merged.config?.cloud_name).toBe('site-cloud');
       expect(merged.config?.api_key).toBe('site-key');
       expect(merged.config?.transform_a).toBe('site-value');
+    });
+
+    it('should cache results for identical field configs', async () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          cloudinary: {
+            config: {
+              cloud_name: 'site-cloud',
+              api_key: 'site-key',
+            },
+          },
+        },
+      });
+
+      const fieldConfig = /** @type {any} */ ({ type: 'image', options: { width: 400 } });
+      const result1 = getMergedLibraryOptions(fieldConfig);
+      const result2 = getMergedLibraryOptions(fieldConfig);
+
+      // Both results should be identical (same reference due to cache)
+      expect(result1).toBe(result2);
+      expect(result1.config?.cloud_name).toBe('site-cloud');
+    });
+
+    it('should use "global" cache key for undefined field config', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          cloudinary: {
+            config: {
+              cloud_name: 'site-cloud',
+              api_key: 'site-key',
+            },
+          },
+        },
+      });
+
+      const result1 = getMergedLibraryOptions(undefined);
+      const result2 = getMergedLibraryOptions(undefined);
+
+      // Both results should be the same cached instance
+      expect(result1).toBe(result2);
+    });
+
+    it('should create separate cache entries for different field configs', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          cloudinary: {
+            config: {
+              cloud_name: 'site-cloud',
+              api_key: 'site-key',
+            },
+          },
+        },
+      });
+
+      const fieldConfig1 = /** @type {any} */ ({ type: 'image', options: { width: 400 } });
+      const fieldConfig2 = /** @type {any} */ ({ type: 'video', options: { width: 800 } });
+      const result1 = getMergedLibraryOptions(fieldConfig1);
+      const result2 = getMergedLibraryOptions(fieldConfig2);
+
+      // Results should be different instances (different cache keys)
+      expect(result1).not.toBe(result2);
+      expect(result1.config?.cloud_name).toBe('site-cloud');
+      expect(result2.config?.cloud_name).toBe('site-cloud');
+    });
+
+    it('should cache based on JSON stringified field config', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          cloudinary: {
+            config: {
+              cloud_name: 'site-cloud',
+              api_key: 'site-key',
+            },
+          },
+        },
+      });
+
+      // Two different objects with same properties should use same cache
+      const fieldConfig1 = /** @type {any} */ ({ type: 'image', width: 400 });
+      const fieldConfig2 = /** @type {any} */ ({ type: 'image', width: 400 });
+      const result1 = getMergedLibraryOptions(fieldConfig1);
+      const result2 = getMergedLibraryOptions(fieldConfig2);
+
+      // Should use same cache entry
+      expect(result1).toBe(result2);
     });
   });
 
