@@ -336,7 +336,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(results[0]).toEqual({
         id: 'def456',
         description: 'video.mp4',
-        previewURL: 'https://ucarecdn.com/def456/-/preview/400x400/',
+        previewURL: 'https://ucarecdn.com/def456/',
         downloadURL: 'https://ucarecdn.com/def456/',
         fileName: 'video.mp4',
         lastModified: new Date('2025-01-02T00:00:00.000Z'),
@@ -368,7 +368,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(results[0]).toEqual({
         id: 'ghi789',
         description: 'document.pdf',
-        previewURL: 'https://ucarecdn.com/ghi789/-/preview/400x400/',
+        previewURL: 'https://ucarecdn.com/ghi789/',
         downloadURL: 'https://ucarecdn.com/ghi789/',
         fileName: 'document.pdf',
         lastModified: new Date('2025-01-03T00:00:00.000Z'),
@@ -523,7 +523,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(results[0].downloadURL).toBe('https://ucarecdn.com/abc123/');
     });
 
-    it('should include defaultOperations in downloadURL when configured', () => {
+    it('should include defaultOperations in downloadURL when configured for images', () => {
       vi.mocked(get).mockReturnValue({
         media_libraries: {
           uploadcare: {
@@ -561,7 +561,44 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       );
     });
 
-    it('should combine defaultOperations with autoFilename', () => {
+    it('should not apply defaultOperations to videos', () => {
+      vi.mocked(get).mockReturnValue({
+        media_libraries: {
+          uploadcare: {
+            config: {
+              publicKey: mockPublicKey,
+            },
+            settings: {
+              defaultOperations: '/quality/smart/-/format/auto/',
+            },
+          },
+        },
+      });
+
+      const mockResults = [
+        {
+          uuid: 'def456',
+          original_filename: 'video.mp4',
+          original_file_url: 'https://ucarecdn.com/def456/video.mp4',
+          size: 98765,
+          mime_type: 'video/mp4',
+          is_image: false,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-02T00:00:00.000Z',
+          datetime_stored: '2025-01-02T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ];
+
+      const results = parseResults(mockResults);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].downloadURL).toBe('https://ucarecdn.com/def456/');
+      expect(results[0].previewURL).toBe('https://ucarecdn.com/def456/');
+    });
+
+    it('should combine defaultOperations with autoFilename for images', () => {
       vi.mocked(get).mockReturnValue({
         media_libraries: {
           uploadcare: {
@@ -600,7 +637,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       );
     });
 
-    it('should use all options together: cdnBase, defaultOperations, and autoFilename', () => {
+    it('should use all options together for images: cdnBase, defaultOperations, and autoFilename', () => {
       vi.mocked(get).mockReturnValue({
         media_libraries: {
           uploadcare: {

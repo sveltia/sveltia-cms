@@ -51,7 +51,7 @@
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
-    kind = 'image',
+    kind,
     fieldConfig = undefined,
     multiple = false,
     searchTerms = '',
