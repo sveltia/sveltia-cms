@@ -10,7 +10,7 @@ Despite its beta status, more and more sites are [switching from Netlify/Decap C
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
-[![285 Netlify/Decap CMS issues solved in Sveltia CMS](https://sveltiacms.app/images/highlights/decap-issues.webp?20260107)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
+[![290 Netlify/Decap CMS issues solved in Sveltia CMS](https://sveltiacms.app/images/highlights/decap-issues.webp?20260124)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
 
 ## Documentation
 
