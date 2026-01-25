@@ -479,6 +479,55 @@ describe('contents/draft/create/index', () => {
       });
     });
 
+    it('should handle extra values', () => {
+      const collection = {
+        name: 'posts',
+        _type: 'entry',
+        fields: [],
+        _i18n: {
+          allLocales: ['en', 'ja'],
+          initialLocales: ['en'],
+          defaultLocale: 'en',
+          canonicalSlug: { key: 'translationKey' },
+        },
+      };
+
+      const extraValues = {
+        en: { richTextField: '<p>Rich content</p>' },
+        ja: { richTextField: '<p>リッチコンテンツ</p>' },
+      };
+
+      createDraft({ collection, extraValues });
+
+      expect(entryDraft.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extraValues,
+        }),
+      );
+    });
+
+    it('should use default extra values when not provided', () => {
+      const collection = {
+        name: 'posts',
+        _type: 'entry',
+        fields: [],
+        _i18n: {
+          allLocales: ['en', 'ja'],
+          initialLocales: ['en'],
+          defaultLocale: 'en',
+          canonicalSlug: { key: 'translationKey' },
+        },
+      };
+
+      createDraft({ collection });
+
+      expect(entryDraft.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extraValues: { en: {}, ja: {} },
+        }),
+      );
+    });
+
     it('should handle expander states', () => {
       const collection = {
         name: 'posts',

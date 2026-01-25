@@ -139,6 +139,7 @@
           collection,
           collectionFile,
           originalEntry: savedEntry,
+          extraValues: $entryDraft?.extraValues,
           expanderStates: $entryDraft?.expanderStates,
         });
       }

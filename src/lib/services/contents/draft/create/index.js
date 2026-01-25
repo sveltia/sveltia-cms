@@ -86,6 +86,8 @@ export const getSlugEditorProp = ({ collection, collectionFile, originalEntry })
  * @param {any} [args.originalEntry] Entry to be edited, or a partial {@link Entry} object.
  * @param {Record<string, string>} [args.dynamicValues] Dynamic default values for a new entry
  * passed through URL parameters.
+ * @param {LocaleContentMap} [args.extraValues] Key is a locale code, value is a flattened object
+ * containing field values in rich text editor components. Can be set when resetting an entry draft.
  * @param {LocaleExpanderMap} [args.expanderStates] Expander UI state. Can be set when resetting an
  * entry draft.
  * @param {boolean} [args.isIndexFile] Whether to edit the collection’s index file.
@@ -95,6 +97,7 @@ export const createDraft = ({
   collectionFile,
   originalEntry = {},
   dynamicValues,
+  extraValues,
   expanderStates,
   isIndexFile = isCollectionIndexFile(collection, originalEntry),
 }) => {
@@ -175,7 +178,7 @@ export const createDraft = ({
       ]),
     ),
     files: {},
-    extraValues: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
+    extraValues: extraValues ?? Object.fromEntries(allLocales.map((locale) => [locale, {}])),
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
     // Any locale-agnostic view states will be put under the `_` key
     expanderStates: expanderStates ?? { _: {} },
