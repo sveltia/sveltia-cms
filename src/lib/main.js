@@ -4,7 +4,10 @@ import { createElement } from 'react';
 import { mount } from 'svelte';
 
 import { eventHookRegistry, SUPPORTED_EVENT_TYPES } from '$lib/services/contents/draft/events';
-import { customPreviewStyleRegistry } from '$lib/services/contents/editor';
+import {
+  customPreviewStyleRegistry,
+  customPreviewTemplateRegistry,
+} from '$lib/services/contents/editor';
 import { customComponentRegistry } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { customFileFormatRegistry } from '$lib/services/contents/file/config';
 
@@ -235,13 +238,25 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
  * Register a custom preview template.
  * @param {string} name Template name.
  * @param {ComponentType<CustomPreviewTemplateProps>} component React component.
+ * @throws {TypeError} If `name` is not a string or `component` is not a function.
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
 const registerPreviewTemplate = (name, component) => {
   // eslint-disable-next-line no-console
   console.warn('Custom preview templates are not yet supported in Sveltia CMS.');
-  void [name, component];
+
+  if (typeof name !== 'string') {
+    throw new TypeError('The `name` option for `CMS.registerPreviewTemplate()` must be a string');
+  }
+
+  if (typeof component !== 'function') {
+    throw new TypeError(
+      'The `component` option for `CMS.registerPreviewTemplate()` must be a function',
+    );
+  }
+
+  customPreviewTemplateRegistry.set(name, component);
 };
 
 /**

@@ -32,6 +32,7 @@ vi.mock('svelte', () => ({
 }));
 vi.mock('$lib/services/contents/editor', () => ({
   customPreviewStyleRegistry: new Set(),
+  customPreviewTemplateRegistry: new Map(),
 }));
 vi.mock('$lib/services/contents/file/config', () => ({
   customFileFormatRegistry: new Map(),
@@ -585,11 +586,11 @@ describe('CMS.registerEventListener()', () => {
 });
 
 describe('CMS.registerPreviewTemplate()', () => {
-  test('accepts preview template without throwing', () => {
+  test('registers a preview template successfully', () => {
     const component = () => null;
 
     // @ts-ignore
-    expect(() => CMS.registerPreviewTemplate('test', component)).not.toThrow();
+    expect(() => CMS.registerPreviewTemplate('posts', component)).not.toThrow();
   });
 
   test('logs warning about unsupported custom preview templates', () => {
@@ -602,6 +603,49 @@ describe('CMS.registerPreviewTemplate()', () => {
       'Custom preview templates are not yet supported in Sveltia CMS.',
     );
     consoleSpy.mockRestore();
+  });
+
+  test('throws TypeError when name is not a string', () => {
+    const component = () => null;
+
+    // @ts-ignore
+    expect(() => CMS.registerPreviewTemplate(123, component)).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => CMS.registerPreviewTemplate(123, component)).toThrow(
+      'The `name` option for `CMS.registerPreviewTemplate()` must be a string',
+    );
+  });
+
+  test('throws TypeError when component is not a function', () => {
+    // @ts-ignore
+    expect(() => CMS.registerPreviewTemplate('posts', 'not-a-function')).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => CMS.registerPreviewTemplate('posts', 'not-a-function')).toThrow(
+      'The `component` option for `CMS.registerPreviewTemplate()` must be a function',
+    );
+  });
+
+  test('allows registering multiple templates', () => {
+    const component1 = () => null;
+    const component2 = () => null;
+
+    // @ts-ignore
+    expect(() => CMS.registerPreviewTemplate('posts', component1)).not.toThrow();
+    // @ts-ignore
+    expect(() => CMS.registerPreviewTemplate('pages', component2)).not.toThrow();
+  });
+
+  test('replaces existing template with same name', () => {
+    const component1 = () => null;
+    const component2 = () => null;
+
+    // @ts-ignore
+    CMS.registerPreviewTemplate('posts', component1);
+    // @ts-ignore
+    CMS.registerPreviewTemplate('posts', component2);
+
+    // No error should be thrown
+    expect(true).toBe(true);
   });
 });
 

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   copyFromLocaleToast,
   customPreviewStyleRegistry,
+  customPreviewTemplateRegistry,
   editorFirstPane,
   editorSecondPane,
   selectAssetsView,
@@ -331,6 +332,121 @@ describe('editor/index', () => {
       expect(styles).toContain(styleUrl1);
       expect(styles).toContain(styleUrl2);
       expect(styles.length).toBe(2);
+    });
+  });
+
+  describe('customPreviewTemplateRegistry', () => {
+    beforeEach(() => {
+      // Clear the Map before each test
+      customPreviewTemplateRegistry.clear();
+    });
+
+    it('should be initialized as an empty Map', () => {
+      expect(customPreviewTemplateRegistry).toBeInstanceOf(Map);
+      expect(customPreviewTemplateRegistry.size).toBe(0);
+    });
+
+    it('should allow custom preview templates to be registered', () => {
+      const templateName = 'posts';
+      /**
+       * Test component.
+       * @returns {null} Component.
+       */
+      const component = () => null;
+
+      customPreviewTemplateRegistry.set(templateName, component);
+
+      expect(customPreviewTemplateRegistry.has(templateName)).toBe(true);
+      expect(customPreviewTemplateRegistry.get(templateName)).toBe(component);
+      expect(customPreviewTemplateRegistry.size).toBe(1);
+    });
+
+    it('should allow multiple templates to be registered', () => {
+      /**
+       * Test component 1.
+       * @returns {null} Component.
+       */
+      const template1 = () => null;
+      /**
+       * Test component 2.
+       * @returns {null} Component.
+       */
+      const template2 = () => null;
+
+      customPreviewTemplateRegistry.set('posts', template1);
+      customPreviewTemplateRegistry.set('pages', template2);
+
+      expect(customPreviewTemplateRegistry.has('posts')).toBe(true);
+      expect(customPreviewTemplateRegistry.has('pages')).toBe(true);
+      expect(customPreviewTemplateRegistry.size).toBe(2);
+    });
+
+    it('should replace existing template when setting same name', () => {
+      /**
+       * Test component 1.
+       * @returns {null} Component.
+       */
+      const component1 = () => null;
+      /**
+       * Test component 2.
+       * @returns {null} Component.
+       */
+      const component2 = () => null;
+
+      customPreviewTemplateRegistry.set('posts', component1);
+      customPreviewTemplateRegistry.set('posts', component2);
+
+      expect(customPreviewTemplateRegistry.size).toBe(1);
+      expect(customPreviewTemplateRegistry.get('posts')).toBe(component2);
+    });
+
+    it('should allow templates to be removed', () => {
+      /**
+       * Test component.
+       * @returns {null} Component.
+       */
+      const component = () => null;
+
+      customPreviewTemplateRegistry.set('posts', component);
+      expect(customPreviewTemplateRegistry.size).toBe(1);
+
+      customPreviewTemplateRegistry.delete('posts');
+      expect(customPreviewTemplateRegistry.size).toBe(0);
+      expect(customPreviewTemplateRegistry.has('posts')).toBe(false);
+    });
+
+    it('should be a Map instance (not a store)', () => {
+      // Verify it's not a Svelte store by checking it doesn't have subscribe method
+      expect(typeof (/** @type {any} */ (customPreviewTemplateRegistry).subscribe)).toBe(
+        'undefined',
+      );
+      expect(customPreviewTemplateRegistry).toBeInstanceOf(Map);
+    });
+
+    it('should return undefined when getting non-existent template', () => {
+      expect(customPreviewTemplateRegistry.get('nonexistent')).toBeUndefined();
+    });
+
+    it('should support iteration over templates', () => {
+      /**
+       * Test component 1.
+       * @returns {null} Component.
+       */
+      const component1 = () => null;
+      /**
+       * Test component 2.
+       * @returns {null} Component.
+       */
+      const component2 = () => null;
+
+      customPreviewTemplateRegistry.set('posts', component1);
+      customPreviewTemplateRegistry.set('pages', component2);
+
+      const entries = Array.from(customPreviewTemplateRegistry.entries());
+
+      expect(entries).toHaveLength(2);
+      expect(entries[0][0]).toBe('posts');
+      expect(entries[1][0]).toBe('pages');
     });
   });
 
