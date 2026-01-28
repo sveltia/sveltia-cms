@@ -375,6 +375,33 @@ describe('Local Backend Service', () => {
       // Picker should have been called after permission was denied
       expect(global.window.showDirectoryPicker).toHaveBeenCalled();
     });
+
+    it('should handle git worktree where .git is a file (TypeMismatchError)', async () => {
+      const typeMismatchError = new Error('TypeMismatchError');
+
+      typeMismatchError.name = 'TypeMismatchError';
+
+      mockDirHandle.requestPermission.mockResolvedValue('granted');
+      mockDirHandle.entries.mockReturnValue({
+        next: vi.fn().mockResolvedValue({ done: false }),
+      });
+      mockDirHandle.getDirectoryHandle.mockRejectedValue(typeMismatchError);
+      mockDirHandle.getFileHandle = vi.fn().mockResolvedValue({});
+
+      mockDB.get.mockResolvedValue(null);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
+
+      const { getRootDirHandle } = localBackend;
+      const service = localBackend.default;
+
+      service.init();
+
+      const handle = await getRootDirHandle();
+
+      expect(handle).toBe(mockDirHandle);
+      expect(mockDirHandle.getDirectoryHandle).toHaveBeenCalledWith('.git');
+      expect(mockDirHandle.getFileHandle).toHaveBeenCalledWith('.git');
+    });
   });
 
   describe('Service Structure', () => {

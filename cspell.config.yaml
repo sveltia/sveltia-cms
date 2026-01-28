@@ -42,6 +42,7 @@ words:
   - Flavored
   - Forgejo
   - frontmatter
+  - gitdir
   - Gitea
   - goldmark
   - hotlinking
@@ -124,6 +125,7 @@ words:
   - weba
   - webformat
   - whitespaces
+  - worktree
   - xslx
   - yacosta
   - zanhk

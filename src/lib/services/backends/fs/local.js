@@ -93,8 +93,20 @@ export const getRootDirHandle = async ({ forceReload = false, showPicker = true 
     handle = await window.showDirectoryPicker();
 
     if (handle) {
-      // This will throw `NotFoundError` when it’s not a project root directory
-      await handle.getDirectoryHandle('.git');
+      // Verify this is a project root by checking for `.git`. In a standard repository, `.git` is
+      // a directory. In a git worktree, `.git` is a file containing a `gitdir:` pointer to the
+      // main repository. Both are valid repository roots.
+      try {
+        await handle.getDirectoryHandle('.git');
+      } catch (/** @type {any} */ ex) {
+        if (ex.name === 'TypeMismatchError') {
+          // `.git` exists but is a file (git worktree), which is still a valid repo root
+          await handle.getFileHandle('.git');
+        } else {
+          throw ex;
+        }
+      }
+
       // If it looks fine, cache the directory handle
       await rootDirHandleDB?.set(ROOT_DIR_HANDLE_KEY, handle);
     }
