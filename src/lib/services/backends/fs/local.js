@@ -106,6 +106,7 @@ export const getRootDirHandle = async ({ forceReload = false, showPicker = true 
           throw ex;
         }
       }
+
       // If it looks fine, cache the directory handle
       await rootDirHandleDB?.set(ROOT_DIR_HANDLE_KEY, handle);
     }
