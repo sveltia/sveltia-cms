@@ -398,7 +398,8 @@
           {multiple}
           assets={listedAssets.filter(
             (asset) =>
-              equal(asset.folder, selectedFolder) &&
+              asset.folder?.internalPath === selectedFolder.internalPath &&
+              asset.folder?.entryRelative === selectedFolder.entryRelative &&
               (selectedFolder.entryRelative
                 ? getPathInfo(asset.path).dirname === targetFolderPath
                 : true),
