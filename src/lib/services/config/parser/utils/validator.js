@@ -17,10 +17,18 @@ import { getListFormatter } from '$lib/services/contents/i18n';
  * @param {'error' | 'warning'} [args.type] The type of the message.
  * @param {string} args.strKey The i18n string key for the message.
  * @param {Record<string, string | undefined>} [args.values] Values for the i18n string.
+ * @param {string} [args.extraStrKey] An extra i18n string key to append to the message.
  * @param {ConfigParserContext} [args.context] The field parser context.
  * @param {ConfigParserCollectors} args.collectors The collectors.
  */
-export const addMessage = ({ type = 'error', strKey, values = {}, context = {}, collectors }) => {
+export const addMessage = ({
+  type = 'error',
+  strKey,
+  values = {},
+  extraStrKey,
+  context = {},
+  collectors,
+}) => {
   const { collection, collectionFile, typedKeyPath } = context;
   const { errors, warnings } = collectors;
   const $_ = get(_);
@@ -55,7 +63,7 @@ export const addMessage = ({ type = 'error', strKey, values = {}, context = {}, 
   const locatorStr = locators.length ? `${getListFormatter(locale).format(locators)}: ` : '';
   const message = $_(`config.${type}.${strKey}`, { values });
 
-  collector.add(`${locatorStr}${message}`);
+  collector.add(`${locatorStr}${message}${extraStrKey ? ` ${$_(`config.${extraStrKey}`)}` : ''}`);
 };
 
 /**
@@ -70,7 +78,14 @@ export const checkUnsupportedOptions = ({ UNSUPPORTED_OPTIONS, config, context, 
   UNSUPPORTED_OPTIONS.forEach(
     ({ type = 'error', prop, newProp, value, strKey = 'unsupported_deprecated_option' }) => {
       if (prop in config && (value === undefined || config[prop] === value)) {
-        addMessage({ type, strKey, values: { prop, newProp }, context, collectors });
+        addMessage({
+          type,
+          strKey,
+          values: { prop, newProp },
+          extraStrKey: 'compatibility_link',
+          context,
+          collectors,
+        });
       }
     },
   );

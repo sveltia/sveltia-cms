@@ -733,6 +733,8 @@ export const strings = {
       unsupported_ignored_option:
         'The `{prop}` option is not supported in Sveltia CMS. It will be ignored.',
     },
+    compatibility_link:
+      'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility',
   },
 
   // Backends

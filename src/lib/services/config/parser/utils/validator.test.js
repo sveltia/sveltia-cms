@@ -30,6 +30,8 @@ function mockTranslate(key, options) {
     'config.error_locator.collection': 'Collection: {collection}',
     'config.error_locator.file': 'File: {file}',
     'config.error_locator.field': 'Field: {field}',
+    'config.compatibility_link':
+      'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility',
   };
 
   let message = strings[key] || key;
@@ -376,6 +378,53 @@ describe('messages', () => {
       expect(message).toContain('oldField');
       expect(message).toContain('newField');
     });
+
+    it('should append extra i18n string when extraStrKey is provided', () => {
+      const collectors = createCollectors();
+
+      addMessage({
+        strKey: 'test_error',
+        extraStrKey: 'compatibility_link',
+        collectors,
+      });
+
+      const message = Array.from(collectors.errors)[0];
+
+      expect(message).toContain('Test error message');
+      expect(message).toContain('See the compatibility notes');
+    });
+
+    it('should not append extra string when extraStrKey is not provided', () => {
+      const collectors = createCollectors();
+
+      addMessage({
+        strKey: 'test_error',
+        collectors,
+      });
+
+      const message = Array.from(collectors.errors)[0];
+
+      expect(message).toBe('Test error message');
+      expect(message).not.toContain('compatibility');
+    });
+
+    it('should append extra string with proper spacing when extraStrKey is provided', () => {
+      const collectors = createCollectors();
+
+      addMessage({
+        strKey: 'unsupported_deprecated_option',
+        values: { prop: 'oldField', newProp: 'newField' },
+        extraStrKey: 'compatibility_link',
+        collectors,
+      });
+
+      const message = Array.from(collectors.errors)[0];
+
+      // Check that the extra string is appended with a space separator
+      expect(message).toMatch(
+        /Unsupported option: oldField \(use newField\) See the compatibility notes/,
+      );
+    });
   });
 
   describe('checkUnsupportedOptions', () => {
@@ -662,6 +711,22 @@ describe('messages', () => {
       });
 
       expect(collectors.errors.size).toBe(1);
+    });
+
+    it('should include compatibility_link in error message', () => {
+      const collectors = createCollectors();
+
+      checkUnsupportedOptions({
+        UNSUPPORTED_OPTIONS: [{ type: 'error', prop: 'oldProp', newProp: 'newProp' }],
+        config: { oldProp: 'value' },
+        context: {},
+        collectors,
+      });
+
+      const message = Array.from(collectors.errors)[0];
+
+      expect(message).toContain('See the compatibility notes');
+      expect(message).toContain('https://sveltiacms.app');
     });
   });
 
