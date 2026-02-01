@@ -1576,6 +1576,9 @@
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
  * @property {boolean} [collapsed] Whether to collapse the object by default. Default: `false`.
+ * @property {boolean} [dialog] Whether to edit the component in a dialog instead of inline.
+ * @property {string} [summary] Template for the placeholder text when `dialog` is enabled, e.g.
+ * `{{title}} - {{videoId}}`. Falls back to the first string field value, then to the label.
  * @property {Field[]} fields Set of fields to be displayed in the component.
  * @property {RegExp} pattern Regular expression to search a block from Markdown document.
  * @property {(match: RegExpMatchArray) => { [key: string]: any }} [fromBlock] Function to convert
