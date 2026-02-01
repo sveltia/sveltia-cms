@@ -483,6 +483,7 @@
     display: flex;
     gap: 16px;
     height: 60dvh;
+    max-height: 800px;
 
     @media (width < 768px) {
       flex-direction: column;
