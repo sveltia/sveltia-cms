@@ -29,9 +29,3 @@ Stay connected and get support through our community channels:
 - [Discord](https://discord.com/invite/5hwCGqup5b): Join the community and chat with us
 - [GitHub Discussions](https://github.com/sveltia/sveltia-cms/discussions): Ask questions and share ideas
 - [Contribute](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md): Learn how to get involved
-
-## Upcoming Events
-
-Join us for an in-depth presentation of Sveltia CMS at the upcoming online Build-Time Render meetup:
-
-[![Introducing Sveltia CMS: The Git-based Headless CMS Renaissance: online event on February 3](https://github.com/user-attachments/assets/db25178a-e305-490a-a57f-034d135a1a1a)](https://www.meetup.com/buildtime/events/312997511/)
