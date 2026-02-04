@@ -442,6 +442,14 @@
             {multiple}
             hidden={libraryName !== 'cloudinary'}
             onSelect={(resources) => {
+              // Check if the dialog is open to prevent selected resources from being inserted to
+              // other fields. This is required because `CloudinaryPanel` uses messaging to
+              // communicate with the embedded iframe, which is shared by all fields using the
+              // Cloudinary media storage.
+              if (!open) {
+                return;
+              }
+
               // Close the dialog after selection
               selectedResources = resources;
               onOk();
