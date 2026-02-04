@@ -76,7 +76,9 @@
     }
 
     if (file) {
-      const { publicPath, entryRelative, hasTemplateTags } = $entryDraft?.files[value].folder ?? {};
+      const { publicPath, entryRelative, hasTemplateTags } =
+        $entryDraft?.files[value]?.folder ?? {};
+
       const _folder = entryRelative || hasTemplateTags ? '' : publicPath || '';
 
       return createPath([_folder, decodeURI(file.name.normalize())]);
