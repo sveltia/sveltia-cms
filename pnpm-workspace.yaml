@@ -17,7 +17,8 @@ overrides:
   glob@>=11.0.0 <11.1.0: ">=11.1.0"
 
 auditConfig:
-  ignoreCves:
-    # ESLint
+  ignoreGhsas:
     # https://github.com/advisories/GHSA-p5wg-g6qr-c7cg
-    - CVE-2025-50537
+    - GHSA-p5wg-g6qr-c7cg
+    # https://github.com/advisories/GHSA-7h2j-956f-4vf2
+    - GHSA-7h2j-956f-4vf2

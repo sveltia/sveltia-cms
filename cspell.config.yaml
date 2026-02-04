@@ -42,6 +42,8 @@ words:
   - Flavored
   - Forgejo
   - frontmatter
+  - GHSA
+  - Ghsas
   - gitdir
   - Gitea
   - goldmark
