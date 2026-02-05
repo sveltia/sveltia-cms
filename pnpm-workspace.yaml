@@ -14,11 +14,8 @@ onlyBuiltDependencies:
 
 overrides:
   esbuild@<=0.24.2: ">=0.25.0"
-  glob@>=11.0.0 <11.1.0: ">=11.1.0"
 
 auditConfig:
   ignoreGhsas:
     # https://github.com/advisories/GHSA-p5wg-g6qr-c7cg
     - GHSA-p5wg-g6qr-c7cg
-    # https://github.com/advisories/GHSA-7h2j-956f-4vf2
-    - GHSA-7h2j-956f-4vf2
