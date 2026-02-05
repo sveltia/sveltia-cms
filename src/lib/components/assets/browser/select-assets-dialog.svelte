@@ -127,6 +127,11 @@
 
     return selectedFolder?.internalPath;
   });
+  const targetFolderPathRegex = $derived(
+    targetFolderPath !== undefined
+      ? new RegExp(`^${escapeRegExp(targetFolderPath)}(?:\\/|$)`)
+      : null,
+  );
   const listedAssets = $derived(
     [...$allAssets, ...unsavedAssets]
       .filter((asset) => !kind || kind === asset.kind)
@@ -167,6 +172,33 @@
       .includes(/** @type {any} */ (libraryName)),
   );
   const Selector = $derived($isSmallScreen ? Select : Listbox);
+
+  /**
+   * Check if an asset is in the selected folder.
+   * @param {Asset} asset Asset to check.
+   * @returns {boolean} `true` if the asset is in the selected folder.
+   */
+  const isAssetInSelectedFolder = (asset) => {
+    if (
+      selectedFolder === undefined ||
+      asset.folder?.internalPath !== selectedFolder.internalPath ||
+      asset.folder?.entryRelative !== selectedFolder.entryRelative
+    ) {
+      return false;
+    }
+
+    if (!selectedFolder.entryRelative) {
+      return true;
+    }
+
+    const { dirname } = getPathInfo(asset.path);
+
+    if (dirname === undefined || !targetFolderPathRegex) {
+      return false;
+    }
+
+    return targetFolderPathRegex.test(dirname);
+  };
 
   /**
    * Check if an asset with the same hash and folder already exists in the unsaved assets.
@@ -397,18 +429,7 @@
         <InternalAssetsPanel
           {accept}
           {multiple}
-          assets={listedAssets.filter(
-            (asset) =>
-              asset.folder?.internalPath === selectedFolder.internalPath &&
-              asset.folder?.entryRelative === selectedFolder.entryRelative &&
-              (selectedFolder.entryRelative
-                ? targetFolderPath
-                  ? getPathInfo(asset.path).dirname?.match(
-                      new RegExp(`^${escapeRegExp(targetFolderPath)}(?:\\/|$)`),
-                    )
-                  : false
-                : true),
-          )}
+          assets={listedAssets.filter(isAssetInSelectedFolder)}
           bind:selectedResources
           {searchTerms}
           basePath={selectedFolder.internalPath}
