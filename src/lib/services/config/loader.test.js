@@ -5,6 +5,43 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fetchCmsConfig, fetchFile, getConfigPath } from './loader';
 
+vi.mock('svelte-i18n', () => ({
+  _: {
+    subscribe: vi.fn((callback) => {
+      callback((key, options) => {
+        // Return a predictable string based on the key
+        if (key === 'config.error.fetch_failed_with_manual_init') {
+          return 'Fetch failed (manual init)';
+        }
+
+        if (key === 'config.error.fetch_failed') {
+          return 'Fetch failed';
+        }
+
+        if (key === 'config.error.fetch_failed_not_ok') {
+          return `Fetch failed with status ${options?.values?.status || '???'}`;
+        }
+
+        if (key === 'config.error.parse_failed') {
+          return 'Parse failed';
+        }
+
+        if (key === 'config.error.parse_failed_unsupported_type') {
+          return 'Unsupported type';
+        }
+
+        if (key === 'config.error.parse_failed_invalid_object') {
+          return 'Invalid object';
+        }
+
+        return key;
+      });
+
+      return () => {};
+    }),
+  },
+}));
+
 // Mock dependencies
 global.fetch = vi.fn();
 global.document = {
@@ -241,6 +278,32 @@ backend:
       expect(result.backend.media_folder).toBe('static/images');
       expect(result.backend.name).toBe('github');
     });
+
+    test('should use correct error message when manualInit is false', async () => {
+      document.querySelectorAll.mockReturnValue([]);
+
+      fetch.mockRejectedValue(new Error('Network error'));
+
+      try {
+        await fetchCmsConfig({ manualInit: false });
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).toBe('Fetch failed');
+      }
+    });
+
+    test('should use correct error message when manualInit is true', async () => {
+      document.querySelectorAll.mockReturnValue([]);
+
+      fetch.mockRejectedValue(new Error('Network error'));
+
+      try {
+        await fetchCmsConfig({ manualInit: true });
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).toBe('Fetch failed (manual init)');
+      }
+    });
   });
 
   describe('fetchFile', () => {
@@ -430,6 +493,41 @@ collections:
           },
         ],
       });
+    });
+
+    test('should use correct error message when manualInit is false and fetch fails', async () => {
+      fetch.mockRejectedValue(new Error('Network error'));
+
+      try {
+        await fetchFile({ href: '/config.yml' }, { manualInit: false });
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).toBe('Fetch failed');
+      }
+    });
+
+    test('should use correct error message when manualInit is true and fetch fails', async () => {
+      fetch.mockRejectedValue(new Error('Network error'));
+
+      try {
+        await fetchFile({ href: '/config.yml' }, { manualInit: true });
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).toBe('Fetch failed (manual init)');
+      }
+    });
+
+    test('should pass manualInit option to fetchFile when called from fetchCmsConfig', async () => {
+      document.querySelectorAll.mockReturnValue([]);
+
+      fetch.mockRejectedValue(new Error('Network error'));
+
+      try {
+        await fetchCmsConfig({ manualInit: true });
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).toBe('Fetch failed (manual init)');
+      }
     });
   });
 });

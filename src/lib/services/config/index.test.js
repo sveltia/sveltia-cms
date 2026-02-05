@@ -204,7 +204,7 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      expect(fetchcmsConfigMock).toHaveBeenCalled();
+      expect(fetchcmsConfigMock).toHaveBeenCalledWith();
 
       const config = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
@@ -274,7 +274,7 @@ describe('config/index', () => {
 
       await initCmsConfig(manualConfig);
 
-      expect(fetchcmsConfigMock).toHaveBeenCalled();
+      expect(fetchcmsConfigMock).toHaveBeenCalledWith({ manualInit: true });
 
       const config = await new Promise((resolve) => {
         /* eslint-disable prefer-const */
@@ -314,6 +314,44 @@ describe('config/index', () => {
 
       expect(errors).toBeDefined();
       expect(errors).toContain('config.error.parse_failed');
+    });
+
+    it('should call fetchCmsConfig with manualInit option when merging with explicit load_config_file true', async () => {
+      const { initCmsConfig } = await import('./index.js');
+
+      const fileConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+      };
+
+      /** @type {any} */
+      const manualConfig = {
+        backend: { name: 'github', repo: 'different/repo' },
+        load_config_file: true,
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(fileConfig);
+
+      await initCmsConfig(manualConfig);
+
+      expect(fetchcmsConfigMock).toHaveBeenCalledWith({ manualInit: true });
+
+      const config = await new Promise((resolve) => {
+        /* eslint-disable prefer-const */
+        /** @type {() => void} */
+        let unsubscribe;
+
+        unsubscribe = cmsConfig.subscribe((cfg) => {
+          if (cfg) {
+            unsubscribe?.();
+            resolve(cfg);
+          }
+        });
+      });
+
+      expect(config).toBeDefined();
+      expect(config?.backend.repo).toBe('different/repo');
     });
 
     it('should set _siteURL from site_url config', async () => {

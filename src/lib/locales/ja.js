@@ -646,6 +646,8 @@ export const strings = {
       no_secure_context: 'Sveltia CMS は HTTPS またはローカルホスト URL でのみ動作します。',
       fetch_failed: '設定ファイルを読み込めませんでした。',
       fetch_failed_not_ok: 'HTTP レスポンスがステータス {status} で返されました。',
+      fetch_failed_with_manual_init:
+        '設定ファイルを取得できませんでした。`config.yml` ファイルの読み込みを防ぐには、`CMS.init()` に渡される設定オブジェクトに [`load_config_file: false`](https://sveltiacms.app/en/docs/api/initialization#providing-a-full-configuration) を追加してください。',
       parse_failed: '設定ファイルを解析できませんでした。',
       parse_failed_invalid_object: '設定ファイルが有効な JavaScript オブジェクトではありません。',
       parse_failed_unsupported_type:

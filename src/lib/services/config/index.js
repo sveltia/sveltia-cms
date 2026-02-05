@@ -97,7 +97,7 @@ export const initCmsConfig = async (manualConfig) => {
       rawConfig = manualConfig;
 
       if (rawConfig.load_config_file !== false) {
-        rawConfig = merge(await fetchCmsConfig(), rawConfig);
+        rawConfig = merge(await fetchCmsConfig({ manualInit: true }), rawConfig);
       }
     } else {
       rawConfig = await fetchCmsConfig();

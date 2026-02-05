@@ -646,6 +646,8 @@ export const strings = {
       no_secure_context: 'Sveltia CMS only works with HTTPS or localhost URLs.',
       fetch_failed: 'The configuration file could not be retrieved.',
       fetch_failed_not_ok: 'HTTP response returned with status {status}.',
+      fetch_failed_with_manual_init:
+        'The configuration file could not be retrieved. To prevent the `config.yml` file from loading, add [`load_config_file: false`](https://sveltiacms.app/en/docs/api/initialization#providing-a-full-configuration) to the configuration object passed to `CMS.init()`.',
       parse_failed: 'The configuration file could not be parsed.',
       parse_failed_invalid_object: 'The configuration file is not a valid JavaScript object.',
       parse_failed_unsupported_type:
