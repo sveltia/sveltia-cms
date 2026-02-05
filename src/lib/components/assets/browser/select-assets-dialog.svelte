@@ -14,6 +14,7 @@
   } from '@sveltia/ui';
   import { getHash } from '@sveltia/utils/crypto';
   import { getPathInfo } from '@sveltia/utils/file';
+  import { escapeRegExp } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
 
@@ -401,7 +402,11 @@
               asset.folder?.internalPath === selectedFolder.internalPath &&
               asset.folder?.entryRelative === selectedFolder.entryRelative &&
               (selectedFolder.entryRelative
-                ? getPathInfo(asset.path).dirname === targetFolderPath
+                ? targetFolderPath
+                  ? getPathInfo(asset.path).dirname?.match(
+                      new RegExp(`^${escapeRegExp(targetFolderPath)}(?:\\/|$)`),
+                    )
+                  : false
                 : true),
           )}
           bind:selectedResources
