@@ -112,6 +112,7 @@ describe('Test getEntryPathRegEx()', () => {
     defaultLocale: 'en',
     structure: /** @type {'single_file'} */ ('single_file'),
     omitDefaultLocaleFromFilePath: false,
+    omitDefaultLocaleFromPreviewPath: false,
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
   };
 
@@ -537,6 +538,7 @@ describe('Test getFileConfig()', () => {
     },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFilePath: false,
+    omitDefaultLocaleFromPreviewPath: false,
   };
 
   /** @type {InternalI18nOptions} */
@@ -554,6 +556,7 @@ describe('Test getFileConfig()', () => {
     },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFilePath: false,
+    omitDefaultLocaleFromPreviewPath: false,
   };
 
   /** @type {InternalI18nOptions} */
@@ -571,6 +574,7 @@ describe('Test getFileConfig()', () => {
     },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFilePath: false,
+    omitDefaultLocaleFromPreviewPath: false,
   };
 
   /** @type {InternalI18nOptions} */
@@ -588,6 +592,7 @@ describe('Test getFileConfig()', () => {
     },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFilePath: false,
+    omitDefaultLocaleFromPreviewPath: false,
   };
 
   /** @type {InternalI18nOptions} */
@@ -605,6 +610,7 @@ describe('Test getFileConfig()', () => {
     },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFilePath: false,
+    omitDefaultLocaleFromPreviewPath: false,
   };
 
   test('entry collection without i18n', () => {

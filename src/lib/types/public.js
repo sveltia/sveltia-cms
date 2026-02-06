@@ -964,6 +964,9 @@
  * from entry file paths. Default: `false`. This option applies to both entry collections and file
  * collections, where the path includes a `{{locale}}.` or  `{{locale}}/` placeholder. It aims to
  * support [Zola’s multilingual sites](https://www.getzola.org/documentation/content/multilingual/).
+ * @property {boolean} [omit_default_locale_from_preview_path] Whether to exclude the default locale
+ * from preview URL paths. Default: `false`. This option helps to create cleaner URLs for the
+ * default locale when generating preview links for multilingual content.
  * @see https://decapcms.org/docs/i18n/
  * @see https://sveltiacms.app/en/docs/i18n
  * @see https://github.com/decaporg/decap-cms/issues/6932

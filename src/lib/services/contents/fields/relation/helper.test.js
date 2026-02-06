@@ -246,6 +246,7 @@ describe('Test getOptions()', async () => {
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     },
     _file: {
       format: 'yaml-frontmatter',
@@ -839,6 +840,7 @@ describe('Test getOptions()', async () => {
           },
           canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
           omitDefaultLocaleFromFilePath: false,
+          omitDefaultLocaleFromPreviewPath: false,
         },
       };
 
@@ -1071,6 +1073,7 @@ describe('Test getOptions()', async () => {
           },
           canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
           omitDefaultLocaleFromFilePath: false,
+          omitDefaultLocaleFromPreviewPath: false,
         },
       };
 

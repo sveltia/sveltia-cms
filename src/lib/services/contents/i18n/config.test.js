@@ -162,6 +162,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
@@ -179,6 +180,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
@@ -196,6 +198,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -226,6 +229,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
@@ -243,6 +247,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
@@ -260,6 +265,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
 
     expect(normalizeI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
@@ -299,6 +305,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -329,6 +336,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -359,6 +367,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
 
     expect(
@@ -382,6 +391,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
 
     expect(
@@ -404,6 +414,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -435,6 +446,7 @@ describe('Test normalizeI18nConfig()', () => {
         saveAllLocales: true,
         canonicalSlug,
         omitDefaultLocaleFromFilePath: false,
+        omitDefaultLocaleFromPreviewPath: false,
       },
     );
 
@@ -462,6 +474,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
 
     expect(
@@ -484,6 +497,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -513,6 +527,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: false,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -542,6 +557,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: false,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -571,6 +587,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: false,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -600,6 +617,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: false,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -629,6 +647,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: false,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -659,7 +678,8 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFilePath: true, // Should be true because i18nMultiFile is true
+      omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false, // Should be true because i18nMultiFile is true
     });
   });
 
@@ -690,7 +710,8 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFilePath: false, // Should be false because i18nMultiFile is false
+      omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false, // Should be false because i18nMultiFile is false
     });
   });
 
@@ -728,7 +749,8 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFilePath: true, // Regex matches file.file pattern (line 223)
+      omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false, // Regex matches file.file pattern (line 223)
     });
   });
 
@@ -766,7 +788,8 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFilePath: false, // False because regex doesn't match (line 223)
+      omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false, // False because regex doesn't match (line 223)
     });
   });
 
@@ -804,6 +827,7 @@ describe('Test normalizeI18nConfig()', () => {
       saveAllLocales: true,
       canonicalSlug,
       omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false,
     });
   });
 
@@ -841,7 +865,8 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFilePath: true, // Regex matches folder pattern ({{locale}}/)
+      omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false, // Regex matches folder pattern ({{locale}}/)
     });
   });
 
@@ -879,7 +904,8 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFilePath: true, // Regex matches root folder pattern ({{locale}}/)
+      omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false, // Regex matches root folder pattern ({{locale}}/)
     });
   });
 
@@ -918,7 +944,8 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFilePath: true, // New option value
+      omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false, // New option value
     });
   });
 
@@ -956,7 +983,8 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFilePath: true, // Legacy option is converted
+      omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false, // Legacy option is converted
     });
   });
 });

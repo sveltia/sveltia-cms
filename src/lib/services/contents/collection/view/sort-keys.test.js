@@ -81,6 +81,7 @@ describe('Test getSortConfig()', async () => {
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     },
     _file: {
       extension: 'json',

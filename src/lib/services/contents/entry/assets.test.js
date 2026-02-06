@@ -101,6 +101,7 @@ describe('getEntryThumbnail', () => {
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     },
     _thumbnailFieldNames: ['image', 'thumbnail'],
   };

@@ -92,6 +92,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
     preview_path: pathTemplate,
     preview_path_date_field: dateFieldName,
     fields: regularFields = [],
+    _i18n: { defaultLocale, omitDefaultLocaleFromPreviewPath },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   if (!showLinks || !baseURL || !entryFilePath || !content || !pathTemplate) {
@@ -113,8 +114,16 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
     }
   }
 
+  let template = pathTemplate;
+
+  // Handle the case where the default locale is omitted from the preview path, ensuring that the
+  // URL is correctly generated without the locale segment for the default locale.
+  if (locale === defaultLocale && omitDefaultLocaleFromPreviewPath) {
+    template = template.replace(/{{locale}}[./]/, '');
+  }
+
   try {
-    const path = fillTemplate(pathTemplate, {
+    const path = fillTemplate(template, {
       type: 'preview_path',
       collection,
       content,

@@ -40,6 +40,7 @@ describe('Test getEntrySummary()', () => {
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     },
     _thumbnailFieldNames: [],
   };
@@ -358,6 +359,7 @@ describe('Test sanitizeEntrySummary()', () => {
         },
         canonicalSlug: { key: 'slug', value: '{{slug}}' },
         omitDefaultLocaleFromFilePath: false,
+        omitDefaultLocaleFromPreviewPath: false,
       },
       _thumbnailFieldNames: [],
     };
@@ -1250,6 +1252,7 @@ describe('Additional comprehensive tests for edge cases', () => {
         },
         canonicalSlug: { key: 'slug', value: '{{slug}}' },
         omitDefaultLocaleFromFilePath: false,
+        omitDefaultLocaleFromPreviewPath: false,
       },
       _thumbnailFieldNames: [],
     };
@@ -1491,6 +1494,7 @@ describe('Additional comprehensive tests for edge cases', () => {
         },
         canonicalSlug: { key: 'slug', value: '{{slug}}' },
         omitDefaultLocaleFromFilePath: false,
+        omitDefaultLocaleFromPreviewPath: false,
       },
       _thumbnailFieldNames: [],
       summary: '{{commit_date}}',

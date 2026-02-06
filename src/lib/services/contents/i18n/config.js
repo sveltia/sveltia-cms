@@ -62,6 +62,7 @@ export const DEFAULT_I18N_CONFIG = {
   },
   canonicalSlug: { ...DEFAULT_CANONICAL_SLUG },
   omitDefaultLocaleFromFilePath: false,
+  omitDefaultLocaleFromPreviewPath: false,
 };
 
 /**
@@ -201,6 +202,7 @@ export const normalizeI18nConfig = (collection, file) => {
     canonical_slug: canonicalSlugConfig = { key: undefined, value: undefined },
     omit_default_locale_from_filename: omitDefaultConfigLegacy,
     omit_default_locale_from_file_path: omitDefaultConfig = omitDefaultConfigLegacy ?? false,
+    omit_default_locale_from_preview_path: omitDefaultLocaleFromPreviewPath = false,
   } = config ?? {};
 
   // @todo Remove the option prior to the 1.0 release.
@@ -249,5 +251,6 @@ export const normalizeI18nConfig = (collection, file) => {
       value: canonicalSlugTemplate,
     },
     omitDefaultLocaleFromFilePath,
+    omitDefaultLocaleFromPreviewPath,
   };
 };

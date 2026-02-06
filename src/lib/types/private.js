@@ -454,6 +454,8 @@
  * @property {{ key: string, value: string }} canonicalSlug See `canonical_slug` above.
  * @property {boolean} omitDefaultLocaleFromFilePath Whether to exclude the default locale from
  * entry file paths.
+ * @property {boolean} omitDefaultLocaleFromPreviewPath Whether to exclude the default locale from
+ * preview URL paths.
  */
 
 /**

@@ -64,6 +64,7 @@ describe('Test filterEntries()', async () => {
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     },
     view_filters: [
       { field: 'status', pattern: 'published', label: 'Published' },

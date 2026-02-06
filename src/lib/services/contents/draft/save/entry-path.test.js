@@ -196,6 +196,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'single_file',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
         },
         collectionFile: {
@@ -204,6 +205,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'single_file',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
         },
         originalEntry: undefined,
@@ -230,6 +232,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'single_file',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
         },
         collectionFile: undefined,
@@ -257,6 +260,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'single_file',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: 'posts',
@@ -285,6 +289,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'multiple_folders',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: 'posts',
@@ -313,6 +318,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'multiple_folders_i18n_root',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: 'posts',
@@ -341,6 +347,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'multiple_root_folders',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: 'posts',
@@ -369,6 +376,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'multiple_files',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: 'posts',
@@ -397,6 +405,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'multiple_files',
             omitDefaultLocaleFromFilePath: true,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: 'posts',
@@ -437,6 +446,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'single_file',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: 'posts',
@@ -475,6 +485,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'single_file',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: 'posts',
@@ -504,6 +515,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'unknown_structure',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: 'posts',
@@ -532,6 +544,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'single_file',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: '',
@@ -560,6 +573,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'multiple_folders',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: '',
@@ -588,6 +602,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'multiple_files',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: '',
@@ -616,6 +631,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'multiple_folders_i18n_root',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: '',
@@ -644,6 +660,7 @@ describe('contents/draft/save/entry-path', () => {
             defaultLocale: 'en',
             structure: 'multiple_root_folders',
             omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
           },
           _file: {
             basePath: '',

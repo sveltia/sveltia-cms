@@ -25,6 +25,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en', 'fr', 'es'],
       defaultLocale: 'en',
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     expect(getLocalePath({ _i18n, locale: 'en', path: 'posts/{{locale}}/hello.md' })).toBe(
@@ -47,6 +48,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en', 'fr'],
       defaultLocale: 'en',
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     expect(getLocalePath({ _i18n, locale: 'en', path: 'posts/hello.{{locale}}.md' })).toBe(
@@ -65,6 +67,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en', 'fr'],
       defaultLocale: 'en',
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     expect(
@@ -91,6 +94,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en', 'fr', 'es'],
       defaultLocale: 'en',
       omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     // Default locale should have .{{locale}} part removed from filename
@@ -115,6 +119,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en', 'fr'],
       defaultLocale: 'en',
       omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     // Test with .md extension
@@ -145,6 +150,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en', 'fr', 'es'],
       defaultLocale: 'en',
       omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     // Default locale: omit the {{locale}}/ folder part
@@ -169,6 +175,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en', 'fr'],
       defaultLocale: 'en',
       omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     // Default locale: omit the {{locale}}/ folder at the beginning
@@ -189,6 +196,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en', 'fr'],
       defaultLocale: 'en',
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     // Default locale should still have the locale in filename when disabled
@@ -208,6 +216,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en', 'fr'],
       defaultLocale: 'en',
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     // Path without locale placeholder should remain unchanged
@@ -223,6 +232,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en', 'fr', 'es'],
       defaultLocale: 'fr',
       omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     // French is the default locale, so it should be omitted
@@ -247,6 +257,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['en-US', 'zh-CN'],
       defaultLocale: 'en-US',
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     // Test with locales containing hyphens
@@ -266,6 +277,7 @@ describe('Test getLocalePath()', () => {
       allLocales: ['_default'],
       defaultLocale: '_default',
       omitDefaultLocaleFromFilePath: false,
+      omitDefaultLocaleFromPreviewPath: false,
     };
 
     // _default locale should be handled normally
