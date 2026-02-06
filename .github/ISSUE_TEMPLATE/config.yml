@@ -3,7 +3,4 @@ blank_issues_enabled: true
 contact_links:
   - name: Got a question?
     url: https://github.com/sveltia/sveltia-cms/discussions/new?category=q-a
-    about: >
-      If you cannot find the answer to your question in the documents, you may ask for help in the
-      discussion forum. Please note that, since Sveltia CMS is currently intended for existing
-      Netlify/Decap CMS users, we do not provide installation/setup support.
+    about: Ask for help in the discussion forum
