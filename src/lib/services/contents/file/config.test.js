@@ -122,7 +122,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
     };
 
@@ -144,7 +144,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
     };
 
@@ -167,7 +167,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
     };
 
@@ -192,7 +192,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
     };
 
@@ -216,7 +216,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
     };
 
@@ -239,7 +239,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: true,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
     };
 
@@ -262,7 +262,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: true,
+        i18nMultiRootFolder: true,
       },
     };
 
@@ -285,7 +285,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
     };
 
@@ -307,7 +307,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
     };
 
@@ -337,7 +337,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
     };
 
@@ -365,7 +365,7 @@ describe('Test getEntryPathRegEx()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
     };
 
@@ -475,7 +475,7 @@ describe('Test getFileConfig()', () => {
       i18nSingleFile: false,
       i18nMultiFile: false,
       i18nMultiFolder: false,
-      i18nRootMultiFolder: false,
+      i18nMultiRootFolder: false,
     },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFileName: false,
@@ -492,7 +492,7 @@ describe('Test getFileConfig()', () => {
       i18nSingleFile: true,
       i18nMultiFile: false,
       i18nMultiFolder: false,
-      i18nRootMultiFolder: false,
+      i18nMultiRootFolder: false,
     },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFileName: false,
@@ -509,7 +509,7 @@ describe('Test getFileConfig()', () => {
       i18nSingleFile: false,
       i18nMultiFile: true,
       i18nMultiFolder: false,
-      i18nRootMultiFolder: false,
+      i18nMultiRootFolder: false,
     },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFileName: false,
@@ -526,14 +526,14 @@ describe('Test getFileConfig()', () => {
       i18nSingleFile: false,
       i18nMultiFile: false,
       i18nMultiFolder: true,
-      i18nRootMultiFolder: false,
+      i18nMultiRootFolder: false,
     },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFileName: false,
   };
 
   /** @type {InternalI18nOptions} */
-  const i18nRootMultiFolder = {
+  const i18nMultiRootFolder = {
     i18nEnabled: true,
     allLocales: ['en', 'fr'],
     initialLocales: ['en', 'fr'],
@@ -543,7 +543,7 @@ describe('Test getFileConfig()', () => {
       i18nSingleFile: false,
       i18nMultiFile: false,
       i18nMultiFolder: false,
-      i18nRootMultiFolder: true,
+      i18nMultiRootFolder: true,
     },
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
     omitDefaultLocaleFromFileName: false,
@@ -947,7 +947,7 @@ describe('Test getFileConfig()', () => {
         rawCollection: {
           ...rawFolderCollection,
         },
-        _i18n: i18nRootMultiFolder,
+        _i18n: i18nMultiRootFolder,
       }),
     ).toEqual({
       extension: 'md',
@@ -966,7 +966,7 @@ describe('Test getFileConfig()', () => {
           ...rawFolderCollection,
           path: '{{slug}}/index',
         },
-        _i18n: i18nRootMultiFolder,
+        _i18n: i18nMultiRootFolder,
       }),
     ).toEqual({
       extension: 'md',
@@ -986,7 +986,7 @@ describe('Test getFileConfig()', () => {
           path: '{{slug}}/index',
           format: 'yaml-frontmatter',
         },
-        _i18n: i18nRootMultiFolder,
+        _i18n: i18nMultiRootFolder,
       }),
     ).toEqual({
       extension: 'md',
@@ -1006,7 +1006,7 @@ describe('Test getFileConfig()', () => {
           extension: 'yml',
           yaml_quote: true,
         },
-        _i18n: i18nRootMultiFolder,
+        _i18n: i18nMultiRootFolder,
       }),
     ).toEqual({
       extension: 'yml',
@@ -1025,7 +1025,7 @@ describe('Test getFileConfig()', () => {
           ...rawFolderCollection,
           extension: 'json',
         },
-        _i18n: i18nRootMultiFolder,
+        _i18n: i18nMultiRootFolder,
       }),
     ).toEqual({
       extension: 'json',

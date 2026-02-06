@@ -44,7 +44,7 @@ describe('config/folders/entries', () => {
     vi.mocked(normalizeI18nConfig).mockReturnValue({
       allLocales: ['_default'],
       structureMap: {
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
@@ -116,7 +116,7 @@ describe('config/folders/entries', () => {
       vi.mocked(normalizeI18nConfig).mockReturnValue({
         allLocales: ['en', 'fr'],
         structureMap: {
-          i18nRootMultiFolder: true,
+          i18nMultiRootFolder: true,
           i18nSingleFile: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
@@ -289,7 +289,7 @@ describe('config/folders/entries', () => {
       vi.mocked(normalizeI18nConfig).mockReturnValue({
         allLocales: ['en', 'fr'],
         // @ts-ignore - simplified structure map for testing
-        structureMap: { i18nRootMultiFolder: false },
+        structureMap: { i18nMultiRootFolder: false },
       });
 
       const config = {
@@ -476,7 +476,7 @@ describe('config/folders/entries', () => {
       vi.mocked(normalizeI18nConfig).mockReturnValue({
         allLocales: ['en', 'fr', 'es'],
         structureMap: {
-          i18nRootMultiFolder: false,
+          i18nMultiRootFolder: false,
           i18nSingleFile: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
@@ -501,7 +501,7 @@ describe('config/folders/entries', () => {
       vi.mocked(normalizeI18nConfig).mockReturnValue({
         allLocales: ['en', 'de'],
         structureMap: {
-          i18nRootMultiFolder: false,
+          i18nMultiRootFolder: false,
           i18nSingleFile: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
@@ -525,7 +525,7 @@ describe('config/folders/entries', () => {
       vi.mocked(normalizeI18nConfig).mockReturnValue({
         allLocales: ['_default'],
         structureMap: {
-          i18nRootMultiFolder: false,
+          i18nMultiRootFolder: false,
           i18nSingleFile: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
@@ -562,7 +562,7 @@ describe('config/folders/entries', () => {
       vi.mocked(normalizeI18nConfig).mockReturnValue({
         allLocales: ['en', 'fr'],
         structureMap: {
-          i18nRootMultiFolder: false,
+          i18nMultiRootFolder: false,
           i18nSingleFile: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
@@ -650,7 +650,7 @@ describe('config/folders/entries', () => {
       vi.mocked(normalizeI18nConfig).mockReturnValue({
         allLocales: ['_default'],
         // @ts-ignore - simplified structure map for testing
-        structureMap: { i18nRootMultiFolder: false },
+        structureMap: { i18nMultiRootFolder: false },
       });
     });
 
@@ -684,7 +684,7 @@ describe('config/folders/entries', () => {
       vi.mocked(normalizeI18nConfig).mockReturnValue({
         allLocales: ['en', 'fr'],
         // @ts-ignore - simplified structure map for testing
-        structureMap: { i18nRootMultiFolder: true },
+        structureMap: { i18nMultiRootFolder: true },
       });
 
       const config = {
@@ -728,7 +728,7 @@ describe('config/folders/entries', () => {
       vi.mocked(normalizeI18nConfig).mockReturnValue({
         allLocales: ['_default'],
         // @ts-ignore - simplified structure map for testing
-        structureMap: { i18nRootMultiFolder: false },
+        structureMap: { i18nMultiRootFolder: false },
       });
     });
 
@@ -805,7 +805,7 @@ describe('config/folders/entries', () => {
       vi.mocked(normalizeI18nConfig).mockReturnValue({
         allLocales: ['_default'],
         // @ts-ignore - simplified structure map for testing
-        structureMap: { i18nRootMultiFolder: false },
+        structureMap: { i18nMultiRootFolder: false },
       });
     });
 

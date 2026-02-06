@@ -60,7 +60,7 @@ describe('Test filterEntries()', async () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
       omitDefaultLocaleFromFileName: false,

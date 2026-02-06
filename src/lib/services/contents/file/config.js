@@ -141,14 +141,14 @@ export const getEntryPathRegEx = ({
     allLocales,
     defaultLocale,
     omitDefaultLocaleFromFileName,
-    structureMap: { i18nMultiFile, i18nMultiFolder, i18nRootMultiFolder },
+    structureMap: { i18nMultiFile, i18nMultiFolder, i18nMultiRootFolder },
   } = _i18n;
 
   const localeMatcher = `(?<locale>${allLocales.join('|')})`;
 
   const pattern = [
     '^',
-    i18nRootMultiFolder ? `${localeMatcher}\\/` : '',
+    i18nMultiRootFolder ? `${localeMatcher}\\/` : '',
     basePath ? `${escapeRegExp(basePath)}\\/` : '',
     i18nMultiFolder ? `${localeMatcher}\\/` : '',
     getFilePathMatcher(subPath, indexFileName),

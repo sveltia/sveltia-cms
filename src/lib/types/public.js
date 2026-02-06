@@ -921,8 +921,8 @@
 
 /**
  * Internationalization (i18n) file structure type.
- * @typedef {'single_file' | 'multiple_files' | 'multiple_folders' |
- * 'multiple_folders_i18n_root'} I18nFileStructure
+ * @typedef {'single_file' | 'multiple_files' | 'multiple_folders' | 'multiple_folders_i18n_root' |
+ * 'multiple_root_folders'} I18nFileStructure
  * @see https://decapcms.org/docs/i18n/
  * @see https://sveltiacms.app/en/docs/i18n
  * @see https://github.com/decaporg/decap-cms/pull/7400
@@ -933,7 +933,8 @@
  * [documentation](https://sveltiacms.app/en/docs/i18n) for details.
  * @typedef {object} I18nOptions
  * @property {I18nFileStructure} structure File structure for entry collections. File/singleton
- * collection must define the structure using `{{locale}}` in the `file` option. See the
+ * collection must define the structure using `{{locale}}` in the `file` option.
+ * `multiple_folders_i18n_root` has been deprecated in favor of `multiple_root_folders`. See the
  * [documentation](https://sveltiacms.app/en/docs/i18n#managing-content-structure) for details.
  * @property {LocaleCode[]} locales List of all available locales.
  * @property {LocaleCode} [default_locale] Default locale. Default: first locale in the `locales`

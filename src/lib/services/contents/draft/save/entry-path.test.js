@@ -179,6 +179,34 @@ describe('contents/draft/save/entry-path', () => {
       expect(result).toBe('en/posts/my-post.md');
     });
 
+    it('should create path for multiple_root_folders structure', async () => {
+      const { createEntryPath } = await import('./entry-path.js');
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            structure: 'multiple_root_folders',
+            omitDefaultLocaleFromFileName: false,
+          },
+          _file: {
+            basePath: 'posts',
+            subPath: undefined,
+            extension: 'md',
+          },
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: { en: {} },
+        isIndexFile: false,
+      };
+
+      const result = createEntryPath({ draft, locale: 'en', slug: 'my-post' });
+
+      expect(result).toBe('en/posts/my-post.md');
+    });
+
     it('should create path for multiple_files structure', async () => {
       const { createEntryPath } = await import('./entry-path.js');
 
@@ -435,6 +463,34 @@ describe('contents/draft/save/entry-path', () => {
           _i18n: {
             defaultLocale: 'en',
             structure: 'multiple_folders_i18n_root',
+            omitDefaultLocaleFromFileName: false,
+          },
+          _file: {
+            basePath: '',
+            subPath: undefined,
+            extension: 'md',
+          },
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: { en: {} },
+        isIndexFile: false,
+      };
+
+      const result = createEntryPath({ draft, locale: 'en', slug: 'my-post' });
+
+      expect(result).toBe('en/my-post.md');
+    });
+
+    it('should strip leading slash when basePath is empty for multiple_root_folders structure', async () => {
+      const { createEntryPath } = await import('./entry-path.js');
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            structure: 'multiple_root_folders',
             omitDefaultLocaleFromFileName: false,
           },
           _file: {

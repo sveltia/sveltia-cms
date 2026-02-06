@@ -66,7 +66,8 @@ export const createEntryPath = ({ draft, locale, slug }) => {
 
   const pathOptions = {
     multiple_folders: `${basePath}/${locale}/${path}.${extension}`,
-    multiple_folders_i18n_root: `${locale}/${basePath}/${path}.${extension}`,
+    multiple_folders_i18n_root: `${locale}/${basePath}/${path}.${extension}`, // deprecated
+    multiple_root_folders: `${locale}/${basePath}/${path}.${extension}`, // new name
     multiple_files:
       omitDefaultLocaleFromFileName && locale === defaultLocale
         ? `${basePath}/${path}.${extension}`

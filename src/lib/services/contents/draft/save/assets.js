@@ -21,7 +21,7 @@ import {
  * FlattenedEntryContent,
  * InternalEntryCollection,
  * } from '$lib/types/private';
- * @import { FieldKeyPath } from '$lib/types/public';
+ * @import { FieldKeyPath, I18nFileStructure } from '$lib/types/public';
  */
 
 /**
@@ -39,6 +39,17 @@ import {
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
  * @property {AssetFolderInfo} folder Folder info.
  */
+
+/**
+ * List of collection structures that use multiple folders for assets.
+ * @type {I18nFileStructure[]}
+ * @todo Remove the legacy `multiple_folders_i18n_root` structure prior to the 1.0 release.
+ */
+const MULTI_FOLDER_STRUCTURES = [
+  'multiple_folders',
+  'multiple_folders_i18n_root', // deprecated
+  'multiple_root_folders', // new name
+];
 
 /**
  * Get the internal/public asset path configuration for the entry assets.
@@ -63,10 +74,7 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
   }
 
   const { collection } = fillSlugOptions;
-
-  const isMultiFolders = ['multiple_folders', 'multiple_folders_i18n_root'].includes(
-    collection._i18n.structure,
-  );
+  const isMultiFolders = MULTI_FOLDER_STRUCTURES.includes(collection._i18n.structure);
 
   const subPath =
     collection._type === 'entry'

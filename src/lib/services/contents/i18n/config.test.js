@@ -153,7 +153,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'fr'],
@@ -170,7 +170,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'fr'],
@@ -187,7 +187,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: false,
       allLocales: ['_default'],
@@ -217,7 +217,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: true,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -234,7 +234,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -251,7 +251,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: false,
       allLocales: ['_default'],
@@ -290,7 +290,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['fr'],
@@ -320,7 +320,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: true,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['es'],
@@ -350,7 +350,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['de'],
@@ -373,7 +373,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['de'],
@@ -395,7 +395,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['de'],
@@ -426,7 +426,7 @@ describe('Test normalizeI18nConfig()', () => {
           i18nSingleFile: true,
           i18nMultiFile: false,
           i18nMultiFolder: false,
-          i18nRootMultiFolder: false,
+          i18nMultiRootFolder: false,
         },
         i18nEnabled: true,
         allLocales: ['es'],
@@ -453,7 +453,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['es'],
@@ -475,7 +475,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['es'],
@@ -504,7 +504,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -533,7 +533,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -562,7 +562,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -591,7 +591,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -620,7 +620,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -651,7 +651,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -682,7 +682,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -720,7 +720,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -758,7 +758,7 @@ describe('Test normalizeI18nConfig()', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       },
       i18nEnabled: true,
       allLocales: ['en', 'de', 'fr'],
@@ -779,6 +779,7 @@ describe('Test internal helper functions', () => {
         MULTIPLE_FILES: 'multiple_files',
         MULTIPLE_FOLDERS: 'multiple_folders',
         MULTIPLE_FOLDERS_I18N_ROOT: 'multiple_folders_i18n_root',
+        MULTIPLE_ROOT_FOLDERS: 'multiple_root_folders',
       });
     });
   });
@@ -974,7 +975,7 @@ describe('Test internal helper functions', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       });
     });
 
@@ -983,7 +984,7 @@ describe('Test internal helper functions', () => {
         i18nSingleFile: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       });
     });
 
@@ -992,7 +993,7 @@ describe('Test internal helper functions', () => {
         i18nSingleFile: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       });
     });
 
@@ -1001,17 +1002,35 @@ describe('Test internal helper functions', () => {
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: true,
-        i18nRootMultiFolder: false,
+        i18nMultiRootFolder: false,
       });
     });
 
-    test('should set i18nRootMultiFolder to true for multiple_folders_i18n_root', () => {
+    test('should set i18nMultiRootFolder to true for multiple_folders_i18n_root', () => {
       expect(createStructureMap(true, 'multiple_folders_i18n_root')).toEqual({
         i18nSingleFile: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
-        i18nRootMultiFolder: true,
+        i18nMultiRootFolder: true,
       });
+    });
+
+    test('should set i18nMultiRootFolder to true for multiple_root_folders', () => {
+      expect(createStructureMap(true, 'multiple_root_folders')).toEqual({
+        i18nSingleFile: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: true,
+      });
+    });
+
+    test('should set i18nMultiRootFolder to true for both deprecated and new root folder structures', () => {
+      const deprecatedResult = createStructureMap(true, 'multiple_folders_i18n_root');
+      const newResult = createStructureMap(true, 'multiple_root_folders');
+
+      expect(deprecatedResult.i18nMultiRootFolder).toBe(true);
+      expect(newResult.i18nMultiRootFolder).toBe(true);
+      expect(deprecatedResult).toEqual(newResult);
     });
   });
 

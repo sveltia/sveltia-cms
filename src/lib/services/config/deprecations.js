@@ -10,6 +10,7 @@ export const warnedOnceMap = {
   uuid_read_only: false,
   save_all_locales: false,
   automatic_deployments: false,
+  multiple_folders_i18n_root: false,
 };
 
 /**
@@ -38,6 +39,10 @@ export const warningMessages = {
     '1.0. Use the `skip_ci` option instead. `automatic_deployments: false` is equivalent to ' +
     '`skip_ci: true`, and `automatic_deployments: true` is equivalent to `skip_ci: false`. ' +
     'https://sveltiacms.app/en/docs/deployments#disabling-automatic-deployments',
+  multiple_folders_i18n_root:
+    'The `multiple_folders_i18n_root` i18n structure is deprecated and will be removed in ' +
+    'Sveltia CMS 1.0. Use the `multiple_root_folders` structure instead. ' +
+    'https://sveltiacms.app/en/docs/i18n#multiple-root-folders',
 };
 
 /**

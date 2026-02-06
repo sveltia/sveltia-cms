@@ -74,7 +74,7 @@ export const getEntryCollectionFolders = ({ collections }) =>
 
       const {
         allLocales,
-        structureMap: { i18nRootMultiFolder },
+        structureMap: { i18nMultiRootFolder },
       } = normalizeI18nConfig(collection);
 
       return {
@@ -83,7 +83,7 @@ export const getEntryCollectionFolders = ({ collections }) =>
         folderPathMap: Object.fromEntries(
           allLocales.map((locale) => [
             locale,
-            i18nRootMultiFolder ? `${locale}/${folderPath}` : folderPath,
+            i18nMultiRootFolder ? `${locale}/${folderPath}` : folderPath,
           ]),
         ),
       };

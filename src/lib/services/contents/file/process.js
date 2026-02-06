@@ -377,7 +377,7 @@ export const prepareEntry = async ({ file, entries, errors }) => {
       i18nEnabled,
       allLocales,
       defaultLocale,
-      structureMap: { i18nSingleFile, i18nMultiFile, i18nMultiFolder, i18nRootMultiFolder },
+      structureMap: { i18nSingleFile, i18nMultiFile, i18nMultiFolder, i18nMultiRootFolder },
       canonicalSlug: { key: canonicalSlugKey },
     },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
@@ -392,7 +392,7 @@ export const prepareEntry = async ({ file, entries, errors }) => {
     return;
   }
 
-  const isMultiFileStructure = i18nMultiFile || i18nMultiFolder || i18nRootMultiFolder;
+  const isMultiFileStructure = i18nMultiFile || i18nMultiFolder || i18nMultiRootFolder;
 
   const { subPath, locale } = extractPathInfo(
     file,
