@@ -959,6 +959,11 @@
  * `multiple_files` i18n structure enabled, as well as to file/singleton collection items with the
  * `file` path ending with `.{{locale}}.<extension>`, aiming to support [Zola’s multilingual
  * sites](https://www.getzola.org/documentation/content/multilingual/).
+ * DEPRECATED: Use the `omit_default_locale_from_file_path` option instead.
+ * @property {boolean} [omit_default_locale_from_file_path] Whether to exclude the default locale
+ * from entry file paths. Default: `false`. This option applies to both entry collections and file
+ * collections, where the path includes a `{{locale}}.` or  `{{locale}}/` placeholder. It aims to
+ * support [Zola’s multilingual sites](https://www.getzola.org/documentation/content/multilingual/).
  * @see https://decapcms.org/docs/i18n/
  * @see https://sveltiacms.app/en/docs/i18n
  * @see https://github.com/decaporg/decap-cms/issues/6932

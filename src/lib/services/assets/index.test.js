@@ -1254,7 +1254,7 @@ describe('assets/index', () => {
           initialLocales: ['en'],
           structure: 'multiple-files',
           canonicalSlug: { key: 'slug', value: '{{slug}}' },
-          omitDefaultLocaleFromFileName: false,
+          omitDefaultLocaleFromFilePath: false,
           structureMap: {},
         },
       });
@@ -1315,7 +1315,7 @@ describe('assets/index', () => {
           initialLocales: ['en'],
           structure: 'multiple-files',
           canonicalSlug: { key: 'slug', value: '{{slug}}' },
-          omitDefaultLocaleFromFileName: false,
+          omitDefaultLocaleFromFilePath: false,
           structureMap: {},
         },
       });
@@ -1370,7 +1370,7 @@ describe('assets/index', () => {
           initialLocales: ['en'],
           structure: 'multiple-files',
           canonicalSlug: { key: 'slug', value: '{{slug}}' },
-          omitDefaultLocaleFromFileName: false,
+          omitDefaultLocaleFromFilePath: false,
           structureMap: {},
         },
         media_folder: 'images',

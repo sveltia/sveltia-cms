@@ -161,7 +161,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
@@ -178,7 +178,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
@@ -195,7 +195,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: '_default',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
   });
 
@@ -225,7 +225,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'fr',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithI18n)).toEqual({
@@ -242,7 +242,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'fr',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithoutI18n)).toEqual({
@@ -259,7 +259,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: '_default',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
 
     expect(normalizeI18nConfig(collectionWithoutI18n, collectionFileWithI18n)).toEqual(
@@ -298,7 +298,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'fr',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
   });
 
@@ -328,7 +328,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'es',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
   });
 
@@ -358,7 +358,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'de',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
 
     expect(
@@ -381,7 +381,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'de',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
 
     expect(
@@ -403,7 +403,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'de',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
   });
 
@@ -434,7 +434,7 @@ describe('Test normalizeI18nConfig()', () => {
         defaultLocale: 'es',
         saveAllLocales: true,
         canonicalSlug,
-        omitDefaultLocaleFromFileName: false,
+        omitDefaultLocaleFromFilePath: false,
       },
     );
 
@@ -461,7 +461,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'es',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
 
     expect(
@@ -483,7 +483,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'es',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
   });
 
@@ -512,7 +512,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: false,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
   });
 
@@ -541,7 +541,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: false,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
   });
 
@@ -570,7 +570,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: false,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
   });
 
@@ -599,7 +599,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: false,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
   });
 
@@ -628,7 +628,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: false,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     });
   });
 
@@ -659,7 +659,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: true, // Should be true because i18nMultiFile is true
+      omitDefaultLocaleFromFilePath: true, // Should be true because i18nMultiFile is true
     });
   });
 
@@ -690,7 +690,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false, // Should be false because i18nMultiFile is false
+      omitDefaultLocaleFromFilePath: false, // Should be false because i18nMultiFile is false
     });
   });
 
@@ -728,7 +728,7 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: true, // Regex matches file.file pattern (line 223)
+      omitDefaultLocaleFromFilePath: true, // Regex matches file.file pattern (line 223)
     });
   });
 
@@ -766,7 +766,197 @@ describe('Test normalizeI18nConfig()', () => {
       defaultLocale: 'en',
       saveAllLocales: true,
       canonicalSlug,
-      omitDefaultLocaleFromFileName: false, // False because regex doesn't match (line 223)
+      omitDefaultLocaleFromFilePath: false, // False because regex doesn't match (line 223)
+    });
+  });
+
+  test('config with new omit_default_locale_from_file_path option and file pattern', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
+      i18n: {
+        structure: 'multiple_files',
+        locales: ['en', 'de', 'fr'],
+        omit_default_locale_from_file_path: true, // New option name
+      },
+      collections: [collectionWithI18n],
+    });
+
+    const fileWithLocale = {
+      name: 'translations',
+      file: 'data/strings.{{locale}}.json',
+      fields: [],
+      i18n: true,
+    };
+
+    expect(normalizeI18nConfig(collectionWithI18n, fileWithLocale)).toEqual({
+      structure: 'multiple_files',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFilePath: true,
+    });
+  });
+
+  test('config with omit_default_locale_from_file_path and folder pattern (multiple_folders)', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
+      i18n: {
+        structure: 'multiple_folders',
+        locales: ['en', 'de', 'fr'],
+        omit_default_locale_from_file_path: true,
+      },
+      collections: [collectionWithI18n],
+    });
+
+    const fileWithFolderLocale = {
+      name: 'products',
+      file: 'content/{{locale}}/products.json',
+      fields: [],
+      i18n: true,
+    };
+
+    // New regex /{{locale}}[./]/ matches {{locale}}/ and {{locale}}.
+    expect(normalizeI18nConfig(collectionWithI18n, fileWithFolderLocale)).toEqual({
+      structure: 'multiple_files', // File with {{locale}} determines multiple_files
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFilePath: true, // Regex matches folder pattern ({{locale}}/)
+    });
+  });
+
+  test('config with omit_default_locale_from_file_path and root folder pattern', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
+      i18n: {
+        structure: 'multiple_root_folders',
+        locales: ['en', 'de', 'fr'],
+        omit_default_locale_from_file_path: true,
+      },
+      collections: [collectionWithI18n],
+    });
+
+    const fileWithRootFolderLocale = {
+      name: 'settings',
+      file: '{{locale}}/settings.yaml',
+      fields: [],
+      i18n: true,
+    };
+
+    // New regex /{{locale}}[./]/ matches {{locale}}/
+    expect(normalizeI18nConfig(collectionWithI18n, fileWithRootFolderLocale)).toEqual({
+      structure: 'multiple_files',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFilePath: true, // Regex matches root folder pattern ({{locale}}/)
+    });
+  });
+
+  test('backward compatibility: both legacy and new option names work together (new option takes precedence)', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
+      i18n: {
+        structure: 'multiple_files',
+        locales: ['en', 'de', 'fr'],
+        omit_default_locale_from_filename: false, // Legacy option
+        omit_default_locale_from_file_path: true, // New option
+      },
+      collections: [collectionWithI18n],
+    });
+
+    const fileWithLocale = {
+      name: 'translations',
+      file: 'data/strings.{{locale}}.json',
+      fields: [],
+      i18n: true,
+    };
+
+    // New option takes precedence
+    expect(normalizeI18nConfig(collectionWithI18n, fileWithLocale)).toEqual({
+      structure: 'multiple_files',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFilePath: true, // New option value
+    });
+  });
+
+  test('backward compatibility: legacy option still works when new option is not provided', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
+      i18n: {
+        structure: 'multiple_files',
+        locales: ['en', 'de', 'fr'],
+        omit_default_locale_from_filename: true, // Legacy option only
+      },
+      collections: [collectionWithI18n],
+    });
+
+    const fileWithLocale = {
+      name: 'translations',
+      file: 'data/strings.{{locale}}.json',
+      fields: [],
+      i18n: true,
+    };
+
+    // Legacy option still works
+    expect(normalizeI18nConfig(collectionWithI18n, fileWithLocale)).toEqual({
+      structure: 'multiple_files',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFilePath: true, // Legacy option is converted
     });
   });
 });

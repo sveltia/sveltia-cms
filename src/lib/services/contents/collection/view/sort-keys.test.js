@@ -80,7 +80,7 @@ describe('Test getSortConfig()', async () => {
         i18nMultiRootFolder: false,
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     },
     _file: {
       extension: 'json',

@@ -213,7 +213,7 @@ export const extractPathInfo = (
     return { subPath: undefined, locale: undefined };
   }
 
-  // If the `omit_default_locale_from_filename` i18n option is enabled, the matching comes with
+  // If the `omit_default_locale_from_file_path` i18n option is enabled, the matching comes with
   // the `locale` group being `undefined` for the default locale, so we need a fallback for it
   const match = path.match(fullPathRegEx);
 

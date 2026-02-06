@@ -53,7 +53,7 @@ describe('Test resolveAssetFolderPaths()', () => {
     initialLocales: ['en'],
     defaultLocale: 'en',
     canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-    omitDefaultLocaleFromFileName: false,
+    omitDefaultLocaleFromFilePath: false,
   };
 
   /** @type {InternalI18nOptions} */
@@ -1545,7 +1545,7 @@ describe('Test replaceBlobURL()', () => {
         allLocales: ['en'],
         initialLocales: ['en'],
         canonicalSlug: { key: '', value: '' },
-        omitDefaultLocaleFromFileName: false,
+        omitDefaultLocaleFromFilePath: false,
         structureMap: {
           i18nSingleFile: true,
           i18nMultiFile: false,

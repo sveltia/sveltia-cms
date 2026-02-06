@@ -245,7 +245,7 @@ describe('Test getOptions()', async () => {
         i18nMultiRootFolder: false,
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     },
     _file: {
       format: 'yaml-frontmatter',
@@ -838,7 +838,7 @@ describe('Test getOptions()', async () => {
             i18nMultiRootFolder: false,
           },
           canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-          omitDefaultLocaleFromFileName: false,
+          omitDefaultLocaleFromFilePath: false,
         },
       };
 
@@ -1070,7 +1070,7 @@ describe('Test getOptions()', async () => {
             i18nMultiRootFolder: false,
           },
           canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-          omitDefaultLocaleFromFileName: false,
+          omitDefaultLocaleFromFilePath: false,
         },
       };
 

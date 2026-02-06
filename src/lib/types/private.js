@@ -452,8 +452,8 @@
  * @property {I18nFileStructure} structure File structure.
  * @property {I18nFileStructureMap} structureMap I18n structure map.
  * @property {{ key: string, value: string }} canonicalSlug See `canonical_slug` above.
- * @property {boolean} omitDefaultLocaleFromFileName Whether to exclude the default locale from
- * entry filenames.
+ * @property {boolean} omitDefaultLocaleFromFilePath Whether to exclude the default locale from
+ * entry file paths.
  */
 
 /**

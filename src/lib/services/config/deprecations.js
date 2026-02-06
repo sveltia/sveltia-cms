@@ -11,6 +11,7 @@ export const warnedOnceMap = {
   save_all_locales: false,
   automatic_deployments: false,
   multiple_folders_i18n_root: false,
+  omit_default_locale_from_filename: false,
 };
 
 /**
@@ -43,6 +44,10 @@ export const warningMessages = {
     'The `multiple_folders_i18n_root` i18n structure is deprecated and will be removed in ' +
     'Sveltia CMS 1.0. Use the `multiple_root_folders` structure instead. ' +
     'https://sveltiacms.app/en/docs/i18n#multiple-root-folders',
+  omit_default_locale_from_filename:
+    'The `omit_default_locale_from_filename` i18n option is deprecated and will be removed in ' +
+    'Sveltia CMS 1.0. Use the `omit_default_locale_from_file_path` option instead. ' +
+    'https://sveltiacms.app/en/docs/i18n#multiple-files-with-default-locale-omission',
 };
 
 /**

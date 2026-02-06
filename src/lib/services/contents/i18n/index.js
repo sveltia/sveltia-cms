@@ -79,12 +79,12 @@ export const getListFormatter = (locale, options = {}) =>
  * @returns {string} Complete path, including the locale.
  */
 export const getLocalePath = ({ _i18n, locale, path }) => {
-  const { defaultLocale, omitDefaultLocaleFromFileName } = _i18n;
+  const { defaultLocale, omitDefaultLocaleFromFilePath } = _i18n;
 
   // Remove the default locale from the file name (for Zola compatibility)
   // @see https://github.com/sveltia/sveltia-cms/discussions/394
-  if (omitDefaultLocaleFromFileName && locale === defaultLocale) {
-    path = path.replace(/\.{{locale}}\.(\w+)$/, '.$1');
+  if (omitDefaultLocaleFromFilePath && locale === defaultLocale) {
+    path = path.replace(/{{locale}}[./]/, '');
   }
 
   // Replace the placeholder with the actual locale. The placeholder may appear multiple times

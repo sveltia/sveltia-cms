@@ -100,7 +100,7 @@ describe('getEntryThumbnail', () => {
         i18nMultiRootFolder: false,
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     },
     _thumbnailFieldNames: ['image', 'thumbnail'],
   };

@@ -12,6 +12,7 @@ describe('Test warnedOnceMap', () => {
       save_all_locales: false,
       automatic_deployments: false,
       multiple_folders_i18n_root: false,
+      omit_default_locale_from_filename: false,
     });
   });
 
@@ -72,6 +73,16 @@ describe('Test warningMessages', () => {
     expect(warningMessages.multiple_folders_i18n_root).toContain('multiple_folders_i18n_root');
     expect(warningMessages.multiple_folders_i18n_root).toContain('deprecated');
     expect(warningMessages.multiple_folders_i18n_root).toContain('multiple_root_folders');
+  });
+
+  test('should contain useful information in omit_default_locale_from_filename message', () => {
+    expect(warningMessages.omit_default_locale_from_filename).toContain(
+      'omit_default_locale_from_filename',
+    );
+    expect(warningMessages.omit_default_locale_from_filename).toContain('deprecated');
+    expect(warningMessages.omit_default_locale_from_filename).toContain(
+      'omit_default_locale_from_file_path',
+    );
   });
 });
 

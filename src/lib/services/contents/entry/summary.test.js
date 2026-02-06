@@ -39,7 +39,7 @@ describe('Test getEntrySummary()', () => {
         i18nMultiRootFolder: false,
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     },
     _thumbnailFieldNames: [],
   };
@@ -357,7 +357,7 @@ describe('Test sanitizeEntrySummary()', () => {
           i18nMultiRootFolder: false,
         },
         canonicalSlug: { key: 'slug', value: '{{slug}}' },
-        omitDefaultLocaleFromFileName: false,
+        omitDefaultLocaleFromFilePath: false,
       },
       _thumbnailFieldNames: [],
     };
@@ -1249,7 +1249,7 @@ describe('Additional comprehensive tests for edge cases', () => {
           i18nMultiRootFolder: false,
         },
         canonicalSlug: { key: 'slug', value: '{{slug}}' },
-        omitDefaultLocaleFromFileName: false,
+        omitDefaultLocaleFromFilePath: false,
       },
       _thumbnailFieldNames: [],
     };
@@ -1490,7 +1490,7 @@ describe('Additional comprehensive tests for edge cases', () => {
           i18nMultiRootFolder: false,
         },
         canonicalSlug: { key: 'slug', value: '{{slug}}' },
-        omitDefaultLocaleFromFileName: false,
+        omitDefaultLocaleFromFilePath: false,
       },
       _thumbnailFieldNames: [],
       summary: '{{commit_date}}',

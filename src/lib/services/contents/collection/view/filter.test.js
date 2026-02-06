@@ -63,7 +63,7 @@ describe('Test filterEntries()', async () => {
         i18nMultiRootFolder: false,
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     },
     view_filters: [
       { field: 'status', pattern: 'published', label: 'Published' },

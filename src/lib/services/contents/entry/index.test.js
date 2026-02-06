@@ -94,7 +94,7 @@ describe('Test getEntryPreviewURL()', () => {
         i18nMultiRootFolder: false,
       },
       canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-      omitDefaultLocaleFromFileName: false,
+      omitDefaultLocaleFromFilePath: false,
     },
     _thumbnailFieldNames: [],
   };
@@ -510,7 +510,7 @@ describe('Test getEntryPreviewURL()', () => {
           i18nMultiRootFolder: false,
         },
         canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-        omitDefaultLocaleFromFileName: false,
+        omitDefaultLocaleFromFilePath: false,
       },
     };
 
@@ -684,7 +684,7 @@ describe('Test getAssociatedCollections()', () => {
           i18nMultiRootFolder: false,
         },
         canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-        omitDefaultLocaleFromFileName: false,
+        omitDefaultLocaleFromFilePath: false,
       },
       _thumbnailFieldNames: [],
     };

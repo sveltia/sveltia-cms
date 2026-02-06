@@ -61,7 +61,7 @@ export const DEFAULT_I18N_CONFIG = {
     i18nMultiRootFolder: false,
   },
   canonicalSlug: { ...DEFAULT_CANONICAL_SLUG },
-  omitDefaultLocaleFromFileName: false,
+  omitDefaultLocaleFromFilePath: false,
 };
 
 /**
@@ -199,12 +199,17 @@ export const normalizeI18nConfig = (collection, file) => {
     initial_locales: initialLocalesConfig,
     save_all_locales: saveAllLocalesConfig = true,
     canonical_slug: canonicalSlugConfig = { key: undefined, value: undefined },
-    omit_default_locale_from_filename: omitDefaultConfig = false,
+    omit_default_locale_from_filename: omitDefaultConfigLegacy,
+    omit_default_locale_from_file_path: omitDefaultConfig = omitDefaultConfigLegacy ?? false,
   } = config ?? {};
 
   // @todo Remove the option prior to the 1.0 release.
   if (config?.save_all_locales !== undefined) {
     warnDeprecation('save_all_locales');
+  }
+
+  if (omitDefaultConfigLegacy !== undefined) {
+    warnDeprecation('omit_default_locale_from_filename');
   }
 
   const {
@@ -224,9 +229,8 @@ export const normalizeI18nConfig = (collection, file) => {
 
   const initialLocales = determineInitialLocales(initialLocalesConfig, allLocales, defaultLocale);
 
-  const omitDefaultLocaleFromFileName =
-    omitDefaultConfig &&
-    (file ? /\.{{locale}}\.[a-zA-Z0-9]+$/.test(file.file) : structureMap.i18nMultiFile);
+  const omitDefaultLocaleFromFilePath =
+    omitDefaultConfig && (file ? /{{locale}}[./]/.test(file.file) : structureMap.i18nMultiFile);
 
   if (structure === 'multiple_folders_i18n_root') {
     warnDeprecation('multiple_folders_i18n_root');
@@ -244,6 +248,6 @@ export const normalizeI18nConfig = (collection, file) => {
       key: canonicalSlugKey,
       value: canonicalSlugTemplate,
     },
-    omitDefaultLocaleFromFileName,
+    omitDefaultLocaleFromFilePath,
   };
 };
