@@ -47,7 +47,7 @@ export const warningMessages = {
   omit_default_locale_from_filename:
     'The `omit_default_locale_from_filename` i18n option is deprecated and will be removed in ' +
     'Sveltia CMS 1.0. Use the `omit_default_locale_from_file_path` option instead. ' +
-    'https://sveltiacms.app/en/docs/i18n#multiple-files-with-default-locale-omission',
+    'https://sveltiacms.app/en/docs/i18n#managing-content-structure',
 };
 
 /**
