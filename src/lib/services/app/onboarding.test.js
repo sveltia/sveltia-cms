@@ -2,24 +2,30 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Logic function for testing mobile sign-in dialog visibility.
- * @param {[boolean, boolean, any, any]} param Array of conditions.
+ * @param {[boolean, boolean, boolean, any, any]} param Array of conditions.
  * @returns {boolean} Whether dialog can be shown.
  */
-const canShowMobileSignInDialogLogic = ([_isLargeScreen, _hasMouse, _backend, _user]) =>
-  _isLargeScreen && _hasMouse && !!_backend?.isGit && !!_user?.token;
+const canShowMobileSignInDialogLogic = ([
+  _isLargeScreen,
+  _hasMouse,
+  _isLocalHost,
+  _backend,
+  _user,
+]) => _isLargeScreen && _hasMouse && !_isLocalHost && !!_backend?.isGit && !!_user?.token;
 
 // Mock dependencies
 const mockDerived = vi.fn((stores, callback) => {
   // Call the callback with different combinations to ensure code coverage
   if (Array.isArray(stores)) {
     // Test all combinations to cover all branches of the logical AND operation
-    callback([true, true, { isGit: true }, { token: 'test' }]); // All true
-    callback([false, true, { isGit: true }, { token: 'test' }]); // First false
-    callback([true, false, { isGit: true }, { token: 'test' }]); // Second false
-    callback([true, true, { isGit: false }, { token: 'test' }]); // Third false
-    callback([true, true, { isGit: true }, { token: null }]); // Fourth false
-    callback([true, true, null, { token: 'test' }]); // Backend null
-    callback([true, true, { isGit: true }, null]); // User null
+    callback([true, true, false, { isGit: true }, { token: 'test' }]); // All true
+    callback([false, true, false, { isGit: true }, { token: 'test' }]); // First false
+    callback([true, false, false, { isGit: true }, { token: 'test' }]); // Second false
+    callback([true, true, true, { isGit: true }, { token: 'test' }]); // Third (isLocalHost) true
+    callback([true, true, false, { isGit: false }, { token: 'test' }]); // Fourth false
+    callback([true, true, false, { isGit: true }, { token: null }]); // Fifth false
+    callback([true, true, false, null, { token: 'test' }]); // Backend null
+    callback([true, true, false, { isGit: true }, null]); // User null
   }
 
   return { subscribe: vi.fn() };
@@ -43,6 +49,7 @@ vi.mock('$lib/services/user', () => ({
 vi.mock('$lib/services/user/env', () => ({
   hasMouse: { subscribe: vi.fn() },
   isLargeScreen: { subscribe: vi.fn() },
+  isLocalHost: { subscribe: vi.fn() },
 }));
 
 describe('onboarding', () => {
@@ -75,6 +82,7 @@ describe('onboarding', () => {
       const result = canShowMobileSignInDialogLogic([
         true, // isLargeScreen
         true, // hasMouse
+        false, // isLocalHost
         { isGit: true }, // backend with Git support
         { token: 'valid-token' }, // user with token
       ]);
@@ -86,6 +94,7 @@ describe('onboarding', () => {
       const result = canShowMobileSignInDialogLogic([
         false, // isLargeScreen
         true, // hasMouse
+        false, // isLocalHost
         { isGit: true }, // backend with Git support
         { token: 'valid-token' }, // user with token
       ]);
@@ -97,6 +106,19 @@ describe('onboarding', () => {
       const result = canShowMobileSignInDialogLogic([
         true, // isLargeScreen
         false, // hasMouse
+        false, // isLocalHost
+        { isGit: true }, // backend with Git support
+        { token: 'valid-token' }, // user with token
+      ]);
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when running on localhost', () => {
+      const result = canShowMobileSignInDialogLogic([
+        true, // isLargeScreen
+        true, // hasMouse
+        true, // isLocalHost
         { isGit: true }, // backend with Git support
         { token: 'valid-token' }, // user with token
       ]);
@@ -108,6 +130,7 @@ describe('onboarding', () => {
       const result = canShowMobileSignInDialogLogic([
         true, // isLargeScreen
         true, // hasMouse
+        false, // isLocalHost
         { isGit: false }, // backend without Git support
         { token: 'valid-token' }, // user with token
       ]);
@@ -119,6 +142,7 @@ describe('onboarding', () => {
       const result = canShowMobileSignInDialogLogic([
         true, // isLargeScreen
         true, // hasMouse
+        false, // isLocalHost
         null, // no backend
         { token: 'valid-token' }, // user with token
       ]);
@@ -130,6 +154,7 @@ describe('onboarding', () => {
       const result = canShowMobileSignInDialogLogic([
         true, // isLargeScreen
         true, // hasMouse
+        false, // isLocalHost
         { isGit: true }, // backend with Git support
         { token: null }, // user without token
       ]);
@@ -141,6 +166,7 @@ describe('onboarding', () => {
       const result = canShowMobileSignInDialogLogic([
         true, // isLargeScreen
         true, // hasMouse
+        false, // isLocalHost
         { isGit: true }, // backend with Git support
         null, // no user
       ]);
