@@ -1,7 +1,8 @@
 <script>
   import { Dialog, Table, TableCell, TableRow } from '@sveltia/ui';
-  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
+
+  import { isMacOS } from '$lib/services/user/env';
 
   /**
    * @typedef {object} Props
@@ -25,14 +26,6 @@
     { feature: 'save_entry', keys: 'Accel+S' },
     { feature: 'cancel_editing', keys: 'Escape' },
   ];
-
-  let accel = $state('Ctrl');
-
-  onMount(() => {
-    if (navigator.userAgentData?.platform === 'macOS' || navigator.platform.startsWith('Mac')) {
-      accel = '⌘'; // Command
-    }
-  });
 </script>
 
 <Dialog
@@ -54,7 +47,7 @@
           <TableCell class="feature">{$_(`keyboard_shortcuts_.${feature}`)}</TableCell>
           <TableCell class="keys">
             {#each keys.split('+') as key}
-              <kbd>{key.replace('Accel', accel)}</kbd>
+              <kbd>{key.replace('Accel', $isMacOS ? '⌘' : 'Ctrl')}</kbd>
             {/each}
           </TableCell>
         </TableRow>

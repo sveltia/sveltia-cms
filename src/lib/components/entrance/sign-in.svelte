@@ -11,15 +11,13 @@
     signingIn,
     signInManually,
   } from '$lib/services/user/auth';
+  import { isBrave, isLocalBackendSupported, isLocalHost } from '$lib/services/user/env';
   import { makeLink } from '$lib/services/utils/string';
 
   /**
    * @import { GitBackend } from '$lib/types/public';
    */
 
-  let isLocalHost = $state(false);
-  let isLocalBackendSupported = $state(false);
-  let isBrave = $state(false);
   let showTokenDialog = $state(false);
   let token = $state('');
 
@@ -33,18 +31,9 @@
       ? undefined
       : /** @type {GitBackend} */ ($cmsConfig?.backend)?.repo?.split('/').pop(),
   );
-  const showLocalBackendOption = $derived(isLocalHost && !isTestRepo);
+  const showLocalBackendOption = $derived($isLocalHost && !isTestRepo);
 
   onMount(() => {
-    const { hostname } = window.location;
-
-    // Local editing needs a secure context, either `http://localhost` or `http://*.localhost`
-    // https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
-    isLocalHost =
-      hostname === '127.0.0.1' || hostname === 'localhost' || hostname.endsWith('.localhost');
-    isLocalBackendSupported = 'showDirectoryPicker' in window;
-    isBrave = navigator.userAgentData?.brands.some(({ brand }) => brand === 'Brave') ?? false;
-
     signInAutomatically();
   });
 </script>
@@ -57,14 +46,14 @@
       <Button
         variant="primary"
         label={$_('work_with_local_repo')}
-        disabled={!isLocalBackendSupported}
+        disabled={!$isLocalBackendSupported}
         onclick={async () => {
           await signInManually('local');
         }}
       />
-      {#if !isLocalBackendSupported}
+      {#if !$isLocalBackendSupported}
         <div role="alert">
-          {#if isBrave}
+          {#if $isBrave}
             {@html makeLink(
               $_('local_backend.disabled'),
               'https://sveltiacms.app/en/docs/workflows/local#enabling-file-system-access-api-in-brave',

@@ -4,6 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockWritable = vi.fn();
 
 const mockStores = {
+  isLocalHost: { set: vi.fn() },
+  isLocalBackendSupported: { set: vi.fn() },
+  isBrave: { set: vi.fn() },
+  isMacOS: { set: vi.fn() },
   isSmallScreen: { set: vi.fn() },
   isMediumScreen: { set: vi.fn() },
   isLargeScreen: { set: vi.fn() },
@@ -36,7 +40,17 @@ describe('env service', () => {
 
     // Set up mock stores
     let storeIndex = 0;
-    const storeNames = ['isSmallScreen', 'isMediumScreen', 'isLargeScreen', 'hasMouse'];
+
+    const storeNames = [
+      'isLocalHost',
+      'isLocalBackendSupported',
+      'isBrave',
+      'isMacOS',
+      'isSmallScreen',
+      'isMediumScreen',
+      'isLargeScreen',
+      'hasMouse',
+    ];
 
     mockWritable.mockImplementation(() => {
       const storeName = storeNames[storeIndex];
@@ -67,18 +81,50 @@ describe('env service', () => {
       }),
     );
 
+    // Mock location.hostname
+    Object.defineProperty(globalThis, 'location', {
+      value: {
+        hostname: 'localhost',
+      },
+      writable: true,
+    });
+
+    // Mock navigator.userAgentData
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        userAgentData: {
+          brands: [],
+        },
+        platform: '',
+      },
+      writable: true,
+    });
+
+    // Mock showDirectoryPicker
+    vi.stubGlobal('window', {
+      showDirectoryPicker: undefined,
+    });
+
     // Import the module after mocks are set up
     envModule = await import('./env.js');
   });
 
   describe('store creation', () => {
     it('should create all environment detection stores', () => {
-      expect(mockWritable).toHaveBeenCalledTimes(4);
-      expect(mockWritable).toHaveBeenNthCalledWith(1, false);
-      expect(mockWritable).toHaveBeenNthCalledWith(2, false);
-      expect(mockWritable).toHaveBeenNthCalledWith(3, false);
-      expect(mockWritable).toHaveBeenNthCalledWith(4, true);
+      expect(mockWritable).toHaveBeenCalledTimes(8);
+      expect(mockWritable).toHaveBeenNthCalledWith(1, false); // isLocalHost
+      expect(mockWritable).toHaveBeenNthCalledWith(2, false); // isLocalBackendSupported
+      expect(mockWritable).toHaveBeenNthCalledWith(3, false); // isBrave
+      expect(mockWritable).toHaveBeenNthCalledWith(4, false); // isMacOS
+      expect(mockWritable).toHaveBeenNthCalledWith(5, false); // isSmallScreen
+      expect(mockWritable).toHaveBeenNthCalledWith(6, false); // isMediumScreen
+      expect(mockWritable).toHaveBeenNthCalledWith(7, false); // isLargeScreen
+      expect(mockWritable).toHaveBeenNthCalledWith(8, true); // hasMouse
 
+      expect(envModule.isLocalHost).toBe(mockStores.isLocalHost);
+      expect(envModule.isLocalBackendSupported).toBe(mockStores.isLocalBackendSupported);
+      expect(envModule.isBrave).toBe(mockStores.isBrave);
+      expect(envModule.isMacOS).toBe(mockStores.isMacOS);
       expect(envModule.isSmallScreen).toBe(mockStores.isSmallScreen);
       expect(envModule.isMediumScreen).toBe(mockStores.isMediumScreen);
       expect(envModule.isLargeScreen).toBe(mockStores.isLargeScreen);
@@ -87,6 +133,169 @@ describe('env service', () => {
   });
 
   describe('initUserEnvDetection', () => {
+    it('should detect localhost hostname and set isLocalHost', () => {
+      globalThis.location.hostname = 'localhost';
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isLocalHost.set).toHaveBeenCalledWith(true);
+    });
+
+    it('should detect 127.0.0.1 and set isLocalHost', () => {
+      globalThis.location.hostname = '127.0.0.1';
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isLocalHost.set).toHaveBeenCalledWith(true);
+    });
+
+    it('should detect subdomain localhost and set isLocalHost', () => {
+      globalThis.location.hostname = 'example.localhost';
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isLocalHost.set).toHaveBeenCalledWith(true);
+    });
+
+    it('should not set isLocalHost for remote hostnames', () => {
+      vi.clearAllMocks();
+      globalThis.location.hostname = 'example.com';
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isLocalHost.set).toHaveBeenCalledWith(false);
+    });
+
+    it('should detect showDirectoryPicker support and set isLocalBackendSupported', () => {
+      vi.stubGlobal('window', { showDirectoryPicker: vi.fn() });
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isLocalBackendSupported.set).toHaveBeenCalledWith(true);
+    });
+
+    it('should set isLocalBackendSupported to false when showDirectoryPicker is not available', () => {
+      vi.clearAllMocks();
+      vi.stubGlobal('window', {});
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isLocalBackendSupported.set).toHaveBeenCalledWith(false);
+    });
+
+    it('should detect Brave browser and set isBrave', () => {
+      globalThis.navigator.userAgentData = {
+        platform: 'macOS',
+        brands: [{ brand: 'Chromium' }, { brand: 'Brave' }],
+      };
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isBrave.set).toHaveBeenCalledWith(true);
+    });
+
+    it('should set isBrave to false for non-Brave browsers', () => {
+      vi.clearAllMocks();
+      globalThis.navigator.userAgentData = {
+        platform: 'Linux',
+        brands: [{ brand: 'Chrome' }],
+      };
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isBrave.set).toHaveBeenCalledWith(false);
+    });
+
+    it('should handle missing userAgentData gracefully', () => {
+      vi.clearAllMocks();
+      globalThis.navigator.userAgentData = undefined;
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isBrave.set).toHaveBeenCalledWith(false);
+    });
+
+    it('should detect macOS from userAgentData.platform', () => {
+      vi.clearAllMocks();
+      Object.defineProperty(globalThis, 'navigator', {
+        value: {
+          userAgentData: {
+            platform: 'macOS',
+            brands: [],
+          },
+          platform: 'Linux',
+        },
+        writable: true,
+      });
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isMacOS.set).toHaveBeenCalledWith(true);
+    });
+
+    it('should detect macOS from navigator.platform', () => {
+      vi.clearAllMocks();
+      Object.defineProperty(globalThis, 'navigator', {
+        value: {
+          userAgentData: undefined,
+          platform: 'MacIntel',
+        },
+        writable: true,
+      });
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isMacOS.set).toHaveBeenCalledWith(true);
+    });
+
+    it('should detect MacPPC from navigator.platform', () => {
+      vi.clearAllMocks();
+      Object.defineProperty(globalThis, 'navigator', {
+        value: {
+          userAgentData: undefined,
+          platform: 'MacPPC',
+        },
+        writable: true,
+      });
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isMacOS.set).toHaveBeenCalledWith(true);
+    });
+
+    it('should set isMacOS to false for non-macOS platforms', () => {
+      vi.clearAllMocks();
+      Object.defineProperty(globalThis, 'navigator', {
+        value: {
+          userAgentData: {
+            platform: 'Linux',
+            brands: [],
+          },
+          platform: 'Linux x86_64',
+        },
+        writable: true,
+      });
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isMacOS.set).toHaveBeenCalledWith(false);
+    });
+
+    it('should set isMacOS to false when both platform sources are unavailable', () => {
+      vi.clearAllMocks();
+      Object.defineProperty(globalThis, 'navigator', {
+        value: {
+          userAgentData: undefined,
+          platform: '',
+        },
+        writable: true,
+      });
+
+      envModule.initUserEnvDetection();
+
+      expect(mockStores.isMacOS.set).toHaveBeenCalledWith(false);
+    });
+
     it('should set up media query listeners and initial values', () => {
       envModule.initUserEnvDetection();
 
