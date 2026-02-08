@@ -54,7 +54,7 @@ export const initUserEnvDetection = () => {
   // Local editing needs a secure context, either `http://localhost` or `http://*.localhost`
   // https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
   isLocalHost.set(hostname === '127.0.0.1' || /^(.+\.)?localhost$/.test(hostname));
-  isLocalBackendSupported.set('showDirectoryPicker' in window);
+  isLocalBackendSupported.set('showDirectoryPicker' in globalThis);
   isBrave.set(userAgentData?.brands.some(({ brand }) => brand === 'Brave') ?? false);
   isMacOS.set(userAgentData?.platform === 'macOS' || platform.startsWith('Mac'));
 

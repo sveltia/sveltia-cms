@@ -100,11 +100,6 @@ describe('env service', () => {
       writable: true,
     });
 
-    // Mock showDirectoryPicker
-    vi.stubGlobal('window', {
-      showDirectoryPicker: undefined,
-    });
-
     // Import the module after mocks are set up
     envModule = await import('./env.js');
   });
@@ -167,7 +162,7 @@ describe('env service', () => {
     });
 
     it('should detect showDirectoryPicker support and set isLocalBackendSupported', () => {
-      vi.stubGlobal('window', { showDirectoryPicker: vi.fn() });
+      vi.stubGlobal('showDirectoryPicker', vi.fn());
 
       envModule.initUserEnvDetection();
 
@@ -176,7 +171,9 @@ describe('env service', () => {
 
     it('should set isLocalBackendSupported to false when showDirectoryPicker is not available', () => {
       vi.clearAllMocks();
-      vi.stubGlobal('window', {});
+      // Delete the showDirectoryPicker property to simulate it not being available
+      // @ts-expect-error - intentionally deleting global property for testing
+      delete globalThis.showDirectoryPicker;
 
       envModule.initUserEnvDetection();
 
