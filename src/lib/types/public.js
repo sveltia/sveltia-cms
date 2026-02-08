@@ -481,6 +481,11 @@
  * @property {Record<string, string>} [default] Default key-value pairs.
  * @property {string} [key_label] Label for the key column. Default: Key.
  * @property {string} [value_label] Label for the value column. Default: Value.
+ * @property {boolean} [root] Whether to save the field value at the top-level of the data file
+ * without the field name. If the `single_file` i18n structure is enabled, the key-value pairs will
+ * still be saved under locale keys. Default: `false`. See the
+ * [documentation](https://sveltiacms.app/en/docs/fields/keyvalue#top-level-key-value-pairs) for
+ * details.
  * @see https://staticjscms.netlify.app/docs/widget-keyvalue
  * @see https://sveltiacms.app/en/docs/fields/keyvalue
  */

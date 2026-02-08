@@ -6,7 +6,7 @@ import { flatten } from 'flat';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
-import { hasRootListField } from '$lib/services/contents/fields/list/helper';
+import { hasRootField } from '$lib/services/contents/entry/fields';
 import { parseEntryFile } from '$lib/services/contents/file/parse';
 
 /**
@@ -109,32 +109,52 @@ export const parseFileContent = async (file, errors) => {
 };
 
 /**
- * Transform raw content to handle special cases like root list fields.
+ * Transform root field content.
+ * @param {object} args Arguments.
+ * @param {RawEntryContent} args.rawContent Raw content from the file.
+ * @param {Field[]} args.fields Collection fields.
+ * @param {boolean} args.i18nSingleFile Whether i18n single file structure is used.
+ * @param {(value: any) => boolean} args.validate Function to validate content items.
+ * @returns {RawEntryContent | undefined} Transformed content.
+ */
+export const transformRoot = ({ rawContent, fields, i18nSingleFile, validate }) => {
+  const fieldName = fields[0].name;
+
+  if (i18nSingleFile) {
+    if (!isObject(rawContent) || !Object.values(rawContent).every(validate)) {
+      return undefined;
+    }
+
+    return Object.fromEntries(
+      Object.entries(rawContent).map(([locale, content]) => [locale, { [fieldName]: content }]),
+    );
+  }
+
+  if (!validate(rawContent)) {
+    return undefined;
+  }
+
+  return { [fieldName]: rawContent };
+};
+
+/**
+ * Transform raw content to handle special cases like root List and root KeyValue fields.
  * @param {RawEntryContent} rawContent Raw content from the file.
  * @param {Field[]} fields Collection fields.
  * @param {boolean} i18nSingleFile Whether i18n single file structure is used.
  * @returns {RawEntryContent | undefined} Transformed content or undefined if invalid.
  */
 export const transformRawContent = (rawContent, fields, i18nSingleFile) => {
-  // Handle a special case: top-level list field
-  if (hasRootListField(fields)) {
-    const fieldName = fields[0].name;
+  const args = { rawContent, fields, i18nSingleFile };
 
-    if (i18nSingleFile) {
-      if (!isObject(rawContent) || !Object.values(rawContent).every(Array.isArray)) {
-        return undefined;
-      }
+  // Handle a special case: top-level List field
+  if (hasRootField(fields, 'list')) {
+    return transformRoot({ ...args, validate: Array.isArray });
+  }
 
-      return Object.fromEntries(
-        Object.entries(rawContent).map(([locale, content]) => [locale, { [fieldName]: content }]),
-      );
-    }
-
-    if (!Array.isArray(rawContent)) {
-      return undefined;
-    }
-
-    return { [fieldName]: rawContent };
+  // Handle a special case: top-level KeyValue field
+  if (hasRootField(fields, 'keyvalue')) {
+    return transformRoot({ ...args, validate: isObject });
   }
 
   return isObject(rawContent) ? rawContent : undefined;

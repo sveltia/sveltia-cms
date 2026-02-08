@@ -6,9 +6,8 @@ import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
-import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
+import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
-import { hasRootListField } from '$lib/services/contents/fields/list/helper';
 import { FULL_DATE_TIME_REGEX } from '$lib/services/utils/date';
 
 /**
@@ -212,10 +211,15 @@ export const serializeContent = ({ draft, locale, valueMap }) => {
     isTomlOutput,
   });
 
-  // Handle a special case: top-level list field. TOML doesn’t support top-level arrays, so we
+  // Handle a special case: top-level List field. TOML doesn’t support top-level arrays, so we
   // ignore the `root` option for such cases.
-  if (!isTomlOutput && hasRootListField(fields)) {
+  if (!isTomlOutput && hasRootField(fields, 'list')) {
     return content[fields[0].name] ?? [];
+  }
+
+  // Handle a special case: top-level KeyValue field
+  if (hasRootField(fields, 'keyvalue')) {
+    return content[fields[0].name] ?? {};
   }
 
   return content;

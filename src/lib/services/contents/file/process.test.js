@@ -1,3 +1,5 @@
+/* eslint-disable jsdoc/require-jsdoc */
+
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -12,6 +14,7 @@ import {
   processNonI18nEntry,
   shouldSkipIndexFile,
   transformRawContent,
+  transformRoot,
 } from '$lib/services/contents/file/process';
 
 /**
@@ -35,8 +38,14 @@ vi.mock('$lib/services/contents/file/parse', () => ({
   parseEntryFile: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/fields/list/helper', () => ({
-  hasRootListField: vi.fn(),
+vi.mock('$lib/services/contents/entry/fields', () => ({
+  hasRootField: vi.fn(
+    (fields, fieldType) =>
+      fields.length === 1 &&
+      fields[0].widget === fieldType &&
+      'root' in fields[0] &&
+      fields[0].root === true,
+  ),
 }));
 
 vi.mock('flat', () => ({
@@ -276,21 +285,60 @@ describe('Test parseFileContent()', () => {
 });
 
 describe('Test transformRawContent()', () => {
-  /** @type {any} */
-  let hasRootListField;
-
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-
-    const helperModule = await import('$lib/services/contents/fields/list/helper');
-
-    hasRootListField = helperModule.hasRootListField;
   });
 
-  test('handles root list field in single file i18n', () => {
-    hasRootListField.mockReturnValue(true);
+  test('delegates to transformRoot for root list field', () => {
+    const fields = [{ name: 'items', widget: 'list', root: true }];
+    const rawContent = ['item1', 'item2'];
+    const result = transformRawContent(rawContent, fields, false);
 
-    const fields = [{ name: 'items', widget: 'list' }];
+    expect(result).toEqual({ items: ['item1', 'item2'] });
+  });
+
+  test('delegates to transformRoot for root keyvalue field', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+    const rawContent = { key1: 'value1', key2: 'value2' };
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toEqual({ keyValues: { key1: 'value1', key2: 'value2' } });
+  });
+
+  test('returns content as-is for regular fields', () => {
+    const fields = [{ name: 'title', widget: 'string' }];
+    const rawContent = { title: 'Test', body: 'Content' };
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toEqual({ title: 'Test', body: 'Content' });
+  });
+
+  test('returns undefined for non-object content with regular fields', () => {
+    const fields = [{ name: 'title', widget: 'string' }];
+    const rawContent = /** @type {any} */ ('not-an-object');
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns undefined for root list field with invalid content', () => {
+    const fields = [{ name: 'items', widget: 'list', root: true }];
+    const rawContent = { key: 'value' };
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns undefined for root keyvalue field with invalid content', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+    const rawContent = /** @type {any} */ (['item1', 'item2']);
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toBeUndefined();
+  });
+
+  test('handles root list field in single file i18n structure', () => {
+    const fields = [{ name: 'items', widget: 'list', root: true }];
 
     const rawContent = {
       en: ['item1', 'item2'],
@@ -305,88 +353,172 @@ describe('Test transformRawContent()', () => {
     });
   });
 
-  test('handles root list field without i18n', () => {
-    hasRootListField.mockReturnValue(true);
+  test('handles root keyvalue field in single file i18n structure', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
 
+    const rawContent = {
+      en: { key1: 'value1' },
+      fr: { clé1: 'valeur1' },
+    };
+
+    const result = transformRawContent(rawContent, fields, true);
+
+    expect(result).toEqual({
+      en: { keyValues: { key1: 'value1' } },
+      fr: { keyValues: { clé1: 'valeur1' } },
+    });
+  });
+});
+
+describe('Test transformRoot()', () => {
+  test('transforms single file i18n content with array validator', () => {
+    const fields = [{ name: 'items', widget: 'list' }];
+
+    const rawContent = {
+      en: ['item1', 'item2'],
+      fr: ['article1', 'article2'],
+    };
+
+    const result = transformRoot({
+      rawContent,
+      fields,
+      i18nSingleFile: true,
+      validate: Array.isArray,
+    });
+
+    expect(result).toEqual({
+      en: { items: ['item1', 'item2'] },
+      fr: { items: ['article1', 'article2'] },
+    });
+  });
+
+  test('transforms single file i18n content with object validator', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue' }];
+
+    const rawContent = {
+      en: { key1: 'value1' },
+      fr: { clé1: 'valeur1' },
+    };
+
+    const result = transformRoot({
+      rawContent,
+      fields,
+      i18nSingleFile: true,
+      validate: (v) => typeof v === 'object' && v !== null && !Array.isArray(v),
+    });
+
+    expect(result).toEqual({
+      en: { keyValues: { key1: 'value1' } },
+      fr: { keyValues: { clé1: 'valeur1' } },
+    });
+  });
+
+  test('returns undefined when single file i18n content fails validation', () => {
+    const fields = [{ name: 'items', widget: 'list' }];
+
+    const rawContent = {
+      en: ['item1'],
+      fr: 'not-an-array',
+    };
+
+    const result = transformRoot({
+      rawContent,
+      fields,
+      i18nSingleFile: true,
+      validate: Array.isArray,
+    });
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns undefined when single file i18n rawContent is not an object', () => {
+    const fields = [{ name: 'items', widget: 'list' }];
+    const rawContent = /** @type {any} */ (['item1', 'item2']);
+
+    const result = transformRoot({
+      rawContent,
+      fields,
+      i18nSingleFile: true,
+      validate: Array.isArray,
+    });
+
+    expect(result).toBeUndefined();
+  });
+
+  test('transforms multi-file structure with array validator', () => {
     const fields = [{ name: 'items', widget: 'list' }];
     const rawContent = ['item1', 'item2'];
-    const result = transformRawContent(rawContent, fields, false);
+
+    const result = transformRoot({
+      rawContent,
+      fields,
+      i18nSingleFile: false,
+      validate: Array.isArray,
+    });
 
     expect(result).toEqual({
       items: ['item1', 'item2'],
     });
   });
 
-  test('returns undefined for invalid root list field content in single file i18n', () => {
-    hasRootListField.mockReturnValue(true);
+  test('transforms multi-file structure with object validator', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue' }];
+    const rawContent = { key1: 'value1', key2: 'value2' };
 
+    const result = transformRoot({
+      rawContent,
+      fields,
+      i18nSingleFile: false,
+      validate: (v) => typeof v === 'object' && v !== null && !Array.isArray(v),
+    });
+
+    expect(result).toEqual({
+      keyValues: { key1: 'value1', key2: 'value2' },
+    });
+  });
+
+  test('returns undefined for multi-file structure when validation fails', () => {
     const fields = [{ name: 'items', widget: 'list' }];
-    const rawContent = { en: 'not-an-array' };
-    const result = transformRawContent(rawContent, fields, true);
+    const rawContent = { key: 'value' };
+
+    const result = transformRoot({
+      rawContent,
+      fields,
+      i18nSingleFile: false,
+      validate: Array.isArray,
+    });
 
     expect(result).toBeUndefined();
   });
 
-  test('returns undefined when object values are not all arrays in single file i18n', () => {
-    hasRootListField.mockReturnValue(true);
-
+  test('returns undefined for multi-file structure when rawContent is not an object', () => {
     const fields = [{ name: 'items', widget: 'list' }];
-    const rawContent = { en: ['item1'], fr: 'not-an-array' }; // Mixed types
-    const result = transformRawContent(rawContent, fields, true);
-
-    expect(result).toBeUndefined();
-  });
-
-  test('returns undefined for invalid root list field content', () => {
-    hasRootListField.mockReturnValue(true);
-
-    const fields = [{ name: 'items', widget: 'list' }];
-    const rawContent = /** @type {any} */ ('not-an-array');
-    const result = transformRawContent(rawContent, fields, false);
-
-    expect(result).toBeUndefined();
-  });
-
-  test('returns content for regular fields with object content', () => {
-    hasRootListField.mockReturnValue(false);
-
-    const fields = [{ name: 'title', widget: 'string' }];
-    const rawContent = { title: 'Test' };
-    const result = transformRawContent(rawContent, fields, false);
-
-    expect(result).toEqual({ title: 'Test' });
-  });
-
-  test('returns undefined for non-object content when no root list field', () => {
-    hasRootListField.mockReturnValue(false);
-
-    const fields = [{ name: 'title', widget: 'string' }];
     const rawContent = /** @type {any} */ ('not-an-object');
-    const result = transformRawContent(rawContent, fields, false);
+
+    const result = transformRoot({
+      rawContent,
+      fields,
+      i18nSingleFile: false,
+      validate: Array.isArray,
+    });
 
     expect(result).toBeUndefined();
   });
 
-  test('returns undefined when rawContent is not an object in single file i18n (line 123 - !isObject branch)', () => {
-    hasRootListField.mockReturnValue(true);
+  test('extracts field name from first field', () => {
+    const fields = [{ name: 'customFieldName', widget: 'list' }];
+    const rawContent = ['item1'];
 
-    const fields = [{ name: 'items', widget: 'list' }];
-    const rawContent = /** @type {any} */ ('not-an-object-string');
-    const result = transformRawContent(rawContent, fields, true);
+    const result = transformRoot({
+      rawContent,
+      fields,
+      i18nSingleFile: false,
+      validate: Array.isArray,
+    });
 
-    // Should return undefined because rawContent is not an object when i18nSingleFile is true
-    expect(result).toBeUndefined();
-  });
-
-  test('returns undefined when rawContent is array in single file i18n (line 123 - !isObject branch)', () => {
-    hasRootListField.mockReturnValue(true);
-
-    const fields = [{ name: 'items', widget: 'list' }];
-    const rawContent = /** @type {any} */ (['item1', 'item2']);
-    const result = transformRawContent(rawContent, fields, true);
-
-    // Should return undefined because rawContent is not an object when i18nSingleFile is true
-    expect(result).toBeUndefined();
+    expect(result).toEqual({
+      customFieldName: ['item1'],
+    });
   });
 });
 
@@ -1105,8 +1237,6 @@ describe('Test prepareEntry()', () => {
   let getCollectionFile;
   /** @type {any} */
   let parseEntryFile;
-  /** @type {any} */
-  let hasRootListField;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -1114,12 +1244,10 @@ describe('Test prepareEntry()', () => {
     const collectionModule = await import('$lib/services/contents/collection');
     const collectionFilesModule = await import('$lib/services/contents/collection/files');
     const parseModule = await import('$lib/services/contents/file/parse');
-    const listHelperModule = await import('$lib/services/contents/fields/list/helper');
 
     getCollection = collectionModule.getCollection;
     getCollectionFile = collectionFilesModule.getCollectionFile;
     parseEntryFile = parseModule.parseEntryFile;
-    hasRootListField = listHelperModule.hasRootListField;
   });
 
   test('skips when parsing fails', async () => {
@@ -1216,7 +1344,7 @@ describe('Test prepareEntry()', () => {
     parseEntryFile.mockResolvedValue('invalid content');
     getCollection.mockReturnValue({
       name: 'posts',
-      fields: [{ name: 'items', widget: 'list' }],
+      fields: [{ name: 'items', widget: 'list', root: true }],
       _file: {
         fullPathRegEx: /test/,
         subPath: undefined,
@@ -1235,7 +1363,6 @@ describe('Test prepareEntry()', () => {
         canonicalSlug: { key: undefined },
       },
     });
-    hasRootListField.mockReturnValue(true);
 
     const file = /** @type {BaseEntryListItem} */ ({
       name: 'test.md',
@@ -1257,7 +1384,6 @@ describe('Test prepareEntry()', () => {
 
   test('skips when shouldSkipIndexFile returns true', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test' });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue({
       name: 'posts',
       fields: [],
@@ -1300,7 +1426,6 @@ describe('Test prepareEntry()', () => {
 
   test('skips when subPath is undefined', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test' });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue({
       name: 'posts',
       fields: [],
@@ -1417,7 +1542,6 @@ describe('Test prepareEntry()', () => {
 
   test('skips when path does not match fullPathRegEx (line 404-406)', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test' });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue({
       name: 'posts',
       fields: [],
@@ -1461,7 +1585,6 @@ describe('Test prepareEntry()', () => {
 
   test('processes non-i18n entry successfully', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test Post' });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue({
       name: 'posts',
       fields: [],
@@ -1509,7 +1632,6 @@ describe('Test prepareEntry()', () => {
       en: { title: 'Test Post' },
       fr: { title: 'Article de Test' },
     });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue({
       name: 'posts',
       fields: [],
@@ -1555,7 +1677,6 @@ describe('Test prepareEntry()', () => {
 
   test('processes file collection entry', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test Data' });
-    hasRootListField.mockReturnValue(false);
 
     const mockCollectionFile = {
       name: 'members',
@@ -1604,7 +1725,6 @@ describe('Test prepareEntry()', () => {
 
   test('processes i18n multi-file entry successfully - new entry', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test Post' });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue({
       name: 'posts',
       fields: [],
@@ -1648,7 +1768,6 @@ describe('Test prepareEntry()', () => {
   });
   test('processes i18n multi-file entry successfully - merging with existing', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Article de Test' });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue({
       name: 'posts',
       fields: [],
@@ -1709,7 +1828,6 @@ describe('Test prepareEntry()', () => {
 
   test('skips when collection is null (line 368 - !collection branch)', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test' });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue(null);
 
     const file = /** @type {BaseEntryListItem} */ ({
@@ -1733,7 +1851,6 @@ describe('Test prepareEntry()', () => {
 
   test('verifies wasMerged return early skips push (line 448)', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Article de Test' });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue({
       name: 'posts',
       fields: [],
@@ -1796,7 +1913,6 @@ describe('Test prepareEntry()', () => {
 
   test('i18n multi-file with non-default locale that does not merge', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test Post' });
-    hasRootListField.mockReturnValue(false);
     getCollection.mockReturnValue({
       name: 'posts',
       fields: [],

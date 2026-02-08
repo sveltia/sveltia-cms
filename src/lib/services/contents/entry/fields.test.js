@@ -8,6 +8,7 @@ import {
   getFieldDisplayValue,
   getPropertyValue,
   getVisibleFieldDisplayValue,
+  hasRootField,
   isFieldMultiple,
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
@@ -1312,6 +1313,81 @@ describe('Test getField()', () => {
 
       expect(result).toBeUndefined();
     });
+  });
+});
+
+describe('Test hasRootField()', () => {
+  test('returns true for single list field with root: true', () => {
+    const fields = [{ name: 'items', widget: 'list', root: true }];
+
+    expect(hasRootField(fields, 'list')).toBe(true);
+  });
+
+  test('returns true for single keyvalue field with root: true', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+
+    expect(hasRootField(fields, 'keyvalue')).toBe(true);
+  });
+
+  test('returns false when root is false', () => {
+    const fields = [{ name: 'items', widget: 'list', root: false }];
+
+    expect(hasRootField(fields, 'list')).toBe(false);
+  });
+
+  test('returns false when root property is missing', () => {
+    const fields = [{ name: 'items', widget: 'list' }];
+
+    expect(hasRootField(fields, 'list')).toBe(false);
+  });
+
+  test('returns false when widget type does not match', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+
+    expect(hasRootField(fields, 'list')).toBe(false);
+  });
+
+  test('returns false when multiple fields are present', () => {
+    const fields = [
+      { name: 'items', widget: 'list', root: true },
+      { name: 'title', widget: 'string' },
+    ];
+
+    expect(hasRootField(fields, 'list')).toBe(false);
+  });
+
+  test('returns false when fields array is empty', () => {
+    /** @type {any} */
+    const fields = [];
+
+    expect(hasRootField(fields, 'list')).toBe(false);
+  });
+
+  test('returns false for root: true with mismatched widget type', () => {
+    const fields = [{ name: 'items', widget: 'list', root: true }];
+
+    expect(hasRootField(fields, 'keyvalue')).toBe(false);
+  });
+
+  test('returns true ignoring other field properties', () => {
+    const fields = [
+      {
+        name: 'items',
+        widget: 'list',
+        root: true,
+        fields: [{ name: 'title', widget: 'string' }],
+        required: false,
+        default: [],
+      },
+    ];
+
+    expect(hasRootField(fields, 'list')).toBe(true);
+  });
+
+  test('returns false for root: undefined with valid widget', () => {
+    const fields = [{ name: 'items', widget: 'list', root: undefined }];
+
+    expect(hasRootField(fields, 'list')).toBe(false);
   });
 });
 

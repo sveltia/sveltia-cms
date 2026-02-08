@@ -47,6 +47,22 @@ import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 export const fieldConfigCacheMap = new Map();
 
 /**
+ * Check if the given fields contain a single List or KeyValue field with the `root` option enabled.
+ * @param {Field[]} fields Field list.
+ * @param {'list' | 'keyvalue'} fieldType Field type to check.
+ * @returns {boolean} Result.
+ */
+export const hasRootField = (fields, fieldType) => {
+  if (fields.length !== 1) {
+    return false;
+  }
+
+  const [field] = fields;
+
+  return field.widget === fieldType && 'root' in field && field.root === true;
+};
+
+/**
  * Check if multi selection is enabled for the given field configuration.
  * @param {Field} fieldConfig Field configuration.
  * @returns {boolean} Result.

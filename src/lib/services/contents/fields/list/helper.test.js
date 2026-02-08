@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
-import { formatSummary, getListFieldInfo, hasRootListField } from './helper';
+import { formatSummary, getListFieldInfo } from './helper';
 
 vi.mock('$lib/services/config');
 
@@ -608,85 +608,5 @@ describe('Test getListFieldInfo()', () => {
       hasVariableTypes: true,
       hasSubFields: true,
     });
-  });
-});
-
-describe('Test hasRootListField()', () => {
-  test('should return true for single list field with root option enabled', () => {
-    /** @type {import('$lib/types/public').Field[]} */
-    const fields = [
-      {
-        name: 'items',
-        widget: 'list',
-        root: true,
-        fields: [],
-      },
-    ];
-
-    expect(hasRootListField(fields)).toBe(true);
-  });
-
-  test('should return false when root option is false', () => {
-    /** @type {import('$lib/types/public').Field[]} */
-    const fields = [
-      {
-        name: 'items',
-        widget: 'list',
-        root: false,
-        fields: [],
-      },
-    ];
-
-    expect(hasRootListField(fields)).toBe(false);
-  });
-
-  test('should return false when root option is undefined', () => {
-    /** @type {import('$lib/types/public').Field[]} */
-    const fields = [
-      {
-        name: 'items',
-        widget: 'list',
-        fields: [],
-      },
-    ];
-
-    expect(hasRootListField(fields)).toBe(false);
-  });
-
-  test('should return false when there are multiple fields', () => {
-    /** @type {import('$lib/types/public').Field[]} */
-    const fields = [
-      {
-        name: 'items',
-        widget: 'list',
-        root: true,
-        fields: [],
-      },
-      {
-        name: 'other',
-        widget: 'string',
-      },
-    ];
-
-    expect(hasRootListField(fields)).toBe(false);
-  });
-
-  test('should return false when field is not a list field', () => {
-    /** @type {import('$lib/types/public').Field[]} */
-    const fields = [
-      {
-        name: 'title',
-        widget: 'string',
-      },
-    ];
-
-    expect(hasRootListField(fields)).toBe(false);
-  });
-
-  test('should return false for empty fields array', () => {
-    /** @type {import('$lib/types/public').Field[]} */
-    const fields = [];
-
-    expect(hasRootListField(fields)).toBe(false);
   });
 });

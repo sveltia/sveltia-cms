@@ -8,7 +8,7 @@ import {
 
 /**
  * @import { FlattenedEntryContent, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
- * @import { ComplexListField, Field, FieldKeyPath, ListField } from '$lib/types/public';
+ * @import { FieldKeyPath, ListField } from '$lib/types/public';
  */
 
 /**
@@ -36,17 +36,6 @@ export const getListFieldInfo = (field) => {
     hasSubFields: hasSingleSubField || hasMultiSubFields || hasVariableTypes,
   };
 };
-
-/**
- * Check if the given fields contain a single List field with the `root` option enabled.
- * @param {Field[]} fields Field list.
- * @returns {boolean} Result.
- */
-export const hasRootListField = (fields) =>
-  fields.length === 1 &&
-  fields[0].widget === 'list' &&
-  'root' in /** @type {ListField} */ (fields[0]) &&
-  /** @type {ComplexListField} */ (fields[0]).root === true;
 
 /**
  * Format the summary template of a List field.
