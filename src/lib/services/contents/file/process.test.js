@@ -368,6 +368,67 @@ describe('Test transformRawContent()', () => {
       fr: { keyValues: { clé1: 'valeur1' } },
     });
   });
+
+  test('returns undefined for root keyvalue field with non-string values', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+    const rawContent = { key1: 'value1', key2: 123, key3: 'value3' };
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns undefined for root keyvalue field with null values', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+    const rawContent = { key1: 'value1', key2: null };
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns undefined for root keyvalue field with boolean values', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+    const rawContent = { key1: 'value1', key2: true };
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns undefined for root keyvalue field with object values', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+    const rawContent = { key1: 'value1', key2: { nested: 'value' } };
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns undefined for root keyvalue field with array values', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+    const rawContent = { key1: 'value1', key2: ['a', 'b'] };
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns wrapped empty object for root keyvalue field with empty object', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+    const rawContent = {};
+    const result = transformRawContent(rawContent, fields, false);
+
+    expect(result).toEqual({ keyValues: {} });
+  });
+
+  test('handles root keyvalue field in i18n single file with non-string values', () => {
+    const fields = [{ name: 'keyValues', widget: 'keyvalue', root: true }];
+
+    const rawContent = {
+      en: { key1: 'value1', key2: 123 },
+      fr: { clé1: 'valeur1' },
+    };
+
+    const result = transformRawContent(rawContent, fields, true);
+
+    expect(result).toBeUndefined();
+  });
 });
 
 describe('Test transformRoot()', () => {

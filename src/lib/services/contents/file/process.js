@@ -154,7 +154,13 @@ export const transformRawContent = (rawContent, fields, i18nSingleFile) => {
 
   // Handle a special case: top-level KeyValue field
   if (hasRootField(fields, 'keyvalue')) {
-    return transformRoot({ ...args, validate: isObject });
+    return transformRoot({
+      ...args,
+      // Check if the key-value pairs are in an object format and each value is a string
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      validate: (value) =>
+        isObject(value) && Object.entries(value).every(([, val]) => typeof val === 'string'),
+    });
   }
 
   return isObject(rawContent) ? rawContent : undefined;
