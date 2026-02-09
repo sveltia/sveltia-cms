@@ -23,7 +23,8 @@ export const copyDefaultLocaleValues = (content) => {
 
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   /** @type {FlattenedEntryContent} */
-  const newContent = { ...toRaw(content), ...toRaw(currentValues[defaultLocale]) };
+  const defaultLocaleContent = toRaw(currentValues[defaultLocale]);
+  const newContent = { ...toRaw(content), ...defaultLocaleContent };
   const getFieldArgs = { collectionName, fileName, valueMap: newContent, isIndexFile };
   /** @type {string[]} */
   const noI18nFieldKeys = [];
@@ -46,6 +47,16 @@ export const copyDefaultLocaleValues = (content) => {
       [true, 'translate'].includes(i18n)
     ) {
       newContent[keyPath] = content[keyPath] ?? '';
+    }
+
+    // Remove `null` values for object fields if i18n is enabled and the field is enabled in the
+    // default locale, otherwise the subfields will not be saved in the current locale
+    if (
+      fieldType === 'object' &&
+      [true, 'translate', 'duplicate'].includes(i18n) &&
+      defaultLocaleContent[keyPath] !== null
+    ) {
+      delete newContent[keyPath];
     }
 
     // Remove the field if i18n is disabled

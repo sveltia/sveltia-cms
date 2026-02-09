@@ -235,6 +235,98 @@ describe('draft/update/locale', () => {
       expect(result['date.timestamp']).toBeUndefined();
       expect(result.title).toBe('Title');
     });
+
+    it('should delete object field when i18n is true and value exists in default locale (lines 51-61)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'metadata') {
+          return { name: 'metadata', widget: 'object', i18n: true };
+        }
+
+        return undefined;
+      });
+
+      mockEntryDraft.currentValues.en.metadata = { key: 'value' };
+
+      const content = { metadata: { key: 'translated' } };
+      const result = copyDefaultLocaleValues(content);
+
+      // Object field with i18n: true and existing value in default locale should be deleted
+      expect(result.metadata).toBeUndefined();
+    });
+
+    it('should delete object field when i18n is "translate" and value exists in default locale (lines 51-61)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'seo') {
+          return { name: 'seo', widget: 'object', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      mockEntryDraft.currentValues.en.seo = { title: 'SEO Title' };
+
+      const content = { seo: { title: 'Translated SEO' } };
+      const result = copyDefaultLocaleValues(content);
+
+      // Object field with i18n: "translate" and existing value in default locale should be deleted
+      expect(result.seo).toBeUndefined();
+    });
+
+    it('should delete object field when i18n is "duplicate" and value exists in default locale (lines 51-61)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'config') {
+          return { name: 'config', widget: 'object', i18n: 'duplicate' };
+        }
+
+        return undefined;
+      });
+
+      mockEntryDraft.currentValues.en.config = { mode: 'prod' };
+
+      const content = { config: { mode: 'dev' } };
+      const result = copyDefaultLocaleValues(content);
+
+      // Object field with i18n: "duplicate" and existing value in default locale should be deleted
+      expect(result.config).toBeUndefined();
+    });
+
+    it('should not delete object field when default locale value is null (lines 51-61)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'metadata') {
+          return { name: 'metadata', widget: 'object', i18n: true };
+        }
+
+        return undefined;
+      });
+
+      mockEntryDraft.currentValues.en.metadata = null;
+
+      const content = { metadata: { key: 'value' } };
+      const result = copyDefaultLocaleValues(content);
+
+      // Object field with null value in default locale should NOT be deleted
+      // After merge with null from default locale, it becomes null (not deleted, but overwritten by
+      // merge)
+      expect(result.metadata).toBeNull();
+    });
+
+    it('should not delete object field when i18n is false (lines 51-61)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'metadata') {
+          return { name: 'metadata', widget: 'object', i18n: false };
+        }
+
+        return undefined;
+      });
+
+      mockEntryDraft.currentValues.en.metadata = { key: 'value' };
+
+      const content = { metadata: { key: 'value' } };
+      const result = copyDefaultLocaleValues(content);
+
+      // Object field with i18n: false should be removed by i18n disabled rule, not object rule
+      expect(result.metadata).toBeUndefined();
+    });
   });
 
   describe('toggleLocale', () => {
