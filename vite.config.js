@@ -92,8 +92,8 @@ const generateTypes = async () => {
     });
   });
 
-  // Export the `CmsConfig` type
-  await appendFile(MAIN_TYPE_PATH, 'export type { CmsConfig };\n');
+  // Re-export all types from `types/public.d.ts` in `main.d.ts` for better DX
+  await appendFile(MAIN_TYPE_PATH, "export type * from './types/public';\n");
 
   const publicType = await readFile(PUBLIC_TYPE_PATH, 'utf-8');
 
