@@ -169,14 +169,23 @@ export const getAssetPublicURL = (
           ({ collectionName }) => collectionName !== undefined,
         ) ?? get(globalAssetFolder));
 
-  // Cannot determine the URL if it’s relative to an entry, unless the asset is in the same folder
+  // Try to determine an entry-relative path if the asset is in the same folder as the entry, or a
+  // sub-folder of it
   if (entryRelative) {
-    if (
-      pathOnly &&
-      !!entry &&
-      getPathInfo(asset.path).dirname === getPathInfo(Object.values(entry.locales)[0].path).dirname
-    ) {
-      return asset.name;
+    if (pathOnly && entry) {
+      const assetFolderPath = getPathInfo(asset.path).dirname;
+      const entryFolderPath = getPathInfo(Object.values(entry.locales)[0].path).dirname;
+
+      if (assetFolderPath !== undefined && entryFolderPath !== undefined) {
+        // If the asset is in the same folder as the entry, return the file name only
+        if (assetFolderPath === entryFolderPath) {
+          return asset.name;
+        }
+
+        // Return the path relative to the entry’s folder, e.g. `images/photo.jpg`, or `undefined`
+        // if the path cannot be determined
+        return asset.path.match(new RegExp(`^(?:${escapeRegExp(entryFolderPath)})/(.+)$`))?.[1];
+      }
     }
 
     return undefined;

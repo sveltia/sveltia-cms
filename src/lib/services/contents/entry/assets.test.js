@@ -14,6 +14,8 @@ const {
   mockGetAssetFoldersByPath,
   mockGetAssetFolder,
   mockAllAssets,
+  mockGetPathInfo,
+  mockEscapeRegExp,
 } = vi.hoisted(() => ({
   mockGetMediaFieldURL: vi.fn(),
   mockGetCollection: vi.fn(),
@@ -23,6 +25,8 @@ const {
   mockGetAssetFoldersByPath: vi.fn(),
   mockGetAssetFolder: vi.fn(),
   mockAllAssets: { set: vi.fn(), subscribe: vi.fn() },
+  mockGetPathInfo: vi.fn(),
+  mockEscapeRegExp: vi.fn((str) => str),
 }));
 
 // Mock the dependencies with hoisted functions
@@ -56,6 +60,14 @@ vi.mock('$lib/services/contents/collection/index-file', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: mockGetField,
+}));
+
+vi.mock('@sveltia/utils/file', () => ({
+  getPathInfo: mockGetPathInfo,
+}));
+
+vi.mock('@sveltia/utils/string', () => ({
+  escapeRegExp: mockEscapeRegExp,
 }));
 
 // Import after mocking
@@ -211,6 +223,20 @@ describe('getAssociatedAssets', () => {
     mockGetField.mockClear();
     mockGetAssetByPath.mockClear();
     mockGetAssetFoldersByPath.mockClear();
+    mockGetAssetFolder.mockClear();
+    mockGetPathInfo.mockClear();
+    mockEscapeRegExp.mockClear();
+
+    // Reset to default implementations
+    mockGetAssetFolder.mockReturnValue(undefined);
+    mockAllAssets.subscribe.mockReturnValue(vi.fn());
+    mockGetPathInfo.mockImplementation((path) => ({
+      dirname: path.split('/').slice(0, -1).join('/'),
+      basename: path.split('/').pop(),
+      filename: path.split('/').pop()?.split('.')[0],
+      extension: path.split('.').pop()?.includes('/') ? '' : `.${path.split('.').pop()}`,
+    }));
+    mockEscapeRegExp.mockImplementation((str) => str);
   });
 
   /** @type {Entry} */
@@ -610,6 +636,24 @@ describe('getAssociatedAssets', () => {
     mockGetAssetByPath.mockReturnValue(undefined);
     mockGetAssetFolder.mockReturnValue({ entryRelative: true });
     mockGetAssetFoldersByPath.mockReturnValue([]);
+    mockGetPathInfo.mockImplementation((path) => {
+      if (path === 'post-dir/orphaned.jpg') {
+        return {
+          dirname: 'post-dir',
+          basename: 'orphaned.jpg',
+          filename: 'orphaned',
+          extension: '.jpg',
+        };
+      }
+
+      return {
+        dirname: 'post-dir',
+        basename: 'index.md',
+        filename: 'index',
+        extension: '.md',
+      };
+    });
+    mockEscapeRegExp.mockImplementation((str) => str);
     mockAllAssets.subscribe.mockImplementation((callback) => {
       callback([mockAsset]);
       return vi.fn();
@@ -670,6 +714,24 @@ describe('getAssociatedAssets', () => {
       },
     ]);
     mockGetAssetFolder.mockReturnValue({ entryRelative: true });
+    mockGetPathInfo.mockImplementation((path) => {
+      if (path === 'post-dir/shared.jpg') {
+        return {
+          dirname: 'post-dir',
+          basename: 'shared.jpg',
+          filename: 'shared',
+          extension: '.jpg',
+        };
+      }
+
+      return {
+        dirname: 'post-dir',
+        basename: 'index.md',
+        filename: 'index',
+        extension: '.md',
+      };
+    });
+    mockEscapeRegExp.mockImplementation((str) => str);
     mockAllAssets.subscribe.mockImplementation((callback) => {
       // Same asset appears in allAssets (as orphaned)
       callback([sharedAsset]);
@@ -722,6 +784,23 @@ describe('getAssociatedAssets', () => {
     mockGetAssetByPath.mockReturnValue(undefined);
     mockGetAssetFolder.mockReturnValue({ entryRelative: true });
     mockGetAssetFoldersByPath.mockReturnValue([]);
+    mockGetPathInfo.mockImplementation((path) => {
+      if (path === 'post-dir/orphaned.jpg') {
+        return {
+          dirname: 'post-dir',
+          basename: 'orphaned.jpg',
+          filename: 'orphaned',
+          extension: '.jpg',
+        };
+      }
+
+      return {
+        dirname: 'post-dir',
+        basename: 'index.md',
+        filename: 'index',
+        extension: '.md',
+      };
+    });
     mockAllAssets.subscribe.mockImplementation((callback) => {
       callback([mockAsset]);
       return vi.fn();
@@ -842,5 +921,210 @@ describe('getAssociatedAssets', () => {
     expect(
       mockGetAssetByPath.mock.calls.some((call) => call[0].value === '@media/uploads/photo.jpg'),
     ).toBe(false);
+  });
+
+  test('includes orphaned assets in sub-folders of entry directory (line 125)', () => {
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    const mockAsset = /** @type {Asset} */ ({
+      path: 'post-dir/subfolder/nested.jpg',
+      name: 'nested.jpg',
+      kind: 'image',
+      size: 1024,
+      text: '',
+      sha: 'abc123',
+      folder: {
+        collectionName: 'posts',
+        internalPath: 'post-dir/subfolder',
+        publicPath: '/post-dir/subfolder',
+        entryRelative: true,
+        hasTemplateTags: false,
+      },
+    });
+
+    const entryWithContent = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'post-dir/index.md',
+          content: {
+            title: 'Test',
+          },
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetField.mockReturnValue(undefined);
+    mockGetAssetByPath.mockReturnValue(undefined);
+    mockGetAssetFolder.mockReturnValue({ entryRelative: true });
+    mockGetAssetFoldersByPath.mockReturnValue([]);
+    mockGetPathInfo.mockImplementation((path) => {
+      if (path === 'post-dir/subfolder/nested.jpg') {
+        return {
+          dirname: 'post-dir/subfolder',
+          basename: 'nested.jpg',
+          filename: 'nested',
+          extension: '.jpg',
+        };
+      }
+
+      return {
+        dirname: 'post-dir',
+        basename: 'index.md',
+        filename: 'index',
+        extension: '.md',
+      };
+    });
+    mockEscapeRegExp.mockImplementation((str) => str);
+    mockAllAssets.subscribe.mockImplementation((callback) => {
+      callback([mockAsset]);
+      return vi.fn();
+    });
+
+    const result = getAssociatedAssets({
+      entry: entryWithContent,
+      collectionName: 'posts',
+      relative: true,
+    });
+
+    // Should include the orphaned asset in the sub-folder
+    expect(result).toContain(mockAsset);
+  });
+
+  test('returns undefined when assetFolderPath is undefined (line 124)', () => {
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    const mockAsset = /** @type {Asset} */ ({
+      path: 'post-dir/orphaned.jpg',
+      name: 'orphaned.jpg',
+      kind: 'image',
+      size: 1024,
+      text: '',
+      sha: 'abc123',
+      folder: {
+        collectionName: 'posts',
+        internalPath: 'post-dir',
+        publicPath: '/post-dir',
+        entryRelative: true,
+        hasTemplateTags: false,
+      },
+    });
+
+    const entryWithContent = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'post-dir/index.md',
+          content: {
+            title: 'Test',
+          },
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetField.mockReturnValue(undefined);
+    mockGetAssetByPath.mockReturnValue(undefined);
+    mockGetAssetFolder.mockReturnValue({ entryRelative: true });
+    mockGetAssetFoldersByPath.mockReturnValue([]);
+    mockGetPathInfo.mockImplementation((path) => {
+      if (path === 'post-dir/orphaned.jpg') {
+        return {
+          dirname: undefined, // Asset path has undefined dirname
+          basename: 'orphaned.jpg',
+          filename: 'orphaned',
+          extension: '.jpg',
+        };
+      }
+
+      return {
+        dirname: 'post-dir',
+        basename: 'index.md',
+        filename: 'index',
+        extension: '.md',
+      };
+    });
+    mockAllAssets.subscribe.mockImplementation((callback) => {
+      callback([mockAsset]);
+      return vi.fn();
+    });
+
+    const result = getAssociatedAssets({
+      entry: entryWithContent,
+      collectionName: 'posts',
+      relative: true,
+    });
+
+    // Should not include the asset since its folder path is undefined
+    expect(result).not.toContain(mockAsset);
+  });
+
+  test('returns undefined when entryFolderPath is undefined (line 124)', () => {
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    const mockAsset = /** @type {Asset} */ ({
+      path: 'post-dir/orphaned.jpg',
+      name: 'orphaned.jpg',
+      kind: 'image',
+      size: 1024,
+      text: '',
+      sha: 'abc123',
+      folder: {
+        collectionName: 'posts',
+        internalPath: 'post-dir',
+        publicPath: '/post-dir',
+        entryRelative: true,
+        hasTemplateTags: false,
+      },
+    });
+
+    const entryWithContent = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'post-dir/index.md',
+          content: {
+            title: 'Test',
+          },
+        },
+      },
+    });
+
+    mockGetCollection.mockReturnValue(mockCollection);
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetField.mockReturnValue(undefined);
+    mockGetAssetByPath.mockReturnValue(undefined);
+    mockGetAssetFolder.mockReturnValue({ entryRelative: true });
+    mockGetAssetFoldersByPath.mockReturnValue([]);
+    mockGetPathInfo.mockImplementation((path) => {
+      if (path === 'post-dir/orphaned.jpg') {
+        return {
+          dirname: 'post-dir',
+          basename: 'orphaned.jpg',
+          filename: 'orphaned',
+          extension: '.jpg',
+        };
+      }
+
+      return {
+        dirname: undefined, // Entry path has undefined dirname
+        basename: 'index.md',
+        filename: 'index',
+        extension: '.md',
+      };
+    });
+    mockAllAssets.subscribe.mockImplementation((callback) => {
+      callback([mockAsset]);
+      return vi.fn();
+    });
+
+    const result = getAssociatedAssets({
+      entry: entryWithContent,
+      collectionName: 'posts',
+      relative: true,
+    });
+
+    // Should not include the asset since the entry folder path is undefined
+    expect(result).not.toContain(mockAsset);
   });
 });

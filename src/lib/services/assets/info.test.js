@@ -531,6 +531,190 @@ describe('assets/info', () => {
       expect(result).toBe('test.jpg');
     });
 
+    it('should return relative path for entry-relative asset in sub-folder', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { escapeRegExp } = await import('@sveltia/utils/string');
+      const getPathInfoMock = vi.mocked(getPathInfo);
+      const escapeRegExpMock = vi.mocked(escapeRegExp);
+
+      // Mock different directories for asset and entry paths
+      getPathInfoMock.mockImplementation((path) => {
+        if (path.includes('images/photos/photo.jpg')) {
+          return {
+            dirname: 'assets/images/photos',
+            basename: 'photo.jpg',
+            filename: 'photo',
+            extension: '.jpg',
+          };
+        }
+
+        return {
+          dirname: 'assets/images',
+          basename: 'entry.md',
+          filename: 'entry',
+          extension: '.md',
+        };
+      });
+
+      // Mock escapeRegExp to return the string as-is for simplicity
+      escapeRegExpMock.mockImplementation((str) => str);
+
+      const entryRelativeAsset = {
+        ...mockAsset,
+        path: 'assets/images/photos/photo.jpg',
+        name: 'photo.jpg',
+        folder: {
+          ...mockAsset.folder,
+          entryRelative: true,
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'test',
+        slug: 'test',
+        subPath: 'test',
+        locales: {
+          en: { path: 'assets/images/entry.md' },
+        },
+      });
+
+      const result = getAssetPublicURL(entryRelativeAsset, {
+        pathOnly: true,
+        entry: mockEntry,
+      });
+
+      expect(result).toBe('photos/photo.jpg');
+    });
+
+    it('should return undefined when assetFolderPath is undefined', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const getPathInfoMock = vi.mocked(getPathInfo);
+
+      getPathInfoMock.mockImplementation((path) => {
+        if (path.includes('photos/photo.jpg')) {
+          return {
+            dirname: undefined,
+            basename: 'photo.jpg',
+            filename: 'photo',
+            extension: '.jpg',
+          };
+        }
+
+        return {
+          dirname: 'assets/images',
+          basename: 'entry.md',
+          filename: 'entry',
+          extension: '.md',
+        };
+      });
+
+      const entryRelativeAsset = {
+        ...mockAsset,
+        path: 'assets/images/photos/photo.jpg',
+        folder: {
+          ...mockAsset.folder,
+          entryRelative: true,
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'test',
+        slug: 'test',
+        locales: {
+          en: { path: 'assets/images/entry.md' },
+        },
+      });
+
+      const result = getAssetPublicURL(entryRelativeAsset, {
+        pathOnly: true,
+        entry: mockEntry,
+      });
+
+      expect(result).toBe(undefined);
+    });
+
+    it('should return undefined when entryFolderPath is undefined', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const getPathInfoMock = vi.mocked(getPathInfo);
+
+      getPathInfoMock.mockImplementation((path) => {
+        if (path.includes('photos/photo.jpg')) {
+          return {
+            dirname: 'assets/images/photos',
+            basename: 'photo.jpg',
+            filename: 'photo',
+            extension: '.jpg',
+          };
+        }
+
+        return {
+          dirname: undefined,
+          basename: 'entry.md',
+          filename: 'entry',
+          extension: '.md',
+        };
+      });
+
+      const entryRelativeAsset = {
+        ...mockAsset,
+        path: 'assets/images/photos/photo.jpg',
+        folder: {
+          ...mockAsset.folder,
+          entryRelative: true,
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'test',
+        slug: 'test',
+        locales: {
+          en: { path: 'assets/images/entry.md' },
+        },
+      });
+
+      const result = getAssetPublicURL(entryRelativeAsset, {
+        pathOnly: true,
+        entry: mockEntry,
+      });
+
+      expect(result).toBe(undefined);
+    });
+
+    it('should return undefined for entry-relative asset when pathOnly is false', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const getPathInfoMock = vi.mocked(getPathInfo);
+
+      getPathInfoMock.mockImplementation(() => ({
+        dirname: 'assets/images',
+        basename: 'file',
+        filename: 'file',
+        extension: '.ext',
+      }));
+
+      const entryRelativeAsset = {
+        ...mockAsset,
+        folder: {
+          ...mockAsset.folder,
+          entryRelative: true,
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'test',
+        slug: 'test',
+        locales: {
+          en: { path: 'assets/images/entry.md' },
+        },
+      });
+
+      const result = getAssetPublicURL(entryRelativeAsset, {
+        pathOnly: false,
+        entry: mockEntry,
+      });
+
+      expect(result).toBe(undefined);
+    });
+
     it('should handle template tags in path', async () => {
       const templateAsset = {
         ...mockAsset,

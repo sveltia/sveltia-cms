@@ -118,11 +118,17 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
 
   // Add orphaned/unused entry-relative assets
   if (relative && getAssetFolder({ collectionName, fileName })?.entryRelative) {
-    const entryDirName = getPathInfo(Object.values(entry.locales)[0].path).dirname;
+    const entryFolderPath = getPathInfo(Object.values(entry.locales)[0].path).dirname;
 
     get(allAssets).forEach((asset) => {
+      const assetFolderPath = getPathInfo(asset.path).dirname;
+
       if (
-        getPathInfo(asset.path).dirname === entryDirName &&
+        assetFolderPath !== undefined &&
+        entryFolderPath !== undefined &&
+        // Include assets in the entry folder and its subfolders
+        (assetFolderPath === entryFolderPath ||
+          new RegExp(`^${escapeRegExp(entryFolderPath)}(?:\\/|$)`).test(assetFolderPath)) &&
         !assets.find(({ path }) => path === asset.path)
       ) {
         assets.push(asset);
