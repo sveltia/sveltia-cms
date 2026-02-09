@@ -159,7 +159,7 @@ export const transformRawContent = (rawContent, fields, i18nSingleFile) => {
       // Check if the key-value pairs are in an object format and each value is a string
       // eslint-disable-next-line jsdoc/require-jsdoc
       validate: (value) =>
-        isObject(value) && Object.entries(value).every(([, val]) => typeof val === 'string'),
+        isObject(value) && Object.values(value).every((val) => typeof val === 'string'),
     });
   }
 
