@@ -644,6 +644,8 @@ export const strings = {
     },
     error: {
       no_secure_context: 'Sveltia CMS only works with HTTPS or localhost URLs.',
+      insecure_url: 'The configuration file URL must use HTTPS protocol or a localhost address.',
+      insecure_urls: 'The configuration file URLs must use HTTPS protocol or localhost addresses.',
       fetch_failed: 'The configuration file could not be retrieved.',
       fetch_failed_not_ok: 'HTTP response returned with status {status}.',
       fetch_failed_with_manual_init:

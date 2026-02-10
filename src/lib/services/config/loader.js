@@ -6,6 +6,12 @@ import { _ } from 'svelte-i18n';
 import { parseTOML, parseYAML } from '$lib/services/contents/file/parse';
 
 /**
+ * @typedef {object} ConfigLink
+ * @property {string} href File path or URL.
+ * @property {string} [type] MIME type.
+ */
+
+/**
  * Supported MIME types for configuration files.
  */
 const SUPPORTED_TYPES = [
@@ -119,6 +125,29 @@ export const getConfigPath = (path) => {
 };
 
 /**
+ * Verify that all provided links are in a secure context. A secure context is defined as either an
+ * HTTPS URL or a localhost address.
+ * @internal
+ * @param {ConfigLink[]} links Links to verify.
+ * @returns {boolean} True if all links are secure, false otherwise.
+ */
+export const verifyLinksAreSecure = (links) => {
+  const { origin } = window.location;
+
+  return links.every(({ href }) => {
+    try {
+      const { protocol, hostname } = new URL(href, origin);
+
+      // Check if protocol is HTTPS or if it's a localhost address
+      return protocol === 'https:' || hostname === 'localhost' || hostname === '127.0.0.1';
+    } catch {
+      // If URL parsing fails, treat as insecure
+      return false;
+    }
+  });
+};
+
+/**
  * Fetch the YAML/JSON CMS configuration file(s) and return a parsed, merged object.
  * @param {object} [options] Options.
  * @param {boolean} [options.manualInit] Whether a manual config is provided. This can affect error
@@ -129,10 +158,16 @@ export const getConfigPath = (path) => {
 export const fetchCmsConfig = async ({ manualInit = false } = {}) => {
   const links = /** @type {HTMLLinkElement[]} */ ([
     ...document.querySelectorAll('link[rel="cms-config-url"]'),
-  ]).map(({ href, type }) => /** @type {{ href: string, type?: string }} */ ({ href, type }));
+  ]).map(({ href, type }) => /** @type {ConfigLink} */ ({ href, type }));
 
   if (!links.length) {
     links.push({ href: getConfigPath(window.location.pathname) });
+  }
+
+  if (!verifyLinksAreSecure(links)) {
+    throw new Error(
+      get(_)(links.length > 1 ? 'config.error.insecure_urls' : 'config.error.insecure_url'),
+    );
   }
 
   const objects = await Promise.all(links.map((link) => fetchFile(link, { manualInit })));

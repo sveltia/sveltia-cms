@@ -3,7 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { fetchCmsConfig, fetchFile, getConfigPath } from './loader';
+import { fetchCmsConfig, fetchFile, getConfigPath, verifyLinksAreSecure } from './loader';
 
 vi.mock('svelte-i18n', () => ({
   _: {
@@ -50,6 +50,7 @@ global.document = {
 global.window = {
   location: {
     pathname: '/admin/',
+    origin: 'https://example.com',
   },
 };
 
@@ -85,6 +86,112 @@ describe('config/loader', () => {
       expect(getConfigPath('')).toBe('/config.yml');
       expect(getConfigPath('/admin/file.name.ext')).toBe('/admin/config.yml');
       expect(getConfigPath('/admin/no-extension')).toBe('/admin/no-extension/config.yml');
+    });
+  });
+
+  describe('verifyLinksAreSecure', () => {
+    beforeEach(() => {
+      global.window = {
+        location: {
+          pathname: '/admin/',
+          origin: 'https://example.com',
+        },
+      };
+    });
+
+    test('should return true for HTTPS URLs', () => {
+      const links = [
+        { href: 'https://example.com/config.yml' },
+        { href: 'https://cdn.example.com/config.json' },
+      ];
+
+      expect(verifyLinksAreSecure(links)).toBe(true);
+    });
+
+    test('should return true for localhost URLs', () => {
+      const links = [
+        { href: 'http://localhost/config.yml' },
+        { href: 'http://localhost:3000/config.json' },
+      ];
+
+      expect(verifyLinksAreSecure(links)).toBe(true);
+    });
+
+    test('should return true for 127.0.0.1 URLs', () => {
+      const links = [
+        { href: 'http://127.0.0.1/config.yml' },
+        { href: 'http://127.0.0.1:8080/config' },
+      ];
+
+      expect(verifyLinksAreSecure(links)).toBe(true);
+    });
+
+    test('should return false for HTTP URLs with non-loopback domains', () => {
+      const links = [{ href: 'http://example.com/config.yml' }];
+
+      expect(verifyLinksAreSecure(links)).toBe(false);
+    });
+
+    test('should return false for mixed secure and insecure URLs', () => {
+      const links = [
+        { href: 'https://example.com/config.yml' },
+        { href: 'http://example.com/config.json' },
+      ];
+
+      expect(verifyLinksAreSecure(links)).toBe(false);
+    });
+
+    test('should return true for empty array', () => {
+      expect(verifyLinksAreSecure([])).toBe(true);
+    });
+
+    test('should return true for relative URLs that resolve to HTTPS', () => {
+      global.window.location.origin = 'https://example.com';
+
+      const links = [{ href: 'relative/path/config.yml' }];
+
+      expect(verifyLinksAreSecure(links)).toBe(true);
+    });
+
+    test('should return true for relative HTTPS URLs from secure origin', () => {
+      global.window.location.origin = 'https://secure.example.com';
+
+      const links = [{ href: '/config.yml' }, { href: './config/base.yml' }];
+
+      expect(verifyLinksAreSecure(links)).toBe(true);
+    });
+
+    test('should return true for relative URLs from localhost origin', () => {
+      global.window.location.origin = 'http://localhost:3000';
+
+      const links = [{ href: '/config.yml' }];
+
+      expect(verifyLinksAreSecure(links)).toBe(true);
+    });
+
+    test('should return false for relative URLs from insecure HTTP origin', () => {
+      global.window.location.origin = 'http://insecure-domain.com';
+
+      const links = [{ href: '/config.yml' }];
+
+      expect(verifyLinksAreSecure(links)).toBe(false);
+    });
+
+    test('should handle multiple links with mixed types', () => {
+      const links = [
+        { href: 'https://example.com/config.yml', type: 'application/yaml' },
+        { href: 'http://localhost:3000/config.json', type: 'application/json' },
+      ];
+
+      expect(verifyLinksAreSecure(links)).toBe(true);
+    });
+
+    test('should return true for HTTP links from HTTP origin when host is localhost', () => {
+      global.window.location.origin = 'http://localhost:8080';
+
+      const links = [{ href: 'http://localhost:8080/config.yml' }];
+
+      expect(verifyLinksAreSecure(links)).toBe(true);
     });
   });
 

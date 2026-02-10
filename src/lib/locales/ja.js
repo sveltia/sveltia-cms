@@ -644,6 +644,10 @@ export const strings = {
     },
     error: {
       no_secure_context: 'Sveltia CMS は HTTPS またはローカルホスト URL でのみ動作します。',
+      insecure_url:
+        '設定ファイルの URL は HTTPS プロトコルまたはローカルホストアドレスを使用する必要があります。',
+      insecure_urls:
+        '設定ファイルの URL は HTTPS プロトコルまたはローカルホストアドレスを使用する必要があります。',
       fetch_failed: '設定ファイルを読み込めませんでした。',
       fetch_failed_not_ok: 'HTTP レスポンスがステータス {status} で返されました。',
       fetch_failed_with_manual_init:
