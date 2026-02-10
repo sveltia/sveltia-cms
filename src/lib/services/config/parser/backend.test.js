@@ -17,6 +17,7 @@ const mockI18nStrings = {
   'config.error.missing_repository': 'Missing repository',
   'config.error.invalid_repository': 'Invalid repository format',
   'config.error.oauth_implicit_flow': 'OAuth implicit flow is not supported',
+  'config.error.github_pkce_unsupported': 'GitHub does not support PKCE authentication',
   'config.error.oauth_no_app_id': 'OAuth app ID is required',
 };
 
@@ -433,7 +434,7 @@ describe('parseBackendConfig', () => {
       /** @type {any} */
       const config = {
         backend: {
-          name: 'github',
+          name: 'gitlab',
           repo: 'owner/repo',
           auth_type: 'pkce',
         },
@@ -448,7 +449,7 @@ describe('parseBackendConfig', () => {
       expect(error).toBe('OAuth app ID is required');
     });
 
-    it('should accept GitHub with PKCE and app_id', async () => {
+    it('should error when GitHub uses PKCE authentication', async () => {
       const { parseBackendConfig } = await import('./backend.js');
       const collectors = createCollectors();
 
@@ -464,7 +465,34 @@ describe('parseBackendConfig', () => {
 
       parseBackendConfig(config, collectors);
 
-      expect(collectors.errors.size).toBe(0);
+      expect(collectors.errors.size).toBe(1);
+
+      const [error] = [...collectors.errors];
+
+      expect(error).toBe('GitHub does not support PKCE authentication');
+    });
+
+    it('should error when GitHub uses PKCE without app_id', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'github',
+          repo: 'owner/repo',
+          auth_type: 'pkce',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(2);
+
+      const errors = [...collectors.errors];
+
+      expect(errors.some((e) => e === 'GitHub does not support PKCE authentication')).toBe(true);
+      expect(errors.some((e) => e === 'OAuth app ID is required')).toBe(true);
     });
   });
 

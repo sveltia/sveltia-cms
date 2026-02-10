@@ -45,7 +45,9 @@ export const init = () => {
     repo: projectPath,
     branch,
     auth_type: authType = '',
+    // @ts-ignore PKCE is not yet supported
     base_url: authRoot = authType === 'pkce' ? DEFAULT_PKCE_AUTH_ROOT : DEFAULT_AUTH_ROOT,
+    // @ts-ignore PKCE is not yet supported
     auth_endpoint: authPath = authType === 'pkce' ? DEFAULT_PKCE_AUTH_PATH : DEFAULT_AUTH_PATH,
     app_id: clientId = '',
     // GitHub Enterprise Server: https://HOSTNAME/api/v3

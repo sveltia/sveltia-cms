@@ -670,6 +670,8 @@ export const strings = {
         '設定されているレポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。',
       oauth_implicit_flow:
         '設定されている認証方式 (暗黙的フロー) は Sveltia CMS では非対応です。代わりに PKCE 認証を使用してください。',
+      github_pkce_unsupported:
+        'GitHub の制約により、Sveltia CMS ではまだ GitHub での PKCE 認証がサポートされていません。',
       oauth_no_app_id: ' OAuth アプリケーション ID が定義されていません。',
       missing_media_folder: 'メディアフォルダーが定義されていません。',
       invalid_media_folder:

@@ -81,6 +81,10 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       errors.add(get(_)('config.error.oauth_implicit_flow'));
     }
 
+    if (name === 'github' && authType === 'pkce') {
+      errors.add(get(_)('config.error.github_pkce_unsupported'));
+    }
+
     if ((name === 'gitea' || authType === 'pkce') && !appId) {
       errors.add(get(_)('config.error.oauth_no_app_id'));
     }
