@@ -51,6 +51,7 @@
     /* eslint-disable prefer-const */
     locale,
     keyPath,
+    typedKeyPath,
     fieldLabel,
     fieldConfig,
     required = true,
@@ -249,7 +250,7 @@
             <FieldEditor
               keyPath={subFieldKeyPath}
               typedKeyPath={hasVariableTypes && typeConfig?.name
-                ? `${keyPath}<${typeConfig.name}>.${subField.name}`
+                ? `${typedKeyPath}<${typeConfig.name}>.${subField.name}`
                 : subFieldKeyPath}
               {locale}
               fieldConfig={subField}

@@ -56,6 +56,7 @@
     /* eslint-disable prefer-const */
     locale,
     keyPath,
+    typedKeyPath,
     fieldConfig,
     /* eslint-enable prefer-const */
   } = $props();
@@ -484,8 +485,8 @@
                 <FieldEditor
                   keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
                   typedKeyPath={hasVariableTypes
-                    ? `${keyPath}.*<${item[typeKey]}>.${subField.name}`
-                    : `${keyPath}.*.${subField.name}`}
+                    ? `${typedKeyPath}.*<${item[typeKey]}>.${subField.name}`
+                    : `${typedKeyPath}.*.${subField.name}`}
                   {locale}
                   fieldConfig={subField}
                   context={hasSingleSubField ? 'single-subfield-list-field' : undefined}

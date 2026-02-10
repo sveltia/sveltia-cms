@@ -258,14 +258,16 @@ describe('assets/folders', () => {
       expect(result).toBeUndefined();
     });
 
-    it('should ignore isIndexFile when not provided in condition', () => {
-      // Should match the collection folder regardless of isIndexFile value in the folder
+    it('should match folders with falsy isIndexFile when not provided in condition', () => {
+      // When isIndexFile is not provided in the condition, it matches folders where
+      // !folder.isIndexFile
+      // The first folder has isIndexFile: false, so it should match
       const result = getAssetFolder({
         collectionName: 'posts',
         fileName: undefined,
       });
 
-      // Should return the first matching folder regardless of isIndexFile
+      expect(result?.isIndexFile).toBe(false);
       expect(result?.internalPath).toBe('content/posts/images');
     });
 
@@ -357,6 +359,82 @@ describe('assets/folders', () => {
         entryRelative: false,
         hasTemplateTags: false,
       });
+    });
+
+    it('should not match folder when typedKeyPath is omitted from condition but folder has one', () => {
+      const mockFolders = [
+        {
+          collectionName: 'posts',
+          fileName: undefined,
+          typedKeyPath: undefined,
+          isIndexFile: false,
+          internalPath: 'content/posts/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        {
+          collectionName: 'posts',
+          fileName: undefined,
+          typedKeyPath: 'gallery',
+          isIndexFile: false,
+          internalPath: 'content/posts/gallery',
+          publicPath: '/gallery',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ];
+
+      allAssetFolders.set(mockFolders);
+
+      // When typedKeyPath is not provided in the condition, it matches folders where
+      // !folder.typedKeyPath
+      // So only the first folder with typedKeyPath: undefined matches
+      const result = getAssetFolder({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result?.typedKeyPath).toBeUndefined();
+      expect(result?.internalPath).toBe('content/posts/images');
+    });
+
+    it('should not match folder when isIndexFile is true and isIndexFile is omitted from condition', () => {
+      const mockFolders = [
+        {
+          collectionName: 'pages',
+          fileName: 'index.md',
+          typedKeyPath: undefined,
+          isIndexFile: true,
+          internalPath: 'pages/banner',
+          publicPath: '/pages',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        {
+          collectionName: 'pages',
+          fileName: undefined,
+          typedKeyPath: undefined,
+          isIndexFile: false,
+          internalPath: 'pages/images',
+          publicPath: '/pages/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ];
+
+      allAssetFolders.set(mockFolders);
+
+      // When isIndexFile is not provided in the condition, it matches folders where
+      // !folder.isIndexFile
+      // So only the second folder with isIndexFile: false matches
+      const result = getAssetFolder({
+        collectionName: 'pages',
+        fileName: undefined,
+      });
+
+      expect(result?.isIndexFile).toBe(false);
+      expect(result?.internalPath).toBe('pages/images');
     });
   });
 

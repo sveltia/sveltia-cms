@@ -61,8 +61,8 @@ export const getAssetFolder = (cond) =>
     (folder) =>
       folder.collectionName === cond.collectionName &&
       folder.fileName === cond.fileName &&
-      ('typedKeyPath' in cond ? folder.typedKeyPath === cond.typedKeyPath : true) &&
-      ('isIndexFile' in cond ? folder.isIndexFile === cond.isIndexFile : true),
+      ('typedKeyPath' in cond ? folder.typedKeyPath === cond.typedKeyPath : !folder.typedKeyPath) &&
+      ('isIndexFile' in cond ? folder.isIndexFile === cond.isIndexFile : !folder.isIndexFile),
   );
 
 /**

@@ -12,7 +12,12 @@
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 
   /**
-   * @import { DraftValueStoreKey, InternalLocaleCode, RawEntryContent } from '$lib/types/private';
+   * @import {
+   * DraftValueStoreKey,
+   * InternalLocaleCode,
+   * RawEntryContent,
+   * TypedFieldKeyPath,
+   * } from '$lib/types/private';
    * @import { Field, FieldKeyPath } from '$lib/types/public';
    */
 
@@ -46,11 +51,14 @@
   let locale = $state('');
   /** @type {FieldKeyPath} */
   let keyPath = $state('');
+  /** @type {TypedFieldKeyPath} */
+  let typedKeyPath = $state('');
   /** @type {boolean} */
   // svelte-ignore state_referenced_locally
   let expanded = $state(!collapsed);
 
   const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${fieldId}:`);
+  const typedKeyPathPrefix = $derived(!typedKeyPath ? '' : `${typedKeyPath}:${fieldId}:`);
 
   /**
    * Get the wrapper element.
@@ -92,12 +100,13 @@
 
   onMount(() => {
     window.requestAnimationFrame(() => {
-      locale = /** @type {string} */ (
-        /** @type {HTMLElement} */ (wrapper?.closest('[data-locale]'))?.dataset.locale
-      );
-      keyPath = /** @type {string} */ (
-        /** @type {HTMLElement} */ (wrapper?.closest('[data-key-path]'))?.dataset.keyPath
-      );
+      // Get the locale and key path from the closest containers
+      const localeContainer = /** @type {HTMLElement} */ (wrapper?.closest('[data-locale]'));
+      const keyPathContainer = /** @type {HTMLElement} */ (wrapper?.closest('[data-key-path]'));
+
+      locale = /** @type {string} */ (localeContainer?.dataset.locale);
+      keyPath = /** @type {string} */ (keyPathContainer?.dataset.keyPath);
+      typedKeyPath = /** @type {string} */ (keyPathContainer?.dataset.typedKeyPath);
     });
 
     return () => {
@@ -199,7 +208,7 @@
           <FieldEditor
             {locale}
             keyPath="{keyPathPrefix}{fieldConfig.name}"
-            typedKeyPath="{keyPathPrefix}{fieldConfig.name}"
+            typedKeyPath="{typedKeyPathPrefix}{fieldConfig.name}"
             {fieldConfig}
             context="rich-text-editor-component"
             {valueStoreKey}

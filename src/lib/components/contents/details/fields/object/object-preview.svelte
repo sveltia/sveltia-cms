@@ -30,6 +30,7 @@
     /* eslint-disable prefer-const */
     locale,
     keyPath,
+    typedKeyPath,
     fieldConfig,
     /* eslint-enable prefer-const */
   } = $props();
@@ -59,7 +60,7 @@
         <FieldPreview
           keyPath={subFieldKeyPath}
           typedKeyPath={hasVariableTypes && typeConfig?.name
-            ? `${keyPath}<${typeConfig.name}>.${subField.name}`
+            ? `${typedKeyPath}<${typeConfig.name}>.${subField.name}`
             : subFieldKeyPath}
           {locale}
           fieldConfig={subField}
