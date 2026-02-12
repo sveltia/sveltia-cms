@@ -31,7 +31,7 @@ function mockTranslate(key, options) {
     'config.error_locator.file': 'File: {file}',
     'config.error_locator.field': 'Field: {field}',
     'config.compatibility_link':
-      'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility',
+      'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented',
   };
 
   let message = strings[key] || key;

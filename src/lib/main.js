@@ -56,7 +56,7 @@ const unsupportedFuncNames = [
 ];
 
 const COMPATIBILITY_URL =
-  'https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility';
+  'https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented';
 
 let initialized = false;
 

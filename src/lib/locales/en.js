@@ -658,9 +658,9 @@ export const strings = {
       missing_backend: 'The backend is not defined.',
       missing_backend_name: 'The backend name is not defined.',
       unsupported_known_backend:
-        'The {name} backend is [not supported](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility) in Sveltia CMS.',
+        'The {name} backend is [not supported](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented) in Sveltia CMS.',
       unsupported_custom_backend:
-        'Custom backends are [not supported](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility) in Sveltia CMS.',
+        'Custom backends are [not supported](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented) in Sveltia CMS.',
       unsupported_backend_suggestion:
         'Use one of the [supported backends](https://sveltiacms.app/en/docs/backends#supported-backends) instead.',
       missing_repository: 'The repository is not defined.',
@@ -740,7 +740,7 @@ export const strings = {
         'The `{prop}` option is not supported in Sveltia CMS. It will be ignored.',
     },
     compatibility_link:
-      'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility',
+      'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented',
   },
 
   // Backends

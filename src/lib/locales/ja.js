@@ -660,9 +660,9 @@ export const strings = {
       missing_backend: 'バックエンドが定義されていません。',
       missing_backend_name: 'バックエンド名が定義されていません。',
       unsupported_known_backend:
-        '{name} バックエンドは Sveltia CMS では [非対応です](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility)。',
+        '{name} バックエンドは Sveltia CMS では [非対応です](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented)。',
       unsupported_custom_backend:
-        'カスタムバックエンドは Sveltia CMS では [非対応です](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility)。',
+        'カスタムバックエンドは Sveltia CMS では [非対応です](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented)。',
       unsupported_backend_suggestion:
         '[サポートされているバックエンド](https://sveltiacms.app/en/docs/backends#supported-backends) のいずれかを使用してください。',
       missing_repository: 'レポジトリが定義されていません。',
@@ -746,7 +746,7 @@ export const strings = {
         '`{prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。',
     },
     compatibility_link:
-      '詳しくは互換性情報をご覧ください: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility',
+      '詳しくは互換性情報をご覧ください: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented',
   },
 
   // Backends

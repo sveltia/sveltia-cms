@@ -30,7 +30,7 @@ export const allBackendServices = {
  * List of backend services that are implemented in Netlify/Decap CMS but are not supported in
  * Sveltia CMS for performance and/or deprecation reasons.
  * @type {Record<string, { label: string }>}
- * @see https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility
+ * @see https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented
  */
 export const unsupportedBackends = {
   azure: { label: 'Azure DevOps' },
