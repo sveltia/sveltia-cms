@@ -46,21 +46,20 @@ export const fetchFile = async (
     });
   }
 
+  const fetchErrorKey = manualInit
+    ? 'config.error.fetch_failed_with_manual_init'
+    : 'config.error.fetch_failed';
+
   try {
     response = await fetch(href);
   } catch (ex) {
-    throw new Error(
-      get(_)(
-        manualInit ? 'config.error.fetch_failed_with_manual_init' : 'config.error.fetch_failed',
-      ),
-      { cause: ex },
-    );
+    throw new Error(get(_)(fetchErrorKey), { cause: ex });
   }
 
   const { ok, status } = response;
 
   if (!ok) {
-    throw new Error(get(_)('config.error.fetch_failed'), {
+    throw new Error(get(_)(fetchErrorKey), {
       cause: new Error(get(_)('config.error.fetch_failed_not_ok', { values: { status } })),
     });
   }

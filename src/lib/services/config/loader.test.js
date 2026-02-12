@@ -636,5 +636,33 @@ collections:
         expect(error.message).toBe('Fetch failed (manual init)');
       }
     });
+
+    test('should use correct error message when manualInit is false and response is not ok', async () => {
+      fetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+      });
+
+      try {
+        await fetchFile({ href: '/config.yml' }, { manualInit: false });
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).toBe('Fetch failed');
+      }
+    });
+
+    test('should use correct error message when manualInit is true and response is not ok', async () => {
+      fetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+      });
+
+      try {
+        await fetchFile({ href: '/config.yml' }, { manualInit: true });
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).toBe('Fetch failed (manual init)');
+      }
+    });
   });
 });
