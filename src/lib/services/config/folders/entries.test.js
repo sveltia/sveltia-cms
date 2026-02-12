@@ -674,6 +674,9 @@ describe('config/folders/entries', () => {
       expect(result[0].collectionName).toBe('blog'); // 'blog' comes before 'content/pages'
       expect(result[1].collectionName).toBe('pages');
       expect(result[2].collectionName).toBe('posts');
+
+      // Verify getValidCollections is called without 'visible' parameter
+      expect(getValidCollections).toHaveBeenCalledWith({ collections: [], type: 'entry' });
     });
 
     it('should handle i18n multi-folder structure', () => {
@@ -704,6 +707,9 @@ describe('config/folders/entries', () => {
           fr: 'fr/content',
         },
       });
+
+      // Verify getValidCollections is called without 'visible' parameter
+      expect(getValidCollections).toHaveBeenCalledWith({ collections: [], type: 'entry' });
     });
 
     it('should return empty array when no entry collections', () => {
@@ -718,6 +724,9 @@ describe('config/folders/entries', () => {
       const result = getEntryCollectionFolders(config);
 
       expect(result).toHaveLength(0);
+
+      // Verify getValidCollections is called without 'visible' parameter
+      expect(getValidCollections).toHaveBeenCalledWith({ collections: [], type: 'entry' });
     });
   });
 
@@ -755,6 +764,9 @@ describe('config/folders/entries', () => {
       expect(result).toHaveLength(2);
       expect(result[0].fileName).toBe('advanced'); // sorted by file path
       expect(result[1].fileName).toBe('general');
+
+      // Verify getValidCollections is called without 'visible' parameter
+      expect(getValidCollections).toHaveBeenCalledWith({ collections: [], type: 'file' });
     });
 
     it('should filter out invalid files', () => {
@@ -781,6 +793,9 @@ describe('config/folders/entries', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].fileName).toBe('valid');
+
+      // Verify getValidCollections is called without 'visible' parameter
+      expect(getValidCollections).toHaveBeenCalledWith({ collections: [], type: 'file' });
     });
 
     it('should return empty array when no file collections', () => {
@@ -795,6 +810,9 @@ describe('config/folders/entries', () => {
       const result = getFileCollectionFolders(config);
 
       expect(result).toHaveLength(0);
+
+      // Verify getValidCollections is called without 'visible' parameter
+      expect(getValidCollections).toHaveBeenCalledWith({ collections: [], type: 'file' });
     });
   });
 
