@@ -72,12 +72,7 @@ export const getSlug = ({ subPath, subPathTemplate }) => {
 
       const placeholder = remaining.substring(nextPlaceholder, placeholderEnd + 2);
 
-      if (placeholder === '{{slug}}') {
-        regexPattern += '(.+)';
-      } else {
-        regexPattern += '[^/]+';
-      }
-
+      regexPattern += placeholder === '{{slug}}' ? '([^/]+)' : '[^/]+?';
       remaining = remaining.substring(placeholderEnd + 2);
     }
 

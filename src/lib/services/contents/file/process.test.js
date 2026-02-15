@@ -219,6 +219,16 @@ describe('Test getSlug()', () => {
       }),
     ).toBe('my-post');
   });
+
+  test('extracts slug with hyphens from date-based template', () => {
+    // Test case for slug containing hyphens in date-based template
+    expect(
+      getSlug({
+        subPath: '2026-02-14-business-logic-errors/index',
+        subPathTemplate: '{{year}}-{{month}}-{{day}}-{{slug}}/index',
+      }),
+    ).toBe('business-logic-errors');
+  });
 });
 
 describe('Test parseFileContent()', () => {
