@@ -59,6 +59,117 @@ const MULTI_FOLDER_STRUCTURES = [
 const FOLDER_PATH_REGEX = /(?<path>.+?)(?:\/[^/]+)?$/;
 
 /**
+ * Fill a template string if it contains template tags, otherwise return as-is.
+ * @param {string} pathString Path string that may contain template tags.
+ * @param {FillTemplateOptions} fillSlugOptions Arguments for {@link fillTemplate}.
+ * @returns {string} Resolved path.
+ */
+const fillTemplateIfNeeded = (pathString, fillSlugOptions) =>
+  pathString.includes('{{') ? fillTemplate(pathString, fillSlugOptions) : pathString;
+
+/**
+ * Extract the entry folder path from an entry file path. Removes file extension and `/index` suffix
+ * for nested entries.
+ * @param {string} entryFilePath Entry file path, e.g., `src/content/blog/hello-world.md`.
+ * @returns {string} Entry folder path, e.g., `src/content/blog/hello-world`.
+ * @example
+ * // Simple files
+ * getEntryFolderPath('src/content/blog/hello-world.md')
+ * // => 'src/content/blog/hello-world'
+ * @example
+ * // Nested files
+ * getEntryFolderPath('src/content/blog/hello-world/index.md')
+ * // => 'src/content/blog/hello-world'
+ */
+const getEntryFolderPath = (entryFilePath) => {
+  // Remove file extension (always present)
+  const extensionIndex = entryFilePath.lastIndexOf('.');
+  let folderPath = entryFilePath.substring(0, extensionIndex);
+
+  // Remove `/index` suffix for nested entries
+  if (folderPath.endsWith('/index')) {
+    folderPath = folderPath.substring(0, folderPath.length - 6);
+  }
+
+  return folderPath;
+};
+
+/**
+ * Resolve the internal asset path for entry-relative assets.
+ * @param {object} args Arguments.
+ * @param {string} args.internalPath Internal path from folder config.
+ * @param {string | undefined} args.internalSubPath Internal sub-path from folder config.
+ * @param {string} args.entryFolderPath Resolved entry folder path.
+ * @param {boolean} args.isMultiFolders Whether collection uses multi-folder i18n structure.
+ * @param {boolean} args.isNestedEntry Whether entry uses nested file structure.
+ * @param {FillTemplateOptions} args.fillSlugOptions Arguments for template filling.
+ * @returns {string} Resolved internal path.
+ */
+const resolveInternalPath = ({
+  internalPath,
+  internalSubPath,
+  entryFolderPath,
+  isMultiFolders,
+  isNestedEntry,
+  fillSlugOptions,
+}) => {
+  // We already know the entry file path, so we can resolve the internal path to the asset folder
+  // even when it’s entry-relative. We should use entryFolderPath (extracted from entryFilePath)
+  // rather than reconstructing the path from templates, because when date-related template tags are
+  // used in subPath (e.g., `{{year}}-{{month}}-{{day}}-{{slug}}/index`), the resolved path would be
+  // different from the original entry path if we filled the template again. This would cause assets
+  // saved at a later date to be stored in a different folder than the entry itself. Instead, we use
+  // the already-resolved entryFolderPath which preserves the original date context. For nested
+  // entries or multi-folder structures, use entryFolderPath. For simple entries with single-file
+  // i18n or file collections, use internalPath (shared asset folder).
+  const shouldUseEntryFolderPath = isMultiFolders || isNestedEntry;
+
+  const internalPathString = createPath([
+    shouldUseEntryFolderPath ? entryFolderPath : internalPath,
+    internalSubPath, // subfolder, e.g. `images` or an empty string
+  ]);
+
+  return resolvePath(fillTemplateIfNeeded(internalPathString, fillSlugOptions));
+};
+
+/**
+ * Resolve the public asset path for entry-relative assets.
+ * @param {object} args Arguments.
+ * @param {string} args.publicPath Public path from folder config.
+ * @param {string} args.subPathFolderPath Extracted folder path from collection’s subPath.
+ * @param {string | undefined} args.subPath Collection’s file subPath template.
+ * @param {boolean} args.isMultiFolders Whether collection uses multi-folder i18n structure.
+ * @param {FillTemplateOptions} args.fillSlugOptions Arguments for template filling.
+ * @returns {string} Resolved public path.
+ */
+const resolvePublicPath = ({
+  publicPath,
+  subPathFolderPath,
+  subPath,
+  isMultiFolders,
+  fillSlugOptions,
+}) => {
+  // Dot-only public path is a special case; the final path stored as the field value will be
+  // `./image.png` rather than `image.png`
+  if (!isMultiFolders && /^\.?$/.test(publicPath)) {
+    return publicPath;
+  }
+
+  const publicPathString = isMultiFolders
+    ? // When multiple folders are used for i18n, the file structure would look like
+      // `{collection}/{locale}/{slug}.md` or `{collection}/{locale}/{slug}/index.md` and the asset
+      // path would be `{collection}/{slug}/{file}.jpg`
+      createPath([
+        ...Array((subPath?.match(/\//g) ?? []).length + 1).fill('..'),
+        publicPath,
+        subPathFolderPath,
+      ])
+    : publicPath;
+
+  return resolvePath(fillTemplateIfNeeded(publicPathString, fillSlugOptions));
+};
+
+/**
  * Get the internal/public asset path configuration for the entry assets.
  * @param {object} args Arguments.
  * @param {AssetFolderInfo} args.folder Asset folder associated with a new file.
@@ -89,66 +200,25 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
       : undefined;
 
   const subPathFolderPath = subPath?.match(FOLDER_PATH_REGEX)?.groups?.path ?? '';
-  // Resolve entry file path to the entry folder path. Entry files always have a file extension:
-  // - Simple files: `src/content/blog/hello-world.md` → folder: `src/content/blog/hello-world`
-  // - Nested files: `src/content/blog/hello-world/index.md` → folder:
-  //   `src/content/blog/hello-world`
-  let entryFolderPath = entryFilePath ?? '';
-  // Remove file extension (always present)
-  const extensionIndex = entryFolderPath.lastIndexOf('.');
-
-  entryFolderPath = entryFolderPath.substring(0, extensionIndex);
-
-  // Remove `/index` suffix for nested entries
-  if (entryFolderPath.endsWith('/index')) {
-    entryFolderPath = entryFolderPath.substring(0, entryFolderPath.length - 6);
-  }
-
-  // We already know the entry file path, so we can resolve the internal path to the asset folder
-  // even when it’s entry-relative. We should use entryFolderPath (extracted from entryFilePath)
-  // rather than reconstructing the path from templates, because when date-related template tags are
-  // used in subPath (e.g., `{{year}}-{{month}}-{{day}}-{{slug}}/index`), the resolved path would be
-  // different from the original entry path if we filled the template again. This would cause assets
-  // saved at a later date to be stored in a different folder than the entry itself. Instead, we use
-  // the already-resolved entryFolderPath which preserves the original date context. For nested
-  // entries or multi-folder structures, use entryFolderPath. For simple entries with single-file
-  // i18n or file collections, use internalPath (shared asset folder).
+  const entryFolderPath = getEntryFolderPath(entryFilePath ?? '');
   const isNestedEntry = subPath?.includes('/') ?? false;
-  const shouldUseEntryFolderPath = isMultiFolders || isNestedEntry;
 
-  const internalPathString = createPath([
-    shouldUseEntryFolderPath ? entryFolderPath : internalPath,
-    internalSubPath, // subfolder, e.g. `images` or an empty string
-  ]);
+  const resolvedInternalPath = resolveInternalPath({
+    internalPath,
+    internalSubPath,
+    entryFolderPath,
+    isMultiFolders,
+    isNestedEntry,
+    fillSlugOptions,
+  });
 
-  // Only call fillTemplate if the path contains template tags like {{slug}}
-  const resolvedInternalPath = resolvePath(
-    internalPathString.includes('{{')
-      ? fillTemplate(internalPathString, fillSlugOptions)
-      : internalPathString,
-  );
-
-  const publicPathString = isMultiFolders
-    ? // When multiple folders are used for i18n, the file structure would look like
-      // `{collection}/{locale}/{slug}.md` or `{collection}/{locale}/{slug}/index.md` and the asset
-      // path would be `{collection}/{slug}/{file}.jpg`
-      createPath([
-        ...Array((subPath?.match(/\//g) ?? []).length + 1).fill('..'),
-        publicPath,
-        subPathFolderPath,
-      ])
-    : publicPath;
-
-  const resolvedPublicPath =
-    !isMultiFolders && /^\.?$/.test(publicPath)
-      ? // Dot-only public path is a special case; the final path stored as the field value will
-        // be `./image.png` rather than `image.png`
-        publicPath
-      : resolvePath(
-          publicPathString.includes('{{')
-            ? fillTemplate(publicPathString, fillSlugOptions)
-            : publicPathString,
-        );
+  const resolvedPublicPath = resolvePublicPath({
+    publicPath,
+    subPathFolderPath,
+    subPath,
+    isMultiFolders,
+    fillSlugOptions,
+  });
 
   return { resolvedInternalPath, resolvedPublicPath };
 };
