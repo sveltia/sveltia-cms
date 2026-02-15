@@ -9,6 +9,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { validateEntry, validateFields } from '$lib/services/contents/draft/validate';
+  import { applyTransformations } from '$lib/services/common/transformations';
 
   /**
    * @import { DraftValueStoreKey, InternalLocaleCode, RawEntryContent } from '$lib/types/private';
@@ -244,21 +245,34 @@
   });
 
   /**
-   * Format a simple summary template by replacing `{{fieldName}}` placeholders with values.
-   * @param {string} template Summary template, e.g. `{{title}} - {{videoId}}`.
-   * @param {Record<string, any>} valueMap Current values.
+   * Format a summary template by replacing `{{fieldName}}` placeholders with values.
+   * Supports nested properties and transformations like the CMS object field summary.
+   * @param {string} template Summary template, e.g. `{{title}} - {{linkType.url | upper}}`.
+   * @param {Record<string, any>} values Current values (unflattened).
    * @returns {string | null} Formatted summary, or null if template is empty or result is empty.
    */
-  const formatSimpleSummary = (template, valueMap) => {
-    if (!template || !valueMap) {
+  const formatSimpleSummary = (template, values) => {
+    if (!template || !values) {
       return null;
     }
 
-    const result = template.replaceAll(/{{(.+?)}}/g, (_, placeholder) => {
-      const fieldName = placeholder.trim().replace(/^fields\./, '');
-      const value = valueMap[fieldName];
+    // Flatten values to support nested property access
+    const flatValues = flatten(values);
 
-      return value != null ? String(value) : '';
+    const result = template.replaceAll(/{{(.+?)}}/g, (_, placeholder) => {
+      const [tag, ...transformations] = placeholder.trim().split(/\s*\|\s*/);
+      const fieldName = tag.replace(/^fields\./, '');
+      let value = flatValues[fieldName];
+
+      if (value === undefined || value === null) {
+        return '';
+      }
+
+      if (transformations.length) {
+        value = applyTransformations({ value, transformations });
+      }
+
+      return String(value);
     });
 
     return result.trim() || null;
