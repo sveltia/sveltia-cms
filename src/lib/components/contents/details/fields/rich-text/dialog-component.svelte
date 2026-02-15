@@ -1,5 +1,5 @@
 <script>
-  import { Button, Dialog } from '@sveltia/ui';
+  import { Button, Dialog, Spacer } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { flatten, unflatten } from 'flat';
   import { onMount, untrack } from 'svelte';
@@ -8,6 +8,7 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
+  import { validateEntry, validateFields } from '$lib/services/contents/draft/validate';
 
   /**
    * @import { DraftValueStoreKey, InternalLocaleCode, RawEntryContent } from '$lib/types/private';
@@ -133,29 +134,60 @@
   };
 
   /**
-   * Handle dialog close.
-   * @param {CustomEvent} event Close event.
-   */
-  const handleDialogClose = (event) => {
-    const { returnValue } = event.detail;
-
-    if (returnValue === 'ok') {
-      // Save: fire onChange with current values
-      onChange(new CustomEvent('update', { detail: currentValues }));
-    } else {
-      // Cancel: restore values from snapshot
-      restoreValues();
-    }
-
-    valuesSnapshot = undefined;
-  };
-
-  /**
    * Handle remove action.
    */
   const handleRemove = () => {
     dialogOpen = false;
     onChange(new CustomEvent('remove'));
+  };
+
+  /**
+   * Handle OK button click. Validates fields and only closes if valid.
+   */
+  const handleOk = () => {
+    // Validate extraValues and get results directly
+    const { validities: extraValidities } = validateFields('extraValues');
+
+    // Update store with validation results (same as validateEntry does)
+    entryDraft.update((_draft) => {
+      if (!_draft) {
+        return _draft;
+      }
+
+      return {
+        ..._draft,
+        validities: Object.fromEntries(
+          Object.keys(_draft.validities).map((loc) => [
+            loc,
+            {
+              ..._draft.validities[loc],
+              ...extraValidities[loc],
+            },
+          ]),
+        ),
+      };
+    });
+
+    // Check if THIS component's fields are valid using the returned validities directly
+    const localeValidities = extraValidities[locale] ?? {};
+    const thisComponentValid = !Object.entries(localeValidities).some(
+      ([key, validity]) => key.startsWith(keyPathPrefix) && !validity.valid,
+    );
+
+    if (thisComponentValid) {
+      dialogOpen = false;
+      onChange(new CustomEvent('update', { detail: currentValues }));
+      valuesSnapshot = undefined;
+    }
+  };
+
+  /**
+   * Handle Cancel button click. Restores values from snapshot and closes dialog.
+   */
+  const handleCancel = () => {
+    restoreValues();
+    dialogOpen = false;
+    valuesSnapshot = undefined;
   };
 
   onMount(() => {
@@ -295,10 +327,8 @@
   title={label}
   bind:open={dialogOpen}
   size="large"
-  okLabel={$_('update')}
-  onClose={(event) => {
-    handleDialogClose(event);
-  }}
+  showOk={false}
+  showCancel={false}
 >
   <div role="none" class="fields">
     {#if locale && keyPath}
@@ -314,12 +344,27 @@
       {/each}
     {/if}
   </div>
-  {#snippet footerExtra()}
+  {#snippet footer()}
     <Button
       variant="secondary"
       label={$_('remove')}
       onclick={() => {
         handleRemove();
+      }}
+    />
+    <Spacer flex={true} />
+    <Button
+      variant="primary"
+      label={$_(isNewComponent ? 'insert' : 'update')}
+      onclick={() => {
+        handleOk();
+      }}
+    />
+    <Button
+      variant="secondary"
+      label={$_('cancel')}
+      onclick={() => {
+        handleCancel();
       }}
     />
   {/snippet}
