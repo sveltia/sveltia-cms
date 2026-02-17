@@ -31,6 +31,7 @@ Object.defineProperty(globalThis, 'window', {
       callback();
       return 1;
     }),
+    getSelection: vi.fn(() => null),
   },
   writable: true,
 });
@@ -843,6 +844,427 @@ describe('createCustomNodeClass', () => {
       expect(mockEditor.update).toHaveBeenCalled();
       expect(unmount).toHaveBeenCalledWith(capturedComponent);
       expect(node.remove).toHaveBeenCalled();
+    });
+
+    describe('Focus and selection preservation', () => {
+      it('should call editor.update with discrete option and onUpdate callback', async () => {
+        const { mount } = await import('svelte');
+        const { getNearestEditorFromDOMNode } = await import('lexical');
+
+        vi.clearAllMocks();
+
+        let capturedOnChange;
+        let updateOptions;
+
+        vi.mocked(mount).mockImplementation((component, options) => {
+          capturedOnChange = options.props.onChange;
+
+          return {
+            getElement: vi.fn(() => document.createElement('div')),
+            destroy: vi.fn(),
+          };
+        });
+
+        const mockEditor = {
+          update: vi.fn((updateFn, options) => {
+            updateOptions = options;
+            updateFn();
+          }),
+        };
+
+        vi.mocked(getNearestEditorFromDOMNode).mockReturnValue(mockEditor);
+
+        const CustomNode = createCustomNodeClass(mockComponentDef);
+        const node = new CustomNode({ title: 'Initial' });
+
+        node.getWritable = vi.fn(() => node);
+
+        // Create DOM to trigger mount
+        node.createDOM();
+
+        // Simulate update event
+        await capturedOnChange({
+          type: 'update',
+          detail: { title: 'Updated' },
+        });
+
+        expect(mockEditor.update).toHaveBeenCalled();
+        expect(updateOptions).toBeDefined();
+        expect(updateOptions.discrete).toBe(true);
+        expect(typeof updateOptions.onUpdate).toBe('function');
+      });
+
+      it('should restore focus to active element when onUpdate is called', async () => {
+        const { mount } = await import('svelte');
+        const { getNearestEditorFromDOMNode } = await import('lexical');
+
+        vi.clearAllMocks();
+
+        let capturedOnChange;
+        let onUpdateCallback;
+
+        // Create a mock active element with focus tracking
+        const mockActiveElement = {
+          tagName: 'INPUT',
+          focus: vi.fn(),
+          matches: vi.fn((selector) => selector === '[contenteditable="true"]'),
+        };
+
+        // Mock document to track activeElement
+        Object.defineProperty(document, 'activeElement', {
+          configurable: true,
+          value: mockActiveElement,
+        });
+
+        Object.defineProperty(document, 'body', {
+          configurable: true,
+          value: {
+            contains: vi.fn(() => true),
+          },
+        });
+
+        vi.mocked(mount).mockImplementation((component, options) => {
+          capturedOnChange = options.props.onChange;
+
+          return {
+            getElement: vi.fn(() => document.createElement('div')),
+            destroy: vi.fn(),
+          };
+        });
+
+        const mockEditor = {
+          update: vi.fn((updateFn, options) => {
+            onUpdateCallback = options.onUpdate;
+            updateFn();
+          }),
+        };
+
+        vi.mocked(getNearestEditorFromDOMNode).mockReturnValue(mockEditor);
+
+        const CustomNode = createCustomNodeClass(mockComponentDef);
+        const node = new CustomNode({ title: 'Initial' });
+
+        node.getWritable = vi.fn(() => node);
+
+        // Create DOM to trigger mount
+        node.createDOM();
+
+        // Simulate update event
+        await capturedOnChange({
+          type: 'update',
+          detail: { title: 'Updated' },
+        });
+
+        // Call the captured onUpdate callback
+        expect(onUpdateCallback).toBeDefined();
+        onUpdateCallback();
+
+        // Verify focus was called on the active element
+        expect(mockActiveElement.focus).toHaveBeenCalled();
+      });
+
+      it('should restore selection range when onUpdate is called', async () => {
+        const { mount } = await import('svelte');
+        const { getNearestEditorFromDOMNode } = await import('lexical');
+
+        vi.clearAllMocks();
+
+        let capturedOnChange;
+        let onUpdateCallback;
+
+        // Create a mock selection with range
+        const mockRange = {
+          cloneRange: vi.fn(() => ({ cloned: true })),
+        };
+
+        const mockSelection = {
+          getRangeAt: vi.fn(() => mockRange),
+          rangeCount: 1,
+          removeAllRanges: vi.fn(),
+          addRange: vi.fn(),
+        };
+
+        // Create a mock active element
+        const mockActiveElement = {
+          tagName: 'DIV',
+          focus: vi.fn(),
+          matches: vi.fn((selector) => selector === '[contenteditable="true"]'),
+        };
+
+        // Mock window.getSelection
+        Object.defineProperty(window, 'getSelection', {
+          configurable: true,
+          value: vi.fn(() => mockSelection),
+        });
+
+        Object.defineProperty(document, 'activeElement', {
+          configurable: true,
+          value: mockActiveElement,
+        });
+
+        Object.defineProperty(document, 'body', {
+          configurable: true,
+          value: {
+            contains: vi.fn(() => true),
+          },
+        });
+
+        vi.mocked(mount).mockImplementation((component, options) => {
+          capturedOnChange = options.props.onChange;
+
+          return {
+            getElement: vi.fn(() => document.createElement('div')),
+            destroy: vi.fn(),
+          };
+        });
+
+        const mockEditor = {
+          update: vi.fn((updateFn, options) => {
+            onUpdateCallback = options.onUpdate;
+            updateFn();
+          }),
+        };
+
+        vi.mocked(getNearestEditorFromDOMNode).mockReturnValue(mockEditor);
+
+        const CustomNode = createCustomNodeClass(mockComponentDef);
+        const node = new CustomNode({ title: 'Initial' });
+
+        node.getWritable = vi.fn(() => node);
+
+        // Create DOM to trigger mount
+        node.createDOM();
+
+        // Simulate update event
+        await capturedOnChange({
+          type: 'update',
+          detail: { title: 'Updated' },
+        });
+
+        // Call the captured onUpdate callback
+        expect(onUpdateCallback).toBeDefined();
+        onUpdateCallback();
+
+        // Verify selection was restored
+        expect(mockSelection.removeAllRanges).toHaveBeenCalled();
+        expect(mockSelection.addRange).toHaveBeenCalledWith({ cloned: true });
+      });
+
+      it('should not restore focus if active element is no longer in DOM', async () => {
+        const { mount } = await import('svelte');
+        const { getNearestEditorFromDOMNode } = await import('lexical');
+
+        vi.clearAllMocks();
+
+        let capturedOnChange;
+        let onUpdateCallback;
+
+        const mockActiveElement = {
+          tagName: 'INPUT',
+          focus: vi.fn(),
+          matches: vi.fn(() => false),
+        };
+
+        Object.defineProperty(document, 'activeElement', {
+          configurable: true,
+          value: mockActiveElement,
+        });
+
+        Object.defineProperty(document, 'body', {
+          configurable: true,
+          value: {
+            contains: vi.fn(() => false), // Element not in DOM
+          },
+        });
+
+        vi.mocked(mount).mockImplementation((component, options) => {
+          capturedOnChange = options.props.onChange;
+
+          return {
+            getElement: vi.fn(() => document.createElement('div')),
+            destroy: vi.fn(),
+          };
+        });
+
+        const mockEditor = {
+          update: vi.fn((updateFn, options) => {
+            onUpdateCallback = options.onUpdate;
+            updateFn();
+          }),
+        };
+
+        vi.mocked(getNearestEditorFromDOMNode).mockReturnValue(mockEditor);
+
+        const CustomNode = createCustomNodeClass(mockComponentDef);
+        const node = new CustomNode({ title: 'Initial' });
+
+        node.getWritable = vi.fn(() => node);
+
+        // Create DOM to trigger mount
+        node.createDOM();
+
+        // Simulate update event
+        await capturedOnChange({
+          type: 'update',
+          detail: { title: 'Updated' },
+        });
+
+        // Call the captured onUpdate callback
+        expect(onUpdateCallback).toBeDefined();
+        onUpdateCallback();
+
+        // Verify focus was NOT called since element is not in DOM
+        expect(mockActiveElement.focus).not.toHaveBeenCalled();
+      });
+
+      it('should handle case where active element does not match contenteditable selector', async () => {
+        const { mount } = await import('svelte');
+        const { getNearestEditorFromDOMNode } = await import('lexical');
+
+        vi.clearAllMocks();
+
+        let capturedOnChange;
+        let onUpdateCallback;
+
+        const mockActiveElement = {
+          tagName: 'BUTTON',
+          focus: vi.fn(),
+          matches: vi.fn(() => false),
+        };
+
+        Object.defineProperty(document, 'activeElement', {
+          configurable: true,
+          value: mockActiveElement,
+        });
+
+        Object.defineProperty(document, 'body', {
+          configurable: true,
+          value: {
+            contains: vi.fn(() => true),
+          },
+        });
+
+        vi.mocked(mount).mockImplementation((component, options) => {
+          capturedOnChange = options.props.onChange;
+
+          return {
+            getElement: vi.fn(() => document.createElement('div')),
+            destroy: vi.fn(),
+          };
+        });
+
+        const mockEditor = {
+          update: vi.fn((updateFn, options) => {
+            onUpdateCallback = options.onUpdate;
+            updateFn();
+          }),
+        };
+
+        vi.mocked(getNearestEditorFromDOMNode).mockReturnValue(mockEditor);
+
+        const CustomNode = createCustomNodeClass(mockComponentDef);
+        const node = new CustomNode({ title: 'Initial' });
+
+        node.getWritable = vi.fn(() => node);
+
+        // Create DOM to trigger mount
+        node.createDOM();
+
+        // Simulate update event
+        await capturedOnChange({
+          type: 'update',
+          detail: { title: 'Updated' },
+        });
+
+        // Call the captured onUpdate callback
+        expect(onUpdateCallback).toBeDefined();
+        onUpdateCallback();
+
+        // Verify focus was called (element is still restored even if not contenteditable)
+        expect(mockActiveElement.focus).toHaveBeenCalled();
+      });
+
+      it('should handle selection with zero range count', async () => {
+        const { mount } = await import('svelte');
+        const { getNearestEditorFromDOMNode } = await import('lexical');
+
+        vi.clearAllMocks();
+
+        let capturedOnChange;
+        let onUpdateCallback;
+
+        // Selection with no ranges
+        const mockSelection = {
+          getRangeAt: vi.fn(),
+          rangeCount: 0, // No ranges
+          removeAllRanges: vi.fn(),
+          addRange: vi.fn(),
+        };
+
+        const mockActiveElement = {
+          tagName: 'DIV',
+          focus: vi.fn(),
+          matches: vi.fn((selector) => selector === '[contenteditable="true"]'),
+        };
+
+        Object.defineProperty(window, 'getSelection', {
+          configurable: true,
+          value: vi.fn(() => mockSelection),
+        });
+
+        Object.defineProperty(document, 'activeElement', {
+          configurable: true,
+          value: mockActiveElement,
+        });
+
+        Object.defineProperty(document, 'body', {
+          configurable: true,
+          value: {
+            contains: vi.fn(() => true),
+          },
+        });
+
+        vi.mocked(mount).mockImplementation((component, options) => {
+          capturedOnChange = options.props.onChange;
+
+          return {
+            getElement: vi.fn(() => document.createElement('div')),
+            destroy: vi.fn(),
+          };
+        });
+
+        const mockEditor = {
+          update: vi.fn((updateFn, options) => {
+            onUpdateCallback = options.onUpdate;
+            updateFn();
+          }),
+        };
+
+        vi.mocked(getNearestEditorFromDOMNode).mockReturnValue(mockEditor);
+
+        const CustomNode = createCustomNodeClass(mockComponentDef);
+        const node = new CustomNode({ title: 'Initial' });
+
+        node.getWritable = vi.fn(() => node);
+
+        // Create DOM to trigger mount
+        node.createDOM();
+
+        // Simulate update event
+        await capturedOnChange({
+          type: 'update',
+          detail: { title: 'Updated' },
+        });
+
+        // Call the captured onUpdate callback
+        expect(onUpdateCallback).toBeDefined();
+        onUpdateCallback();
+
+        // Verify focus was called but selection was not restored
+        expect(mockActiveElement.focus).toHaveBeenCalled();
+        expect(mockSelection.removeAllRanges).not.toHaveBeenCalled();
+        expect(mockSelection.addRange).not.toHaveBeenCalled();
+      });
     });
   });
 
