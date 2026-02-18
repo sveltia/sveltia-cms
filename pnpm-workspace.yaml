@@ -17,7 +17,5 @@ overrides:
 
 auditConfig:
   ignoreGhsas:
-    # https://github.com/advisories/GHSA-p5wg-g6qr-c7cg
-    - GHSA-p5wg-g6qr-c7cg
     # https://github.com/advisories/GHSA-2g4f-4pwh-qvx6
     - GHSA-2g4f-4pwh-qvx6
