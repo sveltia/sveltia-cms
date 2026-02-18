@@ -65,6 +65,7 @@ describe('integrations/media-libraries/stock/unsplash', () => {
         // Valid API keys
         expect(apiKeyPattern.test('abcd1234-efgh5678-ijkl9012-mnop3456-qrst7890')).toBe(true);
         expect(apiKeyPattern.test('1234567890abcdef1234567890abcdef12345678')).toBe(true);
+        expect(apiKeyPattern.test('1234567890abcdef_234567890abcdef12345678')).toBe(true);
 
         // Invalid API keys
         expect(apiKeyPattern.test('short')).toBe(false);

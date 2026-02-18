@@ -155,7 +155,7 @@ export default {
   authType: 'api_key',
   developerURL: 'https://unsplash.com/developers',
   apiKeyURL: 'https://unsplash.com/oauth/applications',
-  apiKeyPattern: /^[a-zA-Z\d-]{40,}$/,
+  apiKeyPattern: /^[a-zA-Z\d_-]{40,}$/,
   list,
   search,
 };
