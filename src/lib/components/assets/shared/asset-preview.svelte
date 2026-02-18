@@ -5,6 +5,7 @@
   import { _ } from 'svelte-i18n';
 
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets/info';
+  import { THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
 
   /**
    * @import { Asset, AssetKind } from '$lib/types/private';
@@ -55,7 +56,11 @@
   let blurImageURL = $state();
 
   const isThumbnail = $derived(!!asset && !!variant && !controls);
-  const isImage = $derived(isThumbnail || kind === 'image' || asset?.name.endsWith('.pdf'));
+  const isImage = $derived(
+    kind === 'image' ||
+      asset?.name.endsWith('.pdf') ||
+      (isThumbnail && THUMBNAIL_KINDS.includes(kind)),
+  );
 
   let updatingSrc = false;
 

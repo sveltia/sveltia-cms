@@ -13,6 +13,12 @@ import mime from 'mime';
 export const MEDIA_KINDS = ['image', 'video', 'audio'];
 
 /**
+ * List of media kinds that support thumbnails.
+ * @type {AssetKind[]}
+ */
+export const THUMBNAIL_KINDS = ['image', 'video'];
+
+/**
  * List of all asset kinds.
  * @type {AssetKind[]}
  */
