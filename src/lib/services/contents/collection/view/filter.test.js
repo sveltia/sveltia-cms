@@ -589,3 +589,62 @@ describe('initializeViewFilters', () => {
     expect(vi.mocked(currentView).update).toHaveBeenCalled();
   });
 });
+
+describe('Test viewFilters store', () => {
+  test('viewFilters derived callback calls initializeViewFilters when selectedCollection changes', async () => {
+    vi.resetModules();
+
+    // Use the real svelte/store functions for this isolated test
+    const {
+      writable,
+      derived: realDerived,
+      get: realGet,
+    } = /** @type {typeof import('svelte/store')} */ (await vi.importActual('svelte/store'));
+
+    vi.doMock('svelte/store', () => ({
+      derived: realDerived,
+      get: realGet,
+      writable,
+    }));
+
+    const _selectedCollection = writable(/** @type {any} */ (undefined));
+    const _currentView = writable({ type: 'list' });
+
+    vi.doMock('$lib/services/contents/collection', () => ({
+      selectedCollection: _selectedCollection,
+    }));
+
+    vi.doMock('$lib/services/contents/collection/view', () => ({
+      currentView: _currentView,
+    }));
+
+    vi.doMock('$lib/services/contents/entry/fields', () => ({
+      getPropertyValue: vi.fn(),
+    }));
+
+    vi.doMock('$lib/services/utils/misc', () => ({
+      getRegex: vi.fn(),
+    }));
+
+    const { viewFilters } = await import('./filter');
+    let filterValues = /** @type {any} */ (null);
+
+    const unsub = viewFilters.subscribe((value) => {
+      filterValues = value;
+    });
+
+    // Set a folder collection with view_filters to exercise line 124
+    _selectedCollection.set(
+      /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        folder: 'content/posts',
+        view_filters: [{ field: 'status', pattern: 'published', name: 'published' }],
+      }),
+    );
+
+    expect(Array.isArray(filterValues)).toBe(true);
+
+    unsub();
+  });
+});

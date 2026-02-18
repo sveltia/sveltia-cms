@@ -5,6 +5,10 @@ const mockGet = vi.fn();
 const mockLoadFiles = vi.fn();
 const mockSaveChanges = vi.fn();
 const mockInit = vi.fn();
+// Shared mock functions for IndexedDB instances — controlled by individual tests
+const mockDBGet = vi.fn();
+const mockDBSet = vi.fn();
+const mockDBDelete = vi.fn();
 
 vi.mock('svelte/store', () => ({
   get: mockGet,
@@ -12,16 +16,16 @@ vi.mock('svelte/store', () => ({
 
 vi.mock('@sveltia/utils/storage', () => {
   /**
-   * Mock IndexedDB class.
+   * Mock IndexedDB class using shared mock functions so tests can control every instance.
    */
   class MockIndexedDB {
     /**
      * Constructor for MockIndexedDB.
      */
     constructor() {
-      this.get = vi.fn();
-      this.set = vi.fn();
-      this.delete = vi.fn();
+      this.get = mockDBGet;
+      this.set = mockDBSet;
+      this.delete = mockDBDelete;
     }
   }
 
@@ -50,19 +54,10 @@ describe('Local Backend Service', () => {
   /** @type {any} */
   let localBackend;
   /** @type {any} */
-  let mockDB;
-  /** @type {any} */
   let mockDirHandle;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    // Mock IndexedDB instance
-    mockDB = {
-      get: vi.fn(),
-      set: vi.fn(),
-      delete: vi.fn(),
-    };
 
     // Mock directory handle
     mockDirHandle = {
@@ -110,7 +105,7 @@ describe('Local Backend Service', () => {
         next: vi.fn().mockResolvedValue({ done: false }),
       });
 
-      mockDB.get.mockResolvedValue(mockDirHandle);
+      mockDBGet.mockResolvedValue(mockDirHandle);
 
       const { getRootDirHandle } = localBackend;
       const service = localBackend.default;
@@ -135,7 +130,7 @@ describe('Local Backend Service', () => {
       });
       mockDirHandle.getDirectoryHandle.mockResolvedValue({});
 
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
 
       const { getRootDirHandle } = localBackend;
@@ -163,7 +158,7 @@ describe('Local Backend Service', () => {
         getDirectoryHandle: vi.fn().mockResolvedValue({}),
       };
 
-      mockDB.get.mockResolvedValue(deniedHandle);
+      mockDBGet.mockResolvedValue(deniedHandle);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(newHandle);
 
       const { getRootDirHandle } = localBackend;
@@ -191,7 +186,7 @@ describe('Local Backend Service', () => {
         getDirectoryHandle: vi.fn().mockResolvedValue({}),
       };
 
-      mockDB.get.mockResolvedValue(mockDirHandle);
+      mockDBGet.mockResolvedValue(mockDirHandle);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(newHandle);
 
       const { getRootDirHandle } = localBackend;
@@ -216,7 +211,7 @@ describe('Local Backend Service', () => {
       });
       mockDirHandle.getDirectoryHandle.mockRejectedValue(notFoundError);
 
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
 
       const { getRootDirHandle } = localBackend;
@@ -232,7 +227,7 @@ describe('Local Backend Service', () => {
 
       abortError.name = 'AbortError';
 
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
       /** @type {any} */ (global.window).showDirectoryPicker.mockRejectedValue(abortError);
 
       const { getRootDirHandle } = localBackend;
@@ -244,7 +239,7 @@ describe('Local Backend Service', () => {
     });
 
     it('should return null when showPicker is false and no cached handle exists', async () => {
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
 
       const { getRootDirHandle } = localBackend;
       const service = localBackend.default;
@@ -260,7 +255,7 @@ describe('Local Backend Service', () => {
     it('should return null when showPicker is false and permission denied', async () => {
       mockDirHandle.requestPermission.mockResolvedValue('denied');
 
-      mockDB.get.mockResolvedValue(mockDirHandle);
+      mockDBGet.mockResolvedValue(mockDirHandle);
 
       const { getRootDirHandle } = localBackend;
       const service = localBackend.default;
@@ -281,7 +276,7 @@ describe('Local Backend Service', () => {
       mockDirHandle.getDirectoryHandle.mockResolvedValue({});
 
       // Set up a cached handle
-      mockDB.get.mockResolvedValue(mockDirHandle);
+      mockDBGet.mockResolvedValue(mockDirHandle);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
 
       const { getRootDirHandle } = localBackend;
@@ -292,7 +287,7 @@ describe('Local Backend Service', () => {
       const handle = await getRootDirHandle({ forceReload: true });
 
       expect(handle).toBe(mockDirHandle);
-      expect(mockDB.get).not.toHaveBeenCalled();
+      expect(mockDBGet).not.toHaveBeenCalled();
       expect(global.window.showDirectoryPicker).toHaveBeenCalled();
     });
 
@@ -303,7 +298,7 @@ describe('Local Backend Service', () => {
       });
       mockDirHandle.getDirectoryHandle.mockResolvedValue({});
 
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
 
       const { getRootDirHandle } = localBackend;
@@ -331,7 +326,7 @@ describe('Local Backend Service', () => {
         getDirectoryHandle: vi.fn().mockResolvedValue({}),
       };
 
-      mockDB.get.mockResolvedValue(mockDirHandle);
+      mockDBGet.mockResolvedValue(mockDirHandle);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(newHandle);
 
       const { getRootDirHandle } = localBackend;
@@ -360,7 +355,7 @@ describe('Local Backend Service', () => {
         getDirectoryHandle: vi.fn().mockResolvedValue({}),
       };
 
-      mockDB.get.mockResolvedValue(deniedHandle);
+      mockDBGet.mockResolvedValue(deniedHandle);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(grantedHandle);
 
       const { getRootDirHandle } = localBackend;
@@ -388,7 +383,7 @@ describe('Local Backend Service', () => {
       mockDirHandle.getDirectoryHandle.mockRejectedValue(typeMismatchError);
       mockDirHandle.getFileHandle = vi.fn().mockResolvedValue({});
 
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
 
       const { getRootDirHandle } = localBackend;
@@ -522,7 +517,7 @@ describe('Local Backend Service', () => {
       mockDirHandle.getDirectoryHandle.mockResolvedValue({});
 
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
 
       const service = localBackend.default;
 
@@ -540,7 +535,7 @@ describe('Local Backend Service', () => {
         next: vi.fn().mockResolvedValue({ done: false }),
       });
 
-      mockDB.get.mockResolvedValue(mockDirHandle);
+      mockDBGet.mockResolvedValue(mockDirHandle);
 
       const service = localBackend.default;
 
@@ -569,7 +564,7 @@ describe('Local Backend Service', () => {
         getDirectoryHandle: vi.fn().mockResolvedValue({}),
       };
 
-      mockDB.get.mockResolvedValue(mockDirHandle);
+      mockDBGet.mockResolvedValue(mockDirHandle);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(newMockDirHandle);
 
       const service = localBackend.default;
@@ -583,7 +578,7 @@ describe('Local Backend Service', () => {
     });
 
     it('should throw error when directory picker is dismissed', async () => {
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
 
       // AbortError is thrown when picker is dismissed
       const abortError = new Error('The user aborted a request.');
@@ -609,7 +604,7 @@ describe('Local Backend Service', () => {
       });
       mockDirHandle.getDirectoryHandle.mockRejectedValue(notFoundError);
 
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
 
       const service = localBackend.default;
@@ -633,7 +628,7 @@ describe('Local Backend Service', () => {
         getDirectoryHandle: vi.fn().mockResolvedValue({}),
       };
 
-      mockDB.get.mockResolvedValue(mockDirHandle);
+      mockDBGet.mockResolvedValue(mockDirHandle);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(newMockDirHandle);
 
       const service = localBackend.default;
@@ -647,7 +642,7 @@ describe('Local Backend Service', () => {
     });
 
     it('should throw error when handle cannot be acquired', async () => {
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
       /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(null);
 
       const service = localBackend.default;
@@ -704,7 +699,7 @@ describe('Local Backend Service', () => {
         showDirectoryPicker: /** @type {any} */ (vi.fn().mockResolvedValue(mockDirHandle)),
       });
 
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
       mockLoadFiles.mockResolvedValue(undefined);
 
       const service = localBackend.default;
@@ -744,7 +739,7 @@ describe('Local Backend Service', () => {
         showDirectoryPicker: /** @type {any} */ (vi.fn().mockResolvedValue(mockDirHandle)),
       });
 
-      mockDB.get.mockResolvedValue(null);
+      mockDBGet.mockResolvedValue(null);
       mockSaveChanges.mockResolvedValue(mockResults);
 
       const service = localBackend.default;

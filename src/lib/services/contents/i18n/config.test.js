@@ -987,6 +987,27 @@ describe('Test normalizeI18nConfig()', () => {
       omitDefaultLocaleFromPreviewPath: false, // Legacy option is converted
     });
   });
+
+  test('config with deprecated multiple_folders_i18n_root structure triggers warnDeprecation (line 238)', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      ...cmsConfigBase,
+      i18n: {
+        structure: 'multiple_folders_i18n_root',
+        locales: ['en', 'de'],
+        default_locale: 'en',
+      },
+      collections: [collectionWithI18n],
+    });
+
+    const result = normalizeI18nConfig(collectionWithI18n);
+
+    // The deprecated structure should still work (treated as i18nMultiRootFolder)
+    expect(result.structure).toBe('multiple_folders_i18n_root');
+    expect(result.structureMap.i18nMultiRootFolder).toBe(true);
+    expect(result.i18nEnabled).toBe(true);
+    expect(result.allLocales).toEqual(['en', 'de']);
+  });
 });
 
 describe('Test internal helper functions', () => {

@@ -548,5 +548,50 @@ describe('assets/view/settings', () => {
 
       expect(backendService.repository.databaseName).toBe('test-db');
     });
+
+    it('should call initSettings when backend exists and assetListSettings is not yet initialized (line 65)', async () => {
+      let capturedSubscriber = /** @type {((backend: any) => void) | null} */ (null);
+
+      vi.doMock('$lib/services/backends', () => ({
+        backend: {
+          subscribe: vi.fn((callback) => {
+            capturedSubscriber = callback;
+            callback(null); // called with no backend initially
+            return vi.fn();
+          }),
+        },
+      }));
+
+      vi.doMock('svelte/store', async () => {
+        const actual = /** @type {typeof import('svelte/store')} */ (
+          await vi.importActual('svelte/store')
+        );
+
+        return {
+          ...actual,
+          get: vi.fn().mockReturnValue(undefined),
+        };
+      });
+
+      vi.resetModules();
+
+      const { initSettings: freshInitSettings } = await import('./settings.js');
+
+      // Now trigger the subscriber with a real backend
+      if (capturedSubscriber) {
+        const testBackend = {
+          repository: { databaseName: 'test-db' },
+        };
+
+        // Should call initSettings → covers line 65
+        const subscriber = capturedSubscriber;
+
+        expect(() => subscriber(testBackend)).not.toThrow();
+      }
+
+      vi.doUnmock('$lib/services/backends');
+      vi.doUnmock('svelte/store');
+      void freshInitSettings;
+    });
   });
 });

@@ -1877,40 +1877,211 @@ describe('collectScanningPaths', () => {
 });
 
 describe('getAllFiles', () => {
-  test('should return array of files', async () => {
-    // getAllFiles is integration-tested through scanDir tests
-    // It requires store configuration (allEntryFolders, allAssetFolders)
-    // and is primarily used in the loadFiles integration flow
-    expect(true).toBe(true);
+  /** @type {import('svelte/store').Writable<import('$lib/types/private').EntryFolderInfo[]>} */
+  let allEntryFolders;
+  /** @type {import('svelte/store').Writable<import('$lib/types/private').AssetFolderInfo[]>} */
+  let allAssetFolders;
+
+  beforeEach(async () => {
+    const contents = await import('$lib/services/contents');
+    const foldersModule = await import('$lib/services/assets/folders');
+
+    allEntryFolders = contents.allEntryFolders;
+    allAssetFolders = foldersModule.allAssetFolders;
+
+    allEntryFolders.set([]);
+    allAssetFolders.set([]);
+  });
+
+  test('should return array of BaseFileListItemProps for files found under a path', async () => {
+    allEntryFolders.set([
+      /** @type {any} */ ({
+        collectionName: 'posts',
+        folderPathMap: { folder: 'content/posts' },
+      }),
+    ]);
+    allAssetFolders.set([]);
+
+    const postsDir = createMockDirectoryHandle('posts');
+    const fileHandle = createMockFileHandle('post.md');
+    const contentDir = createMockDirectoryHandle('content');
+
+    // @ts-ignore
+    contentDir.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* () {
+        yield ['posts', postsDir];
+      },
+    }));
+
+    // @ts-ignore
+    postsDir.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* () {
+        yield ['post.md', fileHandle];
+      },
+    }));
+
+    const rootChildren = new Map([['content', contentDir]]);
+    const rootDirHandle = createMockDirectoryHandle('root', rootChildren);
+
+    // @ts-ignore
+    rootDirHandle.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* () {
+        yield ['content', contentDir];
+      },
+    }));
+
+    const { getAllFiles } = await import('./files');
+    const result = await getAllFiles(rootDirHandle);
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0]).toMatchObject({
+      handle: expect.anything(),
+      path: expect.any(String),
+      name: expect.any(String),
+      size: 0,
+      sha: '',
+    });
+  });
+
+  test('should return empty array when no scanning paths match', async () => {
+    allEntryFolders.set([]);
+    allAssetFolders.set([]);
+
+    const rootDirHandle = createMockDirectoryHandle('root');
+
+    // @ts-ignore
+    rootDirHandle.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* () {
+        // no entries
+      },
+    }));
+
+    const { getAllFiles } = await import('./files');
+    const result = await getAllFiles(rootDirHandle);
+
+    expect(result).toEqual([]);
   });
 });
 
 describe('loadFiles', () => {
-  test('should load and cache files from filesystem', async () => {
-    // This test demonstrates the core flow of loadFiles
-    // which is an integration function that coordinates multiple services
-    const rootDirHandle = createMockDirectoryHandle();
+  test('should load files and populate all stores', async () => {
+    vi.resetModules();
 
-    // Mock the getAllFiles function to return a simple file set
-    vi.doMock('./files', async () => {
-      const actual = await vi.importActual('./files');
+    const mockEntries = [/** @type {any} */ ({ id: '1', slug: 'post-1' })];
+    /** @type {any[]} */
+    const mockErrors = [];
+    const mockAllEntries = { set: vi.fn() };
+    const mockAllAssets = { set: vi.fn() };
+    const mockGitConfigFiles = { set: vi.fn() };
+    const mockEntryParseErrors = { set: vi.fn() };
+    const mockDataLoaded = { set: vi.fn() };
+
+    const fakeFile = {
+      handle: /** @type {any} */ ({
+        name: 'post.md',
+        getFile: vi.fn(async () => new File(['# Post'], 'post.md')),
+      }),
+      path: 'content/posts/post.md',
+      name: 'post.md',
+      size: 0,
+      sha: '',
+    };
+
+    const fakeAssetFile = {
+      handle: /** @type {any} */ ({
+        name: 'image.png',
+        getFile: vi.fn(async () => new File([''], 'image.png', { type: 'image/png' })),
+      }),
+      path: 'static/image.png',
+      name: 'image.png',
+      size: 0,
+      sha: '',
+    };
+
+    const fakeConfigFile = {
+      handle: /** @type {any} */ ({
+        name: 'netlify.toml',
+        getFile: vi.fn(async () => new File(['[build]'], 'netlify.toml')),
+      }),
+      path: 'netlify.toml',
+      name: 'netlify.toml',
+      size: 0,
+      sha: '',
+    };
+
+    const { writable: writ } = await import('svelte/store');
+
+    vi.doMock('$lib/services/contents', () => ({
+      allEntries: mockAllEntries,
+      allEntryFolders: writ([]),
+      dataLoaded: mockDataLoaded,
+      entryParseErrors: mockEntryParseErrors,
+    }));
+
+    vi.doMock('$lib/services/assets', () => ({
+      allAssets: mockAllAssets,
+    }));
+
+    vi.doMock('$lib/services/assets/folders', () => ({
+      allAssetFolders: writ([]),
+    }));
+
+    vi.doMock('$lib/services/backends/git/shared/config', () => ({
+      GIT_CONFIG_FILE_REGEX: /^\.gitconfig$/,
+      gitConfigFiles: mockGitConfigFiles,
+    }));
+
+    vi.doMock('$lib/services/backends/process', () => ({
+      createFileList: vi.fn(() => ({
+        entryFiles: [fakeFile],
+        assetFiles: [fakeAssetFile],
+        configFiles: [fakeConfigFile],
+      })),
+    }));
+
+    vi.doMock('$lib/services/contents/file/process', () => ({
+      prepareEntries: vi.fn(async () => ({ entries: mockEntries, errors: mockErrors })),
+    }));
+
+    vi.doMock('@sveltia/utils/file', () => ({
+      getPathInfo: vi.fn((path) => ({ ext: path.split('.').pop() ?? '', base: path })),
+      readAsText: vi.fn(async () => '# Post'),
+    }));
+
+    vi.doMock('$lib/services/utils/file', async () => {
+      const actual = /** @type {any} */ (await vi.importActual('$lib/services/utils/file'));
 
       return {
         ...actual,
-        getAllFiles: vi.fn(async () => [
-          {
-            handle: createMockFileHandle('post.md'),
-            path: 'entries/post.md',
-            name: 'post.md',
-            size: 0,
-            sha: '',
-            type: 'entry',
-          },
-        ]),
+        getGitHash: vi.fn(async () => 'abc123'),
+        getBlob: vi.fn(() => 'blob:http://localhost/fake'),
       };
     });
 
-    expect(true).toBe(true);
+    vi.doMock('$lib/services/assets/kinds', () => ({
+      getAssetKind: vi.fn(() => 'image'),
+    }));
+
+    const { loadFiles } = await import('./files');
+    // Root handle with no entries — collectScanningPaths returns [] so getAllFiles returns []
+    // But createFileList will be called with the empty result, returning our mocked files
+    const rootDirHandle = createMockDirectoryHandle('root');
+
+    // @ts-ignore
+    rootDirHandle.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* () {
+        // empty — scanning paths are [] so nothing matches
+      },
+    }));
+
+    await loadFiles(rootDirHandle);
+
+    expect(mockAllEntries.set).toHaveBeenCalledWith(mockEntries);
+    expect(mockAllAssets.set).toHaveBeenCalledWith(expect.any(Array));
+    expect(mockDataLoaded.set).toHaveBeenCalledWith(true);
+    expect(mockEntryParseErrors.set).toHaveBeenCalledWith(mockErrors);
+    expect(mockGitConfigFiles.set).toHaveBeenCalledWith(expect.any(Array));
   });
 });
 

@@ -805,5 +805,45 @@ describe('contents/draft/create/proxy', () => {
 
       expect(target.customKey).toBe('should-not-duplicate');
     });
+
+    it('should delete property without syncing to other locales when auto-duplication is disabled (line 154)', async () => {
+      const mockCurrentValues = {
+        en: { title: 'Title' },
+        ja: { title: 'タイトル' },
+      };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockI18nAutoDupEnabled) {
+          return false;
+        }
+
+        if (store === mockEntryDraft) {
+          return {
+            currentValues: mockCurrentValues,
+            validities: { en: {}, ja: {} },
+          };
+        }
+
+        return undefined;
+      });
+
+      // Return undefined so that getFieldInfo returns fieldConfig: undefined,
+      // triggering the early return on line 154
+      mockGetField.mockReturnValue(undefined);
+
+      const { createProxy } = await import('./proxy.js');
+
+      const proxy = createProxy({
+        draft: { collectionName: 'posts', fileName: undefined, isIndexFile: false },
+        locale: 'en',
+        target: mockCurrentValues.en,
+      });
+
+      delete proxy.title;
+
+      // Only the source locale property is deleted; fieldConfig was undefined so no sync
+      expect(mockCurrentValues.en.title).toBeUndefined();
+      expect(mockCurrentValues.ja.title).toBe('タイトル');
+    });
   });
 });

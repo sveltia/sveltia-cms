@@ -736,4 +736,31 @@ describe('Field Collectors', () => {
       expect(relationField.context.typedKeyPath).toBe('sections.*<hero>.featured_article');
     });
   });
+
+  describe('Deprecated date widget type (line 55)', () => {
+    it('should add an error when widget is "date" (deprecated)', async () => {
+      const { parseFields } = await import('./index.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts' },
+        typedKeyPath: '',
+      };
+
+      /** @type {any} */
+      const fields = [
+        {
+          name: 'published_date',
+          widget: 'date',
+        },
+      ];
+
+      parseFields(fields, context, collectors);
+
+      // The deprecated 'date' widget type should trigger addMessage with 'date_field_type'
+      expect(collectors.errors.size).toBe(1);
+    });
+  });
 });

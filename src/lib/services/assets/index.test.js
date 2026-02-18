@@ -200,18 +200,131 @@ describe('assets/index', () => {
       expect(transformFileMock).not.toHaveBeenCalled();
     });
 
-    it.skip('should transform files when transformations are provided', async () => {
-      // NOTE: This test is skipped due to the same architectural issue as the
-      // "should execute transformation branch..." test above. The processedAssets
-      // derived store's callback is frozen at module initialization time. Line 99-109
-      // (transformation branch) is unreachable in unit tests without refactoring to
-      // allow lazy initialization of transformations.
+    it('should transform files when transformations are provided', async () => {
+      const originalFile = new File(['content'], 'original.jpg', { type: 'image/jpeg' });
+      const transformedFile = new File(['transformed'], 'transformed.jpg', { type: 'image/jpeg' });
+
+      Object.defineProperty(originalFile, 'size', { value: 500000 });
+      Object.defineProperty(transformedFile, 'size', { value: 300000 });
+
+      const transformations = /** @type {import('$lib/types/public').ImageTransformations} */ ({
+        webp: { width: 800 },
+      });
+
+      getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        config: {
+          max_file_size: 1000000,
+          multiple: false,
+          transformations,
+        },
+      });
+
+      let latestState = /** @type {any} */ (null);
+
+      // Subscribe persistently so async updates are captured
+      const unsubscribe = processedAssets.subscribe((state) => {
+        latestState = state;
+      });
+
+      transformFileMock.mockResolvedValue(transformedFile);
+
+      uploadingAssets.set({
+        folder: undefined,
+        files: [originalFile],
+      });
+
+      // Wait for the async IIFE, Promise.all, and store updates to settle
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+
+      unsubscribe();
+
+      expect(latestState.processing).toBe(false);
+      expect(transformFileMock).toHaveBeenCalledWith(originalFile, transformations);
+      expect(latestState.undersizedFiles).toEqual([transformedFile]);
     });
 
-    it.skip('should not populate transformedFileMap when file is not transformed', async () => {
-      // NOTE: This test is skipped due to the same architectural issue - the derived
-      // store callback is frozen at module initialization before mocks are set up to
-      // return transformations.
+    it('should populate transformedFileMap when file is transformed', async () => {
+      const originalFile = new File(['content'], 'original.jpg', { type: 'image/jpeg' });
+      const transformedFile = new File(['transformed'], 'transformed.jpg', { type: 'image/jpeg' });
+
+      Object.defineProperty(originalFile, 'size', { value: 500000 });
+      Object.defineProperty(transformedFile, 'size', { value: 300000 });
+
+      getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        config: {
+          max_file_size: 1000000,
+          multiple: false,
+          transformations: /** @type {import('$lib/types/public').ImageTransformations} */ ({
+            webp: { width: 800 },
+          }),
+        },
+      });
+
+      let latestState = /** @type {any} */ (null);
+
+      const unsubscribe = processedAssets.subscribe((state) => {
+        latestState = state;
+      });
+
+      // Return a different file instance (transformed)
+      transformFileMock.mockResolvedValue(transformedFile);
+
+      uploadingAssets.set({
+        folder: undefined,
+        files: [originalFile],
+      });
+
+      // Wait for async processing to complete
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+
+      unsubscribe();
+
+      // The transformedFileMap should map transformedFile -> originalFile
+      expect(latestState.transformedFileMap.get(transformedFile)).toBe(originalFile);
+    });
+
+    it('should not populate transformedFileMap when file is not transformed', async () => {
+      const originalFile = new File(['content'], 'original.jpg', { type: 'image/jpeg' });
+
+      Object.defineProperty(originalFile, 'size', { value: 500000 });
+
+      getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        config: {
+          max_file_size: 1000000,
+          multiple: false,
+          transformations: /** @type {import('$lib/types/public').ImageTransformations} */ ({
+            webp: { width: 800 },
+          }),
+        },
+      });
+
+      let latestState = /** @type {any} */ (null);
+
+      const unsubscribe = processedAssets.subscribe((state) => {
+        latestState = state;
+      });
+
+      // Return the same file instance (no actual transformation)
+      transformFileMock.mockResolvedValue(originalFile);
+
+      uploadingAssets.set({
+        folder: undefined,
+        files: [originalFile],
+      });
+
+      // Wait for async processing to complete
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+
+      unsubscribe();
+
+      // transformedFileMap should not have the original file mapped (file not transformed)
+      expect(latestState.transformedFileMap.get(originalFile)).toBeUndefined();
     });
 
     it('should set processing state during transformations', async () => {
@@ -1950,7 +2063,7 @@ describe('assets/index', () => {
     it('should resolve template tags in internalPath when entry and collection exist (lines 213-237)', async () => {
       const { stripSlashes } = await import('@sveltia/utils/string');
       const { getPathInfo } = await import('@sveltia/utils/file');
-      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { getAssetFolder, globalAssetFolder } = await import('$lib/services/assets/folders');
       const { getAssociatedCollections } = await import('$lib/services/contents/entry');
       const { fillTemplate } = await import('$lib/services/common/template');
       const { flatten } = await import('flat');
@@ -2003,18 +2116,17 @@ describe('assets/index', () => {
         extension: '.jpg',
       });
 
-      // Return the template folder on the last call (after scanning other folders)
-      vi.mocked(getAssetFolder)
-        .mockReturnValueOnce(undefined)
-        .mockReturnValueOnce(undefined)
-        .mockReturnValueOnce(undefined)
-        .mockReturnValueOnce(mockFolderWithTemplate);
+      // Return the template folder as the first getAssetFolder result
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolderWithTemplate);
+
+      // Make globalAssetFolder falsy so it's filtered out
+      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set(undefined);
 
       // Setup mocks for template resolution
       vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-      vi.mocked(createPath).mockReturnValue('content/posts/my-post/media/photo.jpg');
       vi.mocked(fillTemplate).mockReturnValue('content/posts/my-post/media');
       vi.mocked(flatten).mockReturnValue({ slug: 'my-post' });
+      vi.mocked(createPath).mockReturnValue('content/posts/my-post/media/photo.jpg');
 
       allAssets.set([mockAsset]);
 
@@ -2025,9 +2137,14 @@ describe('assets/index', () => {
         fileName: undefined,
       });
 
-      // If fillTemplate wasn't called, that's OK - the important thing is coverage increased
-      // Just verify the test doesn't error
-      expect(result).toBeDefined();
+      // Restore globalAssetFolder to its default
+      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set({});
+
+      expect(result).toEqual(mockAsset);
+      expect(fillTemplate).toHaveBeenCalledWith(
+        'content/posts/{{slug}}/media',
+        expect.objectContaining({ type: 'media_folder', collection: mockCollection }),
+      );
     });
 
     it('should return false for template resolution when collection cannot be found (line 213)', async () => {

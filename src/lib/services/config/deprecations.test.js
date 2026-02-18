@@ -142,3 +142,51 @@ describe('Test warnDeprecation()', () => {
     });
   });
 });
+
+describe('Test warnDeprecation() outside VITEST environment', () => {
+  let consoleWarnSpy;
+
+  beforeEach(() => {
+    // Reset the warned state before each test
+    Object.keys(warnedOnceMap).forEach((key) => {
+      warnedOnceMap[key] = false;
+    });
+
+    // Simulate non-test environment by stubbing VITEST env var to undefined
+    vi.stubEnv('VITEST', undefined);
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    consoleWarnSpy.mockRestore();
+  });
+
+  test('should call console.warn with default message on first call', () => {
+    warnDeprecation('yaml_quote');
+    expect(consoleWarnSpy).toHaveBeenCalledOnce();
+    expect(consoleWarnSpy).toHaveBeenCalledWith(warningMessages.yaml_quote);
+  });
+
+  test('should call console.warn with custom message when provided', () => {
+    const customMessage = 'Custom deprecation message';
+
+    warnDeprecation('slug_length', customMessage);
+    expect(consoleWarnSpy).toHaveBeenCalledOnce();
+    expect(consoleWarnSpy).toHaveBeenCalledWith(customMessage);
+  });
+
+  test('should only warn once per key', () => {
+    warnDeprecation('slug_length');
+    warnDeprecation('slug_length');
+    warnDeprecation('slug_length');
+    expect(consoleWarnSpy).toHaveBeenCalledOnce();
+    expect(warnedOnceMap.slug_length).toBe(true);
+  });
+
+  test('should warn independently for different keys', () => {
+    warnDeprecation('slug_length');
+    warnDeprecation('yaml_quote');
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
+  });
+});

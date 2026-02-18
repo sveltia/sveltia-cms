@@ -230,6 +230,26 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({});
     });
 
+    test('should return empty object when value_type is unknown', () => {
+      /** @type {NumberField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 42,
+        value_type: /** @type {any} */ ('unknown_type'),
+      };
+
+      const keyPath = 'count';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+      });
+
+      expect(result).toEqual({});
+    });
+
     test('should parse string as integer when no value_type specified (defaults to int)', () => {
       /** @type {NumberField} */
       const fieldConfig = {

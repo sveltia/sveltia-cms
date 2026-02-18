@@ -541,6 +541,16 @@ describe('getThumbnailFieldNames()', () => {
 
     expect(getThumbnailFieldNames(collection)).toEqual(['featured', 'attachment']);
   });
+
+  test('returns empty array when folder collection has no fields (line 166)', () => {
+    // thumbnail defaults to true, fields is undefined → reaches `return []` at line 166
+    const collection = {
+      name: 'posts',
+      folder: 'content/posts',
+    };
+
+    expect(getThumbnailFieldNames(collection)).toEqual([]);
+  });
 });
 
 describe('parseEntryCollection()', () => {

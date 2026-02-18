@@ -1273,6 +1273,108 @@ describe('draft/validate', () => {
 
         expect(result).toBeDefined();
       });
+
+      it('should return undefined for list field when keyPath is already in validities (line 138)', () => {
+        // Pre-populate validities with the keyPath so the early-return fires
+        const validities = { en: { tags: { rangeOverflow: false } } };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'tags',
+          valueMap: { 'tags.0': 'a', 'tags.1': 'b' },
+          value: '',
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'tags',
+          widget: 'list',
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(false);
+
+        const result = validateAnyField(args);
+
+        expect(result).toBeUndefined();
+      });
+
+      it('should set valueMissing for required list field with no items (line 154)', () => {
+        const validities = { en: {} };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'tags',
+          valueMap: {},
+          value: [],
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'tags',
+          widget: 'list',
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(true);
+
+        const result = validateAnyField(args);
+
+        expect(result).toBeDefined();
+        expect(result?.valueMissing).toBe(true);
+      });
+
+      it('should return undefined for keyvalue field when keyPath already in validities (line 180)', () => {
+        // Pre-populate with _keyPath so the early return at the keyvalue branch fires
+        const validities = { en: { settings: {} } };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'settings.key1',
+          valueMap: { 'settings.key1': 'val' },
+          value: 'val',
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'settings',
+          widget: 'keyvalue',
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(false);
+
+        const result = validateAnyField(args);
+
+        expect(result).toBeUndefined();
+      });
+
+      it('should return undefined for code field when keyPath already in validities (line 210)', () => {
+        // Pre-populate with the parent keyPath so the early return in the code branch fires
+        const validities = { en: { snippet: {} } };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'snippet.code',
+          valueMap: { 'snippet.code': 'const x = 1;', 'snippet.lang': 'js' },
+          value: 'const x = 1;',
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'snippet',
+          widget: 'code',
+          output_code_only: true,
+          keys: { code: 'code', lang: 'lang' },
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(false);
+
+        const result = validateAnyField(args);
+
+        expect(result).toBeUndefined();
+      });
     });
   });
 });

@@ -41,7 +41,7 @@ vi.mock('@sveltia/utils/storage', () => {
 });
 
 vi.mock('$lib/services/backends', () => ({
-  backend: writable(null),
+  backend: writable(/** @type {any} */ (null)),
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -321,5 +321,25 @@ describe('Test initSettings()', () => {
     currentView.set(/** @type {any} */ (newView));
 
     expect(get(entryListSettings)).toEqual({ articles: newView });
+  });
+
+  test('calls initSettings when backend becomes available and entryListSettings is not initialized (line 55)', async () => {
+    // Reset entryListSettings to undefined so the condition passes
+    entryListSettings.set(undefined);
+
+    // Set backend to a truthy value — triggers the module-level subscriber
+    const { backend: writableBackend } = await import('$lib/services/backends');
+    const b = /** @type {import('svelte/store').Writable<any>} */ (writableBackend);
+
+    b.set(mockBackend);
+
+    // Give async initSettings time to complete
+    await sleep(50);
+
+    // initSettings was called and populated entryListSettings (no longer undefined)
+    expect(get(entryListSettings)).toBeDefined();
+
+    // Clean up
+    b.set(null);
   });
 });

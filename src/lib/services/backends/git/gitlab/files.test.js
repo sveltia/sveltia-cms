@@ -570,9 +570,23 @@ describe('GitLab files service', () => {
         },
       };
 
+      // Capture the setInterval callback to invoke it and cover the progress update code (line 313)
+      /** @type {(() => void) | undefined} */
+      let intervalCallback;
+
+      vi.mocked(window.setInterval).mockImplementationOnce((fn) => {
+        intervalCallback = /** @type {() => void} */ (fn);
+        return /** @type {any} */ (1);
+      });
+
       vi.mocked(fetchGraphQL).mockResolvedValueOnce(mockBlobResponse);
 
-      const result = await fetchFileContents(files);
+      const resultPromise = fetchFileContents(files);
+
+      // Invoke the interval callback to cover the dataLoadedProgress.update call
+      intervalCallback?.();
+
+      const result = await resultPromise;
 
       expect(fetchGraphQL).toHaveBeenCalledWith(
         expect.stringContaining('query($fullPath: ID!, $branch: String!, $paths: [String!]!)'),

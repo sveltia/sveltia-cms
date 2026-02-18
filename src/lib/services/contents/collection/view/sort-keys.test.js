@@ -18,7 +18,13 @@ import {
  */
 
 vi.mock('svelte-i18n', () => ({
-  _: vi.fn(() => (/** @type {string} */ key) => key),
+  _: {
+    subscribe: vi.fn((fn) => {
+      fn((/** @type {string} */ key) => key);
+
+      return vi.fn();
+    }),
+  },
   locale: {
     subscribe: vi.fn(() => vi.fn()),
     set: vi.fn(),
@@ -193,6 +199,25 @@ describe('Test getSortConfig()', async () => {
       }),
     ).toEqual({
       keys: ['title', 'slug', 'commit_author', 'commit_date'],
+      default: { key: 'title', order: 'ascending' },
+    });
+  });
+
+  test('skips adding commit_date when date is already in default sort keys', () => {
+    // When isCommitDateAvailable=true but 'date' is in the default keys already,
+    // the inner `if (!keys.includes('date') && !hasCommitDateKey)` block is skipped
+    // (covers line 149: closing brace of the inner if)
+    expect(
+      getSortConfig({
+        collection: {
+          ...collectionBase,
+          // No sortable_fields → uses DEFAULT_SORT_KEYS which includes 'date'
+        },
+        isCommitAuthorAvailable: false,
+        isCommitDateAvailable: true,
+      }),
+    ).toEqual({
+      keys: ['title', 'name', 'date', 'author', 'description'],
       default: { key: 'title', order: 'ascending' },
     });
   });
@@ -969,6 +994,17 @@ describe('Test getSortKeyType()', () => {
   test('returns String when field config is not found', () => {
     expect(getSortKeyType({ key: 'nonexistent', fieldConfig: undefined })).toBe(String);
   });
+
+  test('returns String for number field with unknown value_type', () => {
+    // When value_type is neither 'int' nor 'float', falls through to return String
+    const unknownNumberField = {
+      name: 'weird',
+      widget: 'number',
+      value_type: /** @type {any} */ ('string'),
+    };
+
+    expect(getSortKeyType({ key: 'weird', fieldConfig: unknownNumberField })).toBe(String);
+  });
 });
 
 describe('Test getSortKeyLabel()', () => {
@@ -985,9 +1021,19 @@ describe('Test getSortKeyLabel()', () => {
   };
 
   test('returns localized labels for special keys', () => {
-    // We need to skip this test since the actual getSortKeyLabel function uses svelte-i18n
-    // which requires proper initialization that's complex to mock in isolation
-    expect(true).toBe(true); // Placeholder test
+    // SPECIAL_SORT_KEYS includes 'slug', 'commit_author', 'commit_date', etc.
+    // getSortKeyLabel returns get(_)(`sort_keys.${key}`) for special keys
+    const slugLabel = getSortKeyLabel({ collection: mockCollection, key: 'slug' });
+
+    expect(typeof slugLabel).toBe('string');
+
+    const commitAuthorLabel = getSortKeyLabel({ collection: mockCollection, key: 'commit_author' });
+
+    expect(typeof commitAuthorLabel).toBe('string');
+
+    const nameLabel = getSortKeyLabel({ collection: mockCollection, key: 'name' });
+
+    expect(typeof nameLabel).toBe('string');
   });
 
   test('returns field label for collection fields', () => {
@@ -1111,5 +1157,72 @@ describe('Test sortKeys store', () => {
     }
 
     unsubscribe();
+  });
+
+  test('sortKeys store executes full callback when selectedCollection is a folder collection', async () => {
+    const { sortKeys } = await import('./sort-keys');
+    const { selectedCollection } = await import('$lib/services/contents/collection');
+    const { allEntries } = await import('$lib/services/contents');
+    const { currentView } = await import('$lib/services/contents/collection/view');
+    const { entryListSettings } = await import('$lib/services/contents/collection/view/settings');
+
+    /** @type {any} */
+    const folderCollection = {
+      name: 'posts',
+      _type: 'entry',
+      folder: 'content/posts',
+      _i18n: {
+        i18nEnabled: false,
+        allLocales: ['_default'],
+        initialLocales: ['_default'],
+        defaultLocale: '_default',
+        structure: 'single_file',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nMultiRootFolder: false,
+        },
+        canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+        omitDefaultLocaleFromFilePath: false,
+        omitDefaultLocaleFromPreviewPath: false,
+      },
+      _file: { extension: 'json', format: 'json' },
+      _thumbnailFieldNames: [],
+      fields: [{ name: 'title', widget: 'string' }],
+    };
+
+    entryListSettings.set(undefined);
+    currentView.set({ type: 'list' });
+
+    allEntries.set(
+      /** @type {any[]} */ ([
+        {
+          id: 'posts/post-1',
+          slug: 'post-1',
+          commitAuthor: 'user',
+          commitDate: new Date(),
+          locales: { _default: { path: 'content/posts/post-1.json', content: {} } },
+        },
+      ]),
+    );
+
+    selectedCollection.set(folderCollection);
+
+    let sortKeysResult = /** @type {any} */ (null);
+
+    const unsubscribe = sortKeys.subscribe((_value) => {
+      sortKeysResult = _value;
+    });
+
+    // With a folder collection and entries, the full callback runs (covers lines 253-254:
+    // isCommitAuthorAvailable/isCommitDateAvailable, line 262: currentView.set)
+    expect(Array.isArray(sortKeysResult)).toBe(true);
+
+    unsubscribe();
+
+    // Clean up
+    selectedCollection.set(undefined);
+    allEntries.set([]);
   });
 });

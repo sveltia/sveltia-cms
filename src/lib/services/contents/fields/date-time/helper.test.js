@@ -1661,6 +1661,23 @@ describe('Day.js format tokens', () => {
 
       expect(result).toBe('23:59');
     });
+
+    test('should return timeStr via full parse when quick regex fails (line 243)', () => {
+      // Tests line 243: if (timeOnly) { return timeStr; }
+      // A 12-hour time string like '2:30 PM' does NOT match the quick regex
+      // /(?:^|T)(?<time>[0-2]\d:[0-5]\d)\b/ (single-digit hour fails [0-2]\d)
+      // so getDate is called and parses it via the format, then timeStr is returned.
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        date_format: false, // timeOnly = true
+        format: 'h:mm A',
+      };
+
+      const result = getInputValue('2:30 PM', fieldConfig);
+
+      expect(result).toMatch(/^\d{2}:\d{2}$/);
+    });
   });
 
   describe('getInputValue - error handling and edge cases', () => {

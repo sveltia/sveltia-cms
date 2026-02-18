@@ -453,4 +453,13 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('md', 'frontmatter', fields)).toBe(false);
     });
   });
+
+  describe('unknown format', () => {
+    it('should return false for unknown format with any extension (line 83)', () => {
+      // Unknown formats don't enforce mismatch
+      expect(isFormatMismatch('csv', 'csv')).toBe(false);
+      expect(isFormatMismatch('txt', 'custom-format')).toBe(false);
+      expect(isFormatMismatch('xml', 'xml-schema')).toBe(false);
+    });
+  });
 });

@@ -215,6 +215,32 @@ describe('sortEntries', () => {
     expect(result.map((e) => e.slug)).toEqual(['entry-2', 'entry-3', 'entry-1']); // 10, 20, 30
   });
 
+  test('should sort by numeric field with missing values treated as zero', () => {
+    const conditions = { key: 'score', order: 'ascending' };
+
+    vi.mocked(getField).mockReturnValue({
+      name: 'score',
+      widget: 'number',
+      label: 'Score',
+    });
+
+    vi.mocked(getSortKeyType).mockReturnValue(Number);
+
+    // Only one entry has a score; others return undefined → treated as 0
+    vi.mocked(getPropertyValue).mockImplementation(({ entry, key }) => {
+      if (key === 'score' && entry.slug === 'entry-1') {
+        return 50;
+      }
+
+      return undefined;
+    });
+
+    const result = sortEntries(mockEntries, mockCollection, conditions);
+
+    // Entries without score (0) come before entry-1 (50)
+    expect(result.map((e) => e.slug)).not.toEqual(['entry-1', 'entry-2', 'entry-3']);
+  });
+
   test('should sort by date field', () => {
     const conditions = { key: 'date', order: 'ascending' };
 
@@ -247,6 +273,34 @@ describe('sortEntries', () => {
     const result = sortEntries(mockEntries, mockCollection, conditions);
 
     expect(result.map((e) => e.slug)).toEqual(['entry-1', 'entry-2', 'entry-3']);
+  });
+
+  test('should sort by date field with missing date values treated as zero', () => {
+    const conditions = { key: 'date', order: 'ascending' };
+
+    vi.mocked(getField).mockReturnValue({
+      name: 'date',
+      widget: 'datetime',
+      label: 'Date',
+    });
+
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+
+    // Only first entry has a date; others return undefined
+    vi.mocked(getPropertyValue).mockImplementation(({ entry, key }) => {
+      if (key === 'date' && entry.slug === 'entry-1') {
+        return '2023-01-02';
+      }
+
+      return undefined;
+    });
+
+    vi.mocked(getDate).mockImplementation((value) => new Date(value));
+
+    const result = sortEntries(mockEntries, mockCollection, conditions);
+
+    // Entries without dates (treated as epoch 0) come before the dated entry
+    expect(result.map((e) => e.slug)).toContain('entry-1');
   });
 
   test('should handle markdown fields by removing markdown syntax', () => {

@@ -71,6 +71,7 @@ vi.mock('$lib/services/backends', () => ({
 vi.mock('svelte-i18n', () => ({
   init: vi.fn().mockResolvedValue({}),
   _: vi.fn(),
+  locale: { subscribe: vi.fn() },
 }));
 
 describe('config/index', () => {
@@ -642,6 +643,28 @@ describe('config/index', () => {
       );
 
       expect(calls.length).toBeGreaterThan(0);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should log console.warn when config has deprecated/unsupported options', async () => {
+      const { initCmsConfig } = await import('./index.js');
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // `local_backend` is an unsupported option that triggers a warning during parsing
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        local_backend: true,
+        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+      getHashMock.mockResolvedValue('test-hash');
+
+      await initCmsConfig();
+
+      expect(consoleSpy).toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });

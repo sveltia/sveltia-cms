@@ -1,8 +1,6 @@
 import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { allEntries } from '$lib/services/contents';
-import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { filterEntries } from '$lib/services/contents/collection/view/filter';
@@ -11,22 +9,85 @@ import { sortEntries } from '$lib/services/contents/collection/view/sort';
 
 import { currentView, entryGroups, listedEntries } from './index.js';
 
+/**
+ * Real writable stores hoisted so they are available when vi.mock factories run.
+ * Vi.hoisted runs before module resolution/imports.
+ */
+const { _allEntries, _selectedCollection, _locale, _selectedEntries, _prefs } = vi.hoisted(() => {
+  /**
+   * Minimal writable store factory (no imports available inside vi.hoisted).
+   * @template T
+   * @param {T} initial Initial value.
+   * @returns {import('svelte/store').Writable<T>} A writable store.
+   */
+  const w = (initial) => {
+    let value = initial;
+    /** @type {Set<(v: T) => void>} */
+    const subs = new Set();
+
+    /** @type {import('svelte/store').Writable<T>} */
+    const store = {
+      /**
+       * Subscribe to the store.
+       * @param {(v: T) => void} run Subscriber function.
+       * @returns {() => void} Unsubscribe function.
+       */
+      subscribe(run) {
+        subs.add(run);
+        run(value);
+
+        return () => subs.delete(run);
+      },
+      /**
+       * Set the store value.
+       * @param {T} v New value.
+       */
+      set(v) {
+        value = v;
+        subs.forEach((run) => run(value));
+      },
+      /**
+       * Update the store value.
+       * @param {(v: T) => T} fn Updater function.
+       */
+      update(fn) {
+        store.set(fn(value));
+      },
+    };
+
+    return store;
+  };
+
+  return {
+    /** @type {import('svelte/store').Writable<any>} */
+    _allEntries: w(/** @type {any} */ (undefined)),
+    /** @type {import('svelte/store').Writable<any>} */
+    _selectedCollection: w(/** @type {any} */ (undefined)),
+    /** @type {import('svelte/store').Writable<string>} */
+    _locale: w('en'),
+    /** @type {import('svelte/store').Writable<any[]>} */
+    _selectedEntries: w(/** @type {any[]} */ ([])),
+    /** @type {import('svelte/store').Writable<any>} */
+    _prefs: w(/** @type {any} */ ({ devModeEnabled: false })),
+  };
+});
+
 // Mock dependencies
 vi.mock('svelte-i18n', () => ({
-  locale: { subscribe: vi.fn(() => () => {}) },
+  locale: _locale,
 }));
 
 vi.mock('$lib/services/contents', () => ({
-  allEntries: { subscribe: vi.fn(() => () => {}), set: vi.fn() },
+  allEntries: _allEntries,
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
-  selectedCollection: { subscribe: vi.fn(() => () => {}), set: vi.fn() },
+  selectedCollection: _selectedCollection,
 }));
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
-  selectedEntries: { set: vi.fn(), subscribe: vi.fn(() => () => {}) },
+  selectedEntries: _selectedEntries,
 }));
 
 vi.mock('$lib/services/contents/collection/files', () => ({
@@ -46,18 +107,16 @@ vi.mock('$lib/services/contents/collection/view/sort', () => ({
 }));
 
 vi.mock('$lib/services/user/prefs', () => ({
-  prefs: {
-    subscribe: vi.fn((handler) => {
-      handler({ devModeEnabled: false });
-
-      return () => {};
-    }),
-  },
+  prefs: _prefs,
 }));
 
 describe('collection/view/index', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    _allEntries.set(undefined);
+    _selectedCollection.set(undefined);
+    _locale.set('en');
+    _prefs.set({ devModeEnabled: false });
     currentView.set({ type: 'list' });
   });
 
@@ -91,16 +150,16 @@ describe('collection/view/index', () => {
 
     vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
 
-    vi.mocked(allEntries.set)(mockEntries);
-    vi.mocked(selectedCollection.set)(/** @type {any} */ ({ name: 'posts' }));
+    _allEntries.set(mockEntries);
+    _selectedCollection.set(/** @type {any} */ ({ name: 'posts' }));
 
     // The derived store should process the entries
     expect(getEntriesByCollection).toBeDefined();
   });
 
   test('listedEntries returns empty array when no collection selected', () => {
-    vi.mocked(allEntries.set)([]);
-    vi.mocked(selectedCollection.set)(undefined);
+    _allEntries.set([]);
+    _selectedCollection.set(undefined);
 
     // The store should be defined
     expect(listedEntries).toBeDefined();
@@ -324,19 +383,12 @@ describe('collection/view/index', () => {
     expect(selectedEntries.set).toBeDefined();
   });
 
-  test('selectedCollection subscription logs in dev mode', async () => {
-    const { prefs: mockPrefs } = await import('$lib/services/user/prefs');
+  test('selectedCollection subscription logs in dev mode', () => {
     const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
     // Update prefs to enable dev mode
-    vi.mocked(mockPrefs.subscribe).mockImplementation((handler) => {
-      handler({ devModeEnabled: true });
-
-      return () => {};
-    });
-
-    // Re-import to trigger subscription with dev mode enabled
-    vi.resetModules();
+    _prefs.set({ devModeEnabled: true });
+    _selectedCollection.set(/** @type {any} */ ({ name: 'posts' }));
 
     consoleInfoSpy.mockRestore();
     expect(consoleInfoSpy).toBeDefined();
@@ -353,8 +405,8 @@ describe('collection/view/index', () => {
     vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
 
     // Simulate both store updates to trigger the derived store callback
-    vi.mocked(allEntries.set)(mockEntries);
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    _allEntries.set(mockEntries);
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
 
     // Subscribe to trigger the store value calculation
 
@@ -393,8 +445,8 @@ describe('collection/view/index', () => {
     vi.mocked(groupEntries).mockReturnValue(groupedEntries);
 
     // Set up the collection and entries
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
-    vi.mocked(allEntries.set)(mockEntries);
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
+    _allEntries.set(mockEntries);
 
     // Set view with sort, filter, and group
 
@@ -421,19 +473,20 @@ describe('collection/view/index', () => {
     unsubscribe();
   });
 
-  test('listedEntries subscription side effect works correctly', async () => {
-    const { selectedEntries } = await import('$lib/services/contents/collection/entries');
+  test('listedEntries subscription resets selectedEntries when entries change', () => {
+    const mockEntries = [{ id: '1', slug: 'post-1', locales: {}, collectionName: 'posts' }];
 
-    // The subscription side effects are tested indirectly through the store behavior
-    // Reset mocks to start fresh
-    vi.clearAllMocks();
+    vi.mocked(getEntriesByCollection).mockReturnValue(/** @type {any} */ (mockEntries));
+    _allEntries.set(mockEntries);
+    _selectedCollection.set(/** @type {any} */ ({ name: 'posts' }));
 
-    // Simulate store update that would trigger the subscription
-    vi.mocked(selectedEntries.set).mockClear();
+    // Subscribe to listedEntries to trigger side-effect
+    const unsubscribe = listedEntries.subscribe(() => {});
 
-    // The listedEntries subscription is set up at module load and calls selectedEntries.set([])
-    // This is verified by checking that the mock was available
-    expect(selectedEntries.set).toBeDefined();
+    unsubscribe();
+
+    // The subscription should have reset selectedEntries to []
+    expect(get(_selectedEntries)).toEqual([]);
   });
 
   test('selectedCollection subscription side effect works correctly', async () => {
@@ -441,70 +494,50 @@ describe('collection/view/index', () => {
     const mockCollection = { name: 'posts', folder: '_posts' };
 
     // The subscription callback exists and can be triggered
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
 
     // Subscribe to verify the store is working
-    const unsubscribe = selectedCollection.subscribe(() => {});
+    const unsubscribe = _selectedCollection.subscribe(() => {});
 
     unsubscribe();
 
     consoleInfoSpy.mockRestore();
   });
 
-  test('listedEntries logs to console when devModeEnabled is true', async () => {
+  test('listedEntries logs to console when devModeEnabled is true', () => {
     const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    const { prefs: mockPrefs } = await import('$lib/services/user/prefs');
 
-    // Re-mock prefs with devModeEnabled true
-    vi.mocked(mockPrefs.subscribe).mockImplementation((handler) => {
-      handler({ devModeEnabled: true });
+    _prefs.set({ devModeEnabled: true });
 
-      return () => {};
-    });
-
+    /** @type {any[]} */
     const mockEntries = [
       { id: '1', slug: 'post-1', subPath: '', locales: {}, sha: 'abc', collectionName: 'posts' },
     ];
 
-    vi.mocked(getEntriesByCollection).mockReturnValue(/** @type {any} */ (mockEntries));
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    _allEntries.set(mockEntries);
+    _selectedCollection.set(/** @type {any} */ ({ name: 'posts' }));
 
-    // Re-import the module to pick up the new mock
-    const { listedEntries: newListedEntries } = await import('./index.js');
-
-    const unsubscribe = newListedEntries.subscribe(() => {
-      // The subscription should have logged in dev mode
-    });
+    const unsubscribe = listedEntries.subscribe(() => {});
 
     unsubscribe();
 
-    // Verify the spy was set up correctly
-    expect(consoleInfoSpy).toBeDefined();
+    // console.info should have been called with the entries
+    expect(consoleInfoSpy).toHaveBeenCalledWith('listedEntries', expect.any(Array));
 
     consoleInfoSpy.mockRestore();
   });
 
-  test('selectedCollection logs to console when devModeEnabled is true and collection exists', async () => {
+  test('selectedCollection logs to console when devModeEnabled is true and collection exists', () => {
     const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    const { prefs: mockPrefs } = await import('$lib/services/user/prefs');
 
-    // Re-mock prefs with devModeEnabled true
-    vi.mocked(mockPrefs.subscribe).mockImplementation((handler) => {
-      handler({ devModeEnabled: true });
-
-      return () => {};
-    });
+    _prefs.set({ devModeEnabled: true });
 
     const mockCollection = { name: 'posts', folder: '_posts' };
-    // Re-import to pick up the new mock
-    const { currentView: newCurrentView } = await import('./index.js');
 
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
 
-    const unsubscribe = newCurrentView.subscribe(() => {});
-
-    unsubscribe();
-
-    expect(consoleInfoSpy).toBeDefined();
+    expect(consoleInfoSpy).toHaveBeenCalledWith('selectedCollection', mockCollection);
 
     consoleInfoSpy.mockRestore();
   });
@@ -529,8 +562,8 @@ describe('collection/view/index', () => {
     vi.mocked(filterEntries).mockReturnValue(filteredEntries);
     vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: filteredEntries }]);
 
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
-    vi.mocked(allEntries.set)(mockEntries);
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
+    _allEntries.set(mockEntries);
 
     currentView.set(
       /** @type {any} */ ({
@@ -571,8 +604,8 @@ describe('collection/view/index', () => {
     vi.mocked(sortEntries).mockReturnValue(sortedEntries);
     vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: sortedEntries }]);
 
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
-    vi.mocked(allEntries.set)(mockEntries);
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
+    _allEntries.set(mockEntries);
 
     currentView.set(
       /** @type {any} */ ({
@@ -606,8 +639,8 @@ describe('collection/view/index', () => {
     vi.mocked(filterEntries).mockReturnValue(filteredEntries);
     vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: filteredEntries }]);
 
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
-    vi.mocked(allEntries.set)(mockEntries);
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
+    _allEntries.set(mockEntries);
 
     currentView.set(
       /** @type {any} */ ({
@@ -624,8 +657,8 @@ describe('collection/view/index', () => {
   });
 
   test('listedEntries handles falsy inputs correctly', () => {
-    vi.mocked(allEntries.set)(/** @type {any} */ ([]));
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (undefined));
+    _allEntries.set(/** @type {any} */ ([]));
+    _selectedCollection.set(/** @type {any} */ (undefined));
 
     const unsubscribe = listedEntries.subscribe(() => {});
 
@@ -637,8 +670,8 @@ describe('collection/view/index', () => {
   test('listedEntries with only allEntries set (no collection)', () => {
     const mockEntries = [{ id: '1', slug: 'post-1', subPath: '', locales: {}, sha: 'abc' }];
 
-    vi.mocked(allEntries.set)(/** @type {any} */ (mockEntries));
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (undefined));
+    _allEntries.set(/** @type {any} */ (mockEntries));
+    _selectedCollection.set(/** @type {any} */ (undefined));
 
     /** @type {any[]} */
     const values = [];
@@ -656,8 +689,8 @@ describe('collection/view/index', () => {
   test('listedEntries with only collection set (no entries)', () => {
     const mockCollection = { name: 'posts', folder: '_posts' };
 
-    vi.mocked(allEntries.set)(/** @type {any} */ (undefined));
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
+    _allEntries.set(/** @type {any} */ (undefined));
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
     vi.mocked(getEntriesByCollection).mockReturnValue([]);
 
     /** @type {any[]} */
@@ -689,8 +722,8 @@ describe('collection/view/index', () => {
     vi.mocked(filterEntries).mockReturnValue(filteredEntries);
     vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: filteredEntries }]);
 
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
-    vi.mocked(allEntries.set)(mockEntries);
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
+    _allEntries.set(mockEntries);
 
     currentView.set(
       /** @type {any} */ ({
@@ -711,28 +744,17 @@ describe('collection/view/index', () => {
     expect(viewValue.filters).toBeDefined();
   });
 
-  test('selectedCollection subscription with devModeEnabled true', async () => {
+  test('selectedCollection subscription with devModeEnabled true', () => {
     const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    const { prefs: mockPrefs } = await import('$lib/services/user/prefs');
 
-    // Mock prefs with devModeEnabled true
-    vi.mocked(mockPrefs.subscribe).mockImplementation((handler) => {
-      handler({ devModeEnabled: true });
-
-      return () => {};
-    });
+    _prefs.set({ devModeEnabled: true });
 
     const mockCollection = { name: 'posts', folder: '_posts' };
 
-    // Re-import to pick up new mock
-    const { selectedCollection: newSelectedCollection } =
-      await import('$lib/services/contents/collection');
+    // Set the collection to trigger the subscription
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
 
-    vi.mocked(newSelectedCollection.set)(/** @type {any} */ (mockCollection));
-
-    const unsubscribe = newSelectedCollection.subscribe(() => {});
-
-    unsubscribe();
+    expect(consoleInfoSpy).toHaveBeenCalledWith('selectedCollection', mockCollection);
 
     consoleInfoSpy.mockRestore();
   });
@@ -744,8 +766,8 @@ describe('collection/view/index', () => {
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
     vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: mockEntries }]);
 
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
-    vi.mocked(allEntries.set)(mockEntries);
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
+    _allEntries.set(mockEntries);
 
     currentView.set({ type: 'list' });
 
@@ -785,8 +807,8 @@ describe('collection/view/index', () => {
       /** @type {any} */ ([{ name: 'about', _path: 'about.md' }]),
     );
 
-    vi.mocked(selectedCollection.set)(/** @type {any} */ (mockCollection));
-    vi.mocked(allEntries.set)(/** @type {any} */ ([mockEntry]));
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
+    _allEntries.set(/** @type {any} */ ([mockEntry]));
 
     const values = [];
 

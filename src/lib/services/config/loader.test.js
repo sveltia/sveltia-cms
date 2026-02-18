@@ -193,6 +193,13 @@ describe('config/loader', () => {
 
       expect(verifyLinksAreSecure(links)).toBe(true);
     });
+
+    test('should return false for links with invalid URLs that throw during parsing (line 144)', () => {
+      // 'http://' with no host causes new URL() to throw a TypeError
+      const links = [{ href: 'http://' }];
+
+      expect(verifyLinksAreSecure(links)).toBe(false);
+    });
   });
 
   describe('fetchCmsConfig', () => {
@@ -663,6 +670,36 @@ collections:
       } catch (error) {
         expect(error.message).toBe('Fetch failed (manual init)');
       }
+    });
+  });
+
+  describe('fetchCmsConfig insecure URL handling (line 167)', () => {
+    beforeEach(() => {
+      global.window = {
+        location: {
+          pathname: '/admin/',
+          origin: 'https://example.com',
+        },
+      };
+    });
+
+    test('should throw error when a single link is on an insecure HTTP URL (line 167)', async () => {
+      const mockLinks = [{ href: 'http://insecure-domain.com/config.yml' }];
+
+      document.querySelectorAll.mockReturnValue(mockLinks);
+
+      await expect(fetchCmsConfig()).rejects.toThrow('config.error.insecure_url');
+    });
+
+    test('should throw error with plural message when multiple insecure links', async () => {
+      const mockLinks = [
+        { href: 'http://insecure-domain.com/config.yml' },
+        { href: 'http://insecure-domain.com/extra.yml' },
+      ];
+
+      document.querySelectorAll.mockReturnValue(mockLinks);
+
+      await expect(fetchCmsConfig()).rejects.toThrow('config.error.insecure_urls');
     });
   });
 });

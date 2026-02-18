@@ -304,6 +304,25 @@ describe('Gemini Translator Service', () => {
       ).rejects.toThrow('Gemini API error: 401 Unauthorized - Invalid API key');
     });
 
+    it('should throw error when API returns non-OK status without error message (line 92)', async () => {
+      const mockFetch = vi.mocked(fetch);
+
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({}), {
+          status: 500,
+          statusText: 'Internal Server Error',
+        }),
+      );
+
+      await expect(
+        geminiTranslator.translate(['Hello'], {
+          sourceLanguage: 'en',
+          targetLanguage: 'fr',
+          apiKey: 'test-key',
+        }),
+      ).rejects.toThrow('Gemini API error: 500 Internal Server Error');
+    });
+
     it('should throw error when response format is invalid', async () => {
       const mockResponse = {
         candidates: [],
@@ -438,6 +457,25 @@ describe('Gemini Translator Service', () => {
           apiKey: 'AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567',
         }),
       ).rejects.toThrow('Network error');
+    });
+
+    it('should wrap non-Error thrown values in a generic error', async () => {
+      const mockFetch = vi.mocked(fetch);
+
+      // Throw a non-Error (string) to trigger the `throw new Error('Failed to translate...')`
+      // branch
+      mockFetch.mockImplementationOnce(() => {
+        // eslint-disable-next-line no-throw-literal
+        throw 'non-error string thrown';
+      });
+
+      await expect(
+        geminiTranslator.translate(['Hello'], {
+          sourceLanguage: 'en',
+          targetLanguage: 'fr',
+          apiKey: 'AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567',
+        }),
+      ).rejects.toThrow('Failed to translate text with Gemini API.');
     });
 
     it('should make API request with correct payload structure', async () => {
