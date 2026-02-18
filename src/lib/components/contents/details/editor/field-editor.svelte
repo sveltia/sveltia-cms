@@ -273,7 +273,9 @@
       {/if}
     </header>
     {#if !readonly && comment}
-      <p class="comment">{@html _sanitize(comment)}</p>
+      <div role="none" class="comment-wrapper">
+        <p class="comment">{@html _sanitize(comment)}</p>
+      </div>
     {/if}
     {#if validity?.valid === false}
       <ValidationError id="{fieldId}-error">
