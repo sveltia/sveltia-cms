@@ -88,12 +88,12 @@
         margin: 1em 0 0;
       }
 
-      :is(:global(video, img)) {
+      :is(video, img) {
         max-width: 100%;
         max-height: 100%;
       }
 
-      :is(:global(a:has(img))) {
+      :is(a:has(img)) {
         display: inline-block;
 
         img {

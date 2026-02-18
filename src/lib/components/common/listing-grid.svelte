@@ -36,7 +36,7 @@
 </div>
 
 <style lang="scss">
-  :is(:global(.grid-view, .list-view)) {
+  :is(.grid-view, .list-view) {
     display: block;
     padding: 0 16px 16px;
     height: 100%;
@@ -111,7 +111,7 @@
           cursor: pointer;
           transition: background-color 200ms;
 
-          &:is(:global(:hover, :focus, :active)) {
+          &:is(:hover, :focus, :active) {
             background-color: var(--sui-hover-background-color);
           }
         }

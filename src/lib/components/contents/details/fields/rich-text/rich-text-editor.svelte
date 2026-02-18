@@ -434,7 +434,7 @@
           width: 100dvw;
         }
 
-        :is(:global(.sui.toolbar, .lexical-root, textarea)) {
+        :is(.sui.toolbar, .lexical-root, textarea) {
           border: 0;
           border-radius: 0;
         }
