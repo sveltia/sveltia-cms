@@ -130,20 +130,50 @@ export const createCustomNodeClass = (componentDef) => {
 
         editor ??= getNearestEditorFromDOMNode(wrapper);
 
-        editor?.update(() => {
-          if (type === 'update') {
-            try {
-              this.getWritable().__props = detail;
-            } catch {
-              //
-            }
-          }
+        // Save the currently focused element and selection to restore after the update.
+        // This prevents the parent Lexical editor from stealing focus when updating node props.
+        const { activeElement } = document;
+        const activeEl = /** @type {HTMLElement | null} */ (activeElement);
 
-          if (type === 'remove') {
-            unmount(component);
-            this.remove();
-          }
-        });
+        const selection = activeEl?.matches('[contenteditable="true"]')
+          ? window.getSelection()
+          : null;
+
+        const selectionRange =
+          selection && selection.rangeCount > 0 ? selection.getRangeAt(0).cloneRange() : null;
+
+        editor?.update(
+          () => {
+            if (type === 'update') {
+              try {
+                this.getWritable().__props = detail;
+              } catch {
+                //
+              }
+            }
+
+            if (type === 'remove') {
+              unmount(component);
+              this.remove();
+            }
+          },
+          {
+            discrete: true,
+            /**
+             * Restore focus and selection after the Lexical update completes.
+             */
+            onUpdate: () => {
+              if (activeEl && document.body.contains(activeEl)) {
+                activeEl.focus();
+
+                if (selectionRange && selection) {
+                  selection.removeAllRanges();
+                  selection.addRange(selectionRange);
+                }
+              }
+            },
+          },
+        );
       };
 
       component = mount(Component, {
