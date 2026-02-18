@@ -264,6 +264,10 @@
           }
         }
       }
+
+      .sui.button.tertiary.small {
+        margin: var(--sui-focus-ring-width);
+      }
     }
 
     & > div {
