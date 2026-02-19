@@ -99,7 +99,7 @@
             }}
           >
             {#snippet startIcon()}
-              <Icon name={'bookmark_manager'} />
+              <Icon name="bookmark_manager" />
             {/snippet}
             {#snippet endIcon()}
               <span

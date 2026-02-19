@@ -26,7 +26,7 @@
         $prefs = { ...$prefs, theme: event.detail.value };
       }}
     >
-      {#each ['auto', 'dark', 'light'] as value}
+      {#each ['auto', 'dark', 'light'] as value (value)}
         <SelectButton
           variant="tertiary"
           label={$_(`prefs.theme.${value}`)}

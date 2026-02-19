@@ -39,7 +39,7 @@
           {$_($cmsConfigErrors.length === 1 ? 'config.one_error' : 'config.many_errors')}
         </div>
         <ul class="error">
-          {#each $cmsConfigErrors as error}
+          {#each $cmsConfigErrors as error (error)}
             <li>
               {@render parseMarkdown(error)}
             </li>

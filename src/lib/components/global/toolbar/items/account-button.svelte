@@ -29,7 +29,7 @@
       {:else if hasAvatar}
         <img class="avatar" loading="lazy" src={$user?.avatarURL} alt="" />
       {:else}
-        <Icon name={'account_circle'} />
+        <Icon name="account_circle" />
       {/if}
     {/snippet}
     {#snippet popup()}

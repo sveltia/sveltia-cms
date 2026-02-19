@@ -76,7 +76,7 @@
       </tr>
     </thead>
     <tbody>
-      {#each pairs as [key, value]}
+      {#each pairs as [key, value], index (`${key}-${index}`)}
         <tr>
           <td>{key}</td>
           <td>{value}</td>

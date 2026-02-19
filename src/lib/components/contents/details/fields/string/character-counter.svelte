@@ -47,10 +47,12 @@
   >
     {#if hasMin}
       {minlength}
+      <!-- eslint-disable-next-line svelte/no-useless-mustaches -->
       {' / '}
     {/if}
     <span role="none" class="count" class:invalid>{count}</span>
     {#if hasMax}
+      <!-- eslint-disable-next-line svelte/no-useless-mustaches -->
       {' / '}
       {maxlength}
     {/if}

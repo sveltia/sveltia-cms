@@ -46,7 +46,7 @@
         <TableRow>
           <TableCell class="feature">{$_(`keyboard_shortcuts_.${feature}`)}</TableCell>
           <TableCell class="keys">
-            {#each keys.split('+') as key}
+            {#each keys.split('+') as key (key)}
               <kbd>{key.replace('Accel', $isMacOS ? '⌘' : 'Ctrl')}</kbd>
             {/each}
           </TableCell>

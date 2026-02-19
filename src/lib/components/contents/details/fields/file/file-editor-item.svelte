@@ -90,6 +90,7 @@
       // Truncate query string for display. This is mainly for Unsplash URLs which have a long query
       // string for image parameters.
       if (isURL(decodedValue)) {
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const url = new URL(decodedValue);
 
         if (url.search) {

@@ -37,7 +37,8 @@
   {#snippet popup()}
     <Menu aria-label={$_('filtering_options')} aria-controls={ariaControls}>
       {#if multiple}
-        {#each filters as { label: _label, field, pattern }}
+        {#each filters as filter (JSON.stringify(filter))}
+          {@const { label: _label, field, pattern } = filter}
           {@const index = ($currentView.filters || []).findIndex(
             (f) => f.field === field && String(f.pattern) === String(pattern),
           )}
@@ -70,7 +71,8 @@
             }));
           }}
         />
-        {#each filters as { label: _label, field, pattern }}
+        {#each filters as filter (JSON.stringify(filter))}
+          {@const { label: _label, field, pattern } = filter}
           <MenuItemRadio
             label={_label}
             checked={$currentView.filter?.field === field &&

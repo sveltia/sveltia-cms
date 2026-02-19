@@ -19,6 +19,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  // eslint-disable-next-line svelte/prefer-writable-derived
   let checked = $state(true);
 
   $effect(() => {

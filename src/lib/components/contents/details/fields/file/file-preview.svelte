@@ -32,7 +32,7 @@
 
 {#if isMultiple(fieldConfig)}
   {#if Array.isArray(currentValue)}
-    {#each currentValue as value}
+    {#each currentValue as value (value)}
       <FilePreviewItem {value} {fieldConfig} />
     {/each}
   {/if}

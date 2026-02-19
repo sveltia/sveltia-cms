@@ -10,6 +10,7 @@
   import { formatSize } from '$lib/services/utils/file';
 
   /** @type {File[]} */
+  // eslint-disable-next-line svelte/prefer-writable-derived
   let files = $state([]);
 
   const { files: originalFiles, folder, originalAsset } = $derived($uploadingAssets);

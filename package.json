@@ -79,7 +79,7 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsdoc": "^62.6.0",
     "eslint-plugin-package-json": "^0.88.3",
-    "eslint-plugin-svelte": "^2.46.1",
+    "eslint-plugin-svelte": "^3.15.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.3.0",
     "jsonc-eslint-parser": "^2.4.2",

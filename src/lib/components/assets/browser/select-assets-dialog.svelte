@@ -343,7 +343,7 @@
 
 <Dialog
   {title}
-  size={'x-large'}
+  size="x-large"
   okLabel={$_('insert')}
   okDisabled={!selectedResources.length}
   keepContent={true}

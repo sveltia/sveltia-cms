@@ -19,7 +19,7 @@
     bind:this={menuButton}
   >
     {#snippet endIcon()}
-      <Icon name={'help'} />
+      <Icon name="help" />
     {/snippet}
     {#snippet popup()}
       <HelpMenu {menuButton} />

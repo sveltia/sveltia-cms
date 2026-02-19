@@ -29,7 +29,7 @@
           $prefs = { ...$prefs, locale: event.detail.value };
         }}
       >
-        {#each $appLocales as locale}
+        {#each $appLocales as locale (locale)}
           <Option
             label={getLocaleLabel(locale, { displayLocale: locale }) ?? locale}
             value={locale}

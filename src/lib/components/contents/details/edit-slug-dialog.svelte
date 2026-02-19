@@ -67,7 +67,7 @@
     {$_('edit_slug_warning')}
   </Alert>
   <div role="none" class="locales">
-    {#each Object.keys(updatedSlugs) as locale}
+    {#each Object.keys(updatedSlugs) as locale (locale)}
       <section>
         {#if !['_', '_default'].includes(locale)}
           <div role="none">

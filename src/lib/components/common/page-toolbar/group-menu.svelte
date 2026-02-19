@@ -44,7 +44,8 @@
           }));
         }}
       />
-      {#each groups as { label: _label, field, pattern }}
+      {#each groups as group (JSON.stringify(group))}
+        {@const { label: _label, field, pattern } = group}
         <MenuItemRadio
           label={_label}
           checked={$currentView.group?.field === field &&

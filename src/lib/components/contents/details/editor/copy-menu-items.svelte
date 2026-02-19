@@ -46,7 +46,7 @@
     (translate && !(await $translator?.availability({ sourceLanguage, targetLanguage })));
 </script>
 
-{#each otherLocales as otherLocale}
+{#each otherLocales as otherLocale (otherLocale)}
   {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
   {#await isMenuDisabled(languagePair) then disabled}
     <MenuItem
