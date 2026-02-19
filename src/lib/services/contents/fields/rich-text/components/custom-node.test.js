@@ -1,5 +1,5 @@
 // @ts-nocheck
-/* eslint-disable jsdoc/require-jsdoc, max-classes-per-file */
+/* eslint-disable jsdoc/require-jsdoc */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

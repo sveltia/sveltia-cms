@@ -169,7 +169,6 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
       return parseFrontMatter({
         collection,
         collectionFile,
-        // eslint-disable-next-line object-shorthand
         format: /** @type {FrontMatterFormat} */ (format),
         text,
       });

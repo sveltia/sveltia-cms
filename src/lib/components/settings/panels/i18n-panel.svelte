@@ -14,9 +14,9 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const, no-unused-vars */
+    /* eslint-disable prefer-const */
     onChange = undefined,
-    /* eslint-enable prefer-const, no-unused-vars */
+    /* eslint-enable prefer-const */
   } = $props();
 </script>
 

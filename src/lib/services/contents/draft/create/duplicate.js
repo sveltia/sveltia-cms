@@ -63,7 +63,6 @@ export const duplicateDraft = () => {
           Object.assign(
             valueMap,
             getHiddenFieldDefaultValueMap({
-              // eslint-disable-next-line object-shorthand
               fieldConfig: /** @type {HiddenField} */ (fieldConfig),
               keyPath,
               locale,

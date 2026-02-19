@@ -25,7 +25,6 @@ export const getFillSlugOptions = ({ draft }) => {
   } = collectionFile ?? collection;
 
   return {
-    // eslint-disable-next-line object-shorthand
     collection: /** @type {InternalEntryCollection} */ (collection),
     content: {
       ...currentValues[defaultLocale],

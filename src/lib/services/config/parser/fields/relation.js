@@ -1,5 +1,3 @@
-/* eslint-disable camelcase */
-
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**

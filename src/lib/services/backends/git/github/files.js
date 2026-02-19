@@ -109,7 +109,6 @@ export const parseFileContents = async (fetchingFiles, results) => {
 
     const data = {
       sha,
-      // eslint-disable-next-line object-shorthand
       size: /** @type {number} */ (size),
       text: results[`content_${index}`]?.text,
       meta: {

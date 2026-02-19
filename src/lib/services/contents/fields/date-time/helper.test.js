@@ -1,5 +1,3 @@
-/* eslint-disable max-classes-per-file */
-
 import dayjs from 'dayjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 

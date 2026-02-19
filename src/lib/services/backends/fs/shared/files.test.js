@@ -1,4 +1,4 @@
-/* eslint-disable jsdoc/require-jsdoc, func-names, object-shorthand, no-unused-vars, no-plusplus */
+/* eslint-disable jsdoc/require-jsdoc, func-names, object-shorthand */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -1315,9 +1315,7 @@ describe('deleteEmptyParentDirs', () => {
 
     // Mock entries() method for async iteration
     // @ts-ignore - Mock async iterator
-    // eslint-disable-next-line jsdoc/require-jsdoc
     dirHandle.entries = vi.fn(() => ({
-      // eslint-disable-next-line jsdoc/require-jsdoc, func-names, object-shorthand
       [Symbol.asyncIterator]: async function* () {
         yield ['file1.txt', createMockFileHandle('file1.txt')];
         yield ['file2.txt', createMockFileHandle('file2.txt')];
@@ -1598,9 +1596,7 @@ describe('scanDir', () => {
     fileHandle.getFile = vi.fn().mockRejectedValue(new Error('Permission denied'));
 
     // @ts-ignore - Mock async iterator
-    // eslint-disable-next-line jsdoc/require-jsdoc
     dirHandle.entries = vi.fn(() => ({
-      // eslint-disable-next-line jsdoc/require-jsdoc, func-names, object-shorthand
       [Symbol.asyncIterator]: async function* () {
         yield ['error.txt', fileHandle];
       },
@@ -1625,9 +1621,7 @@ describe('scanDir', () => {
     const parentDirHandle = createMockDirectoryHandle('parent');
 
     // @ts-ignore - Mock async iterator
-    // eslint-disable-next-line jsdoc/require-jsdoc
     parentDirHandle.entries = vi.fn(() => ({
-      // eslint-disable-next-line jsdoc/require-jsdoc, func-names, object-shorthand
       [Symbol.asyncIterator]: async function* () {
         yield ['nested', nestedDirHandle];
       },
@@ -1655,9 +1649,7 @@ describe('scanDir', () => {
     const gitignoreFile = createMockFileHandle('.gitignore');
 
     // @ts-ignore - Mock async iterator
-    // eslint-disable-next-line jsdoc/require-jsdoc
     dirHandle.entries = vi.fn(() => ({
-      // eslint-disable-next-line jsdoc/require-jsdoc, func-names, object-shorthand
       [Symbol.asyncIterator]: async function* () {
         yield ['.hidden', hiddenFile];
         yield ['.gitignore', gitignoreFile];
@@ -1684,18 +1676,14 @@ describe('scanDir', () => {
     const parentDirHandle = createMockDirectoryHandle('parent');
 
     // @ts-ignore - Mock async iterator for parent
-    // eslint-disable-next-line jsdoc/require-jsdoc
     parentDirHandle.entries = vi.fn(() => ({
-      // eslint-disable-next-line jsdoc/require-jsdoc, func-names, object-shorthand
       [Symbol.asyncIterator]: async function* () {
         yield ['nested', nestedDirHandle];
       },
     }));
 
     // @ts-ignore - Mock async iterator for nested
-    // eslint-disable-next-line jsdoc/require-jsdoc
     nestedDirHandle.entries = vi.fn(() => ({
-      // eslint-disable-next-line jsdoc/require-jsdoc, func-names, object-shorthand
       [Symbol.asyncIterator]: async function* () {
         yield ['file.txt', fileHandle];
       },

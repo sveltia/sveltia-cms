@@ -1,5 +1,3 @@
-/* eslint-disable camelcase */
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**

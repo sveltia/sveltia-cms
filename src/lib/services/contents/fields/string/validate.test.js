@@ -1,7 +1,4 @@
-/* eslint-disable jsdoc/require-returns-description */
-/* eslint-disable jsdoc/require-jsdoc */
-/* eslint-disable jsdoc/require-returns */
-/* eslint-disable jsdoc/require-description */
+/* eslint-disable jsdoc/require-jsdoc, jsdoc/require-returns-description */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 

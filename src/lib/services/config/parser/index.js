@@ -1,5 +1,3 @@
-/* eslint-disable camelcase */
-
 import { parseBackendConfig } from '$lib/services/config/parser/backend';
 import { parseCollections } from '$lib/services/config/parser/collections';
 import { parseMediaConfig } from '$lib/services/config/parser/media';

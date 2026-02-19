@@ -104,7 +104,6 @@ export const createEntryPath = ({ draft, locale, slug }) => {
   }
 
   const pathString = buildPathByStructure({
-    // eslint-disable-next-line object-shorthand
     basePath: /** @type {string} */ (basePath),
     path,
     extension,

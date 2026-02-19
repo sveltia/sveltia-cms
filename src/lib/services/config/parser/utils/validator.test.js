@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**

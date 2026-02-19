@@ -121,7 +121,6 @@ describe('getMediaMetadata', () => {
        * Sets the src property to trigger video metadata load.
        * @param {string} value The video source URL.
        */
-      // eslint-disable-next-line jsdoc/require-jsdoc
       set src(value) {
         // Trigger loadedmetadata event when src is set
       },
@@ -181,7 +180,6 @@ describe('getMediaMetadata', () => {
        * Sets the src property to trigger audio metadata load.
        * @param {string} value The audio source URL.
        */
-      // eslint-disable-next-line jsdoc/require-jsdoc
       set src(value) {
         // Trigger loadedmetadata event when src is set
       },

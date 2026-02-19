@@ -155,7 +155,6 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
       // Store only the handle and path. Metadata will be extracted later when needed, avoiding
       // memory leaks from holding multiple file references during directory scanning.
       fileHandles.push({
-        // eslint-disable-next-line object-shorthand
         handle: /** @type {FileSystemFileHandle} */ (handle),
         path,
       });

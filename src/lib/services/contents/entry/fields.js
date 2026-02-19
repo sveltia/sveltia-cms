@@ -321,7 +321,6 @@ export const getFieldDisplayValue = ({
     if (!transformations?.some((tf) => DATE_TRANSFORMATION_REGEX.test(tf))) {
       value = getDateTimeFieldDisplayValue({
         locale,
-        // eslint-disable-next-line object-shorthand
         fieldConfig: /** @type {DateTimeField} */ (fieldConfig),
         currentValue: value,
       });
@@ -330,7 +329,6 @@ export const getFieldDisplayValue = ({
 
   if (fieldConfig?.widget === 'relation') {
     value = getReferencedOptionLabel({
-      // eslint-disable-next-line object-shorthand
       fieldConfig: /** @type {RelationField} */ (fieldConfig),
       valueMap,
       keyPath,
@@ -340,7 +338,6 @@ export const getFieldDisplayValue = ({
 
   if (fieldConfig?.widget === 'select') {
     value = getOptionLabel({
-      // eslint-disable-next-line object-shorthand
       fieldConfig: /** @type {SelectField} */ (fieldConfig),
       valueMap,
       keyPath,
@@ -478,7 +475,6 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
     // Resolve the displayed value for a relation field
     if (fieldConfig?.widget === 'relation') {
       return getReferencedOptionLabel({
-        // eslint-disable-next-line object-shorthand
         fieldConfig: /** @type {RelationField} */ (fieldConfig),
         valueMap: content,
         keyPath: key,

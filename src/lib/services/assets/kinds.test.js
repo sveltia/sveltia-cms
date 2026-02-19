@@ -87,7 +87,6 @@ describe('assets/kinds', () => {
      */
     const createMockAsset = (path, kind) => ({
       path,
-      // eslint-disable-next-line object-shorthand
       kind: /** @type {import('$lib/types/private').AssetKind} */ (kind),
       name: path.split('/').pop() || '',
       sha: 'abc123',
@@ -323,7 +322,6 @@ describe('assets/kinds', () => {
      */
     const createMockAsset = (path, kind) => ({
       path,
-      // eslint-disable-next-line object-shorthand
       kind: /** @type {import('$lib/types/private').AssetKind} */ (kind),
       name: path.split('/').pop() || '',
       sha: 'abc123',

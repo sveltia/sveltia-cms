@@ -1,5 +1,3 @@
-/* eslint-disable camelcase */
-
 import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';

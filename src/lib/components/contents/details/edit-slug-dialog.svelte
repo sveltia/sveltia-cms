@@ -17,11 +17,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false) } = $props();
 
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const currentSlugs = $derived($entryDraft?.currentSlugs ?? {});

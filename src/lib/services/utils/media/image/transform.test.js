@@ -59,7 +59,6 @@ describe('Image Transform Functions', () => {
        * @returns {string} Mock blob URL.
        */
       static createObjectURL(blob) {
-        // eslint-disable-next-line no-unused-vars
         void blob;
         return 'blob:mock-url';
       }
@@ -69,7 +68,6 @@ describe('Image Transform Functions', () => {
        * @param {string} url The URL to revoke.
        */
       static revokeObjectURL(url) {
-        // eslint-disable-next-line no-unused-vars
         void url;
         // Mock implementation
       }
@@ -104,7 +102,6 @@ describe('Image Transform Functions', () => {
        * @param {string} value The image source URL.
        */
       set src(value) {
-        // eslint-disable-next-line no-unused-vars
         void value;
         // Trigger load event when src is set
       }

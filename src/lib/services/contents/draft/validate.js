@@ -248,7 +248,6 @@ export const validateAnyField = (args) => {
   // Check the number of characters
   if (['string', 'text'].includes(fieldType)) {
     const result = validateStringField({
-      // eslint-disable-next-line object-shorthand
       fieldConfig: /** @type {StringField | TextField} */ (fieldConfig),
       value,
     });

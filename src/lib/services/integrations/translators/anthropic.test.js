@@ -432,7 +432,6 @@ describe('Anthropic Translator Service', () => {
     it('should handle unknown errors', async () => {
       const mockFetch = vi.mocked(fetch);
 
-      // eslint-disable-next-line prefer-promise-reject-errors
       mockFetch.mockRejectedValueOnce('Unknown error');
 
       await expect(anthropicTranslator.translate(['test'], mockOptions)).rejects.toThrow(

@@ -15,11 +15,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false) } = $props();
 
   const associatedAssets = $derived.by(() => {
     const collectionName = $selectedCollection?.name;
