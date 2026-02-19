@@ -96,6 +96,7 @@
 <div role="none">
   <input
     type={dateOnly ? 'date' : timeOnly ? 'time' : 'datetime-local'}
+    max={dateOnly ? '9999-12-31' : timeOnly ? undefined : '9999-12-31T23:59'}
     bind:value={inputValue}
     {readonly}
     aria-readonly={readonly}
