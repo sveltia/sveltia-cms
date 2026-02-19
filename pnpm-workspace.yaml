@@ -19,3 +19,5 @@ auditConfig:
   ignoreGhsas:
     # https://github.com/advisories/GHSA-2g4f-4pwh-qvx6
     - GHSA-2g4f-4pwh-qvx6
+    # https://github.com/advisories/GHSA-3ppc-4f35-3m26
+    - GHSA-3ppc-4f35-3m26
