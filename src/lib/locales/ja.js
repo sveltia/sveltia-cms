@@ -455,12 +455,14 @@ export const strings = {
   validation: {
     value_missing: 'この項目は必須です。',
     range_underflow: {
+      number: '値は {min} 以上でなければなりません。',
       select_many: '少なくとも {min} 個の項目を選択してください。',
       select_one: '少なくとも {min} 個の項目を選択してください。',
       add_many: '少なくとも {min} 個の項目を追加してください。',
       add_one: '少なくとも {min} 個の項目を追加してください。',
     },
     range_overflow: {
+      number: '値は {max} 以下でなければなりません。',
       select_many: '選択できるのは最大で {max} 項目です。',
       select_one: '選択できるのは最大で {max} 項目です。',
       add_many: '追加できるのは最大で {max} 項目です。',
