@@ -25,6 +25,9 @@ export default [
   ...sveltePlugin.configs['flat/recommended'],
   ...sveltePlugin.configs['flat/prettier'],
 
+  // package.json linting
+  pkgJsonPlugin.configs.recommended,
+
   // Custom settings for all JS/Svelte files
   {
     languageOptions: {
@@ -180,9 +183,11 @@ export default [
         { blankLine: 'any', prev: ['export', 'import'], next: ['export', 'import'] },
       ],
       quotes: ['error', 'single', { avoidEscape: true }],
+      // Disable some package-json rules
+      'package-json/require-exports': 'off',
+      'package-json/require-files': 'off',
+      'package-json/require-sideEffects': 'off',
+      'package-json/require-attribution': 'off',
     },
   },
-
-  // package.json linting
-  pkgJsonPlugin.configs.recommended,
 ];
