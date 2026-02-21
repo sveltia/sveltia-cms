@@ -163,7 +163,7 @@
       </tr>
     </thead>
     <tbody>
-      {#each pairs as pair, index (JSON.stringify(pair))}
+      {#each pairs as pair, index (`${pair[0]}-${index}`)}
         <tr bind:this={rowElements[index]}>
           <td class="key">
             <TextInput

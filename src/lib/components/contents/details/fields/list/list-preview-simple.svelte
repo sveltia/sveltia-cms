@@ -29,7 +29,7 @@
 
 {#if Array.isArray(currentValue) && currentValue.length}
   <ul lang={getCanonicalLocale(locale)} dir="auto">
-    {#each currentValue as item (item)}
+    {#each currentValue as item, index (`${item}-${index}`)}
       <li>{item}</li>
     {/each}
   </ul>

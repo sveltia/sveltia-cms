@@ -108,7 +108,7 @@
               {#if !$isSmallScreen || viewType === 'list'}
                 <span role="none" class="name">
                   <TruncatedText lines={2}>
-                    {#each pathArray as segment, index (index)}
+                    {#each pathArray as segment, index (`${segment}-${index}`)}
                       {#if index === pathArray.length - 1}
                         <!-- File name -->
                         <strong>{@render getLabel(segment)}</strong>

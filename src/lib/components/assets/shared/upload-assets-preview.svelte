@@ -27,7 +27,7 @@
 </script>
 
 <div role="list" class="files">
-  {#each files as file, index (index)}
+  {#each files as file, index (`${file.name}-${index}`)}
     {#await sleep() then}
       {@const { name, type, size } = file}
       {@const originalFile = transformedFileMap?.get(file)}
