@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { entryDraft } from '$lib/services/contents/draft';
@@ -25,7 +24,9 @@ vi.mock('svelte/store', async () => {
 });
 
 describe('draft/update/locale', () => {
+  /** @type {any} */
   let mockEntryDraft;
+  /** @type {any} */
   let mockUpdate;
   let mockGet;
 
@@ -114,7 +115,7 @@ describe('draft/update/locale', () => {
   describe('copyDefaultLocaleValues', () => {
     it('should copy values from default locale', () => {
       const content = {};
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // Translatable fields should be empty when not provided in content
       expect(result.title).toBe('');
@@ -125,14 +126,14 @@ describe('draft/update/locale', () => {
 
     it('should reset translatable text fields to empty when not provided', () => {
       const content = {};
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       expect(result.title).toBe('');
     });
 
     it('should not copy non-translatable fields to other locales', () => {
       const content = {};
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // Fields with i18n: false should NOT be copied to new locales
       expect(result.date).toBeUndefined();
@@ -148,14 +149,14 @@ describe('draft/update/locale', () => {
       });
 
       const content = { title: 'Title' };
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       expect(result.title).toBeUndefined();
     });
 
     it('should preserve existing values for translatable fields', () => {
       const content = { title: 'Existing Translation', body: '' };
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // Existing values in content should be preserved
       expect(result.title).toBe('Existing Translation');
@@ -176,7 +177,7 @@ describe('draft/update/locale', () => {
       });
 
       const content = {};
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // Richtext fields with i18n enabled should be reset to empty string
       expect(result.title).toBe('');
@@ -197,7 +198,7 @@ describe('draft/update/locale', () => {
       });
 
       const content = { body: 'Existing Richtext Translation' };
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // Existing richtext values should be preserved
       expect(result.body).toBe('Existing Richtext Translation');
@@ -227,7 +228,7 @@ describe('draft/update/locale', () => {
         'date.timestamp': '123456',
       };
 
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // date is i18n: false, so it should be removed
       expect(result.date).toBeUndefined();
@@ -248,7 +249,7 @@ describe('draft/update/locale', () => {
       mockEntryDraft.currentValues.en.metadata = { key: 'value' };
 
       const content = { metadata: { key: 'translated' } };
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // Object field with i18n: true and existing value in default locale should be deleted
       expect(result.metadata).toBeUndefined();
@@ -266,7 +267,7 @@ describe('draft/update/locale', () => {
       mockEntryDraft.currentValues.en.seo = { title: 'SEO Title' };
 
       const content = { seo: { title: 'Translated SEO' } };
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // Object field with i18n: "translate" and existing value in default locale should be deleted
       expect(result.seo).toBeUndefined();
@@ -284,7 +285,7 @@ describe('draft/update/locale', () => {
       mockEntryDraft.currentValues.en.config = { mode: 'prod' };
 
       const content = { config: { mode: 'dev' } };
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // Object field with i18n: "duplicate" and existing value in default locale should be deleted
       expect(result.config).toBeUndefined();
@@ -302,7 +303,7 @@ describe('draft/update/locale', () => {
       mockEntryDraft.currentValues.en.metadata = null;
 
       const content = { metadata: { key: 'value' } };
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // Object field with null value in default locale should NOT be deleted
       // After merge with null from default locale, it becomes null (not deleted, but overwritten by
@@ -322,10 +323,232 @@ describe('draft/update/locale', () => {
       mockEntryDraft.currentValues.en.metadata = { key: 'value' };
 
       const content = { metadata: { key: 'value' } };
-      const result = copyDefaultLocaleValues(content);
+      const result = copyDefaultLocaleValues(content, 'en');
 
       // Object field with i18n: false should be removed by i18n disabled rule, not object rule
       expect(result.metadata).toBeUndefined();
+    });
+
+    it('should replace {{locale}} placeholder for hidden field with i18n: true (lines 53-63)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'locale_code') {
+          return {
+            name: 'locale_code',
+            widget: 'hidden',
+            i18n: true,
+            default: '{{locale}}',
+          };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      const content = { locale_code: 'en' };
+      const result = copyDefaultLocaleValues(content, 'fr');
+
+      // Hidden field with default: '{{locale}}' should be replaced with target language
+      expect(result.locale_code).toBe('fr');
+    });
+
+    it('should replace {{locale}} placeholder for hidden field with i18n: "translate" (lines 53-63)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'lang') {
+          return {
+            name: 'lang',
+            widget: 'hidden',
+            i18n: 'translate',
+            default: '{{locale}}',
+          };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      const content = { lang: 'en' };
+      const result = copyDefaultLocaleValues(content, 'de');
+
+      // Hidden field with i18n: 'translate' and default: '{{locale}}' should be replaced
+      expect(result.lang).toBe('de');
+    });
+
+    it('should not replace placeholder if default is not "{{locale}}" for hidden field (lines 53-63)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'locale_code') {
+          return {
+            name: 'locale_code',
+            widget: 'hidden',
+            i18n: true,
+            default: 'fixed_value',
+          };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      const content = { locale_code: 'en' };
+      const result = copyDefaultLocaleValues(content, 'es');
+
+      // Hidden field with different default value should not be replaced
+      expect(result.locale_code).toBe('en');
+    });
+
+    it('should not apply locale replacement for hidden field with i18n: false (lines 53-63)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'locale_code') {
+          return {
+            name: 'locale_code',
+            widget: 'hidden',
+            i18n: false,
+            default: '{{locale}}',
+          };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      const content = { locale_code: 'en' };
+      const result = copyDefaultLocaleValues(content, 'it');
+
+      // Hidden field with i18n: false should not apply locale replacement
+      // It should be removed entirely by the i18n disabled rule
+      expect(result.locale_code).toBeUndefined();
+    });
+
+    it('should not apply locale replacement for hidden field with i18n: "none" (lines 53-63)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'system_id') {
+          return {
+            name: 'system_id',
+            widget: 'hidden',
+            i18n: 'none',
+            default: '{{locale}}',
+          };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      const content = { system_id: 'en' };
+      const result = copyDefaultLocaleValues(content, 'pt');
+
+      // Hidden field with i18n: 'none' should be removed and not have locale replacement
+      expect(result.system_id).toBeUndefined();
+    });
+
+    it('should replace {{locale}} with correct locale code when multiple locales present (lines 53-63)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'locale_code') {
+          return {
+            name: 'locale_code',
+            widget: 'hidden',
+            i18n: true,
+            default: '{{locale}}',
+          };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      // Test with different target languages
+      const testCases = [
+        { targetLanguage: 'en', expected: 'en' },
+        { targetLanguage: 'ja', expected: 'ja' },
+        { targetLanguage: 'zh-CN', expected: 'zh-CN' },
+      ];
+
+      testCases.forEach(({ targetLanguage, expected }) => {
+        const content = { locale_code: 'en' };
+        const result = copyDefaultLocaleValues(content, targetLanguage);
+
+        expect(result.locale_code).toBe(expected);
+      });
+    });
+
+    it('should handle multiple hidden fields with {{locale}} placeholder (lines 53-63)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'locale_code') {
+          return {
+            name: 'locale_code',
+            widget: 'hidden',
+            i18n: true,
+            default: '{{locale}}',
+          };
+        }
+
+        if (keyPath === 'language') {
+          return {
+            name: 'language',
+            widget: 'hidden',
+            i18n: 'translate',
+            default: '{{locale}}',
+          };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      const content = { locale_code: 'en', language: 'en' };
+      const result = copyDefaultLocaleValues(content, 'ko');
+
+      // Both hidden fields should have locale replacement
+      expect(result.locale_code).toBe('ko');
+      expect(result.language).toBe('ko');
+    });
+
+    it('should preserve existing value in content and not apply {{locale}} replacement (lines 53-63)', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'locale_code') {
+          return {
+            name: 'locale_code',
+            widget: 'hidden',
+            i18n: true,
+            default: '{{locale}}',
+          };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        return undefined;
+      });
+
+      // Content already has a value from merge with default locale
+      mockEntryDraft.currentValues.en.locale_code = 'en';
+
+      const content = { locale_code: 'en' };
+      const result = copyDefaultLocaleValues(content, 'fr');
+
+      // The existing value from merge should be overwritten with the target locale
+      expect(result.locale_code).toBe('fr');
     });
   });
 

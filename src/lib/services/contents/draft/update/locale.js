@@ -10,14 +10,16 @@ import { getField } from '$lib/services/contents/entry/fields';
 /**
  * @import { Writable } from 'svelte/store';
  * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
+ * @import { HiddenField } from '$lib/types/public';
  */
 
 /**
  * Populate the given localized content with values from the default locale.
  * @param {FlattenedEntryContent} content Original content for the current locale.
+ * @param {InternalLocaleCode} targetLanguage Target locale.
  * @returns {FlattenedEntryContent} Updated content.
  */
-export const copyDefaultLocaleValues = (content) => {
+export const copyDefaultLocaleValues = (content, targetLanguage) => {
   const { collectionName, fileName, collection, collectionFile, currentValues, isIndexFile } =
     /** @type {EntryDraft} */ (get(entryDraft));
 
@@ -47,6 +49,16 @@ export const copyDefaultLocaleValues = (content) => {
       [true, 'translate'].includes(i18n)
     ) {
       newContent[keyPath] = content[keyPath] ?? '';
+    }
+
+    // Support special case for the Hidden field with `default` value set to `{{locale}}`: if the
+    // field value is `{{locale}}`, replace it with the target locale
+    if (fieldType === 'hidden' && [true, 'translate'].includes(i18n)) {
+      const { default: defaultValue } = /** @type {HiddenField} */ (field);
+
+      if (defaultValue === '{{locale}}') {
+        newContent[keyPath] = targetLanguage;
+      }
     }
 
     // Remove `null` values for object fields if i18n is enabled and the field is enabled in the
@@ -95,7 +107,7 @@ export const toggleLocale = (locale) => {
           [locale]: createProxy({
             draft: { collectionName, fileName },
             locale,
-            target: copyDefaultLocaleValues(newContent),
+            target: copyDefaultLocaleValues(newContent, locale),
           }),
         },
       };
