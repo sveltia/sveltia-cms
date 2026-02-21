@@ -1,7 +1,13 @@
 import { init as initI18n } from 'svelte-i18n';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { cmsConfig, cmsConfigErrors, cmsConfigVersion, DEV_SITE_URL } from './index.js';
+import {
+  cmsConfig,
+  cmsConfigErrors,
+  cmsConfigLoaded,
+  cmsConfigVersion,
+  DEV_SITE_URL,
+} from './index.js';
 
 // Mock external dependencies
 vi.mock('@sveltia/utils/crypto', () => ({
@@ -105,6 +111,100 @@ describe('config/index', () => {
       expect(cmsConfig).toBeDefined();
       expect(cmsConfigErrors).toBeDefined();
       expect(cmsConfigVersion).toBeDefined();
+      expect(cmsConfigLoaded).toBeDefined();
+    });
+
+    describe('cmsConfigLoaded', () => {
+      it('should be exported as a readable store', () => {
+        expect(cmsConfigLoaded).toBeDefined();
+        expect(typeof cmsConfigLoaded).toBe('object');
+        expect(typeof cmsConfigLoaded.subscribe).toBe('function');
+      });
+
+      it('should be false when cmsConfig is undefined and cmsConfigErrors is empty', async () => {
+        cmsConfig.set(undefined);
+        cmsConfigErrors.set([]);
+
+        const loadedState = await new Promise((resolve) => {
+          /* eslint-disable prefer-const */
+          /** @type {() => void} */
+          let unsubscribe;
+
+          unsubscribe = cmsConfigLoaded.subscribe((value) => {
+            unsubscribe?.();
+            resolve(value);
+          });
+        });
+
+        expect(loadedState).toBe(false);
+      });
+
+      it('should be true when cmsConfig is defined', async () => {
+        /** @type {any} */
+        const mockConfig = {
+          backend: { name: 'github', repo: 'owner/repo' },
+          media_folder: 'uploads',
+          collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        };
+
+        cmsConfig.set(mockConfig);
+        cmsConfigErrors.set([]);
+
+        const loadedState = await new Promise((resolve) => {
+          /* eslint-disable prefer-const */
+          /** @type {() => void} */
+          let unsubscribe;
+
+          unsubscribe = cmsConfigLoaded.subscribe((value) => {
+            unsubscribe?.();
+            resolve(value);
+          });
+        });
+
+        expect(loadedState).toBe(true);
+      });
+
+      it('should be true when cmsConfigErrors has entries', async () => {
+        cmsConfig.set(undefined);
+        cmsConfigErrors.set(['Error 1', 'Error 2']);
+
+        const loadedState = await new Promise((resolve) => {
+          /* eslint-disable prefer-const */
+          /** @type {() => void} */
+          let unsubscribe;
+
+          unsubscribe = cmsConfigLoaded.subscribe((value) => {
+            unsubscribe?.();
+            resolve(value);
+          });
+        });
+
+        expect(loadedState).toBe(true);
+      });
+
+      it('should be true when both cmsConfig and cmsConfigErrors are populated', async () => {
+        /** @type {any} */
+        const mockConfig = {
+          backend: { name: 'github', repo: 'owner/repo' },
+          media_folder: 'uploads',
+        };
+
+        cmsConfig.set(mockConfig);
+        cmsConfigErrors.set(['Some error']);
+
+        const loadedState = await new Promise((resolve) => {
+          /* eslint-disable prefer-const */
+          /** @type {() => void} */
+          let unsubscribe;
+
+          unsubscribe = cmsConfigLoaded.subscribe((value) => {
+            unsubscribe?.();
+            resolve(value);
+          });
+        });
+
+        expect(loadedState).toBe(true);
+      });
     });
   });
 

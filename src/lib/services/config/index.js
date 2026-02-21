@@ -2,7 +2,7 @@ import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
 import merge from 'deepmerge';
-import { get, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 import { stringify } from 'yaml';
 
@@ -15,7 +15,7 @@ import { allEntryFolders } from '$lib/services/contents';
 import { prefs } from '$lib/services/user/prefs';
 
 /**
- * @import { Writable } from 'svelte/store';
+ * @import { Readable, Writable } from 'svelte/store';
  * @import { ConfigParserCollectors, InternalCmsConfig } from '$lib/types/private';
  * @import { CmsConfig } from '$lib/types/public';
  */
@@ -51,6 +51,15 @@ export const cmsConfigVersion = writable();
  * @type {Writable<string[]>}
  */
 export const cmsConfigErrors = writable([]);
+
+/**
+ * Whether the CMS configuration has been loaded, regardless of whether it contains errors.
+ * @type {Readable<boolean>}
+ */
+export const cmsConfigLoaded = derived(
+  [cmsConfig, cmsConfigErrors],
+  ([_cmsConfig, _cmsConfigErrors]) => !!_cmsConfig || !!_cmsConfigErrors.length,
+);
 
 /**
  * Collectors used during config parsing.

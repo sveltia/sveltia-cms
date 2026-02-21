@@ -2,14 +2,12 @@
   import { Button } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
+  import { appLogoURL } from '$lib/services/app/branding';
   import { openProductionSite } from '$lib/services/app/navigation';
   import { cmsConfig } from '$lib/services/config';
-
-  const src = $derived($cmsConfig?.logo?.src ?? $cmsConfig?.logo_url);
-  const showInHeader = $derived($cmsConfig?.logo?.show_in_header ?? true);
 </script>
 
-{#if src && showInHeader}
+{#if $appLogoURL && ($cmsConfig?.logo?.show_in_header ?? true)}
   <Button
     variant="ghost"
     iconic
@@ -18,7 +16,7 @@
       openProductionSite();
     }}
   >
-    <img loading="lazy" {src} alt="" class="logo" />
+    <img src={$appLogoURL} alt="" class="logo" />
   </Button>
 {/if}
 

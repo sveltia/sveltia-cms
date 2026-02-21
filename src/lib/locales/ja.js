@@ -71,7 +71,8 @@ export const strings = {
   clipboard_error: 'データのコピー中に問題が発生しました。',
 
   // Entrance
-  welcome_to_sveltia_cms: 'Sveltia CMS へようこそ',
+  welcome_message: '{name} へようこそ',
+  powered_by: 'Powered by {name}',
   loading_cms_config: 'CMS 設定を読み込んでいます…',
   loading_site_data: 'サイトデータを読み込んでいます…',
   loading_site_data_error: 'サイトデータの読み込み中にエラーが発生しました。',

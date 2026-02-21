@@ -71,7 +71,8 @@ export const strings = {
   clipboard_error: 'There was an error while copying data.',
 
   // Entrance
-  welcome_to_sveltia_cms: 'Welcome to Sveltia CMS',
+  welcome_message: 'Welcome to {name}',
+  powered_by: 'Powered by {name}',
   loading_cms_config: 'Loading CMS Configuration…',
   loading_site_data: 'Loading Site Data…',
   loading_site_data_error: 'There was an error while loading site data.',

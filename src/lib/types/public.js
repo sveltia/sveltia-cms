@@ -1526,6 +1526,8 @@
  * @property {MediaLibraries} [media_libraries] Unified media storage option that supports multiple
  * libraries. See the [documentation](https://sveltiacms.app/en/docs/media#configuration) for
  * details.
+ * @property {string} [app_title] Custom title for the CMS, which will be displayed on the login
+ * page and the browser’s tab. Default: `Sveltia CMS`.
  * @property {string} [site_url] Site URL. Default: current site’s origin
  * ([`location.origin`](https://developer.mozilla.org/en-US/docs/Web/API/Location/origin)).
  * @property {string} [display_url] Site URL linked from the UI. Default: `site_url` option value.

@@ -4,18 +4,20 @@
   import { marked } from 'marked';
   import { _ } from 'svelte-i18n';
 
-  import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import SignIn from '$lib/components/entrance/sign-in.svelte';
+  import { appLogoURL, appTitle, DEFAULT_APP_TITLE } from '$lib/services/app/branding';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { inAuthPopup } from '$lib/services/backends/git/shared/auth';
-  import { cmsConfig, cmsConfigErrors } from '$lib/services/config';
+  import { cmsConfig, cmsConfigErrors, cmsConfigLoaded } from '$lib/services/config';
   import { dataLoaded, dataLoadedProgress } from '$lib/services/contents';
   import { user } from '$lib/services/user';
   import { signInError, unauthenticated } from '$lib/services/user/auth';
   import { prefs, prefsError } from '$lib/services/user/prefs';
 
   $effect(() => {
-    $announcedPageStatus = $_('welcome_to_sveltia_cms');
+    if ($cmsConfigLoaded) {
+      $announcedPageStatus = $_('welcome_message', { values: { name: $appTitle } });
+    }
   });
 </script>
 
@@ -28,11 +30,10 @@
 
 <div role="none" class="container" inert={$user && $dataLoaded}>
   <div role="none" class="inner">
-    {#if $cmsConfig || $cmsConfigErrors.length}
-      {@const logoURL = $cmsConfig?.logo?.src ?? $cmsConfig?.logo_url}
-      <img src={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`} alt="" class="logo" />
+    {#if $cmsConfigLoaded}
+      <img src={$appLogoURL} alt="" class="logo" />
+      <h1>{$appTitle}</h1>
     {/if}
-    <h1>Sveltia CMS</h1>
     {#if $cmsConfigErrors.length}
       <div role="alert" class="message">
         <div role="none">
@@ -71,6 +72,12 @@
     {/if}
   </div>
 </div>
+
+{#if $cmsConfigLoaded && $appTitle !== DEFAULT_APP_TITLE}
+  <div role="none" class="powered-by">
+    {$_('powered_by', { values: { name: DEFAULT_APP_TITLE } })}
+  </div>
+{/if}
 
 <style lang="scss">
   .container {
@@ -149,5 +156,14 @@
         }
       }
     }
+  }
+
+  .powered-by {
+    position: absolute;
+    z-index: 102;
+    inset: auto 24px 24px;
+    color: var(--sui-tertiary-foreground-color);
+    font-size: var(--sui-font-size-small);
+    text-align: center;
   }
 </style>

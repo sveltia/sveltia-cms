@@ -1,18 +1,17 @@
 <script>
   import { AppShell } from '@sveltia/ui';
-  import mime from 'mime';
   import { onMount } from 'svelte';
   import { isLoading } from 'svelte-i18n';
 
-  import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
   import BackendStatusIndicator from '$lib/components/global/infobars/backend-status-indicator.svelte';
   import UpdateNotification from '$lib/components/global/infobars/update-notification.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
+  import { appLogoType, appLogoURL, appTitle } from '$lib/services/app/branding';
   import { initAppLocale } from '$lib/services/app/i18n';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
-  import { cmsConfig, DEV_SITE_URL, initCmsConfig } from '$lib/services/config';
+  import { cmsConfigLoaded, DEV_SITE_URL, initCmsConfig } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
   import { user } from '$lib/services/user';
   import { initUserEnvDetection } from '$lib/services/user/env';
@@ -71,13 +70,9 @@
 <svelte:head>
   <meta name="referrer" content="same-origin" />
   <meta name="robots" content="noindex" />
-  {#if $cmsConfig}
-    {@const logoURL = $cmsConfig.logo?.src ?? $cmsConfig.logo_url}
-    <link
-      rel="icon"
-      href={logoURL || `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`}
-      type={logoURL ? (mime.getType(logoURL) ?? undefined) : 'image/svg+xml'}
-    />
+  {#if $cmsConfigLoaded}
+    <title>{$appTitle}</title>
+    <link rel="icon" href={$appLogoURL} type={$appLogoType} />
   {/if}
   {#if DEV_SITE_URL}
     <link href="{DEV_SITE_URL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />
