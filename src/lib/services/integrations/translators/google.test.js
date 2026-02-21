@@ -334,6 +334,142 @@ describe('Google Translator Service', () => {
         }),
       );
     });
+
+    it('should decode HTML apostrophes in translated text', async () => {
+      const mockResponse = {
+        data: {
+          translations: [{ translatedText: 'Aujourd&#39;hui' }],
+        },
+      };
+
+      const mockFetch = vi.mocked(fetch);
+
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockResponse), {
+          status: 200,
+          statusText: 'OK',
+        }),
+      );
+
+      const texts = ['Today'];
+      const result = await googleTranslator.translate(texts, mockOptions);
+
+      expect(result).toEqual(["Aujourd'hui"]);
+    });
+
+    it('should handle multiple apostrophes in a single translation', async () => {
+      const mockResponse = {
+        data: {
+          translations: [{ translatedText: 'C&#39;est l&#39;été' }],
+        },
+      };
+
+      const mockFetch = vi.mocked(fetch);
+
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockResponse), {
+          status: 200,
+          statusText: 'OK',
+        }),
+      );
+
+      const texts = ["It's summer"];
+      const result = await googleTranslator.translate(texts, mockOptions);
+
+      expect(result).toEqual(["C'est l'été"]);
+    });
+
+    it('should decode apostrophes in multiple translations', async () => {
+      const mockResponse = {
+        data: {
+          translations: [
+            { translatedText: 'C&#39;est magnifique' },
+            { translatedText: 'L&#39;amour c&#39;est' },
+            { translatedText: 'J&#39;aime les roses' },
+          ],
+        },
+      };
+
+      const mockFetch = vi.mocked(fetch);
+
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockResponse), {
+          status: 200,
+          statusText: 'OK',
+        }),
+      );
+
+      const texts = ["It's great", 'Love is', 'I love roses'];
+      const result = await googleTranslator.translate(texts, mockOptions);
+
+      expect(result).toEqual(["C'est magnifique", "L'amour c'est", "J'aime les roses"]);
+    });
+
+    it('should preserve text without apostrophes', async () => {
+      const mockResponse = {
+        data: {
+          translations: [{ translatedText: 'Bonjour le monde' }],
+        },
+      };
+
+      const mockFetch = vi.mocked(fetch);
+
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockResponse), {
+          status: 200,
+          statusText: 'OK',
+        }),
+      );
+
+      const texts = ['Hello world'];
+      const result = await googleTranslator.translate(texts, mockOptions);
+
+      expect(result).toEqual(['Bonjour le monde']);
+    });
+
+    it('should handle mixed content with apostrophes and other text', async () => {
+      const mockResponse = {
+        data: {
+          translations: [{ translatedText: 'Aujourd&#39;hui, c&#39;est merveilleux!' }],
+        },
+      };
+
+      const mockFetch = vi.mocked(fetch);
+
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockResponse), {
+          status: 200,
+          statusText: 'OK',
+        }),
+      );
+
+      const texts = ["Today, it's wonderful!"];
+      const result = await googleTranslator.translate(texts, mockOptions);
+
+      expect(result).toEqual(["Aujourd'hui, c'est merveilleux!"]);
+    });
+
+    it('should handle apostrophes with HTML tags', async () => {
+      const mockResponse = {
+        data: {
+          translations: [{ translatedText: '<p>C&#39;est <strong>l&#39;été</strong></p>' }],
+        },
+      };
+
+      const mockFetch = vi.mocked(fetch);
+
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockResponse), {
+          status: 200,
+          statusText: 'OK',
+        }),
+      );
+
+      const texts = ["<p>It's <strong>summer</strong></p>"];
+      const result = await googleTranslator.translate(texts, mockOptions);
+
+      expect(result).toEqual(["<p>C'est <strong>l'été</strong></p>"]);
+    });
   });
 
   describe('Service Integration', () => {

@@ -135,7 +135,9 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
       await response.json()
     );
 
-    return data.translations.map((t) => t.translatedText);
+    // cspell:disable-next-line
+    // Decode apostrophes in translated text (e.g., "Aujourd&#39;hui" → "Aujourd'hui")
+    return data.translations.map((t) => t.translatedText.replace(/&#39;/g, "'"));
   } catch (error) {
     if (error instanceof Error) {
       throw error;
