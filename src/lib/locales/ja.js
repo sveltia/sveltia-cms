@@ -477,6 +477,7 @@ export const strings = {
       many: '{max} 文字を超える入力はできません。',
     },
     type_mismatch: {
+      number: '数値を入力してください。',
       email: '正しいメールアドレスを入力してください。',
       url: '正しい URL を入力してください。',
     },
