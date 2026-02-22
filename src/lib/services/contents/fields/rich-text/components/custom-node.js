@@ -2,6 +2,7 @@ import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
 import Component from '$lib/components/contents/details/fields/rich-text/component.svelte';
+import DialogComponent from '$lib/components/contents/details/fields/rich-text/dialog-component.svelte';
 import {
   isMultiLinePattern,
   normalizeProps,
@@ -27,7 +28,17 @@ import {
  * @returns {any} Custom node class.
  */
 export const createCustomNodeClass = (componentDef) => {
-  const { id: componentName, label, collapsed, fields, pattern, toBlock, toPreview } = componentDef;
+  const {
+    id: componentName,
+    label,
+    collapsed,
+    dialog,
+    summary,
+    fields,
+    pattern,
+    toBlock,
+    toPreview,
+  } = componentDef;
   const isMultiLine = isMultiLinePattern(pattern);
   const preview = toPreview?.({});
   const block = toBlock({});
@@ -118,7 +129,7 @@ export const createCustomNodeClass = (componentDef) => {
       let wrapper;
       /** @type {LexicalEditor | null} */
       let editor = null;
-      /** @type {Component} */
+      /** @type {Component | DialogComponent} */
       let component;
 
       /**
@@ -176,12 +187,15 @@ export const createCustomNodeClass = (componentDef) => {
         );
       };
 
-      component = mount(Component, {
+      // Use DialogComponent if `dialog: true`, otherwise use inline Component
+      const ComponentClass = dialog ? DialogComponent : Component;
+
+      component = mount(ComponentClass, {
         target: document.createElement('div'),
         props: {
           componentName,
           label,
-          collapsed,
+          ...(dialog ? { summary } : { collapsed }),
           fields,
           values: this.__props,
           onChange,
