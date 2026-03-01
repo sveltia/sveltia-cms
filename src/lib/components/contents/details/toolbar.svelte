@@ -39,6 +39,14 @@
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
+  import {
+    getNextStatuses,
+    transitionEntry,
+    workflowEnabled,
+    workflowStatuses,
+    STATUS_LABEL_KEYS,
+    TRANSITION_LABEL_KEYS,
+  } from '$lib/services/contents/workflow';
 
   /**
    * @typedef {object} Props
@@ -97,6 +105,25 @@
       ? getEntryPreviewURL(originalEntry, defaultLocale, collection, collectionFile)
       : undefined,
   );
+
+  const entryId = $derived(originalEntry?.id ?? $entryDraft?.id);
+  const isWorkflowEnabled = $derived(!!$workflowEnabled);
+  const currentWorkflowStatus = $derived(
+    isWorkflowEnabled && entryId ? ($workflowStatuses?.get?.(entryId) ?? 'draft') : null,
+  );
+  const nextStatuses = $derived(
+    currentWorkflowStatus ? getNextStatuses(currentWorkflowStatus) : [],
+  );
+
+  /**
+   * Transition entry to a new workflow status.
+   * @param {import('$lib/services/contents/workflow').WorkflowStatus} status Target status.
+   */
+  const handleTransition = (status) => {
+    if (entryId) {
+      transitionEntry(entryId, status);
+    }
+  };
 
   /**
    * Go back to the previous page. If the entry is a singleton file, go to the collections list.
@@ -222,6 +249,11 @@
       </TruncatedText>
     {/if}
   </h2>
+  {#if isWorkflowEnabled && currentWorkflowStatus && !isNew}
+    <span class="workflow-status" data-status={currentWorkflowStatus}>
+      {$_(STATUS_LABEL_KEYS[currentWorkflowStatus] ?? currentWorkflowStatus)}
+    </span>
+  {/if}
   {#if !disabled && previewURL}
     <Button
       variant="tertiary"
@@ -289,10 +321,22 @@
       </Menu>
     {/snippet}
   </MenuButton>
+  {#if isWorkflowEnabled && !isNew && nextStatuses.length}
+    {#each nextStatuses as status (status)}
+      <Button
+        variant="tertiary"
+        label={$_(TRANSITION_LABEL_KEYS[status] ?? status)}
+        disabled={disabled || saving}
+        onclick={() => {
+          handleTransition(status);
+        }}
+      />
+    {/each}
+  {/if}
   {#if $skipCIConfigured}
     <SplitButton
       variant="primary"
-      label={$_(saving ? 'saving' : 'save')}
+      label={$_(saving ? 'saving' : isWorkflowEnabled && isNew ? 'workflow_action.save_draft' : 'save')}
       disabled={disabled || !modified || saving}
       keyShortcuts="Accel+S"
       onclick={() => {
@@ -314,7 +358,7 @@
   {:else}
     <Button
       variant="primary"
-      label={$_(saving ? 'saving' : 'save')}
+      label={$_(saving ? 'saving' : isWorkflowEnabled && isNew ? 'workflow_action.save_draft' : 'save')}
       disabled={disabled || !modified || saving}
       keyShortcuts="Accel+S"
       onclick={() => {
@@ -385,6 +429,31 @@
 </AlertDialog>
 
 <style lang="scss">
+  .workflow-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: var(--sui-font-size-small);
+    font-weight: 500;
+    white-space: nowrap;
+
+    &[data-status='draft'] {
+      background-color: var(--sui-warning-background-color, #fef3c7);
+      color: var(--sui-warning-foreground-color, #92400e);
+    }
+
+    &[data-status='in_review'] {
+      background-color: var(--sui-info-background-color, #dbeafe);
+      color: var(--sui-info-foreground-color, #1e40af);
+    }
+
+    &[data-status='ready'] {
+      background-color: var(--sui-success-background-color, #d1fae5);
+      color: var(--sui-success-foreground-color, #065f46);
+    }
+  }
+
   .error {
     margin-top: 8px;
     border-radius: var(--sui-control-medium-border-radius);

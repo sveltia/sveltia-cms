@@ -32,12 +32,12 @@
     }
 
     if ($cmsConfig?.publish_mode === 'editorial_workflow') {
-      // _pages.push({
-      //   key: 'workflow',
-      //   label: $_('editorial_workflow'),
-      //   icon: 'rebase_edit',
-      //   link: '/workflow',
-      // });
+      _pages.push({
+        key: 'workflow',
+        label: $_('editorial_workflow'),
+        icon: 'rebase_edit',
+        link: '/workflow',
+      });
     }
 
     if ($backendName === 'local') {

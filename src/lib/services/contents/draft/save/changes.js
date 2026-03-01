@@ -13,6 +13,11 @@ import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { getField } from '$lib/services/contents/entry/fields';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+import {
+  getEntryWorkflowStatus,
+  WORKFLOW_STATUS_KEY,
+  workflowEnabled,
+} from '$lib/services/contents/workflow';
 
 /**
  * @import {
@@ -91,6 +96,14 @@ export const createBaseSavingEntryData = async ({
 
         // Add the canonical slug
         content[canonicalSlugKey] = canonicalSlug;
+
+        // Add workflow status if editorial workflow is enabled
+        if (get(workflowEnabled)) {
+          const entryId = draft.id;
+
+          content[WORKFLOW_STATUS_KEY] =
+            entryId ? getEntryWorkflowStatus(entryId) : 'draft';
+        }
 
         // Normalize data
         await Promise.all(

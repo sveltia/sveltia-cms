@@ -13,12 +13,6 @@ import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/valid
  * @type {UnsupportedOption[]}
  */
 const UNSUPPORTED_OPTIONS = [
-  {
-    type: 'warning',
-    prop: 'publish_mode',
-    value: 'editorial_workflow',
-    strKey: 'editorial_workflow_unsupported',
-  },
   { type: 'warning', prop: 'local_backend', strKey: 'unsupported_ignored_option' },
   { type: 'warning', prop: 'locale', strKey: 'unsupported_ignored_option' },
   { type: 'warning', prop: 'search', strKey: 'unsupported_ignored_option' },

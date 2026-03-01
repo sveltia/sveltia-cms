@@ -14,6 +14,7 @@ import { createSavingEntryData } from '$lib/services/contents/draft/save/changes
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/expanders';
+import { setEntryWorkflowStatus, workflowEnabled } from '$lib/services/contents/workflow';
 
 /**
  * @import { ChangeResults, Entry, EntryDraft } from '$lib/types/private';
@@ -79,6 +80,11 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   }
 
   await callEventHooks({ type: 'postSave', draft, savingEntry });
+
+  // Set workflow status for new entries
+  if (isNew && get(workflowEnabled) && savingEntry.id) {
+    setEntryWorkflowStatus(savingEntry.id, 'draft');
+  }
 
   updateStores({ skipCI });
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);

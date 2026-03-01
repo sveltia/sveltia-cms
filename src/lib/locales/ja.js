@@ -774,6 +774,12 @@ export const strings = {
     in_review: 'レビュー中',
     ready: '公開可',
   },
+  workflow_action: {
+    save_draft: '下書き保存',
+    submit_for_review: 'レビューに提出',
+    set_draft: '下書きに戻す',
+    set_ready: '公開準備完了',
+  },
 
   // Settings
   categories: 'カテゴリ',

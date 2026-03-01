@@ -8,6 +8,7 @@ import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
+import { initWorkflowStatuses } from '$lib/services/contents/workflow';
 
 /**
  * @import {
@@ -124,6 +125,7 @@ export const updateStores = ({ entries, assets, configFiles, errors = [] }) => {
   allAssets.set(assets);
   gitConfigFiles.set(configFiles);
   entryParseErrors.set(errors);
+  initWorkflowStatuses(entries);
   dataLoaded.set(true);
 };
 

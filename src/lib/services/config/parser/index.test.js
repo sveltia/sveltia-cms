@@ -198,7 +198,7 @@ describe('Config Parser', () => {
       expect(collectors.errors.size).toBeGreaterThan(0);
     });
 
-    it('should collect warnings for editorial_workflow', async () => {
+    it('should accept editorial_workflow without warnings', async () => {
       const { parseCmsConfig } = await import('./index.js');
       const collectors = createCollectors();
 
@@ -221,7 +221,7 @@ describe('Config Parser', () => {
 
       const warningArray = Array.from(collectors.warnings);
 
-      expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(true);
+      expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(false);
     });
 
     it('should collect warnings for nested collections', async () => {

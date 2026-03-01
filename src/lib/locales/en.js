@@ -766,6 +766,12 @@ export const strings = {
     in_review: 'In Review',
     ready: 'Ready',
   },
+  workflow_action: {
+    save_draft: 'Save Draft',
+    submit_for_review: 'Submit for Review',
+    set_draft: 'Move to Draft',
+    set_ready: 'Mark Ready',
+  },
 
   // Settings
   categories: 'Categories',
