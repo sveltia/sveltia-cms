@@ -48,6 +48,9 @@
 
     :global {
       & > .sui.toolbar {
+        --toolbar-background-color: var(--enterprise-nav-bg);
+        color: var(--enterprise-nav-text);
+
         @media (width < 768px) {
           padding: 0 4px;
         }
@@ -61,12 +64,25 @@
           &:last-child {
             justify-content: flex-end;
           }
+
+          // Style toolbar buttons for dark background
+          .sui.button {
+            color: var(--enterprise-nav-text);
+
+            &:hover {
+              color: var(--enterprise-nav-active);
+            }
+          }
         }
 
+        // Style search bar for dark toolbar
         .sui.search-bar {
           flex: none;
           width: 640px;
           max-width: 50%;
+          --sui-textbox-background-color: var(--enterprise-search-bg);
+          --sui-textbox-border-color: var(--enterprise-search-border);
+          --sui-textbox-foreground-color: var(--enterprise-nav-active);
 
           @media (width < 768px) {
             flex: auto;
@@ -75,6 +91,11 @@
             width: stretch;
             max-width: none;
           }
+        }
+
+        // Style heading text (page title) for dark background
+        h2 {
+          color: var(--enterprise-nav-active);
         }
       }
     }

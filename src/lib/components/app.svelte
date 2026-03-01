@@ -84,6 +84,12 @@
 <svelte:head>
   <meta name="referrer" content="same-origin" />
   <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
   {#if $cmsConfigLoaded}
     <title>{$appTitle}</title>
     <link rel="icon" href={$appLogoURL} type={$appLogoType} />
@@ -127,6 +133,51 @@
 </AppShell>
 
 <style lang="scss">
+  // Design 5: Refined Enterprise — Global theme overrides
+  :global {
+    :root,
+    :host {
+      // Shift base hue to indigo (from 210 blue to 239 indigo)
+      --sui-base-hue: 239;
+
+      // Font: Inter instead of Merriweather Sans
+      --sui-font-family-default: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --sui-font-weight-normal: 400;
+      --sui-font-weight-bold: 600;
+
+      // Override accent colors to match Design 5 indigo (#4f46e5)
+      &[data-theme='light'] {
+        --sui-primary-accent-color-text: hsl(243 76% 54%);
+        --sui-primary-accent-color-light: hsl(243 76% 58%);
+        --sui-primary-accent-color: hsl(243 76% 58%);
+        --sui-primary-accent-color-dark: hsl(243 76% 50%);
+        --sui-primary-accent-color-translucent: hsl(243 76% 58% / 30%);
+      }
+
+      &[data-theme='dark'] {
+        --sui-primary-accent-color-text: hsl(243 80% 68%);
+        --sui-primary-accent-color-light: hsl(243 80% 58%);
+        --sui-primary-accent-color: hsl(243 80% 54%);
+        --sui-primary-accent-color-dark: hsl(243 80% 48%);
+        --sui-primary-accent-color-translucent: hsl(243 80% 58% / 35%);
+      }
+
+      // Custom variables for dark sidebar/toolbar
+      --enterprise-nav-bg: #0f172a;
+      --enterprise-nav-bg-secondary: #1e293b;
+      --enterprise-nav-text: #94a3b8;
+      --enterprise-nav-text-hover: #cbd5e1;
+      --enterprise-nav-active: #e2e8f0;
+      --enterprise-nav-active-bg: hsl(243 76% 58% / 15%);
+      --enterprise-nav-active-text: #a5b4fc;
+      --enterprise-nav-active-count: #818cf8;
+      --enterprise-nav-border: rgb(255 255 255 / 6%);
+      --enterprise-nav-section-label: #475569;
+      --enterprise-search-bg: rgb(255 255 255 / 8%);
+      --enterprise-search-border: rgb(255 255 255 / 10%);
+    }
+  }
+
   @view-transition {
     navigation: auto;
   }

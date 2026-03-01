@@ -43,13 +43,18 @@
         display: flex;
         flex-direction: column;
         flex: none;
-        width: 240px;
+        width: 250px;
         overflow-y: auto;
+        background-color: var(--enterprise-nav-bg);
+        color: var(--enterprise-nav-text);
+        border-right: 1px solid var(--enterprise-nav-border);
 
         @media (width < 768px) {
           flex: auto;
           width: auto;
           background-color: var(--sui-primary-background-color);
+          color: var(--sui-primary-foreground-color);
+          border-right: none;
         }
 
         // Mobile header
@@ -68,7 +73,29 @@
 
         .sui.search-bar {
           margin-inline: 12px;
-          --sui-textbox-background-color: var(--sui-tertiary-background-color);
+          --sui-textbox-background-color: var(--enterprise-search-bg);
+          --sui-textbox-border-color: var(--enterprise-search-border);
+          --sui-textbox-foreground-color: var(--enterprise-nav-active);
+
+          @media (width < 768px) {
+            --sui-textbox-background-color: var(--sui-tertiary-background-color);
+            --sui-textbox-border-color: var(--sui-control-border-color);
+            --sui-textbox-foreground-color: var(--sui-control-foreground-color);
+          }
+        }
+
+        // Section labels in sidebar (Collections, Quick Access)
+        .sui.option-group-label {
+          padding: 10px 20px 8px;
+          font-size: var(--sui-font-size-x-small);
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: var(--enterprise-nav-section-label);
+
+          @media (width < 768px) {
+            color: var(--sui-tertiary-foreground-color);
+          }
         }
 
         [role='radiogroup'] {
@@ -86,6 +113,11 @@
             border-radius: var(--sui-control-medium-border-radius);
             width: 100%;
             text-align: start;
+            color: var(--enterprise-nav-text);
+
+            @media (width < 768px) {
+              color: var(--sui-primary-foreground-color);
+            }
 
             &:not(:first-child) {
               margin-top: 4px;
@@ -93,6 +125,16 @@
 
             &:not(:focus) {
               border-color: transparent;
+            }
+
+            &:hover {
+              background-color: var(--enterprise-nav-border);
+              color: var(--enterprise-nav-text-hover);
+
+              @media (width < 768px) {
+                background-color: var(--sui-hover-background-color);
+                color: var(--sui-primary-foreground-color);
+              }
             }
 
             span {
@@ -106,6 +148,7 @@
 
             .icon {
               transition: color 200ms;
+              opacity: 0.5;
             }
 
             .icon.check {
@@ -114,18 +157,35 @@
 
             .count {
               padding: 2px;
-              color: var(--sui-tertiary-foreground-color);
+              color: var(--enterprise-nav-section-label);
               font-size: var(--sui-font-size-small);
               transition: color 200ms;
+
+              @media (width < 768px) {
+                color: var(--sui-tertiary-foreground-color);
+              }
             }
           }
 
           [role='option'][aria-selected='true'] {
-            color: var(--sui-highlight-foreground-color);
-            background-color: var(--sui-selected-background-color);
+            color: var(--enterprise-nav-active-text);
+            background-color: var(--enterprise-nav-active-bg);
+
+            @media (width < 768px) {
+              color: var(--sui-highlight-foreground-color);
+              background-color: var(--sui-selected-background-color);
+            }
+
+            .icon {
+              opacity: 0.9;
+            }
 
             .count {
-              color: var(--sui-highlighted-foreground-color);
+              color: var(--enterprise-nav-active-count);
+
+              @media (width < 768px) {
+                color: var(--sui-highlighted-foreground-color);
+              }
             }
           }
 
@@ -137,6 +197,11 @@
 
         .sui.divider {
           margin: 8px 0;
+          border-color: var(--enterprise-nav-border);
+
+          @media (width < 768px) {
+            border-color: var(--sui-secondary-border-color);
+          }
         }
       }
     }

@@ -90,6 +90,7 @@
     align-items: center;
     gap: 16px;
     padding: 32px;
+    background: linear-gradient(135deg, var(--enterprise-nav-bg), var(--enterprise-nav-bg-secondary));
 
     .inner {
       display: flex;
@@ -99,6 +100,16 @@
       min-width: 240px;
       max-width: 800px;
       min-height: 240px;
+      background-color: var(--sui-content-background-color);
+      border-radius: 16px;
+      padding: 52px 44px;
+      box-shadow:
+        0 10px 15px -3px rgb(0 0 0 / 8%),
+        0 4px 6px -4px rgb(0 0 0 / 4%);
+
+      @media (width < 768px) {
+        padding: 32px 24px;
+      }
     }
 
     .logo {
@@ -112,6 +123,7 @@
 
     h1 {
       font-size: 48px;
+      letter-spacing: -0.5px;
     }
 
     .logo ~ h1 {
@@ -150,13 +162,23 @@
           padding: 0;
         }
       }
+
+      .buttons .sui.button.primary {
+        box-shadow: 0 2px 8px var(--sui-primary-accent-color-translucent);
+        transition: transform 150ms ease, box-shadow 150ms ease;
+
+        &:hover {
+          box-shadow: 0 4px 12px var(--sui-primary-accent-color-translucent);
+          transform: translateY(-1px);
+        }
+      }
     }
   }
 
   .powered-by {
     position: absolute;
     inset: auto 24px 24px;
-    color: var(--sui-tertiary-foreground-color);
+    color: var(--enterprise-nav-text); // visible on dark background
     font-size: var(--sui-font-size-small);
     text-align: center;
   }
