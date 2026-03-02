@@ -343,9 +343,8 @@ const scriptElement = /** @type {HTMLScriptElement | null} */ (
 
 // Warn if the CMS script comes with `type="module"`. Earlier versions of Sveltia CMS were built and
 // shipped as ES modules. Therefore, some users may have added the attribute to the script tag.
-// Additionally, AI tools tend to add this attribute because they have outdated knowledge about
-// Sveltia CMS being a module. We recommend removing the `type="module"` attribute from the CMS
-// script tag to avoid unexpected behavior.
+// Additionally, Claude tends to add it due to outdated/inaccurate knowledge. We recommend removing
+// the attribute from the CMS script tag to avoid unexpected behavior.
 if (scriptElement?.type === 'module') {
   console.warn(
     'The Sveltia CMS script is not an ES module. Remove the "type="module" attribute from the ' +
