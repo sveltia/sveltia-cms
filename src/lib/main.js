@@ -327,6 +327,16 @@ window.createClass = createClass;
 window.createElement = createElement;
 window.h = createElement;
 
+const cssLinkElement = document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]');
+
+// Warn if an invalid stylesheet is included. Claude tends to add it when setting up Sveltia CMS.
+if (cssLinkElement) {
+  console.warn(
+    'Sveltia CMS does not require a stylesheet. Remove the invalid `<link>` tag referencing ' +
+      '`sveltia-cms.css` to avoid unnecessary network requests.',
+  );
+}
+
 const scriptElement = /** @type {HTMLScriptElement | null} */ (
   document.querySelector('script[src$="/sveltia-cms.js"]')
 );

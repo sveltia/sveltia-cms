@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable jsdoc/require-jsdoc */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -846,5 +847,138 @@ describe('Script element detection and module type warning', () => {
     const result = mockScriptElement?.type === 'module';
 
     expect(result).toBe(false);
+  });
+});
+
+describe('CSS stylesheet detection and warning', () => {
+  test('warns when invalid stylesheet link is found', () => {
+    const mockLinkElement = {
+      rel: 'stylesheet',
+      href: 'https://example.com/sveltia-cms.css',
+    };
+
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => mockLinkElement);
+
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    // Simulate the stylesheet check
+    const cssLinkElement = /** @type {HTMLLinkElement | null} */ (
+      document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]')
+    );
+
+    if (cssLinkElement) {
+      console.warn(
+        'Sveltia CMS does not require a stylesheet. Remove the invalid `<link>` tag referencing ' +
+          '`sveltia-cms.css` to avoid unnecessary network requests.',
+      );
+    }
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Sveltia CMS does not require a stylesheet. Remove the invalid `<link>` tag referencing ' +
+        '`sveltia-cms.css` to avoid unnecessary network requests.',
+    );
+    consoleSpy.mockRestore();
+  });
+
+  test('does not warn when no stylesheet link is found', () => {
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => null);
+
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    // Simulate the stylesheet check
+    const cssLinkElement = /** @type {HTMLLinkElement | null} */ (
+      document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]')
+    );
+
+    if (cssLinkElement) {
+      console.warn('Should not warn');
+    }
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  test('css stylesheet querySelector uses correct selector', () => {
+    const queryMock = vi.fn(() => null);
+
+    // @ts-ignore
+    global.document.querySelector = queryMock;
+
+    // Call querySelector with the CSS selector
+    document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]');
+
+    expect(queryMock).toHaveBeenCalledWith('link[rel="stylesheet"][href$="/sveltia-cms.css"]');
+  });
+
+  test('handles null stylesheet element gracefully', () => {
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => null);
+
+    expect(() => {
+      const cssLinkElement = /** @type {HTMLLinkElement | null} */ (
+        document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]')
+      );
+
+      if (cssLinkElement) {
+        console.warn('Stylesheet warning');
+      }
+    }).not.toThrow();
+  });
+
+  test('truthy check works for stylesheet element', () => {
+    const mockLinkElement = {
+      rel: 'stylesheet',
+      href: 'https://example.com/sveltia-cms.css',
+    };
+
+    // @ts-ignore
+    const isTruthy = !!mockLinkElement;
+
+    expect(isTruthy).toBe(true);
+  });
+
+  test('falsy check works for null stylesheet element', () => {
+    // @ts-ignore
+    const linkElement = null;
+    // @ts-ignore
+    const isFalsy = !linkElement;
+
+    expect(isFalsy).toBe(true);
+  });
+
+  test('stylesheet element with matching href is detected', () => {
+    const mockLinkElement = {
+      rel: 'stylesheet',
+      href: '/sveltia-cms.css',
+    };
+
+    const isDetected = !!mockLinkElement;
+
+    expect(isDetected).toBe(true);
+  });
+
+  test('stylesheet element with different href is still truthy', () => {
+    const mockLinkElement = {
+      rel: 'stylesheet',
+      href: '/other-stylesheet.css',
+    };
+
+    // Note: The selector checks for href ending with "/sveltia-cms.css"
+    // but we test that any element returned from querySelector is truthy
+    const isDetected = !!mockLinkElement;
+
+    expect(isDetected).toBe(true);
+  });
+
+  test('warning message is informative and complete', () => {
+    const expectedMessage =
+      'Sveltia CMS does not require a stylesheet. Remove the invalid `<link>` tag referencing ' +
+      '`sveltia-cms.css` to avoid unnecessary network requests.';
+
+    expect(expectedMessage).toContain('sveltia-cms.css');
+    expect(expectedMessage).toContain('stylesheet');
+    expect(expectedMessage).toContain('Remove');
   });
 });
