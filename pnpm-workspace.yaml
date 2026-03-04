@@ -1,3 +1,7 @@
+auditConfig:
+  ignoreGhsas:
+    - GHSA-v2wj-7wpq-c8vv # https://github.com/advisories/GHSA-v2wj-7wpq-c8vv - waiting for patch
+
 minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
@@ -7,6 +11,7 @@ minimumReleaseAgeExclude:
   - "@sveltia/*"
   - lexical
   - "@lexical/*"
+  - svgo # to update to 4.0.1 that fixes a security vulnerability
 
 onlyBuiltDependencies:
   - "@parcel/watcher"
