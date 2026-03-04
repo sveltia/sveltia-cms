@@ -55,11 +55,7 @@ export const convertFileItemToAsset = async ({ file, blobURL, folder, targetFold
     file,
     blobURL: blobURL ?? URL.createObjectURL(file),
     name,
-    path: targetFolderPath
-      ? // Append a placeholder if the folder is entry-relative because the complete path is not
-        // determined until the entry is saved
-        `${targetFolderPath}/${folder?.entryRelative ? '-/' : ''}${name}`
-      : name,
+    path: targetFolderPath ? `${targetFolderPath}/${name}` : name,
     sha: await getGitHash(file),
     size,
     kind: getAssetKind(name),
