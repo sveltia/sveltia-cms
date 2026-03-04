@@ -133,12 +133,17 @@
   const targetFolderPath = $derived.by(() => {
     const { originalEntry } = $entryDraft ?? {};
 
-    if (selectedFolder?.entryRelative && originalEntry) {
+    if (!selectedFolder?.entryRelative) {
+      return selectedFolder?.internalPath;
+    }
+
+    if (originalEntry) {
       // @todo FIXME: This only works with `media_folder: ""`
       return getPathInfo(Object.values(originalEntry.locales)[0].path).dirname;
     }
 
-    return selectedFolder?.internalPath;
+    // Append a placeholder because the complete path is not determined until the entry is saved
+    return `${selectedFolder?.internalPath}/-`;
   });
   const targetFolderPathRegex = $derived(
     targetFolderPath !== undefined

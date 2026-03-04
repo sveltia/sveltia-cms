@@ -660,6 +660,103 @@ describe('Test convertFileItemToAsset()', () => {
     expect(result.folder).toBeUndefined();
     expect(result.path).toBe('uploads/test.jpg');
   });
+
+  test('should append placeholder for entry-relative folder with target path', async () => {
+    const { convertFileItemToAsset } = await import('./process');
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const mockFolder = {
+      name: 'entry-assets',
+      entryRelative: true,
+      collectionName: 'assets',
+      internalPath: 'assets',
+      publicPath: '/assets',
+      hasTemplateTags: false,
+    };
+
+    getGitHashMock.mockResolvedValue('git-hash-456');
+    getAssetKindMock.mockReturnValue('image');
+
+    // @ts-ignore - Simplified testing
+    const result = await convertFileItemToAsset({
+      file: mockFile,
+      blobURL: 'blob:custom-url',
+      folder: mockFolder,
+      targetFolderPath: 'post-1',
+    });
+
+    expect(result).toEqual({
+      unsaved: true,
+      file: mockFile,
+      blobURL: 'blob:custom-url',
+      name: 'photo.jpg',
+      path: 'post-1/-/photo.jpg',
+      sha: 'git-hash-456',
+      size: 50000,
+      kind: 'image',
+      folder: mockFolder,
+    });
+  });
+
+  test('should not append placeholder for non-entry-relative folder', async () => {
+    const { convertFileItemToAsset } = await import('./process');
+    const mockFile = new File(['content'], 'image.png', { type: 'image/png' });
+
+    Object.defineProperty(mockFile, 'size', { value: 30000 });
+
+    const mockFolder = {
+      name: 'global-assets',
+      entryRelative: false,
+      collectionName: 'assets',
+      internalPath: '_assets',
+      publicPath: '/assets',
+      hasTemplateTags: false,
+    };
+
+    getGitHashMock.mockResolvedValue('git-hash-789');
+    getAssetKindMock.mockReturnValue('image');
+
+    // @ts-ignore - Simplified testing
+    const result = await convertFileItemToAsset({
+      file: mockFile,
+      blobURL: 'blob:custom-url',
+      folder: mockFolder,
+      targetFolderPath: 'uploads',
+    });
+
+    expect(result.path).toBe('uploads/image.png');
+  });
+
+  test('should handle entry-relative folder without target path', async () => {
+    const { convertFileItemToAsset } = await import('./process');
+    const mockFile = new File(['content'], 'file.pdf', { type: 'application/pdf' });
+
+    Object.defineProperty(mockFile, 'size', { value: 100000 });
+
+    const mockFolder = {
+      name: 'entry-assets',
+      entryRelative: true,
+      collectionName: 'assets',
+      internalPath: 'assets',
+      publicPath: '/assets',
+      hasTemplateTags: false,
+    };
+
+    getGitHashMock.mockResolvedValue('git-hash-000');
+    getAssetKindMock.mockReturnValue('document');
+
+    // @ts-ignore - Simplified testing
+    const result = await convertFileItemToAsset({
+      file: mockFile,
+      blobURL: 'blob:custom-url',
+      folder: mockFolder,
+    });
+
+    // When there's no target folder path, should just use the file name
+    expect(result.path).toBe('file.pdf');
+  });
 });
 
 describe('Test getUnsavedAssets()', () => {
@@ -803,6 +900,73 @@ describe('Test getUnsavedAssets()', () => {
 
     expect(result).toHaveLength(3);
     expect(getGitHashMock).toHaveBeenCalledTimes(3);
+  });
+
+  test('should include placeholder for entry-relative folder assets', async () => {
+    const { getUnsavedAssets } = await import('./process');
+    const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const mockFolder = { name: 'entry-assets', entryRelative: true };
+
+    getGitHashMock.mockResolvedValue('hash1');
+    getAssetKindMock.mockReturnValue('image');
+
+    // @ts-ignore - Simplified testing
+    const draft = {
+      files: {
+        'blob:url-1': { file: mockFile, folder: mockFolder },
+      },
+    };
+
+    // @ts-ignore - Simplified testing
+    const result = await getUnsavedAssets({ draft, targetFolderPath: 'post-folder' });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      unsaved: true,
+      file: mockFile,
+      blobURL: 'blob:url-1',
+      name: 'test.jpg',
+      path: 'post-folder/-/test.jpg',
+      sha: 'hash1',
+      size: 50000,
+      kind: 'image',
+      folder: mockFolder,
+    });
+  });
+
+  test('should handle mixed entry-relative and regular folders', async () => {
+    const { getUnsavedAssets } = await import('./process');
+    const mockFile1 = new File(['content1'], 'entry-asset.jpg');
+    const mockFile2 = new File(['content2'], 'global-asset.jpg');
+
+    Object.defineProperty(mockFile1, 'size', { value: 50000 });
+    Object.defineProperty(mockFile2, 'size', { value: 60000 });
+
+    const entryRelativeFolder = { name: 'entry-assets', entryRelative: true };
+    const globalFolder = { name: 'global-assets', entryRelative: false };
+
+    getGitHashMock.mockResolvedValueOnce('hash1').mockResolvedValueOnce('hash2');
+    getAssetKindMock.mockReturnValueOnce('image').mockReturnValueOnce('image');
+
+    // @ts-ignore - Simplified testing
+    const draft = {
+      files: {
+        'blob:url-1': { file: mockFile1, folder: entryRelativeFolder },
+        'blob:url-2': { file: mockFile2, folder: globalFolder },
+      },
+    };
+
+    // @ts-ignore - Simplified testing
+    const result = await getUnsavedAssets({ draft, targetFolderPath: 'post-1' });
+
+    expect(result).toHaveLength(2);
+    // Entry-relative folder should have placeholder
+    expect(result[0].path).toBe('post-1/-/entry-asset.jpg');
+    // Global folder should not have placeholder
+    expect(result[1].path).toBe('post-1/global-asset.jpg');
   });
 });
 
