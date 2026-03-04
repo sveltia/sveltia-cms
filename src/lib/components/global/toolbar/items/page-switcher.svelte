@@ -51,10 +51,10 @@
 
     if ($isSmallScreen) {
       _pages.push({
-        key: 'settings',
-        label: $_('settings'),
-        icon: 'settings',
-        link: '/settings',
+        key: 'menu',
+        label: $_('menu'),
+        icon: 'menu',
+        link: '/menu',
       });
     }
 
