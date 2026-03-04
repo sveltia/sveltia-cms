@@ -537,6 +537,7 @@
     gap: 16px;
     height: 60dvh;
     max-height: 800px;
+    --tile-padding: 4px;
 
     @media (width < 768px) {
       flex-direction: column;
