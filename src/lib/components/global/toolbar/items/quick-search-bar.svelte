@@ -1,6 +1,5 @@
 <script>
   import { SearchBar } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import { _ } from 'svelte-i18n';
 
   import { goBack, goto, parseLocation } from '$lib/services/app/navigation';
@@ -59,16 +58,8 @@
         // @todo Implement quick search dropdown.
         navigate(/** @type {HTMLInputElement} */ (target).value.trim());
       }}
-      onchange={async ({ target }) => {
-        // Wait a moment to get the current value after the change event, otherwise navigating back
-        // to the previous page doesn’t work when search terms are cleared
-        await sleep(100);
-
-        const terms = /** @type {HTMLInputElement} */ (target).value.trim();
-
-        if (!terms) {
-          navigate('');
-        }
+      onClear={() => {
+        navigate('');
       }}
     />
   {/if}
