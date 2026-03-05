@@ -9,7 +9,7 @@
     Button,
     EmptyState,
     InfiniteScroll,
-    PasswordInput,
+    SecretInput,
     TextInput,
     Toast,
   } from '@sveltia/ui';
@@ -337,7 +337,7 @@
         />
       </div>
       <div role="none" class="input-outer">
-        <PasswordInput
+        <SecretInput
           aria-label={$_('password')}
           disabled={authState === 'requested'}
           bind:value={input.password}

@@ -1,5 +1,5 @@
 <script>
-  import { PasswordInput } from '@sveltia/ui';
+  import { SecretInput } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
   import TranslatorSelector from '$lib/components/settings/controls/translator-selector.svelte';
@@ -40,7 +40,7 @@
       <h4>{serviceLabel}</h4>
       <div role="none">
         {#if $prefs.apiKeys}
-          <PasswordInput
+          <SecretInput
             bind:value={$prefs.apiKeys[serviceId]}
             flex
             autocomplete="off"

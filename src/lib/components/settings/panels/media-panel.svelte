@@ -1,5 +1,5 @@
 <script>
-  import { EmptyState, PasswordInput } from '@sveltia/ui';
+  import { EmptyState, SecretInput } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
@@ -71,7 +71,7 @@
           <section>
             <h4>{serviceLabel}</h4>
             <div role="none">
-              <PasswordInput
+              <SecretInput
                 bind:value={$prefs.apiKeys[serviceId]}
                 flex
                 autocomplete="off"
@@ -101,7 +101,7 @@
             <section>
               <h4>{serviceLabel}</h4>
               <div role="none">
-                <PasswordInput
+                <SecretInput
                   bind:value={$prefs.apiKeys[serviceId]}
                   flex
                   autocomplete="off"
