@@ -238,8 +238,12 @@ export const strings = {
   entry_not_found: 'Entry not found.',
   creating_entries_disabled_by_admin:
     'Creating new entries in this collection is disabled by the administrator.',
-  creating_entries_disabled_by_limit:
-    'You cannot add new entries to this collection because it has reached its limit of {limit} entries.',
+  creating_entries_disabled_by_quota:
+    'You cannot add new entries to this collection because it has reached its limit of {quota} entries.',
+  creating_entries_nearing_quota_singular:
+    'This collection is nearing its limit of {quota} entries. You can only create {remaining} more entry.',
+  creating_entries_nearing_quota_plural:
+    'This collection is nearing its limit of {quota} entries. You can only create {remaining} more entries.',
   back_to_collection: 'Back to Collection',
   collection_list: 'Collection List',
   back_to_collection_list: 'Back to Collection List',

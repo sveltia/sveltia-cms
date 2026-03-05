@@ -38,6 +38,52 @@ export const listedEntries = derived(
 );
 
 /**
+ * Threshold for when to show a warning about nearing the quota of entries in an entry collection.
+ * This is used in the UI to provide feedback to users when they are close to reaching the maximum
+ * number of entries allowed in a collection, based on the collection’s quota settings.
+ * @type {number}
+ */
+const QUOTA_WARNING_THRESHOLD = 5;
+
+/**
+ * State of the selected collection, including permissions and quota information, used for
+ * controlling the UI and providing feedback to users.
+ * @type {Readable<{ isEntryCollection: boolean; canCreate: boolean; canDelete: boolean; quota:
+ * number; remaining: number; nearingQuota: boolean, creationDisabled: boolean }>}
+ */
+export const collectionState = derived(
+  [listedEntries, selectedCollection],
+  ([_listedEntries, _selectedCollection]) => {
+    if (_selectedCollection?._type === 'entry') {
+      const canCreate = _selectedCollection.create ?? false;
+      const canDelete = _selectedCollection.delete ?? false;
+      const quota = _selectedCollection?.limit ?? Infinity;
+      const remaining = quota < Infinity ? quota - _listedEntries.length : Infinity;
+
+      return {
+        isEntryCollection: true,
+        canCreate,
+        canDelete,
+        quota,
+        remaining,
+        nearingQuota: remaining > 0 && remaining <= QUOTA_WARNING_THRESHOLD,
+        creationDisabled: !canCreate || remaining <= 0,
+      };
+    }
+
+    return {
+      isEntryCollection: false,
+      canCreate: false,
+      canDelete: false,
+      quota: Infinity,
+      remaining: Infinity,
+      nearingQuota: false,
+      creationDisabled: false,
+    };
+  },
+);
+
+/**
  * Cache key to avoid unnecessary re-processing in `entryGroups` derived store.
  */
 let cacheKey = '';

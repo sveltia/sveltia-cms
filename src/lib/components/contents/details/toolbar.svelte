@@ -23,8 +23,8 @@
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { deleteEntries } from '$lib/services/contents/collection/data/delete';
-  import { canCreateEntry } from '$lib/services/contents/collection/entries';
   import { getCollectionFileLabel } from '$lib/services/contents/collection/files';
+  import { collectionState } from '$lib/services/contents/collection/view';
   import { entryDraft, entryDraftModified } from '$lib/services/contents/draft';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
@@ -171,7 +171,7 @@
       // @todo Enable duplication for Hugo’s page bundles = the `path` option. We need to duplicate
       // assets along with the entry. @see https://github.com/sveltia/sveltia-cms/issues/526
       !!entryCollection?.path ||
-      !canCreateEntry(collection)}
+      $collectionState.creationDisabled}
     onclick={() => {
       goto(`/collections/${collectionName}/new`, {
         replaceState: true,

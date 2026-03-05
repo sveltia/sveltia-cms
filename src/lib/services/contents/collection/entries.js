@@ -12,12 +12,7 @@ import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import {
- * Entry,
- * FlattenedEntryContent,
- * InternalCollection,
- * InternalCollectionFile,
- * } from '$lib/types/private';
+ * @import { Entry, FlattenedEntryContent, InternalCollectionFile } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
@@ -74,27 +69,6 @@ export const getEntriesByCollection = (collectionName) => {
 
     return filterValues.includes(value);
   });
-};
-
-/**
- * Check if entry creation is allowed in the collection.
- * @param {InternalCollection | undefined} collection Collection.
- * @returns {boolean} Result.
- */
-export const canCreateEntry = (collection) => {
-  if (!collection) {
-    return false;
-  }
-
-  const { _type } = collection;
-
-  if (_type !== 'entry') {
-    return true;
-  }
-
-  const { create = true, limit = Infinity } = collection;
-
-  return create && getEntriesByCollection(collection.name).length < limit;
 };
 
 /**

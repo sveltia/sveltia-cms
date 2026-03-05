@@ -239,8 +239,12 @@ export const strings = {
   entry_not_found: 'エントリーが見つかりませんでした。',
   creating_entries_disabled_by_admin:
     'このコレクションへの新しいエントリーの作成は、管理者によって無効化されています。',
-  creating_entries_disabled_by_limit:
-    'このコレクションは最大の {limit} エントリーに達したため、新しいエントリーを作成することはできません。',
+  creating_entries_disabled_by_quota:
+    'このコレクションは最大の {quota} エントリーに達したため、新しいエントリーを作成することはできません。',
+  creating_entries_nearing_quota_singular:
+    'このコレクションは {quota} エントリーの上限に近づいています。あと {remaining} 件のエントリーしか作成できません。',
+  creating_entries_nearing_quota_plural:
+    'このコレクションは {quota} エントリーの上限に近づいています。あと {remaining} 件のエントリーしか作成できません。',
   back_to_collection: 'コレクションへ戻る',
   collection_list: 'コレクションリスト',
   back_to_collection_list: 'コレクションリストへ戻る',

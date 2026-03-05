@@ -7,7 +7,7 @@ import { filterEntries } from '$lib/services/contents/collection/view/filter';
 import { groupEntries } from '$lib/services/contents/collection/view/group';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 
-import { currentView, entryGroups, listedEntries } from './index.js';
+import { collectionState, currentView, entryGroups, listedEntries } from './index.js';
 
 /**
  * Real writable stores hoisted so they are available when vi.mock factories run.
@@ -789,6 +789,237 @@ describe('collection/view/index', () => {
     const callCount = vi.mocked(groupEntries).mock.calls.length;
 
     expect(callCount).toBeLessThanOrEqual(groupEntriesCallCount + 1);
+  });
+
+  describe('collectionState', () => {
+    test('returns non-entry-collection defaults when no collection is selected', () => {
+      _selectedCollection.set(undefined);
+      _allEntries.set([]);
+
+      expect(get(collectionState)).toEqual({
+        isEntryCollection: false,
+        canCreate: false,
+        canDelete: false,
+        quota: Infinity,
+        remaining: Infinity,
+        nearingQuota: false,
+        creationDisabled: false,
+      });
+    });
+
+    test('returns non-entry-collection defaults for a file/folder collection (_type !== entry)', () => {
+      _selectedCollection.set(/** @type {any} */ ({ name: 'pages', _type: 'file' }));
+      _allEntries.set([]);
+
+      expect(get(collectionState)).toEqual({
+        isEntryCollection: false,
+        canCreate: false,
+        canDelete: false,
+        quota: Infinity,
+        remaining: Infinity,
+        nearingQuota: false,
+        creationDisabled: false,
+      });
+    });
+
+    test('reflects create/delete permissions from collection config', () => {
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', create: true, delete: true }),
+      );
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.set([]);
+
+      const state = get(collectionState);
+
+      expect(state.isEntryCollection).toBe(true);
+      expect(state.canCreate).toBe(true);
+      expect(state.canDelete).toBe(true);
+    });
+
+    test('defaults canCreate and canDelete to false when not set', () => {
+      _selectedCollection.set(/** @type {any} */ ({ name: 'posts', _type: 'entry' }));
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.set([]);
+
+      const state = get(collectionState);
+
+      expect(state.canCreate).toBe(false);
+      expect(state.canDelete).toBe(false);
+    });
+
+    test('quota is Infinity when no limit is set', () => {
+      _selectedCollection.set(/** @type {any} */ ({ name: 'posts', _type: 'entry', create: true }));
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.set([]);
+
+      const state = get(collectionState);
+
+      expect(state.quota).toBe(Infinity);
+      expect(state.remaining).toBe(Infinity);
+    });
+
+    test('quota and remaining are computed from limit and entry count', () => {
+      const mockEntries = /** @type {any[]} */ ([
+        { id: '1', slug: 'a' },
+        { id: '2', slug: 'b' },
+        { id: '3', slug: 'c' },
+      ]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.set(mockEntries);
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', create: true, limit: 10 }),
+      );
+
+      const state = get(collectionState);
+
+      expect(state.quota).toBe(10);
+      expect(state.remaining).toBe(7);
+    });
+
+    test('creationDisabled is false when canCreate is true and entries are under quota', () => {
+      const mockEntries = /** @type {any[]} */ ([{ id: '1', slug: 'a' }]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.set(mockEntries);
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', create: true, limit: 10 }),
+      );
+
+      expect(get(collectionState).creationDisabled).toBe(false);
+    });
+
+    test('creationDisabled is true when canCreate is false', () => {
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.set([]);
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', create: false }),
+      );
+
+      expect(get(collectionState).creationDisabled).toBe(true);
+    });
+
+    test('creationDisabled is true when remaining is exactly 0 (quota reached)', () => {
+      const mockEntries = /** @type {any[]} */ ([
+        { id: '1', slug: 'a' },
+        { id: '2', slug: 'b' },
+      ]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.set(mockEntries);
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', create: true, limit: 2 }),
+      );
+
+      const state = get(collectionState);
+
+      expect(state.remaining).toBe(0);
+      expect(state.creationDisabled).toBe(true);
+    });
+
+    test('creationDisabled is true when remaining is negative (quota exceeded)', () => {
+      const mockEntries = /** @type {any[]} */ ([
+        { id: '1', slug: 'a' },
+        { id: '2', slug: 'b' },
+        { id: '3', slug: 'c' },
+      ]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.set(mockEntries);
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', create: true, limit: 2 }),
+      );
+
+      const state = get(collectionState);
+
+      expect(state.remaining).toBe(-1);
+      expect(state.creationDisabled).toBe(true);
+    });
+
+    test('nearingQuota is true when remaining is within warning threshold', () => {
+      const mockEntries = /** @type {any[]} */ ([
+        { id: '1', slug: 'a' },
+        { id: '2', slug: 'b' },
+        { id: '3', slug: 'c' },
+        { id: '4', slug: 'd' },
+        { id: '5', slug: 'e' },
+      ]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.set(mockEntries);
+      // 10 - 5 = 5 remaining, which equals the threshold
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', create: true, limit: 10 }),
+      );
+
+      expect(get(collectionState).nearingQuota).toBe(true);
+    });
+
+    test('nearingQuota is false when remaining is above warning threshold', () => {
+      const mockEntries = /** @type {any[]} */ ([{ id: '1', slug: 'a' }]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.set(mockEntries);
+      // 10 - 1 = 9 remaining, above threshold of 5
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', create: true, limit: 10 }),
+      );
+
+      expect(get(collectionState).nearingQuota).toBe(false);
+    });
+
+    test('nearingQuota is false when remaining is 0 (quota reached, not nearing)', () => {
+      const mockEntries = /** @type {any[]} */ ([
+        { id: '1', slug: 'a' },
+        { id: '2', slug: 'b' },
+      ]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.set(mockEntries);
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', create: true, limit: 2 }),
+      );
+
+      const state = get(collectionState);
+
+      // remaining === 0: quota exactly reached, creationDisabled, but NOT nearingQuota
+      expect(state.nearingQuota).toBe(false);
+      expect(state.creationDisabled).toBe(true);
+    });
+
+    test('nearingQuota is false when quota is Infinity', () => {
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.set([]);
+      _selectedCollection.set(/** @type {any} */ ({ name: 'posts', _type: 'entry', create: true }));
+
+      expect(get(collectionState).nearingQuota).toBe(false);
+    });
+
+    test('updates reactively when entries are added', () => {
+      const twoEntries = /** @type {any[]} */ ([
+        { id: '1', slug: 'a' },
+        { id: '2', slug: 'b' },
+      ]);
+
+      const threeEntries = /** @type {any[]} */ ([...twoEntries, { id: '3', slug: 'c' }]);
+
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', create: true, limit: 3 }),
+      );
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(twoEntries);
+      _allEntries.set(twoEntries);
+      expect(get(collectionState).remaining).toBe(1);
+      expect(get(collectionState).creationDisabled).toBe(false);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(threeEntries);
+      _allEntries.set(threeEntries);
+      expect(get(collectionState).remaining).toBe(0);
+      expect(get(collectionState).creationDisabled).toBe(true);
+    });
   });
 
   test('entryGroups with file/singleton collection returns empty', () => {

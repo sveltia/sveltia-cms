@@ -16,8 +16,8 @@
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { goBack } from '$lib/services/app/navigation';
   import { getCollectionLabel, selectedCollection } from '$lib/services/contents/collection';
-  import { canCreateEntry, selectedEntries } from '$lib/services/contents/collection/entries';
-  import { listedEntries } from '$lib/services/contents/collection/view';
+  import { selectedEntries } from '$lib/services/contents/collection/entries';
+  import { collectionState, listedEntries } from '$lib/services/contents/collection/view';
   import { isSmallScreen } from '$lib/services/user/env';
 
   let showDeleteDialog = $state(false);
@@ -35,31 +35,19 @@
 
   const name = $derived($selectedCollection?.name ?? '');
   const description = $derived($selectedCollection?.description);
-  const createDisabled = $derived(!canCreateEntry($selectedCollection));
   const collectionLabel = $derived(
     // `$appLocale` is a key, because `getCollectionLabel` can return a localized label
     $appLocale && $selectedCollection ? getCollectionLabel($selectedCollection) : name,
   );
-
-  const { isEntryCollection, canCreate, canDelete, limit } = $derived.by(() => {
-    const collection = $selectedCollection;
-
-    if (collection?._type === 'entry') {
-      return {
-        isEntryCollection: true,
-        canCreate: collection.create ?? false,
-        canDelete: collection.delete ?? true,
-        limit: collection.limit ?? Infinity,
-      };
-    }
-
-    return {
-      isEntryCollection: false,
-      canCreate: false,
-      canDelete: false,
-      limit: Infinity,
-    };
-  });
+  const {
+    isEntryCollection,
+    canCreate,
+    canDelete,
+    quota,
+    remaining,
+    nearingQuota,
+    creationDisabled,
+  } = $derived($collectionState);
 </script>
 
 {#if $selectedCollection}
@@ -97,7 +85,7 @@
         />
       {/if}
       <FloatingActionButtonWrapper>
-        {#if !$isSmallScreen || ($listedEntries.length && !createDisabled)}
+        {#if !$isSmallScreen || ($listedEntries.length && !creationDisabled)}
           <CreateEntryButton
             collectionName={name}
             label={$isSmallScreen ? undefined : $_('create')}
@@ -107,7 +95,7 @@
       </FloatingActionButtonWrapper>
     {/if}
   </Toolbar>
-  {#if isEntryCollection && createDisabled}
+  {#if isEntryCollection && (creationDisabled || nearingQuota)}
     <Infobar
       dismissible={false}
       --sui-infobar-border-width="1px 0"
@@ -115,8 +103,12 @@
     >
       {#if !canCreate}
         {$_('creating_entries_disabled_by_admin')}
-      {:else}
-        {$_('creating_entries_disabled_by_limit', { values: { limit } })}
+      {:else if creationDisabled}
+        {$_('creating_entries_disabled_by_quota', { values: { quota } })}
+      {:else if nearingQuota}
+        {$_(`creating_entries_nearing_quota_${remaining === 1 ? 'singular' : 'plural'}`, {
+          values: { quota, remaining },
+        })}
       {/if}
     </Infobar>
   {/if}

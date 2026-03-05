@@ -5,8 +5,8 @@
   import { goto } from '$lib/services/app/navigation';
   import { allEntries } from '$lib/services/contents';
   import { selectedCollection } from '$lib/services/contents/collection';
-  import { canCreateEntry } from '$lib/services/contents/collection/entries';
   import { canCreateIndexFile, getIndexFile } from '$lib/services/contents/collection/index-file';
+  import { collectionState } from '$lib/services/contents/collection/view';
 
   /**
    * @typedef {object} Props
@@ -24,7 +24,6 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const disabled = $derived(!canCreateEntry($selectedCollection));
   const hasOptions = $derived(
     // Use `$allEntries` as a trigger to update the state when a new entry is created
     $allEntries && $selectedCollection ? canCreateIndexFile($selectedCollection) : false,
@@ -47,7 +46,7 @@
 <ButtonComponent
   variant="primary"
   iconic={!label}
-  {disabled}
+  disabled={$collectionState.creationDisabled}
   {label}
   aria-label={$_('create_new_entry')}
   {keyShortcuts}

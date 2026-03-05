@@ -4,7 +4,6 @@ import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
-  canCreateEntry,
   getEntriesByAssetURL,
   getEntriesByCollection,
   hasAsset,
@@ -267,102 +266,6 @@ describe('getEntriesByCollection()', () => {
     expect(result).toHaveLength(2);
     expect(result[0].id).toBe('1');
     expect(result[1].id).toBe('3');
-  });
-});
-
-describe('canCreateEntry()', () => {
-  test('returns false for undefined collection', () => {
-    expect(canCreateEntry(undefined)).toBe(false);
-  });
-
-  test('returns true for file/singleton collections', () => {
-    const collection = {
-      name: 'pages',
-      _type: 'file',
-      create: false,
-      _i18n: { defaultLocale: 'en' },
-    };
-
-    expect(canCreateEntry(collection)).toBe(true);
-  });
-
-  test('returns false for entry collection when create is false', () => {
-    const collection = {
-      name: 'posts',
-      _type: 'entry',
-      create: false,
-      _i18n: { defaultLocale: 'en' },
-    };
-
-    expect(canCreateEntry(collection)).toBe(false);
-  });
-
-  test('returns true for entry collection when create is true and under limit', () => {
-    const collection = {
-      name: 'posts',
-      _type: 'entry',
-      create: true,
-      limit: 5,
-      _i18n: { defaultLocale: 'en' },
-    };
-
-    // Mock allEntries store to return 3 entries
-    vi.mocked(get).mockReturnValue([{ id: '1' }, { id: '2' }, { id: '3' }]);
-
-    expect(canCreateEntry(collection)).toBe(true);
-  });
-
-  test('returns false for entry collection when at limit', async () => {
-    const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const collection = {
-      name: 'posts',
-      _type: 'entry',
-      create: true,
-      limit: 3,
-      _i18n: { defaultLocale: 'en' },
-    };
-
-    // Mock allEntries store to return 3 entries (at limit)
-    const entries = [{ id: '1' }, { id: '2' }, { id: '3' }];
-
-    vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValue(entries);
-    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
-
-    expect(canCreateEntry(collection)).toBe(false);
-  });
-
-  test('returns true for entry collection when no limit specified', () => {
-    const collection = {
-      name: 'posts',
-      _type: 'entry',
-      _i18n: { defaultLocale: 'en' },
-    };
-
-    // Mock allEntries store to return many entries (no limit, so should still return true)
-    vi.mocked(get).mockReturnValue(Array.from({ length: 1000 }, (_, i) => ({ id: String(i + 1) })));
-
-    expect(canCreateEntry(collection)).toBe(true);
-  });
-
-  test('returns true for entry collection when create is not specified (defaults to true)', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const collection = {
-      name: 'posts',
-      _type: 'entry',
-      _i18n: { defaultLocale: 'en' },
-    };
-
-    // Mock allEntries store to return entries under default limit
-    const entries = [{ id: '1' }, { id: '2' }];
-
-    vi.mocked(get).mockReturnValue(entries);
-    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
-
-    expect(canCreateEntry(collection)).toBe(true);
   });
 });
 

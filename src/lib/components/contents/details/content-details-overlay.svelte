@@ -17,7 +17,7 @@
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { canCreateEntry } from '$lib/services/contents/collection/entries';
+  import { collectionState } from '$lib/services/contents/collection/view';
   import { entryDraft } from '$lib/services/contents/draft';
   import {
     resetBackupToastState,
@@ -61,7 +61,6 @@
   const notFound = $derived($entryDraft === undefined);
   const isNew = $derived($entryDraft?.isNew ?? true);
   const collection = $derived($entryDraft?.collection);
-  const entryCollection = $derived(collection?._type === 'entry' ? collection : undefined);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const { showPreview } = $derived($entryEditorSettings ?? {});
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
@@ -71,9 +70,7 @@
   const paneStateKey = $derived(
     collectionFile?.name ? [collection?.name, collectionFile.name].join('|') : collection?.name,
   );
-  const canCreate = $derived(entryCollection?.create ?? false);
-  const limit = $derived(entryCollection?.limit ?? Infinity);
-  const createDisabled = $derived(!canCreateEntry(collection));
+  const { canCreate, quota, creationDisabled } = $derived($collectionState);
 
   const [firstPaneSize, secondPaneSize, minPaneSize] = $derived.by(() => {
     if (!$editorFirstPane && !$editorSecondPane) {
@@ -298,10 +295,10 @@
   bind:this={wrapper}
 >
   {#key $entryDraft?.id}
-    <Toolbar disabled={isNew && createDisabled} />
+    <Toolbar disabled={isNew && creationDisabled} />
     {#if $entryDraft === null}
       <!-- Hide the content after saving a draft -->
-    {:else if notFound || (isNew && createDisabled)}
+    {:else if notFound || (isNew && creationDisabled)}
       <EmptyState>
         <div role="none">
           {#if notFound}
@@ -309,7 +306,7 @@
           {:else if !canCreate}
             {$_('creating_entries_disabled_by_admin')}
           {:else}
-            {$_('creating_entries_disabled_by_limit', { values: { limit } })}
+            {$_('creating_entries_disabled_by_quota', { values: { quota } })}
           {/if}
         </div>
         <div role="none">
