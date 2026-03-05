@@ -55,8 +55,8 @@ export const collectionState = derived(
   [listedEntries, selectedCollection],
   ([_listedEntries, _selectedCollection]) => {
     if (_selectedCollection?._type === 'entry') {
-      const canCreate = _selectedCollection.create ?? false;
-      const canDelete = _selectedCollection.delete ?? false;
+      const canCreate = _selectedCollection.create ?? true;
+      const canDelete = _selectedCollection.delete ?? true;
       const quota = _selectedCollection?.limit ?? Infinity;
       const remaining = quota < Infinity ? quota - _listedEntries.length : Infinity;
 

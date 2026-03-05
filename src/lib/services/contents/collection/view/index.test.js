@@ -837,7 +837,7 @@ describe('collection/view/index', () => {
       expect(state.canDelete).toBe(true);
     });
 
-    test('defaults canCreate and canDelete to false when not set', () => {
+    test('defaults canCreate and canDelete to true when not set', () => {
       _selectedCollection.set(/** @type {any} */ ({ name: 'posts', _type: 'entry' }));
 
       vi.mocked(getEntriesByCollection).mockReturnValue([]);
@@ -845,12 +845,12 @@ describe('collection/view/index', () => {
 
       const state = get(collectionState);
 
-      expect(state.canCreate).toBe(false);
-      expect(state.canDelete).toBe(false);
+      expect(state.canCreate).toBe(true);
+      expect(state.canDelete).toBe(true);
     });
 
     test('quota is Infinity when no limit is set', () => {
-      _selectedCollection.set(/** @type {any} */ ({ name: 'posts', _type: 'entry', create: true }));
+      _selectedCollection.set(/** @type {any} */ ({ name: 'posts', _type: 'entry' }));
 
       vi.mocked(getEntriesByCollection).mockReturnValue([]);
       _allEntries.set([]);
