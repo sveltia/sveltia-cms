@@ -68,3 +68,34 @@ export const createTranslationUserPrompt = (texts) =>
   'Translate these texts and return ONLY valid JSON (no markdown, no code blocks):\n' +
   `${JSON.stringify(texts)}\n\n` +
   'Respond with JSON only:';
+
+/**
+ * Parse and validate a JSON array of translations from an AI API response.
+ * @param {string} content Raw text content from the AI response.
+ * @param {number} expectedCount Expected number of translated strings.
+ * @param {string} serviceLabel Label for the AI service used in error messages, e.g. `'Anthropic
+ * API'`.
+ * @returns {string[]} Array of translated strings.
+ * @throws {Error} When the content cannot be parsed or the count doesn't match.
+ */
+export const parseAiTranslationResponse = (content, expectedCount, serviceLabel) => {
+  let translations;
+
+  try {
+    translations = JSON.parse(content);
+  } catch {
+    throw new Error(`Failed to parse JSON response from ${serviceLabel}.`);
+  }
+
+  if (!Array.isArray(translations)) {
+    throw new Error(`Invalid JSON structure in ${serviceLabel} response.`);
+  }
+
+  if (translations.length !== expectedCount) {
+    throw new Error(
+      `Translation count mismatch: expected ${expectedCount}, got ${translations.length}`,
+    );
+  }
+
+  return translations;
+};

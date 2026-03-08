@@ -1,7 +1,10 @@
+import { complete } from '$lib/services/integrations/ai/google';
+
 import {
   createTranslationSystemPrompt,
   createTranslationUserPrompt,
   normalizeLanguage,
+  parseAiTranslationResponse,
 } from './shared.js';
 
 /**
@@ -46,83 +49,16 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
     throw new Error('Target locale is not supported.');
   }
 
-  // Gemini API endpoint
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const systemPrompt = createTranslationSystemPrompt(sourceLanguageName, targetLanguageName);
-  const userPrompt = createTranslationUserPrompt(texts);
-
-  const requestBody = {
-    system_instruction: {
-      parts: [
-        {
-          text: systemPrompt,
-        },
-      ],
-    },
-    contents: [
-      {
-        parts: [
-          {
-            text: userPrompt,
-          },
-        ],
-      },
-    ],
-    generationConfig: {
-      temperature: 0.3, // Lower temperature for more consistent translations
-      maxOutputTokens: 4000,
-      responseMimeType: 'application/json',
-    },
-  };
-
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
+    const content = await complete({
+      apiKey,
+      model,
+      systemPrompt: createTranslationSystemPrompt(sourceLanguageName, targetLanguageName),
+      userMessage: createTranslationUserPrompt(texts),
+      responseFormat: 'application/json',
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-
-      throw new Error(
-        `Gemini API error: ${response.status} ${response.statusText}` +
-          `${errorData.error?.message ? ` - ${errorData.error.message}` : ''}`,
-      );
-    }
-
-    const data = await response.json();
-
-    if (!Array.isArray(data.candidates) || !data.candidates[0]?.content?.parts?.[0]) {
-      throw new Error('Invalid response format from Gemini API.');
-    }
-
-    const content = data.candidates[0].content.parts[0].text.trim();
-    // Parse the JSON response
-    let translations;
-
-    try {
-      translations = JSON.parse(content);
-    } catch {
-      throw new Error('Failed to parse JSON response from Gemini API.');
-    }
-
-    // Validate the response structure
-    if (!Array.isArray(translations)) {
-      throw new Error('Invalid JSON structure in Gemini API response.');
-    }
-
-    // Ensure we have the right number of translations
-    if (translations.length !== texts.length) {
-      const expectedCount = texts.length;
-      const actualCount = translations.length;
-
-      throw new Error(`Translation count mismatch: expected ${expectedCount}, got ${actualCount}`);
-    }
-
-    return translations;
+    return parseAiTranslationResponse(content, texts.length, 'Gemini API');
   } catch (error) {
     if (error instanceof Error) {
       throw error;

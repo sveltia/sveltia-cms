@@ -1,7 +1,10 @@
+import { complete } from '$lib/services/integrations/ai/anthropic';
+
 import {
   createTranslationSystemPrompt,
   createTranslationUserPrompt,
   normalizeLanguage,
+  parseAiTranslationResponse,
 } from './shared.js';
 
 /**
@@ -46,77 +49,15 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
     throw new Error('Target locale is not supported.');
   }
 
-  // Anthropic Messages API endpoint
-  const url = 'https://api.anthropic.com/v1/messages';
-  const systemPrompt = createTranslationSystemPrompt(sourceLanguageName, targetLanguageName);
-  const userPrompt = createTranslationUserPrompt(texts);
-
-  const requestBody = {
-    model,
-    max_tokens: 4000,
-    temperature: 0.3, // Lower temperature for more consistent translations
-    system: systemPrompt,
-    messages: [
-      {
-        role: 'user',
-        content: userPrompt,
-      },
-    ],
-  };
-
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        // Work around for CORS issues in browsers
-        // @see https://simonwillison.net/2024/Aug/23/anthropic-dangerous-direct-browser-access/
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify(requestBody),
+    const content = await complete({
+      apiKey,
+      model,
+      systemPrompt: createTranslationSystemPrompt(sourceLanguageName, targetLanguageName),
+      userMessage: createTranslationUserPrompt(texts),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-
-      throw new Error(
-        `Anthropic API error: ${response.status} ${response.statusText}` +
-          `${errorData.error?.message ? ` - ${errorData.error.message}` : ''}`,
-      );
-    }
-
-    const data = await response.json();
-
-    if (!data.content || !Array.isArray(data.content) || !data.content[0]) {
-      throw new Error('Invalid response format from Anthropic API.');
-    }
-
-    const content = data.content[0].text.trim();
-    // Parse the JSON response
-    let translations;
-
-    try {
-      translations = JSON.parse(content);
-    } catch {
-      throw new Error('Failed to parse JSON response from Anthropic API.');
-    }
-
-    // Validate the response structure
-    if (!Array.isArray(translations)) {
-      throw new Error('Invalid JSON structure in Anthropic API response.');
-    }
-
-    // Ensure we have the right number of translations
-    if (translations.length !== texts.length) {
-      const expectedCount = texts.length;
-      const actualCount = translations.length;
-
-      throw new Error(`Translation count mismatch: expected ${expectedCount}, got ${actualCount}`);
-    }
-
-    return translations;
+    return parseAiTranslationResponse(content, texts.length, 'Anthropic API');
   } catch (error) {
     if (error instanceof Error) {
       throw error;

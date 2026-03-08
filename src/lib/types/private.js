@@ -261,6 +261,17 @@
  */
 
 /**
+ * Options for direct AI text completion requests.
+ * @typedef {object} AiCompletionOptions
+ * @property {string} apiKey API authentication key.
+ * @property {string} model Model name.
+ * @property {string} systemPrompt System/instruction prompt.
+ * @property {string} userMessage User message content.
+ * @property {number} [temperature] Sampling temperature (0–1). Default is 0.3.
+ * @property {number} [maxTokens] Maximum output tokens. Default is 4000.
+ */
+
+/**
  * Translation language pair.
  * @typedef {object} LanguagePair
  * @property {string} sourceLanguage Source language.
