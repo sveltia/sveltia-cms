@@ -9,6 +9,11 @@
 
 const apiEndpoint = 'https://api.anthropic.com/v1/messages';
 
+export const apiLabel = 'Anthropic API';
+export const developerURL = 'https://docs.claude.com/en/api/overview';
+export const apiKeyURL = 'https://platform.claude.com/settings/keys';
+export const apiKeyPattern = /sk-ant-api03-[a-zA-Z0-9-_]{80,}/;
+
 /**
  * Send a message to the Anthropic Messages API and return the response text.
  * @param {AiCompletionOptions} options Options.

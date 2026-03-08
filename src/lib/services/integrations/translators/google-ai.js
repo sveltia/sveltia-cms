@@ -1,4 +1,10 @@
-import { complete } from '$lib/services/integrations/ai/google';
+import {
+  apiKeyPattern,
+  apiKeyURL,
+  apiLabel,
+  complete,
+  developerURL,
+} from '$lib/services/integrations/ai/google';
 
 import {
   createTranslationSystemPrompt,
@@ -13,10 +19,6 @@ import {
 
 const serviceId = 'google-ai';
 const serviceLabel = 'Google Gemini';
-const apiLabel = 'Google AI Studio API';
-const developerURL = 'https://ai.google.dev/gemini-api/docs';
-const apiKeyURL = 'https://aistudio.google.com/api-keys';
-const apiKeyPattern = /AIza[a-zA-Z0-9_-]{35}/;
 const model = 'gemini-2.5-flash-lite';
 
 /**

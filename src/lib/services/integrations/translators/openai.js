@@ -1,4 +1,10 @@
-import { complete } from '$lib/services/integrations/ai/openai';
+import {
+  apiKeyPattern,
+  apiKeyURL,
+  apiLabel,
+  complete,
+  developerURL,
+} from '$lib/services/integrations/ai/openai';
 
 import {
   createTranslationSystemPrompt,
@@ -13,10 +19,6 @@ import {
 
 const serviceId = 'openai';
 const serviceLabel = 'OpenAI GPT';
-const apiLabel = 'OpenAI API';
-const developerURL = 'https://platform.openai.com/docs/overview';
-const apiKeyURL = 'https://platform.openai.com/api-keys';
-const apiKeyPattern = /sk-[a-zA-Z0-9-_]{40,}/;
 const model = 'gpt-4o-mini';
 
 /**

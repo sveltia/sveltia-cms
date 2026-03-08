@@ -1,4 +1,10 @@
-import { complete } from '$lib/services/integrations/ai/anthropic';
+import {
+  apiKeyPattern,
+  apiKeyURL,
+  apiLabel,
+  complete,
+  developerURL,
+} from '$lib/services/integrations/ai/anthropic';
 
 import {
   createTranslationSystemPrompt,
@@ -13,10 +19,6 @@ import {
 
 const serviceId = 'anthropic';
 const serviceLabel = 'Anthropic Claude';
-const apiLabel = 'Anthropic API';
-const developerURL = 'https://docs.claude.com/en/api/overview';
-const apiKeyURL = 'https://platform.claude.com/settings/keys';
-const apiKeyPattern = /sk-ant-api03-[a-zA-Z0-9-_]{80,}/;
 const model = 'claude-haiku-4-5';
 
 /**

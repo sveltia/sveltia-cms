@@ -9,6 +9,11 @@
 
 const apiEndpoint = 'https://api.openai.com/v1/chat/completions';
 
+export const apiLabel = 'OpenAI API';
+export const developerURL = 'https://platform.openai.com/docs/overview';
+export const apiKeyURL = 'https://platform.openai.com/api-keys';
+export const apiKeyPattern = /sk-[a-zA-Z0-9-_]{40,}/;
+
 /**
  * Send a message to the OpenAI Chat Completions API and return the response text.
  * @param {AiCompletionOptions} options Options.
