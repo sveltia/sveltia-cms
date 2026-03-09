@@ -232,38 +232,8 @@
   });
 </script>
 
-{#snippet imageGrid()}
-  <SimpleImageGrid {viewType} {gridId} {multiple}>
-    <InfiniteScroll items={listedAssets ?? []} itemKey="id">
-      {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
-        {#await sleep() then}
-          {@const { id, previewURL, description, kind: _kind } = asset}
-          <SimpleImageGridItem
-            value={id}
-            {viewType}
-            {multiple}
-            selected={isSelected(asset)}
-            onChange={({ detail: { selected } }) => {
-              onSelectionChange(asset, selected);
-            }}
-          >
-            <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
-            {#if !$isSmallScreen || viewType === 'list'}
-              <AssetPath path={description} />
-            {/if}
-          </SimpleImageGridItem>
-        {/await}
-      {/snippet}
-    </InfiniteScroll>
-  </SimpleImageGrid>
-{/snippet}
-
-{#if hasAuthInfo}
-  {#if error}
-    <EmptyState>
-      <span role="alert">{$_(`assets_dialog.error.${error}`)}</span>
-    </EmptyState>
-  {:else if !listedAssets}
+{#snippet content()}
+  {#if !listedAssets}
     <EmptyState>
       <span role="alert">{$_(searchTerms ? 'searching' : 'loading')}</span>
     </EmptyState>
@@ -271,12 +241,44 @@
     <EmptyState>
       <span role="alert">{$_('no_files_found')}</span>
     </EmptyState>
+  {:else}
+    <SimpleImageGrid {viewType} {gridId} {multiple}>
+      <InfiniteScroll items={listedAssets ?? []} itemKey="id">
+        {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
+          {#await sleep() then}
+            {@const { id, previewURL, description, kind: _kind } = asset}
+            <SimpleImageGridItem
+              value={id}
+              {viewType}
+              {multiple}
+              selected={isSelected(asset)}
+              onChange={({ detail: { selected } }) => {
+                onSelectionChange(asset, selected);
+              }}
+            >
+              <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
+              {#if !$isSmallScreen || viewType === 'list'}
+                <AssetPath path={description} />
+              {/if}
+            </SimpleImageGridItem>
+          {/await}
+        {/snippet}
+      </InfiniteScroll>
+    </SimpleImageGrid>
+  {/if}
+{/snippet}
+
+{#if hasAuthInfo}
+  {#if error}
+    <EmptyState>
+      <span role="alert">{$_(`assets_dialog.error.${error}`)}</span>
+    </EmptyState>
   {:else if upload}
     <DropZone accept={fieldConfig?.accept} {multiple} onDrop={({ files }) => uploadFiles(files)}>
-      {@render imageGrid()}
+      {@render content()}
     </DropZone>
   {:else}
-    {@render imageGrid()}
+    {@render content()}
   {/if}
 {:else if hasConfig}
   <EmptyState>
