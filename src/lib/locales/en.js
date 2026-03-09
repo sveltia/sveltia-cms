@@ -614,12 +614,13 @@ export const strings = {
     invalid: 'The service is not configured properly.',
     auth: {
       api_key: {
-        initial: 'Enter your API key to sign in to {service}.',
+        key_label: 'API Key',
+        initial: 'Enter your {key} for {service}.',
         requested: 'Validating…',
-        error: 'The provided API key is invalid. Please double check and try again.',
+        error: 'The provided {key} is invalid. Please double check and try again.',
       },
       password: {
-        initial: 'Enter your password to sign in to {service}.',
+        initial: 'Enter your password for {service}.',
         requested: 'Signing in…',
         error: 'User name or password is incorrect. Please double check and try again.',
       },
@@ -630,18 +631,10 @@ export const strings = {
         button_label: 'Activate Cloudinary',
         description: 'After signing in, click the Sign In button again to continue.', // Don’t translate "Sign In" here
       },
-      auth: {
-        initial: 'Enter you API Secret to use Cloudinary.', // Not "API Key"
-        requested: 'Validating…',
-        error: 'The provided API Secret is invalid. Please double check and try again.',
-      },
+      auth_key_label: 'API Secret',
     },
     uploadcare: {
-      auth: {
-        initial: 'Enter your API Secret Key to use Uploadcare.',
-        requested: 'Validating…',
-        error: 'The provided Secret Key is invalid. Please double check and try again.',
-      },
+      auth_key_label: 'API Secret Key',
     },
   },
 

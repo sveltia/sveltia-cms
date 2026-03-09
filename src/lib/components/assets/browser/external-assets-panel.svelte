@@ -297,7 +297,12 @@
         {@html sanitize(
           $_(`cloud_storage.${serviceId}.auth.${authState}`, {
             default: $_(`cloud_storage.auth.${authType}.${authState}`, {
-              values: { service: serviceLabel },
+              values: {
+                service: serviceLabel,
+                key: $_(`cloud_storage.${serviceId}.auth_key_label`, {
+                  default: $_(`cloud_storage.auth.${authType}.key_label`),
+                }),
+              },
             }),
           }),
           { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] },

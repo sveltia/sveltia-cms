@@ -616,9 +616,10 @@ export const strings = {
     invalid: 'このサービスは正しく設定されていません。',
     auth: {
       api_key: {
-        initial: '{service} の API キーを入力してください。',
-        requested: 'API キーを検証中…',
-        error: '入力された API キーが無効です。確認の上、再度お試しください。',
+        key_label: 'API キー',
+        initial: '{service} の {key} を入力してください。',
+        requested: '検証中…',
+        error: '入力された {key} が無効です。確認の上、再度お試しください。',
       },
       password: {
         initial: '{service} のパスワードを入力してください。',
@@ -632,18 +633,10 @@ export const strings = {
         button_label: 'Cloudinary を有効化',
         description: 'ログイン後、再度 Sign In ボタンをクリックして続行してください。', // Don’t translate "Sign In" here
       },
-      auth: {
-        initial: 'Cloudinary の API Secret を入力してください。', // Not "API Key"
-        requested: 'API Secret を検証中…',
-        error: '入力された API Secret が無効です。確認の上、再度お試しください。',
-      },
+      auth_key_label: 'API Secret',
     },
     uploadcare: {
-      auth: {
-        initial: 'Uploadcare の API Secret Key を入力してください。',
-        requested: 'API Secret Key を検証中…',
-        error: '入力された Secret Key が無効です。確認の上、再度お試しください。',
-      },
+      auth_key_label: 'API Secret Key',
     },
   },
 
