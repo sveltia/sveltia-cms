@@ -631,4 +631,19 @@ describe('Test createPathRegEx()', () => {
     expect(regex.test('app/(pages)/another.md')).toBe(true);
     expect(regex.test('app/pages/my-post.md')).toBe(false);
   });
+
+  test('should not consume the trailing slash when used with String.replace()', () => {
+    // Regression: with a consuming match `(?:\/|$)`, the slash between the slug folder and the
+    // filename was swallowed, producing `/@assets/images/666-testphoto.jpg` instead of
+    // `/@assets/images/666-test/photo.jpg`.
+    const regex = createPathRegEx('src/assets/images/{{slug}}', (segment) => {
+      const tag = segment.match(/{{(?<tag>.+?)}}/)?.groups?.tag;
+
+      return tag ? `(?<${tag}>[^/]+)` : segment;
+    });
+
+    const result = 'src/assets/images/666-test/photo.jpg'.replace(regex, '/@assets/images/$<slug>');
+
+    expect(result).toBe('/@assets/images/666-test/photo.jpg');
+  });
 });

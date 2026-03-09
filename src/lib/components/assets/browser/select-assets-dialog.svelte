@@ -134,7 +134,8 @@
     const { originalEntry } = $entryDraft ?? {};
 
     if (!selectedFolder?.entryRelative) {
-      return selectedFolder?.internalPath;
+      // @todo FIXME: Replace all template tags in the path, not just `{{slug}}`
+      return selectedFolder?.internalPath?.replace('{{slug}}', originalEntry?.slug ?? '-');
     }
 
     if (originalEntry) {
@@ -207,7 +208,7 @@
     }
 
     if (!selectedFolder.entryRelative) {
-      return true;
+      return targetFolderPathRegex?.test(asset.path) ?? false;
     }
 
     const { dirname } = getPathInfo(asset.path);

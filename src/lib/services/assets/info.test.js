@@ -727,14 +727,29 @@ describe('assets/info', () => {
         },
       };
 
-      // Replace the path with the public version
-      // Since we have template tags, it will use createPathRegEx
-      // which will call our callback to extract tags (lines 189-191)
       const result = getAssetPublicURL(templateAsset, { pathOnly: true });
 
-      // Result should contain the test file and public path
-      expect(result).toBeDefined();
-      expect(result).toContain('test.jpg');
+      expect(result).toBe('/public/post-slug/test.jpg');
+    });
+
+    it('should preserve the slash between slug folder and filename with template tags', () => {
+      // Regression: the slash separating the slug-named folder from the filename must not
+      // be consumed during path replacement, e.g. `/@assets/images/666-test/photo.jpg`
+      // and not `/@assets/images/666-testphoto.jpg`.
+      const templateAsset = {
+        ...mockAsset,
+        path: 'src/assets/images/666-test/my-image.jpg',
+        folder: {
+          ...mockAsset.folder,
+          internalPath: 'src/assets/images/{{slug}}',
+          publicPath: '/@assets/images/{{slug}}',
+          hasTemplateTags: true,
+        },
+      };
+
+      const result = getAssetPublicURL(templateAsset, { pathOnly: true });
+
+      expect(result).toBe('/@assets/images/666-test/my-image.jpg');
     });
 
     it('should encode file path when encoding is enabled', async () => {
