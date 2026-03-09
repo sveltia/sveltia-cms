@@ -223,11 +223,16 @@
 
     untrack(() => {
       window.clearTimeout(debounceTimer);
-      debounceTimer = window.setTimeout(() => {
-        if (hasAuthInfo) {
-          getAssets(searchTerms);
-        }
-      }, 1000);
+
+      if (searchTerms) {
+        debounceTimer = window.setTimeout(() => {
+          if (hasAuthInfo) {
+            getAssets(searchTerms);
+          }
+        }, 1000);
+      } else if (hasAuthInfo) {
+        getAssets(searchTerms);
+      }
     });
   });
 </script>
