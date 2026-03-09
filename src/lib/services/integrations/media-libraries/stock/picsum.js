@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-
 /**
  * @import {
  * ExternalAsset,
@@ -52,30 +50,24 @@ export const parseResults = (results) =>
  * @see https://picsum.photos/#list-images
  */
 export const list = async () => {
-  /** @type {FetchResult[]} */
-  const results = [];
-
   // Pick random pages from the 10 available (100 images each).
   const pages = Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1)
     .sort(() => Math.random() - 0.5)
     .slice(0, FETCH_PAGES);
 
-  for (let i = 0; i < pages.length; i += 1) {
-    const params = new URLSearchParams({ page: String(pages[i]), limit: String(LIMIT) });
-    const response = await fetch(`${ENDPOINT}?${params}`);
+  const responses = await Promise.all(
+    pages.map((page) => fetch(`${ENDPOINT}?page=${page}&limit=${LIMIT}`)),
+  );
 
-    if (!response.ok) {
-      return Promise.reject();
-    }
-
-    /** @type {FetchResult[]} */
-    const pageResults = await response.json();
-
-    results.push(...pageResults);
+  if (responses.some((r) => !r.ok)) {
+    return Promise.reject();
   }
 
+  /** @type {FetchResult[][]} */
+  const pageResults = await Promise.all(responses.map((r) => r.json()));
+
   // Randomize the results for variety, as the API returns them in the same order for the same page.
-  return parseResults(results.sort(() => Math.random() - 0.5));
+  return parseResults(pageResults.flat().sort(() => Math.random() - 0.5));
 };
 
 /**
