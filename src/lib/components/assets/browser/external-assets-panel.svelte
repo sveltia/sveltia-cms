@@ -274,7 +274,7 @@
       <span role="alert">{$_(`assets_dialog.error.${error}`)}</span>
     </EmptyState>
   {:else if upload}
-    <DropZone accept={fieldConfig?.accept} {multiple} onDrop={({ files }) => uploadFiles(files)}>
+    <DropZone accept={fieldConfig?.accept} multiple onDrop={({ files }) => uploadFiles(files)}>
       {@render content()}
     </DropZone>
   {:else}
