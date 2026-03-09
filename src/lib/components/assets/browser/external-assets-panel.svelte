@@ -18,6 +18,7 @@
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
+  import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
@@ -248,7 +249,7 @@
           >
             <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
             {#if !$isSmallScreen || viewType === 'list'}
-              <span role="none" class="name">{description}</span>
+              <AssetPath path={description} />
             {/if}
           </SimpleImageGridItem>
         {/await}

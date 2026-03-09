@@ -1,11 +1,11 @@
 <script>
-  import { EmptyState, InfiniteScroll, TruncatedText } from '@sveltia/ui';
+  import { EmptyState, InfiniteScroll } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
-  import { sanitize } from 'isomorphic-dompurify';
   import { _ } from 'svelte-i18n';
 
+  import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
@@ -76,11 +76,6 @@
   };
 </script>
 
-{#snippet getLabel(/** @type {string} */ str)}
-  <!-- Allow to line-break after a hyphen, underscore and dot -->
-  {@html sanitize(str.replace(/([-_.])/g, '$1<wbr>'), { ALLOWED_TAGS: ['wbr'] })}
-{/snippet}
-
 {#if filteredAssets.length}
   <div role="none" class="grid-wrapper">
     <SimpleImageGrid {multiple} {gridId} {viewType} showTitle={true}>
@@ -91,7 +86,6 @@
             <!-- Show asset path relative to the base folder, or just file name -->
             {@const relPath =
               basePath && !folder.entryRelative ? stripSlashes(path.replace(basePath, '')) : name}
-            {@const pathArray = relPath.split('/')}
             <SimpleImageGridItem
               value={path}
               {viewType}
@@ -106,22 +100,11 @@
               {/if}
               <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
               {#if !$isSmallScreen || viewType === 'list'}
-                <span role="none" class="name">
-                  <TruncatedText lines={2}>
-                    {#each pathArray as segment, index (`${segment}-${index}`)}
-                      {#if index === pathArray.length - 1}
-                        <!-- File name -->
-                        <strong>{@render getLabel(segment)}</strong>
-                      {:else}
-                        <!-- Folder name -->
-                        {@render getLabel(segment)}/
-                      {/if}
-                    {/each}
-                  </TruncatedText>
+                <AssetPath path={relPath}>
                   {#if viewType === 'list' && unsaved}
                     <div role="none" class="unsaved">{$_('assets_dialog.unsaved')}</div>
                   {/if}
-                </span>
+                </AssetPath>
               {/if}
             </SimpleImageGridItem>
           {/await}
@@ -175,14 +158,5 @@
     color: var(--sui-info-foreground-color);
     background-color: var(--sui-info-background-color);
     font-size: var(--sui-font-size-small);
-  }
-
-  .name {
-    color: var(--sui-tertiary-foreground-color);
-
-    strong {
-      color: var(--sui-primary-foreground-color);
-      font-weight: var(--sui-font-weight-normal);
-    }
   }
 </style>
