@@ -31,7 +31,8 @@
 
 /**
  * Cloud media storage name.
- * @typedef {'cloudinary' | 'uploadcare'} CloudMediaLibraryName
+ * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'cloudflare_r2' |
+ * 'digitalocean_spaces'} CloudMediaLibraryName
  */
 
 /**
@@ -165,6 +166,26 @@
  */
 
 /**
+ * Options for S3-compatible media libraries (Amazon S3, Cloudflare R2, DigitalOcean Spaces).
+ * @typedef {object} S3MediaLibrary
+ * @property {string} [name] Media library name (used when configuring via legacy `media_library`).
+ * @property {string} access_key_id AWS access key ID or equivalent (safe to store in config).
+ * @property {string} bucket Bucket name.
+ * @property {string} [region] AWS region (e.g., 'us-east-1'). Required for Amazon S3 and
+ * DigitalOcean Spaces.
+ * @property {string} [account_id] Cloudflare account ID. Required for Cloudflare R2.
+ * @property {string} [endpoint] Custom endpoint URL for S3-compatible services.
+ * @property {string} [prefix] Path prefix within bucket.
+ * @property {boolean} [force_path_style] Use path-style URLs instead of virtual-hosted-style.
+ * @property {string} [public_url] Base URL for public asset access. When set, asset preview and
+ * download URLs are constructed as `{public_url}/{key}` instead of the S3 API endpoint URL.
+ * Required for Cloudflare R2 (S3 API endpoint always requires authentication); set to the `r2.dev`
+ * development URL (e.g. `https://pub-abcd1234.r2.dev`) or a custom domain. Optional for Amazon S3
+ * and DigitalOcean Spaces — use when serving assets through a CDN or custom domain (e.g. CloudFront
+ * or Route 53 for S3, CDN endpoint for Spaces).
+ */
+
+/**
  * Name of supported stock photo/video provider.
  * @typedef {'pexels' | 'picsum' | 'pixabay' | 'unsplash'} StockAssetProviderName
  */
@@ -179,8 +200,8 @@
 
 /**
  * Supported [media storage](https://sveltiacms.app/en/docs/media).
- * @typedef {DefaultMediaLibrary | CloudinaryMediaLibrary | UploadcareMediaLibrary |
- * StockAssetMediaLibrary} MediaLibrary
+ * @typedef {DefaultMediaLibrary | CloudinaryMediaLibrary | UploadcareMediaLibrary | S3MediaLibrary
+ * | StockAssetMediaLibrary} MediaLibrary
  */
 
 /**
@@ -190,6 +211,10 @@
  * @property {DefaultMediaLibrary} [default] Options for the default media storage.
  * @property {CloudinaryMediaLibrary} [cloudinary] Options for the Cloudinary media storage.
  * @property {UploadcareMediaLibrary} [uploadcare] Options for the Uploadcare media storage.
+ * @property {S3MediaLibrary} [aws_s3] Options for the Amazon S3 media storage.
+ * @property {S3MediaLibrary} [cloudflare_r2] Options for the Cloudflare R2 media storage.
+ * @property {S3MediaLibrary} [digitalocean_spaces] Options for the DigitalOcean Spaces media
+ * storage.
  * @property {StockAssetMediaLibrary} [stock_assets] Options for the unified stock photo/video media
  * library.
  */

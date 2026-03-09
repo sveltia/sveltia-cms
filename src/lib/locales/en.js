@@ -636,6 +636,15 @@ export const strings = {
     uploadcare: {
       auth_key_label: 'API Secret Key',
     },
+    aws_s3: {
+      auth_key_label: 'Secret Access Key',
+    },
+    cloudflare_r2: {
+      auth_key_label: 'Secret Access Key',
+    },
+    digitalocean_spaces: {
+      auth_key_label: 'Secret Access Key',
+    },
   },
 
   // Configuration
