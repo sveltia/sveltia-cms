@@ -118,11 +118,11 @@
     if (value) {
       const getURLArgs = { value, entry, collectionName, fileName, fieldConfig };
 
-      if (isImageField && /^https?:/.test(value)) {
+      if (isImageField) {
         asset = undefined;
         kind = 'image';
         src = value;
-      } else if (!value.startsWith('blob:')) {
+      } else if (!value.startsWith('blob:') && !value.startsWith('https:')) {
         asset = getAssetByPath({ ...getURLArgs });
         kind = undefined;
         src = undefined;
