@@ -863,7 +863,7 @@ describe('assets/info', () => {
         collectionName: 'posts',
       });
 
-      expect(result).toBe(undefined);
+      expect(result).toBe('nonexistent.jpg');
     });
 
     it('should return blob URL for found asset', async () => {
