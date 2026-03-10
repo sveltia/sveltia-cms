@@ -177,8 +177,6 @@ const registerEditorComponent = (definition) => {
   }
 
   customComponentRegistry.set(definition.id, definition);
-
-  console.warn('Preview for custom editor components are not yet supported in Sveltia CMS.');
 };
 
 /**
