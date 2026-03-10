@@ -1632,13 +1632,13 @@
  * @property {boolean} [collapsed] Whether to collapse the object by default. Default: `false`.
  * @property {Field[]} fields Set of fields to be displayed in the component.
  * @property {RegExp} pattern Regular expression to search a block from Markdown document.
- * @property {(match: RegExpMatchArray) => { [key: string]: any }} [fromBlock] Function to convert
- * the matching result to field properties. This can be omitted if the `pattern` regex contains
- * named capturing group(s) that will be passed directly to the internal `createNode` method.
- * @property {(props: { [key: string]: any }) => string} toBlock Function to convert field
- * properties to Markdown content.
- * @property {(props: { [key: string]: any }) => string | ReactElement} [toPreview] Function to
- * convert field properties to field preview.
+ * @property {(match: RegExpMatchArray) => Record<string, any>} [fromBlock] Function to convert the
+ * matching result to field properties. This can be omitted if the `pattern` regex contains named
+ * capturing group(s) that will be passed directly to the internal `createNode` method.
+ * @property {(props: Record<string, any>) => string} toBlock Function to convert field properties
+ * to Markdown content.
+ * @property {(props: Record<string, any>) => string | ReactElement} [toPreview] Function to convert
+ * field properties to field preview.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
