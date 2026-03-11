@@ -684,7 +684,7 @@ export const strings = {
       oauth_implicit_flow:
         'The configured authentication method (implicit flow) is not supported in Sveltia CMS. Use PKCE authorization instead.',
       github_pkce_unsupported:
-        'PKCE authorization with GitHub is not yet supported in Sveltia CMS due to GitHub’s limitations.',
+        'PKCE authorization is not yet supported due to GitHub’s limitations. Use other [authentication methods](https://sveltiacms.app/en/docs/backends/github#authentication) instead.',
       oauth_no_app_id: 'OAuth application ID is not defined.',
       missing_media_folder: 'The media folder is not defined.',
       invalid_media_folder: 'The configured media folder is invalid. It must be a string.',
