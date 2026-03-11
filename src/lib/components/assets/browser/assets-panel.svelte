@@ -98,7 +98,7 @@
               {#if viewType === 'grid' && unsaved}
                 <div role="none" class="unsaved">{$_('assets_dialog.unsaved')}</div>
               {/if}
-              <AssetPreview {kind} {asset} variant="tile" {checkerboard} />
+              <AssetPreview {kind} {asset} alt={relPath} variant="tile" {checkerboard} />
               {#if !$isSmallScreen || viewType === 'list'}
                 <AssetPath path={relPath}>
                   {#if viewType === 'list' && unsaved}
