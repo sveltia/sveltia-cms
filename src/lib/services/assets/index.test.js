@@ -2388,6 +2388,183 @@ describe('assets/index', () => {
 
       expect(result).toBeUndefined();
     });
+
+    it('should append dirName to internalPath when publicPath is root "/"', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'assets/subfolder/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'assets',
+          publicPath: '/',
+          collectionName: undefined,
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'assets',
+        publicPath: '/',
+        collectionName: undefined,
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      // When publicPath is '/', dirName like '/subfolder' should be appended
+      // to internalPath as 'assets/subfolder' (not '/subfolder' + 'assets')
+      vi.mocked(stripSlashes).mockReturnValue('/subfolder/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/subfolder',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValueOnce(mockFolder).mockReturnValueOnce(mockFolder);
+
+      // Mock createPath to return the expected internal path with appended dirName
+      // The logic should compute: internalPath + dirName = 'assets' + '/subfolder' =
+      // 'assets/subfolder'
+      vi.mocked(createPath).mockReturnValue('assets/subfolder/photo.jpg');
+
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/subfolder/photo.jpg',
+        entry: undefined,
+        collectionName: '',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAsset);
+      // Verify that createPath was called with internalPath appended with dirName
+      // 'assets' + '/subfolder' should produce 'assets/subfolder'
+      expect(createPath).toHaveBeenCalledWith(['assets/subfolder', 'photo.jpg']);
+    });
+
+    it('should handle nested paths with non-root publicPath', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      // Asset stored at: content/posts/media/album/2024/photo.jpg
+      // With internalPath: content/posts/media
+      // Accessed via publicPath: /media/album/2024
+      const mockAsset = {
+        path: 'content/posts/media/album/2024/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/media',
+          publicPath: '/media',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'content/posts/media',
+        publicPath: '/media',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      // Request path includes nested folders: /media/album/2024/photo.jpg
+      vi.mocked(stripSlashes).mockReturnValue('/media/album/2024/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/media/album/2024',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
+
+      // When replacing /media in /media/album/2024 with content/posts/media
+      // Result should be content/posts/media/album/2024
+      vi.mocked(createPath).mockReturnValueOnce('content/posts/media/album/2024/photo.jpg');
+
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/media/album/2024/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAsset);
+    });
+
+    it('should handle deeply nested paths with root publicPath', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      // Asset stored at: static/images/gallery/albums/2024/march/photo.jpg
+      // With internalPath: static
+      // Accessed via publicPath: root /
+      const mockAsset = {
+        path: 'static/images/gallery/albums/2024/march/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'static',
+          publicPath: '/',
+          collectionName: undefined,
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'static',
+        publicPath: '/',
+        collectionName: undefined,
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      // Request path with deeply nested structure
+      vi.mocked(stripSlashes).mockReturnValue('/images/gallery/albums/2024/march/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/images/gallery/albums/2024/march',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
+
+      // When publicPath is /, concat: static + /images/gallery/albums/2024/march
+      vi.mocked(createPath).mockReturnValueOnce(
+        'static/images/gallery/albums/2024/march/photo.jpg',
+      );
+
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/images/gallery/albums/2024/march/photo.jpg',
+        entry: undefined,
+        collectionName: '',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAsset);
+    });
   });
 
   describe('additional edge cases and scenarios', () => {

@@ -252,8 +252,12 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }
     }
 
     // Handle assets stored in a subfolder of the internal path
-    if (publicPath && internalPath && dirName && dirName.startsWith(`${publicPath}/`)) {
-      internalPath = dirName.replace(publicPath, internalPath);
+    if (publicPath && internalPath && dirName) {
+      if (publicPath === '/') {
+        internalPath = `${internalPath}${dirName}`;
+      } else if (dirName.startsWith(`${publicPath}/`)) {
+        internalPath = dirName.replace(publicPath, internalPath);
+      }
     }
 
     const fullPath = createPath([internalPath, baseName]);
