@@ -207,9 +207,9 @@
    * Parse a block of markdown into HTML, replacing component placeholders with their previews and
    * sanitizing the result if needed.
    * @param {string} block The markdown block to parse.
-   * @returns {Promise<string>} The parsed (and possibly sanitized) HTML string.
+   * @returns {string} The parsed (and possibly sanitized) HTML string.
    */
-  const parseMarkdown = async (block) => {
+  const parseMarkdown = (block) => {
     const rawHTML = /** @type {string} */ (parse(block, { breaks: true }));
 
     return doSanitize ? sanitize(rawHTML, SANITIZE_OPTIONS) : rawHTML;
@@ -233,9 +233,7 @@
 <div role="none" bind:this={container}>
   {#if markdown}
     {#each splitMarkdownBlocks(markdown) as block, index (`${index}-${block}`)}
-      {#await parseMarkdown(block) then parsedHTML}
-        {@html parsedHTML}
-      {/await}
+      {@html parseMarkdown(block)}
     {/each}
   {/if}
 </div>
