@@ -118,7 +118,7 @@
     if (value) {
       const getURLArgs = { value, entry, collectionName, fileName, fieldConfig };
 
-      if (isImageField && /^(https?:|\/)/.test(value)) {
+      if (isImageField && /^https?:/.test(value)) {
         asset = undefined;
         kind = 'image';
         src = value;
