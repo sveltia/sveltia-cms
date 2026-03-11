@@ -256,7 +256,7 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }
       internalPath = dirName.replace(publicPath, internalPath);
     }
 
-    const fullPath = createPath([internalPath, baseName]);
+    const fullPath = createPath([internalPath, path.replace(/^\//,'')]);
     const found = get(allAssets).find((asset) => asset.path === fullPath);
 
     if (found) {

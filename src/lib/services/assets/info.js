@@ -284,7 +284,7 @@ export const getMediaFieldURL = async ({
   const asset = getAssetByPath({ value, entry, collectionName, fileName });
 
   if (!asset) {
-    return value;
+    return undefined;
   }
 
   return (
