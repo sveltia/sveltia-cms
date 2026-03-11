@@ -61,10 +61,6 @@ vi.mock('$lib/services/contents/fields/date-time/helper', () => ({
   parseDateTimeConfig,
 }));
 
-vi.mock('$lib/services/utils/date', () => ({
-  FULL_DATE_TIME_REGEX: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/,
-}));
-
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
  * @import { Field } from '$lib/types/public';
@@ -615,7 +611,7 @@ describe('Test copyProperty()', () => {
       expect(typeof sortedMap.publishDate).toBe('string');
     });
 
-    test('does not convert string that does not match date regex to TomlDate', () => {
+    test('sets invalid date to undefined when string does not match date format', () => {
       /** @type {FlattenedEntryContent} */
       const sortedMap = {};
 
@@ -638,9 +634,8 @@ describe('Test copyProperty()', () => {
         field: { name: 'title', widget: 'datetime', required: false },
       });
 
-      // The string should remain as-is because it does not match the date regex
-      expect(sortedMap.title).toBe('Some random string');
-      expect(typeof sortedMap.title).toBe('string');
+      // Invalid date strings result in undefined to prevent serialization errors
+      expect(sortedMap.title).toBeUndefined();
     });
 
     test('does not convert date when datetime format is configured', () => {

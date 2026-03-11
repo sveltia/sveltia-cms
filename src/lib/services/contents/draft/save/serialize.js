@@ -8,7 +8,6 @@ import { cmsConfig } from '$lib/services/config';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
-import { FULL_DATE_TIME_REGEX } from '$lib/services/utils/date';
 
 /**
  * @import {
@@ -69,16 +68,16 @@ export const copyProperty = ({
   // @see https://toml.io/en/v1.0.0#offset-date-time
   if (
     isTomlOutput &&
-    typeof value === 'string' &&
-    FULL_DATE_TIME_REGEX.test(value) &&
     field?.widget === 'datetime' &&
     !parseDateTimeConfig(/** @type {DateTimeField} */ (field)).format
   ) {
-    try {
-      value = new TomlDate(value);
-    } catch {
-      //
-    }
+    const tomlDate = new TomlDate(value);
+
+    // Ignore invalid dates to prevent serialization errors. This occurs when the field is optional
+    // and no value is provided, such as an empty string. In such cases, save nothing. We cannot
+    // save `null` because TOML doesn’t support it, and an empty string may not be the expected
+    // value for a date field.
+    value = tomlDate.isValid() ? tomlDate : undefined;
   }
 
   if (

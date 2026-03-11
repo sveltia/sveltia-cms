@@ -4,43 +4,11 @@ import {
   DATE_FORMAT_OPTIONS,
   DATE_REGEX,
   DATE_TIME_FORMAT_OPTIONS,
-  FULL_DATE_TIME_REGEX,
   TIME_FORMAT_OPTIONS,
   TIME_SUFFIX_REGEX,
 } from './date';
 
 describe('Date utility regexes', () => {
-  describe('FULL_DATE_TIME_REGEX', () => {
-    test('should match complete ISO 8601 date-time formats', () => {
-      const validFormats = [
-        '2023-12-25T14:30:00.000Z',
-        '2023-12-25T14:30:00Z',
-        '2023-12-25T14:30:00.123Z',
-        '2023-12-25T14:30:00+01:00',
-        '2023-12-25T14:30:00-05:00',
-        '2023-12-25T14:30',
-        '2023-12-25',
-        'T14:30:00',
-        'T14:30',
-      ];
-
-      validFormats.forEach((format) => {
-        expect(FULL_DATE_TIME_REGEX.test(format)).toBe(true);
-      });
-    });
-
-    test('should not match invalid formats', () => {
-      // Test completely invalid strings that don't match the ISO pattern at all
-      expect(FULL_DATE_TIME_REGEX.test('invalid-date')).toBe(false);
-      expect(FULL_DATE_TIME_REGEX.test('not-a-date-at-all')).toBe(false);
-      expect(FULL_DATE_TIME_REGEX.test('2023/12/25')).toBe(false); // Wrong separators
-
-      // Note: This regex is lenient and designed to match partial dates
-      // It doesn't validate the actual validity of dates, just the format structure
-      // Values like '2023-13-25' would still match the pattern structure
-    });
-  });
-
   describe('DATE_REGEX', () => {
     test('should match valid date formats', () => {
       const validDates = [
