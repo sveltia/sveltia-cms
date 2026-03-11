@@ -24,16 +24,18 @@ export const SANITIZE_OPTIONS = {
 };
 
 /**
- * Regex to match component placeholders in Markdown-parsed HTML, capturing the component key for
- * lookup in the preview map.
- */
-export const COMPONENT_MATCHER = /<span data-component-key="([^"]+)"><\/span>/g;
-
-/**
  * Selector for finding component placeholder elements in the rendered HTML, used by the
  * `MutationObserver` to identify where to render React element previews.
  */
 export const COMPONENT_QUERY_SELECTOR = 'span[data-component-key]';
+
+/**
+ * Selector for finding unprocessed images in the rendered HTML, used by the `MutationObserver` to
+ * identify images that need to be processed (e.g. Converted to `blob` URLs for local previews). The
+ * `data-processed` attribute is added to images that have already been processed to avoid
+ * reprocessing on subsequent mutations.
+ */
+export const IMAGE_QUERY_SELECTOR = 'img[src]:not([data-processed])';
 
 /**
  * A simple FNV-1a 32-bit hash of a string, returned as a hex string. Used to produce stable, short,
@@ -152,26 +154,23 @@ export const buildMarkdownWithPreviews = (currentValue, componentDefs) => {
       previewMap.set(key, toPreview?.(fieldProps));
     });
 
-    // Replace the component syntax with a placeholder
-    string = string.replaceAll(
-      globalPattern,
-      () => `<span data-component-key="${keys.shift()}"></span>`,
-    );
+    // Replace the component syntax with a direct preview string or placeholder, depending on the
+    // type of the preview value. This allows simple text previews to be rendered directly without
+    // needing the `MutationObserver` to find and replace a placeholder element, while still
+    // supporting complex React element previews.
+    string = string.replaceAll(globalPattern, () => {
+      const key = keys.shift();
+      const preview = key ? previewMap.get(key) : undefined;
+
+      if (typeof preview === 'string') {
+        return preview;
+      }
+
+      // Return a placeholder element with a unique key that can be used by the `MutationObserver`
+      // to find the correct location to render the React element preview.
+      return `<span data-component-key="${key}"></span>`;
+    });
   });
 
   return { markdown: string, previewMap };
 };
-
-/**
- * Replace string component preview placeholders in parsed HTML with their preview content. React
- * element placeholders are left in place to be rendered by the `MutationObserver`.
- * @param {string} html The parsed HTML string containing component placeholders.
- * @param {Map<string, ComponentPreview>} previewMap Map of component keys to preview values.
- * @returns {string} The HTML string with string previews inlined.
- */
-export const inlineStringPreviews = (html, previewMap) =>
-  html.replace(COMPONENT_MATCHER, (match, key) => {
-    const preview = previewMap.get(key);
-
-    return typeof preview === 'string' ? preview : match;
-  });

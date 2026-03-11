@@ -2,12 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildMarkdownWithPreviews,
-  encodeImageSrc,
-  inlineStringPreviews,
-  splitMarkdownBlocks,
-} from './helper.js';
+import { buildMarkdownWithPreviews, encodeImageSrc, splitMarkdownBlocks } from './helper.js';
 
 describe('encodeImageSrc', () => {
   it('should encode spaces in image URLs without title', () => {
@@ -226,7 +221,7 @@ describe('buildMarkdownWithPreviews', () => {
     expect(previewMap.size).toBe(0);
   });
 
-  it('should replace a matched component with a placeholder span', () => {
+  it('should inline a string preview directly in the markdown', () => {
     /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
     const componentDefs = [
       {
@@ -242,11 +237,38 @@ describe('buildMarkdownWithPreviews', () => {
     const { markdown, previewMap } = buildMarkdownWithPreviews('[note]Hello[/note]', componentDefs);
 
     expect(previewMap.size).toBe(1);
-    expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+    expect(markdown).toBe('<div class="note">Hello</div>');
 
     const [key] = previewMap.keys();
 
     expect(previewMap.get(key)).toBe('<div class="note">Hello</div>');
+  });
+
+  it('should replace a React element preview with a placeholder span', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'note',
+        label: 'Note',
+        fields: [],
+        pattern: /\[note\](?<content>.*?)\[\/note\]/gs,
+        toBlock: ({ content }) => `[note]${content}[/note]`,
+        // Simulate a React element (non-string) preview
+        toPreview: ({ content }) =>
+          /** @type {import('react').ReactElement} */ (
+            /** @type {unknown} */ ({ type: 'div', props: { children: content } })
+          ),
+      },
+    ];
+
+    const { markdown, previewMap } = buildMarkdownWithPreviews('[note]Hello[/note]', componentDefs);
+
+    expect(previewMap.size).toBe(1);
+    expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+
+    const [key] = previewMap.keys();
+
+    expect(previewMap.get(key)).toEqual({ type: 'div', props: { children: 'Hello' } });
   });
 
   it('should use fromBlock to resolve field props when provided', () => {
@@ -307,9 +329,7 @@ describe('buildMarkdownWithPreviews', () => {
     );
 
     expect(previewMap.size).toBe(2);
-    expect(markdown).toMatch(
-      /^<span data-component-key="[^"]+"><\/span> <span data-component-key="[^"]+"><\/span>$/,
-    );
+    expect(markdown).toBe('<div>A</div> <div>B</div>');
   });
 
   it('should encode image src spaces in the markdown', () => {
@@ -382,9 +402,7 @@ describe('buildMarkdownWithPreviews', () => {
     );
 
     expect(previewMap.size).toBe(2);
-    expect(markdown).toMatch(
-      /^<span data-component-key="[^"]+"><\/span> <span data-component-key="[^"]+"><\/span>$/,
-    );
+    expect(markdown).toBe('<div class="note">A</div> <div class="note">B</div>');
   });
 });
 
@@ -441,50 +459,5 @@ describe('splitMarkdownBlocks', () => {
     const md = '````\ncode\n\n````';
 
     expect(splitMarkdownBlocks(md)).toEqual([md]);
-  });
-});
-
-describe('inlineStringPreviews', () => {
-  it('should replace a placeholder with a string preview', () => {
-    const previewMap = new Map([['key-1', '<div>preview</div>']]);
-    const html = '<p><span data-component-key="key-1"></span></p>';
-
-    expect(inlineStringPreviews(html, previewMap)).toBe('<p><div>preview</div></p>');
-  });
-
-  it('should leave the placeholder intact when the preview is not a string', () => {
-    // Simulate a React element (non-string value)
-    /** @type {Map<string, any>} */
-    const previewMap = new Map([['key-1', { type: 'div', props: {} }]]);
-    const html = '<p><span data-component-key="key-1"></span></p>';
-
-    expect(inlineStringPreviews(html, previewMap)).toBe(html);
-  });
-
-  it('should leave the placeholder intact when the key is not in the map', () => {
-    const previewMap = new Map();
-    const html = '<p><span data-component-key="missing-key"></span></p>';
-
-    expect(inlineStringPreviews(html, previewMap)).toBe(html);
-  });
-
-  it('should replace multiple placeholders in one pass', () => {
-    const previewMap = new Map([
-      ['key-1', '<b>one</b>'],
-      ['key-2', '<i>two</i>'],
-    ]);
-
-    const html =
-      '<p><span data-component-key="key-1"></span></p>' +
-      '<p><span data-component-key="key-2"></span></p>';
-
-    expect(inlineStringPreviews(html, previewMap)).toBe('<p><b>one</b></p><p><i>two</i></p>');
-  });
-
-  it('should handle html with no placeholders', () => {
-    const previewMap = new Map([['key-1', '<b>one</b>']]);
-    const html = '<p>No components here</p>';
-
-    expect(inlineStringPreviews(html, previewMap)).toBe(html);
   });
 });
