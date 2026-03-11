@@ -9,8 +9,10 @@
 
   /**
    * @typedef {object} Props
-   * @property {string} path The asset path to display. It can be an empty string if no path is
-   * available (Lorem Picsum doesn’t provide image captions).
+   * @property {string} [path] The asset path to display.
+   * @property {string} [caption] The caption for the asset. Either `path` or `caption` should be
+   * provided. The `path` will be split into segments and displayed with line breaks, while the
+   * `caption` will be displayed as is without splitting.
    * @property {Snippet} [children] Slot content.
    */
 
@@ -18,11 +20,14 @@
   let {
     /* eslint-disable prefer-const */
     path,
+    caption,
     children = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
-  const pathArray = $derived(path ? stripSlashes(path).split('/') : []);
+  const segments = $derived(
+    /** @type {string[]} */ (path ? stripSlashes(path).split('/') : caption ? [caption] : []),
+  );
   const sanitizeOptions = { ALLOWED_TAGS: ['wbr'] };
 
   /**
@@ -33,11 +38,12 @@
   const getLabel = (str) => sanitize(str.replace(/([-_.])/g, '$1<wbr>'), sanitizeOptions);
 </script>
 
-{#if pathArray.length}
-  <span role="none" class="name">
+{#if segments.length}
+  <!-- Hide the asset path from screen readers because the image comes with alt text -->
+  <span class="name" aria-hidden="true">
     <TruncatedText lines={2}>
-      {#each pathArray as segment, index (`${segment}-${index}`)}
-        {#if index === pathArray.length - 1}
+      {#each segments as segment, index (`${segment}-${index}`)}
+        {#if index === segments.length - 1}
           <!-- File name -->
           <strong>{@html getLabel(segment)}</strong>
         {:else}

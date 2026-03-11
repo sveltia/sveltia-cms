@@ -81,6 +81,7 @@
   // Use the grid view for Picsum as it doesn’t provide description for the assets, and the list
   // view relies on the description to show asset information.
   const viewType = $derived(serviceId === 'picsum' ? 'grid' : $selectAssetsView?.type);
+  const isStockAssets = $derived(serviceType === 'stock_assets');
 
   const input = $state({ userName: '', password: '' });
   let hasConfig = $state(true);
@@ -261,9 +262,18 @@
                 onSelectionChange(asset, selected);
               }}
             >
-              <AssetPreview kind={_kind} src={previewURL} variant="tile" crossorigin="anonymous" />
-              {#if !$isSmallScreen || viewType === 'list'}
-                <AssetPath path={description} />
+              <AssetPreview
+                kind={_kind}
+                src={previewURL}
+                alt={description}
+                variant="tile"
+                crossorigin="anonymous"
+              />
+              {#if viewType === 'list' || (!$isSmallScreen && !isStockAssets)}
+                <AssetPath
+                  path={isStockAssets ? undefined : description}
+                  caption={isStockAssets ? description : undefined}
+                />
               {/if}
             </SimpleImageGridItem>
           {/await}
@@ -288,7 +298,7 @@
 {:else if hasConfig}
   <EmptyState>
     <p role="alert">
-      {#if serviceType === 'stock_assets'}
+      {#if isStockAssets}
         {@html sanitize(
           $_('prefs.media.stock_photos.description', {
             values: {
