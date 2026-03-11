@@ -55,8 +55,40 @@ const hashString = (str) => {
 };
 
 /**
+ * HTML void elements that cannot have children or a closing tag. Used to avoid incorrectly
+ * entering HTML block mode when a void element starts a line.
+ * @see https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+ */
+const VOID_ELEMENTS = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
+]);
+
+/**
+ * Regex to detect the opening line of a fenced code block (backtick or tilde fence).
+ */
+const FENCE_OPEN_REGEX = /^[ ]{0,3}(`{3,}|~{3,})/;
+/**
+ * Regex to detect a line that opens an HTML block element, capturing the tag name.
+ */
+const HTML_OPEN_TAG_REGEX = /^<([a-zA-Z][a-zA-Z0-9]*)(?:[\s>])/;
+
+/**
  * Split a Markdown string into logical blocks at blank lines, keeping fenced code blocks (backtick
- * or tilde fences) intact even when they contain blank lines.
+ * or tilde fences) and HTML block elements (e.g. `<div>`) intact even when they contain blank
+ * lines.
  * @param {string} markdown The full Markdown string.
  * @returns {string[]} Array of non-empty block strings.
  */
@@ -69,6 +101,8 @@ export const splitMarkdownBlocks = (markdown) => {
   const current = [];
   /** @type {{ char: string, length: number } | null} */
   let fence = null;
+  /** @type {{ tag: string, depth: number } | null} */
+  let htmlBlock = null;
 
   markdown.split('\n').forEach((line) => {
     if (fence) {
@@ -84,18 +118,47 @@ export const splitMarkdownBlocks = (markdown) => {
       ) {
         fence = null;
       }
+    } else if (htmlBlock) {
+      current.push(line);
+
+      const openRe = new RegExp(`<${htmlBlock.tag}(?:[\\s>])`, 'gi');
+      const closeRe = new RegExp(`<\\/${htmlBlock.tag}>`, 'gi');
+
+      htmlBlock.depth += [...line.matchAll(openRe)].length - [...line.matchAll(closeRe)].length;
+
+      if (htmlBlock.depth <= 0) {
+        htmlBlock = null;
+      }
     } else {
-      const fenceMatch = /^[ ]{0,3}(`{3,}|~{3,})/.exec(line);
+      const fenceMatch = FENCE_OPEN_REGEX.exec(line);
 
       if (fenceMatch) {
         current.push(line);
         fence = { char: fenceMatch[1][0], length: fenceMatch[1].length };
-      } else if (line === '') {
-        if (current.length) {
-          blocks.push(current.splice(0).join('\n'));
-        }
       } else {
-        current.push(line);
+        const htmlOpenMatch = HTML_OPEN_TAG_REGEX.exec(line);
+
+        if (htmlOpenMatch) {
+          const tag = htmlOpenMatch[1].toLowerCase();
+
+          current.push(line);
+
+          if (!VOID_ELEMENTS.has(tag)) {
+            const openRe = new RegExp(`<${tag}(?:[\\s>])`, 'gi');
+            const closeRe = new RegExp(`<\\/${tag}>`, 'gi');
+            const depth = [...line.matchAll(openRe)].length - [...line.matchAll(closeRe)].length;
+
+            if (depth > 0) {
+              htmlBlock = { tag, depth };
+            }
+          }
+        } else if (line === '') {
+          if (current.length) {
+            blocks.push(current.splice(0).join('\n'));
+          }
+        } else {
+          current.push(line);
+        }
       }
     }
   });

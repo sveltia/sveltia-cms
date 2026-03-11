@@ -460,4 +460,33 @@ describe('splitMarkdownBlocks', () => {
 
     expect(splitMarkdownBlocks(md)).toEqual([md]);
   });
+
+  it('should keep an HTML block element with internal blank lines as one block', () => {
+    const md = '<div class="block">\n\ncontent goes here\n\n</div>';
+
+    expect(splitMarkdownBlocks(md)).toEqual([md]);
+  });
+
+  it('should keep a nested HTML block element with internal blank lines as one block', () => {
+    const md = '<div class="outer">\n\n<div class="inner">\n\nnested\n\n</div>\n\n</div>';
+
+    expect(splitMarkdownBlocks(md)).toEqual([md]);
+  });
+
+  it('should split content before and after an HTML block element', () => {
+    const md = 'before\n\n<div>\n\ncontent\n\n</div>\n\nafter';
+
+    expect(splitMarkdownBlocks(md)).toEqual(['before', '<div>\n\ncontent\n\n</div>', 'after']);
+  });
+
+  it('should not treat a void element as an HTML block', () => {
+    expect(splitMarkdownBlocks('<hr>\n\nafter')).toEqual(['<hr>', 'after']);
+  });
+
+  it('should not enter HTML block mode when the tag is opened and closed on the same line', () => {
+    expect(splitMarkdownBlocks('<div>inline</div>\n\nafter')).toEqual([
+      '<div>inline</div>',
+      'after',
+    ]);
+  });
 });
