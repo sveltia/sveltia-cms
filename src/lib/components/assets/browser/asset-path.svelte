@@ -25,9 +25,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const segments = $derived(
-    /** @type {string[]} */ (path ? stripSlashes(path).split('/') : caption ? [caption] : []),
-  );
+  const segments = $derived(path ? stripSlashes(path).split('/') : caption ? [caption] : []);
   const sanitizeOptions = { ALLOWED_TAGS: ['wbr'] };
 
   /**
