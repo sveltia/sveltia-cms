@@ -102,11 +102,11 @@
     }
 
     .logo {
-      max-width: 160px;
-      height: auto;
+      width: auto;
+      height: 160px;
 
       @media (width < 768px) {
-        max-width: 120px;
+        height: 120px;
       }
     }
 
