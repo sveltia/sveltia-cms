@@ -45,7 +45,9 @@
   <h3>{$_('prefs.media.cloud_storage.api_keys.title')}</h3>
   <p>
     {@html makeLink(
-      $_('prefs.media.cloud_storage.api_keys.description'),
+      enabledCloudServiceEntries.length
+        ? $_('prefs.media.cloud_storage.api_keys.description')
+        : $_('prefs.media.cloud_storage.no_services'),
       'https://sveltiacms.app/en/docs/media',
     )}
   </p>
@@ -62,15 +64,15 @@
         />
       </div>
     </section>
-  {:else}
-    <p>{$_('prefs.media.cloud_storage.no_services')}</p>
   {/each}
 </section>
 <section>
   <h3>{$_('prefs.media.stock_photos.api_keys.title')}</h3>
   <p>
     {@html makeLink(
-      $_('prefs.media.stock_photos.api_keys.description'),
+      enabledStockAssetProviderEntries.length
+        ? $_('prefs.media.stock_photos.api_keys.description')
+        : $_('prefs.media.stock_photos.no_services'),
       'https://sveltiacms.app/en/docs/integrations/stock-photos',
     )}
   </p>
@@ -87,7 +89,5 @@
         />
       </div>
     </section>
-  {:else}
-    <p>{$_('prefs.media.stock_photos.no_services')}</p>
   {/each}
 </section>

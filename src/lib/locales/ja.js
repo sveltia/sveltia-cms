@@ -852,7 +852,7 @@ export const strings = {
         description:
           '<a {homeHref}>{service} API</a> にユーザー登録して、<a {apiKeyHref}>発行された API キー</a> をここに入力すると、画像エントリー項目に無料のストックフォトを挿入できます。',
         credit: '写真提供: {service}',
-        no_services: '利用可能な無料画像素材サービスはありません。',
+        no_services: '利用可能な <a>無料画像素材サービス</a> はありません。',
       },
       cloud_storage: {
         api_keys: {
@@ -860,7 +860,7 @@ export const strings = {
           description: '<a>クラウドストレージサービス</a> の API キーを管理します。',
         },
         field_label: '{service} API キー',
-        no_services: '利用可能なクラウドストレージサービスはありません。',
+        no_services: '利用可能な <a>クラウドストレージサービス</a> はありません。',
       },
     },
     accessibility: {
