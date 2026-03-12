@@ -101,8 +101,6 @@
   /** @type {MediaLibraryFetchOptions} */
   const listFetchOptions = $derived({ kind, fieldConfig, apiKey, userName, password });
 
-  let debounceTimer = 0;
-
   /**
    * Search or list assets from the external media library.
    * @param {string} [query] Search query.
@@ -223,15 +221,7 @@
     void [searchTerms, hasAuthInfo];
 
     untrack(() => {
-      window.clearTimeout(debounceTimer);
-
-      if (searchTerms) {
-        debounceTimer = window.setTimeout(() => {
-          if (hasAuthInfo) {
-            getAssets(searchTerms);
-          }
-        }, 1000);
-      } else if (hasAuthInfo) {
+      if (hasAuthInfo) {
         getAssets(searchTerms);
       }
     });

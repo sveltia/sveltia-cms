@@ -342,6 +342,7 @@
     <SearchBar
       flex={$isSmallScreen}
       bind:value={rawSearchTerms}
+      debounce={!isDefaultLibrary}
       disabled={selectedResources.some((r) => r.file)}
       aria-label={$_(`assets_dialog.search_for_${kind ?? 'file'}`)}
     />

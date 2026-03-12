@@ -59,6 +59,28 @@ import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary
 export const optionCacheMap = new Map();
 
 /**
+ * `WeakMap` used to assign stable numeric identities to objects for cheap cache key building,
+ * avoiding the need to `JSON.stringify` large objects like `fieldConfig` or `refEntries` arrays.
+ * @type {WeakMap<object, number>}
+ */
+const objectIdentityMap = new WeakMap();
+let nextObjectId = 0;
+
+/**
+ * Get a stable numeric identity for the given object (by reference).
+ * @param {object} obj Object.
+ * @returns {number} Numeric identity.
+ */
+const getObjectId = (obj) => {
+  if (!objectIdentityMap.has(obj)) {
+    objectIdentityMap.set(obj, nextObjectId);
+    nextObjectId += 1;
+  }
+
+  return /** @type {number} */ (objectIdentityMap.get(obj));
+};
+
+/**
  * Enclose the given field name in brackets if it doesn’t contain any brackets.
  * @internal
  * @param {string} fieldName Field name e.g. `{{name.first}}` or `name.first`.
@@ -462,17 +484,14 @@ export const processComplexListField = ({
     return [];
   }
 
-  const regex = new RegExp(
-    `^${escapeRegExp(baseFieldNameForList)}\\.\\d+\\.${escapeRegExp(subKey)}$`,
-  );
+  const escapedBase = escapeRegExp(baseFieldNameForList);
+  const escapedSub = escapeRegExp(subKey);
+  const regex = new RegExp(`^${escapedBase}\\.\\d+\\.${escapedSub}$`);
+  const indexRegex = new RegExp(`^${escapedBase}\\.([0-9]+)\\.${escapedSub}$`);
 
   const listValues = Object.entries(content)
     .filter(([k]) => regex.test(k))
     .map(([k, v]) => {
-      const escapedBase = escapeRegExp(baseFieldNameForList);
-      const escapedSub = escapeRegExp(subKey);
-      const pattern = `^${escapedBase}\\.([0-9]+)\\.${escapedSub}$`;
-      const indexRegex = new RegExp(pattern);
       const indexMatch = k.match(indexRegex);
 
       return { index: parseInt(indexMatch?.[1] || '0', 10), value: v };
@@ -682,7 +701,9 @@ export const processEntry = ({
  * @returns {RelationOption[]} Options.
  */
 export const getOptions = (locale, fieldConfig, refEntries) => {
-  const cacheKey = JSON.stringify({ locale, fieldConfig, refEntries });
+  // Use object identity for `fieldConfig` and `refEntries` instead of `JSON.stringify`, which would
+  // serialize the entire entries array (potentially hundreds of entries × many fields).
+  const cacheKey = `${locale}|${getObjectId(fieldConfig)}|${getObjectId(refEntries)}`;
   const cache = optionCacheMap.get(cacheKey);
 
   if (cache) {

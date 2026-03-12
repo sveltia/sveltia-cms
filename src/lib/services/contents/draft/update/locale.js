@@ -1,5 +1,4 @@
 import { toRaw } from '@sveltia/utils/object';
-import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
@@ -74,7 +73,7 @@ export const copyDefaultLocaleValues = (content, targetLanguage) => {
     // Remove the field if i18n is disabled
     if (
       [false, 'none'].includes(i18n) ||
-      noI18nFieldKeys.some((key) => new RegExp(`^${escapeRegExp(key)}\\b`).test(keyPath))
+      noI18nFieldKeys.some((key) => keyPath === key || keyPath.startsWith(`${key}.`))
     ) {
       delete newContent[keyPath];
       noI18nFieldKeys.push(keyPath);

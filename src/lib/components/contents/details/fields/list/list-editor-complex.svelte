@@ -84,6 +84,7 @@
   const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`));
+  const keyPathPrefixRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}`));
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
@@ -100,10 +101,7 @@
       Object.fromEntries(
         Object.entries(valueMap)
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-          .map(([_keyPath, value]) => [
-            _keyPath.replace(new RegExp(`^${escapeRegExp(keyPath)}`), fieldName),
-            value,
-          ]),
+          .map(([_keyPath, value]) => [_keyPath.replace(keyPathPrefixRegex, fieldName), value]),
       ),
     )[fieldName] ?? [],
   );

@@ -50,6 +50,7 @@
   {#if $searchMode}
     <SearchBar
       bind:this={searchBar}
+      debounce
       keyShortcuts="Accel+F"
       placeholder={$_(`search_placeholder_${$searchMode}`)}
       --sui-textbox-placeholder-text-align="center"

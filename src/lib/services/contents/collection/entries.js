@@ -6,7 +6,7 @@ import { get, writable } from 'svelte/store';
 
 import { getMediaFieldURL } from '$lib/services/assets/info';
 import { cmsConfig } from '$lib/services/config';
-import { allEntries } from '$lib/services/contents';
+import { allEntries, allEntryFolders } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
@@ -56,8 +56,35 @@ export const getEntriesByCollection = (collectionName) => {
   const filterValues =
     filter?.value === undefined ? [] : Array.isArray(filter.value) ? filter.value : [filter.value];
 
+  // Pre-compute membership check to avoid calling getAssociatedCollections() per entry, which
+  // internally does get(allEntryFolders).filter().sort() for each entry.
+  let isMember;
+
+  if (_type === 'entry') {
+    const fullPathRegEx = collection._file?.fullPathRegEx;
+
+    isMember = fullPathRegEx
+      ? (/** @type {Entry} */ entry) =>
+          fullPathRegEx.test(Object.values(entry.locales)[0]?.path ?? '')
+      : (/** @type {Entry} */ entry) =>
+          getAssociatedCollections(entry).some(({ name }) => name === collectionName);
+  } else {
+    const validPaths = new Set(
+      get(allEntryFolders)
+        .filter(({ collectionName: name }) => name === collectionName)
+        .flatMap(({ filePathMap }) => (filePathMap ? Object.values(filePathMap) : [])),
+    );
+
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    isMember = (/** @type {Entry} */ entry) => {
+      const entryPath = Object.values(entry.locales)[0]?.path;
+
+      return !!entryPath && validPaths.has(entryPath);
+    };
+  }
+
   return get(allEntries).filter((entry) => {
-    if (!getAssociatedCollections(entry).some(({ name }) => name === collectionName)) {
+    if (!isMember(entry)) {
       return false;
     }
 

@@ -71,13 +71,19 @@ export const filterEntries = (entries, collection, filters) => {
       options.some((f) => f.field === field && String(f.pattern) === String(pattern)),
   );
 
+  // Pre-compute regexes once per filter instead of recreating them for every entry.
+  const preparedFilters = validFilters.map(({ field, pattern }) => ({
+    field,
+    pattern,
+    regex: getRegex(pattern),
+  }));
+
   return entries.filter((entry) =>
-    validFilters.every(({ field, pattern }) => {
+    preparedFilters.every(({ field, pattern, regex }) => {
       // Check both the raw value and referenced value
       const args = { entry, locale, collectionName, key: field };
       const rawValue = getPropertyValue({ ...args, resolveRef: false });
       const refValue = getPropertyValue({ ...args });
-      const regex = getRegex(pattern);
 
       if (rawValue === undefined || refValue === undefined) {
         return false;

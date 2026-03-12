@@ -72,8 +72,6 @@
   /** @type {string} */
   let errorMessage = $state('');
 
-  /** @type {number} */
-  let searchInputTimeout = 0;
   /** @type {Leaflet.Map | undefined} */
   let map = undefined;
 
@@ -226,29 +224,25 @@
    * Search for locations using the Nominatim API.
    * @see https://nominatim.org/release-docs/develop/api/Search/
    */
-  const searchLocation = () => {
-    window.clearTimeout(searchInputTimeout);
+  const searchLocation = async () => {
+    const q = searchQuery.trim();
 
-    searchInputTimeout = window.setTimeout(async () => {
-      const q = searchQuery.trim();
+    if (!q) {
+      return;
+    }
 
-      if (!q) {
-        return;
-      }
+    searching = true;
 
-      searching = true;
+    const params = new URLSearchParams({ q, format: 'jsonv2' });
+    const url = `https://nominatim.openstreetmap.org/search?${params}`;
 
-      const params = new URLSearchParams({ q, format: 'jsonv2' });
-      const url = `https://nominatim.openstreetmap.org/search?${params}`;
+    try {
+      searchResults = /** @type {SearchResult[]} */ (await sendRequest(url));
+    } catch {
+      searchResults = [];
+    }
 
-      try {
-        searchResults = /** @type {SearchResult[]} */ (await sendRequest(url));
-      } catch {
-        searchResults = [];
-      }
-
-      searching = false;
-    }, 500);
+    searching = false;
   };
 
   /**
@@ -350,7 +344,7 @@
 
 <div role="none" class="toolbar">
   <!-- @todo Replace this with `<Combobox>` -->
-  <SearchBar bind:value={searchQuery} {readonly} flex placeholder={$_('find_place')} />
+  <SearchBar bind:value={searchQuery} debounce {readonly} flex placeholder={$_('find_place')} />
   <!-- @todo Replace `title` with a native tooltip -->
   <Button
     variant="tertiary"

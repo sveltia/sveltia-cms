@@ -1,9 +1,8 @@
 import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
-import { allEntries } from '$lib/services/contents';
+import { allEntries, allEntryFolders } from '$lib/services/contents';
 import { getCollection, getValidCollections } from '$lib/services/contents/collection';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
 
 /**
  * @import {
@@ -86,14 +85,24 @@ export const getCollectionFilesByEntry = (collection, entry) => {
  * @see https://decapcms.org/docs/collection-file/
  * @see https://sveltiacms.app/en/docs/collections/files
  */
-export const getCollectionFileEntry = (collectionName, fileName) =>
-  get(allEntries).find((entry) =>
-    getAssociatedCollections(entry).some(
-      (collection) =>
-        collection.name === collectionName &&
-        getCollectionFilesByEntry(collection, entry).some((file) => file.name === fileName),
-    ),
+export const getCollectionFileEntry = (collectionName, fileName) => {
+  // Pre-find the valid file paths from `allEntryFolders` to avoid calling
+  // `getAssociatedCollections()` per entry, which iterates `allEntryFolders` internally for each
+  // entry.
+  const folderInfo = get(allEntryFolders).find(
+    ({ collectionName: cn, fileName: fn }) => cn === collectionName && fn === fileName,
   );
+
+  if (!folderInfo?.filePathMap) {
+    return undefined;
+  }
+
+  const validPaths = new Set(Object.values(folderInfo.filePathMap));
+
+  return get(allEntries).find((entry) =>
+    Object.values(entry.locales).some(({ path }) => validPaths.has(path)),
+  );
+};
 
 /**
  * Get the index of a collection file with the given name.

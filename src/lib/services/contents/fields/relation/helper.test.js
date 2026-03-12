@@ -2458,6 +2458,28 @@ describe('Test filterAndPrepareEntries()', () => {
     expect(result).toHaveLength(1);
     expect(result[0].refEntry.slug).toBe('entry-1');
   });
+
+  test('falls back to {} when neither requested locale nor _default exists', () => {
+    // Covers the ?? {} fallback on the locale lookup (line 270 idx 2) and
+    // the content ?? {} assignment (line 275 idx 1). The entry has no 'en'
+    // locale and no '_default' locale, so both lookups fail.
+    /** @type {any[]} */
+    const entriesWithWrongLocale = [
+      {
+        id: 'entry-fr',
+        slug: 'entry-fr',
+        subPath: 'entry-fr',
+        locales: {
+          fr: { slug: 'entry-fr', path: 'entry-fr.md', content: { title: 'Entrée' } },
+        },
+      },
+    ];
+
+    const result = filterAndPrepareEntries(entriesWithWrongLocale, 'en');
+
+    // Content is empty ({}) so hasContent is false — entry is excluded
+    expect(result).toHaveLength(0);
+  });
 });
 
 describe('Test createSimpleOption()', () => {
@@ -2569,6 +2591,82 @@ describe('Test createSimpleOption()', () => {
     // Should fall back to slug after all fallback attempts fail
     expect(result.label).toBe('test-slug');
     expect(result.value).toBe('test-slug');
+  });
+
+  test('uses default-locale summary when primary content summary is empty', async () => {
+    // Covers line 318 idx 1: first getEntrySummaryFromContent returns '' but
+    // the second call (for defaultLocale content) returns a real value.
+    const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{title}}',
+      _valueField: '{{slug}}',
+      _searchField: '{{title}}',
+      allFieldNames: ['title', 'slug'],
+      hasListFields: false,
+    };
+
+    const allFieldNames = ['title', 'slug'];
+
+    const context = {
+      slug: 'fallback-slug',
+      locale: 'en',
+      getDisplayValue: vi.fn(() => ''),
+    };
+
+    const fallbackContext = {
+      content: {}, // empty — first getEntrySummaryFromContent returns ''
+      locales: { en: { content: { title: 'Default Title' } } },
+      defaultLocale: 'en',
+      identifierField: 'title',
+    };
+
+    vi.mocked(getEntrySummaryFromContent)
+      .mockReturnValueOnce('') // first call: primary content has no summary
+      .mockReturnValueOnce('Default Title'); // second call: default locale content has summary
+
+    const result = createSimpleOption({ templates, allFieldNames, context, fallbackContext });
+
+    expect(result.label).toBe('Default Title');
+  });
+
+  test('uses {} when defaultLocale content is undefined (|| {} fallback)', async () => {
+    // Covers line 319 idx 1: locales[defaultLocale]?.content is falsy,
+    // so || {} is used before passing to getEntrySummaryFromContent.
+    const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{title}}',
+      _valueField: '{{slug}}',
+      _searchField: '{{title}}',
+      allFieldNames: ['title', 'slug'],
+      hasListFields: false,
+    };
+
+    const allFieldNames = ['title', 'slug'];
+
+    const context = {
+      slug: 'my-slug',
+      locale: 'en',
+      getDisplayValue: vi.fn(() => ''),
+    };
+
+    const fallbackContext = {
+      content: {},
+      // defaultLocale locale entry exists but has no content property
+      locales: { en: {} },
+      defaultLocale: 'en',
+      identifierField: 'title',
+    };
+
+    vi.mocked(getEntrySummaryFromContent).mockReturnValue(''); // both calls return ''
+
+    const result = createSimpleOption({ templates, allFieldNames, context, fallbackContext });
+
+    // Falls all the way through to slug
+    expect(result.label).toBe('my-slug');
   });
 });
 
@@ -2877,6 +2975,56 @@ describe('Test processComplexListField()', () => {
     });
 
     expect(result).toHaveLength(0);
+  });
+
+  test('skips groupEntries item that does not match COMPLEX_LIST_FIELD_REGEX', () => {
+    // When a wildcardFieldName like 'skills.*' (simple list) is mixed into
+    // groupEntries for a complex-list call, COMPLEX_LIST_FIELD_REGEX won't
+    // match it, so the `if (wildcardMatch)` false branch is taken for that item.
+    const content = { 'cities.0.name': 'Paris', 'cities.1.name': 'Lyon' };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{cities.*.name}}',
+      _valueField: '{{cities.*.name}}',
+      _searchField: '{{cities.*.name}}',
+      allFieldNames: ['cities.*.name'],
+      hasListFields: true,
+    };
+
+    // 'extra.*' does NOT match /^(.+)\.\*\.(.+)$/ — covers the if(wildcardMatch)===false branch
+    /** @type {[string, any][]} */
+    const groupEntries = [
+      ['cities.*.name', { baseFieldName: 'cities' }],
+      ['extra.*', { baseFieldName: 'extra' }], // simple wildcard — no subkey
+    ];
+
+    const context = {
+      slug: 'test-slug',
+      locale: 'en',
+      getDisplayValue: vi.fn(() => ''),
+    };
+
+    const fallbackContext = {
+      content,
+      locales: {},
+      defaultLocale: 'en',
+      identifierField: 'title',
+    };
+
+    const result = processComplexListField({
+      groupEntries,
+      content,
+      templates,
+      allFieldNames: ['cities.*.name'],
+      context,
+      fallbackContext,
+    });
+
+    // Both cities are returned; the 'extra.*' entry is silently skipped
+    expect(result).toHaveLength(2);
+    expect(result[0].label).toBe('Paris');
+    expect(result[1].label).toBe('Lyon');
   });
 });
 

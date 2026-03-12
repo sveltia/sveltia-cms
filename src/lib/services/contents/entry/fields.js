@@ -111,12 +111,6 @@ const parseExplicitType = (key) => {
  * @returns {Field | undefined} Field configuration.
  */
 export const getField = (args) => {
-  const cacheKey = JSON.stringify(args);
-
-  if (fieldConfigCacheMap.has(cacheKey)) {
-    return fieldConfigCacheMap.get(cacheKey);
-  }
-
   const {
     collectionName,
     fileName = undefined,
@@ -125,6 +119,20 @@ export const getField = (args) => {
     keyPath,
     isIndexFile = false,
   } = args;
+
+  // `valueMap` is only consulted during traversal when a keyPath segment is numeric or a wildcard
+  // (to resolve variable-type list/object fields). For all other paths — the vast majority of calls
+  // — it is irrelevant and we can build a much cheaper string cache key that avoids serializing the
+  // full entry content.
+  const hasIndexOrWildcard = /(?:^|\.)(\d+|\*)(?:\.|$)/.test(keyPath);
+
+  const cacheKey = hasIndexOrWildcard
+    ? JSON.stringify(args)
+    : `${collectionName}|${fileName ?? ''}|${componentName ?? ''}|${keyPath}|${isIndexFile ? '1' : '0'}`;
+
+  if (fieldConfigCacheMap.has(cacheKey)) {
+    return fieldConfigCacheMap.get(cacheKey);
+  }
 
   const collection = getCollection(collectionName);
 
@@ -352,12 +360,12 @@ export const getFieldDisplayValue = ({
       // Ignore
     } else {
       // Concat values of single field list or simple list
+      // Pre-compile regex once outside the filter instead of creating it per-iteration.
+      const listItemRegex = new RegExp(`^${escapeRegExp(keyPath)}${String.raw`\.\d+$`}`);
+
       value = getListFormatter(locale).format(
         Object.entries(valueMap)
-          .filter(
-            ([key, val]) =>
-              key.match(`^${escapeRegExp(keyPath)}\\.\\d+$`) && typeof val === 'string' && !!val,
-          )
+          .filter(([key, val]) => listItemRegex.test(key) && typeof val === 'string' && !!val)
           .map(([, val]) => val),
       );
     }

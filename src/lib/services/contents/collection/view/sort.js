@@ -42,10 +42,6 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
   const fieldConfig = getField({ collectionName, keyPath: key });
   const type = getSortKeyType({ key, fieldConfig });
 
-  const valueMap = Object.fromEntries(
-    _entries.map((entry) => [entry.slug, getPropertyValue({ entry, locale, collectionName, key })]),
-  );
-
   const dateFieldConfig =
     fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
 
@@ -56,30 +52,36 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
     fieldConfig?.widget === 'markdown' ||
     markdownFieldKeys.includes(key);
 
-  _entries.sort((a, b) => {
-    const aValue = valueMap[a.slug];
-    const bValue = valueMap[b.slug];
+  // Pre-compute sort keys once (O(n)) instead of re-computing inside the comparator (O(n log n)).
+  // For date fields this avoids re-parsing the date string on every comparison; for markdown fields
+  // it avoids repeatedly stripping syntax from the same value.
+  const sortKeyMap = Object.fromEntries(
+    _entries.map((entry) => {
+      const raw = getPropertyValue({ entry, locale, collectionName, key });
 
-    if (dateFieldConfig) {
-      const aDate = aValue ? getDate(aValue, dateFieldConfig) : undefined;
-      const bDate = bValue ? getDate(bValue, dateFieldConfig) : undefined;
-
-      return Number(aDate ?? 0) - Number(bDate ?? 0);
-    }
-
-    if (type === String) {
-      const aValueStr = aValue ? String(aValue) : '';
-      const bValueStr = bValue ? String(bValue) : '';
-
-      // Strip Markdown syntax from the values in case of some text fields
-      if (isMarkdownField) {
-        return compare(removeMarkdownSyntax(aValueStr), removeMarkdownSyntax(bValueStr));
+      if (dateFieldConfig) {
+        return [entry.slug, raw ? Number(getDate(raw, dateFieldConfig) ?? 0) : 0];
       }
 
-      return compare(aValueStr, bValueStr);
+      if (type === String) {
+        const str = raw ? String(raw) : '';
+
+        return [entry.slug, isMarkdownField ? removeMarkdownSyntax(str) : str];
+      }
+
+      return [entry.slug, Number(raw ?? 0)];
+    }),
+  );
+
+  _entries.sort((a, b) => {
+    const aKey = sortKeyMap[a.slug];
+    const bKey = sortKeyMap[b.slug];
+
+    if (dateFieldConfig || type !== String) {
+      return /** @type {number} */ (aKey) - /** @type {number} */ (bKey);
     }
 
-    return Number(aValue ?? 0) - Number(bValue ?? 0);
+    return compare(/** @type {string} */ (aKey), /** @type {string} */ (bKey));
   });
 
   if (order === 'descending') {

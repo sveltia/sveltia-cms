@@ -84,9 +84,11 @@ export const collectionState = derived(
 );
 
 /**
- * Cache key to avoid unnecessary re-processing in `entryGroups` derived store.
+ * Cache to avoid unnecessary re-processing in `entryGroups` derived store when only `appLocale`
+ * changes (which is a dependency for localized sort/group labels).
  */
-let cacheKey = '';
+let lastListedEntries = /** @type {Entry[] | undefined} */ (undefined);
+let lastCurrentView = /** @type {EntryListView | undefined} */ (undefined);
 
 /**
  * Sorted, filtered and grouped entries for the selected entry collection.
@@ -97,13 +99,14 @@ export const entryGroups = derived(
   // localized labels
   [listedEntries, currentView, appLocale],
   ([_listedEntries, _currentView], set) => {
-    const newCacheKey = JSON.stringify({ _listedEntries, _currentView });
-
-    if (newCacheKey === cacheKey) {
+    // Use reference equality: when only `appLocale` changes, `listedEntries` and `currentView`
+    // retain the same references, so we can skip expensive re-computation.
+    if (_listedEntries === lastListedEntries && _currentView === lastCurrentView) {
       return;
     }
 
-    cacheKey = newCacheKey;
+    lastListedEntries = _listedEntries;
+    lastCurrentView = _currentView;
     set([]);
 
     const collection = /** @type {InternalEntryCollection} */ (get(selectedCollection));

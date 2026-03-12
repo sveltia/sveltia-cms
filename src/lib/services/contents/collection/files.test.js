@@ -11,7 +11,6 @@ import {
   getValidCollectionFiles,
   isValidCollectionFile,
 } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
 
 // Mock dependencies
 vi.mock('svelte/store', () => ({
@@ -22,6 +21,7 @@ vi.mock('$lib/services/config', () => ({
 }));
 vi.mock('$lib/services/contents', () => ({
   allEntries: { subscribe: vi.fn() },
+  allEntryFolders: { subscribe: vi.fn() },
 }));
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
@@ -421,25 +421,17 @@ describe('getCollectionFileEntry()', () => {
       id: 'test-id',
     };
 
-    const mockFile = {
-      name: 'test-file',
-      file: 'test.md',
-      fields: [],
-      _file: { fullPath: 'content/test.md' },
-      _i18n: { defaultLocale: 'en' },
-    };
-
-    const mockCollection = {
-      name: 'test-collection',
-      _type: 'file',
-      _i18n: { defaultLocale: 'en' },
-      _fileMap: {
-        'test-file': mockFile,
-      },
-    };
-
-    vi.mocked(get).mockReturnValue([mockEntry]);
-    vi.mocked(getAssociatedCollections).mockReturnValue([/** @type {any} */ (mockCollection)]);
+    vi.mocked(get)
+      // get(allEntryFolders)
+      .mockReturnValueOnce([
+        {
+          collectionName: 'test-collection',
+          fileName: 'test-file',
+          filePathMap: { en: 'content/test.md' },
+        },
+      ])
+      // get(allEntries)
+      .mockReturnValueOnce([mockEntry]);
 
     const result = getCollectionFileEntry('test-collection', 'test-file');
 
@@ -447,7 +439,17 @@ describe('getCollectionFileEntry()', () => {
   });
 
   test('returns undefined when no entry matches', () => {
-    vi.mocked(get).mockReturnValue([]);
+    vi.mocked(get)
+      // get(allEntryFolders) - folder found but allEntries empty
+      .mockReturnValueOnce([
+        {
+          collectionName: 'test-collection',
+          fileName: 'test-file',
+          filePathMap: { en: 'content/test.md' },
+        },
+      ])
+      // get(allEntries)
+      .mockReturnValueOnce([]);
 
     const result = getCollectionFileEntry('test-collection', 'test-file');
 
@@ -455,28 +457,14 @@ describe('getCollectionFileEntry()', () => {
   });
 
   test('returns undefined when collection name does not match', () => {
-    const mockEntry = {
-      slug: 'test-entry',
-      locales: {
-        en: {
-          path: 'content/test.md',
-          slug: 'test-entry',
-          content: {},
-        },
+    // get(allEntryFolders) returns no folder matching 'test-collection'
+    vi.mocked(get).mockReturnValueOnce([
+      {
+        collectionName: 'different-collection',
+        fileName: 'test-file',
+        filePathMap: { en: 'content/test.md' },
       },
-      i18n: { defaultLocale: 'en' },
-      id: 'test-id',
-    };
-
-    const mockCollection = {
-      name: 'different-collection',
-      _type: 'file',
-      _i18n: { defaultLocale: 'en' },
-      _fileMap: {},
-    };
-
-    vi.mocked(get).mockReturnValue([mockEntry]);
-    vi.mocked(getAssociatedCollections).mockReturnValue([/** @type {any} */ (mockCollection)]);
+    ]);
 
     const result = getCollectionFileEntry('test-collection', 'test-file');
 

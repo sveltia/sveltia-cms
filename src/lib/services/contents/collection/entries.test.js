@@ -27,6 +27,7 @@ vi.mock('$lib/services/config', () => ({
 
 vi.mock('$lib/services/contents', () => ({
   allEntries: { subscribe: vi.fn() },
+  allEntryFolders: { subscribe: vi.fn() },
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -266,6 +267,156 @@ describe('getEntriesByCollection()', () => {
     expect(result).toHaveLength(2);
     expect(result[0].id).toBe('1');
     expect(result[1].id).toBe('3');
+  });
+
+  test('filters entries using fullPathRegEx when collection has _file.fullPathRegEx', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const fullPathRegEx = /^posts\/[^/]+\.md$/;
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      _file: { fullPathRegEx },
+    };
+
+    const entries = [
+      { id: '1', locales: { en: { path: 'posts/hello.md', content: {} } } },
+      { id: '2', locales: { en: { path: 'pages/about.md', content: {} } } },
+      { id: '3', locales: { en: { path: 'posts/world.md', content: {} } } },
+    ];
+
+    vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(get).mockReturnValue(entries);
+
+    const result = getEntriesByCollection('posts');
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe('1');
+    expect(result[1].id).toBe('3');
+  });
+
+  test('handles entry with undefined path when using fullPathRegEx (falls back to empty string)', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const fullPathRegEx = /^posts\/.+\.md$/;
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      _file: { fullPathRegEx },
+    };
+
+    const entries = [
+      // path is undefined — locales[0]?.path ?? '' gives '' which fails the regex
+      { id: '1', locales: { en: { path: undefined, content: {} } } },
+      { id: '2', locales: { en: { path: 'posts/hello.md', content: {} } } },
+    ];
+
+    vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(get).mockReturnValue(entries);
+
+    const result = getEntriesByCollection('posts');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('2');
+  });
+
+  test('filters entries for a file collection using validPaths', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    const collection = {
+      name: 'singleton',
+      _type: 'file',
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    const folders = [
+      {
+        collectionName: 'singleton',
+        fileName: 'about',
+        filePathMap: { en: 'content/singleton/about.md', fr: 'content/singleton/about.fr.md' },
+      },
+      {
+        collectionName: 'other',
+        fileName: 'contact',
+        filePathMap: { en: 'content/other/contact.md' },
+      },
+    ];
+
+    const entries = [
+      { id: '1', locales: { en: { path: 'content/singleton/about.md', content: {} } } },
+      { id: '2', locales: { en: { path: 'content/other/contact.md', content: {} } } },
+      { id: '3', locales: { en: { path: 'content/singleton/about.fr.md', content: {} } } },
+    ];
+
+    vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(get)
+      .mockReturnValueOnce(folders) // get(allEntryFolders)
+      .mockReturnValueOnce(entries); // get(allEntries)
+
+    const result = getEntriesByCollection('singleton');
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe('1');
+    expect(result[1].id).toBe('3');
+  });
+
+  test('handles file collection folder with no filePathMap (flatMap returns [])', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    const collection = {
+      name: 'pages',
+      _type: 'file',
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    const folders = [
+      { collectionName: 'pages', fileName: 'home', filePathMap: { en: 'content/home.md' } },
+      { collectionName: 'pages', fileName: 'missing', filePathMap: undefined }, // no filePathMap
+    ];
+
+    const entries = [
+      { id: '1', locales: { en: { path: 'content/home.md', content: {} } } },
+      { id: '2', locales: { en: { path: 'content/other.md', content: {} } } },
+    ];
+
+    vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(get).mockReturnValueOnce(folders).mockReturnValueOnce(entries);
+
+    const result = getEntriesByCollection('pages');
+
+    // Only entry 1 matches the validPaths (content/home.md)
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
+  });
+
+  test('excludes file collection entry with undefined path from validPaths', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    const collection = {
+      name: 'pages',
+      _type: 'file',
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    const folders = [
+      { collectionName: 'pages', fileName: 'home', filePathMap: { en: 'content/home.md' } },
+    ];
+
+    const entries = [
+      { id: '1', locales: { en: { path: undefined, content: {} } } }, // no path
+      { id: '2', locales: { en: { path: 'content/home.md', content: {} } } },
+    ];
+
+    vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(get).mockReturnValueOnce(folders).mockReturnValueOnce(entries);
+
+    const result = getEntriesByCollection('pages');
+
+    // Entry 1 has undefined path so !!entryPath is false, excluded
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('2');
   });
 });
 

@@ -41,6 +41,28 @@ import { createPath, decodeFilePath, resolvePath } from '$lib/services/utils/fil
 export const allAssets = writable([]);
 
 /**
+ * Lazily-rebuilt Map from asset path to Asset, used for O(1) path lookups. Rebuilt only when
+ * `allAssets` changes reference.
+ * @type {{ source: Asset[] | undefined, map: Map<string, Asset> }}
+ */
+const assetPathCache = { source: undefined, map: new Map() };
+
+/**
+ * Get a Map from asset path to Asset, rebuilt only when `allAssets` changes.
+ * @returns {Map<string, Asset>} Map.
+ */
+const getAssetPathMap = () => {
+  const _allAssets = get(allAssets);
+
+  if (_allAssets !== assetPathCache.source) {
+    assetPathCache.source = _allAssets;
+    assetPathCache.map = new Map(_allAssets.map((asset) => [asset.path, asset]));
+  }
+
+  return assetPathCache.map;
+};
+
+/**
  * Selected assets.
  * @type {Writable<Asset[]>}
  */
@@ -157,7 +179,7 @@ export const getAssetByRelativePathAndCollection = ({ path, entry, collection, f
 
   const resolvedPath = resolvePath(createPath([entryFolder, mediaFolder, localPath]));
 
-  return get(allAssets).find((asset) => asset.path === resolvedPath);
+  return getAssetPathMap().get(resolvedPath);
 };
 
 /**
@@ -187,7 +209,7 @@ export const getAssetByRelativePath = ({ path, entry }) => {
   return (
     assets.flat(1).filter(Boolean)[0] ??
     // Fall back to exact match at the root folder
-    get(allAssets).find((asset) => asset.path === path)
+    getAssetPathMap().get(path)
   );
 };
 
@@ -202,7 +224,7 @@ export const getAssetByRelativePath = ({ path, entry }) => {
  * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }) => {
-  const exactMatch = get(allAssets).find((asset) => asset.path === stripSlashes(path));
+  const exactMatch = getAssetPathMap().get(stripSlashes(path));
 
   if (exactMatch) {
     return exactMatch;
@@ -261,7 +283,7 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName }
     }
 
     const fullPath = createPath([internalPath, baseName]);
-    const found = get(allAssets).find((asset) => asset.path === fullPath);
+    const found = getAssetPathMap().get(fullPath);
 
     if (found) {
       foundAsset = found;

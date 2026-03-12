@@ -1,5 +1,4 @@
 import { isObjectArray } from '@sveltia/utils/array';
-import { escapeRegExp } from '@sveltia/utils/string';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
@@ -20,15 +19,29 @@ const labelCacheMap = new Map();
  * @returns {any | any[]} Resolved field value(s).
  */
 export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
-  const cacheKey = JSON.stringify({ fieldConfig, valueMap, keyPath });
+  const { multiple, options } = fieldConfig;
+  const hasLabels = isObjectArray(options);
+  // Extract only the values relevant to this field from `valueMap`, avoiding serialization of the
+  // entire entry content (which would cause cache misses on any unrelated field change).
+  let rawValues;
+
+  if (multiple) {
+    const prefix = `${keyPath}.`;
+
+    rawValues = Object.entries(valueMap)
+      .filter(([key]) => key.startsWith(prefix) && /^\d+$/.test(key.slice(prefix.length)))
+      .map(([, _value]) => _value);
+  }
+
+  const cacheKey = multiple
+    ? `${keyPath}|${JSON.stringify(options)}|${JSON.stringify(rawValues)}`
+    : `${keyPath}|${JSON.stringify(options)}|${String(valueMap[keyPath])}`;
+
   const cache = labelCacheMap.get(cacheKey);
 
   if (cache) {
     return cache;
   }
-
-  const { multiple, options } = fieldConfig;
-  const hasLabels = isObjectArray(options);
 
   /**
    * Get the label by value.
@@ -40,11 +53,7 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
       ?.label || _value;
 
   if (multiple) {
-    const values = Object.entries(valueMap)
-      .filter(([key]) => key.match(`^${escapeRegExp(keyPath)}\\.\\d+$`))
-      .map(([, _value]) => _value);
-
-    const labels = hasLabels ? values.map(getLabel) : values;
+    const labels = hasLabels ? /** @type {any[]} */ (rawValues).map(getLabel) : rawValues;
 
     labelCacheMap.set(cacheKey, labels);
 
