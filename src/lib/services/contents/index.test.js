@@ -179,6 +179,50 @@ describe('contents/index', () => {
       expect(result).toHaveLength(1);
     });
 
+    it('should sort correctly when some folders have undefined folderPath', () => {
+      allEntryFolders.set([
+        /** @type {any} */ ({
+          collectionName: 'posts',
+          folderPath: undefined,
+          filePathMap: { en: 'content/posts/test.md' },
+        }),
+        /** @type {any} */ ({
+          collectionName: 'blog',
+          folderPath: 'content/posts/blog',
+          filePathMap: { en: 'content/posts/test.md' },
+        }),
+      ]);
+
+      const result = getEntryFoldersByPath('content/posts/test.md');
+
+      expect(result).toHaveLength(2);
+      // Folder with a defined folderPath sorts higher than one with undefined (empty string
+      // fallback).
+      expect(result[0].collectionName).toBe('blog');
+      expect(result[1].collectionName).toBe('posts');
+    });
+
+    it('should sort stably when multiple folders have undefined folderPath', () => {
+      allEntryFolders.set([
+        /** @type {any} */ ({
+          collectionName: 'alpha',
+          folderPath: undefined,
+          filePathMap: { en: 'content/shared.md' },
+        }),
+        /** @type {any} */ ({
+          collectionName: 'beta',
+          folderPath: undefined,
+          filePathMap: { en: 'content/shared.md' },
+        }),
+      ]);
+
+      const result = getEntryFoldersByPath('content/shared.md');
+
+      // Both folders match; both folderPaths are undefined so the ?? '' fallback is hit on
+      // both sides of the comparator in the same sort call.
+      expect(result).toHaveLength(2);
+    });
+
     it('should handle collection without _file property', () => {
       vi.mocked(getCollection).mockReturnValue(undefined);
 
@@ -219,6 +263,26 @@ describe('contents/index', () => {
       const result = getEntryFoldersByPath('content/posts/test.md');
 
       expect(result).toEqual([]);
+    });
+
+    it('should reuse cache when allEntryFolders has not changed', () => {
+      allEntryFolders.set([
+        /** @type {any} */ ({
+          collectionName: 'posts',
+          folderPath: 'content/posts',
+          filePathMap: { en: 'content/posts/test.md' },
+        }),
+      ]);
+
+      // First call populates the cache.
+      const result1 = getEntryFoldersByPath('content/posts/test.md');
+      // Second call with the same store reference should hit the cache.
+      const result2 = getEntryFoldersByPath('content/posts/test.md');
+
+      expect(result1).toHaveLength(1);
+      expect(result2).toHaveLength(1);
+      expect(result1[0].collectionName).toBe('posts');
+      expect(result2[0].collectionName).toBe('posts');
     });
   });
 });

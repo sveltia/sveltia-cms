@@ -1726,6 +1726,34 @@ describe('assets/folders', () => {
         expect(current.localeCompare(next)).toBeGreaterThanOrEqual(0);
       }
     });
+
+    it('should reuse cache when allAssetFolders has not changed', () => {
+      allAssetFolders.set([
+        {
+          collectionName: 'posts',
+          internalPath: 'content/posts',
+          publicPath: '/posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ]);
+
+      getPathInfoMock.mockReturnValue({
+        filename: 'image.jpg',
+        basename: 'image.jpg',
+        dirname: 'content/posts',
+      });
+
+      // First call populates the cache.
+      const result1 = getAssetFoldersByPath('content/posts/image.jpg');
+      // Second call with the same store reference should hit the cache.
+      const result2 = getAssetFoldersByPath('content/posts/image.jpg');
+
+      expect(result1).toHaveLength(1);
+      expect(result2).toHaveLength(1);
+      expect(result1[0].internalPath).toBe('content/posts');
+      expect(result2[0].internalPath).toBe('content/posts');
+    });
   });
 
   describe('canCreateAsset', () => {

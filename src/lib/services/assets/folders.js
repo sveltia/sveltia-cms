@@ -66,6 +66,66 @@ export const getAssetFolder = (cond) =>
   );
 
 /**
+ * Cache for {@link getAssetFoldersByPath} to avoid recreating regexes on every call.
+ * `items`: non-entry-relative folders with both regex variants pre-compiled.
+ * `entryRelative`: folders whose paths are relative to their parent entry.
+ */
+const assetFoldersByPathCache = {
+  source: /** @type {AssetFolderInfo[] | undefined} */ (undefined),
+  /** @type {Array<{ folder: AssetFolderInfo, regexSub: RegExp, regexExact: RegExp }>} */
+  items: [],
+  /** @type {AssetFolderInfo[]} */
+  entryRelative: [],
+};
+
+/**
+ * Rebuild {@link assetFoldersByPathCache} when `allAssetFolders` changes.
+ * @returns {typeof assetFoldersByPathCache} Cache object.
+ */
+const getAssetFolderPathCache = () => {
+  const _allAssetFolders = get(allAssetFolders);
+
+  if (_allAssetFolders === assetFoldersByPathCache.source) {
+    return assetFoldersByPathCache;
+  }
+
+  /** @type {Array<{ folder: AssetFolderInfo, regexSub: RegExp, regexExact: RegExp }>} */
+  const items = [];
+  /** @type {AssetFolderInfo[]} */
+  const entryRelative = [];
+
+  _allAssetFolders.forEach((folder) => {
+    const { internalPath, entryRelative: isRelative } = folder;
+
+    if (internalPath === undefined) {
+      return;
+    }
+
+    if (isRelative) {
+      entryRelative.push(folder);
+    } else {
+      // Pre-compile both regex variants so we don’t recreate them on every path lookup.
+      // The internal path can contain template tags like `{{slug}}`, which we normalize to `.+?`.
+      const normalizedPath = internalPath.replace(/{{.+?}}/g, '.+?');
+
+      items.push({
+        folder,
+        // `\b` anchors the match at the end of the folder segment (sub-folder matching).
+        // When `internalPath` is empty (root), fall back to `$` to avoid a bare `\b` anchor.
+        regexSub: new RegExp(`^${normalizedPath}${internalPath ? '\\b' : '$'}`),
+        regexExact: new RegExp(`^${normalizedPath}$`),
+      });
+    }
+  });
+
+  assetFoldersByPathCache.source = _allAssetFolders;
+  assetFoldersByPathCache.items = items;
+  assetFoldersByPathCache.entryRelative = entryRelative;
+
+  return assetFoldersByPathCache;
+};
+
+/**
  * Get collection asset folders that match the given path.
  * @param {string} path Asset path.
  * @param {object} [options] Options.
@@ -75,33 +135,26 @@ export const getAssetFolder = (cond) =>
  * @returns {AssetFolderInfo[]} Asset folders.
  */
 export const getAssetFoldersByPath = (path, { matchSubFolders = true } = {}) => {
-  const { filename } = getPathInfo(path);
+  const { filename, dirname } = getPathInfo(path);
 
   // Exclude files with a leading `+` sign, which are Svelte page/layout files
   if (filename.startsWith('+')) {
     return [];
   }
 
-  return get(allAssetFolders)
-    .filter(({ internalPath, entryRelative }) => {
-      if (internalPath === undefined) {
-        return false;
-      }
+  const { items, entryRelative } = getAssetFolderPathCache();
+  const dir = dirname ?? '';
 
-      if (entryRelative) {
-        return path.startsWith(`${internalPath}/`);
-      }
+  const results = [
+    ...entryRelative.filter(({ internalPath }) => path.startsWith(`${internalPath}/`)),
+    // Compare that the enclosing directory is exactly the same as the internal path, and ignore
+    // any subdirectories, unless the `matchSubFolders` option is specified.
+    ...items
+      .filter(({ regexSub, regexExact }) => (matchSubFolders ? regexSub : regexExact).test(dir))
+      .map(({ folder }) => folder),
+  ];
 
-      // Compare that the enclosing directory is exactly the same as the internal path, and ignore
-      // any subdirectories, unless the `matchSubFolders` option is specified. The internal path can
-      // contain template tags like `{{slug}}` so that we have to take it into account.
-      const normalizedPath = internalPath.replace(/{{.+?}}/g, '.+?');
-      const anchor = internalPath && matchSubFolders ? '\\b' : '$';
-      const regex = new RegExp(`^${normalizedPath}${anchor}`);
-
-      return regex.test(getPathInfo(path).dirname ?? '');
-    })
-    .sort((a, b) => (b.internalPath ?? '').localeCompare(a.internalPath ?? ''));
+  return results.sort((a, b) => (b.internalPath ?? '').localeCompare(a.internalPath ?? ''));
 };
 
 /**
