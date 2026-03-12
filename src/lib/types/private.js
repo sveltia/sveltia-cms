@@ -1148,4 +1148,10 @@
  * `unsupported_deprecated_option`.
  */
 
+/**
+ * @typedef {object} SettingsPanelOnChangeArgs
+ * @property {string} message Message to show in a toast notification after the change is applied.
+ * @property {'success' | 'error'} [status] Status of the change. Default: `success`.
+ */
+
 export {};

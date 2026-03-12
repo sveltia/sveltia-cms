@@ -6,6 +6,10 @@
   import { panels } from '$lib/components/settings';
 
   /**
+   * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {boolean} [open] Whether to open the dialog.
    * @property {(() => void) | undefined} [onClose] Custom `close` event handler.
@@ -21,6 +25,8 @@
 
   let selectedPanel = $state('appearance');
   let toastMessage = $state('');
+  /** @type {'success' | 'error'} */
+  let toastStatus = $state('success');
   let showToast = $state(false);
 </script>
 
@@ -57,8 +63,9 @@
     {#each get(panels) as { key, component: Content } (key)}
       <TabPanel id="prefs-tab-{key}">
         <Content
-          onChange={(/** @type {{ message: string }} */ { message }) => {
+          onChange={(/** @type {SettingsPanelOnChangeArgs} */ { message, status }) => {
             toastMessage = message;
+            toastStatus = status ?? 'success';
             showToast = true;
           }}
         />
@@ -68,7 +75,7 @@
 </Dialog>
 
 <Toast bind:show={showToast}>
-  <Alert status="success">{toastMessage}</Alert>
+  <Alert status={toastStatus}>{toastMessage}</Alert>
 </Toast>
 
 <style lang="scss">

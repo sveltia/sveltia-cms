@@ -7,8 +7,12 @@
   import { prefs } from '$lib/services/user/prefs';
 
   /**
+   * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {(detail: { message: string }) => void} [onChange] Custom `change` event handler.
+   * @property {(detail: SettingsPanelOnChangeArgs) => void} [onChange] `change` event handler.
    */
 
   /** @type {Props} */

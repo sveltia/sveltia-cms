@@ -779,6 +779,7 @@ export const strings = {
     changes: {
       api_key_saved: 'API key has been saved.',
       api_key_removed: 'API key has been removed.',
+      api_key_invalid: 'The provided API key is invalid. Please double check and try again.',
     },
     error: {
       permission_denied:
@@ -843,6 +844,7 @@ export const strings = {
         description:
           'Sign up for <a {homeHref}>{service} API</a> and enter <a {apiKeyHref}>your API Key</a> here to insert free stock photos to image entry fields.',
         credit: 'Photos provided by {service}',
+        no_services: 'No stock photo services are configured.',
       },
       cloud_storage: {
         api_keys: {
@@ -850,8 +852,8 @@ export const strings = {
           description: 'Manage API keys for <a>cloud storage services</a>.',
         },
         field_label: '{service} API Key',
+        no_services: 'No cloud storage services are configured.',
       },
-      libraries_disabled: 'External media libraries are disabled by the administrator.',
     },
     accessibility: {
       title: 'Accessibility',

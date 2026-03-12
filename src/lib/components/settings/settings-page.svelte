@@ -15,11 +15,17 @@
     updateContentFromHashChange,
   } from '$lib/services/app/navigation';
 
+  /**
+   * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
+   */
+
   const ROUTE_REGEX = /^\/settings(?:\/(?<panelKey>.+))?$/;
 
   /** @type {{ key: string, icon: string, component: import('svelte').Component } | undefined} */
   let selectedPanel = $state(undefined);
   let toastMessage = $state('');
+  /** @type {'success' | 'error'} */
+  let toastStatus = $state('success');
   let showToast = $state(false);
 
   /**
@@ -71,8 +77,9 @@
             {@const Content = selectedPanel.component}
             <div role="none" class="inner">
               <Content
-                onChange={(/** @type {{ message: string }} */ { message }) => {
+                onChange={(/** @type {SettingsPanelOnChangeArgs} */ { message, status }) => {
                   toastMessage = message;
+                  toastStatus = status ?? 'success';
                   showToast = true;
                 }}
               />
@@ -98,7 +105,7 @@
 </PageContainer>
 
 <Toast bind:show={showToast}>
-  <Alert status="success">{toastMessage}</Alert>
+  <Alert status={toastStatus}>{toastMessage}</Alert>
 </Toast>
 
 <style lang="scss">

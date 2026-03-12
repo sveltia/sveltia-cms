@@ -1,15 +1,18 @@
 <script>
-  import { SecretInput } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
+  import ApiKeyInput from '$lib/components/settings/controls/api-key-input.svelte';
   import TranslatorSelector from '$lib/components/settings/controls/translator-selector.svelte';
   import { allTranslationServices } from '$lib/services/integrations/translators';
-  import { prefs } from '$lib/services/user/prefs';
   import { makeLink } from '$lib/services/utils/string';
 
   /**
+   * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {(detail: { message: string }) => void} [onChange] Custom `change` event handler.
+   * @property {(detail: SettingsPanelOnChangeArgs) => void} [onChange] `change` event handler.
    */
 
   /** @type {Props} */
@@ -35,30 +38,17 @@
       'https://sveltiacms.app/en/docs/integrations/translations',
     )}
   </p>
-  {#each Object.entries(allTranslationServices) as [serviceId, { serviceLabel }] (serviceId)}
+  {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}
+    {@const label = service.serviceLabel}
     <section>
-      <h4>{serviceLabel}</h4>
+      <h4>{label}</h4>
       <div role="none">
-        {#if $prefs.apiKeys}
-          <SecretInput
-            bind:value={$prefs.apiKeys[serviceId]}
-            flex
-            autocomplete="off"
-            spellcheck="false"
-            aria-label={$_('prefs.i18n.translators.field_label', {
-              values: { service: serviceLabel },
-            })}
-            onchange={() => {
-              onChange?.({
-                message: $_(
-                  $prefs.apiKeys?.[serviceId]
-                    ? 'prefs.changes.api_key_saved'
-                    : 'prefs.changes.api_key_removed',
-                ),
-              });
-            }}
-          />
-        {/if}
+        <ApiKeyInput
+          {serviceId}
+          {service}
+          ariaLabel={$_('prefs.i18n.translators.field_label', { values: { service: label } })}
+          {onChange}
+        />
       </div>
     </section>
   {/each}
