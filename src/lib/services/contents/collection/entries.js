@@ -1,3 +1,7 @@
+/* eslint-disable no-continue */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-restricted-syntax */
+
 import { get, writable } from 'svelte/store';
 
 import { getMediaFieldURL } from '$lib/services/assets/info';
@@ -161,58 +165,62 @@ export const getEntriesByAssetURL = async (
 ) => {
   const baseURL = get(cmsConfig)?._baseURL;
   const assetURL = baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
+  const isBlobURL = assetURL.startsWith('blob:');
+  const isReplacing = !!newURL;
 
   const results = await Promise.all(
     entries.map(async (entry) => {
       const { locales } = entry;
       const collections = getAssociatedCollections(entry);
+      let found = false;
 
-      const _results = await Promise.all(
-        Object.values(locales).map(async ({ content }) => {
-          const __results = await Promise.all(
-            Object.entries(content).map(async ([keyPath, value]) => {
-              if (typeof value !== 'string' || !value) {
-                return false;
-              }
+      for (const { content } of Object.values(locales)) {
+        for (const [keyPath, value] of Object.entries(content)) {
+          if (typeof value !== 'string' || !value) continue;
+          // Pre-filter: skip values that can't possibly contain the asset URL, avoiding the
+          // expensive getField() call for the vast majority of fields.
+          if (!isBlobURL && !value.includes(assetURL)) continue;
 
-              const ___results = await Promise.all(
-                collections.map(async (collection) => {
-                  const hasAssetArgs = {
-                    assetURL,
-                    newURL,
-                    collectionName: collection.name,
-                    entry,
-                    content,
-                    keyPath,
-                    value,
-                    isIndexFile: isCollectionIndexFile(collection, entry),
-                  };
+          for (const collection of collections) {
+            const hasAssetArgs = {
+              assetURL,
+              newURL,
+              collectionName: collection.name,
+              entry,
+              content,
+              keyPath,
+              value,
+              isIndexFile: isCollectionIndexFile(collection, entry),
+            };
 
-                  const collectionFiles = getCollectionFilesByEntry(collection, entry);
+            const collectionFiles = getCollectionFilesByEntry(collection, entry);
+            let matched;
 
-                  if (collectionFiles.length) {
-                    return (
-                      await Promise.all(
-                        collectionFiles.map((collectionFile) =>
-                          hasAsset({ ...hasAssetArgs, collectionFile }),
-                        ),
-                      )
-                    ).includes(true);
-                  }
+            if (collectionFiles.length) {
+              matched = (
+                await Promise.all(
+                  collectionFiles.map((collectionFile) =>
+                    hasAsset({ ...hasAssetArgs, collectionFile }),
+                  ),
+                )
+              ).includes(true);
+            } else {
+              matched = await hasAsset({ ...hasAssetArgs });
+            }
 
-                  return hasAsset({ ...hasAssetArgs });
-                }),
-              );
+            if (matched) {
+              found = true;
+              if (!isReplacing) break;
+            }
+          }
 
-              return ___results.includes(true);
-            }),
-          );
+          if (found && !isReplacing) break;
+        }
 
-          return __results.includes(true);
-        }),
-      );
+        if (found && !isReplacing) break;
+      }
 
-      return _results.includes(true);
+      return found;
     }),
   );
 

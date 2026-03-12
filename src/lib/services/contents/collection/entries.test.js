@@ -1147,6 +1147,113 @@ describe('getEntriesByAssetURL()', () => {
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('1');
   });
+
+  test('pre-filters fields that cannot contain the asset URL', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: {
+            content: { image: 'test.jpg', title: 'My post', body: 'Some long body text' },
+            slug: 'test',
+            path: 'posts/test.md',
+          },
+        },
+      },
+    ];
+
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    vi.mocked(get).mockReturnValue({ _baseURL: '' });
+    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
+
+    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
+
+    expect(result).toHaveLength(1);
+    // getField should only be called for the 'image' field, not 'title' or 'body'
+    expect(vi.mocked(getField)).toHaveBeenCalledTimes(1);
+  });
+
+  test('short-circuits after first match when not replacing', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: {
+            // Two fields both containing the URL – hasAsset should only be called once
+            content: { image1: 'test.jpg', image2: 'test.jpg' },
+            slug: 'test',
+            path: 'posts/test.md',
+          },
+        },
+      },
+    ];
+
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    vi.mocked(get).mockReturnValue({ _baseURL: '' });
+    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
+
+    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
+
+    expect(result).toHaveLength(1);
+    // Short-circuits after the first matching field, so getField is only called once
+    expect(vi.mocked(getField)).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not short-circuit when replacing (processes all matching fields)', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+    const content = { image1: 'test.jpg', image2: 'test.jpg' };
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: { content, slug: 'test', path: 'posts/test.md' },
+        },
+      },
+    ];
+
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    vi.mocked(get).mockReturnValue({ _baseURL: '' });
+    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
+
+    await getEntriesByAssetURL('test.jpg', { entries: mockEntries, newURL: 'new.jpg' });
+
+    // Both matching fields must be processed so both get replaced
+    expect(vi.mocked(getField)).toHaveBeenCalledTimes(2);
+    expect(content.image1).toBe('new.jpg');
+    expect(content.image2).toBe('new.jpg');
+  });
 });
 
 describe('selectedEntries', () => {
