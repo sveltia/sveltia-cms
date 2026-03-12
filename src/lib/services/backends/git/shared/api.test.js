@@ -250,7 +250,10 @@ describe('api.js', () => {
         'https://api.github.com/test-endpoint',
         {
           method: 'GET',
-          headers: { Authorization: 'token test-token' },
+          headers: {
+            Authorization: 'token test-token',
+            'X-GitHub-Api-Version': '2026-03-10',
+          },
           body: null,
         },
         {
@@ -258,6 +261,22 @@ describe('api.js', () => {
           refreshAccessToken: expect.any(Function),
         },
       );
+    });
+
+    it('should not include X-GitHub-Api-Version header for GraphQL requests', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const mockUser = { token: 'test-token', refreshToken: 'test-refresh-token' };
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockReturnValue(mockUser);
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint', { isGraphQL: true });
+
+      const [, callArgs] = /** @type {any[]} */ (vi.mocked(sendRequest).mock.calls[0]);
+
+      expect(callArgs.headers).not.toHaveProperty('X-GitHub-Api-Version');
     });
 
     it('should use GraphQL base URL when isGraphQL is true', async () => {
@@ -302,7 +321,10 @@ describe('api.js', () => {
         'https://api.github.com/test-endpoint',
         {
           method: 'GET',
-          headers: { Authorization: 'token test-token' },
+          headers: {
+            Authorization: 'token test-token',
+            'X-GitHub-Api-Version': '2026-03-10',
+          },
           body: null,
         },
         {
@@ -396,7 +418,10 @@ describe('api.js', () => {
         'https://api.github.com/test-endpoint',
         {
           method: 'GET',
-          headers: { Authorization: 'token test-token' },
+          headers: {
+            Authorization: 'token test-token',
+            'X-GitHub-Api-Version': '2026-03-10',
+          },
           body: null,
         },
         {
@@ -455,7 +480,10 @@ describe('api.js', () => {
         'https://api.github.com/test-endpoint',
         {
           method: 'GET',
-          headers: { Authorization: 'token provided-token' },
+          headers: {
+            Authorization: 'token provided-token',
+            'X-GitHub-Api-Version': '2026-03-10',
+          },
           body: null,
         },
         {
@@ -500,7 +528,10 @@ describe('api.js', () => {
         'https://api.github.com/test-endpoint',
         {
           method: 'GET',
-          headers: { Authorization: 'token undefined' },
+          headers: {
+            Authorization: 'token undefined',
+            'X-GitHub-Api-Version': '2026-03-10',
+          },
           body: null,
         },
         {
@@ -524,7 +555,10 @@ describe('api.js', () => {
         'https://api.github.com/test-endpoint',
         {
           method: 'GET',
-          headers: { Authorization: 'token provided-token' },
+          headers: {
+            Authorization: 'token provided-token',
+            'X-GitHub-Api-Version': '2026-03-10',
+          },
           body: null,
         },
         expect.anything(),
