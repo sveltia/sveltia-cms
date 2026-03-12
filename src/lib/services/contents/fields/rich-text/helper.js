@@ -84,6 +84,10 @@ const FENCE_OPEN_REGEX = /^[ ]{0,3}(`{3,}|~{3,})/;
  * Regex to detect a line that opens an HTML block element, capturing the tag name.
  */
 const HTML_OPEN_TAG_REGEX = /^<([a-zA-Z][a-zA-Z0-9]*)(?:[\s>])/;
+/**
+ * @type {Map<string, { openRe: RegExp, closeRe: RegExp }>}
+ */
+const htmlTagRegexCache = new Map();
 
 /**
  * Split a Markdown string into logical blocks at blank lines, keeping fenced code blocks (backtick
@@ -101,7 +105,7 @@ export const splitMarkdownBlocks = (markdown) => {
   const current = [];
   /** @type {{ char: string, length: number } | null} */
   let fence = null;
-  /** @type {{ tag: string, depth: number } | null} */
+  /** @type {{ tag: string, depth: number, openRe: RegExp, closeRe: RegExp } | null} */
   let htmlBlock = null;
 
   markdown.split('\n').forEach((line) => {
@@ -121,8 +125,9 @@ export const splitMarkdownBlocks = (markdown) => {
     } else if (htmlBlock) {
       current.push(line);
 
-      const openRe = new RegExp(`<${htmlBlock.tag}(?:[\\s>])`, 'gi');
-      const closeRe = new RegExp(`<\\/${htmlBlock.tag}>`, 'gi');
+      // Reuse pre-compiled regexes stored when the block was opened (avoids two regex allocations
+      // per line for potentially long HTML blocks).
+      const { openRe, closeRe } = htmlBlock;
 
       htmlBlock.depth += [...line.matchAll(openRe)].length - [...line.matchAll(closeRe)].length;
 
@@ -144,12 +149,22 @@ export const splitMarkdownBlocks = (markdown) => {
           current.push(line);
 
           if (!VOID_ELEMENTS.has(tag)) {
-            const openRe = new RegExp(`<${tag}(?:[\\s>])`, 'gi');
-            const closeRe = new RegExp(`<\\/${tag}>`, 'gi');
+            let tagRegexes = htmlTagRegexCache.get(tag);
+
+            if (!tagRegexes) {
+              tagRegexes = {
+                openRe: new RegExp(`<${tag}(?:[\\s>])`, 'gi'),
+                closeRe: new RegExp(`<\\/${tag}>`, 'gi'),
+              };
+              htmlTagRegexCache.set(tag, tagRegexes);
+            }
+
+            const { openRe, closeRe } = tagRegexes;
             const depth = [...line.matchAll(openRe)].length - [...line.matchAll(closeRe)].length;
 
             if (depth > 0) {
-              htmlBlock = { tag, depth };
+              // Store the regexes in the block so subsequent lines reuse them.
+              htmlBlock = { tag, depth, openRe, closeRe };
             }
           }
         } else if (line === '') {
@@ -183,6 +198,14 @@ export const encodeImageSrc = (...args) => {
 };
 
 /**
+ * Cache for global-flag versions of component definition patterns. Keyed by
+ * `${pattern.source}|${pattern.flags}` so the same logical pattern always resolves to the same
+ * global `RegExp`, even if the pattern object is recreated across reactive evaluations.
+ * @type {Map<string, RegExp>}
+ */
+const globalPatternCache = new Map();
+
+/**
  * Process a Markdown string by extracting editor component instances, computing their previews and
  * replacing each match with a placeholder `<span>` keyed to the preview map.
  * @param {string | undefined} currentValue The raw Markdown field value.
@@ -196,9 +219,13 @@ export const buildMarkdownWithPreviews = (currentValue, componentDefs) => {
   let string = (currentValue ?? '').replace(GLOBAL_IMAGE_REGEX, encodeImageSrc);
 
   componentDefs.forEach(({ pattern, fromBlock, toPreview }) => {
-    const globalPattern = pattern.global
-      ? pattern
-      : new RegExp(pattern.source, `${pattern.flags}g`);
+    const patternCacheKey = `${pattern.source}|${pattern.flags}`;
+    let globalPattern = globalPatternCache.get(patternCacheKey);
+
+    if (!globalPattern) {
+      globalPattern = pattern.global ? pattern : new RegExp(pattern.source, `${pattern.flags}g`);
+      globalPatternCache.set(patternCacheKey, globalPattern);
+    }
 
     /** @type {string[]} */
     const keys = [];

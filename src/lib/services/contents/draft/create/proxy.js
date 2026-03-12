@@ -41,8 +41,8 @@ export const copyDefaultLocaleValue = ({ getFieldArgs, fieldConfig, sourceLangua
       if (fieldConfig.widget === 'relation') {
         const { value_field: valueField = '{{slug}}' } = /** @type {RelationField} */ (fieldConfig);
 
-        if (valueField.startsWith('{{locale}}/')) {
-          value = value.replace(new RegExp(`^${sourceLanguage}/`), `${targetLanguage}/`);
+        if (valueField.startsWith('{{locale}}/') && value.startsWith(`${sourceLanguage}/`)) {
+          value = `${targetLanguage}/${value.slice(sourceLanguage.length + 1)}`;
         }
       }
 

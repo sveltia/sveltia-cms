@@ -367,6 +367,12 @@ export const analyzeListFields = (allFieldNames, getFieldArgs) => {
 };
 
 /**
+ * Cache of pre-compiled regexes for {@link processSingleSubfieldList}, keyed by base field name.
+ * @type {Map<string, RegExp>}
+ */
+const singleSubfieldRegexCache = new Map();
+
+/**
  * Process single subfield list fields (e.g., `skills.*`).
  * @internal
  * @param {object} params Parameters.
@@ -389,7 +395,12 @@ export const processSingleSubfieldList = ({
   fallbackContext,
 }) => {
   const { _displayField, _valueField, _searchField } = templates;
-  const regex = new RegExp(`^${escapeRegExp(baseFieldName)}\\.\\d+$`);
+  let regex = singleSubfieldRegexCache.get(baseFieldName);
+
+  if (!regex) {
+    regex = new RegExp(`^${escapeRegExp(baseFieldName)}.\\d+$`);
+    singleSubfieldRegexCache.set(baseFieldName, regex);
+  }
 
   const items = Object.entries(content)
     .filter(([k]) => regex.test(k))
@@ -438,6 +449,12 @@ export const processSingleSubfieldList = ({
  * @type {RegExp}
  */
 const COMPLEX_LIST_FIELD_REGEX = /^(.+)\.\*\.(.+)$/;
+/**
+ * Cache of index-matching regexes for {@link processComplexListField}, keyed by
+ * `"${baseFieldName}:${subKey}"`.
+ * @type {Map<string, RegExp>}
+ */
+const complexListIndexRegexCache = new Map();
 
 /**
  * Get the subfield match from group entries.
@@ -484,13 +501,21 @@ export const processComplexListField = ({
     return [];
   }
 
-  const escapedBase = escapeRegExp(baseFieldNameForList);
-  const escapedSub = escapeRegExp(subKey);
-  const regex = new RegExp(`^${escapedBase}\\.\\d+\\.${escapedSub}$`);
-  const indexRegex = new RegExp(`^${escapedBase}\\.([0-9]+)\\.${escapedSub}$`);
+  const cacheKey = `${baseFieldNameForList}:${subKey}`;
+  let indexRegex = complexListIndexRegexCache.get(cacheKey);
+
+  if (!indexRegex) {
+    const escapedBase = escapeRegExp(baseFieldNameForList);
+    const escapedSub = escapeRegExp(subKey);
+
+    // indexRegex subsumes the old filter-only `regex` (same semantics; `[0-9]+` ≡ `\d+` in JS
+    // without the `u` flag), so one regex construction per call is saved.
+    indexRegex = new RegExp(`^${escapedBase}.([0-9]+).${escapedSub}$`);
+    complexListIndexRegexCache.set(cacheKey, indexRegex);
+  }
 
   const listValues = Object.entries(content)
-    .filter(([k]) => regex.test(k))
+    .filter(([k]) => indexRegex.test(k))
     .map(([k, v]) => {
       const indexMatch = k.match(indexRegex);
 

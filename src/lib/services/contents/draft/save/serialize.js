@@ -10,6 +10,12 @@ import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
 
 /**
+ * Cache of wildcard key-path regexes used in {@link finalizeContent}, keyed by `keyPath`.
+ * @type {Map<string, RegExp>}
+ */
+const wildcardKeyPathRegexCache = new Map();
+
+/**
  * @import {
  * EntryDraft,
  * FlattenedEntryContent,
@@ -156,9 +162,14 @@ const finalizeContent = ({
           copyProperty({ ...copyArgs, key: _keyPath, field });
         });
     } else {
-      const regex = new RegExp(
-        `^${escapeRegExp(keyPath.replaceAll('*', '\\d+')).replaceAll('\\\\d\\+', '\\d+')}$`,
-      );
+      let regex = wildcardKeyPathRegexCache.get(keyPath);
+
+      if (!regex) {
+        regex = new RegExp(
+          `^${escapeRegExp(keyPath.replaceAll('*', '\\d+')).replaceAll('\\\\d\\+', '\\d+')}$`,
+        );
+        wildcardKeyPathRegexCache.set(keyPath, regex);
+      }
 
       Object.keys(unsortedMap)
         .filter((_keyPath) => regex.test(_keyPath))

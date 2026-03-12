@@ -409,6 +409,53 @@ describe('contents/draft/create/proxy', () => {
 
       expect(mockCurrentValues.fr['parent.child']).toBe('nested value');
     });
+
+    it('should replace the source locale prefix using startsWith/slice', async () => {
+      const mockCurrentValues = { pt: {}, de: {} };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockEntryDraft) {
+          return { currentValues: mockCurrentValues };
+        }
+
+        return undefined;
+      });
+
+      const { copyDefaultLocaleValue } = await import('./proxy.js');
+
+      copyDefaultLocaleValue({
+        getFieldArgs: { keyPath: 'slug' },
+        fieldConfig: { widget: 'relation', value_field: '{{locale}}/{{slug}}' },
+        sourceLanguage: 'pt',
+        value: 'pt/article-one',
+      });
+
+      expect(mockCurrentValues.de.slug).toBe('de/article-one');
+    });
+
+    it('should not modify the value when it does not start with the source locale prefix', async () => {
+      const mockCurrentValues = { en: {}, fr: {} };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockEntryDraft) {
+          return { currentValues: mockCurrentValues };
+        }
+
+        return undefined;
+      });
+
+      const { copyDefaultLocaleValue } = await import('./proxy.js');
+
+      // value starts with a different locale — no substitution expected
+      copyDefaultLocaleValue({
+        getFieldArgs: { keyPath: 'slug' },
+        fieldConfig: { widget: 'relation', value_field: '{{locale}}/{{slug}}' },
+        sourceLanguage: 'en',
+        value: 'de/foreign-slug',
+      });
+
+      expect(mockCurrentValues.fr.slug).toBe('de/foreign-slug');
+    });
   });
 
   describe('createProxy', () => {

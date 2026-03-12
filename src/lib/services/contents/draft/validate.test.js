@@ -213,6 +213,28 @@ describe('draft/validate', () => {
       expect(result.validities.en.tags.valid).toBe(false);
     });
 
+    it('should reuse cached regex when validateAnyField is called twice for the same list keyPath', () => {
+      // Exercises the listKeyPathRegexCache hit path added by the perf optimisation.
+      mockEntryDraft.currentValues = {
+        en: { 'tags.0': 'a', 'tags.1': 'b' },
+      };
+
+      vi.mocked(getField).mockReturnValue({ name: 'tags', widget: 'list' });
+
+      // First validation populates listKeyPathRegexCache for 'tags'.
+      const result1 = validateFields('currentValues');
+
+      // Mutate the value and re-validate — the cache HIT path must still yield correct results.
+      mockEntryDraft.currentValues = {
+        en: { 'tags.0': 'x', 'tags.1': 'y', 'tags.2': 'z' },
+      };
+
+      const result2 = validateFields('currentValues');
+
+      expect(result1.valid).toBe(true);
+      expect(result2.valid).toBe(true);
+    });
+
     it('should validate object field as required', () => {
       mockEntryDraft.currentValues = {
         en: {

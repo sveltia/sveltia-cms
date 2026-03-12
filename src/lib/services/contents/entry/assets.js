@@ -121,7 +121,6 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
     const entryFolderPath = getPathInfo(Object.values(entry.locales)[0].path).dirname;
 
     if (entryFolderPath !== undefined) {
-      const subfolderRegex = new RegExp(`^${escapeRegExp(entryFolderPath)}(?:\\/|$)`);
       const existingPaths = new Set(assets.map(({ path }) => path));
 
       get(allAssets).forEach((asset) => {
@@ -130,7 +129,8 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
         if (
           assetFolderPath !== undefined &&
           // Include assets in the entry folder and its subfolders
-          (assetFolderPath === entryFolderPath || subfolderRegex.test(assetFolderPath)) &&
+          (assetFolderPath === entryFolderPath ||
+            assetFolderPath.startsWith(`${entryFolderPath}/`)) &&
           !existingPaths.has(asset.path)
         ) {
           assets.push(asset);

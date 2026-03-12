@@ -15,7 +15,6 @@ const {
   mockGetAssetFolder,
   mockAllAssets,
   mockGetPathInfo,
-  mockEscapeRegExp,
 } = vi.hoisted(() => ({
   mockGetMediaFieldURL: vi.fn(),
   mockGetCollection: vi.fn(),
@@ -26,7 +25,6 @@ const {
   mockGetAssetFolder: vi.fn(),
   mockAllAssets: { set: vi.fn(), subscribe: vi.fn() },
   mockGetPathInfo: vi.fn(),
-  mockEscapeRegExp: vi.fn((str) => str),
 }));
 
 // Mock the dependencies with hoisted functions
@@ -67,7 +65,8 @@ vi.mock('@sveltia/utils/file', () => ({
 }));
 
 vi.mock('@sveltia/utils/string', () => ({
-  escapeRegExp: mockEscapeRegExp,
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  escapeRegExp: (/** @type {string} */ str) => str,
 }));
 
 // Import after mocking
@@ -225,7 +224,6 @@ describe('getAssociatedAssets', () => {
     mockGetAssetFoldersByPath.mockClear();
     mockGetAssetFolder.mockClear();
     mockGetPathInfo.mockClear();
-    mockEscapeRegExp.mockClear();
 
     // Reset to default implementations
     mockGetAssetFolder.mockReturnValue(undefined);
@@ -236,7 +234,6 @@ describe('getAssociatedAssets', () => {
       filename: path.split('/').pop()?.split('.')[0],
       extension: path.split('.').pop()?.includes('/') ? '' : `.${path.split('.').pop()}`,
     }));
-    mockEscapeRegExp.mockImplementation((str) => str);
   });
 
   /** @type {Entry} */
@@ -653,7 +650,6 @@ describe('getAssociatedAssets', () => {
         extension: '.md',
       };
     });
-    mockEscapeRegExp.mockImplementation((str) => str);
     mockAllAssets.subscribe.mockImplementation((callback) => {
       callback([mockAsset]);
       return vi.fn();
@@ -731,7 +727,6 @@ describe('getAssociatedAssets', () => {
         extension: '.md',
       };
     });
-    mockEscapeRegExp.mockImplementation((str) => str);
     mockAllAssets.subscribe.mockImplementation((callback) => {
       // Same asset appears in allAssets (as orphaned)
       callback([sharedAsset]);
@@ -976,7 +971,6 @@ describe('getAssociatedAssets', () => {
         extension: '.md',
       };
     });
-    mockEscapeRegExp.mockImplementation((str) => str);
     mockAllAssets.subscribe.mockImplementation((callback) => {
       callback([mockAsset]);
       return vi.fn();

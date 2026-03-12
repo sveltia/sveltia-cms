@@ -533,9 +533,7 @@ describe('assets/info', () => {
 
     it('should return relative path for entry-relative asset in sub-folder', async () => {
       const { getPathInfo } = await import('@sveltia/utils/file');
-      const { escapeRegExp } = await import('@sveltia/utils/string');
       const getPathInfoMock = vi.mocked(getPathInfo);
-      const escapeRegExpMock = vi.mocked(escapeRegExp);
 
       // Mock different directories for asset and entry paths
       getPathInfoMock.mockImplementation((path) => {
@@ -555,9 +553,6 @@ describe('assets/info', () => {
           extension: '.md',
         };
       });
-
-      // Mock escapeRegExp to return the string as-is for simplicity
-      escapeRegExpMock.mockImplementation((str) => str);
 
       const entryRelativeAsset = {
         ...mockAsset,

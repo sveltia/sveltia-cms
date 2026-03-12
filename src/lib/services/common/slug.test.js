@@ -991,4 +991,24 @@ describe('Test slugify()', () => {
 
     expect(resultPreserveCase).toMatch(/^[0-9a-f]{12}$/); // UUIDs are always lowercase
   });
+
+  test('should produce consistent results across repeated calls with the same replacement character', async () => {
+    // Uses a replacement character (~) not used in any other test to guarantee a cache miss on
+    // the first call, so the second call exercises the slugReplacementRegexCache hit path.
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '~',
+      },
+    });
+
+    const result1 = slugify('Hello World');
+    // Second call: cache hit — same regexes reused from slugReplacementRegexCache.
+    const result2 = slugify('Hello World');
+
+    expect(result1).toBe('hello~world');
+    expect(result1).toBe(result2);
+  });
 });

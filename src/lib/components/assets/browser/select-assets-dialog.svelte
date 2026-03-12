@@ -14,7 +14,6 @@
   } from '@sveltia/ui';
   import { getHash } from '@sveltia/utils/crypto';
   import { getPathInfo } from '@sveltia/utils/file';
-  import { escapeRegExp } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
   import { _ } from 'svelte-i18n';
 
@@ -146,11 +145,6 @@
     // Append a placeholder because the complete path is not determined until the entry is saved
     return `${selectedFolder?.internalPath}/-`;
   });
-  const targetFolderPathRegex = $derived(
-    targetFolderPath !== undefined
-      ? new RegExp(`^${escapeRegExp(targetFolderPath)}(?:\\/|$)`)
-      : null,
-  );
   const listedAssets = $derived(
     [...$allAssets, ...unsavedAssets]
       .filter((asset) => !kind || kind === asset.kind)
@@ -194,6 +188,15 @@
   const Selector = $derived($isSmallScreen ? Select : Listbox);
 
   /**
+   * Check if a given path is in the target folder or its subfolders.
+   * @param {string} path Path to check.
+   * @returns {boolean} `true` if the path is in the target folder.
+   */
+  const isInTargetFolder = (path) =>
+    targetFolderPath !== undefined &&
+    (path === targetFolderPath || path.startsWith(`${targetFolderPath}/`));
+
+  /**
    * Check if an asset is in the selected folder.
    * @param {Asset} asset Asset to check.
    * @returns {boolean} `true` if the asset is in the selected folder.
@@ -208,16 +211,16 @@
     }
 
     if (!selectedFolder.entryRelative) {
-      return targetFolderPathRegex?.test(asset.path) ?? false;
+      return isInTargetFolder(asset.path);
     }
 
     const { dirname } = getPathInfo(asset.path);
 
-    if (dirname === undefined || !targetFolderPathRegex) {
+    if (dirname === undefined) {
       return false;
     }
 
-    return targetFolderPathRegex.test(dirname);
+    return isInTargetFolder(dirname);
   };
 
   /**

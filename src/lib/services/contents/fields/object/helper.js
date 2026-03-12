@@ -11,6 +11,12 @@ import {
  */
 
 /**
+ * Cache of pre-compiled regexes keyed by field key path.
+ * @type {Map<FieldKeyPath, RegExp>}
+ */
+const objectSummaryRegexCache = new Map();
+
+/**
  * Format the summary template of an Object field.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
@@ -36,13 +42,14 @@ export const formatSummary = ({
   const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap, isIndexFile };
 
   if (!summaryTemplate) {
-    return getVisibleFieldDisplayValue({
-      valueMap,
-      locale,
-      keyPath,
-      keyPathRegex: new RegExp(`^${escapeRegExp(keyPath)}\\.`),
-      getFieldArgs,
-    });
+    let keyPathRegex = objectSummaryRegexCache.get(keyPath);
+
+    if (!keyPathRegex) {
+      keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.`);
+      objectSummaryRegexCache.set(keyPath, keyPathRegex);
+    }
+
+    return getVisibleFieldDisplayValue({ valueMap, locale, keyPath, keyPathRegex, getFieldArgs });
   }
 
   return summaryTemplate.replaceAll(/{{(.+?)}}/g, (_match, /** @type {string} */ placeholder) => {

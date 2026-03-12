@@ -2813,6 +2813,53 @@ describe('Test processSingleSubfieldList()', () => {
     expect(result[1].label).toBe('React');
     result.forEach((option) => expect(option.value).toBe('123'));
   });
+
+  test('should reuse the cached regex for the same baseFieldName on successive calls', () => {
+    const content = { 'skills.0': 'TypeScript', 'skills.1': 'Svelte' };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{skills.*}}',
+      _valueField: '{{id}}',
+      _searchField: '{{skills.*}}',
+      allFieldNames: ['skills.*', 'id'],
+      hasListFields: true,
+    };
+
+    const allFieldNames = ['skills.*', 'id'];
+    /** @type {[string, any][]} */
+    const groupEntries = [['skills.*', { baseFieldName: 'skills' }]];
+
+    const context = {
+      slug: 'slug',
+      locale: 'en',
+      getDisplayValue: vi.fn(() => ''),
+    };
+
+    const fallbackContext = {
+      content,
+      locales: {},
+      defaultLocale: 'en',
+      identifierField: 'id',
+    };
+
+    const args = {
+      baseFieldName: 'skills',
+      groupEntries,
+      content,
+      templates,
+      allFieldNames,
+      context,
+      fallbackContext,
+    };
+
+    const result1 = processSingleSubfieldList(args);
+    // Second call reuses the cached regex built from baseFieldName.
+    const result2 = processSingleSubfieldList(args);
+
+    expect(result1).toEqual(result2);
+    expect(result1).toHaveLength(2);
+  });
 });
 
 describe('Test processComplexListField()', () => {
@@ -2868,6 +2915,51 @@ describe('Test processComplexListField()', () => {
     expect(result[0].value).toBe('city1');
     expect(result[1].label).toBe('Boston');
     expect(result[1].value).toBe('city2');
+  });
+
+  test('should produce identical results when called twice with same args (indexRegex used for both filter and capture)', () => {
+    // Verifies the refactored path where the single `indexRegex` (capturing group) is used
+    // both to filter and to extract the index, replacing the old separate `regex`.
+    const content = {
+      'cities.0.name': 'Rome',
+      'cities.0.id': 'rome',
+      'cities.1.name': 'Milan',
+      'cities.1.id': 'milan',
+    };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{cities.*.name}}',
+      _valueField: '{{cities.*.id}}',
+      _searchField: '{{cities.*.name}}',
+      allFieldNames: ['cities.*.name', 'cities.*.id'],
+      hasListFields: true,
+    };
+
+    /** @type {[string, any][]} */
+    const groupEntries = [
+      ['cities.*.name', { baseFieldName: 'cities' }],
+      ['cities.*.id', { baseFieldName: 'cities' }],
+    ];
+
+    const context = { slug: 'slug', locale: 'en', getDisplayValue: vi.fn(() => '') };
+    const fallbackContext = { content, locales: {}, defaultLocale: 'en', identifierField: 'title' };
+
+    const callArgs = {
+      groupEntries,
+      content,
+      templates,
+      allFieldNames: templates.allFieldNames,
+      context,
+      fallbackContext,
+    };
+
+    const result1 = processComplexListField(callArgs);
+    const result2 = processComplexListField(callArgs);
+
+    expect(result1).toEqual(result2);
+    expect(result1[0]).toEqual({ label: 'Rome', value: 'rome', searchValue: 'Rome' });
+    expect(result1[1]).toEqual({ label: 'Milan', value: 'milan', searchValue: 'Milan' });
   });
 
   test('should handle missing list items with empty value fallback to slug', () => {
@@ -3025,6 +3117,45 @@ describe('Test processComplexListField()', () => {
     expect(result).toHaveLength(2);
     expect(result[0].label).toBe('Paris');
     expect(result[1].label).toBe('Lyon');
+  });
+
+  test('should reuse the cached indexRegex for the same base:sub pair', () => {
+    // The 'towns.*' key is fresh — not used in any other `processComplexListField` test above —
+    // so the first call below is a guaranteed cache miss, making the second a verified cache hit.
+    const content = {
+      'towns.0.code': 'ldn',
+      'towns.0.label': 'London',
+      'towns.1.code': 'par',
+      'towns.1.label': 'Paris',
+    };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{towns.*.label}}',
+      _valueField: '{{towns.*.code}}',
+      _searchField: '{{towns.*.label}}',
+      allFieldNames: ['towns.*.label', 'towns.*.code'],
+      hasListFields: true,
+    };
+
+    const args = {
+      groupEntries: /** @type {[string, any][]} */ ([
+        ['towns.*.label', { baseFieldName: 'towns' }],
+        ['towns.*.code', { baseFieldName: 'towns' }],
+      ]),
+      content,
+      templates,
+      allFieldNames: templates.allFieldNames,
+      context: { slug: 'slug', locale: 'en', getDisplayValue: vi.fn(() => '') },
+      fallbackContext: { content, locales: {}, defaultLocale: 'en', identifierField: 'id' },
+    };
+
+    const result1 = processComplexListField(args);
+    // Second call: complexListIndexRegexCache hit — no new RegExp construction.
+    const result2 = processComplexListField(args);
+
+    expect(result1).toEqual(result2);
+    expect(result1).toHaveLength(2);
   });
 });
 

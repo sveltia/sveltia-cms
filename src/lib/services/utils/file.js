@@ -57,14 +57,23 @@ export const encodeFilePath = (path) => {
 export const decodeFilePath = (path) => decodeURIComponent(path);
 
 /**
+ * @type {Map<string, Intl.NumberFormat>}
+ */
+const fileSizeFormatterCache = new Map();
+
+/**
  * Format the given file size in bytes, KB, MB, GB or TB.
  * @param {number} size File size.
  * @returns {string} Formatted size.
  */
 export const formatSize = (size) => {
-  const formatter = new Intl.NumberFormat(/** @type {string} */ (get(appLocale)), {
-    maximumFractionDigits: 1,
-  });
+  const locale = /** @type {string} */ (get(appLocale));
+  let formatter = fileSizeFormatterCache.get(locale);
+
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+    fileSizeFormatterCache.set(locale, formatter);
+  }
 
   const kb = 1000;
   const mb = kb * 1000;

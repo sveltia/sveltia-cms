@@ -1508,3 +1508,30 @@ describe('Test serializeContent()', () => {
     });
   });
 });
+
+describe('wildcardKeyPathRegexCache (within serializeContent)', () => {
+  test('should produce consistent ordering across two serialize calls for the same wildcard field', () => {
+    // serializeContent calls finalizeContent which builds and caches the wildcard regex.
+    // Running it twice exercises the cache-hit path.
+    const draft = /** @type {any} */ ({
+      collection: {
+        _file: { format: 'yaml-frontmatter' },
+        _i18n: { canonicalSlug: { key: 'slug' } },
+      },
+      collectionName: 'blog',
+      collectionFile: null,
+      fields: [
+        // A list field whose keyPath ends up containing a wildcard after createKeyPathList
+        // expansion
+        { name: 'tags.*', widget: 'string' },
+      ],
+      isIndexFile: false,
+    });
+
+    const valueMap = { 'tags.0': 'js', 'tags.1': 'svelte' };
+    const result1 = serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } });
+    const result2 = serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } });
+
+    expect(result1).toEqual(result2);
+  });
+});

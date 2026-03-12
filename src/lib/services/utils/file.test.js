@@ -462,6 +462,18 @@ describe('Test formatSize()', () => {
     expect(formatSize(0)).toBe('file_size_units.b(0)');
     expect(formatSize(1)).toBe('file_size_units.b(1)');
   });
+
+  test('should reuse the cached Intl.NumberFormat instance for the same locale', () => {
+    // After the tests above, 'en' is already in fileSizeFormatterCache.
+    // Subsequent calls for the same locale must hit the cache, not invoke the constructor.
+    const spy = vi.spyOn(Intl, 'NumberFormat');
+
+    formatSize(1000);
+    formatSize(5000000);
+
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
 });
 
 describe('Test resolvePath()', () => {

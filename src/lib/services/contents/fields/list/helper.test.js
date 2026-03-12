@@ -136,6 +136,14 @@ describe('Test formatSummary() — comprehensive tests', () => {
           }),
         ).toEqual('1,234');
       });
+
+      test('should reuse cached regex when called twice with the same keyPath and index', () => {
+        // Exercises the listSummaryRegexCache hit path added by the perf optimisation.
+        const result1 = formatSummary({ ...baseArgs, valueMap: basicValueMap });
+        const result2 = formatSummary({ ...baseArgs, valueMap: basicValueMap });
+
+        expect(result1).toEqual(result2);
+      });
     });
 
     describe('with template', () => {

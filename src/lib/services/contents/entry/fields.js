@@ -32,6 +32,7 @@ import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
  * ListFieldWithSubField,
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
+ * LocaleCode,
  * MediaField,
  * MultiValueField,
  * NumberField,
@@ -294,6 +295,19 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
   Array.isArray(required) ? required.includes(locale) : !!required;
 
 /**
+ * Cache of pre-compiled list-item regexes for {@link getFieldDisplayValue}, keyed by field key
+ * path.
+ * @type {Map<FieldKeyPath, RegExp>}
+ */
+const listItemDisplayRegexCache = new Map();
+/**
+ * Cache of {@link Intl.NumberFormat} instances for {@link getFieldDisplayValue}, keyed by canonical
+ * locale.
+ * @type {Map<LocaleCode | undefined, Intl.NumberFormat>}
+ */
+const numberFormatterCache = new Map();
+
+/**
  * Get a field’s display value that matches the given field name (key path).
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
@@ -360,8 +374,13 @@ export const getFieldDisplayValue = ({
       // Ignore
     } else {
       // Concat values of single field list or simple list
-      // Pre-compile regex once outside the filter instead of creating it per-iteration.
-      const listItemRegex = new RegExp(`^${escapeRegExp(keyPath)}${String.raw`\.\d+$`}`);
+      // Pre-compile and cache the regex — same key path is hit on every field render.
+      let listItemRegex = listItemDisplayRegexCache.get(keyPath);
+
+      if (!listItemRegex) {
+        listItemRegex = new RegExp(`^${escapeRegExp(keyPath)}${String.raw`\.\d+$`}`);
+        listItemDisplayRegexCache.set(keyPath, listItemRegex);
+      }
 
       value = getListFormatter(locale).format(
         Object.entries(valueMap)
@@ -375,7 +394,15 @@ export const getFieldDisplayValue = ({
     const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
 
     if (valueType === 'int' || valueType === 'float') {
-      value = Intl.NumberFormat(getCanonicalLocale(locale)).format(Number(value));
+      const canonicalLocale = getCanonicalLocale(locale);
+      let numberFormatter = numberFormatterCache.get(canonicalLocale);
+
+      if (!numberFormatter) {
+        numberFormatter = Intl.NumberFormat(canonicalLocale);
+        numberFormatterCache.set(canonicalLocale, numberFormatter);
+      }
+
+      value = numberFormatter.format(Number(value));
     }
   }
 

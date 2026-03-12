@@ -38,6 +38,12 @@ export const getListFieldInfo = (field) => {
 };
 
 /**
+ * Cache of pre-compiled regexes keyed by `keyPath:index`.
+ * @type {Map<string, RegExp>}
+ */
+const listSummaryRegexCache = new Map();
+
+/**
  * Format the summary template of a List field.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
@@ -73,11 +79,19 @@ export const formatSummary = ({
       return valueMap[keyPathWithIndex];
     }
 
+    const cacheKey = `${keyPath}:${index}`;
+    let keyPathRegex = listSummaryRegexCache.get(cacheKey);
+
+    if (!keyPathRegex) {
+      keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.${index}[\\b\\.]`);
+      listSummaryRegexCache.set(cacheKey, keyPathRegex);
+    }
+
     return getVisibleFieldDisplayValue({
       valueMap,
       locale,
       keyPath: keyPathWithIndex,
-      keyPathRegex: new RegExp(`^${escapeRegExp(keyPath)}\\.${index}[\\b\\.]`),
+      keyPathRegex,
       getFieldArgs,
     });
   }

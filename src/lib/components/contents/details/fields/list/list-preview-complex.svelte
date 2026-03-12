@@ -47,13 +47,12 @@
   const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`));
-  const keyPathPrefixRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}`));
   const items = $derived(
     unflatten(
       Object.fromEntries(
         Object.entries($state.snapshot($entryDraft?.currentValues[locale]) ?? {})
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-          .map(([_keyPath, value]) => [_keyPath.replace(keyPathPrefixRegex, fieldName), value]),
+          .map(([_keyPath, value]) => [`${fieldName}${_keyPath.slice(keyPath.length)}`, value]),
       ),
     )[fieldName] ?? [],
   );

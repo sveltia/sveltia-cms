@@ -184,7 +184,9 @@ export const getAssetPublicURL = (
 
         // Return the path relative to the entry’s folder, e.g. `images/photo.jpg`, or `undefined`
         // if the path cannot be determined
-        return asset.path.match(new RegExp(`^(?:${escapeRegExp(entryFolderPath)})/(.+)$`))?.[1];
+        const prefix = `${entryFolderPath}/`;
+
+        return asset.path.startsWith(prefix) ? asset.path.slice(prefix.length) : undefined;
       }
     }
 

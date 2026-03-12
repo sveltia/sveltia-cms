@@ -1976,6 +1976,22 @@ describe('Test getFieldDisplayValue()', () => {
       expect(result).toContain('javascript');
       expect(result).toContain('web development');
     });
+
+    test('should reuse cached regex when getFieldDisplayValue is called twice with the same keyPath', () => {
+      // Exercises the listItemDisplayRegexCache hit path added by the perf optimisation.
+      const valueMap = {
+        'simpleTags.0': 'react',
+        'simpleTags.1': 'svelte',
+      };
+
+      const args = { collectionName: 'posts', valueMap, keyPath: 'simpleTags', locale: 'en' };
+      const result1 = getFieldDisplayValue(args);
+      // Second call with the same keyPath — should retrieve the cached RegExp.
+      const result2 = getFieldDisplayValue(args);
+
+      expect(result1).toBe(result2);
+      expect(result1).toContain('react');
+    });
   });
 
   describe('Relation field handling', () => {
@@ -2423,7 +2439,6 @@ describe('Test getFieldDisplayValue()', () => {
       });
 
       expect(result).toBe('1,234.56');
-      expect(Intl.NumberFormat).toHaveBeenCalledWith('en');
     });
 
     test('should format numbers when value_type defaults to int', () => {
@@ -2439,7 +2454,6 @@ describe('Test getFieldDisplayValue()', () => {
       });
 
       expect(result).toBe('5,678');
-      expect(Intl.NumberFormat).toHaveBeenCalledWith('en');
     });
 
     test('should not format numbers for custom value_type', () => {
@@ -2472,7 +2486,6 @@ describe('Test getFieldDisplayValue()', () => {
       });
 
       expect(result).toBe('2,345');
-      expect(Intl.NumberFormat).toHaveBeenCalledWith('en');
     });
 
     test('should handle string numbers for float type', () => {
@@ -2488,7 +2501,6 @@ describe('Test getFieldDisplayValue()', () => {
       });
 
       expect(result).toBe('2,345.67');
-      expect(Intl.NumberFormat).toHaveBeenCalledWith('en');
     });
 
     test('should handle zero values for number fields', () => {
@@ -2554,6 +2566,31 @@ describe('Test getFieldDisplayValue()', () => {
 
       expect(result).toBe('1234'); // Our mock returns toString() for non-en locales
       expect(Intl.NumberFormat).toHaveBeenCalledWith('ja');
+    });
+
+    test('should reuse the cached number formatter for the same locale', () => {
+      // Use 'de' which no other test uses — guarantees a cache miss on the first call.
+      vi.spyOn(Intl, 'NumberFormat').mockImplementation((locale) => ({
+        format: vi.fn((n) => `${locale}:${n}`),
+        resolvedOptions: vi.fn(),
+        formatToParts: vi.fn(),
+        formatRange: vi.fn(),
+        formatRangeToParts: vi.fn(),
+      }));
+
+      const args = {
+        collectionName: 'posts',
+        valueMap: { intNumber: 42 },
+        keyPath: 'intNumber',
+        locale: 'de',
+      };
+
+      const result1 = getFieldDisplayValue(args);
+      const result2 = getFieldDisplayValue(args);
+
+      // Intl.NumberFormat was constructed only once; the second call reused the cache.
+      expect(Intl.NumberFormat).toHaveBeenCalledTimes(1);
+      expect(result1).toBe(result2);
     });
 
     test('should handle invalid number values gracefully', () => {

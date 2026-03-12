@@ -31,6 +31,12 @@ export const updateObject = (obj, newProps) => {
 };
 
 /**
+ * Cache of pre-compiled regexes keyed by field key path.
+ * @type {Map<FieldKeyPath, RegExp>}
+ */
+const itemListRegexCache = new Map();
+
+/**
  * Traverse the given object by decoding dot-notated key path.
  * @internal
  * @param {Record<string, any>} obj Original object.
@@ -38,7 +44,12 @@ export const updateObject = (obj, newProps) => {
  * @returns {[values: any, remainder: any]} Unflatten values and flatten remainder.
  */
 export const getItemList = (obj, keyPath) => {
-  const regex = new RegExp(`^${escapeRegExp(keyPath)}\\b(?!#)`);
+  let regex = itemListRegexCache.get(keyPath);
+
+  if (!regex) {
+    regex = new RegExp(`^${escapeRegExp(keyPath)}\\b(?!#)`);
+    itemListRegexCache.set(keyPath, regex);
+  }
 
   const filtered = Object.entries(obj)
     .filter(([k]) => regex.test(k))

@@ -419,6 +419,18 @@ describe('editor/expanders', () => {
       expect(typeof result).toBe('boolean');
     });
 
+    it('should reuse cached regex on repeated calls with the same key', () => {
+      // Calling twice with the same key exercises the expanderRegexCache hit path.
+      const mockState = /** @type {any} */ (entryDraft)._mockState;
+
+      mockState.currentValues = { en: { 'section.title': 'Hi' } };
+
+      const result1 = getInitialExpanderState({ key: 'section#', locale: 'en', collapsed: 'auto' });
+      const result2 = getInitialExpanderState({ key: 'section#', locale: 'en', collapsed: 'auto' });
+
+      expect(result1).toBe(result2);
+    });
+
     it('should use existing state if available', () => {
       const mockState = /** @type {any} */ (entryDraft)._mockState;
 

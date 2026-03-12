@@ -397,5 +397,13 @@ describe('Test formatSummary() — comprehensive tests', async () => {
         }),
       ).toEqual('Japanese Title');
     });
+
+    test('should reuse cached regex when formatSummary is called twice with the same keyPath', () => {
+      // Exercises the objectSummaryRegexCache hit path introduced by the perf optimisation.
+      const result1 = formatSummary({ ...baseArgs, valueMap: basicValueMap });
+      const result2 = formatSummary({ ...baseArgs, valueMap: basicValueMap });
+
+      expect(result1).toEqual(result2);
+    });
   });
 });

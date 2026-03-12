@@ -61,6 +61,14 @@ export const detectFrontMatterFormat = (text) => {
 };
 
 /**
+ * Cache for front matter regexes, keyed by `${sd}|${ed}` (escaped delimiter pair). Avoids
+ * rebuilding the same regex for every entry in a collection (all entries share identical
+ * delimiters).
+ * @type {Map<string, RegExp>}
+ */
+const frontMatterRegexCache = new Map();
+
+/**
  * Parse front matter from a Markdown file.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection.
@@ -82,8 +90,15 @@ export const parseFrontMatter = ({ collection, collectionFile, format, text }) =
 
   const sd = escapeRegExp(startDelimiter);
   const ed = escapeRegExp(endDelimiter);
+  const cacheKey = `${sd}|${ed}`;
   // Front matter matching: allow an empty head
-  const regex = new RegExp(`^${sd}\\n(?:(?<head>.*?)\\n)?${ed}$(?:\\n(?<body>.+))?`, 'ms');
+  let regex = frontMatterRegexCache.get(cacheKey);
+
+  if (!regex) {
+    regex = new RegExp(`^${sd}\\n(?:(?<head>.*?)\\n)?${ed}$(?:\\n(?<body>.+))?`, 'ms');
+    frontMatterRegexCache.set(cacheKey, regex);
+  }
+
   const { head, body } = text.match(regex)?.groups ?? {};
 
   if (!head && !body) {

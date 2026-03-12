@@ -577,6 +577,43 @@ describe('Test parseFrontMatter()', () => {
     expect(result.published).toBe(true);
     expect(result.body).toBe('\nBody content.');
   });
+
+  test('reuses the cached regex for the same delimiter pair (frontMatterRegexCache)', () => {
+    // Set _format to a non-'frontmatter' value so getFrontMatterDelimiters is never called
+    // and the delimiters are taken directly from fmDelimiters. This avoids any mock pollution
+    // that would affect subsequent parseEntryFile tests.
+    const mockCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: { format: 'yaml-frontmatter', fmDelimiters: ['===', '==='] },
+    });
+
+    const mockCollectionFile = /** @type {any} */ ({
+      _file: { format: 'yaml-frontmatter', fmDelimiters: ['===', '==='] },
+    });
+
+    const text = '===\ntitle: Cached Entry\nauthor: Tester\n===\n\nBody text.';
+
+    // First call — creates and stores the regex in frontMatterRegexCache
+    const result1 = parseFrontMatter({
+      collection: mockCollection,
+      collectionFile: mockCollectionFile,
+      format: 'yaml-frontmatter',
+      text,
+    });
+
+    // Second call — reuses the cached regex (delimiter pair '==='|'===' is already in the cache)
+    const result2 = parseFrontMatter({
+      collection: mockCollection,
+      collectionFile: mockCollectionFile,
+      format: 'yaml-frontmatter',
+      text,
+    });
+
+    expect(result1).toEqual(result2);
+    expect(result1.title).toBe('Cached Entry');
+    expect(result1.author).toBe('Tester');
+    expect(result1.body).toBe('\nBody text.');
+  });
 });
 
 describe('Test parseEntryFile()', () => {

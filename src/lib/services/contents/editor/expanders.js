@@ -15,6 +15,12 @@ import { getField } from '$lib/services/contents/entry/fields';
  */
 
 /**
+ * Cache of pre-compiled regexes keyed by cleaned key path.
+ * @type {Map<string, RegExp>}
+ */
+const expanderRegexCache = new Map();
+
+/**
  * Get the initial object/list expander state based on the `collapsed` option. If `collapsed` is set
  * to `auto`, it checks if there are any values in the object. Otherwise, it uses the `collapsed`
  * option directly, which defaults to `false` (expanded).
@@ -36,8 +42,14 @@ export const getInitialExpanderState = ({ key, locale, collapsed = false }) => {
 
   if (collapsed === 'auto') {
     const valueMap = _draft?.currentValues?.[locale] ?? {};
-    // Regular expression to match any non-nested subfields, with the `#` key suffix removed
-    const regex = new RegExp(`^${escapeRegExp(key.replace(/#$/, ''))}\\.[^\\.]+$`);
+    const cleanKey = key.replace(/#$/, '');
+    // Pre-compile and cache the regex — same key path is queried on every editor render.
+    let regex = expanderRegexCache.get(cleanKey);
+
+    if (!regex) {
+      regex = new RegExp(`^${escapeRegExp(cleanKey)}\\.[^\\.]+$`);
+      expanderRegexCache.set(cleanKey, regex);
+    }
 
     return !Object.entries(valueMap).some(([keyPath, value]) => regex.test(keyPath) && !!value);
   }

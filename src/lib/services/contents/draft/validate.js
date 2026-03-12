@@ -26,6 +26,7 @@ import { getRegex } from '$lib/services/utils/misc';
  * @import {
  * CodeField,
  * Field,
+ * FieldKeyPath,
  * ListField,
  * LocaleCode,
  * MinMaxValueField,
@@ -37,7 +38,7 @@ import { getRegex } from '$lib/services/utils/misc';
  * @property {EntryDraft} draft Entry draft.
  * @property {LocaleValidityMap} validities Validity state.
  * @property {LocaleCode} locale Current locale.
- * @property {string} keyPath Field key path.
+ * @property {FieldKeyPath} keyPath Field key path.
  * @property {FlattenedEntryContent} valueMap Entry values.
  * @property {any} value Field value.
  * @property {string} [componentName] Rich text editor component name.
@@ -64,6 +65,13 @@ export const DEFAULT_VALIDITY = {
   patternMismatch: false,
   typeMismatch: false,
 };
+
+/**
+ * Cache of pre-compiled list key-path regexes for {@link validateAnyField}, keyed by field key
+ * path.
+ * @type {Map<FieldKeyPath, RegExp>}
+ */
+const listKeyPathRegexCache = new Map();
 
 /**
  * Map of functions to validate different field types. Each function receives the field config and
@@ -152,7 +160,13 @@ export const validateAnyField = (args) => {
       return undefined;
     }
 
-    const keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`);
+    // Pre-compile and cache the regex — validateAnyField is called on every keystroke.
+    let keyPathRegex = listKeyPathRegexCache.get(keyPath);
+
+    if (!keyPathRegex) {
+      keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`);
+      listKeyPathRegexCache.set(keyPath, keyPathRegex);
+    }
 
     // We need to check both the list itself and the items in the list because the list can be empty
     // but still have items in the list, depending on the flattening condition. It means the data

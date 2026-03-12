@@ -27,6 +27,12 @@ export const getCanonicalLocale = (locale) => {
 };
 
 /**
+ * Cache of {@link Intl.DisplayNames} instances, keyed by `displayLocale`.
+ * @type {Map<string, Intl.DisplayNames>}
+ */
+const displayNamesCache = new Map();
+
+/**
  * Translate the given locale code in the application UI locale.
  * @param {InternalLocaleCode} locale Locale code like `en`.
  * @param {object} [options] Options.
@@ -45,7 +51,18 @@ export const getLocaleLabel = (
     return undefined;
   }
 
-  const formatter = new Intl.DisplayNames(displayLocale, { type: 'language' });
+  let formatter;
+
+  if (displayLocale) {
+    formatter = displayNamesCache.get(displayLocale);
+
+    if (!formatter) {
+      formatter = new Intl.DisplayNames(displayLocale, { type: 'language' });
+      displayNamesCache.set(displayLocale, formatter);
+    }
+  } else {
+    formatter = new Intl.DisplayNames(undefined, { type: 'language' });
+  }
 
   try {
     return formatter.of(canonicalLocale);
@@ -58,17 +75,34 @@ export const getLocaleLabel = (
 };
 
 /**
+ * Cache of {@link Intl.ListFormat} instances, keyed by `"${locale}|${serializedOptions}"`.
+ * @type {Map<string, Intl.ListFormat>}
+ */
+const listFormatterCache = new Map();
+
+/**
  * Get a simple list formatter.
  * @param {InternalLocaleCode} locale Locale code.
  * @param {Partial<Intl.ListFormatOptions>} options Format options.
  * @returns {Intl.ListFormat} Formatter.
  */
-export const getListFormatter = (locale, options = {}) =>
-  new Intl.ListFormat(getCanonicalLocale(locale), {
+export const getListFormatter = (locale, options = {}) => {
+  const effectiveOptions = /** @type {Intl.ListFormatOptions} */ ({
     style: 'narrow',
     type: 'conjunction',
     ...options,
   });
+
+  const cacheKey = `${locale}|${effectiveOptions.style}|${effectiveOptions.type}`;
+  let formatter = listFormatterCache.get(cacheKey);
+
+  if (!formatter) {
+    formatter = new Intl.ListFormat(getCanonicalLocale(locale), effectiveOptions);
+    listFormatterCache.set(cacheKey, formatter);
+  }
+
+  return formatter;
+};
 
 /**
  * Get the complete path for the given entry folder, including the locale.

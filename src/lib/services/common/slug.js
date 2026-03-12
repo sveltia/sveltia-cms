@@ -10,6 +10,11 @@ import { cmsConfig } from '$lib/services/config';
  */
 
 /**
+ * @type {Map<string, { consecutivePattern: RegExp, trimPattern: RegExp }>}
+ */
+const slugReplacementRegexCache = new Map();
+
+/**
  * Slugify the given string to be used as a filename or URL slug, based on the `slug` configuration.
  * This function can be used for both entry slugs and asset file names.
  * @param {string} string String to be normalized.
@@ -59,13 +64,21 @@ export const slugify = (
   // Consolidate consecutive replacement characters into a single one and trim them from ends
   if (sanitizeReplacement) {
     const escapedReplacement = sanitizeReplacement.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const consecutivePattern = new RegExp(`${escapedReplacement}+`, 'g');
+    let cachedSlugRegexes = slugReplacementRegexCache.get(escapedReplacement);
 
-    slug = slug.replace(consecutivePattern, sanitizeReplacement);
+    if (!cachedSlugRegexes) {
+      cachedSlugRegexes = {
+        consecutivePattern: new RegExp(`${escapedReplacement}+`, 'g'),
+        trimPattern: new RegExp(`^${escapedReplacement}+|${escapedReplacement}+$`, 'g'),
+      };
+      slugReplacementRegexCache.set(escapedReplacement, cachedSlugRegexes);
+    }
+
+    slug = slug.replace(cachedSlugRegexes.consecutivePattern, sanitizeReplacement);
 
     // Trim replacement characters from the beginning and end
     if (trimReplacement) {
-      slug = slug.replace(new RegExp(`^${escapedReplacement}+|${escapedReplacement}+$`, 'g'), '');
+      slug = slug.replace(cachedSlugRegexes.trimPattern, '');
     }
   }
 

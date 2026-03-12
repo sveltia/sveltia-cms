@@ -1,6 +1,11 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { getCanonicalLocale, getLocaleLabel, getLocalePath } from '$lib/services/contents/i18n';
+import {
+  getCanonicalLocale,
+  getListFormatter,
+  getLocaleLabel,
+  getLocalePath,
+} from '$lib/services/contents/i18n';
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
 describe('Test getCanonicalLocale()', () => {
@@ -419,7 +424,8 @@ describe('Test getLocaleLabel()', () => {
     // @ts-ignore
     Intl.DisplayNames = MockDisplayNames;
 
-    const result = getLocaleLabel('en', { displayLocale: 'en' });
+    // Use a displayLocale ('it') not yet in displayNamesCache so the mock constructor is invoked.
+    const result = getLocaleLabel('en', { displayLocale: 'it' });
 
     expect(result).toBe(undefined);
     expect(errorSpy).toHaveBeenCalled();
@@ -427,5 +433,36 @@ describe('Test getLocaleLabel()', () => {
     // @ts-ignore
     Intl.DisplayNames = originalDisplayNames;
     errorSpy.mockRestore();
+  });
+});
+
+describe('Test getListFormatter()', () => {
+  test('should return the same formatter instance for identical locale and options', () => {
+    const formatter1 = getListFormatter('en', { style: 'narrow', type: 'conjunction' });
+    const formatter2 = getListFormatter('en', { style: 'narrow', type: 'conjunction' });
+
+    // Cache hit: both calls must return the exact same object reference.
+    expect(formatter1).toBe(formatter2);
+  });
+
+  test('should return different formatter instances for different options', () => {
+    const formatter1 = getListFormatter('en', { style: 'narrow', type: 'conjunction' });
+    const formatter2 = getListFormatter('en', { style: 'long', type: 'disjunction' });
+
+    expect(formatter1).not.toBe(formatter2);
+  });
+});
+
+describe('Test getLocaleLabel() cache', () => {
+  test('should reuse the cached Intl.DisplayNames for the same displayLocale', () => {
+    // 'nl' is not used by any other test — guarantees a cache miss on first call.
+    const spy = vi.spyOn(Intl, 'DisplayNames');
+
+    getLocaleLabel('en', { displayLocale: 'nl' });
+    // Second call with same displayLocale: should hit displayNamesCache, not call constructor.
+    getLocaleLabel('fr', { displayLocale: 'nl' });
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
   });
 });

@@ -404,6 +404,30 @@ describe('buildMarkdownWithPreviews', () => {
     expect(previewMap.size).toBe(2);
     expect(markdown).toBe('<div class="note">A</div> <div class="note">B</div>');
   });
+
+  it('should reuse the cached global pattern across calls (globalPatternCache)', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'tip',
+        label: 'Tip',
+        fields: [],
+        // Non-global pattern intentionally — exercises the globalPatternCache code path
+        pattern: /\[tip\](?<text>.*?)\[\/tip\]/s,
+        toBlock: ({ text }) => `[tip]${text}[/tip]`,
+        toPreview: ({ text }) => `<aside class="tip">${text}</aside>`,
+      },
+    ];
+
+    const input = '[tip]First[/tip] and [tip]Second[/tip]';
+    // First call — creates and caches the globalised pattern
+    const { markdown: md1 } = buildMarkdownWithPreviews(input, componentDefs);
+    // Second call — reuses the cached pattern; result must be identical
+    const { markdown: md2 } = buildMarkdownWithPreviews(input, componentDefs);
+
+    expect(md1).toBe('<aside class="tip">First</aside> and <aside class="tip">Second</aside>');
+    expect(md2).toBe(md1);
+  });
 });
 
 describe('splitMarkdownBlocks', () => {
@@ -487,6 +511,25 @@ describe('splitMarkdownBlocks', () => {
     expect(splitMarkdownBlocks('<div>inline</div>\n\nafter')).toEqual([
       '<div>inline</div>',
       'after',
+    ]);
+  });
+
+  it('should reuse stored open/close regexes across lines inside an HTML block', () => {
+    // A multi-line <div> block that spans three content lines exercises the
+    // htmlBlock.openRe / htmlBlock.closeRe reuse path added by the perf optimisation.
+    const md = '<div>\nline one\n\nline two\n</div>';
+
+    expect(splitMarkdownBlocks(md)).toEqual([md]);
+  });
+
+  it('should correctly parse two HTML blocks using the same tag (exercises tag regex cache)', () => {
+    // The second <div> block reuses the cached openRe/closeRe from htmlTagRegexCache rather
+    // than constructing fresh RegExp objects.
+    const md = '<div>\nfirst block\n</div>\n\n<div>\nsecond block\n</div>';
+
+    expect(splitMarkdownBlocks(md)).toEqual([
+      '<div>\nfirst block\n</div>',
+      '<div>\nsecond block\n</div>',
     ]);
   });
 });

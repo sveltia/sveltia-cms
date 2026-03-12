@@ -316,5 +316,15 @@ describe('draft/update/list', () => {
       expect(valueList).toEqual(['tag1', 'tag2']);
       expect(remainder).toEqual({ 'tags#metadata': 'should not match' });
     });
+
+    it('should reuse the cached regex when called twice with the same key path', () => {
+      // Calling getItemList twice with the same keyPath exercises the itemListRegexCache hit path.
+      const obj = { 'items.0': 'a', 'items.1': 'b', other: 'x' };
+      const [list1] = getItemList(obj, 'items');
+      const [list2] = getItemList(obj, 'items');
+
+      expect(list1).toEqual(['a', 'b']);
+      expect(list2).toEqual(['a', 'b']);
+    });
   });
 });
