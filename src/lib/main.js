@@ -31,7 +31,13 @@ import App from './components/app.svelte';
  * // Don’t use `$lib` in `from` above, or type declarations will not be exported
  */
 
-const unsupportedFuncNames = [
+/**
+ * List of API functions in Netlify/Decap CMS that we don’t plan to support in Sveltia CMS, either
+ * because they are undocumented or because they are incompatible with Sveltia CMS’s architecture
+ * and design principles.
+ */
+const UNSUPPORTED_FUNC_NAMES = [
+  // Undocumented
   'getBackend',
   'getCustomFormats',
   'getCustomFormatsExtensions',
@@ -47,16 +53,22 @@ const unsupportedFuncNames = [
   'getWidgetValueSerializer',
   'getWidgets',
   'invokeEvent',
-  'moment',
+  'moment', // Removed in Decap CMS 3.1.1 as it switched from Moment.js to Day.js
   'registerBackend',
-  'registerLocale',
   'registerMediaLibrary',
-  'registerRemarkPlugin',
   'registerWidgetValueSerializer',
   'removeEventListener',
   'resolveWidget',
+  // Documented but not planned for implementation
+  'registerLocale', // https://decapcms.org/docs/configuration-options/#locale
+  'registerRemarkPlugin', // https://decapcms.org/docs/widgets/#Markdown
 ];
 
+/**
+ * URL for documentation on unsupported features and compatibility between Netlify/Decap CMS and
+ * Sveltia CMS. When users call an unsupported API function, they will see a warning in the console
+ * with a link to this documentation.
+ */
 const COMPATIBILITY_URL =
   'https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented';
 
@@ -292,7 +304,7 @@ const CMS = new Proxy(
 
       let message = '';
 
-      if (unsupportedFuncNames.includes(key)) {
+      if (UNSUPPORTED_FUNC_NAMES.includes(key)) {
         message =
           'CMS.%s() is not supported in Sveltia CMS, and we don’t have any plans to implement it.';
       }
