@@ -4,7 +4,6 @@ import { get, writable } from 'svelte/store';
 
 import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { currentView, defaultView } from '$lib/services/assets/view';
-import { backend } from '$lib/services/backends';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -15,7 +14,7 @@ import { backend } from '$lib/services/backends';
  * View settings for all the asset collection.
  * @type {Writable<Record<string, AssetListView> | undefined>}
  */
-const assetListSettings = writable();
+export const assetListSettings = writable();
 
 /**
  * Initialize {@link assetListSettings} and relevant subscribers.
@@ -59,9 +58,3 @@ export const initSettings = async ({ repository }) => {
     }
   });
 };
-
-backend.subscribe((_backend) => {
-  if (_backend && !get(assetListSettings)) {
-    initSettings(_backend);
-  }
-});

@@ -2,12 +2,14 @@ import equal from 'fast-deep-equal';
 import { derived, get, writable } from 'svelte/store';
 import { locale as appLocale } from 'svelte-i18n';
 
+import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { filterEntries } from '$lib/services/contents/collection/view/filter';
 import { groupEntries } from '$lib/services/contents/collection/view/group';
+import { entryListSettings, initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 import { prefs } from '$lib/services/user/prefs';
 
@@ -133,6 +135,12 @@ export const entryGroups = derived(
     }
   },
 );
+
+backend.subscribe((_backend) => {
+  if (_backend && !get(entryListSettings)) {
+    initSettings(_backend);
+  }
+});
 
 listedEntries.subscribe((entries) => {
   selectedEntries.set([]);

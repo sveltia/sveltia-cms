@@ -6,7 +6,9 @@ import { allAssets, selectedAssets, uploadingAssets } from '$lib/services/assets
 import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { filterAssets } from '$lib/services/assets/view/filter';
 import { groupAssets } from '$lib/services/assets/view/group';
+import { assetListSettings, initSettings } from '$lib/services/assets/view/settings';
 import { sortAssets } from '$lib/services/assets/view/sort';
+import { backend } from '$lib/services/backends';
 import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
 import { getCollectionFile, getCollectionFileLabel } from '$lib/services/contents/collection/files';
 import { prefs } from '$lib/services/user/prefs';
@@ -117,6 +119,12 @@ export const assetGroups = derived(
     }
   },
 );
+
+backend.subscribe((_backend) => {
+  if (_backend && !get(assetListSettings)) {
+    initSettings(_backend);
+  }
+});
 
 listedAssets.subscribe((assets) => {
   selectedAssets.set([]);
