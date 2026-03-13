@@ -181,21 +181,26 @@ export default defineConfig({
     extensions: ['.js', '.svelte'],
   },
   build: {
-    target: 'es2024',
     reportCompressedSize: false,
     chunkSizeWarningLimit: 5000,
     sourcemap: true,
-    rollupOptions: {
+    rolldownOptions: {
       // Output JavaScript only
       input: 'src/lib/main.js',
       output: [
         {
           entryFileNames: 'sveltia-cms.js',
           format: 'iife',
+          comments: {
+            legal: true,
+          },
         },
         {
           entryFileNames: 'sveltia-cms.mjs',
           format: 'es',
+          comments: {
+            legal: true,
+          },
         },
       ],
       // Keep exports in the ES module
@@ -204,8 +209,6 @@ export default defineConfig({
     },
     outDir: 'package/dist',
   },
-  // https://esbuild.github.io/api/#legal-comments
-  esbuild: { legalComments: 'eof' },
   plugins: [
     svelte({
       ...svelteConfig,
