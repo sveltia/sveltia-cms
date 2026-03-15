@@ -724,7 +724,7 @@ export const strings = {
       duplicate_variable_type:
         'Variable type names must be unique, but `{name}` is used more than once.',
       date_field_type:
-        'The deprecated Date field type is not supported in Sveltia CMS. Use the DateTime field type with the `time_format:false` option instead.',
+        'The deprecated Date field type is not supported in Sveltia CMS. Use the DateTime field type with the `type: date` option instead.',
       unsupported_deprecated_option:
         'The deprecated `{prop}` option is not supported in Sveltia CMS. Use the `{newProp}` option instead.',
       allow_multiple:
