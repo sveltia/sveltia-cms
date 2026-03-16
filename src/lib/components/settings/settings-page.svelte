@@ -1,5 +1,5 @@
 <script>
-  import { Alert, Icon, Menu, MenuItem, Spacer, Toast, Toolbar } from '@sveltia/ui';
+  import { Icon, Menu, MenuItem, Spacer, Toolbar } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
@@ -8,6 +8,7 @@
   import PageContainer from '$lib/components/common/page-container.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import { panels } from '$lib/components/settings';
+  import PanelContainer from '$lib/components/settings/panel-container.svelte';
   import {
     goBack,
     goto,
@@ -15,18 +16,10 @@
     updateContentFromHashChange,
   } from '$lib/services/app/navigation';
 
-  /**
-   * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
-   */
-
   const ROUTE_REGEX = /^\/settings(?:\/(?<panelKey>.+))?$/;
 
   /** @type {{ key: string, icon: string, component: import('svelte').Component } | undefined} */
   let selectedPanel = $state(undefined);
-  let toastMessage = $state('');
-  /** @type {'success' | 'error'} */
-  let toastStatus = $state('success');
-  let showToast = $state(false);
 
   /**
    * Navigate to the index page or a specific page given the URL hash.
@@ -74,16 +67,7 @@
       {#snippet mainContent()}
         <div role="none" class="wrapper">
           {#if selectedPanel}
-            {@const Content = selectedPanel.component}
-            <div role="none" class="inner">
-              <Content
-                onChange={(/** @type {SettingsPanelOnChangeArgs} */ { message, status }) => {
-                  toastMessage = message;
-                  toastStatus = status ?? 'success';
-                  showToast = true;
-                }}
-              />
-            </div>
+            <PanelContainer Panel={selectedPanel.component} />
           {:else}
             <Menu aria-label={$_('settings')}>
               {#each get(panels) as { key, icon } (key)}
@@ -104,10 +88,6 @@
   {/snippet}
 </PageContainer>
 
-<Toast bind:show={showToast}>
-  <Alert status={toastStatus}>{toastMessage}</Alert>
-</Toast>
-
 <style lang="scss">
   .wrapper {
     overflow-y: auto;
@@ -116,31 +96,10 @@
     --sui-menu-border-radius: 0;
     --sui-menu-padding: 8px 0;
 
-    .inner {
-      padding: 16px;
-
-      :global {
-        section:not(:first-child) {
-          margin: 16px 0 0;
-        }
-
-        p {
-          margin-top: 0;
-        }
-
-        h4 {
-          font-size: inherit;
-
-          & ~ div {
-            margin: 8px 0 0;
-          }
-
-          & ~ p {
-            margin: 8px 0 0;
-            color: var(--sui-secondary-foreground-color);
-            font-size: var(--sui-font-size-small);
-          }
-        }
+    :global {
+      & > .container {
+        display: block;
+        padding: 16px;
       }
     }
   }

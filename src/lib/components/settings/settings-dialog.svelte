@@ -1,13 +1,10 @@
 <script>
-  import { Alert, Dialog, Icon, Tab, TabList, TabPanel, Toast } from '@sveltia/ui';
+  import { Dialog, Icon, Tab, TabList, TabPanel } from '@sveltia/ui';
   import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
 
   import { panels } from '$lib/components/settings';
-
-  /**
-   * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
-   */
+  import PanelContainer from '$lib/components/settings/panel-container.svelte';
 
   /**
    * @typedef {object} Props
@@ -24,10 +21,6 @@
   } = $props();
 
   let selectedPanel = $state('appearance');
-  let toastMessage = $state('');
-  /** @type {'success' | 'error'} */
-  let toastStatus = $state('success');
-  let showToast = $state(false);
 </script>
 
 <Dialog
@@ -60,23 +53,13 @@
         {/if}
       {/each}
     </TabList>
-    {#each get(panels) as { key, component: Content } (key)}
+    {#each get(panels) as { key, component } (key)}
       <TabPanel id="prefs-tab-{key}">
-        <Content
-          onChange={(/** @type {SettingsPanelOnChangeArgs} */ { message, status }) => {
-            toastMessage = message;
-            toastStatus = status ?? 'success';
-            showToast = true;
-          }}
-        />
+        <PanelContainer Panel={component} />
       </TabPanel>
     {/each}
   </div>
 </Dialog>
-
-<Toast bind:show={showToast}>
-  <Alert status={toastStatus}>{toastMessage}</Alert>
-</Toast>
 
 <style lang="scss">
   .wrapper {
@@ -90,33 +73,6 @@
       .sui.tab-panel {
         flex: auto;
         border-width: 0;
-
-        section:not(:first-child) {
-          margin: 16px 0 0;
-        }
-
-        p {
-          margin-top: 0;
-        }
-
-        h3 {
-          font-size: inherit;
-
-          & ~ div {
-            margin: 8px 0 0;
-          }
-
-          & ~ p {
-            margin: 8px 0 0;
-            color: var(--sui-secondary-foreground-color);
-            font-size: var(--sui-font-size-small);
-          }
-        }
-
-        h4 {
-          margin-bottom: 4px;
-          font-size: var(--sui-font-size-small);
-        }
       }
     }
   }
