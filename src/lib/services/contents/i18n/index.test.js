@@ -465,4 +465,15 @@ describe('Test getLocaleLabel() cache', () => {
     expect(spy).toHaveBeenCalledTimes(1);
     spy.mockRestore();
   });
+
+  test('uses Intl.DisplayNames with undefined locale when displayLocale is falsy', () => {
+    // Passing displayLocale: '' triggers the else branch at index.js:64
+    const spy = vi.spyOn(Intl, 'DisplayNames');
+
+    getLocaleLabel('en', { displayLocale: '' });
+
+    // Should have been called with undefined as first argument (the else branch)
+    expect(spy).toHaveBeenCalledWith(undefined, { type: 'language' });
+    spy.mockRestore();
+  });
 });

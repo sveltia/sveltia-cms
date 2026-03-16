@@ -373,6 +373,53 @@ describe('draft/update/copy', () => {
       expect(result).toHaveProperty('body');
       expect(result.body).toEqual({ value: 'English Body', isMarkdown: true });
     });
+
+    it('should skip list fields that have sub-fields (fieldType list + hasSubFields true)', () => {
+      mockEntryDraft.currentValues.en.tags = 'tag1';
+      mockEntryDraft.currentValues.ja.tags = '';
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'tags') {
+          return { name: 'tags', widget: 'list', fields: [{ name: 'tag', widget: 'string' }] };
+        }
+
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string' };
+        }
+
+        return undefined;
+      });
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: false },
+      });
+
+      // List field with sub-fields should be excluded
+      expect(result).not.toHaveProperty('tags');
+    });
+
+    it('should include list fields without sub-fields (hasSubFields false)', () => {
+      mockEntryDraft.currentValues.en.tags = 'tag1 tag2';
+      mockEntryDraft.currentValues.ja.tags = '';
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'tags') {
+          return { name: 'tags', widget: 'list' }; // no fields/types/field
+        }
+
+        return undefined;
+      });
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: false },
+      });
+
+      // List field without sub-fields should be included, isMarkdown = false
+      expect(result).toHaveProperty('tags');
+      expect(result.tags).toEqual({ value: 'tag1 tag2', isMarkdown: false });
+    });
   });
 
   describe('updateToast (internal)', () => {
@@ -625,6 +672,59 @@ describe('draft/update/copy', () => {
         sourceLanguage: 'en',
         targetLanguage: 'ja',
       });
+    });
+
+    it('should convert markdown to HTML before translation when markdownSupported is false', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs');
+      const { parse } = await import('marked');
+      const mockTranslate = vi.fn().mockResolvedValue(['<h1>Japanese Title</h1>']);
+
+      vi.mocked(parse).mockReturnValue('<h1>English Title</h1>');
+      vi.mocked(turndownService.turndown).mockReturnValue('# Japanese Title');
+
+      mockGet.mockImplementation((store) => {
+        if (store === translator) {
+          return {
+            serviceId: 'google',
+            markdownSupported: false, // triggers both parse() and turndown()
+            translate: mockTranslate,
+          };
+        }
+
+        if (store === prefs) {
+          return { apiKeys: { google: 'test-api-key' } };
+        }
+
+        if (store === entryDraft) {
+          return mockEntryDraft;
+        }
+
+        return undefined;
+      });
+
+      const currentValues = {
+        en: { body: '# English Title' },
+        ja: { body: '' },
+      };
+
+      const copingFieldMap = {
+        body: { value: '# English Title', isMarkdown: true },
+      };
+
+      await translateFields({
+        currentValues,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja' },
+        copingFieldMap,
+      });
+
+      // parse() should convert markdown to HTML before sending to translator
+      expect(vi.mocked(parse)).toHaveBeenCalledWith('# English Title');
+      // translator receives the HTML version
+      expect(mockTranslate).toHaveBeenCalledWith(['<h1>English Title</h1>'], expect.any(Object));
+      // turndown converts HTML back to markdown
+      expect(vi.mocked(turndownService.turndown)).toHaveBeenCalledWith('<h1>Japanese Title</h1>');
+      expect(currentValues.ja.body).toBe('# Japanese Title');
     });
   });
 });

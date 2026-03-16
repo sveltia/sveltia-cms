@@ -642,6 +642,23 @@ describe('config/folders/entries', () => {
 
       expect(typeof result).toBe('number');
     });
+
+    it('should handle null/undefined filePathMap via ?? {} fallback', () => {
+      const folderA = {
+        collectionName: 'a',
+        filePathMap: null,
+      };
+
+      const folderB = {
+        collectionName: 'b',
+        filePathMap: { _default: 'b/file.md' },
+      };
+
+      // @ts-ignore - testing the ?? {} fallback branch
+      expect(() => compareFilePath(folderA, folderB)).not.toThrow();
+      // @ts-ignore
+      expect(typeof compareFilePath(folderA, folderB)).toBe('number');
+    });
   });
 
   describe('getEntryCollectionFolders', () => {
@@ -813,6 +830,22 @@ describe('config/folders/entries', () => {
 
       // Verify getValidCollections is called without 'visible' parameter
       expect(getValidCollections).toHaveBeenCalledWith({ collections: [], type: 'file' });
+    });
+
+    it('should handle collections without a files property via ?? [] fallback', () => {
+      // @ts-ignore - collection without files property triggers the ?? [] branch
+      vi.mocked(getValidCollections).mockReturnValue([{ name: 'no-files-prop' }]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getFileCollectionFolders(config);
+
+      // Should gracefully produce an empty array without throwing
+      expect(result).toHaveLength(0);
     });
   });
 

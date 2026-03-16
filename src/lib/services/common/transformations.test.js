@@ -233,6 +233,17 @@ describe('Test individual transformation functions', () => {
         ),
       ).toBe('2024-01-23-01-23');
     });
+
+    test('should use UTC parsing for date-only field with Z-suffixed datetime value', () => {
+      // Covers the (dateOnly && !!sValue.match(/T\d{2}:\d{2}...Z$/)) branch
+      expect(
+        applyDateTransformation(
+          '2024-01-23T06:00:00Z',
+          { format: 'YYYY-MM-DD' },
+          { name: 'date', widget: 'datetime', time_format: false },
+        ),
+      ).toBe('2024-01-23');
+    });
   });
 
   describe('applyDefaultTransformation()', () => {

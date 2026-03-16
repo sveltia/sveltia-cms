@@ -303,6 +303,34 @@ describe('sortEntries', () => {
     expect(result.map((e) => e.slug)).toContain('entry-1');
   });
 
+  test('should treat entry as zero when getDate returns null for a date field', () => {
+    const conditions = { key: 'date', order: 'ascending' };
+
+    vi.mocked(getField).mockReturnValue({
+      name: 'date',
+      widget: 'datetime',
+      label: 'Date',
+    });
+
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+
+    vi.mocked(getPropertyValue).mockImplementation(({ entry, key }) => {
+      if (key === 'date') {
+        return entry.locales.en.content.date;
+      }
+
+      return undefined;
+    });
+
+    // getDate returns null for unparseable dates → ?? 0 fallback fires
+    vi.mocked(getDate).mockReturnValue(null);
+
+    const result = sortEntries(mockEntries, mockCollection, conditions);
+
+    // All sort keys are 0 when getDate returns null → order is stable
+    expect(result).toHaveLength(mockEntries.length);
+  });
+
   test('should handle markdown fields by removing markdown syntax', () => {
     const conditions = { key: 'title', order: 'ascending' };
 
@@ -1146,5 +1174,34 @@ describe('sortEntries', () => {
 
     // removeMarkdownSyntax should still be called
     expect(vi.mocked(removeMarkdownSyntax)).toHaveBeenCalled();
+  });
+
+  test('should sort by non-markdown string field (isMarkdownField=false path)', () => {
+    const conditions = { key: 'slug', order: 'ascending' };
+
+    vi.mocked(getField).mockReturnValue({
+      name: 'slug',
+      widget: 'string',
+      label: 'Slug',
+    });
+
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+
+    vi.mocked(getPropertyValue).mockImplementation(({ entry, key }) => {
+      if (key === 'slug') {
+        return entry.slug;
+      }
+
+      return undefined;
+    });
+
+    vi.mocked(removeMarkdownSyntax).mockImplementation((s) => s);
+
+    const result = sortEntries(mockEntries, mockCollection, conditions);
+
+    // 'slug' is not in markdownFieldKeys and widget is not richtext/markdown,
+    // so the plain String(str) branch is used (isMarkdownField=false)
+    expect(result.map((e) => e.slug)).toEqual(['entry-1', 'entry-2', 'entry-3']);
+    expect(vi.mocked(removeMarkdownSyntax)).not.toHaveBeenCalled();
   });
 });

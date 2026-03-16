@@ -486,5 +486,59 @@ describe('contents/draft/create/duplicate', () => {
 
       expect(jaLocaleCall).toHaveLength(0);
     });
+
+    it('should not reset uuid field for non-default locale when i18n is unspecified (??false branch)', async () => {
+      mockEntryDraft.currentValues.en.uuid = 'old-uuid-value';
+      mockEntryDraft.currentValues.ja.uuid = 'old-uuid-value-ja';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'uuid') {
+          // No i18n property at all → fieldConfig.i18n is undefined → ?? false fires
+          return { widget: 'uuid' };
+        }
+
+        return undefined;
+      });
+
+      mockGetInitialUuidValue.mockReturnValue('new-uuid-value');
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      // Default locale resets (condition true via locale === defaultLocale)
+      expect(setCallArg.currentValues.en.uuid).toBe('new-uuid-value');
+      // Non-default locale does not reset (fieldConfig.i18n is undefined → ?? false → condition
+      // false)
+      expect(setCallArg.currentValues.ja.uuid).toBe('old-uuid-value-ja');
+    });
+
+    it('should not reset hidden field for non-default locale when i18n is unspecified (??false branch)', async () => {
+      mockEntryDraft.currentValues.en.hiddenField = 'old-value';
+      mockEntryDraft.currentValues.ja.hiddenField = 'old-value-ja';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'hiddenField') {
+          // No i18n property at all → fieldConfig.i18n is undefined → ?? false fires
+          return { widget: 'hidden', default: 'new-default-value' };
+        }
+
+        return undefined;
+      });
+
+      mockGetHiddenFieldDefaultValueMap.mockReturnValue({ hiddenField: 'new-default-value' });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      // Should only call for defaultLocale (en), not for ja
+      const { calls } = mockGetHiddenFieldDefaultValueMap.mock;
+      const jaLocaleCall = (calls ?? []).filter((/** @type {any} */ c) => c[0].locale === 'ja');
+
+      expect(jaLocaleCall).toHaveLength(0);
+    });
   });
 });

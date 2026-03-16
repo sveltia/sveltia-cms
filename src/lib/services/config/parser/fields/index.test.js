@@ -735,6 +735,42 @@ describe('Field Collectors', () => {
     });
   });
 
+  describe('parseFields with undefined/null fields', () => {
+    it('should handle undefined fields gracefully without throwing', async () => {
+      const { parseFields } = await import('./index.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts' },
+        typedKeyPath: '',
+      };
+
+      // Should not throw when fields is undefined (the ?. optional chain)
+      // @ts-ignore
+      expect(() => parseFields(undefined, context, collectors)).not.toThrow();
+      expect(collectors.errors.size).toBe(0);
+    });
+
+    it('should handle null fields gracefully without throwing', async () => {
+      const { parseFields } = await import('./index.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts' },
+        typedKeyPath: '',
+      };
+
+      // Should not throw when fields is null (the ?. optional chain)
+      // @ts-ignore
+      expect(() => parseFields(null, context, collectors)).not.toThrow();
+      expect(collectors.errors.size).toBe(0);
+    });
+  });
+
   describe('Deprecated date widget type (line 55)', () => {
     it('should add an error when widget is "date" (deprecated)', async () => {
       const { parseFields } = await import('./index.js');
@@ -759,6 +795,33 @@ describe('Field Collectors', () => {
 
       // The deprecated 'date' widget type should trigger addMessage with 'date_field_type'
       expect(collectors.errors.size).toBe(1);
+    });
+  });
+
+  describe('Field name validation (checkName false branch)', () => {
+    it('should skip parseFieldConfig when field has no name', async () => {
+      const { parseFields } = await import('./index.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts' },
+        typedKeyPath: '',
+      };
+
+      /** @type {any} */
+      const fields = [
+        {
+          // name is missing → checkName returns false → parseFieldConfig is NOT called
+          widget: 'string',
+        },
+      ];
+
+      parseFields(fields, context, collectors);
+
+      // checkName should have added an error for missing name
+      expect(collectors.errors.size).toBeGreaterThan(0);
     });
   });
 });

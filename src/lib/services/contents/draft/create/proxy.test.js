@@ -892,5 +892,99 @@ describe('contents/draft/create/proxy', () => {
       expect(mockCurrentValues.en.title).toBeUndefined();
       expect(mockCurrentValues.ja.title).toBe('タイトル');
     });
+
+    it('should not update obj when new value equals existing value (line 115 false branch)', async () => {
+      const target = { title: 'Same Value' };
+      const { createProxy } = await import('./proxy.js');
+
+      const proxy = createProxy({
+        draft: { collectionName: 'posts', fileName: undefined, isIndexFile: false },
+        locale: 'en',
+        target,
+      });
+
+      // Setting the same value that already exists on the target
+      proxy.title = 'Same Value';
+
+      // Value is still 'Same Value' (not changed, and no error)
+      expect(target.title).toBe('Same Value');
+    });
+
+    it('should skip valueMissing update when value is not a string (line 135 false branch)', async () => {
+      const mockValidities = {
+        en: { count: { valueMissing: false } },
+        ja: {},
+      };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockI18nAutoDupEnabled) {
+          return false;
+        }
+
+        if (store === mockEntryDraft) {
+          return {
+            currentValues: { en: {}, ja: {} },
+            validities: mockValidities,
+          };
+        }
+
+        return undefined;
+      });
+
+      mockGetField.mockReturnValue({ widget: 'number', required: true });
+      mockIsFieldRequired.mockReturnValue(true);
+
+      const { createProxy } = await import('./proxy.js');
+
+      const proxy = createProxy({
+        draft: { collectionName: 'posts', fileName: undefined, isIndexFile: false },
+        locale: 'en',
+      });
+
+      // Set a non-string value — validity should NOT be updated (typeof 42 !== 'string')
+      proxy.count = 42;
+
+      // valueMissing stays unchanged because value is not a string
+      expect(mockValidities.en.count.valueMissing).toBe(false);
+    });
+
+    it('should not delete from other locales when shouldAutoDuplicate is false (line 158 false branch)', async () => {
+      const mockCurrentValues = {
+        en: { title: 'Title' },
+        ja: { title: 'タイトル' },
+      };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockI18nAutoDupEnabled) {
+          return true;
+        }
+
+        if (store === mockEntryDraft) {
+          return {
+            currentValues: mockCurrentValues,
+            validities: { en: {}, ja: {} },
+          };
+        }
+
+        return undefined;
+      });
+
+      // fieldConfig exists but i18n is 'translate', not 'duplicate' → shouldAutoDuplicate = false
+      mockGetField.mockReturnValue({ widget: 'string', i18n: 'translate' });
+
+      const { createProxy } = await import('./proxy.js');
+
+      const proxy = createProxy({
+        draft: { collectionName: 'posts', fileName: undefined, isIndexFile: false },
+        locale: 'en',
+        target: mockCurrentValues.en,
+      });
+
+      delete proxy.title;
+
+      // en.title is deleted (local delete), but ja.title stays because shouldAutoDuplicate=false
+      expect(mockCurrentValues.en.title).toBeUndefined();
+      expect(mockCurrentValues.ja.title).toBe('タイトル');
+    });
   });
 });

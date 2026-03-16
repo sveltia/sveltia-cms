@@ -588,6 +588,36 @@ describe('initializeViewFilters', () => {
 
     expect(vi.mocked(currentView).update).toHaveBeenCalled();
   });
+
+  test('sets default filter when currentView has no existing filters (defaultFilter truthy branch)', async () => {
+    const { initializeViewFilters } = await import('./filter');
+    const { currentView } = await import('$lib/services/contents/collection/view');
+    const mockSet = vi.fn();
+
+    // Make update invoke its callback so the ternary branch is executed
+    // @ts-ignore
+    vi.mocked(currentView).update = vi.fn((cb) => cb({ filters: undefined }));
+
+    const entryCollection = /** @type {any} */ ({
+      name: 'posts',
+      _type: 'entry',
+      folder: 'content/posts',
+      view_filters: {
+        filters: [{ field: 'status', pattern: 'published', name: 'published' }],
+        default: 'published',
+      },
+    });
+
+    initializeViewFilters(entryCollection, mockSet);
+
+    // The update callback should be called with the defaultFilter wrapped in an array.
+    // Note: parseFilterConfig strips the 'name' from the returned default object.
+    const updateCallback = vi.mocked(currentView).update.mock.calls[0][0];
+    // @ts-ignore
+    const result = updateCallback({ filters: undefined });
+
+    expect(result.filters).toEqual([{ field: 'status', pattern: 'published' }]);
+  });
 });
 
 describe('Test viewFilters store', () => {

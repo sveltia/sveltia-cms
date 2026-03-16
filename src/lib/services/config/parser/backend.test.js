@@ -210,6 +210,24 @@ describe('parseBackendConfig', () => {
       expect(error).toContain('Unsupported backend: Bitbucket');
       expect(error).toContain('Please check the supported backends');
     });
+
+    it('should use "custom" message branch for completely unknown backend name', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { backend: { name: 'my-custom-backend' } };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(1);
+
+      const [error] = [...collectors.errors];
+
+      // 'my-custom-backend' is not in unsupportedBackends, so it uses the
+      // 'unsupported_custom_backend' message key (custom backend branch at line 51)
+      expect(error).toContain('Unsupported backend');
+      expect(error).toContain('Please check the supported backends');
+    });
   });
 
   describe('local backend', () => {

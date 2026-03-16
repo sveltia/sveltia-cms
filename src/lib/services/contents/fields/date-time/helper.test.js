@@ -581,6 +581,21 @@ describe('getCurrentValue', () => {
     expect(consoleSpy).toHaveBeenCalledWith('Invalid date', 'not-a-valid-date-at-all');
     consoleSpy.mockRestore();
   });
+
+  test('should use HH:mm inputFormat for timeOnly field', () => {
+    // With a custom format and timeOnly, should parse using HH:mm
+    /** @type {DateTimeField} */
+    const fieldConfigWithFormat = {
+      ...baseFieldConfig,
+      date_format: false,
+      format: 'HH:mm',
+    };
+
+    const result = getCurrentValue('14:30', undefined, fieldConfigWithFormat);
+
+    expect(typeof result).toBe('string');
+    expect(result).toContain('14:30');
+  });
 });
 
 describe('getInputValue', () => {

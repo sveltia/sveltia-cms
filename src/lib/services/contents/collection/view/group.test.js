@@ -491,6 +491,75 @@ describe('groupEntries', () => {
     expect(result[1].name).toBe('2023');
     expect(result[2].name).toBe('2022');
   });
+
+  test('should fall back to Other group when entry value does not match regex', async () => {
+    const { getRegex } = await import('$lib/services/utils/misc');
+
+    // @ts-ignore - Mock data for testing
+    const entries = [
+      {
+        id: 'entry1',
+        sha: 'sha1',
+        slug: 'slug1',
+        subPath: '',
+        locales: { en: { path: 'path1', slug: 'slug1', content: { tag: '2023-tech' } } },
+      },
+      {
+        id: 'entry2',
+        sha: 'sha2',
+        slug: 'slug2',
+        subPath: '',
+        locales: { en: { path: 'path2', slug: 'slug2', content: { tag: 'no-year' } } },
+      },
+    ];
+
+    // @ts-ignore
+    const collection = {
+      _file: { format: 'frontmatter', extension: 'md', formatOptions: {} },
+      _i18n: {
+        i18nEnabled: false,
+        structure: 'single_file',
+        allLocales: ['en'],
+        initialLocales: ['en'],
+        defaultLocale: 'en',
+        locales: ['en'],
+        canonicalSlug: {},
+      },
+      name: 'posts',
+      label: 'Posts',
+      folder: 'content/posts',
+    };
+
+    // @ts-ignore
+    vi.mocked(getPropertyValue).mockImplementation(({ entry, key }) => {
+      if (key === 'tag') {
+        return entry.locales.en.content.tag;
+      }
+
+      return undefined;
+    });
+
+    // Regex matches only strings starting with a 4-digit year
+    vi.mocked(getRegex).mockReturnValue(/^\d{4}/);
+
+    vi.mocked(get).mockImplementation((store) => {
+      if (store && typeof store === 'object' && 'subscribe' in store) {
+        return { sort: { key: 'tag', order: 'ascending' } };
+      }
+
+      return (key) => (key === 'other' ? 'Other' : key);
+    });
+
+    // @ts-ignore
+    const conditions = { field: 'tag', pattern: '^\\d{4}' };
+    // @ts-ignore
+    const result = groupEntries(entries, collection, conditions);
+    // '2023-tech' matches → group '2023'; 'no-year' does not match → falls back to 'Other'
+    const groupNames = result.map((g) => g.name);
+
+    expect(groupNames).toContain('2023');
+    expect(groupNames).toContain('Other');
+  });
 });
 
 describe('Test parseGroupConfig()', () => {
@@ -713,6 +782,58 @@ describe('initializeViewGroups', () => {
     ]);
 
     expect(vi.mocked(currentView).update).toHaveBeenCalled();
+  });
+
+  test('sets defaultGroup when currentView.group is undefined (defaultGroup truthy branch)', async () => {
+    const { initializeViewGroups } = await import('./group');
+    const { currentView } = await import('$lib/services/contents/collection/view');
+    const mockSet = vi.fn();
+
+    // Make update invoke its callback so the ternary branch executes
+    vi.mocked(currentView).update = vi.fn((cb) => cb({ group: undefined }));
+
+    const entryCollection = /** @type {any} */ ({
+      name: 'posts',
+      _type: 'entry',
+      folder: 'content/posts',
+      view_groups: {
+        groups: [{ field: 'author', pattern: 'john', name: 'john' }],
+        default: 'john',
+      },
+    });
+
+    initializeViewGroups(entryCollection, mockSet);
+
+    const updateCallback = vi.mocked(currentView).update.mock.calls[0][0];
+    const result = updateCallback({ group: undefined });
+
+    // Note: parseGroupConfig strips the 'name' from the returned default object.
+    expect(result.group).toEqual({ field: 'author', pattern: 'john' });
+  });
+
+  test('keeps existing group when currentView.group is already set (false branch of _view.group === undefined)', async () => {
+    const { initializeViewGroups } = await import('./group');
+    const { currentView } = await import('$lib/services/contents/collection/view');
+    const mockSet = vi.fn();
+    const existingGroup = { field: 'status', pattern: 'draft' };
+
+    // Invoke callback with a pre-existing group → false branch of the ternary
+    vi.mocked(currentView).update = vi.fn((cb) => cb({ group: existingGroup }));
+
+    const entryCollection = /** @type {any} */ ({
+      name: 'posts',
+      _type: 'entry',
+      folder: 'content/posts',
+      view_groups: [{ field: 'status', pattern: 'draft', name: 'draft' }],
+    });
+
+    initializeViewGroups(entryCollection, mockSet);
+
+    const updateCallback = vi.mocked(currentView).update.mock.calls[0][0];
+    const result = updateCallback({ group: existingGroup });
+
+    // group should remain unchanged (false branch: keep existing)
+    expect(result.group).toEqual(existingGroup);
   });
 });
 

@@ -94,6 +94,21 @@ describe('contents/draft/save/key-path', () => {
       expect(result).toEqual(['items', 'items.*']);
     });
 
+    it('should handle object fields without fields or types (isList=false branch)', () => {
+      const fields = [
+        {
+          name: 'meta',
+          widget: 'object',
+          // no fields and no types — hits the else if (isList) false branch
+        },
+      ];
+
+      const result = createKeyPathList(fields);
+
+      // An object field with no subfields just registers its own keyPath
+      expect(result).toEqual(['meta']);
+    });
+
     it('should handle nested object in list', () => {
       const fields = [
         {

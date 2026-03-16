@@ -644,5 +644,19 @@ describe('git/shared/commits', () => {
 
       expect(message).toBe('[skip ci] Create Blog Post "my-post" by test@example.com');
     });
+
+    it('should use empty defaults when backend is undefined (line 40 ?? {} branch)', () => {
+      // Setting backend to undefined causes `get(cmsConfig)?.backend ?? {}` to fire
+      mockCmsConfig.backend = undefined;
+
+      const message = createCommitMessage(mockChanges, {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      // With no backend config, uses default commit message with no skip_ci
+      expect(typeof message).toBe('string');
+      expect(message).not.toBe('');
+    });
   });
 });

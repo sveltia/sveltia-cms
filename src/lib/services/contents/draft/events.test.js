@@ -1094,5 +1094,42 @@ describe('events module', () => {
       // fr should remain unchanged as the hook didn't provide an update
       expect(savingEntry.locales.fr.content).toEqual({ title: 'Titre original' });
     });
+
+    it('should fall back to else-if branch when return has data but no i18n (isObject(map.i18n) is false)', async () => {
+      // Return a map with `data` key but no `i18n` key
+      // → isObject(map.data) = true, isObject(map.i18n) = false
+      // → falls through to else if (isObject(map)) = true
+      const modifiedEntry = fromJS({ data: { title: 'Modified Title' } });
+      const handler = vi.fn().mockReturnValue(modifiedEntry);
+
+      eventHookRegistry.add({ name: 'preSave', handler });
+
+      const draft = {
+        collection: {
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: null,
+        isNew: true,
+        collectionName: 'posts',
+        fileName: null,
+      };
+
+      const savingEntry = {
+        slug: 'test-post',
+        locales: {
+          en: {
+            content: { title: 'Original Title' },
+            path: 'posts/test-post.md',
+          },
+        },
+      };
+
+      // @ts-expect-error
+      await callEventHooks({ type: 'preSave', draft, savingEntry });
+
+      // The else-if branch runs: locales[defaultLocale].content = flatten(map)
+      // map = { data: { title: 'Modified Title' } }, flattened = { 'data.title': 'Modified Title' }
+      expect(savingEntry.locales.en.content).toEqual({ 'data.title': 'Modified Title' });
+    });
   });
 });
