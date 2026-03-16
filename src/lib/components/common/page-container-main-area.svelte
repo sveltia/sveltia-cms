@@ -41,6 +41,7 @@
     flex-direction: column;
     overflow: hidden;
     background-color: var(--sui-primary-background-color);
+    view-transition-name: page-main;
 
     &:not(:first-child) {
       border-start-start-radius: 16px;

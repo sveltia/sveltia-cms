@@ -228,6 +228,26 @@
     }
   }
 
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
   :global {
     html:active-view-transition-type(forwards) {
       @media (width < 768px) {
@@ -296,12 +316,38 @@
     }
 
     html:active-view-transition-type(unknown) {
-      &::view-transition-old(page-root) {
-        animation: none;
+      &::view-transition-old(page-main) {
+        animation: 100ms ease-in both fade-out;
+
+        @media (prefers-reduced-motion) {
+          animation: none;
+        }
       }
 
-      &::view-transition-new(page-root) {
-        animation: none;
+      &::view-transition-new(page-main) {
+        animation: 100ms ease-in both fade-in;
+
+        @media (prefers-reduced-motion) {
+          animation: none;
+        }
+      }
+    }
+
+    html:active-view-transition-type(unknown) {
+      &::view-transition-old(page-main) {
+        animation: 100ms ease-in both fade-out;
+
+        @media (prefers-reduced-motion) {
+          animation: none;
+        }
+      }
+
+      &::view-transition-new(page-main) {
+        animation: 100ms ease-in both fade-in;
+
+        @media (prefers-reduced-motion) {
+          animation: none;
+        }
       }
     }
 

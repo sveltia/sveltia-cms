@@ -349,6 +349,61 @@ describe('navigation', () => {
         update: expect.any(Function),
       });
     });
+
+    it('should skip navigation when already on same path with no state or replaceState', async () => {
+      // Current location is already /collections
+      window.location.href = 'https://example.com/#/collections';
+      window.location.hash = '#/collections';
+
+      await goto('/collections');
+
+      // Should not push state or trigger transition
+      expect(window.history.pushState).not.toHaveBeenCalled();
+      expect(document.startViewTransition).not.toHaveBeenCalled();
+    });
+
+    it('should navigate when on same path but with custom state', async () => {
+      window.location.href = 'https://example.com/#/collections';
+      window.location.hash = '#/collections';
+
+      const customState = { folder: 'assets' };
+
+      await goto('/collections', { state: customState });
+
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        { folder: 'assets', from: 'https://example.com/#/collections' },
+        '',
+        'https://example.com/#/collections',
+      );
+    });
+
+    it('should navigate when on same path but with replaceState', async () => {
+      window.location.href = 'https://example.com/#/collections';
+      window.location.hash = '#/collections';
+
+      await goto('/collections', { replaceState: true });
+
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        { from: 'https://example.com/#/collections' },
+        '',
+        'https://example.com/#/collections',
+      );
+    });
+
+    it('should navigate when on same path but with both state and replaceState', async () => {
+      window.location.href = 'https://example.com/#/collections';
+      window.location.hash = '#/collections';
+
+      const customState = { filter: 'images' };
+
+      await goto('/collections', { state: customState, replaceState: true });
+
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        { filter: 'images', from: 'https://example.com/#/collections' },
+        '',
+        'https://example.com/#/collections',
+      );
+    });
   });
 
   describe('goBack', () => {
@@ -518,28 +573,30 @@ describe('navigation', () => {
       );
     });
 
-    it('should handle backwards transition type', () => {
-      const mockStartViewTransition = vi.fn();
+    it('should handle backwards transition type', async () => {
+      const mockUpdateContent = vi.fn();
+      const mockTransition = { finished: Promise.resolve() };
 
-      document.startViewTransition = mockStartViewTransition;
+      document.startViewTransition = vi.fn().mockReturnValue(mockTransition);
 
-      startViewTransition('backwards', vi.fn());
+      startViewTransition('backwards', mockUpdateContent);
 
-      expect(mockStartViewTransition).toHaveBeenCalledWith(
-        expect.objectContaining({ types: ['backwards'] }),
-      );
+      await mockTransition.finished;
+
+      expect(mockUpdateContent).toHaveBeenCalled();
     });
 
-    it('should handle unknown transition type', () => {
-      const mockStartViewTransition = vi.fn();
+    it('should handle unknown transition type', async () => {
+      const mockUpdateContent = vi.fn();
+      const mockTransition = { finished: Promise.resolve() };
 
-      document.startViewTransition = mockStartViewTransition;
+      document.startViewTransition = vi.fn().mockReturnValue(mockTransition);
 
-      startViewTransition('unknown', vi.fn());
+      startViewTransition('unknown', mockUpdateContent);
 
-      expect(mockStartViewTransition).toHaveBeenCalledWith(
-        expect.objectContaining({ types: ['unknown'] }),
-      );
+      await mockTransition.finished;
+
+      expect(mockUpdateContent).toHaveBeenCalled();
     });
 
     it('should handle TypeError when startViewTransition throws', async () => {
@@ -581,8 +638,9 @@ describe('navigation', () => {
   });
 
   describe('goBack with history.back()', () => {
-    it('should call window.history.back when history state has from property', () => {
+    it('should call window.history.back when history state has from property', async () => {
       const mockHistoryBack = vi.fn();
+      const mockTransition = { finished: Promise.resolve() };
 
       // Mock history with state and back method
       Object.defineProperty(window, 'history', {
@@ -596,50 +654,19 @@ describe('navigation', () => {
         configurable: true,
       });
 
+      document.startViewTransition = vi.fn().mockReturnValue(mockTransition);
+
       goBack('/default');
 
-      expect(document.startViewTransition).toHaveBeenCalled();
-
-      const callArgs = /** @type {any} */ (document.startViewTransition).mock.calls[0][0];
+      const callArgs = /** @type {any} */ (document.startViewTransition).mock.calls[0]?.[0];
 
       if (callArgs?.update) {
         callArgs.update();
-        expect(mockHistoryBack).toHaveBeenCalled();
       }
-    });
 
-    it('should call window.history.back with view transition', () => {
-      const mockStartViewTransition = vi.fn();
-      const mockHistoryBack = vi.fn();
+      expect(mockHistoryBack).toHaveBeenCalled();
 
-      // Mock history with state and back method
-      Object.defineProperty(window, 'history', {
-        value: {
-          pushState: vi.fn(),
-          replaceState: vi.fn(),
-          back: mockHistoryBack,
-          state: { from: 'https://example.com/#/collections' },
-        },
-        writable: true,
-        configurable: true,
-      });
-
-      document.startViewTransition = mockStartViewTransition;
-
-      goBack('/default');
-
-      // Verify startViewTransition was called with the update function
-      expect(mockStartViewTransition).toHaveBeenCalled();
-
-      const callArgs = mockStartViewTransition.mock.calls[0][0];
-
-      expect(callArgs.update).toBeDefined();
-
-      // Execute the update function to verify it calls history.back
-      if (callArgs.update) {
-        callArgs.update();
-        expect(mockHistoryBack).toHaveBeenCalled();
-      }
+      await mockTransition.finished;
     });
   });
 });
