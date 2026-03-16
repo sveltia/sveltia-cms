@@ -11,21 +11,22 @@ const ROUTE_REGEX = /^\/search\/(?<terms>.+)$/;
  * @returns {boolean} Whether the path is a search route.
  */
 export const isSearchRoute = (path) => {
-  const searchMatch = path.match(ROUTE_REGEX);
+  const { groups } = path.match(ROUTE_REGEX) ?? {};
 
-  if (searchMatch?.groups) {
-    const { terms } = searchMatch.groups;
-
-    if (terms && terms !== get(searchTerms)) {
-      searchTerms.set(terms);
-    }
-
-    if (!get(searchMode)) {
-      searchMode.set('contents');
-    }
-
-    return true;
+  if (!groups) {
+    // Not a search route
+    return false;
   }
 
-  return false; // Not a search route
+  const { terms } = groups;
+
+  if (terms && terms !== get(searchTerms)) {
+    searchTerms.set(terms);
+  }
+
+  if (!get(searchMode)) {
+    searchMode.set('contents');
+  }
+
+  return true;
 };

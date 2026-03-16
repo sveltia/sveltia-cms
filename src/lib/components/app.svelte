@@ -333,24 +333,6 @@
       }
     }
 
-    html:active-view-transition-type(unknown) {
-      &::view-transition-old(page-main) {
-        animation: 100ms ease-in both fade-out;
-
-        @media (prefers-reduced-motion) {
-          animation: none;
-        }
-      }
-
-      &::view-transition-new(page-main) {
-        animation: 100ms ease-in both fade-in;
-
-        @media (prefers-reduced-motion) {
-          animation: none;
-        }
-      }
-    }
-
     body:not(:has(#nc-root)) {
       overflow: hidden;
     }

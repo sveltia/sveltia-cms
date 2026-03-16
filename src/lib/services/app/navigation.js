@@ -74,14 +74,9 @@ let activeTransition = null;
  * @see https://developer.chrome.com/docs/web-platform/view-transitions/same-document
  */
 export const startViewTransition = (transitionType, updateContent) => {
-  if (!document.startViewTransition) {
-    updateContent();
-    return;
-  }
-
-  // If a transition is already active (e.g. a redirect `goto` called inside `navigate()`), just
-  // update content directly to avoid aborting the active transition.
-  if (activeTransition) {
+  // Fall back to a direct update if the View Transitions API is unavailable, or if a transition is
+  // already running (e.g. a redirect `goto()` inside `navigate()`), to avoid aborting it.
+  if (!document.startViewTransition || activeTransition) {
     updateContent();
     return;
   }
