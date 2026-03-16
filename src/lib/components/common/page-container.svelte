@@ -87,6 +87,10 @@
             width: 100%;
             text-align: start;
 
+            @media (pointer: coarse) {
+              height: 48px;
+            }
+
             &:not(:first-child) {
               margin-top: 4px;
             }
