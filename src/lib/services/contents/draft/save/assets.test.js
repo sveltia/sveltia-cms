@@ -212,6 +212,67 @@ describe('Test resolveAssetFolderPaths()', () => {
     });
   });
 
+  test('nested path with _index filename, multiple folders, entry relative', async () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}/_index' },
+      _i18n: i18nMultiFolder,
+    };
+
+    await setupAssetFolder(relativeAssetFolder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: relativeAssetFolder,
+        fillSlugOptions: {
+          collection,
+          content: {},
+          currentSlug,
+          entryFilePath: 'src/content/blog/foo/_index.md',
+        },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog/foo/images',
+      resolvedPublicPath: '../../foo',
+    });
+  });
+
+  test('nested path with custom filename, single file i18n, entry relative', async () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}/article' },
+      _i18n: i18nSingleFile,
+    };
+
+    const folder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'src/content/blog',
+      internalSubPath: '',
+      publicPath: '',
+    };
+
+    await setupAssetFolder(folder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder,
+        fillSlugOptions: {
+          collection,
+          content: {},
+          currentSlug,
+          entryFilePath: 'src/content/blog/foo/article.md',
+        },
+      }),
+    ).toEqual({
+      resolvedInternalPath: 'src/content/blog/foo',
+      resolvedPublicPath: '',
+    });
+  });
+
   test('simple path, multiple folders at root, entry relative', async () => {
     /** @type {InternalCollection} */
     const collection = {

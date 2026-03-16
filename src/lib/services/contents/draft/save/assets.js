@@ -68,27 +68,37 @@ const fillTemplateIfNeeded = (pathString, fillSlugOptions) =>
   pathString.includes('{{') ? fillTemplate(pathString, fillSlugOptions) : pathString;
 
 /**
- * Extract the entry folder path from an entry file path. Removes file extension and `/index` suffix
- * for nested entries.
+ * Extract the entry folder path from an entry file path. Removes file extension and the filename
+ * suffix for nested entries (e.g., `/index`, `/_index`, or any custom filename from the `path`
+ * config).
  * @param {string} entryFilePath Entry file path, e.g., `src/content/blog/hello-world.md`.
+ * @param {string | undefined} subPath Collection's file subPath template, e.g., `{{slug}}/index`.
  * @returns {string} Entry folder path, e.g., `src/content/blog/hello-world`.
  * @example
  * // Simple files
- * getEntryFolderPath('src/content/blog/hello-world.md')
+ * getEntryFolderPath('src/content/blog/hello-world.md', '{{slug}}')
  * // => 'src/content/blog/hello-world'
  * @example
- * // Nested files
- * getEntryFolderPath('src/content/blog/hello-world/index.md')
+ * // Nested files with `index`
+ * getEntryFolderPath('src/content/blog/hello-world/index.md', '{{slug}}/index')
  * // => 'src/content/blog/hello-world'
+ * @example
+ * // Nested files with `_index`
+ * getEntryFolderPath('content/learn/my-slug/_index.md', '{{slug}}/_index')
+ * // => 'content/learn/my-slug'
  */
-const getEntryFolderPath = (entryFilePath) => {
+const getEntryFolderPath = (entryFilePath, subPath) => {
   // Remove file extension (always present)
   const extensionIndex = entryFilePath.lastIndexOf('.');
   let folderPath = entryFilePath.substring(0, extensionIndex);
+  // For nested entries where the path config has a fixed filename suffix (e.g., `{{slug}}/index` or
+  // `{{slug}}/_index`), strip that last segment to get the folder path. Paths like
+  // `{{year}}/{{month}}/{{slug}}` are not nested in this sense — the slug IS the last segment, so
+  // nothing is stripped.
+  const lastSubPathSegment = subPath?.includes('/') ? subPath.split('/').at(-1) : undefined;
 
-  // Remove `/index` suffix for nested entries
-  if (folderPath.endsWith('/index')) {
-    folderPath = folderPath.substring(0, folderPath.length - 6);
+  if (lastSubPathSegment && !lastSubPathSegment.includes('{{')) {
+    folderPath = folderPath.match(FOLDER_PATH_REGEX)?.groups?.path ?? folderPath;
   }
 
   return folderPath;
@@ -200,7 +210,7 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
       : undefined;
 
   const subPathFolderPath = subPath?.match(FOLDER_PATH_REGEX)?.groups?.path ?? '';
-  const entryFolderPath = getEntryFolderPath(entryFilePath ?? '');
+  const entryFolderPath = getEntryFolderPath(entryFilePath ?? '', subPath);
   const isNestedEntry = subPath?.includes('/') ?? false;
 
   const resolvedInternalPath = resolveInternalPath({
