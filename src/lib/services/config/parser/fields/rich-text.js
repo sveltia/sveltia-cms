@@ -8,7 +8,10 @@ import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/valid
  * Unsupported options for RichText fields.
  * @type {UnsupportedOption[]}
  */
-const UNSUPPORTED_OPTIONS = [{ prop: 'editorComponents', newProp: 'editor_components' }];
+const UNSUPPORTED_OPTIONS = [
+  // Deprecated camelCase option in Netlify/Decap CMS config, should be converted to snake_case.
+  { prop: 'editorComponents', newProp: 'editor_components' },
+];
 
 /**
  * Parse and validate a RichText field configuration.

@@ -8,7 +8,10 @@ import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/valid
  * Unsupported options for Number fields.
  * @type {UnsupportedOption[]}
  */
-const UNSUPPORTED_OPTIONS = [{ prop: 'valueType', newProp: 'value_type' }];
+const UNSUPPORTED_OPTIONS = [
+  // Deprecated camelCase option in Netlify/Decap CMS config, should be converted to snake_case.
+  { prop: 'valueType', newProp: 'value_type' },
+];
 
 /**
  * Parse and validate a Number field configuration.

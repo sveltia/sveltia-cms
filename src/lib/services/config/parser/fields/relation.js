@@ -14,9 +14,12 @@ import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser
  * @type {UnsupportedOption[]}
  */
 const UNSUPPORTED_OPTIONS = [
+  // Deprecated camelCase options in Netlify/Decap CMS config, should be converted to snake_case.
   { prop: 'displayFields', newProp: 'display_fields' },
   { prop: 'searchFields', newProp: 'search_fields' },
   { prop: 'valueField', newProp: 'value_field' },
+  // Sveltia CMS doesn’t have performance issues with many related entries, so this option is not
+  // applicable.
   { type: 'warning', prop: 'options_length', strKey: 'unsupported_ignored_option' },
 ];
 

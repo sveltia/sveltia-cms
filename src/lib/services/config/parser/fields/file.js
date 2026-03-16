@@ -12,6 +12,7 @@ import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/valid
  * @type {UnsupportedOption[]}
  */
 const UNSUPPORTED_OPTIONS = [
+  // Sveltia CMS doesn’t support the confusing option.
   { prop: 'allow_multiple', newProp: 'multiple', strKey: 'allow_multiple' },
 ];
 

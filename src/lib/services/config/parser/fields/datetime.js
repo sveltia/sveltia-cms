@@ -9,6 +9,7 @@ import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/valid
  * @type {UnsupportedOption[]}
  */
 const UNSUPPORTED_OPTIONS = [
+  // Deprecated camelCase options in Netlify/Decap CMS config, should be converted to snake_case.
   { prop: 'dateFormat', newProp: 'date_format' },
   { prop: 'timeFormat', newProp: 'time_format' },
   { prop: 'pickerUtc', newProp: 'picker_utc' },

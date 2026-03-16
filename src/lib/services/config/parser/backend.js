@@ -16,7 +16,9 @@ import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/valid
  * @type {UnsupportedOption[]}
  */
 const UNSUPPORTED_OPTIONS = [
+  // Sveltia CMS always uses GraphQL for Git backends, so this option is not applicable.
   { type: 'warning', prop: 'use_graphql', strKey: 'unsupported_ignored_option' },
+  // @todo Remove this warning when Sveltia CMS adds support for open authoring.
   { type: 'warning', prop: 'open_authoring', strKey: 'open_authoring_unsupported' },
 ];
 
