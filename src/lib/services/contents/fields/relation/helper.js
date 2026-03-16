@@ -755,7 +755,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
   const filteredEntries = filterAndPrepareEntries(refEntries, locale, fileName, entryFilters);
 
   const options = filteredEntries
-    .map(({ refEntry, content }) =>
+    .flatMap(({ refEntry, content }) =>
       processEntry({
         refEntry,
         content,
@@ -770,7 +770,6 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
         defaultLocale,
       }),
     )
-    .flat(1)
     .sort((a, b) => compare(a.label, b.label));
 
   optionCacheMap.set(cacheKey, options);

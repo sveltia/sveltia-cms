@@ -17,14 +17,15 @@ export const hasMultipleInMediaLibraries = (mediaLibraries) => {
     return undefined;
   }
 
-  // @ts-ignore Stock Asset library doesn't have `config` property
-  const multiArray = Object.values(mediaLibraries).map((lib) => lib.config?.multiple);
+  const libs = Object.values(mediaLibraries);
 
-  if (multiArray.includes(true)) {
+  // @ts-ignore
+  if (libs.some((lib) => lib.config?.multiple === true)) {
     return true;
   }
 
-  if (multiArray.includes(false)) {
+  // @ts-ignore
+  if (libs.some((lib) => lib.config?.multiple === false)) {
     return false;
   }
 

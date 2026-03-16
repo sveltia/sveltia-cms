@@ -57,7 +57,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     return;
   }
 
-  if (Object.keys(gitBackendServices).includes(name)) {
+  if (name in gitBackendServices) {
     const {
       repo,
       automatic_deployments: autoDeploy,

@@ -195,7 +195,7 @@ export const getAssetByRelativePath = ({ path, entry }) => {
     return undefined;
   }
 
-  const assets = getAssociatedCollections(entry).map((collection) => {
+  const assets = getAssociatedCollections(entry).flatMap((collection) => {
     const collectionFiles = getCollectionFilesByEntry(collection, entry);
     const args = { path, entry, collection };
 
@@ -207,7 +207,7 @@ export const getAssetByRelativePath = ({ path, entry }) => {
   });
 
   return (
-    assets.flat(1).filter(Boolean)[0] ??
+    assets.filter(Boolean)[0] ??
     // Fall back to exact match at the root folder
     getAssetPathMap().get(path)
   );

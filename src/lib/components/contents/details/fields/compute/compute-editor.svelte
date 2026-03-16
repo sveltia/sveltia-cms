@@ -63,7 +63,7 @@
   const setCurrentValue = () => {
     // Check if the `keyPath` is valid, otherwise a list item containing this compute field cannot
     // be removed due to the `currentValue` update below
-    if (!Object.keys(valueMap).includes(keyPath)) {
+    if (!(keyPath in valueMap)) {
       return;
     }
 

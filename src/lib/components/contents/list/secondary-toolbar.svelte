@@ -35,7 +35,7 @@
   <Toolbar variant="secondary" aria-label={$_('entry_list')}>
     {#if !($isSmallScreen || $isMediumScreen)}
       <ItemSelector
-        allItems={$entryGroups.map(({ entries }) => entries).flat(1)}
+        allItems={$entryGroups.flatMap(({ entries }) => entries)}
         selectedItems={selectedEntries}
       />
     {/if}

@@ -25,9 +25,9 @@
       collectionName &&
       getAssetFolder({ collectionName })?.entryRelative
     ) {
-      return $selectedEntries
-        .map((entry) => getAssociatedAssets({ entry, collectionName, relative: true }))
-        .flat(1);
+      return $selectedEntries.flatMap((entry) =>
+        getAssociatedAssets({ entry, collectionName, relative: true }),
+      );
     }
 
     return [];

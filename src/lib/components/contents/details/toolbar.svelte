@@ -83,8 +83,7 @@
   const modified = $derived(isNew || $entryDraftModified);
   const errorCount = $derived(
     Object.values($entryDraft?.validities ?? {})
-      .map((validity) => Object.values(validity).map(({ valid }) => !valid))
-      .flat(1)
+      .flatMap((validity) => Object.values(validity).map(({ valid }) => !valid))
       .filter(Boolean).length,
   );
   const associatedAssets = $derived(

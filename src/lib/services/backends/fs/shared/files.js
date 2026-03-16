@@ -182,11 +182,9 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
  * @returns {string[]} Unique list of normalized scanning paths.
  */
 export const collectScanningPaths = () => {
-  const entryPaths = get(allEntryFolders)
-    .map(({ filePathMap, folderPathMap }) =>
-      filePathMap ? Object.values(filePathMap) : Object.values(folderPathMap ?? {}),
-    )
-    .flat(1);
+  const entryPaths = get(allEntryFolders).flatMap(({ filePathMap, folderPathMap }) =>
+    filePathMap ? Object.values(filePathMap) : Object.values(folderPathMap ?? {}),
+  );
 
   const assetPaths = get(allAssetFolders)
     .filter(({ internalPath }) => internalPath !== undefined)

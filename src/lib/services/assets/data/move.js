@@ -36,17 +36,15 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
  */
 export const getDraftBaseProps = ({ entry }) => {
   const { locales } = entry;
-
-  const originalLocales = Object.fromEntries(
-    Object.entries(locales).map(([locale]) => [locale, true]),
-  );
+  const localeEntries = Object.entries(locales);
+  const originalLocales = Object.fromEntries(localeEntries.map(([locale]) => [locale, true]));
 
   const originalSlugs = Object.fromEntries(
-    Object.entries(locales).map(([locale, { slug }]) => [locale, slug]),
+    localeEntries.map(([locale, { slug }]) => [locale, slug]),
   );
 
   const originalValues = Object.fromEntries(
-    Object.entries(locales).map(([locale, { content }]) => [locale, content]),
+    localeEntries.map(([locale, { content }]) => [locale, content]),
   );
 
   return {

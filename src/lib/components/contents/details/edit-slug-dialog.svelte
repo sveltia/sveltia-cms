@@ -35,10 +35,11 @@
    * Initialize the properties.
    */
   const init = () => {
+    const currentSlugSet = new Set(Object.values(currentSlugs));
+
     otherSlugs = getEntriesByCollection(collectionName)
-      .map((entry) => Object.values(entry.locales).map(({ slug }) => slug))
-      .flat(1)
-      .filter((slug) => !Object.values(currentSlugs).includes(slug));
+      .flatMap((entry) => Object.values(entry.locales).map(({ slug }) => slug))
+      .filter((slug) => !currentSlugSet.has(slug));
     Object.assign(updatedSlugs, currentSlugs);
     Object.assign(
       validations,

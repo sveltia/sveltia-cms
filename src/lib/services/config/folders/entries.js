@@ -97,13 +97,12 @@ export const getEntryCollectionFolders = ({ collections }) =>
  */
 export const getFileCollectionFolders = ({ collections }) =>
   getValidCollections({ collections, type: 'file' })
-    .map((collection) =>
+    .flatMap((collection) =>
       // prettier-ignore
       (/** @type {FileCollection} */ (collection).files ?? []).map((file) =>
         getCollectionFileFolder(collection, file),
       ),
     )
-    .flat(1)
     .filter((file) => !!file)
     .sort(compareFilePath);
 

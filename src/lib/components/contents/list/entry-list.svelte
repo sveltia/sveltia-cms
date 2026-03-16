@@ -18,7 +18,7 @@
     /** @type {InternalEntryCollection | undefined} */ ($selectedCollection),
   );
   const viewType = $derived($currentView.type);
-  const allEntries = $derived($entryGroups.map(({ entries }) => entries).flat(1));
+  const allEntries = $derived($entryGroups.flatMap(({ entries }) => entries));
 </script>
 
 <ListContainer aria-label={$_('entry_list')}>
