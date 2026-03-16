@@ -128,9 +128,9 @@ export const strings = {
   // Global toolbar
   visit_live_site: 'Visit Live Site',
   switch_page: 'Switch Page',
-  search_placeholder_entries: 'Search for entries…',
+  search_placeholder_contents: 'Search for contents…',
   search_placeholder_assets: 'Search for assets…',
-  search_placeholder_all: 'Search for entries and assets…',
+  search_placeholder_all: 'Search for contents and assets…',
   create_entry_or_assets: 'Create Entry or Assets',
   publish_changes: 'Publish Changes',
   publishing_changes: 'Publishing Changes…',

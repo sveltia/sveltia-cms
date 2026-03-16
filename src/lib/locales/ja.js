@@ -125,9 +125,9 @@ export const strings = {
   // Global toolbar
   visit_live_site: '管理対象サイトを開く',
   switch_page: 'ページを切り替え',
-  search_placeholder_entries: 'エントリーを検索…',
+  search_placeholder_contents: 'コンテンツを検索…',
   search_placeholder_assets: 'アセットを検索…',
-  search_placeholder_all: 'エントリーとアセットを検索…',
+  search_placeholder_all: 'コンテンツとアセットを検索…',
   create_entry_or_assets: 'エントリーまたはアセットを作成',
   publish_changes: '変更を公開',
   publishing_changes: '変更を公開しています…',

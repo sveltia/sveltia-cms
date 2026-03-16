@@ -5,7 +5,7 @@ import { writable } from 'svelte/store';
  */
 
 /**
- * @type {Writable<'entries' | 'assets' | null>}
+ * @type {Writable<'contents' | 'assets' | null>}
  */
 export const searchMode = writable(null);
 

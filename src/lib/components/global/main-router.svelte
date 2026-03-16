@@ -24,16 +24,20 @@
   import { isSmallScreen } from '$lib/services/user/env';
 
   /** @type {Record<string, any>} */
-  export const pages = {
+  const pages = $derived({
     collections: ContentsPage,
     assets: AssetsPage,
-    search: SearchPage,
+    search: $isSmallScreen
+      ? SearchPage
+      : $searchMode
+        ? { contents: ContentsPage, assets: AssetsPage }[$searchMode]
+        : SearchPage,
     workflow: WorkflowPage,
     config: ConfigPage,
     // For small screens
     menu: MenuPage,
     settings: SettingsPage,
-  };
+  });
 
   const SelectedPage = $derived(pages[$selectedPageName]);
 
@@ -58,7 +62,7 @@
     }
 
     if (pageName === 'collections') {
-      $searchMode = 'entries';
+      $searchMode = 'contents';
     } else if (pageName === 'assets') {
       $searchMode = 'assets';
     } else if (pageName !== 'search') {

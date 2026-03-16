@@ -6,6 +6,7 @@
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import { backendName } from '$lib/services/backends';
   import { cmsConfig } from '$lib/services/config';
+  import { searchMode } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const pages = $derived.by(() => {
@@ -15,6 +16,8 @@
         label: $_('contents'),
         icon: 'article',
         link: '/collections',
+        /** @type {string | undefined} */
+        searchMode: 'contents',
       },
     ];
 
@@ -28,6 +31,7 @@
         link: $isSmallScreen
           ? '/assets'
           : `/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`,
+        searchMode: 'assets',
       });
     }
 
@@ -55,6 +59,7 @@
         label: $_('menu'),
         icon: 'menu',
         link: '/menu',
+        searchMode: undefined,
       });
     }
 
@@ -64,11 +69,11 @@
 
 <div role="none" class="wrapper">
   <SelectButtonGroup aria-label={$_('switch_page')} aria-controls="page-container">
-    {#each pages as { key, label, icon, link }, index (key)}
+    {#each pages as { key, label, icon, link, searchMode: sMode }, index (key)}
       <SelectButton
         variant="ghost"
         iconic
-        selected={$selectedPageName === key}
+        selected={$selectedPageName === key || $searchMode === sMode}
         aria-label={label}
         keyShortcuts="Alt+{index + 1}"
         onclick={() => {

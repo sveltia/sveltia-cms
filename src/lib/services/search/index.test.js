@@ -16,9 +16,9 @@ describe('search stores', () => {
     });
 
     it('should accept "entries" mode', () => {
-      searchMode.set('entries');
+      searchMode.set('contents');
 
-      expect(get(searchMode)).toBe('entries');
+      expect(get(searchMode)).toBe('contents');
     });
 
     it('should accept "assets" mode', () => {
@@ -28,7 +28,7 @@ describe('search stores', () => {
     });
 
     it('should accept null to reset mode', () => {
-      searchMode.set('entries');
+      searchMode.set('contents');
       searchMode.set(null);
 
       expect(get(searchMode)).toBe(null);
@@ -104,10 +104,10 @@ describe('search stores', () => {
     });
 
     it('should maintain independent state from searchMode', () => {
-      searchMode.set('entries');
+      searchMode.set('contents');
       searchTerms.set('test search');
 
-      expect(get(searchMode)).toBe('entries');
+      expect(get(searchMode)).toBe('contents');
       expect(get(searchTerms)).toBe('test search');
 
       searchMode.set('assets');
@@ -119,15 +119,15 @@ describe('search stores', () => {
 
   describe('store interactions', () => {
     it('should allow both stores to be updated independently', () => {
-      searchMode.set('entries');
+      searchMode.set('contents');
       searchTerms.set('first search');
 
-      expect(get(searchMode)).toBe('entries');
+      expect(get(searchMode)).toBe('contents');
       expect(get(searchTerms)).toBe('first search');
 
       searchTerms.set('second search');
 
-      expect(get(searchMode)).toBe('entries'); // Should remain unchanged
+      expect(get(searchMode)).toBe('contents'); // Should remain unchanged
       expect(get(searchTerms)).toBe('second search');
 
       searchMode.set('assets');
@@ -137,7 +137,7 @@ describe('search stores', () => {
     });
 
     it('should handle rapid updates to both stores', () => {
-      searchMode.set('entries');
+      searchMode.set('contents');
       searchTerms.set('query1');
       searchMode.set('assets');
       searchTerms.set('query2');

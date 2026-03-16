@@ -16,6 +16,18 @@
   } from '$lib/services/contents/collection/files';
   import { isSmallScreen } from '$lib/services/user/env';
 
+  /**
+   * @typedef {object} Props
+   * @property {boolean} [isSearchPage] Whether the current page is the search results page.
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    isSearchPage = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
 
   const folders = $derived([
@@ -58,7 +70,7 @@
           {@const uploadDisabled = entryRelative || hasTemplateTags}
           {@const selected = equal($selectedAssetFolder, folder)}
           <Option
-            selected={$isSmallScreen ? false : selected}
+            selected={$isSmallScreen || isSearchPage ? false : selected}
             label={$appLocale ? getFolderLabelByCollection(folder) : ''}
             onSelect={() => {
               goto(`/assets/${internalPath ?? '-/all'}`, {

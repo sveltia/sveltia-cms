@@ -15,6 +15,7 @@
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
+  import SearchMainArea from '$lib/components/search/search-main-area.svelte';
   import {
     announcedPageStatus,
     goto,
@@ -29,11 +30,13 @@
     listedAssets,
     showAssetOverlay,
   } from '$lib/services/assets/view';
+  import { isSearchRoute } from '$lib/services/search/navigation';
   import { isSmallScreen } from '$lib/services/user/env';
 
   const ROUTE_REGEX = /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
 
   let isIndexPage = $state(false);
+  let isSearchPage = $state(false);
 
   const selectedAssetFolderLabel = $derived(
     // `$appLocale` is a key, because `getFolderLabelByCollection` can return a localized label
@@ -49,8 +52,12 @@
     const match = path.match(ROUTE_REGEX);
 
     isIndexPage = false;
+    isSearchPage = false;
 
     if (!match?.groups) {
+      // Check if it's the search page, which has a different URL pattern (`#/search/{query}`)
+      isSearchPage = isSearchRoute(path);
+
       return; // Different page
     }
 
@@ -126,11 +133,13 @@
 <PageContainer aria-label={$_('asset_library')}>
   {#snippet primarySidebar()}
     {#if !$isSmallScreen || isIndexPage}
-      <PrimarySidebar />
+      <PrimarySidebar {isSearchPage} />
     {/if}
   {/snippet}
   {#snippet main()}
-    {#if !$isSmallScreen || !isIndexPage}
+    {#if isSearchPage}
+      <SearchMainArea />
+    {:else if !$isSmallScreen || !isIndexPage}
       <PageContainerMainArea
         id="assets-container"
         aria-label={$_('x_asset_folder', { values: { folder: selectedAssetFolderLabel } })}

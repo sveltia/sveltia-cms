@@ -12,6 +12,7 @@
   import PrimaryToolbar from '$lib/components/contents/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
+  import SearchMainArea from '$lib/components/search/search-main-area.svelte';
   import {
     announcedPageStatus,
     goto,
@@ -35,16 +36,18 @@
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/editor';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
+  import { isSearchRoute } from '$lib/services/search/navigation';
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { InternalCollection } from '$lib/types/private';
    */
 
-  const routeRegex =
+  const ROUTE_REGEX =
     /^\/collections(?:\/(?<_collectionName>[^/]+)(?:\/(?<routeType>new|entries))?(?:\/(?<subPath>.+?))?)?$/;
 
   let isIndexPage = $state(false);
+  let isSearchPage = $state(false);
   let editorLocale = $state();
 
   const MainContent = $derived('files' in ($selectedCollection ?? {}) ? FileList : EntryList);
@@ -55,9 +58,10 @@
    */
   const navigate = () => {
     const { path, params } = parseLocation();
-    const match = path.match(routeRegex);
+    const match = path.match(ROUTE_REGEX);
 
     isIndexPage = false;
+    isSearchPage = false;
 
     // Set the editor locale if specified in the URL params, e.g., `?_locale=fr`
     editorLocale = params._locale;
@@ -69,6 +73,9 @@
     }
 
     if (!match?.groups) {
+      // Check if it's the search page, which has a different URL pattern (`#/search/{query}`)
+      isSearchPage = isSearchRoute(path);
+
       return; // Different page
     }
 
@@ -195,18 +202,20 @@
 
 <svelte:window
   onhashchange={(event) => {
-    updateContentFromHashChange(event, navigate, routeRegex);
+    updateContentFromHashChange(event, navigate, ROUTE_REGEX);
   }}
 />
 
 <PageContainer aria-label={$_('content_library')}>
   {#snippet primarySidebar()}
     {#if !$isSmallScreen || isIndexPage}
-      <PrimarySidebar />
+      <PrimarySidebar {isSearchPage} />
     {/if}
   {/snippet}
   {#snippet main()}
-    {#if !$isSmallScreen || !isIndexPage}
+    {#if isSearchPage}
+      <SearchMainArea />
+    {:else if !$isSmallScreen || !isIndexPage}
       <PageContainerMainArea
         aria-label={$_('x_collection', {
           values: {

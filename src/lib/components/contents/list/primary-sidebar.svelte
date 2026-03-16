@@ -13,6 +13,18 @@
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { isSmallScreen } from '$lib/services/user/env';
 
+  /**
+   * @typedef {object} Props
+   * @property {boolean} [isSearchPage] Whether the current page is the search results page.
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    isSearchPage = false,
+    /* eslint-enable prefer-const */
+  } = $props();
+
   const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
   // @ts-ignore Dividers can be included in the collection list
   const collections = $derived($cmsConfig?.collections?.filter(({ hide }) => !hide) ?? []);
@@ -41,7 +53,9 @@
               {@const { name, label, icon } = collection}
               <Option
                 label={label || name}
-                selected={$isSmallScreen ? false : $selectedCollection?.name === name}
+                selected={$isSmallScreen || isSearchPage
+                  ? false
+                  : $selectedCollection?.name === name}
                 onSelect={() => {
                   goto(`/collections/${name}`, { transitionType: 'forwards' });
                 }}

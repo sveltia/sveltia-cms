@@ -31,7 +31,7 @@
 </script>
 
 <Group aria-labelledby="search-results-entries">
-  <h3 role="none" id="search-results-entries">{$_('entries')}</h3>
+  <!-- <h3 role="none" id="search-results-entries">{$_('entries')}</h3> -->
   <div role="none">
     {#if $entrySearchResults.length}
       <ListingGrid
