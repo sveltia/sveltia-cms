@@ -28,6 +28,9 @@ import { parseEntryFile } from '$lib/services/contents/file/parse';
  */
 export const isIndexFile = (path) => /\/_index(?:\.[\w-]+)?\.md$/.test(path);
 
+/** @type {Map<string, RegExp>} */
+const slugRegexCache = new Map();
+
 /**
  * Determine the slug for the given entry content.
  * @param {object} args Arguments.
@@ -42,41 +45,48 @@ export const isIndexFile = (path) => /\/_index(?:\.[\w-]+)?\.md$/.test(path);
  */
 export const getSlug = ({ subPath, subPathTemplate }) => {
   if (subPathTemplate?.includes('{{slug}}')) {
-    // Build regex by replacing placeholders with patterns
-    let regexPattern = '';
-    let remaining = subPathTemplate;
+    let regex = slugRegexCache.get(subPathTemplate);
 
-    // Process template character by character, handling placeholders specially
-    while (remaining.length > 0) {
-      const nextPlaceholder = remaining.indexOf('{{');
+    if (!regex) {
+      // Build regex by replacing placeholders with patterns
+      let regexPattern = '';
+      let remaining = subPathTemplate;
 
-      if (nextPlaceholder === -1) {
-        // No more placeholders, escape remaining literal text
-        regexPattern += escapeRegExp(remaining);
-        break;
+      // Process template character by character, handling placeholders specially
+      while (remaining.length > 0) {
+        const nextPlaceholder = remaining.indexOf('{{');
+
+        if (nextPlaceholder === -1) {
+          // No more placeholders, escape remaining literal text
+          regexPattern += escapeRegExp(remaining);
+          break;
+        }
+
+        // Add escaped literal text before placeholder
+        if (nextPlaceholder > 0) {
+          regexPattern += escapeRegExp(remaining.substring(0, nextPlaceholder));
+        }
+
+        // Find end of placeholder
+        const placeholderEnd = remaining.indexOf('}}', nextPlaceholder);
+
+        if (placeholderEnd === -1) {
+          // Malformed template, treat as literal
+          regexPattern += escapeRegExp(remaining);
+          break;
+        }
+
+        const placeholder = remaining.substring(nextPlaceholder, placeholderEnd + 2);
+
+        regexPattern += placeholder === '{{slug}}' ? '([^/]+)' : '[^/]+?';
+        remaining = remaining.substring(placeholderEnd + 2);
       }
 
-      // Add escaped literal text before placeholder
-      if (nextPlaceholder > 0) {
-        regexPattern += escapeRegExp(remaining.substring(0, nextPlaceholder));
-      }
-
-      // Find end of placeholder
-      const placeholderEnd = remaining.indexOf('}}', nextPlaceholder);
-
-      if (placeholderEnd === -1) {
-        // Malformed template, treat as literal
-        regexPattern += escapeRegExp(remaining);
-        break;
-      }
-
-      const placeholder = remaining.substring(nextPlaceholder, placeholderEnd + 2);
-
-      regexPattern += placeholder === '{{slug}}' ? '([^/]+)' : '[^/]+?';
-      remaining = remaining.substring(placeholderEnd + 2);
+      regex = new RegExp(`^${regexPattern}$`);
+      slugRegexCache.set(subPathTemplate, regex);
     }
 
-    const [, slug] = subPath.match(new RegExp(`^${regexPattern}$`)) ?? [];
+    const [, slug] = subPath.match(regex) ?? [];
 
     if (slug) {
       return slug;
