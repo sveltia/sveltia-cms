@@ -1559,6 +1559,12 @@
  */
 
 /**
+ * @typedef {object} IssueReports
+ * @property {string} url URL of the issue reporting endpoint. Default:
+ * `https://github.com/sveltia/sveltia-cms/issues/new`.
+ */
+
+/**
  * CMS configuration.
  * @typedef {object} CmsConfig
  * @property {boolean} [load_config_file] Whether to load YAML/JSON CMS configuration file(s) when
@@ -1590,6 +1596,7 @@
  * https://sveltiacms.app/en/docs/customization#custom-logo for details.
  * @property {LogoOptions} [logo] Site logo options.
  * @property {string} [logout_redirect_url] URL to redirect users to after logging out.
+ * @property {IssueReports} [issue_reports] Issue reporting options.
  * @property {boolean} [show_preview_links] Whether to show site preview links. Default: `true`.
  * @property {SlugOptions} [slug] Entry slug options.
  * @property {(Collection | CollectionDivider)[]} [collections] Set of collections. The list can
