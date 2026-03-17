@@ -360,10 +360,22 @@ export const moveFile = async ({ rootDirHandle, previousPath, path }) => {
  * @returns {Promise<File>} Written file.
  */
 export const writeFile = async ({ rootDirHandle, fileHandle, path, data }) => {
-  fileHandle ??= await getFileHandle(rootDirHandle, path);
+  // When no handle is provided (create/update), write to a temp file first, then rename it to the
+  // final path. This avoids race conditions with file watchers (e.g., Astro dev server) that may
+  // read the new file before its content is fully written.
+  // @see https://github.com/sveltia/sveltia-cms/issues/675
+  /** @type {{ dirname: string | undefined, basename: string } | undefined} */
+  let pendingRename;
 
-  // The `createWritable` method is not yet supported by Safari
-  // @see https://bugs.webkit.org/show_bug.cgi?id=254726
+  if (!fileHandle) {
+    const { dirname, basename } = getPathInfo(stripSlashes(path));
+    const tempPath = `${dirname ? `${dirname}/` : ''}.sveltia-tmp-${Date.now()}`;
+
+    fileHandle = await getFileHandle(rootDirHandle, tempPath);
+    pendingRename = { dirname, basename };
+  }
+
+  // The `createWritable` method is not supported by older versions of Safari
   const writer = await fileHandle.createWritable?.();
 
   try {
@@ -376,6 +388,16 @@ export const writeFile = async ({ rootDirHandle, fileHandle, path, data }) => {
       await writer?.close();
     } catch {
       //
+    }
+  }
+
+  if (pendingRename) {
+    const { dirname, basename } = pendingRename;
+
+    if (dirname) {
+      await fileHandle.move(await getDirectoryHandle(rootDirHandle, dirname), basename);
+    } else {
+      await fileHandle.move(basename);
     }
   }
 

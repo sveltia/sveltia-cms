@@ -1194,7 +1194,37 @@ describe('writeFile', () => {
 
     expect(mockWritableStream.write).toHaveBeenCalledWith('test content');
     expect(mockWritableStream.close).toHaveBeenCalled();
+    // Temp file is renamed to the final path to avoid race conditions with file watchers
+    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
     expect(result).toBeInstanceOf(File);
+  });
+
+  test('should write to temp file and rename for nested path', async () => {
+    // Build a real directory tree so getHandleByPath can traverse it
+    const blogChildren = new Map();
+    const blogHandle = createMockDirectoryHandle('blog', blogChildren);
+    const contentChildren = new Map([['blog', blogHandle]]);
+    const contentHandle = createMockDirectoryHandle('content', contentChildren);
+    const rootChildren = new Map([['content', contentHandle]]);
+
+    rootDirHandle = createMockDirectoryHandle('root', rootChildren);
+
+    const result = await writeFile({
+      rootDirHandle,
+      path: 'content/blog/post.md',
+      data: 'hello world',
+    });
+
+    expect(result).toBeInstanceOf(File);
+
+    // The temp file is created inside blogChildren, then renamed to the final basename
+    const tempKey = [...blogChildren.keys()].find((k) => k.startsWith('.sveltia-tmp-'));
+
+    expect(tempKey).toBeTruthy();
+
+    const tempFileHandle = blogChildren.get(tempKey);
+
+    expect(tempFileHandle.move).toHaveBeenCalledWith(blogHandle, 'post.md');
   });
 
   test('should write File object to file', async () => {
@@ -1242,6 +1272,7 @@ describe('writeFile', () => {
     });
 
     expect(result).toBeInstanceOf(File);
+    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
   });
 
   test('should handle close errors gracefully', async () => {
@@ -1266,6 +1297,8 @@ describe('writeFile', () => {
         data: 'test content',
       }),
     ).resolves.toBeInstanceOf(File);
+
+    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
   });
 
   test('should handle Safari without createWritable support', async () => {
@@ -1284,6 +1317,8 @@ describe('writeFile', () => {
     });
 
     expect(result).toBeInstanceOf(File);
+    // Rename still happens even when createWritable is unsupported
+    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
   });
 });
 
@@ -2250,6 +2285,7 @@ describe('writeFile - write stream error scenarios', () => {
 
     expect(result).toBeInstanceOf(File);
     expect(mockWritableStream.close).toHaveBeenCalled();
+    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
   });
 
   test('should handle both write and close failing', async () => {
@@ -2274,6 +2310,7 @@ describe('writeFile - write stream error scenarios', () => {
     });
 
     expect(result).toBeInstanceOf(File);
+    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
   });
 
   test('should handle createWritable throwing error', async () => {
@@ -2294,6 +2331,7 @@ describe('writeFile - write stream error scenarios', () => {
     });
 
     expect(result).toBeInstanceOf(File);
+    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
   });
 
   test('should use provided fileHandle when available', async () => {
@@ -2313,8 +2351,9 @@ describe('writeFile - write stream error scenarios', () => {
       data: 'test content',
     });
 
-    // Should use provided fileHandle, not call getFileHandle
+    // Should use provided fileHandle directly — no temp file, no rename
     expect(result).toBeInstanceOf(File);
     expect(mockWritableStream.write).toHaveBeenCalledWith('test content');
+    expect(mockFileHandle.move).not.toHaveBeenCalled();
   });
 });
