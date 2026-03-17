@@ -110,12 +110,6 @@ export const fetchAPI = async (
   refreshToken ??= _user?.refreshToken;
   headers.Authorization = `${authScheme} ${token}`;
 
-  // Specify the API version for REST requests
-  // https://github.blog/changelog/2026-03-12-rest-api-version-2026-03-10-is-now-available/
-  if (!isGraphQL) {
-    headers['X-GitHub-Api-Version'] = '2026-03-10';
-  }
-
   return sendRequest(
     `${baseURL}${path}`,
     { method, headers, body },
