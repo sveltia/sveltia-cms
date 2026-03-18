@@ -92,7 +92,7 @@
     "stylelint": "^17.4.0",
     "stylelint-config-recommended-scss": "^17.0.0",
     "stylelint-scss": "^7.0.0",
-    "svelte": "^5.53.12",
+    "svelte": "^5.54.0",
     "svelte-check": "^4.4.5",
     "svelte-preprocess": "^6.0.3",
     "ts-json-schema-generator": "^2.9.0",
