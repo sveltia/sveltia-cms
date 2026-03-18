@@ -3,6 +3,7 @@ import { compare } from '@sveltia/utils/string';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getDate } from '$lib/services/contents/fields/date-time/helper';
 import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
 
@@ -57,6 +58,11 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
   // it avoids repeatedly stripping syntax from the same value.
   const sortKeyMap = Object.fromEntries(
     _entries.map((entry) => {
+      // Special handling for summary, which uses a generated value instead of a raw field value
+      if (key === '_summary') {
+        return [entry.slug, getEntrySummary(collection, entry, { locale, useTemplate: true })];
+      }
+
       const raw = getPropertyValue({ entry, locale, collectionName, key });
 
       if (dateFieldConfig) {

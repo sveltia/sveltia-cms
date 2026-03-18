@@ -33,6 +33,7 @@ export const SPECIAL_SORT_KEY_TYPES = {
   slug: String,
   commit_author: String,
   commit_date: Date,
+  _summary: String,
 };
 
 /**
@@ -126,11 +127,18 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
     name: collectionName,
     identifier_field: customIdField,
     sortable_fields: customSortableFields,
+    summary: summaryTemplate,
   } = collection;
 
   let { keys, defaultKey, defaultOrder } = customSortableFields
     ? parseCustomSortableFields(customSortableFields)
     : getDefaultSortKeys(customIdField);
+
+  // Special handling for summary field: if the collection has a summary template defined, we add
+  // `_summary` as a special sort key, which uses the generated summary value
+  if (summaryTemplate) {
+    keys.unshift('_summary');
+  }
 
   const hasCommitAuthorKey = keys.includes('commit_author');
   const hasCommitDateKey = keys.includes('commit_date');

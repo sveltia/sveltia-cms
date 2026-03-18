@@ -1,5 +1,5 @@
 <script>
-  import { Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
+  import { Divider, Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
   import { _ } from 'svelte-i18n';
 
   import { getField } from '$lib/services/contents/entry/fields';
@@ -56,6 +56,9 @@
             }}
           />
         {/each}
+        {#if key === '_summary' && sortKeys.length > 1}
+          <Divider />
+        {/if}
       {/each}
     </Menu>
   {/snippet}
