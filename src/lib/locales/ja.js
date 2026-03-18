@@ -214,6 +214,7 @@ export const strings = {
     slug: 'スラッグ',
     commit_author: '更新者',
     commit_date: '更新日時',
+    _summary: 'サマリー',
   },
   ascending: '{label} (A–Z)',
   ascending_date: '{label} (古い順)',

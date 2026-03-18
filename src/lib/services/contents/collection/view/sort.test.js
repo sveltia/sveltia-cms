@@ -1204,4 +1204,57 @@ describe('sortEntries', () => {
     expect(result.map((e) => e.slug)).toEqual(['entry-1', 'entry-2', 'entry-3']);
     expect(vi.mocked(removeMarkdownSyntax)).not.toHaveBeenCalled();
   });
+
+  test('should sort by _summary field using generated summary values', () => {
+    const locale = 'en';
+
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+
+    // Mock getEntrySummary to return different summary values for each entry
+    vi.mocked(getEntrySummary).mockImplementation((collection, entry) => {
+      const summaries = {
+        'entry-1': 'B Summary',
+        'entry-2': 'A Summary',
+        'entry-3': 'C Summary',
+      };
+
+      return summaries[entry.slug] || '';
+    });
+
+    const result = sortEntries(mockEntries, mockCollection, {
+      key: '_summary',
+      order: 'ascending',
+      locale,
+    });
+
+    // Entries should be sorted by their generated summary values
+    expect(result.map((e) => e.slug)).toEqual(['entry-2', 'entry-1', 'entry-3']); // A, B, C
+    expect(vi.mocked(getEntrySummary)).toHaveBeenCalledTimes(3);
+  });
+
+  test('should sort by _summary field in descending order', () => {
+    const locale = 'en';
+
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+
+    vi.mocked(getEntrySummary).mockImplementation((collection, entry) => {
+      const summaries = {
+        'entry-1': 'B Summary',
+        'entry-2': 'A Summary',
+        'entry-3': 'C Summary',
+      };
+
+      return summaries[entry.slug] || '';
+    });
+
+    const result = sortEntries(mockEntries, mockCollection, {
+      key: '_summary',
+      order: 'descending',
+      locale,
+    });
+
+    // Entries should be sorted by their generated summary values in reverse
+    expect(result.map((e) => e.slug)).toEqual(['entry-3', 'entry-1', 'entry-2']); // C, B, A
+    expect(vi.mocked(getEntrySummary)).toHaveBeenCalledTimes(3);
+  });
 });
