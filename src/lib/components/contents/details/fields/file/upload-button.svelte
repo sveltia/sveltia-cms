@@ -64,7 +64,7 @@
 
       if (imageItem && imageType) {
         const blob = await imageItem.getType(imageType);
-        const [, ext] = imageType.split('/');
+        const ext = imageType.split('/')[1].replace('+xml', '');
         const file = new File([blob], `pasted-image-${Date.now()}.${ext}`, { type: imageType });
 
         onFilePaste(file);
