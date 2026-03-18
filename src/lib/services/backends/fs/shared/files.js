@@ -15,6 +15,7 @@ import { createFileList } from '$lib/services/backends/process';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/contents/file/config';
 import { prepareEntries } from '$lib/services/contents/file/process';
+import { isBrave } from '$lib/services/user/env';
 import { createPathRegEx, getBlob, getGitHash } from '$lib/services/utils/file';
 
 /**
@@ -51,7 +52,7 @@ const FILE_PROCESS_BATCH_SIZE = 10;
  * Get a file or directory handle at the given path.
  * @internal
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
- * @param {string} path Path to the file/directory.
+ * @param {string | undefined} path Path to the file/directory.
  * @param {'file' | 'directory'} [type] Type of the handle to retrieve.
  * @returns {Promise<FileSystemFileHandle | FileSystemDirectoryHandle>} Handle.
  * @throws {Error} If the path is empty and the type is `file`.
@@ -102,7 +103,7 @@ export const getFileHandle = (rootDirHandle, path) =>
  * for reading or writing files within a directory. If the directory does not exist, it will be
  * created.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
- * @param {string} path Path to the directory.
+ * @param {string | undefined} path Path to the directory.
  * @returns {Promise<FileSystemDirectoryHandle>} Handle.
  */
 export const getDirectoryHandle = (rootDirHandle, path) =>
@@ -326,6 +327,42 @@ export const loadFiles = async (rootDirHandle) => {
 };
 
 /**
+ * Check if the `move` method is supported by the current browser. The `move` method is not
+ * implemented in older browsers, and Brave supports the `move` method but throws an error for some
+ * reason, so we need to check it by actually trying to use it.
+ * @internal
+ * @returns {boolean} `true` if the `move` method is supported, `false` otherwise.
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/File_System_API#browser_compatibility
+ * @see https://github.com/sveltia/sveltia-cms/discussions/676
+ */
+export const canMoveFile = () => 'move' in FileSystemFileHandle.prototype && !get(isBrave);
+
+/**
+ * Write data to a file using the provided file handle. This function is used to write data to a
+ * file when we already have a file handle reference, such as when moving a file without changes. It
+ * handles the case where the `createWritable` method is not supported by older versions of Safari.
+ * @internal
+ * @param {FileSystemFileHandle} fileHandle File handle to write to.
+ * @param {FileSystemWriteChunkType} data Data to write to the file.
+ */
+export const writeFile = async (fileHandle, data) => {
+  // The `createWritable` method is not supported by older versions of Safari
+  const writer = await fileHandle.createWritable?.();
+
+  try {
+    // Can throw if the file has just been moved/renamed without any change, and then the `data` is
+    // no longer available
+    await writer?.write(data);
+  } finally {
+    try {
+      await writer?.close();
+    } catch {
+      //
+    }
+  }
+};
+
+/**
  * Move a file from a previous path to a new path within the file system.
  * @internal
  * @param {object} args Arguments.
@@ -335,21 +372,30 @@ export const loadFiles = async (rootDirHandle) => {
  * @returns {Promise<FileSystemFileHandle>} Moved file handle.
  */
 export const moveFile = async ({ rootDirHandle, previousPath, path }) => {
-  const { dirname, basename } = getPathInfo(path);
-  const previousDirname = getPathInfo(previousPath).dirname;
+  const { dirname: newDirname, basename: newBasename } = getPathInfo(path);
+  const { dirname: oldDirname, basename: oldBasename } = getPathInfo(previousPath);
   const fileHandle = await getFileHandle(rootDirHandle, previousPath);
 
-  if (dirname && dirname !== previousDirname) {
-    await fileHandle.move(await getDirectoryHandle(rootDirHandle, dirname), basename);
-  } else {
-    await fileHandle.move(basename);
+  // Use the native `move` method if supported, as it’s more efficient and preserves file metadata.
+  // If not, fall back to copying the file to the new location and deleting the old file.
+  if (canMoveFile()) {
+    // @ts-ignore
+    await fileHandle.move(await getDirectoryHandle(rootDirHandle, newDirname), newBasename);
+
+    return fileHandle;
   }
 
-  return fileHandle;
+  const newFileHandle = await getFileHandle(rootDirHandle, path);
+  const oldDirHandle = await getDirectoryHandle(rootDirHandle, oldDirname);
+
+  await writeFile(newFileHandle, await fileHandle.getFile());
+  await oldDirHandle.removeEntry(oldBasename);
+
+  return newFileHandle;
 };
 
 /**
- * Write data to a file at the specified path.
+ * Save data to a file at the specified path.
  * @internal
  * @param {object} args Arguments.
  * @param {FileSystemDirectoryHandle} args.rootDirHandle Root directory handle.
@@ -359,7 +405,7 @@ export const moveFile = async ({ rootDirHandle, previousPath, path }) => {
  * @param {string | File} args.data The data to write to the file.
  * @returns {Promise<File>} Written file.
  */
-export const writeFile = async ({ rootDirHandle, fileHandle, path, data }) => {
+export const saveFile = async ({ rootDirHandle, fileHandle, path, data }) => {
   // When no handle is provided (create/update), write to a temp file first, then rename it to the
   // final path. This avoids race conditions with file watchers (e.g., Astro dev server) that may
   // read the new file before its content is fully written.
@@ -368,37 +414,27 @@ export const writeFile = async ({ rootDirHandle, fileHandle, path, data }) => {
   let pendingRename;
 
   if (!fileHandle) {
-    const { dirname, basename } = getPathInfo(stripSlashes(path));
-    const tempPath = `${dirname ? `${dirname}/` : ''}.sveltia-tmp-${Date.now()}`;
+    // Check if the `move` method is supported before deciding whether to write to a temp file, as
+    // writing to a temp file and then renaming it is only necessary if the `move` method is not
+    // supported. If the `move` method is supported, we have to write directly to the final path.
+    if (canMoveFile()) {
+      const { dirname, basename } = getPathInfo(stripSlashes(path));
+      const tempPath = `${dirname ? `${dirname}/` : ''}.sveltia-tmp-${Date.now()}`;
 
-    fileHandle = await getFileHandle(rootDirHandle, tempPath);
-    pendingRename = { dirname, basename };
-  }
-
-  // The `createWritable` method is not supported by older versions of Safari
-  const writer = await fileHandle.createWritable?.();
-
-  try {
-    await writer?.write(data);
-  } catch {
-    // Can throw if the file has just been moved/renamed without any change, and then the `data` is
-    // no longer available
-  } finally {
-    try {
-      await writer?.close();
-    } catch {
-      //
+      fileHandle = await getFileHandle(rootDirHandle, tempPath);
+      pendingRename = { dirname, basename };
+    } else {
+      fileHandle = await getFileHandle(rootDirHandle, path);
     }
   }
+
+  await writeFile(fileHandle, data);
 
   if (pendingRename) {
     const { dirname, basename } = pendingRename;
 
-    if (dirname) {
-      await fileHandle.move(await getDirectoryHandle(rootDirHandle, dirname), basename);
-    } else {
-      await fileHandle.move(basename);
-    }
+    // @ts-ignore
+    await fileHandle.move(await getDirectoryHandle(rootDirHandle, dirname), basename);
   }
 
   return fileHandle.getFile();
@@ -468,7 +504,7 @@ export const saveChange = async (rootDirHandle, { action, path, previousPath, da
     // We don’t need to write the file is it’s just been renamed with no change, but the `data` is
     // always provided for the compatibility with Git backends, so we cannot distinguish between the
     // two cases
-    return writeFile({ rootDirHandle, fileHandle, path, data });
+    return saveFile({ rootDirHandle, fileHandle, path, data });
   }
 
   if (action === 'delete') {

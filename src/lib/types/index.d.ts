@@ -22,7 +22,7 @@ interface Element {
 }
 
 interface FileSystemFileHandle {
-  move: Function;
+  move?: Function;
   createWritable?: Function;
 }
 

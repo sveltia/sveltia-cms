@@ -1,8 +1,9 @@
 /* eslint-disable jsdoc/require-jsdoc, func-names, object-shorthand */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  canMoveFile,
   collectScanningPaths,
   deleteEmptyParentDirs,
   deleteFile,
@@ -15,9 +16,15 @@ import {
   parseTextFileInfo,
   saveChange,
   saveChanges,
+  saveFile,
   scanDir,
   writeFile,
 } from './files';
+
+// Provide a minimal FileSystemFileHandle global so canMoveFile() can inspect the prototype.
+// Tests that require canMoveFile() === false can set isBrave to true via the store.
+// @ts-ignore - We only need the prototype.move property for testing
+globalThis.FileSystemFileHandle ??= { prototype: { move: () => {} } };
 
 /**
  * @import { MockedFunction } from 'vitest';
@@ -1107,6 +1114,83 @@ describe('parseTextFileInfo', () => {
   });
 });
 
+describe('canMoveFile', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    // Restore the default prototype so subsequent describe blocks continue to work
+    // @ts-ignore - We only need the prototype.move property for testing
+    globalThis.FileSystemFileHandle ??= { prototype: { move: () => {} } };
+  });
+
+  test('should return true when move is available and not Brave', () => {
+    vi.stubGlobal('FileSystemFileHandle', { prototype: { move: () => {} } });
+    expect(canMoveFile()).toBe(true);
+  });
+
+  test('should return false when move is not in FileSystemFileHandle prototype', () => {
+    vi.stubGlobal('FileSystemFileHandle', { prototype: {} });
+    expect(canMoveFile()).toBe(false);
+  });
+
+  test('should return false when Brave browser is detected', async () => {
+    vi.stubGlobal('FileSystemFileHandle', { prototype: { move: () => {} } });
+
+    const { isBrave } = await import('$lib/services/user/env');
+
+    isBrave.set(true);
+    expect(canMoveFile()).toBe(false);
+    isBrave.set(false);
+  });
+});
+
+describe('writeFile', () => {
+  test('should write data using createWritable', async () => {
+    const fileHandle = createMockFileHandle('test.txt');
+    const mockWritableStream = { write: vi.fn(), close: vi.fn() };
+
+    fileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
+
+    await writeFile(fileHandle, 'test content');
+
+    expect(mockWritableStream.write).toHaveBeenCalledWith('test content');
+    expect(mockWritableStream.close).toHaveBeenCalled();
+  });
+
+  test('should handle missing createWritable (old Safari)', async () => {
+    const fileHandle = createMockFileHandle('test.txt');
+
+    fileHandle.createWritable = undefined;
+
+    await expect(writeFile(fileHandle, 'test content')).resolves.toBeUndefined();
+  });
+
+  test('should swallow close errors', async () => {
+    const fileHandle = createMockFileHandle('test.txt');
+
+    const mockWritableStream = {
+      write: vi.fn(),
+      close: vi.fn().mockRejectedValue(new Error('Close failed')),
+    };
+
+    fileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
+
+    await expect(writeFile(fileHandle, 'data')).resolves.toBeUndefined();
+  });
+
+  test('should propagate write errors', async () => {
+    const fileHandle = createMockFileHandle('test.txt');
+
+    const mockWritableStream = {
+      write: vi.fn().mockRejectedValue(new Error('Write failed')),
+      close: vi.fn(),
+    };
+
+    fileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
+
+    await expect(writeFile(fileHandle, 'data')).rejects.toThrow('Write failed');
+  });
+});
+
 describe('moveFile', () => {
   /** @type {FileSystemDirectoryHandle} */
   let rootDirHandle;
@@ -1162,9 +1246,39 @@ describe('moveFile', () => {
 
     expect(mockFileHandle.move).toHaveBeenCalled();
   });
+
+  test('should use copy-and-delete fallback when move is not available', async () => {
+    const mockFile = new File(['file content'], 'oldfile.txt');
+    const mockSourceHandle = createMockFileHandle('oldfile.txt');
+    const mockDestHandle = createMockFileHandle('newfile.txt');
+    const mockDestWritable = { write: vi.fn(), close: vi.fn() };
+
+    mockSourceHandle.getFile = vi.fn(async () => mockFile);
+    mockDestHandle.createWritable = vi.fn().mockResolvedValue(mockDestWritable);
+
+    const { isBrave } = await import('$lib/services/user/env');
+
+    isBrave.set(true); // Force canMoveFile() to return false
+
+    /** @type {import('vitest').MockedFunction<any>} */ (rootDirHandle.getFileHandle)
+      .mockResolvedValueOnce(mockSourceHandle)
+      .mockResolvedValueOnce(mockDestHandle);
+
+    const result = await moveFile({
+      rootDirHandle,
+      previousPath: 'oldfile.txt',
+      path: 'newfile.txt',
+    });
+
+    isBrave.set(false);
+
+    expect(result).toBe(mockDestHandle);
+    expect(mockSourceHandle.move).not.toHaveBeenCalled();
+    expect(rootDirHandle.removeEntry).toHaveBeenCalledWith('oldfile.txt');
+  });
 });
 
-describe('writeFile', () => {
+describe('saveFile', () => {
   /** @type {FileSystemDirectoryHandle} */
   let rootDirHandle;
 
@@ -1182,20 +1296,17 @@ describe('writeFile', () => {
 
     mockFileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
 
-    /** @type {import('vitest').MockedFunction<any>} */ (
-      rootDirHandle.getFileHandle
-    ).mockResolvedValueOnce(mockFileHandle);
-
-    const result = await writeFile({
+    const result = await saveFile({
       rootDirHandle,
+      fileHandle: mockFileHandle,
       path: 'test.txt',
       data: 'test content',
     });
 
     expect(mockWritableStream.write).toHaveBeenCalledWith('test content');
     expect(mockWritableStream.close).toHaveBeenCalled();
-    // Temp file is renamed to the final path to avoid race conditions with file watchers
-    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
+    // No rename when fileHandle is provided
+    expect(mockFileHandle.move).not.toHaveBeenCalled();
     expect(result).toBeInstanceOf(File);
   });
 
@@ -1209,7 +1320,7 @@ describe('writeFile', () => {
 
     rootDirHandle = createMockDirectoryHandle('root', rootChildren);
 
-    const result = await writeFile({
+    const result = await saveFile({
       rootDirHandle,
       path: 'content/blog/post.md',
       data: 'hello world',
@@ -1239,7 +1350,7 @@ describe('writeFile', () => {
 
     const fileData = new File(['content'], 'test.txt');
 
-    const result = await writeFile({
+    const result = await saveFile({
       rootDirHandle,
       fileHandle: mockFileHandle,
       path: 'test.txt',
@@ -1250,7 +1361,7 @@ describe('writeFile', () => {
     expect(result).toBeInstanceOf(File);
   });
 
-  test('should handle write errors gracefully', async () => {
+  test('should propagate write errors', async () => {
     const mockFileHandle = createMockFileHandle('test.txt');
 
     const mockWritableStream = {
@@ -1264,15 +1375,13 @@ describe('writeFile', () => {
       rootDirHandle.getFileHandle
     ).mockResolvedValueOnce(mockFileHandle);
 
-    // Should not throw
-    const result = await writeFile({
-      rootDirHandle,
-      path: 'test.txt',
-      data: 'test content',
-    });
-
-    expect(result).toBeInstanceOf(File);
-    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
+    await expect(
+      saveFile({
+        rootDirHandle,
+        path: 'test.txt',
+        data: 'test content',
+      }),
+    ).rejects.toThrow('Write failed');
   });
 
   test('should handle close errors gracefully', async () => {
@@ -1285,20 +1394,17 @@ describe('writeFile', () => {
 
     mockFileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
 
-    /** @type {import('vitest').MockedFunction<any>} */ (
-      rootDirHandle.getFileHandle
-    ).mockResolvedValueOnce(mockFileHandle);
-
     // Should not throw
-    await expect(
-      writeFile({
-        rootDirHandle,
-        path: 'test.txt',
-        data: 'test content',
-      }),
-    ).resolves.toBeInstanceOf(File);
+    const result = await saveFile({
+      rootDirHandle,
+      fileHandle: mockFileHandle,
+      path: 'test.txt',
+      data: 'test content',
+    });
 
-    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
+    expect(result).toBeInstanceOf(File);
+    // No rename when fileHandle is provided
+    expect(mockFileHandle.move).not.toHaveBeenCalled();
   });
 
   test('should handle Safari without createWritable support', async () => {
@@ -1306,19 +1412,43 @@ describe('writeFile', () => {
 
     mockFileHandle.createWritable = undefined;
 
-    /** @type {import('vitest').MockedFunction<any>} */ (
-      rootDirHandle.getFileHandle
-    ).mockResolvedValueOnce(mockFileHandle);
-
-    const result = await writeFile({
+    const result = await saveFile({
       rootDirHandle,
+      fileHandle: mockFileHandle,
       path: 'test.txt',
       data: 'test content',
     });
 
     expect(result).toBeInstanceOf(File);
-    // Rename still happens even when createWritable is unsupported
-    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
+    // No rename when fileHandle is provided
+    expect(mockFileHandle.move).not.toHaveBeenCalled();
+  });
+
+  test('should write directly to final path when move is not available', async () => {
+    const mockFileHandle = createMockFileHandle('test.txt');
+    const mockWritableStream = { write: vi.fn(), close: vi.fn() };
+
+    mockFileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
+
+    const { isBrave } = await import('$lib/services/user/env');
+
+    isBrave.set(true); // Force canMoveFile() to return false
+
+    /** @type {import('vitest').MockedFunction<any>} */ (
+      rootDirHandle.getFileHandle
+    ).mockResolvedValueOnce(mockFileHandle);
+
+    const result = await saveFile({
+      rootDirHandle,
+      path: 'test.txt',
+      data: 'test content',
+    });
+
+    isBrave.set(false);
+
+    expect(mockWritableStream.write).toHaveBeenCalledWith('test content');
+    expect(mockFileHandle.move).not.toHaveBeenCalled();
+    expect(result).toBeInstanceOf(File);
   });
 });
 
@@ -2255,7 +2385,7 @@ describe('deleteEmptyParentDirs - recursive deletion scenarios', () => {
   });
 });
 
-describe('writeFile - write stream error scenarios', () => {
+describe('saveFile - write stream error scenarios', () => {
   /** @type {FileSystemDirectoryHandle} */
   let rootDirHandle;
 
@@ -2263,7 +2393,7 @@ describe('writeFile - write stream error scenarios', () => {
     rootDirHandle = createMockDirectoryHandle();
   });
 
-  test('should handle write failing but close succeeding', async () => {
+  test('should propagate write error even if close succeeds', async () => {
     const mockFileHandle = createMockFileHandle('test.txt');
 
     const mockWritableStream = {
@@ -2277,18 +2407,18 @@ describe('writeFile - write stream error scenarios', () => {
       rootDirHandle.getFileHandle
     ).mockResolvedValueOnce(mockFileHandle);
 
-    const result = await writeFile({
-      rootDirHandle,
-      path: 'test.txt',
-      data: 'test content',
-    });
+    await expect(
+      saveFile({
+        rootDirHandle,
+        path: 'test.txt',
+        data: 'test content',
+      }),
+    ).rejects.toThrow('Write timeout');
 
-    expect(result).toBeInstanceOf(File);
     expect(mockWritableStream.close).toHaveBeenCalled();
-    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
   });
 
-  test('should handle both write and close failing', async () => {
+  test('should propagate write error when both write and close fail', async () => {
     const mockFileHandle = createMockFileHandle('test.txt');
 
     const mockWritableStream = {
@@ -2302,15 +2432,13 @@ describe('writeFile - write stream error scenarios', () => {
       rootDirHandle.getFileHandle
     ).mockResolvedValueOnce(mockFileHandle);
 
-    // Should not throw despite both operations failing
-    const result = await writeFile({
-      rootDirHandle,
-      path: 'test.txt',
-      data: 'test content',
-    });
-
-    expect(result).toBeInstanceOf(File);
-    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
+    await expect(
+      saveFile({
+        rootDirHandle,
+        path: 'test.txt',
+        data: 'test content',
+      }),
+    ).rejects.toThrow('Write failed');
   });
 
   test('should handle createWritable throwing error', async () => {
@@ -2320,18 +2448,16 @@ describe('writeFile - write stream error scenarios', () => {
     // The code uses createWritable?.() so undefined is safe
     mockFileHandle.createWritable = undefined;
 
-    /** @type {import('vitest').MockedFunction<any>} */ (
-      rootDirHandle.getFileHandle
-    ).mockResolvedValueOnce(mockFileHandle);
-
-    const result = await writeFile({
+    const result = await saveFile({
       rootDirHandle,
+      fileHandle: mockFileHandle,
       path: 'test.txt',
       data: 'test content',
     });
 
     expect(result).toBeInstanceOf(File);
-    expect(mockFileHandle.move).toHaveBeenCalledWith('test.txt');
+    // No rename when fileHandle is provided
+    expect(mockFileHandle.move).not.toHaveBeenCalled();
   });
 
   test('should use provided fileHandle when available', async () => {
@@ -2344,7 +2470,7 @@ describe('writeFile - write stream error scenarios', () => {
 
     mockFileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
 
-    const result = await writeFile({
+    const result = await saveFile({
       rootDirHandle,
       fileHandle: mockFileHandle,
       path: 'new/path/test.txt',
