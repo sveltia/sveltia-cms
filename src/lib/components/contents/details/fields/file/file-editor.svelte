@@ -268,6 +268,9 @@
     {multiple}
     bind:showSelectAssetsDialog
     bind:replaceMode
+    onFilePaste={(file) => {
+      onResourcesSelect([{ file, folder: targetFolder }]);
+    }}
   />
 {/snippet}
 
