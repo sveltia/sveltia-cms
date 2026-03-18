@@ -213,7 +213,6 @@ export const strings = {
     slug: 'Slug',
     commit_author: 'Updated by',
     commit_date: 'Updated on',
-    _summary: 'Summary',
   },
   ascending: '{label}, A to Z',
   ascending_date: '{label}, old to new',

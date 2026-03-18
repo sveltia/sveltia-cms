@@ -775,39 +775,6 @@ describe('Test getSortConfig()', async () => {
     });
   });
 
-  test('adds _summary at the beginning of keys when collection has summary template', () => {
-    expect(
-      getSortConfig({
-        collection: {
-          ...collectionBase,
-          summary: '{{title}} - {{slug}}',
-          sortable_fields: ['title', 'date'],
-        },
-        isCommitAuthorAvailable: false,
-        isCommitDateAvailable: false,
-      }),
-    ).toEqual({
-      keys: ['_summary', 'title', 'date'],
-      default: { key: '_summary', order: 'ascending' },
-    });
-  });
-
-  test('does not add _summary when collection has no summary template', () => {
-    expect(
-      getSortConfig({
-        collection: {
-          ...collectionBase,
-          sortable_fields: ['title', 'date'],
-        },
-        isCommitAuthorAvailable: false,
-        isCommitDateAvailable: false,
-      }),
-    ).toEqual({
-      keys: ['title', 'date'],
-      default: { key: 'title', order: 'ascending' },
-    });
-  });
-
   test('handles mixed commit fields with isCommitAuthorAvailable/isCommitDateAvailable flags', () => {
     expect(
       getSortConfig({
@@ -851,13 +818,12 @@ describe('Test exported constants and utilities', () => {
       slug: String,
       commit_author: String,
       commit_date: Date,
-      _summary: String,
     });
-    expect(Object.keys(SPECIAL_SORT_KEY_TYPES)).toHaveLength(4);
+    expect(Object.keys(SPECIAL_SORT_KEY_TYPES)).toHaveLength(3);
   });
 
   test('SPECIAL_SORT_KEYS contains keys from SPECIAL_SORT_KEY_TYPES', () => {
-    expect(SPECIAL_SORT_KEYS).toEqual(['slug', 'commit_author', 'commit_date', '_summary']);
+    expect(SPECIAL_SORT_KEYS).toEqual(['slug', 'commit_author', 'commit_date']);
     expect(SPECIAL_SORT_KEYS).toEqual(Object.keys(SPECIAL_SORT_KEY_TYPES));
   });
 });
