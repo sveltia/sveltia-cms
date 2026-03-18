@@ -678,6 +678,8 @@ export const strings = {
       missing_backend_name: 'バックエンド名が定義されていません。',
       unsupported_known_backend:
         '{name} バックエンドは Sveltia CMS では [非対応です](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented)。',
+      unsupported_deprecated_backend:
+        '廃止予定の {name} バックエンドは Sveltia CMS では [非対応です](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented)。',
       unsupported_custom_backend:
         'カスタムバックエンドは Sveltia CMS では [非対応です](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented)。',
       unsupported_backend_suggestion:

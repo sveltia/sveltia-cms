@@ -675,6 +675,8 @@ export const strings = {
       missing_backend_name: 'The backend name is not defined.',
       unsupported_known_backend:
         'The {name} backend is [not supported](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented) in Sveltia CMS.',
+      unsupported_deprecated_backend:
+        'The deprecated {name} backend is [not supported](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented) in Sveltia CMS.',
       unsupported_custom_backend:
         'Custom backends are [not supported](https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented) in Sveltia CMS.',
       unsupported_backend_suggestion:

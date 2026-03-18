@@ -7,6 +7,7 @@ import {
   backendName,
   gitBackendServices,
   isLastCommitPublished,
+  unsupportedBackends,
   validBackendNames,
 } from './index.js';
 
@@ -157,6 +158,39 @@ describe('Backend Services Index', () => {
       get(backend); // Second access
 
       expect(mockInit).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('unsupportedBackends', () => {
+    test('should contain all unsupported backends', () => {
+      expect(unsupportedBackends).toHaveProperty('azure');
+      expect(unsupportedBackends).toHaveProperty('bitbucket');
+      expect(unsupportedBackends).toHaveProperty('git-gateway');
+    });
+
+    test('should have label property for each backend', () => {
+      Object.values(unsupportedBackends).forEach((_backend) => {
+        expect(_backend).toHaveProperty('label');
+        expect(typeof _backend.label).toBe('string');
+      });
+    });
+
+    test('should mark git-gateway as deprecated', () => {
+      expect(unsupportedBackends['git-gateway'].deprecated).toBe(true);
+    });
+
+    test('should not mark azure as deprecated', () => {
+      expect(unsupportedBackends.azure.deprecated).toBeUndefined();
+    });
+
+    test('should not mark bitbucket as deprecated', () => {
+      expect(unsupportedBackends.bitbucket.deprecated).toBeUndefined();
+    });
+
+    test('should have correct labels', () => {
+      expect(unsupportedBackends.azure.label).toBe('Azure DevOps');
+      expect(unsupportedBackends.bitbucket.label).toBe('Bitbucket');
+      expect(unsupportedBackends['git-gateway'].label).toBe('Git Gateway');
     });
   });
 

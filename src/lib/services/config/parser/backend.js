@@ -47,12 +47,10 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
   }
 
   if (!validBackendNames.includes(name)) {
-    const unsupportedBackend = unsupportedBackends[name];
-
-    const message = get(_)(
-      `config.error.unsupported_${unsupportedBackend ? 'known' : 'custom'}_backend`,
-      { values: { name: unsupportedBackend?.label } },
-    );
+    const _backend = unsupportedBackends[name];
+    const type = _backend ? (_backend.deprecated ? 'deprecated' : 'known') : 'custom';
+    const label = _backend?.label;
+    const message = get(_)(`config.error.unsupported_${type}_backend`, { values: { name: label } });
 
     errors.add(`${message} ${get(_)('config.error.unsupported_backend_suggestion')}`);
 
