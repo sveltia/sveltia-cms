@@ -93,7 +93,7 @@
     {/if}
   {/if}
   {#if $signInError.message && $signInError.context === 'authentication'}
-    <div role="alert" class="error">
+    <div role="alert" class="error iconic">
       <Icon name="error" />
       {$signInError.message}
     </div>
@@ -135,9 +135,11 @@
   }
 
   [role='alert'] {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    &.iconic {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     &.error {
       color: var(--sui-error-foreground-color);
