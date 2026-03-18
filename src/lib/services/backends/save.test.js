@@ -22,25 +22,12 @@ import { getCommitAuthor, saveChanges, updateCache, updateStores } from './save.
  */
 
 // Mock external dependencies
-vi.mock('@sveltia/utils/storage', () => {
-  /**
-   * Mock IndexedDB - a function that can be used as a constructor.
-   * @param {string} _dbName Database name.
-   * @param {string} _storeName Store name.
-   * @returns {object} Mock instance.
-   */
-  // eslint-disable-next-line no-unused-vars
-  function IndexedDB(_dbName, _storeName) {
-    return {
-      delete: vi.fn(),
-      set: vi.fn(),
-    };
-  }
-
-  return {
-    IndexedDB,
-  };
-});
+vi.mock('@sveltia/utils/storage', () => ({
+  IndexedDB: vi.fn(() => ({
+    delete: vi.fn(),
+    set: vi.fn(),
+  })),
+}));
 
 vi.mock('svelte/store', () => ({
   get: vi.fn(),
@@ -196,24 +183,20 @@ describe('save', () => {
         repository: { databaseName: 'test-db' },
       });
 
-      // Mock IndexedDB class constructor to return our mock
+      // Get the mocked IndexedDB constructor
       const { IndexedDB } = await import('@sveltia/utils/storage');
 
-      // Vitest 4 requires proper constructor with 'class' keyword
-      /** @type {any} */
-      class MockIndexedDB {
-        /**
-         * Creates a mock IndexedDB instance.
-         */
-        constructor() {
-          Object.assign(this, mockCacheDB);
-        }
+      // Create a mock constructor class that returns our mockCacheDB
+      /**
+       * Mock IndexedDB constructor.
+       * @returns {object} Mock cache database instance.
+       */
+      function MockIndexedDB() {
+        return mockCacheDB;
       }
 
-      /** @type {any} */
-      const mockedIndexedDB = vi.mocked(IndexedDB);
-
-      mockedIndexedDB.mockImplementation(MockIndexedDB);
+      // Replace the IndexedDB mock implementation
+      vi.mocked(IndexedDB).mockImplementation(MockIndexedDB);
     });
 
     test('should return early when no database name is available', async () => {
