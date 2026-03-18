@@ -766,12 +766,12 @@ export const strings = {
   },
 
   // Backends
-  local_backend: {
+  local_workflow: {
     indicator: 'ローカル',
     unsupported_browser:
-      'お使いのブラウザーはローカル開発に対応していません。代わりに Chrome か Edge を使ってください。',
+      'お使いのブラウザーはローカルワークフローに対応していません。代わりに Chrome か Edge を使ってください。',
     disabled:
-      'お使いのブラウザーではローカル開発が無効化されています。<a>有効化する方法はこちら</a>。',
+      'お使いのブラウザーではローカルワークフローが無効化されています。<a>有効化する方法はこちら</a>。',
   },
 
   // Editorial Workflow

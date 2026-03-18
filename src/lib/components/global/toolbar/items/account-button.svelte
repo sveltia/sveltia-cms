@@ -17,7 +17,7 @@
   <MenuButton
     variant="ghost"
     iconic={!isLocalRepo}
-    label={isLocalRepo ? $_('local_backend.indicator') : undefined}
+    label={isLocalRepo ? $_('local_workflow.indicator') : undefined}
     class={hasAvatar ? 'avatar' : ''}
     popupPosition="bottom-right"
     aria-label={$_('show_account_menu')}

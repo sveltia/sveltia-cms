@@ -55,11 +55,11 @@
         <div role="alert">
           {#if $isBrave}
             {@html makeLink(
-              $_('local_backend.disabled'),
+              $_('local_workflow.disabled'),
               'https://sveltiacms.app/en/docs/workflows/local#enabling-file-system-access-api-in-brave',
             )}
           {:else}
-            {$_('local_backend.unsupported_browser')}
+            {$_('local_workflow.unsupported_browser')}
           {/if}
         </div>
       {:else if !$signInError.message}

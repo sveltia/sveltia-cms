@@ -759,11 +759,11 @@ export const strings = {
   },
 
   // Backends
-  local_backend: {
+  local_workflow: {
     indicator: 'Local',
     unsupported_browser:
-      'Local development is not supported in your browser. Please use Chrome or Edge instead.',
-    disabled: 'Local development is disabled in your browser. <a>Here’s how to enable it</a>.',
+      'Local Workflow is not supported in your browser. Please use Chrome or Edge instead.',
+    disabled: 'Local Workflow is disabled in your browser. <a>Here’s how to enable it</a>.',
   },
 
   // Editorial Workflow
