@@ -523,6 +523,70 @@ describe('Test copyProperty()', () => {
         parent: {},
       });
     });
+
+    test('omits optional object with only empty children (typed list item scenario)', () => {
+      isFieldRequired.mockReturnValue(false);
+
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = {
+        'list.0.optionalObject': null,
+        'list.0.optionalObject.foo': '',
+      };
+
+      const args = {
+        locale: 'en',
+        unsortedMap,
+        sortedMap,
+        isTomlOutput: false,
+        omitEmptyOptionalFields: true,
+      };
+
+      copyProperty({
+        ...args,
+        key: 'list.0.optionalObject',
+        field: { name: 'optionalObject', widget: 'object', required: false },
+      });
+
+      // Parent and its empty children should all be omitted
+      expect(sortedMap).toEqual({});
+      // Children should also be removed from unsortedMap
+      expect(unsortedMap).not.toHaveProperty('list.0.optionalObject.foo');
+    });
+
+    test('preserves optional object when at least one child is non-empty', () => {
+      isFieldRequired.mockReturnValue(false);
+
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = {
+        'list.0.optionalObject': null,
+        'list.0.optionalObject.foo': 'has value',
+      };
+
+      const args = {
+        locale: 'en',
+        unsortedMap,
+        sortedMap,
+        isTomlOutput: false,
+        omitEmptyOptionalFields: true,
+      };
+
+      copyProperty({
+        ...args,
+        key: 'list.0.optionalObject',
+        field: { name: 'optionalObject', widget: 'object', required: false },
+      });
+
+      // Parent should be preserved because child has a non-empty value
+      expect(sortedMap).toEqual({
+        'list.0.optionalObject': null,
+      });
+    });
   });
 
   describe('TOML date conversion', () => {
@@ -1505,6 +1569,106 @@ describe('Test serializeContent()', () => {
 
       // Should return empty object for root keyvalue field with no content
       expect(result).toEqual({});
+    });
+  });
+
+  test('omits empty optional object fields inside typed list items', async () => {
+    const { get } = await import('svelte/store');
+
+    vi.mocked(get).mockReturnValueOnce({
+      output: { omit_empty_optional_fields: true },
+    });
+
+    const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+    vi.mocked(createKeyPathList).mockReturnValueOnce([
+      'list',
+      'list.*.type',
+      'list.*.title',
+      'list.*.optionalObject',
+      'list.*.optionalObject.foo',
+    ]);
+
+    // Simulate real getField behaviour: wildcard paths into typed lists return undefined because
+    // the type cannot be resolved from valueMap when the index is `*`.
+    const optionalObjectField = {
+      name: 'optionalObject',
+      widget: 'object',
+      required: false,
+      fields: [{ name: 'foo', widget: 'string' }],
+    };
+
+    getField.mockImplementation(
+      // @ts-ignore — mock intentionally returns undefined for wildcard paths
+      (/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'list') {
+          return { name: 'list', widget: 'list' };
+        }
+
+        // Wildcard paths cannot resolve the type → return undefined (matches real behaviour)
+        if (keyPath.includes('*')) {
+          return undefined;
+        }
+
+        // Concrete paths resolve fine
+        if (/^list\.\d+\.type$/.test(keyPath)) {
+          return { name: 'type', widget: 'string' };
+        }
+
+        if (/^list\.\d+\.title$/.test(keyPath)) {
+          return { name: 'title', widget: 'string' };
+        }
+
+        if (/^list\.\d+\.optionalObject\.foo$/.test(keyPath)) {
+          return { name: 'foo', widget: 'string' };
+        }
+
+        if (/^list\.\d+\.optionalObject$/.test(keyPath)) {
+          return optionalObjectField;
+        }
+
+        return { name: keyPath, widget: 'string' };
+      },
+    );
+
+    isFieldRequired.mockImplementation(
+      (/** @type {any} */ { fieldConfig }) => fieldConfig.required !== false,
+    );
+
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: { canonicalSlug: { key: '' } },
+      },
+      fields: [
+        {
+          name: 'list',
+          widget: 'list',
+          types: [
+            {
+              name: 'my-type',
+              fields: [{ name: 'title', widget: 'string' }, optionalObjectField],
+            },
+          ],
+        },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      'list.0.type': 'my-type',
+      'list.0.title': 'Item without optional object',
+      'list.0.optionalObject': null,
+      'list.0.optionalObject.foo': '',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    // The empty optional object and its empty children should be omitted
+    expect(result).toEqual({
+      list: [{ type: 'my-type', title: 'Item without optional object' }],
     });
   });
 });

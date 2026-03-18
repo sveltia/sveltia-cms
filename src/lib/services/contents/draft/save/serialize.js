@@ -90,10 +90,21 @@ export const copyProperty = ({
     omitEmptyOptionalFields &&
     field &&
     !isFieldRequired({ fieldConfig: field, locale }) &&
-    !Object.keys(unsortedMap).some((_key) => _key.startsWith(`${key}.`)) &&
     isValueEmpty(value)
   ) {
-    // Omit the empty value
+    const childKeys = Object.keys(unsortedMap).filter((_key) => _key.startsWith(`${key}.`));
+
+    if (
+      childKeys.some((_key) => !_key.endsWith('.__sc_item_id') && !isValueEmpty(unsortedMap[_key]))
+    ) {
+      // Preserve the parent because it has non-empty children
+      sortedMap[key] = value;
+    } else {
+      // Omit the empty value and remove any empty children so they are not processed later
+      childKeys.forEach((_key) => {
+        delete unsortedMap[_key];
+      });
+    }
   } else {
     sortedMap[key] = value;
   }
@@ -175,7 +186,11 @@ const finalizeContent = ({
         .filter((_keyPath) => regex.test(_keyPath))
         .sort(([a, b]) => compare(a, b))
         .forEach((_keyPath) => {
-          copyProperty({ ...copyArgs, key: _keyPath, field });
+          // When the wildcard path couldn't resolve a typed list field, resolve with the concrete
+          // key path so that field metadata (e.g. `required`) is available to `copyProperty`
+          const resolvedField = field ?? getField({ ...getFieldArgs, keyPath: _keyPath });
+
+          copyProperty({ ...copyArgs, key: _keyPath, field: resolvedField });
         });
     }
   });
