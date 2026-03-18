@@ -427,6 +427,12 @@
     }
 
     :global {
+      .sui.toolbar {
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 40px;
+      }
+
       @media (width < 768px) {
         .sui.text-editor {
           // Remove the section padding
