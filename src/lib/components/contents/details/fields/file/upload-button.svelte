@@ -181,5 +181,11 @@
     flex-wrap: wrap;
     gap: 0 4px;
     white-space: nowrap;
+
+    :global {
+      .button {
+        margin-block: 0;
+      }
+    }
   }
 </style>
