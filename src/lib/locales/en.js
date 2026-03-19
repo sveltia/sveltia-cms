@@ -722,7 +722,7 @@ export const strings = {
       missing_field_name:
         'The field {count} must have the `name` option defined as a non-empty string.',
       invalid_field_name:
-        'The field name `{name}` is invalid. It must not contain special characters.',
+        'The field name `{name}` is invalid. It must not contain special characters. If you want to nest fields, [use Object fields instead of dot notation](https://sveltiacms.app/en/docs/troubleshooting#using-proper-naming-conventions).',
       duplicate_field_name: 'Field names must be unique, but `{name}` is used more than once.',
       missing_variable_type:
         'The variable type {count} must have the `name` option defined as a non-empty string.',

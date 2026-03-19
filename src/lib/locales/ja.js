@@ -726,7 +726,8 @@ export const strings = {
         'コレクションファイル名は一意でなければなりませんが、`{name}` が複数回使用されています。',
       missing_field_name:
         'フィールド {count} には `name` オプションを空でない文字列として定義する必要があります。',
-      invalid_field_name: 'フィールド名 `{name}` は無効です。特殊文字を含めることはできません。',
+      invalid_field_name:
+        'フィールド名 `{name}` は無効です。特殊文字を含めることはできません。ネストされたフィールドを作成したい場合は、[ドット表記ではなくオブジェクトフィールドを使用してください](https://sveltiacms.app/en/docs/troubleshooting#using-proper-naming-conventions)。',
       duplicate_field_name:
         'フィールド名は一意でなければなりませんが、`{name}` が複数回使用されています。',
       missing_variable_type:
