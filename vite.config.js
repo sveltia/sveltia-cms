@@ -220,7 +220,7 @@ export default defineConfig({
   test: {
     coverage: {
       include: ['src/lib/{components,services}/**/*.js'],
-      reporter: ['text'],
+      reporter: ['text', 'json-summary', 'json'],
     },
     silent: true,
   },
