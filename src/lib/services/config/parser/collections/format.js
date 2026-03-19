@@ -7,6 +7,21 @@
  * @type {string[]}
  */
 const bodyFieldType = ['code', 'markdown', 'richtext', 'text'];
+/**
+ * Markdown file extensions that support front matter formats.
+ * @type {string[]}
+ */
+const markdownExtensions = ['md', 'markdown', 'mdx'];
+/**
+ * Template engine extensions that support any front matter format.
+ * @type {string[]}
+ */
+const templateEngineExtensions = ['astro', 'njk'];
+/**
+ * Allowed extensions for the `frontmatter` auto-detect format.
+ * @type {string[]}
+ */
+const allowedFrontmatterExtensions = [...markdownExtensions, ...templateEngineExtensions];
 
 /**
  * Check if there is a mismatch between the file extension and format.
@@ -46,11 +61,7 @@ export const isFormatMismatch = (extension, format, fields = []) => {
   const normalizedFormat = format === 'yml' ? 'yaml' : format;
 
   // For md/markdown/mdx extensions, only -frontmatter formats are valid
-  if (
-    normalizedExtension === 'md' ||
-    normalizedExtension === 'markdown' ||
-    normalizedExtension === 'mdx'
-  ) {
+  if (markdownExtensions.includes(normalizedExtension)) {
     // Valid formats: 'frontmatter' (auto-detect) or any *-frontmatter format
     return !isFrontMatterFormat;
   }
@@ -60,14 +71,19 @@ export const isFormatMismatch = (extension, format, fields = []) => {
     // Front-matter format: yaml-frontmatter, toml-frontmatter, json-frontmatter
     const fmFormatType = normalizedFormat.replace('-frontmatter', '');
 
-    // Front-matter only works with matching extension
+    // Template engines (njk, astro) work with any front-matter format
+    if (templateEngineExtensions.includes(normalizedExtension)) {
+      return false;
+    }
+
+    // For other extensions, front-matter only works with matching extension
     return normalizedExtension !== fmFormatType;
   }
 
-  // The 'frontmatter' auto-detect format only works with markdown extensions
-  // (already handled above), so reject it for non-markdown extensions
+  // The 'frontmatter' auto-detect format works with markdown extensions and some template engines
+  // (already handled above), so reject it for other extensions
   if (normalizedFormat === 'frontmatter') {
-    return true;
+    return !allowedFrontmatterExtensions.includes(normalizedExtension);
   }
 
   // For known formats, ensure extension matches (yaml/toml/json)

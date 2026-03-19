@@ -232,6 +232,36 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('json', 'yaml-frontmatter')).toBe(true);
     });
 
+    it('should return false when njk extension with yaml-frontmatter', () => {
+      // Template engines support any front-matter format
+      expect(isFormatMismatch('njk', 'yaml-frontmatter')).toBe(false);
+    });
+
+    it('should return false when njk extension with toml-frontmatter', () => {
+      // Template engines support any front-matter format
+      expect(isFormatMismatch('njk', 'toml-frontmatter')).toBe(false);
+    });
+
+    it('should return false when njk extension with json-frontmatter', () => {
+      // Template engines support any front-matter format
+      expect(isFormatMismatch('njk', 'json-frontmatter')).toBe(false);
+    });
+
+    it('should return false when astro extension with yaml-frontmatter', () => {
+      // Template engines support any front-matter format
+      expect(isFormatMismatch('astro', 'yaml-frontmatter')).toBe(false);
+    });
+
+    it('should return false when astro extension with toml-frontmatter', () => {
+      // Template engines support any front-matter format
+      expect(isFormatMismatch('astro', 'toml-frontmatter')).toBe(false);
+    });
+
+    it('should return false when astro extension with json-frontmatter', () => {
+      // Template engines support any front-matter format
+      expect(isFormatMismatch('astro', 'json-frontmatter')).toBe(false);
+    });
+
     it('should return false when html extension with json format (custom extension)', () => {
       // html is not a known format, so it's treated as custom extension
       expect(isFormatMismatch('html', 'json')).toBe(false);
@@ -322,8 +352,18 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('yml', 'frontmatter')).toBe(true);
     });
 
+    it('should return false when njk extension with frontmatter', () => {
+      // frontmatter is valid with template engine extensions like njk
+      expect(isFormatMismatch('njk', 'frontmatter')).toBe(false);
+    });
+
+    it('should return false when astro extension with frontmatter', () => {
+      // frontmatter is valid with template engine extensions like astro
+      expect(isFormatMismatch('astro', 'frontmatter')).toBe(false);
+    });
+
     it('should return true when custom extension with frontmatter', () => {
-      // frontmatter is only valid with markdown extensions
+      // frontmatter is only valid with markdown extensions and template engines
       expect(isFormatMismatch('html', 'frontmatter')).toBe(true);
     });
   });
@@ -460,6 +500,90 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('csv', 'csv')).toBe(false);
       expect(isFormatMismatch('txt', 'custom-format')).toBe(false);
       expect(isFormatMismatch('xml', 'xml-schema')).toBe(false);
+    });
+  });
+
+  describe('comprehensive markdown extensions with frontmatter formats', () => {
+    it('should allow md extension with frontmatter', () => {
+      expect(isFormatMismatch('md', 'frontmatter')).toBe(false);
+    });
+
+    it('should allow markdown extension with frontmatter', () => {
+      expect(isFormatMismatch('markdown', 'frontmatter')).toBe(false);
+    });
+
+    it('should allow mdx extension with frontmatter', () => {
+      expect(isFormatMismatch('mdx', 'frontmatter')).toBe(false);
+    });
+
+    it('should allow md with yaml-frontmatter', () => {
+      expect(isFormatMismatch('md', 'yaml-frontmatter')).toBe(false);
+    });
+
+    it('should allow md with json-frontmatter', () => {
+      expect(isFormatMismatch('md', 'json-frontmatter')).toBe(false);
+    });
+
+    it('should allow md with toml-frontmatter', () => {
+      expect(isFormatMismatch('md', 'toml-frontmatter')).toBe(false);
+    });
+
+    it('should allow markdown with yaml-frontmatter', () => {
+      expect(isFormatMismatch('markdown', 'yaml-frontmatter')).toBe(false);
+    });
+
+    it('should allow markdown with json-frontmatter', () => {
+      expect(isFormatMismatch('markdown', 'json-frontmatter')).toBe(false);
+    });
+
+    it('should allow markdown with toml-frontmatter', () => {
+      expect(isFormatMismatch('markdown', 'toml-frontmatter')).toBe(false);
+    });
+
+    it('should allow mdx with yaml-frontmatter', () => {
+      expect(isFormatMismatch('mdx', 'yaml-frontmatter')).toBe(false);
+    });
+
+    it('should allow mdx with json-frontmatter', () => {
+      expect(isFormatMismatch('mdx', 'json-frontmatter')).toBe(false);
+    });
+
+    it('should allow mdx with toml-frontmatter', () => {
+      expect(isFormatMismatch('mdx', 'toml-frontmatter')).toBe(false);
+    });
+  });
+
+  describe('comprehensive template engine extensions with frontmatter formats', () => {
+    it('should allow njk with frontmatter', () => {
+      expect(isFormatMismatch('njk', 'frontmatter')).toBe(false);
+    });
+
+    it('should allow njk with yaml-frontmatter', () => {
+      expect(isFormatMismatch('njk', 'yaml-frontmatter')).toBe(false);
+    });
+
+    it('should allow njk with json-frontmatter', () => {
+      expect(isFormatMismatch('njk', 'json-frontmatter')).toBe(false);
+    });
+
+    it('should allow njk with toml-frontmatter', () => {
+      expect(isFormatMismatch('njk', 'toml-frontmatter')).toBe(false);
+    });
+
+    it('should allow astro with frontmatter', () => {
+      expect(isFormatMismatch('astro', 'frontmatter')).toBe(false);
+    });
+
+    it('should allow astro with yaml-frontmatter', () => {
+      expect(isFormatMismatch('astro', 'yaml-frontmatter')).toBe(false);
+    });
+
+    it('should allow astro with json-frontmatter', () => {
+      expect(isFormatMismatch('astro', 'json-frontmatter')).toBe(false);
+    });
+
+    it('should allow astro with toml-frontmatter', () => {
+      expect(isFormatMismatch('astro', 'toml-frontmatter')).toBe(false);
     });
   });
 });
