@@ -21,8 +21,8 @@ importers:
         specifier: ^2.3.1
         version: 2.3.1
       '@sveltia/ui':
-        specifier: ^0.35.2
-        version: 0.35.2(svelte@5.54.0)
+        specifier: ^0.35.3
+        version: 0.35.3(svelte@5.54.0)
       '@sveltia/utils':
         specifier: ^0.8.6
         version: 0.8.6
@@ -997,8 +997,8 @@ packages:
   '@napi-rs/wasm-runtime@1.1.1':
     resolution: {integrity: sha512-p64ah1M1ld8xjWv3qbvFwHiFVWrq1yFvV4f7w+mzaqiR4IlSgkqhcRdHwsGgomwzBH51sRY4NEowLxnaBjcW/A==}
 
-  '@next/eslint-plugin-next@16.1.7':
-    resolution: {integrity: sha512-v/bRGOJlfRCO+NDKt0bZlIIWjhMKU8xbgEQBo+rV9C8S6czZvs96LZ/v24/GvpEnovZlL4QDpku/RzWHVbmPpA==}
+  '@next/eslint-plugin-next@16.2.0':
+    resolution: {integrity: sha512-3D3pEMcGKfENC9Pzlkr67GOm+205+5hRdYPZvHuNIy5sr9k0ybSU8g+sxOO/R/RLEh/gWZ3UlY+5LmEyZ1xgXQ==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -1369,8 +1369,8 @@ packages:
       svelte: ^5.46.4
       vite: ^8.0.0-beta.7 || ^8.0.0
 
-  '@sveltia/ui@0.35.2':
-    resolution: {integrity: sha512-EuNyl1FibE6kvP5mbbFwWBg82Z/hoO//c1vzpLit11iJxyX2r359xhrl8E4Qv9tsYjG4sUIR/Bv75uECgBDKJw==}
+  '@sveltia/ui@0.35.3':
+    resolution: {integrity: sha512-Cvl7snSeig1qzw9cQ6ju+fwfG6zQGvRZkIGSn+pve3VegEjWyQBMaY5WWUbbZahfNxvE7rnmOthyJubScTWpVw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -4959,7 +4959,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
-  '@next/eslint-plugin-next@16.1.7':
+  '@next/eslint-plugin-next@16.2.0':
     dependencies:
       fast-glob: 3.3.1
 
@@ -5183,7 +5183,7 @@ snapshots:
       vite: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(sass@1.98.0)(yaml@2.8.2)
       vitefu: 1.1.2(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(sass@1.98.0)(yaml@2.8.2))
 
-  '@sveltia/ui@0.35.2(svelte@5.54.0)':
+  '@sveltia/ui@0.35.3(svelte@5.54.0)':
     dependencies:
       '@lexical/code': 0.41.0
       '@lexical/dragon': 0.41.0
@@ -6164,7 +6164,7 @@ snapshots:
 
   eslint-config-airbnb-extended@3.0.1(@typescript-eslint/parser@8.57.1(eslint@9.39.4)(typescript@5.9.3))(@typescript-eslint/utils@8.57.1(eslint@9.39.4)(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.39.4)(typescript@5.9.3):
     dependencies:
-      '@next/eslint-plugin-next': 16.1.7
+      '@next/eslint-plugin-next': 16.2.0
       '@stylistic/eslint-plugin': 5.10.0(eslint@9.39.4)
       confusing-browser-globals: 1.0.11
       eslint: 9.39.4
