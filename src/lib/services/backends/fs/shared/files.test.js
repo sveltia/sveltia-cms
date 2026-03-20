@@ -1882,6 +1882,51 @@ describe('scanDir', () => {
     expect(fileHandles[0].handle).toBe(fileHandle);
     expect(fileHandles[0].path).toBe('parent/nested/file.txt');
   });
+
+  test('should use cached regex when pathRegexCache already has an entry for the path (L168 false)', async () => {
+    // When scanDir is called with currentPath='parent', the directory entry 'nested' becomes
+    // path='parent/nested'. Pre-populate the cache with that full path key so the cache-hit
+    // branch fires: !regex === false → L168 false covered.
+    const cachedRegex = /nested/;
+    const prePopulatedCache = new Map([['parent/nested', cachedRegex]]);
+    const nestedDirHandle = createMockDirectoryHandle('nested');
+    const fileHandle = createMockFileHandle('file.txt');
+    const parentDirHandle = createMockDirectoryHandle('parent');
+
+    // @ts-ignore - Mock async iterator
+    parentDirHandle.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* () {
+        yield ['nested', nestedDirHandle];
+      },
+    }));
+
+    // @ts-ignore - Mock async iterator for nested dir
+    nestedDirHandle.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* () {
+        yield ['file.txt', fileHandle];
+      },
+    }));
+
+    rootDirHandle.resolve = vi.fn((handle) => {
+      if (handle === fileHandle) return Promise.resolve(['parent', 'nested', 'file.txt']);
+      return Promise.resolve([]);
+    });
+
+    await scanDir(
+      parentDirHandle,
+      {
+        rootDirHandle,
+        scanningPaths: ['parent/nested'],
+        scanningPathsRegEx: [/parent\/nested/],
+        fileHandles,
+        pathRegexCache: prePopulatedCache, // cache already has 'parent/nested' → L168 false
+      },
+      'parent',
+    );
+
+    // The cached regex was reused (not recreated) — same reference
+    expect(prePopulatedCache.get('parent/nested')).toBe(cachedRegex);
+  });
 });
 
 describe('collectScanningPaths', () => {
@@ -2026,6 +2071,23 @@ describe('collectScanningPaths', () => {
     const paths = collectScanningPaths();
 
     expect(paths).toContain('content/folders');
+  });
+
+  test('should return empty paths when entry folder has no filePathMap and no folderPathMap (L187 binary-expr)', () => {
+    // An entry folder with neither filePathMap nor folderPathMap exercises `folderPathMap ?? {}`.
+    allEntryFolders.set([
+      /** @type {any} */ ({
+        collectionName: 'empty-collection',
+        // No filePathMap, no folderPathMap
+      }),
+    ]);
+
+    allAssetFolders.set([]);
+
+    const paths = collectScanningPaths();
+
+    // Object.values(folderPathMap ?? {}) = Object.values({}) = [] → no paths added
+    expect(paths).toEqual([]);
   });
 });
 

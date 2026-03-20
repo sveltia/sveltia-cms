@@ -1,6 +1,14 @@
-import { describe, expect, test } from 'vitest';
+import { stripTags } from '@sveltia/utils/string';
+import { describe, expect, test, vi } from 'vitest';
 
 import { getDefaultValueMap } from './defaults';
+
+// Keep a spy handle that individual tests can override
+vi.mock('@sveltia/utils/string', async (importOriginal) => {
+  const original = /** @type {any} */ (await importOriginal());
+
+  return { ...original, stripTags: vi.fn(original.stripTags) };
+});
 
 /**
  * @import { MarkdownField } from '$lib/types/public';
@@ -219,6 +227,26 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({
         content: '# Title\n\n**Bold** and *italic* text\n\n- List item 1\n- List item 2',
       });
+    });
+
+    test('should use regex fallback when stripTags throws (e.g. no DOMParser)', () => {
+      vi.mocked(stripTags).mockImplementationOnce(() => {
+        throw new Error('DOMParser not available');
+      });
+
+      /** @type {MarkdownField} */
+      const fieldConfig = { ...baseFieldConfig };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'content',
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue: '<b>Bold</b> text with <em>emphasis</em>',
+      });
+
+      // The catch-block regex fallback should strip tags
+      expect(result.content).toBe('Bold text with emphasis');
     });
 
     test('should handle undefined dynamicValue', () => {

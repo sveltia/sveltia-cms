@@ -26,7 +26,10 @@ export const copyDefaultLocaleValue = ({ getFieldArgs, fieldConfig, sourceLangua
     ([targetLanguage, content]) => {
       // Don’t duplicate the value if the parent object doesn’t exist
       if (keyPath.includes('.')) {
-        const { path: parentKeyPath } = keyPath.match(/(?<path>.+?)\.[^.]*$/)?.groups ?? {};
+        // The regex always matches since keyPath is guaranteed to contain a dot (checked above).
+        const parentKeyPath = /** @type {string} */ (
+          keyPath.match(/(?<path>.+?)\.[^.]*$/)?.groups?.path
+        );
 
         if (
           !Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${parentKeyPath}.`)) &&

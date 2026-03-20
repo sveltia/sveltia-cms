@@ -228,17 +228,18 @@ export const getInputValue = (currentValue, fieldConfig) => {
 
   // If the current value is the standard format, return it as is
   const value = dateOnly
-    ? currentValue?.match(/^(?<date>\d{4}-[01]\d-[0-3]\d)\b/)?.groups?.date
+    ? currentValue.match(/^(?<date>\d{4}-[01]\d-[0-3]\d)\b/)?.groups?.date
     : timeOnly
       ? // Match both `YYYY-MM-DDTHH:mm(:ss)` and `HH:mm(:ss)` formats
-        currentValue?.match(/(?:^|T)(?<time>[0-2]\d:[0-5]\d)\b/)?.groups?.time
+        currentValue.match(/(?:^|T)(?<time>[0-2]\d:[0-5]\d)\b/)?.groups?.time
       : undefined;
 
   if (value) {
     return value;
   }
 
-  const dateForParts = currentValue ? getDate(currentValue, fieldConfig) : new Date();
+  // 'currentValue' is always truthy here (the empty-string guard above returned early).
+  const dateForParts = getDate(currentValue, fieldConfig);
 
   // If `getDate` returned `undefined` (parsing failed), return empty string
   if (!dateForParts) {

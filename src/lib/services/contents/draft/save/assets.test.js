@@ -1459,6 +1459,34 @@ describe('Test resolveAssetFolderPaths()', () => {
       resolvedPublicPath: expect.any(String),
     });
   });
+
+  test('uses empty string fallback when entryFilePath is undefined (new entry, line 213)', async () => {
+    // When entryFilePath is undefined (new entry not yet saved), `??` converts it to ''.
+    // getEntryFolderPath('', subPath) is called with an empty folder path.
+    // Inside getEntryFolderPath, the regex does NOT match '' → `?? folderPath` fallback (line 101)
+    // returns the original empty string.
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nMultiFolder,
+    };
+
+    await setupAssetFolder(relativeAssetFolder);
+
+    const result = resolveAssetFolderPaths({
+      folder: relativeAssetFolder,
+      fillSlugOptions: {
+        collection,
+        content: {},
+        currentSlug,
+        entryFilePath: undefined, // New entry: no file path yet
+      },
+    });
+
+    expect(result).toBeDefined();
+    expect(result.resolvedInternalPath).toBeDefined();
+  });
 });
 
 describe('Test replaceBlobURL()', () => {

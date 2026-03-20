@@ -30,7 +30,9 @@ const { DEV, VITE_SITE_URL } = import.meta.env;
  * Next.js. You probably need to define the `Access-Control-Allow-Origin: *` HTTP response header
  * with the dev server’s middleware, or loading the CMS config file may fail due to a CORS error.
  */
-export const DEV_SITE_URL = DEV ? VITE_SITE_URL || 'http://localhost:5174' : undefined;
+export const DEV_SITE_URL = DEV
+  ? VITE_SITE_URL || 'http://localhost:5174'
+  : /* v8 ignore next */ undefined;
 
 /**
  * @type {Partial<CmsConfig>}
@@ -137,7 +139,8 @@ export const initCmsConfig = async (manualConfig) => {
     const config = structuredClone(rawConfig);
 
     // Set the site URL for development or production. See also `/src/lib/components/app.svelte`
-    config._siteURL = config.site_url?.trim() || (DEV ? DEV_SITE_URL : window.location.origin);
+    config._siteURL =
+      config.site_url?.trim() || (DEV ? DEV_SITE_URL : /* v8 ignore next */ window.location.origin);
     config._baseURL = isURL(config._siteURL) ? new URL(config._siteURL).origin : '';
 
     // Handle root collection folder variants, particularly for VitePress

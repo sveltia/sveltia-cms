@@ -46,7 +46,7 @@ vi.mock('svelte/store', () => ({
       callback({});
       return vi.fn();
     }),
-    update: vi.fn(),
+    update: vi.fn((updater) => updater({})),
   })),
 }));
 

@@ -169,7 +169,11 @@ export const getAssetByRelativePathAndCollection = ({ path, entry, collection, f
     return undefined;
   }
 
-  const { entryFolder } = entryFilePath.match(/(?<entryFolder>.+?)(?:\/[^/]+)?$/)?.groups ?? {};
+  // The regex matches any non-empty string (`entryFilePath` is guaranteed non-empty above). Named
+  // capture groups always produce a `groups` object, so no optional chaining needed.
+  const { entryFolder } = /** @type {{ entryFolder: string }} */ (
+    /** @type {RegExpMatchArray} */ (entryFilePath.match(/(?<entryFolder>.+?)(?:\/[^/]+)?$/)).groups
+  );
 
   // Strip the `media_folder` prefix from the stored path before joining with `mediaFolder`, to
   // avoid duplication when the stored value already includes the media folder (e.g.

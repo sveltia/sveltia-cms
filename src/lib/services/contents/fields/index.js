@@ -63,4 +63,10 @@ export const MULTI_VALUE_FIELD_TYPES = [...MEDIA_FIELD_TYPES, 'relation', 'selec
  * List of field types that support the `min` and `max` options.
  * @type {string[]}
  */
-export const MIN_MAX_VALUE_FIELD_TYPES = [...MULTI_VALUE_FIELD_TYPES, 'datetime', 'list', 'number'];
+export const MIN_MAX_VALUE_FIELD_TYPES = [
+  ...MULTI_VALUE_FIELD_TYPES,
+  'datetime',
+  'keyvalue',
+  'list',
+  'number',
+];

@@ -1299,6 +1299,38 @@ describe('Test processI18nMultiFileEntry()', () => {
     expect(entry.id).toBe('posts/my-post');
     expect(entry.locales.en).toBeDefined();
   });
+
+  test('creates new entry for non-default locale first (line 368 false branch)', () => {
+    // When a non-default locale file is processed first (no existing entry yet),
+    // `locale !== defaultLocale` → entry.slug is NOT set (line 368 false branch).
+    const entry = /** @type {Entry} */ ({
+      id: '',
+      slug: '',
+      subPath: 'mon-article',
+      locales: {},
+    });
+
+    const rawContent = { title: 'Mon Article' };
+    const entries = /** @type {Entry[]} */ ([]);
+
+    const wasMerged = processI18nMultiFileEntry(
+      entry,
+      rawContent,
+      '/posts/mon-article.fr.md',
+      undefined,
+      'mon-article',
+      undefined,
+      'fr', // non-default locale processed first
+      'en', // default locale
+      'posts',
+      undefined,
+      entries,
+    );
+
+    expect(wasMerged).toBe(false);
+    expect(entry.slug).toBe(''); // Not set because locale !== defaultLocale
+    expect(entry.locales.fr).toBeDefined();
+  });
 });
 
 describe('Test prepareEntry()', () => {

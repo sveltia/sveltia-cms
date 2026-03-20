@@ -287,6 +287,17 @@ describe('createCustomNodeClass', () => {
       });
     });
 
+    it('should export JSON with empty props when __props is undefined', () => {
+      const CustomNode = createCustomNodeClass(mockComponentDef);
+      const node = new CustomNode();
+      const exported = node.exportJSON();
+
+      expect(exported).toEqual({
+        type: 'test-component',
+        version: 1,
+      });
+    });
+
     it('should have updateFromJSON method', () => {
       const CustomNode = createCustomNodeClass(mockComponentDef);
       const node = new CustomNode();
@@ -484,6 +495,29 @@ describe('createCustomNodeClass', () => {
       const importDOM = CustomNode.importDOM();
 
       expect(importDOM).toBeDefined();
+      expect(Object.keys(importDOM).length).toBe(0);
+    });
+
+    it('should handle when toPreview returns a non-string value', () => {
+      const componentWithObjectPreview = {
+        ...mockComponentDef,
+        /**
+         * Convert properties to preview format.
+         * @returns {{ element: string }} Preview object.
+         */
+        toPreview: () => ({ element: 'div' }),
+        /**
+         * Convert properties to block format.
+         * @returns {string} Block string.
+         */
+        toBlock: () => '<div>Block</div>',
+      };
+
+      const CustomNode = createCustomNodeClass(componentWithObjectPreview);
+      const importDOM = CustomNode.importDOM();
+
+      expect(importDOM).toBeDefined();
+      // tagName is undefined when preview is not a string, so no DOM conversion registered
       expect(Object.keys(importDOM).length).toBe(0);
     });
   });

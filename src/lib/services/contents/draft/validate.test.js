@@ -348,6 +348,80 @@ describe('draft/validate', () => {
       // Unknown field should be skipped (not in validities)
       expect(result.validities.en.unknown).toBeUndefined();
     });
+
+    it('should not set patternMismatch when value matches the pattern (line 270 else branch)', async () => {
+      // Pattern validation passes → the `else` branch of `if (!regex.test(str))` is taken
+      // → patternMismatch is NOT set → result is valid
+      mockEntryDraft.currentValues = {
+        en: {
+          phone: '1234567890',
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'phone',
+        widget: 'string',
+        pattern: ['^\\d{10}$', '10 digits'],
+      });
+
+      const { getRegex } = await import('$lib/services/utils/misc');
+
+      vi.mocked(getRegex).mockReturnValue(/^\d{10}$/);
+
+      const result = validateFields('currentValues');
+
+      // Value matches regex → no patternMismatch
+      expect(result.valid).toBe(true);
+      expect(result.validities.en.phone?.patternMismatch).toBeFalsy();
+    });
+
+    it('should resolve component name prefix in keyPath for rich text fields (line 369)', () => {
+      // COMPONENT_NAME_PREFIX_REGEX matches 'rt:comp:' prefix.
+      // When keyPath starts with the prefix, the prefix part is stripped to get the real keyPath
+      // for getField lookup, exercising the `prefix ? ...` true branch.
+      mockEntryDraft.currentValues = {
+        en: {
+          'rt:MyComp:title': 'Hello',
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'title',
+        widget: 'string',
+      });
+
+      vi.mocked(isFieldRequired).mockReturnValue(false);
+
+      const result = validateFields('currentValues');
+
+      expect(result).toBeDefined();
+    });
+
+    it('should validate list items when list field has subfields (line 398 else branch)', async () => {
+      // A keyPath ending in '.\d+' (matching LIST_KEY_PATH_REGEX) triggers validateList.
+      // When getListFieldInfo.hasSubFields=true and the field is not multiple,
+      // validateList returns { validateItems: true } → `if (!validateItems)` false branch taken.
+      mockEntryDraft.currentValues = {
+        en: {
+          'items.0': 'Item 1',
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'items',
+        widget: 'list',
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+
+      const listHelperModule = await import('$lib/services/contents/fields/list/helper');
+      const { getListFieldInfo } = vi.mocked(listHelperModule);
+
+      getListFieldInfo.mockReturnValue({ hasSubFields: true });
+
+      const result = validateFields('currentValues');
+
+      expect(result).toBeDefined();
+    });
   });
 
   describe('validateEntry', () => {
@@ -1186,6 +1260,76 @@ describe('draft/validate', () => {
         expect(result?.valueMissing).toBe(true);
       });
 
+      it('should set rangeUnderflow when keyvalue pairs are below min (line 219)', () => {
+        // Covers: `else if (typeof min === 'number' && pairs.length < min)`
+        const validities = { en: {} };
+
+        mockEntryDraft.currentValues = { en: { metadata: { key1: 'value1' } } };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'metadata.key1',
+          valueMap: { 'metadata.key1': 'value1' },
+          value: 'value1',
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'metadata',
+          widget: 'keyvalue',
+          required: false,
+          min: 3, // need at least 3 pairs
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(false);
+
+        // Only 1 pair, but min is 3
+        vi.mocked(getPairs).mockReturnValue([{ key: 'key1', value: 'value1' }]);
+
+        const result = validateAnyField(args);
+
+        expect(result?.rangeUnderflow).toBe(true);
+      });
+
+      it('should set rangeOverflow when keyvalue pairs exceed max (line 221)', () => {
+        // Covers: `else if (typeof max === 'number' && pairs.length > max)`
+        const validities = { en: {} };
+
+        mockEntryDraft.currentValues = {
+          en: { metadata: { k1: 'v1', k2: 'v2', k3: 'v3' } },
+        };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'metadata.k1',
+          valueMap: { 'metadata.k1': 'v1' },
+          value: 'v1',
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'metadata',
+          widget: 'keyvalue',
+          required: false,
+          max: 2, // max 2 pairs allowed
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(false);
+
+        // 3 pairs but max is 2
+        vi.mocked(getPairs).mockReturnValue([
+          { key: 'k1', value: 'v1' },
+          { key: 'k2', value: 'v2' },
+          { key: 'k3', value: 'v3' },
+        ]);
+
+        const result = validateAnyField(args);
+
+        expect(result?.rangeOverflow).toBe(true);
+      });
+
       it('should validate code field with output_code_only=true', () => {
         const validities = { en: {} };
 
@@ -1396,6 +1540,118 @@ describe('draft/validate', () => {
         const result = validateAnyField(args);
 
         expect(result).toBeUndefined();
+      });
+
+      it('should use array length when value is a non-empty array for list field (line 177 branch 0)', () => {
+        // When value is a non-empty array, Array.isArray(value) && !!value.length = true
+        // → uses value.length for size instead of Set-based size calculation
+        const validities = { en: {} };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'tags',
+          valueMap: { tags: ['tag1', 'tag2'] },
+          value: ['tag1', 'tag2'], // direct array value
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'tags',
+          widget: 'list',
+          max: 1,
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(false);
+
+        const result = validateAnyField(args);
+
+        // size = value.length = 2, max = 1 → rangeOverflow
+        expect(result).toBeDefined();
+        expect(result?.rangeOverflow).toBe(true);
+      });
+
+      it('should skip object field validity when value is truthy (line 191 else branch)', () => {
+        // When required=true but value is truthy, the `if (required && !value)` condition
+        // is false → implicit else branch → valueMissing not set (valid)
+        const validities = { en: {} };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'metadata',
+          valueMap: { metadata: { key: 'val' } },
+          value: { key: 'val' }, // truthy value for object field
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'metadata',
+          widget: 'object',
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(true);
+
+        const result = validateAnyField(args);
+
+        // required=true but value is truthy → valueMissing NOT set
+        expect(result?.valueMissing).toBeFalsy();
+      });
+
+      it('should skip keypath extraction for code field when keyPath has no output key suffix (lines 231/233)', () => {
+        // When keyPath does not end with the code/lang suffix, the regex match fails.
+        // _keyPath = '' → if (_keyPath) false branch → returns undefined early.
+        const validities = { en: {} };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'snippet', // No .code or .lang suffix
+          valueMap: { 'snippet.code': 'const x = 1;', 'snippet.lang': 'js' },
+          value: 'const x = 1;',
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'snippet',
+          widget: 'code',
+          output_code_only: false,
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(false);
+
+        const result = validateAnyField(args);
+
+        // _keyPath = '' → if (_keyPath) = false → keyPath stays 'snippet'
+        // The function continues and validates the code value normally
+        expect(result?.valueMissing).toBeFalsy();
+      });
+
+      it('should not set valueMissing when required field has a non-empty value (line 261)', () => {
+        // The `if (required && (value === undefined || null || ''))` condition is false
+        // when value is a non-empty string → valueMissing is NOT set.
+        const validities = { en: {} };
+
+        const args = {
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'title',
+          valueMap: { title: 'My Title' },
+          value: 'My Title', // non-empty string, required=true → no valueMissing
+        };
+
+        vi.mocked(getField).mockReturnValue({
+          name: 'title',
+          widget: 'string',
+        });
+
+        vi.mocked(isFieldRequired).mockReturnValue(true);
+
+        const result = validateAnyField(args);
+
+        // required=true but value is non-empty → valueMissing NOT set
+        expect(result?.valueMissing).toBeFalsy();
       });
     });
   });

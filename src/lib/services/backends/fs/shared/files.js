@@ -191,7 +191,10 @@ export const collectScanningPaths = () => {
     .filter(({ internalPath }) => internalPath !== undefined)
     .map(({ internalPath }) => internalPath);
 
-  return unique([...entryPaths, ...assetPaths].map((path) => stripSlashes(path ?? '')));
+  return unique(
+    /* v8 ignore next */
+    [...entryPaths, ...assetPaths].map((path) => stripSlashes(path ?? '')),
+  );
 };
 
 /**

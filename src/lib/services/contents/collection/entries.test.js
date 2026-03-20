@@ -418,6 +418,40 @@ describe('getEntriesByCollection()', () => {
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('2');
   });
+
+  test('uses null fallback when getPropertyValue returns undefined (line 95 branch 1)', async () => {
+    // When getPropertyValue returns undefined, `?? null` converts it to null.
+    // Then `filterValues.includes(null)` determines inclusion.
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getRegex } = await import('$lib/services/utils/misc');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: {
+        field: 'status',
+        value: null, // filtering for null (missing) values
+      },
+    };
+
+    const entries = [{ id: '1', locales: { en: { content: {} } } }];
+
+    vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(get).mockReturnValue(entries);
+    vi.mocked(getRegex).mockReturnValue(null);
+    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
+    // Return undefined to trigger the `?? null` fallback
+    vi.mocked(getPropertyValue).mockReturnValue(undefined);
+
+    const result = getEntriesByCollection('posts');
+
+    // value = undefined ?? null = null, filterValues.includes(null) = true
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
+  });
 });
 
 describe('hasAsset()', () => {
@@ -1019,6 +1053,39 @@ describe('hasAsset()', () => {
 
     expect(result).toBe(true);
   });
+
+  test('returns false for richtext field with no image syntax (line 159 false branch)', async () => {
+    // When the markdown body has no images, `matches.length` = 0 → the if block
+    // is NOT taken → falls through to `return false` at line 178.
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockReturnValue({
+      name: 'body',
+      widget: 'richtext',
+    });
+
+    const args = {
+      assetURL: 'target.jpg',
+      collectionName: 'posts',
+      entry: {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: { content: {}, slug: 'test', path: 'posts/test.md' },
+        },
+      },
+      content: {},
+      keyPath: 'body',
+      value: 'Just plain text, no image syntax here.',
+      isIndexFile: false,
+    };
+
+    const result = await hasAsset(args);
+
+    // matches.length = 0 (no markdown image syntax) → if block skipped → returns false
+    expect(result).toBe(false);
+  });
 });
 
 describe('getEntriesByAssetURL()', () => {
@@ -1404,6 +1471,93 @@ describe('getEntriesByAssetURL()', () => {
     expect(vi.mocked(getField)).toHaveBeenCalledTimes(2);
     expect(content.image1).toBe('new.jpg');
     expect(content.image2).toBe('new.jpg');
+  });
+
+  test('skips non-string values that come first (line 206 branch 0)', async () => {
+    // When a non-string value is the FIRST key in content, it triggers line 206’s continue
+    // before the loop can break early. The numeric `count` key is processed first,
+    // which forces `typeof 42 !== 'string'` = true → continue (branch 0).
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: {
+            // count (non-string) is inserted FIRST so it’s iterated before image
+            content: { count: 42, image: 'target.jpg' },
+            slug: 'test',
+            path: 'posts/test.md',
+          },
+        },
+      },
+    ];
+
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    vi.mocked(get).mockReturnValue({ _baseURL: '' });
+    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
+
+    const result = await getEntriesByAssetURL('target.jpg', { entries: mockEntries });
+
+    // count:42 → continue (line 206 branch 0); image:‘target.jpg’ → found
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
+  });
+
+  test('processes fields where hasAsset returns false before a matching field (line 238 false branch)', async () => {
+    // A string field whose value contains the asset URL passes the pre-filter at
+    // line 209, but `hasAsset` returns false for a non-asset widget (line 178),
+    // causing `matched = false` → `if (matched)` false branch at line 238.
+    // The second field (image) matches and sets found = true.
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: {
+            // description contains the URL but is a string field (not image)
+            content: { description: 'See target.jpg for more', image: 'target.jpg' },
+            slug: 'test',
+            path: 'posts/test.md',
+          },
+        },
+      },
+    ];
+
+    const mockCollection = { name: 'posts', _type: 'entry' };
+
+    vi.mocked(get).mockReturnValue({ _baseURL: '' });
+    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockImplementation(({ keyPath }) => {
+      if (keyPath === 'description') return { name: 'description', widget: 'string' };
+      if (keyPath === 'image') return { name: 'image', widget: 'image' };
+
+      return undefined;
+    });
+
+    const result = await getEntriesByAssetURL('target.jpg', { entries: mockEntries });
+
+    // description → hasAsset returns false (string widget), matched=false (line 238 false branch)
+    // image → hasAsset returns true, found=true
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
   });
 });
 

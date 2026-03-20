@@ -116,9 +116,7 @@ export const normalizeAssetFolder = ({
     publicPath:
       // Prefix the public path with `/` unless it’s empty or starting with `.` (entry-relative
       // setting) or starting with `@` (framework-specific)
-      publicFolder === '' || /^[.@]/.test(publicFolder)
-        ? publicFolder
-        : `/${stripSlashes(publicFolder)}`,
+      /^($|[.@])/.test(publicFolder) ? publicFolder : `/${stripSlashes(publicFolder)}`,
     entryRelative,
     hasTemplateTags: /{{.+?}}/.test(mediaFolder),
   };
@@ -316,7 +314,10 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
 
   handleFieldMediaFolders({ fieldMediaFolders, validCollections, globalFolders });
 
-  assetFolders.sort((a, b) => compare(a.internalPath ?? '', b.internalPath ?? ''));
+  // `internalPath` is always set to a string via `stripSlashes()` in the folder construction above.
+  assetFolders.sort((a, b) =>
+    compare(/** @type {string} */ (a.internalPath), /** @type {string} */ (b.internalPath)),
+  );
 
   const allFolders = [];
 

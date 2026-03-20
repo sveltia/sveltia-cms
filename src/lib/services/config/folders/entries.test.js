@@ -659,6 +659,33 @@ describe('config/folders/entries', () => {
       // @ts-ignore
       expect(typeof compareFilePath(folderA, folderB)).toBe('number');
     });
+
+    it('should handle null/undefined filePathMap on b side', () => {
+      const folderA = {
+        collectionName: 'a',
+        filePathMap: { _default: 'a/file.md' },
+      };
+
+      const folderB = {
+        collectionName: 'b',
+        filePathMap: undefined,
+      };
+
+      // @ts-ignore - testing the ?? {} fallback branch on b side
+      expect(() => compareFilePath(folderA, folderB)).not.toThrow();
+      // @ts-ignore
+      expect(typeof compareFilePath(folderA, folderB)).toBe('number');
+    });
+
+    it('should handle null/undefined filePathMap on both sides', () => {
+      const folderA = { collectionName: 'a', filePathMap: undefined };
+      const folderB = { collectionName: 'b', filePathMap: undefined };
+
+      // @ts-ignore - testing ?? {} fallback on both sides
+      expect(() => compareFilePath(folderA, folderB)).not.toThrow();
+      // @ts-ignore
+      expect(compareFilePath(folderA, folderB)).toBe(0);
+    });
   });
 
   describe('getEntryCollectionFolders', () => {

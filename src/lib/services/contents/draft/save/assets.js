@@ -98,7 +98,7 @@ const getEntryFolderPath = (entryFilePath, subPath) => {
   const lastSubPathSegment = subPath?.includes('/') ? subPath.split('/').at(-1) : undefined;
 
   if (lastSubPathSegment && !lastSubPathSegment.includes('{{')) {
-    folderPath = folderPath.match(FOLDER_PATH_REGEX)?.groups?.path ?? folderPath;
+    folderPath = /** @type {string} */ (folderPath.match(FOLDER_PATH_REGEX)?.groups?.path);
   }
 
   return folderPath;

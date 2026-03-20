@@ -405,9 +405,10 @@ export const processSingleSubfieldList = ({
   const items = Object.entries(content)
     .filter(([k]) => regex.test(k))
     .map(([k, v]) => {
-      const indexMatch = k.match(/\.(\d+)$/);
+      // The filter above guarantees the regex matches, so `indexMatch` is always non-null
+      const indexMatch = /** @type {RegExpMatchArray} */ (k.match(/\.(\d+)$/));
 
-      return { index: parseInt(indexMatch?.[1] || '0', 10), value: v };
+      return { index: parseInt(indexMatch[1], 10), value: v };
     })
     .sort((a, b) => a.index - b.index);
 
@@ -517,9 +518,10 @@ export const processComplexListField = ({
   const listValues = Object.entries(content)
     .filter(([k]) => indexRegex.test(k))
     .map(([k, v]) => {
-      const indexMatch = k.match(indexRegex);
+      // The filter above guarantees `indexRegex` matches, so `indexMatch` is always non-null
+      const indexMatch = /** @type {RegExpMatchArray} */ (k.match(indexRegex));
 
-      return { index: parseInt(indexMatch?.[1] || '0', 10), value: v };
+      return { index: parseInt(indexMatch[1], 10), value: v };
     })
     .sort((a, b) => a.index - b.index);
 

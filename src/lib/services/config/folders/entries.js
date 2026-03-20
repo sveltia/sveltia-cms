@@ -88,7 +88,9 @@ export const getEntryCollectionFolders = ({ collections }) =>
         ),
       };
     })
-    .sort((a, b) => compare(a.folderPath ?? '', b.folderPath ?? ''));
+    .sort((a, b) =>
+      compare(/** @type {string} */ (a.folderPath), /** @type {string} */ (b.folderPath)),
+    );
 
 /**
  * Get file collection folders.

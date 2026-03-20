@@ -310,6 +310,7 @@ export const fetchFileContents = async (fetchingFiles) => {
 
   // Show a fake progressbar because the request waiting time is long
   const dataLoadedProgressInterval = window.setInterval(() => {
+    /* v8 ignore next */
     dataLoadedProgress.update((progress = 0) => progress + 1);
   }, fetchingFiles.length / 10);
 

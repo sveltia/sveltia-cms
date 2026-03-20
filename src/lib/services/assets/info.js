@@ -102,6 +102,16 @@ export const getAssetBlobURL = async (asset) => {
 /** @type {IndexedDB | null | undefined} */
 let thumbnailDB = undefined;
 
+/* v8 ignore next */
+/**
+ * Reset the thumbnail database. This is used in tests to reset the state of the thumbnail database
+ * between tests.
+ * @internal
+ */
+export const _resetThumbnailDB = () => {
+  thumbnailDB = undefined;
+};
+
 /**
  * Get a thumbnail image for the given asset.
  * @param {Asset} asset Asset.

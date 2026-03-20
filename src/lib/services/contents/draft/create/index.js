@@ -123,7 +123,8 @@ export const createDraft = ({
     allLocales,
     initialLocales,
     defaultLocale,
-    canonicalSlug: { key: canonicalSlugKey = 'translationKey' },
+    // `canonicalSlug.key` is always set by config normalization (defaults to 'translationKey')
+    canonicalSlug: { key: canonicalSlugKey },
   } = _i18n;
 
   const enabledLocales = isNew

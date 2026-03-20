@@ -462,7 +462,9 @@ export const prepareEntry = async ({ file, entries, errors }) => {
       subPathTemplate,
       allLocales,
     );
-  } else if (isMultiFileStructure && locale) {
+  } else {
+    // `isMultiFileStructure` is always true here (the only non-`i18nSingleFile` path), and `locale`
+    // is always set (the guard above returned early if it wasn’t).
     const wasMerged = processI18nMultiFileEntry(
       entry,
       transformedContent,
@@ -470,7 +472,7 @@ export const prepareEntry = async ({ file, entries, errors }) => {
       fileName,
       subPath,
       subPathTemplate,
-      locale,
+      /** @type {InternalLocaleCode} */ (locale),
       defaultLocale,
       collectionName,
       canonicalSlugKey,

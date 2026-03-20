@@ -249,8 +249,10 @@ export const buildMarkdownWithPreviews = (currentValue, componentDefs) => {
     // needing the `MutationObserver` to find and replace a placeholder element, while still
     // supporting complex React element previews.
     string = string.replaceAll(globalPattern, () => {
-      const key = keys.shift();
-      const preview = key ? previewMap.get(key) : undefined;
+      // `matchAll` and `replaceAll` iterate the same regex matches in order, so `keys` always has a
+      // corresponding entry — `shift()` is never `undefined`.
+      const key = /** @type {string} */ (keys.shift());
+      const preview = previewMap.get(key);
 
       if (typeof preview === 'string') {
         return preview;

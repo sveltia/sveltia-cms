@@ -19,11 +19,9 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
       // Sanitize the given value to prevent XSS attacks as the preview may not be sanitized
       value = stripTags(dynamicValue);
     } catch {
-      // Fallback for environments where DOMParser is not available (e.g., Node.js tests)
-      // Use a simple regex to remove HTML tags as a basic sanitization measure
-      if (import.meta.env.VITEST) {
-        value = dynamicValue.replace(/<[^>]*>/g, '');
-      }
+      // Fallback for environments where DOMParser is not available (in Vitest). Use a simple regex
+      // to remove HTML tags as a basic sanitization measure
+      value = dynamicValue.replace(/<[^>]*>/g, '');
     }
   } else {
     value = defaultValue || '';

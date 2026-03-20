@@ -596,6 +596,25 @@ describe('getCurrentValue', () => {
     expect(typeof result).toBe('string');
     expect(result).toContain('14:30');
   });
+
+  test('should succeed with fallback parse when inputValue not in inputFormat (line 193 false)', () => {
+    // First parse attempt with inputFormat ('YYYY-MM-DDTHH:mm') fails for a date-only string.
+    // Fallback parse (no format) succeeds → the `if (!parsed.isValid())` false branch is taken.
+    /** @type {DateTimeField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      format: 'MMMM Do, YYYY', // A custom output format
+      // No dateOnly/timeOnly — inputFormat = 'YYYY-MM-DDTHH:mm'
+    };
+
+    // '2023-12-25' cannot be parsed as 'YYYY-MM-DDTHH:mm' (missing time),
+    // but dayjs can parse it generically → fallback succeeds.
+    const result = getCurrentValue('2023-12-25', '', fieldConfig);
+
+    // The fallback parse succeeded, so we get a formatted output (not '')
+    expect(typeof result).toBe('string');
+    expect(result).not.toBe('');
+  });
 });
 
 describe('getInputValue', () => {

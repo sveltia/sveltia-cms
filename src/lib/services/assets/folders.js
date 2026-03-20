@@ -154,7 +154,11 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = true } = {}) => 
       .map(({ folder }) => folder),
   ];
 
-  return results.sort((a, b) => (b.internalPath ?? '').localeCompare(a.internalPath ?? ''));
+  // `internalPath` is always a string for items in results (entry-relative items are filtered to
+  // those with defined `internalPath`, and global-folder items always have `internalPath` set).
+  return results.sort((a, b) =>
+    /** @type {string} */ (b.internalPath).localeCompare(/** @type {string} */ (a.internalPath)),
+  );
 };
 
 /**

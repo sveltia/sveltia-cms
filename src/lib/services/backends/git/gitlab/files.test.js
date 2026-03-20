@@ -286,6 +286,39 @@ describe('GitLab files service', () => {
       });
     });
 
+    test('handles commit with null author (L283 binary-expr — author ?? {})', async () => {
+      // When author is null, `author ?? {}` uses the fallback {}, so id and username are undefined.
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+      ]);
+
+      const sizes = { 'file1.md': { size: '50' } };
+      const blobs = { 'file1.md': { rawTextBlob: 'data' } };
+
+      const commits = {
+        'file1.md': {
+          author: null, // triggers author ?? {} fallback
+          authorName: 'No Author',
+          authorEmail: 'none@example.com',
+          committedDate: '2024-01-01T00:00:00Z',
+        },
+      };
+
+      const result = await parseFileContents({
+        fetchingFiles,
+        sizes,
+        blobs,
+        commits,
+      });
+
+      expect(result['file1.md'].meta.commitAuthor).toEqual({
+        name: 'No Author',
+        email: 'none@example.com',
+        id: undefined,
+        login: undefined,
+      });
+    });
+
     test('handles multiple files with mixed commit data', async () => {
       const fetchingFiles = /** @type {any[]} */ ([
         { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },

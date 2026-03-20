@@ -134,6 +134,10 @@ vi.mock('$lib/services/contents/collection/data', () => ({
 describe('assets/data/create', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+
+    const { getAssetsByDirName } = await import('$lib/services/assets');
+
+    vi.mocked(getAssetsByDirName).mockReturnValue([]);
   });
 
   describe('createFileList', () => {
@@ -281,6 +285,48 @@ describe('assets/data/create', () => {
       expect(result[0].name).toBe('test1.jpg');
       expect(result[1].name).toBe('test2.jpg');
     });
+
+    it('should not add duplicate file name to assetNamesInSameFolder', async () => {
+      const { getAssetsByDirName } = await import('$lib/services/assets');
+
+      // Pre-populate the folder with the file name we're about to upload
+      vi.mocked(getAssetsByDirName).mockReturnValue([
+        {
+          name: 'test.jpg',
+          path: '/images/test.jpg',
+          sha: 'abc123',
+          size: 1024,
+          kind: 'image',
+          folder: {
+            internalPath: '/images',
+            collectionName: 'assets',
+            publicPath: '/images',
+            entryRelative: false,
+            hasTemplateTags: false,
+          },
+        },
+      ]);
+
+      const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+
+      const uploadingAssets = {
+        files: [mockFile],
+        folder: {
+          internalPath: '/images',
+          collectionName: 'assets',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        originalAsset: undefined,
+      };
+
+      const result = createFileList(uploadingAssets);
+
+      // The file name already exists in the folder, so the array should not grow
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('test.jpg');
+    });
   });
 
   describe('createFileList - edge cases', () => {
@@ -341,6 +387,44 @@ describe('assets/data/create', () => {
         deleted: false,
         count: 3,
       });
+    });
+
+    it('should set published to true when backend is Git and skipCI is disabled', async () => {
+      const { assetUpdatesToast } = await import('$lib/services/assets/data');
+      const { backend } = await import('$lib/services/backends');
+      const { skipCIEnabled } = await import('$lib/services/backends/git/shared/integration');
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockImplementation((store) => {
+        if (store === backend) return { isGit: true };
+        if (store === skipCIEnabled) return false;
+        return undefined;
+      });
+
+      updatedStores({ count: 1 });
+
+      expect(assetUpdatesToast.set).toHaveBeenCalledWith(
+        expect.objectContaining({ saved: true, published: true, count: 1 }),
+      );
+    });
+
+    it('should set published to false when skipCI is enabled', async () => {
+      const { assetUpdatesToast } = await import('$lib/services/assets/data');
+      const { backend } = await import('$lib/services/backends');
+      const { skipCIEnabled } = await import('$lib/services/backends/git/shared/integration');
+      const { get } = await import('svelte/store');
+
+      vi.mocked(get).mockImplementation((store) => {
+        if (store === backend) return { isGit: true };
+        if (store === skipCIEnabled) return true;
+        return undefined;
+      });
+
+      updatedStores({ count: 1 });
+
+      expect(assetUpdatesToast.set).toHaveBeenCalledWith(
+        expect.objectContaining({ saved: true, published: false, count: 1 }),
+      );
     });
 
     it('should update focusedAsset when it exists', async () => {

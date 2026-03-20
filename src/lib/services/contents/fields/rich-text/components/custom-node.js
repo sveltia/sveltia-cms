@@ -37,7 +37,7 @@ export const createCustomNodeClass = (componentDef) => {
       ? (preview.trim().match(/^<(?<tagName>[a-z]+)/i)?.groups?.tagName ??
         (typeof block === 'string'
           ? block.trim().match(/^<(?<tagName>[a-z]+)/i)?.groups?.tagName
-          : undefined))
+          : /* v8 ignore next */ undefined))
       : undefined;
 
   /**

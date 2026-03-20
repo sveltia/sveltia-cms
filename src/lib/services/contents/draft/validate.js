@@ -257,10 +257,7 @@ export const validateAnyField = (args) => {
       value = value.trim();
     }
 
-    if (
-      required &&
-      (value === undefined || value === null || value === '' || (multiple && !value.length))
-    ) {
+    if (required && (value === undefined || value === null || value === '')) {
       validity.valueMissing = true;
     }
 

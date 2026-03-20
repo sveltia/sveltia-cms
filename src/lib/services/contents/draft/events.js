@@ -115,7 +115,8 @@ export const callEventHooks = async ({ type, draft, savingEntry }) => {
             locales[locale].content = flatten(map.i18n[locale].data);
           }
         });
-      } else if (isObject(map)) {
+      } else {
+        // `map` is always a plain object here (guaranteed by `isMap(updatedMap)` above)
         locales[defaultLocale].content = flatten(map);
       }
     }

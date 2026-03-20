@@ -5,6 +5,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { filterEntries } from '$lib/services/contents/collection/view/filter';
 import { groupEntries } from '$lib/services/contents/collection/view/group';
+import { initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 
 import { collectionState, currentView, entryGroups, listedEntries } from './index.js';
@@ -13,7 +14,15 @@ import { collectionState, currentView, entryGroups, listedEntries } from './inde
  * Real writable stores hoisted so they are available when vi.mock factories run.
  * Vi.hoisted runs before module resolution/imports.
  */
-const { _allEntries, _selectedCollection, _locale, _selectedEntries, _prefs } = vi.hoisted(() => {
+const {
+  _allEntries,
+  _selectedCollection,
+  _locale,
+  _selectedEntries,
+  _prefs,
+  _backend,
+  _entryListSettings,
+} = vi.hoisted(() => {
   /**
    * Minimal writable store factory (no imports available inside vi.hoisted).
    * @template T
@@ -69,6 +78,10 @@ const { _allEntries, _selectedCollection, _locale, _selectedEntries, _prefs } = 
     _selectedEntries: w(/** @type {any[]} */ ([])),
     /** @type {import('svelte/store').Writable<any>} */
     _prefs: w(/** @type {any} */ ({ devModeEnabled: false })),
+    /** @type {import('svelte/store').Writable<any>} */
+    _backend: w(/** @type {any} */ (null)),
+    /** @type {import('svelte/store').Writable<any>} */
+    _entryListSettings: w(/** @type {any} */ (undefined)),
   };
 });
 
@@ -110,6 +123,15 @@ vi.mock('$lib/services/user/prefs', () => ({
   prefs: _prefs,
 }));
 
+vi.mock('$lib/services/backends', () => ({
+  backend: _backend,
+}));
+
+vi.mock('$lib/services/contents/collection/view/settings', () => ({
+  entryListSettings: _entryListSettings,
+  initSettings: vi.fn(),
+}));
+
 describe('collection/view/index', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -117,6 +139,8 @@ describe('collection/view/index', () => {
     _selectedCollection.set(undefined);
     _locale.set('en');
     _prefs.set({ devModeEnabled: false });
+    _backend.set(null);
+    _entryListSettings.set(undefined);
     currentView.set({ type: 'list' });
   });
 
@@ -1051,5 +1075,122 @@ describe('collection/view/index', () => {
 
     // Should process through entryGroups and return groups
     expect(entryGroups).toBeDefined();
+  });
+
+  test('entryGroups skips recomputation when listedEntries and currentView unchanged (L106 true)', () => {
+    // Cover L106 true: referential equality cache hit — only appLocale changes
+    /** @type {any} */
+    const mockCollection = { name: 'posts', folder: '_posts' };
+    /** @type {any[]} */
+    const mockEntries = [{ id: '1', slug: 'post-1', subPath: '', locales: {}, sha: 'abc' }];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: mockEntries }]);
+
+    _selectedCollection.set(mockCollection);
+    _allEntries.set(mockEntries);
+
+    // Subscribe and keep active so the derived store updates when appLocale changes
+    const values = /** @type {any[][]} */ ([]);
+    const unsubscribe = entryGroups.subscribe((v) => values.push(v));
+
+    // First computation done — lastListedEntries and lastCurrentView are now set.
+    // Change ONLY appLocale while subscription is still active so the derived re-runs.
+    // Since listedEntries and currentView refs are unchanged, L106 true fires (early return).
+    _locale.set('fr');
+
+    unsubscribe();
+
+    expect(entryGroups).toBeDefined();
+  });
+
+  test('entryGroups calls set(groups) when groups differ from current value (L140 true)', () => {
+    // Cover L140 true: !equal(get(entryGroups), groups) is true → set(groups) is called
+    /** @type {any} */
+    const mockCollection = { name: 'posts', folder: '_posts' };
+
+    /** @type {any[]} */
+    const mockEntries = [
+      { id: '1', slug: 'post-1', subPath: '', locales: {}, sha: 'abc' },
+      { id: '2', slug: 'post-2', subPath: '', locales: {}, sha: 'def' },
+    ];
+
+    const mockGroups = [{ name: 'All', entries: mockEntries }];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(groupEntries).mockReturnValue(mockGroups);
+
+    _selectedCollection.set(mockCollection);
+    _allEntries.set(mockEntries);
+
+    // Subscribing should receive the groups after set(groups) is called
+    const receivedValues = /** @type {any[][]} */ ([]);
+    const unsubscribe = entryGroups.subscribe((v) => receivedValues.push(v));
+
+    unsubscribe();
+
+    // The final value should be mockGroups (not [])
+    const lastValue = receivedValues[receivedValues.length - 1];
+
+    expect(lastValue).toEqual(mockGroups);
+  });
+
+  test('entryGroups does not call filterEntries when currentView has no filters (L127 false)', () => {
+    // Cover L127 false: _currentView.filters is falsy → skip filtering
+    /** @type {any} */
+    const mockCollection = { name: 'posts', folder: '_posts' };
+    /** @type {any[]} */
+    const mockEntries = [{ id: '1', slug: 'post-1', subPath: '', locales: {}, sha: 'abc' }];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(groupEntries).mockReturnValue([{ name: 'All', entries: mockEntries }]);
+
+    _selectedCollection.set(mockCollection);
+    _allEntries.set(mockEntries);
+
+    // currentView has sort but NO filters → L127 false
+    currentView.set(/** @type {any} */ ({ type: 'list', sort: { field: 'title' } }));
+
+    expect(vi.mocked(filterEntries)).not.toHaveBeenCalled();
+  });
+
+  test('entryGroups skips set(groups) when computed groups equal current value (L133 false)', () => {
+    // Cover L133 false: equal(get(entryGroups), groups) === true → skip set(groups)
+    // This happens when groupEntries returns [] (same as the [] set at the start of the callback)
+    /** @type {any} */
+    const mockCollection = { name: 'posts', folder: '_posts' };
+    /** @type {any[]} */
+    const mockEntries = [{ id: '1', slug: 'post-1', subPath: '', locales: {}, sha: 'abc' }];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    // groupEntries returns [] — same as what set([]) puts in the store, so equal() is true
+    vi.mocked(groupEntries).mockReturnValue([]);
+
+    _selectedCollection.set(mockCollection);
+    _allEntries.set(mockEntries);
+
+    const values = /** @type {any[][]} */ ([]);
+    const unsubscribe = entryGroups.subscribe((v) => values.push(v));
+
+    unsubscribe();
+
+    // The store should remain [] because groups === [] === get(entryGroups) after set([])
+    expect(values[values.length - 1]).toEqual([]);
+  });
+
+  test('backend.subscribe calls initSettings when backend is truthy and entryListSettings is falsy (L140 true)', () => {
+    // Cover L140 true + L141: _backend is truthy and entryListSettings is undefined
+    // _backend starts as null at module load (covers the &&-short-circuit / binary-expr false path)
+    // Setting it to a truthy value triggers the subscribe callback again.
+    // Since entryListSettings is still undefined (!get(entryListSettings) === true), initSettings
+    // is called, covering L141.
+    _entryListSettings.set(undefined);
+    _backend.set(/** @type {any} */ ({ databaseName: 'test-db' }));
+
+    expect(vi.mocked(initSettings)).toHaveBeenCalledWith({ databaseName: 'test-db' });
   });
 });

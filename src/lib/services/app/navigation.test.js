@@ -543,6 +543,33 @@ describe('navigation', () => {
       document.startViewTransition = originalStartViewTransition;
     });
 
+    it('should clear activeTransition when transition finishes', async () => {
+      const mockUpdateContent = vi.fn();
+      const { sleep } = await import('@sveltia/utils/misc');
+      const { flushSync } = await import('svelte');
+
+      vi.mocked(sleep).mockResolvedValue(undefined);
+      vi.mocked(flushSync).mockImplementation((fn) => {
+        if (fn) fn();
+      });
+
+      const mockTransition = { finished: Promise.resolve() };
+
+      // @ts-ignore - Simplified mock for testing
+      document.startViewTransition = vi.fn((config) => {
+        if (config?.update) config.update();
+        return mockTransition;
+      });
+
+      startViewTransition('forwards', mockUpdateContent);
+
+      // Flush microtasks so the .finally() callback fires before assertions
+      await Promise.resolve();
+
+      expect(document.startViewTransition).toHaveBeenCalled();
+      expect(mockUpdateContent).toHaveBeenCalled();
+    });
+
     it('should use view transition API when document.startViewTransition is supported', async () => {
       const mockUpdateContent = vi.fn();
       const mockTransition = { update: vi.fn() };

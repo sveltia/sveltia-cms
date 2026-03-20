@@ -892,19 +892,6 @@ describe('assets/index', () => {
       // focusedAsset should be reset to undefined
       expect(get(focusedAsset)).toBe(undefined);
     });
-
-    it.skip('should execute transformation branch when transformations are provided at module load', async () => {
-      // NOTE: This test is skipped because Svelte derived stores capture their dependencies
-      // at module initialization time. By the time this test runs and configures the mock
-      // to return transformations, the store's callback has already been evaluated with
-      // transformations=undefined. This would require significant architectural changes
-      // to test properly (e.g., lazy initialization of transformations or refactoring the store).
-      //
-      // Architectural issue: The processedAssets derived store's async callback is frozen
-      // at module load with the mock state at that time. Changing mocks afterwards doesn't
-      // affect the already-evaluated callback. Line 99 (transformation branch) is therefore
-      // unreachable in unit tests without refactoring the source code structure.
-    });
   });
 
   describe('getAssetByRelativePathAndCollection', () => {

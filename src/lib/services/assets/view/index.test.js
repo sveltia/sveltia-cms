@@ -1,6 +1,49 @@
-import { describe, expect, it, vi } from 'vitest';
+/* eslint-disable jsdoc/require-param-description */
+/* eslint-disable jsdoc/require-description */
+/* eslint-disable jsdoc/require-jsdoc */
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getFolderLabelByCollection, showAssetOverlay, showUploadAssetsDialog } from './index.js';
+
+const { _backendAv, _assetListSettingsAv } = vi.hoisted(() => {
+  /**
+   * Minimal writable store factory.
+   * @template T
+   * @param {T} initial Initial value.
+   * @returns {import('svelte/store').Writable<T>} Writable store.
+   */
+  const w = (initial) => {
+    let value = initial;
+    /** @type {Set<(v: T) => void>} */
+    const subs = new Set();
+
+    /** @param {T} v */
+    const setFn = (v) => {
+      value = v;
+      subs.forEach((run) => run(value));
+    };
+
+    return {
+      subscribe(run) {
+        subs.add(run);
+        run(value);
+        return () => subs.delete(run);
+      },
+      set: setFn,
+      update(fn) {
+        setFn(fn(value));
+      },
+    };
+  };
+
+  return {
+    /** @type {import('svelte/store').Writable<any>} */
+    _backendAv: w(/** @type {any} */ (null)),
+    /** @type {import('svelte/store').Writable<any>} */
+    _assetListSettingsAv: w(/** @type {any} */ (undefined)),
+  };
+});
 
 // Mock dependencies
 vi.mock('svelte-i18n', () => ({
@@ -77,7 +120,20 @@ vi.mock('$lib/services/user/prefs', () => ({
   },
 }));
 
+vi.mock('$lib/services/backends', () => ({
+  backend: _backendAv,
+}));
+
+vi.mock('$lib/services/assets/view/settings', () => ({
+  assetListSettings: _assetListSettingsAv,
+  initSettings: vi.fn(),
+}));
+
 describe('assets/view/index', () => {
+  beforeEach(() => {
+    _backendAv.set(null);
+    _assetListSettingsAv.set(undefined);
+  });
   describe('showAssetOverlay', () => {
     it('should be defined as a store', () => {
       expect(showAssetOverlay).toBeDefined();
@@ -543,6 +599,71 @@ describe('assets/view/index', () => {
       const mockCallback = vi.fn();
 
       assetGroups.subscribe(mockCallback);
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      expect(mockCallback).toHaveBeenCalled();
+    });
+  });
+
+  describe('backend.subscribe and assetGroups coverage branches', () => {
+    it('should call initSettings when backend becomes truthy and assetListSettings is falsy', async () => {
+      const { initSettings } = await import('$lib/services/assets/view/settings');
+
+      // _backendAv starts as null (covers &&-short-circuit / binary-expr false path at module load)
+      // Set backend truthy with entryListSettings still undefined → initSettings called
+      _assetListSettingsAv.set(undefined);
+      _backendAv.set(/** @type {any} */ ({ repository: { databaseName: 'test-db' } }));
+
+      expect(vi.mocked(initSettings)).toHaveBeenCalledWith({
+        repository: { databaseName: 'test-db' },
+      });
+    });
+
+    it('should skip set(groups) when computed groups equal current store value (L117 false)', async () => {
+      // Cover L117 false: trigger two computations with the same groups result so that
+      // equal(get(assetGroups), groups) === true → !equal() === false → skip set.
+      // First computation: groups=mockGroups, get(assetGroups)=undefined → not equal → set →
+      //   assetGroups.value = mockGroups.
+      // Second computation (triggered by currentView update): groups=mockGroups still,
+      //   get(assetGroups)=mockGroups → equal → skip → L117 false covered.
+      vi.resetModules();
+
+      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
+      const { filterAssets } = await import('$lib/services/assets/view/filter');
+      const { sortAssets } = await import('$lib/services/assets/view/sort');
+      const { groupAssets } = await import('$lib/services/assets/view/group');
+      const mockAssets = /** @type {any[]} */ ([]);
+      const mockGroups = /** @type {any} */ ({ '*': [] });
+
+      vi.mocked(sortAssets).mockReturnValue(mockAssets);
+      vi.mocked(filterAssets).mockReturnValue(mockAssets);
+      vi.mocked(groupAssets).mockReturnValue(mockGroups);
+
+      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
+        callback(/** @type {any} */ ([]));
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
+        callback(/** @type {any} */ (undefined));
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
+
+      const { assetGroups, currentView } = await import('./index.js');
+      const mockCallback = vi.fn();
+
+      assetGroups.subscribe(mockCallback);
+
+      // First computation sets assetGroups.value = mockGroups (true branch).
+      // Update currentView to trigger a second computation — groups is still mockGroups,
+      // get(assetGroups) is now mockGroups → equal → skip → L117 false branch fires.
+      currentView.set(/** @type {any} */ ({ type: 'grid', showInfo: false }));
 
       await new Promise((resolve) => {
         setTimeout(resolve, 10);

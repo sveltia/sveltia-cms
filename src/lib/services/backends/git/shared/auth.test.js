@@ -1379,4 +1379,58 @@ describe('git/shared/auth', () => {
       });
     });
   });
+
+  describe('authorize — popup-open timer tick (L60 false)', () => {
+    it('should not reject when timer fires and popup is still open', async () => {
+      vi.useFakeTimers();
+      mockPopup.closed = false;
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authURL = 'https://github.com/login/oauth/authorize';
+      const backendName = 'github';
+      const authPromise = authorize({ backendName, authURL });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      // Advance past one full 1 s interval with popup still open.
+      // The timer callback fires, checks popup?.closed === false → L60 false branch (body skipped).
+      mockPopup.closed = false;
+      vi.advanceTimersByTime(1000);
+
+      // Complete auth normally so the promise resolves rather than hanging.
+      messageHandler({ data: 'authorizing:github', origin: 'https://github.com' });
+      messageHandler({
+        data: `authorization:github:success:${JSON.stringify({ token: 'ok' })}`,
+        origin: 'https://github.com',
+      });
+
+      const result = await authPromise;
+
+      expect(result).toEqual({ token: 'ok' });
+      vi.useRealTimers();
+    });
+  });
+
+  describe('sendMessage — unrelated message event (L249 false)', () => {
+    it('should ignore message events whose data does not match the authorizing prefix', () => {
+      let capturedHandler;
+
+      mockWindow.addEventListener = vi.fn((event, handler) => {
+        if (event === 'message') capturedHandler = handler;
+      });
+
+      sendMessage({ provider: 'github', token: 'tok' });
+
+      // Fire an unrelated message → data !== 'authorizing:github' → L249 false (body skipped).
+      capturedHandler({ data: 'unrelated-message', origin: 'https://github.com' });
+
+      // The opener should not have sent an authorization message for this unrelated event.
+      expect(mockWindow.opener.postMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining('authorization:'),
+        expect.any(String),
+      );
+    });
+  });
 });

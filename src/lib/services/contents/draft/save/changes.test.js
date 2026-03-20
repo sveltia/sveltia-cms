@@ -1894,5 +1894,53 @@ describe('draft/save/changes', () => {
       expect(result.changes).toHaveLength(1);
       expect(result.changes[0].action).toBe('create');
     });
+
+    it('should skip undefined changes when a locale is disabled in a new i18n multi-file entry (line 318)', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        id: 'test-uuid',
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: true,
+            allLocales: ['en', 'ja'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true, ja: false }, // 'ja' is disabled
+        originalLocales: {},
+        currentValues: { en: { title: 'Test' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: undefined,
+        localizedSlugs: { en: 'test-post', ja: 'test-post' },
+      };
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      // For 'ja': currentLocales['ja']=false AND isNew=true → getMultiFileChange returns undefined
+      // The `if (change) { changes.push(change); }` false branch (line 318) is exercised for 'ja'
+      // Only 'en' produces a file change
+      expect(result.savingEntry).toBeDefined();
+      expect(result.changes).toHaveLength(1);
+    });
   });
 });

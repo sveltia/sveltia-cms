@@ -489,6 +489,49 @@ describe('assets/data/move', () => {
       expect(getAssociatedCollections).toHaveBeenCalledWith(mockEntry);
       expect(getCollectionFilesByEntry).toHaveBeenCalledWith(mockCollection, mockEntry);
     });
+
+    it('should call getIndexFile when entry is an index file (line 111 true branch)', async () => {
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+
+      const { isCollectionIndexFile, getIndexFile } =
+        await import('$lib/services/contents/collection/index-file');
+
+      const mockEntry = {
+        id: 'index-entry',
+        locales: {
+          en: { path: 'content/blog/_index.md', content: {} },
+        },
+      };
+
+      const mockCollection = {
+        name: 'blog',
+        editor: { preview: true },
+      };
+
+      const mockIndexFile = { name: '_index', format: 'yaml-frontmatter' };
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      // isIndexFile = true → indexFile = getIndexFile(collection) branch is taken
+      vi.mocked(isCollectionIndexFile).mockReturnValue(true);
+      vi.mocked(getIndexFile).mockReturnValue(mockIndexFile);
+
+      const savingEntries = [];
+      const changes = [];
+      const _cmsConfig = {};
+
+      await expect(
+        collectEntryChanges({
+          _cmsConfig,
+          entry: mockEntry,
+          savingEntries,
+          changes,
+        }),
+      ).resolves.not.toThrow();
+
+      expect(getIndexFile).toHaveBeenCalledWith(mockCollection);
+    });
   });
 
   describe('collectEntryChangesFromAsset', () => {

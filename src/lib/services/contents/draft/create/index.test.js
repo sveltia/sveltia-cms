@@ -229,6 +229,36 @@ describe('contents/draft/create/index', () => {
       );
     });
 
+    it('should use true fallback when no editor.preview is set anywhere (line 120)', () => {
+      // Covers the `true` fallback: when none of indexFile/collectionFile/collection/cmsConfig
+      // define editor.preview, the ?? chain falls all the way to `true`.
+      cmsConfig.subscribe.mockImplementation((callback) => {
+        callback({}); // no editor property → cmsConfig?.editor?.preview = undefined
+        return vi.fn();
+      });
+
+      const collection = {
+        name: 'posts',
+        _type: 'entry',
+        fields: [],
+        _i18n: {
+          allLocales: ['en'],
+          initialLocales: ['en'],
+          defaultLocale: 'en',
+          canonicalSlug: { key: 'translationKey' },
+        },
+        // no editor property → collection.editor?.preview = undefined
+      };
+
+      createDraft({ collection });
+
+      expect(entryDraft.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          canPreview: true, // falls through to the literal `true` at line 120
+        }),
+      );
+    });
+
     it('should use initial locales for new entry', () => {
       const collection = {
         name: 'posts',
@@ -605,6 +635,42 @@ describe('contents/draft/create/index', () => {
           defaultLocale: 'en',
           originalSlugs: { _: 'test-post' },
           currentSlugs: { _: 'test-post' },
+        }),
+      );
+    });
+
+    it('should use ?? {} fallback when default locale content is undefined (line 139)', () => {
+      // Covers the `locales?.[defaultLocale]?.content ?? {}` false branch:
+      // when the entry exists but the default locale has no content yet.
+      const collection = {
+        name: 'posts',
+        _type: 'entry',
+        fields: [],
+        _i18n: {
+          allLocales: ['en', 'ja'],
+          initialLocales: ['en'],
+          defaultLocale: 'en',
+          canonicalSlug: { key: 'translationKey' },
+        },
+      };
+
+      const originalEntry = {
+        id: 'entry-456',
+        slug: 'test-post',
+        locales: {
+          // 'en' locale exists but has no 'content' → triggers ?? {} fallback
+          en: { slug: 'test-post' },
+          ja: { content: { translationKey: 'abc' }, slug: 'test-post' },
+        },
+      };
+
+      createDraft({ collection, originalEntry });
+
+      expect(entryDraft.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          defaultLocale: 'en',
+          // 'translationKey' not in {} → takes { _: slug } path
+          originalSlugs: { _: 'test-post' },
         }),
       );
     });

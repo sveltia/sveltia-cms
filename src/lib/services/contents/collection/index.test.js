@@ -40,6 +40,9 @@ vi.mock('$lib/services/contents/file/config', () => ({
 vi.mock('$lib/services/contents/i18n', () => ({
   normalizeI18nConfig: vi.fn(),
 }));
+vi.mock('$lib/services/contents/i18n/config', () => ({
+  normalizeI18nConfig: vi.fn(),
+}));
 
 describe('isEntryCollection()', () => {
   test('returns true for collection with folder property', () => {
@@ -598,10 +601,18 @@ describe('parseFileCollection()', () => {
   beforeEach(async () => {
     const { getFileConfig } = await import('$lib/services/contents/file/config');
     const { normalizeI18nConfig } = await import('$lib/services/contents/i18n');
+
+    const { normalizeI18nConfig: normalizeI18nConfigFromConfig } =
+      await import('$lib/services/contents/i18n/config');
+
     const { isValidCollectionFile } = await import('$lib/services/contents/collection/files');
 
     vi.mocked(getFileConfig).mockReturnValue({ fullPath: '/about.md' });
     vi.mocked(normalizeI18nConfig).mockReturnValue({ defaultLocale: 'en' });
+    vi.mocked(normalizeI18nConfigFromConfig).mockReturnValue({
+      defaultLocale: 'en',
+      i18nEnabled: false,
+    });
     vi.mocked(isValidCollectionFile).mockReturnValue(true);
 
     // Mock cmsConfig to include i18n property for normalizeI18nConfig
@@ -710,11 +721,15 @@ describe('getCollection()', () => {
     const { getFileConfig } = await import('$lib/services/contents/file/config');
     const { normalizeI18nConfig } = await import('$lib/services/contents/i18n');
 
+    const { normalizeI18nConfig: normalizeI18nConfigFromConfig } =
+      await import('$lib/services/contents/i18n/config');
+
     const { getValidCollectionFiles, isValidCollectionFile } =
       await import('$lib/services/contents/collection/files');
 
     vi.mocked(getFileConfig).mockReturnValue({ fullPath: '/content/posts' });
     vi.mocked(normalizeI18nConfig).mockReturnValue({ defaultLocale: 'en' });
+    vi.mocked(normalizeI18nConfigFromConfig).mockReturnValue({ defaultLocale: 'en' });
     vi.mocked(getValidCollectionFiles).mockReturnValue([]);
     vi.mocked(isValidCollectionFile).mockReturnValue(true);
   });
@@ -822,6 +837,24 @@ describe('getCollection()', () => {
 
     expect(result?._type).toBe('file');
     expect(result?._fileMap).toBeDefined();
+  });
+
+  test('skips file path normalization when file item has no file property (line 276 false branch)', () => {
+    const collections = [
+      {
+        name: 'pages-no-file',
+        files: [
+          { name: 'about', fields: [] }, // no 'file' property → if (f.file) is false
+        ],
+      },
+    ];
+
+    vi.mocked(get).mockReturnValue({ collections });
+
+    // Should not throw; the file item without `file` is silently skipped
+    const result = getCollection('pages-no-file');
+
+    expect(result?._type).toBe('file');
   });
 });
 
