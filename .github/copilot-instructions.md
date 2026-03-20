@@ -6,11 +6,11 @@
 
 **Key Details:**
 
-- **Size**: ~800 source files, 170+ test files, 4200+ tests
+- **Size**: ~800 source files, 208 test files, 5800+ tests
 - **Languages**: TypeScript-flavoured JavaScript (ES2024/JSDoc), Svelte 5, SCSS/CSS, HTML
 - **Target Runtime**: Browser (IIFE and ES modules)
 - **Package Manager**: **pnpm only** (npm will cause issues)
-- **Node Version**: v24 (see `.nvmrc`)
+- **Node Version**: v25 (see `.nvmrc`)
 - **Bundle Output**: Distributable CMS that loads in browsers via CDN or npm
 
 ## Build & Development Commands
@@ -60,8 +60,8 @@ pnpm check:imports   # Unused import detection
 pnpm check:audit     # Security audit
 
 # Testing
-pnpm exec vitest run test            # Run all tests
-pnpm exec vitest run test:coverage   # Test coverage report
+pnpm test                # Run all tests
+pnpm test:coverage       # Test coverage report
 
 # Code formatting
 pnpm format          # Auto-fix Prettier formatting
@@ -71,7 +71,7 @@ pnpm format          # Auto-fix Prettier formatting
 
 - `pnpm install`: ~25-30 seconds
 - `pnpm check`: ~30-45 seconds
-- `pnpm exec vitest run`: ~35 seconds (4200+ tests)
+- `pnpm test`: ~35 seconds (5800+ tests)
 - `pnpm build`: ~15-20 seconds
 
 ### Common Issues & Solutions
@@ -114,7 +114,7 @@ src/lib/
 - `vite.config.js`: Build configuration with custom plugins
 - `svelte.config.js`: Svelte 5 with runes enabled
 - `jsconfig.json`: JavaScript & path mapping (`$lib/*`)
-- `.eslintrc.yaml`: Comprehensive ESLint rules with Svelte plugin
+- `eslint.config.js`: Comprehensive ESLint rules with Svelte plugin (flat config format)
 - `.prettierrc.yaml`: Code formatting (single quotes, trailing commas)
 - `.stylelintrc.yaml`: SCSS/CSS linting rules
 - `package.json`: Scripts and dependencies
@@ -132,7 +132,7 @@ src/lib/
 
 - **Triggers**: Every push to any branch
 - **Jobs**: Check, Test, Build (run in parallel matrix)
-- **Node**: Uses `.nvmrc` version (v24)
+- **Node**: Uses `.nvmrc` version (v25)
 - **Package Manager**: pnpm with cache
 - **Steps**: checkout → setup → install → run task
 
@@ -140,7 +140,7 @@ src/lib/
 
 1. All ESLint rules pass (strict Airbnb config + Svelte rules + some customizations)
 2. Prettier formatting enforced
-3. All 4200+ tests pass
+3. All 5800+ tests pass
 4. Svelte compiler checks pass
 5. Production build succeeds
 6. No unused imports (custom script validation)
@@ -149,7 +149,7 @@ src/lib/
 
 ### Coding Standards
 
-- **Guidelines**: Follow Airbnb JavaScript style guide with project-specific overrides (see `.eslintrc.yaml`)
+- **Guidelines**: Follow Airbnb JavaScript style guide with project-specific overrides (see `eslint.config.js`)
 - **Quotes**: Single quotes for JavaScript, double for YAML/CSS (see `.prettierrc.yaml`)
 - **Line Length**: 100 characters max
 - **Trailing Commas**: Always use
@@ -167,7 +167,7 @@ src/lib/
 - **Framework**: Vitest 4 with coverage reporting
 - **Location**: Co-located `*.test.js` files
 - **Coverage**: Focuses on `src/lib/{components,services}/**/*.js`
-- **Standards**: 4200+ tests must continue passing
+- **Standards**: 5800+ tests must continue passing
 
 ### File Patterns
 
@@ -194,7 +194,7 @@ import Button from '$lib/components/common/button.svelte';
 
 1. **Always run `pnpm install` first**
 2. **Use `pnpm check` before committing** - fixes many issues automatically
-3. **Run tests frequently**: `pnpm exec vitest run`
+3. **Run tests frequently**: `pnpm test`
 4. **Follow existing patterns** - this codebase has consistent conventions
 5. **Test in browser**: Use `pnpm dev` to verify UI changes work correctly
 
