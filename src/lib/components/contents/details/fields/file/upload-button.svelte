@@ -1,5 +1,6 @@
 <script>
   import { Alert, Button, Icon, Toast } from '@sveltia/ui';
+  import { matchShortcuts } from '@sveltia/utils/events';
   import { _ } from 'svelte-i18n';
 
   import { hasMouse } from '$lib/services/user/env';
@@ -98,6 +99,12 @@
         showSelectAssetsDialog = true;
       }
     }}
+    onkeydown={(event) => {
+      if (matchShortcuts(event, 'Meta+V')) {
+        event.preventDefault();
+        onPasteButtonClick();
+      }
+    }}
   >
     <Icon name="cloud_upload" />
     <div role="none" class="label">
@@ -115,9 +122,9 @@
         {/if}
         <div role="none" class="buttons">
           <Button label={$_('browse')} variant="tertiary" size="small" {disabled} />
-          {#if onFilePaste && isImageField}
+          {#if onFilePaste}
             <Button
-              label={$_('paste')}
+              label={$_(isImageField ? 'paste' : 'paste_image')}
               variant="tertiary"
               size="small"
               {disabled}

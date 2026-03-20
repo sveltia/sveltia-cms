@@ -292,6 +292,7 @@ export const strings = {
   drop_image_files_or: 'Drop image files here or',
   browse: 'Browse',
   paste: 'Paste',
+  paste_image: 'Paste Image',
   no_image_in_clipboard: 'No image found in clipboard.',
   clipboard_access_denied: 'Clipboard access denied.',
   drop_file_here: 'Drop a file here',

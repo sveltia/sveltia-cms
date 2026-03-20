@@ -293,6 +293,7 @@ export const strings = {
   drop_image_files_or: 'ここに画像ファイルをドロップするか',
   browse: '参照',
   paste: '貼り付け',
+  paste_image: '画像を貼り付け',
   no_image_in_clipboard: 'クリップボードに画像が見つかりません。',
   clipboard_access_denied: 'クリップボードへのアクセスが拒否されました。',
   drop_file_here: 'ここにファイルをドロップ',
