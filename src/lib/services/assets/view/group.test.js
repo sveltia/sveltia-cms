@@ -325,8 +325,8 @@ describe('assets/view/group', () => {
       const result = groupAssets(assetsWithUndefined, { field: 'category', pattern: undefined });
 
       expect(result).toEqual({
+        Other: [assetsWithUndefined[1]],
         photos: [assetsWithUndefined[0]],
-        undefined: [assetsWithUndefined[1]],
       });
     });
 

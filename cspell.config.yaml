@@ -47,6 +47,7 @@ words:
   - gitdir
   - Gitea
   - goldmark
+  - groupable
   - hotlinking
   - hugolify
   - husenunicorn

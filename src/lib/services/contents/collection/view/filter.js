@@ -1,8 +1,8 @@
-import { isObject } from '@sveltia/utils/object';
 import { derived } from 'svelte/store';
 
 import { selectedCollection } from '$lib/services/contents/collection';
 import { currentView } from '$lib/services/contents/collection/view';
+import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
 import { getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getRegex } from '$lib/services/utils/misc';
 
@@ -20,30 +20,9 @@ import { getRegex } from '$lib/services/utils/misc';
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-filters
  * @see https://sveltiacms.app/en/docs/collections/entries#filtering
  */
-export const parseFilterConfig = (filters) => {
-  if (Array.isArray(filters)) {
-    return { options: filters };
-  }
-
-  if (isObject(filters)) {
-    const { filters: options, default: defaultFilterName } = filters;
-
-    if (Array.isArray(options)) {
-      const defaultFilter = defaultFilterName
-        ? options.find(({ name }) => name === defaultFilterName)
-        : undefined;
-
-      return {
-        options,
-        default: defaultFilter
-          ? { field: defaultFilter.field, pattern: defaultFilter.pattern }
-          : undefined,
-      };
-    }
-  }
-
-  return { options: [] };
-};
+export const parseFilterConfig = (filters) =>
+  /** @type {{ options: ViewFilter[], default?: FilteringConditions }} */
+  (parseViewOptions(filters, 'filters'));
 
 /**
  * Filter the given entries.

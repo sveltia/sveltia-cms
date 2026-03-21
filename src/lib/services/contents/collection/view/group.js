@@ -1,12 +1,11 @@
-import { isObject } from '@sveltia/utils/object';
-import { compare } from '@sveltia/utils/string';
 import { derived, get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
+import { buildGroupMap } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { currentView } from '$lib/services/contents/collection/view';
+import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
 import { getPropertyValue } from '$lib/services/contents/entry/fields';
-import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Entry, GroupingConditions, InternalCollection } from '$lib/types/private';
@@ -22,30 +21,9 @@ import { getRegex } from '$lib/services/utils/misc';
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-groups
  * @see https://sveltiacms.app/en/docs/collections/entries#grouping
  */
-export const parseGroupConfig = (filters) => {
-  if (Array.isArray(filters)) {
-    return { options: filters };
-  }
-
-  if (isObject(filters)) {
-    const { groups: options, default: defaultGroupName } = filters;
-
-    if (Array.isArray(options)) {
-      const defaultGroup = defaultGroupName
-        ? options.find(({ name }) => name === defaultGroupName)
-        : undefined;
-
-      return {
-        options,
-        default: defaultGroup
-          ? { field: defaultGroup.field, pattern: defaultGroup.pattern }
-          : undefined,
-      };
-    }
-  }
-
-  return { options: [] };
-};
+export const parseGroupConfig = (filters) =>
+  /** @type {{ options: ViewGroup[], default?: GroupingConditions }} */
+  (parseViewOptions(filters, 'groups'));
 
 /**
  * Group the given entries.
@@ -70,32 +48,14 @@ export const groupEntries = (entries, collection, conditions) => {
   } = collection;
 
   const sortCondition = get(currentView).sort;
-  const regex = getRegex(pattern);
-  /** @type {Record<string, Entry[]>} */
-  const groups = {};
   const otherKey = get(_)('other');
 
-  entries.forEach((entry) => {
-    const value = getPropertyValue({ entry, locale, collectionName, key: field });
-
-    const key =
-      value === undefined
-        ? otherKey
-        : regex
-          ? (String(value).match(regex)?.[0] ?? otherKey)
-          : String(value);
-
-    if (!(key in groups)) {
-      groups[key] = [];
-    }
-
-    groups[key].push(entry);
-  });
-
-  // Sort groups by key
-  const sortedGroups = Object.entries(groups)
-    .map(([name, _entries]) => ({ name, entries: _entries }))
-    .sort(({ name: aKey }, { name: bKey }) => compare(aKey, bKey));
+  const sortedGroups = buildGroupMap(
+    entries,
+    pattern,
+    (entry) => getPropertyValue({ entry, locale, collectionName, key: field }),
+    otherKey,
+  ).map(([name, _entries]) => ({ name, entries: _entries }));
 
   // Keep the descending order if already sorted, especially on the date field
   if (sortCondition?.key === field && sortCondition.order === 'descending') {
