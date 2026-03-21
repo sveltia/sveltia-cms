@@ -1,6 +1,6 @@
 <script>
   import { Alert, Button, Icon, Toast } from '@sveltia/ui';
-  import { matchShortcuts } from '@sveltia/utils/events';
+  import { matchesShortcuts } from '@sveltia/utils/events';
   import { _ } from 'svelte-i18n';
 
   import { hasMouse } from '$lib/services/user/env';
@@ -100,7 +100,7 @@
       }
     }}
     onkeydown={(event) => {
-      if (matchShortcuts(event, 'Meta+V')) {
+      if (matchesShortcuts(event, 'Accel+V')) {
         event.preventDefault();
         onPasteButtonClick();
       }

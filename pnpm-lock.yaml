@@ -24,8 +24,8 @@ importers:
         specifier: ^0.35.4
         version: 0.35.4(svelte@5.54.0)
       '@sveltia/utils':
-        specifier: ^0.9.2
-        version: 0.9.2
+        specifier: ^0.9.3
+        version: 0.9.3
       create-react-class:
         specifier: ^15.7.0
         version: 15.7.0
@@ -1376,8 +1376,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/utils@0.9.2':
-    resolution: {integrity: sha512-JzX0Y1GthRJKfwxcUZQQZgdVgTqX8eTjgGxLHlAGRy/jnNupXiRVEI8yA4IFhj/fKQBpfAFaLmQI0MYHv67y6g==}
+  '@sveltia/utils@0.9.3':
+    resolution: {integrity: sha512-F4dFl4+fe1TqKWbfOZQf4vWbVxKvyTQAfdWICADrCkv7FEOimMsH1D4wV8uZ4Eu0y/BNGbwVzCukuCqyrH/HjQ==}
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -5207,13 +5207,13 @@ snapshots:
       '@lexical/selection': 0.42.0
       '@lexical/table': 0.42.0
       '@lexical/utils': 0.42.0
-      '@sveltia/utils': 0.9.2
+      '@sveltia/utils': 0.9.3
       lexical: 0.42.0
       prismjs: 1.30.0
       svelte: 5.54.0
       svelte-i18n: 4.0.1(svelte@5.54.0)
 
-  '@sveltia/utils@0.9.2':
+  '@sveltia/utils@0.9.3':
     dependencies:
       base32-encode: 2.0.0
 

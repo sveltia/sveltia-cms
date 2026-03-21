@@ -37,7 +37,7 @@
     "@lexical/markdown": "^0.42.0",
     "@sindresorhus/transliterate": "^2.3.1",
     "@sveltia/ui": "^0.35.4",
-    "@sveltia/utils": "^0.9.2",
+    "@sveltia/utils": "^0.9.3",
     "create-react-class": "^15.7.0",
     "dayjs": "^1.11.20",
     "deepmerge": "^4.3.1",
