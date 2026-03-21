@@ -20,7 +20,7 @@ import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fie
  * InternalCollection,
  * InternalLocaleCode,
  * } from '$lib/types/private';
-  @import { RawEntryContent } from '$lib/types/public';
+ * @import { RawEntryContent } from '$lib/types/public';
  */
 
 /**
