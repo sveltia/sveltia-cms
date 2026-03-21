@@ -1,6 +1,12 @@
+import { IndexedDB } from '@sveltia/utils/storage';
 import { compare } from '@sveltia/utils/string';
+import equal from 'fast-deep-equal';
 
 import { getRegex } from '$lib/services/utils/misc';
+
+/**
+ * @import { Writable } from 'svelte/store';
+ */
 
 /**
  * Build a sorted group map from a list of items.
@@ -75,4 +81,29 @@ export const sortItemsByKey = (items, getKey, isStringType, order) => {
   }
 
   return items;
+};
+
+/**
+ * Initialize a view settings store backed by IndexedDB and subscribe to persist changes.
+ * @param {{ databaseName?: string } | undefined} repository Repository info.
+ * @param {string} storageKey Key used to store/retrieve settings in the database.
+ * @param {Writable<Record<string, any> | undefined>} settingsStore Store to initialize and persist.
+ */
+export const initViewSettingsStorage = async (repository, storageKey, settingsStore) => {
+  const { databaseName } = repository ?? {};
+  const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
+
+  settingsStore.set((await settingsDB?.get(storageKey)) ?? {});
+
+  settingsStore.subscribe((_settings) => {
+    (async () => {
+      try {
+        if (!equal(_settings, await settingsDB?.get(storageKey))) {
+          await settingsDB?.set(storageKey, _settings);
+        }
+      } catch {
+        //
+      }
+    })();
+  });
 };

@@ -1,7 +1,7 @@
-import { IndexedDB } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { get, writable } from 'svelte/store';
 
+import { initViewSettingsStorage } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { currentView } from '$lib/services/contents/collection/view';
 
@@ -21,23 +21,7 @@ export const entryListSettings = writable();
  * @param {BackendService} _backend Backend service.
  */
 export const initSettings = async ({ repository }) => {
-  const { databaseName } = repository ?? {};
-  const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
-  const storageKey = 'contents-view';
-
-  entryListSettings.set((await settingsDB?.get(storageKey)) ?? {});
-
-  entryListSettings.subscribe((_settings) => {
-    (async () => {
-      try {
-        if (!equal(_settings, await settingsDB?.get(storageKey))) {
-          await settingsDB?.set(storageKey, _settings);
-        }
-      } catch {
-        //
-      }
-    })();
-  });
+  await initViewSettingsStorage(repository, 'contents-view', entryListSettings);
 
   currentView.subscribe((view) => {
     const { name } = get(selectedCollection) ?? {};
