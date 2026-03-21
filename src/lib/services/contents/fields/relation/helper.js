@@ -6,6 +6,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -395,12 +396,12 @@ export const processSingleSubfieldList = ({
   fallbackContext,
 }) => {
   const { _displayField, _valueField, _searchField } = templates;
-  let regex = singleSubfieldRegexCache.get(baseFieldName);
 
-  if (!regex) {
-    regex = new RegExp(`^${escapeRegExp(baseFieldName)}.\\d+$`);
-    singleSubfieldRegexCache.set(baseFieldName, regex);
-  }
+  const regex = getOrCreate(
+    singleSubfieldRegexCache,
+    baseFieldName,
+    () => new RegExp(`^${escapeRegExp(baseFieldName)}.\\d+$`),
+  );
 
   const items = Object.entries(content)
     .filter(([k]) => regex.test(k))
@@ -503,17 +504,15 @@ export const processComplexListField = ({
   }
 
   const cacheKey = `${baseFieldNameForList}:${subKey}`;
-  let indexRegex = complexListIndexRegexCache.get(cacheKey);
 
-  if (!indexRegex) {
+  const indexRegex = getOrCreate(complexListIndexRegexCache, cacheKey, () => {
     const escapedBase = escapeRegExp(baseFieldNameForList);
     const escapedSub = escapeRegExp(subKey);
 
     // indexRegex subsumes the old filter-only `regex` (same semantics; `[0-9]+` ≡ `\d+` in JS
     // without the `u` flag), so one regex construction per call is saved.
-    indexRegex = new RegExp(`^${escapedBase}.([0-9]+).${escapedSub}$`);
-    complexListIndexRegexCache.set(cacheKey, indexRegex);
-  }
+    return new RegExp(`^${escapedBase}.([0-9]+).${escapedSub}$`);
+  });
 
   const listValues = Object.entries(content)
     .filter(([k]) => indexRegex.test(k))

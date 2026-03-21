@@ -9,6 +9,7 @@ import {
   customFileFormatRegistry,
   getFrontMatterDelimiters,
 } from '$lib/services/contents/file/config';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -91,13 +92,13 @@ export const parseFrontMatter = ({ collection, collectionFile, format, text }) =
   const sd = escapeRegExp(startDelimiter);
   const ed = escapeRegExp(endDelimiter);
   const cacheKey = `${sd}|${ed}`;
-  // Front matter matching: allow an empty head
-  let regex = frontMatterRegexCache.get(cacheKey);
 
-  if (!regex) {
-    regex = new RegExp(`^${sd}\\n(?:(?<head>.*?)\\n)?${ed}$(?:\\n(?<body>.+))?`, 'ms');
-    frontMatterRegexCache.set(cacheKey, regex);
-  }
+  // Front matter matching: allow an empty head
+  const regex = getOrCreate(
+    frontMatterRegexCache,
+    cacheKey,
+    () => new RegExp(`^${sd}\\n(?:(?<head>.*?)\\n)?${ed}$(?:\\n(?<body>.+))?`, 'ms'),
+  );
 
   const { head, body } = text.match(regex)?.groups ?? {};
 

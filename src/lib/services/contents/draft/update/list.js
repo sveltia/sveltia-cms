@@ -3,6 +3,7 @@ import { flatten, unflatten } from 'flat';
 import { get } from 'svelte/store';
 
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -44,12 +45,11 @@ const itemListRegexCache = new Map();
  * @returns {[values: any, remainder: any]} Unflatten values and flatten remainder.
  */
 export const getItemList = (obj, keyPath) => {
-  let regex = itemListRegexCache.get(keyPath);
-
-  if (!regex) {
-    regex = new RegExp(`^${escapeRegExp(keyPath)}\\b(?!#)`);
-    itemListRegexCache.set(keyPath, regex);
-  }
+  const regex = getOrCreate(
+    itemListRegexCache,
+    keyPath,
+    () => new RegExp(`^${escapeRegExp(keyPath)}\\b(?!#)`),
+  );
 
   const filtered = Object.entries(obj)
     .filter(([k]) => regex.test(k))

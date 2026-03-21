@@ -3,6 +3,7 @@ import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -43,13 +44,13 @@ export const getInitialExpanderState = ({ key, locale, collapsed = false }) => {
   if (collapsed === 'auto') {
     const valueMap = _draft?.currentValues?.[locale] ?? {};
     const cleanKey = key.replace(/#$/, '');
-    // Pre-compile and cache the regex — same key path is queried on every editor render.
-    let regex = expanderRegexCache.get(cleanKey);
 
-    if (!regex) {
-      regex = new RegExp(`^${escapeRegExp(cleanKey)}\\.[^\\.]+$`);
-      expanderRegexCache.set(cleanKey, regex);
-    }
+    // Pre-compile and cache the regex — same key path is queried on every editor render.
+    const regex = getOrCreate(
+      expanderRegexCache,
+      cleanKey,
+      () => new RegExp(`^${escapeRegExp(cleanKey)}\\.[^\\.]+$`),
+    );
 
     return !Object.entries(valueMap).some(([keyPath, value]) => regex.test(keyPath) && !!value);
   }

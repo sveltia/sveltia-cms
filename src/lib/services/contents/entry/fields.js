@@ -14,6 +14,7 @@ import { getComponentDef } from '$lib/services/contents/fields/rich-text/compone
 import { getOptionLabel } from '$lib/services/contents/fields/select/helper';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -399,12 +400,11 @@ export const getFieldDisplayValue = ({
     } else {
       // Concat values of single field list or simple list
       // Pre-compile and cache the regex — same key path is hit on every field render.
-      let listItemRegex = listItemDisplayRegexCache.get(keyPath);
-
-      if (!listItemRegex) {
-        listItemRegex = new RegExp(`^${escapeRegExp(keyPath)}${String.raw`\.\d+$`}`);
-        listItemDisplayRegexCache.set(keyPath, listItemRegex);
-      }
+      const listItemRegex = getOrCreate(
+        listItemDisplayRegexCache,
+        keyPath,
+        () => new RegExp(`^${escapeRegExp(keyPath)}${String.raw`\.\d+$`}`),
+      );
 
       value = getListFormatter(locale).format(
         Object.entries(valueMap)

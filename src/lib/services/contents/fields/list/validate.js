@@ -1,5 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
+import { getOrCreate } from '$lib/services/utils/cache';
+
 /**
  * @import { EntryValidityState, LocaleValidityMap } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
@@ -43,12 +45,11 @@ export const validateListField = ({
   }
 
   // Pre-compile and cache the regex — validateAnyField is called on every keystroke.
-  let keyPathRegex = listKeyPathRegexCache.get(keyPath);
-
-  if (!keyPathRegex) {
-    keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`);
-    listKeyPathRegexCache.set(keyPath, keyPathRegex);
-  }
+  const keyPathRegex = getOrCreate(
+    listKeyPathRegexCache,
+    keyPath,
+    () => new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`),
+  );
 
   // We need to check both the list itself and the items in the list because the list can be empty
   // but still have items in the list, depending on the flattening condition. It means the data

@@ -1,4 +1,5 @@
 import { GLOBAL_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { ReactElement } from 'react';
@@ -149,15 +150,10 @@ export const splitMarkdownBlocks = (markdown) => {
           current.push(line);
 
           if (!VOID_ELEMENTS.has(tag)) {
-            let tagRegexes = htmlTagRegexCache.get(tag);
-
-            if (!tagRegexes) {
-              tagRegexes = {
-                openRe: new RegExp(`<${tag}(?:[\\s>])`, 'gi'),
-                closeRe: new RegExp(`<\\/${tag}>`, 'gi'),
-              };
-              htmlTagRegexCache.set(tag, tagRegexes);
-            }
+            const tagRegexes = getOrCreate(htmlTagRegexCache, tag, () => ({
+              openRe: new RegExp(`<${tag}(?:[\\s>])`, 'gi'),
+              closeRe: new RegExp(`<\\/${tag}>`, 'gi'),
+            }));
 
             const { openRe, closeRe } = tagRegexes;
             const depth = [...line.matchAll(openRe)].length - [...line.matchAll(closeRe)].length;

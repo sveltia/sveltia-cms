@@ -8,6 +8,7 @@ import { cmsConfig } from '$lib/services/config';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * Cache of wildcard key-path regexes used in {@link finalizeContent}, keyed by `keyPath`.
@@ -172,14 +173,14 @@ const finalizeContent = ({
           copyProperty({ ...copyArgs, key: _keyPath, field });
         });
     } else {
-      let regex = wildcardKeyPathRegexCache.get(keyPath);
-
-      if (!regex) {
-        regex = new RegExp(
-          `^${escapeRegExp(keyPath.replaceAll('*', '\\d+')).replaceAll('\\\\d\\+', '\\d+')}$`,
-        );
-        wildcardKeyPathRegexCache.set(keyPath, regex);
-      }
+      const regex = getOrCreate(
+        wildcardKeyPathRegexCache,
+        keyPath,
+        () =>
+          new RegExp(
+            `^${escapeRegExp(keyPath.replaceAll('*', '\\d+')).replaceAll('\\\\d\\+', '\\d+')}$`,
+          ),
+      );
 
       Object.keys(unsortedMap)
         .filter((_keyPath) => regex.test(_keyPath))

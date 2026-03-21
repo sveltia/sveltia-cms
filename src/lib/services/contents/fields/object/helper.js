@@ -4,6 +4,7 @@ import {
   getFieldDisplayValue,
   getVisibleFieldDisplayValue,
 } from '$lib/services/contents/entry/fields';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { FlattenedEntryContent, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
@@ -42,12 +43,11 @@ export const formatSummary = ({
   const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap, isIndexFile };
 
   if (!summaryTemplate) {
-    let keyPathRegex = objectSummaryRegexCache.get(keyPath);
-
-    if (!keyPathRegex) {
-      keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.`);
-      objectSummaryRegexCache.set(keyPath, keyPathRegex);
-    }
+    const keyPathRegex = getOrCreate(
+      objectSummaryRegexCache,
+      keyPath,
+      () => new RegExp(`^${escapeRegExp(keyPath)}\\.`),
+    );
 
     return getVisibleFieldDisplayValue({ valueMap, locale, keyPath, keyPathRegex, getFieldArgs });
   }

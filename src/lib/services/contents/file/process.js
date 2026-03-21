@@ -8,6 +8,7 @@ import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { hasRootField } from '$lib/services/contents/entry/fields';
 import { parseEntryFile } from '$lib/services/contents/file/parse';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -44,9 +45,7 @@ const slugRegexCache = new Map();
  */
 export const getSlug = ({ subPath, subPathTemplate }) => {
   if (subPathTemplate?.includes('{{slug}}')) {
-    let regex = slugRegexCache.get(subPathTemplate);
-
-    if (!regex) {
+    const regex = getOrCreate(slugRegexCache, subPathTemplate, () => {
       // Build regex by replacing placeholders with patterns
       let regexPattern = '';
       let remaining = subPathTemplate;
@@ -81,9 +80,8 @@ export const getSlug = ({ subPath, subPathTemplate }) => {
         remaining = remaining.substring(placeholderEnd + 2);
       }
 
-      regex = new RegExp(`^${regexPattern}$`);
-      slugRegexCache.set(subPathTemplate, regex);
-    }
+      return new RegExp(`^${regexPattern}$`);
+    });
 
     const [, slug] = subPath.match(regex) ?? [];
 

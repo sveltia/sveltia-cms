@@ -4,6 +4,7 @@ import { truncate } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { InternalCmsConfig } from '$lib/types/private';
@@ -64,15 +65,11 @@ export const slugify = (
   // Consolidate consecutive replacement characters into a single one and trim them from ends
   if (sanitizeReplacement) {
     const escapedReplacement = sanitizeReplacement.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    let cachedSlugRegexes = slugReplacementRegexCache.get(escapedReplacement);
 
-    if (!cachedSlugRegexes) {
-      cachedSlugRegexes = {
-        consecutivePattern: new RegExp(`${escapedReplacement}+`, 'g'),
-        trimPattern: new RegExp(`^${escapedReplacement}+|${escapedReplacement}+$`, 'g'),
-      };
-      slugReplacementRegexCache.set(escapedReplacement, cachedSlugRegexes);
-    }
+    const cachedSlugRegexes = getOrCreate(slugReplacementRegexCache, escapedReplacement, () => ({
+      consecutivePattern: new RegExp(`${escapedReplacement}+`, 'g'),
+      trimPattern: new RegExp(`^${escapedReplacement}+|${escapedReplacement}+$`, 'g'),
+    }));
 
     slug = slug.replace(cachedSlugRegexes.consecutivePattern, sanitizeReplacement);
 
