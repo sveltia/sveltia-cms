@@ -86,6 +86,34 @@
   };
 </script>
 
+{#snippet buttons()}
+  <div role="none" class="buttons">
+    <Button
+      label={$_('browse')}
+      variant="tertiary"
+      size="small"
+      {disabled}
+      onclick={(event) => {
+        event.stopPropagation();
+        replaceMode = false;
+        showSelectAssetsDialog = true;
+      }}
+    />
+    {#if onFilePaste}
+      <Button
+        label={$_(isImageField ? 'paste' : 'paste_image')}
+        variant="tertiary"
+        size="small"
+        {disabled}
+        onclick={(event) => {
+          event.stopPropagation();
+          onPasteButtonClick();
+        }}
+      />
+    {/if}
+  </div>
+{/snippet}
+
 <div role="none" class="empty" class:invalid class:processing>
   <Button
     flex
@@ -94,7 +122,7 @@
     {disabled}
     tabindex="0"
     onclick={() => {
-      if (!disabled) {
+      if ($hasMouse) {
         replaceMode = false;
         showSelectAssetsDialog = true;
       }
@@ -120,23 +148,9 @@
         {:else}
           {$_(multiple ? 'drop_files_or' : 'drop_file_or')}
         {/if}
-        <div role="none" class="buttons">
-          <Button label={$_('browse')} variant="tertiary" size="small" {disabled} />
-          {#if onFilePaste}
-            <Button
-              label={$_(isImageField ? 'paste' : 'paste_image')}
-              variant="tertiary"
-              size="small"
-              {disabled}
-              onclick={(event) => {
-                event.stopPropagation();
-                onPasteButtonClick();
-              }}
-            />
-          {/if}
-        </div>
+        {@render buttons()}
       {:else}
-        {$_('tap_to_browse')}
+        {@render buttons()}
       {/if}
     </div>
   </Button>
@@ -167,6 +181,14 @@
 
           :global(*) {
             opacity: 0.5;
+          }
+        }
+
+        @media (pointer: coarse) {
+          &:active,
+          &:focus {
+            // Reset the style because the button is disabled on mobile
+            background-color: var(--sui-button-background-color);
           }
         }
       }
