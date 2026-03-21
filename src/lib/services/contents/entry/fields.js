@@ -107,6 +107,103 @@ const parseExplicitType = (key) => {
 };
 
 /**
+ * Advance the field traversal by one key-path segment.
+ * @param {object} args Arguments.
+ * @param {Field} args.field The current (parent) field being traversed.
+ * @param {string} args.key Raw key-path segment (may contain `<typeName>` syntax).
+ * @param {string[]} args.keyPathArray Full split key path.
+ * @param {number} args.segmentIndex Index of the current segment in {@link keyPathArray}.
+ * @param {string | undefined} args.pendingExplicitType Accumulated explicit type from a prior
+ * segment.
+ * @param {FlattenedEntryContent} args.valueMap Entry values (for variable-type lookup).
+ * @returns {{ field: Field | undefined, explicitType: string | undefined }} The resolved child
+ * field and updated explicit type.
+ */
+const resolveNextSegment = ({
+  field,
+  key,
+  keyPathArray,
+  segmentIndex,
+  pendingExplicitType,
+  valueMap,
+}) => {
+  const { cleanKey, typeName } = parseExplicitType(key);
+  const { widget: fieldType = 'text' } = field;
+  const explicitType = typeName != null ? typeName : pendingExplicitType;
+  const isNumericKey = /^\d+$/.test(cleanKey);
+  const isWildcardKey = cleanKey === '*';
+
+  // Handle multi-value field types with numeric keys, e.g. `authors.0`
+  if ((isNumericKey || isWildcardKey) && MULTI_VALUE_FIELD_TYPES.includes(fieldType)) {
+    // For single value field, numeric access is not allowed
+    return { field: isFieldMultiple(field) ? field : undefined, explicitType };
+  }
+
+  const { field: subField } = /** @type {ListFieldWithSubField} */ (field);
+  const { fields: subFields } = /** @type {FieldWithSubFields} */ (field);
+  const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
+
+  if (subField) {
+    const subFieldName = isNumericKey || isWildcardKey ? keyPathArray[segmentIndex + 1] : undefined;
+
+    // It’s possible to get a single-subfield List field with or without a subfield name (e.g.
+    // `image.0` or `image.0.src`), but when a subfield name is specified, check if it’s valid.
+    // The field could be nested (object inside object), so check recursively.
+    const validSubField =
+      !subFieldName ||
+      subField.name === subFieldName ||
+      (subField.widget === 'object' &&
+        'fields' in subField &&
+        /** @type {ObjectFieldWithSubFields} */ (subField).fields?.some(
+          (f) => f.name === subFieldName,
+        ));
+
+    return { field: validSubField ? subField : undefined, explicitType };
+  }
+
+  if (subFields && (isNumericKey || isWildcardKey)) {
+    // For list field types with multiple fields, numeric keys (like "0") should be skipped.
+    // Keep the current field (the list field type) and continue to the next part of the path.
+    return { field, explicitType };
+  }
+
+  if (subFields && !isNumericKey && cleanKey !== '') {
+    return { field: subFields.find(({ name }) => name === cleanKey), explicitType };
+  }
+
+  if (types && (isNumericKey || isWildcardKey)) {
+    // List field type variable types - check for explicit type first, then fall back to valueMap
+    const resolvedType =
+      explicitType ??
+      valueMap[[keyPathArray.slice(0, segmentIndex).join('.'), cleanKey, typeKey].join('.')];
+
+    const nextField = /** @type {Field | undefined} */ (
+      types.find(({ name }) => name === resolvedType)
+    );
+
+    // Clear explicit type after using it for wildcard
+    return { field: nextField, explicitType: isWildcardKey ? undefined : explicitType };
+  }
+
+  if (types && key !== typeKey && cleanKey !== typeKey && cleanKey !== '') {
+    // Object field variable types - check for explicit type first, then fall back to valueMap
+    const resolvedType =
+      explicitType ?? valueMap[[keyPathArray.slice(0, segmentIndex).join('.'), typeKey].join('.')];
+
+    const nextField = types
+      .find(({ name }) => name === resolvedType)
+      ?.fields?.find(({ name }) => name === cleanKey);
+
+    // Clear explicit type after using it
+    return { field: nextField, explicitType: undefined };
+  }
+
+  // If we reach here, the list field is malformed (no `field`, `fields`, or `types`) and
+  // we’re trying to access a nested path, so return undefined
+  return { field: undefined, explicitType };
+};
+
+/**
  * Get a field’s config object that matches the given field name (key path).
  * @param {GetFieldArgs} args Arguments.
  * @returns {Field | undefined} Field configuration.
@@ -181,90 +278,17 @@ export const getField = (args) => {
         currentExplicitType = typeName;
       }
     } else if (field) {
-      const { cleanKey, typeName } = parseExplicitType(key);
-      const { widget: fieldType = 'text' } = field;
+      const result = resolveNextSegment({
+        field,
+        key,
+        keyPathArray,
+        segmentIndex: index,
+        pendingExplicitType: currentExplicitType,
+        valueMap,
+      });
 
-      // Update explicit type if provided in this segment
-      if (typeName) {
-        currentExplicitType = typeName;
-      }
-
-      const isNumericKey = /^\d+$/.test(cleanKey);
-      const isWildcardKey = cleanKey === '*';
-
-      // Handle multi-value field types with numeric keys, e.g. `authors.0`
-      if ((isNumericKey || isWildcardKey) && MULTI_VALUE_FIELD_TYPES.includes(fieldType)) {
-        // For single value field, numeric access is not allowed
-        if (!isFieldMultiple(field)) {
-          field = undefined;
-        }
-
-        return;
-      }
-
-      const { field: subField } = /** @type {ListFieldWithSubField} */ (field);
-      const { fields: subFields } = /** @type {FieldWithSubFields} */ (field);
-      const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
-
-      // Handle all other field types (List, Object, etc.)
-      if (subField) {
-        const subFieldName = isNumericKey || isWildcardKey ? keyPathArray[index + 1] : undefined;
-
-        // It’s possible to get a single-subfield List field with or without a subfield name (e.g.
-        // `image.0` or `image.0.src`), but when a subfield name is specified, check if it’s valid.
-        // The field could be nested (object inside object), so check recursively.
-        if (
-          !subFieldName ||
-          subField.name === subFieldName ||
-          (subField.widget === 'object' &&
-            'fields' in subField &&
-            /** @type {ObjectFieldWithSubFields} */ (subField).fields?.some(
-              (f) => f.name === subFieldName,
-            ))
-        ) {
-          field = subField;
-        } else {
-          field = undefined;
-        }
-      } else if (subFields && (isNumericKey || isWildcardKey)) {
-        // For list field types with multiple fields, numeric keys (like "0") should be skipped.
-        // Keep the current field (the list field type) and continue to the next part of the path
-        // field remains unchanged.
-      } else if (subFields && !isNumericKey && cleanKey !== '') {
-        field = subFields.find(({ name }) => name === cleanKey);
-      } else if (types && (isNumericKey || isWildcardKey)) {
-        // List field type variable types - check for explicit type first, then fall back to
-        // valueMap
-        const resolvedType =
-          currentExplicitType ??
-          valueMap[[keyPathArray.slice(0, index).join('.'), cleanKey, typeKey].join('.')];
-
-        // @ts-ignore
-        field = types.find(({ name }) => name === resolvedType);
-
-        // Clear explicit type after using it
-        if (isWildcardKey) {
-          currentExplicitType = undefined;
-        }
-      } else if (types && key !== typeKey && cleanKey !== typeKey && cleanKey !== '') {
-        // Object field variable types - check for explicit type first, then fall back to valueMap
-        const resolvedType =
-          currentExplicitType ??
-          valueMap[[keyPathArray.slice(0, index).join('.'), typeKey].join('.')];
-
-        field = types
-          .find(({ name }) => name === resolvedType)
-          ?.fields?.find(({ name }) => name === cleanKey);
-
-        // Clear explicit type after using it
-        if (currentExplicitType) {
-          currentExplicitType = undefined;
-        }
-      } else {
-        // If we reach here, the list field is malformed (no `field`, `fields`, or `types`) and
-        // we’re trying to access a nested path, so return undefined
-        field = undefined;
-      }
+      field = result.field;
+      currentExplicitType = result.explicitType;
     }
   });
 
