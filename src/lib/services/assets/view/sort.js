@@ -1,4 +1,4 @@
-import { compare } from '@sveltia/utils/string';
+import { sortItemsByKey } from '$lib/services/common/view';
 
 /**
  * @import { Asset, SortingConditions } from '$lib/types/private';
@@ -50,24 +50,16 @@ export const sortAssets = (assets, { key, order } = {}) => {
     /** @type {Record<string, any>} */ (_assets[0])?.[key]?.constructor ||
     String;
 
-  _assets.sort((a, b) => {
-    const aValue = getValue(a, key);
-    const bValue = getValue(b, key);
+  sortItemsByKey(
+    _assets,
+    (a) => {
+      const v = getValue(a, key);
 
-    if (type === String) {
-      return compare(aValue, bValue);
-    }
-
-    if (type === Date) {
-      return Number(aValue) - Number(bValue);
-    }
-
-    return aValue - bValue;
-  });
-
-  if (order === 'descending') {
-    _assets.reverse();
-  }
+      return type !== String ? Number(v ?? 0) : (v ?? '');
+    },
+    type === String,
+    order,
+  );
 
   return _assets;
 };

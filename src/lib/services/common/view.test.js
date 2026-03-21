@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { buildGroupMap } from './view';
+import { buildGroupMap, matchesFilter, sortItemsByKey } from './view';
 
 vi.mock('@sveltia/utils/string', () => ({
   compare: vi.fn((a, b) => {
@@ -139,5 +139,84 @@ describe('Test buildGroupMap()', () => {
     expect(result[0]).toHaveLength(2);
     expect(result[0][0]).toBe('a');
     expect(Array.isArray(result[0][1])).toBe(true);
+  });
+});
+
+describe('Test matchesFilter()', () => {
+  test('matches value against exact pattern', () => {
+    expect(matchesFilter('hello', 'hello', undefined)).toBe(true);
+  });
+
+  test('returns false when value differs from pattern', () => {
+    expect(matchesFilter('hello', 'world', undefined)).toBe(false);
+  });
+
+  test('matches numeric value against identical number', () => {
+    expect(matchesFilter(42, 42, undefined)).toBe(true);
+  });
+
+  test('returns false for type mismatch without regex', () => {
+    expect(matchesFilter('42', 42, undefined)).toBe(false);
+  });
+
+  test('tests value against regex when provided', () => {
+    expect(matchesFilter('hello world', undefined, /hello/)).toBe(true);
+  });
+
+  test('returns false when regex does not match', () => {
+    expect(matchesFilter('goodbye', undefined, /hello/)).toBe(false);
+  });
+
+  test('coerces null value to empty string for regex test', () => {
+    expect(matchesFilter(null, undefined, /^$/)).toBe(true);
+  });
+
+  test('coerces undefined value to empty string for regex test', () => {
+    expect(matchesFilter(undefined, undefined, /^$/)).toBe(true);
+  });
+});
+
+describe('Test sortItemsByKey()', () => {
+  test('sorts strings ascending by default', () => {
+    const items = [{ v: 'banana' }, { v: 'apple' }, { v: 'cherry' }];
+    const result = sortItemsByKey(items, (i) => i.v, true, 'ascending');
+
+    expect(result.map((i) => i.v)).toEqual(['apple', 'banana', 'cherry']);
+  });
+
+  test('sorts strings descending when order is descending', () => {
+    const items = [{ v: 'banana' }, { v: 'apple' }, { v: 'cherry' }];
+    const result = sortItemsByKey(items, (i) => i.v, true, 'descending');
+
+    expect(result.map((i) => i.v)).toEqual(['cherry', 'banana', 'apple']);
+  });
+
+  test('sorts numbers ascending', () => {
+    const items = [{ v: 30 }, { v: 10 }, { v: 20 }];
+    const result = sortItemsByKey(items, (i) => i.v, false, 'ascending');
+
+    expect(result.map((i) => i.v)).toEqual([10, 20, 30]);
+  });
+
+  test('sorts numbers descending', () => {
+    const items = [{ v: 30 }, { v: 10 }, { v: 20 }];
+    const result = sortItemsByKey(items, (i) => i.v, false, 'descending');
+
+    expect(result.map((i) => i.v)).toEqual([30, 20, 10]);
+  });
+
+  test('mutates and returns the same array reference', () => {
+    const items = [{ v: 'b' }, { v: 'a' }];
+    const result = sortItemsByKey(items, (i) => i.v, true, 'ascending');
+
+    expect(result).toBe(items);
+  });
+
+  test('leaves order unchanged when no order specified', () => {
+    const items = [{ v: 'b' }, { v: 'a' }];
+
+    sortItemsByKey(items, (i) => i.v, true, undefined);
+
+    expect(items.map((i) => i.v)).toEqual(['a', 'b']);
   });
 });

@@ -1,5 +1,6 @@
 import { derived } from 'svelte/store';
 
+import { matchesFilter } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { currentView } from '$lib/services/contents/collection/view';
 import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
@@ -68,11 +69,7 @@ export const filterEntries = (entries, collection, filters) => {
         return false;
       }
 
-      if (regex) {
-        return regex.test(String(rawValue)) || regex.test(String(refValue));
-      }
-
-      return rawValue === pattern || refValue === pattern;
+      return matchesFilter(rawValue, pattern, regex) || matchesFilter(refValue, pattern, regex);
     }),
   );
 };

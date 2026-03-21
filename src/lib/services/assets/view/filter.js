@@ -1,4 +1,5 @@
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { matchesFilter } from '$lib/services/common/view';
 import { getRegex } from '$lib/services/utils/misc';
 
 /**
@@ -25,10 +26,6 @@ export const filterAssets = (assets, { field, pattern } = { field: '', pattern: 
   return assets.filter((asset) => {
     const value = /** @type {Record<string, any>} */ (asset)[field];
 
-    if (regex) {
-      return regex.test(String(value ?? ''));
-    }
-
-    return value === pattern;
+    return matchesFilter(value, pattern, regex);
   });
 };

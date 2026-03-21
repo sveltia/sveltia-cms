@@ -613,3 +613,87 @@ describe('assets/view/sort', () => {
     });
   });
 });
+
+describe('sort key function null fallbacks (line 58)', () => {
+  it('uses 0 fallback when commit_date is undefined (non-String type, v is undefined)', () => {
+    const noDate = /** @type {any} */ ({
+      path: '/a.jpg',
+      name: 'a.jpg',
+      sha: 'sha1',
+      size: 100,
+      kind: 'image',
+      folder: {
+        collectionName: undefined,
+        internalPath: '/a',
+        publicPath: '/a',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+      // commitDate intentionally absent → getValue returns undefined → Number(undefined ?? 0) = 0
+    });
+
+    const withDate = /** @type {any} */ ({
+      path: '/b.jpg',
+      name: 'b.jpg',
+      sha: 'sha2',
+      size: 200,
+      kind: 'image',
+      folder: {
+        collectionName: undefined,
+        internalPath: '/b',
+        publicPath: '/b',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+      commitDate: new Date('2023-06-01'),
+    });
+
+    const result = sortAssets([withDate, noDate], { key: 'commit_date', order: 'ascending' });
+
+    // noDate has numeric 0 (from fallback), withDate has timestamp > 0 → noDate sorts first
+    expect(result[0]).toBe(noDate);
+    expect(result[1]).toBe(withDate);
+  });
+
+  it("uses '' fallback when commit_author is undefined (String type, v is undefined)", () => {
+    const noAuthor1 = /** @type {any} */ ({
+      path: '/a.jpg',
+      name: 'a.jpg',
+      sha: 'sha1',
+      size: 100,
+      kind: 'image',
+      folder: {
+        collectionName: undefined,
+        internalPath: '/a',
+        publicPath: '/a',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+      // commitAuthor absent → getValue destructures to {} → name/login/email all undefined
+      // → name || login || email = undefined → v ?? '' = ''
+    });
+
+    const noAuthor2 = /** @type {any} */ ({
+      path: '/b.jpg',
+      name: 'b.jpg',
+      sha: 'sha2',
+      size: 200,
+      kind: 'image',
+      folder: {
+        collectionName: undefined,
+        internalPath: '/b',
+        publicPath: '/b',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+    });
+
+    // Both have undefined author → both map to '' → sort is stable
+    const result = sortAssets([noAuthor1, noAuthor2], {
+      key: 'commit_author',
+      order: 'ascending',
+    });
+
+    expect(result).toHaveLength(2);
+  });
+});

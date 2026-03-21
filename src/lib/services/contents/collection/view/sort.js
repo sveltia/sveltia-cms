@@ -1,5 +1,4 @@
-import { compare } from '@sveltia/utils/string';
-
+import { sortItemsByKey } from '$lib/services/common/view';
 import { getIndexFile } from '$lib/services/contents/collection/index-file';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
@@ -79,20 +78,7 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
     }),
   );
 
-  _entries.sort((a, b) => {
-    const aKey = sortKeyMap[a.slug];
-    const bKey = sortKeyMap[b.slug];
-
-    if (dateFieldConfig || type !== String) {
-      return /** @type {number} */ (aKey) - /** @type {number} */ (bKey);
-    }
-
-    return compare(/** @type {string} */ (aKey), /** @type {string} */ (bKey));
-  });
-
-  if (order === 'descending') {
-    _entries.reverse();
-  }
+  sortItemsByKey(_entries, (e) => sortKeyMap[e.slug], !dateFieldConfig && type === String, order);
 
   const indexFileName = getIndexFile(collection)?.name;
 

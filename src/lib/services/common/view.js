@@ -34,3 +34,45 @@ export const buildGroupMap = (items, pattern, getValue, otherKey) => {
 
   return Object.entries(groups).sort(([a], [b]) => compare(a, b));
 };
+
+/**
+ * Check whether a value matches a filter condition.
+ * @param {any} value The value to test.
+ * @param {any} pattern Expected value.
+ * @param {RegExp | null | undefined} regex Compiled regex derived from the pattern, if any.
+ * @returns {boolean} Whether the value matches the condition.
+ */
+export const matchesFilter = (value, pattern, regex) => {
+  if (regex) {
+    return regex.test(String(value ?? ''));
+  }
+
+  return value === pattern;
+};
+
+/**
+ * Sort an array of items using a key function and apply ascending/descending order.
+ * @template T
+ * @param {T[]} items Items to sort in place.
+ * @param {(item: T) => string | number} getKey Returns the pre-computed sort key for an item.
+ * @param {boolean} isStringType Whether keys should be compared as strings (locale-aware); if
+ * `false`, numeric subtraction is used instead.
+ * @param {string | undefined} [order] Sort order; reverses the array when `'descending'`.
+ * @returns {T[]} The sorted array (same reference).
+ */
+export const sortItemsByKey = (items, getKey, isStringType, order) => {
+  items.sort((a, b) => {
+    const aKey = getKey(a);
+    const bKey = getKey(b);
+
+    return isStringType
+      ? compare(/** @type {string} */ (aKey), /** @type {string} */ (bKey))
+      : /** @type {number} */ (aKey) - /** @type {number} */ (bKey);
+  });
+
+  if (order === 'descending') {
+    items.reverse();
+  }
+
+  return items;
+};
