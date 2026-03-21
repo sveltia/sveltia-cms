@@ -18,6 +18,7 @@
    * @property {FieldKeyPath} keyPath Field key path.
    * @property {TypedFieldKeyPath} typedKeyPath Typed field key path.
    * @property {Field} fieldConfig Field configuration.
+   * @property {boolean} [showLabel] Whether to show the field label/header. Defaults to `true`.
    */
 
   /** @type {Props} */
@@ -27,6 +28,7 @@
     keyPath,
     typedKeyPath,
     fieldConfig,
+    showLabel = true,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -110,7 +112,9 @@
       highlightEditorField();
     }}
   >
-    <h4>{label || fieldName}</h4>
+    {#if showLabel}
+      <h4>{label || fieldName}</h4>
+    {/if}
     {#if fieldType in previews}
       {@const Preview = previews[fieldType]}
       <Preview {keyPath} {typedKeyPath} {locale} {fieldConfig} {currentValue} />
