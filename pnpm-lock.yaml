@@ -21,8 +21,8 @@ importers:
         specifier: ^2.3.1
         version: 2.3.1
       '@sveltia/ui':
-        specifier: ^0.35.4
-        version: 0.35.4(svelte@5.54.0)
+        specifier: ^0.35.5
+        version: 0.35.5(svelte@5.54.0)
       '@sveltia/utils':
         specifier: ^0.9.3
         version: 0.9.3
@@ -1371,8 +1371,8 @@ packages:
       svelte: ^5.46.4
       vite: ^8.0.0-beta.7 || ^8.0.0
 
-  '@sveltia/ui@0.35.4':
-    resolution: {integrity: sha512-/+0uowbdhpluk4+UE7lDqMk+/UbGfwvqccDnauft2kns/5e61bEAfJNn2SedmNHCabsDtqYTGSrE1/otbox3kA==}
+  '@sveltia/ui@0.35.5':
+    resolution: {integrity: sha512-UU0OvrZaPnlOcLM62qbFYU5bexxt91QH0Zr8HvgjiMEi6byuouxnfSbMFrtO0p2uQNvN685RaDGwEE37HPBnIQ==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -5193,7 +5193,7 @@ snapshots:
       vite: 8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(sass@1.98.0)(yaml@2.8.2)
       vitefu: 1.1.2(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(sass@1.98.0)(yaml@2.8.2))
 
-  '@sveltia/ui@0.35.4(svelte@5.54.0)':
+  '@sveltia/ui@0.35.5(svelte@5.54.0)':
     dependencies:
       '@lexical/code': 0.42.0
       '@lexical/code-prism': 0.42.0
