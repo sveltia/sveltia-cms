@@ -16,9 +16,8 @@ import { parseEntryFile } from '$lib/services/contents/file/parse';
  * InternalCollection,
  * InternalEntryCollection,
  * InternalLocaleCode,
- * RawEntryContent,
  * } from '$lib/types/private';
- * @import { Field } from '$lib/types/public';
+ * @import { Field, RawEntryContent } from '$lib/types/public';
  */
 
 /**

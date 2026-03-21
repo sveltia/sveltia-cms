@@ -6,8 +6,8 @@ import { cmsConfig } from '$lib/services/config';
 import { customFileFormatRegistry } from '$lib/services/contents/file/config';
 
 /**
- * @import { FileConfig, InternalLocaleCode, RawEntryContent } from '$lib/types/private';
- * @import { JsonFormatOptions, YamlFormatOptions } from '$lib/types/public';
+ * @import { FileConfig, InternalLocaleCode } from '$lib/types/private';
+ * @import { JsonFormatOptions, RawEntryContent, YamlFormatOptions } from '$lib/types/public';
  */
 
 /**

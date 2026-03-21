@@ -19,8 +19,8 @@ import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fie
  * FlattenedEntryContent,
  * InternalCollection,
  * InternalLocaleCode,
- * RawEntryContent,
  * } from '$lib/types/private';
+  @import { RawEntryContent } from '$lib/types/public';
  */
 
 /**

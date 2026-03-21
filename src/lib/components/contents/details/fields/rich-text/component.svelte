@@ -15,10 +15,9 @@
    * @import {
    * DraftValueStoreKey,
    * InternalLocaleCode,
-   * RawEntryContent,
    * TypedFieldKeyPath,
    * } from '$lib/types/private';
-   * @import { Field, FieldKeyPath } from '$lib/types/public';
+   * @import { Field, FieldKeyPath, RawEntryContent } from '$lib/types/public';
    */
 
   /**

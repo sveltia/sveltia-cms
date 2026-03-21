@@ -573,12 +573,7 @@
  */
 
 /**
- * Parsed, localized entry content.
- * @typedef {Record<string, any>} RawEntryContent
- */
-
-/**
- * Flattened {@link RawEntryContent} object.
+ * Flattened `RawEntryContent` object.
  * @typedef {Record<FieldKeyPath, any>} FlattenedEntryContent - where key is a key path and value is
  * the corresponding field value.
  * @see https://www.npmjs.com/package/flatten

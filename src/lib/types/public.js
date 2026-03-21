@@ -220,6 +220,11 @@
  */
 
 /**
+ * Parsed, localized entry content.
+ * @typedef {Record<string, any>} RawEntryContent
+ */
+
+/**
  * Common field properties that are shared among all field types.
  * @typedef {object} CommonFieldProps
  * @property {string} name Unique identifier for the field. It cannot include periods and spaces.

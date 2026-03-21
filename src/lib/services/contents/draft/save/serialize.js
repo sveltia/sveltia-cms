@@ -21,9 +21,8 @@ const wildcardKeyPathRegexCache = new Map();
  * FlattenedEntryContent,
  * InternalEntryCollection,
  * InternalLocaleCode,
- * RawEntryContent,
  * } from '$lib/types/private';
- * @import { DateTimeField, Field } from '$lib/types/public';
+ * @import { DateTimeField, Field, RawEntryContent } from '$lib/types/public';
  */
 
 /**
