@@ -15,7 +15,7 @@ import {
   validateList,
   validateSlugs,
   validityProxyHandler,
-} from './validate';
+} from '.';
 
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/draft');
@@ -23,6 +23,9 @@ vi.mock('$lib/services/contents/fields/key-value/helper');
 vi.mock('$lib/services/contents/fields/list/helper');
 vi.mock('$lib/services/contents/fields/rich-text');
 vi.mock('$lib/services/contents/fields/string/validate');
+vi.mock('$lib/services/contents/draft/validate/messages', () => ({
+  getFieldValidationMessages: vi.fn(() => []),
+}));
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/utils/misc');
@@ -117,6 +120,23 @@ describe('draft/validate', () => {
 
       expect(result.valid).toBe(true);
       expect(result.validities).toHaveProperty('en');
+      expect(result.validationMessages).toHaveProperty('en');
+    });
+
+    it('should populate validationMessages for invalid fields', async () => {
+      const { getFieldValidationMessages } =
+        await import('$lib/services/contents/draft/validate/messages');
+
+      vi.mocked(getFieldValidationMessages).mockReturnValue(['This field is required']);
+
+      mockEntryDraft.currentValues = { en: { title: '' } };
+
+      vi.mocked(getField).mockReturnValue({ name: 'title', widget: 'string', required: true });
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      const result = validateFields('currentValues');
+
+      expect(result.validationMessages.en.title).toEqual(['This field is required']);
     });
 
     it('should mark required field as invalid when empty', () => {
@@ -421,6 +441,28 @@ describe('draft/validate', () => {
       const result = validateFields('currentValues');
 
       expect(result).toBeDefined();
+    });
+
+    it('should skip validationMessages for list parent when its validity is absent', () => {
+      // When the value map only contains list item keys (no parent key), validateAnyField for
+      // the parent returns undefined (getField returns undefined for it), so
+      // validities[locale][listKeyPath] is never set → listValidity is undefined → the
+      // `if (listValidity)` false branch is taken and no messages entry is created for the parent.
+      mockEntryDraft.currentValues = {
+        en: { 'tags.0': 'tag1' },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        // Return undefined for the parent list path to trigger the uncovered branch
+        if (keyPath === 'tags') return undefined;
+
+        return { name: 'tags', widget: 'list' };
+      });
+
+      const result = validateFields('currentValues');
+
+      expect(result).toBeDefined();
+      expect(result.validationMessages.en.tags).toBeUndefined();
     });
   });
 

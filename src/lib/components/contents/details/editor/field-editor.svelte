@@ -16,16 +16,12 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
-  import { MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
-  import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
-  import { getFormattedDateTime } from '$lib/services/contents/fields/date-time/validate';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
   /**
    * @import { Component } from 'svelte';
    * @import { Writable } from 'svelte/store';
    * @import {
-   * DateTimeFieldNormalizedProps,
    * DraftValueStoreKey,
    * FieldContext,
    * FieldEditorContext,
@@ -34,14 +30,10 @@
    * } from '$lib/types/private';
    * @import {
    * BooleanField,
-   * DateTimeField,
-   * DateTimeInputType,
    * Field,
    * FieldKeyPath,
-   * MinMaxValueField,
    * NumberField,
    * StringField,
-   * TextField,
    * VisibleField,
    * } from '$lib/types/public';
    */
@@ -99,47 +91,10 @@
     label = '',
     comment = '',
     hint = '',
-    // @ts-ignore Some field types don’t have `pattern` property
-    pattern = /** @type {string[]} */ ([]),
     readonly: readonlyOption = false,
   } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const required = $derived(isFieldRequired({ fieldConfig, locale }));
   const multiple = $derived(isFieldMultiple(fieldConfig));
-  const parsedDateTimeConfig = $derived(
-    /** @type {DateTimeFieldNormalizedProps} */ (
-      fieldType === 'datetime'
-        ? parseDateTimeConfig(/** @type {DateTimeField} */ (fieldConfig))
-        : {}
-    ),
-  );
-  /** @type {{ min?: string | number, max?: string | number }} */
-  const { min, max } = $derived.by(() => {
-    if (MIN_MAX_VALUE_FIELD_TYPES.includes(fieldType)) {
-      const { min: _min, max: _max } =
-        fieldType === 'datetime'
-          ? parsedDateTimeConfig
-          : /** @type {MinMaxValueField} */ (fieldConfig);
-
-      return { min: _min, max: _max };
-    }
-
-    return {};
-  });
-  const type = $derived.by(() => {
-    if (fieldType === 'string') {
-      return /** @type {StringField} */ (fieldConfig).type ?? 'text';
-    }
-
-    if (fieldType === 'datetime') {
-      return parsedDateTimeConfig.type;
-    }
-
-    if (fieldType === 'number') {
-      return 'number';
-    }
-
-    return undefined;
-  });
   const allowPrefix = $derived(['string'].includes(fieldType));
   const prefix = $derived(
     allowPrefix ? /** @type {StringField} */ (fieldConfig).prefix : undefined,
@@ -159,7 +114,6 @@
       : undefined,
   );
   const hasExtraLabels = $derived(!!(prefix || suffix || beforeInputLabel || afterInputLabel));
-  const canAddMultiValue = $derived(fieldType === 'list' || fieldType === 'keyvalue' || multiple);
   const isList = $derived(fieldType === 'list' || multiple);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
@@ -253,27 +207,6 @@
   });
 </script>
 
-{#snippet rangeError(
-  /** @type {string} */ direction,
-  /** @type {string} */ limitKey,
-  /** @type {string | number | undefined} */ limitValue,
-)}
-  {@const quantity = limitValue === 1 ? 'one' : 'many'}
-  {#if fieldType === 'datetime' && typeof limitValue === 'string'}
-    {$_(`validation.range_${direction}.${type}`, {
-      values: {
-        [limitKey]: getFormattedDateTime(/** @type {DateTimeInputType} */ (type), limitValue),
-      },
-    })}
-  {:else if fieldType === 'number'}
-    {$_(`validation.range_${direction}.number`, { values: { [limitKey]: limitValue } })}
-  {:else if canAddMultiValue}
-    {$_(`validation.range_${direction}.add_${quantity}`, { values: { [limitKey]: limitValue } })}
-  {:else}
-    {$_(`validation.range_${direction}.select_${quantity}`, { values: { [limitKey]: limitValue } })}
-  {/if}
-{/snippet}
-
 {#if $entryDraft && canEdit && fieldType !== 'hidden'}
   <FieldEditorGroup
     aria-label={$_('x_field', { values: { field: fieldLabel } })}
@@ -327,33 +260,7 @@
     {/if}
     {#if validity?.valid === false}
       <ValidationError id="{fieldId}-error">
-        {#if validity.valueMissing}
-          {$_('validation.value_missing')}
-        {/if}
-        {#if validity.tooShort}
-          {@const { minlength } = (() => /** @type {StringField | TextField} */ (fieldConfig))()}
-          {$_(minlength === 1 ? 'validation.too_short.one' : 'validation.too_short.many', {
-            values: { min: minlength },
-          })}
-        {/if}
-        {#if validity.tooLong}
-          {@const { maxlength } = (() => /** @type {StringField | TextField} */ (fieldConfig))()}
-          {$_(maxlength === 1 ? 'validation.too_long.one' : 'validation.too_long.many', {
-            values: { max: maxlength },
-          })}
-        {/if}
-        {#if validity.rangeUnderflow}
-          {@render rangeError('underflow', 'min', min)}
-        {/if}
-        {#if validity.rangeOverflow}
-          {@render rangeError('overflow', 'max', max)}
-        {/if}
-        {#if validity.patternMismatch}
-          {pattern[1]}
-        {/if}
-        {#if validity.typeMismatch}
-          {$_(`validation.type_mismatch.${type}`)}
-        {/if}
+        {$entryDraft?.validationMessages[locale][keyPath]?.join(' ')}
       </ValidationError>
     {/if}
     <div role="none" class="field-wrapper" class:has-extra-labels={hasExtraLabels}>

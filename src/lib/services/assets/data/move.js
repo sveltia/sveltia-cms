@@ -60,6 +60,7 @@ export const getDraftBaseProps = ({ entry }) => {
     currentValues: structuredClone(originalValues),
     files: {},
     validities: {},
+    validationMessages: {},
     expanderStates: {},
   };
 };

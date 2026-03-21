@@ -181,6 +181,7 @@ export const createDraft = ({
     files: {},
     extraValues: extraValues ?? Object.fromEntries(allLocales.map((locale) => [locale, {}])),
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
+    validationMessages: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
     // Any locale-agnostic view states will be put under the `_` key
     expanderStates: expanderStates ?? { _: {} },
     slugEditor: getSlugEditorProp({ collection, collectionFile, originalEntry }),

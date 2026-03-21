@@ -626,6 +626,17 @@
  */
 
 /**
+ * Flattened validation messages map, where key is a key path and value is the list of translated
+ * error message strings for that field.
+ * @typedef {Record<FieldKeyPath, string[]>} FlattenedValidationMessagesMap
+ */
+
+/**
+ * Locale validation messages map.
+ * @typedef {Record<InternalLocaleCode, FlattenedValidationMessagesMap>} LocaleValidationMessagesMap
+ */
+
+/**
  * Locale validity map.
  * @typedef {Record<InternalLocaleCode, FlattenedEntryValidityStateMap>} LocaleValidityMap
  */
@@ -667,6 +678,8 @@
  * @property {EntryFileMap} files Files to be uploaded.
  * @property {LocaleValidityMap} validities Key is a locale code, value is a flattened object
  * containing validation results of all the current field values while editing.
+ * @property {LocaleValidationMessagesMap} validationMessages Key is a locale code, value is a
+ * flattened object containing the translated validation error messages for each field.
  * @property {LocaleExpanderMap} expanderStates Key is a locale code, value is a flattened object
  * containing the expander UI state.
  * @property {Record<LocaleCode, boolean | 'readonly'>} slugEditor Whether to show the slug editor

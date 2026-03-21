@@ -1,6 +1,7 @@
 import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
+import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
 import { getField, isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES, MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { resolveCodeField } from '$lib/services/contents/fields/code/validate';
@@ -21,6 +22,7 @@ import { getRegex } from '$lib/services/utils/misc';
  * EntryValidityState,
  * FlattenedEntryContent,
  * GetFieldArgs,
+ * LocaleValidationMessagesMap,
  * LocaleValidityMap,
  * ValidateFieldFuncArgs,
  * } from '$lib/types/private';
@@ -43,6 +45,14 @@ import { getRegex } from '$lib/services/utils/misc';
  * @property {FlattenedEntryContent} valueMap Entry values.
  * @property {any} value Field value.
  * @property {string} [componentName] Rich text editor component name.
+ */
+
+/**
+ * @typedef {object} ValidationResults
+ * @property {boolean} valid Whether the entry draft is valid.
+ * @property {LocaleValidityMap} validities Validity state for each field in each locale.
+ * @property {LocaleValidationMessagesMap} validationMessages Validation messages for each field in
+ * each locale.
  */
 
 /**
@@ -298,7 +308,7 @@ export const validateList = ({ fieldConfig, validateArgs }) => {
 /**
  * Validate the field values and return the results. Mimic the native `ValidityState` API.
  * @param {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
- * @returns {{ valid: boolean, validities: LocaleValidityMap }} Validation results.
+ * @returns {ValidationResults} Validation results.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 export const validateFields = (valueStoreKey) => {
@@ -306,6 +316,8 @@ export const validateFields = (valueStoreKey) => {
   const { collectionName, fileName, isIndexFile, currentLocales } = draft;
   /** @type {LocaleValidityMap} */
   const validities = {};
+  /** @type {LocaleValidationMessagesMap} */
+  const validationMessages = {};
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath: '', valueMap: {} };
   let valid = true;
@@ -318,6 +330,9 @@ export const validateFields = (valueStoreKey) => {
       validities[locale] = Object.fromEntries(
         valueEntries.map(([keyPath]) => [keyPath, { valid: true }]),
       );
+      validationMessages[locale] = Object.fromEntries(
+        valueEntries.map(([keyPath]) => [keyPath, []]),
+      );
 
       return;
     }
@@ -326,6 +341,7 @@ export const validateFields = (valueStoreKey) => {
 
     // Reset the state first
     validities[locale] = {};
+    validationMessages[locale] = {};
 
     valueEntries.forEach(([keyPath, value]) => {
       const [prefix] = keyPath.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
@@ -344,11 +360,13 @@ export const validateFields = (valueStoreKey) => {
 
       // Validate a list itself before the items
       if (LIST_KEY_PATH_REGEX.test(keyPath)) {
+        const listKeyPath = keyPath.replace(LIST_KEY_PATH_REGEX, '');
+
         const { valid: listValid, validateItems } = validateList({
           fieldConfig,
           validateArgs: {
             ...validateArgs,
-            keyPath: keyPath.replace(LIST_KEY_PATH_REGEX, ''),
+            keyPath: listKeyPath,
             value: '',
             componentName,
           },
@@ -356,6 +374,18 @@ export const validateFields = (valueStoreKey) => {
 
         if (!listValid) {
           valid = false;
+        }
+
+        // Compute messages for the list field itself (only on first item iteration)
+        if (!(listKeyPath in validationMessages[locale])) {
+          const listValidity = validities[locale][listKeyPath];
+
+          if (listValidity) {
+            validationMessages[locale][listKeyPath] = getFieldValidationMessages({
+              validity: listValidity,
+              fieldConfig,
+            });
+          }
         }
 
         if (!validateItems) {
@@ -366,10 +396,16 @@ export const validateFields = (valueStoreKey) => {
       if (!validateField({ ...validateArgs, keyPath, value, componentName })) {
         valid = false;
       }
+
+      const validity = validities[locale][keyPath];
+
+      if (validity) {
+        validationMessages[locale][keyPath] = getFieldValidationMessages({ validity, fieldConfig });
+      }
     });
   });
 
-  return { valid, validities };
+  return { valid, validities, validationMessages };
 };
 
 /**
@@ -403,11 +439,17 @@ export const validateSlugs = () => {
  * @returns {boolean} Whether the entry draft is valid.
  */
 export const validateEntry = () => {
-  const { valid: currentValuesValid, validities: currentValuesValidities } =
-    validateFields('currentValues');
+  const {
+    valid: currentValuesValid,
+    validities: currentValuesValidities,
+    validationMessages: currentValuesMessages,
+  } = validateFields('currentValues');
 
-  const { valid: extraValuesValid, validities: extraValuesValidities } =
-    validateFields('extraValues');
+  const {
+    valid: extraValuesValid,
+    validities: extraValuesValidities,
+    validationMessages: extraValuesMessages,
+  } = validateFields('extraValues');
 
   const { valid: slugsValid, validities: slugsValidities } = validateSlugs();
 
@@ -420,6 +462,15 @@ export const validateEntry = () => {
           ...currentValuesValidities[locale],
           ...extraValuesValidities[locale],
           ...slugsValidities[locale],
+        },
+      ]),
+    ),
+    validationMessages: Object.fromEntries(
+      Object.keys(currentValuesMessages).map((locale) => [
+        locale,
+        {
+          ...currentValuesMessages[locale],
+          ...extraValuesMessages[locale],
         },
       ]),
     ),

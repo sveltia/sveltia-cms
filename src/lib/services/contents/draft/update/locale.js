@@ -89,7 +89,9 @@ export const copyDefaultLocaleValues = (content, targetLanguage) => {
  */
 export const toggleLocale = (locale) => {
   /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
-    const { fields, defaultLocale, currentLocales, currentValues, validities } = _draft;
+    const { fields, defaultLocale, currentLocales, currentValues, validities, validationMessages } =
+      _draft;
+
     const enabled = !currentLocales[locale];
 
     // Initialize the content for the locale
@@ -116,6 +118,7 @@ export const toggleLocale = (locale) => {
       ..._draft,
       currentLocales: { ...currentLocales, [locale]: enabled },
       validities: { ...validities, [locale]: {} },
+      validationMessages: { ...validationMessages, [locale]: {} },
     };
   });
 };
