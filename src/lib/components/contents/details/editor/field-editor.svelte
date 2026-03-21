@@ -253,6 +253,27 @@
   });
 </script>
 
+{#snippet rangeError(
+  /** @type {string} */ direction,
+  /** @type {string} */ limitKey,
+  /** @type {string | number | undefined} */ limitValue,
+)}
+  {@const quantity = limitValue === 1 ? 'one' : 'many'}
+  {#if fieldType === 'datetime' && typeof limitValue === 'string'}
+    {$_(`validation.range_${direction}.${type}`, {
+      values: {
+        [limitKey]: getFormattedDateTime(/** @type {DateTimeInputType} */ (type), limitValue),
+      },
+    })}
+  {:else if fieldType === 'number'}
+    {$_(`validation.range_${direction}.number`, { values: { [limitKey]: limitValue } })}
+  {:else if canAddMultiValue}
+    {$_(`validation.range_${direction}.add_${quantity}`, { values: { [limitKey]: limitValue } })}
+  {:else}
+    {$_(`validation.range_${direction}.select_${quantity}`, { values: { [limitKey]: limitValue } })}
+  {/if}
+{/snippet}
+
 {#if $entryDraft && canEdit && fieldType !== 'hidden'}
   <FieldEditorGroup
     aria-label={$_('x_field', { values: { field: fieldLabel } })}
@@ -322,36 +343,10 @@
           })}
         {/if}
         {#if validity.rangeUnderflow}
-          {@const quantity = min === 1 ? 'one' : 'many'}
-          {#if fieldType === 'datetime' && typeof min === 'string'}
-            {$_(`validation.range_underflow.${type}`, {
-              values: {
-                min: getFormattedDateTime(/** @type {DateTimeInputType} */ (type), min),
-              },
-            })}
-          {:else if fieldType === 'number'}
-            {$_('validation.range_underflow.number', { values: { min } })}
-          {:else if canAddMultiValue}
-            {$_(`validation.range_underflow.add_${quantity}`, { values: { min } })}
-          {:else}
-            {$_(`validation.range_underflow.select_${quantity}`, { values: { min } })}
-          {/if}
+          {@render rangeError('underflow', 'min', min)}
         {/if}
         {#if validity.rangeOverflow}
-          {@const quantity = max === 1 ? 'one' : 'many'}
-          {#if fieldType === 'datetime' && typeof max === 'string'}
-            {$_(`validation.range_overflow.${type}`, {
-              values: {
-                max: getFormattedDateTime(/** @type {DateTimeInputType} */ (type), max),
-              },
-            })}
-          {:else if fieldType === 'number'}
-            {$_('validation.range_overflow.number', { values: { max } })}
-          {:else if canAddMultiValue}
-            {$_(`validation.range_overflow.add_${quantity}`, { values: { max } })}
-          {:else}
-            {$_(`validation.range_overflow.select_${quantity}`, { values: { max } })}
-          {/if}
+          {@render rangeError('overflow', 'max', max)}
         {/if}
         {#if validity.patternMismatch}
           {pattern[1]}

@@ -309,6 +309,28 @@
   });
 </script>
 
+{#snippet addPositionItems(/** @type {number} */ insertIndex, /** @type {string} */ position)}
+  {#if hasVariableTypes}
+    <MenuItem label={$_(`add_item_${position}`)} disabled={hasMaxItems}>
+      <!-- eslint-disable-next-line no-shadow -->
+      {#snippet items()}
+        {#each types ?? [] as { name, label: itemLabel } (name)}
+          <MenuItem
+            label={itemLabel || name}
+            onclick={() => addItem({ index: insertIndex, type: name })}
+          />
+        {/each}
+      {/snippet}
+    </MenuItem>
+  {:else}
+    <MenuItem
+      label={$_(`add_item_${position}`)}
+      disabled={hasMaxItems}
+      onclick={() => addItem({ index: insertIndex })}
+    />
+  {/if}
+{/snippet}
+
 <div role="none" class="toolbar top">
   <Button
     iconic
@@ -421,41 +443,8 @@
                       disabled={hasMaxItems}
                       onclick={() => addItem({ index: index + 1, dupIndex: index })}
                     />
-                    {#if hasVariableTypes}
-                      <MenuItem label={$_('add_item_above')} disabled={hasMaxItems}>
-                        <!-- eslint-disable-next-line no-shadow -->
-                        {#snippet items()}
-                          {#each types ?? [] as { name, label: itemLabel } (name)}
-                            <MenuItem
-                              label={itemLabel || name}
-                              onclick={() => addItem({ index, type: name })}
-                            />
-                          {/each}
-                        {/snippet}
-                      </MenuItem>
-                      <MenuItem label={$_('add_item_below')} disabled={hasMaxItems}>
-                        <!-- eslint-disable-next-line no-shadow -->
-                        {#snippet items()}
-                          {#each types ?? [] as { name, label: itemLabel } (name)}
-                            <MenuItem
-                              label={itemLabel || name}
-                              onclick={() => addItem({ index: index + 1, type: name })}
-                            />
-                          {/each}
-                        {/snippet}
-                      </MenuItem>
-                    {:else}
-                      <MenuItem
-                        label={$_('add_item_above')}
-                        disabled={hasMaxItems}
-                        onclick={() => addItem({ index })}
-                      />
-                      <MenuItem
-                        label={$_('add_item_below')}
-                        disabled={hasMaxItems}
-                        onclick={() => addItem({ index: index + 1 })}
-                      />
-                    {/if}
+                    {@render addPositionItems(index, 'above')}
+                    {@render addPositionItems(index + 1, 'below')}
                   </Menu>
                 {/snippet}
               </MenuButton>
