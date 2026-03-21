@@ -1667,7 +1667,7 @@
 
 /**
  * Event entry media file data.
- * @typedef {object} AppEventEntryMedia
+ * @typedef {object} ApiEntryMedia
  * @property {string} id Media file ID.
  * @property {string} path Media file path.
  * @property {string} name Media file name.
@@ -1679,14 +1679,14 @@
 
 /**
  * Event entry data.
- * @typedef {object} AppEventEntry
+ * @typedef {object} ApiEntry
  * @property {Record<string, any>} data Entry data for the default locale.
  * @property {Record<string, any>} i18n Entry data for other locales with locale codes as keys.
  * @property {string} slug Entry slug.
  * @property {string} path Entry file path.
  * @property {boolean} newRecord Whether the entry is newly created.
  * @property {string} collection Name of the collection.
- * @property {AppEventEntryMedia[]} mediaFiles List of media files associated with the entry.
+ * @property {ApiEntryMedia[]} mediaFiles List of media files associated with the entry.
  * @property {{ path: string }} meta Entry meta data.
  * @property {null} isModification Unknown. Always `null`.
  * @property {null} label Unknown. Always `null`.
@@ -1701,10 +1701,10 @@
  * Event listener properties.
  * @typedef {object} AppEventListener
  * @property {AppEventType} name Event type.
- * @property {(args: { author: AppEventAuthor, entry: MapOf<AppEventEntry> }) => void |
- * MapOf<AppEventEntry> | Promise<void> | Promise<MapOf<AppEventEntry>>} handler Event handler. For
- * the `preSave` event, the handler can return a modified entry object in Immutable Map format to
- * change the data before it is saved. For other events, the return value is ignored.
+ * @property {(args: { author: AppEventAuthor, entry: MapOf<ApiEntry> }) => void | MapOf<ApiEntry> |
+ * Promise<void> | Promise<MapOf<ApiEntry>>} handler Event handler. For the `preSave` event, the
+ * handler can return a modified entry object in Immutable Map format to change the data before it
+ * is saved. For other events, the return value is ignored.
  * @see https://decapcms.org/docs/registering-events/
  * @see https://sveltiacms.app/en/docs/api/events
  */

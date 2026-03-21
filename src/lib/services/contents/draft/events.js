@@ -7,7 +7,8 @@ import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
 import { user } from '$lib/services/user';
 
 /**
- * @import { AppEventListener, AppEventType } from '$lib/types/public';
+ * @import { MapOf } from 'immutable';
+ * @import { ApiEntry, AppEventListener, AppEventType } from '$lib/types/public';
  * @import { Asset, Entry, EntryDraft, User } from '$lib/types/private';
  */
 
@@ -36,12 +37,70 @@ export const UPDATABLE_EVENT_TYPES = ['preSave', 'prePublish'];
 export const eventHookRegistry = new Set();
 
 /**
+ * Create an Immutable.js Map representing the entry data, compatible with Netlify/Decap CMS event
+ * hook handlers.
+ * @param {object} args Arguments.
+ * @param {Record<string, any>} args.content Entry content for the default locale.
+ * @param {string[]} args.otherLocales Other locale keys.
+ * @param {Entry['locales']} args.locales All locale data keyed by locale.
+ * @param {string} args.slug Entry slug.
+ * @param {string} args.path Entry file path.
+ * @param {boolean} args.isNew Whether the entry is new.
+ * @param {string} args.collectionName Collection name.
+ * @param {Asset[]} args.associatedAssets Assets associated with the entry.
+ * @returns {MapOf<ApiEntry>} Immutable Map of the entry data.
+ * @see https://immutable-js.com/docs/v5/Map/
+ */
+export const createEntryMap = ({
+  content,
+  otherLocales,
+  locales,
+  slug,
+  path,
+  isNew,
+  collectionName,
+  associatedAssets,
+}) =>
+  // @ts-ignore
+  fromJS({
+    // Entry data for the default locale
+    data: unflatten(content),
+    // Entry data for other locales
+    // @see https://github.com/decaporg/decap-cms/issues/4729
+    i18n: Object.fromEntries(
+      otherLocales.map((locale) => [locale, { data: unflatten(locales[locale].content) }]),
+    ),
+    // Other entry properties
+    slug,
+    path,
+    newRecord: isNew,
+    collection: collectionName,
+    mediaFiles: associatedAssets.map(({ sha, file, size, blobURL, ...asset }) => ({
+      id: sha,
+      name: asset.name,
+      path: asset.path,
+      file,
+      size,
+      url: blobURL,
+      displayURL: blobURL,
+    })),
+    // Additional properties included for compatibility with Netlify/Decap CMS
+    meta: { path },
+    isModification: null,
+    label: null,
+    partial: false,
+    author: '',
+    raw: '',
+    status: '',
+    updatedOn: '',
+  });
+
+/**
  * Call the registered event hooks.
  * @param {object} args Arguments.
  * @param {AppEventType} args.type Type of event.
  * @param {EntryDraft} args.draft Entry draft being saved.
  * @param {Entry} args.savingEntry Entry being saved. This object may be mutated by the hook.
- * @see https://immutable-js.com/docs/v5/Map/
  */
 export const callEventHooks = async ({ type, draft, savingEntry }) => {
   const { login = '', name = '' } = /** @type {User} */ (get(user));
@@ -68,38 +127,15 @@ export const callEventHooks = async ({ type, draft, savingEntry }) => {
     const updatedMap = await hook.handler({
       author: { login, name },
       // Create an Immutable.js Map representing the entry data with deep conversion
-      // @ts-ignore
-      entry: fromJS({
-        // Entry data for the default locale
-        data: unflatten(content),
-        // Entry data for other locales
-        // @see https://github.com/decaporg/decap-cms/issues/4729
-        i18n: Object.fromEntries(
-          otherLocales.map((locale) => [locale, { data: unflatten(locales[locale].content) }]),
-        ),
-        // Other entry properties
+      entry: createEntryMap({
+        content,
+        otherLocales,
+        locales,
         slug,
         path,
-        newRecord: isNew,
-        collection: collectionName,
-        mediaFiles: associatedAssets.map(({ sha, file, size, blobURL, ...asset }) => ({
-          id: sha,
-          name: asset.name,
-          path: asset.path,
-          file,
-          size,
-          url: blobURL,
-          displayURL: blobURL,
-        })),
-        // Additional properties included for compatibility with Netlify/Decap CMS
-        meta: { path },
-        isModification: null,
-        label: null,
-        partial: false,
-        author: '',
-        raw: '',
-        status: '',
-        updatedOn: '',
+        isNew,
+        collectionName,
+        associatedAssets,
       }),
     });
 
