@@ -262,7 +262,7 @@
     }
   };
 
-  onMount(() => () => {
+  onMount(() => {
     if (!$showContentOverlay) {
       $entryDraft = null;
     }
