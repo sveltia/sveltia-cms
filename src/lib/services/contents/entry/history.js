@@ -1,10 +1,9 @@
 import { get } from 'svelte/store';
 
 import { backend } from '$lib/services/backends';
-import { entryDraft } from '$lib/services/contents/draft';
 
 /**
- * @import { FileCommit } from '$lib/types/private';
+ * @import { Entry, FileCommit } from '$lib/types/private';
  */
 
 /**
@@ -20,16 +19,11 @@ const historyCache = new Map();
 /**
  * Fetch the commit history for the current entry draft, using a cache to avoid redundant requests.
  * Returns immediately if the data is already cached for the same entry.
+ * @param {Entry} entry The entry to fetch the history for.
  * @returns {Promise<EntryHistory>} The commit history result.
  */
-export const fetchEntryHistory = async () => {
-  const { originalEntry } = get(entryDraft) ?? {};
-
-  if (!originalEntry) {
-    return { commits: [], loading: false, error: false };
-  }
-
-  const { id } = originalEntry;
+export const fetchEntryHistory = async (entry) => {
+  const { id, locales } = entry;
   const cached = historyCache.get(id);
 
   if (cached) {
@@ -42,7 +36,7 @@ export const fetchEntryHistory = async () => {
     return { commits: [], loading: false, error: false };
   }
 
-  const paths = [...new Set(Object.values(originalEntry.locales).map((l) => l.path))];
+  const paths = [...new Set(Object.values(locales).map((l) => l.path))];
 
   try {
     const commits = await _backend.fetchFileCommits(paths);
@@ -63,11 +57,8 @@ export const fetchEntryHistory = async () => {
 /**
  * Clear the cached commit history for the current entry so the next call to
  * {@link fetchEntryHistory} fetches fresh data.
+ * @param {string} entryId The ID of the entry to clear from the cache.
  */
-export const clearEntryHistoryCache = () => {
-  const draft = get(entryDraft);
-
-  if (draft) {
-    historyCache.delete(draft.id);
-  }
+export const clearEntryHistoryCache = (entryId) => {
+  historyCache.delete(entryId);
 };
