@@ -18,8 +18,6 @@
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
   import { canShowMobileSignInDialog } from '$lib/services/app/onboarding';
-  import { showAssetOverlay } from '$lib/services/assets/view';
-  import { showContentOverlay } from '$lib/services/contents/editor';
   import { searchMode } from '$lib/services/search';
   import { isSmallScreen } from '$lib/services/user/env';
 
@@ -46,9 +44,6 @@
    * @todo Show Not Found page.
    */
   export const selectPage = () => {
-    $showContentOverlay = false;
-    $showAssetOverlay = false;
-
     const { path } = parseLocation();
 
     const { pageName } =

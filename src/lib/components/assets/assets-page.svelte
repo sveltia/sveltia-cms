@@ -55,6 +55,7 @@
     isSearchPage = false;
 
     if (!match?.groups) {
+      $showAssetOverlay = false;
       // Check if it's the search page, which has a different URL pattern (`#/search/{query}`)
       isSearchPage = isSearchRoute(path);
 
@@ -67,6 +68,7 @@
       if ($isSmallScreen) {
         // Show the asset folder list only
         $selectedAssetFolder = undefined;
+        $showAssetOverlay = false;
         $announcedPageStatus = $_('viewing_asset_folder_list');
         isIndexPage = true;
       } else {
@@ -98,6 +100,7 @@
       // Wait for `selectedAssetFolderLabel` to be updated
       await sleep(100);
 
+      $showAssetOverlay = false;
       $announcedPageStatus = $_(
         count > 1
           ? 'viewing_x_asset_folder_many_assets'
@@ -121,6 +124,10 @@
 
   onMount(() => {
     navigate();
+
+    return () => {
+      $showAssetOverlay = false;
+    };
   });
 </script>
 

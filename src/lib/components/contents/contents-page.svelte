@@ -73,6 +73,7 @@
     }
 
     if (!match?.groups) {
+      $showContentOverlay = false;
       // Check if it's the search page, which has a different URL pattern (`#/search/{query}`)
       isSearchPage = isSearchRoute(path);
 
@@ -85,6 +86,7 @@
       if ($isSmallScreen) {
         // Show the collection list only
         $selectedCollection = undefined;
+        $showContentOverlay = false;
         $announcedPageStatus = $_('viewing_collection_list');
         isIndexPage = true;
       } else {
@@ -107,6 +109,7 @@
     }
 
     if (!collection || !$selectedCollection) {
+      $showContentOverlay = false;
       $announcedPageStatus = $_('collection_not_found');
 
       return; // Not Found
@@ -119,6 +122,7 @@
     if (!routeType) {
       const count = $listedEntries.length;
 
+      $showContentOverlay = false;
       $announcedPageStatus = $_(
         count > 1
           ? 'viewing_x_collection_many_entries'
@@ -197,6 +201,10 @@
 
   onMount(() => {
     navigate();
+
+    return () => {
+      $showContentOverlay = false;
+    };
   });
 </script>
 
