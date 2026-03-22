@@ -14,6 +14,7 @@ import { createSavingEntryData } from '$lib/services/contents/draft/save/changes
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/expanders';
+import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 
 /**
  * @import { ChangeResults, Entry, EntryDraft } from '$lib/types/private';
@@ -46,7 +47,7 @@ const updateStores = ({ skipCI }) => {
  */
 export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
-  const { collection, isNew, collectionName, fileName, currentValues } = draft;
+  const { isNew, collection, collectionName, fileName, currentValues, originalEntry } = draft;
 
   if (!validateEntry()) {
     expandInvalidFields({ collectionName, fileName, currentValues });
@@ -82,6 +83,10 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
   updateStores({ skipCI });
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
+
+  if (originalEntry) {
+    clearEntryHistoryCache(originalEntry.id);
+  }
 
   return results.savedEntries[0];
 };

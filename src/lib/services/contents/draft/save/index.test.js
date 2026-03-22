@@ -10,10 +10,12 @@ import {
 } from '$lib/services/contents/collection/data';
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
+import { callEventHooks } from '$lib/services/contents/draft/events';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/expanders';
+import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 
 import { saveEntry } from './index';
 
@@ -30,6 +32,7 @@ vi.mock('$lib/services/contents/draft/save/changes');
 vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/expanders');
+vi.mock('$lib/services/contents/entry/history');
 vi.mock('$lib/services/user/prefs', () => ({
   prefs: { subscribe: vi.fn(() => vi.fn()) },
 }));
@@ -109,6 +112,7 @@ describe('draft/save/index', () => {
       savedAssets: [],
     });
 
+    vi.mocked(callEventHooks).mockResolvedValue(undefined);
     vi.mocked(contentUpdatesToast).set = vi.fn();
     vi.mocked(isLastCommitPublished).set = vi.fn();
     vi.mocked(deleteBackup).mockResolvedValue(undefined);
@@ -233,8 +237,6 @@ describe('draft/save/index', () => {
     });
 
     it('should call postSave event hooks after successful save', async () => {
-      const { callEventHooks } = await import('$lib/services/contents/draft/events');
-
       await saveEntry();
 
       expect(callEventHooks).toHaveBeenCalledWith(
@@ -246,8 +248,6 @@ describe('draft/save/index', () => {
     });
 
     it('should pass correct savingEntry to postSave event hooks', async () => {
-      const { callEventHooks } = await import('$lib/services/contents/draft/events');
-
       await saveEntry();
 
       expect(callEventHooks).toHaveBeenCalledWith(
@@ -265,7 +265,6 @@ describe('draft/save/index', () => {
     });
 
     it('should call postSave hooks after saveChanges completes', async () => {
-      const { callEventHooks } = await import('$lib/services/contents/draft/events');
       let saveChangesCallOrder = 0;
       let callEventHooksCallOrder = 0;
 
@@ -296,8 +295,6 @@ describe('draft/save/index', () => {
     });
 
     it('should not throw if postSave event hooks fail', async () => {
-      const { callEventHooks } = await import('$lib/services/contents/draft/events');
-
       vi.mocked(callEventHooks).mockImplementation(() => {
         throw new Error('Event hook error');
       });
@@ -305,6 +302,22 @@ describe('draft/save/index', () => {
       // This should not throw because the error handling is not implemented
       // If you want to add error handling, adjust this expectation accordingly
       await expect(saveEntry()).rejects.toThrow('Event hook error');
+    });
+
+    it('should clear entry history cache when originalEntry exists', async () => {
+      mockDraft.originalEntry = { id: 'original-entry-id' };
+
+      await saveEntry();
+
+      expect(clearEntryHistoryCache).toHaveBeenCalledWith('original-entry-id');
+    });
+
+    it('should not clear entry history cache when originalEntry is absent', async () => {
+      mockDraft.originalEntry = undefined;
+
+      await saveEntry();
+
+      expect(clearEntryHistoryCache).not.toHaveBeenCalled();
     });
   });
 });
