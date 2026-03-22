@@ -55,7 +55,7 @@ export const fetchEntryHistory = async (entry) => {
 };
 
 /**
- * Clear the cached commit history for the current entry so the next call to
+ * Clear the cached commit history for the given entry ID, so that the next call to
  * {@link fetchEntryHistory} fetches fresh data.
  * @param {string} entryId The ID of the entry to clear from the cache.
  */
