@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { commitChanges, fetchLastCommit } from './commits.js';
+import { repository } from '$lib/services/backends/git/gitea/repository';
+
+import { commitChanges, fetchFileCommits, fetchLastCommit } from './commits.js';
 
 /**
  * @import { CommitAction, CommitOptions, CommitType, FileChange } from '$lib/types/private';
@@ -571,6 +573,143 @@ describe('Gitea Commits Service', () => {
           'file2.md': { sha: '' },
         },
       });
+    });
+  });
+
+  describe('fetchFileCommits', () => {
+    test('fetches and returns commits for a single path', async () => {
+      fetchAPIMock.mockResolvedValue([
+        {
+          sha: 'abc123',
+          commit: {
+            author: { name: 'Alice', email: 'alice@example.com', date: '2024-06-01T12:00:00Z' },
+          },
+          author: { avatar_url: 'https://example.com/alice.png', login: 'alice' },
+        },
+        {
+          sha: 'def456',
+          commit: {
+            author: { name: 'Bob', email: 'bob@example.com', date: '2024-05-01T10:00:00Z' },
+          },
+          author: { avatar_url: 'https://example.com/bob.png', login: 'bob' },
+        },
+      ]);
+
+      const result = await fetchFileCommits(['content/en/post.md']);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual({
+        sha: 'abc123',
+        authorName: 'Alice',
+        authorEmail: 'alice@example.com',
+        authorAvatarURL: 'https://example.com/alice.png',
+        authorLogin: 'alice',
+        date: new Date('2024-06-01T12:00:00Z'),
+      });
+      expect(result[1]).toEqual({
+        sha: 'def456',
+        authorName: 'Bob',
+        authorEmail: 'bob@example.com',
+        authorAvatarURL: 'https://example.com/bob.png',
+        authorLogin: 'bob',
+        date: new Date('2024-05-01T10:00:00Z'),
+      });
+      expect(fetchAPIMock).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/commits?sha=main&path=content%2Fen%2Fpost.md&limit=100',
+      );
+    });
+
+    test('deduplicates commits across multiple paths', async () => {
+      fetchAPIMock
+        .mockResolvedValueOnce([
+          {
+            sha: 'abc123',
+            commit: { author: { name: 'Alice', email: 'a@t.com', date: '2024-06-01T12:00:00Z' } },
+            author: { avatar_url: '', login: 'alice' },
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            sha: 'abc123',
+            commit: { author: { name: 'Alice', email: 'a@t.com', date: '2024-06-01T12:00:00Z' } },
+            author: { avatar_url: '', login: 'alice' },
+          },
+          {
+            sha: 'xyz789',
+            commit: { author: { name: 'Carol', email: 'c@t.com', date: '2024-04-01T08:00:00Z' } },
+            author: { avatar_url: '', login: 'carol' },
+          },
+        ]);
+
+      const result = await fetchFileCommits(['content/en/post.md', 'content/fr/post.md']);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].sha).toBe('abc123');
+      expect(result[1].sha).toBe('xyz789');
+    });
+
+    test('returns sorted commits in descending date order', async () => {
+      fetchAPIMock.mockResolvedValue([
+        {
+          sha: 'oldest',
+          commit: { author: { name: 'A', email: 'a@t.com', date: '2024-01-01T00:00:00Z' } },
+          author: { avatar_url: '', login: 'a' },
+        },
+        {
+          sha: 'newest',
+          commit: { author: { name: 'B', email: 'b@t.com', date: '2024-12-01T00:00:00Z' } },
+          author: { avatar_url: '', login: 'b' },
+        },
+      ]);
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result[0].sha).toBe('newest');
+      expect(result[1].sha).toBe('oldest');
+    });
+
+    test('handles missing commit author fields gracefully', async () => {
+      fetchAPIMock.mockResolvedValue([
+        {
+          sha: 'no-author',
+          commit: { author: null },
+          author: null,
+          created: '2024-03-01T00:00:00Z',
+        },
+      ]);
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        sha: 'no-author',
+        authorName: '',
+        authorEmail: undefined,
+        authorAvatarURL: undefined,
+        authorLogin: undefined,
+        date: new Date('2024-03-01T00:00:00Z'),
+      });
+    });
+
+    test('handles empty response', async () => {
+      fetchAPIMock.mockResolvedValue([]);
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result).toEqual([]);
+    });
+
+    test('handles undefined branch (uses empty string fallback)', async () => {
+      repository.branch = undefined;
+      fetchAPIMock.mockResolvedValue([]);
+
+      await fetchFileCommits(['file.md']);
+
+      expect(fetchAPIMock).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/commits?sha=&path=file.md&limit=100',
+      );
+
+      repository.branch = 'main';
     });
   });
 });

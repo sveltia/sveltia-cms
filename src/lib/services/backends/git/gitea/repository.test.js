@@ -76,6 +76,7 @@ describe('Gitea Repository Service', () => {
       expect(result).toEqual({
         treeBaseURL: 'https://gitea.example.com/owner/repo/src/branch/main',
         blobBaseURL: 'https://gitea.example.com/owner/repo/src/branch/main',
+        commitBaseURL: 'https://gitea.example.com/owner/repo/commit',
       });
     });
 
@@ -86,6 +87,7 @@ describe('Gitea Repository Service', () => {
       expect(result).toEqual({
         treeBaseURL: 'https://gitea.example.com/owner/repo',
         blobBaseURL: '',
+        commitBaseURL: 'https://gitea.example.com/owner/repo/commit',
       });
     });
 
@@ -95,6 +97,7 @@ describe('Gitea Repository Service', () => {
       expect(result).toEqual({
         treeBaseURL: '/src/branch/main',
         blobBaseURL: '/src/branch/main',
+        commitBaseURL: '/commit',
       });
     });
   });

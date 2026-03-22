@@ -1,7 +1,12 @@
 import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { commitChanges, fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
+import {
+  commitChanges,
+  fetchFileCommits,
+  fetchLastCommit,
+} from '$lib/services/backends/git/gitlab/commits';
+import { repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { getGitHash } from '$lib/services/utils/file';
@@ -298,6 +303,155 @@ describe('GitLab commits service', () => {
       );
 
       expect(result.files).toEqual({});
+    });
+  });
+
+  describe('fetchFileCommits', () => {
+    test('fetches and returns commits with resolved avatars', async () => {
+      vi.mocked(fetchAPI)
+        // Commit list request
+        .mockResolvedValueOnce([
+          {
+            id: 'abc123',
+            author_name: 'Alice',
+            author_email: 'alice@example.com',
+            committed_date: '2024-06-01T12:00:00Z',
+          },
+          {
+            id: 'def456',
+            author_name: 'Bob',
+            author_email: 'bob@example.com',
+            committed_date: '2024-05-01T10:00:00Z',
+          },
+        ])
+        // Avatar requests (one per unique email)
+        .mockResolvedValueOnce({ avatar_url: 'https://example.com/alice.png' })
+        .mockResolvedValueOnce({ avatar_url: 'https://example.com/bob.png' });
+
+      const result = await fetchFileCommits(['content/en/post.md']);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual({
+        sha: 'abc123',
+        authorName: 'Alice',
+        authorEmail: 'alice@example.com',
+        authorAvatarURL: 'https://example.com/alice.png',
+        date: new Date('2024-06-01T12:00:00Z'),
+      });
+      expect(result[1]).toEqual({
+        sha: 'def456',
+        authorName: 'Bob',
+        authorEmail: 'bob@example.com',
+        authorAvatarURL: 'https://example.com/bob.png',
+        date: new Date('2024-05-01T10:00:00Z'),
+      });
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/test-owner%2Ftest-repo/repository/commits' +
+          '?ref_name=main&path=content%2Fen%2Fpost.md&per_page=100',
+      );
+      expect(fetchAPI).toHaveBeenCalledWith('/avatar?email=alice%40example.com&size=48');
+      expect(fetchAPI).toHaveBeenCalledWith('/avatar?email=bob%40example.com&size=48');
+    });
+
+    test('deduplicates commits across multiple paths', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce([
+          {
+            id: 'abc123',
+            author_name: 'Alice',
+            author_email: 'alice@example.com',
+            committed_date: '2024-06-01T12:00:00Z',
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: 'abc123',
+            author_name: 'Alice',
+            author_email: 'alice@example.com',
+            committed_date: '2024-06-01T12:00:00Z',
+          },
+          {
+            id: 'xyz789',
+            author_name: 'Carol',
+            author_email: 'carol@example.com',
+            committed_date: '2024-04-01T08:00:00Z',
+          },
+        ])
+        // Avatar requests
+        .mockResolvedValueOnce({ avatar_url: 'https://example.com/alice.png' })
+        .mockResolvedValueOnce({ avatar_url: 'https://example.com/carol.png' });
+
+      const result = await fetchFileCommits(['content/en/post.md', 'content/fr/post.md']);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].sha).toBe('abc123');
+      expect(result[1].sha).toBe('xyz789');
+    });
+
+    test('returns sorted commits in descending date order', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce([
+          {
+            id: 'oldest',
+            author_name: 'A',
+            author_email: 'a@test.com',
+            committed_date: '2024-01-01T00:00:00Z',
+          },
+          {
+            id: 'newest',
+            author_name: 'B',
+            author_email: 'b@test.com',
+            committed_date: '2024-12-01T00:00:00Z',
+          },
+        ])
+        .mockResolvedValueOnce({ avatar_url: '' })
+        .mockResolvedValueOnce({ avatar_url: '' });
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result[0].sha).toBe('newest');
+      expect(result[1].sha).toBe('oldest');
+    });
+
+    test('handles empty response', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue([]);
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result).toEqual([]);
+    });
+
+    test('handles avatar fetch failure gracefully', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce([
+          {
+            id: 'abc123',
+            author_name: 'Alice',
+            author_email: 'alice@example.com',
+            committed_date: '2024-06-01T12:00:00Z',
+          },
+        ])
+        // Avatar request fails
+        .mockRejectedValueOnce(new Error('Network error'));
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].authorAvatarURL).toBeUndefined();
+    });
+
+    test('handles undefined branch (uses empty string fallback)', async () => {
+      repository.branch = undefined;
+      vi.mocked(fetchAPI).mockResolvedValue([]);
+
+      await fetchFileCommits(['file.md']);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/test-owner%2Ftest-repo/repository/commits' +
+          '?ref_name=&path=file.md&per_page=100',
+      );
+
+      repository.branch = 'main';
     });
   });
 });

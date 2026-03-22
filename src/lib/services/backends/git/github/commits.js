@@ -7,7 +7,7 @@ import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 
 /**
- * @import { CommitOptions, CommitResults, FileChange } from '$lib/types/private';
+ * @import { CommitOptions, CommitResults, FileChange, FileCommit } from '$lib/types/private';
  */
 
 /**
@@ -129,4 +129,68 @@ export const commitChanges = async (changes, options) => {
       additions.map(({ path }, index) => [path, { sha: commit[`file_${index}`]?.oid }]),
     ),
   };
+};
+
+/**
+ * Fetch commit history for the given file paths.
+ * @param {string[]} paths File paths to fetch commit history for.
+ * @returns {Promise<FileCommit[]>} Deduplicated and sorted list of commits.
+ * @see https://docs.github.com/en/graphql/reference/objects#commit
+ */
+export const fetchFileCommits = async (paths) => {
+  const innerQuery = paths
+    .map(
+      (path, i) => `
+        history_${i}: ref(qualifiedName: $branch) {
+          target {
+            ... on Commit {
+              history(first: 100, path: ${JSON.stringify(path)}) {
+                nodes {
+                  oid
+                  author {
+                    name
+                    email
+                    avatarUrl
+                    user { login }
+                  }
+                  committedDate
+                }
+              }
+            }
+          }
+        }
+      `,
+    )
+    .join('');
+
+  const query = `
+    query($owner: String!, $repo: String!, $branch: String!) {
+      repository(owner: $owner, name: $repo) {
+        ${innerQuery}
+      }
+    }
+  `;
+
+  const data = /** @type {{ repository: Record<string, any> }} */ (await fetchGraphQL(query));
+  /** @type {Map<string, FileCommit>} */
+  const commitMap = new Map();
+
+  paths.forEach((_path, i) => {
+    const nodes = data.repository[`history_${i}`]?.target?.history?.nodes ?? [];
+
+    nodes.forEach((/** @type {any} */ node) => {
+      if (!commitMap.has(node.oid)) {
+        commitMap.set(node.oid, {
+          sha: node.oid,
+          authorName: node.author.name,
+          authorEmail: node.author.email,
+          authorAvatarURL: node.author.avatarUrl,
+          authorLogin: node.author.user?.login,
+          date: new Date(node.committedDate),
+        });
+      }
+    });
+  });
+
+  return [...commitMap.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
 };

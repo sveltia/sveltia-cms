@@ -8,7 +8,7 @@ import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { user } from '$lib/services/user';
 
 /**
- * @import { CommitOptions, CommitResults, FileChange, User } from '$lib/types/private';
+ * @import { CommitOptions, CommitResults, FileChange, FileCommit, User } from '$lib/types/private';
  */
 
 /**
@@ -91,4 +91,45 @@ export const commitChanges = async (changes, options) => {
       ]),
     ),
   };
+};
+
+/**
+ * Fetch commit history for the given file paths.
+ * @param {string[]} paths File paths to fetch commit history for.
+ * @returns {Promise<FileCommit[]>} Deduplicated and sorted list of commits.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetAllCommits
+ */
+export const fetchFileCommits = async (paths) => {
+  const { owner, repo, branch } = repository;
+
+  const results = await Promise.all(
+    paths.map(
+      (path) =>
+        /** @type {Promise<any[]>} */ (
+          fetchAPI(
+            `/repos/${owner}/${repo}/commits` +
+              `?sha=${encodeURIComponent(branch ?? '')}` +
+              `&path=${encodeURIComponent(path)}&limit=100`,
+          )
+        ),
+    ),
+  );
+
+  /** @type {Map<string, FileCommit>} */
+  const commitMap = new Map();
+
+  results.flat().forEach((commit) => {
+    if (!commitMap.has(commit.sha)) {
+      commitMap.set(commit.sha, {
+        sha: commit.sha,
+        authorName: commit.commit?.author?.name ?? '',
+        authorEmail: commit.commit?.author?.email,
+        authorAvatarURL: commit.author?.avatar_url,
+        authorLogin: commit.author?.login,
+        date: new Date(commit.commit?.author?.date ?? commit.created),
+      });
+    }
+  });
+
+  return [...commitMap.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
 };

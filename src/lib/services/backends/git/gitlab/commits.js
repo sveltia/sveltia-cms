@@ -8,7 +8,7 @@ import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { getGitHash } from '$lib/services/utils/file';
 
 /**
- * @import { CommitOptions, CommitResults, FileChange } from '$lib/types/private';
+ * @import { CommitOptions, CommitResults, FileChange, FileCommit } from '$lib/types/private';
  */
 
 /**
@@ -121,4 +121,84 @@ export const commitChanges = async (changes, options) => {
     date: new Date(committedDate),
     files: Object.fromEntries(entries.filter((entry) => !!entry)),
   };
+};
+
+/**
+ * Fetch the avatar URL for a given email address.
+ * @param {string} email Email address.
+ * @returns {Promise<string | undefined>} Avatar URL, or `undefined` if not available.
+ * @see https://docs.gitlab.com/api/avatar/
+ */
+const fetchAvatarURL = async (email) => {
+  try {
+    const { avatar_url: avatarURL } = /** @type {{ avatar_url: string }} */ (
+      await fetchAPI(`/avatar?email=${encodeURIComponent(email)}&size=48`)
+    );
+
+    return avatarURL || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Fetch commit history for the given file paths.
+ * @param {string[]} paths File paths to fetch commit history for.
+ * @returns {Promise<FileCommit[]>} Deduplicated and sorted list of commits.
+ * @see https://docs.gitlab.com/api/commits/#list-repository-commits
+ */
+export const fetchFileCommits = async (paths) => {
+  const { owner, repo, branch } = repository;
+  const projectId = encodeURIComponent(`${owner}/${repo}`);
+
+  const results = await Promise.all(
+    paths.map(
+      (path) =>
+        /** @type {Promise<any[]>} */ (
+          fetchAPI(
+            `/projects/${projectId}/repository/commits` +
+              `?ref_name=${encodeURIComponent(branch ?? '')}` +
+              `&path=${encodeURIComponent(path)}&per_page=100`,
+          )
+        ),
+    ),
+  );
+
+  /** @type {Map<string, FileCommit>} */
+  const commitMap = new Map();
+
+  results.flat().forEach((commit) => {
+    if (!commitMap.has(commit.id)) {
+      commitMap.set(commit.id, {
+        sha: commit.id,
+        authorName: commit.author_name,
+        authorEmail: commit.author_email,
+        authorAvatarURL: undefined,
+        date: new Date(commit.committed_date),
+      });
+    }
+  });
+
+  // Resolve avatar URLs for unique author emails via the GitLab Avatar API
+  /** @type {string[]} */
+  const uniqueEmails = /** @type {string[]} */ (
+    [...new Set([...commitMap.values()].map((c) => c.authorEmail))].filter((e) => !!e)
+  );
+
+  /** @type {Map<string, string | undefined>} */
+  const avatarMap = new Map(
+    await Promise.all(
+      uniqueEmails.map(
+        async (email) => /** @type {const} */ ([email, await fetchAvatarURL(email)]),
+      ),
+    ),
+  );
+
+  const commitList = [...commitMap.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  commitList.forEach((commit) => {
+    commit.authorAvatarURL = avatarMap.get(/** @type {string} */ (commit.authorEmail));
+  });
+
+  return commitList;
 };

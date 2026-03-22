@@ -5,7 +5,7 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
 
 /**
- * @import { RepositoryInfo } from '$lib/types/private';
+ * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
  */
 
 /**
@@ -32,12 +32,13 @@ export const resetRepositoryInfoCache = () => {
  * @param {string} repoURL The base URL of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
  * the CMS configuration.
- * @returns {{ treeBaseURL: string, blobBaseURL: string }} An object containing the tree base URL
- * for browsing files, and the blob base URL for accessing file contents.
+ * @returns {RepositoryBaseURLs} An object containing the tree base URL for browsing files, and the
+ * blob base URL for accessing file contents.
  */
 export const getBaseURLs = (repoURL, branch) => ({
   treeBaseURL: branch ? `${repoURL}/src/branch/${branch}` : repoURL,
   blobBaseURL: branch ? `${repoURL}/src/branch/${branch}` : '',
+  commitBaseURL: `${repoURL}/commit`,
 });
 
 /**

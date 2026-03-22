@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
-import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
+import { commitChanges, fetchFileCommits } from '$lib/services/backends/git/gitlab/commits';
 import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/git/gitlab/constants';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
 import gitlabBackend, { init } from '$lib/services/backends/git/gitlab/index';
@@ -26,6 +26,7 @@ vi.mock('$lib/services/backends/git/gitlab/auth', () => ({
 }));
 vi.mock('$lib/services/backends/git/gitlab/commits', () => ({
   commitChanges: vi.fn(),
+  fetchFileCommits: vi.fn(),
 }));
 vi.mock('$lib/services/backends/git/gitlab/files', () => ({
   fetchBlob: vi.fn(),
@@ -59,6 +60,7 @@ describe('GitLab backend service', () => {
     vi.mocked(getBaseURLs).mockReturnValue({
       treeBaseURL: 'https://gitlab.com/owner/repo/-/tree/main',
       blobBaseURL: 'https://gitlab.com/owner/repo/-/blob/main',
+      commitBaseURL: 'https://gitlab.com/owner/repo/-/commit',
     });
     vi.mocked(getTokenPageURL).mockReturnValue(
       'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
@@ -314,6 +316,7 @@ describe('GitLab backend service', () => {
         fetchFiles,
         fetchBlob,
         commitChanges,
+        fetchFileCommits,
       });
     });
 

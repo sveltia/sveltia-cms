@@ -1,7 +1,11 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { commitChanges, fetchLastCommit } from '$lib/services/backends/git/github/commits';
+import {
+  commitChanges,
+  fetchFileCommits,
+  fetchLastCommit,
+} from '$lib/services/backends/git/github/commits';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 
@@ -359,6 +363,174 @@ describe('GitHub commits service', () => {
       expect(result.sha).toBe('empty-file-sha');
       // Verify that encodeBase64 was called with empty string
       expect(vi.mocked(encodeBase64)).toHaveBeenCalledWith('');
+    });
+  });
+
+  describe('fetchFileCommits', () => {
+    test('fetches and returns commits for a single path', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          history_0: {
+            target: {
+              history: {
+                nodes: [
+                  {
+                    oid: 'abc123',
+                    author: {
+                      name: 'Alice',
+                      email: 'alice@example.com',
+                      avatarUrl: 'https://example.com/alice.png',
+                      user: { login: 'alice' },
+                    },
+                    committedDate: '2024-06-01T12:00:00Z',
+                  },
+                  {
+                    oid: 'def456',
+                    author: {
+                      name: 'Bob',
+                      email: 'bob@example.com',
+                      avatarUrl: 'https://example.com/bob.png',
+                      user: null,
+                    },
+                    committedDate: '2024-05-01T10:00:00Z',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      const result = await fetchFileCommits(['content/en/post.md']);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual({
+        sha: 'abc123',
+        authorName: 'Alice',
+        authorEmail: 'alice@example.com',
+        authorAvatarURL: 'https://example.com/alice.png',
+        authorLogin: 'alice',
+        date: new Date('2024-06-01T12:00:00Z'),
+      });
+      expect(result[1]).toEqual({
+        sha: 'def456',
+        authorName: 'Bob',
+        authorEmail: 'bob@example.com',
+        authorAvatarURL: 'https://example.com/bob.png',
+        authorLogin: undefined,
+        date: new Date('2024-05-01T10:00:00Z'),
+      });
+    });
+
+    test('deduplicates commits across multiple paths', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          history_0: {
+            target: {
+              history: {
+                nodes: [
+                  {
+                    oid: 'abc123',
+                    author: {
+                      name: 'Alice',
+                      email: 'alice@example.com',
+                      avatarUrl: 'https://example.com/alice.png',
+                      user: { login: 'alice' },
+                    },
+                    committedDate: '2024-06-01T12:00:00Z',
+                  },
+                ],
+              },
+            },
+          },
+          history_1: {
+            target: {
+              history: {
+                nodes: [
+                  {
+                    oid: 'abc123',
+                    author: {
+                      name: 'Alice',
+                      email: 'alice@example.com',
+                      avatarUrl: 'https://example.com/alice.png',
+                      user: { login: 'alice' },
+                    },
+                    committedDate: '2024-06-01T12:00:00Z',
+                  },
+                  {
+                    oid: 'xyz789',
+                    author: {
+                      name: 'Carol',
+                      email: 'carol@example.com',
+                      avatarUrl: 'https://example.com/carol.png',
+                      user: { login: 'carol' },
+                    },
+                    committedDate: '2024-04-01T08:00:00Z',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      const result = await fetchFileCommits(['content/en/post.md', 'content/fr/post.md']);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].sha).toBe('abc123');
+      expect(result[1].sha).toBe('xyz789');
+    });
+
+    test('returns sorted commits in descending date order', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          history_0: {
+            target: {
+              history: {
+                nodes: [
+                  {
+                    oid: 'oldest',
+                    author: {
+                      name: 'A',
+                      email: 'a@test.com',
+                      avatarUrl: '',
+                      user: null,
+                    },
+                    committedDate: '2024-01-01T00:00:00Z',
+                  },
+                  {
+                    oid: 'newest',
+                    author: {
+                      name: 'B',
+                      email: 'b@test.com',
+                      avatarUrl: '',
+                      user: null,
+                    },
+                    committedDate: '2024-12-01T00:00:00Z',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result[0].sha).toBe('newest');
+      expect(result[1].sha).toBe('oldest');
+    });
+
+    test('handles missing history nodes gracefully', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          history_0: {},
+        },
+      });
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result).toEqual([]);
     });
   });
 });

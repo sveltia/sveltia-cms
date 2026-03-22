@@ -93,7 +93,7 @@
 
 /**
  * Basic Git repository information retrieved from the config file.
- * @typedef {object} RepositoryInfo
+ * @typedef {object} RepositoryBaseInfo
  * @property {GitBackendName | ''} service Repository hosting service name, e.g. `github`.
  * @property {string} label Service label, e.g. `GitHub`.
  * @property {string} owner Owner name, which could be either an organization or individual user.
@@ -103,13 +103,27 @@
  * UI to the backend service. Git backends only.
  * @property {string} [tokenPageURL] URL of the page where the user can create a personal access
  * token (PAT). Git backends only.
+ * @property {boolean} [isSelfHosted] Whether the repository is on a GitHub Enterprise Server or
+ * GitLab Self-Managed, or self-hosted Gitea/Forgejo instance.
+ * @property {string} [databaseName] IndexedDB database name. Git backends only.
+ */
+
+/**
+ * List of URLs for the repository’s web interface to access different resources, which can be used
+ * in the CMS UI to link to the backend service.
+ * @typedef {object} RepositoryBaseURLs
  * @property {string} [treeBaseURL] Repository’s tree base URL with a branch name. It’s the same as
  * `baseURL` when the default branch is used. Git backends only.
  * @property {string} [blobBaseURL] Repository’s blob base URL with a branch name. Git backends
  * only.
- * @property {boolean} [isSelfHosted] Whether the repository is on a GitHub Enterprise Server or
- * GitLab Self-Managed, or self-hosted Gitea/Forgejo instance.
- * @property {string} [databaseName] IndexedDB database name. Git backends only.
+ * @property {string} [commitBaseURL] Repository’s commit base URL. Append a SHA to get a commit
+ * URL. Git backends only.
+ */
+
+/**
+ * Complete repository information used in the CMS, which combines the basic repository info from
+ * the config file and the generated base URLs.
+ * @typedef {RepositoryBaseInfo & RepositoryBaseURLs} RepositoryInfo
  */
 
 /**
@@ -211,6 +225,19 @@
  * deletions, and return the commit hash and a map of committed files.
  * @property {() => Promise<Response>} [triggerDeployment] Function to manually trigger a new
  * deployment on any connected CI/CD provider. GitHub only.
+ * @property {(paths: string[]) => Promise<FileCommit[]>} [fetchFileCommits] Function to fetch
+ * commit history for given file paths. Git backends only.
+ */
+
+/**
+ * A single commit associated with one or more files.
+ * @typedef {object} FileCommit
+ * @property {string} sha Commit SHA hash.
+ * @property {string} authorName Author's display name.
+ * @property {string} [authorEmail] Author's email address.
+ * @property {string} [authorAvatarURL] Author's avatar URL.
+ * @property {string} [authorLogin] Author's username on the backend service.
+ * @property {Date} date Commit date.
  */
 
 /**

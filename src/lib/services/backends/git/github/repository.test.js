@@ -60,6 +60,7 @@ describe('GitHub repository service', () => {
       expect(result).toEqual({
         treeBaseURL: `${repoURL}/tree/${branch}`,
         blobBaseURL: `${repoURL}/blob/${branch}`,
+        commitBaseURL: `${repoURL}/commit`,
       });
     });
 
@@ -70,6 +71,7 @@ describe('GitHub repository service', () => {
       expect(result).toEqual({
         treeBaseURL: repoURL,
         blobBaseURL: '',
+        commitBaseURL: `${repoURL}/commit`,
       });
     });
   });

@@ -6,7 +6,7 @@ import {
   normalizeRestBaseURL,
 } from '$lib/services/backends/git/github/api';
 import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/github/auth';
-import { commitChanges } from '$lib/services/backends/git/github/commits';
+import { commitChanges, fetchFileCommits } from '$lib/services/backends/git/github/commits';
 import {
   BACKEND_LABEL,
   BACKEND_NAME,
@@ -115,5 +115,6 @@ export default {
   fetchFiles,
   fetchBlob,
   commitChanges,
+  fetchFileCommits,
   triggerDeployment,
 };

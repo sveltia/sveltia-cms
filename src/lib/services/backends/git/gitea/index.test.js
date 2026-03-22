@@ -20,6 +20,7 @@ vi.mock('$lib/services/backends/git/gitea/auth', () => ({
 
 vi.mock('$lib/services/backends/git/gitea/commits', () => ({
   commitChanges: vi.fn(),
+  fetchFileCommits: vi.fn(),
 }));
 
 vi.mock('$lib/services/backends/git/gitea/constants', () => ({
