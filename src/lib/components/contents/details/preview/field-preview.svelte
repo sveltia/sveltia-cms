@@ -3,7 +3,6 @@
 
   import { previews } from '$lib/components/contents/details/fields';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/editor/expanders';
   import { isFieldMultiple } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
@@ -36,15 +35,9 @@
   const { label = '', preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const multiple = $derived(isFieldMultiple(fieldConfig));
   const isList = $derived(fieldType === 'list' || multiple);
-  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
-  const collectionName = $derived($entryDraft?.collectionName ?? '');
   const collectionFile = $derived($entryDraft?.collectionFile);
-  const fileName = $derived($entryDraft?.fileName);
   const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale] ?? {}));
-  const expanderKeys = $derived(
-    getExpanderKeys({ collectionName, fileName, valueMap, keyPath, isIndexFile }),
-  );
   const { i18nEnabled, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
@@ -62,33 +55,11 @@
   );
 
   /**
-   * Called whenever the preview field is clicked. Highlight the corresponding editor field by
-   * expanding the parent list/object(s), moving the element into the viewport, and focus any
-   * control within the field, such as a text input or button.
+   * Called whenever the preview field is clicked. Posts a message to the window to highlight the
+   * corresponding field in the editor.
    */
   const highlightEditorField = () => {
-    syncExpanderStates(Object.fromEntries(expanderKeys.map((key) => [key, true])));
-
-    window.requestAnimationFrame(() => {
-      const targetField = document.querySelector(
-        `.content-editor .pane[data-mode="edit"] .field[data-key-path="${CSS.escape(keyPath)}"]`,
-      );
-
-      if (targetField) {
-        if (typeof targetField.scrollIntoViewIfNeeded === 'function') {
-          targetField.scrollIntoViewIfNeeded();
-        } else {
-          targetField.scrollIntoView();
-        }
-
-        const widgetWrapper = targetField.querySelector('.field-wrapper');
-
-        /** @type {HTMLElement | null} */ (
-          widgetWrapper?.querySelector('[contenteditable="true"], [tabindex="0"]') ??
-            widgetWrapper?.querySelector('input, textarea, button')
-        )?.focus();
-      }
-    });
+    window.postMessage({ type: 'highlight-editor-field', payload: { locale, keyPath } });
   };
 </script>
 

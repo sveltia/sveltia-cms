@@ -30,10 +30,16 @@
     showContentOverlay,
     showDuplicateToast,
   } from '$lib/services/contents/editor';
+  import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/editor/expanders';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
+
+  /**
+   * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
+   * @import { FieldKeyPath } from '$lib/types/public';
+   */
 
   /**
    * @typedef {object} Props
@@ -59,14 +65,20 @@
   let secondPaneContentArea = $state();
 
   const notFound = $derived($entryDraft === undefined);
-  const isNew = $derived($entryDraft?.isNew ?? true);
-  const collection = $derived($entryDraft?.collection);
-  const collectionFile = $derived($entryDraft?.collectionFile);
+  const {
+    isNew = true,
+    canPreview = true,
+    collection,
+    collectionName,
+    collectionFile,
+    fileName,
+    isIndexFile,
+    currentValues,
+  } = $derived(/** @type {EntryDraft} */ ($entryDraft ?? {}));
   const { showPreview } = $derived($entryEditorSettings ?? {});
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
-  const canPreview = $derived($entryDraft?.canPreview ?? true);
   const paneStateKey = $derived(
     collectionFile?.name ? [collection?.name, collectionFile.name].join('|') : collection?.name,
   );
@@ -196,10 +208,70 @@
     }
   };
 
+  /**
+   * Highlight the corresponding editor field by expanding the parent list/object(s), moving the
+   * element into the viewport, and focus any control within the field, such as a text input or
+   * button.
+   * @param {object} args Arguments.
+   * @param {InternalLocaleCode} args.locale Locale code.
+   * @param {FieldKeyPath} args.keyPath Key path of the field.
+   */
+  const highlightEditorField = ({ locale, keyPath }) => {
+    const valueMap = currentValues?.[locale] ?? {};
+
+    const expanderKeys = getExpanderKeys({
+      collectionName,
+      fileName,
+      valueMap,
+      keyPath,
+      isIndexFile,
+    });
+
+    syncExpanderStates(Object.fromEntries(expanderKeys.map((key) => [key, true])));
+
+    window.requestAnimationFrame(() => {
+      const targetField = document.querySelector(
+        `.content-editor .pane[data-mode="edit"] .field[data-key-path="${CSS.escape(keyPath)}"]`,
+      );
+
+      if (targetField) {
+        if (typeof targetField.scrollIntoViewIfNeeded === 'function') {
+          targetField.scrollIntoViewIfNeeded();
+        } else {
+          targetField.scrollIntoView();
+        }
+
+        const widgetWrapper = targetField.querySelector('.field-wrapper');
+
+        /** @type {HTMLElement | null} */ (
+          widgetWrapper?.querySelector('[contenteditable="true"], [tabindex="0"]') ??
+            widgetWrapper?.querySelector('input, textarea, button')
+        )?.focus();
+      }
+    });
+  };
+
+  /**
+   * Called when a message event is received. If the event is a highlight event, calls
+   * {@link highlightEditorField} with the event payload.
+   * @param {MessageEvent} event The message event.
+   */
+  const onmessage = (event) => {
+    if (event.data?.type === 'highlight-editor-field' && event.data.payload) {
+      highlightEditorField(event.data.payload);
+    }
+  };
+
   onMount(() => () => {
     if (!$showContentOverlay) {
       $entryDraft = null;
     }
+
+    window.addEventListener('message', onmessage);
+
+    return () => {
+      window.removeEventListener('message', onmessage);
+    };
   });
 
   $effect(() => {
