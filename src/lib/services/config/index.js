@@ -67,7 +67,7 @@ export const cmsConfigLoaded = derived(
  * Collectors used during config parsing.
  * @type {ConfigParserCollectors}
  */
-const collectors = {
+export const collectors = {
   errors: new Set(),
   warnings: new Set(),
   mediaFields: new Set(),
