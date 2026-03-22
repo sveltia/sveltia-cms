@@ -17,7 +17,7 @@
   } from '$lib/services/contents/collection/files';
   import { getAssociatedCollections } from '$lib/services/contents/entry';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { DATE_TIME_FORMAT_OPTIONS } from '$lib/services/utils/date';
+  import { formatDate } from '$lib/services/utils/date';
   import { formatSize } from '$lib/services/utils/file';
   import { formatDuration } from '$lib/services/utils/media/video';
 
@@ -48,14 +48,6 @@
     $derived(details);
   const { extension = '' } = $derived(getPathInfo(path));
   const canPreview = $derived(isMediaKind(kind) || path.endsWith('.pdf'));
-
-  /**
-   * Format the date to a localized string.
-   * @param {Date} date Date to format.
-   * @returns {string} Formatted date string.
-   */
-  const formatDate = (date) =>
-    date.toLocaleString($appLocale ?? undefined, DATE_TIME_FORMAT_OPTIONS);
 
   /**
    * Update the properties above.
@@ -178,13 +170,13 @@
   {#if commitDate}
     <section>
       <h4>{$_('sort_keys.commit_date')}</h4>
-      <p>{formatDate(commitDate)}</p>
+      <p>{formatDate(commitDate, $appLocale)}</p>
     </section>
   {/if}
   {#if createdDate}
     <section>
       <h4>{$_('created_date')}</h4>
-      <p>{formatDate(createdDate)}</p>
+      <p>{formatDate(createdDate, $appLocale)}</p>
     </section>
   {/if}
   {#if coordinates}

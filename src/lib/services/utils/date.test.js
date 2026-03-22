@@ -4,6 +4,7 @@ import {
   DATE_FORMAT_OPTIONS,
   DATE_REGEX,
   DATE_TIME_FORMAT_OPTIONS,
+  formatDate,
   TIME_FORMAT_OPTIONS,
   TIME_SUFFIX_REGEX,
 } from './date';
@@ -91,5 +92,55 @@ describe('Date format options', () => {
       minute: 'numeric',
       hour12: true,
     });
+  });
+});
+
+describe('formatDate', () => {
+  test('formats date using DATE_TIME_FORMAT_OPTIONS with given locale', () => {
+    const date = new Date('2024-06-15T14:30:00Z');
+
+    expect(formatDate(date, 'en-US')).toBe(date.toLocaleString('en-US', DATE_TIME_FORMAT_OPTIONS));
+  });
+
+  test('uses the provided locale for formatting', () => {
+    const date = new Date('2024-01-01T09:05:00Z');
+    const enUS = formatDate(date, 'en-US');
+    const jaJP = formatDate(date, 'ja-JP');
+
+    expect(enUS).not.toBe(jaJP);
+    expect(enUS).toBe(date.toLocaleString('en-US', DATE_TIME_FORMAT_OPTIONS));
+    expect(jaJP).toBe(date.toLocaleString('ja-JP', DATE_TIME_FORMAT_OPTIONS));
+  });
+
+  test('formats a date at midnight', () => {
+    const date = new Date('2023-12-31T00:00:00Z');
+
+    expect(formatDate(date, 'en-US')).toBe(date.toLocaleString('en-US', DATE_TIME_FORMAT_OPTIONS));
+  });
+
+  test('formats a date at end of day', () => {
+    const date = new Date('2023-12-31T23:59:59Z');
+
+    expect(formatDate(date, 'en-US')).toBe(date.toLocaleString('en-US', DATE_TIME_FORMAT_OPTIONS));
+  });
+
+  test('returns a non-empty string', () => {
+    const date = new Date('2024-03-22T10:00:00Z');
+
+    expect(typeof formatDate(date, 'en-US')).toBe('string');
+    expect(formatDate(date, 'en-US').length).toBeGreaterThan(0);
+  });
+
+  test('treats null locale the same as undefined', () => {
+    const date = new Date('2024-06-15T14:30:00Z');
+
+    expect(formatDate(date, null)).toBe(date.toLocaleString(undefined, DATE_TIME_FORMAT_OPTIONS));
+  });
+
+  test('returns a non-empty string when locale is null', () => {
+    const date = new Date('2024-03-22T10:00:00Z');
+
+    expect(typeof formatDate(date, null)).toBe('string');
+    expect(formatDate(date, null).length).toBeGreaterThan(0);
   });
 });
