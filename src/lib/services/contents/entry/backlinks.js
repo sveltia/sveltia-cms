@@ -135,7 +135,7 @@ const hasReference = (content, effectiveKeyPath, multiple, targetValues) => {
  * @param {Entry} args.entry Target entry.
  * @returns {ReferringEntry[]} Referring entries.
  */
-export const getReferringEntries = ({ collectionName, fileName, entry }) => {
+export const getBacklinks = ({ collectionName, fileName, entry }) => {
   const targetCollection = getCollection(collectionName);
 
   if (!targetCollection) {

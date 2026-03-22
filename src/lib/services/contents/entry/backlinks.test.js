@@ -2,7 +2,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getReferringEntries } from '$lib/services/contents/entry/referring';
+import { getBacklinks } from '$lib/services/contents/entry/backlinks';
 
 /**
  * @import { Entry } from '$lib/types/private';
@@ -41,7 +41,7 @@ vi.mock('$lib/services/contents/fields/relation/helper', () => ({
   getOptions: vi.fn(),
 }));
 
-describe('getReferringEntries()', async () => {
+describe('getBacklinks()', async () => {
   const { collectors } = await import('$lib/services/config');
   const { get } = await import('svelte/store');
   const { getCollection } = await import('$lib/services/contents/collection');
@@ -128,14 +128,14 @@ describe('getReferringEntries()', async () => {
   test('returns empty array when target collection is not found', () => {
     getCollection.mockReturnValue(undefined);
 
-    expect(getReferringEntries({ collectionName: 'unknown', entry: targetEntry })).toEqual([]);
+    expect(getBacklinks({ collectionName: 'unknown', entry: targetEntry })).toEqual([]);
   });
 
   test('returns empty array when no relation fields reference the target collection', () => {
     getCollection.mockReturnValue(tagsCollection);
     collectors.relationFields = new Set();
 
-    expect(getReferringEntries({ collectionName: 'tags', entry: targetEntry })).toEqual([]);
+    expect(getBacklinks({ collectionName: 'tags', entry: targetEntry })).toEqual([]);
   });
 
   test('finds referring entries for a single-value relation field using slug', () => {
@@ -172,7 +172,7 @@ describe('getReferringEntries()', async () => {
 
     getEntrySummary.mockReturnValue('My Trip');
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(1);
     expect(result[0].collectionName).toBe('posts');
@@ -217,7 +217,7 @@ describe('getReferringEntries()', async () => {
 
     getEntrySummary.mockReturnValue('Travel & Food');
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(1);
     expect(result[0].entry).toBe(postEntryMultiple);
@@ -271,7 +271,7 @@ describe('getReferringEntries()', async () => {
 
     getEntrySummary.mockReturnValue('Trip');
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(1);
     expect(result[0].entry).toBe(postWithTitle);
@@ -316,7 +316,7 @@ describe('getReferringEntries()', async () => {
 
     getEntrySummary.mockReturnValue('Adventure');
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     // Should find the other tag, but not the target entry itself
     expect(result).toHaveLength(1);
@@ -391,7 +391,7 @@ describe('getReferringEntries()', async () => {
       entry === postEntry1 ? 'My Trip' : 'About',
     );
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(2);
     expect(result.map((b) => b.collectionName).sort()).toEqual(['pages', 'posts']);
@@ -436,7 +436,7 @@ describe('getReferringEntries()', async () => {
 
     getEntriesByCollection.mockReturnValue([emptyEntry]);
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(0);
   });
@@ -459,7 +459,7 @@ describe('getReferringEntries()', async () => {
 
     getCollection.mockReturnValue(tagsCollection);
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(0);
   });
@@ -489,7 +489,7 @@ describe('getReferringEntries()', async () => {
     });
 
     // When filtering by fileName='other', the relation with file='general' shouldn't match
-    const result = getReferringEntries({
+    const result = getBacklinks({
       collectionName: 'settings',
       fileName: 'other',
       entry: targetEntry,
@@ -521,7 +521,7 @@ describe('getReferringEntries()', async () => {
       return undefined;
     });
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(0);
   });
@@ -552,7 +552,7 @@ describe('getReferringEntries()', async () => {
 
     getEntriesByCollection.mockReturnValue([]);
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(0);
   });
@@ -605,7 +605,7 @@ describe('getReferringEntries()', async () => {
     getEntriesByCollection.mockReturnValue([postWithBlocks]);
     getEntrySummary.mockReturnValue('Blocky');
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(1);
     expect(result[0].entry).toBe(postWithBlocks);
@@ -661,7 +661,7 @@ describe('getReferringEntries()', async () => {
     getOptions.mockReturnValue([{ label: 'Travel', value: 'travel-Travel' }]);
     getEntrySummary.mockReturnValue('Tpl Post');
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(1);
     expect(result[0].entry.slug).toBe('tpl-post');
@@ -731,7 +731,7 @@ describe('getReferringEntries()', async () => {
     getOptions.mockReturnValue([{ label: 'Adventures', value: 'adventures' }]);
     getEntrySummary.mockReturnValue('Cat Post');
 
-    const result = getReferringEntries({
+    const result = getBacklinks({
       collectionName: 'tags',
       entry: targetWithCategory,
     });
@@ -791,7 +791,7 @@ describe('getReferringEntries()', async () => {
     getEntriesByCollection.mockReturnValue([postEntry1]);
     getEntrySummary.mockReturnValue('My Trip');
 
-    const result = getReferringEntries({
+    const result = getBacklinks({
       collectionName: 'settings',
       entry: settingsEntry,
     });
@@ -863,7 +863,7 @@ describe('getReferringEntries()', async () => {
 
     getEntrySummary.mockReturnValue('FB Post');
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetFallback });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetFallback });
 
     expect(result).toHaveLength(1);
     expect(result[0].entry.slug).toBe('fb-post');
@@ -889,7 +889,7 @@ describe('getReferringEntries()', async () => {
     // undefined so that the internal getCollection(refCollectionName) fails.
     getCollection.mockReturnValueOnce(tagsCollection).mockReturnValueOnce(undefined);
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     // getTargetValues returns empty set → targetValues.size === 0 → no results
     expect(result).toHaveLength(0);
@@ -928,7 +928,7 @@ describe('getReferringEntries()', async () => {
     // No options match the target slug, and targetContent['missing_key'] is undefined
     getOptions.mockReturnValue([{ label: 'Other', value: 'other' }]);
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     // targetValues is empty → no referring entries
     expect(result).toHaveLength(0);
@@ -973,7 +973,7 @@ describe('getReferringEntries()', async () => {
     getEntriesByCollection.mockReturnValue([postEntry1]);
     getEntrySummary.mockReturnValue('My Trip');
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     // Only the tags relation matches; the categories one is filtered (return false on line 152)
     expect(result).toHaveLength(1);
@@ -1028,7 +1028,7 @@ describe('getReferringEntries()', async () => {
     getEntriesByCollection.mockReturnValue([postWithWildcardKey]);
     getEntrySummary.mockReturnValue('WC Post');
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(1);
     expect(result[0].entry).toBe(postWithWildcardKey);
@@ -1076,7 +1076,7 @@ describe('getReferringEntries()', async () => {
     getOptions.mockReturnValue([]);
 
     // targetContent falls back to {} → value is undefined → targetValues is empty → no results
-    const result = getReferringEntries({ collectionName: 'tags', entry: entryNoContent });
+    const result = getBacklinks({ collectionName: 'tags', entry: entryNoContent });
 
     expect(result).toHaveLength(0);
   });
@@ -1116,7 +1116,7 @@ describe('getReferringEntries()', async () => {
 
     // effectiveKeyPath becomes 'tag' (fieldName), matching postEntry1.content.tag = 'travel'
     // But postEntry1 has { tags: 'travel' } not { tag: 'travel' }, so no match
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     // Content key 'tag' not in postEntry1 content, so no referring entries
     expect(result).toHaveLength(0);
@@ -1177,7 +1177,7 @@ describe('getReferringEntries()', async () => {
     getEntrySummary.mockReturnValue('Voyage');
 
     // sourceLocale is 'en' but frOnlyEntry only has 'fr', so it falls back to Object.values()[0]
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(1);
     expect(result[0].entry).toBe(frOnlyEntry);
@@ -1225,7 +1225,7 @@ describe('getReferringEntries()', async () => {
 
     getEntrySummary.mockReturnValue('My Trip');
 
-    const result = getReferringEntries({ collectionName: 'tags', entry: targetEntry });
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
 
     expect(result).toHaveLength(1);
     // Falls back to collectionName since label is undefined
