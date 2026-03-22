@@ -1332,10 +1332,38 @@ describe('saveFile', () => {
     const tempKey = [...blogChildren.keys()].find((k) => k.startsWith('.sveltia-tmp-'));
 
     expect(tempKey).toBeTruthy();
+    // Temp filename should use a UUID (not a timestamp) to guarantee uniqueness
+    expect(tempKey).toMatch(
+      /^\.sveltia-tmp-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
 
     const tempFileHandle = blogChildren.get(tempKey);
 
     expect(tempFileHandle.move).toHaveBeenCalledWith(blogHandle, 'post.md');
+  });
+
+  test('should generate unique temp filenames for concurrent saves in the same directory', async () => {
+    // Reproduce issue #682: concurrent saves of entry + media to the same folder
+    // previously collided when both used Date.now() as the temp filename.
+    const albumChildren = new Map();
+    const albumHandle = createMockDirectoryHandle('my-album', albumChildren);
+    const galleryChildren = new Map([['my-album', albumHandle]]);
+    const galleryHandle = createMockDirectoryHandle('gallery', galleryChildren);
+    const rootChildren = new Map([['gallery', galleryHandle]]);
+
+    rootDirHandle = createMockDirectoryHandle('root', rootChildren);
+
+    // Simulate concurrent writes: index.md and an image in the same folder
+    await Promise.all([
+      saveFile({ rootDirHandle, path: 'gallery/my-album/index.md', data: '# Album' }),
+      saveFile({ rootDirHandle, path: 'gallery/my-album/photo.webp', data: 'binary' }),
+    ]);
+
+    const tempKeys = [...albumChildren.keys()].filter((k) => k.startsWith('.sveltia-tmp-'));
+
+    // Both concurrent writes must have used distinct temp filenames
+    expect(tempKeys).toHaveLength(2);
+    expect(tempKeys[0]).not.toBe(tempKeys[1]);
   });
 
   test('should write File object to file', async () => {

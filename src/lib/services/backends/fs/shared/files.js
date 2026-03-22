@@ -422,7 +422,7 @@ export const saveFile = async ({ rootDirHandle, fileHandle, path, data }) => {
     // supported. If the `move` method is supported, we have to write directly to the final path.
     if (canMoveFile()) {
       const { dirname, basename } = getPathInfo(stripSlashes(path));
-      const tempPath = `${dirname ? `${dirname}/` : ''}.sveltia-tmp-${Date.now()}`;
+      const tempPath = `${dirname ? `${dirname}/` : ''}.sveltia-tmp-${crypto.randomUUID()}`;
 
       fileHandle = await getFileHandle(rootDirHandle, tempPath);
       pendingRename = { dirname, basename };
