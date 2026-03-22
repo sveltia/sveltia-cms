@@ -600,6 +600,16 @@
  */
 
 /**
+ * Entry backlink information.
+ * @typedef {object} EntryBacklink
+ * @property {string} collectionName Source collection name.
+ * @property {string} collectionLabel Source collection label.
+ * @property {string} fieldLabel Relation field label.
+ * @property {Entry} entry Source entry referencing the target.
+ * @property {string} summary Display summary for the source entry.
+ */
+
+/**
  * Flattened `RawEntryContent` object.
  * @typedef {Record<FieldKeyPath, any>} FlattenedEntryContent - where key is a key path and value is
  * the corresponding field value.

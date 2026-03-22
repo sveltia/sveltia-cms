@@ -9,17 +9,13 @@ import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getOptions } from '$lib/services/contents/fields/relation/helper';
 
 /**
- * @import { Entry, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * EntryBacklink,
+ * FlattenedEntryContent,
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField } from '$lib/types/public';
- */
-
-/**
- * @typedef {object} ReferringEntry
- * @property {string} collectionName Source collection name.
- * @property {string} collectionLabel Source collection label.
- * @property {string} fieldLabel Relation field label.
- * @property {Entry} entry Source entry referencing the target.
- * @property {string} summary Display summary for the source entry.
  */
 
 /**
@@ -133,7 +129,7 @@ const hasReference = (content, effectiveKeyPath, multiple, targetValues) => {
  * @param {string} args.collectionName Target collection name.
  * @param {string} [args.fileName] Target file name (for file/singleton collections).
  * @param {Entry} args.entry Target entry.
- * @returns {ReferringEntry[]} Referring entries.
+ * @returns {EntryBacklink[]} Array of backlinks referencing the target entry.
  */
 export const getBacklinks = ({ collectionName, fileName, entry }) => {
   const targetCollection = getCollection(collectionName);
@@ -226,7 +222,7 @@ export const getBacklinks = ({ collectionName, fileName, entry }) => {
           return undefined;
         }
 
-        return /** @type {ReferringEntry} */ ({
+        return /** @type {EntryBacklink} */ ({
           collectionName: sourceCollectionName,
           collectionLabel: sourceCollection.label ?? sourceCollectionName,
           fieldLabel: fieldConfig.label ?? fieldName,
@@ -234,6 +230,6 @@ export const getBacklinks = ({ collectionName, fileName, entry }) => {
           summary: getEntrySummary(sourceCollection, sourceEntry),
         });
       })
-      .filter((/** @type {ReferringEntry | undefined} */ b) => !!b);
+      .filter((/** @type {EntryBacklink | undefined} */ b) => !!b);
   });
 };
