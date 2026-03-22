@@ -9,18 +9,15 @@ import { getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
-import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { getMergedLibraryOptions } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 import { createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
-import { getMediaMetadata } from '$lib/services/utils/media';
 import { transformImage } from '$lib/services/utils/media/image/transform';
 import { renderPDF } from '$lib/services/utils/media/pdf';
 
 /**
  * @import {
  * Asset,
- * AssetDetails,
  * Entry,
  * InternalCmsConfig,
  * InternalImageTransformationOptions,
@@ -303,37 +300,4 @@ export const getMediaFieldURL = async ({
     (thumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset)) ??
     getAssetPublicURL(asset)
   );
-};
-
-/** @type {AssetDetails} */
-export const defaultAssetDetails = {
-  publicURL: undefined,
-  repoBlobURL: undefined,
-  dimensions: undefined,
-  duration: undefined,
-  usedEntries: [],
-};
-
-/**
- * Get the given asset’s extra info.
- * @param {Asset} asset Asset.
- * @returns {Promise<AssetDetails>} Details.
- */
-export const getAssetDetails = async (asset) => {
-  const { kind, path } = asset;
-  const { blobBaseURL } = get(backend)?.repository ?? {};
-  const blobURL = await getAssetBlobURL(asset);
-  const url = getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true }) ?? blobURL;
-  let metaData = {};
-
-  if (['image', 'video', 'audio'].includes(kind) && blobURL) {
-    metaData = await getMediaMetadata(asset, blobURL, kind);
-  }
-
-  return {
-    ...metaData,
-    publicURL: getAssetPublicURL(asset),
-    repoBlobURL: blobBaseURL ? `${blobBaseURL}/${path}` : undefined,
-    usedEntries: url ? await getEntriesByAssetURL(url) : [],
-  };
 };

@@ -9,14 +9,19 @@ import { cmsConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getRegex } from '$lib/services/utils/misc';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { Entry, FlattenedEntryContent, InternalCollectionFile } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * FlattenedEntryContent,
+ * InternalCollection,
+ * InternalCollectionFile,
+ * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
@@ -252,4 +257,19 @@ export const getEntriesByAssetURL = async (
   );
 
   return entries.filter((_entry, index) => results[index]);
+};
+
+/**
+ * Check if index file creation is allowed in the collection.
+ * @param {InternalCollection} collection Collection.
+ * @returns {boolean} Result. It returns `false` if the index file already exists.
+ */
+export const canCreateIndexFile = (collection) => {
+  const indexFile = getIndexFile(collection);
+
+  if (!indexFile) {
+    return false;
+  }
+
+  return !getEntriesByCollection(collection.name).some(({ slug }) => slug === indexFile.name);
 };

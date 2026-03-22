@@ -1020,12 +1020,25 @@
  */
 
 /**
+ * @typedef {object} PopulateDefaultValueArgs
+ * @property {FlattenedEntryContent} content An object holding a new content key-value map.
+ * @property {FieldKeyPath} keyPath Field key path, e.g. `author.name`.
+ * @property {Field} fieldConfig Field configuration.
+ * @property {InternalLocaleCode} locale Locale.
+ * @property {InternalLocaleCode} defaultLocale Default locale of the entry draft.
+ * @property {Record<string, string>} dynamicValues Dynamic default values.
+ */
+
+/**
  * @typedef {object} GetDefaultValueMapFuncArgs
  * @property {Field} fieldConfig Field configuration.
  * @property {FieldKeyPath} keyPath Field key path, e.g. `author.name`.
  * @property {LocaleCode} locale Locale code.
  * @property {InternalLocaleCode} defaultLocale Default locale of the entry draft.
  * @property {string} [dynamicValue] Dynamic default value parsed from the URL query string.
+ * @property {(args: PopulateDefaultValueArgs) => void} [populateDefault] Callback to populate a
+ * default value for a sub-field, injected to avoid a circular dependency between field-type
+ * defaults and the centralized `populateDefaultValue` dispatcher.
  * @see https://decapcms.org/docs/dynamic-default-values/
  * @see https://sveltiacms.app/en/docs/ui/content-editor#dynamic-default-values
  */

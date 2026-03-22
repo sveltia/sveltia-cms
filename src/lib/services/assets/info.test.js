@@ -7,13 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as cloudStorageModule from '$lib/services/integrations/media-libraries/cloud';
 import * as cloudinaryModule from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 
+import { defaultAssetDetails, getAssetDetails } from './details';
 import {
   _resetThumbnailDB,
-  defaultAssetDetails,
   getAssetBaseURL,
   getAssetBlob,
   getAssetBlobURL,
-  getAssetDetails,
   getAssetPublicURL,
   getAssetThumbnailURL,
   getMediaFieldURL,

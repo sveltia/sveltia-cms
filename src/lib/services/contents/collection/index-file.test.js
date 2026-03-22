@@ -4,9 +4,7 @@ import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { isEntryCollection } from '$lib/services/contents/collection';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
-  canCreateIndexFile,
   getIndexFile,
   getLocalizedLabel,
   isCollectionIndexFile,
@@ -20,9 +18,6 @@ vi.mock('svelte/store', () => ({
 vi.mock('svelte-i18n', () => ({
   _: { subscribe: vi.fn() },
 }));
-vi.mock('$lib/services/contents/collection/entries', () => ({
-  getEntriesByCollection: vi.fn(),
-}));
 vi.mock('$lib/services/contents/collection', () => ({
   isEntryCollection: vi.fn(),
 }));
@@ -35,9 +30,6 @@ describe('getIndexFile()', () => {
     vi.mocked(isEntryCollection).mockImplementation(
       (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
     );
-
-    // Setup default mock behavior for getEntriesByCollection
-    vi.mocked(getEntriesByCollection).mockReturnValue([]);
 
     // Setup default mock for svelte/store get function
     vi.mocked(get).mockReturnValue(() => 'Index File');
@@ -224,9 +216,6 @@ describe('isCollectionIndexFile()', () => {
       (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
     );
 
-    // Setup default mock behavior for getEntriesByCollection
-    vi.mocked(getEntriesByCollection).mockReturnValue([]);
-
     // Setup default mock for svelte/store get function
     vi.mocked(get).mockReturnValue(() => 'Index File');
   });
@@ -340,218 +329,6 @@ describe('isCollectionIndexFile()', () => {
     const result = isCollectionIndexFile(collection, entry);
 
     expect(result).toBe(false);
-  });
-});
-
-describe('canCreateIndexFile()', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    // Setup default mock behavior for isEntryCollection
-    vi.mocked(isEntryCollection).mockImplementation(
-      (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
-    );
-
-    // Setup default mock behavior for getEntriesByCollection
-    vi.mocked(getEntriesByCollection).mockReturnValue([]);
-
-    // Setup default mock for svelte/store get function
-    vi.mocked(get).mockReturnValue(() => 'Index File');
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  test('returns false when getIndexFile returns undefined', () => {
-    const collection = {
-      name: 'test-collection',
-      // No folder - will make getIndexFile return undefined
-    };
-
-    vi.mocked(getEntriesByCollection).mockReturnValue([]);
-
-    // @ts-ignore - Intentionally incomplete for testing
-    const result = canCreateIndexFile(collection);
-
-    expect(result).toBe(false);
-  });
-
-  test('returns true when index file is enabled and does not exist', () => {
-    vi.mocked(get).mockReturnValue(() => 'Index File');
-
-    const collection = {
-      name: 'test-collection',
-      folder: 'content/posts',
-      index_file: true,
-    };
-
-    const entries = [
-      {
-        id: 'entry-1',
-        slug: 'post-1',
-        subPath: 'post-1.md',
-        locales: {},
-      },
-      {
-        id: 'entry-2',
-        slug: 'post-2',
-        subPath: 'post-2.md',
-        locales: {},
-      },
-    ];
-
-    vi.mocked(getEntriesByCollection).mockReturnValue(entries);
-
-    // @ts-ignore - Intentionally incomplete for testing
-    const result = canCreateIndexFile(collection);
-
-    expect(result).toBe(true);
-    expect(vi.mocked(getEntriesByCollection)).toHaveBeenCalledWith('test-collection');
-  });
-
-  test('returns false when index file already exists', () => {
-    const collection = {
-      name: 'test-collection',
-      folder: 'content/posts',
-      index_file: true,
-    };
-
-    const entries = [
-      {
-        id: 'entry-1',
-        slug: '_index', // Index file already exists
-        subPath: '_index.md',
-        locales: {},
-      },
-      {
-        id: 'entry-2',
-        slug: 'post-1',
-        subPath: 'post-1.md',
-        locales: {},
-      },
-    ];
-
-    vi.mocked(getEntriesByCollection).mockReturnValue(entries);
-
-    // @ts-ignore - Intentionally incomplete for testing
-    const result = canCreateIndexFile(collection);
-
-    expect(result).toBe(false);
-    expect(vi.mocked(getEntriesByCollection)).toHaveBeenCalledWith('test-collection');
-  });
-
-  test('returns false when custom index file already exists', () => {
-    const collection = {
-      name: 'test-collection',
-      folder: 'content/posts',
-      index_file: {
-        name: 'home',
-      },
-    };
-
-    const entries = [
-      {
-        id: 'entry-1',
-        slug: 'home', // Custom index file already exists
-        subPath: 'home.md',
-        locales: {},
-      },
-      {
-        id: 'entry-2',
-        slug: 'post-1',
-        subPath: 'post-1.md',
-        locales: {},
-      },
-    ];
-
-    vi.mocked(getEntriesByCollection).mockReturnValue(entries);
-
-    // @ts-ignore - Intentionally incomplete for testing
-    const result = canCreateIndexFile(collection);
-
-    expect(result).toBe(false);
-    expect(vi.mocked(getEntriesByCollection)).toHaveBeenCalledWith('test-collection');
-  });
-
-  test('returns true when custom index file is enabled and does not exist', () => {
-    const collection = {
-      name: 'test-collection',
-      folder: 'content/posts',
-      index_file: {
-        name: 'homepage',
-      },
-    };
-
-    const entries = [
-      {
-        id: 'entry-1',
-        slug: 'post-1',
-        subPath: 'post-1.md',
-        locales: {},
-      },
-      {
-        id: 'entry-2',
-        slug: 'post-2',
-        subPath: 'post-2.md',
-        locales: {},
-      },
-    ];
-
-    vi.mocked(getEntriesByCollection).mockReturnValue(entries);
-
-    // @ts-ignore - Intentionally incomplete for testing
-    const result = canCreateIndexFile(collection);
-
-    expect(result).toBe(true);
-    expect(vi.mocked(getEntriesByCollection)).toHaveBeenCalledWith('test-collection');
-  });
-
-  test('handles empty entries array', () => {
-    const collection = {
-      name: 'test-collection',
-      folder: 'content/posts',
-      index_file: true,
-    };
-
-    vi.mocked(getEntriesByCollection).mockReturnValue([]);
-
-    // @ts-ignore - Intentionally incomplete for testing
-    const result = canCreateIndexFile(collection);
-
-    expect(result).toBe(true);
-    expect(vi.mocked(getEntriesByCollection)).toHaveBeenCalledWith('test-collection');
-  });
-
-  test('handles entries with duplicate slugs correctly', () => {
-    const collection = {
-      name: 'test-collection',
-      folder: 'content/posts',
-      index_file: true,
-    };
-
-    const entries = [
-      {
-        id: 'entry-1',
-        slug: '_index',
-        subPath: '_index.md',
-        locales: {},
-      },
-      {
-        id: 'entry-2',
-        slug: '_index', // Duplicate slug (should not happen in practice)
-        subPath: '_index.md',
-        locales: {},
-      },
-    ];
-
-    vi.mocked(getEntriesByCollection).mockReturnValue(entries);
-
-    // @ts-ignore - Intentionally incomplete for testing
-    const result = canCreateIndexFile(collection);
-
-    expect(result).toBe(false); // Should still return false since index file exists
-    expect(vi.mocked(getEntriesByCollection)).toHaveBeenCalledWith('test-collection');
   });
 });
 

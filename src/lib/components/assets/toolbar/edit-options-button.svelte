@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n';
 
   import { editingAsset, renamingAsset, uploadingAssets } from '$lib/services/assets';
-  import { defaultAssetDetails, getAssetDetails } from '$lib/services/assets/info';
+  import { defaultAssetDetails, getAssetDetails } from '$lib/services/assets/details';
   import { canEditAsset } from '$lib/services/assets/kinds';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { backend } from '$lib/services/backends';

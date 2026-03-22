@@ -3,7 +3,8 @@
   import { isTextFileType } from '@sveltia/utils/file';
   import { _ } from 'svelte-i18n';
 
-  import { getAssetBlob, getAssetDetails } from '$lib/services/assets/info';
+  import { getAssetDetails } from '$lib/services/assets/details';
+  import { getAssetBlob } from '$lib/services/assets/info';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
   import { transformImage } from '$lib/services/utils/media/image/transform';
 

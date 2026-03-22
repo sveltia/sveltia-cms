@@ -4,6 +4,7 @@ import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  canCreateIndexFile,
   getEntriesByAssetURL,
   getEntriesByCollection,
   hasAsset,
@@ -39,6 +40,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
 }));
 
 vi.mock('$lib/services/contents/collection/index-file', () => ({
+  getIndexFile: vi.fn(),
   isCollectionIndexFile: vi.fn(),
 }));
 
@@ -1565,5 +1567,112 @@ describe('selectedEntries', () => {
   test('is exported as a writable store', () => {
     expect(selectedEntries).toBeDefined();
     expect(typeof selectedEntries.subscribe).toBe('function');
+  });
+});
+
+describe('canCreateIndexFile()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('returns false when collection has no index file configured', async () => {
+    const { getIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    vi.mocked(getIndexFile).mockReturnValue(undefined);
+
+    // @ts-ignore - Intentionally incomplete for testing
+    const result = canCreateIndexFile({ name: 'posts' });
+
+    expect(result).toBe(false);
+  });
+
+  test('returns true when index file does not yet exist in collection entries', async () => {
+    const { getIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    vi.mocked(getIndexFile).mockReturnValue({ name: '_index' });
+    vi.mocked(getCollection).mockReturnValue(collection);
+
+    const entries = [
+      { id: '1', slug: 'post-1', locales: { en: { content: {} } } },
+      { id: '2', slug: 'post-2', locales: { en: { content: {} } } },
+    ];
+
+    vi.mocked(get).mockReturnValue(entries);
+    vi.mocked(getAssociatedCollections)
+      .mockReturnValueOnce([{ name: 'posts' }])
+      .mockReturnValueOnce([{ name: 'posts' }]);
+
+    // @ts-ignore - Intentionally incomplete for testing
+    const result = canCreateIndexFile(collection);
+
+    expect(result).toBe(true);
+  });
+
+  test('returns false when index file already exists in collection entries', async () => {
+    const { getIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    vi.mocked(getIndexFile).mockReturnValue({ name: '_index' });
+    vi.mocked(getCollection).mockReturnValue(collection);
+
+    const entries = [
+      { id: '1', slug: '_index', locales: { en: { content: {} } } },
+      { id: '2', slug: 'post-1', locales: { en: { content: {} } } },
+    ];
+
+    vi.mocked(get).mockReturnValue(entries);
+    vi.mocked(getAssociatedCollections)
+      .mockReturnValueOnce([{ name: 'posts' }])
+      .mockReturnValueOnce([{ name: 'posts' }]);
+
+    // @ts-ignore - Intentionally incomplete for testing
+    const result = canCreateIndexFile(collection);
+
+    expect(result).toBe(false);
+  });
+
+  test('returns false when custom-named index file already exists', async () => {
+    const { getIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    vi.mocked(getIndexFile).mockReturnValue({ name: 'home' });
+    vi.mocked(getCollection).mockReturnValue(collection);
+
+    const entries = [
+      { id: '1', slug: 'home', locales: { en: { content: {} } } },
+      { id: '2', slug: 'post-1', locales: { en: { content: {} } } },
+    ];
+
+    vi.mocked(get).mockReturnValue(entries);
+    vi.mocked(getAssociatedCollections)
+      .mockReturnValueOnce([{ name: 'posts' }])
+      .mockReturnValueOnce([{ name: 'posts' }]);
+
+    // @ts-ignore - Intentionally incomplete for testing
+    const result = canCreateIndexFile(collection);
+
+    expect(result).toBe(false);
   });
 });

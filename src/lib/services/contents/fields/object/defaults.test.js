@@ -1,3 +1,5 @@
+/* eslint-disable jsdoc/require-jsdoc */
+
 import { describe, expect, test, vi } from 'vitest';
 
 import { getDefaultValueMap } from './defaults';
@@ -28,6 +30,13 @@ const baseFieldConfig = {
   name: 'test_object',
 };
 
+// Simplified populateDefault for testing - mimics populateDefaultValue for simple field types.
+const testPopulateDefault = (/** @type {any} */ { content, keyPath, fieldConfig }) => {
+  const { default: defaultValue } = fieldConfig;
+
+  content[keyPath] = defaultValue !== undefined ? defaultValue : '';
+};
+
 describe('Test getDefaultValueMap()', () => {
   describe('required field behavior', () => {
     test('should return defaults for required field subfields without default', () => {
@@ -48,6 +57,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -74,6 +84,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({ metadata: null });
@@ -108,6 +119,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({ content: null });
@@ -151,6 +163,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -179,6 +192,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({});
@@ -214,6 +228,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -244,6 +259,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -268,6 +284,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -291,6 +308,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -316,6 +334,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -339,6 +358,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -394,6 +414,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -423,6 +444,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -452,6 +474,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -481,6 +504,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -509,6 +533,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -538,6 +563,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -572,6 +598,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       // Object default should take precedence
@@ -598,6 +625,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -621,6 +649,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -653,6 +682,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({
@@ -679,6 +709,7 @@ describe('Test getDefaultValueMap()', () => {
         keyPath,
         locale: '_default',
         defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
       });
 
       expect(result).toEqual({});

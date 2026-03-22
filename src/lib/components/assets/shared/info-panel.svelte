@@ -8,7 +8,7 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { defaultAssetDetails, getAssetDetails } from '$lib/services/assets/info';
+  import { defaultAssetDetails, getAssetDetails } from '$lib/services/assets/details';
   import { isMediaKind } from '$lib/services/assets/kinds';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import {

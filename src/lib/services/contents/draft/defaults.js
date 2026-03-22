@@ -1,20 +1,18 @@
 import { GET_DEFAULT_VALUE_MAP_FUNCTIONS } from '$lib/services/contents/fields/defaults';
 
 /**
- * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
- * @import { Field, FieldKeyPath } from '$lib/types/public';
+ * @import {
+ * FlattenedEntryContent,
+ * InternalLocaleCode,
+ * PopulateDefaultValueArgs,
+ * } from '$lib/types/private';
+ * @import { Field } from '$lib/types/public';
  */
 
 /**
  * Populate the default value for the given field. Check if a dynamic default value is specified,
  * then look for the field configuration’s `default` property.
- * @param {object} args Arguments.
- * @param {FlattenedEntryContent} args.content An object holding a new content key-value map.
- * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
- * @param {Field} args.fieldConfig Field configuration.
- * @param {InternalLocaleCode} args.locale Locale.
- * @param {InternalLocaleCode} args.defaultLocale Default locale of the entry draft.
- * @param {Record<string, string>} args.dynamicValues Dynamic default values.
+ * @param {PopulateDefaultValueArgs} args Arguments.
  * @returns {void} The `content` object is modified in place.
  */
 export const populateDefaultValue = ({
@@ -53,7 +51,14 @@ export const populateDefaultValue = ({
   if (getDefaultValue) {
     Object.assign(
       content,
-      getDefaultValue({ fieldConfig, keyPath, locale, defaultLocale, dynamicValue }),
+      getDefaultValue({
+        fieldConfig,
+        keyPath,
+        locale,
+        defaultLocale,
+        dynamicValue,
+        populateDefault: populateDefaultValue,
+      }),
     );
 
     return;

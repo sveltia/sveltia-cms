@@ -1,7 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 import { flatten } from 'flat';
 
-import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
 import { isFieldRequired } from '$lib/services/contents/entry/fields';
 
 /**
@@ -20,7 +19,13 @@ import { isFieldRequired } from '$lib/services/contents/entry/fields';
  * Object fields do not support dynamic values.
  * @returns {Record<FieldKeyPath, any>} Default value map.
  */
-export const getDefaultValueMap = ({ fieldConfig, keyPath, locale, defaultLocale }) => {
+export const getDefaultValueMap = ({
+  fieldConfig,
+  keyPath,
+  locale,
+  defaultLocale,
+  populateDefault,
+}) => {
   const { default: defaultValue } = /** @type {ObjectField} */ (fieldConfig);
   const { fields: subFields } = /** @type {ObjectFieldWithSubFields} */ (fieldConfig);
   const { types } = /** @type {ObjectFieldWithTypes} */ (fieldConfig);
@@ -49,7 +54,7 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, locale, defaultLocale
   // populate default values from subfields if they exist and have defaults
   if (subFields && subFields.length > 0) {
     subFields.forEach((_subField) => {
-      populateDefaultValue({
+      populateDefault?.({
         content,
         keyPath: [keyPath, _subField.name].join('.'),
         fieldConfig: _subField,

@@ -6,7 +6,7 @@
   import { goto, parseLocation } from '$lib/services/app/navigation';
   import { getAssetsByDirName, renamingAsset } from '$lib/services/assets';
   import { moveAssets } from '$lib/services/assets/data/move';
-  import { getAssetDetails } from '$lib/services/assets/info';
+  import { getAssetDetails } from '$lib/services/assets/details';
   import { showAssetOverlay } from '$lib/services/assets/view';
 
   /**

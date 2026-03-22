@@ -2,7 +2,6 @@ import { get } from 'svelte/store';
 import { _ } from 'svelte-i18n';
 
 import { isEntryCollection } from '$lib/services/contents/collection';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 
 /**
  * @import { Entry, InternalCollection } from '$lib/types/private';
@@ -72,19 +71,4 @@ export const isCollectionIndexFile = (collection, entry) => {
   }
 
   return entry.slug === indexFile.name;
-};
-
-/**
- * Check if index file creation is allowed in the collection.
- * @param {InternalCollection} collection Collection.
- * @returns {boolean} Result. It returns `false` if the index file already exists.
- */
-export const canCreateIndexFile = (collection) => {
-  const indexFile = getIndexFile(collection);
-
-  if (!indexFile) {
-    return false;
-  }
-
-  return !getEntriesByCollection(collection.name).some(({ slug }) => slug === indexFile.name);
 };
