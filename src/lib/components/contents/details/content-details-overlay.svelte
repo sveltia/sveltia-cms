@@ -211,7 +211,7 @@
   });
 
   $effect(() => {
-    void [showPreview, canPreview, $isSmallScreen, $isMediumScreen];
+    void [collection, showPreview, canPreview, $isSmallScreen, $isMediumScreen];
 
     untrack(() => {
       switchPanes();
