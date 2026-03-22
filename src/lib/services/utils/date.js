@@ -26,8 +26,7 @@ export const DATE_TIME_FORMAT_OPTIONS = { ...DATE_FORMAT_OPTIONS, ...TIME_FORMAT
 /**
  * Format the date to a localized string.
  * @param {Date} date Date to format.
- * @param {LocaleCode | null} [locale] Optional locale to use for formatting. If not provided, the
- * current locale from svelte-i18n will be used.
+ * @param {LocaleCode | null} [locale] Optional locale to use for formatting.
  * @returns {string} Formatted date string.
  */
 export const formatDate = (date, locale) =>
