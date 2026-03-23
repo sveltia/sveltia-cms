@@ -1,14 +1,17 @@
 <script>
   import { Button } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
-  import { sleep } from '@sveltia/utils/misc';
   import mime from 'mime';
   import { _, locale as appLocale } from 'svelte-i18n';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { defaultAssetDetails, getAssetDetails } from '$lib/services/assets/details';
+  import {
+    defaultAssetDetails,
+    getAssetDetails,
+    getAssetUsedEntries,
+  } from '$lib/services/assets/details';
   import { isMediaKind } from '$lib/services/assets/kinds';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import {
@@ -54,6 +57,7 @@
    */
   const updateProps = async () => {
     details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
+    details.usedEntries = asset ? await getAssetUsedEntries(asset) : [];
   };
 
   $effect(() => {
@@ -136,8 +140,10 @@
   </section>
   <section>
     <h4>{$_('used_in')}</h4>
-    {#each usedEntries as entry (entry.id)}
-      {#await sleep() then}
+    {#if !usedEntries}
+      <p>{$_('loading')}</p>
+    {:else}
+      {#each usedEntries as entry (entry.id)}
         {#each getAssociatedCollections(entry) as collection (collection.name)}
           {#key $appLocale}
             {@const collectionLabel = getCollectionLabel(collection)}
@@ -156,10 +162,10 @@
             {/each}
           {/key}
         {/each}
-      {/await}
-    {:else}
-      <p>{$_('sort_keys.none')}</p>
-    {/each}
+      {:else}
+        <p>{$_('sort_keys.none')}</p>
+      {/each}
+    {/if}
   </section>
   {#if commitAuthor}
     <section>

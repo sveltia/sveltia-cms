@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as cloudStorageModule from '$lib/services/integrations/media-libraries/cloud';
 import * as cloudinaryModule from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 
-import { defaultAssetDetails, getAssetDetails } from './details';
+import { defaultAssetDetails, getAssetDetails, getAssetUsedEntries } from './details';
 import {
   _resetThumbnailDB,
   getAssetBaseURL,
@@ -1160,7 +1160,6 @@ describe('assets/info', () => {
   describe('getAssetDetails', () => {
     beforeEach(async () => {
       const { getMediaMetadata } = await import('$lib/services/utils/media');
-      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
 
       vi.mocked(getMediaMetadata).mockResolvedValue({
         dimensions: { width: 800, height: 600 },
@@ -1168,8 +1167,6 @@ describe('assets/info', () => {
         createdDate: undefined,
         coordinates: undefined,
       });
-
-      vi.mocked(getEntriesByAssetURL).mockResolvedValue([]);
     });
 
     it('should return asset details with metadata for media files', async () => {
@@ -1185,11 +1182,12 @@ describe('assets/info', () => {
       const result = await getAssetDetails(assetWithHandle);
 
       expect(result).toEqual({
+        coordinates: undefined,
+        createdDate: undefined,
         dimensions: { width: 800, height: 600 },
         duration: undefined,
         publicURL: 'https://example.com/assets/images/test.jpg',
         repoBlobURL: 'https://example.com/blobs/assets/images/test.jpg',
-        usedEntries: [],
       });
     });
 
@@ -1477,11 +1475,11 @@ describe('assets/info', () => {
         handle: mockHandle,
       };
 
-      const result = await getAssetDetails(entryRelativeAsset);
+      const result = await getAssetUsedEntries(entryRelativeAsset);
 
-      // URL should be undefined for entry-relative assets so getEntriesByAssetURL
-      // should not be called
-      expect(result.usedEntries).toEqual([]);
+      // publicURL is undefined for entry-relative assets; blobURL is set from the handle,
+      // so getEntriesByAssetURL is called with the blob URL and returns []
+      expect(result).toEqual([]);
     });
 
     it('should handle getEntriesByAssetURL with used entries', async () => {
@@ -1505,10 +1503,10 @@ describe('assets/info', () => {
         handle: mockHandle,
       };
 
-      const result = await getAssetDetails(assetWithHandle);
+      const result = await getAssetUsedEntries(assetWithHandle);
 
       expect(vi.mocked(getEntriesByAssetURL)).toHaveBeenCalled();
-      expect(result.usedEntries).toContain(mockUsedEntry);
+      expect(result).toContain(mockUsedEntry);
     });
 
     it('should return public URL when blobURL is undefined', async () => {
@@ -1811,10 +1809,10 @@ describe('assets/info', () => {
         handle: mockHandle,
       };
 
-      const result = await getAssetDetails(assetWithHandle);
+      const result = await getAssetUsedEntries(assetWithHandle);
 
-      expect(result.usedEntries).toHaveLength(1);
-      expect(result.usedEntries[0].id).toBe('entry-1');
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('entry-1');
     });
 
     it('should handle asset blob caching', async () => {
@@ -2122,9 +2120,8 @@ describe('assets/info', () => {
       expect(result).toBe('https://example.com/assets/images/test.jpg');
     });
 
-    it('should return empty usedEntries when url is undefined in getAssetDetails', async () => {
-      // Covers L327 false branch: url ? getEntriesByAssetURL(url) : []
-      // This happens when both getAssetPublicURL and blobURL are undefined
+    it('should return empty array when url is undefined in getAssetUsedEntries', async () => {
+      // Covers the !url branch: both getAssetPublicURL and getAssetBlobURL return undefined
       const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
 
       // @ts-ignore
@@ -2146,11 +2143,11 @@ describe('assets/info', () => {
         },
       };
 
-      const result = await getAssetDetails(entryRelativeAsset);
+      const result = await getAssetUsedEntries(entryRelativeAsset);
 
-      // url = undefined ?? undefined = undefined → usedEntries = []
+      // url = undefined ?? undefined = undefined → returns []
       expect(vi.mocked(getEntriesByAssetURL)).not.toHaveBeenCalled();
-      expect(result.usedEntries).toEqual([]);
+      expect(result).toEqual([]);
     });
   });
 

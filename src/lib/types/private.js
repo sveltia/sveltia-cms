@@ -854,7 +854,8 @@
  * file’s Exif data.
  * @property {GeoCoordinates} [coordinates] GPS coordinates extracted from an image file’s Exif
  * data.
- * @property {Entry[]} usedEntries List of entries using the asset.
+ * @property {Entry[]} [usedEntries] List of entries using the asset. `undefined` means the
+ * information is not yet available.
  */
 
 /**

@@ -6,7 +6,7 @@
   import { goto, parseLocation } from '$lib/services/app/navigation';
   import { getAssetsByDirName, renamingAsset } from '$lib/services/assets';
   import { moveAssets } from '$lib/services/assets/data/move';
-  import { getAssetDetails } from '$lib/services/assets/details';
+  import { getAssetUsedEntries } from '$lib/services/assets/details';
   import { showAssetOverlay } from '$lib/services/assets/view';
 
   /**
@@ -46,7 +46,7 @@
       otherNames = getAssetsByDirName(/** @type {string} */ (dirname))
         .map((a) => a.name)
         .filter((n) => n !== asset.name);
-      ({ usedEntries } = await getAssetDetails(asset));
+      usedEntries = await getAssetUsedEntries(asset);
       open = true;
     }
   };
