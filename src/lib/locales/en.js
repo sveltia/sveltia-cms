@@ -498,6 +498,7 @@ export const strings = {
     },
   },
   entry_sidebar: {
+    sidebar_panels: 'Sidebar Panels',
     validation: {
       title: 'Validation',
       placeholder: 'Validation results will be shown here.',

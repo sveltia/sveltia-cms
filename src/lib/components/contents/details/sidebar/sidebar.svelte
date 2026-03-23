@@ -58,7 +58,7 @@
       key: 'history',
       label: $_('entry_sidebar.history.title'),
       icon: 'history',
-      disabled: !$backend?.isGit,
+      disabled: !$backend?.isGit || !!$entryDraft?.isNew,
       panel: HistoryPanel,
     },
     {
@@ -89,14 +89,18 @@
       <EffectiveTab.panel />
     </div>
   {/if}
-  <SelectButtonGroup class="tabs" aria-controls="entry-sidebar-content">
+  <SelectButtonGroup
+    class="tabs"
+    aria-label={$_('entry_sidebar.sidebar_panels')}
+    aria-controls="entry-sidebar-content"
+  >
     {#each tabs as { key, label, icon, disabled } (key)}
       <SelectButton
         iconic
         aria-label={label}
         selected={EffectiveTab?.key === key}
         {disabled}
-        onSelect={() => {
+        onclick={() => {
           activeTab = activeTab === key ? null : key;
         }}
       >

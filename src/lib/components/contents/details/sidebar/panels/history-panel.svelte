@@ -15,7 +15,7 @@
 
   /** @type {FileCommit[]} */
   let commits = $state([]);
-  let loading = $state(true);
+  let loading = $state(false);
   let error = $state(false);
 
   /**

@@ -500,6 +500,7 @@ export const strings = {
     },
   },
   entry_sidebar: {
+    sidebar_panels: 'サイドバーパネル',
     validation: {
       title: 'バリデーション',
       placeholder: '検証結果がここに表示されます。',
@@ -507,8 +508,8 @@ export const strings = {
     },
     history: {
       title: '履歴',
-      fetch_failed: '履歴の読み込みに失敗しました。',
-      no_history: '履歴が見つかりません。',
+      fetch_failed: '履歴を読み込めませんでした。',
+      no_history: '履歴が見つかりませんでした。',
     },
     backlinks: {
       title: 'バックリンク',
