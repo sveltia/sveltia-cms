@@ -6,7 +6,7 @@
 
 **Key Details:**
 
-- **Size**: ~800 source files, 208 test files, 5800+ tests
+- **Size**: ~800 source files, 200+ test files, 6000+ tests
 - **Languages**: TypeScript-flavoured JavaScript (ES2024/JSDoc), Svelte 5, SCSS/CSS, HTML
 - **Target Runtime**: Browser (IIFE and ES modules)
 - **Package Manager**: **pnpm only** (npm will cause issues)
@@ -71,7 +71,7 @@ pnpm format          # Auto-fix Prettier formatting
 
 - `pnpm install`: ~25-30 seconds
 - `pnpm check`: ~30-45 seconds
-- `pnpm test`: ~35 seconds (5800+ tests)
+- `pnpm test`: ~35 seconds (6000+ tests)
 - `pnpm build`: ~15-20 seconds
 
 ### Common Issues & Solutions
@@ -140,7 +140,7 @@ src/lib/
 
 1. All ESLint rules pass (strict Airbnb config + Svelte rules + some customizations)
 2. Prettier formatting enforced
-3. All 5800+ tests pass
+3. All 6000+ tests pass
 4. Svelte compiler checks pass
 5. Production build succeeds
 6. No unused imports (custom script validation)
@@ -167,7 +167,7 @@ src/lib/
 - **Framework**: Vitest 4 with coverage reporting
 - **Location**: Co-located `*.test.js` files
 - **Coverage**: Focuses on `src/lib/{components,services}/**/*.js`
-- **Standards**: 5800+ tests must continue passing
+- **Standards**: 6000+ tests must continue passing with 100% coverage
 
 ### File Patterns
 
