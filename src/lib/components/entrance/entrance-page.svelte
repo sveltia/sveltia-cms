@@ -60,6 +60,7 @@
           {@render parseMarkdown($signInError.message)}
         </div>
       </div>
+      <SignIn />
     {:else if $inAuthPopup}
       <div role="alert" class="message">{$_('authorizing')}</div>
     {:else if !$user || $unauthenticated}

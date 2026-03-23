@@ -34,7 +34,11 @@
   const showLocalBackendOption = $derived($isLocalHost && !isTestRepo);
 
   onMount(() => {
-    signInAutomatically();
+    // Skip automatic sign-in if there's already an error (e.g. repository access denied), so the
+    // error message is preserved and the user can try again with different credentials
+    if (!$signInError.message) {
+      signInAutomatically();
+    }
   });
 </script>
 

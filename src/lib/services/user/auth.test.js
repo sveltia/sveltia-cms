@@ -918,6 +918,9 @@ describe('auth service', () => {
       await authModule.signInAutomatically();
 
       expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      // Should clear the cached token so the sign-in form is shown
+      expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
+      expect(mockUser.set).toHaveBeenCalledWith(undefined);
     });
 
     it('should handle fetch files failure with non-auth error', async () => {
@@ -941,6 +944,10 @@ describe('auth service', () => {
       await authModule.signInAutomatically();
 
       expect(authModule.signInError.set).toHaveBeenCalled();
+      // Should clear the cached token so the sign-in form is shown
+      expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
+      expect(mockUser.set).toHaveBeenCalledWith(undefined);
+      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
     });
 
     it('should handle case when getBackend returns undefined', async () => {
@@ -1110,10 +1117,11 @@ describe('auth service', () => {
 
       expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
       expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      // User is still authenticated even if fetchFiles fails
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(false);
-      expect(mockUser.set).toHaveBeenCalledWith(user);
       expect(authModule.signInError.set).toHaveBeenCalled();
+      // Should clear the cached token so the sign-in form is shown
+      expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
+      expect(mockUser.set).toHaveBeenCalledWith(undefined);
+      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
     });
   });
 

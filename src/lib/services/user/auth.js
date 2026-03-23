@@ -215,6 +215,11 @@ export const signInAutomatically = async () => {
     } else {
       logError(ex, 'dataFetch');
     }
+
+    // Clear the cached token so the sign-in form is shown instead of a dead-end error
+    await LocalStorage.set('sveltia-cms.user', {});
+    user.set(undefined);
+    unauthenticated.set(true);
   }
 };
 
@@ -269,6 +274,11 @@ export const signInManually = async (_backendName, token) => {
     await _backend.fetchFiles();
   } catch (/** @type {any} */ ex) {
     logError(ex, 'dataFetch');
+
+    // Clear the cached token so the sign-in form is shown instead of a dead-end error
+    await LocalStorage.set('sveltia-cms.user', {});
+    user.set(undefined);
+    unauthenticated.set(true);
   }
 };
 
