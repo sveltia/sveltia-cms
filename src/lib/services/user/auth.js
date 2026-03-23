@@ -37,6 +37,15 @@ export const unauthenticated = writable(true);
 export const signingIn = writable(false);
 
 /**
+ * Clear the cached user token so the sign-in form is shown on next load.
+ */
+const clearUserCache = async () => {
+  await LocalStorage.set('sveltia-cms.user', {});
+  user.set(undefined);
+  unauthenticated.set(true);
+};
+
+/**
  * Reset the sign-in error store.
  */
 export const resetError = () => {
@@ -216,10 +225,7 @@ export const signInAutomatically = async () => {
       logError(ex, 'dataFetch');
     }
 
-    // Clear the cached token so the sign-in form is shown instead of a dead-end error
-    await LocalStorage.set('sveltia-cms.user', {});
-    user.set(undefined);
-    unauthenticated.set(true);
+    await clearUserCache();
   }
 };
 
@@ -274,11 +280,7 @@ export const signInManually = async (_backendName, token) => {
     await _backend.fetchFiles();
   } catch (/** @type {any} */ ex) {
     logError(ex, 'dataFetch');
-
-    // Clear the cached token so the sign-in form is shown instead of a dead-end error
-    await LocalStorage.set('sveltia-cms.user', {});
-    user.set(undefined);
-    unauthenticated.set(true);
+    await clearUserCache();
   }
 };
 
@@ -287,14 +289,9 @@ export const signInManually = async (_backendName, token) => {
  */
 export const signOut = async () => {
   await get(backend)?.signOut();
-
-  // Leave an empty user object in the local storage to prevent the user from being signed in
-  // again automatically in `signInAutomatically`.
-  await LocalStorage.set('sveltia-cms.user', {});
+  await clearUserCache();
 
   backendName.set(undefined);
-  user.set(undefined);
-  unauthenticated.set(true);
   dataLoaded.set(false);
 
   const redirectURL = get(cmsConfig)?.logout_redirect_url;
