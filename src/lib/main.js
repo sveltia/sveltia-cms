@@ -362,6 +362,15 @@ if (scriptElement?.type === 'module') {
   );
 }
 
+const netlifyIdentityScriptElement =
+  'script[src="https://identity.netlify.com/v1/netlify-identity-widget.js"]';
+
+// Warn if Netlify Identity Widget is included, as it’s not compatible with Sveltia CMS and has been
+// officially deprecated by Netlify.
+if (document.querySelector(netlifyIdentityScriptElement)) {
+  console.warn('Netlify Identity has been deprecated. The widget is not supported in Sveltia CMS.');
+}
+
 // Automatically initialize the CMS if manual initialization is not requested AND the script is NOT
 // a module; We can’t just use `document.currentScript` for module detection because the earlier
 // versions of Sveltia CMS were built and shipped as modules

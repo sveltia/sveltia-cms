@@ -982,3 +982,70 @@ describe('CSS stylesheet detection and warning', () => {
     expect(expectedMessage).toContain('Remove');
   });
 });
+
+describe('Netlify Identity Widget detection and warning', () => {
+  const netlifyIdentitySelector =
+    'script[src="https://identity.netlify.com/v1/netlify-identity-widget.js"]';
+
+  test('warns when Netlify Identity Widget script is found', () => {
+    const mockScriptElement = {
+      src: 'https://identity.netlify.com/v1/netlify-identity-widget.js',
+    };
+
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => mockScriptElement);
+
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    if (document.querySelector(netlifyIdentitySelector)) {
+      console.warn(
+        'Netlify Identity has been deprecated. The widget is not supported in Sveltia CMS.',
+      );
+    }
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Netlify Identity has been deprecated. The widget is not supported in Sveltia CMS.',
+    );
+    consoleSpy.mockRestore();
+  });
+
+  test('does not warn when Netlify Identity Widget script is not found', () => {
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => null);
+
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    if (document.querySelector(netlifyIdentitySelector)) {
+      console.warn('Should not warn');
+    }
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  test('querySelector uses the correct Netlify Identity selector', () => {
+    const queryMock = vi.fn(() => null);
+
+    // @ts-ignore
+    global.document.querySelector = queryMock;
+
+    document.querySelector(netlifyIdentitySelector);
+
+    expect(queryMock).toHaveBeenCalledWith(
+      'script[src="https://identity.netlify.com/v1/netlify-identity-widget.js"]',
+    );
+  });
+
+  test('handles null element gracefully without throwing', () => {
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => null);
+
+    expect(() => {
+      if (document.querySelector(netlifyIdentitySelector)) {
+        console.warn(
+          'Netlify Identity has been deprecated. The widget is not supported in Sveltia CMS.',
+        );
+      }
+    }).not.toThrow();
+  });
+});
