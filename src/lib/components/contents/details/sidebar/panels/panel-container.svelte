@@ -30,7 +30,15 @@
 </section>
 
 <style lang="scss">
+  section {
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
   header {
+    flex: none;
     display: flex;
     align-items: center;
     border-bottom: 1px solid var(--sui-secondary-border-color);
@@ -43,6 +51,9 @@
   }
 
   div {
+    flex: auto;
+    overflow: auto;
+
     :global {
       h4 {
         display: flex;
