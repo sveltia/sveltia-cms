@@ -5,7 +5,7 @@ import { IndexedDB } from '@sveltia/utils/storage';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfigVersion } from '$lib/services/config';
-import { entryDraftModified } from '$lib/services/contents/draft';
+import { entryDraftInteracted, entryDraftModified } from '$lib/services/contents/draft';
 import { prefs } from '$lib/services/user/prefs';
 
 vi.mock('@sveltia/utils/storage');
@@ -112,6 +112,10 @@ describe('draft/backup', () => {
       }
 
       if (store === entryDraftModified) {
+        return false;
+      }
+
+      if (store === entryDraftInteracted) {
         return false;
       }
 
@@ -228,6 +232,10 @@ describe('draft/backup', () => {
           return true;
         }
 
+        if (store === entryDraftInteracted) {
+          return true;
+        }
+
         return undefined;
       });
 
@@ -262,6 +270,10 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
+        if (store === entryDraftInteracted) {
+          return true;
+        }
+
         if (store === entryDraftModified) {
           return false;
         }
@@ -294,6 +306,10 @@ describe('draft/backup', () => {
 
         if (store === cmsConfigVersion) {
           return 'v1.0.0';
+        }
+
+        if (store === entryDraftInteracted) {
+          return true;
         }
 
         if (store === entryDraftModified) {
@@ -366,6 +382,10 @@ describe('draft/backup', () => {
           return 'v1.0.0';
         }
 
+        if (store === entryDraftInteracted) {
+          return true;
+        }
+
         if (store === entryDraftModified) {
           return true;
         }
@@ -397,6 +417,10 @@ describe('draft/backup', () => {
 
         if (store === cmsConfigVersion) {
           return 'v1.0.0';
+        }
+
+        if (store === entryDraftInteracted) {
+          return true;
         }
 
         if (store === entryDraftModified) {
@@ -436,6 +460,10 @@ describe('draft/backup', () => {
           return 'v1.0.0';
         }
 
+        if (store === entryDraftInteracted) {
+          return true;
+        }
+
         if (store === entryDraftModified) {
           return true;
         }
@@ -461,6 +489,38 @@ describe('draft/backup', () => {
           collectionName: 'posts',
         }),
       );
+    });
+
+    it('should not save backup when user has not interacted with the editor', async () => {
+      mockGet.mockImplementation((store) => {
+        if (store === prefs) {
+          return { useDraftBackup: true };
+        }
+
+        if (store === entryDraftInteracted) {
+          return false;
+        }
+
+        if (store === entryDraftModified) {
+          return true;
+        }
+
+        return undefined;
+      });
+
+      const draft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        originalEntry: { slug: 'my-post' },
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: { en: { title: 'My Post' } },
+        files: {},
+      };
+
+      await saveBackup(draft);
+
+      expect(mockBackupDB.put).not.toHaveBeenCalled();
     });
   });
 
@@ -1350,6 +1410,7 @@ describe('draft/backup', () => {
             return vi.fn();
           }),
         },
+        entryDraftInteracted: { set: vi.fn() },
         i18nAutoDupEnabled: { set: vi.fn() },
       }));
 
@@ -1404,6 +1465,30 @@ describe('draft/backup', () => {
     });
   });
 
+  describe('entryDraft subscription resets interaction flag on new draft', () => {
+    it('should reset entryDraftInteracted when a draft with a new id is loaded', async () => {
+      vi.resetModules();
+
+      const mockInteracted = { set: vi.fn() };
+
+      vi.doMock('$lib/services/contents/draft', () => ({
+        entryDraft: {
+          subscribe: vi.fn((cb) => {
+            cb({ id: 'draft-1', collectionName: 'posts' });
+            return vi.fn();
+          }),
+        },
+        entryDraftModified: { subscribe: vi.fn(() => vi.fn()) },
+        entryDraftInteracted: mockInteracted,
+        i18nAutoDupEnabled: { set: vi.fn() },
+      }));
+
+      await import('./backup');
+
+      expect(mockInteracted.set).toHaveBeenCalledWith(false);
+    });
+  });
+
   describe('entryDraft subscription false branch (L295 false — draft falsy)', () => {
     it('should not set a timeout when draft is null', async () => {
       // `if (draft && backupDB)` → false when draft is null/falsy → L295 false branch.
@@ -1417,6 +1502,7 @@ describe('draft/backup', () => {
           }),
         },
         entryDraftModified: { subscribe: vi.fn(() => vi.fn()) },
+        entryDraftInteracted: { set: vi.fn() },
         i18nAutoDupEnabled: { set: vi.fn() },
       }));
 

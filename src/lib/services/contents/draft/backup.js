@@ -5,7 +5,12 @@ import { get, writable } from 'svelte/store';
 
 import { backend } from '$lib/services/backends';
 import { cmsConfigVersion } from '$lib/services/config';
-import { entryDraft, entryDraftModified, i18nAutoDupEnabled } from '$lib/services/contents/draft';
+import {
+  entryDraft,
+  entryDraftInteracted,
+  entryDraftModified,
+  i18nAutoDupEnabled,
+} from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy';
 import { prefs } from '$lib/services/user/prefs';
 
@@ -88,7 +93,7 @@ export const getBackup = async (collectionName, slug = '') => {
  * @param {EntryDraft} draft Draft.
  */
 export const saveBackup = async (draft) => {
-  if (!(get(prefs).useDraftBackup ?? true)) {
+  if (!(get(prefs).useDraftBackup ?? true) || !get(entryDraftInteracted)) {
     return;
   }
 
@@ -236,6 +241,7 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
 
   if (doRestore) {
     restoreBackup({ backup, collectionName, fileName });
+    entryDraftInteracted.set(true);
   } else {
     await deleteBackup(collectionName, slug);
   }
@@ -289,8 +295,17 @@ backend.subscribe((_backend) => {
 });
 
 // Automatically backup the draft; use a timer to avoid typing lag
+/** @type {string | undefined} */
+let lastDraftId;
+
 entryDraft.subscribe((draft) => {
   globalThis.clearTimeout(backupTimeout);
+
+  // Reset the interaction flag when a new draft is loaded or the editor is closed
+  if (draft?.id !== lastDraftId) {
+    lastDraftId = draft?.id;
+    entryDraftInteracted.set(false);
+  }
 
   if (draft && backupDB) {
     backupTimeout = globalThis.setTimeout(() => {

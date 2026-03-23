@@ -20,6 +20,12 @@ export const entryDraft = writable();
 export const i18nAutoDupEnabled = writable(true);
 
 /**
+ * Whether the user has manually interacted with the entry editor. This prevents auto-backup from
+ * triggering when only programmatic changes (e.g. Lexical markdown reformatting) have occurred.
+ */
+export const entryDraftInteracted = writable(false);
+
+/**
  * Whether the current {@link entryDraft} has been modified.
  * @type {Readable<boolean>}
  */

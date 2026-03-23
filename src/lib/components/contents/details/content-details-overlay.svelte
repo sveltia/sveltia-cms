@@ -21,7 +21,7 @@
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { collectionState } from '$lib/services/contents/collection/view';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { entryDraft, entryDraftInteracted } from '$lib/services/contents/draft';
   import {
     resetBackupToastState,
     showBackupToastIfNeeded,
@@ -196,6 +196,16 @@
         [paneStateKey]: [$editorFirstPane, $editorSecondPane],
       },
     }));
+  };
+
+  /**
+   * Mark the draft as manually interacted when the user performs an action in the editor body.
+   * @param {Event} event DOM event.
+   */
+  const markInteracted = (event) => {
+    if (event.isTrusted && !$entryDraftInteracted) {
+      $entryDraftInteracted = true;
+    }
   };
 
   /**
@@ -436,7 +446,7 @@
         </div>
       </EmptyState>
     {:else}
-      <div role="none" class="body">
+      <div role="none" class="body" onpointerdown={markInteracted} onkeydown={markInteracted}>
         {#key collection}
           <div role="none" class="content-area">
             {#if $editorFirstPane && $editorSecondPane}
