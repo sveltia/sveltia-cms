@@ -7,14 +7,17 @@
     ResizableHandle,
     ResizablePane,
     ResizablePaneGroup,
+    Spacer,
     Toast,
   } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { onMount, tick, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
 
   import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
+  import Sidebar from '$lib/components/contents/details/sidebar/sidebar.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { collectionState } from '$lib/services/contents/collection/view';
@@ -209,6 +212,39 @@
   };
 
   /**
+   * Ensure the given locale’s edit pane is visible, switching panes if needed.
+   * @param {InternalLocaleCode} locale Locale code.
+   */
+  const ensureEditPaneVisible = async (locale) => {
+    const firstPane = $editorFirstPane;
+    const secondPane = $editorSecondPane;
+
+    // Already visible in an edit pane
+    if (
+      (firstPane?.mode === 'edit' && firstPane.locale === locale) ||
+      (secondPane?.mode === 'edit' && secondPane.locale === locale)
+    ) {
+      return;
+    }
+
+    // Prefer switching a preview pane to edit mode for the target locale
+    if (secondPane?.mode === 'preview') {
+      $editorSecondPane = { mode: 'edit', locale };
+    } else if (firstPane?.mode === 'preview') {
+      $editorFirstPane = { mode: 'edit', locale };
+    } else if (secondPane) {
+      // Both are edit panes for other locales; switch the second one
+      $editorSecondPane = { mode: 'edit', locale };
+    } else {
+      // Single-pane layout
+      $editorFirstPane = { mode: 'edit', locale };
+    }
+
+    // Wait for the DOM to update after the pane switch
+    await sleep(100);
+  };
+
+  /**
    * Highlight the corresponding editor field by expanding the parent list/object(s), moving the
    * element into the viewport, and focus any control within the field, such as a text input or
    * button.
@@ -216,7 +252,9 @@
    * @param {InternalLocaleCode} args.locale Locale code.
    * @param {FieldKeyPath} args.keyPath Key path of the field.
    */
-  const highlightEditorField = ({ locale, keyPath }) => {
+  const highlightEditorField = async ({ locale, keyPath }) => {
+    await ensureEditPaneVisible(locale);
+
     const valueMap = currentValues?.[locale] ?? {};
 
     const expanderKeys = getExpanderKeys({
@@ -231,7 +269,8 @@
 
     window.requestAnimationFrame(() => {
       const targetField = document.querySelector(
-        `.content-editor .pane[data-mode="edit"] .field[data-key-path="${CSS.escape(keyPath)}"]`,
+        `.content-editor .pane[data-mode="edit"][data-locale="${CSS.escape(locale)}"] ` +
+          `.field[data-key-path="${CSS.escape(keyPath)}"]`,
       );
 
       if (targetField) {
@@ -338,6 +377,7 @@
     {@const { locale, mode } = $editorSecondPane}
     <div class="pane-wrapper">
       <Group
+        class="pane"
         aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
           values: { locale: getLocaleLabel(locale) ?? locale },
         })}
@@ -396,31 +436,41 @@
         </div>
       </EmptyState>
     {:else}
-      {#key collection}
-        {#if $editorFirstPane && $editorSecondPane}
-          {#if firstPaneSize && secondPaneSize}
-            <ResizablePaneGroup
-              onResize={({ sizes }) => {
-                if ($editorFirstPane && $editorSecondPane) {
-                  [$editorFirstPane.width, $editorSecondPane.width] = sizes;
-                }
-              }}
-            >
-              <ResizablePane defaultSize={firstPaneSize} minSize={minPaneSize}>
-                {@render firstPane()}
-              </ResizablePane>
-              <ResizableHandle />
-              <ResizablePane defaultSize={secondPaneSize} minSize={minPaneSize}>
-                {@render secondPane()}
-              </ResizablePane>
-            </ResizablePaneGroup>
+      <div role="none" class="body">
+        {#key collection}
+          <div role="none" class="content-area">
+            {#if $editorFirstPane && $editorSecondPane}
+              {#if firstPaneSize && secondPaneSize}
+                <ResizablePaneGroup
+                  onResize={({ sizes }) => {
+                    if ($editorFirstPane && $editorSecondPane) {
+                      [$editorFirstPane.width, $editorSecondPane.width] = sizes;
+                    }
+                  }}
+                >
+                  <ResizablePane defaultSize={firstPaneSize} minSize={minPaneSize}>
+                    {@render firstPane()}
+                  </ResizablePane>
+                  <ResizableHandle />
+                  <ResizablePane defaultSize={secondPaneSize} minSize={minPaneSize}>
+                    {@render secondPane()}
+                  </ResizablePane>
+                </ResizablePaneGroup>
+              {/if}
+            {:else if $editorFirstPane}
+              {@render firstPane()}
+            {:else if $editorSecondPane}
+              {@render secondPane()}
+            {:else}
+              <Spacer flex />
+            {/if}
+          </div>
+          <!-- @todo Enable sidebar for mobile -->
+          {#if !$isSmallScreen}
+            <Sidebar />
           {/if}
-        {:else if $editorFirstPane}
-          {@render firstPane()}
-        {:else if $editorSecondPane}
-          {@render secondPane()}
-        {/if}
-      {/key}
+        {/key}
+      </div>
     {/if}
   {/key}
 </div>
@@ -441,27 +491,39 @@
     display: flex;
     flex-direction: column;
     background-color: var(--sui-secondary-background-color);
-
-    :global {
-      .sui.resizable-pane-group {
-        background-color: var(--sui-secondary-background-color); // same as toolbar
-      }
-
-      .sui.resizable-pane {
-        background-color: var(--sui-primary-background-color);
-      }
-    }
   }
 
   .pane-wrapper {
     display: contents;
 
     :global {
-      & > .group {
+      & > .pane {
+        flex: auto;
         height: 100%;
         overflow: hidden;
         display: flex;
         flex-direction: column;
+      }
+    }
+  }
+
+  .body {
+    flex: auto;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .content-area {
+    flex: auto;
+    background-color: var(--sui-primary-background-color);
+
+    &:not(:only-child) {
+      border-start-end-radius: 16px; // sidebar is present
+    }
+
+    :global {
+      .sui.resizable-handle {
+        background-color: var(--sui-secondary-background-color); // same as toolbar
       }
     }
   }

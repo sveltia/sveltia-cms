@@ -497,6 +497,22 @@ export const strings = {
       url: 'Please enter a valid URL.',
     },
   },
+  entry_sidebar: {
+    validation: {
+      title: 'Validation',
+      placeholder: 'Validation results will be shown here.',
+      no_errors_found: 'No errors found.',
+    },
+    history: {
+      title: 'History',
+      fetch_failed: 'Failed to load history.',
+      no_history: 'No history found.',
+    },
+    backlinks: {
+      title: 'Backlinks',
+      no_entries: 'No entries are referencing this entry.',
+    },
+  },
   saving_entry: {
     error: {
       title: 'Error',

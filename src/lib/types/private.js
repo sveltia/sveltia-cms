@@ -958,6 +958,7 @@
  * name (and a file name joined by `|`), value is the left and right pane states. The state can be
  * `null` if preview is disabled.
  * @property {SelectAssetsView} [selectAssetsView] View settings for the Select Assets dialog.
+ * @property {string | null} [sidebarPanel] Active sidebar panel key, e.g. `validation`.
  */
 
 /**

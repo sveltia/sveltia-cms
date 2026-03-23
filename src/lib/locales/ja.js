@@ -499,6 +499,22 @@ export const strings = {
       url: '正しい URL を入力してください。',
     },
   },
+  entry_sidebar: {
+    validation: {
+      title: 'バリデーション',
+      placeholder: '検証結果がここに表示されます。',
+      no_errors_found: 'エラーは見つかりませんでした。',
+    },
+    history: {
+      title: '履歴',
+      fetch_failed: '履歴の読み込みに失敗しました。',
+      no_history: '履歴が見つかりません。',
+    },
+    backlinks: {
+      title: 'バックリンク',
+      no_entries: 'このエントリーを参照しているエントリーはありません。',
+    },
+  },
   saving_entry: {
     error: {
       title: 'エラー',
