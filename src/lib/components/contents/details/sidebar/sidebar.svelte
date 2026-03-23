@@ -84,11 +84,6 @@
 </script>
 
 <div role="none" class="sidebar">
-  {#if EffectiveTab}
-    <div role="none" class="content" id="entry-sidebar-content">
-      <EffectiveTab.panel />
-    </div>
-  {/if}
   <SelectButtonGroup
     class="tabs"
     aria-label={$_('entry_sidebar.sidebar_panels')}
@@ -108,12 +103,18 @@
       </SelectButton>
     {/each}
   </SelectButtonGroup>
+  {#if EffectiveTab}
+    <div role="none" class="content" id="entry-sidebar-content">
+      <EffectiveTab.panel />
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
   .sidebar {
     flex: none;
     display: flex;
+    flex-direction: row-reverse;
 
     :global {
       .tabs {
