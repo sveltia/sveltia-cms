@@ -199,9 +199,13 @@
  */
 
 /**
+ * Supported cloud media storage options.
+ * @typedef {CloudinaryMediaLibrary | UploadcareMediaLibrary | S3MediaLibrary} CloudMediaLibrary
+ */
+
+/**
  * Supported [media storage](https://sveltiacms.app/en/docs/media).
- * @typedef {DefaultMediaLibrary | CloudinaryMediaLibrary | UploadcareMediaLibrary | S3MediaLibrary
- * | StockAssetMediaLibrary} MediaLibrary
+ * @typedef {DefaultMediaLibrary | CloudMediaLibrary | StockAssetMediaLibrary} MediaLibrary
  */
 
 /**
