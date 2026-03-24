@@ -19,7 +19,7 @@ import {
 
 const serviceId = 'openai';
 const serviceLabel = 'OpenAI GPT';
-const model = 'gpt-4o-mini';
+const model = 'gpt-5.4-nano';
 
 /**
  * Check if the given source and target languages are supported.
