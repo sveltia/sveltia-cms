@@ -20,9 +20,7 @@ describe('OpenAI AI Client', () => {
   describe('complete', () => {
     it('should return trimmed response text on success', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ choices: [{ message: { content: '  Hello there!  ' } }] }), {
-          status: 200,
-        }),
+        new Response(JSON.stringify({ output_text: '  Hello there!  ' }), { status: 200 }),
       );
 
       const result = await complete(defaultOptions);
@@ -30,26 +28,42 @@ describe('OpenAI AI Client', () => {
       expect(result).toBe('Hello there!');
     });
 
-    it('should send a POST request to the OpenAI Chat Completions endpoint', async () => {
+    it('should read response text from output items when output_text is unavailable', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
-          status: 200,
-        }),
+        new Response(
+          JSON.stringify({
+            output: [
+              {
+                type: 'message',
+                content: [{ type: 'output_text', text: '  Hello from output items!  ' }],
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+
+      const result = await complete(defaultOptions);
+
+      expect(result).toBe('Hello from output items!');
+    });
+
+    it('should send a POST request to the OpenAI Responses endpoint', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(JSON.stringify({ output_text: 'ok' }), { status: 200 }),
       );
 
       await complete(defaultOptions);
 
       expect(fetch).toHaveBeenCalledWith(
-        'https://api.openai.com/v1/chat/completions',
+        'https://api.openai.com/v1/responses',
         expect.objectContaining({ method: 'POST' }),
       );
     });
 
     it('should include Authorization and Content-Type headers', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
-          status: 200,
-        }),
+        new Response(JSON.stringify({ output_text: 'ok' }), { status: 200 }),
       );
 
       await complete(defaultOptions);
@@ -65,11 +79,9 @@ describe('OpenAI AI Client', () => {
       );
     });
 
-    it('should send model, system prompt, and user message in the request body', async () => {
+    it('should send model, instructions, and input in the request body', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
-          status: 200,
-        }),
+        new Response(JSON.stringify({ output_text: 'ok' }), { status: 200 }),
       );
 
       await complete(defaultOptions);
@@ -77,17 +89,14 @@ describe('OpenAI AI Client', () => {
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
       expect(body.model).toBe(defaultOptions.model);
-      expect(body.messages).toEqual([
-        { role: 'system', content: defaultOptions.systemPrompt },
-        { role: 'user', content: defaultOptions.userMessage },
-      ]);
+      expect(body.instructions).toBe(defaultOptions.systemPrompt);
+      expect(body.input).toBe(defaultOptions.userMessage);
+      expect(body.store).toBe(false);
     });
 
-    it('should use default temperature and max_tokens when not provided', async () => {
+    it('should use default temperature and max_output_tokens when not provided', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
-          status: 200,
-        }),
+        new Response(JSON.stringify({ output_text: 'ok' }), { status: 200 }),
       );
 
       await complete(defaultOptions);
@@ -95,14 +104,12 @@ describe('OpenAI AI Client', () => {
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
       expect(body.temperature).toBe(0.3);
-      expect(body.max_tokens).toBe(4000);
+      expect(body.max_output_tokens).toBe(4000);
     });
 
     it('should forward custom temperature and maxTokens', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
-          status: 200,
-        }),
+        new Response(JSON.stringify({ output_text: 'ok' }), { status: 200 }),
       );
 
       await complete({ ...defaultOptions, temperature: 1.0, maxTokens: 512 });
@@ -110,7 +117,7 @@ describe('OpenAI AI Client', () => {
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
       expect(body.temperature).toBe(1.0);
-      expect(body.max_tokens).toBe(512);
+      expect(body.max_output_tokens).toBe(512);
     });
 
     it('should throw with status and message on non-OK response with error body', async () => {
@@ -154,9 +161,9 @@ describe('OpenAI AI Client', () => {
       );
     });
 
-    it('should throw on empty choices array in response', async () => {
+    it('should throw on empty output array in response', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ choices: [] }), { status: 200 }),
+        new Response(JSON.stringify({ output: [] }), { status: 200 }),
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
@@ -164,9 +171,11 @@ describe('OpenAI AI Client', () => {
       );
     });
 
-    it('should throw on missing message in choice', async () => {
+    it('should throw on missing output text in message item', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ choices: [{}] }), { status: 200 }),
+        new Response(JSON.stringify({ output: [{ type: 'message', content: [] }] }), {
+          status: 200,
+        }),
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(

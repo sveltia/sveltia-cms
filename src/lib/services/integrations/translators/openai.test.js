@@ -130,13 +130,7 @@ describe('OpenAI Translator Service', () => {
 
     it('should successfully translate text', async () => {
       const mockResponse = {
-        choices: [
-          {
-            message: {
-              content: JSON.stringify(['Bonjour le monde', 'Comment allez-vous ?']),
-            },
-          },
-        ],
+        output_text: JSON.stringify(['Bonjour le monde', 'Comment allez-vous ?']),
       };
 
       const mockFetch = vi.mocked(fetch);
@@ -154,7 +148,7 @@ describe('OpenAI Translator Service', () => {
 
       expect(result).toEqual(['Bonjour le monde', 'Comment allez-vous ?']);
       expect(fetch).toHaveBeenCalledWith(
-        'https://api.openai.com/v1/chat/completions',
+        'https://api.openai.com/v1/responses',
         expect.objectContaining({
           method: 'POST',
           headers: {
@@ -167,16 +161,10 @@ describe('OpenAI Translator Service', () => {
 
     it('should handle markdown content in translation', async () => {
       const mockResponse = {
-        choices: [
-          {
-            message: {
-              content: JSON.stringify([
-                '# Bonjour **monde**',
-                'Voici une [lien](https://example.com)',
-              ]),
-            },
-          },
-        ],
+        output_text: JSON.stringify([
+          '# Bonjour **monde**',
+          'Voici une [lien](https://example.com)',
+        ]),
       };
 
       const mockFetch = vi.mocked(fetch);
@@ -270,7 +258,7 @@ describe('OpenAI Translator Service', () => {
 
     it('should handle invalid response format', async () => {
       const mockResponse = {
-        choices: [],
+        output: [],
       };
 
       const mockFetch = vi.mocked(fetch);
@@ -309,13 +297,7 @@ describe('OpenAI Translator Service', () => {
 
     it('should handle empty text array', async () => {
       const mockResponse = {
-        choices: [
-          {
-            message: {
-              content: JSON.stringify([]),
-            },
-          },
-        ],
+        output_text: JSON.stringify([]),
       };
 
       const mockFetch = vi.mocked(fetch);
@@ -334,13 +316,7 @@ describe('OpenAI Translator Service', () => {
 
     it('should handle single text translation', async () => {
       const mockResponse = {
-        choices: [
-          {
-            message: {
-              content: JSON.stringify(['Bonjour']),
-            },
-          },
-        ],
+        output_text: JSON.stringify(['Bonjour']),
       };
 
       const mockFetch = vi.mocked(fetch);
@@ -359,13 +335,7 @@ describe('OpenAI Translator Service', () => {
 
     it('should handle multiline text translation', async () => {
       const mockResponse = {
-        choices: [
-          {
-            message: {
-              content: JSON.stringify(['Bonjour\nComment allez-vous ?\nBonne journée !']),
-            },
-          },
-        ],
+        output_text: JSON.stringify(['Bonjour\nComment allez-vous ?\nBonne journée !']),
       };
 
       const mockFetch = vi.mocked(fetch);
@@ -385,13 +355,7 @@ describe('OpenAI Translator Service', () => {
 
     it('should handle translation count mismatch', async () => {
       const mockResponse = {
-        choices: [
-          {
-            message: {
-              content: JSON.stringify(['Bonjour']), // Only one translation for two inputs
-            },
-          },
-        ],
+        output_text: JSON.stringify(['Bonjour']), // Only one translation for two inputs
       };
 
       const mockFetch = vi.mocked(fetch);
@@ -410,13 +374,7 @@ describe('OpenAI Translator Service', () => {
 
     it('should handle invalid JSON response', async () => {
       const mockResponse = {
-        choices: [
-          {
-            message: {
-              content: 'This is not valid JSON',
-            },
-          },
-        ],
+        output_text: 'This is not valid JSON',
       };
 
       const mockFetch = vi.mocked(fetch);
@@ -435,15 +393,9 @@ describe('OpenAI Translator Service', () => {
 
     it('should handle invalid JSON structure', async () => {
       const mockResponse = {
-        choices: [
-          {
-            message: {
-              content: JSON.stringify({
-                invalidStructure: ['Bonjour'],
-              }),
-            },
-          },
-        ],
+        output_text: JSON.stringify({
+          invalidStructure: ['Bonjour'],
+        }),
       };
 
       const mockFetch = vi.mocked(fetch);
@@ -495,13 +447,7 @@ describe('OpenAI Translator Service', () => {
 
     it('should include markdown preservation instructions in prompt', async () => {
       const mockResponse = {
-        choices: [
-          {
-            message: {
-              content: JSON.stringify(['Test']),
-            },
-          },
-        ],
+        output_text: JSON.stringify(['Test']),
       };
 
       const mockFetch = vi.mocked(fetch);
@@ -519,22 +465,17 @@ describe('OpenAI Translator Service', () => {
         /** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body),
       );
 
-      expect(requestBody.messages[0].content).toContain('markdown formatting');
-      expect(requestBody.messages[0].content).toContain('HTML tags');
-      expect(requestBody.messages[0].content).toContain('JSON array');
+      expect(requestBody.instructions).toContain('markdown formatting');
+      expect(requestBody.instructions).toContain('HTML tags');
+      expect(requestBody.instructions).toContain('JSON array');
       expect(requestBody.model).toBe('gpt-4o-mini');
       expect(requestBody.temperature).toBe(0.3);
+      expect(requestBody.store).toBe(false);
     });
 
     it('should use proper authentication header', async () => {
       const mockResponse = {
-        choices: [
-          {
-            message: {
-              content: JSON.stringify(['Test']),
-            },
-          },
-        ],
+        output_text: JSON.stringify(['Test']),
       };
 
       const mockFetch = vi.mocked(fetch);

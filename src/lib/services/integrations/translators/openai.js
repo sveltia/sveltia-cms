@@ -36,7 +36,7 @@ export const availability = async ({ sourceLanguage, targetLanguage }) =>
  * @param {TranslationOptions} options Options.
  * @returns {Promise<string[]>} Translated strings in the original order.
  * @throws {Error} When the source or target locale is not supported or API call fails.
- * @see https://platform.openai.com/docs/api-reference/chat/create
+ * @see https://developers.openai.com/api/reference/resources/responses/methods/create
  */
 const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
   const sourceLanguageName = normalizeLanguage(sourceLanguage);

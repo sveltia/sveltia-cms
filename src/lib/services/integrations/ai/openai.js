@@ -1,13 +1,13 @@
 /**
  * Generic OpenAI API client.
- * @see https://platform.openai.com/docs/api-reference/chat/create
+ * @see https://developers.openai.com/api/reference/resources/responses/methods/create
  */
 
 /**
  * @import { AiCompletionOptions } from '$lib/types/private';
  */
 
-const apiEndpoint = 'https://api.openai.com/v1/chat/completions';
+const apiEndpoint = 'https://api.openai.com/v1/responses';
 
 export const apiLabel = 'OpenAI API';
 export const developerURL = 'https://platform.openai.com/docs/overview';
@@ -15,7 +15,33 @@ export const apiKeyURL = 'https://platform.openai.com/api-keys';
 export const apiKeyPattern = /sk-[a-zA-Z0-9-_]{40,}/;
 
 /**
- * Send a message to the OpenAI Chat Completions API and return the response text.
+ * Check whether an output item is a message item with array content.
+ * @param {unknown} item Candidate output item.
+ * @returns {item is { content: unknown[] }} True if the item is a message with content.
+ */
+const isMessageOutputItem = (item) =>
+  typeof item === 'object' &&
+  item !== null &&
+  'type' in item &&
+  item.type === 'message' &&
+  'content' in item &&
+  Array.isArray(item.content);
+
+/**
+ * Check whether a message content item contains output text.
+ * @param {unknown} item Candidate message content item.
+ * @returns {item is { text: string }} True if the item contains output text.
+ */
+const isOutputTextItem = (item) =>
+  typeof item === 'object' &&
+  item !== null &&
+  'type' in item &&
+  item.type === 'output_text' &&
+  'text' in item &&
+  typeof item.text === 'string';
+
+/**
+ * Send a message to the OpenAI Responses API and return the response text.
  * @param {AiCompletionOptions} options Options.
  * @returns {Promise<string>} Response text.
  * @throws {Error} When the API call fails or returns an invalid response.
@@ -36,12 +62,11 @@ export const complete = async ({
     },
     body: JSON.stringify({
       model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
+      instructions: systemPrompt,
+      input: userMessage,
+      store: false,
       temperature,
-      max_tokens: maxTokens,
+      max_output_tokens: maxTokens,
     }),
   });
 
@@ -56,9 +81,20 @@ export const complete = async ({
 
   const data = await response.json();
 
-  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-    throw new Error('Invalid response format from OpenAI API.');
+  if (typeof data.output_text === 'string') {
+    return data.output_text.trim();
   }
 
-  return data.choices[0].message.content.trim();
+  /** @type {unknown[]} */
+  const output = Array.isArray(data.output) ? data.output : [];
+  const message = output.find(isMessageOutputItem);
+  /** @type {unknown[]} */
+  const content = Array.isArray(message?.content) ? message.content : [];
+  const textItem = content.find(isOutputTextItem);
+
+  if (typeof textItem?.text === 'string') {
+    return textItem.text.trim();
+  }
+
+  throw new Error('Invalid response format from OpenAI API.');
 };
