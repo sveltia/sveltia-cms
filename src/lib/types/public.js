@@ -192,7 +192,7 @@
 
 /**
  * Options for the unified stock photo/video providers.
- * @typedef {object} StockAssetMediaLibrary
+ * @typedef {object} StockMediaLibrary
  * @property {StockAssetProviderName[]} [providers] Enabled stock photo/video providers. The stock
  * photo/video section in the asset browser is hidden if an empty array is given. Default: all
  * supported providers.
@@ -205,7 +205,7 @@
 
 /**
  * Supported [media storage](https://sveltiacms.app/en/docs/media).
- * @typedef {DefaultMediaLibrary | CloudMediaLibrary | StockAssetMediaLibrary} MediaLibrary
+ * @typedef {DefaultMediaLibrary | CloudMediaLibrary | StockMediaLibrary} MediaLibrary
  */
 
 /**
@@ -219,7 +219,7 @@
  * @property {S3MediaLibrary} [cloudflare_r2] Options for the Cloudflare R2 media storage.
  * @property {S3MediaLibrary} [digitalocean_spaces] Options for the DigitalOcean Spaces media
  * storage.
- * @property {StockAssetMediaLibrary} [stock_assets] Options for the unified stock photo/video media
+ * @property {StockMediaLibrary} [stock_assets] Options for the unified stock photo/video media
  * library.
  */
 
