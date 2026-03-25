@@ -131,16 +131,17 @@
   });
   const targetFolderPath = $derived.by(() => {
     const { originalEntry } = $entryDraft ?? {};
+    const { entryRelative, internalPath, internalSubPath } = selectedFolder ?? {};
 
-    if (!selectedFolder?.entryRelative) {
+    if (!entryRelative) {
       // @todo FIXME: Replace all template tags in the path, not just `{{slug}}`
-      return selectedFolder?.internalPath?.replace('{{slug}}', originalEntry?.slug ?? '-');
+      return internalPath?.replace('{{slug}}', originalEntry?.slug ?? '-');
     }
 
     // A non-empty `internalSubPath` means the field has its own `media_folder` subfolder (e.g.
     // `media_folder: "images1"`). Append it so that only assets in that specific subfolder are
     // shown, not assets from sibling field folders (e.g. `images2`).
-    const subPath = selectedFolder.internalSubPath || undefined;
+    const subPath = internalSubPath || undefined;
 
     if (originalEntry) {
       const entryDir = getPathInfo(Object.values(originalEntry.locales)[0].path).dirname;
@@ -149,9 +150,7 @@
     }
 
     // Append a placeholder because the complete path is not determined until the entry is saved
-    const placeholder = `${selectedFolder.internalPath}/-`;
-
-    return subPath ? `${placeholder}/${subPath}` : placeholder;
+    return subPath ? `${internalPath}/${subPath}/-` : `${internalPath}/-`;
   });
   const listedAssets = $derived(
     [...$allAssets, ...unsavedAssets]
@@ -202,7 +201,10 @@
    */
   const isInTargetFolder = (path) =>
     targetFolderPath !== undefined &&
-    (path === targetFolderPath || path.startsWith(`${targetFolderPath}/`));
+    (path === targetFolderPath ||
+      // Handle the case where the target folder is a template with an unresolved placeholder
+      `${path}/-` === targetFolderPath ||
+      path.startsWith(`${targetFolderPath}/`));
 
   /**
    * Check if an asset is in the selected folder.
