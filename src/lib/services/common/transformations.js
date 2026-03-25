@@ -4,6 +4,7 @@ import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
 import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjsUTC from 'dayjs/plugin/utc';
 
+import { slugify } from '$lib/services/common/slug';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
 
 /**
@@ -136,6 +137,10 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
 
   if (transformation === 'lower') {
     return applyLowerCaseTransformation(value);
+  }
+
+  if (transformation === 'slugify') {
+    return slugify(String(value));
   }
 
   const dateTransformer = transformation.match(DATE_TRANSFORMATION_REGEX);
