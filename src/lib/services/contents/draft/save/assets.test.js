@@ -1917,6 +1917,87 @@ describe('Test replaceBlobURL()', () => {
 
     expect(content.image).toBe('./relative-image.jpg');
   });
+
+  test('should not deduplicate files across different entry-relative folders', async () => {
+    const { getGitHash } = await import('$lib/services/utils/file');
+    const mockFile = new File(['test content'], 'photo.jpg', { type: 'image/jpeg' });
+    const blobURL = 'blob:http://localhost:5173/entry-rel-456';
+
+    vi.mocked(getGitHash).mockResolvedValue('sha-same');
+
+    /** @type {any} */
+    const draft = {
+      collection: {
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'content/blog' },
+        _assetFolder: { fields: [] },
+      },
+      collectionName: 'blog',
+      fileName: undefined,
+      collectionFile: undefined,
+      isIndexFile: false,
+      currentValues: { en: { title: 'Test' } },
+      currentSlugs: { en: 'test-post' },
+    };
+
+    /** @type {any} */
+    const folder2 = {
+      internalPath: 'images2',
+      publicPath: 'images2',
+      entryRelative: true,
+      collectionName: 'blog',
+      hasTemplateTags: false,
+    };
+
+    const content = { image2: blobURL };
+    /** @type {any[]} */
+    const changes = [{ action: 'create', path: 'images1/photo.jpg', data: mockFile }];
+
+    /** @type {any[]} */
+    const savingAssets = [
+      {
+        collectionName: 'blog',
+        folder: {
+          internalPath: 'images1',
+          publicPath: 'images1',
+          entryRelative: true,
+          collectionName: 'blog',
+          hasTemplateTags: false,
+        },
+        blobURL: 'blob:http://localhost:5173/entry-rel-123',
+        name: 'photo.jpg',
+        path: 'images1/photo.jpg',
+        sha: 'sha-same',
+        size: 1024,
+        kind: 'image',
+      },
+    ];
+
+    await replaceBlobURL({
+      file: mockFile,
+      folder: folder2,
+      blobURL,
+      draft,
+      defaultLocaleSlug: 'test-post',
+      keyPath: 'image2',
+      content,
+      changes,
+      savingAssets,
+      slugificationEnabled: false,
+      encodingEnabled: false,
+    });
+
+    // File should be added separately to images2/ even though SHA matches
+    expect(changes).toHaveLength(2);
+    expect(changes[1]).toEqual({
+      action: 'create',
+      path: 'images2/photo.jpg',
+      data: mockFile,
+    });
+    expect(savingAssets).toHaveLength(2);
+    expect(content.image2).toBe('images2/photo.jpg');
+  });
 });
 
 describe('Test getAssetSavingInfo()', () => {

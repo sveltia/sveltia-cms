@@ -20,16 +20,22 @@ import { getGitHash } from '$lib/services/utils/file';
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft containing the resource.
  * @param {File} args.file File to be searched.
+ * @param {AssetFolderInfo} [args.folder] Asset folder for the field. When the folder is
+ * entry-relative, only files in the same folder are considered a match.
  * @returns {Promise<string | undefined>} Blob URL.
  */
-export const getExistingBlobURL = async ({ draft, file }) => {
+export const getExistingBlobURL = async ({ draft, file, folder }) => {
   const hash = await getHash(file);
   /** @type {string | undefined} */
   let foundURL = undefined;
 
   await Promise.all(
     Object.entries(draft.files ?? {}).map(async ([blobURL, f]) => {
-      if (!foundURL && (await getHash(f.file)) === hash) {
+      if (
+        !foundURL &&
+        (await getHash(f.file)) === hash &&
+        (!folder?.entryRelative || equal(f.folder, folder))
+      ) {
         foundURL = blobURL;
       }
     }),
@@ -96,7 +102,8 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
   let oversizedFileName = undefined;
 
   if (file) {
-    const existingBlobURL = await getExistingBlobURL({ draft, file });
+    const { folder } = resource;
+    const existingBlobURL = await getExistingBlobURL({ draft, file, folder });
 
     if (existingBlobURL) {
       value = existingBlobURL;
@@ -106,7 +113,6 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
       }
 
       const sha = await getGitHash(file);
-      const { folder } = resource;
 
       // Check if the selected file has already been uploaded or is pending upload, otherwise
       // duplicate files lead to an `each_key_duplicate` error in Svelte
@@ -139,7 +145,7 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
         entry: draft.originalEntry,
       });
     } else if (asset.file) {
-      value = await getExistingBlobURL({ draft, file: asset.file });
+      value = await getExistingBlobURL({ draft, file: asset.file, folder: asset.folder });
     }
   }
 

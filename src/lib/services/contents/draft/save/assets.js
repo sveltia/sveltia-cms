@@ -1,3 +1,5 @@
+import equal from 'fast-deep-equal';
+
 import { getAssetsByDirName } from '$lib/services/assets';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { fillTemplate } from '$lib/services/common/template';
@@ -299,7 +301,10 @@ export const replaceBlobURL = async ({
   encodingEnabled,
 }) => {
   const sha = await getGitHash(file);
-  const dupFile = savingAssets.find((f) => f.sha === sha);
+
+  const dupFile = savingAssets.find(
+    (f) => f.sha === sha && (!folder.entryRelative || equal(f.folder, folder)),
+  );
 
   const {
     savingAssetProps,
