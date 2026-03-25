@@ -41,7 +41,7 @@ describe('assets/view/group', () => {
     getRegexMock = /** @type {any} */ (vi.mocked(getRegex));
 
     // Default compare implementation for sorting
-    compareMock.mockImplementation((a, b) => {
+    compareMock.mockImplementation((/** @type {string} */ a, /** @type {string} */ b) => {
       if (String(a) < String(b)) return -1;
       if (String(a) > String(b)) return 1;
       return 0;

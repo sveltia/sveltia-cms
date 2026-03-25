@@ -85,7 +85,7 @@ describe('Test processResource()', () => {
     getGitHashMock = /** @type {any} */ (vi.mocked(getGitHash));
 
     // Default mock implementations
-    domPurifyMock.mockImplementation((input) => String(input));
+    domPurifyMock.mockImplementation((/** @type {string} */ input) => String(input));
     getMock.mockReturnValue([]);
   });
 

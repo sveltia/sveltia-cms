@@ -1517,7 +1517,7 @@ describe('deleteEmptyParentDirs', () => {
 
     /** @type {import('vitest').MockedFunction<any>} */ (
       rootDirHandle.getDirectoryHandle
-    ).mockImplementation(async (name) => {
+    ).mockImplementation(async (/** @type {string} */ name) => {
       if (name === '') return rootDirHandle;
       if (name === 'folder') return dirHandle;
 
@@ -1542,7 +1542,7 @@ describe('deleteEmptyParentDirs', () => {
 
     /** @type {import('vitest').MockedFunction<any>} */ (
       rootDirHandle.getDirectoryHandle
-    ).mockImplementation(async (name) => {
+    ).mockImplementation(async (/** @type {string} */ name) => {
       if (name === '') return rootDirHandle;
       if (name === 'folder') return emptyDir;
 

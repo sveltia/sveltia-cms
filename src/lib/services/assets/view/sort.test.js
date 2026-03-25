@@ -21,7 +21,7 @@ describe('assets/view/sort', () => {
     compareMock = /** @type {any} */ (vi.mocked(compare));
 
     // Default compare implementation for string sorting
-    compareMock.mockImplementation((a, b) => {
+    compareMock.mockImplementation((/** @type {string} */ a, /** @type {string} */ b) => {
       if (String(a) < String(b)) return -1;
       if (String(a) > String(b)) return 1;
       return 0;

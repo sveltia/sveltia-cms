@@ -115,7 +115,7 @@ describe('assets/view/filter', () => {
     });
 
     it('should filter by fileType using getAssetKind', () => {
-      getAssetKindMock.mockImplementation((path) => {
+      getAssetKindMock.mockImplementation((/** @type {string} */ path) => {
         if (String(path).includes('.jpg') || String(path).includes('.png')) return 'image';
         if (String(path).includes('.mp4')) return 'video';
         if (String(path).includes('.pdf')) return 'document';
