@@ -71,6 +71,7 @@
   /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
+    typedKeyPath,
     fieldConfig,
     currentValue,
     /* eslint-enable prefer-const */
@@ -158,7 +159,7 @@
     element.dataset.processed = 'true';
 
     const value = /** @type {string} */ (element.getAttribute('src'));
-    const url = await getMediaFieldURL({ value, entry, collectionName, fileName });
+    const url = await getMediaFieldURL({ value, entry, collectionName, fileName, typedKeyPath });
 
     if (url) {
       element.src = url;

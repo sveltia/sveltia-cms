@@ -1155,6 +1155,38 @@ describe('assets/info', () => {
       expect(result).toBe('blob:existing-url');
       expect(vi.mocked(getAssetByPath)).toHaveBeenCalled();
     });
+
+    it('should pass typedKeyPath to getAssetByPath when provided', async () => {
+      const { getAssetByPath } = await import('$lib/services/assets');
+
+      // Ensure Cloudinary is disabled so the relative path reaches getAssetByPath
+      // @ts-ignore
+      vi.mocked(cloudStorageModule.allCloudStorageServices.cloudinary.isEnabled).mockReturnValue(
+        false,
+      );
+
+      const assetWithBlobURL = {
+        ...mockAsset,
+        blobURL: 'blob:typed-key-url',
+      };
+
+      vi.mocked(getAssetByPath).mockReturnValue(assetWithBlobURL);
+
+      const result = await getMediaFieldURL({
+        value: 'hero-image.jpg',
+        collectionName: 'posts',
+        typedKeyPath: 'hero',
+      });
+
+      expect(result).toBe('blob:typed-key-url');
+      expect(vi.mocked(getAssetByPath)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          value: 'hero-image.jpg',
+          collectionName: 'posts',
+          typedKeyPath: 'hero',
+        }),
+      );
+    });
   });
 
   describe('getAssetDetails', () => {

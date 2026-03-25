@@ -15,6 +15,7 @@
    * @typedef {object} Props
    * @property {string} value Field value, either a URL or a file path.
    * @property {MediaField} fieldConfig Field configuration.
+   * @property {string} [typedKeyPath] Field key path for field-level media folders.
    */
 
   /** @type {Props} */
@@ -22,6 +23,7 @@
     /* eslint-disable prefer-const */
     value,
     fieldConfig,
+    typedKeyPath = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -44,7 +46,14 @@
       // already know it’s an image. It’s rather problematic if the path doesn’t have an extension.
       kind = value ? (isImageField ? 'image' : await getMediaKind(value)) : undefined;
       src = kind
-        ? await getMediaFieldURL({ value, entry, collectionName, fileName, fieldConfig })
+        ? await getMediaFieldURL({
+            value,
+            entry,
+            collectionName,
+            fileName,
+            fieldConfig,
+            typedKeyPath,
+          })
         : undefined;
     });
   });

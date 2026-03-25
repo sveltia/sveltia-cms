@@ -274,6 +274,7 @@
       entry: $entryDraft?.originalEntry,
       collectionName,
       fileName,
+      typedKeyPath: `${typedKeyPath}.*.${thumbnailFieldName.replace(/^fields\./, '')}`,
     });
   };
 

@@ -106,6 +106,7 @@
     showRemoveButton,
     collectionName,
     fileName,
+    typedKeyPath,
     entry,
   });
   const enabledCloudServiceEntries = $derived(

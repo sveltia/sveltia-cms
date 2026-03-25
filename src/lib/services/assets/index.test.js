@@ -1500,6 +1500,179 @@ describe('assets/index', () => {
       // "other/photo.jpg" doesn't start with "images/", so it is passed as-is
       expect(createPath).toHaveBeenCalledWith(['content/posts', 'images', 'other/photo.jpg']);
     });
+
+    it('should use field-level internalSubPath when typedKeyPath matches an entry-relative folder', async () => {
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+      const mockAsset = {
+        path: 'content/posts/my-slug/images1/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/my-slug/images1',
+          internalSubPath: 'images1',
+          publicPath: 'images1',
+          collectionName: 'posts',
+          entryRelative: true,
+          hasTemplateTags: false,
+          typedKeyPath: 'hero',
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-slug',
+        slug: 'my-slug',
+        locales: {
+          en: {
+            path: 'content/posts/my-slug/index.md',
+            sha: 'sha123',
+            slug: 'my-slug',
+            content: { title: 'My Title' },
+          },
+        },
+      });
+
+      // Collection-level media_folder is an absolute path that would resolve incorrectly
+      // without the typedKeyPath lookup
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        media_folder: '/src/assets/images/blog',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      const mockFieldFolder = /** @type {any} */ ({
+        internalPath: 'content/posts/my-slug/images1',
+        internalSubPath: 'images1',
+        publicPath: 'images1',
+        collectionName: 'posts',
+        entryRelative: true,
+        hasTemplateTags: false,
+        typedKeyPath: 'hero',
+      });
+
+      vi.mocked(getAssetFolder).mockReturnValue(mockFieldFolder);
+      vi.mocked(createPath).mockReturnValue('content/posts/my-slug/images1/photo.jpg');
+      vi.mocked(resolvePath).mockReturnValue('content/posts/my-slug/images1/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByRelativePathAndCollection({
+        path: 'photo.jpg',
+        entry: mockEntry,
+        collection: mockCollection,
+        typedKeyPath: 'hero',
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(getAssetFolder).toHaveBeenCalledWith({
+        collectionName: 'posts',
+        fileName: undefined,
+        typedKeyPath: 'hero',
+      });
+      // Must use 'images1' from internalSubPath, not the collection's absolute media_folder
+      expect(createPath).toHaveBeenCalledWith(['content/posts/my-slug', 'images1', 'photo.jpg']);
+    });
+
+    it('should fall back to collection media_folder when typed key path folder is not entry-relative', async () => {
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        locales: {
+          en: {
+            path: 'content/posts/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        media_folder: 'images',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      // Field folder is NOT entry-relative (global/absolute folder)
+      const mockFieldFolder = /** @type {any} */ ({
+        internalPath: 'src/assets/images',
+        publicPath: '/images',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+        typedKeyPath: 'hero',
+      });
+
+      vi.mocked(getAssetFolder).mockReturnValue(mockFieldFolder);
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+      vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
+      allAssets.set([]);
+
+      getAssetByRelativePathAndCollection({
+        path: 'photo.jpg',
+        entry: mockEntry,
+        collection: mockCollection,
+        typedKeyPath: 'hero',
+      });
+
+      // When field folder is not entry-relative, use collection's media_folder
+      expect(createPath).toHaveBeenCalledWith(['content/posts', 'images', 'photo.jpg']);
+    });
+
+    it('should use empty string when typedKeyPath folder is entry-relative but has no internalSubPath', async () => {
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        locales: {
+          en: {
+            path: 'content/posts/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        media_folder: 'images',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      // Field folder is entry-relative but has no internalSubPath — hits the `?? ''` fallback
+      const mockFieldFolder = /** @type {any} */ ({
+        internalPath: 'content/posts/my-post',
+        internalSubPath: undefined,
+        publicPath: '',
+        collectionName: 'posts',
+        entryRelative: true,
+        hasTemplateTags: false,
+        typedKeyPath: 'hero',
+      });
+
+      vi.mocked(getAssetFolder).mockReturnValue(mockFieldFolder);
+      vi.mocked(createPath).mockReturnValue('content/posts/photo.jpg');
+      vi.mocked(resolvePath).mockReturnValue('content/posts/photo.jpg');
+      allAssets.set([]);
+
+      getAssetByRelativePathAndCollection({
+        path: 'photo.jpg',
+        entry: mockEntry,
+        collection: mockCollection,
+        typedKeyPath: 'hero',
+      });
+
+      // internalSubPath is undefined → mediaFolder falls back to '' (empty string)
+      expect(createPath).toHaveBeenCalledWith(['content/posts', '', 'photo.jpg']);
+    });
   });
 
   describe('getAssetByRelativePath', () => {
@@ -2551,6 +2724,67 @@ describe('assets/index', () => {
       });
 
       expect(result).toEqual(mockAsset);
+    });
+
+    it('should call getAssetFolder with typedKeyPath as first scanning folder when provided', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/my-slug/images1/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/my-slug/images1',
+          publicPath: '/images1',
+          collectionName: 'posts',
+          entryRelative: true,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFieldFolder = {
+        internalPath: 'content/posts/my-slug/images1',
+        internalSubPath: 'images1',
+        publicPath: '/images1',
+        collectionName: 'posts',
+        entryRelative: true,
+        hasTemplateTags: false,
+        typedKeyPath: 'hero',
+      };
+
+      vi.mocked(stripSlashes).mockReturnValue('/images1/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/images1',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder)
+        .mockReturnValueOnce(mockFieldFolder) // call 1: with typedKeyPath
+        .mockReturnValueOnce(undefined) // call 2: without typedKeyPath, with fileName
+        .mockReturnValueOnce(undefined); // call 3: without typedKeyPath, without fileName
+      vi.mocked(createPath).mockReturnValue('content/posts/my-slug/images1/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/images1/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+        typedKeyPath: 'hero',
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(getAssetFolder).toHaveBeenNthCalledWith(1, {
+        collectionName: 'posts',
+        fileName: undefined,
+        typedKeyPath: 'hero',
+      });
     });
   });
 

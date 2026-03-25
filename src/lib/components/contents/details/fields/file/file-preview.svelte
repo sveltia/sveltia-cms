@@ -24,6 +24,7 @@
   /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
+    typedKeyPath,
     fieldConfig,
     currentValue,
     /* eslint-enable prefer-const */
@@ -33,9 +34,9 @@
 {#if isMultiple(fieldConfig)}
   {#if Array.isArray(currentValue)}
     {#each currentValue as value, index (`${value}-${index}`)}
-      <FilePreviewItem {value} {fieldConfig} />
+      <FilePreviewItem {value} {fieldConfig} {typedKeyPath} />
     {/each}
   {/if}
 {:else if typeof currentValue === 'string' && currentValue}
-  <FilePreviewItem value={currentValue} {fieldConfig} />
+  <FilePreviewItem value={currentValue} {fieldConfig} {typedKeyPath} />
 {/if}

@@ -21,6 +21,7 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * Entry,
  * InternalCmsConfig,
  * InternalImageTransformationOptions,
+ * TypedFieldKeyPath,
  * } from '$lib/types/private';
  * @import { MediaField } from '$lib/types/public';
  */
@@ -261,6 +262,7 @@ export const getAssetBaseURL = (fieldConfig) => {
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {MediaField} [args.fieldConfig] Field configuration.
+ * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
  * @param {boolean} [args.thumbnail] Whether to use a thumbnail of the image.
  * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
  */
@@ -270,6 +272,7 @@ export const getMediaFieldURL = async ({
   collectionName,
   fileName,
   fieldConfig,
+  typedKeyPath,
   thumbnail = false,
 }) => {
   if (!value) {
@@ -290,7 +293,7 @@ export const getMediaFieldURL = async ({
     }
   }
 
-  const asset = getAssetByPath({ value, entry, collectionName, fileName });
+  const asset = getAssetByPath({ value, entry, collectionName, fileName, typedKeyPath });
 
   if (!asset) {
     return undefined;

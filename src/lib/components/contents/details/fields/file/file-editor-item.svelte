@@ -26,6 +26,7 @@
    * @property {boolean} required Whether the field is required.
    * @property {string} collectionName The collection name.
    * @property {string | undefined} fileName The file name.
+   * @property {string} [typedKeyPath] Field key path for field-level media folders.
    * @property {Entry | undefined} entry The entry object.
    * @property {() => void} [onReplace] Event handler for replace action.
    * @property {() => void} [onRemove] Event handler for remove action.
@@ -43,6 +44,7 @@
     required = false,
     collectionName = '',
     fileName = undefined,
+    typedKeyPath = undefined,
     entry = undefined,
     onReplace,
     onRemove,
@@ -116,7 +118,7 @@
 
     // Update the `src` when an asset is selected
     if (value) {
-      const getURLArgs = { value, entry, collectionName, fileName, fieldConfig };
+      const getURLArgs = { value, entry, collectionName, fileName, fieldConfig, typedKeyPath };
 
       if (isImageField && /^https?:/.test(value)) {
         asset = undefined;
