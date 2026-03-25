@@ -25,6 +25,10 @@ vi.mock('$lib/services/contents/fields/uuid/helper', () => ({
   getInitialValue: vi.fn(),
 }));
 
+vi.mock('$lib/services/contents/draft/create', () => ({
+  getSlugEditorProp: vi.fn(),
+}));
+
 describe('contents/draft/create/duplicate', () => {
   /** @type {any} */
   let mockEntryDraft;
@@ -40,6 +44,8 @@ describe('contents/draft/create/duplicate', () => {
   let mockGetHiddenFieldDefaultValueMap;
   /** @type {any} */
   let mockGetInitialUuidValue;
+  /** @type {any} */
+  let mockGetSlugEditorProp;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -51,6 +57,7 @@ describe('contents/draft/create/duplicate', () => {
     const { getField } = await import('$lib/services/contents/entry/fields');
     const { getDefaultValueMap } = await import('$lib/services/contents/fields/hidden/defaults');
     const { getInitialValue } = await import('$lib/services/contents/fields/uuid/helper');
+    const { getSlugEditorProp } = await import('$lib/services/contents/draft/create');
 
     mockGet = getMock;
     mockEntryDraftSet = entryDraft.set;
@@ -58,6 +65,8 @@ describe('contents/draft/create/duplicate', () => {
     mockGetField = getField;
     mockGetHiddenFieldDefaultValueMap = getDefaultValueMap;
     mockGetInitialUuidValue = getInitialValue;
+    mockGetSlugEditorProp = getSlugEditorProp;
+    mockGetSlugEditorProp.mockReturnValue({ en: true, ja: 'readonly' });
 
     // Setup default mock entry draft
     mockEntryDraft = {
@@ -88,6 +97,7 @@ describe('contents/draft/create/duplicate', () => {
       },
       isIndexFile: false,
       isNew: false,
+      slugEditor: { en: false, ja: false },
       originalEntry: { id: 'existing-id' },
       originalSlugs: { en: 'test-post', ja: 'test-post' },
       currentSlugs: { en: 'test-post', ja: 'test-post' },
@@ -319,6 +329,37 @@ describe('contents/draft/create/duplicate', () => {
 
       expect(setCallArg.originalSlugs).toEqual({});
       expect(setCallArg.currentSlugs).toEqual({});
+    });
+
+    it('should recompute slugEditor via getSlugEditorProp with no originalEntry id', async () => {
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      expect(mockGetSlugEditorProp).toHaveBeenCalledWith({
+        collection: mockEntryDraft.collection,
+        collectionFile: mockEntryDraft.collectionFile,
+        originalEntry: {},
+      });
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.slugEditor).toEqual({ en: true, ja: 'readonly' });
+    });
+
+    it("should not carry over the original entry's false slugEditor values", async () => {
+      // Simulate an existing entry whose slug editor was disabled
+      mockEntryDraft.slugEditor = { en: false, ja: false };
+      mockGetSlugEditorProp.mockReturnValue({ en: true, ja: false });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.slugEditor).toEqual({ en: true, ja: false });
+      expect(setCallArg.slugEditor).not.toEqual({ en: false, ja: false });
     });
 
     it('should show duplicate toast', async () => {

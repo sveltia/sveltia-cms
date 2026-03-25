@@ -1,6 +1,7 @@
 import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
+import { getSlugEditorProp } from '$lib/services/contents/draft/create';
 import { showDuplicateToast } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
@@ -87,6 +88,7 @@ export const duplicateDraft = () => {
     originalEntry: undefined,
     originalSlugs: {},
     currentSlugs: {},
+    slugEditor: getSlugEditorProp({ collection, collectionFile, originalEntry: {} }),
   });
 
   showDuplicateToast.set(true);
