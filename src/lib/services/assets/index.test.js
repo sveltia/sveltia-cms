@@ -1676,13 +1676,253 @@ describe('assets/index', () => {
   });
 
   describe('getAssetByRelativePath', () => {
-    it('should return undefined when no entry provided', () => {
+    it('should return undefined when no entry and no collectionName provided', () => {
       const result = getAssetByRelativePath({
         path: 'images/photo.jpg',
         entry: undefined,
       });
 
       expect(result).toBeUndefined();
+    });
+
+    it('should find asset in a non-entry-relative collection folder when no entry provided', async () => {
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'uploads/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'uploads',
+          publicPath: '/uploads',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'uploads',
+        publicPath: '/uploads',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
+      vi.mocked(createPath).mockReturnValue('uploads/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByRelativePath({
+        path: 'photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(getAssetFolder).toHaveBeenCalledWith({ collectionName: 'posts', fileName: undefined });
+    });
+
+    it('should query getAssetFolder with typedKeyPath when both collectionName and typedKeyPath are provided with no entry', async () => {
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'uploads/hero.jpg',
+        name: 'hero.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'uploads',
+          publicPath: '/uploads',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+          typedKeyPath: 'hero',
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'uploads',
+        publicPath: '/uploads',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+        typedKeyPath: 'hero',
+      };
+
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
+      vi.mocked(createPath).mockReturnValue('uploads/hero.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByRelativePath({
+        path: 'hero.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        typedKeyPath: 'hero',
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(getAssetFolder).toHaveBeenCalledWith({
+        collectionName: 'posts',
+        fileName: undefined,
+        typedKeyPath: 'hero',
+      });
+    });
+
+    it('should query getAssetFolder with typedKeyPath when both collectionName and typedKeyPath are provided with no entry', async () => {
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'uploads/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'uploads',
+          publicPath: '/uploads',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'uploads',
+        publicPath: '/uploads',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
+      vi.mocked(createPath).mockReturnValue('uploads/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      // path with publicPath prefix already included (e.g. public_folder: "uploads")
+      const result = getAssetByRelativePath({
+        path: 'uploads/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+      });
+
+      expect(result).toEqual(mockAsset);
+      // createPath should be called with the prefix stripped: internalSubPath is '' for
+      // non-entry-relative
+      expect(createPath).toHaveBeenCalledWith(['uploads', '', 'photo.jpg']);
+    });
+
+    it('should find asset in an entry-relative folder using internalPath+internalSubPath when no entry provided', async () => {
+      const { getAssetFolder, globalAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/images/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts',
+          internalSubPath: 'images',
+          publicPath: 'images',
+          collectionName: 'posts',
+          entryRelative: true,
+          hasTemplateTags: false,
+        },
+      };
+
+      const entryRelativeFolder = {
+        internalPath: 'content/posts',
+        internalSubPath: 'images',
+        publicPath: 'images',
+        collectionName: 'posts',
+        entryRelative: true,
+        hasTemplateTags: false,
+      };
+
+      vi.mocked(getAssetFolder).mockReturnValue(entryRelativeFolder);
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set(undefined);
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByRelativePath({
+        path: 'photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+      });
+
+      // Entry-relative folders are now scanned using internalPath + internalSubPath
+      expect(result).toEqual(mockAsset);
+      expect(createPath).toHaveBeenCalledWith(['content/posts', 'images', 'photo.jpg']);
+
+      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set({});
+    });
+
+    it('should skip template-tag folders when no entry provided', async () => {
+      const { getAssetFolder, globalAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const templateTagFolder = {
+        internalPath: 'content/{{slug}}/images',
+        publicPath: 'images',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: true,
+      };
+
+      vi.mocked(getAssetFolder).mockReturnValue(templateTagFolder);
+      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set(undefined);
+      allAssets.set([]);
+
+      const result = getAssetByRelativePath({
+        path: 'photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+      });
+
+      // Template-tag folders cannot be resolved without an entry → skipped
+      expect(result).toBeUndefined();
+      expect(createPath).not.toHaveBeenCalled();
+
+      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set({});
+    });
+
+    it('should fall back to exact path match when no entry and folder scan fails', async () => {
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+      const mockAsset = {
+        path: 'static/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'static',
+          publicPath: '/',
+          collectionName: undefined,
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      vi.mocked(getAssetFolder).mockReturnValue(undefined);
+      allAssets.set([mockAsset]);
+
+      // If the asset's own path is stored as the value (exact match), it should be found
+      const result = getAssetByRelativePath({
+        path: 'static/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+      });
+
+      expect(result).toEqual(mockAsset);
     });
 
     it('should find asset from associated collections', async () => {

@@ -210,12 +210,52 @@ export const getAssetByRelativePathAndCollection = ({
  * @param {string} args.path Saved relative path.
  * @param {Entry} [args.entry] Associated entry to be used to help locate an asset from a relative
  * path. Can be `undefined` when editing a new draft.
+ * @param {string} [args.collectionName] Collection name, used when no entry is available.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
  * @returns {Asset | undefined} Corresponding asset.
  */
-export const getAssetByRelativePath = ({ path, entry, typedKeyPath }) => {
+export const getAssetByRelativePath = ({ path, entry, collectionName, fileName, typedKeyPath }) => {
   if (!entry) {
-    return undefined;
+    // Without an entry we use collectionName/fileName to scan configured folders. For
+    // entry-relative folders, internalPath + internalSubPath is used as a best-effort path.
+    const scanningFolders = /** @type {AssetFolderInfo[]} */ (
+      [
+        collectionName && typedKeyPath
+          ? getAssetFolder({ collectionName, fileName, typedKeyPath })
+          : undefined,
+        collectionName ? getAssetFolder({ collectionName, fileName }) : undefined,
+        collectionName ? getAssetFolder({ collectionName }) : undefined,
+        get(globalAssetFolder),
+      ].filter((folder) => !!folder && !folder.hasTemplateTags)
+    );
+
+    /** @type {Asset | undefined} */
+    let foundAsset;
+
+    scanningFolders.find((folder) => {
+      // Strip the publicPath prefix from the stored path to get the bare filename/subpath, so
+      // that e.g. `uploads/photo.jpg` with publicPath `/uploads` resolves to `uploads/photo.jpg`
+      // internally rather than `uploads/uploads/photo.jpg`.
+      const publicPathBase = folder.publicPath?.replace(/^\//, '') ?? '';
+
+      const localPath =
+        publicPathBase && path.startsWith(`${publicPathBase}/`)
+          ? path.slice(publicPathBase.length + 1)
+          : path;
+
+      const found = getAssetPathMap().get(
+        createPath([folder.internalPath, folder.internalSubPath ?? '', localPath]),
+      );
+
+      if (found) {
+        foundAsset = found;
+      }
+
+      return !!found;
+    });
+
+    return foundAsset ?? getAssetPathMap().get(path);
   }
 
   const assets = getAssociatedCollections(entry).flatMap((collection) => {
@@ -345,7 +385,7 @@ export const getAssetByPath = ({ value, entry, collectionName, fileName, typedKe
 
   // Handle a relative path
   if (isRelativePath(path)) {
-    return getAssetByRelativePath({ path, entry, typedKeyPath });
+    return getAssetByRelativePath({ path, entry, collectionName, fileName, typedKeyPath });
   }
 
   return getAssetByAbsolutePath({ path, entry, collectionName, fileName, typedKeyPath });

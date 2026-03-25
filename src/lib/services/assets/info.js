@@ -11,7 +11,7 @@ import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { getMergedLibraryOptions } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
-import { createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
+import { createPath, createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
 import { transformImage } from '$lib/services/utils/media/image/transform';
 import { renderPDF } from '$lib/services/utils/media/pdf';
 
@@ -180,9 +180,12 @@ export const getAssetPublicURL = (
   // Try to determine an entry-relative path if the asset is in the same folder as the entry, or a
   // sub-folder of it
   if (entryRelative) {
-    if (pathOnly && entry) {
+    if (pathOnly) {
       const assetFolderPath = getPathInfo(asset.path).dirname;
-      const entryFolderPath = getPathInfo(Object.values(entry.locales)[0].path).dirname;
+
+      const entryFolderPath = entry
+        ? getPathInfo(Object.values(entry.locales)[0].path).dirname
+        : undefined;
 
       if (assetFolderPath !== undefined && entryFolderPath !== undefined) {
         // If the asset is in the same folder as the entry, return the file name only
@@ -195,6 +198,14 @@ export const getAssetPublicURL = (
         const prefix = `${entryFolderPath}/`;
 
         return asset.path.startsWith(prefix) ? asset.path.slice(prefix.length) : undefined;
+      }
+
+      const { internalPath, internalSubPath } = asset.folder;
+
+      // Resolve simple entry-relative paths like `images/photo.jpg` if the asset is in the same
+      // folder as the entry
+      if (asset.path === createPath([internalPath, internalSubPath, asset.name])) {
+        return asset.path.slice(/** @type {string} */ (internalPath).length + 1);
       }
     }
 

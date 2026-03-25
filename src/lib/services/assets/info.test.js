@@ -522,6 +522,69 @@ describe('assets/info', () => {
       expect(result).toBe(undefined);
     });
 
+    it('should resolve entry-relative path via internalPath+internalSubPath when no entry provided', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: 'content/posts/images',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+
+      const entryRelativeAsset = {
+        ...mockAsset,
+        path: 'content/posts/images/photo.jpg',
+        name: 'photo.jpg',
+        folder: {
+          ...mockAsset.folder,
+          internalPath: 'content/posts',
+          internalSubPath: 'images',
+          entryRelative: true,
+        },
+      };
+
+      // createPath(['content/posts', 'images', 'photo.jpg']) should match the asset path
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+
+      const result = getAssetPublicURL(entryRelativeAsset, { pathOnly: true });
+
+      expect(result).toBe('images/photo.jpg');
+      expect(createPath).toHaveBeenCalledWith(['content/posts', 'images', 'photo.jpg']);
+    });
+
+    it('should return undefined when internalPath+internalSubPath does not match asset path and no entry', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: 'content/posts/other',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+
+      const entryRelativeAsset = {
+        ...mockAsset,
+        path: 'content/posts/other/photo.jpg',
+        name: 'photo.jpg',
+        folder: {
+          ...mockAsset.folder,
+          internalPath: 'content/posts',
+          internalSubPath: 'images',
+          entryRelative: true,
+        },
+      };
+
+      // createPath returns a path that does NOT match asset.path
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+
+      const result = getAssetPublicURL(entryRelativeAsset, { pathOnly: true });
+
+      expect(result).toBe(undefined);
+    });
+
     it('should return asset name for entry-relative asset with same directory', async () => {
       const { getPathInfo } = await import('@sveltia/utils/file');
       const getPathInfoMock = vi.mocked(getPathInfo);
