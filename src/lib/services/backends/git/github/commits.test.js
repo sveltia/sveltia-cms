@@ -364,6 +364,162 @@ describe('GitHub commits service', () => {
       // Verify that encodeBase64 was called with empty string
       expect(vi.mocked(encodeBase64)).toHaveBeenCalledWith('');
     });
+
+    test('skips OID query for files over 10 MB', async () => {
+      const largeFile = new File([new ArrayBuffer(11 * 1024 * 1024)], 'large-file.pdf', {
+        type: 'application/pdf',
+      });
+
+      const changes = /** @type {any[]} */ ([
+        {
+          action: 'create',
+          path: 'content/small-entry.md',
+          data: 'title: Small Entry',
+        },
+        {
+          action: 'create',
+          path: 'public/files/large-file.pdf',
+          data: largeFile,
+        },
+      ]);
+
+      const options = /** @type {any} */ ({
+        commitType: 'create',
+      });
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          repository: {
+            ref: {
+              target: {
+                history: {
+                  nodes: [{ oid: 'base-sha', message: 'Base' }],
+                },
+              },
+            },
+          },
+        })
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: {
+              oid: 'commit-sha',
+              committedDate: '2023-01-01T00:00:00Z',
+              file_0: { oid: 'small-file-sha' },
+              // file_1 is not present because the large file OID query was skipped
+            },
+          },
+        });
+
+      const result = await commitChanges(changes, options);
+      // Verify the mutation query only includes OID lookup for the small file
+      const mutationCall = vi.mocked(fetchGraphQL).mock.calls[1];
+      const query = /** @type {string} */ (mutationCall[0]);
+
+      expect(query).toContain('file_0: file(path: "content/small-entry.md") { oid }');
+      expect(query).not.toContain('file_1: file(path:');
+
+      expect(result.files).toEqual({
+        'content/small-entry.md': { sha: 'small-file-sha' },
+        'public/files/large-file.pdf': { sha: undefined, file: largeFile },
+      });
+    });
+
+    test('skips OID query when all files are over 10 MB', async () => {
+      const largeFile = new File([new ArrayBuffer(11 * 1024 * 1024)], 'large.bin', {
+        type: 'application/octet-stream',
+      });
+
+      const changes = /** @type {any[]} */ ([
+        {
+          action: 'create',
+          path: 'public/files/large.bin',
+          data: largeFile,
+        },
+      ]);
+
+      const options = /** @type {any} */ ({
+        commitType: 'create',
+      });
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          repository: {
+            ref: {
+              target: {
+                history: {
+                  nodes: [{ oid: 'base-sha', message: 'Base' }],
+                },
+              },
+            },
+          },
+        })
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: {
+              oid: 'commit-sha',
+              committedDate: '2023-01-01T00:00:00Z',
+            },
+          },
+        });
+
+      const result = await commitChanges(changes, options);
+      const mutationCall = vi.mocked(fetchGraphQL).mock.calls[1];
+      const query = /** @type {string} */ (mutationCall[0]);
+
+      expect(query).not.toContain('file(path:');
+      expect(result.files).toEqual({
+        'public/files/large.bin': { sha: undefined, file: largeFile },
+      });
+    });
+
+    test('includes OID query for files at exactly 10 MB', async () => {
+      const exactFile = new File([new ArrayBuffer(10 * 1024 * 1024)], 'exact.bin', {
+        type: 'application/octet-stream',
+      });
+
+      const changes = /** @type {any[]} */ ([
+        {
+          action: 'create',
+          path: 'public/files/exact.bin',
+          data: exactFile,
+        },
+      ]);
+
+      const options = /** @type {any} */ ({
+        commitType: 'create',
+      });
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          repository: {
+            ref: {
+              target: {
+                history: {
+                  nodes: [{ oid: 'base-sha', message: 'Base' }],
+                },
+              },
+            },
+          },
+        })
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: {
+              oid: 'commit-sha',
+              committedDate: '2023-01-01T00:00:00Z',
+              file_0: { oid: 'exact-file-sha' },
+            },
+          },
+        });
+
+      const result = await commitChanges(changes, options);
+      const mutationCall = vi.mocked(fetchGraphQL).mock.calls[1];
+      const query = /** @type {string} */ (mutationCall[0]);
+
+      expect(query).toContain('file_0: file(path: "public/files/exact.bin") { oid }');
+      expect(result.files).toEqual({
+        'public/files/exact.bin': { sha: 'exact-file-sha' },
+      });
+    });
   });
 
   describe('fetchFileCommits', () => {
