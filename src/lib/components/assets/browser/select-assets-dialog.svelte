@@ -137,13 +137,21 @@
       return selectedFolder?.internalPath?.replace('{{slug}}', originalEntry?.slug ?? '-');
     }
 
+    // A non-empty `internalSubPath` means the field has its own `media_folder` subfolder (e.g.
+    // `media_folder: "images1"`). Append it so that only assets in that specific subfolder are
+    // shown, not assets from sibling field folders (e.g. `images2`).
+    const subPath = selectedFolder.internalSubPath || undefined;
+
     if (originalEntry) {
-      // @todo FIXME: This only works with `media_folder: ""`
-      return getPathInfo(Object.values(originalEntry.locales)[0].path).dirname;
+      const entryDir = getPathInfo(Object.values(originalEntry.locales)[0].path).dirname;
+
+      return subPath ? `${entryDir}/${subPath}` : entryDir;
     }
 
     // Append a placeholder because the complete path is not determined until the entry is saved
-    return `${selectedFolder?.internalPath}/-`;
+    const placeholder = `${selectedFolder.internalPath}/-`;
+
+    return subPath ? `${placeholder}/${subPath}` : placeholder;
   });
   const listedAssets = $derived(
     [...$allAssets, ...unsavedAssets]
