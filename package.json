@@ -83,7 +83,7 @@
     "eslint-plugin-svelte": "^3.16.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.4.0",
-    "oxlint": "^1.56.0",
+    "oxlint": "^1.57.0",
     "postcss": "^8.5.8",
     "postcss-html": "^1.8.1",
     "prettier": "^3.8.1",
