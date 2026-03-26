@@ -1,3 +1,4 @@
+import { sleep } from '@sveltia/utils/misc';
 import { isObject } from '@sveltia/utils/object';
 
 /**
@@ -15,6 +16,8 @@ import { isObject } from '@sveltia/utils/object';
  * @param {() => Promise<AuthTokens>} [options.refreshAccessToken] A function to refresh the OAuth
  * access token when the request fails with a 401 Unauthorized status. If this function is provided,
  * the request will be retried with the new token.
+ * @param {number} [options.retries] Number of remaining retries for transient server errors (5xx).
+ * Defaults to `1`. Used internally for recursive retries.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the request or response.
@@ -22,7 +25,7 @@ import { isObject } from '@sveltia/utils/object';
 export const sendRequest = async (
   url,
   init = {},
-  { responseType = 'json', refreshAccessToken = undefined } = {},
+  { responseType = 'json', refreshAccessToken = undefined, retries = 1 } = {},
 ) => {
   /** @type {Response} */
   let response;
@@ -71,6 +74,16 @@ export const sendRequest = async (
   // with 200 OK so we need to check the content for the `errors` key
   if (ok && !(url.endsWith('/graphql') && isObject(result) && result.errors)) {
     return result;
+  }
+
+  // Retry the request if the server responded with 502 Bad Gateway, which is a transient error that
+  // may succeed on retry. This is especially relevant for the GitHub GraphQL API, which is known to
+  // occasionally return 502 errors.
+  // @see https://github.com/sveltia/sveltia-cms/issues/695
+  if (status === 502 && retries > 0) {
+    await sleep(1000);
+
+    return sendRequest(url, init, { responseType, refreshAccessToken, retries: retries - 1 });
   }
 
   if (status === 401 && refreshAccessToken) {

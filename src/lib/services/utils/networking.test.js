@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { sendRequest } from './networking';
 
+vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefined) }));
+
 // Mock global fetch
 const mockFetch = vi.fn();
 
@@ -225,6 +227,48 @@ describe('sendRequest', () => {
 
     expect(secondInit.headers.get('Authorization')).toBe('token new-token');
     expect(result).toEqual(mockSuccessResponse);
+  });
+
+  test('should retry once on 502 and succeed', async () => {
+    const { sleep } = await import('@sveltia/utils/misc');
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Bad Gateway' }),
+    });
+
+    const mockSuccessResponse = { data: 'success' };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve(mockSuccessResponse),
+    });
+
+    const result = await sendRequest('https://api.example.com/data');
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledWith(1000);
+    expect(result).toEqual(mockSuccessResponse);
+  });
+
+  test('should throw after exhausting 502 retries', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Bad Gateway' }),
+    });
+
+    await expect(sendRequest('https://api.example.com/data')).rejects.toThrow(
+      'Server responded with an error',
+    );
+
+    // Initial request + 1 retry
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
   test('should handle server errors with message', async () => {
