@@ -742,6 +742,9 @@ export const strings = {
         'コレクションファイル名 `{name}` は無効です。特殊文字を含めることはできません。',
       duplicate_collection_file_name:
         'コレクションファイル名は一意でなければなりませんが、`{name}` が複数回使用されています。',
+      collection_no_fields: 'コレクションには少なくとも 1 つのフィールドを定義する必要があります。',
+      collection_file_no_fields:
+        'コレクションファイルには少なくとも 1 つのフィールドを定義する必要があります。',
       missing_field_name:
         'フィールド {count} には `name` オプションを空でない文字列として定義する必要があります。',
       invalid_field_name:

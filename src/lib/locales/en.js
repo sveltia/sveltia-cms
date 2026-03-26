@@ -737,6 +737,10 @@ export const strings = {
         'The collection file name `{name}` is invalid. It must not contain special characters.',
       duplicate_collection_file_name:
         'Collection file names must be unique, but `{name}` is used more than once.',
+      collection_no_fields:
+        'The collection must have the `fields` option defined with at least one field.',
+      collection_file_no_fields:
+        'The collection file must have the `fields` option defined with at least one field.',
       missing_field_name:
         'The field {count} must have the `name` option defined as a non-empty string.',
       invalid_field_name:

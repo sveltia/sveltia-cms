@@ -174,6 +174,77 @@ describe('Collections Parser', () => {
       );
     });
 
+    it('should add error when entry collection has no fields', async () => {
+      const { parseEntryCollection } = await import('./index.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          format: 'yaml',
+          fields: [],
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'collection_no_fields',
+        }),
+      );
+    });
+
+    it('should add error when entry collection has undefined fields', async () => {
+      const { parseEntryCollection } = await import('./index.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          format: 'yaml',
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'collection_no_fields',
+        }),
+      );
+    });
+
+    it('should not add error when entry collection has fields defined', async () => {
+      const { parseEntryCollection } = await import('./index.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          format: 'yaml',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'collection_no_fields',
+        }),
+      );
+    });
+
     it('should handle deprecated slug_length option', async () => {
       const { parseEntryCollection } = await import('./index.js');
       const collectors = createCollectors();

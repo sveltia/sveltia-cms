@@ -297,7 +297,14 @@ describe('config/index', () => {
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
-        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
       };
 
       fetchcmsConfigMock.mockResolvedValue(mockConfig);
@@ -331,7 +338,14 @@ describe('config/index', () => {
       const manualConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
-        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
         load_config_file: false,
       };
 
@@ -362,7 +376,14 @@ describe('config/index', () => {
       const fileConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
-        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
       };
 
       /** @type {any} */
@@ -423,7 +444,14 @@ describe('config/index', () => {
       const fileConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
-        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
       };
 
       /** @type {any} */
@@ -461,7 +489,14 @@ describe('config/index', () => {
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
-        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
         site_url: '  https://example.com  ',
       };
 
@@ -492,7 +527,14 @@ describe('config/index', () => {
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
-        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
       };
 
       fetchcmsConfigMock.mockResolvedValue(mockConfig);
@@ -522,7 +564,14 @@ describe('config/index', () => {
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
-        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
         site_url: 'not-a-valid-url',
       };
 
@@ -555,9 +604,24 @@ describe('config/index', () => {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
         collections: [
-          { name: 'posts', label: 'Posts', folder: '.' },
-          { name: 'pages', label: 'Pages', folder: '/' },
-          { name: 'docs', label: 'Docs', folder: 'docs' },
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: '.',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            name: 'pages',
+            label: 'Pages',
+            folder: '/',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            name: 'docs',
+            label: 'Docs',
+            folder: 'docs',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
         ],
       };
 
@@ -589,7 +653,14 @@ describe('config/index', () => {
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
-        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
       };
 
       fetchcmsConfigMock.mockResolvedValue(mockConfig);
@@ -677,9 +748,24 @@ describe('config/index', () => {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
         collections: [
-          { name: 'posts', label: 'Posts', folder: '.' },
-          { name: 'pages', label: 'Pages', folder: '/' },
-          { name: 'drafts', label: 'Drafts', folder: 'drafts' },
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: '.',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            name: 'pages',
+            label: 'Pages',
+            folder: '/',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            name: 'drafts',
+            label: 'Drafts',
+            folder: 'drafts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
         ],
       };
 
@@ -714,7 +800,14 @@ describe('config/index', () => {
       const mockConfig = {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
-        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
       };
 
       fetchcmsConfigMock.mockResolvedValue(mockConfig);
@@ -756,7 +849,14 @@ describe('config/index', () => {
         backend: { name: 'github', repo: 'owner/repo' },
         media_folder: 'uploads',
         local_backend: true,
-        collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
       };
 
       fetchcmsConfigMock.mockResolvedValue(mockConfig);

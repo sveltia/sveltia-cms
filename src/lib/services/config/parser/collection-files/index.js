@@ -33,6 +33,10 @@ export const parseCollectionFile = (context, collectors) => {
     });
   }
 
+  if (!fields?.length) {
+    addMessage({ strKey: 'collection_file_no_fields', context, collectors });
+  }
+
   parseFields(fields, context, collectors);
 };
 

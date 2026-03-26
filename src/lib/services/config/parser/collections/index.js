@@ -61,6 +61,10 @@ export const parseEntryCollection = (context, collectors) => {
 
   checkUnsupportedOptions({ UNSUPPORTED_OPTIONS, config: collection, context, collectors });
 
+  if (!fields?.length) {
+    addMessage({ strKey: 'collection_no_fields', context, collectors });
+  }
+
   parseFields(fields, context, collectors);
 
   if (index_file) {

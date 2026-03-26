@@ -194,6 +194,80 @@ describe('Collection Files Parser', () => {
       expect(callArgs.values.format).toBe('yaml');
     });
 
+    it('should add error when collection file has no fields', async () => {
+      const { parseCollectionFile } = await import('./index.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts', format: 'yaml' },
+        collectionFile: {
+          name: 'post',
+          file: 'content/posts/index.yaml',
+          format: 'yaml',
+          fields: [],
+        },
+      };
+
+      parseCollectionFile(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'collection_file_no_fields',
+        }),
+      );
+    });
+
+    it('should add error when collection file has undefined fields', async () => {
+      const { parseCollectionFile } = await import('./index.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts', format: 'yaml' },
+        collectionFile: {
+          name: 'post',
+          file: 'content/posts/index.yaml',
+          format: 'yaml',
+        },
+      };
+
+      parseCollectionFile(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'collection_file_no_fields',
+        }),
+      );
+    });
+
+    it('should not add error when collection file has fields defined', async () => {
+      const { parseCollectionFile } = await import('./index.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts', format: 'yaml' },
+        collectionFile: {
+          name: 'post',
+          file: 'content/posts/index.yaml',
+          format: 'yaml',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseCollectionFile(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'collection_file_no_fields',
+        }),
+      );
+    });
+
     it('should always parse fields regardless of format mismatch', async () => {
       const { parseCollectionFile } = await import('./index.js');
       const collectors = createCollectors();
