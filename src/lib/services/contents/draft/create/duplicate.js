@@ -88,7 +88,7 @@ export const duplicateDraft = () => {
     originalEntry: undefined,
     originalSlugs: {},
     currentSlugs: {},
-    slugEditor: getSlugEditorProp({ collection, collectionFile, originalEntry: {} }),
+    slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs: {} }),
   });
 
   showDuplicateToast.set(true);

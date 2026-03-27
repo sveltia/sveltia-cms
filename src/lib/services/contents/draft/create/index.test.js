@@ -36,9 +36,112 @@ const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/bac
 const { createProxy } = await import('$lib/services/contents/draft/create/proxy');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
 const { cmsConfig } = await import('$lib/services/config');
-const { createDraft } = await import('./index.js');
+const { createDraft, getSlugEditorProp } = await import('./index.js');
 
 describe('contents/draft/create/index', () => {
+  describe('getSlugEditorProp', () => {
+    const baseI18n = {
+      allLocales: ['en', 'ja'],
+      defaultLocale: 'en',
+    };
+
+    it('should return all false for a non-entry (file) collection', () => {
+      const collection = {
+        _type: 'file',
+        _i18n: baseI18n,
+      };
+
+      expect(getSlugEditorProp({ collection, originalSlugs: {} })).toEqual({
+        en: false,
+        ja: false,
+      });
+    });
+
+    it('should return all false when the slug template has no slug editor tag', () => {
+      const collection = {
+        _type: 'entry',
+        identifier_field: 'title',
+        slug: '{{title}}',
+        _i18n: baseI18n,
+      };
+
+      expect(getSlugEditorProp({ collection, originalSlugs: {} })).toEqual({
+        en: false,
+        ja: false,
+      });
+    });
+
+    it('should return true for default locale and readonly for others with {{fields._slug}} and empty originalSlugs', () => {
+      const collection = {
+        _type: 'entry',
+        slug: '{{fields._slug}}',
+        _i18n: baseI18n,
+      };
+
+      expect(getSlugEditorProp({ collection, originalSlugs: {} })).toEqual({
+        en: true,
+        ja: 'readonly',
+      });
+    });
+
+    it('should return all true with {{fields._slug | localize}} and empty originalSlugs', () => {
+      const collection = {
+        _type: 'entry',
+        slug: '{{fields._slug | localize}}',
+        _i18n: baseI18n,
+      };
+
+      expect(getSlugEditorProp({ collection, originalSlugs: {} })).toEqual({
+        en: true,
+        ja: true,
+      });
+    });
+
+    it('should return readonly for locales whose slug is already set', () => {
+      const collection = {
+        _type: 'entry',
+        slug: '{{fields._slug}}',
+        _i18n: baseI18n,
+      };
+
+      // en has a slug → readonly; ja does not → also readonly because ja ≠ defaultLocale
+      expect(
+        getSlugEditorProp({ collection, originalSlugs: { en: 'my-post', ja: 'my-post-ja' } }),
+      ).toEqual({ en: 'readonly', ja: 'readonly' });
+    });
+
+    it('should return true for locales without a slug and readonly for those with one when using localized tag', () => {
+      const collection = {
+        _type: 'entry',
+        slug: '{{fields._slug | localize}}',
+        _i18n: baseI18n,
+      };
+
+      // en already has a slug, ja does not
+      expect(getSlugEditorProp({ collection, originalSlugs: { en: 'my-post' } })).toEqual({
+        en: 'readonly',
+        ja: true,
+      });
+    });
+
+    it('should use collectionFile i18n when provided', () => {
+      const collection = {
+        _type: 'entry',
+        slug: '{{fields._slug}}',
+        _i18n: { allLocales: ['en', 'ja', 'fr'], defaultLocale: 'en' },
+      };
+
+      const collectionFile = {
+        _i18n: { allLocales: ['en', 'de'], defaultLocale: 'en' },
+      };
+
+      expect(getSlugEditorProp({ collection, collectionFile, originalSlugs: {} })).toEqual({
+        en: true,
+        de: 'readonly',
+      });
+    });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -382,7 +485,7 @@ describe('contents/draft/create/index', () => {
       );
     });
 
-    it('should disable slugEditor for existing entries', () => {
+    it('should set slugEditor to readonly for existing entries with canonical slug set', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
@@ -396,10 +499,11 @@ describe('contents/draft/create/index', () => {
         },
       };
 
+      // Entry has translationKey in content → canonicalSlug path → originalSlugs = { en: '...' }
       const originalEntry = {
         id: 'entry-123',
         locales: {
-          en: { content: {}, slug: 'existing-slug' },
+          en: { content: { translationKey: 'abc123' }, slug: 'existing-slug' },
         },
       };
 
@@ -408,7 +512,7 @@ describe('contents/draft/create/index', () => {
       expect(entryDraft.set).toHaveBeenCalledWith(
         expect.objectContaining({
           defaultLocale: 'en',
-          slugEditor: { en: false },
+          slugEditor: { en: 'readonly' },
         }),
       );
     });

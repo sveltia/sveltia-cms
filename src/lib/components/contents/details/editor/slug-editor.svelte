@@ -28,6 +28,12 @@
   let inputValue = $state('');
 
   $effect(() => {
+    if (readonly) {
+      inputValue = $entryDraft?.currentSlugs[locale] ?? '';
+    }
+  });
+
+  $effect(() => {
     void [inputValue];
 
     untrack(() => {
@@ -40,12 +46,6 @@
         });
       }
     });
-  });
-
-  $effect(() => {
-    if (readonly) {
-      inputValue = $entryDraft?.currentSlugs[locale] ?? '';
-    }
   });
 </script>
 

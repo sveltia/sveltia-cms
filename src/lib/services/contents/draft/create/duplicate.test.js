@@ -339,7 +339,7 @@ describe('contents/draft/create/duplicate', () => {
       expect(mockGetSlugEditorProp).toHaveBeenCalledWith({
         collection: mockEntryDraft.collection,
         collectionFile: mockEntryDraft.collectionFile,
-        originalEntry: {},
+        originalSlugs: {},
       });
 
       const setCallArg = mockEntryDraftSet.mock.calls[0][0];
