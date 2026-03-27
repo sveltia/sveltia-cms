@@ -1,10 +1,12 @@
 # Sveltia CMS
 
-[Sveltia CMS](https://sveltiacms.app/en/) is an open-source, lightweight, Git-based headless CMS for Jamstack sites. It provides an excellent UX, DX, performance, security and internationalization (i18n) support that makes content management a breeze for both developers and content editors. Its framework-agnostic, generic-purpose design makes it suitable for a wide range of use cases.
+[Sveltia CMS](https://sveltiacms.app/en/) is a free, open-source, Git-based headless content management system built for modern web development using the [Jamstack](https://jamstack.org/) architecture.
 
-Sveltia CMS is also a [modern successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms) (now Decap CMS). It resolves hundreds of issues from the predecessor while maintaining high compatibility with the configuration and API. Although some features are still missing, more and more sites are [migrating from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to benefit from the significantly improved experience and reliability.
+Designed for content editors and developers alike, Sveltia CMS delivers a modern UX, outstanding DX, and top-notch internationalization (i18n) support — all in a small, maintenance-free package that runs entirely in the browser. Its framework-agnostic, generic-purpose design makes it suitable for a wide range of projects, from personal blogs and marketing sites to product catalogs and knowledge bases.
 
-Visit our [showcase](https://sveltiacms.app/en/showcase) to see examples from various industries, and check out our [documentation](https://sveltiacms.app/en/docs) to get started with Sveltia CMS today!
+As the [definitive successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms) (now Decap CMS), Sveltia CMS addresses hundreds of longstanding issues while maintaining high compatibility with the existing configuration format and API. More and more sites are [migrating from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to benefit from the significantly improved experience and reliability.
+
+Explore real-world deployments in our [showcase](https://sveltiacms.app/en/showcase), or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
