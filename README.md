@@ -6,7 +6,7 @@ Designed for content editors and developers alike, Sveltia CMS delivers a modern
 
 As the [definitive successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms) (now Decap CMS), Sveltia CMS addresses hundreds of longstanding issues while maintaining high compatibility with the existing configuration format and API. More and more sites are [migrating from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to benefit from the significantly improved experience, security, and reliability.
 
-Explore real-world deployments in our [showcase](https://sveltiacms.app/en/showcase), or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
+Explore real-world examples in our [showcase](https://sveltiacms.app/en/showcase), or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
