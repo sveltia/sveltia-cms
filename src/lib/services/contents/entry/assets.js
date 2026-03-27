@@ -51,7 +51,13 @@ export const getEntryThumbnail = async (collection, entry) => {
   for (const keyPath of keyPathList) {
     const url = content[keyPath]
       ? // eslint-disable-next-line no-await-in-loop
-        await getMediaFieldURL({ value: content[keyPath], entry, collectionName, thumbnail: true })
+        await getMediaFieldURL({
+          value: content[keyPath],
+          entry,
+          collectionName,
+          typedKeyPath: keyPath,
+          thumbnail: true,
+        })
       : undefined;
 
     if (url) {

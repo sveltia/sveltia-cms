@@ -207,6 +207,7 @@ describe('getEntryThumbnail', () => {
       value: '/images/test.jpg',
       entry: mockEntry,
       collectionName: 'posts',
+      typedKeyPath: 'image',
       thumbnail: true,
     });
     expect(result).toBe('https://example.com/thumbnails/test.jpg');
