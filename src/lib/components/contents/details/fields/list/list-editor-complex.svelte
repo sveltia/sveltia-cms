@@ -439,7 +439,7 @@
                 disabled={isDuplicateField}
               >
                 {#snippet popup()}
-                  <Menu aria-label={$_('translation_options')}>
+                  <Menu aria-label={$_('list_item_options')}>
                     {#if allowDuplicate}
                       <MenuItem
                         label={$_('duplicate')}
