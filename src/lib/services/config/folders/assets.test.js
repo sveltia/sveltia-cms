@@ -841,8 +841,55 @@ describe('config/folders/assets', () => {
         typedKeyPath: 'fields.gallery',
         isIndexFile: false,
         internalPath: 'content/docs',
-        internalSubPath: './media/gallery',
+        internalSubPath: 'media/gallery',
         publicPath: './gallery',
+        entryRelative: true,
+        hasTemplateTags: false,
+      });
+    });
+
+    it('should normalize ./ prefix in field-level media_folder to match plain relative path', () => {
+      vi.mocked(getValidCollections).mockReturnValue([
+        // @ts-ignore - simplified collection for testing
+        {
+          name: 'entries',
+          folder: 'src/content/entry-collection',
+        },
+      ]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections: [],
+      };
+
+      const fieldMediaFolders = [
+        {
+          fieldConfig: {
+            media_folder: './images',
+          },
+          context: {
+            collection: { name: 'entries', folder: 'src/content/entry-collection' },
+            collectionFile: undefined,
+            typedKeyPath: 'fields.image',
+            isIndexFile: false,
+          },
+        },
+      ];
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config, fieldMediaFolders);
+      const fieldFolder = result.find((f) => f.typedKeyPath === 'fields.image');
+
+      expect(fieldFolder).toEqual({
+        collectionName: 'entries',
+        fileName: undefined,
+        typedKeyPath: 'fields.image',
+        isIndexFile: false,
+        internalPath: 'src/content/entry-collection',
+        internalSubPath: 'images',
+        publicPath: '/images',
         entryRelative: true,
         hasTemplateTags: false,
       });

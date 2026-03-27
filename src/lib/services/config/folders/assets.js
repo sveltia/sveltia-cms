@@ -93,6 +93,9 @@ export const normalizeAssetFolder = ({
     mediaFolder = replaceTags(mediaFolder, globalFolders);
   }
 
+  // Normalize `./` prefix: `./images` → `images`, `./` → ``, `.` → ``
+  mediaFolder = mediaFolder.replace(/^\.(?:\/|$)/, '');
+
   if (publicFolder === undefined) {
     publicFolder = mediaFolder;
   } else if (hasTags(publicFolder)) {
