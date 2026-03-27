@@ -1,12 +1,10 @@
 # Sveltia CMS
 
-[Sveltia CMS](https://sveltiacms.app/en/) is a Git-based headless content management system under active development as a modern, direct [replacement for Netlify CMS and Decap CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms). We have solved hundreds of issues reported in the predecessor’s repository, ranging from critical bugs to top feature requests, while maintaining high compatibility with existing Netlify/Decap CMS configurations.
+[Sveltia CMS](https://sveltiacms.app/en/) is an open-source, lightweight, Git-based headless content management system for Jamstack sites. It provides an excellent UX, DX, performance, security and internationalization (i18n) support. Its framework-agnostic, generic-purpose design makes it suitable for a wide range of use cases.
 
-Built from the ground up, Sveltia CMS offers excellent UX, DX, performance, security and internationalization (i18n) support. Although some features are still missing, our numerous enhancements ensure smooth daily workflows for content editors and developers alike.
+Sveltia CMS is also a [modern successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms) (now Decap CMS). It resolves hundreds of issues from the predecessor while maintaining high compatibility with the configuration and API. Although some features are still missing, more and more sites are [migrating from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to benefit from the significantly improved experience and reliability.
 
-This free, open-source successor to Netlify CMS is currently in beta, with version 1.0 expected in early 2026. Check out the [Release Notes](https://github.com/sveltia/sveltia-cms/releases) for the latest updates.
-
-Despite its beta status, more and more sites are [migrating from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS. It’s already being used by hundreds of individuals and organizations worldwide. Visit our [Showcase](https://sveltiacms.app/en/showcase) to see examples from various industries and use cases.
+Visit our [showcase](https://sveltiacms.app/en/showcase) to see examples from various industries, and check out our [documentation](https://sveltiacms.app/en/docs) to get started with Sveltia CMS today!
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
