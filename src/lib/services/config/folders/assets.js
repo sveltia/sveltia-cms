@@ -93,9 +93,6 @@ export const normalizeAssetFolder = ({
     mediaFolder = replaceTags(mediaFolder, globalFolders);
   }
 
-  // Normalize `./` prefix: `./images` → `images`, `./` → ``, `.` → ``
-  mediaFolder = mediaFolder.replace(/^\.(?:\/|$)/, '');
-
   if (publicFolder === undefined) {
     publicFolder = mediaFolder;
   } else if (hasTags(publicFolder)) {
@@ -106,6 +103,11 @@ export const normalizeAssetFolder = ({
 
     publicFolder = replaceTags(publicFolder, globalFolders);
   }
+
+  // Normalize `./` prefix: `./images` → `images`, `./` → ``, `.` → ``
+  // This must happen after publicFolder defaulting so that `publicPath` preserves the `./` prefix
+  // needed to match stored values like `./images/photo.jpg`.
+  mediaFolder = mediaFolder.replace(/^\.(?:\/|$)/, '');
 
   const entryRelative = !mediaFolder.startsWith('/');
 

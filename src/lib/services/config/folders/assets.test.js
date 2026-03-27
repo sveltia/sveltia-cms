@@ -889,7 +889,7 @@ describe('config/folders/assets', () => {
         isIndexFile: false,
         internalPath: 'src/content/entry-collection',
         internalSubPath: 'images',
-        publicPath: '/images',
+        publicPath: './images',
         entryRelative: true,
         hasTemplateTags: false,
       });

@@ -1428,6 +1428,62 @@ describe('assets/index', () => {
       expect(createPath).toHaveBeenCalledWith(['content/test1/my-slug', 'images', 'sub/photo.jpg']);
     });
 
+    it('should normalize ./ prefix in stored path before stripping media_folder prefix', async () => {
+      // When public_folder is `./images`, the stored value is `./images/photo.jpg`. The leading
+      // `./` must be stripped so the `images/` media_folder prefix is correctly detected and
+      // removed, avoiding the duplicated path `entryFolder/images/./images/photo.jpg`.
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'src/content/entries/images/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'src/content/entries',
+          internalSubPath: 'images',
+          publicPath: './images',
+          collectionName: 'entries',
+          entryRelative: true,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-entry',
+        slug: 'my-entry',
+        locales: {
+          en: {
+            path: 'src/content/entries/my-entry.md',
+            sha: 'sha123',
+            slug: 'my-entry',
+            content: { title: 'My Entry' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'entries',
+        media_folder: 'images',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      vi.mocked(createPath).mockReturnValue('src/content/entries/images/photo.jpg');
+      vi.mocked(resolvePath).mockReturnValue('src/content/entries/images/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByRelativePathAndCollection({
+        path: './images/photo.jpg',
+        entry: mockEntry,
+        collection: mockCollection,
+      });
+
+      expect(result).toEqual(mockAsset);
+      // `./images/photo.jpg` → normalized to `images/photo.jpg` → prefix `images/` stripped
+      expect(createPath).toHaveBeenCalledWith(['src/content/entries', 'images', 'photo.jpg']);
+    });
+
     it('should not strip path prefix when media_folder is undefined', async () => {
       // When collection has no media_folder, the path must be passed through unchanged
       const { resolvePath, createPath } = await import('$lib/services/utils/file');
