@@ -586,6 +586,8 @@
  * `true`.
  * @property {boolean} [allow_remove] Whether to allow users to remove items from the list. Default:
  * `true`.
+ * @property {boolean} [allow_duplicate] Whether to allow users to duplicate items in the list.
+ * Default: `true`.
  * @property {boolean} [allow_reorder] Whether to allow users to reorder items in the list. Default:
  * `true`.
  * @property {boolean} [add_to_top] Whether to add new items to the top of the list instead of the
@@ -1282,6 +1284,8 @@
  * to `true` to provide a better out-of-the-box experience.
  * @property {boolean} [delete] Whether to allow users to delete entries in the collection. Default:
  * `true`.
+ * @property {boolean} [duplicate] Whether to allow users to duplicate entries in the collection.
+ * Default: `true`.
  * @property {FileExtension} [extension] File extension. Default: `md`.
  * @property {FieldKeyPath} [identifier_field] Field name to be used as the title and slug of an
  * entry. Default: `title`.

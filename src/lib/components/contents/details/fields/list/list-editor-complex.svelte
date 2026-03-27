@@ -70,6 +70,7 @@
     // Field type-specific options
     allow_add: allowAdd = true,
     allow_remove: allowRemove = true,
+    allow_duplicate: allowDuplicate = true,
     allow_reorder: allowReorder = true,
     collapsed,
     summary,
@@ -439,11 +440,13 @@
               >
                 {#snippet popup()}
                   <Menu aria-label={$_('translation_options')}>
-                    <MenuItem
-                      label={$_('duplicate')}
-                      disabled={hasMaxItems}
-                      onclick={() => addItem({ index: index + 1, dupIndex: index })}
-                    />
+                    {#if allowDuplicate}
+                      <MenuItem
+                        label={$_('duplicate')}
+                        disabled={hasMaxItems}
+                        onclick={() => addItem({ index: index + 1, dupIndex: index })}
+                      />
+                    {/if}
                     {@render addPositionItems(index, 'above')}
                     {@render addPositionItems(index + 1, 'below')}
                   </Menu>

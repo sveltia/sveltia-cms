@@ -162,33 +162,40 @@
 
 {#snippet overflowButtons()}
   {@const Component = $isSmallScreen ? MenuItem : Button}
-  <Component
-    variant="ghost"
-    label={$_('duplicate')}
-    aria-label={$_('duplicate_entry')}
-    disabled={isIndexFile ||
-      // @todo Enable duplication for Hugo’s page bundles = the `path` option. We need to duplicate
-      // assets along with the entry. @see https://github.com/sveltia/sveltia-cms/issues/526
-      !!entryCollection?.path ||
-      $collectionState.creationDisabled}
-    onclick={() => {
-      goto(`/collections/${collectionName}/new`, {
-        replaceState: true,
-        notifyChange: false,
-        transitionType: 'forwards',
-      });
-      duplicateDraft();
-    }}
-  />
-  <Component
-    variant="ghost"
-    label={$_('delete')}
-    aria-label={$_('delete_entry')}
-    disabled={entryCollection?.delete === false}
-    onclick={() => {
-      showDeleteDialog = true;
-    }}
-  />
+  {@const canDuplicate =
+    !isIndexFile &&
+    entryCollection?.duplicate !== false &&
+    !$collectionState.creationDisabled &&
+    // @todo Enable duplication for Hugo’s page bundles = the `path` option. We need to
+    // duplicate assets along with the entry.
+    // @see https://github.com/sveltia/sveltia-cms/issues/526
+    !entryCollection?.path}
+  {@const canDelete = entryCollection?.delete !== false}
+  {#if canDuplicate}
+    <Component
+      variant="ghost"
+      label={$_('duplicate')}
+      aria-label={$_('duplicate_entry')}
+      onclick={() => {
+        goto(`/collections/${collectionName}/new`, {
+          replaceState: true,
+          notifyChange: false,
+          transitionType: 'forwards',
+        });
+        duplicateDraft();
+      }}
+    />
+  {/if}
+  {#if canDelete}
+    <Component
+      variant="ghost"
+      label={$_('delete')}
+      aria-label={$_('delete_entry')}
+      onclick={() => {
+        showDeleteDialog = true;
+      }}
+    />
+  {/if}
 {/snippet}
 
 <Toolbar variant="primary" aria-label={$_('primary')}>
