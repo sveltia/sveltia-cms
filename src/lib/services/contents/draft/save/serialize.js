@@ -5,6 +5,7 @@ import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
+import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
@@ -61,8 +62,8 @@ export const copyProperty = ({
   isTomlOutput,
   omitEmptyOptionalFields,
 }) => {
-  // Skip internal UUIDs added to list items
-  if (key.endsWith('.__sc_item_id')) {
+  // Skip internal properties added to list items
+  if (INTERNAL_PROP_REGEX.test(key)) {
     delete unsortedMap[key];
     return;
   }
@@ -95,7 +96,7 @@ export const copyProperty = ({
     const childKeys = Object.keys(unsortedMap).filter((_key) => _key.startsWith(`${key}.`));
 
     if (
-      childKeys.some((_key) => !_key.endsWith('.__sc_item_id') && !isValueEmpty(unsortedMap[_key]))
+      childKeys.some((_key) => !INTERNAL_PROP_REGEX.test(_key) && !isValueEmpty(unsortedMap[_key]))
     ) {
       // Preserve the parent because it has non-empty children
       sortedMap[key] = value;

@@ -4,6 +4,11 @@ import { derived, get, writable } from 'svelte/store';
 import { prefs } from '$lib/services/user/prefs';
 
 /**
+ * Regex to match internal properties added to list items, which should be excluded from output.
+ */
+export const INTERNAL_PROP_REGEX = /\.__sc_\w+$/;
+
+/**
  * @import { Readable, Writable } from 'svelte/store';
  * @import { EntryDraft } from '$lib/types/private';
  */

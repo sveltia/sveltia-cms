@@ -111,7 +111,7 @@ export default [
       'jsdoc/no-defaults': 1,
       'jsdoc/require-asterisk-prefix': 1,
       'jsdoc/require-description': 1,
-      'jsdoc/require-description-complete-sentence': 1,
+      'jsdoc/require-description-complete-sentence': ['error', { abbreviations: ['e.g.'] }],
       'jsdoc/require-hyphen-before-param-description': [
         'error',
         'never',

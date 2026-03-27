@@ -14,6 +14,38 @@ import { getField } from '$lib/services/contents/entry/fields';
  */
 
 /**
+ * Resolve the original key path for a field that may be inside a reordered list item. When list
+ * items are reordered, added, or removed, each item's `__sc_item_original_key_path` property tracks
+ * where it was originally located.
+ * @param {Record<string, any>} valueMap Current flat value map for the locale.
+ * @param {FieldKeyPath} keyPath Current field key path.
+ * @returns {{ originalKeyPath: FieldKeyPath, currentPrefix: string, originalPrefix: string } |
+ * undefined} The resolved paths, or `undefined` if no remapping is needed.
+ */
+export const resolveOriginalKeyPath = (valueMap, keyPath) => {
+  const parts = keyPath.split('.');
+
+  for (let i = parts.length - 1; i >= 1; i -= 1) {
+    if (/^\d+$/.test(parts[i])) {
+      const itemPrefix = parts.slice(0, i + 1).join('.');
+      const originalPrefix = valueMap[`${itemPrefix}.__sc_item_original_key_path`];
+
+      if (originalPrefix !== undefined) {
+        const suffix = parts.slice(i + 1).join('.');
+
+        return {
+          originalKeyPath: suffix ? `${originalPrefix}.${suffix}` : originalPrefix,
+          currentPrefix: itemPrefix,
+          originalPrefix,
+        };
+      }
+    }
+  }
+
+  return undefined;
+};
+
+/**
  * Revert the changes made to the given field or all the fields to the default value(s).
  * @internal
  * @param {object} args Arguments.
@@ -24,6 +56,8 @@ import { getField } from '$lib/services/contents/entry/fields';
  * @param {GetFieldArgs} args.getFieldArgs Arguments for the {@link getField} function.
  * @param {LocaleContentMap} args.currentValues Current values to revert. This will be modified.
  * @param {boolean} [args.reset] Whether ro remove the current value.
+ * @param {{ from: string, to: string }} [args.remapPrefix] When restoring values from a different
+ * key path prefix (e.g. after list item reordering), remap `from` prefix to `to` prefix.
  */
 export const revertFields = ({
   locale,
@@ -32,6 +66,7 @@ export const revertFields = ({
   getFieldArgs,
   currentValues,
   reset = false,
+  remapPrefix,
 }) => {
   const { valueMap = {} } = getFieldArgs;
 
@@ -43,7 +78,11 @@ export const revertFields = ({
         if (reset) {
           delete currentValues[locale][_keyPath];
         } else {
-          currentValues[locale][_keyPath] = value;
+          const targetKeyPath = remapPrefix
+            ? `${remapPrefix.to}${_keyPath.slice(remapPrefix.from.length)}`
+            : _keyPath;
+
+          currentValues[locale][targetKeyPath] = value;
         }
       }
     }
@@ -72,21 +111,34 @@ export const revertLocale = ({ draft, keyPath, locale }) => {
 
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const isDefaultLocale = locale === defaultLocale;
-  const revertArgs = { keyPath, locale, isDefaultLocale, currentValues };
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, keyPath: '', isIndexFile };
+  // Resolve original key path for fields inside reordered list items
+  const resolved = keyPath ? resolveOriginalKeyPath(currentValues[locale], keyPath) : undefined;
+  const originalKeyPath = resolved?.originalKeyPath ?? keyPath;
+
+  const remapPrefix = resolved
+    ? { from: resolved.originalPrefix, to: resolved.currentPrefix }
+    : undefined;
 
   // Remove all the current values except for i18n-duplicate ones
   revertFields({
-    ...revertArgs,
+    locale,
+    isDefaultLocale,
+    keyPath,
     getFieldArgs: { ...getFieldArgs, valueMap: currentValues[locale] },
+    currentValues,
     reset: true,
   });
 
-  // Restore the original values
+  // Restore the original values, remapping key paths if the item was reordered
   revertFields({
-    ...revertArgs,
+    locale,
+    isDefaultLocale,
+    keyPath: originalKeyPath,
     getFieldArgs: { ...getFieldArgs, valueMap: originalValues[locale] },
+    currentValues,
+    remapPrefix,
   });
 };
 

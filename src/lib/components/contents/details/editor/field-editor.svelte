@@ -13,8 +13,11 @@
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { editors } from '$lib/components/contents/details/fields';
-  import { entryDraft } from '$lib/services/contents/draft';
-  import { revertChanges } from '$lib/services/contents/draft/update/revert';
+  import { entryDraft, INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
+  import {
+    resolveOriginalKeyPath,
+    revertChanges,
+  } from '$lib/services/contents/draft/update/revert';
   import { isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
@@ -154,14 +157,45 @@
 
     return [];
   });
-  const originalValue = $derived(
-    isList
-      ? Object.entries(originalValues?.[locale] ?? {})
-          .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-          .map(([, val]) => val)
-          .filter((val) => val !== undefined)
-      : originalValues?.[locale]?.[keyPath],
-  );
+  const originalValue = $derived.by(() => {
+    if (isList) {
+      return Object.entries(originalValues?.[locale] ?? {})
+        .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
+        .map(([, val]) => val)
+        .filter((val) => val !== undefined);
+    }
+
+    // For fields inside list items, use the original key path if the item was reordered
+    const currentMap = $state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {});
+    const resolved = resolveOriginalKeyPath(currentMap, keyPath);
+
+    if (resolved) {
+      return originalValues?.[locale]?.[resolved.originalKeyPath];
+    }
+
+    return originalValues?.[locale]?.[keyPath];
+  });
+  const isRevertDisabled = $derived.by(() => {
+    if (fieldType === 'list') {
+      // For list fields, compare all flat entries under the keyPath prefix, because `currentValue`
+      // and `originalValue` may not capture complex (nested) list items correctly
+      const currentMap = $state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {});
+      const originalMap = originalValues?.[locale] ?? {};
+      const keyPathPrefix = `${keyPath}.`;
+
+      const currentEntries = Object.entries(currentMap)
+        .filter(([k]) => k.startsWith(keyPathPrefix) && !INTERNAL_PROP_REGEX.test(k))
+        .sort(([a], [b]) => a.localeCompare(b));
+
+      const originalEntries = Object.entries(originalMap)
+        .filter(([k]) => k.startsWith(keyPathPrefix) && !INTERNAL_PROP_REGEX.test(k))
+        .sort(([a], [b]) => a.localeCompare(b));
+
+      return equal(currentEntries, originalEntries);
+    }
+
+    return equal(currentValue, originalValue);
+  });
   const validity = $derived($entryDraft?.validities[locale][keyPath]);
   const fieldLabel = $derived(label || fieldName);
   const readonly = $derived(
@@ -240,9 +274,7 @@
               {#if canRevert}
                 <MenuItem
                   label={$_('revert_changes')}
-                  disabled={equal(currentValue, originalValue) ||
-                    // Disable reversion in list items until we figure out how to handle reordering
-                    /\.\d+\./.test(keyPath)}
+                  disabled={isRevertDisabled}
                   onclick={() => {
                     revertChanges({ locale, keyPath });
                   }}

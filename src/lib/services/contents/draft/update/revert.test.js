@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 
-import { revertChanges, revertFields, revertLocale } from './revert';
+import { resolveOriginalKeyPath, revertChanges, revertFields, revertLocale } from './revert';
 
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/entry/fields');
@@ -650,6 +650,189 @@ describe('draft/update/revert', () => {
 
       expect(draft.currentValues.ja.title).toBe('Original Japanese Title');
       expect(draft.currentValues.ja.date).toBe('Modified Date');
+    });
+  });
+
+  describe('resolveOriginalKeyPath', () => {
+    it('should return undefined when no __sc_item_original_key_path exists', () => {
+      const valueMap = {
+        'checklist.0.label': 'Item 1',
+        'checklist.1.label': 'Item 2',
+      };
+
+      expect(resolveOriginalKeyPath(valueMap, 'checklist.0.label')).toBeUndefined();
+    });
+
+    it('should return undefined for non-list key paths', () => {
+      const valueMap = { title: 'Hello' };
+
+      expect(resolveOriginalKeyPath(valueMap, 'title')).toBeUndefined();
+    });
+
+    it('should resolve original key path for reordered items', () => {
+      const valueMap = {
+        'checklist.0.label': 'Item 2',
+        'checklist.0.__sc_item_original_key_path': 'checklist.1',
+        'checklist.1.label': 'Item 1',
+        'checklist.1.__sc_item_original_key_path': 'checklist.0',
+      };
+
+      expect(resolveOriginalKeyPath(valueMap, 'checklist.0.label')).toEqual({
+        originalKeyPath: 'checklist.1.label',
+        currentPrefix: 'checklist.0',
+        originalPrefix: 'checklist.1',
+      });
+
+      expect(resolveOriginalKeyPath(valueMap, 'checklist.1.label')).toEqual({
+        originalKeyPath: 'checklist.0.label',
+        currentPrefix: 'checklist.1',
+        originalPrefix: 'checklist.0',
+      });
+    });
+
+    it('should resolve original key path for list item itself', () => {
+      const valueMap = {
+        'checklist.0.__sc_item_original_key_path': 'checklist.2',
+      };
+
+      expect(resolveOriginalKeyPath(valueMap, 'checklist.0')).toEqual({
+        originalKeyPath: 'checklist.2',
+        currentPrefix: 'checklist.0',
+        originalPrefix: 'checklist.2',
+      });
+    });
+
+    it('should resolve deeply nested key path', () => {
+      const valueMap = {
+        'sections.0.items.1.__sc_item_original_key_path': 'sections.0.items.0',
+      };
+
+      expect(resolveOriginalKeyPath(valueMap, 'sections.0.items.1.title')).toEqual({
+        originalKeyPath: 'sections.0.items.0.title',
+        currentPrefix: 'sections.0.items.1',
+        originalPrefix: 'sections.0.items.0',
+      });
+    });
+  });
+
+  describe('revertLocale with reordered list items', () => {
+    it('should revert a field inside a reordered list item using the original key path', () => {
+      vi.mocked(getField).mockReturnValue({ name: 'label', widget: 'string', i18n: true });
+
+      const draft = {
+        collection: {
+          _i18n: {
+            defaultLocale: 'en',
+            allLocales: ['en'],
+          },
+        },
+        collectionFile: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        currentValues: {
+          en: {
+            'checklist.0.label': 'Modified Item 2',
+            'checklist.0.__sc_item_original_key_path': 'checklist.1',
+            'checklist.0.__sc_item_id': 'uuid-b',
+            'checklist.1.label': 'Item 1',
+            'checklist.1.__sc_item_original_key_path': 'checklist.0',
+            'checklist.1.__sc_item_id': 'uuid-a',
+          },
+        },
+        originalValues: {
+          en: {
+            'checklist.0.label': 'Original Item 1',
+            'checklist.1.label': 'Original Item 2',
+          },
+        },
+      };
+
+      revertLocale({ draft, keyPath: 'checklist.0.label', locale: 'en' });
+
+      // Should restore from checklist.1 (original position) to checklist.0 (current position)
+      expect(draft.currentValues.en['checklist.0.label']).toBe('Original Item 2');
+      // Other values should remain unchanged
+      expect(draft.currentValues.en['checklist.1.label']).toBe('Item 1');
+    });
+
+    it('should revert the whole list field regardless of reordering', () => {
+      vi.mocked(getField).mockReturnValue({ name: 'label', widget: 'string', i18n: true });
+
+      const draft = {
+        collection: {
+          _i18n: {
+            defaultLocale: 'en',
+            allLocales: ['en'],
+          },
+        },
+        collectionFile: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        currentValues: {
+          en: {
+            'checklist.0.label': 'Item 2',
+            'checklist.0.__sc_item_original_key_path': 'checklist.1',
+            'checklist.0.__sc_item_id': 'uuid-b',
+            'checklist.1.label': 'Item 1',
+            'checklist.1.__sc_item_original_key_path': 'checklist.0',
+            'checklist.1.__sc_item_id': 'uuid-a',
+          },
+        },
+        originalValues: {
+          en: {
+            'checklist.0.label': 'Original Item 1',
+            'checklist.1.label': 'Original Item 2',
+          },
+        },
+      };
+
+      revertLocale({ draft, keyPath: 'checklist', locale: 'en' });
+
+      // Should restore all original values
+      expect(draft.currentValues.en['checklist.0.label']).toBe('Original Item 1');
+      expect(draft.currentValues.en['checklist.1.label']).toBe('Original Item 2');
+      // Internal tracking properties should be removed
+      expect(draft.currentValues.en['checklist.0.__sc_item_original_key_path']).toBeUndefined();
+      expect(draft.currentValues.en['checklist.1.__sc_item_original_key_path']).toBeUndefined();
+    });
+
+    it('should revert after item deletion', () => {
+      vi.mocked(getField).mockReturnValue({ name: 'label', widget: 'string', i18n: true });
+
+      const draft = {
+        collection: {
+          _i18n: {
+            defaultLocale: 'en',
+            allLocales: ['en'],
+          },
+        },
+        collectionFile: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        currentValues: {
+          en: {
+            // Item at index 0 was deleted; original item at index 1 shifted to index 0
+            'checklist.0.label': 'Item 2',
+            'checklist.0.__sc_item_original_key_path': 'checklist.1',
+            'checklist.0.__sc_item_id': 'uuid-b',
+          },
+        },
+        originalValues: {
+          en: {
+            'checklist.0.label': 'Original Item 1',
+            'checklist.1.label': 'Original Item 2',
+          },
+        },
+      };
+
+      revertLocale({ draft, keyPath: 'checklist', locale: 'en' });
+
+      // Should restore all original values
+      expect(draft.currentValues.en['checklist.0.label']).toBe('Original Item 1');
+      expect(draft.currentValues.en['checklist.1.label']).toBe('Original Item 2');
     });
   });
 });

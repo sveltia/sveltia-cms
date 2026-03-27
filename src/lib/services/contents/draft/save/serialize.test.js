@@ -197,6 +197,43 @@ describe('Test copyProperty()', () => {
     expect(unsortedMap).not.toHaveProperty('program.speakers.0.bio');
   });
 
+  test('skips internal original key path tracking added to list items', () => {
+    /** @type {FlattenedEntryContent} */
+    const sortedMap = {};
+
+    /** @type {FlattenedEntryContent} */
+    const unsortedMap = {
+      title: 'My Post',
+      'organizers.0.__sc_item_original_key_path': 'organizers.1',
+      'organizers.0.name': 'Jane Smith',
+      'organizers.1.__sc_item_original_key_path': 'organizers.0',
+      'organizers.1.name': 'John Doe',
+    };
+
+    const args = {
+      locale: 'en',
+      unsortedMap,
+      sortedMap,
+      isTomlOutput: false,
+      omitEmptyOptionalFields: false,
+    };
+
+    copyProperty({ ...args, key: 'title' });
+    copyProperty({ ...args, key: 'organizers.0.name' });
+    copyProperty({ ...args, key: 'organizers.1.name' });
+    copyProperty({ ...args, key: 'organizers.0.__sc_item_original_key_path' });
+    copyProperty({ ...args, key: 'organizers.1.__sc_item_original_key_path' });
+
+    expect(sortedMap).toEqual({
+      title: 'My Post',
+      'organizers.0.name': 'Jane Smith',
+      'organizers.1.name': 'John Doe',
+    });
+
+    expect(unsortedMap).not.toHaveProperty('organizers.0.__sc_item_original_key_path');
+    expect(unsortedMap).not.toHaveProperty('organizers.1.__sc_item_original_key_path');
+  });
+
   describe('empty value handling with omitEmptyOptionalFields', () => {
     test('preserves valid falsy values (false and 0) even when omitEmptyOptionalFields is true', () => {
       // Mock isFieldRequired to return false for optional fields

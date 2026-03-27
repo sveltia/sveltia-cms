@@ -181,6 +181,13 @@
         // Add a random ID to the new item to ensure it is unique. This is necessary for the `key`
         // attribute in the `each` block.
         newItem.__sc_item_id = crypto.randomUUID();
+
+        // Track original key paths for existing items before they shift due to the insertion
+        valueList.forEach((item, i) => {
+          if (isObject(item)) {
+            item.__sc_item_original_key_path ??= `${keyPath}.${i}`;
+          }
+        });
       }
 
       valueList.splice(index, 0, newItem);
@@ -197,6 +204,15 @@
    */
   const removeItem = (index) => {
     updateComplexList(({ valueList, expanderStateList }) => {
+      if (!hasSingleSubField) {
+        // Track original key paths for existing items before they shift due to the removal
+        valueList.forEach((item, i) => {
+          if (isObject(item)) {
+            item.__sc_item_original_key_path ??= `${keyPath}.${i}`;
+          }
+        });
+      }
+
       valueList.splice(index, 1);
       expanderStateList.splice(index, 1);
     });
@@ -212,6 +228,9 @@
         // Ensure the IDs are unique before swapping
         valueList[index].__sc_item_id ??= crypto.randomUUID();
         valueList[index + 1].__sc_item_id ??= crypto.randomUUID();
+        // Track original key paths for correct revert after reordering
+        valueList[index].__sc_item_original_key_path ??= `${keyPath}.${index}`;
+        valueList[index + 1].__sc_item_original_key_path ??= `${keyPath}.${index + 1}`;
       }
 
       [valueList[index], valueList[index + 1]] = [valueList[index + 1], valueList[index]];
