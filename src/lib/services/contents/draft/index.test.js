@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { describe, expect, it, vi } from 'vitest';
 
-import { entryDraft, entryDraftModified, i18nAutoDupEnabled } from './index';
+import { entryDraft, entryDraftModified, filterRealValues, i18nAutoDupEnabled } from './index';
 
 vi.mock('$lib/services/user/prefs', () => ({
   prefs: {
@@ -14,6 +14,55 @@ vi.mock('$lib/services/user/prefs', () => ({
 }));
 
 describe('draft/index', () => {
+  describe('filterRealValues', () => {
+    it('should return an empty object for an empty map', () => {
+      expect(filterRealValues({})).toEqual({});
+    });
+
+    it('should return the map unchanged when there are no internal properties', () => {
+      const valueMap = { title: 'Hello', 'items.0.label': 'World' };
+
+      expect(filterRealValues(valueMap)).toEqual(valueMap);
+    });
+
+    it('should remove __sc_item_id properties', () => {
+      expect(
+        filterRealValues({
+          'items.0.label': 'Hello',
+          'items.0.__sc_item_id': 'uuid-123',
+        }),
+      ).toEqual({ 'items.0.label': 'Hello' });
+    });
+
+    it('should remove __sc_item_original_key_path properties', () => {
+      expect(
+        filterRealValues({
+          'items.0.label': 'Hello',
+          'items.0.__sc_item_original_key_path': 'items.2',
+        }),
+      ).toEqual({ 'items.0.label': 'Hello' });
+    });
+
+    it('should remove all internal __sc_ properties at any index', () => {
+      expect(
+        filterRealValues({
+          'items.0.label': 'A',
+          'items.0.__sc_item_id': 'uuid-a',
+          'items.0.__sc_item_original_key_path': 'items.1',
+          'items.1.label': 'B',
+          'items.1.__sc_item_id': 'uuid-b',
+          'items.1.__sc_item_original_key_path': 'items.0',
+        }),
+      ).toEqual({ 'items.0.label': 'A', 'items.1.label': 'B' });
+    });
+
+    it('should not remove properties that merely contain __sc_ in a non-suffix position', () => {
+      const valueMap = { __sc_toplevel: 'kept', 'a.__sc_middle.b': 'kept' };
+
+      expect(filterRealValues(valueMap)).toEqual(valueMap);
+    });
+  });
+
   describe('entryDraft', () => {
     it('should initialize as undefined', () => {
       let value;
@@ -199,6 +248,86 @@ describe('draft/index', () => {
       });
 
       expect(value).toBe(true);
+    });
+
+    it('should return false when currentValues only differ by internal properties', () => {
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { 'items.0.label': 'Hello' } },
+        currentValues: {
+          en: {
+            'items.0.label': 'Hello',
+            'items.0.__sc_item_id': 'uuid-123',
+            'items.0.__sc_item_original_key_path': 'items.0',
+          },
+        },
+      };
+
+      entryDraft.set(draft);
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(false);
+    });
+
+    it('should return true when currentValues differ by both real and internal properties', () => {
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { 'items.0.label': 'Hello' } },
+        currentValues: {
+          en: {
+            'items.0.label': 'Modified',
+            'items.0.__sc_item_id': 'uuid-123',
+          },
+        },
+      };
+
+      entryDraft.set(draft);
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(true);
+    });
+
+    it('should ignore internal properties across multiple locales', () => {
+      const draft = {
+        originalLocales: { en: true, ja: true },
+        currentLocales: { en: true, ja: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: {
+          en: { 'items.0.label': 'Hello' },
+          ja: { 'items.0.label': 'こんにちは' },
+        },
+        currentValues: {
+          en: { 'items.0.label': 'Hello', 'items.0.__sc_item_id': 'uuid-a' },
+          ja: { 'items.0.label': 'こんにちは', 'items.0.__sc_item_id': 'uuid-a' },
+        },
+      };
+
+      entryDraft.set(draft);
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(false);
     });
   });
 

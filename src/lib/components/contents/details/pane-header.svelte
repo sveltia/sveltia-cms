@@ -9,7 +9,7 @@
   import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';
   import PreviewButton from '$lib/components/contents/details/preview-button.svelte';
   import { backend } from '$lib/services/backends';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { entryDraft, filterRealValues } from '$lib/services/contents/draft';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
@@ -57,8 +57,9 @@
   const canRevert = $derived(
     $thisPane?.locale &&
       !equal(
-        $state.snapshot($entryDraft?.currentValues[$thisPane.locale]),
         originalValues[$thisPane.locale],
+        // Exclude internal properties from the comparison
+        filterRealValues($state.snapshot($entryDraft?.currentValues[$thisPane.locale]) ?? {}),
       ),
   );
   const canPreview = $derived($entryDraft?.canPreview ?? true);

@@ -10,7 +10,7 @@ export const INTERNAL_PROP_REGEX = /\.__sc_\w+$/;
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
- * @import { EntryDraft } from '$lib/types/private';
+ * @import { EntryDraft, FlattenedEntryContent } from '$lib/types/private';
  */
 
 /**
@@ -31,6 +31,14 @@ export const i18nAutoDupEnabled = writable(true);
 export const entryDraftInteracted = writable(false);
 
 /**
+ * Filter out internal properties from a value map.
+ * @param {FlattenedEntryContent} valueMap The value map to filter.
+ * @returns {FlattenedEntryContent} The filtered value map.
+ */
+export const filterRealValues = (valueMap) =>
+  Object.fromEntries(Object.entries(valueMap).filter(([key]) => !INTERNAL_PROP_REGEX.test(key)));
+
+/**
  * Whether the current {@link entryDraft} has been modified.
  * @type {Readable<boolean>}
  */
@@ -48,10 +56,15 @@ export const entryDraftModified = derived([entryDraft], ([draft]) => {
     currentValues,
   } = draft;
 
+  // Exclude internal properties from the value comparison
+  const currentRealValues = Object.fromEntries(
+    Object.entries(currentValues).map(([locale, valueMap]) => [locale, filterRealValues(valueMap)]),
+  );
+
   return (
     !equal(originalLocales, currentLocales) ||
     !equal(originalSlugs, currentSlugs) ||
-    !equal(originalValues, currentValues)
+    !equal(originalValues, currentRealValues)
   );
 });
 
