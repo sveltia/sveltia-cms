@@ -214,21 +214,37 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
     code_challenge_method: 'S256',
   });
 
+  const realAuthURL = `${authURL}?${params}`;
+
   // Store the temporary secret and real auth URL
   await LocalStorage.set('sveltia-cms.auth', {
     csrfToken,
     codeVerifier,
-    realAuthURL: `${authURL}?${params}`,
+    realAuthURL,
   });
 
   // Store the user info only with the backend name, so the automatic sign-in flow that triggers
   // `finishClientSideAuth` below will work
   await LocalStorage.set('sveltia-cms.user', { backendName });
 
-  return authorize({
-    backendName,
-    authURL: redirectURL,
-  });
+  // Try opening a popup window for the OAuth flow. If the popup is blocked (common on mobile
+  // browsers), fall back to a full-page redirect to the authorization URL instead.
+  const popup = openPopup({ authURL: redirectURL });
+
+  if (popup) {
+    return authorize({
+      backendName,
+      authURL: redirectURL,
+    });
+  }
+
+  // Popup was blocked; redirect the main window directly to the auth provider.
+  // When the provider redirects back with ?code=&state=, handleAuthFlow will detect the params
+  // and complete the token exchange via finishClientSideAuthDirect.
+  window.location.href = realAuthURL;
+
+  // Return a never-resolving promise to prevent further execution while navigating
+  return new Promise(() => {});
 };
 
 /**
@@ -359,6 +375,61 @@ export const handleClientSideAuthPopup = async ({ backendName, clientId, tokenUR
 };
 
 /**
+ * Complete the client-side Authorization Code Flow with PKCE directly in the main window (no
+ * popup). Used as a fallback when the popup window could not be opened (e.g. on mobile browsers).
+ * @param {object} args Arguments.
+ * @param {string} args.backendName Backend name, e.g. `gitlab`.
+ * @param {string} args.clientId OAuth application ID.
+ * @param {string} args.tokenURL OAuth token request URL.
+ * @param {string} args.code Authorization code from the redirect.
+ * @param {string} args.state Authorization state (CSRF token) from the redirect.
+ * @returns {Promise<AuthTokens>} Auth tokens.
+ * @throws {Error} When authentication fails.
+ */
+export const finishClientSideAuthDirect = async ({ backendName, clientId, tokenURL, code, state }) => {
+  const { origin, pathname } = window.location;
+  const { csrfToken, codeVerifier } = (await LocalStorage.get('sveltia-cms.auth')) ?? {};
+  const redirectURL = `${origin}${pathname}`;
+
+  // Remove the temporary secret
+  await LocalStorage.delete('sveltia-cms.auth');
+
+  // Clean up the URL by removing the auth params
+  window.history.replaceState({}, '', redirectURL);
+
+  if (!csrfToken || !codeVerifier || state !== csrfToken) {
+    throw new Error('CSRF token mismatch');
+  }
+
+  const response = await fetch(tokenURL, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      grant_type: 'authorization_code',
+      client_id: clientId,
+      code,
+      redirect_uri: redirectURL,
+      code_verifier: codeVerifier,
+    }),
+  });
+
+  if (!response) {
+    throw new Error('Token request failed');
+  }
+
+  const { access_token: token, refresh_token: refreshToken, error } = await response.json();
+
+  if (error || !token) {
+    throw new Error(error || 'No token received');
+  }
+
+  return { token, refreshToken };
+};
+
+/**
  * Handle the authentication flow for a Git service provider. This function decides whether to
  * initiate a client-side or server-side authentication flow based on the configured backend name
  * and authentication type.
@@ -389,6 +460,13 @@ export const handleAuthFlow = async ({ auto, apiConfig }) => {
     if (inPopup) {
       // We are in the auth popup window; let’s get the OAuth flow done
       await handleClientSideAuthPopup({ backendName, clientId, tokenURL });
+    }
+
+    // Check if we’re returning from a direct redirect (popup-blocked fallback)
+    const { code, state } = Object.fromEntries(new URLSearchParams(window.location.search));
+
+    if (code && state && !inPopup) {
+      return finishClientSideAuthDirect({ backendName, clientId, tokenURL, code, state });
     }
 
     if (inPopup || auto) {
