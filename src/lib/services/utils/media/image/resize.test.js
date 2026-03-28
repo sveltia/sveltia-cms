@@ -32,23 +32,23 @@ describe('Test calculateResize()', () => {
     expect(
       calculateResize({ width: 1024, height: 768 }, { ...portraitTarget, fit: 'scale-down' }),
     ).toEqual({
-      scale: 1,
-      width: 1024,
-      height: 768,
+      scale: 0.75,
+      width: 768,
+      height: 576,
     });
     expect(
       calculateResize({ width: 2048, height: 1536 }, { ...portraitTarget, fit: 'scale-down' }),
     ).toEqual({
-      scale: 0.5,
-      width: 1024,
-      height: 768,
+      scale: 0.375,
+      width: 768,
+      height: 576,
     });
     expect(
       calculateResize({ width: 800, height: 600 }, { ...portraitTarget, fit: 'scale-down' }),
     ).toEqual({
-      scale: 1,
-      width: 800,
-      height: 600,
+      scale: 0.96,
+      width: 768,
+      height: 576,
     });
   });
 
@@ -66,9 +66,9 @@ describe('Test calculateResize()', () => {
     expect(
       calculateResize({ width: 100, height: 200 }, { width: 50, height: 100, fit: 'contain' }),
     ).toEqual({
-      scale: 0.25,
-      width: 25,
-      height: 50,
+      scale: 0.5,
+      width: 50,
+      height: 100,
     });
 
     // Portrait image in landscape target (targetWidth > targetHeight)
@@ -101,9 +101,9 @@ describe('Test calculateResize()', () => {
         { width: 768, height: 1024, fit: 'scale-down' },
       ),
     ).toEqual({
-      scale: 0.375,
-      width: 576,
-      height: 768,
+      scale: 0.5,
+      width: 768,
+      height: 1024,
     });
 
     // Larger portrait image in landscape target - scale-down converts to contain
@@ -113,6 +113,64 @@ describe('Test calculateResize()', () => {
       scale: 0.25,
       width: 50,
       height: 100,
+    });
+  });
+
+  test('only width exceeds target (issue #701)', () => {
+    // 4000x2000 with 2560x2560 target — only width exceeds, should still resize
+    expect(
+      calculateResize(
+        { width: 4000, height: 2000 },
+        { width: 2560, height: 2560, fit: 'scale-down' },
+      ),
+    ).toEqual({
+      scale: 0.64,
+      width: 2560,
+      height: 1280,
+    });
+  });
+
+  test('only height exceeds target', () => {
+    // 2000x4000 with 2560x2560 target — only height exceeds, should still resize
+    expect(
+      calculateResize(
+        { width: 2000, height: 4000 },
+        { width: 2560, height: 2560, fit: 'scale-down' },
+      ),
+    ).toEqual({
+      scale: 0.64,
+      width: 1280,
+      height: 2560,
+    });
+  });
+
+  test('square target with non-square image', () => {
+    // Landscape in square target
+    expect(
+      calculateResize({ width: 400, height: 200 }, { width: 100, height: 100, fit: 'contain' }),
+    ).toEqual({
+      scale: 0.25,
+      width: 100,
+      height: 50,
+    });
+
+    // Portrait in square target
+    expect(
+      calculateResize({ width: 200, height: 400 }, { width: 100, height: 100, fit: 'contain' }),
+    ).toEqual({
+      scale: 0.25,
+      width: 50,
+      height: 100,
+    });
+  });
+
+  test('landscape image in portrait target with contain', () => {
+    expect(
+      calculateResize({ width: 400, height: 200 }, { width: 100, height: 300, fit: 'contain' }),
+    ).toEqual({
+      scale: 0.25,
+      width: 100,
+      height: 50,
     });
   });
 
@@ -134,7 +192,12 @@ describe('Test calculateResize()', () => {
     });
 
     // Unknown fit option - should return with scale 1 and newWidth/newHeight as 0
-    expect(calculateResize(source, { fit: /** @type {'contain'} */ ('unknown') })).toEqual({
+    expect(
+      calculateResize(
+        { width: 100, height: 50 },
+        { width: 50, height: 25, fit: /** @type {'contain'} */ ('unknown') },
+      ),
+    ).toEqual({
       scale: 1,
       width: 0,
       height: 0,

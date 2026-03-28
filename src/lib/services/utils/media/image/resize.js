@@ -19,12 +19,11 @@ export const calculateResize = (
 ) => {
   const original = { scale: 1, width: originalWidth, height: originalHeight };
 
-  if (originalWidth === targetHeight && originalHeight === targetHeight) {
+  if (originalWidth === targetWidth && originalHeight === targetHeight) {
     return original;
   }
 
-  const isLandscape = originalWidth > originalHeight;
-  const isSmaller = originalWidth < targetHeight || originalHeight < targetHeight;
+  const isSmaller = originalWidth <= targetWidth && originalHeight <= targetHeight;
   let scale = 1;
   let newWidth = 0;
   let newHeight = 0;
@@ -38,27 +37,9 @@ export const calculateResize = (
   }
 
   if (fit === 'contain') {
-    if (isLandscape) {
-      if (targetWidth > targetHeight) {
-        scale = targetWidth / originalWidth;
-        newWidth = targetWidth;
-      } else {
-        scale = targetHeight / originalWidth;
-        newWidth = targetHeight;
-      }
-
-      newHeight = originalHeight * scale;
-    } else {
-      if (targetWidth > targetHeight) {
-        scale = targetHeight / originalHeight;
-        newHeight = targetHeight;
-      } else {
-        scale = targetWidth / originalHeight;
-        newHeight = targetWidth;
-      }
-
-      newWidth = originalWidth * scale;
-    }
+    scale = Math.min(targetWidth / originalWidth, targetHeight / originalHeight);
+    newWidth = originalWidth * scale;
+    newHeight = originalHeight * scale;
   }
 
   return { scale, width: newWidth, height: newHeight };
