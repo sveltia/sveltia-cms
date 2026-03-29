@@ -56,7 +56,7 @@ export const slugify = (
   } else {
     // Disallow space, control, delimiter, reserved, unwise characters
     // @see https://stackoverflow.com/q/1547899
-    slug = slug.replaceAll(/[\p{Z}\p{C}!"#$&'()*+,/:;<=>?@[\]^`{|}]/gu, ' ');
+    slug = slug.replaceAll(/[\p{Z}\p{C}!"#$%&'()*+,/:;<=>?@[\\\]^`{|}]/gu, ' ');
   }
 
   // Replace all the spaces with replacers (hyphens by default)

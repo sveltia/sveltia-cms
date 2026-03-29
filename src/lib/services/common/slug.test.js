@@ -48,7 +48,8 @@ describe('Test slugify()', () => {
     expect(slugify('Hello, World!')).toBe('hello-world');
     expect(slugify('Hello@World#2024')).toBe('hello-world-2024');
     expect(slugify('Hello & World')).toBe('hello-world');
-    expect(slugify('Hello/World\\Test')).toBe('hello-world\\test');
+    expect(slugify('Hello/World\\Test')).toBe('hello-world-test');
+    expect(slugify('Hello%20World')).toBe('hello-20world'); // % is a delimiter
     expect(slugify('Hello(World)[Test]')).toBe('hello-world-test');
     expect(slugify('Hello"World\'Test')).toBe('hello-world-test');
     expect(slugify('Hello:World;Test')).toBe('hello-world-test');
