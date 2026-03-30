@@ -64,14 +64,13 @@ export const getSlugEditorProp = ({ collection, collectionFile, originalSlugs })
   const slugEditorEnabled = slugTemplate.includes(SLUG_EDITOR_TAG) || localizedSlugEditorEnabled;
 
   return Object.fromEntries(
-    allLocales.map((locale) => [
-      locale,
-      slugEditorEnabled
-        ? (locale === defaultLocale || localizedSlugEditorEnabled) && !originalSlugs[locale]
-          ? true
-          : 'readonly'
-        : false,
-    ]),
+    allLocales.map((locale) => {
+      if (!slugEditorEnabled || originalSlugs._ || originalSlugs[locale]) {
+        return [locale, false];
+      }
+
+      return [locale, locale === defaultLocale || localizedSlugEditorEnabled || 'readonly'];
+    }),
   );
 };
 
