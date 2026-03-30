@@ -587,6 +587,36 @@ describe('Test fillTemplate()', async () => {
     expect(resultWithSlug).toEqual('my-title');
   });
 
+  test('path template with currentSlug is not truncated by maxlength', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      backend: { name: 'github' },
+      media_folder: 'static/images/uploads',
+      collections: [collection],
+      _siteURL: '',
+      _baseURL: '',
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        maxlength: 64,
+      },
+    });
+
+    const longSlug = 'a'.repeat(64);
+    const content = { title: 'Some Title' };
+
+    // When filling a path template with currentSlug, the non-slug parts (e.g. "/+page") must not
+    // be truncated even if the total length exceeds slug.maxlength
+    const result = fillTemplate('{{slug}}/+page', {
+      collection: { ...collection, slug_length: undefined },
+      content,
+      currentSlug: longSlug,
+    });
+
+    expect(result).toEqual(`${longSlug}/+page`);
+  });
+
   test('empty template', async () => {
     await setupCmsConfig();
 

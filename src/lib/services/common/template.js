@@ -319,14 +319,16 @@ export const fillTemplate = (template, options) => {
     .replace(TEMPLATE_REGEX, (_match, tag) => replaceTemplatePlaceholder(tag, context))
     .trim();
 
+  // We don’t have to rename it when creating a path with a slug given. Skip truncation because the
+  // slug has already been truncated during its own generation, and truncating the entire filled
+  // path template (e.g. `{{slug}}/+page`) would break the non-slug parts of the path.
+  if (currentSlug) {
+    return slug;
+  }
+
   // Truncate a long slug if needed
   if (typeof slugMaxLength === 'number') {
     slug = truncate(slug, slugMaxLength, { ellipsis: '' }).replace(/-$/, '');
-  }
-
-  // We don’t have to rename it when creating a path with a slug given
-  if (currentSlug) {
-    return slug;
   }
 
   return renameIfNeeded(slug, getExistingSlugs(collectionName, locale));
