@@ -206,6 +206,12 @@ export default defineConfig({
       // Keep exports in the ES module
       // https://stackoverflow.com/q/71500190
       preserveEntrySignatures: 'strict',
+      // Silence some warnings that are not relevant to our use case
+      checks: {
+        missingNameOptionForIifeExport: false,
+        mixedExports: false,
+        pluginTimings: false,
+      },
     },
     outDir: 'package/dist',
   },
