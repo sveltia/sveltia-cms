@@ -37,6 +37,8 @@ export const strings = {
   delete: '削除',
   save: '保存',
   saving: '保存中…',
+  publish: '公開',
+  publishing: '公開中…',
   rename: '名前を変更',
   update: '更新',
   replace: '差し替え',

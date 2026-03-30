@@ -298,7 +298,7 @@
   {#if $skipCIConfigured}
     <SplitButton
       variant="primary"
-      label={$_(saving ? 'saving' : 'save')}
+      label={$_($skipCIEnabled ? (saving ? 'saving' : 'save') : saving ? 'publishing' : 'publish')}
       disabled={disabled || !modified || saving}
       keyShortcuts="Accel+S"
       onclick={() => {

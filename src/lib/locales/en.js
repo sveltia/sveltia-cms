@@ -37,6 +37,8 @@ export const strings = {
   delete: 'Delete',
   save: 'Save',
   saving: 'Saving…',
+  publish: 'Publish',
+  publishing: 'Publishing…',
   rename: 'Rename',
   update: 'Update',
   replace: 'Replace',
