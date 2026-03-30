@@ -18,10 +18,6 @@ vi.mock('$lib/services/assets/kinds', () => ({
   getAssetKind: vi.fn(),
 }));
 
-vi.mock('$lib/services/backends', () => ({
-  backend: { subscribe: vi.fn() },
-}));
-
 vi.mock('$lib/services/backends/save', () => ({
   saveChanges: vi.fn(),
 }));
@@ -58,6 +54,12 @@ vi.mock('svelte/store', () => ({
 }));
 
 vi.mock('$lib/services/backends/git/shared/integration', () => ({
+  skipCIConfigured: {
+    subscribe: vi.fn((callback) => {
+      callback(false);
+      return vi.fn();
+    }),
+  },
   skipCIEnabled: {
     subscribe: vi.fn((callback) => {
       callback(false);
@@ -94,15 +96,6 @@ vi.mock('$lib/services/assets/data', () => ({
 
 vi.mock('$lib/services/assets/kinds', () => ({
   getAssetKind: vi.fn().mockReturnValue('image'),
-}));
-
-vi.mock('$lib/services/backends', () => ({
-  backend: {
-    subscribe: vi.fn((callback) => {
-      callback({ isGit: false });
-      return vi.fn();
-    }),
-  },
 }));
 
 vi.mock('$lib/services/backends/save', () => ({
@@ -375,9 +368,13 @@ describe('assets/data/create', () => {
   describe('updatedStores', () => {
     it('should update toast with save count', async () => {
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
+      const { skipCIConfigured } = await import('$lib/services/backends/git/shared/integration');
       const { get } = await import('svelte/store');
 
-      vi.mocked(get).mockReturnValue(undefined);
+      vi.mocked(get).mockImplementation((store) => {
+        if (store === skipCIConfigured) return false;
+        return undefined;
+      });
 
       updatedStores({ count: 3 });
 
@@ -389,14 +386,14 @@ describe('assets/data/create', () => {
       });
     });
 
-    it('should set published to true when backend is Git and skipCI is disabled', async () => {
+    it('should set published to true when skipCIConfigured is true and skipCI is disabled', async () => {
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
-      const { backend } = await import('$lib/services/backends');
-      const { skipCIEnabled } = await import('$lib/services/backends/git/shared/integration');
+      const { skipCIConfigured, skipCIEnabled } =
+        await import('$lib/services/backends/git/shared/integration');
       const { get } = await import('svelte/store');
 
       vi.mocked(get).mockImplementation((store) => {
-        if (store === backend) return { isGit: true };
+        if (store === skipCIConfigured) return true;
         if (store === skipCIEnabled) return false;
         return undefined;
       });
@@ -410,12 +407,12 @@ describe('assets/data/create', () => {
 
     it('should set published to false when skipCI is enabled', async () => {
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
-      const { backend } = await import('$lib/services/backends');
-      const { skipCIEnabled } = await import('$lib/services/backends/git/shared/integration');
+      const { skipCIConfigured, skipCIEnabled } =
+        await import('$lib/services/backends/git/shared/integration');
       const { get } = await import('svelte/store');
 
       vi.mocked(get).mockImplementation((store) => {
-        if (store === backend) return { isGit: true };
+        if (store === skipCIConfigured) return true;
         if (store === skipCIEnabled) return true;
         return undefined;
       });

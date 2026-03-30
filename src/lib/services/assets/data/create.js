@@ -3,8 +3,7 @@ import { get } from 'svelte/store';
 import { allAssets, focusedAsset, getAssetsByDirName, overlaidAsset } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { getAssetKind } from '$lib/services/assets/kinds';
-import { backend } from '$lib/services/backends';
-import { skipCIEnabled } from '$lib/services/backends/git/shared/integration';
+import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
@@ -73,7 +72,7 @@ export const updatedStores = ({ count }) => {
   assetUpdatesToast.set({
     ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
-    published: !!get(backend)?.isGit && !get(skipCIEnabled),
+    published: get(skipCIConfigured) && !get(skipCIEnabled),
     count,
   });
 };

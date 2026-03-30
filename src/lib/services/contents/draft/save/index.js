@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 
-import { backend, isLastCommitPublished } from '$lib/services/backends';
-import { skipCIEnabled } from '$lib/services/backends/git/shared/integration';
+import { isLastCommitPublished } from '$lib/services/backends';
+import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
 import {
   contentUpdatesToast,
@@ -26,7 +26,7 @@ import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
  * @param {boolean | undefined} args.skipCI Whether to disable automatic deployments for the change.
  */
 const updateStores = ({ skipCI }) => {
-  const published = !!get(backend)?.isGit && !(skipCI ?? get(skipCIEnabled));
+  const published = get(skipCIConfigured) && !(skipCI ?? get(skipCIEnabled));
 
   contentUpdatesToast.set({
     ...UPDATE_TOAST_DEFAULT_STATE,

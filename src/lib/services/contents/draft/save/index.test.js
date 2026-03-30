@@ -1,8 +1,8 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { backend, isLastCommitPublished } from '$lib/services/backends';
-import { skipCIEnabled } from '$lib/services/backends/git/shared/integration';
+import { isLastCommitPublished } from '$lib/services/backends';
+import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
 import {
   contentUpdatesToast,
@@ -73,8 +73,8 @@ describe('draft/save/index', () => {
         return mockDraft;
       }
 
-      if (store === backend) {
-        return { isGit: true };
+      if (store === skipCIConfigured) {
+        return true;
       }
 
       if (store === skipCIEnabled) {
@@ -174,8 +174,8 @@ describe('draft/save/index', () => {
           return mockDraft;
         }
 
-        if (store === backend) {
-          return { isGit: false };
+        if (store === skipCIConfigured) {
+          return false;
         }
 
         return undefined;
