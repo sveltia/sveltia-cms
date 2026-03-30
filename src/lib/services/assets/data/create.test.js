@@ -388,8 +388,10 @@ describe('assets/data/create', () => {
 
     it('should set published to true when skipCIConfigured is true and skipCI is disabled', async () => {
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
+
       const { skipCIConfigured, skipCIEnabled } =
         await import('$lib/services/backends/git/shared/integration');
+
       const { get } = await import('svelte/store');
 
       vi.mocked(get).mockImplementation((store) => {
@@ -407,8 +409,10 @@ describe('assets/data/create', () => {
 
     it('should set published to false when skipCI is enabled', async () => {
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
+
       const { skipCIConfigured, skipCIEnabled } =
         await import('$lib/services/backends/git/shared/integration');
+
       const { get } = await import('svelte/store');
 
       vi.mocked(get).mockImplementation((store) => {
