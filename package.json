@@ -52,7 +52,7 @@
     "marked-bidi": "^1.0.14",
     "mime": "^4.1.0",
     "parse-entities": "^4.0.2",
-    "pdfjs-dist": "^5.5.207",
+    "pdfjs-dist": "^5.6.205",
     "qrcode": "^1.5.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
