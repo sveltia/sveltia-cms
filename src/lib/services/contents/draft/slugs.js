@@ -4,12 +4,34 @@ import { getIndexFile } from '$lib/services/contents/collection/index-file';
 /**
  * @import {
  * EntryDraft,
+ * EntryFileMap,
  * EntrySlugVariants,
  * FillTemplateOptions,
+ * FlattenedEntryContent,
  * InternalEntryCollection,
  * LocaleSlugMap,
  * } from '$lib/types/private';
  */
+
+/**
+ * Replace blob URLs in the value map with the actual file names (without extension) so that asset
+ * fields (image, file) can be used in slug templates.
+ * @param {FlattenedEntryContent} valueMap Flattened entry content.
+ * @param {EntryFileMap} files Draft file map keyed by blob URL.
+ * @returns {FlattenedEntryContent} Value map with blob URLs replaced.
+ * @see https://github.com/sveltia/sveltia-cms/issues/710
+ */
+export const resolveBlobURLs = (valueMap, files) => {
+  const resolved = { ...valueMap };
+
+  Object.entries(resolved).forEach(([key, value]) => {
+    if (typeof value === 'string' && value.startsWith('blob:') && files[value]) {
+      resolved[key] = files[value].file.name.replace(/\.[^.]+$/, '');
+    }
+  });
+
+  return resolved;
+};
 
 /**
  * Get base options for {@link fillTemplate}.
@@ -18,7 +40,7 @@ import { getIndexFile } from '$lib/services/contents/collection/index-file';
  * @returns {FillTemplateOptions} Options.
  */
 export const getFillSlugOptions = ({ draft }) => {
-  const { collection, collectionFile, currentSlugs, currentValues, isIndexFile } = draft;
+  const { collection, collectionFile, currentSlugs, currentValues, files, isIndexFile } = draft;
 
   const {
     _i18n: { defaultLocale },
@@ -27,7 +49,7 @@ export const getFillSlugOptions = ({ draft }) => {
   return {
     collection: /** @type {InternalEntryCollection} */ (collection),
     content: {
-      ...currentValues[defaultLocale],
+      ...resolveBlobURLs(currentValues[defaultLocale], files),
       // Slug candidate for the default locale
       _slug: currentSlugs?.[defaultLocale] ?? currentSlugs?._,
     },
@@ -45,7 +67,17 @@ export const getFillSlugOptions = ({ draft }) => {
  * @returns {string} Localized slug.
  */
 export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
-  const { isNew, collection, collectionFile, currentSlugs, currentValues, isIndexFile } = draft;
+  const {
+    isNew,
+    collection,
+    collectionFile,
+    originalLocales,
+    currentSlugs,
+    currentValues,
+    files,
+    isIndexFile,
+  } = draft;
+
   const { _type } = collection;
 
   const {
@@ -62,15 +94,18 @@ export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
   // When creating a new entry or enabling a locale for an existing entry, we need to fill the slug
   // template to generate the initial slug for the new locale. For other cases, we keep the existing
   // slug to avoid changing URLs unexpectedly.
-  if (isNew || !draft.originalLocales[locale]) {
+  if (isNew || !originalLocales[locale]) {
     return fillTemplate(slugTemplate, {
       collection,
       locale,
       content: {
         // Merge the default locale content and localized content
-        ...currentValues[defaultLocale],
-        ...Object.fromEntries(
-          localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale]?.[keyPath]]),
+        ...resolveBlobURLs(currentValues[defaultLocale], files),
+        ...resolveBlobURLs(
+          Object.fromEntries(
+            localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale]?.[keyPath]]),
+          ),
+          files,
         ),
         // Slug candidate for the current locale
         _slug,
