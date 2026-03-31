@@ -46,6 +46,22 @@ const clearUserCache = async () => {
 };
 
 /**
+ * Clear the cached token for authentication/access errors so the sign-in form is shown instead of a
+ * dead-end error. Don’t clear for configuration errors like missing branches or repositories where
+ * the credentials are still valid.
+ * @param {Error} error Exception to check if it’s an authentication error.
+ */
+const clearUserCacheIfNeeded = async (error) => {
+  const isAuthError =
+    typeof (/** @type {any} */ (error?.cause)?.status) === 'number' ||
+    error?.message === 'Not a collaborator of the repository';
+
+  if (isAuthError) {
+    await clearUserCache();
+  }
+};
+
+/**
  * Reset the sign-in error store.
  */
 export const resetError = () => {
@@ -225,7 +241,7 @@ export const signInAutomatically = async () => {
       logError(ex, 'dataFetch');
     }
 
-    await clearUserCache();
+    await clearUserCacheIfNeeded(ex);
   }
 };
 
@@ -280,7 +296,7 @@ export const signInManually = async (_backendName, token) => {
     await _backend.fetchFiles();
   } catch (/** @type {any} */ ex) {
     logError(ex, 'dataFetch');
-    await clearUserCache();
+    await clearUserCacheIfNeeded(ex);
   }
 };
 
