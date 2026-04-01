@@ -160,14 +160,16 @@ const replaceTemplateTag = (tag, context) => {
     currentSlug,
     entryFilePath,
     locale,
-    dateTimeParts = getDateTimeParts({ timeZone: 'UTC' }),
+    dateTimeParts,
     identifierField,
     basePath,
     isIndexFile = false,
   } = context;
 
-  // Handle date-time fields
-  const dateTimeValue = handleDateTimeTag(tag, dateTimeParts);
+  // Handle date-time fields. Parts are pre-calculated in `fillTemplate` to avoid redundant
+  // calculations for multiple date-time tags in the same template.
+  const _dateTimeParts = /** @type {Record<string, string>} */ (dateTimeParts);
+  const dateTimeValue = handleDateTimeTag(tag, _dateTimeParts);
 
   if (dateTimeValue !== undefined) {
     return dateTimeValue;
@@ -295,7 +297,15 @@ const getExistingSlugs = (collectionName, locale) =>
  * @see https://sveltiacms.app/en/docs/media/internal#using-placeholders
  */
 export const fillTemplate = (template, options) => {
-  const { collection, content: valueMap, currentSlug, locale, isIndexFile = false } = options;
+  const {
+    collection,
+    content: valueMap,
+    currentSlug,
+    locale,
+    dateTimeParts,
+    isIndexFile = false,
+  } = options;
+
   const { _type, name: collectionName } = collection;
 
   const {
@@ -309,7 +319,12 @@ export const fillTemplate = (template, options) => {
 
   /** @type {ReplaceContext} */
   const context = {
-    replaceSubContext: { ...options, identifierField, basePath },
+    replaceSubContext: {
+      ...options,
+      dateTimeParts: dateTimeParts ?? getDateTimeParts({ timeZone: 'UTC' }),
+      identifierField,
+      basePath,
+    },
     getFieldArgs: { collectionName, keyPath: '', valueMap, isIndexFile },
   };
 
