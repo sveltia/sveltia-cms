@@ -1532,6 +1532,10 @@
  * @property {boolean} [trim] Whether to trim leading and trailing replacement characters. Default:
  * `true`.
  * @property {boolean} [lowercase] Whether to convert the slug to lowercase. Default: `true`.
+ * @property {'utc' | 'local'} [timezone] Timezone to be used for date-based slug template tags,
+ * such as `{{day}}` and `{{hour}}`. Default is `utc` for backward compatibility with Netlify/Decap
+ * CMS. Use `local` to generate slugs based on the local time of the user’s browser, which is more
+ * intuitive in most cases.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://sveltiacms.app/en/docs/collections/entries#global-slug-options
  */

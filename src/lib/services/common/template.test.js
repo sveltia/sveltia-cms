@@ -99,9 +99,71 @@ describe('Test fillTemplate()', async () => {
     const { year, month, day, hour, minute, second } = dateTimeParts;
     const result = `${year}-${month}-${day}-${hour}-${minute}-${second}`;
 
-    // The time zone should always be UTC, not local, with or without the `dateTimeParts` option
+    // UTC is the default when `slug.timezone` is not set, with or without explicit `dateTimeParts`
     expect(fillTemplate(template, { collection, content: {} })).toEqual(result);
     expect(fillTemplate(template, { collection, content: {}, dateTimeParts })).toEqual(result);
+  });
+
+  test('date/time with explicit utc timezone config', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      backend: { name: 'github' },
+      media_folder: 'static/images/uploads',
+      collections: [collection],
+      _siteURL: '',
+      _baseURL: '',
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        timezone: 'utc',
+      },
+    });
+
+    const template = '{{year}}-{{month}}-{{day}}-{{hour}}-{{minute}}-{{second}}';
+    const dateTimeParts = getDateTimeParts({ timeZone: 'UTC' });
+    const { year, month, day, hour, minute, second } = dateTimeParts;
+    const expected = `${year}-${month}-${day}-${hour}-${minute}-${second}`;
+
+    // Explicitly setting `timezone: 'utc'` should produce the same result as the default
+    expect(fillTemplate(template, { collection, content: {} })).toEqual(expected);
+  });
+
+  test('date/time with local timezone config', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      backend: { name: 'github' },
+      media_folder: 'static/images/uploads',
+      collections: [collection],
+      _siteURL: '',
+      _baseURL: '',
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        timezone: 'local',
+      },
+    });
+
+    const template = '{{year}}-{{month}}-{{day}}-{{hour}}-{{minute}}-{{second}}';
+    // Should produce a valid date/time format using the local timezone
+    const result = fillTemplate(template, { collection, content: {} });
+
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}$/);
+
+    // Explicitly provided `dateTimeParts` should always be used, regardless of timezone config
+    const customParts = {
+      year: '2025',
+      month: '06',
+      day: '15',
+      hour: '10',
+      minute: '30',
+      second: '45',
+    };
+
+    expect(fillTemplate(template, { collection, content: {}, dateTimeParts: customParts })).toEqual(
+      '2025-06-15-10-30-45',
+    );
   });
 
   test('random ID fallback', async () => {

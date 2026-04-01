@@ -314,14 +314,16 @@ export const fillTemplate = (template, options) => {
     _file: { basePath } = {},
   } = _type === 'entry' ? collection : {};
 
+  const slugOptions = get(cmsConfig)?.slug;
   // @todo Remove the legacy option prior to the 1.0 release.
-  const slugMaxLength = legacySlugLength ?? get(cmsConfig)?.slug?.maxlength;
+  const maxlength = legacySlugLength ?? slugOptions?.maxlength;
+  const timeZone = slugOptions?.timezone === 'local' ? undefined : 'UTC';
 
   /** @type {ReplaceContext} */
   const context = {
     replaceSubContext: {
       ...options,
-      dateTimeParts: dateTimeParts ?? getDateTimeParts({ timeZone: 'UTC' }),
+      dateTimeParts: dateTimeParts ?? getDateTimeParts({ timeZone }),
       identifierField,
       basePath,
     },
@@ -342,8 +344,8 @@ export const fillTemplate = (template, options) => {
   }
 
   // Truncate a long slug if needed
-  if (typeof slugMaxLength === 'number') {
-    slug = truncate(slug, slugMaxLength, { ellipsis: '' }).replace(/-$/, '');
+  if (typeof maxlength === 'number') {
+    slug = truncate(slug, maxlength, { ellipsis: '' }).replace(/-$/, '');
   }
 
   return renameIfNeeded(slug, getExistingSlugs(collectionName, locale));
