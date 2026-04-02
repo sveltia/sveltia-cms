@@ -2,9 +2,9 @@
 
 [Sveltia CMS](https://sveltiacms.app/en/) is a free, open-source, Git-based headless content management system built for modern web development using the [Jamstack](https://jamstack.org/) architecture.
 
-Designed for content editors and developers alike, Sveltia CMS delivers a modern UX, outstanding DX, and top-notch internationalization (i18n) support — all in a small, maintenance-free package that runs entirely in the browser. Its framework-agnostic, generic-purpose design makes it suitable for a wide range of projects, from personal blogs and marketing sites to product catalogs and knowledge bases.
+Designed for content editors and developers alike, Sveltia CMS delivers a modern UX, outstanding DX, and top-notch internationalization (i18n) support — all in a small, maintenance-free JavaScript bundle that runs entirely in the browser. Its framework-agnostic, generic-purpose design makes it suitable for a wide range of projects, from personal blogs and marketing sites to product catalogs and knowledge bases.
 
-As the [definitive successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms) (now Decap CMS), Sveltia CMS addresses hundreds of longstanding issues while maintaining high compatibility with the existing configuration format and API. More and more sites are [migrating from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to benefit from the significantly improved experience, security, and reliability.
+As the [de facto successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms) (now Decap CMS), Sveltia CMS addresses hundreds of longstanding issues while maintaining high compatibility with the existing configuration format and API. More and more sites are [migrating from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to benefit from the significantly improved experience, security, and reliability.
 
 Explore real-world examples in our [showcase](https://sveltiacms.app/en/showcase), or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
