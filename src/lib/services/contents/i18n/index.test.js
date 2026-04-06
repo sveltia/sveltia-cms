@@ -8,6 +8,12 @@ import {
 } from '$lib/services/contents/i18n';
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
+// Controllable locale mock so we can set appLocale.current to null/undefined to cover the
+// `appLocale.current ?? 'en'` fallback branch in getLocaleLabel's default parameter.
+const mockLocale = vi.hoisted(() => ({ current: /** @type {string | null} */ (''), set: vi.fn() }));
+
+vi.mock('@sveltia/i18n', () => ({ locale: mockLocale }));
+
 describe('Test getCanonicalLocale()', () => {
   test('valid locale code', () => {
     expect(getCanonicalLocale('en')).toEqual('en');
@@ -450,6 +456,16 @@ describe('Test getListFormatter()', () => {
     const formatter2 = getListFormatter('en', { style: 'long', type: 'disjunction' });
 
     expect(formatter1).not.toBe(formatter2);
+  });
+});
+
+describe('Test getLocaleLabel() null/undefined appLocale.current', () => {
+  test('falls back to en when appLocale.current is null', () => {
+    mockLocale.current = null;
+    // null ?? 'en' → 'en', so displayLocale becomes 'en' and the formatter returns English names
+    expect(getLocaleLabel('en')).toBe('English');
+    expect(getLocaleLabel('fr')).toBe('French');
+    mockLocale.current = '';
   });
 });
 

@@ -1,5 +1,4 @@
-import { get } from 'svelte/store';
-import { locale as appLocale } from 'svelte-i18n';
+import { locale as appLocale } from '@sveltia/i18n';
 
 /**
  * @import {
@@ -71,7 +70,7 @@ export const parseResults = (results) =>
  * @returns {string} Locale code.
  */
 export const getLocale = () => {
-  const [locale] = /** @type {string} */ (get(appLocale)).toLowerCase().split('-');
+  const [locale] = appLocale.current.toLowerCase().split('-');
 
   return SUPPORTED_LOCALES.includes(locale) ? locale : 'en';
 };

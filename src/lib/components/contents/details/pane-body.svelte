@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, EmptyState } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { _ } from 'svelte-i18n';
 
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
@@ -147,11 +147,11 @@
   {:else if mode === 'edit'}
     <EmptyState>
       <span role="alert">
-        {$_(hasContent ? 'locale_x_now_disabled' : 'locale_x_has_been_disabled', labelOptions)}
+        {_(hasContent ? 'locale_x_now_disabled' : 'locale_x_has_been_disabled', labelOptions)}
       </span>
       <Button
         variant="tertiary"
-        label={$_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
+        label={_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
         onclick={() => {
           if (locale) {
             toggleLocale(locale);

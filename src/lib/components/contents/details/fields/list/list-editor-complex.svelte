@@ -6,12 +6,12 @@
   @see https://sveltiacms.app/en/docs/fields/list
 -->
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Icon, Menu, MenuButton, MenuItem, Spacer, TruncatedText } from '@sveltia/ui';
   import { isObject } from '@sveltia/utils/object';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
   import { getContext, onMount, untrack } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import ExpandIcon from '$lib/components/common/expand-icon.svelte';
@@ -332,7 +332,7 @@
 
 {#snippet addPositionItems(/** @type {number} */ insertIndex, /** @type {string} */ position)}
   {#if hasVariableTypes}
-    <MenuItem label={$_(`add_item_${position}`)} disabled={hasMaxItems}>
+    <MenuItem label={_(`add_item_${position}`)} disabled={hasMaxItems}>
       <!-- eslint-disable-next-line no-shadow -->
       {#snippet items()}
         {#each types ?? [] as { name, label: itemLabel } (name)}
@@ -345,7 +345,7 @@
     </MenuItem>
   {:else}
     <MenuItem
-      label={$_(`add_item_${position}`)}
+      label={_(`add_item_${position}`)}
       disabled={hasMaxItems}
       onclick={() => addItem({ index: insertIndex })}
     />
@@ -356,7 +356,7 @@
   <Button
     iconic
     disabled={!items.length}
-    aria-label={parentExpanded ? $_('collapse') : $_('expand')}
+    aria-label={parentExpanded ? _('collapse') : _('expand')}
     aria-expanded={parentExpanded}
     aria-controls="list-{fieldId}-item-list"
     onclick={() => {
@@ -376,7 +376,7 @@
     <Button
       variant="tertiary"
       size="small"
-      label={$_('expand_all')}
+      label={_('expand_all')}
       disabled={itemExpanderStates.every(([, value]) => value)}
       onclick={() => {
         syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, true])));
@@ -385,7 +385,7 @@
     <Button
       variant="tertiary"
       size="small"
-      label={$_('collapse_all')}
+      label={_('collapse_all')}
       disabled={itemExpanderStates.every(([, value]) => !value)}
       onclick={() => {
         syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, false])));
@@ -426,7 +426,7 @@
                 size="small"
                 iconic
                 disabled={isDuplicateField || index === 0}
-                aria-label={$_('move_up')}
+                aria-label={_('move_up')}
                 onclick={() => moveDownItem(index - 1)}
               >
                 {#snippet startIcon()}
@@ -438,7 +438,7 @@
                 iconic
                 size="small"
                 disabled={isDuplicateField || index === items.length - 1}
-                aria-label={$_('move_down')}
+                aria-label={_('move_down')}
                 onclick={() => moveDownItem(index)}
               >
                 {#snippet startIcon()}
@@ -454,14 +454,14 @@
                 size="small"
                 iconic
                 popupPosition="bottom-right"
-                aria-label={$_('list_item_options')}
+                aria-label={_('list_item_options')}
                 disabled={isDuplicateField}
               >
                 {#snippet popup()}
-                  <Menu aria-label={$_('list_item_options')}>
+                  <Menu aria-label={_('list_item_options')}>
                     {#if allowDuplicate}
                       <MenuItem
-                        label={$_('duplicate')}
+                        label={_('duplicate')}
                         disabled={hasMaxItems}
                         onclick={() => addItem({ index: index + 1, dupIndex: index })}
                       />
@@ -477,7 +477,7 @@
                 variant="ghost"
                 size="small"
                 iconic
-                aria-label={$_('remove')}
+                aria-label={_('remove')}
                 onclick={() => removeItem(index)}
               >
                 {#snippet startIcon()}

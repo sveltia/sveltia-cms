@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Alert, Button, Icon, Toast } from '@sveltia/ui';
   import { matchesShortcuts } from '@sveltia/utils/events';
-  import { _ } from 'svelte-i18n';
 
   import { hasMouse } from '$lib/services/user/env';
 
@@ -74,12 +74,12 @@
       }
 
       Object.assign(toast, {
-        message: $_('no_image_in_clipboard'),
+        message: _('no_image_in_clipboard'),
         show: true,
       });
     } catch {
       Object.assign(toast, {
-        message: $_('clipboard_access_denied'),
+        message: _('clipboard_access_denied'),
         show: true,
       });
     }
@@ -89,7 +89,7 @@
 {#snippet buttons()}
   <div role="none" class="buttons">
     <Button
-      label={$_('browse')}
+      label={_('browse')}
       variant="tertiary"
       size="small"
       {disabled}
@@ -101,7 +101,7 @@
     />
     {#if onFilePaste}
       <Button
-        label={$_(isImageField ? 'paste' : 'paste_image')}
+        label={_(isImageField ? 'paste' : 'paste_image')}
         variant="tertiary"
         size="small"
         {disabled}
@@ -138,15 +138,15 @@
     <div role="none" class="label">
       {#if processing}
         <div role="status">
-          {$_('processing_file')}
+          {_('processing_file')}
         </div>
       {:else if $hasMouse}
         {#if !allowDrop}
-          {$_('click_to_browse')}
+          {_('click_to_browse')}
         {:else if isImageField}
-          {$_(multiple ? 'drop_image_files_or' : 'drop_image_file_or')}
+          {_('drop_image_files_or', { values: { count: multiple ? 2 : 1 } })}
         {:else}
-          {$_(multiple ? 'drop_files_or' : 'drop_file_or')}
+          {_('drop_files_or', { values: { count: multiple ? 2 : 1 } })}
         {/if}
         {@render buttons()}
       {:else}

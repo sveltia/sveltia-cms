@@ -4,6 +4,7 @@
   one for an image/file entry field.
 -->
 <script>
+  import { _ } from '@sveltia/i18n';
   import {
     Alert,
     Button,
@@ -16,7 +17,6 @@
   import { sleep } from '@sveltia/utils/misc';
   import { sanitize } from 'isomorphic-dompurify';
   import { onMount, untrack } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
@@ -231,11 +231,11 @@
 {#snippet content()}
   {#if !listedAssets}
     <EmptyState>
-      <span role="alert">{$_(searchTerms ? 'searching' : 'loading')}</span>
+      <span role="alert">{_(searchTerms ? 'searching' : 'loading')}</span>
     </EmptyState>
   {:else if !listedAssets.length}
     <EmptyState>
-      <span role="alert">{$_('no_files_found')}</span>
+      <span role="alert">{_('no_files_found')}</span>
     </EmptyState>
   {:else}
     <SimpleImageGrid {viewType} {gridId} {multiple}>
@@ -276,7 +276,7 @@
 {#if hasAuthInfo}
   {#if error}
     <EmptyState>
-      <span role="alert">{$_(`assets_dialog.error.${error}`)}</span>
+      <span role="alert">{_(`assets_dialog.error.${error}`)}</span>
     </EmptyState>
   {:else if upload}
     <DropZone accept={fieldConfig?.accept} multiple onDrop={({ files }) => uploadFiles(files)}>
@@ -290,7 +290,7 @@
     <p role="alert">
       {#if isStockAssets}
         {@html sanitize(
-          $_('prefs.media.stock_photos.description', {
+          _('prefs.media.stock_photos.description', {
             values: {
               service: serviceLabel,
               homeHref: `href="${developerURL}"`,
@@ -302,12 +302,12 @@
       {/if}
       {#if serviceType === 'cloud_storage'}
         {@html sanitize(
-          $_(`cloud_storage.${serviceId}.auth.${authState}`, {
-            default: $_(`cloud_storage.auth.${authType}.${authState}`, {
+          _(`cloud_storage.${serviceId}.auth.${authState}`, {
+            default: _(`cloud_storage.auth.${authType}.${authState}`, {
               values: {
                 service: serviceLabel,
-                key: $_(`cloud_storage.${serviceId}.auth_key_label`, {
-                  default: $_(`cloud_storage.auth.${authType}.key_label`),
+                key: _(`cloud_storage.${serviceId}.auth_key_label`, {
+                  default: _(`cloud_storage.auth.${authType}.key_label`),
                 }),
               },
             }),
@@ -322,7 +322,7 @@
           flex
           monospace
           spellcheck="false"
-          aria-label={$_('prefs.media.stock_photos.field_label', {
+          aria-label={_('prefs.media.stock_photos.field_label', {
             values: { service: serviceLabel },
           })}
           oninput={(event) => {
@@ -344,14 +344,14 @@
         <TextInput
           flex
           spellcheck="false"
-          aria-label={$_('user_name')}
+          aria-label={_('user_name')}
           disabled={authState === 'requested'}
           bind:value={input.userName}
         />
       </div>
       <div role="none" class="input-outer">
         <SecretInput
-          aria-label={$_('password')}
+          aria-label={_('password')}
           disabled={authState === 'requested'}
           bind:value={input.password}
         />
@@ -359,7 +359,7 @@
       <div role="none" class="input-outer">
         <Button
           variant="secondary"
-          label={$_('sign_in')}
+          label={_('sign_in')}
           disabled={!input.userName || !input.password || authState === 'requested'}
           onclick={async () => {
             authState = 'requested';
@@ -384,21 +384,17 @@
   </EmptyState>
 {:else}
   <EmptyState>
-    <span role="alert">{$_('cloud_storage.invalid')}</span>
+    <span role="alert">{_('cloud_storage.invalid')}</span>
   </EmptyState>
 {/if}
 
 <Toast bind:show={uploadingToast.show}>
   <Alert status={uploadingToast.status}>
     {#if uploadingToast.status === 'info'}
-      {$_(uploadingToast.length === 1 ? 'uploading_file_progress' : 'uploading_files_progress', {
-        values: { count: uploadingToast.length },
-      })}
+      {_('uploading_files_progress', { values: { count: uploadingToast.length } })}
     {/if}
     {#if uploadingToast.status === 'error'}
-      {$_(uploadingToast.length === 1 ? 'uploading_file_failed' : 'uploading_files_failed', {
-        values: { count: uploadingToast.length },
-      })}
+      {_('uploading_files_failed', { values: { count: uploadingToast.length } })}
     {/if}
   </Alert>
 </Toast>

@@ -1,15 +1,12 @@
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import pexelsService, { getLocale, list, parseResults, search } from './pexels';
 
-// Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
+const mockLocale = vi.hoisted(() => ({ current: 'en-US', set: vi.fn() }));
 
-vi.mock('svelte-i18n', () => ({
-  locale: { subscribe: vi.fn() },
+// Mock dependencies
+vi.mock('@sveltia/i18n', () => ({
+  locale: mockLocale,
 }));
 
 vi.mock('@sveltia/utils/misc', () => ({
@@ -23,10 +20,8 @@ describe('integrations/media-libraries/stock/pexels', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Mock the locale store to return 'en-US'
-    vi.mocked(get).mockReturnValue('en-US');
-
-    vi.mocked(get).mockReturnValue('en-US');
+    // Set the default locale
+    mockLocale.current = 'en-US';
   });
 
   afterEach(() => {
@@ -66,29 +61,29 @@ describe('integrations/media-libraries/stock/pexels', () => {
       });
 
       it('should find exact locale match (case-insensitive)', () => {
-        vi.mocked(get).mockReturnValue('pt-BR');
+        mockLocale.current = 'pt-BR';
         expect(getLocale()).toBe('pt-BR');
 
-        vi.mocked(get).mockReturnValue('ES-ES');
+        mockLocale.current = 'ES-ES';
         expect(getLocale()).toBe('es-ES');
       });
 
       it('should find language match when exact locale not available', () => {
-        vi.mocked(get).mockReturnValue('es');
+        mockLocale.current = 'es';
         expect(getLocale()).toBe('es-ES');
 
-        vi.mocked(get).mockReturnValue('zh');
+        mockLocale.current = 'zh';
         expect(getLocale()).toBe('zh-TW'); // First match in the list
 
-        vi.mocked(get).mockReturnValue('fr');
+        mockLocale.current = 'fr';
         expect(getLocale()).toBe('fr-FR');
       });
 
       it('should fallback to en-US for unsupported locales', () => {
-        vi.mocked(get).mockReturnValue('unsupported-locale');
+        mockLocale.current = 'unsupported-locale';
         expect(getLocale()).toBe('en-US');
 
-        vi.mocked(get).mockReturnValue('xyz-ABC');
+        mockLocale.current = 'xyz-ABC';
         expect(getLocale()).toBe('en-US');
       });
     });
@@ -551,7 +546,7 @@ describe('integrations/media-libraries/stock/pexels', () => {
       });
 
       it('should use supported locale in search parameters', async () => {
-        vi.mocked(get).mockReturnValue('pt-BR'); // Portuguese (Brazil) locale
+        mockLocale.current = 'pt-BR'; // Portuguese (Brazil) locale
 
         const fetchMock = vi.mocked(fetch);
 
@@ -571,7 +566,7 @@ describe('integrations/media-libraries/stock/pexels', () => {
       });
 
       it('should fallback to English for unsupported locales', async () => {
-        vi.mocked(get).mockReturnValue('unsupported-locale');
+        mockLocale.current = 'unsupported-locale';
 
         const fetchMock = vi.mocked(fetch);
 

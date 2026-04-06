@@ -1,15 +1,12 @@
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import unsplashService, { getLocale, list, parseResults, search } from './unsplash';
 
-// Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
+const mockLocale = vi.hoisted(() => ({ current: 'en', set: vi.fn() }));
 
-vi.mock('svelte-i18n', () => ({
-  locale: { subscribe: vi.fn() },
+// Mock dependencies
+vi.mock('@sveltia/i18n', () => ({
+  locale: mockLocale,
 }));
 
 vi.mock('@sveltia/utils/misc', () => ({
@@ -25,8 +22,8 @@ describe('integrations/media-libraries/stock/unsplash', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Mock the locale store to return 'en'
-    vi.mocked(get).mockReturnValue('en');
+    // Set the default locale
+    mockLocale.current = 'en';
   });
 
   afterEach(() => {
@@ -82,26 +79,26 @@ describe('integrations/media-libraries/stock/unsplash', () => {
       });
 
       it('should find exact locale match (case-insensitive)', () => {
-        vi.mocked(get).mockReturnValue('zh-Hans');
+        mockLocale.current = 'zh-Hans';
         expect(getLocale()).toBe('zh-Hans');
 
-        vi.mocked(get).mockReturnValue('PT-PT');
+        mockLocale.current = 'PT-PT';
         expect(getLocale()).toBe('pt-pt');
       });
 
       it('should find language match when exact locale not available', () => {
-        vi.mocked(get).mockReturnValue('ja-JP');
+        mockLocale.current = 'ja-JP';
         expect(getLocale()).toBe('ja');
 
-        vi.mocked(get).mockReturnValue('es-MX');
+        mockLocale.current = 'es-MX';
         expect(getLocale()).toBe('es');
       });
 
       it('should fallback to English for unsupported locales', () => {
-        vi.mocked(get).mockReturnValue('unsupported-locale');
+        mockLocale.current = 'unsupported-locale';
         expect(getLocale()).toBe('en');
 
-        vi.mocked(get).mockReturnValue('xyz-ABC');
+        mockLocale.current = 'xyz-ABC';
         expect(getLocale()).toBe('en');
       });
     });
@@ -486,7 +483,7 @@ describe('integrations/media-libraries/stock/unsplash', () => {
     });
 
     it('should use supported locale in search parameters', async () => {
-      vi.mocked(get).mockReturnValue('ja-JP'); // Japanese locale
+      mockLocale.current = 'ja-JP'; // Japanese locale
 
       const fetchMock = vi.mocked(fetch);
 
@@ -506,7 +503,7 @@ describe('integrations/media-libraries/stock/unsplash', () => {
     });
 
     it('should fallback to English for unsupported locales', async () => {
-      vi.mocked(get).mockReturnValue('unsupported-locale');
+      mockLocale.current = 'unsupported-locale';
 
       const fetchMock = vi.mocked(fetch);
 

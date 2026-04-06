@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Dialog, Switch, TextArea } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { editingAsset } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data/create';
@@ -73,9 +73,9 @@
 
 <Dialog
   size="x-large"
-  title={$_('edit_x', { values: { name: asset?.name } })}
+  title={_('edit_x', { values: { name: asset?.name ?? '' } })}
   bind:open
-  okLabel={$_('save')}
+  okLabel={_('save')}
   okDisabled={currentValue === originalValue}
   okShortcuts="Accel+S"
   onOk={() => {
@@ -89,7 +89,7 @@
     <TextArea bind:value={currentValue} flex />
   </div>
   {#snippet footerExtra()}
-    <Switch label={$_('wrap_long_lines')} bind:checked={wrap} />
+    <Switch label={_('wrap_long_lines')} bind:checked={wrap} />
   {/snippet}
 </Dialog>
 

@@ -1,8 +1,8 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import { Icon, Listbox, Option, OptionGroup } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -28,7 +28,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const numberFormatter = $derived(Intl.NumberFormat($appLocale ?? undefined));
+  const numberFormatter = $derived(Intl.NumberFormat(appLocale.current));
 
   const folders = $derived([
     // All Assets, Global Assets, then collection-level, file-level folders, sorted by appearance
@@ -48,7 +48,7 @@
 <div role="none" class="primary-sidebar">
   {#if $isSmallScreen}
     <header>
-      <h2>{$_('assets')}</h2>
+      <h2>{_('assets')}</h2>
     </header>
     <QuickSearchBar
       onclick={(event) => {
@@ -57,8 +57,8 @@
       }}
     />
   {/if}
-  <Listbox aria-label={$_('asset_folder_list')} aria-controls="assets-container">
-    <OptionGroup label={$_('asset_location.repository')}>
+  <Listbox aria-label={_('asset_folder_list')} aria-controls="assets-container">
+    <OptionGroup label={_('asset_location.repository')}>
       {#each folders as folder ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
         {#await sleep() then}
           {@const { collectionName, fileName, internalPath, entryRelative, hasTemplateTags } =
@@ -71,7 +71,7 @@
           {@const selected = equal($selectedAssetFolder, folder)}
           <Option
             selected={$isSmallScreen || isSearchPage ? false : selected}
-            label={$appLocale ? getFolderLabelByCollection(folder) : ''}
+            label={appLocale.current ? getFolderLabelByCollection(folder) : ''}
             onSelect={() => {
               goto(`/assets/${internalPath ?? '-/all'}`, {
                 transitionType: 'forwards',
@@ -134,13 +134,7 @@
                   {@const count = (
                     internalPath !== undefined ? getAssetsByFolder(folder) : $allAssets
                   ).length}
-                  <span
-                    class="count"
-                    aria-label="({$_(
-                      count > 1 ? 'many_assets' : count === 1 ? 'one_asset' : 'no_assets',
-                      { values: { count } },
-                    )})"
-                  >
+                  <span class="count" aria-label="({_('x_assets', { values: { count } })})">
                     {numberFormatter.format(count)}
                   </span>
                 {/await}

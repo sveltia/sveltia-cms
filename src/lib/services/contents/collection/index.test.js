@@ -24,8 +24,8 @@ vi.mock('svelte/store', () => ({
   get: vi.fn(),
   writable: vi.fn(),
 }));
-vi.mock('svelte-i18n', () => ({
-  _: { subscribe: vi.fn() },
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key) => key),
 }));
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { subscribe: vi.fn() },
@@ -668,11 +668,10 @@ describe('parseFileCollection()', () => {
 });
 
 describe('getCollectionLabel()', () => {
-  beforeEach(() => {
-    vi.mocked(get).mockReturnValue((key) => {
-      if (key === 'files') return 'Files';
-      return key;
-    });
+  beforeEach(async () => {
+    const { _ } = await import('@sveltia/i18n');
+
+    vi.mocked(_).mockImplementation((key) => (key === 'files' ? 'Files' : key));
   });
 
   test('returns "Files" for singleton collection', () => {

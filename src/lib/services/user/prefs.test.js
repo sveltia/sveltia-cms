@@ -44,7 +44,6 @@ const mockWritable = vi.fn((initialValue, startCallback) => {
 });
 
 const mockAppLocale = { set: vi.fn() };
-const mockAppLocales = { subscribe: vi.fn() };
 const mockGet = vi.fn(() => ['en', 'ja', 'fr']);
 
 vi.mock('@sveltia/utils/storage', () => ({
@@ -60,9 +59,9 @@ vi.mock('svelte/store', () => ({
   writable: mockWritable,
 }));
 
-vi.mock('svelte-i18n', () => ({
+vi.mock('@sveltia/i18n', () => ({
   locale: mockAppLocale,
-  locales: mockAppLocales,
+  locales: ['en', 'ja', 'fr'],
 }));
 
 describe('prefs service', () => {
@@ -124,7 +123,6 @@ describe('prefs service', () => {
 
   it('should set app locale when valid locale is provided', async () => {
     mockLocalStorage.get.mockResolvedValue({});
-    mockGet.mockReturnValue(['en', 'ja', 'fr']);
 
     await import('./prefs.js');
 
@@ -148,7 +146,6 @@ describe('prefs service', () => {
 
   it('should not set app locale when invalid locale is provided', async () => {
     mockLocalStorage.get.mockResolvedValue({});
-    mockGet.mockReturnValue(['en', 'ja', 'fr']);
 
     await import('./prefs.js');
 

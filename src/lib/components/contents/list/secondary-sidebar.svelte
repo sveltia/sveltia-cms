@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Group } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { _ } from 'svelte-i18n';
 
   import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
@@ -21,7 +21,7 @@
 </script>
 
 {#if internalPath !== undefined && $isLargeScreen && $currentView.showMedia}
-  <Group id="collection-assets" class="secondary-sidebar" aria-label={$_('collection_assets')}>
+  <Group id="collection-assets" class="secondary-sidebar" aria-label={_('collection_assets')}>
     <DropZone
       disabled={uploadDisabled}
       multiple={true}

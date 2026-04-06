@@ -1,8 +1,8 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Icon, Menu, MenuItem, Spacer, Toolbar } from '@sveltia/ui';
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
-  import { _ } from 'svelte-i18n';
 
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
@@ -49,17 +49,17 @@
   }}
 />
 
-<PageContainer aria-label={$_('settings')}>
+<PageContainer aria-label={_('settings')}>
   {#snippet main()}
     <PageContainerMainArea>
       {#snippet primaryToolbar()}
         <Toolbar variant="primary">
           {#if selectedPanel}
             <BackButton onclick={() => goBack('/settings')} />
-            <h2 role="none">{$_(`prefs.${selectedPanel.key}.title`)}</h2>
+            <h2 role="none">{_(`prefs.${selectedPanel.key}.title`)}</h2>
           {:else}
             <BackButton onclick={() => goBack('/menu')} />
-            <h2 role="none">{$_('settings')}</h2>
+            <h2 role="none">{_('settings')}</h2>
           {/if}
           <Spacer flex />
         </Toolbar>
@@ -69,10 +69,10 @@
           {#if selectedPanel}
             <PanelContainer Panel={selectedPanel.component} />
           {:else}
-            <Menu aria-label={$_('settings')}>
+            <Menu aria-label={_('settings')}>
               {#each get(panels) as { key, icon } (key)}
                 <MenuItem
-                  label={$_(`prefs.${key}.title`)}
+                  label={_(`prefs.${key}.title`)}
                   onclick={() => goto(`/settings/${key}`, { transitionType: 'forwards' })}
                 >
                   {#snippet startIcon()}

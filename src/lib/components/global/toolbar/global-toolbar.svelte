@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Toolbar } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import AccountButton from '$lib/components/global/toolbar/items/account-button.svelte';
   import CreateButton from '$lib/components/global/toolbar/items/create-button.svelte';
@@ -15,7 +15,7 @@
 </script>
 
 <div role="none" class="toolbar-wrapper" inert={$hasOverlay}>
-  <Toolbar variant="primary" aria-label={$_('global')}>
+  <Toolbar variant="primary" aria-label={_('global')}>
     <div role="none" class="buttons">
       <SiteLogo />
       <PageSwitcher />

@@ -42,29 +42,14 @@ vi.mock('$lib/services/config', () => ({
   },
 }));
 
-vi.mock('svelte-i18n', () => {
+vi.mock('@sveltia/i18n', () => ({
   /**
    * Mock translation function.
    * @param {string} key Translation key.
    * @returns {string} Translated string.
    */
-  const mockTranslate = (key) => `Translated: ${key}`;
-
-  const mockStore = {
-    /**
-     * Subscribe to store changes.
-     * @param {(value: (key: string) => string) => void} fn Subscriber function.
-     * @returns {() => void} Unsubscribe function.
-     */
-    subscribe: (fn) => {
-      fn(mockTranslate);
-
-      return () => {};
-    },
-  };
-
-  return { _: mockStore };
-});
+  _: (key) => `Translated: ${key}`,
+}));
 
 describe('git/shared/auth', () => {
   /** @type {any} */

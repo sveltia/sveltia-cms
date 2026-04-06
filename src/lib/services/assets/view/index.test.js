@@ -46,27 +46,15 @@ const { _backendAv, _assetListSettingsAv } = vi.hoisted(() => {
 });
 
 // Mock dependencies
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn((callback) => {
-      /**
-       * Mock translation function for testing.
-       * @param {string} key Translation key to look up.
-       * @returns {string} Translated text or original key if not found.
-       */
-      const mockTranslationFunction = (key) => {
-        /** @type {Record<string, string>} */
-        const translations = {
-          all_assets: 'All Assets',
-          global_assets: 'Global Assets',
-        };
+vi.mock('@sveltia/i18n', () => ({
+  _: (/** @type {string} */ key) => {
+    /** @type {Record<string, string>} */
+    const translations = {
+      all_assets: 'All Assets',
+      global_assets: 'Global Assets',
+    };
 
-        return translations[key] || key;
-      };
-
-      callback(mockTranslationFunction);
-      return vi.fn();
-    }),
+    return translations[key] || key;
   },
 }));
 

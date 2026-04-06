@@ -1,19 +1,19 @@
-/* eslint-disable jsdoc/require-description */
 /* eslint-disable jsdoc/require-param-description */
 /* eslint-disable jsdoc/require-returns-description */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
 
 import { getFieldValidationMessages } from './messages';
 
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
+/** @type {(key: string, opts?: any) => string} */
+const t = vi.hoisted(
+  () => (key, opts) => (opts?.values ? `${key}(${JSON.stringify(opts.values)})` : key),
+);
 
-vi.mock('svelte-i18n', () => ({
-  _: {},
+vi.mock('@sveltia/i18n', () => ({
+  _: t,
 }));
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
@@ -29,20 +29,6 @@ vi.mock('$lib/services/contents/fields/date-time/validate', () => ({
 }));
 
 describe('getFieldValidationMessages', () => {
-  /** @type {import('vitest').MockedFunction<any>} */
-  let getMock;
-  /** @type {(key: string, opts?: any) => string} */
-  const t = (key, opts) => (opts?.values ? `${key}(${JSON.stringify(opts.values)})` : key);
-
-  beforeEach(async () => {
-    vi.clearAllMocks();
-
-    const { get } = await import('svelte/store');
-
-    getMock = /** @type {any} */ (vi.mocked(get));
-    getMock.mockReturnValue(t);
-  });
-
   /**
    * Build default args with all required fields, overridable per test.
    * @param {Partial<Parameters<typeof getFieldValidationMessages>[0]>} overrides
@@ -75,7 +61,7 @@ describe('getFieldValidationMessages', () => {
         }),
       );
 
-      expect(messages).toEqual(['validation.too_short.one({"min":1})']);
+      expect(messages).toEqual(['validation.too_short({"min":1})']);
     });
 
     it('returns plural message when minlength > 1', () => {
@@ -86,7 +72,7 @@ describe('getFieldValidationMessages', () => {
         }),
       );
 
-      expect(messages).toEqual(['validation.too_short.many({"min":5})']);
+      expect(messages).toEqual(['validation.too_short({"min":5})']);
     });
   });
 
@@ -99,7 +85,7 @@ describe('getFieldValidationMessages', () => {
         }),
       );
 
-      expect(messages).toEqual(['validation.too_long.one({"max":1})']);
+      expect(messages).toEqual(['validation.too_long({"max":1})']);
     });
 
     it('returns plural message when maxlength > 1', () => {
@@ -110,7 +96,7 @@ describe('getFieldValidationMessages', () => {
         }),
       );
 
-      expect(messages).toEqual(['validation.too_long.many({"max":100})']);
+      expect(messages).toEqual(['validation.too_long({"max":100})']);
     });
   });
 
@@ -151,7 +137,7 @@ describe('getFieldValidationMessages', () => {
         }),
       );
 
-      expect(messages).toEqual(['validation.range_underflow.add_many({"min":2})']);
+      expect(messages).toEqual(['validation.range_underflow.add({"min":2})']);
     });
 
     it('returns add_one message when canAddMultiValue and min === 1', () => {
@@ -162,7 +148,7 @@ describe('getFieldValidationMessages', () => {
         }),
       );
 
-      expect(messages).toEqual(['validation.range_underflow.add_one({"min":1})']);
+      expect(messages).toEqual(['validation.range_underflow.add({"min":1})']);
     });
 
     it('returns select_many message when !canAddMultiValue and min != 1', () => {
@@ -173,7 +159,7 @@ describe('getFieldValidationMessages', () => {
         }),
       );
 
-      expect(messages).toEqual(['validation.range_underflow.select_many({"min":3})']);
+      expect(messages).toEqual(['validation.range_underflow.select({"min":3})']);
     });
 
     it('returns select_one message when !canAddMultiValue and min === 1', () => {
@@ -184,7 +170,7 @@ describe('getFieldValidationMessages', () => {
         }),
       );
 
-      expect(messages).toEqual(['validation.range_underflow.select_one({"min":1})']);
+      expect(messages).toEqual(['validation.range_underflow.select({"min":1})']);
     });
   });
 
@@ -225,7 +211,7 @@ describe('getFieldValidationMessages', () => {
         }),
       );
 
-      expect(messages).toEqual(['validation.range_overflow.add_many({"max":5})']);
+      expect(messages).toEqual(['validation.range_overflow.add({"max":5})']);
     });
 
     it('returns select_one message when !canAddMultiValue and max === 1', () => {
@@ -236,7 +222,7 @@ describe('getFieldValidationMessages', () => {
         }),
       );
 
-      expect(messages).toEqual(['validation.range_overflow.select_one({"max":1})']);
+      expect(messages).toEqual(['validation.range_overflow.select({"max":1})']);
     });
   });
 

@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import ExpandIcon from '$lib/components/common/expand-icon.svelte';
 
@@ -35,7 +35,7 @@
   <div role="none">
     <Button
       size="small"
-      aria-label={expanded ? $_('collapse') : $_('expand')}
+      aria-label={expanded ? _('collapse') : _('expand')}
       aria-expanded={expanded}
       aria-controls={controlId}
       onclick={() => {

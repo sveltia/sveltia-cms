@@ -4,9 +4,9 @@
   @see https://sveltiacms.app/en/docs/api/preview-styles
 -->
 <script>
+  import { _ } from '@sveltia/i18n';
   import { sanitize } from 'isomorphic-dompurify';
   import { mount } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import Placeholder from '$lib/components/common/placeholder.svelte';
 
@@ -81,7 +81,7 @@
   });
 </script>
 
-<iframe class="preview" title={$_('content_preview')} bind:this={iframe}></iframe>
+<iframe class="preview" title={_('content_preview')} bind:this={iframe}></iframe>
 
 <style lang="scss">
   iframe {

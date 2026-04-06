@@ -13,30 +13,11 @@ vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/user', () => ({
   user: { subscribe: vi.fn() },
 }));
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn(),
-    set: vi.fn(),
-  },
-  get: vi.fn().mockReturnValue(() => 'Translation message'),
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn(() => 'Translation message'),
 }));
 vi.mock('svelte/store', () => ({
-  get: vi.fn().mockImplementation((store) => {
-    // Check if this is the user store
-    if (store && store.subscribe) {
-      // Check if it's the translation store by looking at its structure
-      if (store.subscribe && store.set) {
-        // This is the translation store - return a translation function
-        return () => 'Translation message';
-      }
-
-      // This is the user store - return user data
-      return { login: 'test-user' };
-    }
-
-    // Default return
-    return {};
-  }),
+  get: vi.fn().mockReturnValue({ login: 'test-user' }),
 }));
 
 describe('GitHub repository service', () => {

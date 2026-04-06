@@ -5,10 +5,10 @@
   @see https://sveltiacms.app/en/docs/fields/keyvalue
 -->
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { getContext, untrack } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -51,8 +51,8 @@
     value_label: _valueLabel,
     max = Infinity,
   } = $derived(fieldConfig);
-  const keyLabel = $derived(_keyLabel || $_('key_value.key'));
-  const valueLabel = $derived(_valueLabel || $_('key_value.value'));
+  const keyLabel = $derived(_keyLabel || _('key_value.key'));
+  const valueLabel = $derived(_valueLabel || _('key_value.value'));
 
   /** @type {[string, string][]} */
   let pairs = $state([]);
@@ -158,7 +158,7 @@
         <th scope="col" class="key">{keyLabel}</th>
         <th scope="col" class="value">{valueLabel}</th>
         {#if !readonly}
-          <th scope="col" class="action" aria-label={$_('key_value.action')}></th>
+          <th scope="col" class="action" aria-label={_('key_value.action')}></th>
         {/if}
       </tr>
     </thead>
@@ -212,7 +212,7 @@
                 variant="ghost"
                 size="small"
                 iconic
-                aria-label={$_('remove')}
+                aria-label={_('remove')}
                 onclick={() => {
                   removePair(index);
                 }}
@@ -232,17 +232,17 @@
 {#if validations.some(Boolean)}
   <ValidationError id="{fieldId}-kv-error">
     {#if validations.includes('empty')}
-      {$_('key_value.empty_key')}
+      {_('key_value.empty_key')}
     {/if}
     {#if validations.includes('duplicate')}
-      {$_('key_value.duplicate_key')}
+      {_('key_value.duplicate_key')}
     {/if}
   </ValidationError>
 {/if}
 
 <div role="none">
   <Button
-    label={$_('add')}
+    label={_('add')}
     variant="tertiary"
     disabled={readonly || pairs.length >= max}
     onclick={() => {

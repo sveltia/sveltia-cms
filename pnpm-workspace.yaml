@@ -16,4 +16,3 @@ onlyBuiltDependencies:
 
 overrides:
   brace-expansion@<5.0.5: ">=5.0.5"
-  esbuild@<=0.24.2: ">=0.25.0"

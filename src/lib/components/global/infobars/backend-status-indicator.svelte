@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Infobar } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import { backend } from '$lib/services/backends';
   import { cmsConfig } from '$lib/services/config';
@@ -81,10 +81,10 @@
     status={status === 'major' ? 'error' : 'warning'}
     --sui-infobar-message-justify-content="center"
   >
-    {$_(`backend_status.${status}_incident`, { values: { service: $backend?.label } })}
+    {_(`backend_status.${status}_incident`, { values: { service: $backend?.label } })}
     <Button
       variant="link"
-      label={$_('details')}
+      label={_('details')}
       onclick={() => {
         window.open($backend?.statusDashboardURL, '_blank');
       }}

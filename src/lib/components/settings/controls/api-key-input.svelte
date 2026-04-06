@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { SecretInput } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import { prefs } from '$lib/services/user/prefs';
 
@@ -48,10 +48,10 @@
 
     onChange?.({
       message: invalid
-        ? $_('prefs.changes.api_key_invalid')
+        ? _('prefs.changes.api_key_invalid')
         : apiKey
-          ? $_('prefs.changes.api_key_saved')
-          : $_('prefs.changes.api_key_removed'),
+          ? _('prefs.changes.api_key_saved')
+          : _('prefs.changes.api_key_removed'),
       status: invalid ? 'error' : 'success',
     });
   };

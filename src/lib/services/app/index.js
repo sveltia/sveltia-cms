@@ -1,1 +1,3 @@
-export { dependencies, version } from '../../../../package.json';
+import pkg from '../../../../package.json';
+
+export const { dependencies, version } = pkg;

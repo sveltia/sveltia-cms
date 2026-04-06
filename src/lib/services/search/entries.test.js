@@ -56,8 +56,8 @@ vi.mock('$lib/services/search/util', () => ({
 }));
 
 // Mock stores as plain objects
-vi.mock('svelte-i18n', () => ({
-  locale: writable('en'),
+vi.mock('@sveltia/i18n', () => ({
+  locale: { current: 'en', set: vi.fn() },
 }));
 
 vi.mock('$lib/services/contents', () => ({

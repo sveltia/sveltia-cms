@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { EmptyState, GridBody, InfiniteScroll } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { _ } from 'svelte-i18n';
 
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
@@ -21,7 +21,7 @@
   const uploadDisabled = $derived(!canCreateAsset(folder));
 </script>
 
-<ListContainer aria-label={$_('asset_list')}>
+<ListContainer aria-label={_('asset_list')}>
   <DropZone
     disabled={uploadDisabled}
     multiple={true}
@@ -33,7 +33,7 @@
       <ListingGrid
         id="asset-list"
         {viewType}
-        aria-label={$_('assets')}
+        aria-label={_('assets')}
         aria-rowcount={$listedAssets.length}
       >
         {#each Object.entries($assetGroups) as [name, assets] (name)}
@@ -54,9 +54,9 @@
       </ListingGrid>
     {:else}
       <EmptyState>
-        <span role="none">{$_('no_files_found')}</span>
+        <span role="none">{_('no_files_found')}</span>
         {#if !uploadDisabled}
-          <UploadAssetsButton label={$_('upload_assets')} />
+          <UploadAssetsButton label={_('upload_assets')} />
         {/if}
       </EmptyState>
     {/if}

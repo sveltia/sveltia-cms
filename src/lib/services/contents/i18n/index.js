@@ -1,5 +1,4 @@
-import { get } from 'svelte/store';
-import { locale as appLocale } from 'svelte-i18n';
+import { locale as appLocale } from '@sveltia/i18n';
 
 /**
  * @import { InternalI18nOptions, InternalLocaleCode, } from '$lib/types/private';
@@ -43,7 +42,7 @@ const displayNamesCache = new Map();
  */
 export const getLocaleLabel = (
   locale,
-  { displayLocale = getCanonicalLocale(get(appLocale) ?? 'en') } = {},
+  { displayLocale = getCanonicalLocale(appLocale.current ?? 'en') } = {},
 ) => {
   const canonicalLocale = getCanonicalLocale(locale);
 

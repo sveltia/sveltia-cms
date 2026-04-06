@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Divider, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { _ } from 'svelte-i18n';
 
   import { goto } from '$lib/services/app/navigation';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
@@ -21,13 +21,13 @@
   variant="ghost"
   iconic
   popupPosition="bottom-right"
-  aria-label={$_('create_entry_or_assets')}
+  aria-label={_('create_entry_or_assets')}
 >
   {#snippet endIcon()}
     <Icon name="add" />
   {/snippet}
   {#snippet popup()}
-    <Menu aria-label={$_('create_entry_or_assets')}>
+    <Menu aria-label={_('create_entry_or_assets')}>
       {#if entryCollections.length}
         {#each entryCollections as collection (collection.name)}
           {@const {
@@ -48,7 +48,7 @@
         <Divider />
       {/if}
       <MenuItem
-        label={$_('assets')}
+        label={_('assets')}
         onclick={async () => {
           goto('/assets', { transitionType: 'forwards' });
           await sleep(100);

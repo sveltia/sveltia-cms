@@ -1,4 +1,5 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import {
     Alert,
     Button,
@@ -12,7 +13,6 @@
   } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { onMount, tick, untrack } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
@@ -364,7 +364,7 @@
     <div class="pane-wrapper">
       <Group
         class="pane"
-        aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+        aria-label={_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
           values: { locale: getLocaleLabel(locale) ?? locale },
         })}
         data-locale={locale}
@@ -388,7 +388,7 @@
     <div class="pane-wrapper">
       <Group
         class="pane"
-        aria-label={$_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+        aria-label={_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
           values: { locale: getLocaleLabel(locale) ?? locale },
         })}
         data-locale={locale}
@@ -413,7 +413,7 @@
 <div
   role="group"
   class="wrapper content-editor"
-  aria-label={$_('content_editor')}
+  aria-label={_('content_editor')}
   bind:this={wrapper}
 >
   {#key $entryDraft?.id}
@@ -424,11 +424,11 @@
       <EmptyState>
         <div role="none">
           {#if notFound}
-            {$_('entry_not_found')}
+            {_('entry_not_found')}
           {:else if !canCreate}
-            {$_('creating_entries_disabled_by_admin')}
+            {_('creating_entries_disabled_by_admin')}
           {:else}
-            {$_('creating_entries_disabled_by_quota', { values: { quota } })}
+            {_('creating_entries_disabled_by_quota', { values: { quota } })}
           {/if}
         </div>
         <div role="none">
@@ -441,7 +441,7 @@
               });
             }}
           >
-            {$_('back_to_collection')}
+            {_('back_to_collection')}
           </Button>
         </div>
       </EmptyState>
@@ -489,7 +489,7 @@
 
 <Toast bind:show={$showDuplicateToast}>
   <Alert status="success">
-    {$_('entry_duplicated')}
+    {_('entry_duplicated')}
   </Alert>
 </Toast>
 

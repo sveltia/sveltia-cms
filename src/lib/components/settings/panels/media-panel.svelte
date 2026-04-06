@@ -1,5 +1,5 @@
 <script>
-  import { _ } from 'svelte-i18n';
+  import { _ } from '@sveltia/i18n';
 
   import ApiKeyInput from '$lib/components/settings/controls/api-key-input.svelte';
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
@@ -42,12 +42,12 @@
 </script>
 
 <section>
-  <h3>{$_('prefs.media.cloud_storage.api_keys.title')}</h3>
+  <h3>{_('prefs.media.cloud_storage.api_keys.title')}</h3>
   <p>
     {@html makeLink(
       enabledCloudServiceEntries.length
-        ? $_('prefs.media.cloud_storage.api_keys.description')
-        : $_('prefs.media.cloud_storage.no_services'),
+        ? _('prefs.media.cloud_storage.api_keys.description')
+        : _('prefs.media.cloud_storage.no_services'),
       'https://sveltiacms.app/en/docs/media',
     )}
   </p>
@@ -59,7 +59,7 @@
         <ApiKeyInput
           {serviceId}
           {service}
-          ariaLabel={$_('prefs.media.cloud_storage.field_label', { values: { service: label } })}
+          ariaLabel={_('prefs.media.cloud_storage.field_label', { values: { service: label } })}
           {onChange}
         />
       </div>
@@ -67,12 +67,12 @@
   {/each}
 </section>
 <section>
-  <h3>{$_('prefs.media.stock_photos.api_keys.title')}</h3>
+  <h3>{_('prefs.media.stock_photos.api_keys.title')}</h3>
   <p>
     {@html makeLink(
       enabledStockAssetProviderEntries.length
-        ? $_('prefs.media.stock_photos.api_keys.description')
-        : $_('prefs.media.stock_photos.no_services'),
+        ? _('prefs.media.stock_photos.api_keys.description')
+        : _('prefs.media.stock_photos.no_services'),
       'https://sveltiacms.app/en/docs/integrations/stock-photos',
     )}
   </p>
@@ -84,7 +84,7 @@
         <ApiKeyInput
           {serviceId}
           {service}
-          ariaLabel={$_('prefs.media.stock_photos.field_label', { values: { service: label } })}
+          ariaLabel={_('prefs.media.stock_photos.field_label', { values: { service: label } })}
           {onChange}
         />
       </div>

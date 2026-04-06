@@ -1,8 +1,8 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import { AlertDialog, Button, FilePicker, Icon } from '@sveltia/ui';
   import { scanFiles } from '@sveltia/utils/file';
   import { onMount } from 'svelte';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { getListFormatter } from '$lib/services/contents/i18n';
@@ -93,11 +93,11 @@
 
 {#snippet typeMismatchAlert()}
   {#if accept === SUPPORTED_IMAGE_TYPES.join(',')}
-    {$_('dropped_image_type_mismatch')}
+    {_('dropped_image_type_mismatch')}
   {:else}
-    {$_('dropped_file_type_mismatch', {
+    {_('dropped_file_type_mismatch', {
       values: {
-        type: getListFormatter(/** @type {string} */ ($appLocale), {
+        type: getListFormatter(appLocale.current, {
           type: 'disjunction',
         }).format(/** @type {string} */ (accept).split(/,\s*/)),
       },
@@ -166,15 +166,15 @@
       {#if showUploadButton}
         <div role="none">
           {#if $hasMouse}
-            {$_(multiple ? 'drop_files_or_click_to_browse' : 'drop_file_or_click_to_browse')}
+            {_(multiple ? 'drop_files_or_click_to_browse' : 'drop_file_or_click_to_browse')}
           {:else}
-            {$_('tap_to_browse')}
+            {_('tap_to_browse')}
           {/if}
         </div>
         <div role="none">
           <Button
             variant="primary"
-            label={$_(multiple ? 'choose_files' : 'choose_file')}
+            label={_('choose_files', { values: { count: multiple ? 2 : 1 } })}
             {disabled}
             onclick={() => {
               openFilePicker();
@@ -202,7 +202,7 @@
     <div role="none" class="drop-indicator">
       <div role="none">
         <Icon name="download" />
-        <span role="none">{$_(multiple ? 'drop_files_here' : 'drop_file_here')}</span>
+        <span role="none">{_('drop_files_here', { values: { count: multiple ? 2 : 1 } })}</span>
       </div>
     </div>
   {/if}
@@ -218,7 +218,7 @@
 />
 
 {#if !showDefaultContent}
-  <AlertDialog bind:open={showTypeMismatchAlertDialog} title={$_('unsupported_file_type')}>
+  <AlertDialog bind:open={showTypeMismatchAlertDialog} title={_('unsupported_file_type')}>
     {@render typeMismatchAlert()}
   </AlertDialog>
 {/if}

@@ -1,24 +1,14 @@
+/* eslint-disable jsdoc/require-jsdoc */
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
  */
 
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn((fn) => {
-      fn((/** @type {string} */ key) => key);
-
-      return () => {};
-    }),
-  },
-  locale: {
-    subscribe: vi.fn((fn) => {
-      fn('en-US');
-
-      return () => {};
-    }),
-  },
+vi.mock('@sveltia/i18n', () => ({
+  _: (/** @type {string} */ key) => key,
+  locale: { current: 'en-US', set: vi.fn() },
 }));
 
 const mockGetStore = vi.fn();
@@ -64,19 +54,7 @@ describe('File Field Parser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockGetStore.mockImplementation((store) => {
-      if (store && typeof store.subscribe === 'function') {
-        let result;
-
-        store.subscribe((/** @type {any} */ value) => {
-          result = value;
-        })();
-
-        return result;
-      }
-
-      return store;
-    });
+    mockGetStore.mockImplementation((store) => store);
   });
 
   describe('parseFileFieldConfig', () => {

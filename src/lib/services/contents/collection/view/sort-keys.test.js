@@ -1,3 +1,5 @@
+/* eslint-disable jsdoc/require-jsdoc */
+
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
@@ -17,19 +19,9 @@ import {
  * @import { InternalEntryCollection } from '$lib/types/private';
  */
 
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn((fn) => {
-      fn((/** @type {string} */ key) => key);
-
-      return vi.fn();
-    }),
-  },
-  locale: {
-    subscribe: vi.fn(() => vi.fn()),
-    set: vi.fn(),
-    update: vi.fn(),
-  },
+vi.mock('@sveltia/i18n', () => ({
+  _: (/** @type {string} */ key) => key,
+  locale: { current: 'en', set: vi.fn() },
 }));
 
 vi.mock('$lib/services/config');
@@ -1056,7 +1048,7 @@ describe('Test getSortKeyLabel()', () => {
 
   test('returns localized labels for special keys', () => {
     // SPECIAL_SORT_KEYS includes 'slug', 'commit_author', 'commit_date', etc.
-    // getSortKeyLabel returns get(_)(`sort_keys.${key}`) for special keys
+    // getSortKeyLabel returns _(`sort_keys.${key}`) for special keys
     const slugLabel = getSortKeyLabel({ collection: mockCollection, key: 'slug' });
 
     expect(typeof slugLabel).toBe('string');

@@ -13,19 +13,9 @@ const mockTranslation = vi.fn((/** @type {string} */ key) => {
 });
 
 // Mock the stores and dependencies
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn((callback) => {
-      callback(mockTranslation);
-      return vi.fn();
-    }),
-  },
-  locale: {
-    subscribe: vi.fn((callback) => {
-      callback('en');
-      return vi.fn();
-    }),
-  },
+vi.mock('@sveltia/i18n', () => ({
+  _: mockTranslation,
+  locale: { current: 'en', set: vi.fn() },
 }));
 
 vi.mock('$lib/services/assets', () => ({

@@ -4,8 +4,8 @@
   @see https://leafletjs.com/
 -->
 <script>
+  import { _ } from '@sveltia/i18n';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import { getUnpkgURL, loadModule } from '$lib/services/app/dependencies';
 
@@ -85,7 +85,7 @@
   role="application"
   class="map {className}"
   bind:this={mapElement}
-  aria-label={coordinates ? $_('map_lat_lng', { values: coordinates }) : undefined}
+  aria-label={coordinates ? _('map_lat_lng', { values: coordinates }) : undefined}
   {...rest}
 ></div>
 

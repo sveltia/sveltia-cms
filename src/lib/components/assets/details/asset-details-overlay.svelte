@@ -1,10 +1,10 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { EmptyState } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
   import { sanitize } from 'isomorphic-dompurify';
   import { parse } from 'marked';
   import { tick } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import Toolbar from '$lib/components/assets/details/toolbar.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
@@ -53,7 +53,7 @@
   });
 </script>
 
-<div role="group" class="wrapper" aria-label={$_('asset_editor')} bind:this={wrapper}>
+<div role="group" class="wrapper" aria-label={_('asset_editor')} bind:this={wrapper}>
   {#key $overlaidAsset?.sha}
     <Toolbar />
     <div role="none" class="row">
@@ -85,7 +85,7 @@
           {/await}
         {:else}
           <EmptyState>
-            <span role="alert">{$_('preview_unavailable')}</span>
+            <span role="alert">{_('preview_unavailable')}</span>
           </EmptyState>
         {/if}
       </div>

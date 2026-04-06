@@ -5,10 +5,10 @@
   @see https://sveltiacms.app/en/docs/fields/object
 -->
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Checkbox, Icon, TruncatedText } from '@sveltia/ui';
   import { toRaw } from '@sveltia/utils/object';
   import { getContext, onMount, tick } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
@@ -189,7 +189,7 @@
 
 {#if !hasVariableTypes && !required}
   <Checkbox
-    label={$_('add_x', { values: { name: fieldLabel || fieldName } })}
+    label={_('add_x', { values: { name: fieldLabel || fieldName } })}
     checked={hasValues}
     disabled={addButtonDisabled}
     onChange={({ detail: { checked } }) => {
@@ -227,7 +227,7 @@
               size="small"
               iconic
               disabled={addButtonDisabled}
-              aria-label={$_('remove')}
+              aria-label={_('remove')}
               onclick={() => {
                 removeFields();
               }}

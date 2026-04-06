@@ -1,4 +1,5 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import {
     Button,
     FloatingActionButtonWrapper,
@@ -9,7 +10,6 @@
   } from '@sveltia/ui';
   import { sanitize } from 'isomorphic-dompurify';
   import { marked } from 'marked';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
@@ -36,8 +36,8 @@
   const name = $derived($selectedCollection?.name ?? '');
   const description = $derived($selectedCollection?.description);
   const collectionLabel = $derived(
-    // `$appLocale` is a key, because `getCollectionLabel` can return a localized label
-    $appLocale && $selectedCollection ? getCollectionLabel($selectedCollection) : name,
+    // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
+    appLocale.current && $selectedCollection ? getCollectionLabel($selectedCollection) : name,
   );
   const {
     isEntryCollection,
@@ -51,10 +51,10 @@
 </script>
 
 {#if $selectedCollection}
-  <Toolbar variant="primary" aria-label={$_('collection')}>
+  <Toolbar variant="primary" aria-label={_('collection')}>
     {#if $isSmallScreen}
       <BackButton
-        aria-label={$_('back_to_collection_list')}
+        aria-label={_('back_to_collection_list')}
         onclick={() => {
           goBack('/collections');
         }}
@@ -74,10 +74,8 @@
       {#if !$isSmallScreen}
         <Button
           variant="ghost"
-          label={$_('delete')}
-          aria-label={$selectedEntries.length === 1
-            ? $_('delete_selected_entry')
-            : $_('delete_selected_entries')}
+          label={_('delete')}
+          aria-label={_('delete_selected_entries', { values: { count: $selectedEntries.length } })}
           disabled={!$selectedEntries.length || !canDelete}
           onclick={() => {
             showDeleteDialog = true;
@@ -88,7 +86,7 @@
         {#if !$isSmallScreen || ($listedEntries.length && !creationDisabled)}
           <CreateEntryButton
             collectionName={name}
-            label={$isSmallScreen ? undefined : $_('create')}
+            label={$isSmallScreen ? undefined : _('create')}
             keyShortcuts="Accel+E"
           />
         {/if}
@@ -102,13 +100,11 @@
       --sui-infobar-message-justify-content="center"
     >
       {#if !canCreate}
-        {$_('creating_entries_disabled_by_admin')}
+        {_('creating_entries_disabled_by_admin')}
       {:else if creationDisabled}
-        {$_('creating_entries_disabled_by_quota', { values: { quota } })}
+        {_('creating_entries_disabled_by_quota', { values: { quota } })}
       {:else if nearingQuota}
-        {$_(`creating_entries_nearing_quota_${remaining === 1 ? 'singular' : 'plural'}`, {
-          values: { quota, remaining },
-        })}
+        {_('creating_entries_nearing_quota', { values: { quota, remaining } })}
       {/if}
     </Infobar>
   {/if}

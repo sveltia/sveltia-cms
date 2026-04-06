@@ -1,5 +1,4 @@
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
+import { _ } from '@sveltia/i18n';
 
 import {
   encodeQuotes,
@@ -100,11 +99,11 @@ export const getBuiltInComponentDefs = () => {
   // Common props with localized labels
   const commonImageProps = {
     icon: 'image',
-    label: get(_)('editor_components.image'),
+    label: _('editor_components.image'),
     fields: [
-      { name: 'src', label: get(_)('editor_components.src'), widget: 'image' },
-      { name: 'alt', label: get(_)('editor_components.alt'), required: false },
-      { name: 'title', label: get(_)('editor_components.title'), required: false },
+      { name: 'src', label: _('editor_components.src'), widget: 'image' },
+      { name: 'alt', label: _('editor_components.alt'), required: false },
+      { name: 'title', label: _('editor_components.title'), required: false },
     ],
   };
 
@@ -120,7 +119,7 @@ export const getBuiltInComponentDefs = () => {
       ...commonImageProps,
       fields: [
         ...commonImageProps.fields,
-        { name: 'link', label: get(_)('editor_components.link'), required: false },
+        { name: 'link', label: _('editor_components.link'), required: false },
       ],
     },
   ];
@@ -139,11 +138,11 @@ export const getComponentDef = (name) => {
   // Common props with localized labels
   const commonImageProps = {
     icon: 'image',
-    label: get(_)('editor_components.image'),
+    label: _('editor_components.image'),
     fields: [
-      { name: 'src', label: get(_)('editor_components.src'), widget: 'image' },
-      { name: 'alt', label: get(_)('editor_components.alt'), required: false },
-      { name: 'title', label: get(_)('editor_components.title'), required: false },
+      { name: 'src', label: _('editor_components.src'), widget: 'image' },
+      { name: 'alt', label: _('editor_components.alt'), required: false },
+      { name: 'title', label: _('editor_components.title'), required: false },
     ],
   };
 
@@ -160,7 +159,7 @@ export const getComponentDef = (name) => {
       ...commonImageProps,
       fields: [
         ...commonImageProps.fields,
-        { name: 'link', label: get(_)('editor_components.link'), required: false },
+        { name: 'link', label: _('editor_components.link'), required: false },
       ],
     },
   };

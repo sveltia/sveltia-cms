@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Checkbox } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -30,7 +30,7 @@
 <div role="none" class="wrapper">
   <Checkbox
     disabled={!totalCount}
-    aria-label={$_('select_all')}
+    aria-label={_('select_all')}
     checked={anySelected && !allSelected ? 'mixed' : anySelected}
     onChange={() => {
       // Use `set` because assignment doesn’t work with Runes
@@ -39,7 +39,7 @@
   />
   {#if anySelected}
     <span role="none">
-      {$_('x_of_x_selected', { values: { total: totalCount, selected: selectedCount } })}
+      {_('x_of_x_selected', { values: { total: totalCount, selected: selectedCount } })}
     </span>
   {/if}
 </div>

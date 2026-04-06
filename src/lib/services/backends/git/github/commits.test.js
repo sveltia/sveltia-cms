@@ -15,22 +15,11 @@ vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', () => ({
   createCommitMessage: vi.fn().mockReturnValue('Test commit message'),
 }));
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn(),
-    set: vi.fn(),
-  },
-  get: vi.fn().mockImplementation(() => () => 'Translation message'),
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn(() => 'Translation message'),
 }));
 vi.mock('svelte/store', () => ({
-  get: vi.fn().mockImplementation((store) => {
-    // Mock the _ store to return a translation function
-    if (store && store.subscribe) {
-      return () => 'Translation message';
-    }
-
-    return {};
-  }),
+  get: vi.fn().mockReturnValue({}),
   writable: vi.fn(() => ({ subscribe: vi.fn(), set: vi.fn(), update: vi.fn() })),
 }));
 vi.mock('@sveltia/utils/file', () => ({

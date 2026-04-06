@@ -12,6 +12,12 @@ vi.mock('svelte/store', () => ({
     subscribe: vi.fn(() => vi.fn()),
   })),
   get: vi.fn(() => ({})),
+  toStore: vi.fn((getter) => ({
+    subscribe: vi.fn((fn) => {
+      fn(getter());
+      return vi.fn();
+    }),
+  })),
   writable: vi.fn(() => ({ subscribe: vi.fn() })),
 }));
 

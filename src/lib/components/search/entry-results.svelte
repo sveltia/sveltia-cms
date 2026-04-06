@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { EmptyState, Group, InfiniteScroll } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { _ } from 'svelte-i18n';
 
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryResultItem from '$lib/components/search/entry-result-item.svelte';
@@ -16,27 +16,19 @@
   $effect(() => {
     const entryCount = $entrySearchResults.length;
 
-    $announcedPageStatus = $_('viewing_entry_search_results', {
-      values: {
-        terms: $searchTerms,
-        entries:
-          entryCount > 1
-            ? $_('many_entries', { values: { count: entryCount } })
-            : entryCount === 1
-              ? $_('one_entry')
-              : $_('no_entries'),
-      },
+    $announcedPageStatus = _('viewing_entry_search_results', {
+      values: { terms: $searchTerms, count: entryCount },
     });
   });
 </script>
 
 <Group aria-labelledby="search-results-entries">
-  <!-- <h3 role="none" id="search-results-entries">{$_('entries')}</h3> -->
+  <!-- <h3 role="none" id="search-results-entries">{_('entries')}</h3> -->
   <div role="none">
     {#if $entrySearchResults.length}
       <ListingGrid
         viewType="list"
-        aria-label={$_('entries')}
+        aria-label={_('entries')}
         aria-rowcount={$entrySearchResults.length}
       >
         {#key $searchTerms}
@@ -51,7 +43,7 @@
       </ListingGrid>
     {:else if $searchTerms}
       <EmptyState>
-        <span role="none">{$_('no_entries_found')}</span>
+        <span role="none">{_('no_entries_found')}</span>
       </EmptyState>
     {/if}
   </div>

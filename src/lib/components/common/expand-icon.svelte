@@ -1,5 +1,6 @@
 <script>
-  import { Icon, isRTL } from '@sveltia/ui';
+  import { isRTL } from '@sveltia/i18n';
+  import { Icon } from '@sveltia/ui';
 
   /**
    * @typedef {object} Props
@@ -14,4 +15,4 @@
   } = $props();
 </script>
 
-<Icon name={expanded ? 'expand_more' : $isRTL ? 'chevron_left' : 'chevron_right'} />
+<Icon name={expanded ? 'expand_more' : isRTL() ? 'chevron_left' : 'chevron_right'} />

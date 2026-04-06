@@ -1,22 +1,13 @@
 // @ts-nocheck
 
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { isEntryCollection } from '$lib/services/contents/collection';
-import {
-  getIndexFile,
-  getLocalizedLabel,
-  isCollectionIndexFile,
-} from '$lib/services/contents/collection/index-file';
+import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 
 // Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  writable: vi.fn(),
-}));
-vi.mock('svelte-i18n', () => ({
-  _: { subscribe: vi.fn() },
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn(() => 'Index File'),
 }));
 vi.mock('$lib/services/contents/collection', () => ({
   isEntryCollection: vi.fn(),
@@ -30,9 +21,6 @@ describe('getIndexFile()', () => {
     vi.mocked(isEntryCollection).mockImplementation(
       (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
     );
-
-    // Setup default mock for svelte/store get function
-    vi.mocked(get).mockReturnValue(() => 'Index File');
   });
 
   afterEach(() => {
@@ -88,31 +76,7 @@ describe('getIndexFile()', () => {
     expect(result).toBeUndefined();
   });
 
-  test('returns default configuration when index_file is true', () => {
-    vi.mocked(get).mockReturnValue(() => 'Index File');
-
-    const collection = {
-      name: 'test-collection',
-      folder: 'content/posts',
-      index_file: true,
-    };
-
-    const result = getIndexFile(collection);
-
-    expect(result).toEqual({
-      name: '_index',
-      label: 'Index File',
-      icon: 'home',
-      fields: undefined,
-      editor: undefined,
-    });
-  });
-
-  test('returns default configuration with fallback label when svelte-i18n fails', () => {
-    vi.mocked(get).mockImplementation(() => {
-      throw new Error('svelte-i18n not initialized');
-    });
-
+  test('returns default configuration with label from i18n', () => {
     const collection = {
       name: 'test-collection',
       folder: 'content/posts',
@@ -131,8 +95,6 @@ describe('getIndexFile()', () => {
   });
 
   test('returns custom configuration when index_file is an object', () => {
-    vi.mocked(get).mockReturnValue(() => 'Localized Index File');
-
     const collection = {
       name: 'test-collection',
       folder: 'content/posts',
@@ -157,8 +119,6 @@ describe('getIndexFile()', () => {
   });
 
   test('uses defaults for missing properties in index_file object', () => {
-    vi.mocked(get).mockReturnValue(() => 'Localized Index File');
-
     const collection = {
       name: 'test-collection',
       folder: 'content/posts',
@@ -172,7 +132,7 @@ describe('getIndexFile()', () => {
 
     expect(result).toEqual({
       name: 'custom-index',
-      label: 'Localized Index File',
+      label: 'Index File',
       icon: 'home',
       fields: undefined,
       editor: undefined,
@@ -180,8 +140,6 @@ describe('getIndexFile()', () => {
   });
 
   test('uses defaults when index_file object has null/undefined values', () => {
-    vi.mocked(get).mockReturnValue(() => 'Localized Index File');
-
     const collection = {
       name: 'test-collection',
       folder: 'content/posts',
@@ -199,7 +157,7 @@ describe('getIndexFile()', () => {
 
     expect(result).toEqual({
       name: '_index',
-      label: 'Localized Index File',
+      label: 'Index File',
       icon: 'home',
       fields: null,
       editor: undefined,
@@ -215,9 +173,6 @@ describe('isCollectionIndexFile()', () => {
     vi.mocked(isEntryCollection).mockImplementation(
       (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
     );
-
-    // Setup default mock for svelte/store get function
-    vi.mocked(get).mockReturnValue(() => 'Index File');
   });
 
   afterEach(() => {
@@ -244,8 +199,6 @@ describe('isCollectionIndexFile()', () => {
   });
 
   test('returns true when entry slug matches index file name', () => {
-    vi.mocked(get).mockReturnValue(() => 'Index File');
-
     const collection = {
       name: 'test-collection',
       folder: 'content/posts',
@@ -266,8 +219,6 @@ describe('isCollectionIndexFile()', () => {
   });
 
   test('returns false when entry slug does not match index file name', () => {
-    vi.mocked(get).mockReturnValue(() => 'Index File');
-
     const collection = {
       name: 'test-collection',
       folder: 'content/posts',
@@ -310,8 +261,6 @@ describe('isCollectionIndexFile()', () => {
   });
 
   test('handles empty string slug', () => {
-    vi.mocked(get).mockReturnValue(() => 'Index File');
-
     const collection = {
       name: 'test-collection',
       folder: 'content/posts',
@@ -329,41 +278,5 @@ describe('isCollectionIndexFile()', () => {
     const result = isCollectionIndexFile(collection, entry);
 
     expect(result).toBe(false);
-  });
-});
-
-describe('getLocalizedLabel()', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test('returns localized label when svelte-i18n is available', () => {
-    vi.mocked(get).mockReturnValue(() => 'Index File');
-
-    const result = getLocalizedLabel();
-
-    expect(result).toBe('Index File');
-    expect(get).toHaveBeenCalled();
-  });
-
-  test('returns fallback label when svelte-i18n throws error', () => {
-    vi.mocked(get).mockImplementation(() => {
-      throw new Error('svelte-i18n not initialized');
-    });
-
-    const result = getLocalizedLabel();
-
-    expect(result).toBe('Index File');
-  });
-
-  test('returns translated label for different languages', () => {
-    vi.mocked(get).mockReturnValue((key) => {
-      if (key === 'index_file') return 'Archivo Índice';
-      return key;
-    });
-
-    const result = getLocalizedLabel();
-
-    expect(result).toBe('Archivo Índice');
   });
 });

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * @import { ConfigParserCollectors } from '$lib/types/private';
  */
 
-// Mock svelte-i18n
+// Mock @sveltia/i18n
 /** @type {Record<string, string>} */
 const mockI18nStrings = {
   'config.error.missing_backend': 'Missing backend configuration',
@@ -42,21 +42,9 @@ function mockTranslate(key, options) {
   return message;
 }
 
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn((fn) => {
-      fn(mockTranslate);
-
-      return () => {};
-    }),
-  },
-  locale: {
-    subscribe: vi.fn((fn) => {
-      fn('en-US');
-
-      return () => {};
-    }),
-  },
+vi.mock('@sveltia/i18n', () => ({
+  _: mockTranslate,
+  locale: { current: 'en-US', set: vi.fn() },
 }));
 
 const mockGetStore = vi.fn();
@@ -121,27 +109,7 @@ describe('Config Parser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockGetStore.mockImplementation((store) => {
-      // If this is the i18n store, return the translate function
-      if (store && typeof store.subscribe === 'function') {
-        // This is a Svelte store - call subscribe to get current value
-        let value;
-
-        store.subscribe(
-          /**
-           * Store subscriber.
-           * @param {any} v Value.
-           */
-          (v) => {
-            value = v;
-          },
-        )();
-
-        return value;
-      }
-
-      return store;
-    });
+    mockGetStore.mockImplementation((store) => store);
 
     mockIsObject.mockImplementation(
       /**

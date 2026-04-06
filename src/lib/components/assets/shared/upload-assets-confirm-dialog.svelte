@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Alert, ConfirmationDialog } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { processedAssets, uploadingAssets } from '$lib/services/assets';
@@ -34,8 +34,8 @@
 
 <ConfirmationDialog
   open={$showUploadAssetsConfirmDialog}
-  title={$_(originalAsset ? 'replace_asset' : 'upload_assets')}
-  okLabel={$_(originalAsset ? 'replace' : 'upload')}
+  title={_(originalAsset ? 'replace_asset' : 'upload_assets')}
+  okLabel={_(originalAsset ? 'replace' : 'upload')}
   okDisabled={!files.length}
   onOk={async () => {
     await saveAssets({ files, folder, originalAsset }, { commitType: 'uploadMedia' });
@@ -47,18 +47,18 @@
 >
   {#if processing}
     <div role="status">
-      {$_(originalFiles.length === 1 ? 'processing_file' : 'processing_files')}
+      {_('processing_files', { values: { count: originalFiles.length } })}
     </div>
   {/if}
   {#if files.length}
-    <div role="group" class="section uploading" aria-label={$_('uploading_files')}>
+    <div role="group" class="section uploading" aria-label={_('uploading_files')}>
       <div role="none">
         {#if originalAsset}
-          {$_('confirm_replacing_file', {
+          {_('confirm_replacing_file', {
             values: { name: originalAsset.name },
           })}
         {:else}
-          {$_(files.length === 1 ? 'confirm_uploading_file' : 'confirm_uploading_files', {
+          {_('confirm_uploading_files', {
             values: { count: files.length, folder: `/${folder?.internalPath}` },
           })}
         {/if}
@@ -67,10 +67,13 @@
     </div>
   {/if}
   {#if oversizedFiles.length}
-    <div role="group" class="section oversized" aria-label={$_('oversized_files')}>
+    <div role="group" class="section oversized" aria-label={_('oversized_files')}>
       <Alert status="warning">
-        {$_(oversizedFiles.length === 1 ? 'warning_oversized_file' : 'warning_oversized_files', {
-          values: { size: formatSize(/** @type {number} */ (maxSize)) },
+        {_('warning_oversized_files', {
+          values: {
+            count: oversizedFiles.length,
+            size: formatSize(/** @type {number} */ (maxSize)),
+          },
         })}
       </Alert>
       <UploadAssetsPreview files={oversizedFiles} {transformedFileMap} removable={false} />

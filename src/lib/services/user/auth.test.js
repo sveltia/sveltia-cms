@@ -56,7 +56,7 @@ vi.mock('svelte/store', () => ({
   })),
 }));
 
-vi.mock('svelte-i18n', () => ({
+vi.mock('@sveltia/i18n', () => ({
   _: mockGetLocaleText,
 }));
 
@@ -105,9 +105,7 @@ describe('auth service', () => {
       }
 
       // Handle the translation function (_)
-      if (store === mockGetLocaleText) {
-        return mockGetLocaleText;
-      }
+      // (no longer needed; _ is called directly in @sveltia/i18n)
 
       // Default to returning the cmsConfig for other store access
       return mockCmsConfig;
@@ -506,7 +504,7 @@ describe('auth service', () => {
       mockGet.mockImplementation((store) => {
         if (store === mockBackendName) return 'local';
 
-        return mockGetLocaleText;
+        return mockCmsConfig;
       });
       mockGetLocaleText.mockReturnValue('Picker dismissed error');
 
@@ -525,7 +523,7 @@ describe('auth service', () => {
       mockGet.mockImplementation((store) => {
         if (store === mockBackendName) return 'github';
 
-        return mockGetLocaleText;
+        return mockCmsConfig;
       });
       mockGetLocaleText.mockReturnValue('Authentication aborted error');
 

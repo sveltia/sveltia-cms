@@ -1,8 +1,8 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button, Icon, TruncatedText } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { sleep } from '@sveltia/utils/misc';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import { formatSize } from '$lib/services/utils/file';
@@ -46,10 +46,10 @@
             </TruncatedText>
           </div>
           <div role="none" class="meta">
-            {#key $appLocale}
-              {$_('file_meta', {
+            {#key appLocale.current}
+              {_('file_meta', {
                 values: {
-                  type: $_(`file_type_labels.${file.type.split('/')[1]}`, {
+                  type: _(`file_type_labels.${file.type.split('/')[1]}`, {
                     default: getPathInfo(name).extension?.toUpperCase(),
                   }),
                   size: formatSize(size),
@@ -57,9 +57,9 @@
               })}
             {/key}
             {#if originalFile && originalFile.type !== file.type}
-              {$_('file_meta_converted_from_x', {
+              {_('file_meta_converted_from_x', {
                 values: {
-                  type: $_(`file_type_labels.${originalFile.type.split('/')[1]}`, {
+                  type: _(`file_type_labels.${originalFile.type.split('/')[1]}`, {
                     default: getPathInfo(originalFile.name).extension?.toUpperCase(),
                   }),
                 },
@@ -70,7 +70,7 @@
         <Button
           variant="ghost"
           iconic
-          aria-label={$_('remove')}
+          aria-label={_('remove')}
           hidden={!removable || files.length === 1}
           onclick={(event) => {
             event.stopPropagation();

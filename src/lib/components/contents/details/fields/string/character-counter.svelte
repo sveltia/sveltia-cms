@@ -1,5 +1,5 @@
 <script>
-  import { _ } from 'svelte-i18n';
+  import { _ } from '@sveltia/i18n';
 
   import { validateStringField } from '$lib/services/contents/fields/string/validate';
 
@@ -33,18 +33,12 @@
 {#if hasMin || hasMax}
   <div
     class="wrapper"
-    aria-label={$_(
+    aria-label={_(
       hasMin && hasMax
-        ? count === 1
-          ? 'character_counter.min_max.one'
-          : 'character_counter.min_max.many'
+        ? 'character_counter.min_max'
         : hasMin
-          ? count === 1
-            ? 'character_counter.min.one'
-            : 'character_counter.min.many'
-          : count === 1
-            ? 'character_counter.max.one'
-            : 'character_counter.max.many',
+          ? 'character_counter.min'
+          : 'character_counter.max',
       { values: { count, min: minlength, max: maxlength } },
     )}
   >

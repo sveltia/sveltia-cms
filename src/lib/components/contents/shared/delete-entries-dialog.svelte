@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { ConfirmationDialog } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { getAssetFolder } from '$lib/services/assets/folders';
   import { selectedCollection } from '$lib/services/contents/collection';
@@ -36,30 +36,21 @@
 
 <ConfirmationDialog
   bind:open
-  title={$selectedEntries.length === 1 ? $_('delete_entry') : $_('delete_entries')}
-  okLabel={$_('delete')}
+  title={_('delete_entries', { values: { count: $selectedEntries.length } })}
+  okLabel={_('delete')}
   onOk={() => {
     deleteEntries($selectedEntries, associatedAssets);
   }}
 >
-  {#if $selectedEntries.length === 1}
-    {$_(
-      associatedAssets.length
-        ? 'confirm_deleting_selected_entry_with_assets'
-        : 'confirm_deleting_selected_entry',
-    )}
-  {:else if $selectedEntries.length === $listedEntries.length}
-    {$_(
-      associatedAssets.length
+  {@const all = $selectedEntries.length > 1 && $selectedEntries.length === $listedEntries.length}
+  {_(
+    associatedAssets.length
+      ? all
         ? 'confirm_deleting_all_entries_with_assets'
-        : 'confirm_deleting_all_entries',
-    )}
-  {:else}
-    {$_(
-      associatedAssets.length
-        ? 'confirm_deleting_selected_entries_with_assets'
+        : 'confirm_deleting_selected_entries_with_assets'
+      : all
+        ? 'confirm_deleting_all_entries'
         : 'confirm_deleting_selected_entries',
-      { values: { count: $selectedEntries.length } },
-    )}
-  {/if}
+    { values: { count: $selectedEntries.length } },
+  )}
 </ConfirmationDialog>

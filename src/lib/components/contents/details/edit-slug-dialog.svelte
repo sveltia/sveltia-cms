@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Alert, Dialog, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { _ } from 'svelte-i18n';
 
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -56,8 +56,8 @@
 
 <Dialog
   bind:open
-  title={$_('edit_slug')}
-  okLabel={$_('update')}
+  title={_('edit_slug')}
+  okLabel={_('update')}
   okDisabled={equal(currentSlugs, updatedSlugs) ||
     Object.values(validations).some((invalid) => invalid !== false)}
   onOk={() => {
@@ -65,7 +65,7 @@
   }}
 >
   <Alert status="warning" --font-size="var(--sui-font-size-small)">
-    {$_('edit_slug_warning')}
+    {_('edit_slug_warning')}
   </Alert>
   <div role="none" class="locales">
     {#each Object.keys(updatedSlugs) as locale (locale)}
@@ -91,10 +91,10 @@
           />
           <p id="{componentId}-{locale}-error" class="error">
             {#if validations[locale] === 'empty'}
-              {$_('edit_slug_error.empty')}
+              {_('edit_slug_error.empty')}
             {/if}
             {#if validations[locale] === 'duplicate'}
-              {$_('edit_slug_error.duplicate')}
+              {_('edit_slug_error.duplicate')}
             {/if}
           </p>
         </div>

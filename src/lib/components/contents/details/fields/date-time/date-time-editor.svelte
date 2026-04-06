@@ -6,9 +6,9 @@
   @todo Replace the native `<input>` with a custom component.
 -->
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
   import { untrack } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import {
     getCurrentDateTime,
@@ -110,7 +110,7 @@
   {#if !readonly}
     <Button
       variant="tertiary"
-      label={$_(dateOnly ? 'today' : 'now')}
+      label={_(dateOnly ? 'today' : 'now')}
       onclick={() => {
         const dt = getCurrentDateTime(fieldConfig);
 
@@ -121,7 +121,7 @@
   {#if !readonly && !required}
     <Button
       variant="tertiary"
-      label={$_('clear')}
+      label={_('clear')}
       disabled={!currentValue}
       onclick={() => {
         currentValue = '';

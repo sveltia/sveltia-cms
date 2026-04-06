@@ -1,8 +1,8 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import mime from 'mime';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
@@ -89,18 +89,18 @@
     </div>
   {/if}
   <section>
-    <h4>{$_('kind')}</h4>
+    <h4>{_('kind')}</h4>
     <p>
-      {$_(`file_type_labels.${extension}`, {
+      {_(`file_type_labels.${extension}`, {
         default: mime.getType(path) ?? extension.toUpperCase(),
       })}
     </p>
   </section>
   {#if !!size}
     <section>
-      <h4>{$_('size')}</h4>
+      <h4>{_('size')}</h4>
       <p>
-        {#key $appLocale}
+        {#key appLocale.current}
           {formatSize(size)}
         {/key}
       </p>
@@ -108,18 +108,18 @@
   {/if}
   {#if canPreview}
     <section>
-      <h4>{$_('dimensions')}</h4>
+      <h4>{_('dimensions')}</h4>
       <p>{dimensions ? `${dimensions.width}×${dimensions.height}` : '–'}</p>
     </section>
   {/if}
   {#if ['audio', 'video'].includes(kind)}
     <section>
-      <h4>{$_('duration')}</h4>
+      <h4>{_('duration')}</h4>
       <p>{duration ? formatDuration(duration) : '–'}</p>
     </section>
   {/if}
   <section>
-    <h4>{$_('public_url')}</h4>
+    <h4>{_('public_url')}</h4>
     <p>
       {#if publicURL}
         <a href={publicURL} target="_blank">{publicURL}</a>
@@ -129,7 +129,7 @@
     </p>
   </section>
   <section>
-    <h4>{$_('file_path')}</h4>
+    <h4>{_('file_path')}</h4>
     <p>
       {#if repoBlobURL}
         <a href={repoBlobURL}>/{path}</a>
@@ -139,13 +139,13 @@
     </p>
   </section>
   <section>
-    <h4>{$_('used_in')}</h4>
+    <h4>{_('used_in')}</h4>
     {#if !usedEntries}
-      <p>{$_('loading')}</p>
+      <p>{_('loading')}</p>
     {:else}
       {#each usedEntries as entry (entry.id)}
         {#each getAssociatedCollections(entry) as collection (collection.name)}
-          {#key $appLocale}
+          {#key appLocale.current}
             {@const collectionLabel = getCollectionLabel(collection)}
             {#each getCollectionFilesByEntry(collection, entry) as file (file.name)}
               {@render usedEntryLink({
@@ -163,31 +163,31 @@
           {/key}
         {/each}
       {:else}
-        <p>{$_('sort_keys.none')}</p>
+        <p>{_('sort_keys.none')}</p>
       {/each}
     {/if}
   </section>
   {#if commitAuthor}
     <section>
-      <h4>{$_('sort_keys.commit_author')}</h4>
+      <h4>{_('sort_keys.commit_author')}</h4>
       <p>{commitAuthor.name || commitAuthor.login || commitAuthor.email}</p>
     </section>
   {/if}
   {#if commitDate}
     <section>
-      <h4>{$_('sort_keys.commit_date')}</h4>
-      <p>{formatDate(commitDate, $appLocale)}</p>
+      <h4>{_('sort_keys.commit_date')}</h4>
+      <p>{formatDate(commitDate, appLocale.current)}</p>
     </section>
   {/if}
   {#if createdDate}
     <section>
-      <h4>{$_('created_date')}</h4>
-      <p>{formatDate(createdDate, $appLocale)}</p>
+      <h4>{_('created_date')}</h4>
+      <p>{formatDate(createdDate, appLocale.current)}</p>
     </section>
   {/if}
   {#if coordinates}
     <section>
-      <h4>{$_('location')}</h4>
+      <h4>{_('location')}</h4>
       <LeafletMap {coordinates} />
     </section>
   {/if}

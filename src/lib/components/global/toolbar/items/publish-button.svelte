@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Alert, Button, Toast } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { backend, isLastCommitPublished } from '$lib/services/backends';
   import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
@@ -53,13 +53,13 @@
   <Button
     variant="secondary"
     size={$isSmallScreen ? 'small' : 'medium'}
-    label={$_('publish_changes')}
+    label={_('publish_changes')}
     disabled={!canPublish}
     onclick={() => publish()}
   />
   <Toast bind:show={showToast}>
     <Alert status={toastStatus}>
-      {$_(toastStatus === 'error' ? 'publishing_changes_failed' : 'publishing_changes')}
+      {_(toastStatus === 'error' ? 'publishing_changes_failed' : 'publishing_changes')}
     </Alert>
   </Toast>
 {/if}

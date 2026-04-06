@@ -1,9 +1,9 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import { Alert, Toast } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
   import { onMount } from 'svelte';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
   import EditAssetDialog from '$lib/components/assets/details/edit-asset-dialog.svelte';
@@ -39,8 +39,11 @@
   let isSearchPage = $state(false);
 
   const selectedAssetFolderLabel = $derived(
-    // `$appLocale` is a key, because `getFolderLabelByCollection` can return a localized label
-    $appLocale && $selectedAssetFolder ? getFolderLabelByCollection($selectedAssetFolder) : '',
+    // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized
+    // label
+    appLocale.current && $selectedAssetFolder
+      ? getFolderLabelByCollection($selectedAssetFolder)
+      : '',
   );
 
   /**
@@ -69,7 +72,7 @@
         // Show the asset folder list only
         $selectedAssetFolder = undefined;
         $showAssetOverlay = false;
-        $announcedPageStatus = $_('viewing_asset_folder_list');
+        $announcedPageStatus = _('viewing_asset_folder_list');
         isIndexPage = true;
       } else {
         // Redirect to All Assets
@@ -101,14 +104,9 @@
       await sleep(100);
 
       $showAssetOverlay = false;
-      $announcedPageStatus = $_(
-        count > 1
-          ? 'viewing_x_asset_folder_many_assets'
-          : count === 1
-            ? 'viewing_x_asset_folder_one_asset'
-            : 'viewing_x_asset_folder_no_assets',
-        { values: { folder: selectedAssetFolderLabel, count } },
-      );
+      $announcedPageStatus = _('viewing_x_asset_folder', {
+        values: { folder: selectedAssetFolderLabel, count },
+      });
 
       return;
     }
@@ -117,8 +115,8 @@
       ? $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`)
       : undefined;
     $announcedPageStatus = $overlaidAsset
-      ? $_('viewing_x_asset_details', { values: { name: $overlaidAsset.name } })
-      : $_('file_not_found');
+      ? _('viewing_x_asset_details', { values: { name: $overlaidAsset.name } })
+      : _('file_not_found');
     $showAssetOverlay = true;
   };
 
@@ -137,7 +135,7 @@
   }}
 />
 
-<PageContainer aria-label={$_('asset_library')}>
+<PageContainer aria-label={_('asset_library')}>
   {#snippet primarySidebar()}
     {#if !$isSmallScreen || isIndexPage}
       <PrimarySidebar {isSearchPage} />
@@ -149,7 +147,7 @@
     {:else if !$isSmallScreen || !isIndexPage}
       <PageContainerMainArea
         id="assets-container"
-        aria-label={$_('x_asset_folder', { values: { folder: selectedAssetFolderLabel } })}
+        aria-label={_('x_asset_folder', { values: { folder: selectedAssetFolderLabel } })}
       >
         {#snippet primaryToolbar()}
           <PrimaryToolbar />
@@ -179,41 +177,26 @@
 
 <Toast bind:show={$assetUpdatesToast.saved}>
   <Alert status="success">
-    {$_(
-      $assetUpdatesToast.published
-        ? $assetUpdatesToast.count === 1
-          ? 'asset_saved_and_published'
-          : 'assets_saved_and_published'
-        : $assetUpdatesToast.count === 1
-          ? 'asset_saved'
-          : 'assets_saved',
-      {
-        values: { count: $assetUpdatesToast.count },
-      },
-    )}
+    {_($assetUpdatesToast.published ? 'assets_saved_and_published' : 'assets_saved', {
+      values: { count: $assetUpdatesToast.count },
+    })}
   </Alert>
 </Toast>
 
 <Toast bind:show={$assetUpdatesToast.moved}>
   <Alert status="success">
-    {$_($assetUpdatesToast.count === 1 ? 'asset_moved' : 'assets_moved', {
-      values: { count: $assetUpdatesToast.count },
-    })}
+    {_('assets_moved', { values: { count: $assetUpdatesToast.count } })}
   </Alert>
 </Toast>
 
 <Toast bind:show={$assetUpdatesToast.renamed}>
   <Alert status="success">
-    {$_($assetUpdatesToast.count === 1 ? 'asset_renamed' : 'assets_renamed', {
-      values: { count: $assetUpdatesToast.count },
-    })}
+    {_('assets_renamed', { values: { count: $assetUpdatesToast.count } })}
   </Alert>
 </Toast>
 
 <Toast bind:show={$assetUpdatesToast.deleted}>
   <Alert status="success">
-    {$_($assetUpdatesToast.count === 1 ? 'asset_deleted' : 'assets_deleted', {
-      values: { count: $assetUpdatesToast.count },
-    })}
+    {_('assets_deleted', { values: { count: $assetUpdatesToast.count } })}
   </Alert>
 </Toast>

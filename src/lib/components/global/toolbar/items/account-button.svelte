@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Icon, MenuButton } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import AccountMenu from '$lib/components/global/toolbar/items/account-menu.svelte';
   import { backendName } from '$lib/services/backends';
@@ -17,10 +17,10 @@
   <MenuButton
     variant="ghost"
     iconic={!isLocalRepo}
-    label={isLocalRepo ? $_('local_workflow.indicator') : undefined}
+    label={isLocalRepo ? _('local_workflow.indicator') : undefined}
     class={hasAvatar ? 'avatar' : ''}
     popupPosition="bottom-right"
-    aria-label={$_('show_account_menu')}
+    aria-label={_('show_account_menu')}
     bind:this={menuButton}
   >
     {#snippet endIcon()}

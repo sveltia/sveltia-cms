@@ -36,19 +36,9 @@ vi.mock('svelte/store', () => ({
 }));
 
 // Mock i18n dependencies
-vi.mock('svelte-i18n', () => ({
-  /**
-   * Locale store.
-   * @returns {string} Current locale.
-   */
-  locale: () => 'en',
-  /**
-   * Translation function store.
-   * @returns {import('vitest').Mock} Translation function.
-   */
-  _: () => vi.fn((key, options) => `${key}(${options?.values?.size || ''})`),
-  addMessages: vi.fn(),
-  init: vi.fn(),
+vi.mock('@sveltia/i18n', () => ({
+  locale: { current: 'en', set: vi.fn() },
+  _: vi.fn((key, options) => `${key}(${options?.values?.size || ''})`),
 }));
 
 describe('Test encodeFilePath()', () => {

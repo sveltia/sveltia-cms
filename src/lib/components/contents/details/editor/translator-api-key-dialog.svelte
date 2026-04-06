@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { PromptDialog, Spacer } from '@sveltia/ui';
   import { sanitize } from 'isomorphic-dompurify';
-  import { _ } from 'svelte-i18n';
 
   import TranslatorSelector from '$lib/components/settings/controls/translator-selector.svelte';
   import { showContentOverlay, translatorApiKeyDialogState } from '$lib/services/contents/editor';
@@ -21,12 +21,14 @@
 
 <PromptDialog
   bind:open={$translatorApiKeyDialogState.show}
-  title={$_($translatorApiKeyDialogState.multiple ? 'translate_fields' : 'translate_field')}
+  title={_('translate_fields', {
+    values: { count: $translatorApiKeyDialogState.multiple ? 2 : 1 },
+  })}
   showOk={false}
   textboxAttrs={{
     spellcheck: false,
     monospace: true,
-    'aria-label': $_('api_key'),
+    'aria-label': _('api_key'),
   }}
   oninput={(event) => {
     const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
@@ -45,7 +47,7 @@
   <TranslatorSelector />
   <Spacer />
   {@html sanitize(
-    $_('prefs.i18n.translators.description', {
+    _('prefs.i18n.translators.description', {
       values: {
         service: apiLabel,
         homeHref: `href="${developerURL}"`,

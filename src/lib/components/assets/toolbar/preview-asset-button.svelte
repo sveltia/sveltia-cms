@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { goto } from '$lib/services/app/navigation';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
@@ -25,8 +25,8 @@
 <Button
   variant="ghost"
   disabled={!asset || !canPreviewAsset(asset)}
-  label={$_('preview')}
-  aria-label={$_('show_preview')}
+  label={_('preview')}
+  aria-label={_('show_preview')}
   onclick={() => {
     goto(`/assets/${asset?.path}`, { transitionType: 'forwards' });
   }}

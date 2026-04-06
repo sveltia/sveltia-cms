@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Icon, Option } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { announcedPageStatus, goto } from '$lib/services/app/navigation';
 
@@ -35,7 +35,7 @@
     onSelect={() => {
       // Announce the selected singleton file. The Content Editor will not open until
       // the user presses Enter.
-      $announcedPageStatus = $_('singleton_selected_announcement', {
+      $announcedPageStatus = _('singleton_selected_announcement', {
         values: { file: label || name },
       });
     }}

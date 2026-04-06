@@ -5,9 +5,9 @@
   @see https://sveltiacms.app/en/docs/fields/keyvalue
 -->
 <script>
+  import { _ } from '@sveltia/i18n';
   import equal from 'fast-deep-equal';
   import { untrack } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import { entryDraft } from '$lib/services/contents/draft';
   import { getPairs } from '$lib/services/contents/fields/key-value/helper';
@@ -38,8 +38,8 @@
     key_label: _keyLabel,
     value_label: _valueLabel,
   } = $derived(fieldConfig);
-  const keyLabel = $derived(_keyLabel || $_('key_value.key'));
-  const valueLabel = $derived(_valueLabel || $_('key_value.value'));
+  const keyLabel = $derived(_keyLabel || _('key_value.key'));
+  const valueLabel = $derived(_valueLabel || _('key_value.value'));
 
   /** @type {[string, string][]}  */
   let pairs = $state([]);

@@ -1,5 +1,5 @@
 <script>
-  import { _ } from 'svelte-i18n';
+  import { _ } from '@sveltia/i18n';
 
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import EntryPreviewIframe from '$lib/components/contents/details/preview/entry-preview-iframe.svelte';
@@ -43,7 +43,7 @@
   {#if customPreviewStyleRegistry.size}
     <EntryPreviewIframe {locale} styleURLs={[...customPreviewStyleRegistry]} {children} />
   {:else}
-    <div role="document" aria-label={$_('content_preview')}>
+    <div role="document" aria-label={_('content_preview')}>
       {@render children()}
     </div>
   {/if}

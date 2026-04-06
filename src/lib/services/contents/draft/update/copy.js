@@ -113,7 +113,6 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
   const { serviceId, markdownSupported, translate } = get(translator);
   const { sourceLanguage, targetLanguage } = options;
   const count = Object.keys(copingFieldMap).length;
-  const countType = count === 1 ? 'one' : 'many';
 
   const apiKey =
     get(prefs).apiKeys?.[serviceId] ||
@@ -146,7 +145,7 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
         isMarkdown && !markdownSupported ? turndownService.turndown(value) : value;
     });
 
-    updateToast('success', `translation.complete.${countType}`, { count, sourceLanguage });
+    updateToast('success', 'translation.complete', { count, sourceLanguage });
   } catch (ex) {
     // @todo Show a detailed error message.
     updateToast('error', 'translation.error', { count, sourceLanguage });
@@ -167,13 +166,12 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
 export const copyFields = ({ currentValues, options, copingFieldMap }) => {
   const { sourceLanguage, targetLanguage } = options;
   const count = Object.keys(copingFieldMap).length;
-  const countType = count === 1 ? 'one' : 'many';
 
   Object.entries(copingFieldMap).forEach(([_keyPath, { value }]) => {
     currentValues[targetLanguage][_keyPath] = value;
   });
 
-  updateToast('success', `copy.complete.${countType}`, { count, sourceLanguage });
+  updateToast('success', 'copy.complete', { count, sourceLanguage });
 };
 
 /**

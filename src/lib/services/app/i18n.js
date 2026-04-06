@@ -1,26 +1,29 @@
-import { initLocales } from '@sveltia/ui';
+import { addMessages, getLocaleFromNavigator, init } from '@sveltia/i18n';
 import { getPathInfo } from '@sveltia/utils/file';
 import { get } from 'svelte/store';
-import { addMessages, getLocaleFromNavigator } from 'svelte-i18n';
+import { parse } from 'yaml';
 
 import { prefs } from '$lib/services/user/prefs';
 
 /**
  * Load strings and initialize the locales.
- * @see https://github.com/kaisermann/svelte-i18n/blob/main/docs/Getting%20Started.md
+ * @see https://github.com/sveltia/sveltia-i18n
  * @see https://vitejs.dev/guide/features.html#glob-import
  */
 export const initAppLocale = () => {
-  /** @type {Record<string, { strings: Record<string, string> }>} */
-  const modules = import.meta.glob('$lib/locales/*.js', { eager: true });
-
-  Object.entries(modules).forEach(([path, { strings }]) => {
-    const locale = getPathInfo(path).filename;
-
-    addMessages(locale, strings);
+  const modules = import.meta.glob('$lib/locales/*.yaml', {
+    eager: true,
+    query: '?raw',
+    import: 'default',
   });
 
-  initLocales({
+  Object.entries(modules).forEach(([path, content]) => {
+    const locale = getPathInfo(path).filename;
+
+    addMessages(locale, parse(/** @type {string} */ (content)));
+  });
+
+  init({
     fallbackLocale: 'en',
     initialLocale: get(prefs).locale || (getLocaleFromNavigator() ?? '').split('-')[0] || 'en',
   });

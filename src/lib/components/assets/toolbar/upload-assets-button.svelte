@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Icon } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
@@ -25,7 +25,7 @@
   iconic={!label}
   {disabled}
   {label}
-  aria-label={$_('upload_assets')}
+  aria-label={_('upload_assets')}
   onclick={() => {
     $showUploadAssetsDialog = true;
   }}

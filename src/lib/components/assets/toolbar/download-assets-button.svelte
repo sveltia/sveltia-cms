@@ -1,8 +1,8 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Alert, Button, MenuItem, Toast } from '@sveltia/ui';
   import { saveFile } from '@sveltia/utils/file';
   import { sleep } from '@sveltia/utils/misc';
-  import { _ } from 'svelte-i18n';
 
   import { getAssetBlob } from '$lib/services/assets/info';
 
@@ -47,7 +47,7 @@
 <Component
   variant="ghost"
   disabled={!assets.length}
-  label={$_('download')}
+  label={_('download')}
   onclick={() => {
     downloadFiles();
   }}
@@ -55,6 +55,6 @@
 
 <Toast bind:show={showToast}>
   <Alert status="success">
-    {assets.length === 1 ? $_('asset_downloaded') : $_('assets_downloaded')}
+    {_('assets_downloaded', { values: { count: assets.length } })}
   </Alert>
 </Toast>

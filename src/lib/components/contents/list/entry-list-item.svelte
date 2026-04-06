@@ -1,6 +1,6 @@
 <script>
+  import { locale as appLocale } from '@sveltia/i18n';
   import { Checkbox, GridCell, GridRow, Icon, TruncatedText } from '@sveltia/ui';
-  import { locale as appLocale } from 'svelte-i18n';
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -90,7 +90,7 @@
   <GridCell class="title">
     <div role="none" class="label">
       <TruncatedText lines={2}>
-        {#key $appLocale}
+        {#key appLocale.current}
           {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
         {/key}
         {#if isCollectionIndexFile(collection, entry)}

@@ -1,5 +1,5 @@
+import { _ } from '@sveltia/i18n';
 import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 
 import { user } from '$lib/services/user';
 import { sendRequest } from '$lib/services/utils/networking';
@@ -64,7 +64,7 @@ export const refreshAccessToken = async ({ clientId, tokenURL, refreshToken }) =
   }
 
   if (!response?.ok) {
-    throw new Error(get(_)('sign_in_error.TOKEN_REFRESH_FAILED'));
+    throw new Error(_('sign_in_error.TOKEN_REFRESH_FAILED'));
   }
 
   ({ access_token: token, refresh_token: refreshToken } = await response.json());

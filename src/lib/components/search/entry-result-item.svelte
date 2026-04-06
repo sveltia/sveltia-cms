@@ -1,7 +1,7 @@
 <script>
+  import { locale as appLocale } from '@sveltia/i18n';
   import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { locale as appLocale } from 'svelte-i18n';
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -62,7 +62,7 @@
         {/if}
       </GridCell>
       <GridCell class="collection">
-        {#key $appLocale}
+        {#key appLocale.current}
           {getCollectionLabel(collection)}
         {/key}
       </GridCell>
@@ -72,7 +72,7 @@
             {#if collectionFile}
               {getCollectionFileLabel(collectionFile)}
             {:else}
-              {#key $appLocale}
+              {#key appLocale.current}
                 {@html getEntrySummary(collection, entry, {
                   useTemplate: true,
                   allowMarkdown: true,

@@ -1,5 +1,5 @@
+import { _ } from '@sveltia/i18n';
 import { derived, get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 
 import { buildGroupMap } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
@@ -48,7 +48,7 @@ export const groupEntries = (entries, collection, conditions) => {
   } = collection;
 
   const sortCondition = get(currentView).sort;
-  const otherKey = get(_)('other');
+  const otherKey = _('other');
 
   const sortedGroups = buildGroupMap(
     entries,

@@ -1,7 +1,7 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import { backend } from '$lib/services/backends';
@@ -38,11 +38,11 @@
   });
 </script>
 
-<PanelContainer title={$_('entry_sidebar.history.title')}>
+<PanelContainer title={_('entry_sidebar.history.title')}>
   {#if loading}
-    <div class="empty">{$_('loading')}</div>
+    <div class="empty">{_('loading')}</div>
   {:else if error}
-    <div class="empty">{$_('entry_sidebar.history.fetch_failed')}</div>
+    <div class="empty">{_('entry_sidebar.history.fetch_failed')}</div>
   {:else if commits.length > 0}
     <div role="list" class="commits">
       {#each commits as commit (commit.sha)}
@@ -74,13 +74,13 @@
           {/if}
           <span class="details">
             <span class="author">{commit.authorName}</span>
-            <span class="date">{formatDate(commit.date, $appLocale)}</span>
+            <span class="date">{formatDate(commit.date, appLocale.current)}</span>
           </span>
         </Button>
       {/each}
     </div>
   {:else}
-    <div class="empty">{$_('entry_sidebar.history.no_history')}</div>
+    <div class="empty">{_('entry_sidebar.history.no_history')}</div>
   {/if}
 </PanelContainer>
 

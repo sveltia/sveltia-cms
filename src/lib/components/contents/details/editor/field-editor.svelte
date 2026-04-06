@@ -1,4 +1,5 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
   import { escapeRegExp } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
@@ -6,7 +7,6 @@
   import { parseInline } from 'marked';
   import { getContext, setContext } from 'svelte';
   import { writable } from 'svelte/store';
-  import { _ } from 'svelte-i18n';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import FieldEditorGroup from '$lib/components/contents/details/editor/field-editor-group.svelte';
@@ -243,7 +243,7 @@
 
 {#if $entryDraft && canEdit && fieldType !== 'hidden'}
   <FieldEditorGroup
-    aria-label={$_('x_field', { values: { field: fieldLabel } })}
+    aria-label={_('x_field', { values: { field: fieldLabel } })}
     data-field-type={fieldType}
     data-key-path={keyPath}
     data-typed-key-path={typedKeyPath}
@@ -252,7 +252,7 @@
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{fieldLabel}</h4>
       {#if !readonly && required}
-        <div class="required" aria-label={$_('required')}>*</div>
+        <div class="required" aria-label={_('required')}>*</div>
       {/if}
       <Spacer flex />
       {#if canCopy && ['richtext', 'markdown', 'string', 'text', 'list', 'object'].includes(fieldType)}
@@ -264,16 +264,16 @@
           size="small"
           iconic
           popupPosition="bottom-right"
-          aria-label={$_('show_field_options')}
+          aria-label={_('show_field_options')}
         >
           {#snippet popup()}
-            <Menu aria-label={$_('field_options')}>
+            <Menu aria-label={_('field_options')}>
               {#if canCopy}
                 <CopyMenuItems {locale} {otherLocales} {keyPath} />
               {/if}
               {#if canRevert}
                 <MenuItem
-                  label={$_('revert_changes')}
+                  label={_('revert_changes')}
                   disabled={isRevertDisabled}
                   onclick={() => {
                     revertChanges({ locale, keyPath });
@@ -297,7 +297,7 @@
     {/if}
     <div role="none" class="field-wrapper" class:has-extra-labels={hasExtraLabels}>
       {#if !(fieldType in editors)}
-        <div role="none">{$_('unsupported_field_type_x', { values: { name: fieldType } })}</div>
+        <div role="none">{_('unsupported_field_type_x', { values: { name: fieldType } })}</div>
       {:else if isList}
         {@const Editor = editors[fieldType]}
         <Editor

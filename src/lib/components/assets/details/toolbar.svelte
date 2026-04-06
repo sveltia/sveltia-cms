@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Toolbar, TruncatedText } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import CopyAssetsButton from '$lib/components/assets/toolbar/copy-assets-button.svelte';
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
@@ -21,8 +21,8 @@
   <DownloadAssetsButton {assets} {useButton} />
   <DeleteAssetsButton
     {assets}
-    buttonDescription={$_('delete_asset')}
-    dialogDescription={$_('confirm_deleting_this_asset')}
+    buttonDescription={_('delete_asset')}
+    dialogDescription={_('confirm_deleting_this_asset')}
     onDelete={() => {
       goBack(`/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`);
     }}
@@ -30,9 +30,9 @@
   />
 {/snippet}
 
-<Toolbar variant="primary" aria-label={$_('primary')}>
+<Toolbar variant="primary" aria-label={_('primary')}>
   <BackButton
-    aria-label={$_('cancel_editing')}
+    aria-label={_('cancel_editing')}
     useShortcut={true}
     onclick={() => {
       goBack(`/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`);

@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Toolbar } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
@@ -16,7 +16,7 @@
     {#if $isSmallScreen}
       <Toolbar variant="primary">
         <BackButton
-          aria-label={$_(
+          aria-label={_(
             $searchMode === 'assets' ? 'back_to_asset_folder_list' : 'back_to_collection_list',
           )}
           onclick={() => {

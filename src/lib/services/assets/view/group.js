@@ -1,5 +1,4 @@
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
+import { _ } from '@sveltia/i18n';
 
 import { buildGroupMap } from '$lib/services/common/view';
 
@@ -19,7 +18,7 @@ export const groupAssets = (assets, { field, pattern } = { field: '', pattern: u
     return assets.length ? { '*': assets } : {};
   }
 
-  const otherKey = get(_)('other');
+  const otherKey = _('other');
 
   return Object.fromEntries(
     buildGroupMap(

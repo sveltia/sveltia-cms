@@ -1,3 +1,4 @@
+/* eslint-disable jsdoc/require-jsdoc */
 // @ts-nocheck
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -5,17 +6,18 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { groupEntries, parseGroupConfig } from './group';
 
 // Mock all dependencies
-vi.mock('svelte-i18n', () => ({
-  _: vi.fn(() => (key) => (key === 'other' ? 'Other' : key)),
-  locale: {
-    subscribe: vi.fn(() => vi.fn()),
-    set: vi.fn(),
-    update: vi.fn(),
-  },
+vi.mock('@sveltia/i18n', () => ({
+  _: (key) => (key === 'other' ? 'Other' : key),
 }));
 
 vi.mock('svelte/store', () => ({
   get: vi.fn(),
+  toStore: vi.fn((getter) => ({
+    subscribe: vi.fn((fn) => {
+      fn(getter());
+      return vi.fn();
+    }),
+  })),
   writable: vi.fn(() => ({
     subscribe: vi.fn(() => vi.fn()),
     set: vi.fn(),
@@ -44,9 +46,7 @@ describe('groupEntries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock the translation function
-    // @ts-ignore - Mock parameter types
-    vi.mocked(get).mockReturnValue((key) => (key === 'other' ? 'Other' : key));
+    vi.mocked(get).mockReturnValue({ sort: undefined });
   });
 
   test('should return ungrouped entries when no conditions', () => {
@@ -471,15 +471,7 @@ describe('groupEntries', () => {
     vi.mocked(getRegex).mockReturnValue(/^(\d{4})/);
 
     // Mock currentView store to return descending sort on date field
-    vi.mocked(get).mockImplementation((store) => {
-      // For currentView store
-      if (store && typeof store === 'object' && 'subscribe' in store) {
-        return { sort: { key: 'date', order: 'descending' } };
-      }
-
-      // For translation function
-      return (key) => (key === 'other' ? 'Other' : key);
-    });
+    vi.mocked(get).mockReturnValue({ sort: { key: 'date', order: 'descending' } });
 
     // @ts-ignore - Mock data for testing
     const conditions = { field: 'date', pattern: '(\\d{4})' };
@@ -542,13 +534,7 @@ describe('groupEntries', () => {
     // Regex matches only strings starting with a 4-digit year
     vi.mocked(getRegex).mockReturnValue(/^\d{4}/);
 
-    vi.mocked(get).mockImplementation((store) => {
-      if (store && typeof store === 'object' && 'subscribe' in store) {
-        return { sort: { key: 'tag', order: 'ascending' } };
-      }
-
-      return (key) => (key === 'other' ? 'Other' : key);
-    });
+    vi.mocked(get).mockReturnValue({ sort: { key: 'tag', order: 'ascending' } });
 
     // @ts-ignore
     const conditions = { field: 'tag', pattern: '^\\d{4}' };

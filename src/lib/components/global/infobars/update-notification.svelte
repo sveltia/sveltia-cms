@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Infobar } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import { version as userVersion } from '$lib/services/app';
 
@@ -64,10 +64,10 @@
 
 {#if updateAvailable}
   <Infobar --sui-infobar-message-justify-content="center">
-    {$_('update_available')}
+    {_('update_available')}
     <Button
       variant="link"
-      label={$_('update_now')}
+      label={_('update_now')}
       onclick={() => {
         window.location.reload();
       }}

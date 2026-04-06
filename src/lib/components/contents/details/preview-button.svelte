@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Icon } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -23,7 +23,7 @@
 <Button
   variant="ghost"
   iconic
-  aria-label={$_('preview')}
+  aria-label={_('preview')}
   pressed={$thisPane?.mode === 'preview'}
   onclick={() => {
     $thisPane = {

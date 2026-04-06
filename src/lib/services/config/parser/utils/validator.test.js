@@ -50,21 +50,9 @@ vi.mock('svelte/store', () => ({
   get: mockGet,
 }));
 
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn((fn) => {
-      fn(mockTranslate);
-
-      return () => {};
-    }),
-  },
-  locale: {
-    subscribe: vi.fn((fn) => {
-      fn('en-US');
-
-      return () => {};
-    }),
-  },
+vi.mock('@sveltia/i18n', () => ({
+  _: mockTranslate,
+  locale: { current: 'en-US', set: vi.fn() },
 }));
 
 vi.mock('$lib/services/contents/i18n', () => ({
@@ -92,26 +80,7 @@ describe('messages', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockGet.mockImplementation((store) => {
-      // If this is a store, call subscribe to get the current value
-      if (store && typeof store.subscribe === 'function') {
-        let value;
-
-        store.subscribe(
-          /**
-           * Store subscriber callback.
-           * @param {any} v Value.
-           */
-          (v) => {
-            value = v;
-          },
-        )();
-
-        return value;
-      }
-
-      return store;
-    });
+    mockGet.mockImplementation((store) => store);
 
     mockGetListFormatter.mockReturnValue({
       /**

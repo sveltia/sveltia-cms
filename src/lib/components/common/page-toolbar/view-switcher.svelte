@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { isLargeScreen } from '$lib/services/user/env';
 
@@ -30,13 +30,13 @@
 
 <div role="none" class="wrapper">
   {#if $isLargeScreen}
-    <SelectButtonGroup {disabled} aria-label={$_('switch_view')} {...rest}>
+    <SelectButtonGroup {disabled} aria-label={_('switch_view')} {...rest}>
       <SelectButton
         {disabled}
         selected={!isGridView}
         variant="ghost"
         iconic
-        aria-label={$_('list_view')}
+        aria-label={_('list_view')}
         onSelect={() => {
           currentView.update((view) => ({ ...view, type: 'list' }));
         }}
@@ -50,7 +50,7 @@
         selected={isGridView}
         variant="ghost"
         iconic
-        aria-label={$_('grid_view')}
+        aria-label={_('grid_view')}
         onSelect={() => {
           currentView.update((view) => ({ ...view, type: 'grid' }));
         }}
@@ -65,7 +65,7 @@
       {disabled}
       variant="ghost"
       iconic
-      aria-label={$_(isGridView ? 'switch_to_list_view' : 'switch_to_grid_view')}
+      aria-label={_(isGridView ? 'switch_to_list_view' : 'switch_to_grid_view')}
       onclick={() => {
         currentView.update((view) => ({ ...view, type: isGridView ? 'list' : 'grid' }));
       }}

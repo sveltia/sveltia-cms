@@ -1,7 +1,6 @@
 /* eslint-disable camelcase */
 
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
+import { _ } from '@sveltia/i18n';
 
 import { CLOUD_MEDIA_LIBRARY_NAMES } from '$lib/services/integrations/media-libraries/cloud';
 
@@ -28,22 +27,22 @@ export const parseMediaConfig = (cmsConfig, collectors) => {
         CLOUD_MEDIA_LIBRARY_NAMES.includes(/** @type {any} */ (name)),
       )
     ) {
-      errors.add(get(_)('config.error.missing_media_folder'));
+      errors.add(_('config.error.missing_media_folder'));
     }
   } else if (typeof media_folder !== 'string') {
-    errors.add(get(_)('config.error.invalid_media_folder'));
+    errors.add(_('config.error.invalid_media_folder'));
   }
 
   if (public_folder !== undefined) {
     if (typeof public_folder !== 'string') {
-      errors.add(get(_)('config.error.invalid_public_folder'));
+      errors.add(_('config.error.invalid_public_folder'));
     } else {
       if (/^\.{1,2}\//.test(public_folder)) {
-        errors.add(get(_)('config.error.public_folder_relative_path'));
+        errors.add(_('config.error.public_folder_relative_path'));
       }
 
       if (/^https?:/.test(public_folder)) {
-        errors.add(get(_)('config.error.public_folder_absolute_url'));
+        errors.add(_('config.error.public_folder_absolute_url'));
       }
     }
   }

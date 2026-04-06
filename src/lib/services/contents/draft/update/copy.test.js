@@ -426,13 +426,13 @@ describe('draft/update/copy', () => {
     it('should update toast notification', async () => {
       const { copyFromLocaleToast } = await import('$lib/services/contents/editor');
 
-      updateToast('success', 'copy.complete.one', { count: 1, sourceLanguage: 'en' });
+      updateToast('success', 'copy.complete', { count: 1, sourceLanguage: 'en' });
 
       expect(vi.mocked(copyFromLocaleToast).set).toHaveBeenCalledWith({
         id: expect.any(Number),
         show: true,
         status: 'success',
-        message: 'copy.complete.one',
+        message: 'copy.complete',
         count: 1,
         sourceLanguage: 'en',
       });

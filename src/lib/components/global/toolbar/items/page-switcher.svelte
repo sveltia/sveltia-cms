@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { goto, selectedPageName } from '$lib/services/app/navigation';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
@@ -13,7 +13,7 @@
     const _pages = [
       {
         key: 'collections',
-        label: $_('contents'),
+        label: _('contents'),
         icon: 'article',
         link: '/collections',
         /** @type {string | undefined} */
@@ -26,7 +26,7 @@
     if ($allAssetFolders.length) {
       _pages.push({
         key: 'assets',
-        label: $_('assets'),
+        label: _('assets'),
         icon: 'photo',
         link: $isSmallScreen
           ? '/assets'
@@ -38,7 +38,7 @@
     if ($cmsConfig?.publish_mode === 'editorial_workflow') {
       // _pages.push({
       //   key: 'workflow',
-      //   label: $_('editorial_workflow'),
+      //   label: _('editorial_workflow'),
       //   icon: 'rebase_edit',
       //   link: '/workflow',
       // });
@@ -47,7 +47,7 @@
     if ($backendName === 'local') {
       // _pages.push({
       //   key: 'config',
-      //   label: $_('cms_config'),
+      //   label: _('cms_config'),
       //   icon: 'settings',
       //   link: '/config',
       // });
@@ -56,7 +56,7 @@
     if ($isSmallScreen) {
       _pages.push({
         key: 'menu',
-        label: $_('menu'),
+        label: _('menu'),
         icon: 'menu',
         link: '/menu',
         searchMode: undefined,
@@ -68,7 +68,7 @@
 </script>
 
 <div role="none" class="wrapper">
-  <SelectButtonGroup aria-label={$_('switch_page')} aria-controls="page-container">
+  <SelectButtonGroup aria-label={_('switch_page')} aria-controls="page-container">
     {#each pages as { key, label, icon, link, searchMode: sMode }, index (key)}
       <SelectButton
         variant="ghost"

@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -18,12 +17,10 @@ vi.mock('svelte/store', () => ({
   derived: vi.fn(() => ({ subscribe: vi.fn() })),
   readonly: vi.fn(() => ({ subscribe: vi.fn() })),
 }));
-vi.mock('svelte-i18n', () => ({
-  addMessages: vi.fn(),
-  init: vi.fn(),
-  locale: { subscribe: vi.fn() },
-  dictionary: { subscribe: vi.fn() },
-  _: vi.fn(),
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key) => key),
+  locale: { current: 'en', set: vi.fn() },
+  dictionary: {},
 }));
 vi.mock('$lib/services/backends/git/gitlab/repository', () => ({
   repository: {
@@ -44,19 +41,6 @@ vi.mock('@sveltia/utils/file', () => ({
 describe('GitLab commits service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Mock translation function
-    vi.mocked(get).mockReturnValue((/** @type {any} */ key, /** @type {any} */ options) => {
-      if (key === 'repository_not_found') {
-        return `Repository ${options?.values?.repo} not found`;
-      }
-
-      if (key === 'branch_not_found') {
-        return `Branch ${options?.values?.branch} not found in ${options?.values?.repo}`;
-      }
-
-      return key;
-    });
   });
 
   describe('fetchLastCommit', () => {

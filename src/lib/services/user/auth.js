@@ -1,7 +1,7 @@
+import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 import { get, writable } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 
 import { goto, parseLocation } from '$lib/services/app/navigation';
 import { backend, backendName } from '$lib/services/backends';
@@ -74,15 +74,14 @@ export const resetError = () => {
  * @param {SignInErrorContext} [context] Context of the error.
  */
 export const logError = (ex, context = 'authentication') => {
-  let message =
-    /** @type {{ message: string }} */ (ex.cause)?.message || get(_)('unexpected_error');
+  let message = /** @type {{ message: string }} */ (ex.cause)?.message || _('unexpected_error');
 
   if (ex.name === 'NotFoundError') {
-    message = get(_)('sign_in_error.not_project_root');
+    message = _('sign_in_error.not_project_root');
   }
 
   if (ex.name === 'AbortError') {
-    message = get(_)(
+    message = _(
       get(backendName) === 'local'
         ? 'sign_in_error.picker_dismissed'
         : 'sign_in_error.authentication_aborted',
@@ -274,7 +273,7 @@ export const signInManually = async (_backendName, token) => {
       // If the user is signing in using a personal access token (PAT) and the token is invalid,
       // display a specific error message.
       logError(
-        new Error('Invalid token', { cause: { message: get(_)('sign_in_error.invalid_token') } }),
+        new Error('Invalid token', { cause: { message: _('sign_in_error.invalid_token') } }),
       );
     } else {
       logError(ex);

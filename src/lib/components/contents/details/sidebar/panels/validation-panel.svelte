@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
@@ -33,7 +33,7 @@
   };
 </script>
 
-<PanelContainer title={$_('entry_sidebar.validation.title')}>
+<PanelContainer title={_('entry_sidebar.validation.title')}>
   {#if validities && hasResults}
     {#each Object.entries(validationMessages) as [locale, messagesByKey] (locale)}
       {@const valueMap = currentValues?.[locale]}
@@ -66,12 +66,12 @@
             {/if}
           {/each}
         {:else}
-          <div class="empty">{$_('entry_sidebar.validation.no_errors_found')}</div>
+          <div class="empty">{_('entry_sidebar.validation.no_errors_found')}</div>
         {/if}
       </section>
     {/each}
   {:else}
-    <div class="empty">{$_('entry_sidebar.validation.placeholder')}</div>
+    <div class="empty">{_('entry_sidebar.validation.placeholder')}</div>
   {/if}
 </PanelContainer>
 

@@ -1,7 +1,6 @@
+import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 import merge from 'deepmerge';
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 
 import { parseTOML, parseYAML } from '$lib/services/contents/file/parse';
 
@@ -41,8 +40,8 @@ export const fetchFile = async (
   let response;
 
   if (!SUPPORTED_TYPES.includes(type)) {
-    throw new Error(get(_)('config.error.parse_failed'), {
-      cause: new Error(get(_)('config.error.parse_failed_unsupported_type')),
+    throw new Error(_('config.error.parse_failed'), {
+      cause: new Error(_('config.error.parse_failed_unsupported_type')),
     });
   }
 
@@ -58,14 +57,14 @@ export const fetchFile = async (
 
     response = await fetch(url);
   } catch (ex) {
-    throw new Error(get(_)(fetchErrorKey), { cause: ex });
+    throw new Error(_(fetchErrorKey), { cause: ex });
   }
 
   const { ok, status } = response;
 
   if (!ok) {
-    throw new Error(get(_)(fetchErrorKey), {
-      cause: new Error(get(_)('config.error.fetch_failed_not_ok', { values: { status } })),
+    throw new Error(_(fetchErrorKey), {
+      cause: new Error(_('config.error.fetch_failed_not_ok', { values: { status } })),
     });
   }
 
@@ -85,12 +84,12 @@ export const fetchFile = async (
       }
     }
   } catch (ex) {
-    throw new Error(get(_)('config.error.parse_failed'), { cause: ex });
+    throw new Error(_('config.error.parse_failed'), { cause: ex });
   }
 
   if (!isObject(result)) {
-    throw new Error(get(_)('config.error.parse_failed'), {
-      cause: new Error(get(_)('config.error.parse_failed_invalid_object')),
+    throw new Error(_('config.error.parse_failed'), {
+      cause: new Error(_('config.error.parse_failed_invalid_object')),
     });
   }
 
@@ -169,9 +168,7 @@ export const fetchCmsConfig = async ({ manualInit = false } = {}) => {
   }
 
   if (!verifyLinksAreSecure(links)) {
-    throw new Error(
-      get(_)(links.length > 1 ? 'config.error.insecure_urls' : 'config.error.insecure_url'),
-    );
+    throw new Error(_('config.error.insecure_urls', { values: { count: links.length } }));
   }
 
   const objects = await Promise.all(links.map((link) => fetchFile(link, { manualInit })));

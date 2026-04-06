@@ -1,6 +1,6 @@
+import { _ } from '@sveltia/i18n';
 import equal from 'fast-deep-equal';
 import { derived, get, writable } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 
 import { allAssets, selectedAssets, uploadingAssets } from '$lib/services/assets';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
@@ -49,7 +49,7 @@ export const showUploadAssetsConfirmDialog = derived(
  */
 export const getFolderLabelByCollection = ({ collectionName, fileName, internalPath }) => {
   if (collectionName === undefined) {
-    return get(_)(internalPath === undefined ? 'all_assets' : 'global_assets');
+    return _(internalPath === undefined ? 'all_assets' : 'global_assets');
   }
 
   const collection = getCollection(collectionName);

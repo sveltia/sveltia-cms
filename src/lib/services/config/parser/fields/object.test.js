@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * @import { ConfigParserCollectors } from '$lib/types/private';
  */
 
-// Mock svelte-i18n
+// Mock @sveltia/i18n
 /** @type {Record<string, string>} */
 const mockI18nStrings = {
   'config.error.invalid_object_field': 'Object field cannot have both fields and types',
@@ -31,21 +31,9 @@ function mockTranslate(key, options) {
   return message;
 }
 
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn((fn) => {
-      fn(mockTranslate);
-
-      return () => {};
-    }),
-  },
-  locale: {
-    subscribe: vi.fn((fn) => {
-      fn('en-US');
-
-      return () => {};
-    }),
-  },
+vi.mock('@sveltia/i18n', () => ({
+  _: mockTranslate,
+  locale: { current: 'en-US', set: vi.fn() },
 }));
 
 const mockGetStore = vi.fn();
@@ -85,20 +73,7 @@ describe('Object Field Config Parser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockGetStore.mockImplementation((store) => {
-      // Handle the i18n store
-      if (store && typeof store.subscribe === 'function') {
-        let result;
-
-        store.subscribe((/** @type {any} */ value) => {
-          result = value;
-        })();
-
-        return result;
-      }
-
-      return store;
-    });
+    mockGetStore.mockImplementation((store) => store);
 
     mockCheckName.mockReturnValue(true);
   });

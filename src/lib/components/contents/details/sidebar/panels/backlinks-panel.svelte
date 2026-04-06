@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -49,7 +49,7 @@
   });
 </script>
 
-<PanelContainer title={$_('entry_sidebar.backlinks.title')}>
+<PanelContainer title={_('entry_sidebar.backlinks.title')}>
   {#if backlinks.length > 0}
     {#each groupedEntries as { collectionLabel, items } (collectionLabel)}
       <section class="collection" role="group">
@@ -70,7 +70,7 @@
       </section>
     {/each}
   {:else}
-    <div class="empty">{$_('entry_sidebar.backlinks.no_entries')}</div>
+    <div class="empty">{_('entry_sidebar.backlinks.no_entries')}</div>
   {/if}
 </PanelContainer>
 

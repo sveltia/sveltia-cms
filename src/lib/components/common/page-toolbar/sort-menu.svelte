@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Divider, Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { getField } from '$lib/services/contents/entry/fields';
 
@@ -36,13 +36,13 @@
   const dateFields = ['date', 'commit_date'];
 </script>
 
-<MenuButton variant="ghost" label={label || $_('sort')} {disabled} popupPosition="bottom-right">
+<MenuButton variant="ghost" label={label || _('sort')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
-    <Menu aria-label={$_('sorting_options')} aria-controls={ariaControls}>
+    <Menu aria-label={_('sorting_options')} aria-controls={ariaControls}>
       {#each sortKeys as { key, label: _label } (key)}
         {#each sortOrders as order (order)}
           <MenuItemRadio
-            label={$_(
+            label={_(
               dateFields.includes(key) ||
                 (!!collectionName &&
                   getField({ collectionName, keyPath: key })?.widget === 'datetime')

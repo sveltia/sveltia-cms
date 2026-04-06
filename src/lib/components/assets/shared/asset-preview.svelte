@@ -1,8 +1,8 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Icon } from '@sveltia/ui';
   import { waitForVisibility } from '@sveltia/utils/element';
   import { flushSync } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets/info';
   import { THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
@@ -184,7 +184,7 @@
     <div role="none" class="blur">
       <div role="status" class="overlay">
         {#if !isThumbnail && !loaded}
-          {$_('loading')}
+          {_('loading')}
         {/if}
       </div>
       <img role="none" loading="lazy" src={blurImageURL} alt="" class:loaded={!!blurImageURL} />

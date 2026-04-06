@@ -1,8 +1,8 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Progressbar } from '@sveltia/ui';
   import { sanitize } from 'isomorphic-dompurify';
   import { marked } from 'marked';
-  import { _ } from 'svelte-i18n';
 
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { appLogoURL, appTitle, DEFAULT_APP_TITLE } from '$lib/services/app/branding';
@@ -16,7 +16,7 @@
 
   $effect(() => {
     if ($cmsConfigLoaded) {
-      $announcedPageStatus = $_('welcome_message', { values: { name: $appTitle } });
+      $announcedPageStatus = _('welcome_message', { values: { name: $appTitle } });
     }
   });
 </script>
@@ -37,7 +37,7 @@
     {#if $cmsConfigErrors.length}
       <div role="alert" class="message">
         <div role="none">
-          {$_($cmsConfigErrors.length === 1 ? 'config.one_error' : 'config.many_errors')}
+          {_('config.errors', { values: { count: $cmsConfigErrors.length } })}
         </div>
         <ul class="error">
           {#each $cmsConfigErrors as error (error)}
@@ -49,24 +49,24 @@
       </div>
     {:else if $prefsError}
       <div role="alert" class="message">
-        {$_(`prefs.error.${$prefsError.type}`)}
+        {_(`prefs.error.${$prefsError.type}`)}
       </div>
     {:else if !$cmsConfig || !$prefs}
-      <div role="alert" class="message">{$_('loading_cms_config')}</div>
+      <div role="alert" class="message">{_('loading_cms_config')}</div>
     {:else if $signInError.message && $signInError.context === 'dataFetch'}
       <div role="alert">
-        <div role="none" class="message">{$_('loading_site_data_error')}</div>
+        <div role="none" class="message">{_('loading_site_data_error')}</div>
         <div role="none" class="error">
           {@render parseMarkdown($signInError.message)}
         </div>
       </div>
       <SignIn />
     {:else if $inAuthPopup}
-      <div role="alert" class="message">{$_('authorizing')}</div>
+      <div role="alert" class="message">{_('authorizing')}</div>
     {:else if !$user || $unauthenticated}
       <SignIn />
     {:else if !$dataLoaded}
-      <div role="alert" class="message">{$_('loading_site_data')}</div>
+      <div role="alert" class="message">{_('loading_site_data')}</div>
       {#if $dataLoadedProgress !== undefined}
         <Progressbar now={$dataLoadedProgress} />
       {/if}
@@ -76,7 +76,7 @@
 
 {#if $cmsConfigLoaded && $appTitle !== DEFAULT_APP_TITLE}
   <div role="none" class="powered-by">
-    {$_('powered_by', { values: { name: DEFAULT_APP_TITLE } })}
+    {_('powered_by', { values: { name: DEFAULT_APP_TITLE } })}
   </div>
 {/if}
 

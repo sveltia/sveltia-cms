@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { EmptyState, GridCell, GridRow, Icon, InfiniteScroll, TruncatedText } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { _ } from 'svelte-i18n';
 
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
@@ -21,9 +21,9 @@
   );
 </script>
 
-<ListContainer aria-label={$_('file_list')}>
+<ListContainer aria-label={_('file_list')}>
   {#if files?.length}
-    <ListingGrid viewType="list" aria-label={$_('files')} aria-rowcount={files.length}>
+    <ListingGrid viewType="list" aria-label={_('files')} aria-rowcount={files.length}>
       <InfiniteScroll items={files} itemKey="name">
         {#snippet renderItem(/** @type {CollectionFile} */ { name, label, icon })}
           {#await sleep() then}
@@ -51,7 +51,7 @@
     </ListingGrid>
   {:else}
     <EmptyState>
-      <span role="none">{$_('no_files_in_collection')}</span>
+      <span role="none">{_('no_files_in_collection')}</span>
     </EmptyState>
   {/if}
 </ListContainer>

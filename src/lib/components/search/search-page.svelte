@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import PageContainer from '$lib/components/common/page-container.svelte';
   import SearchMainArea from '$lib/components/search/search-main-area.svelte';
@@ -36,7 +36,7 @@
   }}
 />
 
-<PageContainer aria-label={$_('search_results_for_x', { values: { terms: $searchTerms } })}>
+<PageContainer aria-label={_('search_results_for_x', { values: { terms: $searchTerms } })}>
   {#snippet main()}
     <SearchMainArea />
   {/snippet}

@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Divider, Icon, Spacer, Toolbar } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import FilterMenu from '$lib/components/common/page-toolbar/filter-menu.svelte';
   import GroupMenu from '$lib/components/common/page-toolbar/group-menu.svelte';
@@ -32,7 +32,7 @@
 </script>
 
 {#if entryCollection}
-  <Toolbar variant="secondary" aria-label={$_('entry_list')}>
+  <Toolbar variant="secondary" aria-label={_('entry_list')}>
     {#if !($isSmallScreen || $isMediumScreen)}
       <ItemSelector
         allItems={$entryGroups.flatMap(({ entries }) => entries)}
@@ -76,7 +76,7 @@
         pressed={!!$currentView.showMedia}
         aria-controls="collection-assets"
         aria-expanded={$currentView.showMedia}
-        aria-label={$_($currentView.showMedia ? 'hide_assets' : 'show_assets')}
+        aria-label={_($currentView.showMedia ? 'hide_assets' : 'show_assets')}
         onclick={() => {
           currentView.update((view) => ({
             ...view,

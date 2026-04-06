@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Divider, Menu, MenuItem } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import ReleaseNotesMenuItem from '$lib/components/help/release-notes-menu-item.svelte';
   import ShortcutsMenuItem from '$lib/components/help/shortcuts-menu-item.svelte';
@@ -21,14 +21,14 @@
 
 {#snippet link(/** @type {string} */ labelKey, /** @type {string} */ url)}
   <MenuItem
-    label={$_(labelKey)}
+    label={_(labelKey)}
     onclick={() => {
       window.open(url, '_blank');
     }}
   />
 {/snippet}
 
-<Menu aria-label={$_('help')}>
+<Menu aria-label={_('help')}>
   <ShortcutsMenuItem {menuButton} />
   {#if $prefs.devModeEnabled}
     {@render link('documentation', 'https://sveltiacms.app/en/docs')}

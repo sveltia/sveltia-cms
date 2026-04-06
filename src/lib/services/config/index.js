@@ -1,9 +1,9 @@
+import { _ } from '@sveltia/i18n';
 import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
 import merge from 'deepmerge';
 import { derived, get, writable } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 import { stringify } from 'yaml';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
@@ -94,7 +94,7 @@ export const initCmsConfig = async (manualConfig) => {
   try {
     // Not a config error but `getHash` below and some other features require a secure context
     if (!window.isSecureContext) {
-      throw new Error(get(_)('config.error.no_secure_context'));
+      throw new Error(_('config.error.no_secure_context'));
     }
 
     /** @type {any} */
@@ -102,7 +102,7 @@ export const initCmsConfig = async (manualConfig) => {
 
     if (manualConfig) {
       if (!isObject(manualConfig)) {
-        throw new Error(get(_)('config.error.parse_failed'));
+        throw new Error(_('config.error.parse_failed'));
       }
 
       rawConfig = manualConfig;
@@ -156,7 +156,7 @@ export const initCmsConfig = async (manualConfig) => {
     cmsConfigErrors.set(
       collectors.errors.size
         ? [...collectors.errors]
-        : [ex.name === 'Error' ? ex.message : get(_)('config.error.unexpected')],
+        : [ex.name === 'Error' ? ex.message : _('config.error.unexpected')],
     );
 
     // eslint-disable-next-line no-console

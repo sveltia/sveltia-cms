@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Divider, Menu, MenuItem } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import ShortcutsMenuItem from '$lib/components/help/shortcuts-menu-item.svelte';
   import SettingsDialog from '$lib/components/settings/settings-dialog.svelte';
@@ -30,13 +30,13 @@
   const isTestRepo = $derived($backendName === 'test-repo');
 </script>
 
-<Menu aria-label={$_('account')}>
+<Menu aria-label={_('account')}>
   <MenuItem
     label={isLocalRepo
-      ? $_('working_with_local_repo')
+      ? _('working_with_local_repo')
       : isTestRepo
-        ? $_('working_with_test_repo')
-        : $_('signed_in_as_x', { values: { name: $user?.login } })}
+        ? _('working_with_test_repo')
+        : _('signed_in_as_x', { values: { name: $user?.login } })}
     disabled={isLocalRepo || isTestRepo}
     onclick={() => {
       window.open($user?.profileURL, '_blank');
@@ -44,21 +44,21 @@
   />
   <Divider />
   <MenuItem
-    label={$_('live_site')}
+    label={_('live_site')}
     onclick={() => {
       openProductionSite();
     }}
   />
   {#if $prefs.devModeEnabled}
     <MenuItem
-      label={$_('git_repository')}
+      label={_('git_repository')}
       disabled={!$backend?.repository?.treeBaseURL}
       onclick={() => {
         window.open($backend?.repository?.treeBaseURL);
       }}
     />
     <MenuItem
-      label={$_('cms_config')}
+      label={_('cms_config')}
       onclick={() => {
         goto('/config', { transitionType: 'forwards' });
       }}
@@ -66,7 +66,7 @@
   {/if}
   <Divider />
   <MenuItem
-    label={$_('settings')}
+    label={_('settings')}
     onclick={() => {
       if ($isSmallScreen) {
         goto('/settings', { transitionType: 'forwards' });
@@ -81,7 +81,7 @@
   {/if}
   {#if $canShowMobileSignInDialog}
     <MenuItem
-      label={$_('sign_in_with_mobile')}
+      label={_('sign_in_with_mobile')}
       onclick={() => {
         $showMobileSignInDialog = true;
       }}
@@ -89,7 +89,7 @@
   {/if}
   <Divider />
   <MenuItem
-    label={$_('sign_out')}
+    label={_('sign_out')}
     onclick={async () => {
       // Wait a bit before the menu is closed
       window.requestAnimationFrame(() => {

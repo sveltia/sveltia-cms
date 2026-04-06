@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { SearchBar } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { goBack, goto, parseLocation } from '$lib/services/app/navigation';
   import { searchMode, searchTerms } from '$lib/services/search';
@@ -52,7 +52,7 @@
       bind:this={searchBar}
       debounce
       keyShortcuts="Accel+F"
-      placeholder={$_(`search_placeholder_${$searchMode}`)}
+      placeholder={_(`search_placeholder_${$searchMode}`)}
       --sui-textbox-placeholder-text-align="center"
       {onclick}
       oninput={({ target }) => {

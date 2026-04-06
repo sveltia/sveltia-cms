@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { MenuItem } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { entryDraft } from '$lib/services/contents/draft';
   import { copyFromLocale } from '$lib/services/contents/draft/update/copy';
@@ -50,7 +50,7 @@
   {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
   {#await isMenuDisabled(languagePair) then disabled}
     <MenuItem
-      label={$_(translate ? 'translate_from_x' : 'copy_from_x', {
+      label={_(translate ? 'translate_from_x' : 'copy_from_x', {
         values: { locale: getLocaleLabel(otherLocale) },
       })}
       {disabled}

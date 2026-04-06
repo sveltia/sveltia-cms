@@ -30,8 +30,8 @@ vi.mock('$lib/services/user/prefs', () => ({
 vi.mock('$lib/services/user', () => ({
   user: { subscribe: vi.fn() },
 }));
-vi.mock('svelte-i18n', () => ({
-  _: { subscribe: vi.fn() },
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key) => key),
 }));
 vi.mock('$lib/services/backends/git/github/auth', () => ({
   getTokenPageURL: vi.fn(),

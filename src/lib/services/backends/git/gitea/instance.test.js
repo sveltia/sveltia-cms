@@ -10,8 +10,8 @@ vi.mock('svelte/store', () => ({
   get: getMock,
 }));
 
-vi.mock('svelte-i18n', () => ({
-  _: {}, // Mock _ as a store-like object
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key) => key),
 }));
 
 vi.mock('$lib/services/backends/git/shared/api', () => ({
@@ -31,7 +31,7 @@ describe('Gitea Instance Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock get(_) to return a translation function
+    // Mock _ to return a translation function
     // @ts-ignore
     getMock.mockReturnValue((key, options) => {
       switch (key) {

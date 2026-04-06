@@ -1,8 +1,8 @@
+import { _ } from '@sveltia/i18n';
 import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 import { get, writable } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 
 import { cmsConfig } from '$lib/services/config';
 
@@ -110,7 +110,7 @@ export const authorize = async ({ backendName, authURL }) => {
           new Error('Authentication failed', {
             cause: new Error(
               result.errorCode
-                ? get(_)(`sign_in_error.${result.errorCode}`, { default: result.error })
+                ? _(`sign_in_error.${result.errorCode}`, { default: result.error })
                 : result.error,
             ),
           }),
@@ -283,7 +283,7 @@ export const finishClientSideAuth = async ({ backendName, clientId, tokenURL, co
   if (!csrfToken || !codeVerifier || state !== csrfToken) {
     return sendMessage({
       provider,
-      error: get(_)('sign_in_error.CSRF_DETECTED'),
+      error: _('sign_in_error.CSRF_DETECTED'),
       errorCode: 'CSRF_DETECTED',
     });
   }
@@ -315,7 +315,7 @@ export const finishClientSideAuth = async ({ backendName, clientId, tokenURL, co
   if (!response) {
     return sendMessage({
       provider,
-      error: get(_)('sign_in_error.TOKEN_REQUEST_FAILED'),
+      error: _('sign_in_error.TOKEN_REQUEST_FAILED'),
       errorCode: 'TOKEN_REQUEST_FAILED',
     });
   }
@@ -325,7 +325,7 @@ export const finishClientSideAuth = async ({ backendName, clientId, tokenURL, co
   } catch {
     return sendMessage({
       provider,
-      error: get(_)('sign_in_error.MALFORMED_RESPONSE'),
+      error: _('sign_in_error.MALFORMED_RESPONSE'),
       errorCode: 'MALFORMED_RESPONSE',
     });
   }

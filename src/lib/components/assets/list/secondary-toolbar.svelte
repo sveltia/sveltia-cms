@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Divider, Icon, Spacer, Toolbar } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import FilterMenu from '$lib/components/common/page-toolbar/filter-menu.svelte';
   import ItemSelector from '$lib/components/common/page-toolbar/item-selector.svelte';
@@ -16,7 +16,7 @@
   const hasMultipleAssets = $derived($listedAssets.length > 1);
 </script>
 
-<Toolbar variant="secondary" aria-label={$_('asset_list')}>
+<Toolbar variant="secondary" aria-label={_('asset_list')}>
   {#if !($isSmallScreen || $isMediumScreen)}
     <ItemSelector allItems={Object.values($assetGroups).flat(1)} selectedItems={selectedAssets} />
   {/if}
@@ -28,11 +28,11 @@
     aria-controls="asset-list"
   />
   <FilterMenu
-    label={$_('type')}
+    label={_('type')}
     disabled={!hasMultipleAssets}
     {currentView}
-    noneLabel={$_('all')}
-    filters={ASSET_KINDS.map((type) => ({ label: $_(type), field: 'fileType', pattern: type }))}
+    noneLabel={_('all')}
+    filters={ASSET_KINDS.map((type) => ({ label: _(type), field: 'fileType', pattern: type }))}
     aria-controls="asset-list"
   />
   <ViewSwitcher disabled={!hasListedAssets} {currentView} aria-controls="asset-list" />
@@ -45,7 +45,7 @@
       pressed={!!$currentView.showInfo}
       aria-controls="asset-info"
       aria-expanded={!!$currentView.showInfo}
-      aria-label={$_($currentView.showInfo ? 'hide_info' : 'show_info')}
+      aria-label={_($currentView.showInfo ? 'hide_info' : 'show_info')}
       onclick={() => {
         currentView.update((view) => ({
           ...view,

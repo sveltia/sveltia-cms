@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import { getYouTubeEmbedURL } from '$lib/services/utils/media/video/youtube';
@@ -36,7 +36,7 @@
     <VisibilityObserver>
       <iframe
         src={encodeURI(embedURL)}
-        title={$_('youtube_video_player')}
+        title={_('youtube_video_player')}
         frameborder="0"
         allow="autoplay; encrypted-media; picture-in-picture"
         referrerpolicy="strict-origin-when-cross-origin"

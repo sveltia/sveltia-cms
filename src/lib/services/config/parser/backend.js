@@ -1,6 +1,5 @@
+import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 
 import { gitBackendServices, unsupportedBackends, validBackendNames } from '$lib/services/backends';
 import { warnDeprecation } from '$lib/services/config/deprecations';
@@ -33,7 +32,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
   const { errors } = collectors;
 
   if (!isObject(backend)) {
-    errors.add(get(_)('config.error.missing_backend'));
+    errors.add(_('config.error.missing_backend'));
 
     return;
   }
@@ -41,7 +40,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
   const { name } = backend;
 
   if (!name) {
-    errors.add(get(_)('config.error.missing_backend_name'));
+    errors.add(_('config.error.missing_backend_name'));
 
     return;
   }
@@ -50,9 +49,9 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     const _backend = unsupportedBackends[name];
     const type = _backend ? (_backend.deprecated ? 'deprecated' : 'known') : 'custom';
     const label = _backend?.label;
-    const message = get(_)(`config.error.unsupported_${type}_backend`, { values: { name: label } });
+    const message = _(`config.error.unsupported_${type}_backend`, { values: { name: label } });
 
-    errors.add(`${message} ${get(_)('config.error.unsupported_backend_suggestion')}`);
+    errors.add(`${message} ${_('config.error.unsupported_backend_suggestion')}`);
 
     return;
   }
@@ -68,23 +67,23 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     } = /** @type {GitBackend} */ (backend);
 
     if (repo === undefined) {
-      errors.add(get(_)('config.error.missing_repository'));
+      errors.add(_('config.error.missing_repository'));
     }
 
     if (typeof repo !== 'string' || !/(.+)\/([^/]+)$/.test(repo)) {
-      errors.add(get(_)('config.error.invalid_repository'));
+      errors.add(_('config.error.invalid_repository'));
     }
 
     if (authType === 'implicit') {
-      errors.add(get(_)('config.error.oauth_implicit_flow'));
+      errors.add(_('config.error.oauth_implicit_flow'));
     }
 
     if (name === 'github' && authType === 'pkce') {
-      errors.add(get(_)('config.error.github_pkce_unsupported'));
+      errors.add(_('config.error.github_pkce_unsupported'));
     }
 
     if ((name === 'gitea' || authType === 'pkce') && !appId) {
-      errors.add(get(_)('config.error.oauth_no_app_id'));
+      errors.add(_('config.error.oauth_no_app_id'));
     }
 
     // @todo Remove the option prior to the 1.0 release.

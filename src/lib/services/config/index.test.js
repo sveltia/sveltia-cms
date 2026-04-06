@@ -1,4 +1,3 @@
-import { init as initI18n } from 'svelte-i18n';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -74,20 +73,13 @@ vi.mock('$lib/services/backends', () => ({
 }));
 
 // Mock i18n
-vi.mock('svelte-i18n', () => ({
-  init: vi.fn().mockResolvedValue({}),
-  _: vi.fn(),
-  locale: { subscribe: vi.fn() },
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key) => key),
+  locale: { current: 'en', set: vi.fn() },
 }));
 
 describe('config/index', () => {
   beforeEach(async () => {
-    // Initialize i18n for tests
-    await initI18n({
-      fallbackLocale: 'en',
-      initialLocale: 'en',
-    });
-
     // Reset all mocks
     vi.clearAllMocks();
   });

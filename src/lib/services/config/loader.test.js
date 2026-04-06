@@ -5,40 +5,34 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fetchCmsConfig, fetchFile, getConfigPath, verifyLinksAreSecure } from './loader';
 
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn((callback) => {
-      callback((key, options) => {
-        // Return a predictable string based on the key
-        if (key === 'config.error.fetch_failed_with_manual_init') {
-          return 'Fetch failed (manual init)';
-        }
+vi.mock('@sveltia/i18n', () => ({
+  _: (key, options) => {
+    // Return a predictable string based on the key
+    if (key === 'config.error.fetch_failed_with_manual_init') {
+      return 'Fetch failed (manual init)';
+    }
 
-        if (key === 'config.error.fetch_failed') {
-          return 'Fetch failed';
-        }
+    if (key === 'config.error.fetch_failed') {
+      return 'Fetch failed';
+    }
 
-        if (key === 'config.error.fetch_failed_not_ok') {
-          return `Fetch failed with status ${options?.values?.status || '???'}`;
-        }
+    if (key === 'config.error.fetch_failed_not_ok') {
+      return `Fetch failed with status ${options?.values?.status || '???'}`;
+    }
 
-        if (key === 'config.error.parse_failed') {
-          return 'Parse failed';
-        }
+    if (key === 'config.error.parse_failed') {
+      return 'Parse failed';
+    }
 
-        if (key === 'config.error.parse_failed_unsupported_type') {
-          return 'Unsupported type';
-        }
+    if (key === 'config.error.parse_failed_unsupported_type') {
+      return 'Unsupported type';
+    }
 
-        if (key === 'config.error.parse_failed_invalid_object') {
-          return 'Invalid object';
-        }
+    if (key === 'config.error.parse_failed_invalid_object') {
+      return 'Invalid object';
+    }
 
-        return key;
-      });
-
-      return () => {};
-    }),
+    return key;
   },
 }));
 
@@ -718,7 +712,7 @@ collections:
 
       document.querySelectorAll.mockReturnValue(mockLinks);
 
-      await expect(fetchCmsConfig()).rejects.toThrow('config.error.insecure_url');
+      await expect(fetchCmsConfig()).rejects.toThrow('config.error.insecure_urls');
     });
 
     test('should throw error with plural message when multiple insecure links', async () => {

@@ -1,4 +1,5 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import {
     Alert,
     AlertDialog,
@@ -14,7 +15,6 @@
     Toolbar,
     TruncatedText,
   } from '@sveltia/ui';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
@@ -72,12 +72,12 @@
   const collectionName = $derived(collection?.name);
   const fileName = $derived(collectionFile?.name);
   const collectionLabel = $derived(
-    // `$appLocale` is a key, because `getCollectionLabel` can return a localized label
-    $appLocale && collection ? getCollectionLabel(collection) : '',
+    // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
+    appLocale.current && collection ? getCollectionLabel(collection) : '',
   );
   const collectionLabelSingular = $derived(
-    // `$appLocale` is a key, because `getCollectionLabel` can return a localized label
-    $appLocale && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
+    // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
+    appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );
   const canPreview = $derived($entryDraft?.canPreview ?? true);
   const modified = $derived(isNew || $entryDraftModified);
@@ -147,7 +147,7 @@
         showValidationToast = true;
       } else if (ex.message === 'saving_failed') {
         showErrorDialog = true;
-        errorMessage = ex.cause?.message ?? ex.message ?? $_('unexpected_error');
+        errorMessage = ex.cause?.message ?? ex.message ?? _('unexpected_error');
       } else {
         showErrorDialog = true;
         errorMessage = '';
@@ -174,8 +174,8 @@
   {#if canDuplicate}
     <Component
       variant="ghost"
-      label={$_('duplicate')}
-      aria-label={$_('duplicate_entry')}
+      label={_('duplicate')}
+      aria-label={_('duplicate_entry')}
       onclick={() => {
         goto(`/collections/${collectionName}/new`, {
           replaceState: true,
@@ -189,8 +189,8 @@
   {#if canDelete}
     <Component
       variant="ghost"
-      label={$_('delete')}
-      aria-label={$_('delete_entry')}
+      label={_('delete')}
+      aria-label={_('delete_entry')}
       onclick={() => {
         showDeleteDialog = true;
       }}
@@ -198,9 +198,9 @@
   {/if}
 {/snippet}
 
-<Toolbar variant="primary" aria-label={$_('primary')}>
+<Toolbar variant="primary" aria-label={_('primary')}>
   <BackButton
-    aria-label={$_('cancel_editing')}
+    aria-label={_('cancel_editing')}
     useShortcut={$prefs.closeWithEscape}
     onclick={() => {
       _goBack();
@@ -210,17 +210,17 @@
     {#if !notFound}
       <TruncatedText>
         {#if isNew}
-          {$_('create_entry_title', { values: { name: collectionLabelSingular } })}
+          {_('create_entry_title', { values: { name: collectionLabelSingular } })}
         {:else}
           {@const entrySummary = collectionFile
             ? getCollectionFileLabel(collectionFile)
-            : collection && originalEntry && $appLocale
+            : collection && originalEntry && appLocale.current
               ? getEntrySummary(collection, originalEntry)
               : ''}
           {#if $isSmallScreen}
             {entrySummary}
           {:else}
-            {$_('edit_entry_title', {
+            {_('edit_entry_title', {
               values: { collection: collectionLabel, entry: entrySummary },
             })}
           {/if}
@@ -231,7 +231,7 @@
   {#if !disabled && previewURL}
     <Button
       variant="tertiary"
-      label={$_('view_on_live_site')}
+      label={_('view_on_live_site')}
       onclick={() => {
         window.open(previewURL);
       }}
@@ -245,23 +245,23 @@
     variant="ghost"
     iconic
     popupPosition="bottom-right"
-    aria-label={$_('show_editor_options')}
+    aria-label={_('show_editor_options')}
     bind:this={menuButton}
   >
     {#snippet popup()}
-      <Menu aria-label={$_('editor_options')}>
+      <Menu aria-label={_('editor_options')}>
         {#if $isSmallScreen && !disabled && !collectionFile && !isNew}
           {@render overflowButtons()}
         {/if}
         <MenuItem
-          label={$_('edit_slug')}
+          label={_('edit_slug')}
           disabled={!!collectionFile || isNew || isIndexFile || entryCollection?.delete === false}
           onclick={() => {
             showEditSlugDialog = true;
           }}
         />
         <MenuItem
-          label={$_('revert_all_changes')}
+          label={_('revert_all_changes')}
           disabled={!modified}
           onclick={() => {
             revertChanges();
@@ -270,7 +270,7 @@
         {#if !($isSmallScreen || $isMediumScreen)}
           <Divider />
           <MenuItemCheckbox
-            label={$_('show_preview')}
+            label={_('show_preview')}
             checked={$entryEditorSettings?.showPreview}
             disabled={!canPreview}
             onChange={() => {
@@ -281,7 +281,7 @@
             }}
           />
           <MenuItemCheckbox
-            label={$_('sync_scrolling')}
+            label={_('sync_scrolling')}
             checked={$entryEditorSettings?.syncScrolling}
             disabled={!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1}
             onChange={() => {
@@ -298,7 +298,7 @@
   {#if $skipCIConfigured}
     <SplitButton
       variant="primary"
-      label={$_($skipCIEnabled ? (saving ? 'saving' : 'save') : saving ? 'publishing' : 'publish')}
+      label={_($skipCIEnabled ? (saving ? 'saving' : 'save') : saving ? 'publishing' : 'publish')}
       disabled={disabled || !modified || saving}
       keyShortcuts="Accel+S"
       onclick={() => {
@@ -309,7 +309,7 @@
         <!-- Show the opposite option: if automatic deployments are enabled, allow to disable it -->
         <Menu>
           <MenuItem
-            label={$_($skipCIEnabled ? 'save_and_publish' : 'save_without_publishing')}
+            label={_($skipCIEnabled ? 'save_and_publish' : 'save_without_publishing')}
             onclick={() => {
               save({ skipCI: !$skipCIEnabled });
             }}
@@ -320,7 +320,7 @@
   {:else}
     <Button
       variant="primary"
-      label={$_(saving ? 'saving' : 'save')}
+      label={_(saving ? 'saving' : 'save')}
       disabled={disabled || !modified || saving}
       keyShortcuts="Accel+S"
       onclick={() => {
@@ -332,16 +332,14 @@
 
 <Toast bind:show={showValidationToast}>
   <Alert status="error">
-    {$_(errorCount === 1 ? 'entry_validation_error' : 'entry_validation_errors', {
-      values: { count: errorCount },
-    })}
+    {_('entry_validation_errors', { values: { count: errorCount } })}
   </Alert>
 </Toast>
 
 <Toast id={$copyFromLocaleToast.id} bind:show={$copyFromLocaleToast.show}>
   {@const { status, message, count, sourceLanguage } = $copyFromLocaleToast}
   <Alert {status}>
-    {$_(`editor.${message}`, {
+    {_(`editor.${message}`, {
       values: {
         count,
         source: sourceLanguage ? (getLocaleLabel(sourceLanguage) ?? sourceLanguage) : '',
@@ -354,8 +352,8 @@
 
 <ConfirmationDialog
   bind:open={showDeleteDialog}
-  title={$_('delete_entry')}
-  okLabel={$_('delete')}
+  title={_('delete_entry')}
+  okLabel={_('delete')}
   onOk={async () => {
     if (originalEntry) {
       await deleteEntries([originalEntry], associatedAssets);
@@ -367,7 +365,7 @@
     menuButton?.focus();
   }}
 >
-  {$_(
+  {_(
     associatedAssets.length
       ? 'confirm_deleting_this_entry_with_assets'
       : 'confirm_deleting_this_entry',
@@ -377,12 +375,12 @@
 <!-- @todo make the error message more informative -->
 <AlertDialog
   bind:open={showErrorDialog}
-  title={$_('saving_entry.error.title')}
+  title={_('saving_entry.error.title')}
   onClose={() => {
     menuButton?.focus();
   }}
 >
-  {$_('saving_entry.error.description')}
+  {_('saving_entry.error.description')}
   {#if errorMessage}
     <div role="none" class="error">
       {errorMessage}

@@ -1,8 +1,8 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Divider, Menu, MenuButton, MenuItem, Spacer, Toolbar } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { writable } from 'svelte/store';
-  import { _ } from 'svelte-i18n';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
@@ -71,14 +71,14 @@
 </script>
 
 <div role="none" {id} class="header">
-  <Toolbar variant="secondary" aria-label={$_('secondary')}>
+  <Toolbar variant="secondary" aria-label={_('secondary')}>
     {#if i18nEnabled && allLocales.length > 1}
       <LocaleSwitcher {id} {thisPane} {thatPane} />
       {#if ($isSmallScreen || $isMediumScreen) && canPreview}
         <PreviewButton {thisPane} />
       {/if}
     {:else if !($isSmallScreen || $isMediumScreen)}
-      <h3 role="none">{$thisPane?.mode === 'preview' ? $_('preview') : $_('edit')}</h3>
+      <h3 role="none">{$thisPane?.mode === 'preview' ? _('preview') : _('edit')}</h3>
     {:else if canPreview}
       <PreviewButton {thisPane} />
     {/if}
@@ -92,15 +92,15 @@
         variant="ghost"
         iconic
         popupPosition="bottom-right"
-        aria-label={$_('show_content_options_x_locale', { values: { locale: localeLabel } })}
+        aria-label={_('show_content_options_x_locale', { values: { locale: localeLabel } })}
       >
         {#snippet popup()}
-          <Menu aria-label={$_('content_options_x_locale', { values: { locale: localeLabel } })}>
+          <Menu aria-label={_('content_options_x_locale', { values: { locale: localeLabel } })}>
             {#if canCopy && $thisPane?.locale}
               <CopyMenuItems locale={$thisPane.locale} {otherLocales} />
             {/if}
             <MenuItem
-              label={$_('revert_changes')}
+              label={_('revert_changes')}
               disabled={!canRevert}
               onclick={() => {
                 revertChanges({ locale: $thisPane?.locale });
@@ -109,7 +109,7 @@
             {#if !saveAllLocales && $thisPane?.locale}
               <Divider />
               <MenuItem
-                label={$_(
+                label={_(
                   isLocaleEnabled
                     ? 'disable_x_locale'
                     : $state.snapshot($entryDraft?.currentValues[$thisPane.locale])
@@ -127,7 +127,7 @@
               <Divider />
               {#if previewURL}
                 <MenuItem
-                  label={$_('view_on_live_site')}
+                  label={_('view_on_live_site')}
                   onclick={() => {
                     window.open(previewURL);
                   }}
@@ -136,9 +136,9 @@
               {#if $prefs.devModeEnabled}
                 <MenuItem
                   disabled={!$backend?.repository?.blobBaseURL}
-                  label={$_('view_on_x', {
+                  label={_('view_on_x', {
                     values: { service: $backend?.repository?.label },
-                    default: $_('view_in_repository'),
+                    default: _('view_in_repository'),
                   })}
                   onclick={() => {
                     if (originalEntry && $thisPane) {

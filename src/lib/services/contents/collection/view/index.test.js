@@ -86,7 +86,7 @@ const {
 });
 
 // Mock dependencies
-vi.mock('svelte-i18n', () => ({
+vi.mock('@sveltia/i18n', () => ({
   locale: _locale,
 }));
 
@@ -1192,5 +1192,19 @@ describe('collection/view/index', () => {
     _backend.set(/** @type {any} */ ({ databaseName: 'test-db' }));
 
     expect(vi.mocked(initSettings)).toHaveBeenCalledWith({ databaseName: 'test-db' });
+  });
+
+  test('entryGroups skips re-processing when re-triggered with same listedEntries and currentView references', () => {
+    // This covers the reference-equality cache early return (the `return;` inside
+    // `if (_listedEntries === lastListedEntries && _currentView === lastCurrentView)`).
+    // Subscribing activates the derived store, which runs once and stores the references.
+    // Re-setting currentView with the *same object reference* triggers re-computation; since
+    // listedEntries has not changed, both equality checks pass and the early return fires.
+    const unsubscribe = entryGroups.subscribe(() => {});
+    const viewRef = get(currentView);
+
+    currentView.set(viewRef);
+
+    unsubscribe();
   });
 });

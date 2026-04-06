@@ -12,14 +12,7 @@ import {
 } from './definitions.js';
 
 // Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn((store) => {
-    if (typeof store === 'function') return store;
-    return (key) => key;
-  }),
-}));
-
-vi.mock('svelte-i18n', () => ({
+vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key) => key),
 }));
 
@@ -485,22 +478,14 @@ describe('definitions', () => {
       }
     });
 
-    it('should localize component labels using get(_) (line 77)', async () => {
-      // This tests the localization path where get(_)(...) is called
-      const { get } = await import('svelte/store');
+    it('should localize component labels using _ (line 77)', async () => {
+      // This tests the localization path where _(...) is called
+      const { _ } = await import('@sveltia/i18n');
 
       vi.clearAllMocks();
 
-      // Mock get to return a function that returns the i18n key
-      const getMock = vi.mocked(get);
-
-      getMock.mockImplementation((store) => {
-        if (typeof store === 'function') {
-          return (key) => `localized_${key}`;
-        }
-
-        return store;
-      });
+      // Mock _ to return a localized string
+      vi.mocked(_).mockImplementation((key) => `localized_${key}`);
 
       const builtInDefs = getBuiltInComponentDefs();
 
@@ -511,8 +496,8 @@ describe('definitions', () => {
         expect(def.label.length).toBeGreaterThan(0);
       });
 
-      // Verify that get was called for i18n (specifically for labels)
-      expect(getMock).toHaveBeenCalled();
+      // Verify that _ was called for i18n (specifically for labels)
+      expect(vi.mocked(_)).toHaveBeenCalled();
     });
 
     it('should include localized field labels in built-in components', () => {

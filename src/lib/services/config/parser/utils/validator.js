@@ -1,5 +1,4 @@
-import { get } from 'svelte/store';
-import { _, locale as appLocale } from 'svelte-i18n';
+import { _, locale as appLocale } from '@sveltia/i18n';
 
 import { getListFormatter } from '$lib/services/contents/i18n';
 
@@ -31,12 +30,11 @@ export const addMessage = ({
 }) => {
   const { collection, collectionFile, typedKeyPath } = context;
   const { errors, warnings } = collectors;
-  const $_ = get(_);
   const locators = [];
 
   if (collection) {
     locators.push(
-      $_('config.error_locator.collection', {
+      _('config.error_locator.collection', {
         values: { collection: collection.label_singular ?? collection.label ?? collection.name },
       }),
     );
@@ -44,7 +42,7 @@ export const addMessage = ({
 
   if (collectionFile) {
     locators.push(
-      $_('config.error_locator.file', {
+      _('config.error_locator.file', {
         values: { file: collectionFile.label ?? collectionFile.name },
       }),
     );
@@ -52,18 +50,18 @@ export const addMessage = ({
 
   if (typedKeyPath) {
     locators.push(
-      $_('config.error_locator.field', {
+      _('config.error_locator.field', {
         values: { field: typedKeyPath },
       }),
     );
   }
 
   const collector = type === 'error' ? errors : warnings;
-  const locale = /** @type {string} */ (get(appLocale));
+  const locale = appLocale.current;
   const locatorStr = locators.length ? `${getListFormatter(locale).format(locators)}: ` : '';
-  const message = $_(`config.${type}.${strKey}`, { values });
+  const message = _(`config.${type}.${strKey}`, { values });
 
-  collector.add(`${locatorStr}${message}${extraStrKey ? ` ${$_(`config.${extraStrKey}`)}` : ''}`);
+  collector.add(`${locatorStr}${message}${extraStrKey ? ` ${_(`config.${extraStrKey}`)}` : ''}`);
 };
 
 /**

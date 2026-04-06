@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { appLogoURL, DEFAULT_APP_LOGO_URL } from '$lib/services/app/branding';
   import { openProductionSite } from '$lib/services/app/navigation';
@@ -11,7 +11,7 @@
   <Button
     variant="ghost"
     iconic
-    aria-label={$_('visit_live_site')}
+    aria-label={_('visit_live_site')}
     onclick={() => {
       openProductionSite();
     }}

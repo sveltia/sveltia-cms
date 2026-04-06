@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import BacklinksPanel from '$lib/components/contents/details/sidebar/panels/backlinks-panel.svelte';
   import HistoryPanel from '$lib/components/contents/details/sidebar/panels/history-panel.svelte';
@@ -49,21 +49,21 @@
   const tabs = $derived([
     {
       key: 'validation',
-      label: $_('entry_sidebar.validation.title'),
+      label: _('entry_sidebar.validation.title'),
       icon: 'task_alt',
       disabled: false,
       panel: ValidationPanel,
     },
     {
       key: 'history',
-      label: $_('entry_sidebar.history.title'),
+      label: _('entry_sidebar.history.title'),
       icon: 'history',
       disabled: !$backend?.isGit || !!$entryDraft?.isNew,
       panel: HistoryPanel,
     },
     {
       key: 'backlinks',
-      label: $_('entry_sidebar.backlinks.title'),
+      label: _('entry_sidebar.backlinks.title'),
       icon: 'article_shortcut',
       disabled: !isReferenced,
       panel: BacklinksPanel,
@@ -86,7 +86,7 @@
 <div role="none" class="sidebar">
   <SelectButtonGroup
     class="tabs"
-    aria-label={$_('entry_sidebar.sidebar_panels')}
+    aria-label={_('entry_sidebar.sidebar_panels')}
     aria-controls="entry-sidebar-content"
   >
     {#each tabs as { key, label, icon, disabled } (key)}

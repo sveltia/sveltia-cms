@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Dialog, Table, TableCell, TableRow } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { isMacOS } from '$lib/services/user/env';
 
@@ -29,7 +29,7 @@
 </script>
 
 <Dialog
-  title={$_('keyboard_shortcuts')}
+  title={_('keyboard_shortcuts')}
   size="small"
   bind:open
   showOk={false}
@@ -41,10 +41,10 @@
   }}
 >
   <div role="none" class="wrapper">
-    <Table aria-label={$_('keyboard_shortcuts')}>
+    <Table aria-label={_('keyboard_shortcuts')}>
       {#each shortcuts as { feature, keys } (keys)}
         <TableRow>
-          <TableCell class="feature">{$_(`keyboard_shortcuts_.${feature}`)}</TableCell>
+          <TableCell class="feature">{_(`keyboard_shortcuts_.${feature}`)}</TableCell>
           <TableCell class="keys">
             {#each keys.split('+') as key (key)}
               <kbd>{key.replace('Accel', $isMacOS ? '⌘' : 'Ctrl')}</kbd>

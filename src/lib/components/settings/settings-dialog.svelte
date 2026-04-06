@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Dialog, Icon, Tab, TabList, TabPanel } from '@sveltia/ui';
   import { get } from 'svelte/store';
-  import { _ } from 'svelte-i18n';
 
   import { panels } from '$lib/components/settings';
   import PanelContainer from '$lib/components/settings/panel-container.svelte';
@@ -24,7 +24,7 @@
 </script>
 
 <Dialog
-  title={$_('settings')}
+  title={_('settings')}
   size="large"
   bind:open
   showOk={false}
@@ -35,11 +35,11 @@
   }}
 >
   <div role="none" class="wrapper">
-    <TabList orientation="vertical" aria-label={$_('categories')}>
+    <TabList orientation="vertical" aria-label={_('categories')}>
       {#each get(panels) as { key, icon, enabled = true } (key)}
         {#if enabled}
           <Tab
-            label={$_(`prefs.${key}.title`)}
+            label={_(`prefs.${key}.title`)}
             selected={key === selectedPanel}
             aria-controls="prefs-tab-{key}"
             onSelect={() => {

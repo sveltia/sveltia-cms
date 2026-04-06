@@ -1,6 +1,6 @@
+import { _ } from '@sveltia/i18n';
 import { stripSlashes } from '@sveltia/utils/string';
 import { get, writable } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 
 import { cmsConfig } from '$lib/services/config';
 import {
@@ -308,7 +308,7 @@ export const getCollectionLabel = (collection, { useSingular = false } = {}) => 
   const { _type, name, label, label_singular: singularLabel } = collection;
 
   if (_type === 'singleton') {
-    return get(_)('files');
+    return _('files');
   }
 
   if (useSingular && singularLabel) {

@@ -1,8 +1,7 @@
 /* eslint-disable no-await-in-loop */
 
+import { locale as appLocale } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
-import { get } from 'svelte/store';
-import { locale as appLocale } from 'svelte-i18n';
 
 /**
  * @import {
@@ -43,7 +42,7 @@ const SEARCH_PARAMS = {
  * @returns {string} Locale code.
  */
 export const getLocale = () => {
-  const locale = /** @type {string} */ (get(appLocale)).toLowerCase();
+  const locale = appLocale.current.toLowerCase();
   const [lang] = locale.split('-');
 
   return (

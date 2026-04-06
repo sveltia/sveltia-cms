@@ -2,13 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import pixabayService, { getLocale, list, parseResults, search } from './pixabay';
 
-// Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
+const mockLocale = vi.hoisted(() => ({ current: 'en-US', set: vi.fn() }));
 
-vi.mock('svelte-i18n', () => ({
-  locale: { subscribe: vi.fn() },
+// Mock dependencies
+vi.mock('@sveltia/i18n', () => ({
+  locale: mockLocale,
 }));
 
 // Setup global fetch mock
@@ -20,10 +18,8 @@ describe('integrations/media-libraries/stock/pixabay', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Mock the locale store to return 'en-US'
-    const { get } = await import('svelte/store');
-
-    vi.mocked(get).mockReturnValue('en-US');
+    // Set the default locale
+    mockLocale.current = 'en-US';
   });
 
   afterEach(() => {
@@ -79,17 +75,13 @@ describe('integrations/media-libraries/stock/pixabay', () => {
   describe('utility functions', () => {
     describe('getLocale', () => {
       it('should return supported locale', async () => {
-        const { get } = await import('svelte/store');
-
-        vi.mocked(get).mockReturnValue('de-DE');
+        mockLocale.current = 'de-DE';
 
         expect(getLocale()).toBe('de');
       });
 
       it('should fallback to English for unsupported locales', async () => {
-        const { get } = await import('svelte/store');
-
-        vi.mocked(get).mockReturnValue('unsupported-locale');
+        mockLocale.current = 'unsupported-locale';
 
         expect(getLocale()).toBe('en');
       });
@@ -259,9 +251,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
     });
 
     it('should use supported locale in list parameters', async () => {
-      const { get } = await import('svelte/store');
-
-      vi.mocked(get).mockReturnValue('de-DE'); // German locale
+      mockLocale.current = 'de-DE'; // German locale
 
       const fetchMock = vi.mocked(fetch);
 
@@ -402,9 +392,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
     });
 
     it('should use supported locale in search parameters', async () => {
-      const { get } = await import('svelte/store');
-
-      vi.mocked(get).mockReturnValue('de-DE'); // German locale
+      mockLocale.current = 'de-DE'; // German locale
 
       const fetchMock = vi.mocked(fetch);
 
@@ -424,9 +412,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
     });
 
     it('should fallback to English for unsupported locales', async () => {
-      const { get } = await import('svelte/store');
-
-      vi.mocked(get).mockReturnValue('unsupported-locale');
+      mockLocale.current = 'unsupported-locale';
 
       const fetchMock = vi.mocked(fetch);
 

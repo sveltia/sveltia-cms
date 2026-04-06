@@ -1,9 +1,9 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Icon } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { flatten, unflatten } from 'flat';
   import { onMount, untrack } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
@@ -189,7 +189,7 @@
       <Button
         size="small"
         iconic
-        aria-label={$_('remove')}
+        aria-label={_('remove')}
         onclick={() => {
           onChange(new CustomEvent('remove'));
         }}

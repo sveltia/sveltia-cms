@@ -6,9 +6,9 @@
   @todo Replace the native `<input>` with a custom component.
 -->
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Slider, TextInput } from '@sveltia/ui';
   import { untrack } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -127,13 +127,13 @@
         />
       {/if}
       {#if enableAlpha}
-        {$_('opacity')}
+        {_('opacity')}
         <Slider
           min={0}
           max={255}
           disabled={!inputValue}
           bind:value={inputAlphaValue}
-          aria-label={$_('opacity')}
+          aria-label={_('opacity')}
         />
       {/if}
     </span>
@@ -141,7 +141,7 @@
   {#if !readonly && !required}
     <Button
       variant="tertiary"
-      label={$_('clear')}
+      label={_('clear')}
       disabled={!inputValue}
       aria-controls={`${id}-picker ${allowInput ? `${id}-input` : ''}`}
       onclick={() => {

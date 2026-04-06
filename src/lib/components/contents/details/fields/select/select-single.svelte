@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Option, Radio, RadioGroup, Select } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   /**
    * @import { SelectFieldSelectorProps } from '$lib/types/private';
@@ -40,7 +40,7 @@
     if (!required && !options.some(({ value }) => !value)) {
       options = [
         {
-          label: $_('unselected_option'),
+          label: _('unselected_option'),
           value: valueType === 'number' ? null : '',
           searchValue: '',
         },

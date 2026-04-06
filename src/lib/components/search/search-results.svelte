@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Toolbar } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import AssetResults from '$lib/components/search/asset-results.svelte';
   import EntryResults from '$lib/components/search/entry-results.svelte';
@@ -11,7 +11,7 @@
 <div role="none" class="wrapper">
   {#if !$isSmallScreen}
     <Toolbar variant="primary">
-      <h2 role="none">{$_('search_results')}</h2>
+      <h2 role="none">{_('search_results')}</h2>
     </Toolbar>
   {/if}
   <div role="none" class="results">

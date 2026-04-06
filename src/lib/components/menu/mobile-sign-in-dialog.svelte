@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Dialog } from '@sveltia/ui';
   import { toCanvas } from 'qrcode';
-  import { _ } from 'svelte-i18n';
 
   import { showMobileSignInDialog } from '$lib/services/app/onboarding';
   import { user } from '$lib/services/user';
@@ -28,14 +28,14 @@
 
 <Dialog
   bind:open={$showMobileSignInDialog}
-  title={$_('sign_in_with_mobile')}
+  title={_('sign_in_with_mobile')}
   size="small"
   showOk={false}
   showCancel={false}
   showClose={true}
   style="--sui-dialog-small-content-max-height:auto"
 >
-  <div>{$_('sign_in_with_mobile_instruction')}</div>
+  <div>{_('sign_in_with_mobile_instruction')}</div>
   <canvas bind:this={canvas}></canvas>
 </Dialog>
 

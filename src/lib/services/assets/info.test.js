@@ -38,13 +38,11 @@ vi.mock('svelte/store', () => ({
     subscribe: vi.fn(),
   })),
 }));
-vi.mock('svelte-i18n', () => ({
-  _: vi.fn(),
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key) => key),
   addMessages: vi.fn(),
-  init: vi.fn(),
-  locale: { subscribe: vi.fn() },
-  $dictionary: { subscribe: vi.fn() },
-  dictionary: { subscribe: vi.fn() },
+  locale: { current: 'en', set: vi.fn() },
+  dictionary: {},
 }));
 vi.mock('$lib/services/assets', () => ({
   getAssetByPath: vi.fn(),

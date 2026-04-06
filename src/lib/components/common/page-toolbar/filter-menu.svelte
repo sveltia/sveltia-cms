@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Menu, MenuButton, MenuItemCheckbox, MenuItemRadio } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -33,9 +33,9 @@
   } = $props();
 </script>
 
-<MenuButton variant="ghost" label={label || $_('filter')} {disabled} popupPosition="bottom-right">
+<MenuButton variant="ghost" label={label || _('filter')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
-    <Menu aria-label={$_('filtering_options')} aria-controls={ariaControls}>
+    <Menu aria-label={_('filtering_options')} aria-controls={ariaControls}>
       {#if multiple}
         {#each filters as filter (JSON.stringify(filter))}
           {@const { label: _label, field, pattern } = filter}
@@ -62,7 +62,7 @@
         {/each}
       {:else}
         <MenuItemRadio
-          label={noneLabel || $_('sort_keys.none')}
+          label={noneLabel || _('sort_keys.none')}
           checked={!$currentView.filter}
           onSelect={() => {
             currentView.update((view) => ({

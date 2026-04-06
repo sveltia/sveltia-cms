@@ -1,7 +1,7 @@
+import { locale as appLocale, locales as appLocales } from '@sveltia/i18n';
 import { LocalStorage } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
-import { get, writable } from 'svelte/store';
-import { locale as appLocale, locales as appLocales } from 'svelte-i18n';
+import { writable } from 'svelte/store';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -63,7 +63,7 @@ prefs.subscribe((newPrefs) => {
     devModeEnabled: devMode = false,
   } = newPrefs;
 
-  if (locale && get(appLocales).includes(locale)) {
+  if (locale && appLocales.includes(locale)) {
     appLocale.set(locale);
   }
 

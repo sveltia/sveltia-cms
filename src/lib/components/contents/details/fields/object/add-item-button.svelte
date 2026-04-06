@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   /**
    * @import { ComplexListField, FieldWithTypes, ObjectField } from '$lib/types/public';
@@ -30,7 +30,7 @@
   const labelSingular = $derived(listField?.label_singular ?? '');
   const max = $derived(listField?.max ?? undefined);
   const label = $derived(
-    $_('add_x', { values: { name: labelSingular || labelPlural || fieldName } }),
+    _('add_x', { values: { name: labelSingular || labelPlural || fieldName } }),
   );
   const _disabled = $derived(disabled || (typeof max === 'number' && items.length === max));
 </script>
@@ -42,7 +42,7 @@
     {/snippet}
     {#snippet endIcon()}{/snippet}
     {#snippet popup()}
-      <Menu aria-label={$_('select_list_type')}>
+      <Menu aria-label={_('select_list_type')}>
         {#each types as { name, label: itemLabel } (name)}
           <MenuItem label={itemLabel || name} onclick={() => addItem({ type: name })} />
         {/each}

@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Alert, Toast } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { entryParseErrors } from '$lib/services/contents';
 
@@ -9,6 +9,6 @@
 
 <Toast bind:show={showParseErrorToast}>
   <Alert status="error">
-    {$_($entryParseErrors.length === 1 ? 'entry_parse_error' : 'entry_parse_errors')}
+    {_('entry_parse_errors', { values: { count: $entryParseErrors.length } })}
   </Alert>
 </Toast>

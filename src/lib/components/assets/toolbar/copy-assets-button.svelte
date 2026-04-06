@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Alert, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
-  import { _ } from 'svelte-i18n';
 
   import { getAssetDetails } from '$lib/services/assets/details';
   import { getAssetBlob } from '$lib/services/assets/info';
@@ -32,7 +32,6 @@
   /** @type {{ show: boolean, text: string, status: 'success' | 'error' }} */
   const toast = $state({ show: false, text: '', status: 'success' });
 
-  const singleAsset = $derived(assets.length === 1);
   const publicURLs = $derived(
     assetsDetailList.filter(({ publicURL }) => !!publicURL).map(({ publicURL }) => publicURL),
   );
@@ -49,7 +48,7 @@
   const checkCanCopyFileData = async () => {
     assetBlob = undefined;
 
-    if (!singleAsset) {
+    if (assets.length !== 1) {
       return false;
     }
 
@@ -111,17 +110,16 @@
   /**
    * Execute a copy action.
    * @param {() => Promise<void>} func Copy function.
-   * @param {string} toastSingular Singular toast label.
-   * @param {string} toastPlural Plural toast label.
+   * @param {string} toastKey Toast label.
    */
-  const doCopyAction = async (func, toastSingular, toastPlural) => {
+  const doCopyAction = async (func, toastKey) => {
     try {
       await func();
       toast.status = 'success';
-      toast.text = singleAsset ? toastSingular : toastPlural;
+      toast.text = _(toastKey, { values: { count: assets.length } });
     } catch {
       toast.status = 'error';
-      toast.text = $_('clipboard_error');
+      toast.text = _('clipboard_error');
     } finally {
       toast.show = true;
     }
@@ -137,23 +135,23 @@
 
 {#snippet menuItems()}
   <MenuItem
-    label={singleAsset ? $_('public_url') : $_('public_urls')}
+    label={_('public_urls', { values: { count: assets.length } })}
     disabled={!publicURLs.length}
     onclick={() => {
-      doCopyAction(copyPublicURLs, $_('asset_url_copied'), $_('asset_urls_copied'));
+      doCopyAction(copyPublicURLs, 'asset_urls_copied');
     }}
   />
   <MenuItem
-    label={singleAsset ? $_('file_path') : $_('file_paths')}
+    label={_('file_paths', { values: { count: assets.length } })}
     onclick={() => {
-      doCopyAction(copyFilePaths, $_('asset_path_copied'), $_('asset_paths_copied'));
+      doCopyAction(copyFilePaths, 'asset_paths_copied');
     }}
   />
   <MenuItem
-    label={$_('file_data')}
+    label={_('file_data')}
     disabled={!canCopyFileData}
     onclick={() => {
-      doCopyAction(copyFileData, $_('asset_data_copied'), $_('asset_data_copied'));
+      doCopyAction(copyFileData, 'asset_data_copied');
     }}
   />
 {/snippet}
@@ -162,17 +160,17 @@
   <MenuButton
     variant="ghost"
     disabled={!assets.length}
-    label={$_('copy')}
+    label={_('copy')}
     popupPosition="bottom-right"
   >
     {#snippet popup()}
-      <Menu aria-label={$_('copy_options')}>
+      <Menu aria-label={_('copy_options')}>
         {@render menuItems()}
       </Menu>
     {/snippet}
   </MenuButton>
 {:else}
-  <MenuItem disabled={!assets.length} label={$_('copy')} popupPosition="left-top">
+  <MenuItem disabled={!assets.length} label={_('copy')} popupPosition="left-top">
     {#snippet items()}
       {@render menuItems()}
     {/snippet}

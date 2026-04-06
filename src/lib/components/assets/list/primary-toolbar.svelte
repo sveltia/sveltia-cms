@@ -1,6 +1,6 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import { FloatingActionButtonWrapper, Toolbar } from '@sveltia/ui';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import CopyAssetsButton from '$lib/components/assets/toolbar/copy-assets-button.svelte';
   import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
@@ -28,17 +28,17 @@
   const uploadDisabled = $derived(!canCreateAsset($targetAssetFolder));
 </script>
 
-<Toolbar variant="primary" aria-label={$_('folder')}>
+<Toolbar variant="primary" aria-label={_('folder')}>
   {#if $isSmallScreen}
     <BackButton
-      aria-label={$_('back_to_asset_folder_list')}
+      aria-label={_('back_to_asset_folder_list')}
       onclick={() => {
         goBack('/assets');
       }}
     />
   {/if}
   <h2 role="none">
-    {#key $appLocale}
+    {#key appLocale.current}
       {$selectedAssetFolder ? getFolderLabelByCollection($selectedAssetFolder) : ''}
     {/key}
     {#if !$isSmallScreen && $selectedAssetFolder?.internalPath !== undefined}
@@ -51,15 +51,11 @@
     <DownloadAssetsButton {assets} />
     <DeleteAssetsButton
       {assets}
-      buttonDescription={$_(
-        assets.length === 1 ? 'delete_selected_asset' : 'delete_selected_assets',
-      )}
-      dialogDescription={$_(
-        assets.length === 1
-          ? 'confirm_deleting_selected_asset'
-          : assets.length === $listedAssets.length
-            ? 'confirm_deleting_all_assets'
-            : 'confirm_deleting_selected_assets',
+      buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}
+      dialogDescription={_(
+        assets.length > 1 && assets.length === $listedAssets.length
+          ? 'confirm_deleting_all_assets'
+          : 'confirm_deleting_selected_assets',
         { values: { count: assets.length } },
       )}
     />
@@ -67,7 +63,7 @@
   {/if}
   <FloatingActionButtonWrapper>
     {#if !$isSmallScreen || ($listedAssets.length && !uploadDisabled)}
-      <UploadAssetsButton label={$isSmallScreen ? undefined : $_('upload')} />
+      <UploadAssetsButton label={$isSmallScreen ? undefined : _('upload')} />
     {/if}
   </FloatingActionButtonWrapper>
 </Toolbar>

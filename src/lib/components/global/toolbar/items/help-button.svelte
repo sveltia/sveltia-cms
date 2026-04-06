@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Icon, MenuButton } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import HelpMenu from '$lib/components/global/toolbar/items/help-menu.svelte';
   import ShortcutsDialog from '$lib/components/help/shortcuts-dialog.svelte';
@@ -15,7 +15,7 @@
     variant="ghost"
     iconic
     popupPosition="bottom-right"
-    aria-label={$_('show_help_menu')}
+    aria-label={_('show_help_menu')}
     bind:this={menuButton}
   >
     {#snippet endIcon()}

@@ -4,43 +4,31 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * @import { ConfigParserCollectors } from '$lib/types/private';
  */
 
-// Mock svelte-i18n
+// Mock @sveltia/i18n
 /** @type {Record<string, string>} */
 const mockI18nStrings = {};
 
-vi.mock('svelte-i18n', () => ({
-  _: {
-    subscribe: vi.fn((fn) => {
-      fn(
-        /**
-         * I18n callback.
-         * @param {string} key Message key.
-         * @param {object & { values?: Record<string, string> }} [options] Options.
-         * @returns {string} Translated string.
-         */
-        (key, options) => {
-          let message = mockI18nStrings[key] || key;
+/**
+ * I18n translation function.
+ * @param {string} key Message key.
+ * @param {object & { values?: Record<string, string> }} [options] Options.
+ * @returns {string} Translated string.
+ */
+const mockTranslate = (key, options) => {
+  let message = mockI18nStrings[key] || key;
 
-          if (options?.values) {
-            Object.entries(options.values).forEach(([k, v]) => {
-              message = message.replace(`{${k}}`, v);
-            });
-          }
+  if (options?.values) {
+    Object.entries(options.values).forEach(([k, v]) => {
+      message = message.replace(`{${k}}`, v);
+    });
+  }
 
-          return message;
-        },
-      );
+  return message;
+};
 
-      return () => {};
-    }),
-  },
-  locale: {
-    subscribe: vi.fn((fn) => {
-      fn('en');
-
-      return () => {};
-    }),
-  },
+vi.mock('@sveltia/i18n', () => ({
+  _: mockTranslate,
+  locale: { current: 'en', set: vi.fn() },
 }));
 
 const mockGetStore = vi.fn();
@@ -66,21 +54,7 @@ describe('Field Collectors', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockGetStore.mockImplementation((store) => {
-      // Handle the _ (i18n) store
-      if (store && typeof store.subscribe === 'function') {
-        let result;
-
-        store.subscribe((/** @type {any} */ value) => {
-          result = value;
-        })();
-
-        return result;
-      }
-
-      // Fallback for other stores
-      return store;
-    });
+    mockGetStore.mockImplementation((store) => store);
   });
 
   describe('Media field collection in nested structures', () => {

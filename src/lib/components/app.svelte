@@ -1,7 +1,7 @@
 <script>
+  import { isLoading } from '@sveltia/i18n';
   import { AppShell } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import { isLoading } from 'svelte-i18n';
 
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
   import BackendStatusIndicator from '$lib/components/global/infobars/backend-status-indicator.svelte';
@@ -108,7 +108,7 @@
 />
 
 <AppShell>
-  {#if !$isLoading}
+  {#if !isLoading()}
     <div role="none" class="outer">
       <UpdateNotification />
       {#if $backend}

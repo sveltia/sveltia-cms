@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Dialog, FilePicker } from '@sveltia/ui';
   import mime from 'mime';
-  import { _ } from 'svelte-i18n';
 
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { uploadingAssets } from '$lib/services/assets';
@@ -52,8 +52,8 @@
 {#if $hasMouse}
   <Dialog
     title={originalAsset
-      ? $_('replace_x', { values: { name: originalAsset.name } })
-      : $_('upload_assets')}
+      ? _('replace_x', { values: { name: originalAsset.name } })
+      : _('upload_assets')}
     bind:open={$showUploadAssetsDialog}
     showOk={false}
   >

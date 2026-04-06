@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Divider, Menu, MenuButton, MenuItem } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { editingAsset, renamingAsset, uploadingAssets } from '$lib/services/assets';
   import { defaultAssetDetails, getAssetDetails } from '$lib/services/assets/details';
@@ -46,19 +46,14 @@
   });
 </script>
 
-<MenuButton
-  variant="ghost"
-  iconic
-  popupPosition="bottom-right"
-  aria-label={$_('show_edit_options')}
->
+<MenuButton variant="ghost" iconic popupPosition="bottom-right" aria-label={_('show_edit_options')}>
   {#snippet popup()}
-    <Menu aria-label={$_('edit_options')}>
+    <Menu aria-label={_('edit_options')}>
       {@render extraItems?.()}
       <MenuItem
         variant="ghost"
-        label={$_('edit')}
-        aria-label={$_('edit_asset')}
+        label={_('edit')}
+        aria-label={_('edit_asset')}
         disabled={!asset || !canEditAsset(asset)}
         onclick={() => {
           $editingAsset = asset;
@@ -66,8 +61,8 @@
       />
       <MenuItem
         variant="ghost"
-        label={$_('rename')}
-        aria-label={$_('rename_asset')}
+        label={_('rename')}
+        aria-label={_('rename_asset')}
         disabled={!asset}
         onclick={() => {
           $renamingAsset = asset;
@@ -75,8 +70,8 @@
       />
       <MenuItem
         variant="ghost"
-        label={$_('replace')}
-        aria-label={$_('replace_asset')}
+        label={_('replace')}
+        aria-label={_('replace_asset')}
         disabled={!asset}
         onclick={() => {
           $uploadingAssets = { folder: undefined, files: [], originalAsset: asset };
@@ -85,7 +80,7 @@
       />
       <Divider />
       <MenuItem
-        label={$_('view_on_live_site')}
+        label={_('view_on_live_site')}
         disabled={!publicURL}
         onclick={() => {
           window.open(publicURL);
@@ -94,9 +89,9 @@
       {#if $prefs.devModeEnabled}
         <MenuItem
           disabled={!$backend?.repository || !repoBlobURL}
-          label={$_('view_on_x', {
+          label={_('view_on_x', {
             values: { service: $backend?.repository?.label },
-            default: $_('view_in_repository'),
+            default: _('view_in_repository'),
           })}
           onclick={() => {
             window.open(`${repoBlobURL}?plain=1`);

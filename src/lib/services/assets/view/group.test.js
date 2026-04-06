@@ -1,3 +1,5 @@
+/* eslint-disable jsdoc/require-jsdoc */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { groupAssets } from './group';
@@ -11,8 +13,8 @@ vi.mock('svelte/store', () => ({
   get: vi.fn(),
 }));
 
-vi.mock('svelte-i18n', () => ({
-  _: {},
+vi.mock('@sveltia/i18n', () => ({
+  _: (/** @type {string} */ key) => (key === 'other' ? 'Other' : key),
 }));
 
 vi.mock('$lib/services/utils/misc', () => ({
@@ -47,7 +49,7 @@ describe('assets/view/group', () => {
       return 0;
     });
 
-    // Mock svelte-i18n properly - get(_) should return a function that returns the translation
+    // Mock get() for currentView store — _ is called directly via @sveltia/i18n mock
     getMock.mockReturnValue(() => 'Other');
 
     // Mock getRegex to return null by default (when no pattern)

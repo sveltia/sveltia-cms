@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Icon, PromptDialog, Spacer } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import { allBackendServices } from '$lib/services/backends';
   import { cmsConfig } from '$lib/services/config';
@@ -44,12 +44,12 @@
 
 <div role="none" class="buttons">
   {#if $signingIn}
-    <div role="alert" class="message">{$_('signing_in')}</div>
+    <div role="alert" class="message">{_('signing_in')}</div>
   {:else if configuredBackend}
     {#if showLocalBackendOption}
       <Button
         variant="primary"
-        label={$_('work_with_local_repo')}
+        label={_('work_with_local_repo')}
         disabled={!$isLocalBackendSupported}
         onclick={async () => {
           await signInManually('local');
@@ -59,19 +59,19 @@
         <div role="alert">
           {#if $isBrave}
             {@html makeLink(
-              $_('local_workflow.disabled'),
+              _('local_workflow.disabled'),
               'https://sveltiacms.app/en/docs/workflows/local#enabling-file-system-access-api-in-brave',
             )}
           {:else}
-            {$_('local_workflow.unsupported_browser')}
+            {_('local_workflow.unsupported_browser')}
           {/if}
         </div>
       {:else if !$signInError.message}
         <div role="none">
           {#if repositoryName}
-            {$_('work_with_local_repo_description', { values: { repo: repositoryName } })}
+            {_('work_with_local_repo_description', { values: { repo: repositoryName } })}
           {:else}
-            {$_('work_with_local_repo_description_no_repo')}
+            {_('work_with_local_repo_description_no_repo')}
           {/if}
         </div>
       {/if}
@@ -80,8 +80,8 @@
     <Button
       variant={showLocalBackendOption ? 'secondary' : 'primary'}
       label={isTestRepo
-        ? $_('work_with_test_repo')
-        : $_('sign_in_with_x', { values: { service: configuredBackend.label } })}
+        ? _('work_with_test_repo')
+        : _('sign_in_with_x', { values: { service: configuredBackend.label } })}
       onclick={async () => {
         await signInManually(configuredBackendName);
       }}
@@ -89,7 +89,7 @@
     {#if !isTestRepo}
       <Button
         variant="secondary"
-        label={$_('sign_in_with_x_using_token', { values: { service: configuredBackend.label } })}
+        label={_('sign_in_with_x_using_token', { values: { service: configuredBackend.label } })}
         onclick={() => {
           showTokenDialog = true;
         }}
@@ -107,18 +107,18 @@
 <PromptDialog
   bind:open={showTokenDialog}
   bind:value={token}
-  title={$_('sign_in_using_pat_title')}
-  textboxAttrs={{ spellcheck: false, 'aria-label': $_('personal_access_token') }}
-  okLabel={$_('sign_in')}
+  title={_('sign_in_using_pat_title')}
+  textboxAttrs={{ spellcheck: false, 'aria-label': _('personal_access_token') }}
+  okLabel={_('sign_in')}
   okDisabled={!token.trim()}
   onOk={async () => {
     await signInManually(configuredBackendName, token.trim());
   }}
 >
-  {$_('sign_in_using_pat_description')}
+  {_('sign_in_using_pat_description')}
   {#if configuredBackend?.repository?.tokenPageURL}
     {@html makeLink(
-      $_('sign_in_using_pat_link', { values: { service: configuredBackend.label } }),
+      _('sign_in_using_pat_link', { values: { service: configuredBackend.label } }),
       configuredBackend.repository.tokenPageURL,
     )}
   {/if}

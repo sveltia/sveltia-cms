@@ -1,6 +1,6 @@
 <script>
+  import { locale as appLocale } from '@sveltia/i18n';
   import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
-  import { locale as appLocale } from 'svelte-i18n';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
@@ -34,7 +34,7 @@
     <AssetPreview {kind} {asset} variant="icon" cover />
   </GridCell>
   <GridCell class="collection">
-    {#key $appLocale}
+    {#key appLocale.current}
       {getFolderLabelByCollection(folder)}
     {/key}
   </GridCell>

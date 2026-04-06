@@ -1,25 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Create a working mock for import.meta.glob
-const mockLocaleModules = {
-  '$lib/locales/en.js': { strings: { hello: 'Hello', world: 'World' } },
-  '$lib/locales/ja.js': { strings: { hello: 'こんにちは', world: '世界' } },
-};
-
+// Simplified locale data used by the yaml.parse mock
+const mockEnData = { hello: 'Hello', world: 'World' };
+const mockJaData = { hello: 'こんにちは', world: '世界' };
+const mockYamlParse = vi.fn();
 // Mock all dependencies first
 const mockAddMessages = vi.fn();
-const mockInitLocales = vi.fn();
+const mockInit = vi.fn();
 const mockGetLocaleFromNavigator = vi.fn();
 const mockGet = vi.fn();
 const mockGetPathInfo = vi.fn();
 
-vi.mock('@sveltia/ui', () => ({
-  initLocales: mockInitLocales,
+vi.mock('yaml', () => ({
+  parse: mockYamlParse,
 }));
 
-vi.mock('svelte-i18n', () => ({
+vi.mock('@sveltia/i18n', () => ({
   addMessages: mockAddMessages,
   getLocaleFromNavigator: mockGetLocaleFromNavigator,
+  init: mockInit,
 }));
 
 vi.mock('svelte/store', () => ({
@@ -34,30 +33,24 @@ vi.mock('$lib/services/user/prefs', () => ({
   prefs: { locale: 'en' },
 }));
 
-// Mock import.meta.glob by using dynamic import mocking
-vi.doMock('$lib/locales/en.js', () => mockLocaleModules['$lib/locales/en.js']);
-vi.doMock('$lib/locales/ja.js', () => mockLocaleModules['$lib/locales/ja.js']);
-
 describe('i18n', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Set up getPathInfo to extract filename correctly
     mockGetPathInfo.mockImplementation((path) => {
-      const match = path.match(/([^/]+)\.js$/);
+      const match = path.match(/([^/]+)\.yaml$/);
 
       return { filename: match ? match[1] : 'unknown' };
     });
+
+    // Set up yaml.parse to return locale-appropriate test data (en first, then ja)
+    mockYamlParse.mockReturnValueOnce(mockEnData).mockReturnValueOnce(mockJaData);
   });
 
   describe('initAppLocale', () => {
     it('should load locale modules and initialize locales', async () => {
       mockGet.mockReturnValue({ locale: 'en' });
-
-      // Mock import.meta.glob for this test
-      const originalGlob = import.meta.glob;
-
-      import.meta.glob = vi.fn().mockReturnValue(mockLocaleModules);
 
       const { initAppLocale } = await import('./i18n.js');
 
@@ -67,79 +60,52 @@ describe('i18n', () => {
       expect(mockAddMessages).toHaveBeenCalledWith('en', { hello: 'Hello', world: 'World' });
       expect(mockAddMessages).toHaveBeenCalledWith('ja', { hello: 'こんにちは', world: '世界' });
 
-      expect(mockInitLocales).toHaveBeenCalledWith({
+      expect(mockInit).toHaveBeenCalledWith({
         fallbackLocale: 'en',
         initialLocale: 'en',
       });
-
-      // Restore original
-      import.meta.glob = originalGlob;
     });
 
     it('should fall back to navigator locale when no prefs locale', async () => {
       mockGet.mockReturnValue({ locale: null });
       mockGetLocaleFromNavigator.mockReturnValue('ja-JP');
 
-      // Mock import.meta.glob
-      const originalGlob = import.meta.glob;
-
-      import.meta.glob = vi.fn().mockReturnValue(mockLocaleModules);
-
       const { initAppLocale } = await import('./i18n.js');
 
       initAppLocale();
 
-      expect(mockInitLocales).toHaveBeenCalledWith({
+      expect(mockInit).toHaveBeenCalledWith({
         fallbackLocale: 'en',
         initialLocale: 'ja',
       });
-
-      // Restore original
-      import.meta.glob = originalGlob;
     });
 
     it('should fall back to en when no prefs and no navigator locale', async () => {
       mockGet.mockReturnValue({ locale: null });
       mockGetLocaleFromNavigator.mockReturnValue(null);
 
-      // Mock import.meta.glob
-      const originalGlob = import.meta.glob;
-
-      import.meta.glob = vi.fn().mockReturnValue(mockLocaleModules);
-
       const { initAppLocale } = await import('./i18n.js');
 
       initAppLocale();
 
-      expect(mockInitLocales).toHaveBeenCalledWith({
+      expect(mockInit).toHaveBeenCalledWith({
         fallbackLocale: 'en',
         initialLocale: 'en',
       });
-
-      // Restore original
-      import.meta.glob = originalGlob;
     });
 
     it('should handle empty navigator locale string', async () => {
       mockGet.mockReturnValue({ locale: null });
       mockGetLocaleFromNavigator.mockReturnValue('');
 
-      // Mock import.meta.glob
-      const originalGlob = import.meta.glob;
-
-      import.meta.glob = vi.fn().mockReturnValue(mockLocaleModules);
-
       const { initAppLocale } = await import('./i18n.js');
 
       initAppLocale();
 
-      expect(mockInitLocales).toHaveBeenCalledWith({
+      expect(mockInit).toHaveBeenCalledWith({
         fallbackLocale: 'en',
         initialLocale: 'en',
       });
-
-      // Restore original
-      import.meta.glob = originalGlob;
     });
   });
 });

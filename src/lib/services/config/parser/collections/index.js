@@ -1,7 +1,6 @@
 /* eslint-disable camelcase */
 
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
+import { _ } from '@sveltia/i18n';
 
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
@@ -139,10 +138,9 @@ export const parseCollection = ({ cmsConfig, collection }, collectors) => {
 export const parseCollections = (cmsConfig, collectors) => {
   const { collections, singletons } = cmsConfig;
   const { errors } = collectors;
-  const $_ = get(_);
 
   if (!Array.isArray(collections) && !Array.isArray(singletons)) {
-    errors.add($_('config.error.no_collection'));
+    errors.add(_('config.error.no_collection'));
 
     return;
   }
@@ -165,8 +163,8 @@ export const parseCollections = (cmsConfig, collectors) => {
     /** @type {InternalSingletonCollection} */
     const collection = {
       name: '_singletons',
-      label: $_('singletons'),
-      label_singular: $_('singleton'),
+      label: _('singletons'),
+      label_singular: _('singleton'),
       files: singletons,
     };
 

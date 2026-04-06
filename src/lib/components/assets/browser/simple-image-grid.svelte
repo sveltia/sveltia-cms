@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Listbox } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -35,7 +35,7 @@
     id={gridId}
     class={viewType}
     {multiple}
-    aria-label={$_('assets_dialog.available_images')}
+    aria-label={_('assets_dialog.available_images')}
     onChange={(event) => {
       onChange?.(event.detail);
     }}

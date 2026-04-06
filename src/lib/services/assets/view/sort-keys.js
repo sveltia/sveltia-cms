@@ -1,5 +1,5 @@
-import { derived, get } from 'svelte/store';
-import { _, locale as appLocale } from 'svelte-i18n';
+import { _, locale as appLocale } from '@sveltia/i18n';
+import { derived, toStore } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
 
@@ -12,8 +12,8 @@ import { allAssets } from '$lib/services/assets';
  * @type {Readable<{ key: string, label: string }[]>}
  */
 export const sortKeys = derived(
-  // Include `appLocale` as a dependency because it returns a localized label
-  [allAssets, appLocale],
+  // Include `appLocale.current` as a dependency because it returns a localized label
+  [allAssets, toStore(() => appLocale.current)],
   ([_allAssets], set) => {
     const _sortFields = ['name'];
 
@@ -25,6 +25,6 @@ export const sortKeys = derived(
       _sortFields.push('commit_date');
     }
 
-    set(_sortFields.map((key) => ({ key, label: get(_)(`sort_keys.${key}`) })));
+    set(_sortFields.map((key) => ({ key, label: _(`sort_keys.${key}`) })));
   },
 );

@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, ConfirmationDialog, MenuItem } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import { deleteAssets } from '$lib/services/assets/data/delete';
 
@@ -36,7 +36,7 @@
 <Component
   variant="ghost"
   disabled={!assets.length}
-  label={$_('delete')}
+  label={_('delete')}
   aria-label={buttonDescription}
   onclick={() => {
     showDialog = true;
@@ -45,8 +45,8 @@
 
 <ConfirmationDialog
   bind:open={showDialog}
-  title={assets.length === 1 ? $_('delete_asset') : $_('delete_assets')}
-  okLabel={$_('delete')}
+  title={_('delete_assets', { values: { count: assets.length } })}
+  okLabel={_('delete')}
   onOk={() => {
     deleteAssets(assets);
     onDelete?.();

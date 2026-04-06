@@ -7,10 +7,10 @@
   @see https://media-library.cloudinary.com/global/all.js
 -->
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, EmptyState } from '@sveltia/ui';
   import { isObject } from '@sveltia/utils/object';
   import { onMount } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import {
     CONFIG_PROPS,
@@ -187,7 +187,7 @@
 
 <iframe
   bind:this={iframe}
-  title={$_('cloud_storage.cloudinary.iframe_title')}
+  title={_('cloud_storage.cloudinary.iframe_title')}
   hidden={hidden || !authenticated}
   allow="camera; storage-access"
 >
@@ -197,14 +197,14 @@
   <EmptyState>
     <Button
       variant="primary"
-      label={$_('cloud_storage.cloudinary.activate.button_label')}
+      label={_('cloud_storage.cloudinary.activate.button_label')}
       onclick={async () => {
         // Let the user sign in to Cloudinary first in a separate tab, otherwise third-party cookies
         // in the iframe won’t work, and authentication will fail.
         window.open('https://console.cloudinary.com/console/media_library/cms_login?cms=true');
       }}
     />
-    <div role="none">{$_('cloud_storage.cloudinary.activate.description')}</div>
+    <div role="none">{_('cloud_storage.cloudinary.activate.description')}</div>
   </EmptyState>
 {/if}
 

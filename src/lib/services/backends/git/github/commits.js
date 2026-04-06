@@ -1,6 +1,5 @@
+import { _ } from '@sveltia/i18n';
 import { encodeBase64 } from '@sveltia/utils/file';
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
 
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -50,13 +49,13 @@ export const fetchLastCommit = async () => {
 
   if (!result.repository) {
     throw new Error('Failed to retrieve the last commit hash.', {
-      cause: new Error(get(_)('repository_not_found', { values: { repo } })),
+      cause: new Error(_('repository_not_found', { values: { repo } })),
     });
   }
 
   if (!result.repository.ref) {
     throw new Error('Failed to retrieve the last commit hash.', {
-      cause: new Error(get(_)('branch_not_found', { values: { repo, branch } })),
+      cause: new Error(_('branch_not_found', { values: { repo, branch } })),
     });
   }
 

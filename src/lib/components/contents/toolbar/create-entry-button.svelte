@@ -1,6 +1,6 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button, Icon, Menu, MenuItem, SplitButton } from '@sveltia/ui';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import { goto } from '$lib/services/app/navigation';
   import { allEntries } from '$lib/services/contents';
@@ -30,8 +30,8 @@
     $allEntries && $selectedCollection ? canCreateIndexFile($selectedCollection) : false,
   );
   const indexFileLabel = $derived(
-    // `$appLocale` is a key, because `getIndexFile` can return a localized label
-    $appLocale && $selectedCollection ? getIndexFile($selectedCollection)?.label : '',
+    // `appLocale.current` is a key, because `getIndexFile` can return a localized label
+    appLocale.current && $selectedCollection ? getIndexFile($selectedCollection)?.label : '',
   );
   const ButtonComponent = $derived(hasOptions ? SplitButton : Button);
 
@@ -49,7 +49,7 @@
   iconic={!label}
   disabled={$collectionState.creationDisabled}
   {label}
-  aria-label={$_('create_new_entry')}
+  aria-label={_('create_new_entry')}
   {keyShortcuts}
   onclick={() => openEditor()}
 >
@@ -59,7 +59,7 @@
   {#snippet popup()}
     {#if hasOptions}
       <Menu>
-        <MenuItem label={$_('entry')} onclick={() => openEditor()} />
+        <MenuItem label={_('entry')} onclick={() => openEditor()} />
         <MenuItem label={indexFileLabel} onclick={() => openEditor(true)} />
       </Menu>
     {/if}

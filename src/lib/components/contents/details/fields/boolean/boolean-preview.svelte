@@ -5,7 +5,7 @@
   @see https://sveltiacms.app/en/docs/fields/boolean
 -->
 <script>
-  import { _ } from 'svelte-i18n';
+  import { _ } from '@sveltia/i18n';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
@@ -28,6 +28,6 @@
 
 {#if typeof currentValue === 'boolean'}
   <p>
-    {$_(`boolean.${currentValue}`)}
+    {_(`boolean.${currentValue}`)}
   </p>
 {/if}

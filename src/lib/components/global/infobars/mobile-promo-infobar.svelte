@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Infobar } from '@sveltia/ui';
   import { IndexedDB } from '@sveltia/utils/storage';
-  import { _ } from 'svelte-i18n';
 
   import { showMobileSignInDialog } from '$lib/services/app/onboarding';
   import { backend } from '$lib/services/backends';
@@ -30,10 +30,10 @@
 </script>
 
 <Infobar show={showInfobar} dismissible={false} --sui-infobar-message-justify-content="center">
-  {$_('mobile_promo_title')}
+  {_('mobile_promo_title')}
   <Button
     variant="link"
-    label={$_('mobile_promo_button')}
+    label={_('mobile_promo_button')}
     onclick={() => {
       showInfobar = false;
       $showMobileSignInDialog = true;
@@ -41,7 +41,7 @@
   />
   <Button
     variant="link"
-    label={$_('later')}
+    label={_('later')}
     onclick={() => {
       showInfobar = false;
     }}

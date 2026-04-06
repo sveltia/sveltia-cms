@@ -1,7 +1,7 @@
 <script>
+  import { _, locale as appLocale } from '@sveltia/i18n';
   import { Alert, Toast } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import { _, locale as appLocale } from 'svelte-i18n';
 
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
@@ -87,7 +87,7 @@
         // Show the collection list only
         $selectedCollection = undefined;
         $showContentOverlay = false;
-        $announcedPageStatus = $_('viewing_collection_list');
+        $announcedPageStatus = _('viewing_collection_list');
         isIndexPage = true;
       } else {
         // Redirect to the selected, first or singleton collection
@@ -110,7 +110,7 @@
 
     if (!collection || !$selectedCollection) {
       $showContentOverlay = false;
-      $announcedPageStatus = $_('collection_not_found');
+      $announcedPageStatus = _('collection_not_found');
 
       return; // Not Found
     }
@@ -123,14 +123,9 @@
       const count = $listedEntries.length;
 
       $showContentOverlay = false;
-      $announcedPageStatus = $_(
-        count > 1
-          ? 'viewing_x_collection_many_entries'
-          : count === 1
-            ? 'viewing_x_collection_one_entry'
-            : 'viewing_x_collection_no_entries',
-        { values: { collection: collectionLabel, count } },
-      );
+      $announcedPageStatus = _('viewing_x_collection', {
+        values: { collection: collectionLabel, count },
+      });
 
       return;
     }
@@ -159,7 +154,7 @@
           });
         }
 
-        $announcedPageStatus = $_(`edit_${collection._type}_announcement`, {
+        $announcedPageStatus = _(`edit_${collection._type}_announcement`, {
           values: {
             collection: collectionLabel,
             file: getCollectionFileLabel(collectionFile),
@@ -175,7 +170,7 @@
           isIndexFile: !!window.history.state?.index,
         });
 
-        $announcedPageStatus = $_('create_entry_announcement', {
+        $announcedPageStatus = _('create_entry_announcement', {
           values: {
             collection: collectionLabel,
           },
@@ -185,10 +180,10 @@
       if (routeType === 'entries' && subPath) {
         const originalEntry = $listedEntries.find((entry) => entry.subPath === subPath);
 
-        if (originalEntry && $appLocale) {
+        if (originalEntry && appLocale.current) {
           createDraft({ collection, originalEntry });
 
-          $announcedPageStatus = $_('edit_entry_announcement', {
+          $announcedPageStatus = _('edit_entry_announcement', {
             values: {
               collection: collectionLabel,
               entry: getEntrySummary($selectedCollection, originalEntry),
@@ -214,7 +209,7 @@
   }}
 />
 
-<PageContainer aria-label={$_('content_library')}>
+<PageContainer aria-label={_('content_library')}>
   {#snippet primarySidebar()}
     {#if !$isSmallScreen || isIndexPage}
       <PrimarySidebar {isSearchPage} />
@@ -225,11 +220,14 @@
       <SearchMainArea />
     {:else if !$isSmallScreen || !isIndexPage}
       <PageContainerMainArea
-        aria-label={$_('x_collection', {
+        aria-label={_('x_collection', {
           values: {
             collection:
-              // `$appLocale` is a key, because `getCollectionLabel` can return a localized label
-              $appLocale && $selectedCollection ? getCollectionLabel($selectedCollection) : '',
+              // `appLocale.current` is a key, because `getCollectionLabel` can return a localized
+              // label
+              appLocale.current && $selectedCollection
+                ? getCollectionLabel($selectedCollection)
+                : '',
           },
         })}
         aria-description={$selectedCollection?.description}
@@ -259,14 +257,12 @@
 
 <Toast bind:show={$contentUpdatesToast.saved}>
   <Alert status="success">
-    {$_($contentUpdatesToast.published ? 'entry_saved_and_published' : 'entry_saved')}
+    {_($contentUpdatesToast.published ? 'entry_saved_and_published' : 'entry_saved')}
   </Alert>
 </Toast>
 
 <Toast bind:show={$contentUpdatesToast.deleted}>
   <Alert status="success">
-    {$_($contentUpdatesToast.count === 1 ? 'entry_deleted' : 'entries_deleted', {
-      values: { count: $contentUpdatesToast.count },
-    })}
+    {_('entries_deleted', { values: { count: $contentUpdatesToast.count } })}
   </Alert>
 </Toast>

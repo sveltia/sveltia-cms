@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Icon, Menu, MenuButton } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -46,7 +46,7 @@
 
 {#if otherLocales.length === 1}
   {@const [otherLocale] = otherLocales}
-  {@const label = $_('translate_from_x', {
+  {@const label = _('translate_from_x', {
     values: { locale: getLocaleLabel(otherLocale) ?? otherLocale },
   })}
   {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
@@ -75,14 +75,14 @@
     {size}
     iconic
     popupPosition="bottom-right"
-    aria-label={$_('translate')}
+    aria-label={_('translate')}
     disabled={sourceDisabled}
   >
     {#snippet endIcon()}
       <Icon name="translate" />
     {/snippet}
     {#snippet popup()}
-      <Menu aria-label={$_('translation_options')}>
+      <Menu aria-label={_('translation_options')}>
         <CopyMenuItems {locale} {otherLocales} {keyPath} translate={true} />
       </Menu>
     {/snippet}

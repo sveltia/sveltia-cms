@@ -1,5 +1,4 @@
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
+import { _ } from '@sveltia/i18n';
 
 import { MIN_FORGEJO_VERSION, MIN_GITEA_VERSION } from '$lib/services/backends/git/gitea/constants';
 import { repository } from '$lib/services/backends/git/gitea/repository';
@@ -37,7 +36,7 @@ export const checkInstanceVersion = async () => {
   if (version < minVersion) {
     throw new Error(`Unsupported ${name} version`, {
       cause: new Error(
-        get(_)('backend_unsupported_version', {
+        _('backend_unsupported_version', {
           values: { name, version: minVersion },
         }),
       ),

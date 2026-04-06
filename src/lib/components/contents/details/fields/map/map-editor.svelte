@@ -9,10 +9,10 @@
 <script>
   // cSpell:ignore Nominatim jsonv2
 
+  import { _ } from '@sveltia/i18n';
   import { AlertDialog, Button, Icon, Listbox, Option, SearchBar } from '@sveltia/ui';
   import { isObject } from '@sveltia/utils/object';
   import { untrack } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { loadModule } from '$lib/services/app/dependencies';
@@ -290,7 +290,7 @@
   const useCurrentLocation = () => {
     if (!navigator.geolocation) {
       showAlertDialog = true;
-      errorMessage = $_('geolocation_unsupported');
+      errorMessage = _('geolocation_unsupported');
 
       return;
     }
@@ -301,7 +301,7 @@
       },
       (error) => {
         showAlertDialog = true;
-        errorMessage = $_('geolocation_error_body');
+        errorMessage = _('geolocation_error_body');
         // eslint-disable-next-line no-console
         console.error('Error getting current location:', error);
       },
@@ -344,13 +344,13 @@
 
 <div role="none" class="toolbar">
   <!-- @todo Replace this with `<Combobox>` -->
-  <SearchBar bind:value={searchQuery} debounce {readonly} flex placeholder={$_('find_place')} />
+  <SearchBar bind:value={searchQuery} debounce {readonly} flex placeholder={_('find_place')} />
   <!-- @todo Replace `title` with a native tooltip -->
   <Button
     variant="tertiary"
     iconic
-    title={$_('use_your_location')}
-    aria-label={$_('use_your_location')}
+    title={_('use_your_location')}
+    aria-label={_('use_your_location')}
     disabled={readonly}
     onclick={() => {
       useCurrentLocation();
@@ -362,7 +362,7 @@
   </Button>
   <Button
     variant="tertiary"
-    label={$_('clear')}
+    label={_('clear')}
     disabled={readonly || !currentValue}
     onclick={() => {
       clearValue();
@@ -371,11 +371,11 @@
 </div>
 
 {#if searching}
-  <div role="alert" class="search-result searching">{$_('searching')}</div>
+  <div role="alert" class="search-result searching">{_('searching')}</div>
 {:else if searchQuery}
   {#if searchResults}
     {#if searchResults.length}
-      <Listbox aria-label={$_('search_results')}>
+      <Listbox aria-label={_('search_results')}>
         {#each searchResults as result (result.place_id)}
           <Option
             label={result.display_name}
@@ -386,7 +386,7 @@
         {/each}
       </Listbox>
     {:else}
-      <div role="alert" class="search-result no-result">{$_('no_results')}</div>
+      <div role="alert" class="search-result no-result">{_('no_results')}</div>
     {/if}
   {/if}
 {/if}
@@ -395,7 +395,7 @@
   <LeafletMap bind:mapElement inert={readonly} class={invalid ? 'invalid' : undefined} {onReady} />
 </div>
 
-<AlertDialog bind:open={showAlertDialog} title={$_('geolocation_error_title')}>
+<AlertDialog bind:open={showAlertDialog} title={_('geolocation_error_title')}>
   {errorMessage}
 </AlertDialog>
 

@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiConfig, graphqlVars, refreshAccessToken } from './api';
 import * as apiModule from './api';
 
-// Mock svelte-i18n
-vi.mock('svelte-i18n', () => ({
-  _: vi.fn(() => 'Token refresh failed'), // Return a readable store value directly
+// Mock @sveltia/i18n
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn(() => 'Token refresh failed'),
 }));
 
 // Mock svelte/store

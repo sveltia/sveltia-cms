@@ -1,5 +1,4 @@
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
+import { _ } from '@sveltia/i18n';
 
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
@@ -69,7 +68,7 @@ export const checkRepositoryAccess = async () => {
 
     if (!permissions?.pull) {
       throw new Error('Not a collaborator of the repository', {
-        cause: new Error(get(_)('repository_no_access', { values: { repo } })),
+        cause: new Error(_('repository_no_access', { values: { repo } })),
       });
     }
   } catch (error) {
@@ -78,7 +77,7 @@ export const checkRepositoryAccess = async () => {
     }
 
     throw new Error('Failed to check repository access', {
-      cause: new Error(get(_)('repository_not_found', { values: { repo } })),
+      cause: new Error(_('repository_not_found', { values: { repo } })),
     });
   }
 };
@@ -97,7 +96,7 @@ export const fetchDefaultBranchName = async () => {
 
     if (!branch) {
       throw new Error('Failed to retrieve the default branch name.', {
-        cause: new Error(get(_)('repository_empty', { values: { repo } })),
+        cause: new Error(_('repository_empty', { values: { repo } })),
       });
     }
 
@@ -106,7 +105,7 @@ export const fetchDefaultBranchName = async () => {
     return branch;
   } catch {
     throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(get(_)('repository_not_found', { values: { repo } })),
+      cause: new Error(_('repository_not_found', { values: { repo } })),
     });
   }
 };

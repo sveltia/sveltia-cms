@@ -1,9 +1,9 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { EmptyState, InfiniteScroll } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
-  import { _ } from 'svelte-i18n';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
@@ -96,13 +96,13 @@
               }}
             >
               {#if viewType === 'grid' && unsaved}
-                <div role="none" class="unsaved">{$_('assets_dialog.unsaved')}</div>
+                <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
               {/if}
               <AssetPreview {kind} {asset} alt={relPath} variant="tile" {checkerboard} />
               {#if !$isSmallScreen || viewType === 'list'}
                 <AssetPath path={relPath}>
                   {#if viewType === 'list' && unsaved}
-                    <div role="none" class="unsaved">{$_('assets_dialog.unsaved')}</div>
+                    <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
                   {/if}
                 </AssetPath>
               {/if}
@@ -114,7 +114,7 @@
   </div>
 {:else}
   <EmptyState>
-    <span role="none">{$_('no_files_found')}</span>
+    <span role="none">{_('no_files_found')}</span>
   </EmptyState>
 {/if}
 

@@ -1,7 +1,7 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { writable } from 'svelte/store';
-  import { _ } from 'svelte-i18n';
 
   import { entryDraft } from '$lib/services/contents/draft';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
@@ -56,7 +56,7 @@
 <div role="none" class="wrapper">
   <SelectComponent
     class={hasAnyError && useDropDown ? 'error' : undefined}
-    aria-label={$_('switch_locale')}
+    aria-label={_('switch_locale')}
     aria-controls={id.replace('-header', '-body')}
   >
     <!-- Need an inner to style elements inside the <dialog> -->
@@ -72,9 +72,9 @@
           {size}
           {label}
           aria-label="{label} {disabled
-            ? $_('locale_content_disabled_short')
+            ? _('locale_content_disabled_short')
             : hasError
-              ? $_('locale_content_error_short')
+              ? _('locale_content_error_short')
               : ''}"
           selected={$thisPane?.mode === 'edit' && $thisPane.locale === locale}
           class={hasError ? 'error' : ''}
@@ -100,7 +100,7 @@
         <OptionComponent
           {variant}
           {size}
-          label={$_('preview')}
+          label={_('preview')}
           selected={$thisPane?.mode === 'preview'}
           data-mode="preview"
           onSelect={() => {

@@ -1,5 +1,4 @@
-import { get } from 'svelte/store';
-import { _ } from 'svelte-i18n';
+import { _ } from '@sveltia/i18n';
 
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
@@ -36,11 +35,8 @@ const getRangeErrorMessage = ({
   type,
   canAddMultiValue,
 }) => {
-  const t = get(_);
-  const quantity = limitValue === 1 ? 'one' : 'many';
-
   if (fieldType === 'datetime' && typeof limitValue === 'string') {
-    return t(`validation.range_${direction}.${type}`, {
+    return _(`validation.range_${direction}.${type}`, {
       values: {
         [limitKey]: getFormattedDateTime(/** @type {DateTimeInputType} */ (type), limitValue),
       },
@@ -48,18 +44,16 @@ const getRangeErrorMessage = ({
   }
 
   if (fieldType === 'number') {
-    return t(`validation.range_${direction}.number`, { values: { [limitKey]: limitValue } });
+    return _(`validation.range_${direction}.number`, { values: { [limitKey]: limitValue } });
   }
 
   if (canAddMultiValue) {
-    return t(`validation.range_${direction}.add_${quantity}`, {
+    return _(`validation.range_${direction}.add`, {
       values: { [limitKey]: limitValue },
     });
   }
 
-  return t(`validation.range_${direction}.select_${quantity}`, {
-    values: { [limitKey]: limitValue },
-  });
+  return _(`validation.range_${direction}.select`, { values: { [limitKey]: limitValue } });
 };
 
 /**
@@ -70,7 +64,6 @@ const getRangeErrorMessage = ({
  * @returns {string[]} List of translated error message strings, one per violated constraint.
  */
 export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
-  const t = get(_);
   /** @type {string[]} */
   const messages = [];
   const { widget: fieldType = 'string' } = fieldConfig;
@@ -100,27 +93,19 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
     fieldType === 'list' || fieldType === 'keyvalue' || isFieldMultiple(fieldConfig);
 
   if (validity.valueMissing) {
-    messages.push(t('validation.value_missing'));
+    messages.push(_('validation.value_missing'));
   }
 
   if (validity.tooShort) {
     const { minlength } = /** @type {StringField | TextField} */ (fieldConfig);
 
-    messages.push(
-      t(minlength === 1 ? 'validation.too_short.one' : 'validation.too_short.many', {
-        values: { min: minlength },
-      }),
-    );
+    messages.push(_('validation.too_short', { values: { min: minlength } }));
   }
 
   if (validity.tooLong) {
     const { maxlength } = /** @type {StringField | TextField} */ (fieldConfig);
 
-    messages.push(
-      t(maxlength === 1 ? 'validation.too_long.one' : 'validation.too_long.many', {
-        values: { max: maxlength },
-      }),
-    );
+    messages.push(_('validation.too_long', { values: { max: maxlength } }));
   }
 
   if (validity.rangeUnderflow) {
@@ -154,7 +139,7 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
   }
 
   if (validity.typeMismatch) {
-    messages.push(t(`validation.type_mismatch.${type}`));
+    messages.push(_(`validation.type_mismatch.${type}`));
   }
 
   return messages;

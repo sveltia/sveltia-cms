@@ -1,14 +1,14 @@
 <script>
-  import { _ } from 'svelte-i18n';
+  import { _ } from '@sveltia/i18n';
   import { stringify } from 'yaml';
 
   import PageContainer from '$lib/components/common/page-container.svelte';
   import { rawCmsConfig } from '$lib/services/config';
 </script>
 
-<PageContainer aria-label={$_('site_configuration_editor')}>
+<PageContainer aria-label={_('site_configuration_editor')}>
   {#snippet main()}
-    <div role="blockquote" aria-label={$_('cms_config')}>
+    <div role="blockquote" aria-label={_('cms_config')}>
       <pre>{stringify(rawCmsConfig)}</pre>
     </div>
   {/snippet}

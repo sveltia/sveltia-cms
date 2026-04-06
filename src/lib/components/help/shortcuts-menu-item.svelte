@@ -1,6 +1,6 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { MenuItem } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
 
   import ShortcutsDialog from '$lib/components/help/shortcuts-dialog.svelte';
   import { hasMouse } from '$lib/services/user/env';
@@ -23,7 +23,7 @@
 <!-- Assume the user has a physical keyboard if the pointer is mouse (on desktop) -->
 {#if $hasMouse}
   <MenuItem
-    label={$_('keyboard_shortcuts')}
+    label={_('keyboard_shortcuts')}
     onclick={() => {
       showDialog = true;
     }}

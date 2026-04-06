@@ -1,6 +1,6 @@
 <script>
-  import { Button, Icon, isRTL } from '@sveltia/ui';
-  import { _ } from 'svelte-i18n';
+  import { _, isRTL } from '@sveltia/i18n';
+  import { Button, Icon } from '@sveltia/ui';
 
   /**
    * @typedef {object} Props
@@ -22,12 +22,12 @@
 <Button
   variant="ghost"
   iconic
-  aria-label={ariaLabel ?? $_('back')}
+  aria-label={ariaLabel ?? _('back')}
   keyShortcuts={useShortcut ? 'Escape' : undefined}
   class="back"
   {onclick}
 >
   {#snippet startIcon()}
-    <Icon name={$isRTL ? 'arrow_forward' : 'arrow_back'} />
+    <Icon name={isRTL() ? 'arrow_forward' : 'arrow_back'} />
   {/snippet}
 </Button>
