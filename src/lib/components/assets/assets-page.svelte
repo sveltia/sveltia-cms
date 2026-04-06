@@ -98,14 +98,15 @@
     }
 
     if (!fileName) {
-      const count = $listedAssets.length;
-
       // Wait for `selectedAssetFolderLabel` to be updated
       await sleep(100);
 
       $showAssetOverlay = false;
       $announcedPageStatus = _('viewing_x_asset_folder', {
-        values: { folder: selectedAssetFolderLabel, count },
+        values: {
+          folder: selectedAssetFolderLabel,
+          count: $listedAssets.length,
+        },
       });
 
       return;

@@ -120,11 +120,12 @@
     const _fileMap = '_fileMap' in $selectedCollection ? $selectedCollection._fileMap : undefined;
 
     if (!routeType) {
-      const count = $listedEntries.length;
-
       $showContentOverlay = false;
       $announcedPageStatus = _('viewing_x_collection', {
-        values: { collection: collectionLabel, count },
+        values: {
+          collection: collectionLabel,
+          count: $listedEntries.length,
+        },
       });
 
       return;

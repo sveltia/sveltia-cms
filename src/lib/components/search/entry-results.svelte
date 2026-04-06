@@ -14,10 +14,11 @@
    */
 
   $effect(() => {
-    const entryCount = $entrySearchResults.length;
-
     $announcedPageStatus = _('viewing_entry_search_results', {
-      values: { terms: $searchTerms, count: entryCount },
+      values: {
+        terms: $searchTerms,
+        count: $entrySearchResults.length,
+      },
     });
   });
 </script>

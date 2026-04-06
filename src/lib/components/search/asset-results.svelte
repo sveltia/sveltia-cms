@@ -14,10 +14,11 @@
    */
 
   $effect(() => {
-    const assetCount = $assetSearchResults.length;
-
     $announcedPageStatus = _('viewing_asset_search_results', {
-      values: { terms: $searchTerms, count: assetCount },
+      values: {
+        terms: $searchTerms,
+        count: $assetSearchResults.length,
+      },
     });
   });
 </script>
