@@ -10,7 +10,7 @@ import { prefs } from '$lib/services/user/prefs';
  * @see https://vitejs.dev/guide/features.html#glob-import
  */
 export const initAppLocale = () => {
-  // YAML files are transformed into JS objects by the `yamlToJson` Vite plugin at build time
+  // YAML files are transformed into JS objects by the `yamlToJS` Vite plugin at build time
   const modules = import.meta.glob('$lib/locales/*.yaml', { eager: true, import: 'default' });
 
   Object.entries(modules).forEach(([path, content]) => {
