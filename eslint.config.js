@@ -26,7 +26,8 @@ export default [
   ...sveltePlugin.configs['flat/prettier'],
 
   // package.json linting
-  pkgJsonPlugin.configs.recommended,
+  pkgJsonPlugin.configs['recommended-publishable'],
+  pkgJsonPlugin.configs.stylistic,
 
   // Custom settings for all JS/Svelte files
   {

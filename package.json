@@ -3,14 +3,20 @@
   "version": "0.152.1",
   "description": "Sveltia CMS is a modern, lightweight, Git-based headless content management system.",
   "keywords": [
+    "svelte",
     "cms",
     "content-management-system"
   ],
+  "homepage": "https://sveltiacms.app/en/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sveltia/sveltia-cms"
+    "url": "git+https://github.com/sveltia/sveltia-cms.git"
   },
   "license": "MIT",
+  "author": {
+    "name": "Kohei Yoshino",
+    "url": "https://github.com/kyoshino"
+  },
   "type": "module",
   "scripts": {
     "build": "vite build",
