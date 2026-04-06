@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "target": "ESNext",
     "module": "ESNext",
     /**
@@ -33,10 +33,9 @@
     /**
      * Resolve `$lib` in source. The same path has to be defined in `vite.config.js`
      */
-    "baseUrl": ".",
     "paths": {
-      "$lib": ["src/lib"],
-      "$lib/*": ["src/lib/*"]
+      "$lib": ["./src/lib"],
+      "$lib/*": ["./src/lib/*"]
     }
   },
   /**
