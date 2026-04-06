@@ -54,6 +54,14 @@
   let loaded = $state(false);
   /** @type {string | undefined} */
   let blurImageURL = $state();
+  /**
+   * The actual `src` applied to the media element. For the `asset`-based flow this mirrors `src`
+   * (which is set after a visibility check inside {@link updateSrc}). For an externally-provided
+   * `src` with `loading === 'lazy'`, it is deferred via {@link waitForVisibility} so that the
+   * browser does not eagerly fetch off-screen images in grid layouts.
+   * @type {string | undefined}
+   */
+  let mediaSrc = $state();
 
   const isThumbnail = $derived(!!asset && !!variant && !controls);
   const isImage = $derived(
@@ -100,7 +108,7 @@
    * Update the {@link loaded} state when the media is loaded.
    */
   const checkLoaded = async () => {
-    if (!mediaElement || !src) {
+    if (!mediaElement || !mediaSrc) {
       return;
     }
 
@@ -129,7 +137,7 @@
     loaded = true;
 
     // Revoke the thumbnail blob URL
-    if (asset && isThumbnail && src.startsWith('blob:')) {
+    if (asset && isThumbnail && src?.startsWith('blob:')) {
       URL.revokeObjectURL(src);
     }
   };
@@ -149,7 +157,27 @@
   });
 
   $effect(() => {
-    if (mediaElement && src) {
+    if (asset) {
+      // For the asset-based flow, `src` is set by `updateSrc` after a visibility check
+      mediaSrc = src;
+    } else if (src && mediaElement && loading === 'lazy') {
+      // For externally-provided `src`, use Intersection Observer instead of relying on the native
+      // `loading="lazy"` attribute, which browsers may ignore in grid/flex layouts
+      mediaSrc = undefined;
+
+      const currentSrc = src;
+
+      (async () => {
+        await waitForVisibility(mediaElement);
+        mediaSrc = currentSrc;
+      })();
+    } else {
+      mediaSrc = src;
+    }
+  });
+
+  $effect(() => {
+    if (mediaElement && mediaSrc) {
       checkLoaded();
     }
   });
@@ -166,14 +194,19 @@
   {#if hasError}
     <Icon name="draft" />
   {:else if isImage}
-    <img {loading} {src} {alt} {...rest} bind:this={mediaElement} />
+    <img {loading} src={mediaSrc} {alt} {...rest} bind:this={mediaElement} />
   {:else if kind === 'video'}
     <!-- svelte-ignore a11y_media_has_caption -->
-    <video {src} controls={controls || undefined} playsinline {...rest} bind:this={mediaElement}
+    <video
+      src={mediaSrc}
+      controls={controls || undefined}
+      playsinline
+      {...rest}
+      bind:this={mediaElement}
     ></video>
   {:else if kind === 'audio'}
     {#if controls}
-      <audio {src} controls playsinline {...rest} bind:this={mediaElement}></audio>
+      <audio src={mediaSrc} controls playsinline {...rest} bind:this={mediaElement}></audio>
     {:else}
       <Icon name="audio_file" />
     {/if}
