@@ -166,7 +166,7 @@
       {#if showUploadButton}
         <div role="none">
           {#if $hasMouse}
-            {_(multiple ? 'drop_files_or_click_to_browse' : 'drop_file_or_click_to_browse')}
+            {_('drop_files_or_click_to_browse', { values: { count: multiple ? 2 : 1 } })}
           {:else}
             {_('tap_to_browse')}
           {/if}

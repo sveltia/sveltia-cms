@@ -68,6 +68,8 @@
   /** @type {DropZone | undefined} */
   let dropZone = $state();
   let processing = $state(false);
+  /** @type {string[]} */
+  let oversizedFileNames = $state([]);
 
   const {
     widget: fieldType,
@@ -140,6 +142,7 @@
 
     resetSelection();
     processing = true;
+    oversizedFileNames = [];
 
     const resources = await Promise.all(
       selectedResources.map((resource) =>
@@ -149,8 +152,6 @@
 
     /** @type {string[]} */
     const credits = [];
-    /** @type {string[]} */
-    const oversizedFileNames = [];
 
     const lastIndex = multiple
       ? (Object.keys($entryDraft.currentValues[locale])
@@ -344,7 +345,9 @@
 />
 
 <AlertDialog bind:open={showSizeLimitDialog} title={_('assets_dialog.large_file.title')}>
-  {_('warning_oversized_file', { values: { size: formatSize(maxSize) } })}
+  {_('warning_oversized_files', {
+    values: { count: oversizedFileNames.length, size: formatSize(maxSize) },
+  })}
 </AlertDialog>
 
 <ConfirmationDialog

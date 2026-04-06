@@ -266,6 +266,11 @@ replace_asset: Replace Asset
 replace_x: Replace {$name}
 click_to_browse: Click to browse…
 tap_to_browse: Tap to browse…
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Drop a file here or click to browse… }}
+    *   {{ Drop files here or click to browse… }}
 drop_files_or: |
   .input {$count :integer}
   .match $count
@@ -595,12 +600,6 @@ used_in: Used in
 created_date: Created Date
 location: Location
 map_lat_lng: Map showing latitude {$latitude}, longitude {$longitude}
-select_file: Select File
-select_image: Select Image
-replace_file: Replace File
-replace_image: Replace Image
-remove_file: Remove File
-remove_image: Remove Image
 remove_this_item: Remove This Item
 move_up: Move Up
 move_down: Move Down

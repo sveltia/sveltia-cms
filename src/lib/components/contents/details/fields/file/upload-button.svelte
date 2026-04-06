@@ -138,7 +138,7 @@
     <div role="none" class="label">
       {#if processing}
         <div role="status">
-          {_('processing_file')}
+          {_('processing_files', { values: { count: multiple ? 2 : 1 } })}
         </div>
       {:else if $hasMouse}
         {#if !allowDrop}
