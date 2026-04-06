@@ -20,7 +20,7 @@
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   const assets = $derived.by(() => {
-    if ($selectedAssets.length) return $selectedAssets;
+    if ($selectedAssets.length) return [...$selectedAssets];
     if ($focusedAsset) return [$focusedAsset];
     return [];
   });
