@@ -1,7 +1,6 @@
 import { addMessages, getLocaleFromNavigator, init } from '@sveltia/i18n';
 import { getPathInfo } from '@sveltia/utils/file';
 import { get } from 'svelte/store';
-import { parse } from 'yaml';
 
 import { prefs } from '$lib/services/user/prefs';
 
@@ -11,16 +10,13 @@ import { prefs } from '$lib/services/user/prefs';
  * @see https://vitejs.dev/guide/features.html#glob-import
  */
 export const initAppLocale = () => {
-  const modules = import.meta.glob('$lib/locales/*.yaml', {
-    eager: true,
-    query: '?raw',
-    import: 'default',
-  });
+  // YAML files are transformed into JS objects by the `yamlToJson` Vite plugin at build time
+  const modules = import.meta.glob('$lib/locales/*.yaml', { eager: true, import: 'default' });
 
   Object.entries(modules).forEach(([path, content]) => {
     const locale = getPathInfo(path).filename;
 
-    addMessages(locale, parse(/** @type {string} */ (content)));
+    addMessages(locale, /** @type {Record<string, any>} */ (content));
   });
 
   init({

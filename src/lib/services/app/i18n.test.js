@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Simplified locale data used by the yaml.parse mock
+// Simplified locale data used by the locale module mocks
 const mockEnData = { hello: 'Hello', world: 'World' };
 const mockJaData = { hello: 'こんにちは', world: '世界' };
-const mockYamlParse = vi.fn();
 // Mock all dependencies first
 const mockAddMessages = vi.fn();
 const mockInit = vi.fn();
@@ -11,9 +10,8 @@ const mockGetLocaleFromNavigator = vi.fn();
 const mockGet = vi.fn();
 const mockGetPathInfo = vi.fn();
 
-vi.mock('yaml', () => ({
-  parse: mockYamlParse,
-}));
+vi.mock('$lib/locales/en.yaml', () => ({ default: mockEnData }));
+vi.mock('$lib/locales/ja.yaml', () => ({ default: mockJaData }));
 
 vi.mock('@sveltia/i18n', () => ({
   addMessages: mockAddMessages,
@@ -43,9 +41,6 @@ describe('i18n', () => {
 
       return { filename: match ? match[1] : 'unknown' };
     });
-
-    // Set up yaml.parse to return locale-appropriate test data (en first, then ja)
-    mockYamlParse.mockReturnValueOnce(mockEnData).mockReturnValueOnce(mockJaData);
   });
 
   describe('initAppLocale', () => {
