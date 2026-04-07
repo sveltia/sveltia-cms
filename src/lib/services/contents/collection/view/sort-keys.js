@@ -1,9 +1,10 @@
-import { _, locale as appLocale } from '@sveltia/i18n';
+import { _ } from '@sveltia/i18n';
 import { unique } from '@sveltia/utils/array';
 import { isObject } from '@sveltia/utils/object';
 import equal from 'fast-deep-equal';
-import { derived, get, toStore } from 'svelte/store';
+import { derived, get } from 'svelte/store';
 
+import { appLocaleStore } from '$lib/services/app/i18n';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { currentView } from '$lib/services/contents/collection/view';
@@ -246,7 +247,7 @@ export const getSortKeyLabel = ({ collection, key }) => {
 export const sortKeys = derived(
   // Include `appLocale.current` as a dependency because `getSortKeyLabel()` may return a localized
   // label
-  [selectedCollection, allEntries, toStore(() => appLocale.current)],
+  [selectedCollection, allEntries, appLocaleStore],
   ([collection, _allEntries], set) => {
     // Disable sorting for file/singleton collection
     if (!collection || !('folder' in collection)) {

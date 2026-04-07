@@ -1,6 +1,6 @@
-import { locale as appLocale } from '@sveltia/i18n';
-import { derived, toStore } from 'svelte/store';
+import { derived } from 'svelte/store';
 
+import { appLocaleStore } from '$lib/services/app/i18n';
 import { allEntries } from '$lib/services/contents';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
@@ -88,6 +88,6 @@ export const searchEntries = ({ entries, terms }) => {
 export const entrySearchResults = derived(
   // Include `appLocale.current` as a dependency because `getEntrySummary()` may return a localized
   // label
-  [allEntries, searchTerms, toStore(() => appLocale.current)],
+  [allEntries, searchTerms, appLocaleStore],
   ([entries, terms]) => searchEntries({ entries, terms }),
 );

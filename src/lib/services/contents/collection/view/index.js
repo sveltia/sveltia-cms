@@ -1,7 +1,7 @@
-import { locale as appLocale } from '@sveltia/i18n';
 import equal from 'fast-deep-equal';
-import { derived, get, toStore, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 
+import { appLocaleStore } from '$lib/services/app/i18n';
 import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
@@ -99,7 +99,7 @@ let lastCurrentView = /** @type {EntryListView | undefined} */ (undefined);
 export const entryGroups = derived(
   // Include `appLocale.current` as a dependency because `sortEntries()` and `groupEntries()` may
   // return localized labels
-  [listedEntries, currentView, toStore(() => appLocale.current)],
+  [listedEntries, currentView, appLocaleStore],
   ([_listedEntries, _currentView], set) => {
     // Use reference equality: when only `appLocale.current` changes, `listedEntries` and
     // `currentView` retain the same references, so we can skip expensive re-computation.

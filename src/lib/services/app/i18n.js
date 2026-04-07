@@ -1,8 +1,18 @@
-import { addMessages, getLocaleFromNavigator, init } from '@sveltia/i18n';
+import { addMessages, locale as appLocale, getLocaleFromNavigator, init } from '@sveltia/i18n';
 import { getPathInfo } from '@sveltia/utils/file';
-import { get } from 'svelte/store';
+import { get, toStore } from 'svelte/store';
 
 import { prefs } from '$lib/services/user/prefs';
+
+/**
+ * @import { Readable } from 'svelte/store';
+ */
+
+/**
+ * Current application locale as a Svelte store, derived from `locale` of `sveltia-i18n`.
+ * @type {Readable<string>}
+ */
+export const appLocaleStore = toStore(() => appLocale.current);
 
 /**
  * Load strings and initialize the locales.

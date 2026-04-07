@@ -21,6 +21,7 @@ vi.mock('@sveltia/i18n', () => ({
 
 vi.mock('svelte/store', () => ({
   get: mockGet,
+  toStore: vi.fn(() => ({ subscribe: vi.fn() })),
 }));
 
 vi.mock('@sveltia/utils/file', () => ({

@@ -1,6 +1,7 @@
-import { _, locale as appLocale } from '@sveltia/i18n';
-import { derived, toStore } from 'svelte/store';
+import { _ } from '@sveltia/i18n';
+import { derived } from 'svelte/store';
 
+import { appLocaleStore } from '$lib/services/app/i18n';
 import { allAssets } from '$lib/services/assets';
 
 /**
@@ -13,7 +14,7 @@ import { allAssets } from '$lib/services/assets';
  */
 export const sortKeys = derived(
   // Include `appLocale.current` as a dependency because it returns a localized label
-  [allAssets, toStore(() => appLocale.current)],
+  [allAssets, appLocaleStore],
   ([_allAssets], set) => {
     const _sortFields = ['name'];
 
