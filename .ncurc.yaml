@@ -8,3 +8,5 @@ reject:
   - terra-draw-leaflet-adapter
   # Updating to TypeScript 6 is blocked by various unmet peer dependencies
   - typescript
+  # 3.1.0 causes test failures for some reason
+  - eslint-config-airbnb-extended

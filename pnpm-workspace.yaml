@@ -13,6 +13,3 @@ onlyBuiltDependencies:
   - es5-ext
   - esbuild
   - svelte-preprocess
-
-overrides:
-  brace-expansion@<5.0.5: ">=5.0.5"
