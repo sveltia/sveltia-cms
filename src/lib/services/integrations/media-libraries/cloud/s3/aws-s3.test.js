@@ -57,7 +57,7 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
         'https://console.aws.amazon.com/iam/home#/security_credentials',
       );
       expect(awsS3Service.apiKeyPattern).toBeInstanceOf(RegExp);
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(awsS3Service.isEnabled).toBeDefined();
     });
 

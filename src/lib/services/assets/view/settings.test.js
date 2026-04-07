@@ -23,7 +23,6 @@ vi.mock('@sveltia/utils/storage', () => {
    * @param {string} _storeName Store name.
    * @returns {MockIndexedDB} Mock instance.
    */
-  // eslint-disable-next-line no-unused-vars
   function IndexedDBConstructor(_dbName, _storeName) {
     return new MockIndexedDB();
   }

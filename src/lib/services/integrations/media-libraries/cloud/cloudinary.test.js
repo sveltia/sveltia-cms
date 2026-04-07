@@ -78,7 +78,7 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       expect(cloudinaryService.developerURL).toBe('https://cloudinary.com/documentation/');
       expect(cloudinaryService.apiKeyURL).toBe('https://console.cloudinary.com/settings/api-keys');
       expect(cloudinaryService.apiKeyPattern).toBeInstanceOf(RegExp);
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(cloudinaryService.isEnabled).toBeDefined();
     });
 

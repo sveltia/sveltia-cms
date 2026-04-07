@@ -10,7 +10,7 @@ import {
   dataLoadedProgress,
   entryParseErrors,
   getEntryFoldersByPath,
-} from './index.js';
+} from '.';
 
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),

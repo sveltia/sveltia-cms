@@ -65,7 +65,7 @@ describe('integrations/media-libraries/cloud/s3/cloudflare-r2', () => {
         'https://dash.cloudflare.com/?to=/:account/r2/api-tokens',
       );
       expect(cloudflareR2Service.apiKeyPattern).toBeInstanceOf(RegExp);
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(cloudflareR2Service.isEnabled).toBeDefined();
     });
 

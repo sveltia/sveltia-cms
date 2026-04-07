@@ -40,9 +40,9 @@ describe('integrations/media-libraries/stock/pexels', () => {
       expect(pexelsService.developerURL).toBe('https://www.pexels.com/api/');
       expect(pexelsService.apiKeyURL).toBe('https://www.pexels.com/api/new/');
       expect(pexelsService.apiKeyPattern).toBeInstanceOf(RegExp);
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(pexelsService.list).toBeDefined();
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(pexelsService.search).toBeDefined();
     });
 

@@ -200,7 +200,7 @@ function removeUnusedImports(content, analysisResult) {
       const escapedFrom = importInfo.from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
       const importRegex = new RegExp(
-        // eslint-disable-next-line max-len
+        // eslint-disable-next-line @stylistic/max-len
         `^(\\s*\\*?\\s*@import\\s*\\{)([^}]*(?:\\n[^}]*)*)(\\}\\s*from\\s*['"\`]${escapedFrom}['"\`]\\s*;?)`,
         'gm',
       );

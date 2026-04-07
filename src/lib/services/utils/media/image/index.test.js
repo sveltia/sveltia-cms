@@ -10,7 +10,7 @@ import {
   VECTOR_IMAGE_EXTENSION_REGEX,
   VECTOR_IMAGE_FORMATS,
   VECTOR_IMAGE_TYPES,
-} from './index.js';
+} from '.';
 
 describe('Image Constants', () => {
   test('RASTER_IMAGE_FORMATS should contain expected formats', () => {

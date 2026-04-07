@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { formatDuration } from './index';
+import { formatDuration } from '.';
 
 describe('formatDuration', () => {
   test('should format duration in seconds to hh:mm:ss format', () => {

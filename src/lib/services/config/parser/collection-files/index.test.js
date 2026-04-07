@@ -90,7 +90,7 @@ describe('Collection Files Parser', () => {
 
   describe('parseCollectionFile', () => {
     it('should parse field configurations in a collection file', async () => {
-      const { parseCollectionFile } = await import('./index.js');
+      const { parseCollectionFile } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -118,7 +118,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should use inherited format from collection if file format is not specified', async () => {
-      const { parseCollectionFile } = await import('./index.js');
+      const { parseCollectionFile } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -141,7 +141,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should detect format mismatch between file extension and format', async () => {
-      const { parseCollectionFile } = await import('./index.js');
+      const { parseCollectionFile } = await import('.');
       const collectors = createCollectors();
 
       mockIsFormatMismatch.mockReturnValue(true);
@@ -170,7 +170,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should add error when collection file has no fields', async () => {
-      const { parseCollectionFile } = await import('./index.js');
+      const { parseCollectionFile } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -195,7 +195,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should add error when collection file has undefined fields', async () => {
-      const { parseCollectionFile } = await import('./index.js');
+      const { parseCollectionFile } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -219,7 +219,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should not add error when collection file has fields defined', async () => {
-      const { parseCollectionFile } = await import('./index.js');
+      const { parseCollectionFile } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -244,7 +244,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should always parse fields regardless of format mismatch', async () => {
-      const { parseCollectionFile } = await import('./index.js');
+      const { parseCollectionFile } = await import('.');
       const collectors = createCollectors();
 
       mockIsFormatMismatch.mockReturnValue(true);
@@ -269,7 +269,7 @@ describe('Collection Files Parser', () => {
 
   describe('parseCollectionFiles', () => {
     it('should parse multiple collection files', async () => {
-      const { parseCollectionFiles } = await import('./index.js');
+      const { parseCollectionFiles } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -300,7 +300,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should skip divider entries', async () => {
-      const { parseCollectionFiles } = await import('./index.js');
+      const { parseCollectionFiles } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -341,7 +341,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should validate file names for duplicates', async () => {
-      const { parseCollectionFiles } = await import('./index.js');
+      const { parseCollectionFiles } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -377,7 +377,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should skip parsing files when checkName returns false', async () => {
-      const { parseCollectionFiles } = await import('./index.js');
+      const { parseCollectionFiles } = await import('.');
       const collectors = createCollectors();
 
       mockCheckName.mockReturnValueOnce(true).mockReturnValueOnce(false);
@@ -411,7 +411,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should pass correct context to checkName including file info', async () => {
-      const { parseCollectionFiles } = await import('./index.js');
+      const { parseCollectionFiles } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -440,7 +440,7 @@ describe('Collection Files Parser', () => {
     });
 
     it('should handle empty files array', async () => {
-      const { parseCollectionFiles } = await import('./index.js');
+      const { parseCollectionFiles } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */

@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
 
-import { panels } from './index.js';
+import { panels } from '.';
 
 // Mock Svelte components - they're not needed for this test, but they must be mocked
 // because Vitest 4 cannot load .svelte files in Node environment

@@ -82,7 +82,7 @@ describe('draft/backup', () => {
 
     // Import module (happens once, uses the mock set up above)
     const backupModule = await import('./backup');
-    const draftModule = await import('./index');
+    const draftModule = await import('.');
 
     ({
       deleteBackup,

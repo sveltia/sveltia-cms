@@ -38,9 +38,9 @@ describe('integrations/media-libraries/stock/pixabay', () => {
       expect(pixabayService.developerURL).toBe('https://pixabay.com/service/about/api/');
       expect(pixabayService.apiKeyURL).toBe('https://pixabay.com/api/docs/#api_key');
       expect(pixabayService.apiKeyPattern).toBeInstanceOf(RegExp);
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(pixabayService.list).toBeDefined();
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(pixabayService.search).toBeDefined();
     });
 

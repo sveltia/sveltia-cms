@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getDefaultMediaLibraryOptions, transformFile } from './index';
+import { getDefaultMediaLibraryOptions, transformFile } from '.';
 
 // Mock all dependencies
 vi.mock('@sveltia/utils/object');

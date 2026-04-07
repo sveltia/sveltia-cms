@@ -12,7 +12,7 @@ import {
   showContentOverlay,
   showDuplicateToast,
   translatorApiKeyDialogState,
-} from './index.js';
+} from '.';
 
 describe('editor/index', () => {
   beforeEach(() => {

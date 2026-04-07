@@ -37,7 +37,7 @@ describe('user index service', () => {
     mockWritable.mockReturnValue(mockUserStore);
 
     // Import the module after mocks are set up
-    userModule = await import('./index.js');
+    userModule = await import('.');
 
     // Get the subscribe function that was passed to the store
     const subscribeCalls = mockUserStore.subscribe.mock.calls;

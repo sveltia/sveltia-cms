@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getMediaMetadata } from './index';
+import { getMediaMetadata } from '.';
 
 // Mock the extractExifData function
 vi.mock('$lib/services/utils/media/image/exif', () => ({

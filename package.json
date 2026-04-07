@@ -72,6 +72,7 @@
     "yaml": "^2.8.3"
   },
   "devDependencies": {
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^25.5.2",
@@ -83,9 +84,9 @@
     "eslint": "^9.39.4",
     "eslint-config-airbnb-extended": "^3.0.1",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsdoc": "^62.9.0",
     "eslint-plugin-package-json": "^0.91.1",
+    "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-svelte": "^3.17.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.4.0",

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getStockAssetMediaLibraryOptions } from './index';
+import { getStockAssetMediaLibraryOptions } from '.';
 
 // Mock all dependencies
 vi.mock('$lib/services/integrations/media-libraries', () => ({

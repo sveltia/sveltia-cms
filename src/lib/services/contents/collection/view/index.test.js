@@ -8,7 +8,7 @@ import { groupEntries } from '$lib/services/contents/collection/view/group';
 import { initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 
-import { collectionState, currentView, entryGroups, listedEntries } from './index.js';
+import { collectionState, currentView, entryGroups, listedEntries } from '.';
 
 /**
  * Real writable stores hoisted so they are available when vi.mock factories run.

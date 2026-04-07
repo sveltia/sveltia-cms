@@ -103,7 +103,7 @@ describe('Collections Parser', () => {
 
   describe('parseEntryCollection', () => {
     it('should parse fields in entry collection', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -123,7 +123,7 @@ describe('Collections Parser', () => {
     });
 
     it('should detect format mismatch in entry collection', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       mockIsFormatMismatch.mockReturnValue(true);
@@ -150,7 +150,7 @@ describe('Collections Parser', () => {
     });
 
     it('should add error when entry collection has no fields', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -174,7 +174,7 @@ describe('Collections Parser', () => {
     });
 
     it('should add error when entry collection has undefined fields', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -197,7 +197,7 @@ describe('Collections Parser', () => {
     });
 
     it('should not add error when entry collection has fields defined', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -221,7 +221,7 @@ describe('Collections Parser', () => {
     });
 
     it('should handle deprecated slug_length option', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -241,7 +241,7 @@ describe('Collections Parser', () => {
     });
 
     it('should validate slug without slashes', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -265,7 +265,7 @@ describe('Collections Parser', () => {
     });
 
     it('should accept valid slug without slashes', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -289,7 +289,7 @@ describe('Collections Parser', () => {
     });
 
     it('should handle index_file when true', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -310,7 +310,7 @@ describe('Collections Parser', () => {
     });
 
     it('should handle index_file with custom fields', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -338,7 +338,7 @@ describe('Collections Parser', () => {
     });
 
     it('should use parent fields when index_file has no fields', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -366,7 +366,7 @@ describe('Collections Parser', () => {
     });
 
     it('should check for unsupported options', async () => {
-      const { parseEntryCollection } = await import('./index.js');
+      const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -388,7 +388,7 @@ describe('Collections Parser', () => {
 
   describe('parseCollection', () => {
     it('should error when collection has no options', async () => {
-      const { parseCollection } = await import('./index.js');
+      const { parseCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -410,7 +410,7 @@ describe('Collections Parser', () => {
     });
 
     it('should error when collection has conflicting options (files and folder)', async () => {
-      const { parseCollection } = await import('./index.js');
+      const { parseCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -434,7 +434,7 @@ describe('Collections Parser', () => {
     });
 
     it('should error when collection has divider and files', async () => {
-      const { parseCollection } = await import('./index.js');
+      const { parseCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -456,7 +456,7 @@ describe('Collections Parser', () => {
     });
 
     it('should parse file collection', async () => {
-      const { parseCollection } = await import('./index.js');
+      const { parseCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -475,7 +475,7 @@ describe('Collections Parser', () => {
     });
 
     it('should parse entry collection', async () => {
-      const { parseCollection } = await import('./index.js');
+      const { parseCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -495,7 +495,7 @@ describe('Collections Parser', () => {
     });
 
     it('should skip divider collections', async () => {
-      const { parseCollection } = await import('./index.js');
+      const { parseCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -513,7 +513,7 @@ describe('Collections Parser', () => {
     });
 
     it('should return early on validation error', async () => {
-      const { parseCollection } = await import('./index.js');
+      const { parseCollection } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -533,7 +533,7 @@ describe('Collections Parser', () => {
 
   describe('parseCollections', () => {
     it('should error when no collections or singletons', async () => {
-      const { parseCollections } = await import('./index.js');
+      const { parseCollections } = await import('.');
       const collectors = createCollectors();
       /** @type {any} */
       const config = {};
@@ -544,7 +544,7 @@ describe('Collections Parser', () => {
     });
 
     it('should parse collections array', async () => {
-      const { parseCollections } = await import('./index.js');
+      const { parseCollections } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -565,7 +565,7 @@ describe('Collections Parser', () => {
     });
 
     it('should skip collection dividers', async () => {
-      const { parseCollections } = await import('./index.js');
+      const { parseCollections } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -590,7 +590,7 @@ describe('Collections Parser', () => {
     });
 
     it('should parse singletons collection', async () => {
-      const { parseCollections } = await import('./index.js');
+      const { parseCollections } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -610,7 +610,7 @@ describe('Collections Parser', () => {
     });
 
     it('should validate collection names', async () => {
-      const { parseCollections } = await import('./index.js');
+      const { parseCollections } = await import('.');
       const collectors = createCollectors();
 
       mockCheckName.mockReturnValueOnce(false);
@@ -634,7 +634,7 @@ describe('Collections Parser', () => {
     });
 
     it('should handle both collections and singletons', async () => {
-      const { parseCollections } = await import('./index.js');
+      const { parseCollections } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */

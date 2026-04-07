@@ -54,7 +54,7 @@ vi.mock('$lib/services/user/prefs', () => ({
 }));
 
 // Import after mocks
-const { init } = await import('./index.js');
+const { init } = await import('.');
 const { getTokenPageURL } = await import('./auth.js');
 
 describe('Gitea Index Service', () => {
@@ -326,7 +326,7 @@ describe('Gitea Index Service', () => {
 
   describe('default export', () => {
     test('should export BackendService with correct properties', async () => {
-      const { default: backend } = await import('./index.js');
+      const { default: backend } = await import('.');
 
       expect(backend).toBeDefined();
       expect(backend.isGit).toBe(true);

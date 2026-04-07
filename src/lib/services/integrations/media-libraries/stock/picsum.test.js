@@ -26,7 +26,7 @@ describe('integrations/media-libraries/stock/picsum', () => {
       expect(picsumService.developerURL).toBeUndefined();
       expect(picsumService.apiKeyURL).toBeUndefined();
       expect(picsumService.apiKeyPattern).toBeUndefined();
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(picsumService.list).toBeDefined();
       expect(picsumService.search).toBeUndefined();
     });

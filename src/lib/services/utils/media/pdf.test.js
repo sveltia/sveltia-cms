@@ -46,7 +46,6 @@ describe('renderPDF', () => {
        * @param {string} _contextType Context type.
        * @returns {object} Rendering context.
        */
-      // eslint-disable-next-line no-unused-vars
       getContext(_contextType) {
         return {};
       }

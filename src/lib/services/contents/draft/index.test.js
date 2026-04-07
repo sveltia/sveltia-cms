@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { describe, expect, it, vi } from 'vitest';
 
-import { entryDraft, entryDraftModified, filterRealValues, i18nAutoDupEnabled } from './index';
+import { entryDraft, entryDraftModified, filterRealValues, i18nAutoDupEnabled } from '.';
 
 vi.mock('$lib/services/user/prefs', () => ({
   prefs: {
@@ -350,7 +350,7 @@ describe('draft/index', () => {
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
       // Re-import the module with new mocks
-      await import('./index');
+      await import('.');
 
       // The subscription should have logged on import
       // (Note: Testing this fully would require accessing internal module state)

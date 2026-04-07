@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getMediaLibraryOptions } from './index';
+import { getMediaLibraryOptions } from '.';
 
 // Mock all dependencies
 vi.mock('svelte/store', () => ({

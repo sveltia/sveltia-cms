@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { dependencies, version } from './index.js';
+import { dependencies, version } from '.';
 
 describe('services/app re-exports', () => {
   test('exports a version string', () => {

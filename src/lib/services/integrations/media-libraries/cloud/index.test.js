@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { allCloudStorageServices } from './index.js';
+import { allCloudStorageServices } from '.';
 
 describe('Cloud storage services', () => {
   test('should export allCloudStorageServices', () => {

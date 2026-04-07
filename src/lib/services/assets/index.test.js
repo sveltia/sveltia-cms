@@ -17,7 +17,7 @@ import {
   renamingAsset,
   selectedAssets,
   uploadingAssets,
-} from './index';
+} from '.';
 
 // Mock all dependencies
 vi.mock('@sveltia/utils/file');

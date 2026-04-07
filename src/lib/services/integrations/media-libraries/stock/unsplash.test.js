@@ -42,9 +42,9 @@ describe('integrations/media-libraries/stock/unsplash', () => {
       expect(unsplashService.developerURL).toBe('https://unsplash.com/developers');
       expect(unsplashService.apiKeyURL).toBe('https://unsplash.com/oauth/applications');
       expect(unsplashService.apiKeyPattern).toBeInstanceOf(RegExp);
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(unsplashService.list).toBeDefined();
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(unsplashService.search).toBeDefined();
     });
 

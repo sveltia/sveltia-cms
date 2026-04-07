@@ -123,7 +123,7 @@ describe('Config Parser', () => {
 
   describe('parseCmsConfig', () => {
     it('should parse a minimal valid config', async () => {
-      const { parseCmsConfig } = await import('./index.js');
+      const { parseCmsConfig } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -146,7 +146,7 @@ describe('Config Parser', () => {
     });
 
     it('should collect errors for missing backend', async () => {
-      const { parseCmsConfig } = await import('./index.js');
+      const { parseCmsConfig } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -167,7 +167,7 @@ describe('Config Parser', () => {
     });
 
     it('should collect warnings for editorial_workflow', async () => {
-      const { parseCmsConfig } = await import('./index.js');
+      const { parseCmsConfig } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -193,7 +193,7 @@ describe('Config Parser', () => {
     });
 
     it('should collect warnings for nested collections', async () => {
-      const { parseCmsConfig } = await import('./index.js');
+      const { parseCmsConfig } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -219,7 +219,7 @@ describe('Config Parser', () => {
     });
 
     it('should collect errors for no collections', async () => {
-      const { parseCmsConfig } = await import('./index.js');
+      const { parseCmsConfig } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */

@@ -17,7 +17,7 @@ import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/expanders';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 
-import { saveEntry } from './index';
+import { saveEntry } from '.';
 
 vi.mock('$lib/services/backends');
 vi.mock('$lib/services/backends/git/shared/integration');

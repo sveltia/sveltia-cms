@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCustomNodeClass } from './custom-node.js';
 import { createTransformer } from './transformers.js';
 
-import { createLexicalNodeFeatures, EditorComponent, featureCacheMap } from './index.js';
+import { createLexicalNodeFeatures, EditorComponent, featureCacheMap } from '.';
 
 // Mock the dependencies
 vi.mock('./custom-node.js', () => ({

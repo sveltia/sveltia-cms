@@ -36,7 +36,7 @@ const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/bac
 const { createProxy } = await import('$lib/services/contents/draft/create/proxy');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
 const { cmsConfig } = await import('$lib/services/config');
-const { createDraft, getSlugEditorProp } = await import('./index.js');
+const { createDraft, getSlugEditorProp } = await import('.');
 
 describe('contents/draft/create/index', () => {
   describe('getSlugEditorProp', () => {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { allTranslationServices, translator } from './index.js';
+import { allTranslationServices, translator } from '.';
 
 // Mock the individual translator services
 vi.mock('./google.js', () => ({

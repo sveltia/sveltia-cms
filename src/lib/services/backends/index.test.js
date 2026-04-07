@@ -9,7 +9,7 @@ import {
   isLastCommitPublished,
   unsupportedBackends,
   validBackendNames,
-} from './index.js';
+} from '.';
 
 describe('Backend Services Index', () => {
   beforeEach(() => {

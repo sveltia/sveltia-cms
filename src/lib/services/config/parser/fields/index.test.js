@@ -59,7 +59,7 @@ describe('Field Collectors', () => {
 
   describe('Media field collection in nested structures', () => {
     it('should collect media fields at top level', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -92,7 +92,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect media fields in object field subfields', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -131,7 +131,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect media fields in nested object fields', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -172,7 +172,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect media fields in list field subfields', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -207,7 +207,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect media fields in list with single field', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -240,7 +240,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect media fields in nested list and object structures', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -282,7 +282,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect multiple media fields at different depths', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -336,7 +336,7 @@ describe('Field Collectors', () => {
 
   describe('Relation field collection in nested structures', () => {
     it('should collect relation fields at top level', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -367,7 +367,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect relation fields in object field', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -404,7 +404,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect relation fields in list field', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -439,7 +439,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect relation fields in deeply nested structures', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -485,7 +485,7 @@ describe('Field Collectors', () => {
 
   describe('Variable type fields with collectors', () => {
     it('should collect media fields in list with variable types', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -535,7 +535,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect relation fields in object with variable types', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -587,7 +587,7 @@ describe('Field Collectors', () => {
     });
 
     it('should collect fields from multiple variable types', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -642,7 +642,7 @@ describe('Field Collectors', () => {
     });
 
     it('should handle complex nested variable type structures', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -711,7 +711,7 @@ describe('Field Collectors', () => {
 
   describe('parseFields with undefined/null fields', () => {
     it('should handle undefined fields gracefully without throwing', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -728,7 +728,7 @@ describe('Field Collectors', () => {
     });
 
     it('should handle null fields gracefully without throwing', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -747,7 +747,7 @@ describe('Field Collectors', () => {
 
   describe('Deprecated date widget type (line 55)', () => {
     it('should add an error when widget is "date" (deprecated)', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -774,7 +774,7 @@ describe('Field Collectors', () => {
 
   describe('Field name validation (checkName false branch)', () => {
     it('should skip parseFieldConfig when field has no name', async () => {
-      const { parseFields } = await import('./index.js');
+      const { parseFields } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */

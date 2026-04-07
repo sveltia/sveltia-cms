@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { editors, previews } from './index.js';
+import { editors, previews } from '.';
 
 // Mock all Svelte components - they're not needed for this test, but they must be mocked
 // because Vitest 4 cannot load .svelte files in Node environment

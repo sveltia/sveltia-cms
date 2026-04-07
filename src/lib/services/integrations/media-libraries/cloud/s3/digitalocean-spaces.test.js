@@ -67,7 +67,7 @@ describe('integrations/media-libraries/cloud/s3/digitalocean-spaces', () => {
         'https://cloud.digitalocean.com/account/api/spaces',
       );
       expect(digitalOceanSpacesService.apiKeyPattern).toBeInstanceOf(RegExp);
-      // eslint-disable-next-line import/no-named-as-default-member
+      // eslint-disable-next-line import-x/no-named-as-default-member
       expect(digitalOceanSpacesService.isEnabled).toBeDefined();
     });
 

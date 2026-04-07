@@ -1,8 +1,8 @@
-import { configs as airbnbConfigs } from 'eslint-config-airbnb-extended/legacy';
-import prettier from 'eslint-config-prettier';
-import importPlugin from 'eslint-plugin-import';
+import stylistic from '@stylistic/eslint-plugin';
+import { configs as airbnbConfigs, plugins as airbnbPlugins } from 'eslint-config-airbnb-extended';
 import jsdocPlugin from 'eslint-plugin-jsdoc';
 import pkgJsonPlugin from 'eslint-plugin-package-json';
+import prettierPlugin from 'eslint-plugin-prettier/recommended';
 import sveltePlugin from 'eslint-plugin-svelte';
 import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import globals from 'globals';
@@ -11,12 +11,16 @@ export default [
   // Ignore files (migrated from .eslintrc.yaml ignorePatterns + .eslintignore)
   { ignores: ['**/*.cjs', '**/*.d.ts', 'package/', '.vite/'] },
 
-  // Airbnb base rules (equivalent to eslint-config-airbnb-base), applied to all
-  // files (strip the `files` restriction so .svelte files are also covered)
+  // Register @stylistic and import-x plugins for all files (including .svelte)
+  (({ files: _f, ...c }) => c)(airbnbPlugins.stylistic),
+  (({ files: _f, ...c }) => c)(airbnbPlugins.importX),
+
+  // Airbnb extended base rules, applied to all files (strip the `files` restriction
+  // so .svelte files are also covered)
   ...airbnbConfigs.base.recommended.map(({ files: _f, ...c }) => c),
 
-  // Disable rules that conflict with Prettier
-  prettier,
+  // Prettier recommended rules, applied to all files
+  prettierPlugin,
 
   // JSDoc recommended rules
   jsdocPlugin.configs['flat/recommended'],
@@ -45,19 +49,19 @@ export default [
       },
     },
     plugins: {
-      import: importPlugin,
+      '@stylistic': stylistic,
       'unused-imports': unusedImportsPlugin,
       jsdoc: jsdocPlugin,
     },
     rules: {
       'class-methods-use-this': 'off',
-      'import/extensions': 'off',
-      'import/no-extraneous-dependencies': 'off',
-      'import/no-mutable-exports': 'off',
-      'import/no-unresolved': 'off',
-      'import/prefer-default-export': 'off',
+      'import-x/extensions': 'off',
+      'import-x/no-extraneous-dependencies': 'off',
+      'import-x/no-mutable-exports': 'off',
+      'import-x/no-unresolved': 'off',
+      'import-x/prefer-default-export': 'off',
       // https://github.com/import-js/eslint-plugin-import/issues/1670#issuecomment-1018833148
-      'import/order': [
+      'import-x/order': [
         'error',
         {
           groups: [
@@ -121,7 +125,7 @@ export default [
       'jsdoc/require-throws': 1,
       'jsdoc/sort-tags': 1,
       'jsdoc/valid-types': 0,
-      'max-len': [
+      '@stylistic/max-len': [
         'error',
         {
           code: 100,
@@ -144,7 +148,7 @@ export default [
       'no-undef-init': 'off',
       'no-underscore-dangle': 'off',
       // https://github.com/airbnb/javascript/issues/1660#issuecomment-353018874 + small tweaks
-      'padding-line-between-statements': [
+      '@stylistic/padding-line-between-statements': [
         'error',
         {
           blankLine: 'always',
@@ -183,7 +187,7 @@ export default [
         },
         { blankLine: 'any', prev: ['export', 'import'], next: ['export', 'import'] },
       ],
-      quotes: ['error', 'single', { avoidEscape: true }],
+      '@stylistic/quotes': ['error', 'single', { avoidEscape: true }],
       // Disable some package-json rules
       'package-json/require-exports': 'off',
       'package-json/require-files': 'off',
