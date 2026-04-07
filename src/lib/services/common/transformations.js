@@ -126,11 +126,12 @@ export const applyTruncateTransformation = (value, { max, ellipsis = '…' }) =>
  * @param {Field} [args.fieldConfig] Field configuration, used for date transformations.
  * @param {any} args.value Original value to be transformed.
  * @param {string} args.transformation Transformation, e.g `upper`, `truncate(10)`.
+ * @param {string} [args.locale] BCP 47 language tag passed to the `slugify` transformation.
  * @returns {string} Transformed value.
  * @see https://decapcms.org/docs/summary-strings/
  * @see https://sveltiacms.app/en/docs/string-transformations
  */
-export const applyTransformation = ({ fieldConfig, value, transformation }) => {
+export const applyTransformation = ({ fieldConfig, value, transformation, locale }) => {
   if (transformation === 'upper') {
     return applyUpperCaseTransformation(value);
   }
@@ -140,7 +141,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
   }
 
   if (transformation === 'slugify') {
-    return slugify(String(value));
+    return slugify(String(value), { locale });
   }
 
   const dateTransformer = transformation.match(DATE_TRANSFORMATION_REGEX);
@@ -189,11 +190,12 @@ export const applyTransformation = ({ fieldConfig, value, transformation }) => {
  * @param {Field} [args.fieldConfig] Field configuration.
  * @param {any} args.value Original value.
  * @param {string[]} args.transformations List of transformations.
+ * @param {string} [args.locale] BCP 47 language tag passed to the `slugify` transformation.
  * @returns {string} Transformed value.
  */
-export const applyTransformations = ({ fieldConfig, value, transformations }) => {
+export const applyTransformations = ({ fieldConfig, value, transformations, locale }) => {
   transformations.forEach((transformation) => {
-    value = applyTransformation({ fieldConfig, value, transformation });
+    value = applyTransformation({ fieldConfig, value, transformation, locale });
   });
 
   return value;

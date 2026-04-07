@@ -256,22 +256,25 @@ const replaceTemplatePlaceholder = (placeholder, { replaceSubContext, getFieldAr
     return generateUUID('short');
   }
 
+  const { type, locale } = replaceSubContext;
+
   if (transformations.length) {
     value = applyTransformations({
       fieldConfig: getField({ ...getFieldArgs, keyPath: tag }),
       value,
       transformations,
+      locale,
     });
   }
 
   // Return the value as is when generating the preview path or media folder path
-  if (replaceSubContext.type) {
+  if (type) {
     return String(value);
   }
 
   // Slugify the value for a slug or filename. Don’t limit the length here; it will be handled later
   // in `fillTemplate`.
-  return slugify(String(value), { maxLength: Infinity });
+  return slugify(String(value), { locale, maxLength: Infinity });
 };
 
 /**

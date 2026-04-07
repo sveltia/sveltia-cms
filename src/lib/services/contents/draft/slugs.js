@@ -53,6 +53,7 @@ export const getFillSlugOptions = ({ draft }) => {
       // Slug candidate for the default locale
       _slug: currentSlugs?.[defaultLocale] ?? currentSlugs?._,
     },
+    locale: defaultLocale,
     isIndexFile,
   };
 };

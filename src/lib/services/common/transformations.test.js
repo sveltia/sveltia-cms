@@ -166,6 +166,14 @@ describe('Test applyTransformation()', () => {
         transformation: 'slugify',
       }),
     ).toBe('already-slugified');
+    // locale is forwarded to slugify (no visible effect here since clean_accents defaults to false)
+    expect(
+      applyTransformation({
+        value: 'Hello World',
+        transformation: 'slugify',
+        locale: 'de',
+      }),
+    ).toBe('hello-world');
   });
 
   test('unknown transformation returns string value', () => {
@@ -226,6 +234,17 @@ describe('Test applyTransformations()', () => {
         fieldConfig: { name: 'date', widget: 'datetime', picker_utc: true },
       }),
     ).toBe('2024-01-23-01-23');
+  });
+
+  test('passes locale to slugify transformation', () => {
+    // locale is forwarded to slugify (no visible effect here since clean_accents defaults to false)
+    expect(
+      applyTransformations({
+        value: 'Hello World',
+        transformations: ['slugify'],
+        locale: 'de',
+      }),
+    ).toBe('hello-world');
   });
 });
 

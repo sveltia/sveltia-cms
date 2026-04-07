@@ -11,6 +11,11 @@ import { getOrCreate } from '$lib/services/utils/cache';
  */
 
 /**
+ * Locales that are supported in the `locale` option of the transliteration library.
+ * @see https://github.com/sindresorhus/transliterate/tree/main#locale
+ */
+const TRANSLITERATION_LOCALES = ['da', 'de', 'hu', 'nb', 'sr', 'sv', 'tr'];
+/**
  * @type {Map<string, { consecutivePattern: RegExp, trimPattern: RegExp }>}
  */
 const slugReplacementRegexCache = new Map();
@@ -22,6 +27,8 @@ const slugReplacementRegexCache = new Map();
  * @param {object} [options] Options.
  * @param {boolean} [options.fallback] Whether to return a fallback value if the slug is empty.
  * Defaults to `true`, which returns a part of a UUID.
+ * @param {string} [options.locale] BCP 47 language tag passed to the transliterate library when
+ * `clean_accents` is enabled.
  * @param {number} [options.maxLength] Maximum length of the slug.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
@@ -29,7 +36,7 @@ const slugReplacementRegexCache = new Map();
  */
 export const slugify = (
   string,
-  { fallback = true, maxLength: maxLengthParam = undefined } = {},
+  { fallback = true, locale = undefined, maxLength: maxLengthParam = undefined } = {},
 ) => {
   const {
     slug: {
@@ -48,7 +55,9 @@ export const slugify = (
   if (cleanAccents) {
     // Remove any accented characters by transliterating them to their ASCII equivalents
     // @see https://www.npmjs.com/package/@sindresorhus/transliterate
-    slug = transliterate(slug.normalize('NFD'));
+    slug = transliterate(slug.normalize('NFD'), {
+      locale: locale && TRANSLITERATION_LOCALES.includes(locale) ? locale : undefined,
+    });
   }
 
   if (encoding === 'ascii') {

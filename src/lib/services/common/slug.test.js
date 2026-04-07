@@ -153,6 +153,37 @@ describe('Test slugify()', () => {
     expect(slugify('Москва')).toBe('moskva'); // Russian transliteration
   });
 
+  test('locale option for accent cleaning', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: true,
+        sanitize_replacement: '-',
+      },
+    });
+
+    // Swedish locale: ö→o (vs default ö→oe)
+    expect(slugify('Björk', { locale: 'sv' })).toBe('bjork');
+    expect(slugify('Björk')).toBe('bjoerk'); // Default without locale
+
+    // Unsupported locales fall back to default transliteration
+    expect(slugify('Björk', { locale: 'en' })).toBe('bjoerk'); // 'en' not in TRANSLITERATION_LOCALES
+    expect(slugify('Björk', { locale: 'fr' })).toBe('bjoerk'); // 'fr' not in TRANSLITERATION_LOCALES
+
+    // locale option has no effect when clean_accents is false
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+      },
+    });
+
+    expect(slugify('Björk', { locale: 'sv' })).toBe('björk'); // No transliteration applied
+  });
+
   test('custom sanitize replacement', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = writable({

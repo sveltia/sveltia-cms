@@ -182,6 +182,7 @@ export const replace = (placeholder, context) => {
       fieldConfig: getField({ ...getFieldArgs }),
       value,
       transformations,
+      locale: defaultLocale,
     });
   }
 

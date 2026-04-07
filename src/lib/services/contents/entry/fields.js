@@ -435,7 +435,7 @@ export const getFieldDisplayValue = ({
   }
 
   if (transformations?.length) {
-    value = applyTransformations({ fieldConfig, value, transformations });
+    value = applyTransformations({ fieldConfig, value, transformations, locale });
   }
 
   // Return an empty string if the value is null or undefined

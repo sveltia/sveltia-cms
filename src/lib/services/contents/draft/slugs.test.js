@@ -126,6 +126,7 @@ describe('draft/slugs', () => {
           body: 'Content',
           _slug: 'my-post',
         },
+        locale: 'en',
         isIndexFile: false,
       });
     });
