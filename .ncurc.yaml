@@ -5,7 +5,6 @@ reject:
   - eslint
   # https://github.com/sveltia/sveltia-cms/issues/540
   - terra-draw-leaflet-adapter
-  # Updating to TypeScript 6 is blocked by various unmet peer dependencies
+  # Updating to TypeScript 6 is blocked by
+  # https://github.com/sveltejs/svelte-preprocess/pull/675
   - typescript
-  # 3.1.0 causes test failures for some reason
-  - eslint-config-airbnb-extended
