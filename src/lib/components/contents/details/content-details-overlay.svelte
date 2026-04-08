@@ -447,7 +447,7 @@
       </EmptyState>
     {:else}
       <div role="none" class="body" onpointerdown={markInteracted} onkeydown={markInteracted}>
-        {#key collection}
+        {#key `${collectionName}|${fileName}|${isIndexFile}`}
           <div role="none" class="content-area">
             {#if $editorFirstPane && $editorSecondPane}
               {#if firstPaneSize && secondPaneSize}
