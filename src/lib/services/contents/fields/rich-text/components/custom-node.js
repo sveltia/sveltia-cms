@@ -120,6 +120,20 @@ export const createCustomNodeClass = (componentDef) => {
       let editor = null;
       /** @type {Component} */
       let component;
+      let destroyed = false;
+
+      /**
+       * Unmount the component exactly once, regardless of how many times cleanup is triggered.
+       */
+      const cleanup = () => {
+        /* v8 ignore next */
+        if (destroyed) {
+          return;
+        }
+
+        destroyed = true;
+        unmount(component);
+      };
 
       /**
        * Custom `Change` event handler.
@@ -153,7 +167,7 @@ export const createCustomNodeClass = (componentDef) => {
             }
 
             if (type === 'remove') {
-              unmount(component);
+              cleanup();
               this.remove();
             }
           },
@@ -196,6 +210,25 @@ export const createCustomNodeClass = (componentDef) => {
 
       window.requestAnimationFrame(() => {
         wrapper.focus();
+
+        // Clean up when the parent field is unmounted (e.g. navigating away).
+        wrapper.closest('.field')?.addEventListener('Unmount', cleanup, { once: true });
+
+        // Clean up when the Lexical node is removed directly (e.g. keyboard Delete, undo) without
+        // going through onChange. Lexical has no destroyDOM() hook, so watch the DOM.
+        const { parentElement } = wrapper;
+
+        /* v8 ignore next */
+        if (parentElement) {
+          const observer = new MutationObserver(() => {
+            if (!wrapper.isConnected) {
+              cleanup();
+              observer.disconnect();
+            }
+          });
+
+          observer.observe(parentElement, { childList: true });
+        }
       });
 
       return wrapper;

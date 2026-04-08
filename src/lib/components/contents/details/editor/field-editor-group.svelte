@@ -1,4 +1,6 @@
 <script>
+  import { onMount } from 'svelte';
+
   /**
    * @import { Snippet } from 'svelte';
    */
@@ -15,9 +17,20 @@
     ...rest
     /* eslint-enable prefer-const */
   } = $props();
+
+  /** @type {HTMLElement | undefined} */
+  let wrapper = $state();
+
+  // eslint-disable-next-line arrow-body-style
+  onMount(() => {
+    // onUnmount
+    return () => {
+      wrapper?.dispatchEvent(new CustomEvent('Unmount'));
+    };
+  });
 </script>
 
-<section role="group" class="field" {...rest}>
+<section role="group" class="field" {...rest} bind:this={wrapper}>
   {@render children?.()}
 </section>
 
