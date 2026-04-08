@@ -139,10 +139,7 @@ describe('Local Backend Service', () => {
       service.init();
 
       // Test verifies the function doesn't throw
-      const result = await getRootDirHandle();
-
-      // Just verify a result is returned (may be mocked or undefined)
-      expect(result !== null || result === null).toBe(true);
+      await getRootDirHandle();
     });
 
     it('should show picker when permission is denied', async () => {
@@ -167,9 +164,7 @@ describe('Local Backend Service', () => {
       service.init();
 
       // Test verifies the function doesn't throw
-      const result = await getRootDirHandle();
-
-      expect(result !== null || result === null).toBe(true);
+      await getRootDirHandle();
     });
 
     it('should show picker when cached directory has been moved/deleted', async () => {
@@ -307,9 +302,7 @@ describe('Local Backend Service', () => {
       service.init();
 
       // Test verifies the function doesn't throw
-      const result = await getRootDirHandle();
-
-      expect(result !== null || result === null).toBe(true);
+      await getRootDirHandle();
     });
 
     it('should handle cached directory that is no longer accessible and allow new selection', async () => {
