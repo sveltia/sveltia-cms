@@ -1,8 +1,8 @@
 import stylistic from '@stylistic/eslint-plugin';
 import { configs as airbnbConfigs, plugins as airbnbPlugins } from 'eslint-config-airbnb-extended';
+import prettier from 'eslint-config-prettier';
 import jsdocPlugin from 'eslint-plugin-jsdoc';
 import pkgJsonPlugin from 'eslint-plugin-package-json';
-import prettierPlugin from 'eslint-plugin-prettier/recommended';
 import sveltePlugin from 'eslint-plugin-svelte';
 import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import globals from 'globals';
@@ -19,8 +19,8 @@ export default [
   // so .svelte files are also covered)
   ...airbnbConfigs.base.recommended.map(({ files: _f, ...c }) => c),
 
-  // Prettier recommended rules, applied to all files
-  prettierPlugin,
+  // Disable rules that conflict with Prettier
+  prettier,
 
   // JSDoc recommended rules
   jsdocPlugin.configs['flat/recommended'],

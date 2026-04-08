@@ -86,7 +86,6 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^62.9.0",
     "eslint-plugin-package-json": "^0.91.1",
-    "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-svelte": "^3.17.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.4.0",
