@@ -1,5 +1,4 @@
 <script>
-  import { isLoading } from '@sveltia/i18n';
   import { AppShell } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
@@ -32,8 +31,15 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  /**
+   * State to track whether the app locale has been initialized and loaded. We can’t use `isLoading`
+   * from the i18n service here because it becomes `false` as soon as Sveltia UI strings are loaded.
+   */
+  let localeLoaded = $state(false);
+
   onMount(() => {
     initAppLocale();
+    localeLoaded = true;
   });
 
   onMount(() => {
@@ -108,7 +114,7 @@
 />
 
 <AppShell>
-  {#if !isLoading()}
+  {#if localeLoaded}
     <div role="none" class="outer">
       <UpdateNotification />
       {#if $backend}
@@ -122,8 +128,8 @@
         {/if}
       </div>
     </div>
+    <div role="status">{$announcedPageStatus}</div>
   {/if}
-  <div role="status">{$announcedPageStatus}</div>
 </AppShell>
 
 <style lang="scss">
