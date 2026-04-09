@@ -37,16 +37,16 @@
    */
   let localeLoaded = $state(false);
 
-  onMount(() => {
+  $effect.pre(() => {
     initAppLocale();
     localeLoaded = true;
   });
 
-  onMount(() => {
+  $effect.pre(() => {
     initCmsConfig(config);
   });
 
-  onMount(() => {
+  $effect.pre(() => {
     initUserEnvDetection();
   });
 
