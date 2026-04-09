@@ -254,7 +254,7 @@ export default defineConfig({
             legal: true,
           },
           // Work around the “Prism is not defined” error
-          // @see https://github.com/remix-run/remix/discussions/8182
+          // @see https://github.com/vitejs/vite/issues/21948
           strictExecutionOrder: true,
         },
         {
