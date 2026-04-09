@@ -253,6 +253,9 @@ export default defineConfig({
           comments: {
             legal: true,
           },
+          // Work around the “Prism is not defined” error
+          // @see https://github.com/remix-run/remix/discussions/8182
+          strictExecutionOrder: true,
         },
         {
           entryFileNames: 'sveltia-cms.mjs',
@@ -260,6 +263,7 @@ export default defineConfig({
           comments: {
             legal: true,
           },
+          strictExecutionOrder: true,
         },
       ],
       // Keep exports in the ES module
