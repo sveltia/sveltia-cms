@@ -17,13 +17,13 @@ jobs:
             command: pnpm build
     steps:
       - name: Checkout the branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
       - name: Install pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v5.0.0
         with:
           version: latest
       - name: Setup Node.js environment
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.3.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
