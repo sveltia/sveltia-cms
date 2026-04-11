@@ -1,15 +1,12 @@
+allowBuilds:
+  "@parcel/watcher": false
+  esbuild: false
+  svelte-preprocess: true
+  unrs-resolver: false
+
+engineStrict: true
+
 minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
-  - devalue
-  - svelte
-  - "@sveltejs/*"
   - "@sveltia/*"
-  - lexical
-  - "@lexical/*"
-
-onlyBuiltDependencies:
-  - "@parcel/watcher"
-  - es5-ext
-  - esbuild
-  - svelte-preprocess
