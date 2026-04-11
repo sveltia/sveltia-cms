@@ -35,7 +35,7 @@ jobs:
       - name: Build & publish the app
         run: pnpm publish --no-git-checks
       - name: Notify Discord of Release
-        uses: SethCohen/github-releases-to-discord@v1
+        uses: SethCohen/github-releases-to-discord@v1.20.0
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           reduce_headings: true
