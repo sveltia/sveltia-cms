@@ -43,11 +43,11 @@
   });
 
   $effect.pre(() => {
-    initCmsConfig(config);
+    initUserEnvDetection();
   });
 
-  $effect.pre(() => {
-    initUserEnvDetection();
+  $effect(() => {
+    initCmsConfig(config);
   });
 
   // Fix the position of the custom mount element if needed
