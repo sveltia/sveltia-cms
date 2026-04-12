@@ -148,7 +148,7 @@ export const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
    */
   const localizingKeyPaths = [...slugTemplate.matchAll(/{{((?:fields\.)?.+?)( \| localize)?}}/g)]
     .filter(([, , localize]) => !!localize)
-    .map(([, keyPath]) => keyPath);
+    .map(([, keyPath]) => keyPath.replace(/^fields\./, ''));
 
   if (i18nSingleFile || !localizingKeyPaths.length) {
     return undefined;

@@ -713,6 +713,55 @@ describe('draft/slugs', () => {
         fr: 'mon-article',
       });
     });
+
+    it('should strip fields. prefix from localizing key paths when using fields. notation', async () => {
+      const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
+
+      fillTemplate.mockImplementation((template, options) => {
+        if (options.locale === 'fr') {
+          return 'mon-article';
+        }
+
+        return 'my-article';
+      });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          identifier_field: 'title',
+          slug: '{{fields.title | localize}}',
+          _i18n: {
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+          },
+        },
+        collectionFile: undefined,
+        currentLocales: { en: true, fr: true },
+        currentSlugs: {},
+        currentValues: {
+          en: { title: 'My Article' },
+          fr: { title: 'Mon Article' },
+        },
+        files: {},
+        isIndexFile: false,
+        isNew: true,
+      };
+
+      const result = getLocalizedSlugs({ draft, defaultLocaleSlug: 'my-article' });
+
+      // Verify localization works correctly — fields. prefix stripped so title key is found
+      expect(result).toEqual({
+        en: 'my-article',
+        fr: 'mon-article',
+      });
+      expect(fillTemplate).toHaveBeenCalledWith(
+        '{{fields.title | localize}}',
+        expect.objectContaining({
+          locale: 'fr',
+          content: expect.objectContaining({ title: 'Mon Article' }),
+        }),
+      );
+    });
   });
 
   describe('getCanonicalSlug (internal)', () => {
