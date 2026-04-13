@@ -3,6 +3,7 @@ import { derived } from 'svelte/store';
 import { prefs } from '$lib/services/user/prefs';
 
 import anthropic from './anthropic';
+import deepseek from './deepseek';
 import google from './google';
 import googleAi from './google-ai';
 import openai from './openai';
@@ -20,6 +21,7 @@ export const allTranslationServices = {
   google,
   'google-ai': googleAi,
   anthropic,
+  deepseek,
   openai,
 };
 

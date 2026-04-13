@@ -59,6 +59,20 @@ vi.mock('./anthropic.js', () => ({
   },
 }));
 
+vi.mock('./deepseek.js', () => ({
+  default: {
+    serviceId: 'deepseek',
+    serviceLabel: 'DeepSeek',
+    apiLabel: 'DeepSeek API',
+    developerURL: 'https://api-docs.deepseek.com/',
+    apiKeyURL: 'https://platform.deepseek.com/api_keys',
+    apiKeyPattern: /sk-[a-zA-Z0-9]{32,}/,
+    markdownSupported: true,
+    availability: vi.fn(),
+    translate: vi.fn(),
+  },
+}));
+
 vi.mock('svelte/store', () => {
   // Use globalThis to avoid hoisting issues
   const mockDerived = vi.fn((stores, callback) => {
@@ -106,6 +120,12 @@ describe('Translator Services Index', () => {
       expect(allTranslationServices.openai.serviceId).toBe('openai');
     });
 
+    it('should include DeepSeek translator service', () => {
+      expect(allTranslationServices).toHaveProperty('deepseek');
+      expect(allTranslationServices.deepseek).toBeDefined();
+      expect(allTranslationServices.deepseek.serviceId).toBe('deepseek');
+    });
+
     it('should have all required properties for each service', () => {
       const requiredProperties = [
         'serviceId',
@@ -143,6 +163,7 @@ describe('Translator Services Index', () => {
     it('should have correct markdown support flags', () => {
       expect(allTranslationServices.google.markdownSupported).toBe(false);
       expect(allTranslationServices.openai.markdownSupported).toBe(true);
+      expect(allTranslationServices.deepseek.markdownSupported).toBe(true);
     });
   });
 
