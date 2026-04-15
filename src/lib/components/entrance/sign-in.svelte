@@ -120,7 +120,7 @@
     {#if !isTestRepo}
       <Button
         variant="secondary"
-        label={_('sign_in_with_x_using_token', { values: { service: signInServiceLabel } })}
+        label={_('sign_in_using_access_token', { values: { service: signInServiceLabel } })}
         disabled={tokenAuthDisabled}
         onclick={() => {
           showTokenDialog = true;
@@ -139,7 +139,7 @@
 <PromptDialog
   bind:open={showTokenDialog}
   bind:value={token}
-  title={_('sign_in_using_pat_title')}
+  title={_('sign_in_using_access_token')}
   textboxAttrs={{ spellcheck: false, 'aria-label': _('personal_access_token') }}
   okLabel={_('sign_in')}
   okDisabled={!token.trim()}
@@ -147,10 +147,10 @@
     await signInManually(backendName, token.trim());
   }}
 >
-  {_('sign_in_using_pat_description')}
+  {_('sign_in_using_access_token_description')}
   {#if backend?.repository?.tokenPageURL}
     {@html makeLink(
-      _('sign_in_using_pat_link', { values: { service: signInServiceLabel } }),
+      _('sign_in_using_access_token_link', { values: { service: signInServiceLabel } }),
       backend.repository.tokenPageURL,
     )}
   {/if}

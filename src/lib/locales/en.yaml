@@ -67,10 +67,9 @@ loading_cms_config: Loading CMS Configuration…
 loading_site_data: Loading Site Data…
 loading_site_data_error: There was an error while loading site data.
 sign_in_with_x: Sign In with {$service}
-sign_in_with_x_using_token: Sign In with {$service} Using Token
-sign_in_using_pat_title: Sign In Using Personal Access Token
-sign_in_using_pat_description: Enter your token below. It must have read/write access to the repository content.
-sign_in_using_pat_link: You can generate a token on the <a>{$service} user settings page</a>.
+sign_in_using_access_token: Sign In Using Access Token
+sign_in_using_access_token_description: Enter your token below. It must have read/write access to the repository content.
+sign_in_using_access_token_link: You can generate a token on the <a>{$service} user settings page</a>.
 personal_access_token: Personal Access Token
 authorizing: Authorizing…
 signing_in: Signing in…

@@ -1393,8 +1393,8 @@
  * [documentation](https://sveltiacms.app/en/docs/deployments#disabling-automatic-deployments) for
  * details.
  * @property {boolean} [allow_token_auth] Whether to allow users to authenticate using an access
- * token. Default: `true`. If set to `false`, the “Sign In with Token” button will be disabled in
- * the UI, and users will be forced to use OAuth authentication.
+ * token. Default: `true`. If set to `false`, the “Sign In Using Access Token” button will be
+ * disabled in the UI, and users will be forced to use OAuth authentication.
  * @see https://decapcms.org/docs/backends-overview/
  * @see https://sveltiacms.app/en/docs/backends
  */
