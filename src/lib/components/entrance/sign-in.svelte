@@ -29,6 +29,9 @@
     isTestRepo ? undefined : /** @type {GitBackend} */ (configuredBackend)?.repo?.split('/').pop(),
   );
   const showLocalBackendOption = $derived($isLocalHost && !isTestRepo);
+  const tokenAuthDisabled = $derived(
+    !isTestRepo && /** @type {GitBackend} */ (configuredBackend).allow_token_auth === false,
+  );
 
   /**
    * The label to use for the Sign In button, which is usually the backend’s label but can be
@@ -118,6 +121,7 @@
       <Button
         variant="secondary"
         label={_('sign_in_with_x_using_token', { values: { service: signInServiceLabel } })}
+        disabled={tokenAuthDisabled}
         onclick={() => {
           showTokenDialog = true;
         }}

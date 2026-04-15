@@ -29,7 +29,7 @@ const UNSUPPORTED_OPTIONS = [
  */
 export const parseBackendConfig = (cmsConfig, collectors) => {
   const { backend } = cmsConfig;
-  const { errors } = collectors;
+  const { errors, warnings } = collectors;
 
   if (!isObject(backend)) {
     errors.add(_('config.error.missing_backend'));
@@ -60,6 +60,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     const {
       repo,
       automatic_deployments: autoDeploy,
+      allow_token_auth: allowTokenAuth = true,
       // @ts-ignore GitHub/GitLab only
       auth_type: authType,
       // @ts-ignore GitLab/Gitea only
@@ -82,12 +83,22 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       errors.add(_('config.error.github_pkce_unsupported'));
     }
 
-    // Gitea defaults to PKCE authentication and requires an app ID, but we can’t check this during
-    // config validation because we support token authentication as well, which doesn't require an
-    // app ID. We’ll just disable the Sign In button in the UI in such cases.
-    // @see https://github.com/sveltia/sveltia-cms/issues/721
-    if (name !== 'github' && authType === 'pkce' && !appId) {
+    if (name === 'gitlab' && authType === 'pkce' && !appId) {
       errors.add(_('config.error.oauth_no_app_id'));
+    }
+
+    // Gitea requires an app ID for OAuth authentication, but also supports token-based sign-in,
+    // which doesn't require one. If no app ID is configured and token auth is allowed (the
+    // default), we issue a warning and disable the OAuth Sign In button in the UI — users can still
+    // sign in with a token. If token auth is explicitly disabled as well, we issue an error because
+    // there is no working sign-in method available.
+    // @see https://github.com/sveltia/sveltia-cms/issues/721
+    if (name === 'gitea' && !appId) {
+      if (allowTokenAuth) {
+        warnings.add(_('config.warning.oauth_no_app_id'));
+      } else {
+        errors.add(_('config.error.oauth_no_app_id'));
+      }
     }
 
     // @todo Remove the option prior to the 1.0 release.

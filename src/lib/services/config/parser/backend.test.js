@@ -18,6 +18,8 @@ const mockI18nStrings = {
   'config.error.oauth_implicit_flow': 'OAuth implicit flow is not supported',
   'config.error.github_pkce_unsupported': 'GitHub does not support PKCE authentication',
   'config.error.oauth_no_app_id': 'OAuth app ID is required',
+  'config.warning.oauth_no_app_id':
+    'OAuth application ID is not defined. Users are required to provide an access token to sign in.',
 };
 
 /**
@@ -291,7 +293,7 @@ describe('parseBackendConfig', () => {
       expect(collectors.errors.size).toBe(0);
     });
 
-    it('should accept Gitea backend without app_id when auth_type is not set', async () => {
+    it('should warn when Gitea backend has no app_id and auth_type is not set', async () => {
       const { parseBackendConfig } = await import('./backend.js');
       const collectors = createCollectors();
 
@@ -305,8 +307,13 @@ describe('parseBackendConfig', () => {
 
       parseBackendConfig(config, collectors);
 
-      // No error during config validation; the Sign In button is disabled in the UI instead
+      // Token auth is allowed by default; a warning is issued and the Sign In button is disabled
       expect(collectors.errors.size).toBe(0);
+      expect(collectors.warnings.size).toBe(1);
+
+      const [warning] = [...collectors.warnings];
+
+      expect(warning).toContain('OAuth application ID is not defined');
     });
 
     it('should error when repository is undefined for GitHub', async () => {
@@ -417,7 +424,7 @@ describe('parseBackendConfig', () => {
       expect(error).toBe('OAuth implicit flow is not supported');
     });
 
-    it('should not require app_id for Gitea backend when auth_type is not set', async () => {
+    it('should warn when Gitea backend has no app_id and auth_type is not set', async () => {
       const { parseBackendConfig } = await import('./backend.js');
       const collectors = createCollectors();
 
@@ -431,11 +438,16 @@ describe('parseBackendConfig', () => {
 
       parseBackendConfig(config, collectors);
 
-      // No error during config validation; the Sign In button is disabled in the UI instead
+      // Token auth is allowed by default; a warning is issued and the Sign In button is disabled
       expect(collectors.errors.size).toBe(0);
+      expect(collectors.warnings.size).toBe(1);
+
+      const [warning] = [...collectors.warnings];
+
+      expect(warning).toContain('OAuth application ID is not defined');
     });
 
-    it('should require app_id for Gitea backend with PKCE auth_type', async () => {
+    it('should warn when Gitea backend has no app_id with PKCE auth_type (token auth allowed)', async () => {
       const { parseBackendConfig } = await import('./backend.js');
       const collectors = createCollectors();
 
@@ -450,7 +462,32 @@ describe('parseBackendConfig', () => {
 
       parseBackendConfig(config, collectors);
 
+      // Token auth is still allowed; warning issued, not an error
+      expect(collectors.errors.size).toBe(0);
+      expect(collectors.warnings.size).toBe(1);
+
+      const [warning] = [...collectors.warnings];
+
+      expect(warning).toContain('OAuth application ID is not defined');
+    });
+
+    it('should error when Gitea backend has no app_id and allow_token_auth is false', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'gitea',
+          repo: 'owner/repo',
+          allow_token_auth: false,
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
       expect(collectors.errors.size).toBe(1);
+      expect(collectors.warnings.size).toBe(0);
 
       const [error] = [...collectors.errors];
 

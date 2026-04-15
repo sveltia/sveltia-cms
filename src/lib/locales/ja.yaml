@@ -661,6 +661,7 @@ config:
     relation_field_invalid_value_field: 参照されている値フィールド `{$field}` は無効であるか定義されていません。
     unexpected: 予期せぬ問題
   warning:
+    oauth_no_app_id: OAuth アプリケーション ID が定義されていません。ユーザーがログインするにはアクセストークンを入力する必要があります。
     editorial_workflow_unsupported: Sveltia CMS ではまだエディトリアルワークフローはサポートされていません。
     open_authoring_unsupported: Sveltia CMS ではまだオープンオーサリングはサポートされていません。
     nested_collections_unsupported: Sveltia CMS ではネストされたコレクションはまだサポートされていません。

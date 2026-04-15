@@ -776,6 +776,7 @@ config:
     relation_field_invalid_value_field: The referenced value field `{$field}` is invalid or not defined.
     unexpected: Unexpected error
   warning:
+    oauth_no_app_id: OAuth application ID is not defined. Users are required to provide an access token to sign in.
     editorial_workflow_unsupported: Editorial workflow is not yet supported in Sveltia CMS.
     open_authoring_unsupported: Open authoring is not yet supported in Sveltia CMS.
     nested_collections_unsupported: Nested collections are not yet supported in Sveltia CMS.
