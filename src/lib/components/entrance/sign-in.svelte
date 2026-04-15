@@ -31,6 +31,21 @@
   const showLocalBackendOption = $derived($isLocalHost && !isTestRepo);
 
   /**
+   * The label to use for the Sign In button, which is usually the backend’s label but can be
+   * overridden for specific backends (e.g. Forgejo on Codeberg) to provide a better UX.
+   */
+  const signInServiceLabel = $derived.by(() => {
+    if (
+      backendName === 'gitea' &&
+      /** @type {GiteaBackend} */ (configuredBackend).base_url === 'https://codeberg.org'
+    ) {
+      return 'Codeberg';
+    }
+
+    return backend?.label;
+  });
+
+  /**
    * Whether the Sign In button should be disabled due to missing configuration that prevents
    * signing in. Gitea with PKCE authentication requires an app ID. If it’s not provided, the button
    * should be disabled. We can’t check this during config validation because token authentication
@@ -93,7 +108,7 @@
       variant={showLocalBackendOption ? 'secondary' : 'primary'}
       label={isTestRepo
         ? _('work_with_test_repo')
-        : _('sign_in_with_x', { values: { service: backend.label } })}
+        : _('sign_in_with_x', { values: { service: signInServiceLabel } })}
       disabled={signInDisabled}
       onclick={async () => {
         await signInManually(backendName);
@@ -102,7 +117,7 @@
     {#if !isTestRepo}
       <Button
         variant="secondary"
-        label={_('sign_in_with_x_using_token', { values: { service: backend.label } })}
+        label={_('sign_in_with_x_using_token', { values: { service: signInServiceLabel } })}
         onclick={() => {
           showTokenDialog = true;
         }}
@@ -131,7 +146,7 @@
   {_('sign_in_using_pat_description')}
   {#if backend?.repository?.tokenPageURL}
     {@html makeLink(
-      _('sign_in_using_pat_link', { values: { service: backend.label } }),
+      _('sign_in_using_pat_link', { values: { service: signInServiceLabel } }),
       backend.repository.tokenPageURL,
     )}
   {/if}
