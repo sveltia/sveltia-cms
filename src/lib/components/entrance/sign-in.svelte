@@ -15,21 +15,18 @@
   import { makeLink } from '$lib/services/utils/string';
 
   /**
-   * @import { GitBackend } from '$lib/types/public';
+   * @import { Backend, GitBackend } from '$lib/types/public';
    */
 
   let showTokenDialog = $state(false);
   let token = $state('');
 
-  const configuredBackendName = $derived(/** @type {string} */ ($cmsConfig?.backend?.name));
-  const configuredBackend = $derived(
-    configuredBackendName ? allBackendServices[configuredBackendName] : null,
-  );
-  const isTestRepo = $derived(configuredBackendName === 'test-repo');
+  const configuredBackend = $derived(/** @type {Backend} */ ($cmsConfig?.backend));
+  const backendName = $derived(/** @type {string} */ (configuredBackend.name));
+  const backend = $derived(backendName ? allBackendServices[backendName] : null);
+  const isTestRepo = $derived(backendName === 'test-repo');
   const repositoryName = $derived(
-    isTestRepo
-      ? undefined
-      : /** @type {GitBackend} */ ($cmsConfig?.backend)?.repo?.split('/').pop(),
+    isTestRepo ? undefined : /** @type {GitBackend} */ (configuredBackend)?.repo?.split('/').pop(),
   );
   const showLocalBackendOption = $derived($isLocalHost && !isTestRepo);
 
@@ -45,7 +42,7 @@
 <div role="none" class="buttons">
   {#if $signingIn}
     <div role="alert" class="message">{_('signing_in')}</div>
-  {:else if configuredBackend}
+  {:else if backend}
     {#if showLocalBackendOption}
       <Button
         variant="primary"
@@ -81,15 +78,15 @@
       variant={showLocalBackendOption ? 'secondary' : 'primary'}
       label={isTestRepo
         ? _('work_with_test_repo')
-        : _('sign_in_with_x', { values: { service: configuredBackend.label } })}
+        : _('sign_in_with_x', { values: { service: backend.label } })}
       onclick={async () => {
-        await signInManually(configuredBackendName);
+        await signInManually(backendName);
       }}
     />
     {#if !isTestRepo}
       <Button
         variant="secondary"
-        label={_('sign_in_with_x_using_token', { values: { service: configuredBackend.label } })}
+        label={_('sign_in_with_x_using_token', { values: { service: backend.label } })}
         onclick={() => {
           showTokenDialog = true;
         }}
@@ -112,14 +109,14 @@
   okLabel={_('sign_in')}
   okDisabled={!token.trim()}
   onOk={async () => {
-    await signInManually(configuredBackendName, token.trim());
+    await signInManually(backendName, token.trim());
   }}
 >
   {_('sign_in_using_pat_description')}
-  {#if configuredBackend?.repository?.tokenPageURL}
+  {#if backend?.repository?.tokenPageURL}
     {@html makeLink(
-      _('sign_in_using_pat_link', { values: { service: configuredBackend.label } }),
-      configuredBackend.repository.tokenPageURL,
+      _('sign_in_using_pat_link', { values: { service: backend.label } }),
+      backend.repository.tokenPageURL,
     )}
   {/if}
 </PromptDialog>
