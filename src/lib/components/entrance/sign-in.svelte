@@ -15,7 +15,7 @@
   import { makeLink } from '$lib/services/utils/string';
 
   /**
-   * @import { Backend, GitBackend } from '$lib/types/public';
+   * @import { Backend, GitBackend, GiteaBackend } from '$lib/types/public';
    */
 
   let showTokenDialog = $state(false);
@@ -29,6 +29,21 @@
     isTestRepo ? undefined : /** @type {GitBackend} */ (configuredBackend)?.repo?.split('/').pop(),
   );
   const showLocalBackendOption = $derived($isLocalHost && !isTestRepo);
+
+  /**
+   * Whether the Sign In button should be disabled due to missing configuration that prevents
+   * signing in. Gitea with PKCE authentication requires an app ID. If it’s not provided, the button
+   * should be disabled. We can’t check this during config validation because token authentication
+   * doesn’t require an app ID, so we check it here instead.
+   * @see https://github.com/sveltia/sveltia-cms/issues/721
+   */
+  const signInDisabled = $derived.by(() => {
+    if (backendName === 'gitea' && !(/** @type {GiteaBackend} */ (configuredBackend).app_id)) {
+      return true;
+    }
+
+    return false;
+  });
 
   onMount(() => {
     // Skip automatic sign-in if there's already an error (e.g. repository access denied), so the
@@ -79,6 +94,7 @@
       label={isTestRepo
         ? _('work_with_test_repo')
         : _('sign_in_with_x', { values: { service: backend.label } })}
+      disabled={signInDisabled}
       onclick={async () => {
         await signInManually(backendName);
       }}

@@ -82,7 +82,11 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       errors.add(_('config.error.github_pkce_unsupported'));
     }
 
-    if ((name === 'gitea' || authType === 'pkce') && !appId) {
+    // Gitea defaults to PKCE authentication and requires an app ID, but we can’t check this during
+    // config validation because we support token authentication as well, which doesn't require an
+    // app ID. We’ll just disable the Sign In button in the UI in such cases.
+    // @see https://github.com/sveltia/sveltia-cms/issues/721
+    if (name !== 'github' && authType === 'pkce' && !appId) {
       errors.add(_('config.error.oauth_no_app_id'));
     }
 

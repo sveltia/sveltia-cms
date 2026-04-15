@@ -291,7 +291,7 @@ describe('parseBackendConfig', () => {
       expect(collectors.errors.size).toBe(0);
     });
 
-    it('should require app_id for Gitea backend (checked in OAuth section)', async () => {
+    it('should accept Gitea backend without app_id when auth_type is not set', async () => {
       const { parseBackendConfig } = await import('./backend.js');
       const collectors = createCollectors();
 
@@ -305,7 +305,8 @@ describe('parseBackendConfig', () => {
 
       parseBackendConfig(config, collectors);
 
-      expect(collectors.errors.size).toBe(1);
+      // No error during config validation; the Sign In button is disabled in the UI instead
+      expect(collectors.errors.size).toBe(0);
     });
 
     it('should error when repository is undefined for GitHub', async () => {
@@ -416,7 +417,7 @@ describe('parseBackendConfig', () => {
       expect(error).toBe('OAuth implicit flow is not supported');
     });
 
-    it('should require app_id for Gitea backend', async () => {
+    it('should not require app_id for Gitea backend when auth_type is not set', async () => {
       const { parseBackendConfig } = await import('./backend.js');
       const collectors = createCollectors();
 
@@ -425,6 +426,25 @@ describe('parseBackendConfig', () => {
         backend: {
           name: 'gitea',
           repo: 'owner/repo',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      // No error during config validation; the Sign In button is disabled in the UI instead
+      expect(collectors.errors.size).toBe(0);
+    });
+
+    it('should require app_id for Gitea backend with PKCE auth_type', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'gitea',
+          repo: 'owner/repo',
+          auth_type: 'pkce',
         },
       };
 
@@ -515,12 +535,12 @@ describe('parseBackendConfig', () => {
 
       parseBackendConfig(config, collectors);
 
-      expect(collectors.errors.size).toBe(2);
+      // Only the GitHub PKCE error; oauth_no_app_id is skipped because name === 'github'
+      expect(collectors.errors.size).toBe(1);
 
-      const errors = [...collectors.errors];
+      const [error] = [...collectors.errors];
 
-      expect(errors.some((e) => e === 'GitHub does not support PKCE authentication')).toBe(true);
-      expect(errors.some((e) => e === 'OAuth app ID is required')).toBe(true);
+      expect(error).toBe('GitHub does not support PKCE authentication');
     });
   });
 
