@@ -22,7 +22,7 @@
     "build": "vite build",
     "build:watch": "vite build --watch",
     "check": "pnpm run '/^check:.*/'",
-    "check:audit": "pnpm audit",
+    "check:audit": "pnpm audit --ignore-registry-errors",
     "check:cspell": "cspell --no-progress",
     "check:eslint": "eslint .",
     "check:imports": "node scripts/find-unused-imports.js",
