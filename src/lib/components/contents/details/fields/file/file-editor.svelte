@@ -121,8 +121,6 @@
    */
   const allowDrop = $derived(!enabledCloudServiceEntries.length);
 
-  $inspect({ enabledCloudServiceEntries, fieldConfig });
-
   /**
    * Reset the current selection.
    */
