@@ -65,6 +65,9 @@
    * @property {AssetLibraryFolderMap} assetLibraryFolderMap Default asset library folder map.
    * @property {[string, MediaLibraryService][]} enabledCloudServiceEntries List of enabled cloud
    * storage services.
+   * @property {File[]} [pendingFiles] Files to be uploaded to the cloud service panel when the
+   * dialog opens. These are typically files dropped on the file editor when only a cloud service is
+   * available.
    * @property {(resources: SelectedResource[]) => void} [onSelect] Custom `Select` event handler
    * that will be called when the dialog is closed with the Insert button.
    */
@@ -83,6 +86,7 @@
     assetLibraryFolderMap,
     enabledCloudServiceEntries,
     onSelect = undefined,
+    pendingFiles = $bindable([]),
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -342,6 +346,14 @@
   $effect(() => {
     if (!$showContentOverlay) {
       open = false;
+    }
+  });
+
+  // Upload pending files (e.g. dropped on the file editor) to the cloud service panel once mounted
+  $effect(() => {
+    if (externalAssetsPanel && pendingFiles.length) {
+      externalAssetsPanel.uploadFiles(pendingFiles);
+      pendingFiles = [];
     }
   });
 </script>

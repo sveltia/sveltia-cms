@@ -70,6 +70,8 @@
   let processing = $state(false);
   /** @type {string[]} */
   let oversizedFileNames = $state([]);
+  /** @type {File[]} */
+  let pendingFiles = $state([]);
 
   const {
     widget: fieldType,
@@ -83,7 +85,8 @@
   const fileName = $derived($entryDraft?.fileName);
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const isImageField = $derived(fieldType === 'image');
-  const libraryConfig = $derived(getDefaultMediaLibraryOptions({ fieldConfig }).config);
+  const defaultLibraryOptions = $derived(getDefaultMediaLibraryOptions({ fieldConfig }));
+  const libraryConfig = $derived(defaultLibraryOptions.config);
   const assetLibraryFolderMap = $derived(
     getAssetLibraryFolderMap({ collectionName, fileName, typedKeyPath, isIndexFile }),
   );
@@ -117,9 +120,20 @@
     ),
   );
   /**
-   * Disable the drop zone if there are cloud services configured to avoid confusion.
+   * Whether the default (internal) media library is available as a storage provider.
    */
-  const allowDrop = $derived(!enabledCloudServiceEntries.length);
+  const isDefaultLibraryAvailable = $derived(defaultLibraryOptions.enabled && !!targetFolder);
+  /**
+   * The total number of available media storage providers (default and/or cloud).
+   */
+  const totalProviders = $derived(
+    (isDefaultLibraryAvailable ? 1 : 0) + enabledCloudServiceEntries.length,
+  );
+  /**
+   * Disable the drop zone if there are no providers or multiple providers are available, to avoid
+   * confusion about where dropped files will be stored.
+   */
+  const allowDrop = $derived(totalProviders === 1);
 
   /**
    * Reset the current selection.
@@ -220,7 +234,13 @@
       return;
     }
 
-    onResourcesSelect(files.map((file) => ({ file, folder: targetFolder })));
+    if (isDefaultLibraryAvailable) {
+      onResourcesSelect(files.map((file) => ({ file, folder: targetFolder })));
+    } else {
+      // Open the dialog and pass files to the cloud service panel for upload
+      pendingFiles = files;
+      showSelectAssetsDialog = true;
+    }
   };
 
   /**
@@ -356,6 +376,7 @@
   {assetLibraryFolderMap}
   {enabledCloudServiceEntries}
   bind:open={showSelectAssetsDialog}
+  bind:pendingFiles
   onSelect={onResourcesSelect}
 />
 
