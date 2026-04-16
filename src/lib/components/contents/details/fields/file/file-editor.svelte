@@ -140,6 +140,9 @@
       return;
     }
 
+    // Save the current value so we can restore it if all resources fail validation
+    const previousValue = multiple ? undefined : currentValue;
+
     resetSelection();
     processing = true;
     oversizedFileNames = [];
@@ -152,6 +155,7 @@
 
     /** @type {string[]} */
     const credits = [];
+    let hasValidResource = false;
 
     const lastIndex = multiple
       ? (Object.keys($entryDraft.currentValues[locale])
@@ -162,6 +166,8 @@
 
     resources.forEach(({ value, credit, oversizedFileName }, index) => {
       if (value) {
+        hasValidResource = true;
+
         if (multiple) {
           const targetIndex = replaceMode ? replaceIndex : lastIndex + 1 + index;
 
@@ -181,6 +187,12 @@
         oversizedFileNames.push(oversizedFileName);
       }
     });
+
+    // Restore the previous value if no valid resources were processed, so that a failed
+    // upload/replace doesn't leave an empty or invalid reference in the YAML
+    if (!hasValidResource && !multiple && previousValue !== undefined) {
+      currentValue = previousValue;
+    }
 
     if (credits.length) {
       photoCredit = credits.join('\n');

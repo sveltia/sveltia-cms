@@ -149,8 +149,11 @@ export const formatFileName = (
 
   if (slugificationEnabled) {
     const { filename, extension } = getPathInfo(fileName);
+    const slug = slugify(filename);
 
-    fileName = `${slugify(filename)}${extension ? `.${extension}` : ''}`;
+    // Lowercase the extension to match the slug's lowercase behavior, ensuring consistent file
+    // references (e.g., `.JPG` → `.jpg`, `.MOV` → `.mov`)
+    fileName = `${slug}${extension ? `.${extension.toLowerCase()}` : ''}`;
   }
 
   return renameIfNeeded(fileName, assetNamesInSameFolder);
