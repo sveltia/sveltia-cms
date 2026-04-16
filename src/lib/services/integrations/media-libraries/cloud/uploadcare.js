@@ -52,14 +52,17 @@ export const getLibraryOptions = (config = get(cmsConfig)) =>
 /**
  * Get Uploadcare public key from library options.
  * @internal
+ * @param {MediaField} [fieldConfig] Field configuration.
  * @returns {string | undefined} Public key.
  */
-export const getPublicKey = () => getLibraryOptions()?.config?.publicKey;
+export const getPublicKey = (fieldConfig) =>
+  (getLibraryOptions(fieldConfig) ?? getLibraryOptions())?.config?.publicKey;
 /**
  * Check if Uploadcare integration is enabled.
+ * @param {MediaField} [fieldConfig] Field configuration.
  * @returns {boolean} True if enabled, false otherwise.
  */
-export const isEnabled = () => !!getPublicKey();
+export const isEnabled = (fieldConfig) => !!getPublicKey(fieldConfig);
 
 /**
  * Parse API results into ExternalAsset format.
@@ -117,13 +120,12 @@ export const parseResults = (results, { fieldConfig } = {}) => {
  * @see https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File/operation/filesList
  */
 export const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
-  const publicKey = getPublicKey();
+  const { kind, fieldConfig, apiKey: secretKey } = options;
+  const publicKey = getPublicKey(fieldConfig);
 
   if (!publicKey) {
     return Promise.reject(new Error('Uploadcare public key is not configured'));
   }
-
-  const { kind, fieldConfig, apiKey: secretKey } = options;
 
   const headers = {
     Accept: 'application/vnd.uploadcare-v0.7+json',
@@ -242,13 +244,12 @@ export const upload = async (files, options) => {
     return [];
   }
 
-  const publicKey = getPublicKey();
+  const { fieldConfig, apiKey: secretKey } = options;
+  const publicKey = getPublicKey(fieldConfig);
 
   if (!publicKey) {
     return Promise.reject(new Error('Uploadcare public key is not configured'));
   }
-
-  const { fieldConfig, apiKey: secretKey } = options;
 
   if (!secretKey) {
     return Promise.reject(new Error('Uploadcare secret key is not provided'));

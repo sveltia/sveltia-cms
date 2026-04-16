@@ -112,12 +112,16 @@
     entry,
   });
   const enabledCloudServiceEntries = $derived(
-    Object.entries(allCloudStorageServices).filter(([, { isEnabled }]) => isEnabled?.() ?? true),
+    Object.entries(allCloudStorageServices).filter(
+      ([, { isEnabled }]) => isEnabled?.(fieldConfig) ?? true,
+    ),
   );
   /**
    * Disable the drop zone if there are cloud services configured to avoid confusion.
    */
   const allowDrop = $derived(!enabledCloudServiceEntries.length);
+
+  $inspect({ enabledCloudServiceEntries, fieldConfig });
 
   /**
    * Reset the current selection.
@@ -352,6 +356,7 @@
   {entryDraft}
   {fieldConfig}
   {assetLibraryFolderMap}
+  {enabledCloudServiceEntries}
   bind:open={showSelectAssetsDialog}
   onSelect={onResourcesSelect}
 />

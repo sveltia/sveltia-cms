@@ -157,10 +157,12 @@ export const getCloudConfig = () => {
 
 /**
  * Check if Cloudinary integration is enabled.
+ * @param {MediaField} [fieldConfig] Field configuration.
  * @returns {boolean} True if enabled, false otherwise.
  */
-export const isEnabled = () => {
-  const { cloudName, apiKey } = getCloudConfig();
+export const isEnabled = (fieldConfig) => {
+  const options = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
+  const { cloud_name: cloudName, api_key: apiKey } = options?.config ?? {};
 
   return !!(cloudName && apiKey);
 };

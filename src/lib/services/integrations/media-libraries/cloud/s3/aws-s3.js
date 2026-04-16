@@ -27,10 +27,11 @@ export const getLibraryOptions = (config = get(cmsConfig)) =>
 
 /**
  * Check if Amazon S3 integration is enabled.
+ * @param {MediaField} [fieldConfig] Field configuration.
  * @returns {boolean} True if enabled, false otherwise.
  */
-export const isEnabled = () => {
-  const options = getLibraryOptions();
+export const isEnabled = (fieldConfig) => {
+  const options = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
 
   return !!(options?.access_key_id && options?.bucket && options?.region);
 };

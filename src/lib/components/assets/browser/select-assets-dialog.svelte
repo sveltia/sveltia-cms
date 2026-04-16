@@ -27,7 +27,6 @@
     convertFileItemToAsset,
     getUnsavedAssets,
   } from '$lib/services/contents/fields/file/process';
-  import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import {
     allStockAssetProviders,
     getStockAssetMediaLibraryOptions,
@@ -46,6 +45,7 @@
    * AssetLibraryFolderMapKey,
    * EntryDraft,
    * MediaLibraryAssetKind,
+   * MediaLibraryService,
    * SelectAssetsView,
    * SelectedResource,
    * } from '$lib/types/private';
@@ -62,6 +62,8 @@
    * @property {Writable<EntryDraft | null | undefined>} [entryDraft] Associated entry draft.
    * @property {MediaField} [fieldConfig] Field configuration.
    * @property {AssetLibraryFolderMap} assetLibraryFolderMap Default asset library folder map.
+   * @property {[string, MediaLibraryService][]} enabledCloudServiceEntries List of enabled cloud
+   * storage services.
    * @property {(resources: SelectedResource[]) => void} [onSelect] Custom `Select` event handler
    * that will be called when the dialog is closed with the Insert button.
    */
@@ -78,6 +80,7 @@
     entryDraft,
     fieldConfig,
     assetLibraryFolderMap,
+    enabledCloudServiceEntries,
     onSelect = undefined,
     /* eslint-enable prefer-const */
   } = $props();
@@ -177,9 +180,6 @@
       ([serviceId, { authType }]) =>
         serviceId === libraryName && (authType === 'none' || !!$prefs?.apiKeys?.[libraryName]),
     ),
-  );
-  const enabledCloudServiceEntries = $derived(
-    Object.entries(allCloudStorageServices).filter(([, { isEnabled }]) => isEnabled?.() ?? true),
   );
   const enabledExternalServiceEntries = $derived(
     [...enabledCloudServiceEntries, ...enabledStockAssetProviderEntries].sort(sortServicesByName),

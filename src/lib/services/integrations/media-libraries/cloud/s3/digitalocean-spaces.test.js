@@ -110,6 +110,40 @@ describe('integrations/media-libraries/cloud/s3/digitalocean-spaces', () => {
 
       expect(isEnabled()).toBe(false);
     });
+
+    it('should return true when field-level config is present', () => {
+      vi.mocked(get).mockReturnValue({});
+
+      expect(
+        isEnabled(
+          /** @type {any} */ ({
+            widget: 'file',
+            media_libraries: {
+              digitalocean_spaces: {
+                access_key_id: mockAccessKeyId,
+                bucket: mockBucket,
+                region: mockRegion,
+              },
+            },
+          }),
+        ),
+      ).toBe(true);
+    });
+
+    it('should return false when field-level config has missing credentials', () => {
+      vi.mocked(get).mockReturnValue({});
+
+      expect(
+        isEnabled(
+          /** @type {any} */ ({
+            widget: 'file',
+            media_libraries: {
+              digitalocean_spaces: {},
+            },
+          }),
+        ),
+      ).toBe(false);
+    });
   });
 
   describe('getLibraryOptions', () => {

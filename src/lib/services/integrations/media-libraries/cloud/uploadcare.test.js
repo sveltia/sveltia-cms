@@ -196,6 +196,42 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
 
       expect(isEnabled()).toBe(false);
     });
+
+    it('should return true when field-level config is present', () => {
+      vi.mocked(get).mockReturnValue({});
+
+      expect(
+        isEnabled(
+          /** @type {any} */ ({
+            widget: 'file',
+            media_libraries: {
+              uploadcare: {
+                config: {
+                  publicKey: mockPublicKey,
+                },
+              },
+            },
+          }),
+        ),
+      ).toBe(true);
+    });
+
+    it('should return false when field-level config has missing public key', () => {
+      vi.mocked(get).mockReturnValue({});
+
+      expect(
+        isEnabled(
+          /** @type {any} */ ({
+            widget: 'file',
+            media_libraries: {
+              uploadcare: {
+                config: {},
+              },
+            },
+          }),
+        ),
+      ).toBe(false);
+    });
   });
 
   describe('generateSignature', () => {

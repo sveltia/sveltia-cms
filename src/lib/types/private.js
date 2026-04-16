@@ -274,8 +274,8 @@
  * @property {string} [developerURL] URL of the page that provides the API/developer service.
  * @property {string} [apiKeyURL] URL of the page that provides an API key.
  * @property {RegExp} [apiKeyPattern] API key pattern.
- * @property {() => boolean} [isEnabled] Whether the service is enabled. It’s determined by whether
- * the service is defined in the CMS configuration.
+ * @property {(fieldConfig?: MediaField) => boolean} [isEnabled] Whether the service is enabled.
+ * It’s determined by whether the service is defined in the CMS or field configuration.
  * @property {() => Promise<boolean>} [init] Function to initialize the service.
  * @property {(userName: string, password: string) => Promise<boolean>} [signIn] Function to sign in
  * to the service.
