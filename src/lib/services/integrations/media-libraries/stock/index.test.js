@@ -107,5 +107,24 @@ describe('integrations/media-libraries/stock', () => {
         providers: ['pexels', 'picsum', 'pixabay', 'unsplash'],
       });
     });
+
+    it('should return empty providers when stock_assets is explicitly disabled', async () => {
+      const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
+      const getMock = vi.mocked(getMediaLibraryOptions);
+
+      getMock.mockReturnValue(/** @type {any} */ (false));
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          stock_assets: false,
+        },
+      });
+
+      const result = getStockAssetMediaLibraryOptions({ fieldConfig });
+
+      expect(result).toEqual({
+        providers: [],
+      });
+    });
   });
 });

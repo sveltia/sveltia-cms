@@ -17,7 +17,8 @@ import { listS3Objects, searchS3Objects, uploadToS3 } from './core';
  * Get Amazon S3 library options from site config.
  * @internal
  * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
- * @returns {S3MediaLibrary | undefined} Configuration object.
+ * @returns {S3MediaLibrary | false | undefined} Configuration object, or `false` if explicitly
+ * disabled.
  */
 export const getLibraryOptions = (config = get(cmsConfig)) =>
   config?.media_libraries?.aws_s3 ??
@@ -33,7 +34,7 @@ export const getLibraryOptions = (config = get(cmsConfig)) =>
 export const isEnabled = (fieldConfig) => {
   const options = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
 
-  return !!(options?.access_key_id && options?.bucket && options?.region);
+  return !!(options && options.access_key_id && options.bucket && options.region);
 };
 
 /**

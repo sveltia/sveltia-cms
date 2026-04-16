@@ -36,6 +36,7 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions();
 
       expect(result).toEqual({
+        enabled: true,
         config: {
           max_file_size: Infinity,
           multiple: false,
@@ -76,6 +77,7 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions({ fieldConfig });
 
       expect(result).toEqual({
+        enabled: true,
         config: {
           max_file_size: 500000,
           multiple: false,
@@ -112,6 +114,7 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions({ fieldConfig });
 
       expect(result).toEqual({
+        enabled: true,
         config: {
           max_file_size: 300000,
           multiple: false,
@@ -130,6 +133,7 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions();
 
       expect(result).toEqual({
+        enabled: true,
         config: {
           max_file_size: Infinity,
           multiple: false,
@@ -157,6 +161,7 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions();
 
       expect(result).toEqual({
+        enabled: true,
         config: {
           max_file_size: 1024000,
           multiple: false,
@@ -183,6 +188,57 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions({ fieldConfig });
 
       expect(result).toEqual({
+        enabled: true,
+        config: {
+          max_file_size: Infinity,
+          multiple: false,
+          slugify_filename: false,
+          transformations: undefined,
+        },
+      });
+    });
+
+    it('should return enabled: false when default library is explicitly disabled', async () => {
+      const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
+      const getMock = vi.mocked(getMediaLibraryOptions);
+
+      getMock.mockReturnValue(/** @type {any} */ (false));
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          default: false,
+        },
+      });
+
+      const result = getDefaultMediaLibraryOptions({ fieldConfig });
+
+      expect(result).toEqual({
+        enabled: false,
+        config: {
+          max_file_size: Infinity,
+          multiple: false,
+          slugify_filename: false,
+          transformations: undefined,
+        },
+      });
+    });
+
+    it('should return enabled: false when default library is explicitly disabled', async () => {
+      const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
+      const getMock = vi.mocked(getMediaLibraryOptions);
+
+      getMock.mockReturnValue(/** @type {any} */ (false));
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          default: false,
+        },
+      });
+
+      const result = getDefaultMediaLibraryOptions({ fieldConfig });
+
+      expect(result).toEqual({
+        enabled: false,
         config: {
           max_file_size: Infinity,
           multiple: false,
@@ -217,6 +273,7 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions({ fieldConfig });
 
       expect(result).toEqual({
+        enabled: true,
         config: {
           max_file_size: Infinity,
           multiple: false,
@@ -253,6 +310,7 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions({ fieldConfig });
 
       expect(result).toEqual({
+        enabled: true,
         config: {
           max_file_size: Infinity,
           multiple: false,
@@ -287,6 +345,7 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions({ fieldConfig });
 
       expect(result).toEqual({
+        enabled: true,
         config: {
           max_file_size: 1000000,
           multiple: true,
@@ -321,6 +380,7 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions({ fieldConfig });
 
       expect(result).toEqual({
+        enabled: true,
         config: {
           max_file_size: Infinity,
           multiple: false,
@@ -353,6 +413,7 @@ describe('integrations/media-libraries/default', () => {
       const result = getDefaultMediaLibraryOptions({ fieldConfig });
 
       expect(result).toEqual({
+        enabled: true,
         config: {
           max_file_size: Infinity,
           multiple: false,

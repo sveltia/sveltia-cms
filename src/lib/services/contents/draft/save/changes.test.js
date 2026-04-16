@@ -56,6 +56,7 @@ describe('draft/save/changes', () => {
       await import('$lib/services/integrations/media-libraries/default');
 
     vi.mocked(getDefaultMediaLibraryOptions).mockReturnValue({
+      enabled: true,
       config: {
         max_file_size: Infinity,
         multiple: false,

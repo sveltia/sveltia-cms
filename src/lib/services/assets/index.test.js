@@ -118,6 +118,7 @@ describe('assets/index', () => {
       transformFileMock = vi.mocked(transformFile);
 
       getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        enabled: true,
         config: {
           max_file_size: 1000000, // 1MB
           multiple: false,
@@ -173,6 +174,7 @@ describe('assets/index', () => {
       Object.defineProperty(transformedFile, 'size', { value: 300000 });
 
       getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        enabled: true,
         config: {
           max_file_size: 1000000,
           multiple: false,
@@ -212,6 +214,7 @@ describe('assets/index', () => {
       });
 
       getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        enabled: true,
         config: {
           max_file_size: 1000000,
           multiple: false,
@@ -253,6 +256,7 @@ describe('assets/index', () => {
       Object.defineProperty(transformedFile, 'size', { value: 300000 });
 
       getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        enabled: true,
         config: {
           max_file_size: 1000000,
           multiple: false,
@@ -293,6 +297,7 @@ describe('assets/index', () => {
       Object.defineProperty(originalFile, 'size', { value: 500000 });
 
       getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        enabled: true,
         config: {
           max_file_size: 1000000,
           multiple: false,
@@ -331,6 +336,7 @@ describe('assets/index', () => {
       const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 
       getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        enabled: true,
         config: {
           max_file_size: 1000000,
           multiple: false,
@@ -367,6 +373,7 @@ describe('assets/index', () => {
 
     it('should handle empty files array with transformations undefined', async () => {
       getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        enabled: true,
         config: {
           max_file_size: 1000000,
           multiple: false,
@@ -3332,6 +3339,7 @@ describe('assets/index', () => {
         await import('$lib/services/integrations/media-libraries/default');
 
       vi.mocked(getDefaultMediaLibraryOptions).mockReturnValue({
+        enabled: true,
         config: {
           max_file_size: 1000000,
           multiple: false,

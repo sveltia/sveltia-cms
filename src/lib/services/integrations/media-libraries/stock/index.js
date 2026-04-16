@@ -30,6 +30,11 @@ export const allStockAssetProviders = {
 export const getStockAssetMediaLibraryOptions = ({ fieldConfig } = {}) => {
   const options = getMediaLibraryOptions({ libraryName: 'stock_assets', fieldConfig });
 
+  // Explicitly disabled
+  if (options === false) {
+    return { providers: [] };
+  }
+
   const allProviderNames = /** @type {StockAssetProviderName[]} */ (
     Object.keys(allStockAssetProviders)
   );

@@ -27,6 +27,7 @@
     convertFileItemToAsset,
     getUnsavedAssets,
   } from '$lib/services/contents/fields/file/process';
+  import { getMediaLibraryOptions } from '$lib/services/integrations/media-libraries';
   import {
     allStockAssetProviders,
     getStockAssetMediaLibraryOptions,
@@ -119,7 +120,8 @@
   );
   const searchTerms = $derived(normalize(rawSearchTerms));
   const isDefaultLibraryEnabled = $derived(
-    Object.values(assetLibraryFolderMap).some(({ enabled }) => enabled),
+    getMediaLibraryOptions({ fieldConfig }) !== false &&
+      Object.values(assetLibraryFolderMap).some(({ enabled }) => enabled),
   );
   const isDefaultLibrary = $derived(libraryName.startsWith('default-'));
   const selectedFolder = $derived.by(() => {
@@ -309,9 +311,9 @@
   };
 
   $effect.pre(() => {
-    const firstDefaultLibraryId = Object.entries(assetLibraryFolderMap).find(
-      ([, { enabled }]) => enabled,
-    )?.[0];
+    const firstDefaultLibraryId = isDefaultLibraryEnabled
+      ? Object.entries(assetLibraryFolderMap).find(([, { enabled }]) => enabled)?.[0]
+      : undefined;
 
     if (firstDefaultLibraryId) {
       // Select the first enabled folder

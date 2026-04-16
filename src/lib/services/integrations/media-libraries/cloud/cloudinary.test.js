@@ -152,8 +152,8 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const options = getLibraryOptions();
 
       expect(options).toBeDefined();
-      expect(options?.config?.cloud_name).toBe(mockCloudName);
-      expect(options?.config?.api_key).toBe(mockApiKey);
+      expect(/** @type {any} */ (options)?.config?.cloud_name).toBe(mockCloudName);
+      expect(/** @type {any} */ (options)?.config?.api_key).toBe(mockApiKey);
     });
 
     it('should return undefined when config is missing', () => {
@@ -178,7 +178,7 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const options = getLibraryOptions();
 
       expect(options).toBeDefined();
-      expect(options?.config?.cloud_name).toBe('legacy-cloud');
+      expect(/** @type {any} */ (options)?.config?.cloud_name).toBe('legacy-cloud');
     });
 
     it('should return undefined for non-cloudinary media_library', () => {
@@ -228,7 +228,7 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       const options = getLibraryOptions(fieldConfig);
 
       expect(options).toBeDefined();
-      expect(options?.config?.cloud_name).toBe('field-cloud');
+      expect(/** @type {any} */ (options)?.config?.cloud_name).toBe('field-cloud');
     });
   });
 

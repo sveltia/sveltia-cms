@@ -125,7 +125,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       const options = getLibraryOptions();
 
       expect(options).toBeDefined();
-      expect(options?.config?.publicKey).toBe(mockPublicKey);
+      expect(/** @type {any} */ (options)?.config?.publicKey).toBe(mockPublicKey);
     });
 
     it('should return undefined when config is missing', () => {
@@ -149,7 +149,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       const options = getLibraryOptions();
 
       expect(options).toBeDefined();
-      expect(options?.config?.publicKey).toBe('legacy-public-key');
+      expect(/** @type {any} */ (options)?.config?.publicKey).toBe('legacy-public-key');
     });
 
     it('should return undefined for non-uploadcare media_library', () => {

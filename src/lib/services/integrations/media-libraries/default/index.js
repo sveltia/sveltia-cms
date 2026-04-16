@@ -21,7 +21,7 @@ import { optimizeSVG, transformImage } from '$lib/services/utils/media/image/tra
  * Get normalized default media library options.
  * @param {object} [options] Options.
  * @param {MediaField} [options.fieldConfig] Field configuration.
- * @returns {{ config: DefaultMediaLibraryConfig }} Options.
+ * @returns {{ enabled: boolean, config: DefaultMediaLibraryConfig }} Options.
  */
 export const getDefaultMediaLibraryOptions = ({ fieldConfig } = {}) => {
   const options = getMediaLibraryOptions({ fieldConfig });
@@ -35,6 +35,7 @@ export const getDefaultMediaLibraryOptions = ({ fieldConfig } = {}) => {
   } = typeof options === 'boolean' ? {} : (options?.config ?? {});
 
   return {
+    enabled: options !== false,
     config: {
       max_file_size: typeof maxSize === 'number' && Number.isInteger(maxSize) ? maxSize : Infinity,
       multiple: typeof multiple === 'boolean' ? multiple : false,

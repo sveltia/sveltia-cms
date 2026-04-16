@@ -41,7 +41,8 @@ import { formatFileName } from '$lib/services/utils/file';
  * Get Uploadcare library options from site config.
  * @internal
  * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
- * @returns {UploadcareMediaLibrary | undefined} Configuration object.
+ * @returns {UploadcareMediaLibrary | false | undefined} Configuration object, or `false` if
+ * explicitly disabled.
  */
 export const getLibraryOptions = (config = get(cmsConfig)) =>
   config?.media_libraries?.uploadcare ??
@@ -55,8 +56,11 @@ export const getLibraryOptions = (config = get(cmsConfig)) =>
  * @param {MediaField} [fieldConfig] Field configuration.
  * @returns {string | undefined} Public key.
  */
-export const getPublicKey = (fieldConfig) =>
-  (getLibraryOptions(fieldConfig) ?? getLibraryOptions())?.config?.publicKey;
+export const getPublicKey = (fieldConfig) => {
+  const options = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
+
+  return options ? options.config?.publicKey : undefined;
+};
 /**
  * Check if Uploadcare integration is enabled.
  * @param {MediaField} [fieldConfig] Field configuration.
@@ -75,10 +79,12 @@ export const isEnabled = (fieldConfig) => !!getPublicKey(fieldConfig);
  * @see https://sveltiacms.app/en/docs/media/uploadcare
  */
 export const parseResults = (results, { fieldConfig } = {}) => {
+  const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
+
   const {
     settings: { autoFilename = false, defaultOperations = undefined } = {},
     config: { cdnBase = undefined } = {},
-  } = getLibraryOptions(fieldConfig) ?? getLibraryOptions() ?? {};
+  } = libOptions || {};
 
   return results.map((result) => {
     const {

@@ -11,14 +11,14 @@ import { cmsConfig } from '$lib/services/config';
  * @param {object} [options] Options.
  * @param {MediaLibraryName} [options.libraryName] Library name.
  * @param {MediaField} [options.fieldConfig] Field configuration.
- * @returns {Record<string, any>} Options.
+ * @returns {Record<string, any> | false} Options, or `false` if the library is explicitly disabled.
  */
 export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {
   const _cmsConfig = get(cmsConfig);
 
-  // Priority 1: fieldConfig.media_libraries
-  if (fieldConfig?.media_libraries?.[libraryName]) {
-    return fieldConfig.media_libraries[libraryName];
+  // Priority 1: fieldConfig.media_libraries (including explicit `false` to disable)
+  if (fieldConfig?.media_libraries && libraryName in fieldConfig.media_libraries) {
+    return fieldConfig.media_libraries[libraryName] ?? {};
   }
 
   // Priority 2: fieldConfig.media_library (legacy)
@@ -35,9 +35,9 @@ export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } 
     }
   }
 
-  // Priority 3: cmsConfig.media_libraries
-  if (_cmsConfig?.media_libraries?.[libraryName]) {
-    return _cmsConfig.media_libraries[libraryName];
+  // Priority 3: cmsConfig.media_libraries (including explicit `false` to disable)
+  if (_cmsConfig?.media_libraries && libraryName in _cmsConfig.media_libraries) {
+    return _cmsConfig.media_libraries[libraryName] ?? {};
   }
 
   // Priority 4: cmsConfig.media_library (legacy)

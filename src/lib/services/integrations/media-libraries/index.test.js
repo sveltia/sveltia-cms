@@ -436,7 +436,7 @@ describe('integrations/media-libraries', () => {
       expect(result).toEqual({});
     });
 
-    it('should match when site explicitly sets name to "default" and field name is undefined', async () => {
+    it('should match field media_library when site explicitly sets name to "default" and field name is undefined', async () => {
       const { get } = await import('svelte/store');
       const getMock = vi.mocked(get);
 
@@ -458,6 +458,105 @@ describe('integrations/media-libraries', () => {
       expect(result).toEqual({
         config: { max_file_size: 600000 },
       });
+    });
+
+    it('should return empty object when field-level media_libraries entry is null', () => {
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          default: null,
+        },
+      });
+
+      const result = getMediaLibraryOptions({ libraryName: 'default', fieldConfig });
+
+      expect(result).toEqual({});
+    });
+
+    it('should return empty object when site-level media_libraries entry is null', async () => {
+      const { get } = await import('svelte/store');
+      const getMock = vi.mocked(get);
+
+      getMock.mockImplementation(() => ({
+        media_libraries: {
+          stock_assets: null,
+        },
+      }));
+
+      const result = getMediaLibraryOptions({ libraryName: /** @type {any} */ ('stock_assets') });
+
+      expect(result).toEqual({});
+    });
+
+    it('should return false when field-level media_libraries explicitly disables a library', () => {
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          default: false,
+        },
+      });
+
+      const result = getMediaLibraryOptions({ libraryName: 'default', fieldConfig });
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when site-level media_libraries explicitly disables a library', async () => {
+      const { get } = await import('svelte/store');
+      const getMock = vi.mocked(get);
+
+      getMock.mockImplementation(() => ({
+        media_libraries: {
+          stock_assets: false,
+        },
+      }));
+
+      const result = getMediaLibraryOptions({ libraryName: /** @type {any} */ ('stock_assets') });
+
+      expect(result).toBe(false);
+    });
+
+    it('should respect field-level false even when site-level has config', async () => {
+      const { get } = await import('svelte/store');
+      const getMock = vi.mocked(get);
+
+      getMock.mockImplementation(() => ({
+        media_libraries: {
+          default: { config: { max_file_size: 2048000 } },
+        },
+      }));
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          default: false,
+        },
+      });
+
+      const result = getMediaLibraryOptions({ libraryName: 'default', fieldConfig });
+
+      expect(result).toBe(false);
+    });
+
+    it('should fall through to site config when field media_libraries does not include the library', async () => {
+      const { get } = await import('svelte/store');
+      const getMock = vi.mocked(get);
+
+      getMock.mockImplementation(() => ({
+        media_libraries: {
+          cloudflare_r2: { access_key_id: 'key', bucket: 'bucket', account_id: 'id' },
+        },
+      }));
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          default: false,
+        },
+      });
+
+      const result = getMediaLibraryOptions({
+        libraryName: /** @type {any} */ ('cloudflare_r2'),
+        fieldConfig,
+      });
+
+      expect(result).toEqual({ access_key_id: 'key', bucket: 'bucket', account_id: 'id' });
     });
   });
 });
