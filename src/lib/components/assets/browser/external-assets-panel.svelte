@@ -238,38 +238,40 @@
       <span role="alert">{_('no_files_found')}</span>
     </EmptyState>
   {:else}
-    <SimpleImageGrid {viewType} {gridId} {multiple}>
-      <InfiniteScroll items={listedAssets ?? []} itemKey="id">
-        {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
-          {#await sleep() then}
-            {@const { id, previewURL, description, kind: _kind } = asset}
-            <SimpleImageGridItem
-              value={id}
-              {viewType}
-              {multiple}
-              selected={isSelected(asset)}
-              onChange={({ detail: { selected } }) => {
-                onSelectionChange(asset, selected);
-              }}
-            >
-              <AssetPreview
-                kind={_kind}
-                src={previewURL}
-                alt={description}
-                variant="tile"
-                crossorigin="anonymous"
-              />
-              {#if viewType === 'list' || (!$isSmallScreen && !isStockAssets)}
-                <AssetPath
-                  path={isStockAssets ? undefined : description}
-                  caption={isStockAssets ? description : undefined}
+    <div role="none" class="grid-wrapper">
+      <SimpleImageGrid {viewType} {gridId} {multiple}>
+        <InfiniteScroll items={listedAssets ?? []} itemKey="id">
+          {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
+            {#await sleep() then}
+              {@const { id, previewURL, description, kind: _kind } = asset}
+              <SimpleImageGridItem
+                value={id}
+                {viewType}
+                {multiple}
+                selected={isSelected(asset)}
+                onChange={({ detail: { selected } }) => {
+                  onSelectionChange(asset, selected);
+                }}
+              >
+                <AssetPreview
+                  kind={_kind}
+                  src={previewURL}
+                  alt={description}
+                  variant="tile"
+                  crossorigin="anonymous"
                 />
-              {/if}
-            </SimpleImageGridItem>
-          {/await}
-        {/snippet}
-      </InfiniteScroll>
-    </SimpleImageGrid>
+                {#if viewType === 'list' || (!$isSmallScreen && !isStockAssets)}
+                  <AssetPath
+                    path={isStockAssets ? undefined : description}
+                    caption={isStockAssets ? description : undefined}
+                  />
+                {/if}
+              </SimpleImageGridItem>
+            {/await}
+          {/snippet}
+        </InfiniteScroll>
+      </SimpleImageGrid>
+    </div>
   {/if}
 {/snippet}
 
@@ -400,6 +402,11 @@
 </Toast>
 
 <style lang="scss">
+  .grid-wrapper {
+    overflow-y: auto;
+    height: 100%;
+  }
+
   p {
     margin: 0 0 8px;
   }
