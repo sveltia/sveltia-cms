@@ -52,7 +52,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { decimals = 7, type: geometryType = 'Point' } = $derived(fieldConfig);
+  const { decimals = 7, type: geometryType = 'Point', center, zoom } = $derived(fieldConfig);
   const drawMode = $derived(geometryType.toLowerCase());
 
   /** @type {HTMLElement | undefined} */
@@ -117,6 +117,13 @@
     });
 
     draw = _draw;
+
+    if (!currentValue) {
+      // Leaflet uses `[latitude, longitude]` format for coordinates, while GeoJSON uses
+      // `[longitude, latitude]`. We need to reverse the order of the coordinates when setting the
+      // view of the map.
+      map.setView(center ? [center[1], center[0]] : [0, 0], zoom ?? 2);
+    }
   };
 
   /**

@@ -670,6 +670,9 @@
  * properties.
  * @property {number} [decimals] Precision of coordinates to be saved. Default: `7`.
  * @property {'Point' | 'LineString' | 'Polygon'} [type] Geometry type. Default: `Point`.
+ * @property {[number, number]} [center] Default center coordinates as `[longitude, latitude]`.
+ * Default: `[0, 0]`.
+ * @property {number} [zoom] Default zoom level. Default: `2`.
  * @see https://decapcms.org/docs/widgets/#Map
  * @see https://sveltiacms.app/en/docs/fields/map
  */
