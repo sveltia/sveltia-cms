@@ -16,6 +16,11 @@
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { loadModule } from '$lib/services/app/dependencies';
+  import {
+    getGeometryBounds,
+    isValidGeoJSON,
+    roundCoordinates,
+  } from '$lib/services/contents/fields/map/helper';
   import { sendRequest } from '$lib/services/utils/networking';
   import { toFixed } from '$lib/services/utils/number';
 
@@ -118,10 +123,11 @@
 
     draw = _draw;
 
-    if (!currentValue) {
-      // Leaflet uses `[latitude, longitude]` format for coordinates, while GeoJSON uses
-      // `[longitude, latitude]`. We need to reverse the order of the coordinates when setting the
-      // view of the map.
+    // The $effect below will handle fitting the map to an existing valid value. Apply the
+    // configured center/zoom defaults here for the case where there is no valid value. Leaflet uses
+    // `[latitude, longitude]` format for coordinates, while GeoJSON uses `[longitude, latitude]`.
+    // We need to reverse the order of the coordinates when setting the view of the map.
+    if (!currentValue || !isValidGeoJSON(currentValue, geometryType)) {
       map.setView(center ? [center[1], center[0]] : [0, 0], zoom ?? 2);
     }
   };
@@ -145,13 +151,7 @@
 
     inputValue = JSON.stringify({
       type: geometryType,
-      coordinates: feature.geometry.coordinates.map((coords) =>
-        Array.isArray(coords)
-          ? coords.map((c) =>
-              Array.isArray(c) ? c.map((cc) => toFixed(cc, decimals)) : toFixed(c, decimals),
-            )
-          : toFixed(coords, decimals),
-      ),
+      coordinates: roundCoordinates(feature.geometry.coordinates, decimals),
     });
 
     // Allow to have only one feature
@@ -159,6 +159,28 @@
       draw.removeFeatures(
         snapshot.filter((f) => f.id !== feature.id).map((f) => /** @type {string} */ (f.id)),
       );
+    }
+  };
+
+  /**
+   * Fit the map view to the given geometry. For a Point, the map is centered on the coordinates at
+   * zoom level 15. For a LineString or Polygon, the map is fitted to the bounding box of all
+   * coordinate pairs.
+   * @param {GeoJSONStoreGeometries} geometry GeoJSON geometry object.
+   */
+  const fitMapToGeometry = (geometry) => {
+    if (geometry.type === 'Point') {
+      const [longitude, latitude] = geometry.coordinates;
+
+      if (typeof longitude === 'number' && typeof latitude === 'number') {
+        map?.setView([latitude, longitude], 15);
+      }
+    } else {
+      const bounds = getGeometryBounds(geometry);
+
+      if (bounds) {
+        map?.fitBounds(bounds);
+      }
     }
   };
 
@@ -176,16 +198,14 @@
 
     // Validate the value
     try {
-      if (newValue !== undefined) {
-        geometry = JSON.parse(newValue);
+      geometry = JSON.parse(newValue);
 
-        if (
-          !isObject(geometry) ||
-          geometry.type !== geometryType ||
-          !Array.isArray(geometry.coordinates)
-        ) {
-          throw new Error('Invalid object');
-        }
+      if (
+        !isObject(geometry) ||
+        geometry.type !== geometryType ||
+        !Array.isArray(geometry.coordinates)
+      ) {
+        throw new Error('Invalid object');
       }
     } catch {
       newValue = '';
@@ -202,12 +222,7 @@
 
     if (geometry) {
       draw.addFeatures([{ type: 'Feature', geometry, properties: { mode: drawMode } }]);
-
-      if (geometry.coordinates.every((c) => typeof c === 'number')) {
-        const [longitude, latitude] = geometry.coordinates;
-
-        map?.setView([latitude, longitude], 15);
-      }
+      fitMapToGeometry(geometry);
     }
   };
 
