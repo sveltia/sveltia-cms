@@ -114,46 +114,45 @@
   </div>
 {/snippet}
 
-<div role="none" class="empty" class:invalid class:processing>
-  <Button
-    flex
-    role="button"
-    variant="tertiary"
-    {disabled}
-    tabindex="0"
-    onclick={() => {
-      if ($hasMouse) {
-        replaceMode = false;
-        showSelectAssetsDialog = true;
-      }
-    }}
-    onkeydown={(event) => {
-      if (matchesShortcuts(event, 'Accel+V')) {
-        event.preventDefault();
-        onPasteButtonClick();
-      }
-    }}
-  >
-    <Icon name="cloud_upload" />
-    <div role="none" class="label">
-      {#if processing}
-        <div role="status">
-          {_('processing_files', { values: { count: multiple ? 2 : 1 } })}
-        </div>
-      {:else if $hasMouse}
-        {#if !allowDrop}
-          {_('click_to_browse')}
-        {:else if isImageField}
-          {_('drop_image_files_or', { values: { count: multiple ? 2 : 1 } })}
-        {:else}
-          {_('drop_files_or', { values: { count: multiple ? 2 : 1 } })}
-        {/if}
-        {@render buttons()}
+<div
+  role="button"
+  class="empty"
+  class:invalid
+  class:processing
+  aria-disabled={disabled || undefined}
+  tabindex={disabled ? -1 : 0}
+  onclick={() => {
+    if ($hasMouse && !disabled) {
+      replaceMode = false;
+      showSelectAssetsDialog = true;
+    }
+  }}
+  onkeydown={(event) => {
+    if (!disabled && matchesShortcuts(event, 'Accel+V')) {
+      event.preventDefault();
+      onPasteButtonClick();
+    }
+  }}
+>
+  <Icon name="cloud_upload" />
+  <div role="none" class="label">
+    {#if processing}
+      <div role="status">
+        {_('processing_files', { values: { count: multiple ? 2 : 1 } })}
+      </div>
+    {:else if $hasMouse}
+      {#if !allowDrop}
+        {_('click_to_browse')}
+      {:else if isImageField}
+        {_('drop_image_files_or', { values: { count: multiple ? 2 : 1 } })}
       {:else}
-        {@render buttons()}
+        {_('drop_files_or', { values: { count: multiple ? 2 : 1 } })}
       {/if}
-    </div>
-  </Button>
+      {@render buttons()}
+    {:else}
+      {@render buttons()}
+    {/if}
+  </div>
 </div>
 
 <Toast bind:show={toast.show}>
@@ -164,42 +163,72 @@
 
 <style lang="scss">
   .empty {
-    :global {
-      & > button {
-        flex-direction: column;
-        justify-content: center;
-        height: 120px;
-        font-size: var(--sui-font-size-small);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 120px;
+    margin: var(--sui-focus-ring-width);
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--sui-button-tertiary-border-color, var(--sui-button-border-color));
+    border-radius: var(--sui-button-medium-border-radius);
+    color: var(--sui-button-tertiary-foreground-color, var(--sui-highlight-foreground-color));
+    background-color: var(
+      --sui-button-tertiary-background-color,
+      var(--sui-button-background-color)
+    );
+    font-family: var(--sui-control-font-family);
+    font-size: var(--sui-font-size-small);
+    cursor: pointer;
+    transition: all 200ms;
 
-        .icon {
-          color: var(--sui-secondary-foreground-color);
-          font-size: 48px;
-        }
+    &:focus-visible {
+      z-index: 1;
+      outline: var(--sui-focus-ring-width) solid var(--sui-focus-ring-color);
+      outline-offset: var(--sui-focus-ring-offset);
+    }
 
-        &:disabled {
-          pointer-events: none !important;
+    &:not([aria-disabled='true']):is(:hover, :focus-visible) {
+      background-color: var(
+        --sui-button-tertiary-background-color-focus,
+        var(--sui-hover-background-color)
+      );
+    }
 
-          :global(*) {
-            opacity: 0.5;
-          }
-        }
+    &:not([aria-disabled='true']):active {
+      background-color: var(
+        --sui-button-tertiary-background-color-active,
+        var(--sui-active-background-color)
+      );
+    }
 
-        @media (pointer: coarse) {
-          &:active,
-          &:focus {
-            // Reset the style because the button is disabled on mobile
-            background-color: var(--sui-button-background-color);
-          }
-        }
+    :global(.icon) {
+      color: var(--sui-secondary-foreground-color);
+      font-size: 48px;
+    }
+
+    &[aria-disabled='true'] {
+      pointer-events: none !important;
+
+      :global(*) {
+        opacity: 0.5;
+      }
+    }
+
+    @media (pointer: coarse) {
+      cursor: default;
+
+      &:active,
+      &:focus {
+        // Reset the style because the element is non-interactive on touch devices
+        background-color: var(--sui-button-background-color) !important;
       }
     }
 
     &.invalid {
-      :global {
-        button {
-          border-color: var(--sui-error-border-color);
-        }
-      }
+      border-color: var(--sui-error-border-color);
     }
   }
 
