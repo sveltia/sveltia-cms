@@ -55,7 +55,7 @@
     "isomorphic-dompurify": "^3.9.0",
     "leaflet": "^1.9.4",
     "lexical": "^0.43.0",
-    "marked": "^18.0.0",
+    "marked": "^18.0.1",
     "marked-bidi": "^1.0.15",
     "mime": "^4.1.0",
     "parse-entities": "^4.0.2",
