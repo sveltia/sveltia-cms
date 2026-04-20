@@ -6,7 +6,7 @@ Designed for content editors and developers alike, Sveltia CMS delivers a modern
 
 As the de facto [successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), Sveltia CMS addresses hundreds of longstanding issues while maintaining high compatibility with the existing configuration format and API. It surpasses the poorly maintained official successor, Decap CMS, in all aspects. More and more projects, including a U.S. government site, are [migrating from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to take advantage of the significantly improved experience, security, and reliability.
 
-It’s also an excellent option for individuals or organizations migrating from traditional CMSs like WordPress to a static site generator like Astro and seeking a Git-based lightweight CMS to manage their content.
+Sveltia CMS is also an excellent option for individuals or organizations migrating from traditional CMSs like WordPress to a static site generator like Astro and seeking a Git-based lightweight CMS to manage their content.
 
 Explore real-world examples in our [showcase](https://sveltiacms.app/en/showcase), or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
