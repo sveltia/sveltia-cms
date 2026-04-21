@@ -16,6 +16,8 @@
   import { getContext, untrack } from 'svelte';
 
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getAssetLibraryFolderMap } from '$lib/services/contents/fields/file/helper';
+  import { processResource } from '$lib/services/contents/fields/file/process';
   import {
     BUILTIN_COMPONENTS,
     BUTTON_NAME_MAP,
@@ -30,6 +32,7 @@
     getComponentDef,
   } from '$lib/services/contents/fields/rich-text/components/definitions';
   import { getCanonicalLocale } from '$lib/services/contents/i18n';
+  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import {
     RASTER_IMAGE_EXTENSION_REGEX,
     SUPPORTED_IMAGE_TYPES,
@@ -38,7 +41,7 @@
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
-   * @import { MarkdownField } from '$lib/types/public';
+   * @import { EditorComponentDefinition, ImageField, MarkdownField } from '$lib/types/public';
    */
 
   /**
@@ -122,59 +125,55 @@
    * @param {EventTarget | null} args.target Event target.
    * @param {ImageEntry[]} args.images Image list.
    */
-  const insertImages = ({ target, images }) => {
+  const insertImages = async ({ target, images }) => {
     const outer = /** @type {HTMLElement} */ (target)?.closest('div');
     const editor = getNearestEditorFromDOMNode(outer);
 
-    if (!imageComponent || !outer?.matches('.lexical-root') || !editor) {
+    if (!$entryDraft || !imageComponent || !outer?.matches('.lexical-root') || !editor) {
       return;
     }
 
-    images.forEach(({ file, src, alt = '' }) => {
+    const draft = $entryDraft;
+    const { collectionName, fileName, isIndexFile } = draft;
+
+    const srcFieldConfig =
+      /** @type {import('@sveltia/ui').TextEditorComponent & EditorComponentDefinition} */ (
+        imageComponent
+      ).fields?.find(({ name }) => name === 'src');
+
+    const { config: libraryConfig } = getDefaultMediaLibraryOptions({
+      fieldConfig: /** @type {ImageField} */ (srcFieldConfig),
+    });
+
+    const folderMap = getAssetLibraryFolderMap({ collectionName, fileName, isIndexFile });
+    const folder = Object.values(folderMap).find(({ enabled }) => enabled)?.folder;
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const { file, src: externalSrc, alt = '' } of images) {
+      let src = externalSrc;
+
       if (file) {
-        src = URL.createObjectURL(file);
-      }
-
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      const onUpdate = () => {
-        if (!file || !src) {
-          return;
-        }
-
-        // Wait until the image editor component is added to the DOM
-        const observer = new MutationObserver((records) => {
-          records.forEach(({ addedNodes }) => {
-            addedNodes.forEach((node) => {
-              if (
-                node instanceof HTMLElement &&
-                node.matches('.preview') &&
-                node.querySelector(`img[src="${src}"]`)
-              ) {
-                // Dispatch `Select` event so the file is processed in `FileEditor`
-                node
-                  .closest('.drop-target')
-                  ?.dispatchEvent(new CustomEvent('Select', { detail: { files: [file] } }));
-
-                if (src?.startsWith('blob:')) {
-                  URL.revokeObjectURL(src);
-                }
-
-                observer.disconnect();
-              }
-            });
-          });
+        // eslint-disable-next-line no-await-in-loop
+        const { value } = await processResource({
+          draft,
+          resource: { file, folder },
+          libraryConfig,
         });
 
-        observer.observe(outer, { childList: true, subtree: true });
-      };
+        src = value;
+      }
 
-      editor.update(
-        () => {
-          insertNodes([imageComponent.createNode({ src, alt }), createParagraphNode()]);
-        },
-        { onUpdate },
-      );
-    });
+      if (!src) {
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+
+      const _src = src;
+
+      editor.update(() => {
+        insertNodes([imageComponent.createNode({ src: _src, alt }), createParagraphNode()]);
+      });
+    }
   };
 
   /**
@@ -258,7 +257,7 @@
         return { file, alt };
       });
 
-      insertImages({ target, images });
+      await insertImages({ target, images });
     }
   };
 
@@ -316,7 +315,7 @@
     }
 
     if (images.length) {
-      insertImages({ target, images });
+      await insertImages({ target, images });
     }
   };
 
