@@ -56,6 +56,9 @@
 
   /** @type {[string, string][]} */
   let pairs = $state([]);
+  /** @type {number[]} */
+  let pairIds = $state([]);
+  let nextPairId = 0;
   /** @type {HTMLTableRowElement[]} */
   const rowElements = $state([]);
   /** @type {boolean[]} */
@@ -76,6 +79,8 @@
 
     if (!equal(pairs, updatedPairs)) {
       pairs = [...updatedPairs];
+      // Preserve existing IDs for unchanged positions; assign new IDs for new pairs
+      pairIds = updatedPairs.map((_, i) => (i < pairIds.length ? pairIds[i] : nextPairId++));
       edited = updatedPairs.map(() => false);
     }
 
@@ -101,6 +106,7 @@
     });
 
     pairs.push(['', '']);
+    pairIds.push(nextPairId++);
     edited.push(false);
 
     window.requestAnimationFrame(() => {
@@ -116,6 +122,7 @@
    */
   const removePair = (index) => {
     pairs.splice(index, 1);
+    pairIds.splice(index, 1);
     edited.splice(index, 1);
   };
 
@@ -163,7 +170,7 @@
       </tr>
     </thead>
     <tbody>
-      {#each pairs as pair, index (`${pair[0]}-${index}`)}
+      {#each pairs as pair, index (pairIds[index])}
         <tr bind:this={rowElements[index]}>
           <td class="key">
             <TextInput
