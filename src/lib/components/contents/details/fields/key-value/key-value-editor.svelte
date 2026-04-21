@@ -80,7 +80,15 @@
     if (!equal(pairs, updatedPairs)) {
       pairs = [...updatedPairs];
       // Preserve existing IDs for unchanged positions; assign new IDs for new pairs
-      pairIds = updatedPairs.map((_, i) => (i < pairIds.length ? pairIds[i] : nextPairId++));
+      pairIds = updatedPairs.map((_pair, i) => {
+        if (i < pairIds.length) {
+          return pairIds[i];
+        }
+
+        nextPairId += 1;
+
+        return nextPairId - 1;
+      });
       edited = updatedPairs.map(() => false);
     }
 
@@ -106,7 +114,8 @@
     });
 
     pairs.push(['', '']);
-    pairIds.push(nextPairId++);
+    pairIds.push(nextPairId);
+    nextPairId += 1;
     edited.push(false);
 
     window.requestAnimationFrame(() => {
