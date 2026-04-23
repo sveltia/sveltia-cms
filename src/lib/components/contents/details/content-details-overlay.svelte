@@ -306,6 +306,11 @@
    * @param {MessageEvent} event The message event.
    */
   const onmessage = (event) => {
+    // Only accept messages from the same window to prevent potential security issues
+    if (event.source !== window) {
+      return;
+    }
+
     if (event.data?.type === 'highlight-editor-field' && event.data.payload) {
       highlightEditorField(event.data.payload);
     }
