@@ -15,6 +15,7 @@ import {
   overlaidAsset,
   processedAssets,
   renamingAsset,
+  selectedAssetPathSet,
   selectedAssets,
   uploadingAssets,
 } from '.';
@@ -70,6 +71,16 @@ describe('assets/index', () => {
 
     it('should initialize selectedAssets as empty array', () => {
       expect(get(selectedAssets)).toEqual([]);
+    });
+
+    it('should derive selectedAssetPathSet from selectedAssets', () => {
+      selectedAssets.set([
+        /** @type {any} */ ({ path: 'a.jpg' }),
+        /** @type {any} */ ({ path: 'b.jpg' }),
+      ]);
+      expect(get(selectedAssetPathSet)).toEqual(new Set(['a.jpg', 'b.jpg']));
+      selectedAssets.set([]);
+      expect(get(selectedAssetPathSet)).toEqual(new Set());
     });
 
     it('should initialize focusedAsset as undefined', () => {

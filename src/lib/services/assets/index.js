@@ -70,6 +70,15 @@ const getAssetPathMap = () => {
 export const selectedAssets = writable([]);
 
 /**
+ * Set of selected asset paths, for O(1) membership checks in list items.
+ * @type {import('svelte/store').Readable<Set<string>>}
+ */
+export const selectedAssetPathSet = derived(
+  selectedAssets,
+  ($selectedAssets) => new Set($selectedAssets.map((asset) => asset.path)),
+);
+
+/**
  * Asset currently focused in the UI.
  * @type {Writable<Asset | undefined>}
  */

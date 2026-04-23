@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { get } from 'svelte/store';
+import { derived, get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -14,6 +14,7 @@ import {
 
 // Mock dependencies
 vi.mock('svelte/store', () => ({
+  derived: vi.fn(() => ({ subscribe: vi.fn() })),
   get: vi.fn(),
   writable: vi.fn(() => ({ subscribe: vi.fn() })),
 }));
@@ -56,6 +57,15 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
 vi.mock('$lib/services/utils/misc', () => ({
   getRegex: vi.fn(),
 }));
+
+describe('selectedEntryIdSet', () => {
+  test('derives a Set of entry IDs from selectedEntries', () => {
+    const [, factory] = vi.mocked(derived).mock.calls[0];
+
+    expect(factory([{ id: 'a' }, { id: 'b' }])).toEqual(new Set(['a', 'b']));
+    expect(factory([])).toEqual(new Set());
+  });
+});
 
 describe('MARKDOWN_IMAGE_REGEX', () => {
   test('matches simple markdown image', () => {

@@ -3,7 +3,7 @@
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { focusedAsset, selectedAssets } from '$lib/services/assets';
+  import { focusedAsset, selectedAssetPathSet, selectedAssets } from '$lib/services/assets';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
   import { listedAssets } from '$lib/services/assets/view';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
@@ -75,7 +75,7 @@
       <Checkbox
         role="none"
         tabindex="-1"
-        checked={$selectedAssets.includes(asset)}
+        checked={$selectedAssetPathSet.has(asset.path)}
         onChange={({ detail: { checked } }) => {
           updateSelection(checked);
         }}

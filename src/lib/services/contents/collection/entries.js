@@ -2,7 +2,7 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
 
-import { get, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 
 import { getMediaFieldURL } from '$lib/services/assets/info';
 import { cmsConfig } from '$lib/services/config';
@@ -34,6 +34,15 @@ export const MARKDOWN_IMAGE_REGEX = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
  * @type {Writable<Entry[]>}
  */
 export const selectedEntries = writable([]);
+
+/**
+ * Set of selected entry IDs, for O(1) membership checks in list items.
+ * @type {import('svelte/store').Readable<Set<string>>}
+ */
+export const selectedEntryIdSet = derived(
+  selectedEntries,
+  ($selectedEntries) => new Set($selectedEntries.map((entry) => entry.id)),
+);
 
 /**
  * Get entries by the given collection name, while applying a filer if needed.

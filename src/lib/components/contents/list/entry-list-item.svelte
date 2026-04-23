@@ -4,7 +4,7 @@
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { selectedEntries } from '$lib/services/contents/collection/entries';
+  import { selectedEntries, selectedEntryIdSet } from '$lib/services/contents/collection/entries';
   import {
     getIndexFile,
     isCollectionIndexFile,
@@ -71,7 +71,7 @@
       <Checkbox
         role="none"
         tabindex="-1"
-        checked={$selectedEntries.includes(entry)}
+        checked={$selectedEntryIdSet.has(entry.id)}
         onChange={({ detail: { checked } }) => {
           updateSelection(checked);
         }}
