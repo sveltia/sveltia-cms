@@ -104,20 +104,25 @@ export const updateCache = async ({ changes, commit }) => {
  * @param {Asset[]} args.savedAssets Assets that have been saved.
  */
 export const updateStores = ({ changes, savedEntries, savedAssets }) => {
-  const savedEntryIds = savedEntries.map((e) => e.id);
+  const savedEntryIds = new Set(savedEntries.map((e) => e.id));
 
   allEntries.update((entries) => [
-    ...entries.filter((e) => !savedEntryIds.includes(e.id)),
+    ...entries.filter((e) => !savedEntryIds.has(e.id)),
     ...savedEntries,
   ]);
 
-  const savedAssetsPaths = savedAssets.map((a) => a.path);
-  const movedAssetPaths = changes.filter((c) => c.action === 'move').map((c) => c.previousPath);
-  const deletedAssetPaths = changes.filter((c) => c.action === 'delete').map((c) => c.path);
-  const excludingPaths = [...savedAssetsPaths, ...movedAssetPaths, ...deletedAssetPaths];
+  const excludingPaths = new Set(savedAssets.map((a) => a.path));
+
+  changes.forEach((c) => {
+    if (c.action === 'move' && c.previousPath) {
+      excludingPaths.add(c.previousPath);
+    } else if (c.action === 'delete') {
+      excludingPaths.add(c.path);
+    }
+  });
 
   allAssets.update((assets) => [
-    ...assets.filter((a) => !excludingPaths.includes(a.path)),
+    ...assets.filter((a) => !excludingPaths.has(a.path)),
     ...savedAssets,
   ]);
 };

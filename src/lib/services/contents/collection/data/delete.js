@@ -25,8 +25,9 @@ import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
  */
 export const updateStores = ({ ids, assetPaths }) => {
   const _allEntries = get(allEntries);
+  const idSet = new Set(ids);
 
-  allEntries.set(_allEntries.filter((file) => !ids.includes(file.id)));
+  allEntries.set(_allEntries.filter((file) => !idSet.has(file.id)));
 
   contentUpdatesToast.set({
     ...UPDATE_TOAST_DEFAULT_STATE,
@@ -35,7 +36,9 @@ export const updateStores = ({ ids, assetPaths }) => {
   });
 
   if (assetPaths.length) {
-    allAssets.update((assets) => assets.filter((asset) => !assetPaths.includes(asset.path)));
+    const assetPathSet = new Set(assetPaths);
+
+    allAssets.update((assets) => assets.filter((asset) => !assetPathSet.has(asset.path)));
   }
 };
 

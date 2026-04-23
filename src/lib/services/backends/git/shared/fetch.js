@@ -143,8 +143,8 @@ export const updateCache = async ({
   fetchingFiles,
   fetchedFileMap,
 }) => {
-  const usedPaths = allFiles.map(({ path }) => path);
-  const unusedPaths = Object.keys(cachedFiles).filter((path) => !usedPaths.includes(path));
+  const usedPaths = new Set(allFiles.map(({ path }) => path));
+  const unusedPaths = Object.keys(cachedFiles).filter((path) => !usedPaths.has(path));
 
   // Save new entry caches
   if (fetchingFiles.length) {
