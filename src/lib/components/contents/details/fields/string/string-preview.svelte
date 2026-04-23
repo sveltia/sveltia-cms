@@ -32,6 +32,8 @@
   } = $props();
 
   const { name: fieldName, type = 'text' } = $derived(fieldConfig);
+
+  const SAFE_PROTOCOL_REGEX = /^(?:https|mailto|tel):/;
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}
@@ -39,8 +41,10 @@
     {#if type === 'url' || isURL(currentValue)}
       {#if isYouTubeVideoURL(currentValue)}
         <YouTubeEmbed url={currentValue} />
-      {:else}
+      {:else if SAFE_PROTOCOL_REGEX.test(currentValue)}
         <a href={encodeURI(currentValue)}>{currentValue}</a>
+      {:else}
+        {currentValue}
       {/if}
     {:else if type === 'email'}
       <a href="mailto:{encodeURI(currentValue)}">{currentValue}</a>
