@@ -21,13 +21,23 @@
 
   const embedURL = $derived(getYouTubeEmbedURL(url));
 
+  /**
+   * Listener for Content Security Policy violations.
+   * @param {SecurityPolicyViolationEvent} event Event.
+   */
+  const onViolation = ({ blockedURI, violatedDirective }) => {
+    if (blockedURI === new URL(embedURL).origin && violatedDirective === 'frame-src') {
+      embeddable = false;
+    }
+  };
+
   onMount(() => {
     // Hide the iframe if CSP is violated
-    window.addEventListener('securitypolicyviolation', ({ blockedURI, violatedDirective }) => {
-      if (blockedURI === new URL(embedURL).origin && violatedDirective === 'frame-src') {
-        embeddable = false;
-      }
-    });
+    window.addEventListener('securitypolicyviolation', onViolation);
+
+    return () => {
+      window.removeEventListener('securitypolicyviolation', onViolation);
+    };
   });
 </script>
 

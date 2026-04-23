@@ -245,15 +245,22 @@ export const sendMessage = ({ provider = 'unknown', token, refreshToken, error, 
   const _state = error ? 'error' : 'success';
   const content = error ? { provider, error, errorCode } : { provider, token, refreshToken };
 
-  window.addEventListener('message', ({ data, origin }) => {
+  /**
+   * Listener for messages from the window opener.
+   * @param {MessageEvent} event Event.
+   */
+  const onMessage = ({ data, origin }) => {
     if (data === `authorizing:${provider}`) {
       window.opener?.postMessage(
         `authorization:${provider}:${_state}:${JSON.stringify(content)}`,
         origin,
       );
+      // The handshake is complete; remove the listener so repeated auth flows don’t accumulate.
+      window.removeEventListener('message', onMessage);
     }
-  });
+  };
 
+  window.addEventListener('message', onMessage);
   window.opener?.postMessage(`authorizing:${provider}`, '*');
 };
 

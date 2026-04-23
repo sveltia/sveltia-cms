@@ -34,6 +34,9 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  /** @type {ResizeObserver | undefined} */
+  let resizeObserver;
+
   /**
    * Load the Leaflet library and initialize the map. We don’t bundle the library because of the
    * bundle size. The component may not be used often, and multiple map services, including Google
@@ -69,15 +72,21 @@
       a.setAttribute('rel', 'noopener noreferrer');
     });
 
-    new ResizeObserver(() => {
+    resizeObserver = new ResizeObserver(() => {
       map?.invalidateSize();
-    }).observe(mapElement);
+    });
+
+    resizeObserver.observe(mapElement);
 
     onReady?.({ leaflet, map });
   };
 
   onMount(() => {
     init();
+
+    return () => {
+      resizeObserver?.disconnect();
+    };
   });
 </script>
 

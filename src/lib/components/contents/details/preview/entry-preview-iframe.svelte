@@ -69,8 +69,19 @@
    */
   const initializeIframe = () => {
     if (iframe) {
-      iframe.addEventListener('load', mountPlaceholder, { once: true });
-      iframe.src = URL.createObjectURL(new Blob([generateHTML()], { type: 'text/html' }));
+      const blobURL = URL.createObjectURL(new Blob([generateHTML()], { type: 'text/html' }));
+
+      iframe.addEventListener(
+        'load',
+        () => {
+          mountPlaceholder();
+          // The iframe has loaded the HTML document, so the blob URL is no longer needed
+          URL.revokeObjectURL(blobURL);
+        },
+        { once: true },
+      );
+
+      iframe.src = blobURL;
     }
   };
 

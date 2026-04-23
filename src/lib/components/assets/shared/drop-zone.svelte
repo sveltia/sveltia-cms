@@ -78,10 +78,20 @@
     onDrop?.({ files });
   };
 
+  /**
+   * Handler for custom `Select` events dispatched by the drop target.
+   * @param {Event} event Event.
+   */
+  const onSelect = (event) => {
+    onDrop?.({ files: /** @type {CustomEvent} */ (event).detail.files });
+  };
+
   onMount(() => {
-    dropTarget?.addEventListener('Select', (event) => {
-      onDrop?.({ files: /** @type {CustomEvent} */ (event).detail.files });
-    });
+    dropTarget?.addEventListener('Select', onSelect);
+
+    return () => {
+      dropTarget?.removeEventListener('Select', onSelect);
+    };
   });
 
   $effect(() => {
