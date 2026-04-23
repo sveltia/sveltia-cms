@@ -107,16 +107,13 @@ const getTargetValues = (fieldConfig, targetEntry, locale) => {
  * @param {FieldKeyPath} effectiveKeyPath Key path, possibly containing wildcards.
  * @param {boolean} multiple Whether the relation field is multiple.
  * @param {Set<any>} targetValues Target values to match.
+ * @param {RegExp} [wildcardPattern] Pre-compiled pattern for wildcard key paths.
  * @returns {boolean} Whether a reference was found.
  */
-const hasReference = (content, effectiveKeyPath, multiple, targetValues) => {
-  const hasWildcard = effectiveKeyPath.includes('*');
-
-  if (hasWildcard) {
-    const pattern = new RegExp(`^${escapeRegExp(effectiveKeyPath).replace(/\\\*/g, '\\d+')}$`);
-
+const hasReference = (content, effectiveKeyPath, multiple, targetValues, wildcardPattern) => {
+  if (wildcardPattern) {
     return Object.keys(content)
-      .filter((key) => pattern.test(key))
+      .filter((key) => wildcardPattern.test(key))
       .some((key) => getRelationValues(content, key, multiple).some((v) => targetValues.has(v)));
   }
 
@@ -204,6 +201,10 @@ export const getBacklinks = ({ collectionName, fileName, entry }) => {
     const baseKeyPath = keyPath.replace(/\*\./g, '').replace(/\*$/g, '');
     const effectiveKeyPath = baseKeyPath || fieldName;
 
+    const wildcardPattern = effectiveKeyPath.includes('*')
+      ? new RegExp(`^${escapeRegExp(effectiveKeyPath).replace(/\\\*/g, '\\d+')}$`)
+      : undefined;
+
     const sourceEntries =
       sourceCollectionName === collectionName
         ? getEntriesByCollection(sourceCollectionName).filter((e) => e.slug !== entry.slug)
@@ -217,7 +218,13 @@ export const getBacklinks = ({ collectionName, fileName, entry }) => {
 
         if (
           !content ||
-          !hasReference(content, effectiveKeyPath, !!fieldConfig.multiple, targetValues)
+          !hasReference(
+            content,
+            effectiveKeyPath,
+            !!fieldConfig.multiple,
+            targetValues,
+            wildcardPattern,
+          )
         ) {
           return undefined;
         }
