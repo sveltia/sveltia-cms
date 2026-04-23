@@ -92,15 +92,24 @@ export const sortItemsByKey = (items, getKey, isStringType, order) => {
 export const initViewSettingsStorage = async (repository, storageKey, settingsStore) => {
   const { databaseName } = repository ?? {};
   const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
+  const initial = (await settingsDB?.get(storageKey)) ?? {};
 
-  settingsStore.set((await settingsDB?.get(storageKey)) ?? {});
+  settingsStore.set(initial);
+
+  // Track the last persisted value in memory so we can skip redundant IndexedDB reads and writes
+  // every time the store changes (list views update this store frequently as users sort/filter).
+  let lastSaved = initial;
 
   settingsStore.subscribe((_settings) => {
+    if (equal(_settings, lastSaved)) {
+      return;
+    }
+
+    lastSaved = _settings;
+
     (async () => {
       try {
-        if (!equal(_settings, await settingsDB?.get(storageKey))) {
-          await settingsDB?.set(storageKey, _settings);
-        }
+        await settingsDB?.set(storageKey, _settings);
       } catch {
         //
       }
