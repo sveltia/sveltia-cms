@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { encodeQuotes, isMultiLinePattern, normalizeProps, replaceQuotes } from './utils.js';
+import { isMultiLinePattern, normalizeProps, replaceQuotes } from './utils.js';
 
 describe('utils', () => {
   describe('isMultiLinePattern', () => {
@@ -211,64 +211,6 @@ describe('utils', () => {
       const result = replaceQuotes(input);
 
       expect(result).toBe("'''");
-    });
-  });
-
-  describe('encodeQuotes', () => {
-    it('should encode double quotes as HTML entities', () => {
-      const input = 'Hello "world" and "everyone"';
-      const result = encodeQuotes(input);
-
-      expect(result).toBe('Hello &quot;world&quot; and &quot;everyone&quot;');
-    });
-
-    it('should handle strings without quotes', () => {
-      const input = 'Hello world';
-      const result = encodeQuotes(input);
-
-      expect(result).toBe('Hello world');
-    });
-
-    it('should handle strings with only single quotes', () => {
-      const input = "Hello 'world'";
-      const result = encodeQuotes(input);
-
-      expect(result).toBe("Hello 'world'");
-    });
-
-    it('should handle empty strings', () => {
-      const input = '';
-      const result = encodeQuotes(input);
-
-      expect(result).toBe('');
-    });
-
-    it('should handle strings with mixed quotes', () => {
-      const input = 'Hello "world" and \'everyone\'';
-      const result = encodeQuotes(input);
-
-      expect(result).toBe("Hello &quot;world&quot; and 'everyone'");
-    });
-
-    it('should handle multiple consecutive double quotes', () => {
-      const input = 'Test ""double"" quotes';
-      const result = encodeQuotes(input);
-
-      expect(result).toBe('Test &quot;&quot;double&quot;&quot; quotes');
-    });
-
-    it('should handle strings that are just quotes', () => {
-      const input = '"""';
-      const result = encodeQuotes(input);
-
-      expect(result).toBe('&quot;&quot;&quot;');
-    });
-
-    it('should not affect already encoded entities', () => {
-      const input = 'Hello &quot;world&quot; and "everyone"';
-      const result = encodeQuotes(input);
-
-      expect(result).toBe('Hello &quot;world&quot; and &quot;everyone&quot;');
     });
   });
 });

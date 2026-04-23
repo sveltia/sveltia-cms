@@ -1,13 +1,11 @@
 import { _ } from '@sveltia/i18n';
 
-import {
-  encodeQuotes,
-  replaceQuotes,
-} from '$lib/services/contents/fields/rich-text/components/utils';
+import { replaceQuotes } from '$lib/services/contents/fields/rich-text/components/utils';
 import {
   IMAGE_OR_LINKED_IMAGE_REGEX,
   IMAGE_REGEX,
 } from '$lib/services/contents/fields/rich-text/constants';
+import { escapeAttr } from '$lib/services/utils/string';
 
 /**
  * @import { EditorComponentDefinition } from '$lib/types/public';
@@ -44,10 +42,7 @@ export const IMAGE_COMPONENT = {
     const { src = '', alt = '', title = '' } = props;
 
     // Return `<img>` even if `src` is empty to make sure the `tagName` below works
-    return (
-      `<img src="${encodeQuotes(src)}" alt="${encodeQuotes(alt)}" ` +
-      `title="${encodeQuotes(title)}">`
-    );
+    return `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" title="${escapeAttr(title)}">`;
   },
   /* eslint-enable jsdoc/require-jsdoc */
 };
@@ -80,13 +75,11 @@ export const LINKED_IMAGE_COMPONENT = {
   },
   toPreview: (props) => {
     const { src = '', alt = '', title = '', link = '' } = props;
-
-    const img =
-      `<img src="${encodeQuotes(src)}" alt="${encodeQuotes(alt)}" ` +
-      `title="${encodeQuotes(title)}">`;
+    // eslint-disable-next-line @stylistic/max-len
+    const img = `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" title="${escapeAttr(title)}">`;
 
     // Return `<img>` even if `src` is empty to make sure the `tagName` below works
-    return link ? `<a href="${encodeQuotes(link)}">${img}</a>` : img;
+    return link ? `<a href="${escapeAttr(link)}">${img}</a>` : img;
   },
   /* eslint-enable jsdoc/require-jsdoc */
 };

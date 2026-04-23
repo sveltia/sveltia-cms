@@ -5,10 +5,10 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { sanitize } from 'isomorphic-dompurify';
   import { mount } from 'svelte';
 
   import Placeholder from '$lib/components/common/placeholder.svelte';
+  import { escapeAttr } from '$lib/services/utils/string';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -43,10 +43,10 @@
    */
   const generateHTML = () => `
     <!DOCTYPE html>
-    <html lang="${sanitize(locale)}">
+    <html lang="${escapeAttr(locale)}">
     <head>
       <meta charset="UTF-8">
-      ${styleURLs.map((url) => `<link rel="stylesheet" href="${sanitize(url)}">`).join('\n')}
+      ${styleURLs.map((url) => `<link rel="stylesheet" href="${escapeAttr(url)}">`).join('\n')}
     </head>
     <body></body>
     </html>

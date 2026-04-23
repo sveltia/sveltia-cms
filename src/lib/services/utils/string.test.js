@@ -1,6 +1,44 @@
 import { describe, expect, it } from 'vitest';
 
-import { makeLink } from './string.js';
+import { escapeAttr, makeLink } from './string.js';
+
+describe('escapeAttr', () => {
+  it('should return the string unchanged when no special characters are present', () => {
+    expect(escapeAttr('en')).toBe('en');
+    expect(escapeAttr('https://example.com/style.css')).toBe('https://example.com/style.css');
+  });
+
+  it('should escape a bare & as &amp;', () => {
+    expect(escapeAttr('a&b')).toBe('a&amp;b');
+    expect(escapeAttr('a&b&c')).toBe('a&amp;b&amp;c');
+  });
+
+  it('should not double-encode pre-existing named entities', () => {
+    expect(escapeAttr('Tom &amp; Jerry')).toBe('Tom &amp; Jerry');
+    expect(escapeAttr('&lt;tag&gt;')).toBe('&lt;tag&gt;');
+  });
+
+  it('should not double-encode pre-existing numeric entities', () => {
+    expect(escapeAttr('&#34;')).toBe('&#34;');
+    expect(escapeAttr('&#x22;')).toBe('&#x22;');
+  });
+
+  it('should escape " as &quot;', () => {
+    expect(escapeAttr('say "hello"')).toBe('say &quot;hello&quot;');
+  });
+
+  it('should escape both bare & and " in the same string', () => {
+    expect(escapeAttr('"a&b"')).toBe('&quot;a&amp;b&quot;');
+  });
+
+  it('should handle a mix of bare & and pre-existing entity', () => {
+    expect(escapeAttr('a & b &amp; c')).toBe('a &amp; b &amp; c');
+  });
+
+  it('should handle an empty string', () => {
+    expect(escapeAttr('')).toBe('');
+  });
+});
 
 describe('makeLink', () => {
   it('should replace <a> tag with href attribute', () => {

@@ -27,10 +27,3 @@ export const normalizeProps = (props) =>
  * @returns {string} Escaped string.
  */
 export const replaceQuotes = (str) => str.replace(/"/g, "'");
-
-/**
- * Encode double quotes as HTML entities to prevent issues in HTML rendering.
- * @param {string} str String to escape.
- * @returns {string} Escaped string.
- */
-export const encodeQuotes = (str) => str.replace(/"/g, '&quot;');
