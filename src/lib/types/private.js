@@ -296,6 +296,8 @@
  * @property {string} userMessage User message content.
  * @property {number} [temperature] Sampling temperature (0–1). Default is 0.3.
  * @property {number} [maxTokens] Maximum output tokens. Default is 4000.
+ * @property {boolean} [thinking] Whether to enable thinking/reasoning mode. Only supported by
+ * certain providers (e.g., DeepSeek). Default varies by provider.
  */
 
 /**

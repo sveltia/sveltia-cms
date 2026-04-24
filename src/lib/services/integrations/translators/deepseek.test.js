@@ -186,8 +186,9 @@ describe('DeepSeek Translator Service', () => {
         /** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body),
       );
 
-      expect(requestBody.model).toBe('deepseek-chat');
+      expect(requestBody.model).toBe('deepseek-v4-flash');
       expect(requestBody.stream).toBe(false);
+      expect(requestBody.thinking).toEqual({ type: 'disabled' });
     });
 
     it('should include proper system and user messages in request', async () => {

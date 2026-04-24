@@ -19,7 +19,7 @@ import {
 
 const serviceId = 'deepseek';
 const serviceLabel = 'DeepSeek';
-const model = 'deepseek-chat';
+const model = 'deepseek-v4-flash';
 
 /**
  * Check if the given source and target languages are supported.
@@ -56,6 +56,7 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
       model,
       systemPrompt: createTranslationSystemPrompt(sourceLanguageName, targetLanguageName),
       userMessage: createTranslationUserPrompt(texts),
+      thinking: false,
     });
 
     return parseAiTranslationResponse(content, texts.length, 'DeepSeek API');
