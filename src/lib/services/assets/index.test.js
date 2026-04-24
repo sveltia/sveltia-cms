@@ -6,6 +6,7 @@ import {
   editingAsset,
   focusedAsset,
   getAssetByAbsolutePath,
+  getAssetByInternalPath,
   getAssetByPath,
   getAssetByRelativePath,
   getAssetByRelativePathAndCollection,
@@ -432,6 +433,29 @@ describe('assets/index', () => {
 
       expect(result.undersizedFiles).toEqual([file1, file3]);
       expect(result.oversizedFiles).toEqual([file2]);
+    });
+  });
+
+  describe('getAssetByInternalPath', () => {
+    it('should return an asset by internal path', () => {
+      const asset = /** @type {any} */ ({ path: 'assets/photo.jpg', name: 'photo.jpg' });
+
+      allAssets.set([asset]);
+
+      expect(getAssetByInternalPath('assets/photo.jpg')).toBe(asset);
+    });
+
+    it('should rebuild the path map when allAssets changes', () => {
+      const oldAsset = /** @type {any} */ ({ path: 'assets/old.jpg', name: 'old.jpg' });
+      const newAsset = /** @type {any} */ ({ path: 'assets/new.jpg', name: 'new.jpg' });
+
+      allAssets.set([oldAsset]);
+      expect(getAssetByInternalPath('assets/old.jpg')).toBe(oldAsset);
+
+      allAssets.set([newAsset]);
+
+      expect(getAssetByInternalPath('assets/old.jpg')).toBeUndefined();
+      expect(getAssetByInternalPath('assets/new.jpg')).toBe(newAsset);
     });
   });
 

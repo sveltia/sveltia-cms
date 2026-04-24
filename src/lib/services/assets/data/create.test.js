@@ -7,6 +7,7 @@ vi.mock('$lib/services/assets', () => ({
   allAssets: { subscribe: vi.fn() },
   focusedAsset: { set: vi.fn() },
   overlaidAsset: { set: vi.fn() },
+  getAssetByInternalPath: vi.fn(),
   getAssetsByDirName: vi.fn(),
 }));
 
@@ -84,6 +85,7 @@ vi.mock('$lib/services/assets', () => ({
     set: vi.fn(),
     subscribe: vi.fn(() => vi.fn()),
   },
+  getAssetByInternalPath: vi.fn(),
   getAssetsByDirName: vi.fn().mockReturnValue([]),
 }));
 
@@ -429,7 +431,7 @@ describe('assets/data/create', () => {
     });
 
     it('should update focusedAsset when it exists', async () => {
-      const { focusedAsset, allAssets } = await import('$lib/services/assets');
+      const { focusedAsset, getAssetByInternalPath } = await import('$lib/services/assets');
       const { get } = await import('svelte/store');
 
       const oldAsset = {
@@ -448,17 +450,18 @@ describe('assets/data/create', () => {
 
       vi.mocked(get).mockImplementation((store) => {
         if (store === focusedAsset) return oldAsset;
-        if (store === allAssets) return [newAsset];
         return undefined;
       });
+      vi.mocked(getAssetByInternalPath).mockReturnValue(/** @type {any} */ (newAsset));
 
       updatedStores({ count: 1 });
 
+      expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/old.jpg');
       expect(focusedAsset.set).toHaveBeenCalledWith(newAsset);
     });
 
     it('should update overlaidAsset when it exists', async () => {
-      const { overlaidAsset, allAssets } = await import('$lib/services/assets');
+      const { overlaidAsset, getAssetByInternalPath } = await import('$lib/services/assets');
       const { get } = await import('svelte/store');
 
       const oldAsset = {
@@ -477,17 +480,20 @@ describe('assets/data/create', () => {
 
       vi.mocked(get).mockImplementation((store) => {
         if (store === overlaidAsset) return oldAsset;
-        if (store === allAssets) return [newAsset];
         return undefined;
       });
+      vi.mocked(getAssetByInternalPath).mockReturnValue(/** @type {any} */ (newAsset));
 
       updatedStores({ count: 1 });
 
+      expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/old.jpg');
       expect(overlaidAsset.set).toHaveBeenCalledWith(newAsset);
     });
 
     it('should update both focusedAsset and overlaidAsset when they exist', async () => {
-      const { focusedAsset, overlaidAsset, allAssets } = await import('$lib/services/assets');
+      const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
+        await import('$lib/services/assets');
+
       const { get } = await import('svelte/store');
 
       const oldFocused = {
@@ -515,12 +521,16 @@ describe('assets/data/create', () => {
       vi.mocked(get).mockImplementation((store) => {
         if (store === focusedAsset) return oldFocused;
         if (store === overlaidAsset) return oldOverlaid;
-        if (store === allAssets) return [newFocused, newOverlaid];
         return undefined;
       });
+      vi.mocked(getAssetByInternalPath).mockImplementation(
+        (path) => /** @type {any} */ (path === '/images/focused.jpg' ? newFocused : newOverlaid),
+      );
 
       updatedStores({ count: 2 });
 
+      expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/focused.jpg');
+      expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/overlaid.jpg');
       expect(focusedAsset.set).toHaveBeenCalledWith(newFocused);
       expect(overlaidAsset.set).toHaveBeenCalledWith(newOverlaid);
     });

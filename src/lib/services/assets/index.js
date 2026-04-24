@@ -64,6 +64,13 @@ const getAssetPathMap = () => {
 };
 
 /**
+ * Get an asset by its internal repository path.
+ * @param {string} path Asset path.
+ * @returns {Asset | undefined} Asset.
+ */
+export const getAssetByInternalPath = (path) => getAssetPathMap().get(path);
+
+/**
  * Selected assets.
  * @type {Writable<Asset[]>}
  */
