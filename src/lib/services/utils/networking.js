@@ -54,6 +54,10 @@ export const sendRequest = async (
   init.cache = 'no-cache';
   init.headers = new Headers(init.headers);
 
+  if (init.headers.has('Authorization') && !isSecureURL(url)) {
+    throw new Error('Refusing to send credentials over an insecure connection');
+  }
+
   if (responseType === 'json') {
     init.headers.set('Accept', 'application/json');
   }

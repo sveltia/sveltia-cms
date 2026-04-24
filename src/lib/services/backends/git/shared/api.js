@@ -2,7 +2,7 @@ import { _ } from '@sveltia/i18n';
 import { get } from 'svelte/store';
 
 import { user } from '$lib/services/user';
-import { sendRequest } from '$lib/services/utils/networking';
+import { isSecureURL, sendRequest } from '$lib/services/utils/networking';
 
 /**
  * @import { ApiEndpointConfig, AuthTokens, FetchApiOptions } from '$lib/types/private';
@@ -45,6 +45,10 @@ export const graphqlVars = {};
 export const refreshAccessToken = async ({ clientId, tokenURL, refreshToken }) => {
   let response;
   let token = '';
+
+  if (!isSecureURL(tokenURL)) {
+    throw new Error(_('sign_in_error.TOKEN_REFRESH_FAILED'));
+  }
 
   try {
     response = await fetch(tokenURL, {

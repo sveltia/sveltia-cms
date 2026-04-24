@@ -5,6 +5,7 @@ import { LocalStorage } from '@sveltia/utils/storage';
 import { get, writable } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
+import { isSecureURL } from '$lib/services/utils/networking';
 
 /**
  * @import {
@@ -299,6 +300,14 @@ export const finishClientSideAuth = async ({ backendName, clientId, tokenURL, co
   let token = '';
   let refreshToken = '';
   let error = '';
+
+  if (!isSecureURL(tokenURL)) {
+    return sendMessage({
+      provider,
+      error: _('sign_in_error.TOKEN_REQUEST_FAILED'),
+      errorCode: 'TOKEN_REQUEST_FAILED',
+    });
+  }
 
   try {
     response = await fetch(tokenURL, {

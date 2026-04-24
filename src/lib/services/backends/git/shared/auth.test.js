@@ -830,6 +830,28 @@ describe('git/shared/auth', () => {
       expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
     });
 
+    it('should reject insecure token request URLs', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+      });
+
+      await finishClientSideAuth({
+        backendName: 'gitlab',
+        clientId: 'test-client',
+        tokenURL: 'http://gitlab.example.com/oauth/token',
+        code: 'test-code',
+        state: 'test-csrf',
+      });
+
+      expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+      expect(fetch).not.toHaveBeenCalled();
+      expect(mockWindow.opener.postMessage).toHaveBeenCalledWith(
+        'authorizing:gitlab',
+        'https://localhost:3000',
+      );
+    });
+
     it('should handle malformed JSON response', async () => {
       vi.mocked(LocalStorage.get).mockResolvedValue({
         csrfToken: 'test-csrf',

@@ -83,6 +83,29 @@ describe('sendRequest', () => {
     expect(headers.get('Accept')).toBe('application/json');
   });
 
+  test('should reject Authorization headers over insecure remote HTTP', async () => {
+    await expect(
+      sendRequest('http://api.example.com/data', { headers: { Authorization: 'token secret' } }),
+    ).rejects.toThrow('Refusing to send credentials over an insecure connection');
+
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  test('should allow Authorization headers over localhost HTTP', async () => {
+    const mockResponse = { data: 'test' };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    await expect(
+      sendRequest('http://localhost:3000/data', { headers: { Authorization: 'token secret' } }),
+    ).resolves.toEqual(mockResponse);
+  });
+
   test('should handle POST requests with JSON body', async () => {
     const mockResponse = { success: true };
     const requestBody = { name: 'test' };

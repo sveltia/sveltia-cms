@@ -22,6 +22,12 @@ vi.mock('$lib/services/user', () => ({
 
 // Mock networking utils
 vi.mock('$lib/services/utils/networking', () => ({
+  isSecureURL: vi.fn(
+    (url) =>
+      url.startsWith('https://') ||
+      url.startsWith('http://localhost') ||
+      url.startsWith('http://127.0.0.1'),
+  ),
   sendRequest: vi.fn(),
 }));
 
@@ -213,6 +219,18 @@ describe('api.js', () => {
           refreshToken: 'old-refresh-token',
         }),
       ).rejects.toThrow('Token refresh failed');
+    });
+
+    it('should reject insecure token refresh URLs', async () => {
+      await expect(
+        refreshAccessToken({
+          clientId: 'test-client-id',
+          tokenURL: 'http://api.example.com/oauth/token',
+          refreshToken: 'old-refresh-token',
+        }),
+      ).rejects.toThrow('Token refresh failed');
+
+      expect(fetch).not.toHaveBeenCalled();
     });
   });
 
