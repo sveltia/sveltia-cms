@@ -60,6 +60,38 @@ import { getOrCreate } from '$lib/services/utils/cache';
 export const optionCacheMap = new Map();
 
 /**
+ * Cache indexed labels for each cached option array so multi-value relations don’t scan all
+ * relation options for every stored value.
+ * @type {WeakMap<RelationOption[], Map<any, string>>}
+ */
+const optionLabelMapCache = new WeakMap();
+
+/**
+ * Create or retrieve a value-to-label index for the given relation options.
+ * @param {RelationOption[]} options Relation options.
+ * @returns {Map<any, string>} Option labels keyed by option value.
+ */
+const getOptionLabelMap = (options) => {
+  const cachedLabelMap = optionLabelMapCache.get(options);
+
+  if (cachedLabelMap) {
+    return cachedLabelMap;
+  }
+
+  const labelMap = new Map();
+
+  options.forEach(({ value, label }) => {
+    if (!labelMap.has(value)) {
+      labelMap.set(value, label);
+    }
+  });
+
+  optionLabelMapCache.set(options, labelMap);
+
+  return labelMap;
+};
+
+/**
  * `WeakMap` used to assign stable numeric identities to objects for cheap cache key building,
  * avoiding the need to `JSON.stringify` large objects like `fieldConfig` or `refEntries` arrays.
  * @type {WeakMap<object, number>}
@@ -791,12 +823,13 @@ export const getReferencedOptionLabel = ({ fieldConfig, valueMap, keyPath, local
   const { multiple, collection } = fieldConfig;
   const refEntries = getEntriesByCollection(collection);
   const refOptions = getOptions(locale, fieldConfig, refEntries);
+  const optionLabelMap = getOptionLabelMap(refOptions);
   /**
    * Get the label by value.
    * @param {any} _value Stored value.
    * @returns {string} Label.
    */
-  const getLabel = (_value) => refOptions.find((o) => o.value === _value)?.label || _value;
+  const getLabel = (_value) => optionLabelMap.get(_value) || _value;
 
   if (multiple) {
     const values = Object.entries(valueMap)

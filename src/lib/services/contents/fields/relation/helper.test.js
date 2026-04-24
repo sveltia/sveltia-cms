@@ -1291,6 +1291,38 @@ describe('Test getOptions()', async () => {
 
         expect(result).toBeUndefined();
       });
+
+      test('should preserve first matching option when indexing labels', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          display_fields: ['name.first'],
+          value_field: 'email',
+        };
+
+        vi.mocked(getFieldDisplayValue).mockImplementation(({ keyPath, valueMap }) => {
+          if (keyPath === 'email') {
+            return 'shared@example.com';
+          }
+
+          return valueMap?.[keyPath] || 'display-value';
+        });
+
+        const valueMap = {
+          author: 'shared@example.com',
+        };
+
+        const args = {
+          fieldConfig,
+          valueMap,
+          keyPath: 'author',
+          locale,
+        };
+
+        expect(getReferencedOptionLabel(args)).toBe('Elsie');
+        expect(getReferencedOptionLabel(args)).toBe('Elsie');
+      });
     });
 
     describe('Multiple value relations', () => {
