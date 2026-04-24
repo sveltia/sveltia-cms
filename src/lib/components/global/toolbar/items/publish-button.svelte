@@ -6,6 +6,7 @@
   import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
+  import { isSecureURL } from '$lib/services/utils/networking';
 
   const { deployHookURL, deployHookAuthHeader } = $derived($prefs);
   const triggerDeployment = $derived($backend?.triggerDeployment);
@@ -26,6 +27,10 @@
     showToast = true;
 
     try {
+      if (deployHookURL && !isSecureURL(deployHookURL)) {
+        throw new Error('Deploy hook URL must use HTTPS or localhost');
+      }
+
       const { ok, status } = deployHookURL
         ? await fetch(deployHookURL, {
             method: 'POST',

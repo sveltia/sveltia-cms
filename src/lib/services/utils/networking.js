@@ -6,6 +6,27 @@ import { isObject } from '@sveltia/utils/object';
  */
 
 /**
+ * Check if a URL can be requested without exposing credentials over an insecure transport.
+ * @param {string} url URL to check.
+ * @param {string} [baseURL] Base URL for relative URLs.
+ * @returns {boolean} Whether the URL uses HTTPS or local HTTP.
+ */
+export const isSecureURL = (
+  url,
+  baseURL = globalThis.window?.location?.origin ??
+    globalThis.location?.origin ??
+    'https://localhost',
+) => {
+  try {
+    const { hostname, protocol } = new URL(url, baseURL);
+
+    return protocol === 'https:' || ['localhost', '127.0.0.1', '[::1]'].includes(hostname);
+  } catch {
+    return false;
+  }
+};
+
+/**
  * A `fetch` wrapper to send an HTTP request to an API endpoint, parse the response as JSON or other
  * specified format, and handle errors gracefully.
  * @param {string} url URL.

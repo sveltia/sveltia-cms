@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { sendRequest } from './networking';
+import { isSecureURL, sendRequest } from './networking';
 
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefined) }));
 
@@ -8,6 +8,34 @@ vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefin
 const mockFetch = vi.fn();
 
 global.fetch = mockFetch;
+
+describe('isSecureURL', () => {
+  test('should allow HTTPS URLs', () => {
+    expect(isSecureURL('https://example.com/hook')).toBe(true);
+  });
+
+  test('should allow localhost HTTP URLs', () => {
+    expect(isSecureURL('http://localhost:3000/hook')).toBe(true);
+    expect(isSecureURL('http://127.0.0.1:3000/hook')).toBe(true);
+  });
+
+  test('should reject non-local HTTP URLs', () => {
+    expect(isSecureURL('http://example.com/hook')).toBe(false);
+  });
+
+  test('should reject non-HTTP protocols', () => {
+    expect(isSecureURL('ftp://example.com/hook')).toBe(false);
+  });
+
+  test('should resolve relative URLs against the provided base URL', () => {
+    expect(isSecureURL('/hook', 'https://example.com')).toBe(true);
+    expect(isSecureURL('/hook', 'http://example.com')).toBe(false);
+  });
+
+  test('should return false for invalid URLs that throw during parsing', () => {
+    expect(isSecureURL('http://[invalid]:80')).toBe(false);
+  });
+});
 
 describe('sendRequest', () => {
   beforeEach(() => {
