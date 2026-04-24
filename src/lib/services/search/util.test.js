@@ -85,4 +85,18 @@ describe('hasMatch', () => {
     expect(hasMatch({ value: 'test-file_name.txt', terms: 'file_name' })).toBe(true);
     expect(hasMatch({ value: 'version-1.2.3', terms: '1.2' })).toBe(true);
   });
+
+  it('should cache normalized values', () => {
+    const normalizedValueCache = new Map();
+
+    expect(hasMatch({ value: 'Café', terms: 'cafe', normalizedValueCache })).toBe(true);
+    expect(normalizedValueCache.get('Café')).toBe('cafe');
+  });
+
+  it('should reuse cached normalized values', () => {
+    const normalizedValueCache = new Map([['Café', 'cached-value']]);
+
+    expect(hasMatch({ value: 'Café', terms: 'cached', normalizedValueCache })).toBe(true);
+    expect(normalizedValueCache.get('Café')).toBe('cached-value');
+  });
 });

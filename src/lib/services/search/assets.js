@@ -7,6 +7,7 @@ import { hasMatch, normalize } from '$lib/services/search/util';
 /**
  * @import { Readable } from 'svelte/store';
  * @import { Asset } from '$lib/types/private';
+ * @import { NormalizedValueCache } from '$lib/services/search/util';
  */
 
 /**
@@ -23,7 +24,10 @@ export const searchAssets = ({ assets, terms }) => {
     return [];
   }
 
-  return assets.filter((asset) => hasMatch({ value: asset.name, terms }));
+  /** @type {NormalizedValueCache} */
+  const normalizedValueCache = new Map();
+
+  return assets.filter((asset) => hasMatch({ value: asset.name, terms, normalizedValueCache }));
 };
 
 /**

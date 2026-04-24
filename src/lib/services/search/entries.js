@@ -11,6 +11,7 @@ import { hasMatch, normalize } from '$lib/services/search/util';
 /**
  * @import { Readable } from 'svelte/store';
  * @import { Entry } from '$lib/types/private';
+ * @import { NormalizedValueCache } from '$lib/services/search/util';
  */
 
 /**
@@ -18,9 +19,10 @@ import { hasMatch, normalize } from '$lib/services/search/util';
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry to scan.
  * @param {string} args.terms Search terms.
+ * @param {NormalizedValueCache} [args.normalizedValueCache] Normalized value cache.
  * @returns {number} Points scored for the entry based on matches.
  */
-export const scanEntry = ({ entry, terms }) => {
+export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) => {
   // Count the number of matches, weighting the collection name and title
   let points = 0;
   const collections = getAssociatedCollections(entry);
@@ -28,13 +30,13 @@ export const scanEntry = ({ entry, terms }) => {
   if (collections.length) {
     collections.forEach((collection) => {
       // Check if the collection label or name matches
-      if (hasMatch({ value: collection.label || collection.name, terms })) {
+      if (hasMatch({ value: collection.label || collection.name, terms, normalizedValueCache })) {
         points += 10;
       }
 
       // Check if the file labels or names match
       points += getCollectionFilesByEntry(collection, entry).filter((file) =>
-        hasMatch({ value: file.label || file.name, terms }),
+        hasMatch({ value: file.label || file.name, terms, normalizedValueCache }),
       ).length;
     });
 
@@ -42,7 +44,7 @@ export const scanEntry = ({ entry, terms }) => {
     const summary = getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true });
 
     // Check if the entry summary matches
-    if (hasMatch({ value: summary, terms })) {
+    if (hasMatch({ value: summary, terms, normalizedValueCache })) {
       points += 10;
     }
   }
@@ -51,8 +53,11 @@ export const scanEntry = ({ entry, terms }) => {
   Object.values(entry.locales).forEach(({ content }) => {
     points += Object.values(content).filter(
       (value) =>
-        (typeof value === 'string' && !!value && hasMatch({ value, terms })) ||
-        (typeof value === 'number' && hasMatch({ value: String(value), terms })),
+        (typeof value === 'string' &&
+          !!value &&
+          hasMatch({ value, terms, normalizedValueCache })) ||
+        (typeof value === 'number' &&
+          hasMatch({ value: String(value), terms, normalizedValueCache })),
     ).length;
   });
 
@@ -73,8 +78,11 @@ export const searchEntries = ({ entries, terms }) => {
     return [];
   }
 
+  /** @type {NormalizedValueCache} */
+  const normalizedValueCache = new Map();
+
   return entries
-    .map((entry) => ({ entry, points: scanEntry({ entry, terms }) }))
+    .map((entry) => ({ entry, points: scanEntry({ entry, terms, normalizedValueCache }) }))
     .filter(({ points }) => points > 0)
     .sort((a, b) => b.points - a.points)
     .map(({ entry }) => entry);
