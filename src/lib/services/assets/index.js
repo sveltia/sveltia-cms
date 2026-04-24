@@ -1,6 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
-import equal from 'fast-deep-equal';
 import { flatten } from 'flat';
 import { derived, get, writable } from 'svelte/store';
 
@@ -413,11 +412,30 @@ export const getAssetByPath = ({ value, entry, collectionName, fileName, typedKe
 };
 
 /**
+ * Check if an asset belongs to the given asset folder.
+ * @param {Asset} asset Asset.
+ * @param {AssetFolderInfo} folder Folder info.
+ * @returns {boolean} Result.
+ */
+export const isAssetInFolder = ({ folder: assetFolder }, folder) =>
+  assetFolder === folder ||
+  (assetFolder.collectionName === folder.collectionName &&
+    assetFolder.fileName === folder.fileName &&
+    assetFolder.typedKeyPath === folder.typedKeyPath &&
+    assetFolder.isIndexFile === folder.isIndexFile &&
+    assetFolder.internalPath === folder.internalPath &&
+    assetFolder.internalSubPath === folder.internalSubPath &&
+    assetFolder.publicPath === folder.publicPath &&
+    assetFolder.entryRelative === folder.entryRelative &&
+    assetFolder.hasTemplateTags === folder.hasTemplateTags);
+
+/**
  * Get a list of assets stored in the given collection defined folder.
  * @param {AssetFolderInfo} folder Folder info.
  * @returns {Asset[]} Assets.
  */
-export const getAssetsByFolder = (folder) => get(allAssets).filter((a) => equal(a.folder, folder));
+export const getAssetsByFolder = (folder) =>
+  get(allAssets).filter((asset) => isAssetInFolder(asset, folder));
 
 /**
  * Get a list of assets stored in the given internal directory.

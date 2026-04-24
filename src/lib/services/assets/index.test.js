@@ -12,6 +12,7 @@ import {
   getAssetByRelativePathAndCollection,
   getAssetsByDirName,
   getAssetsByFolder,
+  isAssetInFolder,
   isRelativePath,
   overlaidAsset,
   processedAssets,
@@ -24,7 +25,6 @@ import {
 // Mock all dependencies
 vi.mock('@sveltia/utils/file');
 vi.mock('@sveltia/utils/string');
-vi.mock('fast-deep-equal');
 vi.mock('flat');
 vi.mock('$lib/services/integrations/media-libraries/default');
 vi.mock('$lib/services/common/slug');
@@ -722,10 +722,7 @@ describe('assets/index', () => {
   });
 
   describe('getAssetsByFolder', () => {
-    it('should return assets matching the folder', async () => {
-      const { default: equal } = await import('fast-deep-equal');
-      const equalMock = vi.mocked(equal);
-
+    it('should return assets matching the folder', () => {
       const folder = {
         internalPath: 'assets',
         publicPath: '/assets',
@@ -760,18 +757,36 @@ describe('assets/index', () => {
 
       allAssets.set([matchingAsset, nonMatchingAsset]);
 
-      // Mock equal to return true only for the matching folder
-      equalMock.mockImplementation((a, b) => a === b);
-
       const result = getAssetsByFolder(folder);
 
       expect(result).toEqual([matchingAsset]);
     });
 
-    it('should return empty array when no assets match', async () => {
-      const { default: equal } = await import('fast-deep-equal');
-      const equalMock = vi.mocked(equal);
+    it('should return assets with equivalent folder info', () => {
+      const folder = {
+        internalPath: 'assets',
+        publicPath: '/assets',
+        collectionName: undefined,
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
 
+      const matchingAsset = {
+        path: 'assets/image.jpg',
+        name: 'image.jpg',
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        sha: 'abc123',
+        size: 1024,
+        folder: { ...folder },
+      };
+
+      allAssets.set([matchingAsset]);
+
+      expect(isAssetInFolder(/** @type {any} */ (matchingAsset), folder)).toBe(true);
+      expect(getAssetsByFolder(folder)).toEqual([matchingAsset]);
+    });
+
+    it('should return empty array when no assets match', () => {
       const folder = {
         internalPath: 'nonexistent',
         publicPath: '/nonexistent',
@@ -796,7 +811,6 @@ describe('assets/index', () => {
       };
 
       allAssets.set([asset]);
-      equalMock.mockReturnValue(false);
 
       const result = getAssetsByFolder(folder);
 
@@ -3127,10 +3141,7 @@ describe('assets/index', () => {
   });
 
   describe('additional edge cases and scenarios', () => {
-    it('should handle getAssetsByFolder with multiple matching folders', async () => {
-      const { default: equal } = await import('fast-deep-equal');
-      const equalMock = vi.mocked(equal);
-
+    it('should handle getAssetsByFolder with multiple matching folders', () => {
       const folder1 = {
         internalPath: 'assets/images',
         publicPath: '/assets/images',
@@ -3175,13 +3186,6 @@ describe('assets/index', () => {
       };
 
       allAssets.set([asset1, asset2, asset3]);
-
-      // Mock equal to match folder1 only
-      equalMock.mockImplementation((a, b) => {
-        if (a === folder1 && b === folder1) return true;
-        if (a === folder2 && b === folder2) return true;
-        return false;
-      });
 
       const result = getAssetsByFolder(folder1);
 
