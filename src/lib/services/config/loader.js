@@ -3,6 +3,7 @@ import { isObject } from '@sveltia/utils/object';
 import merge from 'deepmerge';
 
 import { parseTOML, parseYAML } from '$lib/services/contents/file/parse';
+import { isSecureURL } from '$lib/services/utils/networking';
 
 /**
  * @typedef {object} ConfigLink
@@ -137,17 +138,7 @@ export const getConfigPath = (path) => {
 export const verifyLinksAreSecure = (links) => {
   const { origin } = window.location;
 
-  return links.every(({ href }) => {
-    try {
-      const { protocol, hostname } = new URL(href, origin);
-
-      // Check if protocol is HTTPS or if it's a localhost address
-      return protocol === 'https:' || hostname === 'localhost' || hostname === '127.0.0.1';
-    } catch {
-      // If URL parsing fails, treat as insecure
-      return false;
-    }
-  });
+  return links.every(({ href }) => isSecureURL(href, origin));
 };
 
 /**
