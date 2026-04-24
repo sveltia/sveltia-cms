@@ -59,7 +59,10 @@
    * corresponding field in the editor.
    */
   const highlightEditorField = () => {
-    window.postMessage({ type: 'highlight-editor-field', payload: { locale, keyPath } });
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale, keyPath } },
+      window.location.origin,
+    );
   };
 </script>
 

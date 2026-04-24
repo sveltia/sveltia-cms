@@ -29,7 +29,10 @@
    * @param {FieldKeyPath} args.keyPath Key path of the field.
    */
   const focusField = ({ locale, keyPath }) => {
-    window.postMessage({ type: 'highlight-editor-field', payload: { locale, keyPath } });
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale, keyPath } },
+      window.location.origin,
+    );
   };
 </script>
 

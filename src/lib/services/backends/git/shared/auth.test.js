@@ -235,6 +235,11 @@ describe('git/shared/auth', () => {
         token: 'test-token',
       });
 
+      expect(mockWindow.opener.postMessage).toHaveBeenCalledWith(
+        'authorizing:github',
+        'https://localhost:3000',
+      );
+
       // Simulate receiving the authorization message
       messageHandler({
         data: 'authorizing:github',

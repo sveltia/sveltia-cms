@@ -261,7 +261,7 @@ export const sendMessage = ({ provider = 'unknown', token, refreshToken, error, 
   };
 
   window.addEventListener('message', onMessage);
-  window.opener?.postMessage(`authorizing:${provider}`, '*');
+  window.opener?.postMessage(`authorizing:${provider}`, window.location.origin);
 };
 
 /**
