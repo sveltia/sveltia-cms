@@ -1,4 +1,3 @@
-import equal from 'fast-deep-equal';
 import { derived, get, writable } from 'svelte/store';
 
 import { appLocaleStore } from '$lib/services/app/i18n';
@@ -109,7 +108,6 @@ export const entryGroups = derived(
 
     lastListedEntries = _listedEntries;
     lastCurrentView = _currentView;
-    set([]);
 
     const collection = /** @type {InternalEntryCollection} */ (get(selectedCollection));
     /** @type {Entry[]} */
@@ -117,6 +115,7 @@ export const entryGroups = derived(
 
     // Reset the groups if the current collection is empty or a file/singleton collection
     if (!entries.length || !!getCollectionFilesByEntry(collection, entries[0]).length) {
+      set([]);
       return;
     }
 
@@ -128,11 +127,7 @@ export const entryGroups = derived(
       entries = filterEntries(entries, collection, _currentView.filters);
     }
 
-    const groups = groupEntries(entries, collection, _currentView.group);
-
-    if (!equal(get(entryGroups), groups)) {
-      set(groups);
-    }
+    set(groupEntries(entries, collection, _currentView.group));
   },
 );
 

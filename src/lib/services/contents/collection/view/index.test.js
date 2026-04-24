@@ -391,6 +391,38 @@ describe('collection/view/index', () => {
     expect(entryGroups).toBeDefined();
   });
 
+  test('entryGroups does not emit an empty reset before populated groups', () => {
+    const mockCollection = { name: 'posts', folder: '_posts' };
+
+    /** @type {any} */
+    const mockEntries = [
+      { id: '1', slug: 'post-1', locales: { _default: { content: {} } }, collectionName: 'posts' },
+    ];
+
+    const mockGroups = [{ name: 'All', entries: mockEntries }];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(groupEntries).mockReturnValue(mockGroups);
+
+    _selectedCollection.set(/** @type {any} */ (mockCollection));
+    _allEntries.set(mockEntries);
+
+    /** @type {any[]} */
+    const values = [];
+
+    const unsubscribe = entryGroups.subscribe((value) => {
+      values.push(value);
+    });
+
+    values.length = 0;
+    currentView.set(/** @type {any} */ ({ type: 'grid' }));
+
+    unsubscribe();
+
+    expect(values).toEqual([mockGroups]);
+  });
+
   test('listedEntries resets selectedEntries when entries change', async () => {
     /** @type {any} */
     const mockEntries = [{ id: '1', slug: 'post-1', locales: {}, collectionName: 'posts' }];
