@@ -18,6 +18,7 @@
     FRAME_SRC_PARAMS,
     getMergedLibraryOptions,
   } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
+  import { openNewTab } from '$lib/services/utils/window';
 
   /**
    * @import { MediaLibraryAssetKind, SelectedResource } from '$lib/types/private';
@@ -201,7 +202,7 @@
       onclick={async () => {
         // Let the user sign in to Cloudinary first in a separate tab, otherwise third-party cookies
         // in the iframe won’t work, and authentication will fail.
-        window.open('https://console.cloudinary.com/console/media_library/cms_login?cms=true');
+        openNewTab('https://console.cloudinary.com/console/media_library/cms_login?cms=true');
       }}
     />
     <div role="none">{_('cloud_storage.cloudinary.activate.description')}</div>

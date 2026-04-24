@@ -11,6 +11,7 @@
   import { signOut } from '$lib/services/user/auth';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
+  import { openNewTab } from '$lib/services/utils/window';
 
   /**
    * @typedef {object} Props
@@ -39,7 +40,7 @@
         : _('signed_in_as_x', { values: { name: $user?.login } })}
     disabled={isLocalRepo || isTestRepo}
     onclick={() => {
-      window.open($user?.profileURL, '_blank');
+      openNewTab($user?.profileURL);
     }}
   />
   <Divider />
@@ -54,7 +55,7 @@
       label={_('git_repository')}
       disabled={!$backend?.repository?.treeBaseURL}
       onclick={() => {
-        window.open($backend?.repository?.treeBaseURL);
+        openNewTab($backend?.repository?.treeBaseURL);
       }}
     />
     <MenuItem

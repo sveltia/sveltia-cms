@@ -39,6 +39,7 @@
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
+  import { openNewTab } from '$lib/services/utils/window';
 
   /**
    * @typedef {object} Props
@@ -233,7 +234,7 @@
       variant="tertiary"
       label={_('view_on_live_site')}
       onclick={() => {
-        window.open(previewURL);
+        openNewTab(previewURL);
       }}
     />
   {/if}

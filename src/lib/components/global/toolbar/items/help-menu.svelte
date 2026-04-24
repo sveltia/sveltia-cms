@@ -5,6 +5,7 @@
   import ReleaseNotesMenuItem from '$lib/components/help/release-notes-menu-item.svelte';
   import ShortcutsMenuItem from '$lib/components/help/shortcuts-menu-item.svelte';
   import { prefs } from '$lib/services/user/prefs';
+  import { openNewTab } from '$lib/services/utils/window';
 
   /**
    * @typedef {object} Props
@@ -23,7 +24,7 @@
   <MenuItem
     label={_(labelKey)}
     onclick={() => {
-      window.open(url, '_blank');
+      openNewTab(url);
     }}
   />
 {/snippet}

@@ -25,4 +25,7 @@ const LINK_SANITIZE_OPTIONS = {
  * @returns {string} Linked and sanitized HTML string.
  */
 export const makeLink = (str, href) =>
-  sanitize(str.replace('<a>', `<a href="${href}" target="_blank">`), LINK_SANITIZE_OPTIONS);
+  sanitize(
+    str.replace('<a>', `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer">`),
+    LINK_SANITIZE_OPTIONS,
+  );

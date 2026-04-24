@@ -5,6 +5,7 @@ import { derived, get, writable } from 'svelte/store';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
+import { openNewTab } from '$lib/services/utils/window';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -209,5 +210,5 @@ export const openProductionSite = () => {
     get(cmsConfig)
   );
 
-  window.open(displayURL || siteURL || '/', '_blank');
+  openNewTab(displayURL || siteURL || '/');
 };

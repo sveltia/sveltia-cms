@@ -5,6 +5,7 @@
 
   import { backend } from '$lib/services/backends';
   import { cmsConfig } from '$lib/services/config';
+  import { openNewTab } from '$lib/services/utils/window';
 
   /**
    * @import { BackendServiceStatus } from '$lib/types/private';
@@ -86,7 +87,7 @@
       variant="link"
       label={_('details')}
       onclick={() => {
-        window.open($backend?.statusDashboardURL, '_blank');
+        openNewTab($backend?.statusDashboardURL);
       }}
     />
   </Infobar>

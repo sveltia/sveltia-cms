@@ -8,6 +8,7 @@
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { backend } from '$lib/services/backends';
   import { prefs } from '$lib/services/user/prefs';
+  import { openNewTab } from '$lib/services/utils/window';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -83,7 +84,7 @@
         label={_('view_on_live_site')}
         disabled={!publicURL}
         onclick={() => {
-          window.open(publicURL);
+          openNewTab(publicURL);
         }}
       />
       {#if $prefs.devModeEnabled}
@@ -94,7 +95,7 @@
             default: _('view_in_repository'),
           })}
           onclick={() => {
-            window.open(`${repoBlobURL}?plain=1`);
+            openNewTab(`${repoBlobURL}?plain=1`);
           }}
         />
       {/if}

@@ -79,11 +79,11 @@ describe('makeLink', () => {
   });
 
   it('should preserve rel attribute if present', () => {
-    // The function generates rel attributes automatically during sanitization
     const result = makeLink('Click <a>here</a>', 'https://example.com');
 
     expect(result).toContain('<a');
     expect(result).toContain('href="https://example.com"');
+    expect(result).toContain('rel="noopener noreferrer"');
   });
 
   it('should handle empty href gracefully', () => {
@@ -111,7 +111,16 @@ describe('makeLink', () => {
     const url = 'https://example.com/path?q="test"&other=<value>';
     const result = makeLink('Link <a>here</a>', url);
 
-    expect(result).toContain('href="https://example.com/path?q=');
+    expect(result).toContain(
+      'href="https://example.com/path?q=&quot;test&quot;&amp;other=<value>"',
+    );
+  });
+
+  it('should not allow href values to inject attributes', () => {
+    const result = makeLink('Link <a>text</a>', 'https://example.com" onclick="alert(1)');
+
+    expect(result).toContain('href="https://example.com&quot; onclick=&quot;alert(1)"');
+    expect(result).not.toContain('onclick="');
   });
 
   it('should remove potentially malicious onclick attributes', () => {

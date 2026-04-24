@@ -488,7 +488,11 @@ describe('navigation', () => {
 
       openProductionSite();
 
-      expect(window.open).toHaveBeenCalledWith('https://my-site.com', '_blank');
+      expect(window.open).toHaveBeenCalledWith(
+        'https://my-site.com',
+        '_blank',
+        'noopener,noreferrer',
+      );
     });
 
     it('should fall back to _siteURL when no display_url', () => {
@@ -498,7 +502,11 @@ describe('navigation', () => {
 
       openProductionSite();
 
-      expect(window.open).toHaveBeenCalledWith('https://fallback.com', '_blank');
+      expect(window.open).toHaveBeenCalledWith(
+        'https://fallback.com',
+        '_blank',
+        'noopener,noreferrer',
+      );
     });
 
     it('should use root path when no URLs available', () => {
@@ -506,7 +514,7 @@ describe('navigation', () => {
 
       openProductionSite();
 
-      expect(window.open).toHaveBeenCalledWith('/', '_blank');
+      expect(window.open).toHaveBeenCalledWith('/', '_blank', 'noopener,noreferrer');
     });
   });
 
