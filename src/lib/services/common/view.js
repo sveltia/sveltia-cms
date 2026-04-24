@@ -60,25 +60,27 @@ export const matchesFilter = (value, pattern, regex) => {
  * Sort an array of items using a key function and apply ascending/descending order.
  * @template T
  * @param {T[]} items Items to sort in place.
- * @param {(item: T) => string | number} getKey Returns the pre-computed sort key for an item.
+ * @param {(item: T) => string | number} getKey Returns the sort key for an item. Called once per
+ * item.
  * @param {boolean} isStringType Whether keys should be compared as strings (locale-aware); if
  * `false`, numeric subtraction is used instead.
  * @param {string | undefined} [order] Sort order; reverses the array when `'descending'`.
  * @returns {T[]} The sorted array (same reference).
  */
 export const sortItemsByKey = (items, getKey, isStringType, order) => {
-  items.sort((a, b) => {
-    const aKey = getKey(a);
-    const bKey = getKey(b);
+  const keyedItems = items.map((item) => ({ item, key: getKey(item) }));
 
-    return isStringType
+  keyedItems.sort(({ key: aKey }, { key: bKey }) =>
+    isStringType
       ? compare(/** @type {string} */ (aKey), /** @type {string} */ (bKey))
-      : /** @type {number} */ (aKey) - /** @type {number} */ (bKey);
-  });
+      : /** @type {number} */ (aKey) - /** @type {number} */ (bKey),
+  );
 
   if (order === 'descending') {
-    items.reverse();
+    keyedItems.reverse();
   }
+
+  items.splice(0, items.length, ...keyedItems.map(({ item }) => item));
 
   return items;
 };

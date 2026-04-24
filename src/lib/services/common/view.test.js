@@ -219,4 +219,14 @@ describe('Test sortItemsByKey()', () => {
 
     expect(items.map((i) => i.v)).toEqual(['a', 'b']);
   });
+
+  test('computes each sort key once', () => {
+    const items = [{ v: 'c' }, { v: 'a' }, { v: 'b' }];
+    const getKey = vi.fn((i) => i.v);
+
+    sortItemsByKey(items, getKey, true, 'ascending');
+
+    expect(getKey).toHaveBeenCalledTimes(items.length);
+    expect(items.map((i) => i.v)).toEqual(['a', 'b', 'c']);
+  });
 });
