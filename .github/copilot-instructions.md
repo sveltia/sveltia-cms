@@ -2,11 +2,11 @@
 
 ## Repository Overview
 
-**Sveltia CMS** is a modern, Git-based headless content management system built as a drop-in replacement for Netlify/Decap CMS. The project is written in Svelte 5 with JavaScript, using Vite 7 as the build tool and Vitest 4 for testing.
+**Sveltia CMS** is a modern, Git-based headless content management system built as a drop-in replacement for Netlify/Decap CMS. The project is written in Svelte 5 with JavaScript, using Vite 8 as the build tool and Vitest 4 for testing.
 
 **Key Details:**
 
-- **Size**: ~800 source files, 200+ test files, 6000+ tests
+- **Size**: ~800 source files, 225+ test files, 6,200+ tests
 - **Languages**: TypeScript-flavoured JavaScript (ES2024/JSDoc), Svelte 5, SCSS/CSS, HTML
 - **Target Runtime**: Browser (IIFE and ES modules)
 - **Package Manager**: **pnpm only** (npm will cause issues)
@@ -67,13 +67,6 @@ pnpm test:coverage       # Test coverage report
 pnpm format          # Auto-fix Prettier formatting
 ```
 
-### Build Timing
-
-- `pnpm install`: ~25-30 seconds
-- `pnpm check`: ~30-45 seconds
-- `pnpm test`: ~35 seconds (6000+ tests)
-- `pnpm build`: ~15-20 seconds
-
 ### Common Issues & Solutions
 
 **pnpm not found**: Install with `npm install -g pnpm@latest`
@@ -118,7 +111,7 @@ src/lib/
 - `.prettierrc.yaml`: Code formatting (single quotes, trailing commas)
 - `.stylelintrc.yaml`: SCSS/CSS linting rules
 - `package.json`: Scripts and dependencies
-- `.nvmrc`: Node v24 requirement
+- `.nvmrc`: Node v25 requirement
 
 ### Build Output
 
@@ -167,7 +160,7 @@ src/lib/
 - **Framework**: Vitest 4 with coverage reporting
 - **Location**: Co-located `*.test.js` files
 - **Coverage**: Focuses on `src/lib/{components,services}/**/*.js`
-- **Standards**: 6000+ tests must continue passing with 100% coverage
+- **Standards**: 6,200+ tests must continue passing with 100% coverage
 
 ### File Patterns
 
@@ -194,15 +187,15 @@ import Button from '$lib/components/common/button.svelte';
 
 1. **Always run `pnpm install` first**
 2. **Use `pnpm check` before committing** - fixes many issues automatically
-3. **Run tests frequently**: `pnpm test`
+3. **Run tests frequently**: `pnpm test` and `pnpm test:coverage` to ensure no regressions
 4. **Follow existing patterns** - this codebase has consistent conventions
 5. **Test in browser**: Use `pnpm dev` to verify UI changes work correctly
 
 ### Special Notes
 
 - **Svelte 5**: Uses new runes syntax - avoid legacy Svelte patterns; use the [MCP server](https://mcp.svelte.dev/mcp) if needed
-- **Bundle size**: Watch for large dependencies - final bundle should stay under 1.5MB
-- **Browser support**: Targets modern browsers (ES2024)
+- **Bundle size**: Watch for large dependencies - final bundle should stay under 2 MB
+- **Browser support**: Targets modern browsers (ES2025)
 - **CMS Domain**: Understanding of headless CMS concepts helpful for meaningful contributions
 - **Test coverage**: Use `sed` to find uncovered lines in reports
 
