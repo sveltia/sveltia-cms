@@ -33,7 +33,7 @@ export const parseResults = (results) =>
 
     return {
       id,
-      // The service doesn't provide descriptions
+      // The service doesn’t provide descriptions
       description: '',
       previewURL: `https://picsum.photos/id/${id}/${pw}/${ph}.webp`,
       downloadURL: `https://picsum.photos/id/${id}/${w}/${h}.webp`,

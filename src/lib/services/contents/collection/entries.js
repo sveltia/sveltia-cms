@@ -218,7 +218,7 @@ export const getEntriesByAssetURL = async (
       for (const { content } of Object.values(locales)) {
         for (const [keyPath, value] of Object.entries(content)) {
           if (typeof value !== 'string' || !value) continue;
-          // Pre-filter: skip values that can't possibly contain the asset URL, avoiding the
+          // Pre-filter: skip values that can’t possibly contain the asset URL, avoiding the
           // expensive getField() call for the vast majority of fields.
           if (!isBlobURL && !value.includes(assetURL)) continue;
 

@@ -161,7 +161,7 @@ export const goto = async (
 ) => {
   const { path: currentPath } = parseLocation();
 
-  // If we're already on this page AND not updating state, don't navigate or trigger a transition
+  // If we’re already on this page AND not updating state, don’t navigate or trigger a transition
   if (currentPath === path && !Object.keys(state).length && !replaceState) {
     return;
   }

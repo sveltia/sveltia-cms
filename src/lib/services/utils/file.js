@@ -151,7 +151,7 @@ export const formatFileName = (
     const { filename, extension } = getPathInfo(fileName);
     const slug = slugify(filename);
 
-    // Lowercase the extension to match the slug's lowercase behavior, ensuring consistent file
+    // Lowercase the extension to match the slug’s lowercase behavior, ensuring consistent file
     // references (e.g., `.JPG` → `.jpg`, `.MOV` → `.mov`)
     fileName = `${slug}${extension ? `.${extension.toLowerCase()}` : ''}`;
   }

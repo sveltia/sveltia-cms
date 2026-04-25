@@ -88,7 +88,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     }
 
     // Gitea requires an app ID for OAuth authentication, but also supports token-based sign-in,
-    // which doesn't require one. If no app ID is configured and token auth is allowed (the
+    // which doesn’t require one. If no app ID is configured and token auth is allowed (the
     // default), we issue a warning and disable the OAuth Sign In button in the UI — users can still
     // sign in with a token. If token auth is explicitly disabled as well, we issue an error because
     // there is no working sign-in method available.

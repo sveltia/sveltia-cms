@@ -204,7 +204,7 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
     );
 
     if (i18nSingleFileFlatDefault) {
-      // Remove `lang` from default content to avoid stale/duplicate values; it's always
+      // Remove `lang` from default content to avoid stale/duplicate values; it’s always
       // auto-generated from the configured locales.
       const { lang: _lang, ...defaultContent } = localeContents[defaultLocale] ?? {};
 

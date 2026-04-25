@@ -59,7 +59,7 @@
 
     if (!match?.groups) {
       $showAssetOverlay = false;
-      // Check if it's the search page, which has a different URL pattern (`#/search/{query}`)
+      // Check if it’s the search page, which has a different URL pattern (`#/search/{query}`)
       isSearchPage = isSearchRoute(path);
 
       return; // Different page

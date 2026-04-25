@@ -187,7 +187,7 @@ const finalizeContent = ({
         .filter((_keyPath) => regex.test(_keyPath))
         .sort(([a, b]) => compare(a, b))
         .forEach((_keyPath) => {
-          // When the wildcard path couldn't resolve a typed list field, resolve with the concrete
+          // When the wildcard path couldn’t resolve a typed list field, resolve with the concrete
           // key path so that field metadata (e.g. `required`) is available to `copyProperty`
           const resolvedField = field ?? getField({ ...getFieldArgs, keyPath: _keyPath });
 

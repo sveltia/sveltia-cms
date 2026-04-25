@@ -20,7 +20,7 @@ export const DEFAULT_APP_TITLE = 'Sveltia CMS';
 export const DEFAULT_APP_LOGO_URL = `data:image/svg+xml;base64,${btoa(SveltiaLogo)}`;
 
 /**
- * The app title, derived from the CMS configuration's `app_title` field.
+ * The app title, derived from the CMS configuration’s `app_title` field.
  * @type {Readable<string>}
  */
 export const appTitle = derived([cmsConfig], ([config]) => config?.app_title || DEFAULT_APP_TITLE);

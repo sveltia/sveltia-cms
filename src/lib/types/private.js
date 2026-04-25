@@ -233,10 +233,10 @@
  * A single commit associated with one or more files.
  * @typedef {object} FileCommit
  * @property {string} sha Commit SHA hash.
- * @property {string} authorName Author's display name.
- * @property {string} [authorEmail] Author's email address.
- * @property {string} [authorAvatarURL] Author's avatar URL.
- * @property {string} [authorLogin] Author's username on the backend service.
+ * @property {string} authorName Author’s display name.
+ * @property {string} [authorEmail] Author’s email address.
+ * @property {string} [authorAvatarURL] Author’s avatar URL.
+ * @property {string} [authorLogin] Author’s username on the backend service.
  * @property {Date} date Commit date.
  */
 

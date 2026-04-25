@@ -76,7 +76,7 @@ export const createTranslationUserPrompt = (texts) =>
  * @param {string} serviceLabel Label for the AI service used in error messages, e.g. `'Anthropic
  * API'`.
  * @returns {string[]} Array of translated strings.
- * @throws {Error} When the content cannot be parsed or the count doesn't match.
+ * @throws {Error} When the content cannot be parsed or the count doesn’t match.
  */
 export const parseAiTranslationResponse = (content, expectedCount, serviceLabel) => {
   let translations;

@@ -63,7 +63,7 @@ export const parseField = ({ field, keyPath, keyPathList }) => {
       }
     }
   } else if (fieldType && MULTI_VALUE_FIELD_TYPES.includes(fieldType) && isFieldMultiple(field)) {
-    // Only add wildcard path for multi-value field types that aren't list/object
+    // Only add wildcard path for multi-value field types that aren’t list/object
     keyPathList.push(`${keyPath}.*`);
   }
 };

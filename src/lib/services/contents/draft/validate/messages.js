@@ -67,7 +67,7 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
   /** @type {string[]} */
   const messages = [];
   const { widget: fieldType = 'string' } = fieldConfig;
-  // @ts-ignore Some field types don't have `pattern` property
+  // @ts-ignore Some field types don’t have `pattern` property
   const { pattern = /** @type {string[]} */ ([]) } = fieldConfig;
   const isDatetime = fieldType === 'datetime';
 

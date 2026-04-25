@@ -74,7 +74,7 @@ const fillTemplateIfNeeded = (pathString, fillSlugOptions) =>
  * suffix for nested entries (e.g., `/index`, `/_index`, or any custom filename from the `path`
  * config).
  * @param {string} entryFilePath Entry file path, e.g., `src/content/blog/hello-world.md`.
- * @param {string | undefined} subPath Collection's file subPath template, e.g., `{{slug}}/index`.
+ * @param {string | undefined} subPath Collection’s file subPath template, e.g., `{{slug}}/index`.
  * @returns {string} Entry folder path, e.g., `src/content/blog/hello-world`.
  * @example
  * // Simple files

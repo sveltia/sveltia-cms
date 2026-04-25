@@ -192,7 +192,7 @@ export const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
 export const list = async (options) => fetchFiles(options);
 
 /**
- * Search files in Uploadcare. Since Uploadcare doesn't have a built-in search API,
+ * Search files in Uploadcare. Since Uploadcare doesn’t have a built-in search API,
  * this implementation fetches files and filters them client-side by filename.
  * @param {string} query Search query.
  * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey).

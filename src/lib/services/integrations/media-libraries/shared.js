@@ -39,12 +39,12 @@ export const hasMultipleInMediaLibraries = (mediaLibraries) => {
  * @returns {boolean | undefined} Result of checking if any media library allows multiple files.
  */
 export const hasMultipleInMediaLibrary = (mediaLibrary) => {
-  // @ts-ignore Stock Asset library doesn't have `config` property
+  // @ts-ignore Stock Asset library doesn’t have `config` property
   if (!mediaLibrary?.config) {
     return undefined;
   }
 
-  // @ts-ignore Stock Asset library doesn't have `config` property
+  // @ts-ignore Stock Asset library doesn’t have `config` property
   const { multiple } = mediaLibrary.config;
 
   if (typeof multiple === 'boolean') {

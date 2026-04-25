@@ -15,7 +15,7 @@ import { getField } from '$lib/services/contents/entry/fields';
 
 /**
  * Resolve the original key path for a field that may be inside a reordered list item. When list
- * items are reordered, added, or removed, each item's `__sc_item_original_key_path` property tracks
+ * items are reordered, added, or removed, each item’s `__sc_item_original_key_path` property tracks
  * where it was originally located.
  * @param {Record<string, any>} valueMap Current flat value map for the locale.
  * @param {FieldKeyPath} keyPath Current field key path.

@@ -80,7 +80,7 @@ pnpm format          # Auto-fix Prettier formatting
 
 **Build failures**: Always run `pnpm install` first after any `package.json` changes
 
-**Import errors**: Use the custom `find-unused-imports.js` script via `pnpm check:imports` - it's more accurate than standard tools for this project
+**Import errors**: Use the custom `find-unused-imports.js` script via `pnpm check:imports` - it’s more accurate than standard tools for this project
 
 **Svelte 5 compatibility**: This project uses Svelte 5 with runes - ensure any Svelte code follows the new syntax patterns
 

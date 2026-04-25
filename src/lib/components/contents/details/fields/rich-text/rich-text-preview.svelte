@@ -129,7 +129,7 @@
       reactRoots.set(element, root);
       root.render(preview);
     } else {
-      // Remove the placeholder if there's no valid preview to render
+      // Remove the placeholder if there’s no valid preview to render
       element.remove();
     }
   };

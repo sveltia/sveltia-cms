@@ -23,7 +23,7 @@
    * @property {Component} panel The panel component to render when the tab is active.
    */
 
-  /** Whether any relation field references the current entry's collection. */
+  /** Whether any relation field references the current entry’s collection. */
   const isReferenced = $derived.by(() => {
     const collectionName = $entryDraft?.collectionName;
     const fileName = $entryDraft?.fileName;

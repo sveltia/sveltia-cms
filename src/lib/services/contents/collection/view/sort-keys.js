@@ -229,14 +229,14 @@ export const getSortKeyLabel = ({ collection, key }) => {
 
         const keyPath = arr.slice(0, index + 1).join('.');
 
-        // @ts-ignore Hidden field doesn't have `label` property
+        // @ts-ignore Hidden field doesn’t have `label` property
         return getField({ collectionName: collection.name, keyPath })?.label || _key;
       })
       .filter(Boolean)
       .join(' – ');
   }
 
-  // @ts-ignore Hidden field doesn't have `label` property
+  // @ts-ignore Hidden field doesn’t have `label` property
   return collection.fields?.find(({ name }) => name === key)?.label || key;
 };
 

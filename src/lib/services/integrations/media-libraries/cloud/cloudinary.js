@@ -473,7 +473,7 @@ export const upload = async (files, options) => {
   /** @type {CloudinaryResource[]} */
   const uploadedResources = [];
 
-  // Upload files one by one (Cloudinary doesn't support batch uploads in the same way)
+  // Upload files one by one (Cloudinary doesn’t support batch uploads in the same way)
   // eslint-disable-next-line no-restricted-syntax
   for (const file of files) {
     const params = {

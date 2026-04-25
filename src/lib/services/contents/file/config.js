@@ -95,7 +95,7 @@ export const detectFileFormat = ({ extension, format }) => {
 
 /**
  * Get the file path matcher pattern for the regex. The path pattern in the middle should match the
- * filename (without extension), possibly with the parent directory. If the collection's `path` is
+ * filename (without extension), possibly with the parent directory. If the collection’s `path` is
  * configured, use it to generate a pattern, so that unrelated files are excluded. Note that the
  * `path` may contain `{{variable}}` placeholders, which should be replaced with a non-greedy
  * wildcard that excludes slashes. It may also contain brackets, like `app/(pages)`, which are used

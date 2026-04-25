@@ -205,7 +205,7 @@
     });
 
     // Restore the previous value if no valid resources were processed, so that a failed
-    // upload/replace doesn't leave an empty or invalid reference in the YAML
+    // upload/replace doesn’t leave an empty or invalid reference in the YAML
     if (!hasValidResource && !multiple && previousValue !== undefined) {
       currentValue = previousValue;
     }
