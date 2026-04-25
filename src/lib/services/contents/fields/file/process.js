@@ -84,6 +84,45 @@ export const getUnsavedAssets = async ({ draft, targetFolderPath }) =>
   );
 
 /**
+ * Get the saved assets relevant to the current entry draft and folder. For entry-relative folders,
+ * the result is filtered to only include assets within the current entry’s own folder, preventing
+ * false duplicate detection across entries that share the same folder config template.
+ * @param {EntryDraft} draft Entry draft.
+ * @param {AssetFolderInfo | undefined} folder Asset folder associated with the field.
+ * @returns {Asset[]} Filtered saved assets.
+ */
+const getSavedAssetsForEntry = (draft, folder) => {
+  const savedAssets = get(allAssets);
+
+  if (!folder?.entryRelative) {
+    return savedAssets;
+  }
+
+  const { originalEntry, defaultLocale, collection } = draft;
+  const entryFilePath = originalEntry?.locales[defaultLocale]?.path;
+
+  if (!entryFilePath) {
+    // New entry — no saved assets exist for this entry yet
+    return [];
+  }
+
+  const subPath = collection._type === 'entry' ? collection._file.subPath : undefined;
+  const lastSubPathSegment = subPath?.includes('/') ? subPath.split('/').at(-1) : undefined;
+  // Strip the file extension and any fixed nested filename suffix (e.g., `{{slug}}/index` → remove
+  // the trailing `index` segment) to get the entry folder path.
+  let entryFolderPath = entryFilePath.substring(0, entryFilePath.lastIndexOf('.'));
+
+  if (lastSubPathSegment && !lastSubPathSegment.includes('{{')) {
+    entryFolderPath =
+      entryFolderPath.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? entryFolderPath;
+  }
+
+  const expectedPrefix = [entryFolderPath, folder.internalSubPath].filter(Boolean).join('/');
+
+  return savedAssets.filter((a) => a.path.startsWith(`${expectedPrefix}/`));
+};
+
+/**
  * Process a selected resource.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft containing the resource.
@@ -116,9 +155,10 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
 
       // Check if the selected file has already been uploaded or is pending upload, otherwise
       // duplicate files lead to an `each_key_duplicate` error in Svelte
-      const existingAsset = [...get(allAssets), ...(await getUnsavedAssets({ draft }))].find(
-        (a) => a.sha === sha && equal(a.folder, folder),
-      );
+      const existingAsset = [
+        ...getSavedAssetsForEntry(draft, folder),
+        ...(await getUnsavedAssets({ draft })),
+      ].find((a) => a.sha === sha && equal(a.folder, folder));
 
       if (existingAsset) {
         // If the selected file has already been uploaded, use the existing asset instead of

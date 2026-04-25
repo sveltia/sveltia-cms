@@ -523,6 +523,339 @@ describe('Test processResource()', () => {
     expect(result.oversizedFileName).toBeUndefined();
     expect(transformFileMock).not.toHaveBeenCalled();
   });
+
+  test('should allow uploading the same file to a different entry-relative folder', async () => {
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const folder = {
+      entryRelative: true,
+      internalPath: 'src/content/people',
+      internalSubPath: 'assets/images',
+      publicPath: 'assets/images',
+      hasTemplateTags: false,
+      collectionName: 'people',
+    };
+
+    // draft is for person-b
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+      defaultLocale: '_default',
+      originalEntry: {
+        locales: {
+          _default: { path: 'src/content/people/person-b/index.md' },
+        },
+      },
+      collection: {
+        _type: 'entry',
+        _file: { subPath: '{{slug}}/index' },
+      },
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = {
+      file: mockFile,
+      folder,
+      credit: '',
+    };
+
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+
+    // allAssets contains photo.jpg from person-a
+    const personAAsset = {
+      sha: 'git-hash',
+      folder,
+      path: 'src/content/people/person-a/assets/images/photo.jpg',
+    };
+
+    getHashMock.mockResolvedValue('file-hash');
+    getGitHashMock.mockResolvedValue('git-hash');
+    getMock.mockReturnValue([personAAsset]);
+    equalMock.mockReturnValue(true);
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    // Should NOT reuse person-a's asset — should upload as a new file to person-b
+    expect(result.value).toBe('blob:mock-url');
+    expect(result.oversizedFileName).toBeUndefined();
+    // @ts-ignore - Mock files object
+    expect(draft.files['blob:mock-url']).toBeDefined();
+  });
+
+  test('should deduplicate file already saved in the same entry-relative folder', async () => {
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const folder = {
+      entryRelative: true,
+      internalPath: 'src/content/people',
+      internalSubPath: 'assets/images',
+      publicPath: 'assets/images',
+      hasTemplateTags: false,
+      collectionName: 'people',
+    };
+
+    // draft is for person-b
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+      defaultLocale: '_default',
+      originalEntry: {
+        locales: {
+          _default: { path: 'src/content/people/person-b/index.md' },
+        },
+      },
+      collection: {
+        _type: 'entry',
+        _file: { subPath: '{{slug}}/index' },
+      },
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = {
+      file: mockFile,
+      folder,
+      credit: '',
+    };
+
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+
+    // allAssets contains photo.jpg already saved in person-b (same entry)
+    const personBAsset = {
+      sha: 'git-hash',
+      folder,
+      path: 'src/content/people/person-b/assets/images/photo.jpg',
+      unsaved: false,
+    };
+
+    getHashMock.mockResolvedValue('file-hash');
+    getGitHashMock.mockResolvedValue('git-hash');
+    getMock.mockReturnValue([personBAsset]);
+    equalMock.mockReturnValue(true);
+    getAssetPublicURLMock.mockReturnValue('assets/images/photo.jpg');
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    // Should reuse the existing person-b asset — not upload again
+    expect(result.value).toBe('assets/images/photo.jpg');
+    expect(Object.keys(draft.files)).toHaveLength(0);
+  });
+
+  test('should allow upload for new entry (no originalEntry) with entry-relative folder', async () => {
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const folder = {
+      entryRelative: true,
+      internalPath: 'src/content/people',
+      internalSubPath: 'assets/images',
+      publicPath: 'assets/images',
+      hasTemplateTags: false,
+      collectionName: 'people',
+    };
+
+    // draft is for a brand-new entry (no originalEntry)
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+      defaultLocale: '_default',
+      originalEntry: undefined,
+      collection: {
+        _type: 'entry',
+        _file: { subPath: '{{slug}}/index' },
+      },
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = {
+      file: mockFile,
+      folder,
+      credit: '',
+    };
+
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+
+    // allAssets contains the same file from some other entry
+    const otherAsset = {
+      sha: 'git-hash',
+      folder,
+      path: 'src/content/people/person-a/assets/images/photo.jpg',
+    };
+
+    getHashMock.mockResolvedValue('file-hash');
+    getGitHashMock.mockResolvedValue('git-hash');
+    getMock.mockReturnValue([otherAsset]);
+    equalMock.mockReturnValue(true);
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    // Should upload as a new file since there's no original entry to scope against
+    expect(result.value).toBe('blob:mock-url');
+    // @ts-ignore - Mock files object
+    expect(draft.files['blob:mock-url']).toBeDefined();
+  });
+
+  test('should treat entry-relative folder as non-entry collection (file collection)', async () => {
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const folder = {
+      entryRelative: true,
+      internalPath: 'src/content/pages',
+      internalSubPath: '',
+      publicPath: '/',
+      hasTemplateTags: false,
+      collectionName: 'pages',
+    };
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+      defaultLocale: '_default',
+      originalEntry: {
+        locales: {
+          _default: { path: 'src/content/pages/about.md' },
+        },
+      },
+      // Non-entry collection type: subPath should be treated as undefined (line 109)
+      collection: { _type: 'file' },
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = { file: mockFile, folder, credit: '' };
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+
+    // Entry folder path derived from 'src/content/pages/about.md' → 'src/content/pages/about'
+    const existingAsset = {
+      sha: 'git-hash',
+      folder,
+      path: 'src/content/pages/about/photo.jpg',
+    };
+
+    getHashMock.mockResolvedValue('file-hash');
+    getGitHashMock.mockResolvedValue('git-hash');
+    getMock.mockReturnValue([existingAsset]);
+    equalMock.mockReturnValue(true);
+    getAssetPublicURLMock.mockReturnValue('/photo.jpg');
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    expect(result.value).toBe('/photo.jpg');
+  });
+
+  test('should handle entry-relative folder with simple (non-nested) subPath', async () => {
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const folder = {
+      entryRelative: true,
+      internalPath: 'src/content/blog',
+      internalSubPath: '',
+      publicPath: '/',
+      hasTemplateTags: false,
+      collectionName: 'blog',
+    };
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+      defaultLocale: '_default',
+      originalEntry: {
+        locales: {
+          _default: { path: 'src/content/blog/hello-world.md' },
+        },
+      },
+      // Simple subPath with no `/` — lastSubPathSegment stays undefined (line 110 not reached)
+      collection: {
+        _type: 'entry',
+        _file: { subPath: '{{slug}}' },
+      },
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = { file: mockFile, folder, credit: '' };
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+
+    const existingAsset = {
+      sha: 'git-hash',
+      folder,
+      path: 'src/content/blog/hello-world/photo.jpg',
+    };
+
+    getHashMock.mockResolvedValue('file-hash');
+    getGitHashMock.mockResolvedValue('git-hash');
+    getMock.mockReturnValue([existingAsset]);
+    equalMock.mockReturnValue(true);
+    getAssetPublicURLMock.mockReturnValue('/photo.jpg');
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    // Entry folder path from 'hello-world.md' → 'hello-world'; asset at 'hello-world/photo.jpg'
+    // starts with that prefix, so it's found and reused rather than re-uploaded.
+    expect(result.value).toBe('/photo.jpg');
+  });
+
+  test('should fall back to entryFolderPath when regex yields no match (line 117)', async () => {
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const folder = {
+      entryRelative: true,
+      internalPath: 'src/content/blog',
+      internalSubPath: '',
+      publicPath: '/',
+      hasTemplateTags: false,
+      collectionName: 'blog',
+    };
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+      defaultLocale: '_default',
+      originalEntry: {
+        // entryFilePath with no extension: lastIndexOf('.') === -1, so entryFolderPath === ''
+        // The regex /(?<path>.+?).../ won't match an empty string → falls back to entryFolderPath
+        locales: {
+          _default: { path: 'no-extension' },
+        },
+      },
+      collection: {
+        _type: 'entry',
+        _file: { subPath: '{{slug}}/index' },
+      },
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = { file: mockFile, folder, credit: '' };
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+
+    getHashMock.mockResolvedValue('file-hash');
+    getGitHashMock.mockResolvedValue('git-hash');
+    getMock.mockReturnValue([]);
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    expect(result.value).toBe('blob:mock-url');
+  });
 });
 
 describe('Test convertFileItemToAsset()', () => {
