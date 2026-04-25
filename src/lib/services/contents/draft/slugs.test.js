@@ -653,6 +653,26 @@ describe('draft/slugs', () => {
       expect(result).toBeUndefined();
     });
 
+    it('should return undefined for single_file_flat_default i18n', () => {
+      const draft = {
+        collection: {
+          _type: 'entry',
+          identifier_field: 'title',
+          slug: '{{title | localize}}',
+          _i18n: {
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false, i18nSingleFileFlatDefault: true },
+          },
+        },
+        collectionFile: undefined,
+        currentLocales: { en: true, fr: true },
+      };
+
+      const result = getLocalizedSlugs({ draft, defaultLocaleSlug: 'my-article' });
+
+      expect(result).toBeUndefined();
+    });
+
     it('should return undefined when no localizing key paths', () => {
       const draft = {
         collection: {

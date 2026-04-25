@@ -6,6 +6,7 @@ import {
   extractPathInfo,
   getSlug,
   isIndexFile,
+  normalizeDefaultRootContent,
   parseFileContent,
   prepareEntries,
   prepareEntry,
@@ -438,6 +439,66 @@ describe('Test transformRawContent()', () => {
     const result = transformRawContent(rawContent, fields, true);
 
     expect(result).toBeUndefined();
+  });
+});
+
+describe('Test normalizeDefaultRootContent()', () => {
+  test('extracts default locale content from root and non-default locales from their keys', () => {
+    const rawContent = {
+      title: 'Über uns',
+      content: 'Dies ist die deutsche Version.',
+      en: { title: 'About Us', content: 'This is the English version.' },
+      fr: { title: 'À propos', content: 'Ceci est la version française.' },
+    };
+
+    const result = normalizeDefaultRootContent(rawContent, ['de', 'en', 'fr'], 'de');
+
+    expect(result).toEqual({
+      de: { title: 'Über uns', content: 'Dies ist die deutsche Version.' },
+      en: { title: 'About Us', content: 'This is the English version.' },
+      fr: { title: 'À propos', content: 'Ceci est la version française.' },
+    });
+  });
+
+  test('includes only the default locale when non-default locales are absent', () => {
+    const rawContent = { title: 'About Us', content: 'English only.' };
+    const result = normalizeDefaultRootContent(rawContent, ['en', 'fr'], 'en');
+
+    expect(result).toEqual({ en: { title: 'About Us', content: 'English only.' } });
+  });
+
+  test('preserves any root-level field whose name matches a non-default locale key', () => {
+    // The "en" field value at root is a string, not an object, so it stays in default content
+    const rawContent = {
+      title: 'Hello',
+      en: { title: 'Hello EN' },
+    };
+
+    const result = normalizeDefaultRootContent(rawContent, ['de', 'en'], 'de');
+
+    // "en" at root is an object → treated as en locale, not included in de content
+    expect(result).toEqual({
+      de: { title: 'Hello' },
+      en: { title: 'Hello EN' },
+    });
+  });
+
+  test('skips non-default locale keys whose value is not an object', () => {
+    const rawContent = {
+      title: 'Hello',
+      en: 'not-an-object',
+    };
+
+    const result = normalizeDefaultRootContent(rawContent, ['de', 'en'], 'de');
+
+    expect(result).toEqual({ de: { title: 'Hello' } });
+  });
+
+  test('returns undefined when rawContent is not an object', () => {
+    expect(
+      normalizeDefaultRootContent(/** @type {any} */ ([]), ['en', 'fr'], 'en'),
+    ).toBeUndefined();
+    expect(normalizeDefaultRootContent(/** @type {any} */ (null), ['en'], 'en')).toBeUndefined();
   });
 });
 
@@ -1416,6 +1477,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1459,6 +1521,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1501,6 +1564,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1543,6 +1607,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1585,6 +1650,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1607,6 +1673,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1660,6 +1727,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1702,6 +1770,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1749,6 +1818,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: true,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1778,6 +1848,98 @@ describe('Test prepareEntry()', () => {
     expect(entries[0].locales.fr).toBeDefined();
   });
 
+  test('processes single_file_flat_default entry successfully', async () => {
+    parseEntryFile.mockResolvedValue({
+      title: 'Test Post', // default locale (en) at root
+      fr: { title: 'Article de Test' },
+    });
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nSingleFileFlatDefault: true,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nMultiRootFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'my-post.md',
+      path: '/posts/my-post.md',
+      text: '---\\ntitle: Test Post\\nfr:\\n  title: Article de Test\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].slug).toBe('my-post');
+    expect(entries[0].locales.en).toBeDefined();
+    expect(entries[0].locales.fr).toBeDefined();
+  });
+
+  test('skips single_file_flat_default entry when normalizeDefaultRootContent returns undefined', async () => {
+    parseEntryFile.mockResolvedValue(['not', 'an', 'object']); // Array, not object
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nSingleFileFlatDefault: true,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nMultiRootFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'my-post.md',
+      path: '/posts/my-post.md',
+      text: 'invalid',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const entries = /** @type {Entry[]} */ ([]);
+    const errors = /** @type {Error[]} */ ([]);
+
+    await prepareEntry({ file, entries, errors });
+
+    expect(entries).toHaveLength(0);
+  });
+
   test('processes file collection entry', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test Data' });
 
@@ -1796,6 +1958,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1842,6 +2005,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1885,6 +2049,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1968,6 +2133,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -2030,6 +2196,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -2109,6 +2276,7 @@ describe('Test prepareEntries()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,

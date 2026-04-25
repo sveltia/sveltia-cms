@@ -121,6 +121,7 @@ describe('Test getEntryPathRegEx()', () => {
       ...baseI18nOptions,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -143,6 +144,7 @@ describe('Test getEntryPathRegEx()', () => {
       ...baseI18nOptions,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -166,6 +168,7 @@ describe('Test getEntryPathRegEx()', () => {
       ...baseI18nOptions,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -191,6 +194,7 @@ describe('Test getEntryPathRegEx()', () => {
       ...baseI18nOptions,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -215,6 +219,7 @@ describe('Test getEntryPathRegEx()', () => {
       omitDefaultLocaleFromFilePath: true,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -238,6 +243,7 @@ describe('Test getEntryPathRegEx()', () => {
       ...baseI18nOptions,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: true,
         i18nMultiRootFolder: false,
@@ -261,6 +267,7 @@ describe('Test getEntryPathRegEx()', () => {
       ...baseI18nOptions,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: true,
@@ -284,6 +291,7 @@ describe('Test getEntryPathRegEx()', () => {
       ...baseI18nOptions,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -306,6 +314,7 @@ describe('Test getEntryPathRegEx()', () => {
       ...baseI18nOptions,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -336,6 +345,7 @@ describe('Test getEntryPathRegEx()', () => {
       ...baseI18nOptions,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -364,6 +374,7 @@ describe('Test getEntryPathRegEx()', () => {
       ...baseI18nOptions,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -391,6 +402,7 @@ describe('Test getEntryPathRegEx()', () => {
       omitDefaultLocaleFromFilePath: true,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: true,
         i18nMultiRootFolder: false,
@@ -420,6 +432,7 @@ describe('Test getEntryPathRegEx()', () => {
       omitDefaultLocaleFromFilePath: true,
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: true,
@@ -532,6 +545,7 @@ describe('Test getFileConfig()', () => {
     structure: 'single_file',
     structureMap: {
       i18nSingleFile: false,
+      i18nSingleFileFlatDefault: false,
       i18nMultiFile: false,
       i18nMultiFolder: false,
       i18nMultiRootFolder: false,
@@ -550,6 +564,7 @@ describe('Test getFileConfig()', () => {
     structure: 'single_file',
     structureMap: {
       i18nSingleFile: true,
+      i18nSingleFileFlatDefault: false,
       i18nMultiFile: false,
       i18nMultiFolder: false,
       i18nMultiRootFolder: false,
@@ -568,6 +583,7 @@ describe('Test getFileConfig()', () => {
     structure: 'multiple_files',
     structureMap: {
       i18nSingleFile: false,
+      i18nSingleFileFlatDefault: false,
       i18nMultiFile: true,
       i18nMultiFolder: false,
       i18nMultiRootFolder: false,
@@ -586,6 +602,7 @@ describe('Test getFileConfig()', () => {
     structure: 'multiple_folders',
     structureMap: {
       i18nSingleFile: false,
+      i18nSingleFileFlatDefault: false,
       i18nMultiFile: false,
       i18nMultiFolder: true,
       i18nMultiRootFolder: false,
@@ -604,6 +621,7 @@ describe('Test getFileConfig()', () => {
     structure: 'multiple_folders_i18n_root',
     structureMap: {
       i18nSingleFile: false,
+      i18nSingleFileFlatDefault: false,
       i18nMultiFile: false,
       i18nMultiFolder: false,
       i18nMultiRootFolder: true,

@@ -1540,6 +1540,131 @@ describe('draft/save/changes', () => {
     });
   });
 
+  describe('getSingleFileChange with single_file_flat_default', () => {
+    it('should spread default locale content at root and nest non-default locales under their key', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockImplementation(({ locale }) =>
+        locale === 'de'
+          ? { title: 'Über uns', content: 'Deutsche Version.' }
+          : { title: 'About Us', content: 'English version.' },
+      );
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml' },
+          _i18n: {
+            i18nEnabled: true,
+            defaultLocale: 'de',
+            structureMap: { i18nSingleFileFlatDefault: true },
+          },
+        },
+        isNew: true,
+        originalSlugs: undefined,
+        originalEntry: undefined,
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          de: { slug: 'about', path: 'about.yaml', content: { title: 'Über uns' } },
+          en: { slug: 'about', path: 'about.yaml', content: { title: 'About Us' } },
+        },
+      };
+
+      await getSingleFileChange({ draft, savingEntry, cacheDB: undefined });
+
+      const [formatArgs] = vi.mocked(formatEntryFile).mock.calls[0];
+
+      expect(formatArgs.content).toEqual({
+        lang: ['de', 'en'],
+        title: 'Über uns',
+        content: 'Deutsche Version.',
+        en: { title: 'About Us', content: 'English version.' },
+      });
+    });
+
+    it('should omit non-default locales without content', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Default' });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml' },
+          _i18n: {
+            i18nEnabled: true,
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFileFlatDefault: true },
+          },
+        },
+        isNew: true,
+        originalSlugs: undefined,
+        originalEntry: undefined,
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          en: { slug: 'post', path: 'post.yaml', content: { title: 'Hello' } },
+          fr: { slug: 'post', path: 'post.yaml', content: null },
+        },
+      };
+
+      await getSingleFileChange({ draft, savingEntry, cacheDB: undefined });
+
+      const [formatArgs] = vi.mocked(formatEntryFile).mock.calls[0];
+
+      // fr has no content so it's excluded from lang and from root fields
+      expect(formatArgs.content).toEqual({ lang: ['en'], title: 'Default' });
+    });
+
+    it('should fall back to empty object when default locale has no content', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'French' });
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml' },
+          _i18n: {
+            i18nEnabled: true,
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFileFlatDefault: true },
+          },
+        },
+        isNew: true,
+        originalSlugs: undefined,
+        originalEntry: undefined,
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          // en locale has no content (falsy), so it won't appear in localeContents
+          en: { slug: 'post', path: 'post.yaml', content: null },
+          fr: { slug: 'post', path: 'post.yaml', content: { title: 'French' } },
+        },
+      };
+
+      await getSingleFileChange({ draft, savingEntry, cacheDB: undefined });
+
+      const [formatArgs] = vi.mocked(formatEntryFile).mock.calls[0];
+
+      // defaultContent should fall back to {} since en has no content
+      expect(formatArgs.content).toEqual({ lang: ['en', 'fr'], fr: { title: 'French' } });
+    });
+  });
+
   describe('getSingleFileChange with previousPath handling', () => {
     it('should not include previousPath when entry is not renamed', async () => {
       const { formatEntryFile } = await import('$lib/services/contents/file/format');

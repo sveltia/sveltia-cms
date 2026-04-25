@@ -46,6 +46,7 @@ describe('config/folders/entries', () => {
       structureMap: {
         i18nMultiRootFolder: false,
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
       },
@@ -118,6 +119,7 @@ describe('config/folders/entries', () => {
         structureMap: {
           i18nMultiRootFolder: true,
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
         },
@@ -478,6 +480,7 @@ describe('config/folders/entries', () => {
         structureMap: {
           i18nMultiRootFolder: false,
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
         },
@@ -503,6 +506,7 @@ describe('config/folders/entries', () => {
         structureMap: {
           i18nMultiRootFolder: false,
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
         },
@@ -527,6 +531,7 @@ describe('config/folders/entries', () => {
         structureMap: {
           i18nMultiRootFolder: false,
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
         },
@@ -564,6 +569,7 @@ describe('config/folders/entries', () => {
         structureMap: {
           i18nMultiRootFolder: false,
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
         },

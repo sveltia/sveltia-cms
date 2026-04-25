@@ -106,6 +106,7 @@ describe('getEntryThumbnail', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,

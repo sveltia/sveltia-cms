@@ -34,6 +34,7 @@ describe('Test getEntrySummary()', () => {
       structure: 'multiple_files',
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -353,6 +354,7 @@ describe('Test sanitizeEntrySummary()', () => {
         structure: 'multiple_files',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1246,6 +1248,7 @@ describe('Additional comprehensive tests for edge cases', () => {
         structure: 'multiple_files',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1488,6 +1491,7 @@ describe('Additional comprehensive tests for edge cases', () => {
         structure: 'multiple_files',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,

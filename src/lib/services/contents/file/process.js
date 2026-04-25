@@ -140,6 +140,39 @@ export const transformRoot = ({ rawContent, fields, i18nSingleFile, validate }) 
 };
 
 /**
+ * Normalize `single_file_flat_default` content into the standard locale-keyed format used by the
+ * `single_file` structure. Root-level entries (excluding non-default locale keys) become the
+ * default locale’s content, and each non-default locale key becomes that locale’s content.
+ * @param {RawEntryContent} rawContent Raw content from the file.
+ * @param {InternalLocaleCode[]} allLocales All available locales.
+ * @param {InternalLocaleCode} defaultLocale The default locale.
+ * @returns {RawEntryContent | undefined} Normalized locale-keyed content or undefined if invalid.
+ */
+export const normalizeDefaultRootContent = (rawContent, allLocales, defaultLocale) => {
+  if (!isObject(rawContent)) {
+    return undefined;
+  }
+
+  const nonDefaultLocales = allLocales.filter((locale) => locale !== defaultLocale);
+
+  // Root-level entries excluding non-default locale keys = default locale content
+  const defaultContent = Object.fromEntries(
+    Object.entries(rawContent).filter(([key]) => !nonDefaultLocales.includes(key)),
+  );
+
+  /** @type {RawEntryContent} */
+  const result = { [defaultLocale]: defaultContent };
+
+  nonDefaultLocales.forEach((locale) => {
+    if (isObject(rawContent[locale])) {
+      result[locale] = rawContent[locale];
+    }
+  });
+
+  return result;
+};
+
+/**
  * Transform raw content to handle special cases like root List and root KeyValue fields.
  * @param {RawEntryContent} rawContent Raw content from the file.
  * @param {Field[]} fields Collection fields.
@@ -405,12 +438,29 @@ export const prepareEntry = async ({ file, entries, errors }) => {
       i18nEnabled,
       allLocales,
       defaultLocale,
-      structureMap: { i18nSingleFile, i18nMultiFile, i18nMultiFolder, i18nMultiRootFolder },
+      structureMap: {
+        i18nSingleFile,
+        i18nSingleFileFlatDefault,
+        i18nMultiFile,
+        i18nMultiFolder,
+        i18nMultiRootFolder,
+      },
       canonicalSlug: { key: canonicalSlugKey },
     },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
-  const transformedContent = transformRawContent(rawContent, fields, i18nSingleFile);
+  // Normalize `single_file_flat_default` content into the standard locale-keyed format so that the
+  // rest of the processing pipeline can treat it identically to `single_file`.
+  const effectiveRawContent = i18nSingleFileFlatDefault
+    ? normalizeDefaultRootContent(rawContent, allLocales, defaultLocale)
+    : rawContent;
+
+  if (!effectiveRawContent) {
+    return;
+  }
+
+  const isI18nSingleFile = i18nSingleFile || i18nSingleFileFlatDefault;
+  const transformedContent = transformRawContent(effectiveRawContent, fields, isI18nSingleFile);
 
   if (!transformedContent) {
     return;
@@ -449,7 +499,7 @@ export const prepareEntry = async ({ file, entries, errors }) => {
 
   if (!i18nEnabled) {
     processNonI18nEntry(entry, transformedContent, path, fileName, subPath, subPathTemplate);
-  } else if (i18nSingleFile) {
+  } else if (i18nSingleFile || i18nSingleFileFlatDefault) {
     processI18nSingleFileEntry(
       entry,
       transformedContent,

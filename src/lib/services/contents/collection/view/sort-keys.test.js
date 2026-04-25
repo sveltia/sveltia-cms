@@ -73,6 +73,7 @@ describe('Test getSortConfig()', async () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: false,
+        i18nSingleFileFlatDefault: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -1205,6 +1206,7 @@ describe('Test sortKeys store', () => {
         structure: 'single_file',
         structureMap: {
           i18nSingleFile: false,
+          i18nSingleFileFlatDefault: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
