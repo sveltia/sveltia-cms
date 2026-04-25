@@ -1477,7 +1477,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1521,7 +1521,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1564,7 +1564,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1607,7 +1607,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1650,7 +1650,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1673,7 +1673,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1727,7 +1727,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1770,7 +1770,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1818,7 +1818,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: true,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1848,7 +1848,7 @@ describe('Test prepareEntry()', () => {
     expect(entries[0].locales.fr).toBeDefined();
   });
 
-  test('processes single_file_flat_default entry successfully', async () => {
+  test('processes single_file_default_root entry successfully', async () => {
     parseEntryFile.mockResolvedValue({
       title: 'Test Post', // default locale (en) at root
       fr: { title: 'Article de Test' },
@@ -1867,7 +1867,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: true,
+          i18nSingleFileDefaultRoot: true,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1897,7 +1897,7 @@ describe('Test prepareEntry()', () => {
     expect(entries[0].locales.fr).toBeDefined();
   });
 
-  test('skips single_file_flat_default entry when normalizeDefaultRootContent returns undefined', async () => {
+  test('skips single_file_default_root entry when normalizeDefaultRootContent returns undefined', async () => {
     parseEntryFile.mockResolvedValue(['not', 'an', 'object']); // Array, not object
     getCollection.mockReturnValue({
       name: 'posts',
@@ -1913,7 +1913,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: true,
+          i18nSingleFileDefaultRoot: true,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -1958,7 +1958,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -2005,7 +2005,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -2049,7 +2049,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -2133,7 +2133,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -2196,7 +2196,7 @@ describe('Test prepareEntry()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: true,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -2276,7 +2276,7 @@ describe('Test prepareEntries()', () => {
         defaultLocale: 'en',
         structureMap: {
           i18nSingleFile: false,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,

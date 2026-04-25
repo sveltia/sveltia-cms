@@ -140,7 +140,7 @@ export const transformRoot = ({ rawContent, fields, i18nSingleFile, validate }) 
 };
 
 /**
- * Normalize `single_file_flat_default` content into the standard locale-keyed format used by the
+ * Normalize `single_file_default_root` content into the standard locale-keyed format used by the
  * `single_file` structure. Root-level entries (excluding non-default locale keys) become the
  * default locale’s content, and each non-default locale key becomes that locale’s content.
  * @param {RawEntryContent} rawContent Raw content from the file.
@@ -440,7 +440,7 @@ export const prepareEntry = async ({ file, entries, errors }) => {
       defaultLocale,
       structureMap: {
         i18nSingleFile,
-        i18nSingleFileFlatDefault,
+        i18nSingleFileDefaultRoot,
         i18nMultiFile,
         i18nMultiFolder,
         i18nMultiRootFolder,
@@ -449,9 +449,9 @@ export const prepareEntry = async ({ file, entries, errors }) => {
     },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
-  // Normalize `single_file_flat_default` content into the standard locale-keyed format so that the
+  // Normalize `single_file_default_root` content into the standard locale-keyed format so that the
   // rest of the processing pipeline can treat it identically to `single_file`.
-  const effectiveRawContent = i18nSingleFileFlatDefault
+  const effectiveRawContent = i18nSingleFileDefaultRoot
     ? normalizeDefaultRootContent(rawContent, allLocales, defaultLocale)
     : rawContent;
 
@@ -459,7 +459,7 @@ export const prepareEntry = async ({ file, entries, errors }) => {
     return;
   }
 
-  const isI18nSingleFile = i18nSingleFile || i18nSingleFileFlatDefault;
+  const isI18nSingleFile = i18nSingleFile || i18nSingleFileDefaultRoot;
   const transformedContent = transformRawContent(effectiveRawContent, fields, isI18nSingleFile);
 
   if (!transformedContent) {
@@ -499,7 +499,7 @@ export const prepareEntry = async ({ file, entries, errors }) => {
 
   if (!i18nEnabled) {
     processNonI18nEntry(entry, transformedContent, path, fileName, subPath, subPathTemplate);
-  } else if (i18nSingleFile || i18nSingleFileFlatDefault) {
+  } else if (i18nSingleFile || i18nSingleFileDefaultRoot) {
     processI18nSingleFileEntry(
       entry,
       transformedContent,

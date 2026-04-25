@@ -22,7 +22,7 @@ import { isSingletonCollection } from '$lib/services/contents/collection';
  */
 export const I18N_STRUCTURES = {
   SINGLE_FILE: 'single_file',
-  SINGLE_FILE_FLAT_DEFAULT: 'single_file_flat_default',
+  SINGLE_FILE_DEFAULT_ROOT: 'single_file_default_root',
   MULTIPLE_FILES: 'multiple_files',
   MULTIPLE_FOLDERS: 'multiple_folders',
   MULTIPLE_FOLDERS_I18N_ROOT: 'multiple_folders_i18n_root', // deprecated
@@ -57,7 +57,7 @@ export const DEFAULT_I18N_CONFIG = {
   structure: I18N_STRUCTURES.SINGLE_FILE,
   structureMap: {
     i18nSingleFile: false,
-    i18nSingleFileFlatDefault: false,
+    i18nSingleFileDefaultRoot: false,
     i18nMultiFile: false,
     i18nMultiFolder: false,
     i18nMultiRootFolder: false,
@@ -123,10 +123,10 @@ export const determineStructure = (defaultStructure, file) => {
     return I18N_STRUCTURES.MULTIPLE_FILES;
   }
 
-  // For file collections without `{{locale}}`, preserve `single_file_flat_default` if set;
+  // For file collections without `{{locale}}`, preserve `single_file_default_root` if set;
   // otherwise fall back to `single_file`.
-  if (defaultStructure === I18N_STRUCTURES.SINGLE_FILE_FLAT_DEFAULT) {
-    return I18N_STRUCTURES.SINGLE_FILE_FLAT_DEFAULT;
+  if (defaultStructure === I18N_STRUCTURES.SINGLE_FILE_DEFAULT_ROOT) {
+    return I18N_STRUCTURES.SINGLE_FILE_DEFAULT_ROOT;
   }
 
   return I18N_STRUCTURES.SINGLE_FILE;
@@ -141,7 +141,7 @@ export const determineStructure = (defaultStructure, file) => {
  */
 export const createStructureMap = (i18nEnabled, structure) => ({
   i18nSingleFile: i18nEnabled && structure === I18N_STRUCTURES.SINGLE_FILE,
-  i18nSingleFileFlatDefault: i18nEnabled && structure === I18N_STRUCTURES.SINGLE_FILE_FLAT_DEFAULT,
+  i18nSingleFileDefaultRoot: i18nEnabled && structure === I18N_STRUCTURES.SINGLE_FILE_DEFAULT_ROOT,
   i18nMultiFile: i18nEnabled && structure === I18N_STRUCTURES.MULTIPLE_FILES,
   i18nMultiFolder: i18nEnabled && structure === I18N_STRUCTURES.MULTIPLE_FOLDERS,
   i18nMultiRootFolder:

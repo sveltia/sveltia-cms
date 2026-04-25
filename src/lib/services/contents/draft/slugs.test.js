@@ -653,7 +653,7 @@ describe('draft/slugs', () => {
       expect(result).toBeUndefined();
     });
 
-    it('should return undefined for single_file_flat_default i18n', () => {
+    it('should return undefined for single_file_default_root i18n', () => {
       const draft = {
         collection: {
           _type: 'entry',
@@ -661,7 +661,7 @@ describe('draft/slugs', () => {
           slug: '{{title | localize}}',
           _i18n: {
             defaultLocale: 'en',
-            structureMap: { i18nSingleFile: false, i18nSingleFileFlatDefault: true },
+            structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: true },
           },
         },
         collectionFile: undefined,

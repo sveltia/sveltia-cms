@@ -151,7 +151,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -170,7 +170,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -189,7 +189,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -221,7 +221,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'multiple_folders',
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: true,
         i18nMultiRootFolder: false,
@@ -240,7 +240,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file', // Always single
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -259,7 +259,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -300,7 +300,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -332,7 +332,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'multiple_folders',
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: true,
         i18nMultiRootFolder: false,
@@ -364,7 +364,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -389,7 +389,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -413,7 +413,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -446,7 +446,7 @@ describe('Test normalizeI18nConfig()', () => {
         structure: 'single_file', // Always single
         structureMap: {
           i18nSingleFile: true,
-          i18nSingleFileFlatDefault: false,
+          i18nSingleFileDefaultRoot: false,
           i18nMultiFile: false,
           i18nMultiFolder: false,
           i18nMultiRootFolder: false,
@@ -475,7 +475,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file', // Always single
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -499,7 +499,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file', // Always single
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -530,7 +530,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -561,7 +561,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -592,7 +592,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -623,7 +623,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -654,7 +654,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -687,7 +687,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'multiple_files',
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -720,7 +720,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -760,7 +760,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'multiple_files', // File with {{locale}} determines multiple_files
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -800,7 +800,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'single_file', // File without {{locale}} determines single_file
       structureMap: {
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -839,7 +839,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'multiple_files',
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -879,7 +879,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'multiple_files', // File with {{locale}} determines multiple_files
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -919,7 +919,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'multiple_files',
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -960,7 +960,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'multiple_files',
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -1000,7 +1000,7 @@ describe('Test normalizeI18nConfig()', () => {
       structure: 'multiple_files',
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -1043,7 +1043,7 @@ describe('Test internal helper functions', () => {
     test('should have all expected structure types', () => {
       expect(I18N_STRUCTURES).toEqual({
         SINGLE_FILE: 'single_file',
-        SINGLE_FILE_FLAT_DEFAULT: 'single_file_flat_default',
+        SINGLE_FILE_DEFAULT_ROOT: 'single_file_default_root',
         MULTIPLE_FILES: 'multiple_files',
         MULTIPLE_FOLDERS: 'multiple_folders',
         MULTIPLE_FOLDERS_I18N_ROOT: 'multiple_folders_i18n_root',
@@ -1220,10 +1220,10 @@ describe('Test internal helper functions', () => {
       expect(determineStructure('multiple_folders', file)).toBe('single_file');
     });
 
-    test('should preserve single_file_flat_default when file does not include {{locale}}', () => {
+    test('should preserve single_file_default_root when file does not include {{locale}}', () => {
       const file = { name: 'data', file: '_data.yml', fields: [] };
 
-      expect(determineStructure('single_file_flat_default', file)).toBe('single_file_flat_default');
+      expect(determineStructure('single_file_default_root', file)).toBe('single_file_default_root');
     });
 
     test('should return multiple_files when file includes {{locale}}', () => {
@@ -1247,7 +1247,7 @@ describe('Test internal helper functions', () => {
     test('should return all false when i18n is disabled', () => {
       expect(createStructureMap(false, 'single_file')).toEqual({
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -1257,17 +1257,17 @@ describe('Test internal helper functions', () => {
     test('should set i18nSingleFile to true for single_file structure', () => {
       expect(createStructureMap(true, 'single_file')).toEqual({
         i18nSingleFile: true,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
       });
     });
 
-    test('should set i18nSingleFileFlatDefault to true for single_file_flat_default structure', () => {
-      expect(createStructureMap(true, 'single_file_flat_default')).toEqual({
+    test('should set i18nSingleFileDefaultRoot to true for single_file_default_root structure', () => {
+      expect(createStructureMap(true, 'single_file_default_root')).toEqual({
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: true,
+        i18nSingleFileDefaultRoot: true,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -1277,7 +1277,7 @@ describe('Test internal helper functions', () => {
     test('should set i18nMultiFile to true for multiple_files structure', () => {
       expect(createStructureMap(true, 'multiple_files')).toEqual({
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: true,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,
@@ -1287,7 +1287,7 @@ describe('Test internal helper functions', () => {
     test('should set i18nMultiFolder to true for multiple_folders structure', () => {
       expect(createStructureMap(true, 'multiple_folders')).toEqual({
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: true,
         i18nMultiRootFolder: false,
@@ -1297,7 +1297,7 @@ describe('Test internal helper functions', () => {
     test('should set i18nMultiRootFolder to true for multiple_folders_i18n_root', () => {
       expect(createStructureMap(true, 'multiple_folders_i18n_root')).toEqual({
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: true,
@@ -1307,7 +1307,7 @@ describe('Test internal helper functions', () => {
     test('should set i18nMultiRootFolder to true for multiple_root_folders', () => {
       expect(createStructureMap(true, 'multiple_root_folders')).toEqual({
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: true,

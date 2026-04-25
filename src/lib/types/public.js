@@ -997,7 +997,7 @@
 
 /**
  * Internationalization (i18n) file structure type.
- * @typedef {'single_file' | 'single_file_flat_default' | 'multiple_files' | 'multiple_folders' |
+ * @typedef {'single_file' | 'single_file_default_root' | 'multiple_files' | 'multiple_folders' |
  * 'multiple_folders_i18n_root' | 'multiple_root_folders'} I18nFileStructure
  * @see https://decapcms.org/docs/i18n/
  * @see https://sveltiacms.app/en/docs/i18n

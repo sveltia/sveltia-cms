@@ -474,7 +474,7 @@
 /**
  * @typedef {object} I18nFileStructureMap
  * @property {boolean} i18nSingleFile Whether the i18n structure is a single file.
- * @property {boolean} i18nSingleFileFlatDefault Whether the i18n structure is a single file with
+ * @property {boolean} i18nSingleFileDefaultRoot Whether the i18n structure is a single file with
  * the default locale content at the root level instead of under a locale key.
  * @property {boolean} i18nMultiFile Whether the i18n structure is multiple files.
  * @property {boolean} i18nMultiFolder Whether the i18n structure is multiple folders.

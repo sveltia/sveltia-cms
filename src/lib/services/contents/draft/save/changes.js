@@ -180,7 +180,7 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
 
   const {
     _file,
-    _i18n: { i18nEnabled, defaultLocale, structureMap: { i18nSingleFileFlatDefault } = {} },
+    _i18n: { i18nEnabled, defaultLocale, structureMap: { i18nSingleFileDefaultRoot } = {} },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const { slug, path, content } = savingEntry.locales[defaultLocale];
@@ -188,7 +188,7 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
   const previousPath = originalEntry?.locales[defaultLocale]?.path;
 
   /**
-   * Build the serialized content for the file. For `single_file_flat_default`, the default locale’s
+   * Build the serialized content for the file. For `single_file_default_root`, the default locale’s
    * fields are written at the root level and non-default locales are nested under their locale key.
    * @returns {object} Serialized content object.
    */
@@ -203,7 +203,7 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
         .map(([locale, le]) => [locale, serializeContent({ draft, locale, valueMap: le.content })]),
     );
 
-    if (i18nSingleFileFlatDefault) {
+    if (i18nSingleFileDefaultRoot) {
       // Remove `lang` from default content to avoid stale/duplicate values; it’s always
       // auto-generated from the configured locales.
       const { lang: _lang, ...defaultContent } = localeContents[defaultLocale] ?? {};
@@ -310,7 +310,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
       i18nEnabled,
       allLocales,
       defaultLocale,
-      structureMap: { i18nSingleFile, i18nSingleFileFlatDefault },
+      structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot },
     },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
@@ -336,7 +336,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
   const cacheDB = databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
   const getFileChangeArgs = { draft, savingEntry, cacheDB };
 
-  if (!i18nEnabled || i18nSingleFile || i18nSingleFileFlatDefault) {
+  if (!i18nEnabled || i18nSingleFile || i18nSingleFileDefaultRoot) {
     changes.push(await getSingleFileChange({ ...getFileChangeArgs }));
   } else {
     await Promise.all(

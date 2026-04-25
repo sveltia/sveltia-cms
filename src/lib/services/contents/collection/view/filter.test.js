@@ -64,7 +64,7 @@ describe('Test filterEntries()', async () => {
       structure: 'single_file',
       structureMap: {
         i18nSingleFile: false,
-        i18nSingleFileFlatDefault: false,
+        i18nSingleFileDefaultRoot: false,
         i18nMultiFile: false,
         i18nMultiFolder: false,
         i18nMultiRootFolder: false,

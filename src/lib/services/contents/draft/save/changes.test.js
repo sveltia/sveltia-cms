@@ -1540,7 +1540,7 @@ describe('draft/save/changes', () => {
     });
   });
 
-  describe('getSingleFileChange with single_file_flat_default', () => {
+  describe('getSingleFileChange with single_file_default_root', () => {
     it('should spread default locale content at root and nest non-default locales under their key', async () => {
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
       const { serializeContent } = await import('./serialize');
@@ -1559,7 +1559,7 @@ describe('draft/save/changes', () => {
           _i18n: {
             i18nEnabled: true,
             defaultLocale: 'de',
-            structureMap: { i18nSingleFileFlatDefault: true },
+            structureMap: { i18nSingleFileDefaultRoot: true },
           },
         },
         isNew: true,
@@ -1601,7 +1601,7 @@ describe('draft/save/changes', () => {
           _i18n: {
             i18nEnabled: true,
             defaultLocale: 'en',
-            structureMap: { i18nSingleFileFlatDefault: true },
+            structureMap: { i18nSingleFileDefaultRoot: true },
           },
         },
         isNew: true,
@@ -1639,7 +1639,7 @@ describe('draft/save/changes', () => {
           _i18n: {
             i18nEnabled: true,
             defaultLocale: 'en',
-            structureMap: { i18nSingleFileFlatDefault: true },
+            structureMap: { i18nSingleFileDefaultRoot: true },
           },
         },
         isNew: true,
