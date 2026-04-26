@@ -6,7 +6,7 @@
   import { allEntries } from '$lib/services/contents';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { canCreateIndexFile } from '$lib/services/contents/collection/entries';
-  import { getIndexFile } from '$lib/services/contents/collection/index-file';
+  import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
   import { collectionState } from '$lib/services/contents/collection/view';
 
   /**

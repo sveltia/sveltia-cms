@@ -1,5 +1,5 @@
 import { sortItemsByKey } from '$lib/services/common/view';
-import { getIndexFile } from '$lib/services/contents/collection/index-file';
+import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';

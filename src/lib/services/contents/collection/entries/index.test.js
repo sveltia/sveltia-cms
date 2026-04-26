@@ -40,7 +40,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
   getCollectionFilesByEntry: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection/index-file', () => ({
+vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
   isCollectionIndexFile: vi.fn(),
 }));
@@ -1107,7 +1107,10 @@ describe('getEntriesByAssetURL()', () => {
 
   test('finds entries with asset URL', async () => {
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
     const { getMediaFieldURL } = await import('$lib/services/assets/info');
@@ -1147,7 +1150,10 @@ describe('getEntriesByAssetURL()', () => {
 
   test('returns empty array when no entries match', async () => {
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
     const { getMediaFieldURL } = await import('$lib/services/assets/info');
@@ -1202,7 +1208,10 @@ describe('getEntriesByAssetURL()', () => {
 
   test('skips entries with non-string content values', async () => {
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
     const { getMediaFieldURL } = await import('$lib/services/assets/info');
@@ -1246,7 +1255,10 @@ describe('getEntriesByAssetURL()', () => {
 
   test('skips entries with empty string content values', async () => {
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
     const { getMediaFieldURL } = await import('$lib/services/assets/info');
@@ -1290,7 +1302,10 @@ describe('getEntriesByAssetURL()', () => {
 
   test('handles file collections with collectionFiles', async () => {
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
     const { getMediaFieldURL } = await import('$lib/services/assets/info');
@@ -1335,7 +1350,10 @@ describe('getEntriesByAssetURL()', () => {
 
   test('handles multiple locales with different content', async () => {
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
     const { getMediaFieldURL } = await import('$lib/services/assets/info');
@@ -1380,7 +1398,10 @@ describe('getEntriesByAssetURL()', () => {
 
   test('pre-filters fields that cannot contain the asset URL', async () => {
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
 
@@ -1416,7 +1437,10 @@ describe('getEntriesByAssetURL()', () => {
 
   test('short-circuits after first match when not replacing', async () => {
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
 
@@ -1453,7 +1477,10 @@ describe('getEntriesByAssetURL()', () => {
 
   test('does not short-circuit when replacing (processes all matching fields)', async () => {
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
     const content = { image1: 'test.jpg', image2: 'test.jpg' };
@@ -1490,7 +1517,10 @@ describe('getEntriesByAssetURL()', () => {
     // before the loop can break early. The numeric `count` key is processed first,
     // which forces `typeof 42 !== 'string'` = true → continue (branch 0).
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
 
@@ -1531,7 +1561,10 @@ describe('getEntriesByAssetURL()', () => {
     // causing `matched = false` → `if (matched)` false branch at line 238.
     // The second field (image) matches and sets found = true.
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
     const { getField } = await import('$lib/services/contents/entry/fields');
 
@@ -1586,7 +1619,7 @@ describe('canCreateIndexFile()', () => {
   });
 
   test('returns false when collection has no index file configured', async () => {
-    const { getIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
 
     vi.mocked(getIndexFile).mockReturnValue(undefined);
 
@@ -1597,7 +1630,7 @@ describe('canCreateIndexFile()', () => {
   });
 
   test('returns true when index file does not yet exist in collection entries', async () => {
-    const { getIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
     const { getCollection } = await import('$lib/services/contents/collection');
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
 
@@ -1627,7 +1660,7 @@ describe('canCreateIndexFile()', () => {
   });
 
   test('returns false when index file already exists in collection entries', async () => {
-    const { getIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
     const { getCollection } = await import('$lib/services/contents/collection');
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
 
@@ -1657,7 +1690,7 @@ describe('canCreateIndexFile()', () => {
   });
 
   test('returns false when custom-named index file already exists', async () => {
-    const { getIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
     const { getCollection } = await import('$lib/services/contents/collection');
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
 

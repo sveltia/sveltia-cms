@@ -40,7 +40,7 @@ vi.mock('$lib/services/contents/collection', () => ({
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(),
 }));
-vi.mock('$lib/services/contents/collection/index-file', () => ({
+vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   isCollectionIndexFile: vi.fn(),
 }));
 vi.mock('$lib/services/contents/entry/fields', () => ({
@@ -66,7 +66,10 @@ const baseMultipleFieldConfig = {
 describe('Test getOptions()', async () => {
   const { getCollection } = await import('$lib/services/contents/collection');
   const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
-  const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+
+  const { isCollectionIndexFile } =
+    await import('$lib/services/contents/collection/entries/index-file');
+
   const { getField, getFieldDisplayValue } = await import('$lib/services/contents/entry/fields');
   const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
   const locale = '_default';
@@ -3522,7 +3525,9 @@ describe('Test processListFields()', () => {
 });
 
 describe('Test processEntry()', async () => {
-  const { isCollectionIndexFile } = await import('$lib/services/contents/collection/index-file');
+  const { isCollectionIndexFile } =
+    await import('$lib/services/contents/collection/entries/index-file');
+
   const { getField, getFieldDisplayValue } = await import('$lib/services/contents/entry/fields');
   const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
 

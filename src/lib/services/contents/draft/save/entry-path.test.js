@@ -5,7 +5,7 @@ vi.mock('$lib/services/common/template', () => ({
   fillTemplate: vi.fn((template) => template),
 }));
 
-vi.mock('$lib/services/contents/collection/index-file', () => ({
+vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
 }));
 
@@ -22,7 +22,7 @@ describe('contents/draft/save/entry-path', () => {
     vi.clearAllMocks();
 
     const { fillTemplate } = await import('$lib/services/common/template');
-    const { getIndexFile } = await import('$lib/services/contents/collection/index-file');
+    const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
     const { getLocalePath } = await import('$lib/services/contents/i18n');
 
     mockFillTemplate = fillTemplate;

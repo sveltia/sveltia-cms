@@ -31,7 +31,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
   getCollectionFile: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection/index-file', () => ({
+vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
 }));
 
@@ -661,7 +661,7 @@ describe('Test shouldSkipIndexFile()', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    const indexFileModule = await import('$lib/services/contents/collection/index-file');
+    const indexFileModule = await import('$lib/services/contents/collection/entries/index-file');
 
     getIndexFile = indexFileModule.getIndexFile;
   });

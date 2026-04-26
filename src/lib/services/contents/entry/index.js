@@ -10,7 +10,10 @@ import { fillTemplate } from '$lib/services/common/template';
 import { cmsConfig } from '$lib/services/config';
 import { getEntryFoldersByPath } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
-import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import {
+  getIndexFile,
+  isCollectionIndexFile,
+} from '$lib/services/contents/collection/entries/index-file';
 import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/helper';
 
 /**

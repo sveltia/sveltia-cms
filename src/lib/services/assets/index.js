@@ -11,8 +11,8 @@ import {
 } from '$lib/services/assets/folders';
 import { fillTemplate } from '$lib/services/common/template';
 import { getCollection } from '$lib/services/contents/collection';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import {
   getDefaultMediaLibraryOptions,

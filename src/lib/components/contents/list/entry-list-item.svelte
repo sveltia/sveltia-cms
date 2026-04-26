@@ -8,7 +8,7 @@
   import {
     getIndexFile,
     isCollectionIndexFile,
-  } from '$lib/services/contents/collection/index-file';
+  } from '$lib/services/contents/collection/entries/index-file';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';

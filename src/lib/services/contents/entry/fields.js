@@ -5,8 +5,11 @@ import {
   DATE_TRANSFORMATION_REGEX,
 } from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
+import {
+  getIndexFile,
+  isCollectionIndexFile,
+} from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
-import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { MEDIA_FIELD_TYPES, MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helper';
 import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helper';

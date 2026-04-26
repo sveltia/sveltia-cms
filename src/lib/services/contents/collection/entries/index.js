@@ -8,8 +8,11 @@ import { getMediaFieldURL } from '$lib/services/assets/info';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
+import {
+  getIndexFile,
+  isCollectionIndexFile,
+} from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getRegex } from '$lib/services/utils/misc';

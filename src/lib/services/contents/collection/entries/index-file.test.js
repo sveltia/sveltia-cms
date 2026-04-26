@@ -3,7 +3,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { isEntryCollection } from '$lib/services/contents/collection';
-import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import {
+  getIndexFile,
+  isCollectionIndexFile,
+} from '$lib/services/contents/collection/entries/index-file';
 
 // Mock dependencies
 vi.mock('@sveltia/i18n', () => ({

@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getCollection, isEntryCollection } from '$lib/services/contents/collection';
-import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import {
+  getIndexFile,
+  isCollectionIndexFile,
+} from '$lib/services/contents/collection/entries/index-file';
 import {
   fieldConfigCacheMap,
   getField,
@@ -24,7 +27,7 @@ vi.mock('$lib/services/contents/collection', () => ({
   isEntryCollection: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection/index-file', () => ({
+vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
   isCollectionIndexFile: vi.fn(),
 }));

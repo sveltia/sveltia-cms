@@ -9,7 +9,10 @@ import {
   DATE_TRANSFORMATION_REGEX,
   TERNARY_TRANSFORMATION_REGEX,
 } from '$lib/services/common/transformations';
-import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import {
+  getIndexFile,
+  isCollectionIndexFile,
+} from '$lib/services/contents/collection/entries/index-file';
 import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 
 /**

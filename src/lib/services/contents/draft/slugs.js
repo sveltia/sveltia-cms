@@ -1,5 +1,5 @@
 import { fillTemplate } from '$lib/services/common/template';
-import { getIndexFile } from '$lib/services/contents/collection/index-file';
+import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 
 /**
  * @import {

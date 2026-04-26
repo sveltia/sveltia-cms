@@ -6,7 +6,7 @@ vi.mock('$lib/services/config', () => ({
   cmsConfig: { subscribe: vi.fn() },
 }));
 
-vi.mock('$lib/services/contents/collection/index-file', () => ({
+vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
   isCollectionIndexFile: vi.fn(),
 }));
@@ -29,7 +29,7 @@ vi.mock('$lib/services/contents/draft/defaults', () => ({
 
 // Import mocked modules once at the top level
 const { getIndexFile, isCollectionIndexFile } =
-  await import('$lib/services/contents/collection/index-file');
+  await import('$lib/services/contents/collection/entries/index-file');
 
 const { entryDraft } = await import('$lib/services/contents/draft');
 const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/backup');

@@ -31,7 +31,7 @@ vi.mock('$lib/services/common/slug');
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/contents/collection');
 vi.mock('$lib/services/contents/collection/files');
-vi.mock('$lib/services/contents/collection/index-file');
+vi.mock('$lib/services/contents/collection/entries/index-file');
 vi.mock('$lib/services/contents/entry');
 vi.mock('$lib/services/utils/file');
 
@@ -3672,7 +3672,7 @@ describe('assets/index', () => {
       const { fillTemplate } = await import('$lib/services/common/template');
 
       const { isCollectionIndexFile } =
-        await import('$lib/services/contents/collection/index-file');
+        await import('$lib/services/contents/collection/entries/index-file');
 
       const mockEntry = /** @type {any} */ ({
         id: 'my-post',

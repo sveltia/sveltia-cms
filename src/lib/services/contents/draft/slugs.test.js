@@ -21,7 +21,7 @@ vi.mock('$lib/services/common/template', () => ({
   }),
 }));
 
-vi.mock('$lib/services/contents/collection/index-file', () => ({
+vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(() => ({ name: 'index' })),
 }));
 

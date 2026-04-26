@@ -9,7 +9,7 @@ import { getSortKeyGetter, markdownFieldKeys, sortEntries } from './sort';
  */
 
 // Mock external dependencies
-vi.mock('$lib/services/contents/collection/index-file', () => ({
+vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
 }));
 
@@ -34,7 +34,7 @@ vi.mock('$lib/services/utils/markdown', () => ({
   removeMarkdownSyntax: vi.fn(),
 }));
 
-const { getIndexFile } = await import('$lib/services/contents/collection/index-file');
+const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
 const { getSortKeyType } = await import('$lib/services/contents/collection/view/sort-keys');
 const { getField, getPropertyValue } = await import('$lib/services/contents/entry/fields');
 const { getEntrySummary } = await import('$lib/services/contents/entry/summary');

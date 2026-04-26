@@ -1,7 +1,10 @@
 import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
-import { getIndexFile, isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import {
+  getIndexFile,
+  isCollectionIndexFile,
+} from '$lib/services/contents/collection/entries/index-file';
 import { entryDraft } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { createProxy } from '$lib/services/contents/draft/create/proxy';

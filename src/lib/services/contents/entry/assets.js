@@ -6,7 +6,7 @@ import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets'
 import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { getMediaFieldURL } from '$lib/services/assets/info';
 import { getCollection } from '$lib/services/contents/collection';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/index-file';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getField } from '$lib/services/contents/entry/fields';
 
 /**
