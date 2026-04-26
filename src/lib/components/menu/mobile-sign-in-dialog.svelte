@@ -13,8 +13,7 @@
   $effect(() => {
     if (canvas && $showMobileSignInDialog) {
       const { origin, pathname } = window.location;
-      const encodedData = btoa(JSON.stringify({ token: $user?.token, prefs: $prefs }));
-      const url = `${origin}${pathname}#/signin/${encodedData}`;
+      const url = `${origin}${pathname}#/signin`;
 
       toCanvas(canvas, url);
 
