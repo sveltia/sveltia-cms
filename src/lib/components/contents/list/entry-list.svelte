@@ -6,9 +6,15 @@
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import EntryListItem from '$lib/components/contents/list/entry-list-item.svelte';
+  import EntryReorderList from '$lib/components/contents/list/entry-reorder-list.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { selectedCollection } from '$lib/services/contents/collection';
-  import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
+  import {
+    currentView,
+    entryGroups,
+    listedEntries,
+    reordering,
+  } from '$lib/services/contents/collection/view';
 
   /**
    * @import { Entry, InternalEntryCollection } from '$lib/types/private';
@@ -17,7 +23,7 @@
   const collection = $derived(
     /** @type {InternalEntryCollection | undefined} */ ($selectedCollection),
   );
-  const viewType = $derived($currentView.type);
+  const viewType = $derived($reordering ? 'list' : $currentView.type);
   const allEntries = $derived($entryGroups.flatMap(({ entries }) => entries));
 </script>
 
@@ -31,25 +37,30 @@
         aria-label={_('entries')}
         aria-rowcount={$listedEntries.length}
       >
-        {#each $entryGroups as { name, entries } (name)}
-          {#await sleep() then}
-            <!-- @todo Implement custom table column option that can replace summary template -->
-            <GridBody label={name !== '*' ? name : undefined}>
-              <InfiniteScroll
-                items={entries.filter(
-                  ({ locales }) => !!(locales[defaultLocale] ?? Object.values(locales)[0])?.content,
-                )}
-                itemKey="id"
-              >
-                {#snippet renderItem(/** @type {Entry} */ entry)}
-                  {#await sleep() then}
-                    <EntryListItem {collection} {entry} {viewType} />
-                  {/await}
-                {/snippet}
-              </InfiniteScroll>
-            </GridBody>
-          {/await}
-        {/each}
+        <!-- @todo Implement custom table column option that can replace summary template -->
+        {#if $reordering}
+          <EntryReorderList {collection} {viewType} />
+        {:else}
+          {#each $entryGroups as { name, entries } (name)}
+            {#await sleep() then}
+              <GridBody label={name !== '*' ? name : undefined}>
+                <InfiniteScroll
+                  items={entries.filter(
+                    ({ locales }) =>
+                      !!(locales[defaultLocale] ?? Object.values(locales)[0])?.content,
+                  )}
+                  itemKey="id"
+                >
+                  {#snippet renderItem(/** @type {Entry} */ entry)}
+                    {#await sleep() then}
+                      <EntryListItem {collection} {entry} {viewType} />
+                    {/await}
+                  {/snippet}
+                </InfiniteScroll>
+              </GridBody>
+            {/await}
+          {/each}
+        {/if}
       </ListingGrid>
     {:else if $listedEntries.length}
       <EmptyState>

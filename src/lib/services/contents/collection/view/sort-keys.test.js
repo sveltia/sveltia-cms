@@ -52,6 +52,8 @@ describe('Test getSortConfig()', async () => {
           return { name: 'email', widget: 'string' };
         case 'custom_id':
           return { name: 'custom_id', widget: 'string' };
+        case 'order':
+          return { name: 'order', widget: 'number' };
         default:
           return undefined;
       }
@@ -830,6 +832,70 @@ describe('Test getSortConfig()', async () => {
       default: { key: 'title', order: 'ascending' },
     });
   });
+
+  test('prepends the _manual key and defaults to it when reorder is enabled', () => {
+    expect(
+      getSortConfig({
+        collection: { ...collectionBase, reorder: true },
+        isCommitAuthorAvailable: false,
+        isCommitDateAvailable: false,
+      }),
+    ).toEqual({
+      keys: ['_manual', 'title', 'name', 'date', 'author', 'description'],
+      default: { key: '_manual', order: 'ascending' },
+    });
+  });
+
+  test('replaces the default order field key with _manual when listed in sortable_fields', () => {
+    expect(
+      getSortConfig({
+        collection: {
+          ...collectionBase,
+          reorder: true,
+          sortable_fields: ['order', 'title'],
+        },
+        isCommitAuthorAvailable: false,
+        isCommitDateAvailable: false,
+      }),
+    ).toEqual({
+      keys: ['_manual', 'title'],
+      default: { key: '_manual', order: 'ascending' },
+    });
+  });
+
+  test('replaces a custom order key listed in sortable_fields with _manual', () => {
+    expect(
+      getSortConfig({
+        collection: {
+          ...collectionBase,
+          reorder: { key: 'position' },
+          sortable_fields: ['position', 'title'],
+        },
+        isCommitAuthorAvailable: false,
+        isCommitDateAvailable: false,
+      }),
+    ).toEqual({
+      keys: ['_manual', 'title'],
+      default: { key: '_manual', order: 'ascending' },
+    });
+  });
+
+  test('does not duplicate _manual when it is already listed in sortable_fields', () => {
+    expect(
+      getSortConfig({
+        collection: {
+          ...collectionBase,
+          reorder: true,
+          sortable_fields: ['_manual', 'title'],
+        },
+        isCommitAuthorAvailable: false,
+        isCommitDateAvailable: false,
+      }),
+    ).toEqual({
+      keys: ['_manual', 'title'],
+      default: { key: '_manual', order: 'ascending' },
+    });
+  });
 });
 
 describe('Test exported constants and utilities', () => {
@@ -845,12 +911,19 @@ describe('Test exported constants and utilities', () => {
       commit_author: String,
       commit_date: Date,
       _summary: String,
+      _manual: String,
     });
-    expect(Object.keys(SPECIAL_SORT_KEY_TYPES)).toHaveLength(4);
+    expect(Object.keys(SPECIAL_SORT_KEY_TYPES)).toHaveLength(5);
   });
 
   test('SPECIAL_SORT_KEYS contains keys from SPECIAL_SORT_KEY_TYPES', () => {
-    expect(SPECIAL_SORT_KEYS).toEqual(['slug', 'commit_author', 'commit_date', '_summary']);
+    expect(SPECIAL_SORT_KEYS).toEqual([
+      'slug',
+      'commit_author',
+      'commit_date',
+      '_summary',
+      '_manual',
+    ]);
     expect(SPECIAL_SORT_KEYS).toEqual(Object.keys(SPECIAL_SORT_KEY_TYPES));
   });
 });

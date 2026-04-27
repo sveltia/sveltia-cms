@@ -42,6 +42,14 @@ vi.mock('$lib/services/contents/draft/save/changes', () => ({
   getPreviousSha: vi.fn().mockResolvedValue('mock-sha-123'),
 }));
 
+vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
+  buildRenumberChanges: vi.fn().mockResolvedValue({ changes: [], savingEntries: [] }),
+}));
+
+vi.mock('$lib/services/contents/collection/entries', () => ({
+  getEntriesByCollection: vi.fn(() => []),
+}));
+
 describe('Test updateStores()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -173,6 +181,7 @@ describe('Test deleteEntries()', () => {
           previousSha: 'mock-sha-123',
         },
       ],
+      savingEntries: [],
       options: {
         commitType: 'delete',
         collection: { name: 'posts' },
@@ -211,6 +220,7 @@ describe('Test deleteEntries()', () => {
         { action: 'delete', path: '/images/image1.jpg', previousSha: 'asset-sha-1' },
         { action: 'delete', path: '/images/image2.jpg', previousSha: 'asset-sha-2' },
       ],
+      savingEntries: [],
       options: {
         commitType: 'delete',
         collection: expect.any(Object),
@@ -244,6 +254,7 @@ describe('Test deleteEntries()', () => {
           previousSha: 'mock-sha-123',
         },
       ],
+      savingEntries: [],
       options: {
         commitType: 'delete',
         collection: expect.any(Object),
@@ -260,6 +271,7 @@ describe('Test deleteEntries()', () => {
     // Should still call saveChanges with empty changes
     expect(vi.mocked(saveChanges)).toHaveBeenCalledWith({
       changes: [],
+      savingEntries: [],
       options: {
         commitType: 'delete',
         collection: expect.any(Object),
@@ -329,6 +341,7 @@ describe('Test deleteEntries()', () => {
           previousSha: 'mock-sha-123',
         },
       ],
+      savingEntries: [],
       options: {
         commitType: 'delete',
         collection: expect.any(Object),
@@ -430,5 +443,93 @@ describe('Test deleteEntries()', () => {
     // IndexedDB should have been called with the database name
     expect(IndexedDB).toBeDefined();
     expect(vi.mocked(saveChanges)).toHaveBeenCalled();
+  });
+
+  test('bundles renumber changes for entry collections into the same commit', async () => {
+    const { buildRenumberChanges } =
+      await import('$lib/services/contents/collection/entries/reorder');
+
+    const { saveChanges } = await import('$lib/services/backends/save');
+    const { selectedCollection } = await import('$lib/services/contents/collection');
+    const collection = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+
+    selectedCollection.set(collection);
+
+    const renumberChange = /** @type {any} */ ({
+      action: 'update',
+      slug: 'post-2',
+      path: '/content/posts/post-2.md',
+      data: 'order: 1',
+    });
+
+    const renumberSavingEntry = /** @type {any} */ ({ id: '2', slug: 'post-2', locales: {} });
+
+    vi.mocked(buildRenumberChanges).mockResolvedValueOnce({
+      changes: [renumberChange],
+      savingEntries: [renumberSavingEntry],
+    });
+
+    await deleteEntries(
+      /** @type {any} */ ([
+        {
+          id: '1',
+          slug: 'post-1',
+          locales: { en: { path: '/content/posts/post-1.md' } },
+        },
+      ]),
+    );
+
+    // buildRenumberChanges should be called with the collection and the deleted IDs in `excludeIds`
+    // so the renumber pass skips them.
+    expect(vi.mocked(buildRenumberChanges)).toHaveBeenCalledWith(
+      collection,
+      expect.objectContaining({
+        excludeIds: expect.any(Set),
+      }),
+    );
+
+    const callArgs = vi.mocked(buildRenumberChanges).mock.calls[0][1];
+
+    expect(/** @type {any} */ (callArgs).excludeIds).toEqual(new Set(['1']));
+
+    // saveChanges should receive both delete + renumber changes in a single call.
+    const call = vi.mocked(saveChanges).mock.calls[0][0];
+
+    expect(call.changes).toEqual([
+      expect.objectContaining({ action: 'delete', slug: 'post-1' }),
+      renumberChange,
+    ]);
+    expect(call.savingEntries).toEqual([renumberSavingEntry]);
+    expect(call.options.commitType).toBe('delete');
+  });
+
+  test('does not append renumber changes for non-entry collections', async () => {
+    const { buildRenumberChanges } =
+      await import('$lib/services/contents/collection/entries/reorder');
+
+    const { saveChanges } = await import('$lib/services/backends/save');
+    const { selectedCollection } = await import('$lib/services/contents/collection');
+
+    selectedCollection.set(/** @type {any} */ ({ name: 'pages', _type: 'file' }));
+
+    // The default mock returns no changes, which is what `buildRenumberChanges` does internally for
+    // non-entry collections too.
+    vi.mocked(buildRenumberChanges).mockResolvedValueOnce({ changes: [], savingEntries: [] });
+
+    await deleteEntries(
+      /** @type {any} */ ([
+        {
+          id: '1',
+          slug: 'post-1',
+          locales: { en: { path: '/content/pages/post-1.md' } },
+        },
+      ]),
+    );
+
+    const call = vi.mocked(saveChanges).mock.calls[0][0];
+
+    // Only the delete change should be present.
+    expect(call.changes).toEqual([expect.objectContaining({ action: 'delete', slug: 'post-1' })]);
+    expect(call.savingEntries).toEqual([]);
   });
 });

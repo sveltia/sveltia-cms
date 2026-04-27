@@ -307,7 +307,7 @@ describe('git/shared/commits', () => {
         collection: mockCollection,
       });
 
-      expect(message).toBe('Update Blog Post “first-post”');
+      expect(message).toBe('Update Blog Post “first-post” +1');
     });
 
     it('should handle deleteMedia with multiple files', () => {
@@ -348,6 +348,20 @@ describe('git/shared/commits', () => {
       });
 
       expect(message).toBe('[skip ci] openAuthoring');
+    });
+
+    it('should append +N for openAuthoring with multiple changes', () => {
+      const multiChanges = [
+        { path: 'content/posts/a.md', slug: 'a' },
+        { path: 'content/posts/b.md', slug: 'b' },
+        { path: 'content/posts/c.md', slug: 'c' },
+      ];
+
+      const message = createCommitMessage(multiChanges, {
+        commitType: 'openAuthoring',
+      });
+
+      expect(message).toBe('openAuthoring +2');
     });
 
     it('should not apply [skip ci] when skipCI is explicitly false', () => {

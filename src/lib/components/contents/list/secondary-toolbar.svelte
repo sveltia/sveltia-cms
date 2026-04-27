@@ -10,7 +10,12 @@
   import { getAssetFolder } from '$lib/services/assets/folders';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
-  import { currentView, entryGroups, listedEntries } from '$lib/services/contents/collection/view';
+  import {
+    currentView,
+    entryGroups,
+    listedEntries,
+    reordering,
+  } from '$lib/services/contents/collection/view';
   import { viewFilters } from '$lib/services/contents/collection/view/filter';
   import { viewGroups } from '$lib/services/contents/collection/view/group';
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
@@ -31,7 +36,7 @@
   const hasMultipleEntries = $derived($listedEntries.length > 1);
 </script>
 
-{#if entryCollection}
+{#if entryCollection && !$reordering}
   <Toolbar variant="secondary" aria-label={_('entry_list')}>
     {#if !($isSmallScreen || $isMediumScreen)}
       <ItemSelector

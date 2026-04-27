@@ -8,6 +8,8 @@ import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { callEventHooks } from '$lib/services/contents/draft/events';
@@ -23,6 +25,12 @@ vi.mock('$lib/services/backends');
 vi.mock('$lib/services/backends/git/shared/integration');
 vi.mock('$lib/services/backends/save');
 vi.mock('$lib/services/contents/collection/data');
+vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
+  getOrderFieldKey: vi.fn(() => undefined),
+}));
+vi.mock('$lib/services/contents/collection/entries', () => ({
+  getEntriesByCollection: vi.fn(() => []),
+}));
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/draft/backup');
 vi.mock('$lib/services/contents/draft/events', () => ({
@@ -318,6 +326,134 @@ describe('draft/save/index', () => {
       await saveEntry();
 
       expect(clearEntryHistoryCache).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('manual sort order assignment', () => {
+    beforeEach(() => {
+      mockDraft.collection = {
+        name: 'posts',
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+      };
+      mockDraft.collectionFile = undefined;
+      mockDraft.currentValues = { en: { title: 'Test Post' }, ja: { title: 'テスト' } };
+      vi.mocked(getOrderFieldKey).mockReturnValue(undefined);
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+    });
+
+    it('should assign max + 1 to all locales when saving a new entry in a reorder collection', async () => {
+      mockDraft.isNew = true;
+      vi.mocked(getOrderFieldKey).mockReturnValue('order');
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        { locales: { en: { content: { order: 1 } } } },
+        { locales: { en: { content: { order: 5 } } } },
+        { locales: { en: { content: { order: 3 } } } },
+      ]);
+
+      await saveEntry();
+
+      expect(mockDraft.currentValues.en.order).toBe(6);
+      expect(mockDraft.currentValues.ja.order).toBe(6);
+    });
+
+    it('should assign 1 when no existing entries have a numeric order', async () => {
+      mockDraft.isNew = true;
+      vi.mocked(getOrderFieldKey).mockReturnValue('order');
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+
+      await saveEntry();
+
+      expect(mockDraft.currentValues.en.order).toBe(1);
+    });
+
+    it('should ignore non-numeric existing order values', async () => {
+      mockDraft.isNew = true;
+      vi.mocked(getOrderFieldKey).mockReturnValue('order');
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        { locales: { en: { content: { order: 'abc' } } } },
+        { locales: { en: { content: {} } } },
+        { locales: { en: { content: { order: 2 } } } },
+      ]);
+
+      await saveEntry();
+
+      expect(mockDraft.currentValues.en.order).toBe(3);
+    });
+
+    it('should overwrite a stale order value already on the draft (race-safe)', async () => {
+      mockDraft.isNew = true;
+      mockDraft.currentValues.en.order = 5;
+      mockDraft.currentValues.ja.order = 5;
+      vi.mocked(getOrderFieldKey).mockReturnValue('order');
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        { locales: { en: { content: { order: 5 } } } },
+        { locales: { en: { content: { order: 6 } } } },
+      ]);
+
+      await saveEntry();
+
+      expect(mockDraft.currentValues.en.order).toBe(7);
+      expect(mockDraft.currentValues.ja.order).toBe(7);
+    });
+
+    it('should use the configured custom order key', async () => {
+      mockDraft.isNew = true;
+      vi.mocked(getOrderFieldKey).mockReturnValue('priority');
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        { locales: { en: { content: { priority: 10 } } } },
+      ]);
+
+      await saveEntry();
+
+      expect(mockDraft.currentValues.en.priority).toBe(11);
+    });
+
+    it('should not assign order for existing entries', async () => {
+      mockDraft.isNew = false;
+      mockDraft.currentValues.en.order = 7;
+      vi.mocked(getOrderFieldKey).mockReturnValue('order');
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        { locales: { en: { content: { order: 99 } } } },
+      ]);
+
+      await saveEntry();
+
+      expect(mockDraft.currentValues.en.order).toBe(7);
+    });
+
+    it('should not assign order when reorder is disabled', async () => {
+      mockDraft.isNew = true;
+      vi.mocked(getOrderFieldKey).mockReturnValue(undefined);
+
+      await saveEntry();
+
+      expect(mockDraft.currentValues.en.order).toBeUndefined();
+    });
+
+    it('should not assign order for file collections', async () => {
+      mockDraft.isNew = true;
+      mockDraft.collection._type = 'file';
+      vi.mocked(getOrderFieldKey).mockReturnValue('order');
+
+      await saveEntry();
+
+      expect(mockDraft.currentValues.en.order).toBeUndefined();
+    });
+
+    it('should use collectionFile i18n when provided', async () => {
+      mockDraft.isNew = true;
+      mockDraft.collection._i18n = { defaultLocale: 'en' };
+      mockDraft.collectionFile = { _i18n: { defaultLocale: 'ja' } };
+      vi.mocked(getOrderFieldKey).mockReturnValue('order');
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        { locales: { en: { content: { order: 1 } }, ja: { content: { order: 9 } } } },
+      ]);
+
+      await saveEntry();
+
+      // Reads from `ja` (collectionFile defaultLocale), so max = 9 → next = 10.
+      expect(mockDraft.currentValues.en.order).toBe(10);
     });
   });
 });

@@ -27,6 +27,9 @@ copy: コピー
 download: ダウンロード
 duplicate: 複製
 delete: 削除
+reorder: 並び替え
+cancel: キャンセル
+done: 完了
 save: 保存
 saving: 保存中…
 publish: 公開
@@ -168,8 +171,8 @@ list_view: リストビュー
 grid_view: グリッドビュー
 switch_to_list_view: リストビューに切り替え
 switch_to_grid_view: グリッドビューに切り替え
-sort: 並び替え
-sorting_options: 並べ替えオプション
+sort: 表示順
+sorting_options: 表示順オプション
 sort_keys:
   none: なし
   name: 名前
@@ -177,6 +180,7 @@ sort_keys:
   commit_author: 更新者
   commit_date: 更新日時
   _summary: サマリー
+  _manual: 手動
 ascending: "{$label} (A–Z)"
 ascending_date: "{$label} (古い順)"
 descending: "{$label} (Z–A)"
@@ -283,6 +287,10 @@ confirm_deleting_selected_entries_with_assets: |
     *   {{ 選択された {$count} 個のエントリーと関連アセットを削除してもよろしいですか？ }}
 confirm_deleting_all_entries: すべてのエントリーを削除してもよろしいですか？
 confirm_deleting_all_entries_with_assets: すべてのエントリーと関連アセットを削除してもよろしいですか？
+reorder_entries: エントリーを並び替え
+done_reordering_entries: エントリーの並び替えを完了
+cancel_reordering_entries: エントリーの並び替えをキャンセル
+saving_reorder_failed: エントリーの並び替えを保存できませんでした。再度お試しください。
 processing_files: ファイルを処理しています。これには時間がかかる場合があります。
 uploading_files: アップロード対象ファイル
 confirm_replacing_file: 「{$name}」を以下のファイルと差し替えてもよろしいですか？
@@ -315,8 +323,16 @@ entry_validation_errors: |
   .match $count
     one {{ ひとつのフィールドにエラーがあります。エントリーを保存するには問題を修正してください。 }}
     *   {{ {$count} 個のフィールドにエラーがあります。エントリーを保存するには問題を修正してください。 }}
-entry_saved: エントリーが保存されました。
-entry_saved_and_published: エントリーが保存、公開されました。
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ エントリーが保存されました。 }}
+    *   {{ {$count} 件のエントリーが保存されました。 }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ エントリーが保存、公開されました。 }}
+    *   {{ {$count} 件のエントリーが保存、公開されました。 }}
 entries_deleted: |
   .input {$count :integer}
   .match $count

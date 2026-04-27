@@ -8,7 +8,14 @@ import { groupEntries } from '$lib/services/contents/collection/view/group';
 import { initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 
-import { collectionState, currentView, entryGroups, listedEntries } from '.';
+import {
+  collectionState,
+  currentView,
+  entryGroups,
+  listedEntries,
+  reorderedEntries,
+  reordering,
+} from '.';
 
 /**
  * Real writable stores hoisted so they are available when vi.mock factories run.
@@ -856,6 +863,7 @@ describe('collection/view/index', () => {
         isEntryCollection: false,
         canCreate: false,
         canDelete: false,
+        canReorder: false,
         quota: Infinity,
         remaining: Infinity,
         nearingQuota: false,
@@ -871,6 +879,7 @@ describe('collection/view/index', () => {
         isEntryCollection: false,
         canCreate: false,
         canDelete: false,
+        canReorder: false,
         quota: Infinity,
         remaining: Infinity,
         nearingQuota: false,
@@ -1238,5 +1247,97 @@ describe('collection/view/index', () => {
     currentView.set(viewRef);
 
     unsubscribe();
+  });
+
+  test('reordering store does not clear reorderedEntries while truthy', () => {
+    reorderedEntries.set([/** @type {any} */ ({ id: 'pending' })]);
+    reordering.set(true);
+
+    // The truthy branch of `if (!value)` does NOT reset the pending entries.
+    expect(get(reorderedEntries)).toEqual([{ id: 'pending' }]);
+
+    reordering.set(false);
+
+    // The falsy branch resets the pending entries.
+    expect(get(reorderedEntries)).toEqual([]);
+  });
+
+  test('entering reorder mode forces the entry list to be sorted by manual order', () => {
+    currentView.set({ type: 'list', sort: { key: 'title', order: 'descending' } });
+
+    reordering.set(true);
+
+    expect(get(currentView).sort).toEqual({ key: '_manual', order: 'ascending' });
+
+    reordering.set(false);
+  });
+
+  test('entering reorder mode does not re-set currentView when already sorted by manual order', () => {
+    const view = {
+      type: /** @type {const} */ ('list'),
+      sort: { key: '_manual', order: /** @type {const} */ ('ascending') },
+    };
+
+    currentView.set(view);
+
+    reordering.set(true);
+
+    // Reference is preserved because we skip the redundant set.
+    expect(get(currentView)).toBe(view);
+
+    reordering.set(false);
+  });
+
+  test('entering reorder mode clears active filters to avoid order collisions', () => {
+    currentView.set({
+      type: 'list',
+      sort: { key: '_manual', order: 'ascending' },
+      filters: [{ field: 'category', pattern: 'news' }],
+    });
+
+    reordering.set(true);
+
+    const view = get(currentView);
+
+    expect(view.filters).toEqual([]);
+    expect(view.sort).toEqual({ key: '_manual', order: 'ascending' });
+
+    reordering.set(false);
+  });
+
+  test('entering reorder mode clears active grouping to produce a single flat list', () => {
+    currentView.set({
+      type: 'list',
+      sort: { key: '_manual', order: 'ascending' },
+      group: { field: 'category' },
+    });
+
+    reordering.set(true);
+
+    const view = get(currentView);
+
+    expect(view.group).toBeNull();
+    expect(view.sort).toEqual({ key: '_manual', order: 'ascending' });
+
+    reordering.set(false);
+  });
+
+  test('entering reorder mode applies sort, filter, and group overrides together', () => {
+    currentView.set({
+      type: 'list',
+      sort: { key: 'title', order: 'descending' },
+      filters: [{ field: 'category', pattern: 'news' }],
+      group: { field: 'year' },
+    });
+
+    reordering.set(true);
+
+    const view = get(currentView);
+
+    expect(view.sort).toEqual({ key: '_manual', order: 'ascending' });
+    expect(view.filters).toEqual([]);
+    expect(view.group).toBeNull();
+
+    reordering.set(false);
   });
 });

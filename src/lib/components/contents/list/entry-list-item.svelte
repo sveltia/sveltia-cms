@@ -1,18 +1,14 @@
+<!--
+  @component
+  Render a read-only entry row. Clicking the row navigates to the entry edit page.
+-->
 <script>
-  import { locale as appLocale } from '@sveltia/i18n';
-  import { Checkbox, GridCell, GridRow, Icon, TruncatedText } from '@sveltia/ui';
+  import { GridRow } from '@sveltia/ui';
 
-  import Image from '$lib/components/assets/shared/image.svelte';
+  import EntryListItemCells from '$lib/components/contents/list/entry-list-item-cells.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { selectedEntries, selectedEntryIdSet } from '$lib/services/contents/collection/entries';
-  import {
-    getIndexFile,
-    isCollectionIndexFile,
-  } from '$lib/services/contents/collection/entries/index-file';
+  import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries } from '$lib/services/contents/collection/view';
-  import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
-  import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { Entry, InternalEntryCollection, ViewType } from '$lib/types/private';
@@ -66,49 +62,5 @@
     });
   }}
 >
-  {#if !($isSmallScreen || $isMediumScreen)}
-    <GridCell class="checkbox">
-      <Checkbox
-        role="none"
-        tabindex="-1"
-        checked={$selectedEntryIdSet.has(entry.id)}
-        onChange={({ detail: { checked } }) => {
-          updateSelection(checked);
-        }}
-      />
-    </GridCell>
-  {/if}
-  {#if collection._thumbnailFieldNames.length}
-    <GridCell class="image">
-      {#await getEntryThumbnail(collection, entry) then src}
-        {#if src}
-          <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
-        {/if}
-      {/await}
-    </GridCell>
-  {/if}
-  <GridCell class="title">
-    <div role="none" class="label">
-      <TruncatedText lines={2}>
-        {#key appLocale.current}
-          {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
-        {/key}
-        {#if isCollectionIndexFile(collection, entry)}
-          <Icon name={getIndexFile(collection)?.icon} class="home" />
-        {/if}
-      </TruncatedText>
-    </div>
-  </GridCell>
+  <EntryListItemCells {collection} {entry} {viewType} showCheckbox onSelect={updateSelection} />
 </GridRow>
-
-<style lang="scss">
-  .label {
-    :global {
-      .icon.home {
-        opacity: 0.5;
-        font-size: 20px;
-        vertical-align: -4px;
-      }
-    }
-  }
-</style>

@@ -5,6 +5,7 @@ import { TomlDate } from 'smol-toml';
 import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
 import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/entry/fields';
@@ -124,6 +125,8 @@ export const copyProperty = ({
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
  * @param {string} [args.canonicalSlugKey] Property name of a canonical slug.
+ * @param {string} [args.orderKey] Property name of the entry order field. Placed right after the
+ * canonical slug, ahead of all configured fields, when present in the value map.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @param {boolean} [args.isTomlOutput] Whether the output it TOML format.
@@ -136,6 +139,7 @@ const finalizeContent = ({
   locale,
   valueMap,
   canonicalSlugKey,
+  orderKey,
   isIndexFile = false,
   isTomlOutput = false,
 }) => {
@@ -153,6 +157,11 @@ const finalizeContent = ({
   // Add the slug first
   if (canonicalSlugKey && canonicalSlugKey in unsortedMap) {
     copyProperty({ ...copyArgs, key: canonicalSlugKey });
+  }
+
+  // Add the order field next so it appears at the top of the output
+  if (orderKey && orderKey in unsortedMap) {
+    copyProperty({ ...copyArgs, key: orderKey });
   }
 
   // Move the listed properties to a new object
@@ -233,6 +242,7 @@ export const serializeContent = ({ draft, locale, valueMap }) => {
     locale,
     valueMap,
     canonicalSlugKey,
+    orderKey: getOrderFieldKey(collection),
     isIndexFile,
     isTomlOutput,
   });

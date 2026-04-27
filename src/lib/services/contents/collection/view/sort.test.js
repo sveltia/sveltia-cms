@@ -1257,6 +1257,70 @@ describe('sortEntries', () => {
     expect(result.map((e) => e.slug)).toEqual(['entry-3', 'entry-1', 'entry-2']); // C, B, A
     expect(vi.mocked(getEntrySummary)).toHaveBeenCalledTimes(3);
   });
+
+  test('should sort numerically when the key matches the reorder field', () => {
+    const locale = 'en';
+    const reorderableCollection = { ...mockCollection, reorder: true };
+
+    vi.mocked(getPropertyValue).mockImplementation(({ entry }) => {
+      const orders = { 'entry-1': 10, 'entry-2': 2, 'entry-3': 100 };
+
+      return orders[entry.slug];
+    });
+
+    const result = sortEntries(mockEntries, reorderableCollection, {
+      key: 'order',
+      order: 'ascending',
+      locale,
+    });
+
+    // Numeric sort: 2, 10, 100 (string sort would yield 10, 100, 2).
+    expect(result.map((e) => e.slug)).toEqual(['entry-2', 'entry-1', 'entry-3']);
+    // `getSortKeyType` should be skipped for the reorder field.
+    expect(vi.mocked(getSortKeyType)).not.toHaveBeenCalled();
+  });
+
+  test('should sort numerically when the key is the special _manual key', () => {
+    const locale = 'en';
+    const reorderableCollection = { ...mockCollection, reorder: true };
+
+    vi.mocked(getPropertyValue).mockImplementation(({ entry, key }) => {
+      // The resolved key should be the actual order field, not `_manual`.
+      expect(key).toBe('order');
+
+      const orders = { 'entry-1': 10, 'entry-2': 2, 'entry-3': 100 };
+
+      return orders[entry.slug];
+    });
+
+    const result = sortEntries(mockEntries, reorderableCollection, {
+      key: '_manual',
+      order: 'ascending',
+      locale,
+    });
+
+    expect(result.map((e) => e.slug)).toEqual(['entry-2', 'entry-1', 'entry-3']);
+    expect(vi.mocked(getSortKeyType)).not.toHaveBeenCalled();
+  });
+
+  test('should fall back to the _manual key when the collection has no reorder configuration', () => {
+    const locale = 'en';
+
+    // No `reorder` set → `getOrderFieldKey` returns undefined → resolvedKey stays `_manual`.
+    vi.mocked(getPropertyValue).mockImplementation(({ key }) => {
+      expect(key).toBe('_manual');
+
+      return undefined;
+    });
+
+    const result = sortEntries(mockEntries, mockCollection, {
+      key: '_manual',
+      order: 'ascending',
+      locale,
+    });
+
+    expect(result).toHaveLength(3);
+  });
 });
 
 describe('getSortKeyGetter', () => {

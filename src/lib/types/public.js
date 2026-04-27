@@ -1295,6 +1295,11 @@
  * `true`.
  * @property {boolean} [duplicate] Whether to allow users to duplicate entries in the collection.
  * Default: `true`.
+ * @property {boolean | { key: string }} [reorder] Whether to allow users to reorder entries in the
+ * collection. Default: `false`. If set to `true`, entries can be reordered with a drag-and-drop UI,
+ * and the numeric order starting from 1 is saved in an automatically generated `order` field. If an
+ * object with a `key` property is provided, e.g. `{ key: 'weight' }`, the specified field is used
+ * to save the order instead of the default `order` field.
  * @property {FileExtension} [extension] File extension. Default: `md`.
  * @property {FieldKeyPath} [identifier_field] Field name to be used as the title and slug of an
  * entry. Default: `title`.

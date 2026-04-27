@@ -1005,6 +1005,82 @@ describe('Test serializeContent()', () => {
     });
   });
 
+  test('places the order field right after the canonical slug', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        reorder: true,
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: 'translationKey' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'body', widget: 'markdown' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      title: 'Test',
+      body: 'Body',
+      translationKey: 'abc',
+      order: 3,
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    // The output property order should be: canonical slug, then order, then declared fields.
+    expect(Object.keys(result)).toEqual(['translationKey', 'order', 'title', 'body']);
+    expect(result.order).toBe(3);
+  });
+
+  test('omits the order field when the value is missing', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        reorder: true,
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: 'translationKey' },
+        },
+      },
+      fields: [{ name: 'title', widget: 'string' }],
+      isIndexFile: false,
+    };
+
+    const valueMap = { title: 'Test', translationKey: 'abc' };
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(Object.keys(result)).toEqual(['translationKey', 'title']);
+    expect('order' in result).toBe(false);
+  });
+
+  test('uses the configured custom order key', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        reorder: { key: 'priority' },
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [{ name: 'title', widget: 'string' }],
+      isIndexFile: false,
+    };
+
+    const valueMap = { title: 'Test', priority: 7 };
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(Object.keys(result)).toEqual(['priority', 'title']);
+    expect(result.priority).toBe(7);
+  });
+
   test('serializes content with root list field', () => {
     /** @type {any} */
     const draft = {

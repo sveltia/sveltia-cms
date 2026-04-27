@@ -12,12 +12,17 @@
   import { marked } from 'marked';
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
+  import ReorderControls from '$lib/components/contents/list/reorder-controls.svelte';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { goBack } from '$lib/services/app/navigation';
   import { getCollectionLabel, selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
-  import { collectionState, listedEntries } from '$lib/services/contents/collection/view';
+  import {
+    collectionState,
+    listedEntries,
+    reordering,
+  } from '$lib/services/contents/collection/view';
   import { isSmallScreen } from '$lib/services/user/env';
 
   let showDeleteDialog = $state(false);
@@ -43,6 +48,7 @@
     isEntryCollection,
     canCreate,
     canDelete,
+    canReorder,
     quota,
     remaining,
     nearingQuota,
@@ -70,7 +76,9 @@
         </TruncatedText>
       </div>
     {/if}
-    {#if isEntryCollection}
+    {#if isEntryCollection && $reordering}
+      <ReorderControls />
+    {:else if isEntryCollection}
       {#if !$isSmallScreen}
         <Button
           variant="ghost"
@@ -79,6 +87,17 @@
           disabled={!$selectedEntries.length || !canDelete}
           onclick={() => {
             showDeleteDialog = true;
+          }}
+        />
+      {/if}
+      {#if canReorder}
+        <Button
+          variant="ghost"
+          label={_('reorder')}
+          aria-label={_('reorder_entries')}
+          disabled={!$listedEntries.length}
+          onclick={() => {
+            $reordering = true;
           }}
         />
       {/if}

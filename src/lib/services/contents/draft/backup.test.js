@@ -20,6 +20,9 @@ vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/draft/create/proxy', () => ({
   createProxy: vi.fn(({ target }) => target),
 }));
+vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
+  getOrderFieldKey: vi.fn(() => undefined),
+}));
 vi.mock('$lib/services/backends', () => ({
   backend: {
     subscribe: vi.fn((callback) => {
@@ -841,6 +844,80 @@ describe('draft/backup', () => {
       expect(() => {
         restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
       }).not.toThrow();
+    });
+
+    it('reconciles a stale order field with the live entry value when originalEntry exists', async () => {
+      const { getOrderFieldKey } =
+        await import('$lib/services/contents/collection/entries/reorder');
+
+      vi.mocked(getOrderFieldKey).mockReturnValueOnce('order');
+
+      const backup = {
+        timestamp: new Date(),
+        cmsConfigVersion: 'v1.0.0',
+        collectionName: 'posts',
+        slug: 'my-post',
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        // Backup has stale order value 3
+        currentValues: { en: { title: 'Old Title', order: 3 } },
+        files: {},
+      };
+
+      let updatedDraft;
+
+      vi.mocked(entryDraft.update).mockImplementation((updater) => {
+        updatedDraft = createMockDraft({
+          collection: { reorder: true },
+          originalEntry: { locales: { en: { content: { title: 'Old Title', order: 7 } } } },
+        });
+
+        updater(updatedDraft);
+      });
+
+      restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+
+      // The restored order should use the live value (7), not the stale backup value (3)
+      expect(updatedDraft.currentValues.en.order).toBe(7);
+    });
+
+    it('removes the order field when originalEntry does not exist (new entry)', async () => {
+      const { getOrderFieldKey } =
+        await import('$lib/services/contents/collection/entries/reorder');
+
+      vi.mocked(getOrderFieldKey).mockReturnValueOnce('order');
+
+      const backup = {
+        timestamp: new Date(),
+        cmsConfigVersion: 'v1.0.0',
+        collectionName: 'posts',
+        slug: '',
+        currentLocales: { en: true },
+        currentSlugs: { en: '' },
+        // Backup has an order value from a previous save attempt
+        currentValues: { en: { title: 'New Post', order: 2 } },
+        files: {},
+      };
+
+      let capturedValueMap;
+
+      vi.mocked(entryDraft.update).mockImplementation((updater) => {
+        const draft = createMockDraft({
+          collection: { reorder: true },
+          originalEntry: undefined, // new entry — no live order
+          currentValues: { en: {} },
+          originalValues: { en: {} },
+        });
+
+        // Intercept the valueMap mutation
+        updater(draft);
+        capturedValueMap = backup.currentValues.en;
+      });
+
+      restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+
+      // The order field should be removed so assignManualSortOrder can recompute it at save time
+      expect('order' in capturedValueMap).toBe(false);
     });
   });
 

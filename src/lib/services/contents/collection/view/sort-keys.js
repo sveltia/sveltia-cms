@@ -7,6 +7,7 @@ import { derived, get } from 'svelte/store';
 import { appLocaleStore } from '$lib/services/app/i18n';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
 import { currentView } from '$lib/services/contents/collection/view';
 import { entryListSettings } from '$lib/services/contents/collection/view/settings';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -35,6 +36,7 @@ export const SPECIAL_SORT_KEY_TYPES = {
   commit_author: String,
   commit_date: Date,
   _summary: String,
+  _manual: String,
 };
 
 /**
@@ -165,6 +167,22 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
     (key) =>
       !!key && (SPECIAL_SORT_KEYS.includes(key) || !!getField({ collectionName, keyPath: key })),
   );
+
+  // If the collection allows reordering, expose a single special `_manual` sort key that maps to
+  // the order field. We hide the raw order field key from the dropdown — even if the user listed it
+  // in `sortable_fields` — to avoid showing two equivalent options.
+  const orderKey = getOrderFieldKey(collection);
+
+  if (orderKey) {
+    keys = keys.filter((key) => key !== orderKey);
+
+    if (!keys.includes('_manual')) {
+      keys.unshift('_manual');
+    }
+
+    defaultKey = '_manual';
+    defaultOrder = 'ascending';
+  }
 
   defaultKey = defaultKey && keys.includes(defaultKey) ? defaultKey : keys[0];
   defaultOrder ??= defaultKey ? 'ascending' : undefined;

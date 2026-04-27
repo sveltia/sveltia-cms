@@ -62,10 +62,6 @@ export const createCommitMessage = (
       .replaceAll('{{author-email}}', email)
       .replaceAll('{{author-login}}', login)
       .replaceAll('{{author-name}}', name);
-
-    if (remainingPaths.length) {
-      message += ` +${remainingPaths.length}`;
-    }
   }
 
   if (['openAuthoring'].includes(commitType)) {
@@ -74,6 +70,10 @@ export const createCommitMessage = (
       .replaceAll('{{author-email}}', email)
       .replaceAll('{{author-login}}', login)
       .replaceAll('{{author-name}}', name);
+  }
+
+  if (remainingPaths.length) {
+    message += ` +${remainingPaths.length}`;
   }
 
   // If requested, disable automatic deployments by using the standard `[skip ci]` prefix supported

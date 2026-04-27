@@ -5,6 +5,7 @@ import { get, writable } from 'svelte/store';
 
 import { backend } from '$lib/services/backends';
 import { cmsConfigVersion } from '$lib/services/config';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
 import {
   entryDraft,
   entryDraftInteracted,
@@ -151,7 +152,24 @@ export const restoreBackup = ({ backup, collectionName, fileName }) => {
       draft.currentLocales = currentLocales;
       draft.currentSlugs = currentSlugs;
 
+      // Reconcile a stale manual-sort order field. The backup may have been taken before another
+      // reorder/renumber operation rewrote this entry’s `order`. For existing entries, prefer the
+      // value persisted on the live entry; for new entries, drop the field entirely so
+      // `assignManualSortOrder` can compute a fresh value at save time. Without this, restoring an
+      // old backup would clobber the latest order with a stale one.
+      const orderKey = getOrderFieldKey(draft.collection);
+
       Object.entries(currentValues).forEach(([locale, valueMap]) => {
+        if (orderKey && orderKey in valueMap) {
+          const liveOrder = draft.originalEntry?.locales[locale]?.content?.[orderKey];
+
+          if (liveOrder !== undefined) {
+            valueMap[orderKey] = liveOrder;
+          } else {
+            delete valueMap[orderKey];
+          }
+        }
+
         Object.entries(valueMap).forEach(([keyPath, value]) => {
           if (typeof value === 'string') {
             [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {

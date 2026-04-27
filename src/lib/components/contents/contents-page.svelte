@@ -258,7 +258,9 @@
 
 <Toast bind:show={$contentUpdatesToast.saved}>
   <Alert status="success">
-    {_($contentUpdatesToast.published ? 'entry_saved_and_published' : 'entry_saved')}
+    {_($contentUpdatesToast.published ? 'entry_saved_and_published' : 'entry_saved', {
+      values: { count: $contentUpdatesToast.count },
+    })}
   </Alert>
 </Toast>
 

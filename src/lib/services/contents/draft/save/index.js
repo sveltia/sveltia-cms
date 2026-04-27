@@ -7,6 +7,8 @@ import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { callEventHooks } from '$lib/services/contents/draft/events';
@@ -39,6 +41,37 @@ const updateStores = ({ skipCI }) => {
 };
 
 /**
+ * For new entries in reorder-enabled entry collections, assign a fresh manual sort order to the
+ * draft’s current values: highest existing order + 1, or 1 if no entries have one yet. Doing this
+ * at save time (rather than draft creation) makes the assignment race-safe even when a draft has
+ * been backed up and restored after another entry took the previously computed value. Callers must
+ * gate on `draft.isNew` and `draft.collection._type === 'entry'` themselves.
+ * @param {EntryDraft} draft Draft to mutate in place.
+ */
+const assignManualSortOrder = (draft) => {
+  const { collection, collectionFile, currentValues } = draft;
+  const orderKey = getOrderFieldKey(collection);
+
+  if (!orderKey) {
+    return;
+  }
+
+  const { defaultLocale } = (collectionFile ?? collection)._i18n;
+
+  const maxOrder = getEntriesByCollection(collection.name).reduce((max, entry) => {
+    const value = Number(entry.locales[defaultLocale]?.content?.[orderKey]);
+
+    return Number.isFinite(value) && value > max ? value : max;
+  }, 0);
+
+  const nextOrder = maxOrder + 1;
+
+  Object.values(currentValues).forEach((valueMap) => {
+    valueMap[orderKey] = nextOrder;
+  });
+};
+
+/**
  * Save the entry draft.
  * @param {object} [options] Options.
  * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
@@ -53,6 +86,10 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     expandInvalidFields({ collectionName, fileName, currentValues });
 
     throw new Error('validation_failed');
+  }
+
+  if (isNew && collection._type === 'entry') {
+    assignManualSortOrder(draft);
   }
 
   const slugs = getSlugs({ draft });
