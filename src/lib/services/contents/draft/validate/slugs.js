@@ -13,13 +13,16 @@ import { entryDraft } from '$lib/services/contents/draft';
  * @returns {{ valid: boolean, validities: LocaleValidityMap }} Validation results.
  */
 export const validateSlugs = () => {
-  const { currentSlugs, slugEditor } = /** @type {EntryDraft} */ (get(entryDraft));
+  const { currentLocales, currentSlugs, slugEditor } = /** @type {EntryDraft} */ (get(entryDraft));
   /** @type {LocaleValidityMap} */
   const validities = {};
   let valid = true;
 
   Object.entries(currentSlugs).forEach(([locale, slug]) => {
-    const valueMissing = !!slugEditor[locale] && !slug?.trim();
+    // Only validate slugs for locales that are currently enabled. A disabled locale’s slug is not
+    // written to disk, so an empty value should not block saving.
+    // @see https://github.com/sveltia/sveltia-cms/issues/740
+    const valueMissing = !!currentLocales?.[locale] && !!slugEditor[locale] && !slug?.trim();
 
     if (valueMissing) {
       valid = false;

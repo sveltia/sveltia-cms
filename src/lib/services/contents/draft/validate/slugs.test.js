@@ -27,6 +27,7 @@ describe('draft/validate/slugs', () => {
     mockGet = vi.mocked(get);
 
     mockEntryDraft = {
+      currentLocales: { en: true },
       currentSlugs: { en: 'test-post' },
       slugEditor: { en: false },
     };
@@ -42,6 +43,7 @@ describe('draft/validate/slugs', () => {
 
   describe('validateSlugs', () => {
     it('should return valid when slug editors are not shown', () => {
+      mockEntryDraft.currentLocales = { en: true, fr: true };
       mockEntryDraft.currentSlugs = { en: 'test-post', fr: 'test-article' };
       mockEntryDraft.slugEditor = { en: false, fr: false };
 
@@ -53,6 +55,7 @@ describe('draft/validate/slugs', () => {
     });
 
     it('should return invalid when slug is empty and editor is shown', () => {
+      mockEntryDraft.currentLocales = { en: true, fr: true };
       mockEntryDraft.currentSlugs = { en: '', fr: 'test-article' };
       mockEntryDraft.slugEditor = { en: true, fr: false };
 
@@ -65,6 +68,7 @@ describe('draft/validate/slugs', () => {
     });
 
     it('should trim slug before validation', () => {
+      mockEntryDraft.currentLocales = { en: true, fr: true };
       mockEntryDraft.currentSlugs = { en: '   ', fr: 'test' };
       mockEntryDraft.slugEditor = { en: true, fr: true };
 
@@ -72,6 +76,20 @@ describe('draft/validate/slugs', () => {
 
       expect(result.valid).toBe(false);
       expect(result.validities.en._slug.valueMissing).toBe(true);
+      expect(result.validities.fr._slug.valueMissing).toBe(false);
+    });
+
+    it('should ignore slug for locales that are not currently enabled', () => {
+      // Regression test for https://github.com/sveltia/sveltia-cms/issues/740
+      mockEntryDraft.currentLocales = { en: true, fr: false };
+      mockEntryDraft.currentSlugs = { en: 'test-post', fr: undefined };
+      mockEntryDraft.slugEditor = { en: false, fr: true };
+
+      const result = validateSlugs();
+
+      expect(result.valid).toBe(true);
+      expect(result.validities.en._slug.valid).toBe(true);
+      expect(result.validities.fr._slug.valid).toBe(true);
       expect(result.validities.fr._slug.valueMissing).toBe(false);
     });
   });
