@@ -1009,11 +1009,13 @@
  * Global, collection-level or collection file-level i18n options. See the
  * [documentation](https://sveltiacms.app/en/docs/i18n) for details.
  * @typedef {object} I18nOptions
- * @property {I18nFileStructure} structure File structure for entry collections. File/singleton
- * collection must define the structure using `{{locale}}` in the `file` option.
- * `multiple_folders_i18n_root` has been deprecated in favor of `multiple_root_folders`. See the
+ * @property {I18nFileStructure} [structure] File structure for entry collections. **Required for
+ * the global i18n options**. File/singleton collection must define the structure using `{{locale}}`
+ * in the `file` option. `multiple_folders_i18n_root` has been deprecated in favor of
+ * `multiple_root_folders`. See the
  * [documentation](https://sveltiacms.app/en/docs/i18n#managing-content-structure) for details.
- * @property {LocaleCode[]} locales List of all available locales.
+ * @property {LocaleCode[]} [locales] List of all available locales. **Required for the global i18n
+ * options**.
  * @property {LocaleCode} [default_locale] Default locale. Default: first locale in the `locales`
  * option.
  * @property {LocaleCode[] | 'all' | 'default'} [initial_locales] Locales to be enabled when
