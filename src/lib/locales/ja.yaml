@@ -637,7 +637,7 @@ config:
     unsupported_backend_suggestion: "[サポートされているバックエンド](https://sveltiacms.app/en/docs/backends#supported-backends) のいずれかを使用してください。"
     missing_repository: レポジトリが定義されていません。
     invalid_repository: 設定されているレポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。
-    oauth_implicit_flow: 設定されている認証方式 (暗黙的フロー) は Sveltia CMS では非対応です。代わりに PKCE 認証を使用してください。
+    oauth_implicit_flow: 設定されている認証方式 (暗黙的フロー) は Sveltia CMS では非対応です。代わりに他の [認証方法](https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authentication) を使用してください。
     github_pkce_unsupported: GitHub の制約により PKCE 認証はまだサポートされていません。代わりに他の [認証方法](https://sveltiacms.app/en/docs/backends/github#authentication) を使用してください。
     oauth_no_app_id: " OAuth アプリケーション ID が定義されていません。"
     missing_media_folder: メディアフォルダーが定義されていません。

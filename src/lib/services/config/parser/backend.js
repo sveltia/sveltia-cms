@@ -76,7 +76,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     }
 
     if (authType === 'implicit') {
-      errors.add(_('config.error.oauth_implicit_flow'));
+      errors.add(_('config.error.oauth_implicit_flow').replace('BACKEND_NAME', name));
     }
 
     if (name === 'github' && authType === 'pkce') {
