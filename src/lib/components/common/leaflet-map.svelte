@@ -56,6 +56,10 @@
       .tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        // Set the referrer policy explicitly to avoid issues when loading tiles from OpenStreetMap.
+        // Otherwise, the global `same-origin` policy set in Sveltia CMS will apply.
+        // @see https://github.com/sveltia/sveltia-cms/issues/742
+        referrerPolicy: 'strict-origin',
       })
       .addTo(map);
 
