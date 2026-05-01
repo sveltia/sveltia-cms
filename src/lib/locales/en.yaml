@@ -752,8 +752,8 @@ config:
     unsupported_backend_suggestion: Use one of the [supported backends](https://sveltiacms.app/en/docs/backends#supported-backends) instead.
     missing_repository: The repository is not defined.
     invalid_repository: The configured repository is invalid. It must be in “owner/repo” format.
-    oauth_implicit_flow: The configured authentication method (implicit flow) is not supported in Sveltia CMS. Use other [authentication methods](https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authentication) instead.
-    github_pkce_unsupported: PKCE authorization is not yet supported due to GitHub’s limitations. Use other [authentication methods](https://sveltiacms.app/en/docs/backends/github#authentication) instead.
+    oauth_implicit_flow: The configured authentication method (implicit flow) is not supported in Sveltia CMS. Use a different [authentication method](https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authentication) instead.
+    github_pkce_unsupported: PKCE authorization is not yet supported due to GitHub’s limitations. Use a different [authentication method](https://sveltiacms.app/en/docs/backends/github#authentication) instead.
     oauth_no_app_id: OAuth application ID is not defined.
     missing_media_folder: The media folder is not defined.
     invalid_media_folder: The configured media folder is invalid. It must be a string.
