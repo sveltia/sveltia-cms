@@ -60,13 +60,12 @@ export const transformFile = async (file, transformations) => {
     /** @type {RasterImageTransformationOptions | undefined} */
     let transformation;
 
-    if (subType in transformations) {
-      transformation = /** @type {Record<string, any>} */ (transformations)[subType];
-    } else if (
-      'raster_image' in transformations &&
-      /** @type {string[]} */ (RASTER_IMAGE_FORMATS).includes(subType)
-    ) {
-      transformation = transformations.raster_image;
+    if (/** @type {string[]} */ (RASTER_IMAGE_FORMATS).includes(subType)) {
+      if (subType in transformations) {
+        transformation = /** @type {Record<string, any>} */ (transformations)[subType];
+      } else if ('raster_image' in transformations) {
+        transformation = transformations.raster_image;
+      }
     }
 
     if (transformation) {

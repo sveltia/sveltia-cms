@@ -616,6 +616,21 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toBe(tiffFile);
     });
 
+    it('should not transform non-raster image formats even with format-specific transformation', async () => {
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+
+      const transformations = /** @type {any} */ ({
+        tiff: { format: 'webp' },
+      });
+
+      // Format-specific key matching a non-raster format should also be ignored
+      const tiffFile = new File(['content'], 'image.tiff', { type: 'image/tiff' });
+      const result = await transformFile(tiffFile, transformations);
+
+      expect(vi.mocked(transformImage)).not.toHaveBeenCalled();
+      expect(result).toBe(tiffFile);
+    });
+
     it('should handle valid integer quality and dimensions', async () => {
       const { transformImage } = await import('$lib/services/utils/media/image/transform');
       const mockBlob = new Blob(['transformed'], { type: 'image/webp' });
