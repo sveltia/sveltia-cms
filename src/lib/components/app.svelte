@@ -107,6 +107,7 @@
 
       // Open external links and links to different paths in a new tab
       if (origin !== window.location.origin || pathname !== window.location.pathname) {
+        link.rel = 'noopener noreferrer';
         link.target = '_blank';
       }
     }
