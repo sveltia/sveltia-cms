@@ -282,6 +282,42 @@ export const prepareFieldTemplates = (fieldConfig, identifierField) => {
 };
 
 /**
+ * Resolve `{{fields.fieldName}}` and `{{slug}}` template strings in filter values against the entry
+ * currently being edited. Unresolvable templates are dropped from the values array so they do not
+ * accidentally match `undefined` content fields.
+ * @internal
+ * @param {RelationFieldFilterOptions[]} filters Entry filters.
+ * @param {FlattenedEntryContent | undefined} currentLocaleValues Current locale field values of the
+ * entry being edited, or `undefined` when not available (e.g. backlink resolution).
+ * @param {string | undefined} currentSlug Current slug of the entry being edited, or `undefined`
+ * when not yet determined (e.g. new entry draft).
+ * @returns {RelationFieldFilterOptions[]} Filters with template values resolved.
+ */
+export const resolveFilterValues = (filters, currentLocaleValues, currentSlug = undefined) =>
+  filters.map(({ field, values, exclude }) => ({
+    field,
+    exclude,
+    values: values.flatMap((v) => {
+      if (typeof v !== 'string') return [v];
+
+      if (v === '{{slug}}') {
+        // Drop if slug not yet determined (new entry draft)
+        return currentSlug ? [currentSlug] : [];
+      }
+
+      const match = v.match(/^{{fields\.(.+?)}}$/);
+
+      if (!match) return [v];
+
+      // Template found — resolve against current entry values
+      const resolved = currentLocaleValues?.[match[1]];
+
+      // Drop unresolvable templates to avoid false matches
+      return resolved !== undefined ? [resolved] : [];
+    }),
+  }));
+
+/**
  * Filter entries based on file name and entry filters.
  * @internal
  * @param {Entry[]} refEntries Reference entries.
@@ -309,8 +345,21 @@ export const filterAndPrepareEntries = (
       };
     })
     .filter(
-      ({ hasContent, content }) =>
-        hasContent && entryFilters.every(({ field, values }) => values.includes(content[field])),
+      ({ hasContent, content, refEntry }) =>
+        hasContent &&
+        entryFilters.every(({ field, values, exclude = false }) => {
+          // An empty values array means no constraint — skip this filter
+          if (values.length === 0) return true;
+
+          // `slug` refers to the entry's slug, not a regular content field.
+          // `fields.fieldName` strips the prefix so a field literally named `slug` can be
+          // targeted via `fields.slug` without ambiguity.
+          const isEntrySlug = field === 'slug';
+          const fieldKey = field.replace(/^fields\./, '');
+          const fieldValue = isEntrySlug ? refEntry.slug : content[fieldKey];
+
+          return exclude ? !values.includes(fieldValue) : values.includes(fieldValue);
+        }),
     );
 
 /**
@@ -757,19 +806,39 @@ export const processEntry = ({
  * @param {InternalLocaleCode} args.locale Current locale.
  * @param {RelationField} args.fieldConfig Field configuration.
  * @param {Entry[]} args.refEntries Referenced entries.
+ * @param {FlattenedEntryContent} [args.currentLocaleValues] Flattened field values of the entry
+ * currently being edited. Required to resolve `{{fields.fieldName}}` template strings in filter
+ * `values`. When omitted, those template strings are ignored.
+ * @param {string} [args.currentSlug] Current slug of the entry being edited. Required to resolve
+ * `{{slug}}` template strings in filter `values`. When omitted (e.g. new entry draft), `{{slug}}`
+ * templates are ignored.
  * @returns {RelationOption[]} Options.
  */
-export const getOptions = ({ locale, fieldConfig, refEntries }) => {
+export const getOptions = ({
+  locale,
+  fieldConfig,
+  refEntries,
+  currentLocaleValues = undefined,
+  currentSlug = undefined,
+}) => {
+  const { collection: collectionName, file: fileName, filters } = fieldConfig;
+  // Resolve template strings in filter values against the current entry's locale content and slug.
+  // The resolved values are also baked into the cache key so stale options are not returned when
+  // the relevant field value changes while the user is editing.
+  const resolvedFilters = resolveFilterValues(filters ?? [], currentLocaleValues, currentSlug);
   // Use object identity for `fieldConfig` and `refEntries` instead of `JSON.stringify`, which would
-  // serialize the entire entries array (potentially hundreds of entries × many fields).
-  const cacheKey = `${locale}|${getObjectId(fieldConfig)}|${getObjectId(refEntries)}`;
+  // serialize the entire entries array (potentially hundreds of entries × many fields). The
+  // resolved template values are included as a plain string so the cache is invalidated when the
+  // current entry's relevant field value changes.
+  const resolvedKey = resolvedFilters.flatMap(({ values }) => values).join('\x00');
+  const ids = `${getObjectId(fieldConfig)}|${getObjectId(refEntries)}`;
+  const cacheKey = `${locale}|${ids}|${resolvedKey}`;
   const cache = optionCacheMap.get(cacheKey);
 
   if (cache) {
     return cache;
   }
 
-  const { collection: collectionName, file: fileName, filters } = fieldConfig;
   const collection = getCollection(collectionName);
 
   if (!collection) {
@@ -783,10 +852,9 @@ export const getOptions = ({ locale, fieldConfig, refEntries }) => {
   } = collection;
 
   const { identifier_field: identifierField = 'title' } = _type === 'entry' ? collection : {};
-  const entryFilters = filters ?? [];
   const templates = prepareFieldTemplates(fieldConfig, identifierField);
   const { allFieldNames, hasListFields } = templates;
-  const filteredEntries = filterAndPrepareEntries(refEntries, locale, fileName, entryFilters);
+  const filteredEntries = filterAndPrepareEntries(refEntries, locale, fileName, resolvedFilters);
 
   const options = filteredEntries
     .flatMap(({ refEntry, content }) =>

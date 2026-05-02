@@ -8,6 +8,7 @@
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
+  import { entryDraft } from '$lib/services/contents/draft';
   import { getOptions } from '$lib/services/contents/fields/relation/helper';
 
   /**
@@ -47,11 +48,13 @@
       ? [getCollectionFileEntry(collectionName, fileName)].filter((entry) => !!entry)
       : getEntriesByCollection(collectionName),
   );
+  const currentLocaleValues = $derived($entryDraft?.currentValues[locale]);
+  const currentSlug = $derived($entryDraft?.currentSlugs[locale] ?? $entryDraft?.currentSlugs._);
   /** @type {SelectField} */
   const selectFieldConfig = $derived({
     ...fieldConfig,
     widget: 'select',
-    options: getOptions({ locale, fieldConfig, refEntries }),
+    options: getOptions({ locale, fieldConfig, refEntries, currentLocaleValues, currentSlug }),
   });
 </script>
 

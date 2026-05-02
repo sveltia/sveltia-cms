@@ -821,7 +821,12 @@
  * Entry filter options for a Relation field.
  * @typedef {object} RelationFieldFilterOptions
  * @property {FieldKeyPath} field Field name.
- * @property {any[]} values One or more values to be matched.
+ * @property {any[]} values One or more values to be matched. String values may contain template
+ * tags — `{{fields.fieldName}}` (resolved from the current entry's field values) or `{{slug}}`
+ * (resolved from the current entry's slug) — that are resolved against the entry currently being
+ * edited. Unresolvable templates (e.g. `{{slug}}` for a new, unsaved entry) are ignored.
+ * @property {boolean} [exclude] If `true`, entries matching this filter are excluded instead of
+ * included. Default: `false`.
  */
 
 /**

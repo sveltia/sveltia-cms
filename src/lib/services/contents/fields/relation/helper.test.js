@@ -19,6 +19,7 @@ import {
   processListFields,
   processSingleSubfieldList,
   replaceTemplateFields,
+  resolveFilterValues,
 } from '$lib/services/contents/fields/relation/helper';
 
 /**
@@ -579,6 +580,88 @@ describe('Test getOptions()', async () => {
         const result = getOptions({ locale, fieldConfig, refEntries: comprehensiveMemberEntries });
 
         expect(result).toEqual([]);
+      });
+
+      test('should exclude entries when exclude is true', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          filters: [{ field: 'active', values: [true], exclude: true }],
+        };
+
+        const result = getOptions({ locale, fieldConfig, refEntries: comprehensiveMemberEntries });
+
+        // Should include inactive members (all except `melvin-lucas` and `maxine-field`)
+        expect(result.every((r) => r.value !== 'melvin-lucas' && r.value !== 'maxine-field')).toBe(
+          true,
+        );
+      });
+
+      test('should resolve {{fields.x}} template values from currentLocaleValues', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          filters: [{ field: 'department', values: ['{{fields.myDept}}'], exclude: true }],
+        };
+
+        // Pretend the entry being edited is in the 'engineering' department
+        const currentLocaleValues = { myDept: 'engineering' };
+
+        const result = getOptions({
+          locale,
+          fieldConfig,
+          refEntries: comprehensiveMemberEntries,
+          currentLocaleValues,
+        });
+
+        // `melvin-lucas` is engineering — should be excluded
+        expect(result.every((r) => r.value !== 'melvin-lucas')).toBe(true);
+      });
+
+      test('should ignore unresolvable template values and not filter', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          // Template cannot resolve because currentLocaleValues is not provided
+          filters: [{ field: 'slug', values: ['{{fields.uuid}}'], exclude: true }],
+        };
+
+        const result = getOptions({ locale, fieldConfig, refEntries: comprehensiveMemberEntries });
+
+        // All entries are returned because the unresolvable template is dropped (empty values →
+        // no constraint)
+        expect(result).toHaveLength(comprehensiveMemberEntries.length);
+      });
+
+      test('should cache separately for different resolved template values', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          filters: [{ field: 'department', values: ['{{fields.myDept}}'], exclude: true }],
+        };
+
+        const result1 = getOptions({
+          locale,
+          fieldConfig,
+          refEntries: comprehensiveMemberEntries,
+          currentLocaleValues: { myDept: 'engineering' },
+        });
+
+        const result2 = getOptions({
+          locale,
+          fieldConfig,
+          refEntries: comprehensiveMemberEntries,
+          currentLocaleValues: { myDept: 'marketing' },
+        });
+
+        // Each resolved value should produce a distinct set of options
+        expect(result1).not.toBe(result2);
+        expect(result1.every((r) => r.value !== 'melvin-lucas')).toBe(true);
+        expect(result2.every((r) => r.value !== 'maxine-field')).toBe(true);
       });
     });
 
@@ -2689,6 +2772,148 @@ describe('Test filterAndPrepareEntries()', () => {
 
     // Content is empty ({}) so hasContent is false — entry is excluded
     expect(result).toHaveLength(0);
+  });
+
+  test('should exclude entries when exclude is true', () => {
+    const filters = [{ field: 'status', values: ['published'], exclude: true }];
+    const result = filterAndPrepareEntries(entries, locale, undefined, filters);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].refEntry.slug).toBe('entry-2'); // the draft entry
+  });
+
+  test('should skip filter when values array is empty', () => {
+    // Empty values array means "no constraint" — all entries with content should pass
+    const filters = [{ field: 'status', values: [] }];
+    const result = filterAndPrepareEntries(entries, locale, undefined, filters);
+
+    expect(result).toHaveLength(3);
+  });
+
+  test('should filter by entry slug when field is "slug"', () => {
+    // Bare `slug` refers to the entry slug (refEntry.slug), not a content field
+    const filters = [{ field: 'slug', values: ['entry-1'] }];
+    const result = filterAndPrepareEntries(entries, locale, undefined, filters);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].refEntry.slug).toBe('entry-1');
+  });
+
+  test('should exclude entry by slug when field is "slug" and exclude is true', () => {
+    const filters = [{ field: 'slug', values: ['entry-1'], exclude: true }];
+    const result = filterAndPrepareEntries(entries, locale, undefined, filters);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.refEntry.slug)).toEqual(['entry-2', 'entry-3']);
+  });
+
+  test('should filter by content field named "slug" when field is "fields.slug"', () => {
+    // `fields.slug` strips the prefix and looks up content['slug'], not refEntry.slug
+    /** @type {Entry[]} */
+    const entriesWithSlugField = [
+      {
+        id: 'a',
+        slug: 'entry-a',
+        subPath: 'a',
+        locales: {
+          en: { slug: 'entry-a', path: 'a.md', content: { slug: 'alpha', status: 'published' } },
+        },
+      },
+      {
+        id: 'b',
+        slug: 'entry-b',
+        subPath: 'b',
+        locales: {
+          en: { slug: 'entry-b', path: 'b.md', content: { slug: 'beta', status: 'published' } },
+        },
+      },
+    ];
+
+    const filters = [{ field: 'fields.slug', values: ['alpha'] }];
+    const result = filterAndPrepareEntries(entriesWithSlugField, 'en', undefined, filters);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].refEntry.slug).toBe('entry-a');
+  });
+});
+
+describe('Test resolveFilterValues()', () => {
+  test('should pass through non-template values unchanged', () => {
+    const filters = [{ field: 'status', values: ['published', 42] }];
+    const result = resolveFilterValues(filters, undefined);
+
+    expect(result[0].values).toEqual(['published', 42]);
+  });
+
+  test('should resolve {{fields.x}} against currentLocaleValues', () => {
+    const filters = [{ field: 'uuid', values: ['{{fields.uuid}}'] }];
+    const result = resolveFilterValues(filters, { uuid: 'abc-123' });
+
+    expect(result[0].values).toEqual(['abc-123']);
+  });
+
+  test('should drop template values that cannot be resolved', () => {
+    const filters = [{ field: 'uuid', values: ['{{fields.uuid}}'] }];
+    const result = resolveFilterValues(filters, undefined);
+
+    expect(result[0].values).toEqual([]);
+  });
+
+  test('should drop templates whose key is absent from currentLocaleValues', () => {
+    const filters = [{ field: 'uuid', values: ['{{fields.uuid}}'] }];
+    const result = resolveFilterValues(filters, { other: 'something' });
+
+    expect(result[0].values).toEqual([]);
+  });
+
+  test('should keep non-{{fields.x}} non-{{slug}} templates unchanged', () => {
+    const filters = [{ field: 'x', values: ['{{unknown}}'] }];
+    const result = resolveFilterValues(filters, { unknown: 'should-not-resolve' });
+
+    expect(result[0].values).toEqual(['{{unknown}}']);
+  });
+
+  test('should resolve {{slug}} against currentSlug', () => {
+    const filters = [{ field: 'slug', values: ['{{slug}}'] }];
+    const result = resolveFilterValues(filters, undefined, 'my-article');
+
+    expect(result[0].values).toEqual(['my-article']);
+  });
+
+  test('should drop {{slug}} when currentSlug is not available', () => {
+    const filters = [{ field: 'slug', values: ['{{slug}}'] }];
+    const result = resolveFilterValues(filters, undefined, undefined);
+
+    expect(result[0].values).toEqual([]);
+  });
+
+  test('should drop {{slug}} when currentSlug is empty string (new entry)', () => {
+    const filters = [{ field: 'slug', values: ['{{slug}}'] }];
+    const result = resolveFilterValues(filters, undefined, '');
+
+    expect(result[0].values).toEqual([]);
+  });
+
+  test('should resolve both {{slug}} and {{fields.x}} in same filter', () => {
+    const filters = [{ field: 'key', values: ['{{slug}}', '{{fields.uuid}}'] }];
+    const result = resolveFilterValues(filters, { uuid: 'abc-123' }, 'my-article');
+
+    expect(result[0].values).toEqual(['my-article', 'abc-123']);
+  });
+
+  test('should preserve exclude flag', () => {
+    const filters = [{ field: 'uuid', values: ['{{fields.uuid}}'], exclude: true }];
+    const result = resolveFilterValues(filters, { uuid: 'abc-123' });
+
+    expect(result[0].exclude).toBe(true);
+    expect(result[0].values).toEqual(['abc-123']);
+  });
+
+  test('should handle mixed template and static values', () => {
+    const filters = [{ field: 'tag', values: ['static', '{{fields.myTag}}'] }];
+    const result = resolveFilterValues(filters, { myTag: 'dynamic' });
+
+    expect(result[0].values).toEqual(['static', 'dynamic']);
   });
 });
 
