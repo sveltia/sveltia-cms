@@ -61,7 +61,7 @@ const getTargetValues = (fieldConfig, targetEntry, locale) => {
       )
     : getEntriesByCollection(refCollectionName);
 
-  const options = getOptions(locale, fieldConfig, refEntries);
+  const options = getOptions({ locale, fieldConfig, refEntries });
   const valueField = fieldConfig.value_field;
   const usesSlug = !valueField || valueField === '{{slug}}' || valueField === 'slug';
 

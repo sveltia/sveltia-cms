@@ -753,12 +753,13 @@ export const processEntry = ({
 
 /**
  * Get options for a Relation field.
- * @param {InternalLocaleCode} locale Current locale.
- * @param {RelationField} fieldConfig Field configuration.
- * @param {Entry[]} refEntries Referenced entries.
+ * @param {object} args Arguments.
+ * @param {InternalLocaleCode} args.locale Current locale.
+ * @param {RelationField} args.fieldConfig Field configuration.
+ * @param {Entry[]} args.refEntries Referenced entries.
  * @returns {RelationOption[]} Options.
  */
-export const getOptions = (locale, fieldConfig, refEntries) => {
+export const getOptions = ({ locale, fieldConfig, refEntries }) => {
   // Use object identity for `fieldConfig` and `refEntries` instead of `JSON.stringify`, which would
   // serialize the entire entries array (potentially hundreds of entries × many fields).
   const cacheKey = `${locale}|${getObjectId(fieldConfig)}|${getObjectId(refEntries)}`;
@@ -822,7 +823,7 @@ export const getOptions = (locale, fieldConfig, refEntries) => {
 export const getReferencedOptionLabel = ({ fieldConfig, valueMap, keyPath, locale }) => {
   const { multiple, collection } = fieldConfig;
   const refEntries = getEntriesByCollection(collection);
-  const refOptions = getOptions(locale, fieldConfig, refEntries);
+  const refOptions = getOptions({ locale, fieldConfig, refEntries });
   const optionLabelMap = getOptionLabelMap(refOptions);
   /**
    * Get the label by value.

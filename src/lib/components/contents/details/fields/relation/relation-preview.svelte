@@ -43,7 +43,7 @@
       ? [getCollectionFileEntry(collectionName, fileName)].filter((entry) => !!entry)
       : getEntriesByCollection(collectionName),
   );
-  const options = $derived(getOptions(locale, fieldConfig, refEntries));
+  const options = $derived(getOptions({ locale, fieldConfig, refEntries }));
   const refValues = $derived(
     (multiple ? /** @type {string[]} */ (currentValue) : /** @type {string[]} */ ([currentValue]))
       .filter((value) => value !== undefined)

@@ -51,7 +51,7 @@
   const selectFieldConfig = $derived({
     ...fieldConfig,
     widget: 'select',
-    options: getOptions(locale, fieldConfig, refEntries),
+    options: getOptions({ locale, fieldConfig, refEntries }),
   });
 </script>
 

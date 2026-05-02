@@ -305,7 +305,7 @@ describe('Test getOptions()', async () => {
           collection: 'members',
         };
 
-        const result = getOptions(locale, fieldConfig, comprehensiveMemberEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: comprehensiveMemberEntries });
 
         expect(result).toEqual([]);
       });
@@ -317,7 +317,7 @@ describe('Test getOptions()', async () => {
           collection: 'members',
         };
 
-        const result = getOptions(locale, fieldConfig, emptyEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: emptyEntries });
 
         expect(result).toEqual([]);
       });
@@ -329,7 +329,7 @@ describe('Test getOptions()', async () => {
           collection: 'members',
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
         expect(result[0]).toEqual({
@@ -347,7 +347,7 @@ describe('Test getOptions()', async () => {
           value_field: 'email',
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
 
@@ -364,7 +364,7 @@ describe('Test getOptions()', async () => {
           display_fields: ['name.first', 'name.last'],
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
         expect(result[0].label).toEqual('Melvin Lucas');
@@ -380,7 +380,7 @@ describe('Test getOptions()', async () => {
           display_fields: ['{{name.first}} ({{twitterHandle}})'],
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
         expect(result[0].label).toBe('Melvin (MelvinLucas)');
@@ -394,7 +394,7 @@ describe('Test getOptions()', async () => {
           value_field: 'slug',
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
 
@@ -421,7 +421,7 @@ describe('Test getOptions()', async () => {
           value_field: 'fields.slug',
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
         // Gets the `slug` field content as display value
@@ -436,7 +436,7 @@ describe('Test getOptions()', async () => {
           display_fields: ['{{locale}}/{{name.first}}'],
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
         expect(result[0].label).toBe('_default/Melvin');
@@ -461,7 +461,7 @@ describe('Test getOptions()', async () => {
           display_fields: ['cities.*.name'],
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(2); // Should create separate entries for each city
         expect(result[0].label).toBe('Boston'); // Second city comes first due to sorting
@@ -482,7 +482,7 @@ describe('Test getOptions()', async () => {
           display_fields: ['skills.*'],
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         // Each list item becomes a separate option
         expect(result).toHaveLength(3);
@@ -503,7 +503,7 @@ describe('Test getOptions()', async () => {
           display_fields: ['skills.*'],
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         // Each list item becomes a separate option
         expect(result).toHaveLength(3);
@@ -527,7 +527,7 @@ describe('Test getOptions()', async () => {
           display_fields: ['cities.*.name'],
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(2); // Should create separate entries for each city
         expect(result[0].label).toBe('Boston'); // Second city comes first due to sorting
@@ -544,7 +544,7 @@ describe('Test getOptions()', async () => {
           filters: [{ field: 'active', values: [true] }],
         };
 
-        const result = getOptions(locale, fieldConfig, comprehensiveMemberEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: comprehensiveMemberEntries });
 
         // Should only include active members (`melvin-lucas` and `maxine-field`)
         expect(result).toHaveLength(2);
@@ -561,7 +561,7 @@ describe('Test getOptions()', async () => {
           ],
         };
 
-        const result = getOptions(locale, fieldConfig, comprehensiveMemberEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: comprehensiveMemberEntries });
 
         // Should only include `melvin-lucas` (active and engineering)
         expect(result).toHaveLength(1);
@@ -576,7 +576,7 @@ describe('Test getOptions()', async () => {
           filters: [{ field: 'department', values: ['nonexistent'] }],
         };
 
-        const result = getOptions(locale, fieldConfig, comprehensiveMemberEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: comprehensiveMemberEntries });
 
         expect(result).toEqual([]);
       });
@@ -590,7 +590,11 @@ describe('Test getOptions()', async () => {
           collection: 'members',
         };
 
-        const result = getOptions('en', fieldConfig, comprehensiveMemberEntries);
+        const result = getOptions({
+          locale: 'en',
+          fieldConfig,
+          refEntries: comprehensiveMemberEntries,
+        });
 
         expect(result).toHaveLength(4);
       });
@@ -602,7 +606,11 @@ describe('Test getOptions()', async () => {
           collection: 'members',
         };
 
-        const result = getOptions('nonexistent', fieldConfig, comprehensiveMemberEntries);
+        const result = getOptions({
+          locale: 'nonexistent',
+          fieldConfig,
+          refEntries: comprehensiveMemberEntries,
+        });
 
         expect(result).toHaveLength(4);
       });
@@ -626,7 +634,7 @@ describe('Test getOptions()', async () => {
           collection: 'members',
         };
 
-        const result = getOptions(locale, fieldConfig, entriesWithMissingContent);
+        const result = getOptions({ locale, fieldConfig, refEntries: entriesWithMissingContent });
 
         expect(result).toBeDefined();
         expect(Array.isArray(result)).toBe(true);
@@ -643,7 +651,7 @@ describe('Test getOptions()', async () => {
           search_fields: ['email', 'bio'],
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
         // Verify it has the right structure
@@ -659,7 +667,7 @@ describe('Test getOptions()', async () => {
           display_fields: ['name.first'],
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
         expect(result[0]).toHaveProperty('label');
@@ -681,7 +689,11 @@ describe('Test getOptions()', async () => {
           display_fields: ['name.first'],
         };
 
-        const result = getOptions(locale, fieldConfig, comprehensiveMemberEntries.slice(0, 3));
+        const result = getOptions({
+          locale,
+          fieldConfig,
+          refEntries: comprehensiveMemberEntries.slice(0, 3),
+        });
 
         expect(result).toHaveLength(3);
         expect(result[0].label).toBe('Alice');
@@ -700,9 +712,9 @@ describe('Test getOptions()', async () => {
         };
 
         // First call - should compute options
-        const result1 = getOptions(locale, fieldConfig, singleEntry);
+        const result1 = getOptions({ locale, fieldConfig, refEntries: singleEntry });
         // Second call with same parameters - should return cached result
-        const result2 = getOptions(locale, fieldConfig, singleEntry);
+        const result2 = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         // Should return the exact same cached array
         expect(result1).toBe(result2);
@@ -720,7 +732,11 @@ describe('Test getOptions()', async () => {
           collection: 'members',
         };
 
-        const result = getOptions(locale, fieldConfig, [comprehensiveMemberEntries[3]]);
+        const result = getOptions({
+          locale,
+          fieldConfig,
+          refEntries: [comprehensiveMemberEntries[3]],
+        });
 
         expect(result).toHaveLength(1);
         expect(result[0].label).toBe('fallback-summary');
@@ -751,7 +767,7 @@ describe('Test getOptions()', async () => {
           collection: 'members',
         };
 
-        const result = getOptions(locale, fieldConfig, [entryWithSpecialChars]);
+        const result = getOptions({ locale, fieldConfig, refEntries: [entryWithSpecialChars] });
 
         expect(result).toHaveLength(1);
         expect(result[0].value).toBeDefined();
@@ -770,7 +786,7 @@ describe('Test getOptions()', async () => {
           collection: 'members',
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
         expect(result[0].label).toBe(longText);
@@ -786,7 +802,7 @@ describe('Test getOptions()', async () => {
           collection: 'members',
         };
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
         expect(result[0].label).toBeDefined();
@@ -808,7 +824,7 @@ describe('Test getOptions()', async () => {
 
         isCollectionIndexFileSpy.mockReturnValue(true);
 
-        const result = getOptions(locale, fieldConfig, singleEntry);
+        const result = getOptions({ locale, fieldConfig, refEntries: singleEntry });
 
         expect(result).toHaveLength(1);
         // The spy should be called during the `getOptions` execution
@@ -912,7 +928,7 @@ describe('Test getOptions()', async () => {
           value_field: 'cities.*.id',
         };
 
-        const result = getOptions(locale, fieldConfig, citiesFileCollectionEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: citiesFileCollectionEntries });
 
         // Should create separate options for each city in the list
         expect(result).toHaveLength(5);
@@ -949,7 +965,7 @@ describe('Test getOptions()', async () => {
           value_field: 'cities.*.id',
         };
 
-        const result = getOptions(locale, fieldConfig, citiesFileCollectionEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: citiesFileCollectionEntries });
 
         // Should return empty array when file doesn’t match
         expect(result).toHaveLength(0);
@@ -979,7 +995,7 @@ describe('Test getOptions()', async () => {
           value_field: 'cities.*.id',
         };
 
-        const result = getOptions(locale, fieldConfig, emptyFileCollectionEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: emptyFileCollectionEntries });
 
         expect(result).toHaveLength(0);
       });
@@ -1014,7 +1030,11 @@ describe('Test getOptions()', async () => {
           value_field: 'cities.*.id',
         };
 
-        const result = getOptions(locale, fieldConfig, malformedFileCollectionEntries);
+        const result = getOptions({
+          locale,
+          fieldConfig,
+          refEntries: malformedFileCollectionEntries,
+        });
 
         // Should still handle the data, but entries with missing required fields are filtered out
         expect(result).toHaveLength(2);
@@ -1041,7 +1061,7 @@ describe('Test getOptions()', async () => {
           value_field: 'cities.*.id',
         };
 
-        const result = getOptions(locale, fieldConfig, citiesFileCollectionEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: citiesFileCollectionEntries });
 
         // Should still work but might not parse the list structure correctly
         // This tests the fallback behavior when field config is missing
@@ -1144,7 +1164,7 @@ describe('Test getOptions()', async () => {
           value_field: 'colors.customColors.*.colorName',
         };
 
-        const result = getOptions(locale, fieldConfig, themeFileCollectionEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: themeFileCollectionEntries });
 
         expect(result).toHaveLength(3);
         expect(result[0]).toEqual({
@@ -1177,7 +1197,7 @@ describe('Test getOptions()', async () => {
           value_field: 'colors.customColors.*.colorName',
         };
 
-        const result = getOptions(locale, fieldConfig, themeFileCollectionEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: themeFileCollectionEntries });
 
         expect(result).toHaveLength(3);
         expect(result[0].label).toBe('Accent Red (#cc0000)');
@@ -1218,7 +1238,7 @@ describe('Test getOptions()', async () => {
           value_field: 'colors.customColors.*.colorName',
         };
 
-        const result = getOptions(locale, fieldConfig, emptyThemeEntries);
+        const result = getOptions({ locale, fieldConfig, refEntries: emptyThemeEntries });
 
         // Should return empty array when no list items found
         expect(result).toHaveLength(0);
@@ -1655,7 +1675,7 @@ describe('Test getOptions()', async () => {
       };
 
       // Get options
-      const options = getOptions(locale, fieldConfig, comprehensiveMemberEntries);
+      const options = getOptions({ locale, fieldConfig, refEntries: comprehensiveMemberEntries });
 
       expect(options.length).toBeGreaterThan(0);
 
@@ -1685,7 +1705,7 @@ describe('Test getOptions()', async () => {
       };
 
       // Get options
-      const options = getOptions(locale, fieldConfig, comprehensiveMemberEntries);
+      const options = getOptions({ locale, fieldConfig, refEntries: comprehensiveMemberEntries });
 
       expect(options.length).toBeGreaterThan(1);
 
