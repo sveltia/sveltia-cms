@@ -44,6 +44,7 @@ export const init = () => {
     api_root: restApiRoot = DEFAULT_API_ROOT,
     // https://HOSTNAME/api/graphql or https://HOSTNAME/PATH/api/graphql
     graphql_api_root: graphqlApiRoot = restApiRoot.replace(/\/api\/.+$/, '/api/graphql'),
+    include_credentials: includeCredentials = false,
   } = backend;
 
   /**
@@ -86,6 +87,7 @@ export const init = () => {
       authScheme: 'Bearer',
       restBaseURL: stripSlashes(restApiRoot),
       graphqlBaseURL: stripSlashes(graphqlApiRoot),
+      includeCredentials,
     }),
   );
 

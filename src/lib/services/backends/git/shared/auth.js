@@ -271,15 +271,15 @@ export const sendMessage = ({ provider = 'unknown', token, refreshToken, error, 
  * basically does the same thing as the callback handler of Sveltia CMS Authenticator.
  * @param {object} args Arguments.
  * @param {string} args.backendName Backend name, e.g. `gitlab`.
- * @param {string} args.clientId OAuth application ID.
- * @param {string} args.tokenURL OAuth token request URL.
+ * @param {ApiEndpointConfig} args.apiConfig API endpoint configuration.
  * @param {string} args.code Authorization code.
  * @param {string} args.state Authorization state, which is a CSRF token previously set.
  * @returns {Promise<void>} None.
  * @see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-with-proof-key-for-code-exchange-pkce
  * @see https://github.com/sveltia/sveltia-cms-auth/blob/main/src/index.js
  */
-export const finishClientSideAuth = async ({ backendName, clientId, tokenURL, code, state }) => {
+export const finishClientSideAuth = async ({ backendName, apiConfig, code, state }) => {
+  const { clientId, tokenURL, includeCredentials = false } = apiConfig;
   const { origin, pathname } = new URL(window.location.href);
   const { csrfToken, codeVerifier } = (await LocalStorage.get('sveltia-cms.auth')) ?? {};
   const provider = backendName;
@@ -323,6 +323,7 @@ export const finishClientSideAuth = async ({ backendName, clientId, tokenURL, co
         redirect_uri: redirectURL,
         code_verifier: codeVerifier,
       }),
+      ...(includeCredentials && { credentials: 'include' }),
     });
   } catch {
     //
@@ -354,17 +355,16 @@ export const finishClientSideAuth = async ({ backendName, clientId, tokenURL, co
  * to the authorization site or finish the flow after being redirected from the auth site.
  * @param {object} args Arguments.
  * @param {string} args.backendName Backend name, e.g. `gitlab`.
- * @param {string} args.clientId OAuth application ID.
- * @param {string} args.tokenURL OAuth token request URL.
+ * @param {ApiEndpointConfig} args.apiConfig API endpoint configuration.
  */
-export const handleClientSideAuthPopup = async ({ backendName, clientId, tokenURL }) => {
+export const handleClientSideAuthPopup = async ({ backendName, apiConfig }) => {
   inAuthPopup.set(true);
 
   const { search } = window.location;
   const { code, state } = Object.fromEntries(new URLSearchParams(search));
 
   if (code && state) {
-    await finishClientSideAuth({ backendName, clientId, tokenURL, code, state });
+    await finishClientSideAuth({ backendName, apiConfig, code, state });
   } else {
     const { realAuthURL } = (await LocalStorage.get('sveltia-cms.auth')) ?? {};
 
@@ -395,7 +395,7 @@ export const handleAuthFlow = async ({ auto, apiConfig }) => {
     auth_type: authType,
   } = /** @type {GitBackend} */ (backend);
 
-  const { clientId, authScope, authURL, tokenURL } = apiConfig;
+  const { clientId, authScope, authURL } = apiConfig;
   const authArgs = { backendName, authURL, scope: authScope };
 
   // Gitea/Forgejo backend only supports PKCE at this time
@@ -404,7 +404,7 @@ export const handleAuthFlow = async ({ auto, apiConfig }) => {
 
     if (inPopup) {
       // We are in the auth popup window; let’s get the OAuth flow done
-      await handleClientSideAuthPopup({ backendName, clientId, tokenURL });
+      await handleClientSideAuthPopup({ backendName, apiConfig });
     }
 
     if (inPopup || auto) {

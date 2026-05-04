@@ -65,6 +65,7 @@ describe('api.js', () => {
       expect(apiConfig).toHaveProperty('authScheme');
       expect(apiConfig).toHaveProperty('restBaseURL');
       expect(apiConfig).toHaveProperty('graphqlBaseURL');
+      expect(apiConfig).toHaveProperty('includeCredentials');
     });
 
     it('should have empty string defaults', () => {
@@ -78,6 +79,10 @@ describe('api.js', () => {
 
     it('should have token auth scheme as default', () => {
       expect(apiConfig.authScheme).toBe('token');
+    });
+
+    it('should have includeCredentials as false by default', () => {
+      expect(apiConfig.includeCredentials).toBe(false);
     });
   });
 
@@ -231,6 +236,52 @@ describe('api.js', () => {
       ).rejects.toThrow('Token refresh failed');
 
       expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should include credentials in request when apiConfig.includeCredentials is true', async () => {
+      const mockResponse = new Response(
+        JSON.stringify({ access_token: 'new-token', refresh_token: 'new-refresh' }),
+        { status: 200, statusText: 'OK' },
+      );
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse);
+
+      Object.assign(apiConfig, { includeCredentials: true });
+
+      await refreshAccessToken({
+        clientId: 'test-client-id',
+        tokenURL: 'https://api.github.com/oauth/token',
+        refreshToken: 'old-refresh-token',
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://api.github.com/oauth/token',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+
+      Object.assign(apiConfig, { includeCredentials: false });
+    });
+
+    it('should not include credentials when apiConfig.includeCredentials is false', async () => {
+      const mockResponse = new Response(
+        JSON.stringify({ access_token: 'new-token', refresh_token: 'new-refresh' }),
+        { status: 200, statusText: 'OK' },
+      );
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse);
+
+      Object.assign(apiConfig, { includeCredentials: false });
+
+      await refreshAccessToken({
+        clientId: 'test-client-id',
+        tokenURL: 'https://api.github.com/oauth/token',
+        refreshToken: 'old-refresh-token',
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://api.github.com/oauth/token',
+        expect.not.objectContaining({ credentials: expect.anything() }),
+      );
     });
   });
 
@@ -563,6 +614,44 @@ describe('api.js', () => {
         expect.any(String),
         expect.any(Object),
         expect.objectContaining({ responseType: 'blob' }),
+      );
+    });
+
+    it('should pass credentials: include to sendRequest when includeCredentials is true', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const { get } = await import('svelte/store');
+
+      Object.assign(apiConfig, { includeCredentials: true });
+      vi.mocked(get).mockReturnValue({ token: 'test-token', refreshToken: 'test-refresh' });
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint');
+
+      expect(sendRequest).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ credentials: 'include' }),
+        expect.any(Object),
+      );
+
+      Object.assign(apiConfig, { includeCredentials: false });
+    });
+
+    it('should not pass credentials to sendRequest when includeCredentials is false', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+      const { get } = await import('svelte/store');
+
+      Object.assign(apiConfig, { includeCredentials: false });
+      vi.mocked(get).mockReturnValue({ token: 'test-token', refreshToken: 'test-refresh' });
+      vi.mocked(sendRequest).mockResolvedValue({ success: true });
+
+      await fetchAPI('/test-endpoint');
+
+      expect(sendRequest).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.not.objectContaining({ credentials: expect.anything() }),
+        expect.any(Object),
       );
     });
   });

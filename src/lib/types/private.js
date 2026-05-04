@@ -136,6 +136,8 @@
  * @property {string} [authScheme] Authorization scheme. Default is `token`.
  * @property {string} restBaseURL REST API endpoint, e.g. `/api/v3`.
  * @property {string} [graphqlBaseURL] GraphQL API endpoint, e.g. `/api/graphql`.
+ * @property {boolean} [includeCredentials] Whether to include credentials (e.g. cookies) in all API
+ * and token requests. Corresponds to the `include_credentials` backend config option.
  */
 
 /**

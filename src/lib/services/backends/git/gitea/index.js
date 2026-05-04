@@ -41,6 +41,7 @@ export const init = () => {
     app_id: clientId = '',
     // https://HOSTNAME/api/v1 or https://HOSTNAME/PATH/api/v1
     api_root: restApiRoot = DEFAULT_API_ROOT,
+    include_credentials: includeCredentials = false,
   } = backend;
 
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
@@ -72,6 +73,7 @@ export const init = () => {
       authURL,
       tokenURL: authURL.replace('/authorize', '/access_token'),
       restBaseURL: stripSlashes(restApiRoot),
+      includeCredentials,
     }),
   );
 

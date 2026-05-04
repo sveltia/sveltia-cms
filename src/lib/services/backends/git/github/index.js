@@ -54,6 +54,7 @@ export const init = () => {
     api_root: restApiRoot = DEFAULT_API_ROOT,
     // GitHub Enterprise Server: https://HOSTNAME/api/graphql
     graphql_api_root: graphqlApiRoot = restApiRoot,
+    include_credentials: includeCredentials = false,
   } = backend;
 
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
@@ -86,6 +87,7 @@ export const init = () => {
       tokenURL: authURL.replace('/authorize', '/access_token'),
       restBaseURL: normalizeRestBaseURL(restApiRoot),
       graphqlBaseURL: normalizeGraphQLBaseURL(graphqlApiRoot),
+      includeCredentials,
     }),
   );
 

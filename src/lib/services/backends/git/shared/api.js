@@ -20,6 +20,7 @@ const API_CONFIG_INFO_PLACEHOLDER = {
   authScheme: 'token',
   restBaseURL: '',
   graphqlBaseURL: '',
+  includeCredentials: false,
 };
 
 /**
@@ -62,6 +63,7 @@ export const refreshAccessToken = async ({ clientId, tokenURL, refreshToken }) =
         client_id: clientId,
         refresh_token: refreshToken,
       }),
+      ...(apiConfig.includeCredentials && { credentials: 'include' }),
     });
   } catch {
     //
@@ -106,7 +108,15 @@ export const fetchAPI = async (
     refreshToken = undefined,
   } = {},
 ) => {
-  const { clientId, tokenURL, restBaseURL, graphqlBaseURL, authScheme = 'token' } = apiConfig;
+  const {
+    clientId,
+    tokenURL,
+    restBaseURL,
+    graphqlBaseURL,
+    authScheme = 'token',
+    includeCredentials,
+  } = apiConfig;
+
   const _user = get(user);
   const baseURL = isGraphQL ? graphqlBaseURL : restBaseURL;
 
@@ -116,7 +126,12 @@ export const fetchAPI = async (
 
   return sendRequest(
     `${baseURL}${path}`,
-    { method, headers, body },
+    {
+      method,
+      headers,
+      body,
+      ...(includeCredentials && { credentials: 'include' }),
+    },
     {
       responseType,
       refreshAccessToken: refreshToken

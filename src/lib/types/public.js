@@ -1416,6 +1416,9 @@
  * @property {boolean} [allow_token_auth] Whether to allow users to authenticate using an access
  * token. Default: `true`. If set to `false`, the “Sign In Using Access Token” button will be
  * disabled in the UI, and users will be forced to use OAuth authentication.
+ * @property {boolean} [include_credentials] Whether to include credentials in API requests.
+ * Default: `false`. If set to `true`, credentials such as cookies will be included in API requests.
+ * This is only necessary when using cookie-based authentication with a self-hosted Git backend.
  * @see https://decapcms.org/docs/backends-overview/
  * @see https://sveltiacms.app/en/docs/backends
  */

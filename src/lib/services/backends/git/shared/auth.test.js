@@ -770,8 +770,7 @@ describe('git/shared/auth', () => {
 
       await finishClientSideAuth({
         backendName: 'gitlab',
-        clientId: 'test-client',
-        tokenURL: 'https://gitlab.com/oauth/token',
+        apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
         code: 'test-code',
         state: 'test-csrf',
       });
@@ -788,8 +787,7 @@ describe('git/shared/auth', () => {
 
       await finishClientSideAuth({
         backendName: 'gitlab',
-        clientId: 'test-client',
-        tokenURL: 'https://gitlab.com/oauth/token',
+        apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
         code: 'test-code',
         state: 'wrong-csrf',
       });
@@ -802,8 +800,7 @@ describe('git/shared/auth', () => {
 
       await finishClientSideAuth({
         backendName: 'gitlab',
-        clientId: 'test-client',
-        tokenURL: 'https://gitlab.com/oauth/token',
+        apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
         code: 'test-code',
         state: 'test-csrf',
       });
@@ -821,8 +818,7 @@ describe('git/shared/auth', () => {
 
       await finishClientSideAuth({
         backendName: 'gitlab',
-        clientId: 'test-client',
-        tokenURL: 'https://gitlab.com/oauth/token',
+        apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
         code: 'test-code',
         state: 'test-csrf',
       });
@@ -838,8 +834,7 @@ describe('git/shared/auth', () => {
 
       await finishClientSideAuth({
         backendName: 'gitlab',
-        clientId: 'test-client',
-        tokenURL: 'http://gitlab.example.com/oauth/token',
+        apiConfig: { clientId: 'test-client', tokenURL: 'http://gitlab.example.com/oauth/token' },
         code: 'test-code',
         state: 'test-csrf',
       });
@@ -870,13 +865,40 @@ describe('git/shared/auth', () => {
 
       await finishClientSideAuth({
         backendName: 'gitlab',
-        clientId: 'test-client',
-        tokenURL: 'https://gitlab.com/oauth/token',
+        apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
         code: 'test-code',
         state: 'test-csrf',
       });
 
       expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+    });
+
+    it('should include credentials in token request when includeCredentials is true', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+      });
+
+      global.fetch = vi.fn().mockResolvedValue({
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        json: async () => ({ access_token: 'test-token' }),
+      });
+
+      await finishClientSideAuth({
+        backendName: 'gitlab',
+        apiConfig: {
+          clientId: 'test-client',
+          tokenURL: 'https://gitlab.com/oauth/token',
+          includeCredentials: true,
+        },
+        code: 'test-code',
+        state: 'test-csrf',
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://gitlab.com/oauth/token',
+        expect.objectContaining({ credentials: 'include' }),
+      );
     });
   });
 
@@ -905,8 +927,7 @@ describe('git/shared/auth', () => {
 
       await handleClientSideAuthPopup({
         backendName: 'gitlab',
-        clientId: 'test-client',
-        tokenURL: 'https://gitlab.com/oauth/token',
+        apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
       });
 
       expect(get(inAuthPopup)).toBe(true);
@@ -922,8 +943,7 @@ describe('git/shared/auth', () => {
 
       await handleClientSideAuthPopup({
         backendName: 'gitlab',
-        clientId: 'test-client',
-        tokenURL: 'https://gitlab.com/oauth/token',
+        apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
       });
 
       expect(mockWindow.location.href).toBe('https://gitlab.com/oauth/authorize?params');
@@ -936,11 +956,38 @@ describe('git/shared/auth', () => {
 
       await handleClientSideAuthPopup({
         backendName: 'gitlab',
-        clientId: 'test-client',
-        tokenURL: 'https://gitlab.com/oauth/token',
+        apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
       });
 
       expect(get(inAuthPopup)).toBe(true);
+    });
+
+    it('should pass includeCredentials through to finishClientSideAuth', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+      });
+
+      mockWindow.location.search = '?code=test-code&state=test-csrf';
+
+      global.fetch = vi.fn().mockResolvedValue({
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        json: async () => ({ access_token: 'test-token' }),
+      });
+
+      await handleClientSideAuthPopup({
+        backendName: 'gitlab',
+        apiConfig: {
+          clientId: 'test-client',
+          tokenURL: 'https://gitlab.com/oauth/token',
+          includeCredentials: true,
+        },
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://gitlab.com/oauth/token',
+        expect.objectContaining({ credentials: 'include' }),
+      );
     });
   });
 
