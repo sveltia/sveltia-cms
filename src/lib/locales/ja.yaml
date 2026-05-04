@@ -408,6 +408,7 @@ locale_content_disabled_short: (無効)
 locale_content_error_short: (エラー)
 edit: 編集
 preview: プレビュー
+swap_panes: ペインを入れ替える
 edit_x_locale: "{$locale} コンテンツを編集"
 preview_x_locale: "{$locale} コンテンツをプレビュー"
 content_preview: コンテンツプレビュー

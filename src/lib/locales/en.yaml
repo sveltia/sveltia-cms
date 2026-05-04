@@ -475,6 +475,7 @@ locale_content_disabled_short: (disabled)
 locale_content_error_short: (error)
 edit: Edit
 preview: Preview
+swap_panes: Swap Panes
 edit_x_locale: Edit {$locale} Content
 preview_x_locale: Preview {$locale} Content
 content_preview: Content Preview

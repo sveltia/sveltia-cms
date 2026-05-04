@@ -5,6 +5,7 @@
     Button,
     EmptyState,
     Group,
+    Icon,
     ResizableHandle,
     ResizablePane,
     ResizablePaneGroup,
@@ -466,7 +467,26 @@
                   <ResizablePane defaultSize={firstPaneSize} minSize={minPaneSize}>
                     {@render firstPane()}
                   </ResizablePane>
-                  <ResizableHandle />
+                  <ResizableHandle>
+                    <!-- eslint-disable-next-line svelte/no-useless-children-snippet -->
+                    {#snippet children()}
+                      <Button
+                        class="swap-button"
+                        iconic
+                        size="small"
+                        variant="tertiary"
+                        aria-label={_('swap_panes')}
+                        onclick={() => {
+                          [$editorFirstPane, $editorSecondPane] = [
+                            $editorSecondPane,
+                            $editorFirstPane,
+                          ];
+                        }}
+                      >
+                        <Icon name="swap_horiz" />
+                      </Button>
+                    {/snippet}
+                  </ResizableHandle>
                   <ResizablePane defaultSize={secondPaneSize} minSize={minPaneSize}>
                     {@render secondPane()}
                   </ResizablePane>
@@ -539,6 +559,19 @@
     :global {
       .sui.resizable-handle {
         background-color: var(--sui-secondary-background-color); // same as toolbar
+
+        .swap-button {
+          position: absolute;
+          top: calc(50% - 12px);
+          margin: 0;
+          border-radius: 50%;
+          opacity: 0.5;
+
+          &:hover,
+          &:focus-visible {
+            opacity: 1;
+          }
+        }
       }
     }
   }

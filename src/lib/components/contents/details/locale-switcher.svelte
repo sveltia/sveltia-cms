@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
+  import { Divider, Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { writable } from 'svelte/store';
 
   import { entryDraft } from '$lib/services/contents/draft';
@@ -51,10 +51,18 @@
   const OptionComponent = $derived(useDropDown ? Option : SelectButton);
   const variant = $derived(useDropDown ? undefined : 'tertiary');
   const size = $derived(useDropDown ? undefined : 'small');
+  const currentValue = $derived(
+    $thisPane?.mode === 'edit'
+      ? $thisPane.locale
+      : $thisPane?.mode === 'preview'
+        ? 'preview'
+        : undefined,
+  );
 </script>
 
 <div role="none" class="wrapper">
   <SelectComponent
+    value={currentValue}
     class={hasAnyError && useDropDown ? 'error' : undefined}
     aria-label={_('switch_locale')}
     aria-controls={id.replace('-header', '-body')}
@@ -71,6 +79,7 @@
           {variant}
           {size}
           {label}
+          value={locale}
           aria-label="{label} {disabled
             ? _('locale_content_disabled_short')
             : hasError
@@ -97,10 +106,14 @@
         </OptionComponent>
       {/each}
       {#if $thatPane?.mode === 'edit' && canPreview && $entryEditorSettings?.showPreview}
+        {#if useDropDown}
+          <Divider />
+        {/if}
         <OptionComponent
           {variant}
           {size}
           label={_('preview')}
+          value="preview"
           selected={$thisPane?.mode === 'preview'}
           data-mode="preview"
           onSelect={() => {
