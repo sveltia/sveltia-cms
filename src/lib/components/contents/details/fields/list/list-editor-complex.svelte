@@ -113,6 +113,14 @@
     }),
   );
   const hasMaxItems = $derived(items.length >= max);
+  const hasEditableSubFields = $derived(
+    locale === defaultLocale ||
+      (hasVariableTypes
+        ? (types?.flatMap(({ fields: typeFields = [] }) => typeFields) ?? [])
+        : (fields ?? (field ? [field] : []))
+      ).some(({ i18n: subI18n = false }) => subI18n === true || subI18n === 'translate'),
+  );
+  const isAddDisabled = $derived(isDuplicateField || !hasEditableSubFields);
 
   /**
    * List item thumbnails.
@@ -395,7 +403,7 @@
 </div>
 {#if allowAdd && (addToTop || !items.length)}
   <div role="none" class="toolbar top add">
-    <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
+    <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
   </div>
 {/if}
 <div role="none" id="list-{fieldId}-item-list" class="item-list" class:collapsed={!parentExpanded}>
@@ -455,7 +463,7 @@
                 iconic
                 popupPosition="bottom-right"
                 aria-label={_('list_item_options')}
-                disabled={isDuplicateField}
+                disabled={isAddDisabled}
               >
                 {#snippet popup()}
                   <Menu aria-label={_('list_item_options')}>
@@ -519,7 +527,7 @@
 </div>
 {#if allowAdd && !addToTop && items.length}
   <div role="none" class="toolbar bottom add">
-    <AddItemButton disabled={isDuplicateField} {fieldConfig} {items} {addItem} />
+    <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
     <Spacer flex />
   </div>
 {/if}
