@@ -6,7 +6,7 @@ import { get } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
-import { transformFile } from '$lib/services/integrations/media-libraries/default';
+import { processFile } from '$lib/services/assets/process';
 import { getGitHash } from '$lib/services/utils/file';
 
 /**
@@ -132,7 +132,6 @@ const getSavedAssetsForEntry = (draft, folder) => {
  * undefined }>} Processed resource value, credit, and file name if the file is oversized.
  */
 export const processResource = async ({ draft, resource, libraryConfig }) => {
-  const { transformations, max_file_size: maxSize } = libraryConfig ?? {};
   const { url, credit } = resource;
   let { asset, file } = resource;
   /** @type {string | undefined} */
@@ -147,9 +146,9 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
     if (existingBlobURL) {
       value = existingBlobURL;
     } else {
-      if (transformations) {
-        file = await transformFile(file, transformations);
-      }
+      const { file: processedFile, oversized } = await processFile(file, libraryConfig ?? {});
+
+      file = processedFile;
 
       const sha = await getGitHash(file);
 
@@ -165,7 +164,7 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
         // uploading the same file twice
         asset = existingAsset;
         file = undefined;
-      } else if (file.size > /** @type {number} */ (maxSize)) {
+      } else if (oversized) {
         oversizedFileName = file.name;
         file = undefined;
       } else {

@@ -1548,7 +1548,6 @@ describe('Test replaceBlobURL()', () => {
       content,
       changes,
       savingAssets,
-      slugificationEnabled: false,
       encodingEnabled: false,
     });
 
@@ -1615,7 +1614,6 @@ describe('Test replaceBlobURL()', () => {
       content,
       changes,
       savingAssets,
-      slugificationEnabled: false,
       encodingEnabled: false,
     });
 
@@ -1669,7 +1667,6 @@ describe('Test replaceBlobURL()', () => {
       content,
       changes,
       savingAssets,
-      slugificationEnabled: false,
       encodingEnabled: false,
     });
 
@@ -1725,7 +1722,6 @@ describe('Test replaceBlobURL()', () => {
       content,
       changes,
       savingAssets,
-      slugificationEnabled: false,
       encodingEnabled: true,
     });
 
@@ -1777,7 +1773,6 @@ describe('Test replaceBlobURL()', () => {
       content,
       changes,
       savingAssets,
-      slugificationEnabled: false,
       encodingEnabled: false,
     });
 
@@ -1832,7 +1827,6 @@ describe('Test replaceBlobURL()', () => {
       content,
       changes,
       savingAssets,
-      slugificationEnabled: false,
       encodingEnabled: false,
     });
 
@@ -1917,7 +1911,6 @@ describe('Test replaceBlobURL()', () => {
       content,
       changes,
       savingAssets,
-      slugificationEnabled: false,
       encodingEnabled: false,
     });
 
@@ -1990,7 +1983,6 @@ describe('Test replaceBlobURL()', () => {
       content,
       changes,
       savingAssets,
-      slugificationEnabled: false,
       encodingEnabled: false,
     });
 

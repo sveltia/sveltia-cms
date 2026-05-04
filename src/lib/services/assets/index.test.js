@@ -161,6 +161,12 @@ describe('assets/index', () => {
       Object.defineProperty(smallFile, 'size', { value: 500000 });
       Object.defineProperty(largeFile, 'size', { value: 1500000 });
 
+      let latestState = /** @type {any} */ (null);
+
+      const unsubscribe = processedAssets.subscribe((state) => {
+        latestState = state;
+      });
+
       uploadingAssets.set({
         folder: undefined,
         files: [smallFile, largeFile],
@@ -168,14 +174,14 @@ describe('assets/index', () => {
 
       // Wait for async processing
       await new Promise((resolve) => {
-        setTimeout(resolve, 0);
+        setTimeout(resolve, 50);
       });
 
-      const result = get(processedAssets);
+      unsubscribe();
 
-      expect(result.processing).toBe(false);
-      expect(result.undersizedFiles).toEqual([smallFile]);
-      expect(result.oversizedFiles).toEqual([largeFile]);
+      expect(latestState.processing).toBe(false);
+      expect(latestState.undersizedFiles).toEqual([smallFile]);
+      expect(latestState.oversizedFiles).toEqual([largeFile]);
     });
 
     it('should handle file transformations', async () => {
@@ -196,6 +202,12 @@ describe('assets/index', () => {
 
       transformFileMock.mockResolvedValue(transformedFile);
 
+      let latestState = /** @type {any} */ (null);
+
+      const unsubscribe = processedAssets.subscribe((state) => {
+        latestState = state;
+      });
+
       uploadingAssets.set({
         folder: undefined,
         files: [originalFile],
@@ -206,11 +218,11 @@ describe('assets/index', () => {
         setTimeout(resolve, 50);
       });
 
-      const result = get(processedAssets);
+      unsubscribe();
 
-      expect(result.processing).toBe(false);
+      expect(latestState.processing).toBe(false);
       // original file since no transformations
-      expect(result.undersizedFiles).toEqual([originalFile]);
+      expect(latestState.undersizedFiles).toEqual([originalFile]);
       expect(transformFileMock).not.toHaveBeenCalled();
     });
 
@@ -420,19 +432,25 @@ describe('assets/index', () => {
       Object.defineProperty(file2, 'size', { value: 1000001 }); // Just over max size
       Object.defineProperty(file3, 'size', { value: 999999 }); // Just under max size
 
+      let latestState = /** @type {any} */ (null);
+
+      const unsubscribe = processedAssets.subscribe((state) => {
+        latestState = state;
+      });
+
       uploadingAssets.set({
         folder: undefined,
         files: [file1, file2, file3],
       });
 
       await new Promise((resolve) => {
-        setTimeout(resolve, 0);
+        setTimeout(resolve, 50);
       });
 
-      const result = get(processedAssets);
+      unsubscribe();
 
-      expect(result.undersizedFiles).toEqual([file1, file3]);
-      expect(result.oversizedFiles).toEqual([file2]);
+      expect(latestState.undersizedFiles).toEqual([file1, file3]);
+      expect(latestState.oversizedFiles).toEqual([file2]);
     });
   });
 
@@ -3386,21 +3404,27 @@ describe('assets/index', () => {
         },
       });
 
+      let latestState = /** @type {any} */ (null);
+
+      const unsubscribe = processedAssets.subscribe((state) => {
+        latestState = state;
+      });
+
       uploadingAssets.set({
         folder: undefined,
         files: [smallFile1, smallFile2, largeFile1, largeFile2],
       });
 
       await new Promise((resolve) => {
-        setTimeout(resolve, 0);
+        setTimeout(resolve, 50);
       });
 
-      const result = get(processedAssets);
+      unsubscribe();
 
-      expect(result.undersizedFiles).toEqual([smallFile1, smallFile2]);
-      expect(result.oversizedFiles).toEqual([largeFile1, largeFile2]);
-      expect(result.undersizedFiles.length).toBe(2);
-      expect(result.oversizedFiles.length).toBe(2);
+      expect(latestState.undersizedFiles).toEqual([smallFile1, smallFile2]);
+      expect(latestState.oversizedFiles).toEqual([largeFile1, largeFile2]);
+      expect(latestState.undersizedFiles.length).toBe(2);
+      expect(latestState.oversizedFiles.length).toBe(2);
     });
 
     it('should handle getAssetByAbsolutePath with global asset folder fallback', async () => {

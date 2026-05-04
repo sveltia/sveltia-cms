@@ -23,6 +23,9 @@
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
+  import OversizeAlertDialog from '$lib/components/assets/shared/oversize-alert-dialog.svelte';
+  import { processFile } from '$lib/services/assets/process';
+  import { cmsConfig } from '$lib/services/config';
   import { selectAssetsView } from '$lib/services/contents/editor';
   import { isSmallScreen } from '$lib/services/user/env';
   import { prefs } from '$lib/services/user/prefs';
@@ -82,6 +85,12 @@
   // view relies on the description to show asset information.
   const viewType = $derived(serviceId === 'picsum' ? 'grid' : $selectAssetsView?.type);
   const isStockAssets = $derived(serviceType === 'stock_assets');
+  const allMediaLibraryOptions = $derived(
+    fieldConfig?.media_libraries?.all ?? $cmsConfig?.media_libraries?.all ?? {},
+  );
+  const maxSize = $derived(
+    /** @type {number} */ (allMediaLibraryOptions.max_file_size ?? Infinity),
+  );
 
   const input = $state({ userName: '', password: '' });
   let hasConfig = $state(true);
@@ -97,6 +106,9 @@
   let error = $state();
   /** @type {{ show: boolean, status: 'info' | 'error', length: number }} */
   let uploadingToast = $state({ show: false, status: 'info', length: 0 });
+  /** @type {string[]} */
+  let oversizedFileNames = $state([]);
+  let showOversizeAlert = $state(false);
 
   /** @type {MediaLibraryFetchOptions} */
   const listFetchOptions = $derived({ kind, fieldConfig, apiKey, userName, password });
@@ -125,6 +137,22 @@
    */
   export const uploadFiles = async (files) => {
     if (!upload) {
+      return;
+    }
+
+    const processed = await Promise.all(files.map((f) => processFile(f, allMediaLibraryOptions)));
+
+    files = processed.filter(({ oversized }) => !oversized).map(({ file }) => file);
+
+    oversizedFileNames = processed
+      .filter(({ oversized }) => oversized)
+      .map(({ file }) => file.name);
+
+    if (oversizedFileNames.length) {
+      showOversizeAlert = true;
+    }
+
+    if (!files.length) {
       return;
     }
 
@@ -400,6 +428,8 @@
     {/if}
   </Alert>
 </Toast>
+
+<OversizeAlertDialog bind:open={showOversizeAlert} {oversizedFileNames} {maxSize} />
 
 <style lang="scss">
   .grid-wrapper {

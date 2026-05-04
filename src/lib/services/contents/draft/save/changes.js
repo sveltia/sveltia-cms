@@ -12,7 +12,6 @@ import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { getField } from '$lib/services/contents/entry/fields';
 import { formatEntryFile } from '$lib/services/contents/file/format';
-import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
 
 /**
  * @import {
@@ -65,18 +64,10 @@ export const createBaseSavingEntryData = async ({
   const changes = [];
   /** @type {Asset[]} */
   const savingAssets = [];
-  const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
   const { encode_file_path: encodingEnabled = false } = get(cmsConfig)?.output ?? {};
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap: {}, isIndexFile };
-
-  const replaceBlobBaseArgs = {
-    draft,
-    defaultLocaleSlug,
-    changes,
-    savingAssets,
-    slugificationEnabled,
-  };
+  const replaceBlobBaseArgs = { draft, defaultLocaleSlug, changes, savingAssets };
 
   const localizedEntryMap = Object.fromEntries(
     await Promise.all(

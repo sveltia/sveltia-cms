@@ -284,7 +284,6 @@ export const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
  * @param {FlattenedEntryContent} args.content Localized content.
  * @param {FileChange[]} args.changes Changeset.
  * @param {Asset[]} args.savingAssets List of assets to be saved.
- * @param {boolean} args.slugificationEnabled Whether the file name slugification is enabled.
  * @param {boolean} args.encodingEnabled Whether the file path encoding is enabled.
  */
 export const replaceBlobURL = async ({
@@ -297,7 +296,6 @@ export const replaceBlobURL = async ({
   content,
   changes,
   savingAssets,
-  slugificationEnabled,
   encodingEnabled,
 }) => {
   const sha = await getGitHash(file);
@@ -318,7 +316,7 @@ export const replaceBlobURL = async ({
   if (dupFile) {
     fileName = dupFile.name;
   } else {
-    fileName = formatFileName(file.name, { slugificationEnabled, assetNamesInSameFolder });
+    fileName = formatFileName(file.name, { assetNamesInSameFolder });
 
     const assetPath = resolvedInternalPath ? `${resolvedInternalPath}/${fileName}` : fileName;
 

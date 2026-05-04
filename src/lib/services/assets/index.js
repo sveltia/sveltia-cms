@@ -9,15 +9,13 @@ import {
   globalAssetFolder,
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
+import { processFile } from '$lib/services/assets/process';
 import { fillTemplate } from '$lib/services/common/template';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
-import {
-  getDefaultMediaLibraryOptions,
-  transformFile,
-} from '$lib/services/integrations/media-libraries/default';
+import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
 import { createPath, decodeFilePath, resolvePath } from '$lib/services/utils/file';
 
 /**
@@ -127,35 +125,24 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
   });
 
   const originalFiles = _uploadingAssets.files;
-  const transformedFileMap = new WeakMap();
-  const { max_file_size: maxSize, transformations } = getDefaultMediaLibraryOptions().config;
-  /** @type {File[]} */
-  let files = [];
+  const { config } = getDefaultMediaLibraryOptions();
 
   (async () => {
-    if (originalFiles.length && transformations) {
+    if (originalFiles.length && config.transformations) {
       update((state) => ({ ...state, processing: true }));
-
-      files = await Promise.all(
-        originalFiles.map(async (file) => {
-          const newFile = await transformFile(file, transformations);
-
-          if (newFile !== file) {
-            transformedFileMap.set(newFile, file);
-          }
-
-          return newFile;
-        }),
-      );
-    } else {
-      files = [...originalFiles];
     }
+
+    const results = await Promise.all(originalFiles.map((file) => processFile(file, config)));
 
     update(() => ({
       processing: false,
-      undersizedFiles: files.filter(({ size }) => size <= /** @type {number} */ (maxSize)),
-      oversizedFiles: files.filter(({ size }) => size > /** @type {number} */ (maxSize)),
-      transformedFileMap,
+      undersizedFiles: results.filter(({ oversized }) => !oversized).map(({ file }) => file),
+      oversizedFiles: results.filter(({ oversized }) => oversized).map(({ file }) => file),
+      transformedFileMap: new WeakMap(
+        results
+          .filter(({ originalFile }) => originalFile !== undefined)
+          .map(({ file, originalFile }) => [file, /** @type {File} */ (originalFile)]),
+      ),
     }));
   })();
 });

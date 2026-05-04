@@ -8,11 +8,12 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { AlertDialog, ConfirmationDialog, TextArea } from '@sveltia/ui';
+  import { ConfirmationDialog, TextArea } from '@sveltia/ui';
   import { flushSync, getContext } from 'svelte';
 
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
+  import OversizeAlertDialog from '$lib/components/assets/shared/oversize-alert-dialog.svelte';
   import FileEditorItem from '$lib/components/contents/details/fields/file/file-editor-item.svelte';
   import UploadButton from '$lib/components/contents/details/fields/file/upload-button.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -21,7 +22,6 @@
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
-  import { formatSize } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -62,7 +62,7 @@
   let showSelectAssetsDialog = $state(false);
   let replaceMode = $state(false);
   let replaceIndex = $state(-1);
-  let showSizeLimitDialog = $state(false);
+  let showOversizeAlert = $state(false);
   let showPhotoCreditDialog = $state(false);
   let photoCredit = $state('');
   /** @type {DropZone | undefined} */
@@ -218,7 +218,7 @@
     }
 
     if (oversizedFileNames.length) {
-      showSizeLimitDialog = true;
+      showOversizeAlert = true;
     }
 
     processing = false;
@@ -380,11 +380,7 @@
   onSelect={onResourcesSelect}
 />
 
-<AlertDialog bind:open={showSizeLimitDialog} title={_('assets_dialog.large_file.title')}>
-  {_('warning_oversized_files', {
-    values: { count: oversizedFileNames.length, size: formatSize(maxSize) },
-  })}
-</AlertDialog>
+<OversizeAlertDialog bind:open={showOversizeAlert} {oversizedFileNames} {maxSize} />
 
 <ConfirmationDialog
   bind:open={showPhotoCreditDialog}
