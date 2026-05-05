@@ -80,8 +80,12 @@ export const createBaseSavingEntryData = async ({
           return [locale, { path }];
         }
 
-        // Add the canonical slug
-        content[canonicalSlugKey] = canonicalSlug;
+        // Add the canonical slug only when it’s defined; if it’s undefined (e.g. the slug template
+        // has no `| localize` filter), skip the assignment to avoid wiping a user-defined field
+        // that happens to share the same key (e.g. `translationKey`).
+        if (canonicalSlug !== undefined) {
+          content[canonicalSlugKey] = canonicalSlug;
+        }
 
         // Normalize data
         await Promise.all(

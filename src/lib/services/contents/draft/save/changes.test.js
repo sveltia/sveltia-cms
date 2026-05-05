@@ -417,6 +417,39 @@ describe('draft/save/changes', () => {
       expect(result.savingAssets).toEqual([]);
     });
 
+    it('should strip keys with undefined values during normalization', async () => {
+      const { createEntryPath } = await import('./entry-path');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: { en: { title: 'Test Post', draft: undefined } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      expect(result.localizedEntryMap.en.content).not.toHaveProperty('draft');
+      expect(result.localizedEntryMap.en.content.title).toBe('Test Post');
+    });
+
     it('should handle multiple locales', async () => {
       const { createEntryPath } = await import('./entry-path');
 
@@ -453,6 +486,41 @@ describe('draft/save/changes', () => {
 
       expect(result.localizedEntryMap.en).toBeDefined();
       expect(result.localizedEntryMap.ja).toBeDefined();
+    });
+
+    it('should not wipe a user-defined field that shares the canonical slug key when canonicalSlug is undefined', async () => {
+      const { createEntryPath } = await import('./entry-path');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/en/test-post.md');
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        // The user has a field named `translationKey` with an existing value.
+        currentValues: { en: { title: 'Test Post', translationKey: 'my-custom-key' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        // canonicalSlug is undefined because the slug template has no `| localize` filter.
+        canonicalSlug: undefined,
+        localizedSlugs: undefined,
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      // The user's `translationKey` value must be preserved, not wiped.
+      expect(result.localizedEntryMap.en.content.translationKey).toBe('my-custom-key');
     });
   });
 
