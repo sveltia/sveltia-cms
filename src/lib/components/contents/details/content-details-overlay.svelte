@@ -468,24 +468,21 @@
                     {@render firstPane()}
                   </ResizablePane>
                   <ResizableHandle>
-                    <!-- eslint-disable-next-line svelte/no-useless-children-snippet -->
-                    {#snippet children()}
-                      <Button
-                        class="swap-button"
-                        iconic
-                        size="small"
-                        variant="tertiary"
-                        aria-label={_('swap_panes')}
-                        onclick={() => {
-                          [$editorFirstPane, $editorSecondPane] = [
-                            $editorSecondPane,
-                            $editorFirstPane,
-                          ];
-                        }}
-                      >
-                        <Icon name="swap_horiz" />
-                      </Button>
-                    {/snippet}
+                    <Button
+                      class="swap-button"
+                      iconic
+                      size="small"
+                      variant="tertiary"
+                      aria-label={_('swap_panes')}
+                      onclick={() => {
+                        [$editorFirstPane, $editorSecondPane] = [
+                          $editorSecondPane,
+                          $editorFirstPane,
+                        ];
+                      }}
+                    >
+                      <Icon name="swap_horiz" />
+                    </Button>
                   </ResizableHandle>
                   <ResizablePane defaultSize={secondPaneSize} minSize={minPaneSize}>
                     {@render secondPane()}
