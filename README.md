@@ -8,7 +8,7 @@ As the de facto [successor to Netlify CMS](https://sveltiacms.app/en/docs/succes
 
 Sveltia CMS is also an excellent option for individuals or organizations migrating from a traditional CMS like WordPress to a static site generator like Astro and looking for a lightweight CMS solution to manage their content.
 
-Explore real-world examples in our [showcase](https://sveltiacms.app/en/showcase), or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
+Explore various real-world examples in our [showcase](https://sveltiacms.app/en/showcase), or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
