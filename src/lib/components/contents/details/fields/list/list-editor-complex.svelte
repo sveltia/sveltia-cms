@@ -278,7 +278,16 @@
       return undefined;
     }
 
-    const thumbnailKeyPath = `${keyPath}.${index}.${thumbnailFieldName.replace(/^fields\./, '')}`;
+    const fieldNameNormalized = thumbnailFieldName.replace(/^fields\./, '');
+    const itemKeyPath = `${keyPath}.${index}`;
+
+    // For single-subfield lists (`field:` option), values are stored at the item key path directly
+    // (without the field name). `getField(itemKeyPath)` already traverses into the subfield, so we
+    // use it to validate the name match too.
+    const thumbnailKeyPath = hasSingleSubField
+      ? itemKeyPath
+      : `${itemKeyPath}.${fieldNameNormalized}`;
+
     const thumbnailValue = valueMap[thumbnailKeyPath];
 
     if (!thumbnailValue) {
@@ -293,7 +302,10 @@
       isIndexFile,
     });
 
-    if (thumbnailFieldConfig?.widget !== 'image') {
+    if (
+      thumbnailFieldConfig?.widget !== 'image' ||
+      (hasSingleSubField && thumbnailFieldConfig.name !== fieldNameNormalized)
+    ) {
       return undefined;
     }
 
@@ -302,7 +314,9 @@
       entry: $entryDraft?.originalEntry,
       collectionName,
       fileName,
-      typedKeyPath: `${typedKeyPath}.*.${thumbnailFieldName.replace(/^fields\./, '')}`,
+      typedKeyPath: hasSingleSubField
+        ? `${typedKeyPath}.*`
+        : `${typedKeyPath}.*.${fieldNameNormalized}`,
     });
   };
 
