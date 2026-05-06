@@ -4,6 +4,8 @@
 
 Since Sveltia CMS is still its early stages, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) so we can make the product better for everyone.
 
+We usually fix bugs within 24 hours of them being reported, but it can take longer if the issue is complex or we’re really busy. We appreciate your patience and understanding.
+
 ## Feature requests
 
 You can also [request new features](https://github.com/sveltia/sveltia-cms/issues/new?type=feature), but we may not be able to respond due to [heavy workload](https://sveltiacms.app/en/roadmap) and limited resources. Keep in mind that even though there are only a handful of issues in [our repository](https://github.com/sveltia/sveltia-cms/issues?q=is%3Aissue%20state%3Aopen%20type%3AFeature), our main focus is on [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues?q=label%3A%22type%3A%20feature%22%20OR%20label%3A%22kind%3A%20feature%22), which means we have tons of things to do.
@@ -24,8 +26,10 @@ Sometimes developers and users ask questions in our [discussion forum](https://g
 
 ## Donations
 
-We’ll set up a sponsorship program at some point in the future.
+We’ll set up a sponsorship program soon.
 
 ## Other things you can do
+
+If you have a blog or social media account, you can help us by writing about Sveltia CMS and sharing it with your followers. You could also create tutorials, videos, or other content to help users learn how to use the product.
 
 Last but not least, don’t forget to star this project on GitHub and spread the word so more users can benefit from a better CMS experience!
