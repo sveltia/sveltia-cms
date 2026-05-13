@@ -27,12 +27,16 @@ import { formatFileName } from '$lib/services/utils/file';
  * object.
  */
 export const createFileList = (uploadingAssets) => {
-  const { files, folder, originalAsset } = uploadingAssets;
+  const { files, folder, originalAsset, subPath } = uploadingAssets;
   const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
 
+  const targetDir = subPath && folder?.internalPath
+    ? [folder.internalPath, subPath].join('/')
+    : folder?.internalPath;
+
   const assetNamesInSameFolder =
-    folder?.internalPath !== undefined
-      ? getAssetsByDirName(folder.internalPath).map((a) => a.name.normalize())
+    targetDir !== undefined
+      ? getAssetsByDirName(targetDir).map((a) => a.name.normalize())
       : [];
 
   return files.map((file) => {
@@ -44,10 +48,14 @@ export const createFileList = (uploadingAssets) => {
       assetNamesInSameFolder.push(fileName);
     }
 
+    const filePath = originalAsset?.path ?? (subPath && folder?.internalPath
+      ? [folder.internalPath, subPath, fileName].join('/')
+      : targetDir ? [targetDir, fileName].join('/') : fileName);
+
     return {
       action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),
       name: fileName,
-      path: originalAsset?.path ?? [folder?.internalPath, fileName].join('/'),
+      path: filePath,
       file,
     };
   });
@@ -109,4 +117,37 @@ export const saveAssets = async (uploadingAssets, options) => {
   });
 
   updatedStores({ count: files.length });
+};
+
+/**
+ * Create a new empty folder by committing a `.gitkeep` file inside it.
+ * @param {string} name Folder name.
+ * @param {AssetFolderInfo | undefined} parentFolder The parent asset folder.
+ * @param {string} [currentSubPath] Current sub-path within the parent folder.
+ */
+export const createFolder = async (name, parentFolder, currentSubPath) => {
+  const basePath = parentFolder?.internalPath ?? '';
+
+  if (!basePath) {
+    return;
+  }
+
+  const folderPath = currentSubPath ? `${basePath}/${currentSubPath}/${name}` : `${basePath}/${name}`;
+
+  /** @type {Asset} */
+  const asset = {
+    name: '.gitkeep',
+    path: `${folderPath}/.gitkeep`,
+    size: 0,
+    kind: 'other',
+    folder: /** @type {AssetFolderInfo} */ (parentFolder),
+  };
+
+  await saveChanges({
+    changes: [{ action: 'create', path: `${folderPath}/.gitkeep`, data: new Blob(['']) }],
+    savingAssets: [asset],
+    options: {},
+  });
+
+  updatedStores({ count: 1 });
 };

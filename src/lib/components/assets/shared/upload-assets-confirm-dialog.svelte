@@ -13,7 +13,7 @@
   // eslint-disable-next-line svelte/prefer-writable-derived
   let files = $state([]);
 
-  const { files: originalFiles, folder, originalAsset } = $derived($uploadingAssets);
+  const { files: originalFiles, folder, originalAsset, subPath } = $derived($uploadingAssets);
   const { processing, undersizedFiles, oversizedFiles, transformedFileMap } =
     $derived($processedAssets);
   const { max_file_size: maxSize } = $derived(getDefaultMediaLibraryOptions().config);
@@ -36,9 +36,10 @@
   open={$showUploadAssetsConfirmDialog}
   title={_(originalAsset ? 'replace_asset' : 'upload_assets')}
   okLabel={_(originalAsset ? 'replace' : 'upload')}
+  cancelLabel={_('cancel')}
   okDisabled={!files.length}
   onOk={async () => {
-    await saveAssets({ files, folder, originalAsset }, { commitType: 'uploadMedia' });
+    await saveAssets({ files, folder, originalAsset, subPath }, { commitType: 'uploadMedia' });
     $uploadingAssets = { folder: undefined, files: [] };
   }}
   onCancel={() => {
@@ -59,7 +60,16 @@
           })}
         {:else}
           {_('confirm_uploading_files', {
-            values: { count: files.length, folder: `/${folder?.internalPath}` },
+            values: {
+              count: files.length,
+              folder: folder?.internalPath
+                ? subPath
+                  ? `/${folder.internalPath}/${subPath}`
+                  : `/${folder.internalPath}`
+                : subPath
+                  ? `/${subPath}`
+                  : '',
+            },
           })}
         {/if}
       </div>

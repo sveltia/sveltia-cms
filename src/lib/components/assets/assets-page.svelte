@@ -1,11 +1,13 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Alert, Toast } from '@sveltia/ui';
+  import { Alert, Button, Icon, Toast } from '@sveltia/ui';
+  import { getPathInfo } from '@sveltia/utils/file';
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
   import { onMount } from 'svelte';
 
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
+  import CreateFolderDialog from '$lib/components/assets/shared/create-folder-dialog.svelte';
   import EditAssetDialog from '$lib/components/assets/details/edit-asset-dialog.svelte';
   import RenameAssetDialog from '$lib/components/assets/details/rename-asset-dialog.svelte';
   import AssetList from '$lib/components/assets/list/asset-list.svelte';
@@ -22,10 +24,11 @@
     parseLocation,
     updateContentFromHashChange,
   } from '$lib/services/app/navigation';
-  import { allAssets, overlaidAsset } from '$lib/services/assets';
+  import { allAssets, getAssetSubDirectories, overlaidAsset } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
-  import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+  import { allAssetFolders, canCreateAsset, selectedAssetFolder } from '$lib/services/assets/folders';
   import {
+    currentAssetSubPath,
     getFolderLabelByCollection,
     listedAssets,
     showAssetOverlay,
@@ -38,6 +41,56 @@
   let isIndexPage = $state(false);
   let isSearchPage = $state(false);
 
+  /** @type {string} */
+  let currentSubPath = $state('');
+  let showCreateFolderDialog = $state(false);
+
+  const subDirectories = $derived.by(() => {
+    void $allAssets;
+
+    return getAssetSubDirectories($selectedAssetFolder, currentSubPath);
+  });
+
+  const breadcrumbSegments = $derived(
+    currentSubPath ? ['', ...currentSubPath.split('/')] : [''],
+  );
+
+  const canCreateInFolder = $derived(canCreateAsset($selectedAssetFolder));
+
+  $effect(() => {
+    $currentAssetSubPath = currentSubPath;
+  });
+
+  /**
+   * Navigate to a subfolder path.
+   * @param {string} subPath Subfolder path relative to folder root.
+   */
+  const navigateToSubPath = (subPath) => {
+    currentSubPath = subPath ?? '';
+  };
+
+  /**
+   * Navigate up one directory level.
+   */
+  const navigateUp = () => {
+    const segments = currentSubPath.split('/');
+
+    segments.pop();
+    currentSubPath = segments.join('/');
+  };
+
+  /**
+   * Navigate to a specific breadcrumb segment.
+   * @param {number} index Index of the segment to navigate to.
+   */
+  const navigateToSegment = (index) => {
+    if (index === 0) {
+      currentSubPath = '';
+    } else {
+      currentSubPath = breadcrumbSegments.slice(1, index + 1).join('/');
+    }
+  };
+
   const selectedAssetFolderLabel = $derived(
     // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized
     // label
@@ -45,6 +98,17 @@
       ? getFolderLabelByCollection($selectedAssetFolder)
       : '',
   );
+
+  const filteredListedAssets = $derived.by(() => {
+    if (!currentSubPath || !$selectedAssetFolder) {
+      return $listedAssets;
+    }
+
+    const base = $selectedAssetFolder.internalPath ?? '';
+    const expectedDir = base ? `${base}/${currentSubPath}` : currentSubPath;
+
+    return $listedAssets.filter((asset) => getPathInfo(asset.path).dirname === expectedDir);
+  });
 
   /**
    * Navigate to the asset list or asset details page given the URL hash.
@@ -95,6 +159,7 @@
       $selectedAssetFolder = undefined;
     } else if (!equal($selectedAssetFolder, folder)) {
       $selectedAssetFolder = folder;
+      currentSubPath = '';
     }
 
     if (!fileName) {
@@ -139,7 +204,12 @@
 <PageContainer aria-label={_('asset_library')}>
   {#snippet primarySidebar()}
     {#if !$isSmallScreen || isIndexPage}
-      <PrimarySidebar {isSearchPage} />
+      <PrimarySidebar
+        {isSearchPage}
+        onSelect={() => {
+          currentSubPath = '';
+        }}
+      />
     {/if}
   {/snippet}
   {#snippet main()}
@@ -154,12 +224,54 @@
           <PrimaryToolbar />
         {/snippet}
         {#snippet secondaryToolbar()}
-          {#if $listedAssets.length}
-            <SecondaryToolbar />
+          {#if filteredListedAssets.length}
+            <SecondaryToolbar filteredAssets={filteredListedAssets} />
           {/if}
         {/snippet}
         {#snippet mainContent()}
-          <AssetList />
+          {#if $selectedAssetFolder}
+            <!-- Breadcrumb -->
+            <div role="navigation" class="breadcrumb" aria-label="Folder navigation">
+              <span class="segments">
+                {#each breadcrumbSegments as segment, index}
+                  {#if index > 0}
+                    <Icon name="chevron_right" />
+                  {/if}
+                  <button
+                    class="crumb"
+                    class:active={index === breadcrumbSegments.length - 1}
+                    onclick={() => navigateToSegment(index)}
+                  >
+                    {index === 0
+                      ? getFolderLabelByCollection($selectedAssetFolder)
+                      : decodeURIComponent(segment)}
+                  </button>
+                {/each}
+              </span>
+              {#if currentSubPath}
+                <Button
+                  variant="text"
+                  size="small"
+                  label={_('go_up')}
+                  onclick={navigateUp}
+                />
+              {/if}
+              {#if canCreateInFolder}
+                <Button
+                  variant="text"
+                  size="small"
+                  label={_('assets_dialog.create_folder')}
+                  onclick={() => { showCreateFolderDialog = true; }}
+                />
+              {/if}
+            </div>
+          {/if}
+          <AssetList
+            {subDirectories}
+            {currentSubPath}
+            onNavigateFolder={(subDir) => navigateToSubPath(subDir.path)}
+            onNavigateUp={currentSubPath ? navigateUp : undefined}
+          />
         {/snippet}
         {#snippet secondarySidebar()}
           <SecondarySidebar />
@@ -201,3 +313,54 @@
     {_('assets_deleted', { values: { count: $assetUpdatesToast.count } })}
   </Alert>
 </Toast>
+
+<CreateFolderDialog
+  open={showCreateFolderDialog}
+  parentFolder={$selectedAssetFolder}
+  currentSubPath={currentSubPath}
+  onClose={() => {
+    showCreateFolderDialog = false;
+  }}
+/>
+
+<style lang="scss">
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--sui-control-border-color);
+
+    .segments {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: auto;
+
+      .crumb {
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        padding: 2px 6px;
+        color: var(--sui-link-color);
+        background: none;
+        font-size: var(--sui-font-size-small);
+        font-family: inherit;
+
+        &:hover {
+          text-decoration: underline;
+        }
+
+        &.active {
+          cursor: default;
+          color: var(--sui-primary-foreground-color);
+          font-weight: var(--sui-font-weight-semi-bold);
+
+          &:hover {
+            text-decoration: none;
+          }
+        }
+      }
+  }
+}
+</style>

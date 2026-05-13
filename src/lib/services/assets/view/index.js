@@ -30,6 +30,13 @@ export const showAssetOverlay = writable(false);
 export const showUploadAssetsDialog = writable(false);
 
 /**
+ * Current sub-path being browsed within an asset folder. Used to upload files into the right
+ * subdirectory.
+ * @type {Writable<string>}
+ */
+export const currentAssetSubPath = writable('');
+
+/**
  * @type {Readable<boolean>}
  */
 export const showUploadAssetsConfirmDialog = derived(

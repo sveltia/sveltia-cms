@@ -20,6 +20,8 @@ working_with_local_repo: Working with Local Repository
 working_with_test_repo: Working with Test Repository
 sign_out: Sign Out
 create: New
+go_up: Go Up
+open_folder: Open “{$name}”
 select: Select
 select_all: Select All
 upload: Upload
@@ -266,6 +268,8 @@ enter_new_name_for_asset_error:
   character: File name cannot contain special characters.
   duplicate: This file name is used for another asset.
 replace_asset: Replace Asset
+replace_folder: Replace Folder
+remove_folder: Remove Folder
 replace_x: Replace {$name}
 click_to_browse: Click to browse…
 tap_to_browse: Tap to browse…
@@ -629,6 +633,7 @@ assets_dialog:
   title:
     file: Select File
     image: Select Image
+    folder: Select Folder
   search_for_file: Search for Files
   search_for_image: Search for Images
   locations: Locations
@@ -652,6 +657,10 @@ assets_dialog:
     title: Photo Credit
     description: "Use the following credit if possible:"
   unsaved: Unsaved
+  create_folder: Create Folder
+  enter_folder_name: Enter folder name
+  folder_name_empty: Folder name cannot be empty.
+  folder_name_character: Folder name cannot contain special characters.
 character_counter:
   min_max: |
     .input {$count :integer}

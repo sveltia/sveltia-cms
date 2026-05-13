@@ -18,10 +18,12 @@
   import equal from 'fast-deep-equal';
 
   import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
+  import CreateFolderDialog from '$lib/components/assets/shared/create-folder-dialog.svelte';
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { allAssets } from '$lib/services/assets';
+  import { allAssets, getAssetSubDirectories } from '$lib/services/assets';
+  import { canCreateAsset } from '$lib/services/assets/folders';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import {
     convertFileItemToAsset,
@@ -68,6 +70,7 @@
    * @property {File[]} [pendingFiles] Files to be uploaded to the cloud service panel when the
    * dialog opens. These are typically files dropped on the file editor when only a cloud service is
    * available.
+   * @property {boolean} [forFolder] Whether to select folders instead of files.
    * @property {(resources: SelectedResource[]) => void} [onSelect] Custom `Select` event handler
    * that will be called when the dialog is closed with the Insert button.
    */
@@ -87,6 +90,7 @@
     enabledCloudServiceEntries,
     onSelect = undefined,
     pendingFiles = $bindable([]),
+    forFolder = false,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -95,6 +99,8 @@
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
   let libraryName = $state('default-global');
+  let currentSubPath = $state('');
+  let showCreateFolderDialog = $state(false);
   /** @type {Asset[]} */
   let droppedAssets = $state([]);
   /** @type {Asset[]} */
@@ -120,7 +126,11 @@
   };
 
   const title = $derived(
-    kind === 'image' ? _('assets_dialog.title.image') : _('assets_dialog.title.file'),
+    forFolder
+      ? _('assets_dialog.title.folder')
+      : kind === 'image'
+        ? _('assets_dialog.title.image')
+        : _('assets_dialog.title.file'),
   );
   const searchTerms = $derived(normalize(rawSearchTerms));
   const isDefaultLibraryEnabled = $derived(
@@ -144,7 +154,9 @@
 
     if (!entryRelative) {
       // @todo FIXME: Replace all template tags in the path, not just `{{slug}}`
-      return internalPath?.replace('{{slug}}', originalEntry?.slug ?? '-');
+      const basePath = internalPath?.replace('{{slug}}', originalEntry?.slug ?? '-') ?? '';
+
+      return currentSubPath ? `${basePath}/${currentSubPath}` : basePath;
     }
 
     // A non-empty `internalSubPath` means the field has its own `media_folder` subfolder (e.g.
@@ -155,12 +167,64 @@
     if (originalEntry) {
       const entryDir = getPathInfo(Object.values(originalEntry.locales)[0].path).dirname;
 
-      return subPath ? `${entryDir}/${subPath}` : entryDir;
+      const baseDir = subPath ? `${entryDir}/${subPath}` : entryDir;
+
+      return currentSubPath ? `${baseDir}/${currentSubPath}` : baseDir;
     }
 
     // Append a placeholder because the complete path is not determined until the entry is saved
     return subPath ? `${internalPath}/${subPath}/-` : `${internalPath}/-`;
   });
+  const subDirectories = $derived.by(() => {
+    void $allAssets;
+
+    return selectedFolder ? getAssetSubDirectories(selectedFolder, currentSubPath) : [];
+  });
+
+  const breadcrumbSegments = $derived(currentSubPath ? ['', ...currentSubPath.split('/')] : ['']);
+
+  const folderLabel = $derived(
+    selectedFolder
+      ? (selectedFolder.fileName ?? selectedFolder.collectionName ?? _('global_assets'))
+      : '',
+  );
+
+  /**
+   * Navigate to a subfolder path.
+   * @param {string} subPath Subfolder path relative to folder root.
+   */
+  const navigateToSubPath = (subPath) => {
+    currentSubPath = subPath ?? '';
+    selectedResources = [];
+  };
+
+  /**
+   * Navigate up one directory level.
+   */
+  const navigateUp = () => {
+    const segments = currentSubPath.split('/');
+
+    segments.pop();
+    currentSubPath = segments.join('/');
+    selectedResources = [];
+  };
+
+  /**
+   * Navigate to a specific breadcrumb segment.
+   * @param {number} index Index of the segment to navigate to.
+   */
+  const navigateToSegment = (index) => {
+    if (index === 0) {
+      currentSubPath = '';
+    } else {
+      currentSubPath = breadcrumbSegments.slice(1, index + 1).join('/');
+    }
+
+    selectedResources = [];
+  };
+
+  const canCreateInFolder = $derived(canCreateAsset(selectedFolder));
+
   const listedAssets = $derived(
     [...$allAssets, ...unsavedAssets]
       .filter((asset) => !kind || kind === asset.kind)
@@ -227,7 +291,19 @@
     }
 
     if (!selectedFolder.entryRelative) {
-      return isInTargetFolder(asset.path);
+      if (!isInTargetFolder(asset.path)) {
+        return false;
+      }
+
+      // When browsing a subdirectory, only include files directly in that subdirectory
+      if (currentSubPath) {
+        const expectedDir = `${selectedFolder.internalPath}/${currentSubPath}`;
+
+        return getPathInfo(asset.path).dirname === expectedDir;
+      }
+
+      // At root level of the folder, only include files directly in the root (not in subdirs)
+      return getPathInfo(asset.path).dirname === selectedFolder.internalPath;
     }
 
     const { dirname } = getPathInfo(asset.path);
@@ -295,6 +371,7 @@
     droppedAssets = [];
     unsavedAssets = [];
     selectedResources = [];
+    currentSubPath = '';
   };
 
   /**
@@ -306,6 +383,11 @@
     }
 
     const resources = $state.snapshot(selectedResources).map((resource) => {
+      // For folder selection mode, convert asset-based selection to a URL path
+      if (forFolder && resource.asset) {
+        return { url: resource.asset.path };
+      }
+
       const { unsaved, file, folder } = resource.asset ?? {};
 
       return unsaved ? { file, folder } : resource;
@@ -395,6 +477,7 @@
   size="x-large"
   okLabel={_('insert')}
   okDisabled={!selectedResources.length}
+  cancelLabel={_('cancel')}
   keepContent={true}
   focusInput={false}
   bind:open
@@ -428,6 +511,7 @@
         filterThreshold={-1}
         onChange={(event) => {
           libraryName = event.detail.name;
+          currentSubPath = '';
           selectedResources = [];
         }}
       >
@@ -475,17 +559,54 @@
     </div>
     <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane">
       {#if isDefaultLibrary && selectedFolder}
-        <InternalAssetsPanel
-          {accept}
-          {multiple}
-          assets={listedAssets.filter(isAssetInSelectedFolder)}
-          bind:selectedResources
-          {searchTerms}
-          basePath={selectedFolder.internalPath}
-          onDrop={({ files }) => {
-            onDrop(files);
-          }}
-        />
+        <div class="internal-panel" role="none">
+          <!-- Breadcrumb -->
+          <div role="navigation" class="breadcrumb" aria-label="Folder navigation">
+            <span class="segments">
+              {#each breadcrumbSegments as segment, index}
+                {#if index > 0}
+                  <Icon name="chevron_right" />
+                {/if}
+                <button
+                  class="crumb"
+                  class:active={index === breadcrumbSegments.length - 1}
+                  onclick={() => navigateToSegment(index)}
+                >
+                  {index === 0 ? folderLabel : decodeURIComponent(segment)}
+                </button>
+              {/each}
+            </span>
+            {#if currentSubPath && !forFolder}
+              <Button variant="text" size="small" label={_('go_up')} onclick={navigateUp} />
+            {/if}
+            {#if canCreateInFolder && !forFolder}
+              <Button
+                variant="text"
+                size="small"
+                label={_('assets_dialog.create_folder')}
+                onclick={() => (showCreateFolderDialog = true)}
+              />
+            {/if}
+          </div>
+          <div class="internal-panel-body" role="none">
+            <InternalAssetsPanel
+              {accept}
+              {multiple}
+              assets={listedAssets.filter(isAssetInSelectedFolder)}
+              bind:selectedResources
+              {searchTerms}
+              basePath={selectedFolder.internalPath}
+              {subDirectories}
+              onNavigateFolder={(subDir) => navigateToSubPath(subDir.path)}
+          chooseFolders={forFolder}
+          onNavigateUp={currentSubPath ? navigateUp : undefined}
+          {currentSubPath}
+              onDrop={({ files }) => {
+                onDrop(files);
+              }}
+            />
+          </div>
+        </div>
       {/if}
       {#if canEnterURL && libraryName === 'enter-url'}
         <EmptyState>
@@ -562,6 +683,15 @@
   }}
 />
 
+<CreateFolderDialog
+  open={showCreateFolderDialog}
+  parentFolder={selectedFolder}
+  {currentSubPath}
+  onClose={() => {
+    showCreateFolderDialog = false;
+  }}
+/>
+
 <style lang="scss">
   .wrapper {
     display: flex;
@@ -599,5 +729,60 @@
   .filter-tools {
     display: flex;
     gap: 8px;
+  }
+
+  .internal-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .internal-panel-body {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .breadcrumb {
+    /* Keep in sync with assets-page.svelte breadcrumb styles */
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--sui-control-border-color);
+    margin-bottom: 8px;
+
+    .segments {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: auto;
+
+      .crumb {
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        padding: 2px 6px;
+        color: var(--sui-link-color);
+        background: none;
+        font-size: var(--sui-font-size-small);
+        font-family: inherit;
+
+        &:hover {
+          text-decoration: underline;
+        }
+
+        &.active {
+          cursor: default;
+          color: var(--sui-primary-foreground-color);
+          font-weight: var(--sui-font-weight-semi-bold);
+
+          &:hover {
+            text-decoration: none;
+          }
+        }
+      }
+    }
   }
 </style>

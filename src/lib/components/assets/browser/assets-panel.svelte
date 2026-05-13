@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { EmptyState, InfiniteScroll } from '@sveltia/ui';
+  import { EmptyState, Icon, InfiniteScroll } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
@@ -17,6 +17,12 @@
    */
 
   /**
+   * @typedef {object} SubDirectory
+   * @property {string} name Subdirectory name.
+   * @property {string} path Subdirectory path relative to the base folder.
+   */
+
+  /**
    * @typedef {object} Props
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
    * @property {Asset[]} [assets] Asset list.
@@ -28,6 +34,12 @@
    * transparent image.
    * @property {SelectedResource[]} [selectedResources] Selected resources.
    * @property {(detail: { asset: Asset }) => void} [onSelect] Custom `select` event handler.
+   * @property {SubDirectory[]} [subDirectories] Subdirectories of the current folder.
+   * @property {(subDir: SubDirectory) => void} [onNavigateFolder] Called when a subdirectory is
+   * clicked.
+   * @property {boolean} [chooseFolders] Whether to only allow selecting folders.
+   * @property {() => void} [onNavigateUp] Called when the "go up" button is clicked.
+   * @property {string} [currentSubPath] Current sub-path within the folder.
    */
 
   /** @type {Props} */
@@ -42,8 +54,16 @@
     checkerboard = false,
     selectedResources = $bindable([]),
     onSelect = undefined,
+    subDirectories = [],
+    onNavigateFolder = undefined,
+    chooseFolders = false,
+    onNavigateUp = undefined,
+    currentSubPath = '',
     /* eslint-enable prefer-const */
   } = $props();
+
+  const isRootLevel = $derived(!currentSubPath);
+  const showSubDirs = $derived(!searchTerms || chooseFolders);
 
   const filteredAssets = $derived(
     (searchTerms ? assets.filter(({ name }) => normalize(name).includes(searchTerms)) : assets)
@@ -76,40 +96,84 @@
   };
 </script>
 
-{#if filteredAssets.length}
+{#if showSubDirs && (subDirectories.length || !isRootLevel) || filteredAssets.length}
   <div role="none" class="grid-wrapper">
     <SimpleImageGrid {multiple} {gridId} {viewType} showTitle={true}>
-      <InfiniteScroll items={filteredAssets} itemKey="path">
-        {#snippet renderItem(/** @type {Asset} */ asset)}
-          {#await sleep() then}
-            {@const { kind, name, path, unsaved, folder } = asset}
-            <!-- Show asset path relative to the base folder, or just file name -->
-            {@const relPath =
-              basePath && !folder.entryRelative ? stripSlashes(path.replace(basePath, '')) : name}
-            <SimpleImageGridItem
-              value={path}
-              {viewType}
-              {multiple}
-              selected={isSelected(asset)}
-              onChange={({ detail: { selected } }) => {
-                onSelectionChange(asset, selected);
-              }}
-            >
-              {#if viewType === 'grid' && unsaved}
-                <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
-              {/if}
-              <AssetPreview {kind} {asset} alt={relPath} variant="tile" {checkerboard} />
-              {#if !$isSmallScreen || viewType === 'list'}
-                <AssetPath path={relPath}>
-                  {#if viewType === 'list' && unsaved}
-                    <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
-                  {/if}
-                </AssetPath>
-              {/if}
-            </SimpleImageGridItem>
-          {/await}
-        {/snippet}
-      </InfiniteScroll>
+      {#if showSubDirs}
+        {#if !isRootLevel && onNavigateUp}
+          <SimpleImageGridItem
+            value=".."
+            {viewType}
+            {multiple}
+            selected={false}
+            onChange={() => onNavigateUp()}
+          >
+            <span role="none" class="dir-preview {viewType}">
+              <Icon name="arrow_upward" />
+            </span>
+            <AssetPath path=".." />
+          </SimpleImageGridItem>
+        {/if}
+        {#each subDirectories as subDir (subDir.path)}
+          {@const sel = chooseFolders && isSelected(
+            /** @type {any} */ ({ name: subDir.name, path: subDir.path, kind: 'other' }),
+          )}
+          <SimpleImageGridItem
+            value={subDir.path}
+            {viewType}
+            {multiple}
+            {gridId}
+            selected={sel}
+            onChange={({ detail: { selected } }) => {
+              if (chooseFolders) {
+                onSelectionChange(
+                  /** @type {any} */ ({ name: subDir.name, path: subDir.path, kind: 'other' }),
+                  selected,
+                );
+              } else {
+                onNavigateFolder?.(subDir);
+              }
+            }}
+          >
+            <span role="none" class="dir-preview {viewType}">
+              <Icon name="folder" />
+            </span>
+            <AssetPath path={subDir.name} />
+          </SimpleImageGridItem>
+        {/each}
+      {/if}
+      {#if !chooseFolders && filteredAssets.length}
+        <InfiniteScroll items={filteredAssets} itemKey="path">
+          {#snippet renderItem(/** @type {Asset} */ asset)}
+            {#await sleep() then}
+              {@const { kind, name, path, unsaved, folder } = asset}
+              {@const relPath =
+                basePath && !folder.entryRelative ? stripSlashes(path.replace(basePath, '')) : name}
+              <SimpleImageGridItem
+                value={path}
+                {viewType}
+                {multiple}
+                selected={isSelected(asset)}
+                onChange={({ detail: { selected } }) => {
+                  onSelectionChange(asset, selected);
+                }}
+              >
+                {#if viewType === 'grid' && unsaved}
+                  <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
+                {/if}
+                <AssetPreview {kind} {asset} alt={relPath} variant="tile" {checkerboard} />
+                {#if !$isSmallScreen || viewType === 'list'}
+                  <AssetPath path={relPath}>
+                    {#if viewType === 'list' && unsaved}
+                      <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
+                    {/if}
+                  </AssetPath>
+                {/if}
+              </SimpleImageGridItem>
+            {/await}
+          {/snippet}
+        </InfiniteScroll>
+      {/if}
     </SimpleImageGrid>
   </div>
 {:else}
@@ -158,5 +222,33 @@
     color: var(--sui-info-foreground-color);
     background-color: var(--sui-info-background-color);
     font-size: var(--sui-font-size-small);
+  }
+
+  .dir-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    border: 1px solid var(--sui-control-border-color);
+    border-radius: var(--sui-control-medium-border-radius);
+    background-color: var(--sui-secondary-background-color);
+    width: 100%;
+
+    :global(.icon) {
+      font-size: 48px;
+      color: var(--sui-secondary-foreground-color);
+      opacity: 0.6;
+    }
+
+    &.list {
+      width: 64px;
+      aspect-ratio: unset;
+      height: 64px;
+      flex: none;
+
+      :global(.icon) {
+        font-size: 24px;
+      }
+    }
   }
 </style>

@@ -311,6 +311,9 @@
  * [`accept`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept)
  * attribute.
  * @property {boolean} [choose_url] Whether to show the URL input UI. Default: `true`.
+ * @property {boolean} [select_folder] Whether to allow selecting folders instead of files. When
+ * set to `true`, the media library will show only directories and selecting one will store its
+ * path as the field value. Default: `false`.
  * @property {string} [media_folder] Internal media folder path for the field. Default: global or
  * collection-level `media_folder` value.
  * @property {string} [public_folder] Public media folder path for the field. Default:

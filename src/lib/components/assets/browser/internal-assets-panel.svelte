@@ -7,6 +7,7 @@
 
   /**
    * @import { Asset, SelectedResource } from '$lib/types/private';
+   * @import { SubDirectory } from './assets-panel.svelte';
    */
 
   /**
@@ -18,6 +19,12 @@
    * @property {string} [basePath] Path to an asset folder, if any folder is selected.
    * @property {SelectedResource[]} selectedResources Selected resources.
    * @property {(detail: { files: File[] }) => void} [onDrop] Custom `Drop` event handler.
+   * @property {SubDirectory[]} [subDirectories] Subdirectories of the current folder.
+   * @property {(subDir: SubDirectory) => void} [onNavigateFolder] Called when a subdirectory is
+   * clicked.
+   * @property {boolean} [chooseFolders] Whether to only allow selecting folders.
+   * @property {() => void} [onNavigateUp] Called when the "go up" button is clicked.
+   * @property {string} [currentSubPath] Current sub-path within the folder.
    */
 
   /** @type {Props} */
@@ -30,6 +37,11 @@
     basePath = undefined,
     selectedResources = $bindable([]),
     onDrop,
+    subDirectories = [],
+    onNavigateFolder = undefined,
+    chooseFolders = false,
+    onNavigateUp = undefined,
+    currentSubPath = '',
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -55,5 +67,10 @@
     gridId="select-assets-grid"
     checkerboard={true}
     bind:selectedResources
+    {subDirectories}
+    {onNavigateFolder}
+    {chooseFolders}
+    {onNavigateUp}
+    {currentSubPath}
   />
 </DropZone>

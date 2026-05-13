@@ -10,6 +10,7 @@ import {
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
 import { processFile } from '$lib/services/assets/process';
+import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { fillTemplate } from '$lib/services/common/template';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -396,6 +397,60 @@ export const getAssetByPath = ({ value, entry, collectionName, fileName, typedKe
   }
 
   return getAssetByAbsolutePath({ path, entry, collectionName, fileName, typedKeyPath });
+};
+
+/**
+ * Get unique subdirectory names one level below a given path prefix within a configured asset
+ * folder, or at the repo root when `assetFolder` is the All Assets folder (no `internalPath`).
+ * This is derived from existing asset paths plus `.gitkeep` config files, so empty directories
+ * (containing only a `.gitkeep`) are also included.
+ * @param {AssetFolderInfo | undefined} assetFolder The selected asset folder.
+ * @param {string} [subPath] Current sub-path within the folder relative to the folder root.
+ * @returns {{ name: string, path: string }[]} Sorted subdirectory entries.
+ */
+export const getAssetSubDirectories = (assetFolder, subPath) => {
+  // Entry-relative folders have paths relative to entries, which don't map cleanly
+  // to absolute repo paths. Skip subdirectory scanning for these.
+  if (!assetFolder || assetFolder.entryRelative) {
+    return [];
+  }
+
+  // All Assets is a virtual folder with no concrete path — no subfolder navigation.
+  if (!assetFolder.internalPath) {
+    return [];
+  }
+
+  const base = assetFolder.internalPath;
+
+  const prefix = subPath ? `${base}/${subPath}/` : `${base}/`;
+
+  const dirs = new Map();
+
+  const paths = [
+    ...get(allAssets).map((a) => a.path),
+    // Also scan .gitkeep config files so folders with only a .gitkeep are visible
+    ...get(gitConfigFiles).filter((f) => f.name === '.gitkeep').map((f) => f.path),
+  ];
+
+  paths.forEach((path) => {
+    if (prefix && !path.startsWith(prefix)) {
+      return;
+    }
+
+    const searchIn = prefix ? path.slice(prefix.length) : path;
+    const slashIdx = searchIn.indexOf('/');
+
+    if (slashIdx > 0) {
+      const dirName = searchIn.slice(0, slashIdx);
+      const dirPath = subPath ? `${subPath}/${dirName}` : dirName;
+
+      if (!dirs.has(dirName)) {
+        dirs.set(dirName, { name: dirName, path: dirPath });
+      }
+    }
+  });
+
+  return Array.from(dirs.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
 
 /**

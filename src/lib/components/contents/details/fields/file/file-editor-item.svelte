@@ -32,6 +32,7 @@
    * @property {() => void} [onRemove] Event handler for remove action.
    * @property {() => void} [onMoveUp] Event handler for move up action.
    * @property {() => void} [onMoveDown] Event handler for move down action.
+   * @property {boolean} [isFolderField] Whether this field selects folders instead of files.
    */
 
   /** @type {Props} */
@@ -50,6 +51,7 @@
     onRemove,
     onMoveUp,
     onMoveDown,
+    isFolderField = false,
   } = $props();
 
   /** @type {Asset | undefined} */
@@ -184,7 +186,11 @@
       </Button>
     </div>
   {/if}
-  {#if kind && src}
+  {#if isFolderField}
+    <span role="none" class="preview no-thumbnail">
+      <Icon name="folder" />
+    </span>
+  {:else if kind && src}
     <AssetPreview {kind} {src} variant="tile" checkerboard={true} />
   {:else if asset}
     <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
@@ -216,7 +222,7 @@
           variant="tertiary"
           size="small"
           label={_('replace')}
-          aria-label={_(`replace_${fieldType}`)}
+          aria-label={isFolderField ? _('replace_folder') : _(`replace_${fieldType}`)}
           aria-controls="{fieldId}-value"
           onclick={() => {
             onReplace();
@@ -229,7 +235,7 @@
           variant="tertiary"
           size="small"
           label={_('remove')}
-          aria-label={_(`remove_${fieldType}`)}
+          aria-label={isFolderField ? _('remove_folder') : _(`remove_${fieldType}`)}
           aria-controls="{fieldId}-value"
           onclick={() => {
             onRemove();

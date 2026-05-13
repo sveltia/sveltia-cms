@@ -85,6 +85,7 @@
   const fileName = $derived($entryDraft?.fileName);
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const isImageField = $derived(fieldType === 'image');
+  const isFolderField = $derived(fieldConfig.select_folder ?? false);
   const defaultLibraryOptions = $derived(getDefaultMediaLibraryOptions({ fieldConfig }));
   const libraryConfig = $derived(defaultLibraryOptions.config);
   const assetLibraryFolderMap = $derived(
@@ -113,6 +114,7 @@
     fileName,
     typedKeyPath,
     entry,
+    isFolderField: isFolderField,
   });
   const enabledCloudServiceEntries = $derived(
     Object.entries(allCloudStorageServices).filter(
@@ -375,6 +377,7 @@
   {fieldConfig}
   {assetLibraryFolderMap}
   {enabledCloudServiceEntries}
+  forFolder={isFolderField}
   bind:open={showSelectAssetsDialog}
   bind:pendingFiles
   onSelect={onResourcesSelect}

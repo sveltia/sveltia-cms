@@ -786,6 +786,7 @@
  * @property {AssetFolderInfo | undefined} folder Target asset folder info.
  * @property {File[]} files File list.
  * @property {Asset} [originalAsset] Asset to be replaced.
+ * @property {string} [subPath] Current sub-path within the folder for target path.
  */
 
 /**

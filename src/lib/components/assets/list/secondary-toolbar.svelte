@@ -12,13 +12,31 @@
   import { sortKeys } from '$lib/services/assets/view/sort-keys';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
-  const hasListedAssets = $derived(!!$listedAssets.length);
-  const hasMultipleAssets = $derived($listedAssets.length > 1);
+  /**
+   * @import { Asset } from '$lib/types/private';
+   */
+
+  /**
+   * @typedef {object} Props
+   * @property {Asset[]} [filteredAssets] When set, overrides $listedAssets for the item selector
+   * and count checks (used when browsing a subfolder).
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    filteredAssets = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
+
+  const totalAssets = $derived(filteredAssets ?? $listedAssets);
+  const hasListedAssets = $derived(!!totalAssets.length);
+  const hasMultipleAssets = $derived(totalAssets.length > 1);
 </script>
 
 <Toolbar variant="secondary" aria-label={_('asset_list')}>
   {#if !($isSmallScreen || $isMediumScreen)}
-    <ItemSelector allItems={Object.values($assetGroups).flat(1)} selectedItems={selectedAssets} />
+    <ItemSelector allItems={totalAssets} selectedItems={selectedAssets} />
   {/if}
   <Spacer flex />
   <SortMenu

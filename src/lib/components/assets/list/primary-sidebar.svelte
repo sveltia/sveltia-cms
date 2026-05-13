@@ -19,12 +19,14 @@
   /**
    * @typedef {object} Props
    * @property {boolean} [isSearchPage] Whether the current page is the search results page.
+   * @property {() => void} [onSelect] Called when a folder is selected.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     isSearchPage = false,
+    onSelect = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -73,6 +75,7 @@
             selected={$isSmallScreen || isSearchPage ? false : selected}
             label={appLocale.current ? getFolderLabelByCollection(folder) : ''}
             onSelect={() => {
+              onSelect?.();
               goto(`/assets/${internalPath ?? '-/all'}`, {
                 transitionType: 'forwards',
                 // An internal path can be shared by multiple collections, files and fields. Pass
