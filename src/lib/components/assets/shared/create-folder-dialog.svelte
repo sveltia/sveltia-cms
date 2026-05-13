@@ -30,11 +30,11 @@
   let errorMessage = $state('');
 
   /**
-   * Convert a string to a filesystem-safe folder name.
+   * Trim whitespace from a folder name.
    * @param {string} str Input string.
-   * @returns {string} Sanitized folder name.
+   * @returns {string} Trimmed folder name.
    */
-  const sanitizeFolderName = (str) => str.trim();
+  const trimFolderName = (str) => str.trim();
 
   /**
    * Validate the folder name.
@@ -67,7 +67,13 @@
       return;
     }
 
-    await createFolder(sanitizeFolderName(folderName), parentFolder, currentSubPath);
+    try {
+      await createFolder(trimFolderName(folderName), parentFolder, currentSubPath);
+    } catch (e) {
+      errorMessage = /** @type {Error} */ (e).message;
+
+      return;
+    }
 
     folderName = '';
     open = false;
@@ -88,7 +94,7 @@
 <Dialog
   title={_('assets_dialog.create_folder')}
   size="small"
-  okLabel="Create"
+  okLabel={_('create')}
   bind:open
   onOk={onCreate}
   onClose={handleClose}

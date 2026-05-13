@@ -8,7 +8,7 @@
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { selectedAssets } from '$lib/services/assets';
   import { ASSET_KINDS } from '$lib/services/assets/kinds';
-  import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
+  import { currentView, listedAssets } from '$lib/services/assets/view';
   import { sortKeys } from '$lib/services/assets/view/sort-keys';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 

@@ -11,8 +11,8 @@
   /**
    * @typedef {object} Props
    * @property {string} title Title.
-   * @property {() => void} onclick onClick.
-   * @property {ViewType} viewType ViewType.
+   * @property {() => void} onclick Click handler.
+   * @property {ViewType} viewType View type.
    */
 
   /** @type {Props} */

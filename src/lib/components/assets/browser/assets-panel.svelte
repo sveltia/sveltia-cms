@@ -39,8 +39,6 @@
    * @property {(subDir: SubDirectory) => void} [onNavigateFolder] Called when a subdirectory is
    * clicked.
    * @property {boolean} [chooseFolders] Whether to only allow selecting folders.
-   * @property {() => void} [onNavigateUp] Called when the "go up" button is clicked.
-   * @property {string} [currentSubPath] Current sub-path within the folder.
    */
 
   /** @type {Props} */
@@ -58,11 +56,9 @@
     subDirectories = [],
     onNavigateFolder = undefined,
     chooseFolders = false,
-    currentSubPath = '',
     /* eslint-enable prefer-const */
   } = $props();
 
-  const isRootLevel = $derived(!currentSubPath);
   const showSubDirs = $derived(!searchTerms || chooseFolders);
 
   const filteredAssets = $derived(
@@ -96,7 +92,7 @@
   };
 </script>
 
-{#if (showSubDirs && (subDirectories.length || !isRootLevel)) || filteredAssets.length}
+{#if (showSubDirs && subDirectories.length) || filteredAssets.length}
   <div role="none" class="grid-wrapper">
     <SimpleImageGrid {multiple} {gridId} {viewType} showTitle={true}>
       {#if showSubDirs}

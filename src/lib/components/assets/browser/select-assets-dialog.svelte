@@ -17,11 +17,11 @@
   import { getPathInfo } from '@sveltia/utils/file';
   import equal from 'fast-deep-equal';
 
-  import Breadcrumb from '$lib/components/assets/shared/breadcrumb.svelte';
   import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
-  import CreateFolderDialog from '$lib/components/assets/shared/create-folder-dialog.svelte';
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
+  import Breadcrumb from '$lib/components/assets/shared/breadcrumb.svelte';
+  import CreateFolderDialog from '$lib/components/assets/shared/create-folder-dialog.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { allAssets, getAssetSubDirectories } from '$lib/services/assets';
   import { canCreateAsset } from '$lib/services/assets/folders';
@@ -167,7 +167,6 @@
 
     if (originalEntry) {
       const entryDir = getPathInfo(Object.values(originalEntry.locales)[0].path).dirname;
-
       const baseDir = subPath ? `${entryDir}/${subPath}` : entryDir;
 
       return currentSubPath ? `${baseDir}/${currentSubPath}` : baseDir;
@@ -194,17 +193,6 @@
    */
   const navigateToSubPath = (subPath) => {
     currentSubPath = subPath ?? '';
-    selectedResources = [];
-  };
-
-  /**
-   * Navigate up one directory level.
-   */
-  const navigateUp = () => {
-    const segments = currentSubPath.split('/');
-
-    segments.pop();
-    currentSubPath = segments.join('/');
     selectedResources = [];
   };
 
@@ -287,7 +275,7 @@
         return getPathInfo(asset.path).dirname === expectedDir;
       }
 
-      // At root level of the folder, only include files directly in the root (not in subdirs)
+      // At root level, only include files in the root (not in subdirectories)
       return getPathInfo(asset.path).dirname === selectedFolder.internalPath;
     }
 
@@ -571,8 +559,6 @@
               {subDirectories}
               onNavigateFolder={(subDir) => navigateToSubPath(subDir.path)}
               chooseFolders={forFolder}
-              onNavigateUp={currentSubPath ? navigateUp : undefined}
-              {currentSubPath}
               onDrop={({ files }) => {
                 onDrop(files);
               }}

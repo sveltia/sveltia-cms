@@ -17,6 +17,9 @@
     targetAssetFolder,
   } from '$lib/services/assets/folders';
   import { currentView, listedAssets } from '$lib/services/assets/view';
+  import { filterAssets } from '$lib/services/assets/view/filter';
+  import { groupAssets } from '$lib/services/assets/view/group';
+  import { sortAssets } from '$lib/services/assets/view/sort';
 
   /**
    * @import { Asset } from '$lib/types/private';
@@ -34,7 +37,6 @@
    * @property {string} [currentSubPath] Current sub-path within the folder.
    * @property {(subDir: SubDirectory) => void} [onNavigateFolder] Called when a subdirectory is
    * clicked.
-   * @property {() => void} [onNavigateUp] Called when the "go up" button is clicked.
    */
 
   /** @type {Props} */
@@ -43,7 +45,6 @@
     subDirectories = [],
     currentSubPath = '',
     onNavigateFolder = undefined,
-    onNavigateUp = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -70,6 +71,15 @@
 
       return dirname === base;
     });
+  });
+
+  const groupedEntries = $derived.by(() => {
+    let assets = [...filteredAssets];
+
+    assets = sortAssets(assets, $currentView.sort);
+    assets = filterAssets(assets, $currentView.filter);
+
+    return Object.entries(groupAssets(assets, $currentView.group));
   });
 
   const showContent = $derived(subDirectories.length > 0 || filteredAssets.length > 0);
@@ -101,17 +111,19 @@
                 />
               {/each}
             {/if}
-            {#if filteredAssets.length}
-              <InfiniteScroll items={filteredAssets} itemKey="path">
-                {#snippet renderItem(/** @type {Asset} */ asset)}
-                  {#key asset.sha}
-                    {#await sleep() then}
-                      <AssetListItem {asset} {viewType} />
-                    {/await}
-                  {/key}
-                {/snippet}
-              </InfiniteScroll>
-            {/if}
+            {#each groupedEntries as [name, assets] (name)}
+              {#await sleep() then}
+                <InfiniteScroll items={assets} itemKey="path">
+                  {#snippet renderItem(/** @type {Asset} */ asset)}
+                    {#key asset.sha}
+                      {#await sleep() then}
+                        <AssetListItem {asset} {viewType} />
+                      {/await}
+                    {/key}
+                  {/snippet}
+                </InfiniteScroll>
+              {/await}
+            {/each}
           </GridBody>
         {/await}
       </ListingGrid>

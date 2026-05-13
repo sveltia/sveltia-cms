@@ -114,7 +114,7 @@
     fileName,
     typedKeyPath,
     entry,
-    isFolderField: isFolderField,
+    isFolderField,
   });
   const enabledCloudServiceEntries = $derived(
     Object.entries(allCloudStorageServices).filter(

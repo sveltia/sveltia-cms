@@ -15,7 +15,8 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-
 import { formatFileName } from '$lib/services/utils/file';
 
 /**
- * @import { Asset, CommitAction, CommitOptions, UploadingAssets } from '$lib/types/private';
+ * @import { Asset, AssetFolderInfo } from '$lib/types/private';
+ * @import { CommitAction, CommitOptions, UploadingAssets } from '$lib/types/private';
  */
 
 /**
@@ -47,13 +48,17 @@ export const createFileList = (uploadingAssets) => {
       assetNamesInSameFolder.push(fileName);
     }
 
-    const filePath =
-      originalAsset?.path ??
-      (subPath && folder?.internalPath
-        ? [folder.internalPath, subPath, fileName].join('/')
-        : targetDir
-          ? [targetDir, fileName].join('/')
-          : fileName);
+    let filePath;
+
+    if (originalAsset?.path) {
+      filePath = originalAsset.path;
+    } else if (subPath && folder?.internalPath) {
+      filePath = [folder.internalPath, subPath, fileName].join('/');
+    } else if (targetDir) {
+      filePath = [targetDir, fileName].join('/');
+    } else {
+      filePath = fileName;
+    }
 
     return {
       action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),
@@ -132,7 +137,7 @@ export const createFolder = async (name, parentFolder, currentSubPath) => {
   const basePath = parentFolder?.internalPath ?? '';
 
   if (!basePath) {
-    return;
+    throw new Error('Cannot create folder: no parent folder selected');
   }
 
   const folderPath = currentSubPath
@@ -143,15 +148,18 @@ export const createFolder = async (name, parentFolder, currentSubPath) => {
   const asset = {
     name: '.gitkeep',
     path: `${folderPath}/.gitkeep`,
+    sha: '',
     size: 0,
     kind: 'other',
     folder: /** @type {AssetFolderInfo} */ (parentFolder),
   };
 
   await saveChanges({
-    changes: [{ action: 'create', path: `${folderPath}/.gitkeep`, data: new Blob(['']) }],
+    changes: [
+      { action: 'create', path: `${folderPath}/.gitkeep`, data: new File([''], '.gitkeep') },
+    ],
     savingAssets: [asset],
-    options: {},
+    options: { commitType: 'uploadMedia' },
   });
 
   updatedStores({ count: 1 });

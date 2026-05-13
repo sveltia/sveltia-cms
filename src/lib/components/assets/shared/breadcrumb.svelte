@@ -2,7 +2,20 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon } from '@sveltia/ui';
 
+  /**
+   * @typedef {object} Props
+   * @property {string} [currentSubPath] Current sub-path.
+   * @property {string} [rootLabel] Root folder label.
+   * @property {boolean} [showUpButton] Whether to show the up button.
+   * @property {boolean} [showCreateButton] Whether to show the create folder button.
+   * @property {() => void} [onCreateFolder] Create folder callback.
+   * @property {() => void} [onNavigate] Navigate callback.
+   * @property {() => void} [onNavigateUp] Navigate up callback.
+   */
+
+  /** @type {Props} */
   let {
+    /* eslint-disable prefer-const */
     currentSubPath = $bindable(''),
     rootLabel = '',
     showUpButton = false,
@@ -10,10 +23,14 @@
     onCreateFolder = () => {},
     onNavigate = () => {},
     onNavigateUp = () => {},
+    /* eslint-enable prefer-const */
   } = $props();
 
   const breadcrumbSegments = $derived(currentSubPath ? ['', ...currentSubPath.split('/')] : ['']);
 
+  /**
+   * Navigate up one directory level.
+   */
   const navigateUp = () => {
     const segments = currentSubPath.split('/');
 
@@ -22,6 +39,10 @@
     onNavigateUp();
   };
 
+  /**
+   * Navigate to a breadcrumb segment by index.
+   * @param {number} index Segment index.
+   */
   const navigateToSegment = (index) => {
     if (index === 0) {
       currentSubPath = '';
@@ -35,7 +56,7 @@
 
 <div role="navigation" class="breadcrumb" aria-label="Folder navigation">
   <span class="segments">
-    {#each breadcrumbSegments as segment, index}
+    {#each breadcrumbSegments as segment, index (index)}
       {#if index > 0}
         <Icon name="chevron_right" />
       {/if}
@@ -44,16 +65,24 @@
         class:active={index === breadcrumbSegments.length - 1}
         onclick={() => navigateToSegment(index)}
       >
-        {index === 0 ? rootLabel : decodeURIComponent(segment)}
+        {index === 0
+          ? rootLabel
+          : (() => {
+              try {
+                return decodeURIComponent(segment);
+              } catch {
+                return segment;
+              }
+            })()}
       </button>
     {/each}
   </span>
   {#if showUpButton}
-    <Button variant="text" size="small" label={_('go_up')} onclick={navigateUp} />
+    <Button variant="tertiary" size="small" label={_('go_up')} onclick={navigateUp} />
   {/if}
   {#if showCreateButton}
     <Button
-      variant="text"
+      variant="tertiary"
       size="small"
       label={_('assets_dialog.create_folder')}
       onclick={onCreateFolder}
@@ -68,7 +97,6 @@
     align-items: center;
     gap: 8px;
     padding: var(--breadcrumb-padding, 8px 16px);
-    border-bottom: 1px solid var(--sui-control-border-color);
     margin-bottom: var(--breadcrumb-margin-bottom, 0);
 
     .segments {

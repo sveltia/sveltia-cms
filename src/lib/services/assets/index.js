@@ -421,9 +421,7 @@ export const getAssetSubDirectories = (assetFolder, subPath) => {
   }
 
   const base = assetFolder.internalPath;
-
   const prefix = subPath ? `${base}/${subPath}/` : `${base}/`;
-
   const dirs = new Map();
 
   const paths = [

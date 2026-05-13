@@ -70,16 +70,6 @@
     currentSubPath = subPath ?? '';
   };
 
-  /**
-   * Navigate up one directory level.
-   */
-  const navigateUp = () => {
-    const segments = currentSubPath.split('/');
-
-    segments.pop();
-    currentSubPath = segments.join('/');
-  };
-
   const selectedAssetFolderLabel = $derived(
     // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized
     // label
@@ -218,7 +208,7 @@
           {/if}
         {/snippet}
         {#snippet mainContent()}
-          {#if $selectedAssetFolder}
+          {#if $selectedAssetFolder?.internalPath !== undefined}
             <Breadcrumb
               bind:currentSubPath
               rootLabel={getFolderLabelByCollection($selectedAssetFolder)}
@@ -233,7 +223,6 @@
             {subDirectories}
             {currentSubPath}
             onNavigateFolder={(subDir) => navigateToSubPath(subDir.path)}
-            onNavigateUp={currentSubPath ? navigateUp : undefined}
           />
         {/snippet}
         {#snippet secondarySidebar()}

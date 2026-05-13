@@ -7,7 +7,12 @@
 
   /**
    * @import { Asset, SelectedResource } from '$lib/types/private';
-   * @import { SubDirectory } from './assets-panel.svelte';
+   */
+
+  /**
+   * @typedef {object} SubDirectory
+   * @property {string} name Subdirectory name.
+   * @property {string} path Subdirectory path relative to the base folder.
    */
 
   /**
@@ -23,8 +28,6 @@
    * @property {(subDir: SubDirectory) => void} [onNavigateFolder] Called when a subdirectory is
    * clicked.
    * @property {boolean} [chooseFolders] Whether to only allow selecting folders.
-   * @property {() => void} [onNavigateUp] Called when the "go up" button is clicked.
-   * @property {string} [currentSubPath] Current sub-path within the folder.
    */
 
   /** @type {Props} */
@@ -40,8 +43,6 @@
     subDirectories = [],
     onNavigateFolder = undefined,
     chooseFolders = false,
-    onNavigateUp = undefined,
-    currentSubPath = '',
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -70,7 +71,5 @@
     {subDirectories}
     {onNavigateFolder}
     {chooseFolders}
-    {onNavigateUp}
-    {currentSubPath}
   />
 </DropZone>
