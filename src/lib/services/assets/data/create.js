@@ -30,14 +30,13 @@ export const createFileList = (uploadingAssets) => {
   const { files, folder, originalAsset, subPath } = uploadingAssets;
   const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
 
-  const targetDir = subPath && folder?.internalPath
-    ? [folder.internalPath, subPath].join('/')
-    : folder?.internalPath;
+  const targetDir =
+    subPath && folder?.internalPath
+      ? [folder.internalPath, subPath].join('/')
+      : folder?.internalPath;
 
   const assetNamesInSameFolder =
-    targetDir !== undefined
-      ? getAssetsByDirName(targetDir).map((a) => a.name.normalize())
-      : [];
+    targetDir !== undefined ? getAssetsByDirName(targetDir).map((a) => a.name.normalize()) : [];
 
   return files.map((file) => {
     const fileName =
@@ -48,9 +47,13 @@ export const createFileList = (uploadingAssets) => {
       assetNamesInSameFolder.push(fileName);
     }
 
-    const filePath = originalAsset?.path ?? (subPath && folder?.internalPath
-      ? [folder.internalPath, subPath, fileName].join('/')
-      : targetDir ? [targetDir, fileName].join('/') : fileName);
+    const filePath =
+      originalAsset?.path ??
+      (subPath && folder?.internalPath
+        ? [folder.internalPath, subPath, fileName].join('/')
+        : targetDir
+          ? [targetDir, fileName].join('/')
+          : fileName);
 
     return {
       action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),
@@ -132,7 +135,9 @@ export const createFolder = async (name, parentFolder, currentSubPath) => {
     return;
   }
 
-  const folderPath = currentSubPath ? `${basePath}/${currentSubPath}/${name}` : `${basePath}/${name}`;
+  const folderPath = currentSubPath
+    ? `${basePath}/${currentSubPath}/${name}`
+    : `${basePath}/${name}`;
 
   /** @type {Asset} */
   const asset = {

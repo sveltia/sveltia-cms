@@ -429,7 +429,9 @@ export const getAssetSubDirectories = (assetFolder, subPath) => {
   const paths = [
     ...get(allAssets).map((a) => a.path),
     // Also scan .gitkeep config files so folders with only a .gitkeep are visible
-    ...get(gitConfigFiles).filter((f) => f.name === '.gitkeep').map((f) => f.path),
+    ...get(gitConfigFiles)
+      .filter((f) => f.name === '.gitkeep')
+      .map((f) => f.path),
   ];
 
   paths.forEach((path) => {

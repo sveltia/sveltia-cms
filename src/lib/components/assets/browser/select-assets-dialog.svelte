@@ -598,9 +598,9 @@
               basePath={selectedFolder.internalPath}
               {subDirectories}
               onNavigateFolder={(subDir) => navigateToSubPath(subDir.path)}
-          chooseFolders={forFolder}
-          onNavigateUp={currentSubPath ? navigateUp : undefined}
-          {currentSubPath}
+              chooseFolders={forFolder}
+              onNavigateUp={currentSubPath ? navigateUp : undefined}
+              {currentSubPath}
               onDrop={({ files }) => {
                 onDrop(files);
               }}

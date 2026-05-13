@@ -26,7 +26,11 @@
   } from '$lib/services/app/navigation';
   import { allAssets, getAssetSubDirectories, overlaidAsset } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
-  import { allAssetFolders, canCreateAsset, selectedAssetFolder } from '$lib/services/assets/folders';
+  import {
+    allAssetFolders,
+    canCreateAsset,
+    selectedAssetFolder,
+  } from '$lib/services/assets/folders';
   import {
     currentAssetSubPath,
     getFolderLabelByCollection,
@@ -51,9 +55,7 @@
     return getAssetSubDirectories($selectedAssetFolder, currentSubPath);
   });
 
-  const breadcrumbSegments = $derived(
-    currentSubPath ? ['', ...currentSubPath.split('/')] : [''],
-  );
+  const breadcrumbSegments = $derived(currentSubPath ? ['', ...currentSubPath.split('/')] : ['']);
 
   const canCreateInFolder = $derived(canCreateAsset($selectedAssetFolder));
 
@@ -249,19 +251,16 @@
                 {/each}
               </span>
               {#if currentSubPath}
-                <Button
-                  variant="text"
-                  size="small"
-                  label={_('go_up')}
-                  onclick={navigateUp}
-                />
+                <Button variant="text" size="small" label={_('go_up')} onclick={navigateUp} />
               {/if}
               {#if canCreateInFolder}
                 <Button
                   variant="text"
                   size="small"
                   label={_('assets_dialog.create_folder')}
-                  onclick={() => { showCreateFolderDialog = true; }}
+                  onclick={() => {
+                    showCreateFolderDialog = true;
+                  }}
                 />
               {/if}
             </div>
@@ -317,7 +316,7 @@
 <CreateFolderDialog
   open={showCreateFolderDialog}
   parentFolder={$selectedAssetFolder}
-  currentSubPath={currentSubPath}
+  {currentSubPath}
   onClose={() => {
     showCreateFolderDialog = false;
   }}
@@ -361,6 +360,6 @@
           }
         }
       }
+    }
   }
-}
 </style>

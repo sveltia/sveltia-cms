@@ -203,6 +203,7 @@
 
           &.image {
             width: 48px;
+            text-align: center;
 
             &:empty::before {
               display: block;

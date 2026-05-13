@@ -96,7 +96,7 @@
   };
 </script>
 
-{#if showSubDirs && (subDirectories.length || !isRootLevel) || filteredAssets.length}
+{#if (showSubDirs && (subDirectories.length || !isRootLevel)) || filteredAssets.length}
   <div role="none" class="grid-wrapper">
     <SimpleImageGrid {multiple} {gridId} {viewType} showTitle={true}>
       {#if showSubDirs}
@@ -115,9 +115,11 @@
           </SimpleImageGridItem>
         {/if}
         {#each subDirectories as subDir (subDir.path)}
-          {@const sel = chooseFolders && isSelected(
-            /** @type {any} */ ({ name: subDir.name, path: subDir.path, kind: 'other' }),
-          )}
+          {@const sel =
+            chooseFolders &&
+            isSelected(
+              /** @type {any} */ ({ name: subDir.name, path: subDir.path, kind: 'other' }),
+            )}
           <SimpleImageGridItem
             value={subDir.path}
             {viewType}
