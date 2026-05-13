@@ -400,6 +400,23 @@ export const getAssetByPath = ({ value, entry, collectionName, fileName, typedKe
 };
 
 /**
+ * Check if an asset path is directly inside a given folder directory (not in subdirectories).
+ * @param {string} assetPath Asset path.
+ * @param {string | undefined} basePath Base folder path.
+ * @param {string} [subPath] Optional sub-path within the base folder.
+ * @returns {boolean} `true` if the asset is directly in the target directory.
+ */
+export const isInDirectDir = (assetPath, basePath, subPath) => {
+  if (!basePath) {
+    return false;
+  }
+
+  const targetDir = subPath ? `${basePath}/${subPath}` : basePath;
+
+  return (getPathInfo(assetPath).dirname ?? '') === targetDir;
+};
+
+/**
  * Get unique subdirectory names one level below a given path prefix within a configured asset
  * folder, or at the repo root when `assetFolder` is the All Assets folder (no `internalPath`).
  * This is derived from existing asset paths plus `.gitkeep` config files, so empty directories

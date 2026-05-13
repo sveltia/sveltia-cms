@@ -445,6 +445,13 @@
  */
 
 /**
+ * Subdirectory entry within an asset folder.
+ * @typedef {object} SubDirectory
+ * @property {string} name Subdirectory name.
+ * @property {string} path Subdirectory path relative to the base folder.
+ */
+
+/**
  * File info being processed as {@link Entry}.
  * @typedef {BaseFileListItemProps & { type: 'entry', folder: EntryFolderInfo }} BaseEntryListItem
  */

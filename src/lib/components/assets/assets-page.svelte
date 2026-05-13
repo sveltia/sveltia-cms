@@ -1,7 +1,6 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Alert, Toast } from '@sveltia/ui';
-  import { getPathInfo } from '@sveltia/utils/file';
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
   import { onMount } from 'svelte';
@@ -25,7 +24,7 @@
     parseLocation,
     updateContentFromHashChange,
   } from '$lib/services/app/navigation';
-  import { allAssets, getAssetSubDirectories, overlaidAsset } from '$lib/services/assets';
+  import { allAssets, getAssetSubDirectories, isInDirectDir, overlaidAsset } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import {
     allAssetFolders,
@@ -50,11 +49,9 @@
   let currentSubPath = $state('');
   let showCreateFolderDialog = $state(false);
 
-  const subDirectories = $derived.by(() => {
-    void $allAssets;
-
-    return getAssetSubDirectories($selectedAssetFolder, currentSubPath);
-  });
+  const subDirectories = $derived.by(() =>
+    getAssetSubDirectories($selectedAssetFolder, currentSubPath),
+  );
 
   const canCreateInFolder = $derived(canCreateAsset($selectedAssetFolder));
 
@@ -79,14 +76,13 @@
   );
 
   const filteredListedAssets = $derived.by(() => {
-    if (!currentSubPath || !$selectedAssetFolder) {
+    const base = $selectedAssetFolder?.internalPath;
+
+    if (!base) {
       return $listedAssets;
     }
 
-    const base = $selectedAssetFolder.internalPath ?? '';
-    const expectedDir = base ? `${base}/${currentSubPath}` : currentSubPath;
-
-    return $listedAssets.filter((asset) => getPathInfo(asset.path).dirname === expectedDir);
+    return $listedAssets.filter((asset) => isInDirectDir(asset.path, base, currentSubPath));
   });
 
   /**
@@ -149,7 +145,7 @@
       $announcedPageStatus = _('viewing_x_asset_folder', {
         values: {
           folder: selectedAssetFolderLabel,
-          count: $listedAssets.length,
+          count: filteredListedAssets.length,
         },
       });
 
@@ -222,6 +218,7 @@
           <AssetList
             {subDirectories}
             {currentSubPath}
+            filteredAssets={filteredListedAssets}
             onNavigateFolder={(subDir) => navigateToSubPath(subDir.path)}
           />
         {/snippet}

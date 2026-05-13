@@ -21,7 +21,7 @@ working_with_test_repo: Working with Test Repository
 sign_out: Sign Out
 create: New
 go_up: Go Up
-open_folder: Open “{$name}”
+folder_navigation: Folder navigation
 select: Select
 select_all: Select All
 upload: Upload

@@ -23,7 +23,7 @@
   import Breadcrumb from '$lib/components/assets/shared/breadcrumb.svelte';
   import CreateFolderDialog from '$lib/components/assets/shared/create-folder-dialog.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
-  import { allAssets, getAssetSubDirectories } from '$lib/services/assets';
+  import { allAssets, getAssetSubDirectories, isInDirectDir } from '$lib/services/assets';
   import { canCreateAsset } from '$lib/services/assets/folders';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import {
@@ -175,11 +175,9 @@
     // Append a placeholder because the complete path is not determined until the entry is saved
     return subPath ? `${internalPath}/${subPath}/-` : `${internalPath}/-`;
   });
-  const subDirectories = $derived.by(() => {
-    void $allAssets;
-
-    return selectedFolder ? getAssetSubDirectories(selectedFolder, currentSubPath) : [];
-  });
+  const subDirectories = $derived.by(() =>
+    selectedFolder ? getAssetSubDirectories(selectedFolder, currentSubPath) : [],
+  );
 
   const folderLabel = $derived(
     selectedFolder
@@ -268,15 +266,7 @@
         return false;
       }
 
-      // When browsing a subdirectory, only include files directly in that subdirectory
-      if (currentSubPath) {
-        const expectedDir = `${selectedFolder.internalPath}/${currentSubPath}`;
-
-        return getPathInfo(asset.path).dirname === expectedDir;
-      }
-
-      // At root level, only include files in the root (not in subdirectories)
-      return getPathInfo(asset.path).dirname === selectedFolder.internalPath;
+      return isInDirectDir(asset.path, selectedFolder.internalPath, currentSubPath);
     }
 
     const { dirname } = getPathInfo(asset.path);

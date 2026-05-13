@@ -1,7 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { EmptyState, GridBody, InfiniteScroll } from '@sveltia/ui';
-  import { getPathInfo } from '@sveltia/utils/file';
   import { sleep } from '@sveltia/utils/misc';
 
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
@@ -11,30 +10,21 @@
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import { uploadingAssets } from '$lib/services/assets';
-  import {
-    canCreateAsset,
-    selectedAssetFolder,
-    targetAssetFolder,
-  } from '$lib/services/assets/folders';
-  import { currentView, listedAssets } from '$lib/services/assets/view';
+  import { canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
+  import { currentView } from '$lib/services/assets/view';
   import { filterAssets } from '$lib/services/assets/view/filter';
   import { groupAssets } from '$lib/services/assets/view/group';
   import { sortAssets } from '$lib/services/assets/view/sort';
 
   /**
-   * @import { Asset } from '$lib/types/private';
-   */
-
-  /**
-   * @typedef {object} SubDirectory
-   * @property {string} name Subdirectory name.
-   * @property {string} path Subdirectory path relative to the base folder.
+   * @import { Asset, SubDirectory } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {SubDirectory[]} [subDirectories] Subdirectories of the current folder.
    * @property {string} [currentSubPath] Current sub-path within the folder.
+   * @property {Asset[]} [filteredAssets] Assets filtered to the current folder and sub-path.
    * @property {(subDir: SubDirectory) => void} [onNavigateFolder] Called when a subdirectory is
    * clicked.
    */
@@ -44,6 +34,7 @@
     /* eslint-disable prefer-const */
     subDirectories = [],
     currentSubPath = '',
+    filteredAssets = [],
     onNavigateFolder = undefined,
     /* eslint-enable prefer-const */
   } = $props();
@@ -51,27 +42,6 @@
   const viewType = $derived($currentView.type);
   const folder = $derived($targetAssetFolder);
   const uploadDisabled = $derived(!canCreateAsset(folder));
-
-  const filteredAssets = $derived.by(() => {
-    const selectedFolder = $selectedAssetFolder;
-    const base = selectedFolder?.internalPath;
-
-    if (!base) {
-      return $listedAssets;
-    }
-
-    if (currentSubPath) {
-      const expectedDir = `${base}/${currentSubPath}`;
-
-      return $listedAssets.filter((asset) => getPathInfo(asset.path).dirname === expectedDir);
-    }
-
-    return $listedAssets.filter((asset) => {
-      const dirname = getPathInfo(asset.path).dirname ?? '';
-
-      return dirname === base;
-    });
-  });
 
   const groupedEntries = $derived.by(() => {
     let assets = [...filteredAssets];
@@ -98,7 +68,7 @@
         id="asset-list"
         {viewType}
         aria-label={_('assets')}
-        aria-rowcount={$listedAssets.length}
+        aria-rowcount={filteredAssets.length + subDirectories.length}
       >
         {#await sleep() then}
           <GridBody>

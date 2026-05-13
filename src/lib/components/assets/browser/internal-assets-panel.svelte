@@ -6,13 +6,7 @@
   import { selectAssetsView } from '$lib/services/contents/editor';
 
   /**
-   * @import { Asset, SelectedResource } from '$lib/types/private';
-   */
-
-  /**
-   * @typedef {object} SubDirectory
-   * @property {string} name Subdirectory name.
-   * @property {string} path Subdirectory path relative to the base folder.
+   * @import { Asset, SelectedResource, SubDirectory } from '$lib/types/private';
    */
 
   /**

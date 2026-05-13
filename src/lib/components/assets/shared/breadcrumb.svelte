@@ -54,7 +54,7 @@
   };
 </script>
 
-<div role="navigation" class="breadcrumb" aria-label="Folder navigation">
+<div role="navigation" class="breadcrumb" aria-label={_('folder_navigation')}>
   <span class="segments">
     {#each breadcrumbSegments as segment, index (index)}
       {#if index > 0}

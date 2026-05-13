@@ -31,10 +31,11 @@ export const createFileList = (uploadingAssets) => {
   const { files, folder, originalAsset, subPath } = uploadingAssets;
   const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
 
-  const targetDir =
-    subPath && folder?.internalPath
-      ? [folder.internalPath, subPath].join('/')
-      : folder?.internalPath;
+  const targetDir = folder?.internalPath
+    ? subPath
+      ? `${folder.internalPath}/${subPath}`
+      : folder.internalPath
+    : undefined;
 
   const assetNamesInSameFolder =
     targetDir !== undefined ? getAssetsByDirName(targetDir).map((a) => a.name.normalize()) : [];
@@ -48,17 +49,7 @@ export const createFileList = (uploadingAssets) => {
       assetNamesInSameFolder.push(fileName);
     }
 
-    let filePath;
-
-    if (originalAsset?.path) {
-      filePath = originalAsset.path;
-    } else if (subPath && folder?.internalPath) {
-      filePath = [folder.internalPath, subPath, fileName].join('/');
-    } else if (targetDir) {
-      filePath = [targetDir, fileName].join('/');
-    } else {
-      filePath = fileName;
-    }
+    const filePath = originalAsset?.path ?? (targetDir ? `${targetDir}/${fileName}` : fileName);
 
     return {
       action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),

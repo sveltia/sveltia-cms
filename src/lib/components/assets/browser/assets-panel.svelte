@@ -14,13 +14,7 @@
   import { isSmallScreen } from '$lib/services/user/env';
 
   /**
-   * @import { Asset, SelectedResource, ViewType } from '$lib/types/private';
-   */
-
-  /**
-   * @typedef {object} SubDirectory
-   * @property {string} name Subdirectory name.
-   * @property {string} path Subdirectory path relative to the base folder.
+   * @import { Asset, SelectedResource, SubDirectory, ViewType } from '$lib/types/private';
    */
 
   /**

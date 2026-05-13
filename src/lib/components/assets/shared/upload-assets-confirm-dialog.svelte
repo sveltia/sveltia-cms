@@ -18,6 +18,14 @@
     $derived($processedAssets);
   const { max_file_size: maxSize } = $derived(getDefaultMediaLibraryOptions().config);
 
+  const targetFolderLabel = $derived.by(() => {
+    if (folder?.internalPath) {
+      return subPath ? `/${folder.internalPath}/${subPath}` : `/${folder.internalPath}`;
+    }
+
+    return subPath ? `/${subPath}` : '';
+  });
+
   $effect(() => {
     files = [...undersizedFiles];
   });
@@ -62,13 +70,7 @@
           {_('confirm_uploading_files', {
             values: {
               count: files.length,
-              folder: folder?.internalPath
-                ? subPath
-                  ? `/${folder.internalPath}/${subPath}`
-                  : `/${folder.internalPath}`
-                : subPath
-                  ? `/${subPath}`
-                  : '',
+              folder: targetFolderLabel,
             },
           })}
         {/if}
