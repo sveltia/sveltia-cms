@@ -285,6 +285,3 @@
     showCreateFolderDialog = false;
   }}
 />
-
-<style lang="scss">
-</style>

@@ -1,6 +1,7 @@
 <script>
-  import { GridCell, GridRow, Icon, TruncatedText } from '@sveltia/ui';
+  import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
 
+  import FolderPreview from '$lib/components/assets/shared/folder-preview.svelte';
   import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
 
   /**
@@ -29,11 +30,7 @@
     <GridCell class="checkbox" />
   {/if}
   <GridCell class="image">
-    <span class="dir-preview {viewType}">
-      <span role="none">
-        <Icon name="folder" />
-      </span>
-    </span>
+    <FolderPreview {viewType} />
   </GridCell>
   {#if !$isSmallScreen || viewType === 'list'}
     <GridCell class="title">
@@ -49,42 +46,5 @@
 <style lang="scss">
   .label {
     word-break: break-all;
-  }
-
-  .dir-preview {
-    display: block;
-    &.grid {
-      padding: 12px;
-    }
-
-    & > span {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      aspect-ratio: 1 / 1;
-
-      :global(.icon) {
-        font-size: 48px;
-        color: var(--sui-secondary-foreground-color);
-        opacity: 0.6;
-      }
-    }
-
-    &.grid > span {
-      border: 1px solid var(--sui-control-border-color);
-      border-radius: var(--sui-control-medium-border-radius);
-      background-color: var(--sui-secondary-background-color);
-    }
-
-    &.list > span {
-      width: 48px;
-      aspect-ratio: unset;
-      height: 48px;
-      flex: none;
-
-      :global(.icon) {
-        font-size: 24px;
-      }
-    }
   }
 </style>

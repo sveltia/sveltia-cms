@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { EmptyState, Icon, InfiniteScroll } from '@sveltia/ui';
+  import { EmptyState, InfiniteScroll } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
@@ -9,6 +9,7 @@
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import FolderPreview from '$lib/components/assets/shared/folder-preview.svelte';
   import { normalize } from '$lib/services/search/util';
   import { isSmallScreen } from '$lib/services/user/env';
 
@@ -57,7 +58,6 @@
     subDirectories = [],
     onNavigateFolder = undefined,
     chooseFolders = false,
-    onNavigateUp = undefined,
     currentSubPath = '',
     /* eslint-enable prefer-const */
   } = $props();
@@ -100,20 +100,6 @@
   <div role="none" class="grid-wrapper">
     <SimpleImageGrid {multiple} {gridId} {viewType} showTitle={true}>
       {#if showSubDirs}
-        {#if !isRootLevel && onNavigateUp}
-          <SimpleImageGridItem
-            value=".."
-            {viewType}
-            {multiple}
-            selected={false}
-            onChange={() => onNavigateUp()}
-          >
-            <span role="none" class="dir-preview {viewType}">
-              <Icon name="arrow_upward" />
-            </span>
-            <AssetPath path=".." />
-          </SimpleImageGridItem>
-        {/if}
         {#each subDirectories as subDir (subDir.path)}
           {@const sel =
             chooseFolders &&
@@ -124,7 +110,6 @@
             value={subDir.path}
             {viewType}
             {multiple}
-            {gridId}
             selected={sel}
             onChange={({ detail: { selected } }) => {
               if (chooseFolders) {
@@ -137,8 +122,8 @@
               }
             }}
           >
-            <span role="none" class="dir-preview {viewType}">
-              <Icon name="folder" />
+            <span class="preview">
+              <FolderPreview {viewType} />
             </span>
             <AssetPath path={subDir.name} />
           </SimpleImageGridItem>
@@ -224,33 +209,5 @@
     color: var(--sui-info-foreground-color);
     background-color: var(--sui-info-background-color);
     font-size: var(--sui-font-size-small);
-  }
-
-  .dir-preview {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    aspect-ratio: 1 / 1;
-    border: 1px solid var(--sui-control-border-color);
-    border-radius: var(--sui-control-medium-border-radius);
-    background-color: var(--sui-secondary-background-color);
-    width: 100%;
-
-    :global(.icon) {
-      font-size: 48px;
-      color: var(--sui-secondary-foreground-color);
-      opacity: 0.6;
-    }
-
-    &.list {
-      width: 64px;
-      aspect-ratio: unset;
-      height: 64px;
-      flex: none;
-
-      :global(.icon) {
-        font-size: 24px;
-      }
-    }
   }
 </style>
