@@ -1,13 +1,12 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Alert, Button, Icon, Toast } from '@sveltia/ui';
+  import { Alert, Toast } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
   import { onMount } from 'svelte';
 
   import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
-  import CreateFolderDialog from '$lib/components/assets/shared/create-folder-dialog.svelte';
   import EditAssetDialog from '$lib/components/assets/details/edit-asset-dialog.svelte';
   import RenameAssetDialog from '$lib/components/assets/details/rename-asset-dialog.svelte';
   import AssetList from '$lib/components/assets/list/asset-list.svelte';
@@ -15,6 +14,8 @@
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/assets/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
+  import Breadcrumb from '$lib/components/assets/shared/breadcrumb.svelte';
+  import CreateFolderDialog from '$lib/components/assets/shared/create-folder-dialog.svelte';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import SearchMainArea from '$lib/components/search/search-main-area.svelte';
@@ -55,8 +56,6 @@
     return getAssetSubDirectories($selectedAssetFolder, currentSubPath);
   });
 
-  const breadcrumbSegments = $derived(currentSubPath ? ['', ...currentSubPath.split('/')] : ['']);
-
   const canCreateInFolder = $derived(canCreateAsset($selectedAssetFolder));
 
   $effect(() => {
@@ -79,18 +78,6 @@
 
     segments.pop();
     currentSubPath = segments.join('/');
-  };
-
-  /**
-   * Navigate to a specific breadcrumb segment.
-   * @param {number} index Index of the segment to navigate to.
-   */
-  const navigateToSegment = (index) => {
-    if (index === 0) {
-      currentSubPath = '';
-    } else {
-      currentSubPath = breadcrumbSegments.slice(1, index + 1).join('/');
-    }
   };
 
   const selectedAssetFolderLabel = $derived(
@@ -232,38 +219,15 @@
         {/snippet}
         {#snippet mainContent()}
           {#if $selectedAssetFolder}
-            <!-- Breadcrumb -->
-            <div role="navigation" class="breadcrumb" aria-label="Folder navigation">
-              <span class="segments">
-                {#each breadcrumbSegments as segment, index}
-                  {#if index > 0}
-                    <Icon name="chevron_right" />
-                  {/if}
-                  <button
-                    class="crumb"
-                    class:active={index === breadcrumbSegments.length - 1}
-                    onclick={() => navigateToSegment(index)}
-                  >
-                    {index === 0
-                      ? getFolderLabelByCollection($selectedAssetFolder)
-                      : decodeURIComponent(segment)}
-                  </button>
-                {/each}
-              </span>
-              {#if currentSubPath}
-                <Button variant="text" size="small" label={_('go_up')} onclick={navigateUp} />
-              {/if}
-              {#if canCreateInFolder}
-                <Button
-                  variant="text"
-                  size="small"
-                  label={_('assets_dialog.create_folder')}
-                  onclick={() => {
-                    showCreateFolderDialog = true;
-                  }}
-                />
-              {/if}
-            </div>
+            <Breadcrumb
+              bind:currentSubPath
+              rootLabel={getFolderLabelByCollection($selectedAssetFolder)}
+              showUpButton={!!currentSubPath}
+              showCreateButton={canCreateInFolder}
+              onCreateFolder={() => {
+                showCreateFolderDialog = true;
+              }}
+            />
           {/if}
           <AssetList
             {subDirectories}
@@ -323,43 +287,4 @@
 />
 
 <style lang="scss">
-  .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--sui-control-border-color);
-
-    .segments {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex: auto;
-
-      .crumb {
-        cursor: pointer;
-        border: none;
-        border-radius: 4px;
-        padding: 2px 6px;
-        color: var(--sui-link-color);
-        background: none;
-        font-size: var(--sui-font-size-small);
-        font-family: inherit;
-
-        &:hover {
-          text-decoration: underline;
-        }
-
-        &.active {
-          cursor: default;
-          color: var(--sui-primary-foreground-color);
-          font-weight: var(--sui-font-weight-semi-bold);
-
-          &:hover {
-            text-decoration: none;
-          }
-        }
-      }
-    }
-  }
 </style>

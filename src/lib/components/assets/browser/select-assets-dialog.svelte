@@ -17,6 +17,7 @@
   import { getPathInfo } from '@sveltia/utils/file';
   import equal from 'fast-deep-equal';
 
+  import Breadcrumb from '$lib/components/assets/shared/breadcrumb.svelte';
   import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
   import CreateFolderDialog from '$lib/components/assets/shared/create-folder-dialog.svelte';
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
@@ -181,8 +182,6 @@
     return selectedFolder ? getAssetSubDirectories(selectedFolder, currentSubPath) : [];
   });
 
-  const breadcrumbSegments = $derived(currentSubPath ? ['', ...currentSubPath.split('/')] : ['']);
-
   const folderLabel = $derived(
     selectedFolder
       ? (selectedFolder.fileName ?? selectedFolder.collectionName ?? _('global_assets'))
@@ -206,20 +205,6 @@
 
     segments.pop();
     currentSubPath = segments.join('/');
-    selectedResources = [];
-  };
-
-  /**
-   * Navigate to a specific breadcrumb segment.
-   * @param {number} index Index of the segment to navigate to.
-   */
-  const navigateToSegment = (index) => {
-    if (index === 0) {
-      currentSubPath = '';
-    } else {
-      currentSubPath = breadcrumbSegments.slice(1, index + 1).join('/');
-    }
-
     selectedResources = [];
   };
 
@@ -560,34 +545,21 @@
     <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane">
       {#if isDefaultLibrary && selectedFolder}
         <div class="internal-panel" role="none">
-          <!-- Breadcrumb -->
-          <div role="navigation" class="breadcrumb" aria-label="Folder navigation">
-            <span class="segments">
-              {#each breadcrumbSegments as segment, index}
-                {#if index > 0}
-                  <Icon name="chevron_right" />
-                {/if}
-                <button
-                  class="crumb"
-                  class:active={index === breadcrumbSegments.length - 1}
-                  onclick={() => navigateToSegment(index)}
-                >
-                  {index === 0 ? folderLabel : decodeURIComponent(segment)}
-                </button>
-              {/each}
-            </span>
-            {#if currentSubPath && !forFolder}
-              <Button variant="text" size="small" label={_('go_up')} onclick={navigateUp} />
-            {/if}
-            {#if canCreateInFolder && !forFolder}
-              <Button
-                variant="text"
-                size="small"
-                label={_('assets_dialog.create_folder')}
-                onclick={() => (showCreateFolderDialog = true)}
-              />
-            {/if}
-          </div>
+          <Breadcrumb
+            bind:currentSubPath
+            rootLabel={folderLabel}
+            showUpButton={!!currentSubPath && !forFolder}
+            showCreateButton={canCreateInFolder && !forFolder}
+            onNavigate={() => {
+              selectedResources = [];
+            }}
+            onNavigateUp={() => {
+              selectedResources = [];
+            }}
+            onCreateFolder={() => {
+              showCreateFolderDialog = true;
+            }}
+          />
           <div class="internal-panel-body" role="none">
             <InternalAssetsPanel
               {accept}
@@ -743,46 +715,8 @@
     min-height: 0;
   }
 
-  .breadcrumb {
-    /* Keep in sync with assets-page.svelte breadcrumb styles */
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--sui-control-border-color);
-    margin-bottom: 8px;
-
-    .segments {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex: auto;
-
-      .crumb {
-        cursor: pointer;
-        border: none;
-        border-radius: 4px;
-        padding: 2px 6px;
-        color: var(--sui-link-color);
-        background: none;
-        font-size: var(--sui-font-size-small);
-        font-family: inherit;
-
-        &:hover {
-          text-decoration: underline;
-        }
-
-        &.active {
-          cursor: default;
-          color: var(--sui-primary-foreground-color);
-          font-weight: var(--sui-font-weight-semi-bold);
-
-          &:hover {
-            text-decoration: none;
-          }
-        }
-      }
-    }
+  .internal-panel :global(.breadcrumb) {
+    --breadcrumb-padding: 8px 0;
+    --breadcrumb-margin-bottom: 8px;
   }
 </style>
