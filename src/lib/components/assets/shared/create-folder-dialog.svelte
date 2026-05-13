@@ -95,6 +95,7 @@
   title={_('assets_dialog.create_folder')}
   size="small"
   okLabel={_('create')}
+  cancelLabel={_('cancel')}
   bind:open
   onOk={onCreate}
   onClose={handleClose}
