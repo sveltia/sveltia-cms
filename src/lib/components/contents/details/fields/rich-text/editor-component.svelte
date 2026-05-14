@@ -19,17 +19,17 @@
    * InternalLocaleCode,
    * TypedFieldKeyPath,
    * } from '$lib/types/private';
-   * @import { Field, FieldKeyPath, RawEntryContent } from '$lib/types/public';
+   * @import { EditorComponentMode, Field, FieldKeyPath, RawEntryContent } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
    * @property {string} componentName Rich text editor component name.
    * @property {string} label Field label.
-   * @property {boolean} [dialog] Whether to use dialog editing mode. Default: `false`.
-   * @property {boolean} [collapsed] Whether to collapse the object by default (inline mode only).
+   * @property {EditorComponentMode} [mode] Editing mode for the component. Default: `'block'`.
+   * @property {boolean} [collapsed] Whether to collapse the object by default (`block` mode only).
    * Default: `false`.
-   * @property {string} [summary] Summary template for the placeholder text (dialog mode only),
+   * @property {string} [summary] Summary template for the placeholder text (`dialog` mode only),
    * e.g. `{{title}}`.
    * @property {Field[]} fields Subfield definitions.
    * @property {Record<string, any> | undefined} values Value map.
@@ -41,7 +41,7 @@
     /* eslint-disable prefer-const */
     componentName,
     label,
-    dialog = false,
+    mode = 'block',
     collapsed = false,
     summary,
     fields,
@@ -283,12 +283,12 @@
       locale = /** @type {string} */ (localeContainer?.dataset.locale);
       keyPath = /** @type {string} */ (keyPathContainer?.dataset.keyPath);
 
-      if (!dialog) {
+      if (mode !== 'dialog') {
         typedKeyPath = /** @type {string} */ (keyPathContainer?.dataset.typedKeyPath);
       }
 
       // Auto-open dialog for freshly inserted components (dialog mode only)
-      if (dialog && isNewComponent) {
+      if (mode === 'dialog' && isNewComponent) {
         openDialog();
       }
     });
@@ -332,7 +332,7 @@
 
   // Inline mode: forward onChange whenever currentValues change
   $effect(() => {
-    if (dialog) return;
+    if (mode === 'dialog') return;
 
     void [currentValues];
 
@@ -345,7 +345,7 @@
   });
 </script>
 
-{#if dialog}
+{#if mode === 'dialog'}
   <!-- Dialog mode: compact placeholder that opens a dialog on click -->
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <span

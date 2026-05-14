@@ -31,7 +31,7 @@ export const createCustomNodeClass = (componentDef) => {
     id: componentName,
     label,
     collapsed,
-    dialog,
+    mode,
     summary,
     fields,
     pattern,
@@ -206,7 +206,7 @@ export const createCustomNodeClass = (componentDef) => {
         props: {
           componentName,
           label,
-          dialog,
+          mode,
           collapsed,
           summary,
           fields,
