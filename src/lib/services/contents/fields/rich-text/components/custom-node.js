@@ -39,6 +39,7 @@ export const createCustomNodeClass = (componentDef) => {
     toBlock,
     toPreview,
   } = componentDef;
+
   const isMultiLine = isMultiLinePattern(pattern);
   const preview = toPreview?.({});
   const block = toBlock({});

@@ -1,19 +1,19 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { Button, Dialog, Spacer } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { flatten, unflatten } from 'flat';
   import { onMount, untrack } from 'svelte';
-  import { _ } from 'svelte-i18n';
 
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import { applyTransformations } from '$lib/services/common/transformations';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
-  import { validateEntry, validateFields } from '$lib/services/contents/draft/validate';
-  import { applyTransformations } from '$lib/services/common/transformations';
+  import { validateFields } from '$lib/services/contents/draft/validate/fields';
 
   /**
-   * @import { DraftValueStoreKey, InternalLocaleCode, RawEntryContent } from '$lib/types/private';
-   * @import { Field, FieldKeyPath } from '$lib/types/public';
+   * @import { DraftValueStoreKey, InternalLocaleCode } from '$lib/types/private';
+   * @import { Field, FieldKeyPath, RawEntryContent } from '$lib/types/public';
    */
 
   /**
@@ -57,7 +57,7 @@
    * Whether this is a freshly inserted component (no existing values).
    * Used to auto-open the dialog on mount.
    */
-  const isNewComponent = !values;
+  const isNewComponent = $derived(!values);
 
   const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${fieldId}:`);
 
@@ -171,6 +171,7 @@
 
     // Check if THIS component's fields are valid using the returned validities directly
     const localeValidities = extraValidities[locale] ?? {};
+
     const thisComponentValid = !Object.entries(localeValidities).some(
       ([key, validity]) => key.startsWith(keyPathPrefix) && !validity.valid,
     );
@@ -248,18 +249,18 @@
    * Format a summary template by replacing `{{fieldName}}` placeholders with values.
    * Supports nested properties and transformations like the CMS object field summary.
    * @param {string} template Summary template, e.g. `{{title}} - {{linkType.url | upper}}`.
-   * @param {Record<string, any>} values Current values (unflattened).
+   * @param {Record<string, any>} _values Current values (unflattened).
    * @returns {string | null} Formatted summary, or null if template is empty or result is empty.
    */
-  const formatSimpleSummary = (template, values) => {
-    if (!template || !values) {
+  const formatSimpleSummary = (template, _values) => {
+    if (!template || !_values) {
       return null;
     }
 
     // Flatten values to support nested property access
-    const flatValues = flatten(values);
+    const flatValues = flatten(_values);
 
-    const result = template.replaceAll(/{{(.+?)}}/g, (_, placeholder) => {
+    const result = template.replaceAll(/{{(.+?)}}/g, (__, placeholder) => {
       const [tag, ...transformations] = placeholder.trim().split(/\s*\|\s*/);
       const fieldName = tag.replace(/^fields\./, '');
       let value = flatValues[fieldName];
@@ -282,7 +283,7 @@
    * The text to display in the placeholder. Priority:
    * 1. Formatted summary template (if provided and produces non-empty result)
    * 2. First string field's value
-   * 3. Component label
+   * 3. Component label.
    */
   const displayText = $derived.by(() => {
     // Try summary template first
@@ -337,13 +338,7 @@
   {displayText}
 </span>
 
-<Dialog
-  title={label}
-  bind:open={dialogOpen}
-  size="large"
-  showOk={false}
-  showCancel={false}
->
+<Dialog title={label} bind:open={dialogOpen} size="large" showOk={false} showCancel={false}>
   <div role="none" class="fields">
     {#if locale && keyPath}
       {#each fields as fieldConfig (fieldConfig.name)}
@@ -361,7 +356,7 @@
   {#snippet footer()}
     <Button
       variant="secondary"
-      label={$_('remove')}
+      label={_('remove')}
       onclick={() => {
         handleRemove();
       }}
@@ -369,14 +364,14 @@
     <Spacer flex={true} />
     <Button
       variant="primary"
-      label={$_(isNewComponent ? 'insert' : 'update')}
+      label={_(isNewComponent ? 'insert' : 'update')}
       onclick={() => {
         handleOk();
       }}
     />
     <Button
       variant="secondary"
-      label={$_('cancel')}
+      label={_('cancel')}
       onclick={() => {
         handleCancel();
       }}
