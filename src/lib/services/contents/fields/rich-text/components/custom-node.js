@@ -1,8 +1,7 @@
 import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
-import Component from '$lib/components/contents/details/fields/rich-text/component.svelte';
-import DialogComponent from '$lib/components/contents/details/fields/rich-text/dialog-component.svelte';
+import EditorComponent from '$lib/components/contents/details/fields/rich-text/editor-component.svelte';
 import {
   isMultiLinePattern,
   normalizeProps,
@@ -130,7 +129,7 @@ export const createCustomNodeClass = (componentDef) => {
       let wrapper;
       /** @type {LexicalEditor | null} */
       let editor = null;
-      /** @type {Component | DialogComponent} */
+      /** @type {{ getElement: () => HTMLElement | undefined }} */
       let component;
       let destroyed = false;
 
@@ -202,15 +201,14 @@ export const createCustomNodeClass = (componentDef) => {
         );
       };
 
-      // Use DialogComponent if `dialog: true`, otherwise use inline Component
-      const ComponentClass = dialog ? DialogComponent : Component;
-
-      component = mount(ComponentClass, {
+      component = mount(EditorComponent, {
         target: document.createElement('div'),
         props: {
           componentName,
           label,
-          ...(dialog ? { summary } : { collapsed }),
+          dialog,
+          collapsed,
+          summary,
           fields,
           values: this.__props,
           onChange,
