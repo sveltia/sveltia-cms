@@ -58,7 +58,7 @@
   let locale = $state('');
   /** @type {FieldKeyPath} */
   let keyPath = $state('');
-  // Inline mode only
+  // Block mode only
   /** @type {TypedFieldKeyPath} */
   let typedKeyPath = $state('');
   /** @type {boolean} */
@@ -101,7 +101,7 @@
    */
   const valueStoreKey = 'extraValues';
   /**
-   * Previous values for the editor component, used to detect changes (inline mode only).
+   * Previous values for the editor component, used to detect changes (block mode only).
    * @type {RawEntryContent | undefined}
    */
   let previousValues = undefined;
@@ -343,7 +343,7 @@
     });
   });
 
-  // Inline mode: forward onChange whenever currentValues change
+  // Block mode: forward onChange whenever currentValues change
   $effect(() => {
     if (mode === 'dialog') return;
 
@@ -429,7 +429,7 @@
     {/snippet}
   </Dialog>
 {:else}
-  <!-- Inline mode: expandable block with ObjectHeader -->
+  <!-- Block mode: expandable block with ObjectHeader -->
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <div
     role="group"
