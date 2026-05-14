@@ -223,7 +223,7 @@
    * Format a summary template by replacing `{{fieldName}}` placeholders with values (dialog mode
    * only). Supports nested properties and transformations like the CMS object field summary.
    * @param {string} template Summary template, e.g. `{{title}} - {{linkType.url | upper}}`.
-   * @param {Record<string, any>} _values Current values (unflattened).
+   * @param {RawEntryContent} _values Current values (unflattened).
    * @returns {string | null} Formatted summary, or null if template is empty or result is empty.
    */
   const formatSimpleSummary = (template, _values) => {
@@ -243,7 +243,12 @@
       }
 
       if (transformations.length) {
-        value = applyTransformations({ value, transformations });
+        value = applyTransformations({
+          fieldConfig: fields.find((f) => f.name === fieldName),
+          value,
+          transformations,
+          locale,
+        });
       }
 
       return String(value);
