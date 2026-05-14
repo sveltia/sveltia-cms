@@ -72,16 +72,14 @@
    * @type {Record<string, any> | undefined}
    */
   let valuesSnapshot = $state(undefined);
+  /**
+   * Whether this is a freshly inserted component (no existing values). Initialized once in
+   * `onMount` so it doesn’t change when `values` is later assigned defaults.
+   */
+  let isNewComponent = $state(false);
 
   const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${fieldId}:`);
-  // Inline mode only
   const typedKeyPathPrefix = $derived(!typedKeyPath ? '' : `${typedKeyPath}:${fieldId}:`);
-  // Dialog mode only
-  /**
-   * Whether this is a freshly inserted component (no existing values). Used to auto-open the
-   * dialog on mount.
-   */
-  const isNewComponent = $derived(!values);
   /**
    * Find the first string/text field from the fields definition.
    * @type {Field | undefined}
@@ -110,7 +108,7 @@
 
   /**
    * Current values for the editor component. These values are stored in the {@link entryDraft}
-   * under the `extraValues` key, with the key path prefixed with the parent field's key path, e.g.
+   * under the `extraValues` key, with the key path prefixed with the parent field’s key path, e.g.
    * `body:c12:image`.
    * @type {RawEntryContent | undefined}
    */
@@ -208,11 +206,17 @@
 
   /**
    * Handle Cancel button click. Restores values from snapshot and closes dialog (dialog mode only).
+   * If the component was newly inserted, remove it entirely instead of leaving it with empty state.
    */
   const handleCancel = () => {
-    restoreValues();
-    dialogOpen = false;
-    valuesSnapshot = undefined;
+    if (isNewComponent) {
+      dialogOpen = false;
+      onChange(new CustomEvent('remove'));
+    } else {
+      restoreValues();
+      dialogOpen = false;
+      valuesSnapshot = undefined;
+    }
   };
 
   /**
@@ -251,7 +255,7 @@
   /**
    * The text to display in the placeholder (dialog mode only). Priority:
    * 1. Formatted summary template (if provided and produces non-empty result)
-   * 2. First string field's value
+   * 2. First string field’s value
    * 3. Component label.
    */
   const displayText = $derived.by(() => {
@@ -287,6 +291,9 @@
         typedKeyPath = /** @type {string} */ (keyPathContainer?.dataset.typedKeyPath);
       }
 
+      // Capture whether this is a newly inserted component (before $effect assigns defaults)
+      isNewComponent = !values;
+
       // Auto-open dialog for freshly inserted components (dialog mode only)
       if (mode === 'dialog' && isNewComponent) {
         openDialog();
@@ -294,11 +301,17 @@
     });
 
     return () => {
-      // Remove the values from the draft when the component is unmounted
-      if ($entryDraft && valueStoreKey === 'extraValues') {
+      // Remove the values and validities from the draft when the component is unmounted
+      if ($entryDraft) {
         Object.keys($entryDraft[valueStoreKey][locale] ?? {}).forEach((key) => {
           if (key.startsWith(keyPathPrefix)) {
             delete $entryDraft[valueStoreKey][locale][key];
+          }
+        });
+
+        Object.keys($entryDraft.validities[locale] ?? {}).forEach((key) => {
+          if (key.startsWith(keyPathPrefix)) {
+            delete $entryDraft.validities[locale][key];
           }
         });
       }
@@ -347,7 +360,6 @@
 
 {#if mode === 'dialog'}
   <!-- Dialog mode: compact placeholder that opens a dialog on click -->
-  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <span
     role="button"
     class="placeholder"

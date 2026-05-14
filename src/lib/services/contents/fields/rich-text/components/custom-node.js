@@ -206,8 +206,8 @@ export const createCustomNodeClass = (componentDef) => {
         props: {
           componentName,
           label,
-          mode,
           collapsed,
+          mode,
           summary,
           fields,
           values: this.__props,
