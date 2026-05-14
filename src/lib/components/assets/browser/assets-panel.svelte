@@ -24,6 +24,7 @@
    * @property {ViewType} [viewType] View type.
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {string} [basePath] Path to an asset folder, if any folder is selected.
+   * @property {string} [publicBasePath] Public URL path to an asset folder.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
    * @property {boolean} [checkerboard] Whether to show a checkerboard background below a
    * transparent image.
@@ -43,6 +44,7 @@
     viewType = 'grid',
     searchTerms = '',
     basePath = undefined,
+    publicBasePath = undefined,
     gridId = undefined,
     checkerboard = false,
     selectedResources = $bindable([]),
@@ -91,10 +93,11 @@
     <SimpleImageGrid {multiple} {gridId} {viewType} showTitle={true}>
       {#if showSubDirs}
         {#each subDirectories as subDir (subDir.path)}
+          {@const fullPath = publicBasePath ? `${publicBasePath}/${subDir.path}` : subDir.path}
           {@const sel =
             chooseFolders &&
             isSelected(
-              /** @type {any} */ ({ name: subDir.name, path: subDir.path, kind: 'other' }),
+              /** @type {any} */ ({ name: subDir.name, path: fullPath, kind: 'other' }),
             )}
           <SimpleImageGridItem
             value={subDir.path}
@@ -104,12 +107,15 @@
             onChange={({ detail: { selected } }) => {
               if (chooseFolders) {
                 onSelectionChange(
-                  /** @type {any} */ ({ name: subDir.name, path: subDir.path, kind: 'other' }),
+                  /** @type {any} */ ({ name: subDir.name, path: fullPath, kind: 'other' }),
                   selected,
                 );
               } else {
                 onNavigateFolder?.(subDir);
               }
+            }}
+            ondblclick={() => {
+              onNavigateFolder?.(subDir);
             }}
           >
             <span class="preview">

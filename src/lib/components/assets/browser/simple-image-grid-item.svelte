@@ -13,6 +13,7 @@
    * @property {ViewType} [viewType] View type.
    * @property {boolean} multiple Whether to allow selecting multiple assets.
    * @property {(event: CustomEvent) => void} onChange Custom `Change` event handler.
+   * @property {() => void} [ondblclick] Double-click handler.
    * @property {Snippet} children Slot content.
    */
 
@@ -24,12 +25,13 @@
     viewType = 'grid',
     multiple,
     onChange,
+    ondblclick,
     children,
     /* eslint-enable prefer-const */
   } = $props();
 </script>
 
-<div role="none" class="wrapper {viewType}">
+<div role="none" class="wrapper {viewType}" {ondblclick}>
   <Option label="" {value} {selected} {onChange}>
     {#snippet startIcon()}
       {#if multiple}

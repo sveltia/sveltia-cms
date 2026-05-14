@@ -24,7 +24,12 @@
     parseLocation,
     updateContentFromHashChange,
   } from '$lib/services/app/navigation';
-  import { allAssets, getAssetSubDirectories, isInDirectDir, overlaidAsset } from '$lib/services/assets';
+  import {
+    allAssets,
+    getAssetSubDirectories,
+    isInDirectDir,
+    overlaidAsset,
+  } from '$lib/services/assets';
   import { assetUpdatesToast } from '$lib/services/assets/data';
   import {
     allAssetFolders,

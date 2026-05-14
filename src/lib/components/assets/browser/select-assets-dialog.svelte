@@ -546,6 +546,7 @@
               bind:selectedResources
               {searchTerms}
               basePath={selectedFolder.internalPath}
+              publicBasePath={selectedFolder.publicPath}
               {subDirectories}
               onNavigateFolder={(subDir) => navigateToSubPath(subDir.path)}
               chooseFolders={forFolder}

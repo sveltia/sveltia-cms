@@ -16,6 +16,7 @@
    * @property {Asset[]} [assets] Asset list.
    * @property {string} [searchTerms] Search terms for filtering assets.
    * @property {string} [basePath] Path to an asset folder, if any folder is selected.
+   * @property {string} [publicBasePath] Public URL path to an asset folder.
    * @property {SelectedResource[]} selectedResources Selected resources.
    * @property {(detail: { files: File[] }) => void} [onDrop] Custom `Drop` event handler.
    * @property {SubDirectory[]} [subDirectories] Subdirectories of the current folder.
@@ -32,6 +33,7 @@
     assets = [],
     searchTerms = '',
     basePath = undefined,
+    publicBasePath = undefined,
     selectedResources = $bindable([]),
     onDrop,
     subDirectories = [],
@@ -59,6 +61,7 @@
     viewType={$selectAssetsView?.type}
     {searchTerms}
     {basePath}
+    {publicBasePath}
     gridId="select-assets-grid"
     checkerboard={true}
     bind:selectedResources
