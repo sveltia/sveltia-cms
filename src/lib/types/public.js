@@ -1701,10 +1701,11 @@
  * @property {string} label Label of the component to be displayed in the editor UI.
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
- * @property {boolean} [collapsed] Whether to collapse the object by default. Default: `false`.
+ * @property {boolean} [collapsed] Whether to collapse the object by default (`block` mode only).
+ * Default: `false`.
  * @property {EditorComponentMode} [mode] Editing mode for the component. `block` (default) renders
- * the component inline with an expandable field list. `dialog` renders a compact placeholder that
- * opens a dialog when clicked.
+ * the component within the rich text editor with an expandable field list. `dialog` renders a
+ * compact placeholder that opens a dialog when clicked.
  * @property {string} [summary] Template for the placeholder text when `mode` is `dialog`, e.g.
  * `{{title}} - {{videoId}}`. Falls back to the first string field value, then to the label.
  * @property {Field[]} fields Set of fields to be displayed in the component.
