@@ -45,6 +45,7 @@
       'https://github.com/sveltia/sveltia-cms/discussions/categories/ideas',
     )}
     {@render link('get_help', 'https://github.com/sveltia/sveltia-cms/discussions/categories/q-a')}
+    {@render link('donate', 'https://github.com/sponsors/kyoshino')}
     <Divider />
     {@render link('bluesky', 'https://bsky.app/profile/sveltiacms.app')}
     {@render link('join_discord', 'https://discord.com/invite/5hwCGqup5b')}

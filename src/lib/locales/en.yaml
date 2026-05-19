@@ -133,6 +133,7 @@ version_x: Version {$version}
 report_issue: Report Issue
 share_feedback: Share Feedback
 get_help: Get Help
+donate: Donate
 join_discord: Join Us on Discord
 bluesky: Follow Us on Bluesky
 update_available: The latest version of Sveltia CMS is available.
