@@ -14,14 +14,14 @@ import openai from './openai';
  */
 
 /**
- * List of all the supported translation services.
+ * List of all the supported translation services. Alphabetical order by service name.
  * @type {Record<string, TranslationService>}
  */
 export const allTranslationServices = {
-  google,
-  'google-ai': googleAi,
   anthropic,
   deepseek,
+  google,
+  'google-ai': googleAi,
   openai,
 };
 
