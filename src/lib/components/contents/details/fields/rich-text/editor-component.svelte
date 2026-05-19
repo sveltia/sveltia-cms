@@ -233,7 +233,6 @@
     }
 
     const flatValues = flatten(_values);
-    let anyValue = false;
 
     const result = template.replaceAll(/{{(.+?)}}/g, (__, placeholder) => {
       const [tag, ...transformations] = placeholder.trim().split(/\s*\|\s*/);
@@ -253,16 +252,18 @@
         });
       }
 
-      const str = String(value);
-
-      if (str) {
-        anyValue = true;
-      }
-
-      return str;
+      return String(value);
     });
 
-    return anyValue ? result.trim() || null : null;
+    // Return `null` if the result (after stripping all placeholder-based content) is empty. This
+    // handles the case where all field values are empty but literal text (e.g. ' — ') remains.
+    const strippedTemplate = template.replaceAll(/{{.+?}}/g, '');
+
+    if (result !== strippedTemplate && result.trim()) {
+      return result.trim();
+    }
+
+    return null;
   };
 
   /**
@@ -272,16 +273,21 @@
    * 3. Component label.
    */
   const displayText = $derived.by(() => {
-    if (summary && currentValues) {
-      const formatted = formatSimpleSummary(summary, currentValues);
+    // Fall back to the `values` prop when `currentValues` has no field data yet, e.g. on initial
+    // render or before the store has been notified with the values.
+    const hasFieldValues = fields.some((f) => currentValues?.[f.name] !== undefined);
+    const vals = hasFieldValues ? currentValues : values;
+
+    if (summary && vals) {
+      const formatted = formatSimpleSummary(summary, vals);
 
       if (formatted) {
         return formatted;
       }
     }
 
-    if (displayField && currentValues) {
-      const value = currentValues[displayField.name];
+    if (displayField && vals) {
+      const value = vals[displayField.name];
 
       if (typeof value === 'string' && value.trim()) {
         return value.trim();
@@ -342,15 +348,24 @@
         values.__sc_component_name = componentName;
 
         if (!equal(values, currentValues)) {
-          Object.assign(
-            $entryDraft[valueStoreKey][locale],
-            Object.fromEntries(
-              Object.entries(flatten(values)).map(([key, value]) => [
-                `${keyPathPrefix}${key}`,
-                value,
-              ]),
-            ),
+          const newEntries = Object.fromEntries(
+            Object.entries(flatten(values)).map(([key, value]) => [
+              `${keyPathPrefix}${key}`,
+              value,
+            ]),
           );
+
+          // Use `entryDraft.update()` instead of `Object.assign()` directly so that the store
+          // notifies subscribers and `currentValues` re-derives immediately.
+          entryDraft.update((_draft) => {
+            if (!_draft) {
+              return _draft;
+            }
+
+            Object.assign(_draft[valueStoreKey][locale], newEntries);
+
+            return _draft;
+          });
         }
       }
     });
