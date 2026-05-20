@@ -92,7 +92,11 @@
   });
 </script>
 
-<iframe class="preview" title={_('content_preview')} sandbox="allow-same-origin" bind:this={iframe}
+<iframe
+  class="preview"
+  title={_('content_preview')}
+  sandbox="allow-same-origin allow-scripts"
+  bind:this={iframe}
 ></iframe>
 
 <style lang="scss">
