@@ -240,7 +240,21 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
     throw new TypeError('The `raw` option for `CMS.registerPreviewStyle()` must be a boolean');
   }
 
-  const url = raw ? URL.createObjectURL(new Blob([style], { type: 'text/css' })) : style;
+  const base = window.location.href;
+
+  if (!raw && !URL.canParse(style, base)) {
+    throw new TypeError(
+      'The `style` option for `CMS.registerPreviewStyle()` must be a valid URL or file path ' +
+        'when `raw` is false',
+    );
+  }
+
+  const url = raw
+    ? // Create a blob URL for the raw CSS string
+      URL.createObjectURL(new Blob([style], { type: 'text/css' }))
+    : // Convert relative URLs to absolute to ensure they work in the preview iframe, which has a
+      // unique blob URL as its origin
+      new URL(style, base).href;
 
   customPreviewStyleRegistry.add(url);
 };

@@ -10,6 +10,7 @@ global.window = {
   // @ts-ignore
   initCMS: undefined,
   CMS_MANUAL_INIT: true,
+  location: /** @type {Location} */ ({ href: 'https://sveltia.dev/admin/' }),
   currentScript: null,
   querySelector: vi.fn(() => null),
 };
@@ -59,6 +60,7 @@ vi.mock('$lib/components/app.svelte', () => ({
 // Now import after all setup
 // @ts-ignore
 const CMS = (await import('./main.js')).default;
+const { customPreviewStyleRegistry } = await import('$lib/services/contents/editor');
 
 describe('CMS.init()', () => {
   beforeEach(() => {
@@ -402,16 +404,34 @@ describe('CMS.registerEditorComponent()', () => {
 });
 
 describe('CMS.registerPreviewStyle()', () => {
+  beforeEach(() => {
+    customPreviewStyleRegistry.clear();
+  });
+
   test('registers stylesheet URL', () => {
     expect(() => CMS.registerPreviewStyle('https://example.com/style.css')).not.toThrow();
+    expect(customPreviewStyleRegistry).toContain('https://example.com/style.css');
   });
 
   test('registers stylesheet file path', () => {
     expect(() => CMS.registerPreviewStyle('/assets/style.css')).not.toThrow();
+    expect(customPreviewStyleRegistry).toContain('https://sveltia.dev/assets/style.css');
   });
 
   test('registers raw CSS string', () => {
     expect(() => CMS.registerPreviewStyle('body { color: red; }', { raw: true })).not.toThrow();
+    expect(customPreviewStyleRegistry.size).toBe(1);
+    expect([...customPreviewStyleRegistry][0]).toMatch(/^blob:/);
+  });
+
+  test('throws TypeError if non-raw style is not a valid URL or file path', () => {
+    expect(() => CMS.registerPreviewStyle('http://')).toThrow(TypeError);
+  });
+
+  test('throws with proper error message for invalid non-raw style', () => {
+    expect(() => CMS.registerPreviewStyle('http://')).toThrow(
+      'The `style` option for `CMS.registerPreviewStyle()` must be a valid URL or file path when `raw` is false',
+    );
   });
 
   test('throws TypeError if style is not a string', () => {
