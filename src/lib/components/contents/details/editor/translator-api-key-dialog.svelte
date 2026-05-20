@@ -53,7 +53,9 @@
         homeHref: `href="${developerURL}"`,
         apiKeyHref: `href="${apiKeyURL}"`,
       },
-    }),
+    })
+      // Remove invisible characters used for link detection in the locale string
+      .replace(/[\u2068\u2069]/g, ''),
     { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] },
   )}
 </PromptDialog>
