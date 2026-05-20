@@ -14,6 +14,7 @@
   import { SvelteMap } from 'svelte/reactivity';
 
   import { getMediaFieldURL } from '$lib/services/assets/info';
+  import { cmsConfig } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/draft';
   import { BUILTIN_COMPONENTS } from '$lib/services/contents/fields/rich-text';
   import {
@@ -62,6 +63,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
+  const defaultConfig = $cmsConfig?.field_defaults?.richtext ?? {};
   /** @type {SvelteMap<HTMLElement, import('react-dom/client').Root>} */
   const reactRoots = new SvelteMap();
 
@@ -84,11 +86,11 @@
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
   const {
-    sanitize_preview: doSanitize = true,
-    editor_components:
+    sanitize_preview: doSanitize = defaultConfig.sanitize_preview ?? true,
+    editor_components: _editorComponents = defaultConfig.editor_components ??
       // Include all built-in and custom components by default
-      _editorComponents = [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
-    linked_images: linkedImagesEnabled = true,
+      [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
+    linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
   } = $derived(fieldConfig);
   const componentDefs = $derived(
     _editorComponents

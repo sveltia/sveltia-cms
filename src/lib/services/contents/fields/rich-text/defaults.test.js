@@ -1,5 +1,6 @@
 import { stripTags } from '@sveltia/utils/string';
-import { describe, expect, test, vi } from 'vitest';
+import { writable } from 'svelte/store';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getDefaultValueMap } from './defaults';
 
@@ -10,20 +11,27 @@ vi.mock('@sveltia/utils/string', async (importOriginal) => {
   return { ...original, stripTags: vi.fn(original.stripTags) };
 });
 
+vi.mock('$lib/services/config');
+
+beforeEach(async () => {
+  // @ts-ignore
+  (await import('$lib/services/config')).cmsConfig = writable(null);
+});
+
 /**
- * @import { MarkdownField } from '$lib/types/public';
+ * @import { RichTextField } from '$lib/types/public';
  */
 
-/** @type {Pick<MarkdownField, 'widget' | 'name'>} */
+/** @type {Pick<RichTextField, 'widget' | 'name'>} */
 const baseFieldConfig = {
-  widget: 'markdown',
-  name: 'test_markdown',
+  widget: 'richtext',
+  name: 'test_richtext',
 };
 
 describe('Test getDefaultValueMap()', () => {
   describe('without dynamicValue', () => {
     test('should return default markdown value', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
         default: '# Hello World\n\nThis is a **markdown** document.',
@@ -44,7 +52,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should return empty string when no default', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
       };
@@ -62,7 +70,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should return empty string when default is null', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
         // @ts-expect-error - Testing edge case
@@ -82,7 +90,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should return empty string when default is undefined', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
         default: undefined,
@@ -101,7 +109,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should handle different key paths', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
         default: 'Sample content',
@@ -122,7 +130,7 @@ describe('Test getDefaultValueMap()', () => {
 
   describe('with dynamicValue', () => {
     test('should prioritize dynamicValue over default', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
         default: 'Default content',
@@ -144,7 +152,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should sanitize HTML tags in dynamicValue', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
         default: 'Default content',
@@ -169,7 +177,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should handle empty dynamicValue', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
         default: 'Default content',
@@ -189,7 +197,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should handle dynamicValue when no default exists', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
       };
@@ -208,7 +216,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should preserve markdown formatting in dynamicValue', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
         default: 'Default content',
@@ -234,7 +242,7 @@ describe('Test getDefaultValueMap()', () => {
         throw new Error('DOMParser not available');
       });
 
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = { ...baseFieldConfig };
 
       const result = getDefaultValueMap({
@@ -250,7 +258,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should handle undefined dynamicValue', () => {
-      /** @type {MarkdownField} */
+      /** @type {RichTextField} */
       const fieldConfig = {
         ...baseFieldConfig,
         default: 'Default content',
@@ -267,6 +275,85 @@ describe('Test getDefaultValueMap()', () => {
       });
 
       expect(result).toEqual({ content: 'Default content' });
+    });
+  });
+
+  describe('with field_defaults fallback', () => {
+    test('should use field_defaults when field has no default', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).cmsConfig = writable({
+        field_defaults: { richtext: { default: '# Default from config' } },
+      });
+
+      /** @type {RichTextField} */
+      const fieldConfig = { ...baseFieldConfig };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'content',
+        locale: '_default',
+        defaultLocale: '_default',
+      });
+
+      expect(result).toEqual({ content: '# Default from config' });
+    });
+
+    test('should prefer field-level default over field_defaults', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).cmsConfig = writable({
+        field_defaults: { richtext: { default: '# Default from config' } },
+      });
+
+      /** @type {RichTextField} */
+      const fieldConfig = { ...baseFieldConfig, default: '# Field default' };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'content',
+        locale: '_default',
+        defaultLocale: '_default',
+      });
+
+      expect(result).toEqual({ content: '# Field default' });
+    });
+
+    test('should return empty string when field_defaults has no default', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).cmsConfig = writable({
+        field_defaults: { richtext: {} },
+      });
+
+      /** @type {RichTextField} */
+      const fieldConfig = { ...baseFieldConfig };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'content',
+        locale: '_default',
+        defaultLocale: '_default',
+      });
+
+      expect(result).toEqual({ content: '' });
+    });
+
+    test('dynamicValue takes precedence over field_defaults', async () => {
+      // @ts-ignore
+      (await import('$lib/services/config')).cmsConfig = writable({
+        field_defaults: { richtext: { default: '# Default from config' } },
+      });
+
+      /** @type {RichTextField} */
+      const fieldConfig = { ...baseFieldConfig };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'content',
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue: 'Dynamic content',
+      });
+
+      expect(result).toEqual({ content: 'Dynamic content' });
     });
   });
 });

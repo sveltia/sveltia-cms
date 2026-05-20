@@ -15,6 +15,7 @@
   } from 'lexical';
   import { getContext, untrack } from 'svelte';
 
+  import { cmsConfig } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getAssetLibraryFolderMap } from '$lib/services/contents/fields/file/helper';
   import { processResource } from '$lib/services/contents/fields/file/process';
@@ -54,6 +55,7 @@
    * @property {string | undefined} currentValue Field value.
    */
 
+  const defaultConfig = $cmsConfig?.field_defaults?.richtext ?? {};
   /** @type {FieldEditorContext} */
   const { fieldContext = undefined } = getContext('field-editor') ?? {};
   const inEditorComponent = fieldContext === 'rich-text-editor-component';
@@ -80,13 +82,13 @@
 
   const {
     // Field type-specific options
-    modes: _modes = [...DEFAULT_MODES],
-    buttons: _buttons = [...DEFAULT_BUTTONS],
-    editor_components:
+    modes: _modes = defaultConfig.modes ?? [...DEFAULT_MODES],
+    buttons: _buttons = defaultConfig.buttons ?? [...DEFAULT_BUTTONS],
+    editor_components: _editorComponents = defaultConfig.editor_components ??
       // Include all built-in and custom components by default
-      _editorComponents = [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
-    linked_images: linkedImagesEnabled = true,
-    minimal = false,
+      [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
+    linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
+    minimal = defaultConfig.minimal ?? false,
   } = $derived(fieldConfig);
   const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
   const buttons = $derived(

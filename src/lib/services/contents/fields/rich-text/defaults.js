@@ -1,7 +1,10 @@
 import { stripTags } from '@sveltia/utils/string';
+import { get } from 'svelte/store';
+
+import { cmsConfig } from '$lib/services/config';
 
 /**
- * @import { MarkdownField } from '$lib/types/public';
+ * @import { RichTextField } from '$lib/types/public';
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
  */
 
@@ -11,7 +14,9 @@ import { stripTags } from '@sveltia/utils/string';
  * @returns {Record<string, string>} Default value map.
  */
 export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
-  const { default: defaultValue } = /** @type {MarkdownField} */ (fieldConfig);
+  const { default: defaultValue = get(cmsConfig)?.field_defaults?.richtext?.default } =
+    /** @type {RichTextField} */ (fieldConfig);
+
   let value = '';
 
   if (dynamicValue !== undefined) {

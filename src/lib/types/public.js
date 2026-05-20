@@ -1631,6 +1631,13 @@
  */
 
 /**
+ * Default options for fields. These options will be applied to all fields of the specified type
+ * unless they are overridden by field-specific options.
+ * @typedef {object} FieldDefaults
+ * @property {RichTextFieldBaseProps} [richtext] RichText and Markdown field default options.
+ */
+
+/**
  * CMS configuration.
  * @typedef {object} CmsConfig
  * @property {boolean} [load_config_file] Whether to load YAML/JSON CMS configuration file(s) when
@@ -1676,6 +1683,7 @@
  * @property {EditorOptions} [editor] Editor view options.
  * @property {OutputOptions} [output] Data output options. See the
  * [documentation](https://sveltiacms.app/en/docs/data-output#controlling-data-output) for details.
+ * @property {FieldDefaults} [field_defaults] Default options for fields.
  * @see https://decapcms.org/docs/configuration-options/
  * @see https://decapcms.org/docs/i18n/
  * @see https://sveltiacms.app/en/docs/i18n
