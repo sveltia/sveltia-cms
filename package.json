@@ -12,6 +12,10 @@
     "type": "git",
     "url": "git+https://github.com/sveltia/sveltia-cms.git"
   },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/kyoshino"
+  },
   "license": "MIT",
   "author": {
     "name": "Kohei Yoshino",
