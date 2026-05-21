@@ -75,7 +75,11 @@
         aria-label={_('replace_asset')}
         disabled={!asset}
         onclick={() => {
-          $uploadingAssets = { folder: undefined, files: [], originalAsset: asset };
+          $uploadingAssets = {
+            folder: undefined,
+            files: [],
+            originalAssets: asset ? [asset] : [],
+          };
           $showUploadAssetsDialog = true;
         }}
       />

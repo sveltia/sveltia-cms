@@ -12,7 +12,9 @@
   /** @type {FilePicker | undefined} */
   let filePicker = $state();
 
-  const { originalAsset } = $derived($uploadingAssets);
+  const { originalAssets } = $derived($uploadingAssets);
+  // Use the first asset because replacement only supports one asset for now
+  const originalAsset = $derived(originalAssets?.[0]);
   const multiple = $derived(!originalAsset);
   const accept = $derived(
     originalAsset ? (mime.getType(originalAsset.name) ?? undefined) : undefined,
@@ -30,7 +32,7 @@
     $uploadingAssets = {
       folder: originalAsset ? originalAsset.folder : $targetAssetFolder,
       files,
-      originalAsset,
+      originalAssets,
     };
     $showUploadAssetsDialog = false;
   };

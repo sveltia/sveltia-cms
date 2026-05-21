@@ -294,18 +294,26 @@ cancel_reordering_entries: エントリーの並び替えをキャンセル
 saving_reorder_failed: エントリーの並び替えを保存できませんでした。再度お試しください。
 processing_files: ファイルを処理しています。これには時間がかかる場合があります。
 uploading_files: アップロード対象ファイル
-confirm_replacing_file: 「{$name}」を以下のファイルと差し替えてもよろしいですか？
+confirm_replacing_file: "「{$name}」がこのファイルと置き換えられます:"
 confirm_uploading_files: |
   .input {$count :integer}
   .match $count
-    one {{ 以下のファイルを「{$folder}」フォルダーに保存してもよろしいですか？ }}
-    *   {{ 以下の {$count} 個のファイルを「{$folder}」フォルダーに保存してもよろしいですか？ }}
+    one {{ このファイルを「{$folder}」フォルダーに保存します: }}
+    *   {{ これら {$count} 個のファイルを「{$folder}」フォルダーに保存します: }}
 oversized_files: サイズ超過ファイル
 warning_oversized_files: |
   .input {$count :integer}
   .match $count
     one {{ このファイルは最大サイズ {$size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください。 }}
     *   {{ これらのファイルは最大サイズ {$size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください。 }}
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ 同じ名前のファイルがこのフォルダーに既に存在します。置き換えますか？ }}
+    *   {{ 同じ名前のファイルが {$count} 個このフォルダーに既に存在します。置き換えますか？ }}
+file_name_conflict_resolution: ファイル名の競合解決
+replace_existing_files: 既存のファイルを置き換える
+keep_both_files: 両方のファイルを維持する
 uploading_files_progress: ファイルをアップロード中…
 uploading_files_failed: ファイルをアップロードできませんでした
 file_meta: "{$type} · {$size}"

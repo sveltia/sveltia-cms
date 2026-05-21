@@ -51,7 +51,7 @@
         {
           folder: asset.folder,
           files: [new File([currentValue], asset.name, { type: blob.type })],
-          originalAsset: asset,
+          originalAssets: [asset],
         },
         { commitType: 'uploadMedia' },
       );

@@ -785,7 +785,7 @@
  * @typedef {object} UploadingAssets
  * @property {AssetFolderInfo | undefined} folder Target asset folder info.
  * @property {File[]} files File list.
- * @property {Asset} [originalAsset] Asset to be replaced.
+ * @property {Asset[]} [originalAssets] Assets to be replaced.
  */
 
 /**

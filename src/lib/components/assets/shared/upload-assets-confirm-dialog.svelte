@@ -1,25 +1,44 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, ConfirmationDialog } from '@sveltia/ui';
+  import { Alert, ConfirmationDialog, Radio, RadioGroup } from '@sveltia/ui';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
-  import { processedAssets, uploadingAssets } from '$lib/services/assets';
+  import { getAssetsByDirName, processedAssets, uploadingAssets } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data/create';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { formatSize } from '$lib/services/utils/file';
 
   /** @type {File[]} */
-  // eslint-disable-next-line svelte/prefer-writable-derived
   let files = $state([]);
+  let replaceFiles = $state(true);
 
-  const { files: originalFiles, folder, originalAsset } = $derived($uploadingAssets);
+  const { files: originalFiles, folder, originalAssets } = $derived($uploadingAssets);
+  const originalAsset = $derived(originalAssets?.[0]);
   const { processing, undersizedFiles, oversizedFiles, transformedFileMap } =
     $derived($processedAssets);
   const { max_file_size: maxSize } = $derived(getDefaultMediaLibraryOptions().config);
+  const assetsInSameFolder = $derived(
+    originalAsset || folder?.internalPath === undefined
+      ? []
+      : getAssetsByDirName(folder.internalPath),
+  );
+
+  const dupFileCount = $derived.by(() => {
+    if (!assetsInSameFolder.length || !files.length) {
+      return 0;
+    }
+
+    const existingNames = new Set(
+      assetsInSameFolder.map(({ name }) => name.normalize().toLowerCase()),
+    );
+
+    return files.filter((file) => existingNames.has(file.name.normalize().toLowerCase())).length;
+  });
 
   $effect(() => {
     files = [...undersizedFiles];
+    replaceFiles = true;
   });
 
   $effect(() => {
@@ -30,15 +49,15 @@
   });
 </script>
 
-<!-- @todo Confirm to replace an old image if a file with the same same exists. -->
-
 <ConfirmationDialog
   open={$showUploadAssetsConfirmDialog}
   title={_(originalAsset ? 'replace_asset' : 'upload_assets')}
   okLabel={_(originalAsset ? 'replace' : 'upload')}
   okDisabled={!files.length}
   onOk={async () => {
-    await saveAssets({ files, folder, originalAsset }, { commitType: 'uploadMedia' });
+    const original = originalAsset ? originalAssets : replaceFiles ? assetsInSameFolder : [];
+
+    await saveAssets({ files, folder, originalAssets: original }, { commitType: 'uploadMedia' });
     $uploadingAssets = { folder: undefined, files: [] };
   }}
   onCancel={() => {
@@ -79,13 +98,31 @@
       <UploadAssetsPreview files={oversizedFiles} {transformedFileMap} removable={false} />
     </div>
   {/if}
+  {#if dupFileCount}
+    <div role="group" class="section">
+      {_('file_name_conflict_confirmation', { values: { count: dupFileCount } })}
+      <RadioGroup
+        aria-label={_('file_name_conflict_resolution')}
+        onChange={({ detail }) => {
+          replaceFiles = detail.value === 'replace';
+        }}
+      >
+        <Radio value="replace" checked={replaceFiles}>
+          {_('replace_existing_files', { values: { count: dupFileCount } })}
+        </Radio>
+        <Radio value="keep" checked={!replaceFiles}>
+          {_('keep_both_files')}
+        </Radio>
+      </RadioGroup>
+    </div>
+  {/if}
 </ConfirmationDialog>
 
 <style lang="scss">
   .section {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 
     &:not(:first-child) {
       margin-top: 16px;

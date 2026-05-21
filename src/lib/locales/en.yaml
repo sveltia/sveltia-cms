@@ -354,18 +354,30 @@ processing_files: |
     one {{ Processing a file. This may take a while. }}
     *   {{ Processing files. This may take a while. }}
 uploading_files: Uploading Files
-confirm_replacing_file: Are you sure you want to replace “{$name}” with the following file?
+confirm_replacing_file: "“{$name}” will be replaced with this file:"
 confirm_uploading_files: |
   .input {$count :integer}
   .match $count
-    one {{ Are you sure you want to save the following file to the “{$folder}” folder? }}
-    *   {{ Are you sure you want to save the following {$count} files to the “{$folder}” folder? }}
+    one {{ This file will be saved to the “{$folder}” folder: }}
+    *   {{ These {$count} files will be saved to the “{$folder}” folder: }}
 oversized_files: Oversized Files
 warning_oversized_files: |
   .input {$count :integer}
   .match $count
     one {{ This file cannot be uploaded because it exceeds the maximum size of {$size}. Please reduce the size or select a different file. }}
     *   {{ These files cannot be uploaded because they exceed the maximum size of {$size}. Please reduce the sizes or select different files. }}
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ A file with the same name already exists in this folder. Do you want to replace it? }}
+    *   {{ {$count} files with the same names already exist in this folder. Do you want to replace them? }}
+file_name_conflict_resolution: File Name Conflict Resolution
+replace_existing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Replace existing file }}
+    *   {{ Replace existing files }}
+keep_both_files: Keep both files
 uploading_files_progress: |
   .input {$count :integer}
   .match $count
