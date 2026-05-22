@@ -178,7 +178,7 @@ export const restoreBackup = ({ backup, collectionName, fileName }) => {
               // Support `LegacyEntryFileMap`
               // @todo Remove this before the 1.0 release
               if (cache instanceof File) {
-                cache = { file: cache, folder: undefined };
+                cache = { file: cache, folder: undefined, replace: false };
               }
 
               if (!cache) {

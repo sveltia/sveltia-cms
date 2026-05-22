@@ -654,9 +654,25 @@ describe('draft/backup', () => {
         files: { 'blob:http://localhost/legacy123': testFile },
       };
 
-      expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
-      }).not.toThrow();
+      /** @type {any} */
+      let updatedDraft;
+
+      vi.mocked(entryDraft.update).mockImplementation((updater) => {
+        updatedDraft = createMockDraft();
+        updater(updatedDraft);
+      });
+
+      restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+
+      // Legacy File should be migrated to { file, folder, replace: false }
+      const fileEntries = Object.values(updatedDraft.files);
+
+      expect(fileEntries).toHaveLength(1);
+      expect(fileEntries[0]).toEqual({
+        file: testFile,
+        folder: undefined,
+        replace: false,
+      });
     });
 
     it('should skip blob URLs that have no matching file in cache', () => {

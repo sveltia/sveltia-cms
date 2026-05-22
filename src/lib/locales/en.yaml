@@ -371,6 +371,12 @@ file_name_conflict_confirmation: |
   .match $count
     one {{ A file with the same name already exists in this folder. Do you want to replace it? }}
     *   {{ {$count} files with the same names already exist in this folder. Do you want to replace them? }}
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ A file named “{$name}” already exists in this folder. Do you want to replace it? }}
+    *   {{ {$count} files with the same names already exist in this folder. Do you want to replace them? }}
 file_name_conflict_resolution: File Name Conflict Resolution
 keep_both: Keep Both
 uploading_files_progress: |

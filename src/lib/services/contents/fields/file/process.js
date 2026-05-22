@@ -132,7 +132,7 @@ const getSavedAssetsForEntry = (draft, folder) => {
  * undefined }>} Processed resource value, credit, and file name if the file is oversized.
  */
 export const processResource = async ({ draft, resource, libraryConfig }) => {
-  const { url, credit } = resource;
+  const { url, credit, replace = false } = resource;
   let { asset, file } = resource;
   /** @type {string | undefined} */
   let value = '';
@@ -171,7 +171,7 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
         // Set a temporary blob URL, which will be later replaced with the actual file path
         value = URL.createObjectURL(file);
         // Cache the file itself for later upload
-        draft.files[value] = { file, folder };
+        draft.files[value] = { file, folder, replace };
       }
     }
   }

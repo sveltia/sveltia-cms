@@ -226,6 +226,7 @@ describe('Test processResource()', () => {
     expect(draft.files['blob:mock-url']).toEqual({
       file: mockFile,
       folder: { name: 'uploads' },
+      replace: false,
     });
   });
 
@@ -349,6 +350,7 @@ describe('Test processResource()', () => {
     expect(draft.files['blob:mock-url']).toEqual({
       file: transformedFile,
       folder: { name: 'uploads' },
+      replace: false,
     });
   });
 
@@ -855,6 +857,40 @@ describe('Test processResource()', () => {
     const result = await processResource({ draft, resource, libraryConfig });
 
     expect(result.value).toBe('blob:mock-url');
+  });
+
+  test('should store replace flag in draft.files when replace is true', async () => {
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = { files: {} };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = {
+      file: mockFile,
+      folder: { name: 'uploads' },
+      credit: '',
+      replace: true,
+    };
+
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+
+    getHashMock.mockResolvedValue('new-hash');
+    getGitHashMock.mockResolvedValue('git-hash');
+    getMock.mockReturnValue([]);
+
+    // @ts-ignore - Test with simplified types
+    await processResource({ draft, resource, libraryConfig });
+
+    // @ts-ignore - Mock files object
+    expect(draft.files['blob:mock-url']).toEqual({
+      file: mockFile,
+      folder: { name: 'uploads' },
+      replace: true,
+    });
   });
 });
 

@@ -20,6 +20,7 @@
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
+  import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import {
     getTargetFolderPath,
     hasSameAsset,
@@ -180,8 +181,8 @@
   /**
    * Process a dropped file.
    * @param {File} file File to be processed.
-   * @returns {Promise<SelectedResource | undefined>} Processed asset or `undefined` if the file
-   * already exists.
+   * @returns {Promise<Asset | undefined>} Processed asset or `undefined` if the file already
+   * exists.
    */
   const processFile = async (file) => {
     const hash = await getHash(file);
@@ -195,7 +196,7 @@
 
     droppedAssets.push(asset);
 
-    return { asset };
+    return asset;
   };
 
   /**
@@ -203,7 +204,16 @@
    * @param {File[]} files File list.
    */
   const onDrop = async (files) => {
-    selectedResources = (await Promise.all(files.map(processFile))).filter((r) => !!r);
+    const replace = await checkDuplicates({ files, listedAssets });
+
+    if (replace === undefined) {
+      // User cancelled the dialog
+      return;
+    }
+
+    selectedResources = (await Promise.all(files.map((file) => processFile(file))))
+      .filter((asset) => !!asset)
+      .map((asset) => ({ asset, replace }));
   };
 
   /**
@@ -226,9 +236,9 @@
     }
 
     const resources = $state.snapshot(selectedResources).map((resource) => {
-      const { unsaved, file, folder } = resource.asset ?? {};
+      const { asset: { unsaved, file, folder } = {}, replace } = resource;
 
-      return unsaved ? { file, folder } : resource;
+      return unsaved ? { file, folder, replace } : resource;
     });
 
     onSelect?.(resources);

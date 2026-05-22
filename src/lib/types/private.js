@@ -623,9 +623,18 @@
  */
 
 /**
+ * File to be uploaded and its target asset folder information.
+ * @typedef {object} EntryFileItem
+ * @property {File} file File to be uploaded.
+ * @property {AssetFolderInfo | undefined} folder Target asset folder information.
+ * @property {boolean} replace Whether to replace the existing file if there’s a file with the same
+ * name in the target folder.
+ */
+
+/**
  * Flattened entry file list object, where key is a blob URL, and value is be a file to be uploaded
  * and its target asset folder.
- * @typedef {Record<string, { file: File, folder?: AssetFolderInfo }>} EntryFileMap
+ * @typedef {Record<string, EntryFileItem>} EntryFileMap
  */
 
 /**
@@ -889,6 +898,7 @@
  * @property {string} [url] URL from direct input or a hotlinking stock asset.
  * @property {string} [credit] Attribution HTML string for a stock asset, including the photographer
  * name/link and service name/link.
+ * @property {boolean} [replace] Whether to replace an existing file.
  */
 
 /**

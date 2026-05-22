@@ -1541,6 +1541,7 @@ describe('Test replaceBlobURL()', () => {
     await replaceBlobURL({
       file: mockFile,
       folder,
+      replace: false,
       blobURL,
       draft,
       defaultLocaleSlug: 'test-post',
@@ -1607,6 +1608,7 @@ describe('Test replaceBlobURL()', () => {
     await replaceBlobURL({
       file: mockFile,
       folder,
+      replace: false,
       blobURL,
       draft,
       defaultLocaleSlug: 'test-post',
@@ -1660,6 +1662,7 @@ describe('Test replaceBlobURL()', () => {
     await replaceBlobURL({
       file: mockFile,
       folder,
+      replace: false,
       blobURL,
       draft,
       defaultLocaleSlug: 'test-post',
@@ -1715,6 +1718,7 @@ describe('Test replaceBlobURL()', () => {
     await replaceBlobURL({
       file: mockFile,
       folder,
+      replace: false,
       blobURL,
       draft,
       defaultLocaleSlug: 'test-post',
@@ -1766,6 +1770,7 @@ describe('Test replaceBlobURL()', () => {
     await replaceBlobURL({
       file: mockFile,
       folder,
+      replace: false,
       blobURL,
       draft,
       defaultLocaleSlug: 'test-post',
@@ -1820,6 +1825,7 @@ describe('Test replaceBlobURL()', () => {
     await replaceBlobURL({
       file: mockFile,
       folder,
+      replace: false,
       blobURL,
       draft,
       defaultLocaleSlug: 'test-post',
@@ -1904,6 +1910,7 @@ describe('Test replaceBlobURL()', () => {
     await replaceBlobURL({
       file: mockFile,
       folder,
+      replace: false,
       blobURL,
       draft,
       defaultLocaleSlug: 'test-post',
@@ -1976,6 +1983,7 @@ describe('Test replaceBlobURL()', () => {
     await replaceBlobURL({
       file: mockFile,
       folder: folder2,
+      replace: false,
       blobURL,
       draft,
       defaultLocaleSlug: 'test-post',
@@ -1995,6 +2003,120 @@ describe('Test replaceBlobURL()', () => {
     });
     expect(savingAssets).toHaveLength(2);
     expect(content.image2).toBe('images2/photo.jpg');
+  });
+
+  test('should use action "update" when replace is true and file exists in same folder', async () => {
+    const { getAssetsByDirName } = await import('$lib/services/assets');
+    const mockFile = new File(['test content'], 'photo.jpg', { type: 'image/jpeg' });
+    const blobURL = 'blob:http://localhost:5173/replace-123';
+
+    vi.mocked(getAssetsByDirName).mockReturnValue(/** @type {any} */ ([{ name: 'photo.jpg' }]));
+
+    /** @type {any} */
+    const draft = {
+      collection: {
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'posts' },
+        _assetFolder: { fields: [] },
+      },
+      collectionName: 'posts',
+      fileName: undefined,
+      collectionFile: undefined,
+      isIndexFile: false,
+      currentValues: { en: { title: 'Test' } },
+      currentSlugs: { en: 'test-post' },
+    };
+
+    /** @type {any} */
+    const folder = {
+      internalPath: 'static/images',
+      publicPath: '/images',
+      entryRelative: false,
+      collectionName: 'posts',
+      hasTemplateTags: false,
+    };
+
+    const content = { image: blobURL };
+    /** @type {any[]} */
+    const changes = [];
+    /** @type {any[]} */
+    const savingAssets = [];
+
+    await replaceBlobURL({
+      file: mockFile,
+      folder,
+      replace: true,
+      blobURL,
+      draft,
+      defaultLocaleSlug: 'test-post',
+      keyPath: 'image',
+      content,
+      changes,
+      savingAssets,
+      encodingEnabled: false,
+    });
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0].action).toBe('update');
+    expect(changes[0].path).toBe('static/images/photo.jpg');
+    expect(content.image).toBe('/images/photo.jpg');
+  });
+
+  test('should use action "create" when replace is true but file does not exist in folder', async () => {
+    const mockFile = new File(['test content'], 'new-photo.jpg', { type: 'image/jpeg' });
+    const blobURL = 'blob:http://localhost:5173/replace-new-456';
+
+    // getAssetsByDirName returns [] by default (file does not exist)
+
+    /** @type {any} */
+    const draft = {
+      collection: {
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'posts' },
+        _assetFolder: { fields: [] },
+      },
+      collectionName: 'posts',
+      fileName: undefined,
+      collectionFile: undefined,
+      isIndexFile: false,
+      currentValues: { en: { title: 'Test' } },
+      currentSlugs: { en: 'test-post' },
+    };
+
+    /** @type {any} */
+    const folder = {
+      internalPath: 'static/images',
+      publicPath: '/images',
+      entryRelative: false,
+      collectionName: 'posts',
+      hasTemplateTags: false,
+    };
+
+    const content = { image: blobURL };
+    /** @type {any[]} */
+    const changes = [];
+    /** @type {any[]} */
+    const savingAssets = [];
+
+    await replaceBlobURL({
+      file: mockFile,
+      folder,
+      replace: true,
+      blobURL,
+      draft,
+      defaultLocaleSlug: 'test-post',
+      keyPath: 'image',
+      content,
+      changes,
+      savingAssets,
+      encodingEnabled: false,
+    });
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0].action).toBe('create');
+    expect(changes[0].path).toBe('static/images/new-photo.jpg');
   });
 });
 

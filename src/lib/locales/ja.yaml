@@ -310,7 +310,13 @@ file_name_conflict_confirmation: |
   .input {$count :integer}
   .match $count
     one {{ 同じ名前のファイルがこのフォルダーに既に存在します。置き換えますか？ }}
-    *   {{ 同じ名前のファイルが {$count} 個このフォルダーに既に存在します。置き換えますか？ }}
+    *   {{ {$count} 個のファイルが同じ名前でこのフォルダーに既に存在します。置き換えますか？ }}
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ "{$name}" という名前のファイルはこのフォルダーに既に存在します。置き換えますか？ }}
+    *   {{ {$count} 個のファイルが同じ名前でこのフォルダーに既に存在します。置き換えますか？ }}
 file_name_conflict_resolution: ファイル名の競合解決
 keep_both: 両方とも残す
 uploading_files_progress: ファイルをアップロード中…

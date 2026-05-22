@@ -277,6 +277,7 @@ export const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
  * @param {object} args Arguments.
  * @param {File} args.file Raw file.
  * @param {AssetFolderInfo} args.folder Asset folder associated with the new file.
+ * @param {boolean} args.replace Whether to replace an existing file.
  * @param {string} args.blobURL Blob URL of the file.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
@@ -289,6 +290,7 @@ export const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
 export const replaceBlobURL = async ({
   file,
   folder,
+  replace,
   blobURL,
   draft,
   defaultLocaleSlug,
@@ -316,12 +318,20 @@ export const replaceBlobURL = async ({
   if (dupFile) {
     fileName = dupFile.name;
   } else {
-    fileName = formatFileName(file.name, { assetNamesInSameFolder });
+    fileName = formatFileName(file.name, replace ? {} : { assetNamesInSameFolder });
 
+    const update = replace && assetNamesInSameFolder.includes(fileName);
     const assetPath = resolvedInternalPath ? `${resolvedInternalPath}/${fileName}` : fileName;
 
-    assetNamesInSameFolder.push(fileName);
-    changes.push({ action: 'create', path: assetPath, data: file });
+    if (!update) {
+      assetNamesInSameFolder.push(fileName);
+    }
+
+    changes.push({
+      action: update ? 'update' : 'create',
+      path: assetPath,
+      data: file,
+    });
 
     savingAssets.push({
       ...savingAssetProps,
