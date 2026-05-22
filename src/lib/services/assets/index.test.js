@@ -1,3 +1,7 @@
+/* eslint-disable jsdoc/require-returns-description */
+/* eslint-disable jsdoc/require-param-description */
+/* eslint-disable jsdoc/require-description */
+
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
