@@ -136,7 +136,7 @@
   }}
 />
 
-<PageContainer aria-label={_('asset_library')}>
+<PageContainer uiSettingsKey="assets-page" aria-label={_('asset_library')}>
   {#snippet primarySidebar()}
     {#if !$isSmallScreen || isIndexPage}
       <PrimarySidebar {isSearchPage} />

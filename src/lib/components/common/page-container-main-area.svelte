@@ -40,13 +40,14 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    height: 100%;
     background-color: var(--sui-primary-background-color);
 
     @media (768px <= width) {
       view-transition-name: page-main;
     }
 
-    &:not(:first-child) {
+    :global(.resizable-pane) > & {
       border-start-start-radius: 16px;
     }
 

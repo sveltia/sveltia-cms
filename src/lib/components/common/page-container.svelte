@@ -1,5 +1,11 @@
 <script>
+  import { ResizableHandle, ResizablePane, ResizablePaneGroup } from '@sveltia/ui';
+  import { IndexedDB } from '@sveltia/utils/storage';
+  import { get } from 'svelte/store';
+
   import { hasOverlay } from '$lib/services/app/navigation';
+  import { backend } from '$lib/services/backends';
+  import { isSmallScreen } from '$lib/services/user/env';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -8,6 +14,8 @@
   /**
    * @typedef {object} Props
    * @property {string} [class] CSS class name on the button.
+   * @property {string} [uiSettingsKey] Key for storing UI settings in IndexedDB. If not provided,
+   * the sidebar width will not be persisted.
    * @property {Snippet} [primarySidebar] Primary sidebar content.
    * @property {Snippet} [main] Main content.
    */
@@ -16,16 +24,77 @@
   let {
     /* eslint-disable prefer-const */
     class: className = '',
+    uiSettingsKey = undefined,
     primarySidebar = undefined,
     main = undefined,
     ...rest
     /* eslint-enable prefer-const */
   } = $props();
+
+  /** @type {HTMLElement | undefined} */
+  let container = $state();
+  /** @type {number | undefined} */
+  let sidebarWidth = $state();
+
+  /** @type {IndexedDB | null} */
+  let uiSettingsDB = null;
+
+  /**
+   * Restore the sidebar width from IndexedDB, or use the default width if not set.
+   */
+  const restoreSidebarWidth = async () => {
+    if (!uiSettingsKey) return;
+
+    const { databaseName } = get(backend)?.repository ?? {};
+
+    uiSettingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
+    sidebarWidth = (await uiSettingsDB?.get(uiSettingsKey))?.sidebarWidth ?? 240;
+  };
+
+  /**
+   * Save the sidebar width to IndexedDB.
+   * @param {number} percent Sidebar width as a percentage of the container’s width.
+   */
+  const saveSidebarWidth = async (percent) => {
+    if (!uiSettingsDB || !uiSettingsKey || !container) return;
+
+    await uiSettingsDB.set(uiSettingsKey, {
+      ...(await uiSettingsDB.get(uiSettingsKey)),
+      sidebarWidth: Math.round(container.clientWidth * (percent / 100)),
+    });
+  };
+
+  $effect.pre(() => {
+    restoreSidebarWidth();
+  });
 </script>
 
-<div role="group" id="page-container" class="outer {className}" inert={$hasOverlay} {...rest}>
-  {@render primarySidebar?.()}
-  {@render main?.()}
+<div
+  role="group"
+  id="page-container"
+  class="outer {className}"
+  inert={$hasOverlay}
+  {...rest}
+  bind:this={container}
+>
+  {#if $isSmallScreen || !primarySidebar || !main}
+    {@render primarySidebar?.()}
+    {@render main?.()}
+  {:else if sidebarWidth !== undefined}
+    <ResizablePaneGroup
+      onResize={({ sizes }) => {
+        saveSidebarWidth(sizes[0]);
+      }}
+    >
+      <ResizablePane defaultSize="{sidebarWidth}px" minSize="160px" maxSize="480px">
+        {@render primarySidebar()}
+      </ResizablePane>
+      <ResizableHandle />
+      <ResizablePane>
+        {@render main()}
+      </ResizablePane>
+    </ResizablePaneGroup>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -43,8 +112,8 @@
         display: flex;
         flex-direction: column;
         flex: none;
-        width: 240px;
         overflow-y: auto;
+        height: 100%;
 
         @media (width < 768px) {
           flex: auto;

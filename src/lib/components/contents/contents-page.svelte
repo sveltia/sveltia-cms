@@ -210,7 +210,7 @@
   }}
 />
 
-<PageContainer aria-label={_('content_library')}>
+<PageContainer uiSettingsKey="contents-page" aria-label={_('content_library')}>
   {#snippet primarySidebar()}
     {#if !$isSmallScreen || isIndexPage}
       <PrimarySidebar {isSearchPage} />
