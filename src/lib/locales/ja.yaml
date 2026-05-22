@@ -312,8 +312,7 @@ file_name_conflict_confirmation: |
     one {{ 同じ名前のファイルがこのフォルダーに既に存在します。置き換えますか？ }}
     *   {{ 同じ名前のファイルが {$count} 個このフォルダーに既に存在します。置き換えますか？ }}
 file_name_conflict_resolution: ファイル名の競合解決
-replace_existing_files: 既存のファイルを置き換える
-keep_both_files: 両方のファイルを維持する
+keep_both: 両方とも残す
 uploading_files_progress: ファイルをアップロード中…
 uploading_files_failed: ファイルをアップロードできませんでした
 file_meta: "{$type} · {$size}"

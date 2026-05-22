@@ -102,12 +102,8 @@
           replaceFiles = detail.value === 'replace';
         }}
       >
-        <Radio value="replace" checked={replaceFiles}>
-          {_('replace_existing_files', { values: { count: dupFileCount } })}
-        </Radio>
-        <Radio value="keep" checked={!replaceFiles}>
-          {_('keep_both_files')}
-        </Radio>
+        <Radio value="replace" checked={replaceFiles}>{_('replace')}</Radio>
+        <Radio value="keep" checked={!replaceFiles}>{_('keep_both')}</Radio>
       </RadioGroup>
     </div>
   {/if}
