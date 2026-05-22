@@ -638,12 +638,6 @@
  */
 
 /**
- * A legacy version of {@link EntryFileMap} that may be used in backups.
- * @typedef {Record<string, File>} LegacyEntryFileMap
- * @todo Remove this before the 1.0 release.
- */
-
-/**
  * Validation state of a field value. The key is a validation property name, and the value is a
  * boolean. These are the same properties as the native HTML5 constraint validation.
  * @typedef {Record<string, boolean>} EntryValidityState
@@ -752,7 +746,7 @@
  * @property {LocaleSlugMap} currentSlugs Key is a locale code, value is the current slug.
  * @property {LocaleContentMap} currentValues Key is a locale code, value is a flattened object
  * containing all the current field values while editing.
- * @property {EntryFileMap | LegacyEntryFileMap} files Files to be uploaded.
+ * @property {EntryFileMap} files Files to be uploaded.
  */
 
 /**

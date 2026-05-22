@@ -173,19 +173,13 @@ export const restoreBackup = ({ backup, collectionName, fileName }) => {
         Object.entries(valueMap).forEach(([keyPath, value]) => {
           if (typeof value === 'string') {
             [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
-              let cache = files[blobURL];
+              const cache = files[blobURL];
+              const { file } = cache ?? {};
 
-              // Support `LegacyEntryFileMap`
-              // @todo Remove this before the 1.0 release
-              if (cache instanceof File) {
-                cache = { file: cache, folder: undefined, replace: false };
-              }
-
-              if (!cache) {
+              if (!cache || !file) {
                 return;
               }
 
-              const { file } = cache;
               let newURL = '';
 
               if (fileURLs.has(file)) {

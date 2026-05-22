@@ -639,7 +639,7 @@ describe('draft/backup', () => {
       }).not.toThrow();
     });
 
-    it('should handle legacy file format (File instead of object with file property)', () => {
+    it('should skip blob URLs whose cache entry has no file property (legacy format)', () => {
       const testFile = new File(['test content'], 'test.txt', { type: 'text/plain' });
 
       const backup = {
@@ -664,15 +664,8 @@ describe('draft/backup', () => {
 
       restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
 
-      // Legacy File should be migrated to { file, folder, replace: false }
-      const fileEntries = Object.values(updatedDraft.files);
-
-      expect(fileEntries).toHaveLength(1);
-      expect(fileEntries[0]).toEqual({
-        file: testFile,
-        folder: undefined,
-        replace: false,
-      });
+      // Legacy format is no longer migrated — the blob URL is skipped entirely
+      expect(Object.keys(updatedDraft.files)).toHaveLength(0);
     });
 
     it('should skip blob URLs that have no matching file in cache', () => {
