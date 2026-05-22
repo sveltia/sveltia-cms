@@ -50,7 +50,7 @@
     {
       key: 'validation',
       label: _('entry_sidebar.validation.title'),
-      icon: 'task_alt',
+      icon: 'check_circle',
       disabled: false,
       panel: ValidationPanel,
     },
