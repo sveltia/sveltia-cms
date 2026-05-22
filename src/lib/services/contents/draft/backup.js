@@ -240,12 +240,13 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
   }
 
   const { timestamp } = backup;
+  const { promise, resolve } = Promise.withResolvers();
 
+  restoreDialogState.set({ show: true, timestamp, resolve });
+
+  // The promise will be resolved once the Restore or Discard button is clicked on the dialog
   /** @type {boolean | undefined} */
-  const doRestore = await new Promise((resolve) => {
-    // The promise will be resolved once the Restore or Discard button is clicked on the dialog
-    restoreDialogState.set({ show: true, timestamp, resolve });
-  });
+  const doRestore = await promise;
 
   if (doRestore === undefined) {
     return;
