@@ -785,6 +785,7 @@ describe('Test copyProperty()', () => {
       class MockTomlDateThrows {
         /**
          * Constructor that throws.
+         * @throws {Error} Always throws an error to simulate invalid date format.
          */
         constructor() {
           throw new Error('Invalid date format');
