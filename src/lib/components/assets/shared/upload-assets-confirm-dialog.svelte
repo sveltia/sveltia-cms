@@ -3,7 +3,12 @@
   import { Alert, ConfirmationDialog, Radio, RadioGroup } from '@sveltia/ui';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
-  import { getAssetsByDirName, processedAssets, uploadingAssets } from '$lib/services/assets';
+  import {
+    getAssetsByDirName,
+    getDuplicateFiles,
+    processedAssets,
+    uploadingAssets,
+  } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data/create';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
@@ -23,18 +28,8 @@
       ? []
       : getAssetsByDirName(folder.internalPath),
   );
-
-  const dupFileCount = $derived.by(() => {
-    if (!assetsInSameFolder.length || !files.length) {
-      return 0;
-    }
-
-    const existingNames = new Set(
-      assetsInSameFolder.map(({ name }) => name.normalize().toLowerCase()),
-    );
-
-    return files.filter((file) => existingNames.has(file.name.normalize().toLowerCase())).length;
-  });
+  const dupFiles = $derived(getDuplicateFiles(files, assetsInSameFolder));
+  const dupFileCount = $derived(dupFiles.length);
 
   $effect(() => {
     files = [...undersizedFiles];

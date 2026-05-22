@@ -12,6 +12,7 @@ import {
   getAssetByRelativePathAndCollection,
   getAssetsByDirName,
   getAssetsByFolder,
+  getDuplicateFiles,
   isAssetInFolder,
   isRelativePath,
   overlaidAsset,
@@ -3849,6 +3850,91 @@ describe('assets/index', () => {
       expect(isRelativePath('@assets/images/photo.jpg')).toBe(false);
       expect(isRelativePath('@/images/icon.svg')).toBe(false);
       expect(isRelativePath('@media/file.txt')).toBe(false);
+    });
+  });
+
+  describe('getDuplicateFiles', () => {
+    /**
+     * @param {string} name
+     * @returns {File}
+     */
+    const makeFile = (name) => new File([], name);
+    /**
+     * @param {string} name
+     * @returns {import('$lib/types/private').Asset}
+     */
+    const makeAsset = (name) => /** @type {any} */ ({ name });
+
+    it('should return empty array when files list is empty', () => {
+      expect(getDuplicateFiles([], [makeAsset('photo.jpg')])).toEqual([]);
+    });
+
+    it('should return empty array when assets list is empty', () => {
+      expect(getDuplicateFiles([makeFile('photo.jpg')], [])).toEqual([]);
+    });
+
+    it('should return empty array when both lists are empty', () => {
+      expect(getDuplicateFiles([], [])).toEqual([]);
+    });
+
+    it('should return duplicate files whose names match an existing asset', () => {
+      const file = makeFile('photo.jpg');
+      const result = getDuplicateFiles([file], [makeAsset('photo.jpg')]);
+
+      expect(result).toEqual([file]);
+    });
+
+    it('should return only the files that match existing asset names', () => {
+      const dup = makeFile('photo.jpg');
+      const unique = makeFile('new-image.png');
+
+      const result = getDuplicateFiles(
+        [dup, unique],
+        [makeAsset('photo.jpg'), makeAsset('other.gif')],
+      );
+
+      expect(result).toEqual([dup]);
+    });
+
+    it('should perform case-insensitive name comparison', () => {
+      const file = makeFile('Photo.JPG');
+      const result = getDuplicateFiles([file], [makeAsset('photo.jpg')]);
+
+      expect(result).toEqual([file]);
+    });
+
+    it('should handle asset names with different casing', () => {
+      const file = makeFile('photo.jpg');
+      const result = getDuplicateFiles([file], [makeAsset('PHOTO.JPG')]);
+
+      expect(result).toEqual([file]);
+    });
+
+    it('should return no duplicates when no names match', () => {
+      const result = getDuplicateFiles(
+        [makeFile('new1.jpg'), makeFile('new2.png')],
+        [makeAsset('existing.jpg'), makeAsset('other.gif')],
+      );
+
+      expect(result).toEqual([]);
+    });
+
+    it('should return all files when all match existing assets', () => {
+      const file1 = makeFile('a.jpg');
+      const file2 = makeFile('b.png');
+      const result = getDuplicateFiles([file1, file2], [makeAsset('a.jpg'), makeAsset('b.png')]);
+
+      expect(result).toEqual([file1, file2]);
+    });
+
+    it('should apply Unicode normalization when comparing names', () => {
+      // Compose vs decompose: both represent the same character
+      const composed = '\u00e9'; // é (NFC)
+      const decomposed = 'e\u0301'; // é (NFD)
+      const file = makeFile(`caf${decomposed}.jpg`);
+      const result = getDuplicateFiles([file], [makeAsset(`caf${composed}.jpg`)]);
+
+      expect(result).toEqual([file]);
     });
   });
 });

@@ -436,3 +436,19 @@ export const getAssetsByDirName = (dirname) =>
 selectedAssetFolder.subscribe(() => {
   focusedAsset.set(undefined);
 });
+
+/**
+ * Get a list of duplicate files based on their names compared to existing assets.
+ * @param {File[]} files The list of files to check for duplicates.
+ * @param {Asset[]} assets The list of existing assets to compare against.
+ * @returns {File[]} An array of files that have duplicate names in the existing assets.
+ */
+export const getDuplicateFiles = (files, assets) => {
+  if (!assets.length || !files.length) {
+    return [];
+  }
+
+  const existingNames = new Set(assets.map(({ name }) => name.normalize().toLowerCase()));
+
+  return files.filter((file) => existingNames.has(file.name.normalize().toLowerCase()));
+};
