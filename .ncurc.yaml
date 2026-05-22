@@ -7,5 +7,3 @@ reject:
   # Updating to TypeScript 6 is blocked by
   # https://github.com/sveltejs/svelte-preprocess/pull/675
   - typescript
-  # prettier-plugin-svelte@4 introduces many errors
-  - prettier-plugin-svelte
