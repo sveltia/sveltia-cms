@@ -4,6 +4,3 @@ reject:
   - eslint
   # https://github.com/sveltia/sveltia-cms/issues/540
   - terra-draw-leaflet-adapter
-  # Updating to TypeScript 6 is blocked by
-  # https://github.com/sveltejs/svelte-preprocess/pull/675
-  - typescript
