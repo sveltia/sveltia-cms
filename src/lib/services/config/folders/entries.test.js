@@ -762,6 +762,39 @@ describe('config/folders/entries', () => {
       expect(getValidCollections).toHaveBeenCalledWith({ collections: [], type: 'entry' });
     });
 
+    it('should use bare folderPath for default locale when omitDefaultLocaleFromFilePath is true', () => {
+      // @ts-ignore - simplified mock for testing
+      vi.mocked(getValidCollections).mockReturnValue([{ name: 'events', folder: 'events' }]);
+
+      // @ts-ignore - simplified mock for testing
+      vi.mocked(normalizeI18nConfig).mockReturnValue({
+        allLocales: ['en', 'de', 'fr'],
+        defaultLocale: 'en',
+        omitDefaultLocaleFromFilePath: true,
+        // @ts-ignore - simplified structure map for testing
+        structureMap: { i18nMultiRootFolder: true },
+      });
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getEntryCollectionFolders(config);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        collectionName: 'events',
+        folderPath: 'events',
+        folderPathMap: {
+          en: 'events', // default locale: no locale prefix
+          de: 'de/events',
+          fr: 'fr/events',
+        },
+      });
+    });
+
     it('should return empty array when no entry collections', () => {
       vi.mocked(getValidCollections).mockReturnValue([]);
 

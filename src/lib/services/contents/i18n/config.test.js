@@ -8,6 +8,7 @@ import {
   DEFAULT_LOCALE_KEY,
   determineDefaultLocale,
   determineInitialLocales,
+  determineOmitDefaultLocale,
   determineStructure,
   I18N_STRUCTURES,
   mergeI18nConfigs,
@@ -1393,6 +1394,83 @@ describe('Test internal helper functions', () => {
     test('should preserve order and not duplicate default locale', () => {
       expect(determineInitialLocales(['fr', 'en'], ['en', 'fr', 'de'], 'en')).toEqual(['en', 'fr']);
       expect(determineInitialLocales(['de', 'fr'], ['en', 'fr', 'de'], 'fr')).toEqual(['fr', 'de']);
+    });
+  });
+
+  describe('determineOmitDefaultLocale', () => {
+    /** @type {import('$lib/types/private').I18nFileStructureMap} */
+    const baseStructureMap = {
+      i18nSingleFile: false,
+      i18nSingleFileDefaultRoot: false,
+      i18nMultiFile: false,
+      i18nMultiFolder: false,
+      i18nMultiRootFolder: false,
+    };
+
+    test('should return false when omitDefaultConfig is false', () => {
+      const structureMap = { ...baseStructureMap, i18nMultiFile: true };
+
+      expect(determineOmitDefaultLocale(false, structureMap)).toBe(false);
+    });
+
+    test('should return false for single_file structure', () => {
+      const structureMap = { ...baseStructureMap, i18nSingleFile: true };
+
+      expect(determineOmitDefaultLocale(true, structureMap)).toBe(false);
+    });
+
+    test('should return true for multiple_files structure', () => {
+      const structureMap = { ...baseStructureMap, i18nMultiFile: true };
+
+      expect(determineOmitDefaultLocale(true, structureMap)).toBe(true);
+    });
+
+    test('should return true for multiple_folders structure', () => {
+      const structureMap = { ...baseStructureMap, i18nMultiFolder: true };
+
+      expect(determineOmitDefaultLocale(true, structureMap)).toBe(true);
+    });
+
+    test('should return true for multiple_root_folders structure', () => {
+      const structureMap = { ...baseStructureMap, i18nMultiRootFolder: true };
+
+      expect(determineOmitDefaultLocale(true, structureMap)).toBe(true);
+    });
+
+    test('should return true for file with {{locale}} in path', () => {
+      /** @type {CollectionFile} */
+      const file = { name: 'about', file: '{{locale}}/about.md', fields: [] };
+
+      expect(determineOmitDefaultLocale(true, baseStructureMap, file)).toBe(true);
+    });
+
+    test('should return true for file with {{locale}}. pattern', () => {
+      /** @type {CollectionFile} */
+      const file = { name: 'about', file: 'content/about.{{locale}}.md', fields: [] };
+
+      expect(determineOmitDefaultLocale(true, baseStructureMap, file)).toBe(true);
+    });
+
+    test('should return false for file without {{locale}} in path', () => {
+      /** @type {CollectionFile} */
+      const file = { name: 'about', file: 'content/about.md', fields: [] };
+
+      expect(determineOmitDefaultLocale(true, baseStructureMap, file)).toBe(false);
+    });
+
+    test('should return false for file with {{locale}} at end of path (no separator)', () => {
+      /** @type {CollectionFile} */
+      const file = { name: 'about', file: 'content/about-{{locale}}', fields: [] };
+
+      expect(determineOmitDefaultLocale(true, baseStructureMap, file)).toBe(false);
+    });
+
+    test('should ignore structureMap when file is provided', () => {
+      const structureMap = { ...baseStructureMap, i18nMultiFile: true };
+      /** @type {CollectionFile} */
+      const file = { name: 'about', file: 'content/about.md', fields: [] }; // no {{locale}}
+
+      expect(determineOmitDefaultLocale(true, structureMap, file)).toBe(false);
     });
   });
 });

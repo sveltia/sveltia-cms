@@ -194,6 +194,28 @@ export const determineInitialLocales = (initialLocalesConfig, allLocales, defaul
 };
 
 /**
+ * Determines whether the default locale should be omitted from the file path.
+ * @internal
+ * @param {boolean} omitDefaultLocale The raw `omit_default_locale_from_file_path` config value.
+ * @param {I18nFileStructureMap} structureMap The structure map.
+ * @param {CollectionFile} [file] The collection file configuration.
+ * @returns {boolean} Whether to omit the default locale from the file path.
+ */
+export const determineOmitDefaultLocale = (omitDefaultLocale, structureMap, file) => {
+  if (!omitDefaultLocale) {
+    return false;
+  }
+
+  if (file) {
+    return /{{locale}}[./]/.test(file.file);
+  }
+
+  return (
+    structureMap.i18nMultiFile || structureMap.i18nMultiFolder || structureMap.i18nMultiRootFolder
+  );
+};
+
+/**
  * Get the normalized i18n configuration for the given collection or collection file.
  * @param {Collection} collection Developer-defined collection.
  * @param {CollectionFile} [file] Developer-defined collection file.
@@ -211,8 +233,8 @@ export const normalizeI18nConfig = (collection, file) => {
     initial_locales: initialLocalesConfig,
     save_all_locales: saveAllLocalesConfig = true,
     canonical_slug: canonicalSlugConfig = { key: undefined, value: undefined },
-    omit_default_locale_from_filename: omitDefaultConfigLegacy,
-    omit_default_locale_from_file_path: omitDefaultConfig = omitDefaultConfigLegacy ?? false,
+    omit_default_locale_from_filename: omitDefaultLocaleLegacy,
+    omit_default_locale_from_file_path: omitDefaultLocale = omitDefaultLocaleLegacy ?? false,
     omit_default_locale_from_preview_path: omitDefaultLocaleFromPreviewPath = false,
   } = config ?? {};
 
@@ -221,7 +243,7 @@ export const normalizeI18nConfig = (collection, file) => {
     warnDeprecation('save_all_locales');
   }
 
-  if (omitDefaultConfigLegacy !== undefined) {
+  if (omitDefaultLocaleLegacy !== undefined) {
     warnDeprecation('omit_default_locale_from_filename');
   }
 
@@ -242,8 +264,11 @@ export const normalizeI18nConfig = (collection, file) => {
 
   const initialLocales = determineInitialLocales(initialLocalesConfig, allLocales, defaultLocale);
 
-  const omitDefaultLocaleFromFilePath =
-    omitDefaultConfig && (file ? /{{locale}}[./]/.test(file.file) : structureMap.i18nMultiFile);
+  const omitDefaultLocaleFromFilePath = determineOmitDefaultLocale(
+    omitDefaultLocale,
+    structureMap,
+    file,
+  );
 
   if (structure === 'multiple_folders_i18n_root') {
     warnDeprecation('multiple_folders_i18n_root');
