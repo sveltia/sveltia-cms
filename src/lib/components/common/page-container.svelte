@@ -65,7 +65,15 @@
   };
 
   $effect.pre(() => {
-    restoreSidebarWidth();
+    void [$hasOverlay];
+
+    // `ResizablePaneGroup` doesn’t work well when the container is inert, so we need to wait until
+    // the overlay is actually gone before restoring the sidebar width.
+    window.requestAnimationFrame(() => {
+      if (!$hasOverlay) {
+        restoreSidebarWidth();
+      }
+    });
   });
 </script>
 
