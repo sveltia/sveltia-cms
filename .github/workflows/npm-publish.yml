@@ -39,3 +39,4 @@ jobs:
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           reduce_headings: true
+        continue-on-error: true
