@@ -21,7 +21,7 @@ import { addMessage, checkName } from '$lib/services/config/parser/utils/validat
 export const parseCollectionFile = (context, collectors) => {
   const { collection, collectionFile } = context;
   // @ts-ignore singleton files don’t have `format` property on their files
-  const { file, format = collection.format, fields } = collectionFile;
+  const { file, format = collection.format, fields, i18n } = collectionFile;
   const { extension } = getPathInfo(file);
 
   if (isFormatMismatch(extension, format, fields)) {
@@ -35,6 +35,13 @@ export const parseCollectionFile = (context, collectors) => {
 
   if (!fields?.length) {
     addMessage({ strKey: 'collection_file_no_fields', context, collectors });
+  }
+
+  if (file.includes('{{locale}}') && !i18n) {
+    // The `{{locale}}` placeholder in the `file` path is only valid if i18n is enabled for the
+    // collection file. Otherwise, it will be replaced with the internal `_default` locale code,
+    // which is likely not the intended behavior.
+    addMessage({ strKey: 'collection_file_i18n_required', context, collectors });
   }
 
   parseFields(fields, context, collectors);

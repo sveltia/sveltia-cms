@@ -15,6 +15,7 @@ const mockI18nStrings = {
   'config.error_locator.file': 'File: {file}',
   'config.error_locator.field': 'Field: {field}',
   'config.error.duplicate_collection_file_names': 'Duplicate file name: {name}',
+  'config.error.collection_file_i18n_required': 'Collection file i18n required',
 };
 
 /**
@@ -264,6 +265,82 @@ describe('Collection Files Parser', () => {
       parseCollectionFile(context, collectors);
 
       expect(mockParseFields).toHaveBeenCalled();
+    });
+
+    it('should add error when {{locale}} placeholder is used without i18n', async () => {
+      const { parseCollectionFile } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts', format: 'yaml' },
+        collectionFile: {
+          name: 'post',
+          file: 'content/posts/{{locale}}/index.yaml',
+          format: 'yaml',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseCollectionFile(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'collection_file_i18n_required',
+        }),
+      );
+    });
+
+    it('should not add error when {{locale}} placeholder is used with i18n enabled', async () => {
+      const { parseCollectionFile } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts', format: 'yaml' },
+        collectionFile: {
+          name: 'post',
+          file: 'content/posts/{{locale}}/index.yaml',
+          format: 'yaml',
+          fields: [{ name: 'title', widget: 'string' }],
+          i18n: { structure: 'single_file' },
+        },
+      };
+
+      parseCollectionFile(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'collection_file_i18n_required',
+        }),
+      );
+    });
+
+    it('should not add error when {{locale}} placeholder is not used', async () => {
+      const { parseCollectionFile } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts', format: 'yaml' },
+        collectionFile: {
+          name: 'post',
+          file: 'content/posts/index.yaml',
+          format: 'yaml',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseCollectionFile(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'collection_file_i18n_required',
+        }),
+      );
     });
   });
 
