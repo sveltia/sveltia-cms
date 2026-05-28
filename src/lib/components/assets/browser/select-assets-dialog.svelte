@@ -343,7 +343,7 @@
       {@const { showServiceLink, serviceLabel, serviceURL } =
         allStockAssetProviders[/** @type {StockAssetProviderName} */ (libraryName)] ?? {}}
       {#if showServiceLink}
-        <a href={serviceURL}>
+        <a href={serviceURL} class="service-link">
           {_('prefs.media.stock_photos.credit', { values: { service: serviceLabel } })}
         </a>
       {/if}
@@ -524,6 +524,10 @@
       overflow: auto;
       flex: auto;
     }
+  }
+
+  .service-link {
+    font-size: var(--sui-font-size-small);
   }
 
   .filter-tools {
