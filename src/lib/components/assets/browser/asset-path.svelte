@@ -33,7 +33,7 @@
    * @param {string} str The string to process.
    * @returns {string} The processed string with `<wbr>` tags for line breaking.
    */
-  const getLabel = (str) => sanitize(str.replace(/([-_.])/g, '$1<wbr>'), sanitizeOptions);
+  const getLabel = (str) => sanitize(str, sanitizeOptions).replace(/([-_.])/g, '$1<wbr>');
 </script>
 
 {#if segments.length}
