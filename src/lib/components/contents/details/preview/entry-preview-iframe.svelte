@@ -99,7 +99,7 @@
   bind:this={iframe}
 ></iframe>
 
-<style lang="scss">
+<style>
   iframe {
     display: block;
     border: none;

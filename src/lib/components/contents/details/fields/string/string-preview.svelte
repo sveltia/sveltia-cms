@@ -58,18 +58,16 @@
   </p>
 {/if}
 
-<style lang="scss">
+<style>
   .title {
     font-size: var(--sui-font-size-xxx-large);
     font-weight: var(--sui-font-weight-bold);
   }
 
-  // Remove the padding to make the iframe full-width on small screens
+  /* Remove the padding to make the iframe full-width on small screens */
   @media (width < 768px) {
-    p:has(:global(iframe)) {
-      :global([role='document'] section) > & {
-        margin-inline: calc(var(--entry-preview-padding-inline) * -1);
-      }
+    :global([role='document'] section) > p:has(:global(iframe)) {
+      margin-inline: calc(var(--entry-preview-padding-inline) * -1);
     }
   }
 </style>

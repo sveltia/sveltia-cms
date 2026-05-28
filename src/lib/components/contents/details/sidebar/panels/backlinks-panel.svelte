@@ -74,7 +74,7 @@
   {/if}
 </PanelContainer>
 
-<style lang="scss">
+<style>
   .collection {
     padding: 4px;
 

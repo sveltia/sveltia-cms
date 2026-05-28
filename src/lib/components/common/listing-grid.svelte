@@ -35,7 +35,7 @@
   {/await}
 </div>
 
-<style lang="scss">
+<style>
   :is(.grid-view, .list-view) {
     display: block;
     padding: 0 16px 16px;
@@ -51,7 +51,7 @@
     :global {
       .row-group-caption {
         display: block;
-        grid-column: 1 / -1; // span the entire row
+        grid-column: 1 / -1; /* span the entire row */
 
         th {
           display: block;

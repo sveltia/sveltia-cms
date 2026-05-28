@@ -104,7 +104,7 @@
   </div>
 </Dialog>
 
-<style lang="scss">
+<style>
   p:not(:empty) {
     margin-top: 0;
   }

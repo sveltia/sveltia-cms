@@ -77,7 +77,7 @@
   {/if}
 </div>
 
-<style lang="scss">
+<style>
   .wrapper {
     display: contents;
 

@@ -58,7 +58,7 @@
   {/if}
 </div>
 
-<style lang="scss">
+<style>
   iframe {
     display: block;
     margin: 0 auto;

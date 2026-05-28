@@ -435,7 +435,7 @@
 
 <OversizeAlertDialog bind:open={showOversizeAlert} {oversizedFileNames} {maxSize} />
 
-<style lang="scss">
+<style>
   .grid-wrapper {
     overflow-y: auto;
     height: 100%;

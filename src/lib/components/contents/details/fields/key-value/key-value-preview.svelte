@@ -86,7 +86,7 @@
   </table>
 {/if}
 
-<style lang="scss">
+<style>
   table {
     width: -moz-available;
     width: -webkit-fill-available;
@@ -105,7 +105,7 @@
 
   td {
     &:empty::after {
-      content: '\00a0'; // nbsp
+      content: '\00a0'; /* nbsp */
     }
   }
 </style>

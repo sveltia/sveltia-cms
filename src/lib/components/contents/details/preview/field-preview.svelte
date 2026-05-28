@@ -96,7 +96,7 @@
   </section>
 {/if}
 
-<style lang="scss">
+<style>
   :global([role='document']) section {
     overflow: hidden;
     margin: 8px 0;

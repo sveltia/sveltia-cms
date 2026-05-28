@@ -61,7 +61,7 @@
   </div>
 </Dialog>
 
-<style lang="scss">
+<style>
   .wrapper {
     display: flex;
 

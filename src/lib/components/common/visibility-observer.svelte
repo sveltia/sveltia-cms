@@ -38,7 +38,7 @@
   <div class="placeholder" bind:this={placeholder}></div>
 {/if}
 
-<style lang="scss">
+<style>
   .placeholder {
     height: 64px;
   }

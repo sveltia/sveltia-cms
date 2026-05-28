@@ -56,7 +56,7 @@
   </div>
 {/if}
 
-<style lang="scss">
+<style>
   .wrapper {
     flex: none;
     color: var(--sui-tertiary-foreground-color) !important;

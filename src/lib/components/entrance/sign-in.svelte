@@ -166,7 +166,7 @@
   {/if}
 </PromptDialog>
 
-<style lang="scss">
+<style>
   .buttons {
     display: flex;
     flex-direction: column;

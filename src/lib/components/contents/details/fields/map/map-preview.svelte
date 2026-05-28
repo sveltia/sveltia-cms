@@ -28,7 +28,7 @@
   <pre>{currentValue}</pre>
 {/if}
 
-<style lang="scss">
+<style>
   pre {
     white-space: pre-wrap;
   }

@@ -167,7 +167,7 @@
   {/each}
 </div>
 
-<style lang="scss">
+<style>
   .wrapper {
     :global {
       .grid-row.drag-source {

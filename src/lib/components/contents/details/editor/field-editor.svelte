@@ -352,7 +352,7 @@
   </FieldEditorGroup>
 {/if}
 
-<style lang="scss">
+<style>
   .field-wrapper {
     &.has-extra-labels {
       display: flex;
@@ -414,7 +414,7 @@
       }
 
       input:read-only {
-        // Make readonly inputs selectable
+        /* Make readonly inputs selectable */
         -webkit-user-select: text;
         user-select: text;
         pointer-events: auto;

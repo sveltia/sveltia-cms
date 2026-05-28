@@ -270,7 +270,7 @@
   />
 </div>
 
-<style lang="scss">
+<style>
   table {
     width: -moz-available;
     width: -webkit-fill-available;

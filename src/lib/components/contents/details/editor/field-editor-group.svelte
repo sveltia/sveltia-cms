@@ -34,7 +34,7 @@
   {@render children?.()}
 </section>
 
-<style lang="scss">
+<style>
   section {
     padding: var(--field-editor-padding);
 

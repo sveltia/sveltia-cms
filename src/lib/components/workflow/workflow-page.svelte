@@ -27,12 +27,12 @@
   {/snippet}
 </PageContainer>
 
-<style lang="scss">
+<style>
   .columns {
     flex: auto;
     display: flex;
     gap: 4px;
-    background-color: var(--sui-secondary-background-color); // same as toolbar
+    background-color: var(--sui-secondary-background-color); /* same as toolbar */
 
     @media (width < 768px) {
       flex-direction: column;

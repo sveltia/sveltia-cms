@@ -49,7 +49,7 @@
   {/if}
 </VisibilityObserver>
 
-<style lang="scss">
+<style>
   div {
     --entry-preview-padding-block: 8px;
     --entry-preview-padding-inline: 16px;

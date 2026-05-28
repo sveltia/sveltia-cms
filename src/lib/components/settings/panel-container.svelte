@@ -38,7 +38,7 @@
   <Alert status={toastStatus}>{toastMessage}</Alert>
 </Toast>
 
-<style lang="scss">
+<style>
   .container {
     display: contents;
 

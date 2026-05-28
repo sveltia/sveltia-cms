@@ -66,7 +66,7 @@
   {/if}
 </div>
 
-<style lang="scss">
+<style>
   .wrapper {
     display: contents;
     --sui-textbox-border-width: 0;

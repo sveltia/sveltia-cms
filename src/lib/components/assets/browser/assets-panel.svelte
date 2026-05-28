@@ -118,7 +118,7 @@
   </EmptyState>
 {/if}
 
-<style lang="scss">
+<style>
   .grid-wrapper {
     overflow-y: auto;
     height: 100%;

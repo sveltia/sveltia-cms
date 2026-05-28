@@ -133,7 +133,7 @@
   {/if}
 </AppShell>
 
-<style lang="scss">
+<style>
   @view-transition {
     navigation: auto;
   }
@@ -186,7 +186,7 @@
     }
   }
 
-  // RTL-specific keyframes that mirror the depth effect
+  /* RTL-specific keyframes that mirror the depth effect */
   @keyframes slide-out-to-left-rtl {
     from {
       transform: translateX(0);

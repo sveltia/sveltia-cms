@@ -118,7 +118,7 @@
   </div>
 </Dialog>
 
-<style lang="scss">
+<style>
   p {
     margin: 0 0 8px;
   }

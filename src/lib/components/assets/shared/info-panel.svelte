@@ -193,7 +193,7 @@
   {/if}
 </div>
 
-<style lang="scss">
+<style>
   .detail {
     flex: none;
     overflow-x: hidden;

@@ -161,7 +161,7 @@
   </Alert>
 </Toast>
 
-<style lang="scss">
+<style>
   .empty {
     display: flex;
     flex-direction: column;
@@ -222,7 +222,7 @@
 
       &:active,
       &:focus {
-        // Reset the style because the element is non-interactive on touch devices
+        /* Reset the style because the element is non-interactive on touch devices */
         background-color: var(--sui-button-background-color) !important;
       }
     }

@@ -110,7 +110,7 @@
   {/if}
 </div>
 
-<style lang="scss">
+<style>
   .sidebar {
     flex: none;
     display: flex;

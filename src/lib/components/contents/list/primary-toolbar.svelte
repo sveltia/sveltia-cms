@@ -131,7 +131,7 @@
 
 <DeleteEntriesDialog bind:open={showDeleteDialog} />
 
-<style lang="scss">
+<style>
   h2 {
     flex: none !important;
   }

@@ -29,7 +29,7 @@
   </div>
 </div>
 
-<style lang="scss">
+<style>
   .validation {
     color: var(--sui-error-foreground-color) !important;
     font-size: var(--sui-font-size-small);

@@ -32,7 +32,7 @@
   </div>
 </div>
 
-<style lang="scss">
+<style>
   .subsection {
     margin: 16px auto;
     border: 2px solid var(--sui-secondary-border-color);

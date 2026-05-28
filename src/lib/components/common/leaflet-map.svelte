@@ -102,10 +102,10 @@
   {...rest}
 ></div>
 
-<style lang="scss">
-  // Leaflet default styles copied from `node_modules/leaflet/dist/leaflet.css`. Somehow we cannot
-  // import it directly here; Vite emits it as a separate CSS file, which we want to avoid.
-  // @todo Remove unused rules.
+<style>
+  /* Leaflet default styles copied from `node_modules/leaflet/dist/leaflet.css`. Somehow we can’t */
+  /* import it directly here; Vite emits it as a separate CSS file, which we want to avoid. */
+  /* @todo Remove unused rules. */
   :global {
     .leaflet-pane,
     .leaflet-tile,
@@ -366,7 +366,9 @@
     }
 
     .leaflet-grab {
+      /* stylelint-disable-next-line declaration-property-value-no-unknown */
       cursor: -webkit-grab;
+      /* stylelint-disable-next-line declaration-property-value-no-unknown */
       cursor: -moz-grab;
       cursor: grab;
     }
@@ -385,7 +387,9 @@
     .leaflet-dragging .leaflet-grab .leaflet-interactive,
     .leaflet-dragging .leaflet-marker-draggable {
       cursor: move;
+      /* stylelint-disable-next-line declaration-property-value-no-unknown */
       cursor: -webkit-grabbing;
+      /* stylelint-disable-next-line declaration-property-value-no-unknown */
       cursor: -moz-grabbing;
       cursor: grabbing;
     }
@@ -844,7 +848,7 @@
     padding: 4px 8px;
   }
 
-  // Dark theme: https://stackoverflow.com/q/59819792
+  /* Dark theme: https://stackoverflow.com/q/59819792 */
   :global(:root[data-theme='dark'] .leaflet-layer) {
     filter: invert(100%) hue-rotate(180deg);
   }

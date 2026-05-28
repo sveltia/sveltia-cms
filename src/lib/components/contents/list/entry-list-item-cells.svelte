@@ -77,7 +77,7 @@
   </div>
 </GridCell>
 
-<style lang="scss">
+<style>
   .label {
     :global {
       .icon.home {

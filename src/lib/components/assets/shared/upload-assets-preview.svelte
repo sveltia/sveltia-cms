@@ -84,7 +84,7 @@
   {/each}
 </div>
 
-<style lang="scss">
+<style>
   .files {
     display: flex;
     flex-direction: column;

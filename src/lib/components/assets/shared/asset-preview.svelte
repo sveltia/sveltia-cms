@@ -225,7 +225,7 @@
   {/if}
 </div>
 
-<style lang="scss">
+<style>
   .preview {
     display: inline-flex;
     align-items: center;
@@ -256,7 +256,7 @@
       aspect-ratio: 1 / 1;
 
       img {
-        // Prevent the image from being dragged
+        /* Prevent the image from being dragged */
         pointer-events: none;
       }
     }
@@ -319,21 +319,19 @@
     }
   }
 
-  img {
-    /* prettier-ignore */
-    .checkerboard & {
-      // hardcoded, the same color as the checkerboard in Photoshop
-      background-image:
-        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
-        linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%);
-      background-size: 8px 8px;
-      background-position: 0 0, 4px 4px;
-    }
+  /* prettier-ignore */
+  .checkerboard img {
+    /* hardcoded, the same color as the checkerboard in Photoshop */
+    background-image:
+      linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+      linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 4px 4px;
+  }
 
-    :not(.checkerboard) & {
-      // hardcoded, the same color as the transparent image preview in Chrome and Firefox
-      background-color: #e5e5e5;
-    }
+  :not(.checkerboard) img {
+    /* hardcoded, the same color as the transparent image preview in Chrome and Firefox */
+    background-color: #e5e5e5;
   }
 
   :is(:global(img, video)) {
@@ -342,10 +340,10 @@
     &:not([src]) {
       visibility: hidden;
     }
+  }
 
-    .cover & {
-      object-fit: cover;
-      aspect-ratio: 1 / 1;
-    }
+  .cover :is(:global(img, video)) {
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
   }
 </style>

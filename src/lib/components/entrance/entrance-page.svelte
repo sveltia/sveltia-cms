@@ -80,7 +80,7 @@
   </div>
 {/if}
 
-<style lang="scss">
+<style>
   .container {
     position: absolute;
     inset: 0;
@@ -131,7 +131,7 @@
     }
 
     :global {
-      // `<SignIn>` also has `.message`
+      /* `<SignIn>` also has `.message` */
       .message {
         margin: 0 0 16px;
         font-size: var(--sui-font-size-large);

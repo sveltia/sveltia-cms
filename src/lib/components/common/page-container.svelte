@@ -105,7 +105,7 @@
   {/if}
 </div>
 
-<style lang="scss">
+<style>
   .outer {
     flex: auto;
     display: flex;
@@ -129,7 +129,7 @@
           background-color: var(--sui-primary-background-color);
         }
 
-        // Mobile header
+        /* Mobile header */
         header {
           display: flex;
           align-items: center;

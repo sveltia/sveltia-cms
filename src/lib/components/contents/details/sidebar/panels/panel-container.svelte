@@ -29,7 +29,7 @@
   </div>
 </section>
 
-<style lang="scss">
+<style>
   section {
     overflow: hidden;
     height: 100%;

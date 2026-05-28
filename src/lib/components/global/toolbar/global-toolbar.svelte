@@ -33,14 +33,14 @@
   </Toolbar>
 </div>
 
-<style lang="scss">
+<style>
   .toolbar-wrapper {
     display: contents;
 
     &[inert] {
       :global {
         .sui.search-bar {
-          // Disable the keyboard shortcut for the search bar
+          /* Disable the keyboard shortcut for the search bar */
           display: none !important;
         }
       }

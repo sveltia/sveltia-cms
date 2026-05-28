@@ -24,7 +24,7 @@
   {@render children?.()}
 </div>
 
-<style lang="scss">
+<style>
   .list-container {
     --icon-size: 36px;
 

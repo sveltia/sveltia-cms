@@ -269,16 +269,16 @@
   </div>
 {/if}
 
-<style lang="scss">
+<style>
   .wrapper {
     border-width: 2px;
     border-color: var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);
+  }
 
-    :global(.sui.checkbox) + & {
-      & > :global(.group) {
-        margin-top: 8px;
-      }
+  :global(.sui.checkbox) + .wrapper {
+    & > :global(.group) {
+      margin-top: 8px;
     }
   }
 

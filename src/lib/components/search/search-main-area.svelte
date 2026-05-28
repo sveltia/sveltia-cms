@@ -37,7 +37,7 @@
   {/snippet}
 </PageContainerMainArea>
 
-<style lang="scss">
+<style>
   [role='search'] {
     display: contents;
 

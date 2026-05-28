@@ -85,7 +85,7 @@
   {/if}
 </PanelContainer>
 
-<style lang="scss">
+<style>
   .commits {
     padding: 4px;
   }

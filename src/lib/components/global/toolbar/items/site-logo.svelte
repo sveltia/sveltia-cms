@@ -20,7 +20,7 @@
   </Button>
 {/if}
 
-<style lang="scss">
+<style>
   img {
     width: 24px;
     height: 24px;

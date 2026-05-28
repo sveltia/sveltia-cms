@@ -1,5 +1,5 @@
 extends:
-  - stylelint-config-recommended-scss
+  - stylelint-config-recommended
 ignoreFiles:
   - node_modules/**
   - package/**

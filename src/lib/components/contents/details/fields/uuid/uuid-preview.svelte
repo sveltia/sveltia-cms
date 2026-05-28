@@ -28,7 +28,7 @@
   <p>{currentValue}</p>
 {/if}
 
-<style lang="scss">
+<style>
   p {
     font-family: var(--sui-font-family-monospace);
   }

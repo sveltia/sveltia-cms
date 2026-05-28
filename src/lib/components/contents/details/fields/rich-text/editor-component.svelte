@@ -520,13 +520,13 @@
   </div>
 {/if}
 
-<style lang="scss">
+<style>
   .wrapper {
-    display: inline-block; // Cancel underline if the component is within a link
+    display: inline-block; /* Cancel underline if the component is within a link */
     border: 1px solid var(--sui-secondary-border-color);
     border-radius: 4px;
     width: 100%;
-    color: var(--sui-secondary-foreground-color); // Reset color within a link
+    color: var(--sui-secondary-foreground-color); /* Reset color within a link */
     background-color: var(--sui-primary-background-color);
     white-space: normal;
     -webkit-user-select: none;
@@ -536,7 +536,7 @@
       outline-color: var(--sui-primary-accent-color-translucent);
     }
 
-    // Make the input fields compact within the built-in image component
+    /* Make the input fields compact within the built-in image component */
     &:is([data-component-name='image'], [data-component-name='linked-image']) {
       :global {
         @media (768px <= width) {

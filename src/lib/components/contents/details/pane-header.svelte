@@ -156,7 +156,7 @@
   </Toolbar>
 </div>
 
-<style lang="scss">
+<style>
   .header {
     flex: none !important;
 

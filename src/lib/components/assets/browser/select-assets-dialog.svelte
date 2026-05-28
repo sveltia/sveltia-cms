@@ -492,7 +492,7 @@
   }}
 />
 
-<style lang="scss">
+<style>
   .wrapper {
     display: flex;
     gap: 16px;

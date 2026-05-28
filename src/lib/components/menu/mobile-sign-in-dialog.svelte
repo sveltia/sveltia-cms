@@ -39,7 +39,7 @@
   <canvas bind:this={canvas}></canvas>
 </Dialog>
 
-<style lang="scss">
+<style>
   canvas {
     display: block;
     margin: 32px auto 16px;

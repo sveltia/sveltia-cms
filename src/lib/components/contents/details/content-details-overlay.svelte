@@ -515,7 +515,7 @@
   </Alert>
 </Toast>
 
-<style lang="scss">
+<style>
   .wrapper {
     position: fixed;
     inset: 0;
@@ -550,12 +550,12 @@
     background-color: var(--sui-primary-background-color);
 
     &:not(:only-child) {
-      border-start-end-radius: 16px; // sidebar is present
+      border-start-end-radius: 16px; /* sidebar is present */
     }
 
     :global {
       .sui.resizable-handle {
-        background-color: var(--sui-secondary-background-color); // same as toolbar
+        background-color: var(--sui-secondary-background-color); /* same as toolbar */
 
         .swap-button {
           position: absolute;

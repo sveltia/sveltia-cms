@@ -130,7 +130,7 @@
   {/if}
 </div>
 
-<style lang="scss">
+<style>
   div {
     display: flex;
     align-items: center;

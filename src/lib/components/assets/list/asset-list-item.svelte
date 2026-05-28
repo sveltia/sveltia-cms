@@ -102,7 +102,7 @@
   {/if}
 </GridRow>
 
-<style lang="scss">
+<style>
   .label {
     word-break: break-all;
   }

@@ -34,7 +34,7 @@
   </div>
 </div>
 
-<style lang="scss">
+<style>
   .wrapper {
     flex: auto;
     display: flex;
@@ -47,10 +47,6 @@
       view-transition-name: page-main;
     }
 
-    :global(.resizable-pane) > & {
-      border-start-start-radius: 16px;
-    }
-
     :global {
       .sui.toolbar.primary {
         justify-content: center;
@@ -60,6 +56,10 @@
         }
       }
     }
+  }
+
+  :global(.resizable-pane) > .wrapper {
+    border-start-start-radius: 16px;
   }
 
   .main-inner {

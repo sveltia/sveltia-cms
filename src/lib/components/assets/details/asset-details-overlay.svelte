@@ -96,7 +96,7 @@
   {/key}
 </div>
 
-<style lang="scss">
+<style>
   .wrapper {
     position: fixed;
     inset: 0;

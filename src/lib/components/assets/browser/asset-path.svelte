@@ -54,7 +54,7 @@
   </span>
 {/if}
 
-<style lang="scss">
+<style>
   .name {
     color: var(--sui-tertiary-foreground-color);
 

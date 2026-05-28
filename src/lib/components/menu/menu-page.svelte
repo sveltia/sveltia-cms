@@ -36,7 +36,7 @@
   {/snippet}
 </PageContainer>
 
-<style lang="scss">
+<style>
   .wrapper {
     overflow-y: auto;
     height: 100%;

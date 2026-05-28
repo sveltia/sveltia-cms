@@ -56,7 +56,7 @@
   {/if}
 </ListContainer>
 
-<style lang="scss">
+<style>
   .label {
     display: flex;
     align-items: center;

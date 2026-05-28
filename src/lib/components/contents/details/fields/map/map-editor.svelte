@@ -421,7 +421,7 @@
   {errorMessage}
 </AlertDialog>
 
-<style lang="scss">
+<style>
   .toolbar {
     display: flex;
     align-items: center;

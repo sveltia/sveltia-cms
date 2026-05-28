@@ -22,7 +22,7 @@
   {/snippet}
 </MenuItem>
 
-<style lang="scss">
+<style>
   .version {
     border-radius: 4px;
     padding: 0 6px;

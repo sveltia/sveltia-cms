@@ -14,7 +14,7 @@
   {/snippet}
 </PageContainer>
 
-<style lang="scss">
+<style>
   div {
     flex: auto;
     overflow: auto;

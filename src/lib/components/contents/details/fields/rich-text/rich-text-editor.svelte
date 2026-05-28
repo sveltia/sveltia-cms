@@ -415,7 +415,7 @@
   {/await}
 </div>
 
-<style lang="scss">
+<style>
   .wrapper {
     display: contents;
 
@@ -431,7 +431,7 @@
     :global {
       @media (width < 768px) {
         .sui.text-editor {
-          // Remove the section padding
+          /* Remove the section padding */
           margin: 0 calc(var(--field-editor-padding) * -1) calc(var(--field-editor-padding) * -1);
           width: 100dvw;
         }

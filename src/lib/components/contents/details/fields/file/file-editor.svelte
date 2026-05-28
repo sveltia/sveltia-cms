@@ -440,7 +440,7 @@
   </div>
 </ConfirmationDialog>
 
-<style lang="scss">
+<style>
   .item-list {
     display: flex;
     flex-direction: column;

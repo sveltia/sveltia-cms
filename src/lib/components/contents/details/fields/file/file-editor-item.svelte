@@ -240,7 +240,7 @@
   </div>
 </div>
 
-<style lang="scss">
+<style>
   .filled {
     display: flex !important;
     align-items: center;

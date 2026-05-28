@@ -98,7 +98,7 @@
 <TranslatorApiKeyDialog />
 <EntryParseErrorsToast />
 
-<style lang="scss">
+<style>
   .page-root {
     position: relative;
     flex: auto;

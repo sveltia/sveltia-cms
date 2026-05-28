@@ -389,7 +389,7 @@
   {/if}
 </AlertDialog>
 
-<style lang="scss">
+<style>
   .error {
     margin-top: 8px;
     border-radius: var(--sui-control-medium-border-radius);

@@ -31,7 +31,7 @@
   <p lang={getCanonicalLocale(locale)} dir={getDirection(locale)}>{currentValue}</p>
 {/if}
 
-<style lang="scss">
+<style>
   p {
     white-space: pre-wrap;
   }

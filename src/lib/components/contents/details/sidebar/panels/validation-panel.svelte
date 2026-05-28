@@ -78,7 +78,7 @@
   {/if}
 </PanelContainer>
 
-<style lang="scss">
+<style>
   .locale {
     padding: 4px;
 

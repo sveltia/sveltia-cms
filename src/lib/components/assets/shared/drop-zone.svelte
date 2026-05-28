@@ -233,7 +233,7 @@
   </AlertDialog>
 {/if}
 
-<style lang="scss">
+<style>
   .drop-target {
     display: flex;
     flex-direction: column;

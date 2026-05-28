@@ -44,7 +44,7 @@
   {/if}
 </div>
 
-<style lang="scss">
+<style>
   .wrapper {
     display: flex;
     align-items: center;

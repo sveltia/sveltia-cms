@@ -55,7 +55,7 @@
   </p>
 {/if}
 
-<style lang="scss">
+<style>
   .preview {
     display: inline-flex;
     align-items: center;
