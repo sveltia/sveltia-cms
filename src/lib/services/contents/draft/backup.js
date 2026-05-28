@@ -77,8 +77,7 @@ export const getBackup = async (collectionName, slug = '') => {
     return null;
   }
 
-  // @todo Remove the legacy `siteConfigVersion` check prior to the 1.0 release
-  if ((backup.siteConfigVersion ?? backup.cmsConfigVersion) === get(cmsConfigVersion)) {
+  if (backup.cmsConfigVersion === get(cmsConfigVersion)) {
     return backup;
   }
 

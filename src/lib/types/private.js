@@ -738,8 +738,6 @@
  * @property {Date} timestamp When the backup was created.
  * @property {string} cmsConfigVersion The SHA-1 hash of the CMS configuration file, which is used
  * to verify that the backup can be safely restored.
- * @property {string} [siteConfigVersion] Replaced by `cmsConfigVersion`. Remove this before the 1.0
- * release.
  * @property {string} collectionName Collection name.
  * @property {string} slug Entry slug. An empty string for a new entry.
  * @property {LocaleStateMap} currentLocales Current locale state.
