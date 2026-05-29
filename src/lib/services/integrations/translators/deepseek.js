@@ -56,7 +56,7 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
       model,
       systemPrompt: createTranslationSystemPrompt(sourceLanguageName, targetLanguageName),
       userMessage: createTranslationUserPrompt(texts),
-      thinking: false,
+      reasoning: false,
     });
 
     return parseAiTranslationResponse(content, texts.length, 'DeepSeek API');

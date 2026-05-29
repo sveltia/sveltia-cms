@@ -27,7 +27,7 @@ export const complete = async ({
   userMessage,
   temperature = 0.3,
   maxTokens = 4000,
-  thinking = true,
+  reasoning = true,
 }) => {
   const response = await fetch(apiEndpoint, {
     method: 'POST',
@@ -43,7 +43,7 @@ export const complete = async ({
       ],
       temperature,
       max_tokens: maxTokens,
-      thinking: { type: thinking ? 'enabled' : 'disabled' },
+      thinking: { type: reasoning ? 'enabled' : 'disabled' },
       stream: false,
     }),
   });

@@ -83,7 +83,7 @@ describe('DeepSeek AI Client', () => {
       expect(body.stream).toBe(false);
     });
 
-    it('should use default temperature, max_tokens, and thinking=enabled when not provided', async () => {
+    it('should use default temperature, max_tokens, and reasoning=enabled when not provided', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
         new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
           status: 200,
@@ -114,14 +114,14 @@ describe('DeepSeek AI Client', () => {
       expect(body.max_tokens).toBe(512);
     });
 
-    it('should send thinking=disabled when thinking option is false', async () => {
+    it('should send thinking=disabled when reasoning option is false', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
         new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
           status: 200,
         }),
       );
 
-      await complete({ ...defaultOptions, thinking: false });
+      await complete({ ...defaultOptions, reasoning: false });
 
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
