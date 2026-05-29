@@ -73,6 +73,20 @@ vi.mock('./deepseek.js', () => ({
   },
 }));
 
+vi.mock('./mistral.js', () => ({
+  default: {
+    serviceId: 'mistral',
+    serviceLabel: 'Mistral',
+    apiLabel: 'Mistral AI API',
+    developerURL: 'https://docs.mistral.ai/',
+    apiKeyURL: 'https://console.mistral.ai/home?profile_dialog=api-keys',
+    apiKeyPattern: /[a-zA-Z0-9]{32,}/,
+    markdownSupported: true,
+    availability: vi.fn(),
+    translate: vi.fn(),
+  },
+}));
+
 vi.mock('svelte/store', () => {
   // Use globalThis to avoid hoisting issues
   const mockDerived = vi.fn((stores, callback) => {
@@ -124,6 +138,12 @@ describe('Translator Services Index', () => {
       expect(allTranslationServices).toHaveProperty('deepseek');
       expect(allTranslationServices.deepseek).toBeDefined();
       expect(allTranslationServices.deepseek.serviceId).toBe('deepseek');
+    });
+
+    it('should include Mistral AI translator service', () => {
+      expect(allTranslationServices).toHaveProperty('mistral');
+      expect(allTranslationServices.mistral).toBeDefined();
+      expect(allTranslationServices.mistral.serviceId).toBe('mistral');
     });
 
     it('should have all required properties for each service', () => {

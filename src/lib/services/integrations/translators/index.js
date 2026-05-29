@@ -6,6 +6,7 @@ import anthropic from './anthropic';
 import deepseek from './deepseek';
 import google from './google';
 import googleAi from './google-ai';
+import mistral from './mistral';
 import openai from './openai';
 
 /**
@@ -22,6 +23,7 @@ export const allTranslationServices = {
   deepseek,
   google,
   'google-ai': googleAi,
+  mistral,
   openai,
 };
 
