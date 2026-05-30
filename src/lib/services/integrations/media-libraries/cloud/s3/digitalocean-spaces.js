@@ -1,8 +1,9 @@
-import { get } from 'svelte/store';
-
-import { cmsConfig } from '$lib/services/config';
-
-import { listS3Objects, searchS3Objects, uploadToS3 } from './core';
+import {
+  getLibraryOptions as getS3LibraryOptions,
+  listS3Objects,
+  searchS3Objects,
+  uploadToS3,
+} from './core';
 
 /**
  * @import {
@@ -20,11 +21,7 @@ import { listS3Objects, searchS3Objects, uploadToS3 } from './core';
  * @returns {S3MediaLibrary | false | undefined} Configuration object, or `false` if explicitly
  * disabled.
  */
-export const getLibraryOptions = (config = get(cmsConfig)) =>
-  config?.media_libraries?.digitalocean_spaces ??
-  (config?.media_library?.name === 'digitalocean_spaces'
-    ? /** @type {S3MediaLibrary} */ (config?.media_library)
-    : undefined);
+export const getLibraryOptions = (config) => getS3LibraryOptions('digitalocean_spaces', config);
 
 /**
  * Check if DigitalOcean Spaces integration is enabled.
@@ -38,30 +35,35 @@ export const isEnabled = (fieldConfig) => {
 };
 
 /**
- * List files from DigitalOcean Spaces.
+ * Build the resolved S3 config for the given field or global Spaces library options.
  * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset[]>} Assets.
+ * @returns {S3MediaLibrary} Resolved config, or throws if unavailable.
+ * @throws {Error} If the DigitalOcean Spaces configuration is not available.
  */
-export const list = async (options) => {
-  const { fieldConfig } = options;
+const getConfig = ({ fieldConfig }) => {
   const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
 
   if (!libOptions) {
-    return Promise.reject(new Error('DigitalOcean Spaces configuration is not available'));
+    throw new Error('DigitalOcean Spaces configuration is not available');
   }
 
   // Spaces uses the region endpoint for API calls (path-style) and virtual-hosted-style for
   // public asset URLs, unless the user has configured a custom CDN public_url.
-  const config = {
+  return {
     ...libOptions,
     endpoint: `https://${libOptions.region}.digitaloceanspaces.com`,
     public_url:
       libOptions.public_url ??
       `https://${libOptions.bucket}.${libOptions.region}.digitaloceanspaces.com`,
   };
-
-  return listS3Objects(config, options);
 };
+
+/**
+ * List files from DigitalOcean Spaces.
+ * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+ * @returns {Promise<ExternalAsset[]>} Assets.
+ */
+export const list = async (options) => listS3Objects(getConfig(options), options);
 
 /**
  * Search files in DigitalOcean Spaces.
@@ -69,26 +71,7 @@ export const list = async (options) => {
  * @param {MediaLibraryFetchOptions} options Options containing the configuration.
  * @returns {Promise<ExternalAsset[]>} Assets.
  */
-export const search = async (query, options) => {
-  const { fieldConfig } = options;
-  const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
-
-  if (!libOptions) {
-    return Promise.reject(new Error('DigitalOcean Spaces configuration is not available'));
-  }
-
-  // Spaces uses the region endpoint for API calls (path-style) and virtual-hosted-style for
-  // public asset URLs, unless the user has configured a custom CDN public_url.
-  const config = {
-    ...libOptions,
-    endpoint: `https://${libOptions.region}.digitaloceanspaces.com`,
-    public_url:
-      libOptions.public_url ??
-      `https://${libOptions.bucket}.${libOptions.region}.digitaloceanspaces.com`,
-  };
-
-  return searchS3Objects(query, config, options);
-};
+export const search = async (query, options) => searchS3Objects(query, getConfig(options), options);
 
 /**
  * Upload files to DigitalOcean Spaces.
@@ -96,26 +79,7 @@ export const search = async (query, options) => {
  * @param {MediaLibraryFetchOptions} options Options containing the configuration.
  * @returns {Promise<ExternalAsset[]>} Uploaded assets.
  */
-export const upload = async (files, options) => {
-  const { fieldConfig } = options;
-  const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
-
-  if (!libOptions) {
-    return Promise.reject(new Error('DigitalOcean Spaces configuration is not available'));
-  }
-
-  // Spaces uses the region endpoint for API calls (path-style) and virtual-hosted-style for
-  // public asset URLs, unless the user has configured a custom CDN public_url.
-  const config = {
-    ...libOptions,
-    endpoint: `https://${libOptions.region}.digitaloceanspaces.com`,
-    public_url:
-      libOptions.public_url ??
-      `https://${libOptions.bucket}.${libOptions.region}.digitaloceanspaces.com`,
-  };
-
-  return uploadToS3(files, config, options);
-};
+export const upload = async (files, options) => uploadToS3(files, getConfig(options), options);
 
 /**
  * DigitalOcean Spaces media library service integration.

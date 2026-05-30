@@ -24,11 +24,16 @@ vi.mock('./index', () => ({
   uploadToS3: vi.fn(),
 }));
 
-vi.mock('./core', () => ({
-  listS3Objects: vi.fn(),
-  searchS3Objects: vi.fn(),
-  uploadToS3: vi.fn(),
-}));
+vi.mock('./core', async (importOriginal) => {
+  const actual = /** @type {object} */ (await importOriginal());
+
+  return {
+    ...actual,
+    listS3Objects: vi.fn(),
+    searchS3Objects: vi.fn(),
+    uploadToS3: vi.fn(),
+  };
+});
 
 describe('integrations/media-libraries/cloud/s3/cloudflare-r2', () => {
   const mockAccessKeyId = 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890';

@@ -1,13 +1,28 @@
 /* eslint-disable no-await-in-loop */
 
 import { sleep } from '@sveltia/utils/misc';
+import { get } from 'svelte/store';
 
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { cmsConfig } from '$lib/services/config';
 
 /**
  * @import { ExternalAsset, MediaLibraryFetchOptions } from '$lib/types/private';
- * @import { S3MediaLibrary } from '$lib/types/public';
+ * @import { CmsConfig, MediaField, MediaLibraries, S3MediaLibrary } from '$lib/types/public';
  */
+
+/**
+ * Get S3-compatible library options from site config for the given service.
+ * @param {keyof MediaLibraries} serviceId Service identifier matching the `media_libraries` key.
+ * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
+ * @returns {S3MediaLibrary | false | undefined} Configuration object, or `false` if explicitly
+ * disabled.
+ */
+export const getLibraryOptions = (serviceId, config = get(cmsConfig)) =>
+  /** @type {S3MediaLibrary | false | undefined} */ (config?.media_libraries?.[serviceId]) ??
+  (config?.media_library?.name === serviceId
+    ? /** @type {S3MediaLibrary} */ (config?.media_library)
+    : undefined);
 
 /**
  * @typedef {object} S3Object

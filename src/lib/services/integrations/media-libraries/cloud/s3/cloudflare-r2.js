@@ -1,8 +1,9 @@
-import { get } from 'svelte/store';
-
-import { cmsConfig } from '$lib/services/config';
-
-import { listS3Objects, searchS3Objects, uploadToS3 } from './core';
+import {
+  getLibraryOptions as getS3LibraryOptions,
+  listS3Objects,
+  searchS3Objects,
+  uploadToS3,
+} from './core';
 
 /**
  * @import {
@@ -43,11 +44,7 @@ const getEndpoint = ({ account_id: accountId, jurisdiction = 'default' }) => {
  * @returns {S3MediaLibrary | false | undefined} Configuration object, or `false` if explicitly
  * disabled.
  */
-export const getLibraryOptions = (config = get(cmsConfig)) =>
-  config?.media_libraries?.cloudflare_r2 ??
-  (config?.media_library?.name === 'cloudflare_r2'
-    ? /** @type {S3MediaLibrary} */ (config?.media_library)
-    : undefined);
+export const getLibraryOptions = (config) => getS3LibraryOptions('cloudflare_r2', config);
 
 /**
  * Check if Cloudflare R2 integration is enabled.
@@ -61,27 +58,32 @@ export const isEnabled = (fieldConfig) => {
 };
 
 /**
- * List files from Cloudflare R2.
+ * Build the resolved S3 config for the given field or global R2 library options.
  * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset[]>} Assets.
+ * @returns {S3MediaLibrary} Resolved config, or throws if unavailable.
+ * @throws {Error} If the Cloudflare R2 configuration is not available.
  */
-export const list = async (options) => {
-  const { fieldConfig } = options;
+const getConfig = ({ fieldConfig }) => {
   const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
 
   if (!libOptions) {
-    return Promise.reject(new Error('Cloudflare R2 configuration is not available'));
+    throw new Error('Cloudflare R2 configuration is not available');
   }
 
   // R2 uses auto region
-  const config = {
+  return {
     ...libOptions,
     region: 'auto',
     endpoint: getEndpoint(libOptions),
   };
-
-  return listS3Objects(config, options);
 };
+
+/**
+ * List files from Cloudflare R2.
+ * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+ * @returns {Promise<ExternalAsset[]>} Assets.
+ */
+export const list = async (options) => listS3Objects(getConfig(options), options);
 
 /**
  * Search files in Cloudflare R2.
@@ -89,23 +91,7 @@ export const list = async (options) => {
  * @param {MediaLibraryFetchOptions} options Options containing the configuration.
  * @returns {Promise<ExternalAsset[]>} Assets.
  */
-export const search = async (query, options) => {
-  const { fieldConfig } = options;
-  const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
-
-  if (!libOptions) {
-    return Promise.reject(new Error('Cloudflare R2 configuration is not available'));
-  }
-
-  // R2 uses auto region
-  const config = {
-    ...libOptions,
-    region: 'auto',
-    endpoint: getEndpoint(libOptions),
-  };
-
-  return searchS3Objects(query, config, options);
-};
+export const search = async (query, options) => searchS3Objects(query, getConfig(options), options);
 
 /**
  * Upload files to Cloudflare R2.
@@ -113,23 +99,7 @@ export const search = async (query, options) => {
  * @param {MediaLibraryFetchOptions} options Options containing the configuration.
  * @returns {Promise<ExternalAsset[]>} Uploaded assets.
  */
-export const upload = async (files, options) => {
-  const { fieldConfig } = options;
-  const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
-
-  if (!libOptions) {
-    return Promise.reject(new Error('Cloudflare R2 configuration is not available'));
-  }
-
-  // R2 uses auto region
-  const config = {
-    ...libOptions,
-    region: 'auto',
-    endpoint: getEndpoint(libOptions),
-  };
-
-  return uploadToS3(files, config, options);
-};
+export const upload = async (files, options) => uploadToS3(files, getConfig(options), options);
 
 /**
  * Cloudflare R2 media library service integration.
