@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import mistralTranslator, { availability } from './mistral.js';
+import mistralTranslator from './mistral.js';
 
 // Mock the i18n functions
 vi.mock('$lib/services/contents/i18n', () => ({
@@ -79,38 +79,6 @@ describe('Mistral AI Translator Service', () => {
 
     it('should support markdown', () => {
       expect(mistralTranslator.markdownSupported).toBe(true);
-    });
-  });
-
-  describe('Availability', () => {
-    it('should return true for supported language pairs', async () => {
-      await expect(availability({ sourceLanguage: 'en', targetLanguage: 'fr' })).resolves.toBe(
-        true,
-      );
-      await expect(
-        availability({ sourceLanguage: 'fr-FR', targetLanguage: 'zh-CN' }),
-      ).resolves.toBe(true);
-      await expect(availability({ sourceLanguage: 'es', targetLanguage: 'ja' })).resolves.toBe(
-        true,
-      );
-    });
-
-    it('should return false for unsupported source languages', async () => {
-      await expect(
-        availability({ sourceLanguage: 'unsupported', targetLanguage: 'fr' }),
-      ).resolves.toBe(false);
-    });
-
-    it('should return false for unsupported target languages', async () => {
-      await expect(
-        availability({ sourceLanguage: 'en', targetLanguage: 'unsupported' }),
-      ).resolves.toBe(false);
-    });
-
-    it('should return false when both languages are unsupported', async () => {
-      await expect(
-        availability({ sourceLanguage: 'unsupported1', targetLanguage: 'unsupported2' }),
-      ).resolves.toBe(false);
     });
   });
 

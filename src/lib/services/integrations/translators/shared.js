@@ -5,6 +5,10 @@
 import { getLocaleLabel } from '$lib/services/contents/i18n';
 
 /**
+ * @import { AiCompletionOptions, LanguagePair, TranslationOptions } from '$lib/types/private';
+ */
+
+/**
  * Normalize a locale code to a language label in English that AI services can understand.
  * @param {string} locale Locale code, e.g., 'en', 'fr-FR', 'zh-CN'.
  * @returns {string | undefined} Normalized language label, e.g., 'English', 'French', 'Chinese'.
@@ -99,3 +103,73 @@ export const parseAiTranslationResponse = (content, expectedCount, serviceLabel)
 
   return translations;
 };
+
+/**
+ * Check if the given source and target languages are supported.
+ * @param {LanguagePair} languages Language pair.
+ * @returns {Promise<boolean>} True if both source and target languages are supported.
+ */
+export const availability = async ({ sourceLanguage, targetLanguage }) =>
+  !!normalizeLanguage(sourceLanguage) && !!normalizeLanguage(targetLanguage);
+
+/**
+ * Resolve and validate source and target language names from locale codes.
+ * @param {string} sourceLanguage Source locale code.
+ * @param {string} targetLanguage Target locale code.
+ * @returns {[string, string]} Tuple of [sourceLanguageName, targetLanguageName].
+ * @throws {Error} When source or target locale is not supported.
+ */
+export const resolveLanguageNames = (sourceLanguage, targetLanguage) => {
+  const sourceLangName = normalizeLanguage(sourceLanguage);
+  const targetLangName = normalizeLanguage(targetLanguage);
+
+  if (!sourceLangName) {
+    throw new Error('Source locale is not supported.');
+  }
+
+  if (!targetLangName) {
+    throw new Error('Target locale is not supported.');
+  }
+
+  return [sourceLangName, targetLangName];
+};
+
+/**
+ * Create a `translate` function for an AI-based translation service.
+ * @param {(options: AiCompletionOptions) => Promise<string>} complete AI completion function from
+ * the service’s AI module.
+ * @param {string} model Model identifier to use for translation.
+ * @param {string} apiLabel Label for the service used in error messages, e.g. `'Anthropic API'`.
+ * @param {object} [extraOptions] Extra options to pass to `complete`, e.g. `{ reasoning: false }`.
+ * @returns {(texts: string[], options: TranslationOptions) => Promise<string[]>} Translate
+ * function.
+ */
+export const createAiTranslate =
+  (complete, model, apiLabel, extraOptions = {}) =>
+  /**
+   * Translate the given texts using the AI service.
+   * @param {string[]} texts Array of original texts.
+   * @param {TranslationOptions} options Options.
+   * @returns {Promise<string[]>} Translated strings in the original order.
+   */
+  async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
+    const [sourceLangName, targetLangName] = resolveLanguageNames(sourceLanguage, targetLanguage);
+
+    try {
+      const content = await complete({
+        apiKey,
+        model,
+        systemPrompt: createTranslationSystemPrompt(sourceLangName, targetLangName),
+        userMessage: createTranslationUserPrompt(texts),
+        ...extraOptions,
+      });
+
+      return parseAiTranslationResponse(content, texts.length, apiLabel);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+
+      throw new Error(`Failed to translate text with ${apiLabel}.`);
+    }
+  };

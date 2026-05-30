@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  availability,
   createTranslationSystemPrompt,
   createTranslationUserPrompt,
   normalizeLanguage,
+  resolveLanguageNames,
 } from './shared.js';
 
 // Mock the i18n functions
@@ -157,6 +159,64 @@ describe('Translation Shared Utilities', () => {
       expect(prompt).toContain('"Hello \\"world\\""');
       expect(prompt).toContain('"Line\\nbreak"');
       expect(prompt).toContain('"Tab\\ttab"');
+    });
+  });
+
+  describe('availability', () => {
+    it('should return true when both languages are supported', async () => {
+      await expect(availability({ sourceLanguage: 'en', targetLanguage: 'fr' })).resolves.toBe(
+        true,
+      );
+      await expect(
+        availability({ sourceLanguage: 'fr-CA', targetLanguage: 'zh-CN' }),
+      ).resolves.toBe(true);
+    });
+
+    it('should return false when source language is not supported', async () => {
+      await expect(
+        availability({ sourceLanguage: 'unsupported', targetLanguage: 'fr' }),
+      ).resolves.toBe(false);
+    });
+
+    it('should return false when target language is not supported', async () => {
+      await expect(
+        availability({ sourceLanguage: 'en', targetLanguage: 'unsupported' }),
+      ).resolves.toBe(false);
+    });
+
+    it('should return false when both languages are not supported', async () => {
+      await expect(
+        availability({ sourceLanguage: 'unsupported1', targetLanguage: 'unsupported2' }),
+      ).resolves.toBe(false);
+    });
+  });
+
+  describe('resolveLanguageNames', () => {
+    it('should return language names for supported locales', () => {
+      expect(resolveLanguageNames('en', 'fr')).toEqual(['English', 'French']);
+      expect(resolveLanguageNames('de', 'ja')).toEqual(['German', 'Japanese']);
+      expect(resolveLanguageNames('fr-CA', 'zh-CN')).toEqual([
+        'Canadian French',
+        'Chinese (China)',
+      ]);
+    });
+
+    it('should throw when source locale is not supported', () => {
+      expect(() => resolveLanguageNames('unsupported', 'fr')).toThrow(
+        'Source locale is not supported.',
+      );
+    });
+
+    it('should throw when target locale is not supported', () => {
+      expect(() => resolveLanguageNames('en', 'unsupported')).toThrow(
+        'Target locale is not supported.',
+      );
+    });
+
+    it('should throw when both locales are not supported', () => {
+      expect(() => resolveLanguageNames('unsupported1', 'unsupported2')).toThrow(
+        'Source locale is not supported.',
+      );
     });
   });
 

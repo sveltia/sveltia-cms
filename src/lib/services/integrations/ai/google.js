@@ -7,7 +7,7 @@
  * @import { AiCompletionOptions } from '$lib/types/private';
  */
 
-export const apiLabel = 'Google AI Studio API';
+export const apiLabel = 'Gemini API';
 export const developerURL = 'https://ai.google.dev/gemini-api/docs';
 export const apiKeyURL = 'https://aistudio.google.com/api-keys';
 export const apiKeyPattern = /AIza[a-zA-Z0-9_-]{35}/;

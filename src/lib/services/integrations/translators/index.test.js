@@ -21,7 +21,7 @@ vi.mock('./google-ai.js', () => ({
   default: {
     serviceId: 'google-ai',
     serviceLabel: 'Google Gemini',
-    apiLabel: 'Google AI Studio API',
+    apiLabel: 'Gemini API',
     developerURL: 'https://ai.google.dev/gemini-api/docs',
     apiKeyURL: 'https://aistudio.google.com/api-keys',
     apiKeyPattern: /AIza[a-zA-Z0-9_-]{35}/,

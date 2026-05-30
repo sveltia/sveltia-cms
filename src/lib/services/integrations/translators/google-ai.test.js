@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import geminiTranslator, { availability } from './google-ai.js';
+import geminiTranslator from './google-ai.js';
 
 // Mock the i18n functions
 vi.mock('$lib/services/contents/i18n', () => ({
@@ -58,7 +58,7 @@ describe('Gemini Translator Service', () => {
     it('should have correct service metadata', () => {
       expect(geminiTranslator.serviceId).toBe('google-ai');
       expect(geminiTranslator.serviceLabel).toBe('Google Gemini');
-      expect(geminiTranslator.apiLabel).toBe('Google AI Studio API');
+      expect(geminiTranslator.apiLabel).toBe('Gemini API');
       expect(geminiTranslator.developerURL).toBe('https://ai.google.dev/gemini-api/docs');
       expect(geminiTranslator.apiKeyURL).toBe('https://aistudio.google.com/api-keys');
       expect(geminiTranslator.apiKeyPattern).toBeInstanceOf(RegExp);
@@ -84,38 +84,6 @@ describe('Gemini Translator Service', () => {
 
     it('should support markdown', () => {
       expect(geminiTranslator.markdownSupported).toBe(true);
-    });
-  });
-
-  describe('Availability', () => {
-    it('should return true for supported language pairs', async () => {
-      await expect(availability({ sourceLanguage: 'en', targetLanguage: 'fr' })).resolves.toBe(
-        true,
-      );
-      await expect(
-        availability({ sourceLanguage: 'fr-FR', targetLanguage: 'zh-CN' }),
-      ).resolves.toBe(true);
-      await expect(availability({ sourceLanguage: 'es', targetLanguage: 'ja' })).resolves.toBe(
-        true,
-      );
-    });
-
-    it('should return false when source language is unsupported', async () => {
-      await expect(availability({ sourceLanguage: 'xx-YY', targetLanguage: 'en' })).resolves.toBe(
-        false,
-      );
-    });
-
-    it('should return false when target language is unsupported', async () => {
-      await expect(availability({ sourceLanguage: 'en', targetLanguage: 'xx-YY' })).resolves.toBe(
-        false,
-      );
-    });
-
-    it('should return false when both languages are unsupported', async () => {
-      await expect(
-        availability({ sourceLanguage: 'xx-YY', targetLanguage: 'yy-XX' }),
-      ).resolves.toBe(false);
     });
   });
 
