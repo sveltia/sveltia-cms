@@ -2,13 +2,13 @@
 
 [Sveltia CMS](https://sveltiacms.app/en/) is a free, open-source, Git-based headless content management system for [Jamstack](https://jamstack.org/) sites. It’s a complete rewrite of Netlify CMS, now known as Decap CMS.
 
-Designed for content editors and developers alike, Sveltia CMS delivers a modern UX, outstanding DX, powerful features, and first-class internationalization (i18n) support — all in a small, maintenance-free, single-page web application served from a CDN. Its framework-agnostic, generic-purpose approach makes it suitable for a wide range of projects, from personal blogs and marketing sites to product catalogs and knowledge bases.
+Designed for content editors and developers alike, Sveltia CMS delivers a modern UX/DX, powerful features, and first-class internationalization (i18n) support — all in a small, maintenance-free, single-page web application served from a CDN. Its framework-agnostic, generic-purpose approach makes it suitable for a wide range of projects, from personal blogs and portfolios to marketing sites and knowledge bases.
 
-As the de facto [successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), Sveltia CMS addresses 300+ longstanding issues while maintaining high compatibility with the existing configuration format and API. It far surpasses the official yet neglected legacy successor, Decap CMS. An increasing number of projects, including a U.S. government site, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to take advantage of its significantly improved experience, performance, security, and reliability.
+As the de facto [successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), Sveltia CMS addresses 300+ longstanding issues while maintaining high compatibility with the existing configuration format. It far surpasses the official yet neglected successor, Decap CMS. More and more projects, including a U.S. government site, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to take advantage of its significantly improved performance, security, reliability and experience.
 
-Sveltia CMS is also an excellent option for individuals or organizations migrating from a traditional CMS to a static site generator and looking for a lightweight content management solution. A common use case is rebuilding WordPress sites with Astro and Sveltia CMS, which provides a secure, low-cost, high-performance hosting solution with a user-friendly content editing experience.
+Sveltia CMS is also a great choice for those migrating from a traditional CMS to a static site generator and looking for a lightweight content management solution. A common use case is rebuilding WordPress sites with Astro and Sveltia CMS, which provides a secure, low-cost, high-performance hosting stack.
 
-Explore 200+ real-world examples in our ever-growing, best-in-class [showcase](https://sveltiacms.app/en/showcase), or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
+Explore 200+ real-world examples in our [showcase](https://sveltiacms.app/en/showcase), or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
