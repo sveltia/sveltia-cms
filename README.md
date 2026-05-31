@@ -4,9 +4,9 @@
 
 Designed for content editors and developers alike, Sveltia CMS delivers a modern UX/DX, powerful features, and first-class internationalization (i18n) support — all in a small, maintenance-free, single-page web application served from a CDN. Its framework-agnostic, generic-purpose approach makes it suitable for a wide range of projects, from personal blogs and portfolios to marketing sites and knowledge bases.
 
-As the de facto [successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), Sveltia CMS addresses 300+ longstanding issues while maintaining high compatibility with existing installations. It far surpasses the official yet neglected successor, Decap CMS. More and more projects, including a U.S. government site, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to take advantage of its significantly improved performance, security, reliability and experience.
+As the de facto [successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), Sveltia CMS addresses 300+ longstanding issues while maintaining high compatibility with existing installations. It far surpasses the official yet neglected successor, Decap CMS. More and more projects, including a U.S. government site, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to take advantage of its significantly improved performance, security, reliability, and experience.
 
-Sveltia CMS is also a great choice for people migrating from a traditional CMS to a static site generator and looking for a lightweight headless CMS. A common use case is rebuilding a WordPress site with Astro and Sveltia CMS, which provides a secure, low-cost, high-performance hosting stack.
+It’s also a great choice for people migrating from a traditional CMS to a static site generator and looking for a lightweight headless CMS. A common use case is rebuilding a WordPress site with Astro and Sveltia CMS, which provides a secure, low-cost, high-performance hosting stack.
 
 Explore 200+ real-world examples in our [showcase](https://sveltiacms.app/en/showcase), or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
