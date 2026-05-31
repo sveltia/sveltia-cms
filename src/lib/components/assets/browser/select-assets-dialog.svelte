@@ -507,6 +507,7 @@
     }
 
     .nav {
+      flex: none;
       display: flex;
       gap: 4px;
 
