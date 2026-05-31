@@ -7,7 +7,7 @@ import { getAssetKind } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config';
 
 /**
- * @import { ExternalAsset, MediaLibraryFetchOptions } from '$lib/types/private';
+ * @import { ExternalAsset, MediaLibraryFetchOptions, S3Config } from '$lib/types/private';
  * @import { CmsConfig, MediaField, MediaLibraries, S3MediaLibrary } from '$lib/types/public';
  */
 
@@ -158,7 +158,7 @@ export const generateAwsSignature = async ({
  * @param {object} params Parameters.
  * @param {string} params.method HTTP method.
  * @param {string} params.url Request URL.
- * @param {S3MediaLibrary} params.config S3 configuration.
+ * @param {S3Config} params.config S3 configuration.
  * @param {string} params.secretAccessKey AWS secret access key.
  * @param {string | ArrayBuffer} [params.body] Request body.
  * @param {Record<string, string>} [params.extraHeaders] Additional headers.
@@ -277,7 +277,7 @@ export const buildObjectUrl = ({ bucket, key, endpoint, region, forcePathStyle, 
 /**
  * Parse S3 list response into ExternalAsset format.
  * @param {S3Object[]} objects S3 objects.
- * @param {S3MediaLibrary} config S3 configuration.
+ * @param {S3Config} config S3 configuration.
  * @returns {ExternalAsset[]} Assets.
  */
 export const parseS3Results = (objects, config) => {
@@ -311,7 +311,7 @@ export const parseS3Results = (objects, config) => {
 
 /**
  * List objects from S3-compatible storage.
- * @param {S3MediaLibrary} config S3 configuration.
+ * @param {S3Config} config S3 configuration.
  * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
  * @param {object} [params] Additional parameters.
  * @param {number} [params.maxPages] Maximum number of pages to fetch. Default: 10.
@@ -389,7 +389,7 @@ export const listS3Objects = async (config, options, { maxPages = 10 } = {}) => 
 /**
  * Search objects in S3-compatible storage.
  * @param {string} query Search query.
- * @param {S3MediaLibrary} config S3 configuration.
+ * @param {S3Config} config S3 configuration.
  * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
  * @returns {Promise<ExternalAsset[]>} Assets.
  */
@@ -408,7 +408,7 @@ export const searchS3Objects = async (query, config, options) => {
 /**
  * Upload files to S3-compatible storage.
  * @param {File[]} files Files to upload.
- * @param {S3MediaLibrary} config S3 configuration.
+ * @param {S3Config} config S3 configuration.
  * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
  * @returns {Promise<ExternalAsset[]>} Uploaded assets.
  */
@@ -450,7 +450,7 @@ export const uploadToS3 = async (files, config, options) => {
       body: fileContent,
       extraHeaders: {
         'Content-Type': file.type || 'application/octet-stream',
-        'x-amz-acl': 'public-read',
+        ...(config.acl !== false && { 'x-amz-acl': config.acl ?? 'public-read' }),
       },
     });
 

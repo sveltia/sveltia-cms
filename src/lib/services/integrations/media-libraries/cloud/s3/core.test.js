@@ -900,6 +900,29 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       );
     });
 
+    it('should omit x-amz-acl header when acl is false', async () => {
+      const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+
+      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+
+      await uploadToS3(
+        [mockFile],
+        { ...mockConfig, acl: false },
+        {
+          apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+        },
+      );
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          headers: expect.not.objectContaining({
+            'x-amz-acl': expect.anything(),
+          }),
+        }),
+      );
+    });
+
     it('should fall back to file.name when all path components are empty', async () => {
       const mockFile = new File(['content'], '/', { type: 'image/jpeg' });
 

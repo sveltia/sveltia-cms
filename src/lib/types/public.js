@@ -32,7 +32,7 @@
 /**
  * Cloud media storage name.
  * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'cloudflare_r2' |
- * 'digitalocean_spaces'} CloudMediaLibraryName
+ * 'digitalocean_spaces' | 'scaleway_object_storage' | 'supabase_storage'} CloudMediaLibraryName
  */
 
 /**
@@ -176,17 +176,18 @@
  */
 
 /**
- * Options for S3-compatible media libraries (Amazon S3, Cloudflare R2, DigitalOcean Spaces).
+ * Options for S3-compatible media libraries.
  * @typedef {object} S3MediaLibrary
  * @property {string} [name] Media library name (used when configuring via legacy `media_library`).
  * @property {string} access_key_id AWS access key ID or equivalent (safe to store in config).
  * @property {string} bucket Bucket name.
- * @property {string} [region] AWS region (e.g., 'us-east-1'). Required for Amazon S3 and
- * DigitalOcean Spaces.
+ * @property {string} [region] AWS region (e.g., 'us-east-1'). Required for Amazon S3, DigitalOcean
+ * Spaces, Scaleway Object Storage, and Supabase Storage.
  * @property {string} [account_id] Cloudflare account ID. Required for Cloudflare R2.
  * @property {'default' | 'eu' | 'fedramp'} [jurisdiction] Cloudflare R2 jurisdiction. Required for
  * buckets created in the EU or FedRAMP jurisdictions; the global endpoint returns an error for
  * those buckets. Default: `'default'`.
+ * @property {string} [project_id] Supabase project reference ID. Required for Supabase Storage.
  * @property {string} [endpoint] Custom endpoint URL for S3-compatible services.
  * @property {string} [prefix] Path prefix within bucket.
  * @property {boolean} [force_path_style] Use path-style URLs instead of virtual-hosted-style.
@@ -240,6 +241,10 @@
  * Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [digitalocean_spaces] Options for the DigitalOcean Spaces
  * media storage. Set to `false` to explicitly disable.
+ * @property {S3MediaLibrary | false} [scaleway_object_storage] Options for the Scaleway Object
+ * Storage media storage. Set to `false` to explicitly disable.
+ * @property {S3MediaLibrary | false} [supabase_storage] Options for the Supabase Storage media
+ * storage. Set to `false` to explicitly disable.
  * @property {StockMediaLibrary | false} [stock_assets] Options for the unified stock photo/video
  * media library. Set to `false` to explicitly disable.
  */

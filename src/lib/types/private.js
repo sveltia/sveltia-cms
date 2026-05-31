@@ -23,6 +23,7 @@
  * MediaField,
  * RasterImageFormat,
  * RelationField,
+ * S3MediaLibrary,
  * SelectField,
  * SelectFieldValue,
  * } from './public';
@@ -257,6 +258,12 @@
  * cloud storage services.
  * @property {string} [password] Password for services that require user authentication, such as
  * cloud storage services.
+ */
+
+/**
+ * Resolved S3 configuration passed to core request helpers. Extends the public `S3MediaLibrary`
+ * with internal fields that providers set in their `getConfig` functions.
+ * @typedef {S3MediaLibrary & { acl?: string | false }} S3Config
  */
 
 /**
