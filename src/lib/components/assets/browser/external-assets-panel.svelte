@@ -159,8 +159,11 @@
     uploadingToast = { show: true, status: 'info', length: files.length };
 
     try {
-      await upload(files, listFetchOptions);
-      getAssets();
+      const uploaded = await upload(files, listFetchOptions);
+      const resources = await Promise.all(uploaded.map((asset) => getResource(asset)));
+
+      selectedResources = resources.filter((r) => !!r).slice(0, multiple ? undefined : 1);
+      listedAssets = [...uploaded, ...(listedAssets ?? [])];
     } catch {
       uploadingToast = { show: true, status: 'error', length: files.length };
     }
