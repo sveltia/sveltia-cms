@@ -59,6 +59,8 @@
 
   let restoring = false;
   let switching = false;
+  let swapDragStartX = 0;
+  let swapDragStartY = 0;
 
   let hidden = $state(true);
   /** @type {HTMLElement | undefined} */
@@ -474,7 +476,18 @@
                       size="small"
                       variant="tertiary"
                       aria-label={_('swap_panes')}
-                      onclick={() => {
+                      onpointerdown={(e) => {
+                        swapDragStartX = e.clientX;
+                        swapDragStartY = e.clientY;
+                      }}
+                      onclick={(e) => {
+                        if (
+                          Math.abs(e.clientX - swapDragStartX) > 5 ||
+                          Math.abs(e.clientY - swapDragStartY) > 5
+                        ) {
+                          return;
+                        }
+
                         [$editorFirstPane, $editorSecondPane] = [
                           $editorSecondPane,
                           $editorFirstPane,
