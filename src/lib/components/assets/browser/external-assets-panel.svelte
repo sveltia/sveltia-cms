@@ -132,6 +132,41 @@
   };
 
   /**
+   * Download the selected asset, if needed, and return the file and credit. If hotlinking is
+   * required by the service, just return the URL instead of downloading the file.
+   * @param {ExternalAsset} asset Selected asset.
+   * @returns {Promise<SelectedResource | undefined>} The selected resource with the file or URL.
+   * @todo Support video files.
+   */
+  const getResource = async (asset) => {
+    const { downloadURL: url, fileName, credit } = asset;
+
+    if (hotlinking) {
+      return { url, credit };
+    }
+
+    try {
+      const response = await fetch(url);
+      const { ok, status } = response;
+
+      if (!ok) {
+        throw new Error(`The response returned with HTTP status ${status}.`);
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], fileName, { type: blob.type });
+
+      return { url, credit, file };
+    } catch (ex) {
+      error = 'image_fetch_failed';
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    }
+
+    return undefined;
+  };
+
+  /**
    * Handle `Drop` event to upload files.
    * @param {File[]} files Dropped files.
    */
@@ -167,41 +202,6 @@
     } catch {
       uploadingToast = { show: true, status: 'error', length: files.length };
     }
-  };
-
-  /**
-   * Download the selected asset, if needed, and return the file and credit. If hotlinking is
-   * required by the service, just return the URL instead of downloading the file.
-   * @param {ExternalAsset} asset Selected asset.
-   * @returns {Promise<SelectedResource | undefined>} The selected resource with the file or URL.
-   * @todo Support video files.
-   */
-  const getResource = async (asset) => {
-    const { downloadURL: url, fileName, credit } = asset;
-
-    if (hotlinking) {
-      return { url, credit };
-    }
-
-    try {
-      const response = await fetch(url);
-      const { ok, status } = response;
-
-      if (!ok) {
-        throw new Error(`The response returned with HTTP status ${status}.`);
-      }
-
-      const blob = await response.blob();
-      const file = new File([blob], fileName, { type: blob.type });
-
-      return { url, credit, file };
-    } catch (ex) {
-      error = 'image_fetch_failed';
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    }
-
-    return undefined;
   };
 
   /**
