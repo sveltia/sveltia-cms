@@ -36,9 +36,14 @@ import { cmsConfig } from '$lib/services/config';
  */
 
 /**
+ * Cloudinary Media Library console URL. Used for the popup and iframe src.
+ */
+export const CONSOLE_BASE_URL = 'https://console.cloudinary.com/console/media_library';
+
+/**
  * Cloudinary Media Library iframe origin.
  */
-export const FRAME_ORIGIN = 'https://console.cloudinary.com';
+export const FRAME_ORIGIN = new URL(CONSOLE_BASE_URL).origin;
 
 /**
  * Cloudinary Media Library iframe’s `src` search parameters.

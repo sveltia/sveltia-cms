@@ -14,6 +14,7 @@
 
   import {
     CONFIG_PROPS,
+    CONSOLE_BASE_URL,
     FRAME_ORIGIN,
     FRAME_SRC_PARAMS,
     getMergedLibraryOptions,
@@ -74,7 +75,7 @@
       remove_header: 'true',
     });
 
-    iframe.src = `https://console.cloudinary.com/console/media_library/cms?${params}`;
+    iframe.src = `${CONSOLE_BASE_URL}/cms?${params}`;
   };
 
   /**
@@ -201,8 +202,9 @@
       label={_('cloud_storage.cloudinary.activate.button_label')}
       onclick={async () => {
         // Let the user sign in to Cloudinary first in a separate tab, otherwise third-party cookies
-        // in the iframe won’t work, and authentication will fail.
-        openNewTab('https://console.cloudinary.com/console/media_library/cms_login?cms=true');
+        // in the iframe won’t work, and authentication will fail. Allow `window.opener` so
+        // Cloudinary can send the login message back via `postMessage`.
+        openNewTab(`${CONSOLE_BASE_URL}/cms_login?cms=true`, { noopener: false });
       }}
     />
     <div role="none">{_('cloud_storage.cloudinary.activate.description')}</div>
