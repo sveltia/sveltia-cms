@@ -383,7 +383,11 @@ export const listS3Objects = async (config, options, { maxPages = 10 } = {}) => 
     ? allObjects.filter((obj) => getAssetKind(obj.Key) === kind)
     : allObjects;
 
-  return parseS3Results(filteredObjects, config);
+  // S3 returns objects in lexicographical key order; sort by last modified date, newest first, to
+  // match the behavior of other media libraries like Uploadcare
+  return parseS3Results(filteredObjects, config).sort(
+    (a, b) => (b.lastModified?.getTime() ?? 0) - (a.lastModified?.getTime() ?? 0),
+  );
 };
 
 /**

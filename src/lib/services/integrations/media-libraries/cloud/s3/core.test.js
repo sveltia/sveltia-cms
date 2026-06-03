@@ -508,8 +508,43 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       });
 
       expect(results).toHaveLength(2);
-      expect(results[0].fileName).toBe('image1.jpg');
-      expect(results[1].fileName).toBe('image2.png');
+      expect(results[0].fileName).toBe('image2.png');
+      expect(results[1].fileName).toBe('image1.jpg');
+    });
+
+    it('should sort objects by last modified date, newest first', async () => {
+      const xmlResponse = `<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult>
+  <Contents>
+    <Key>a-oldest.jpg</Key>
+    <LastModified>2025-01-01T00:00:00.000Z</LastModified>
+    <Size>1024</Size>
+  </Contents>
+  <Contents>
+    <Key>b-newest.jpg</Key>
+    <LastModified>2025-03-01T00:00:00.000Z</LastModified>
+    <Size>1024</Size>
+  </Contents>
+  <Contents>
+    <Key>c-middle.jpg</Key>
+    <LastModified>2025-02-01T00:00:00.000Z</LastModified>
+    <Size>1024</Size>
+  </Contents>
+  <IsTruncated>false</IsTruncated>
+</ListBucketResult>`;
+
+      vi.mocked(fetch).mockResolvedValue(new Response(xmlResponse, { status: 200 }));
+
+      const results = await listS3Objects(mockConfig, {
+        kind: undefined,
+        apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+      });
+
+      expect(results.map((r) => r.fileName)).toEqual([
+        'b-newest.jpg',
+        'c-middle.jpg',
+        'a-oldest.jpg',
+      ]);
     });
 
     it('should filter by image kind', async () => {
@@ -721,8 +756,8 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       });
 
       expect(results).toHaveLength(2);
-      expect(results[0].fileName).toBe('vacation-photo.jpg');
-      expect(results[1].fileName).toBe('another-photo.jpg');
+      expect(results[0].fileName).toBe('another-photo.jpg');
+      expect(results[1].fileName).toBe('vacation-photo.jpg');
     });
 
     it('should be case-insensitive', async () => {
