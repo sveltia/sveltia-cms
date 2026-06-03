@@ -956,4 +956,80 @@ describe('Test formatEntryFile()', () => {
 
     expect(result).toBe('');
   });
+
+  test('formats frontmatter with inline body (bodyField.inline = true)', async () => {
+    const content = {
+      title: 'Test Post',
+      body: 'This should stay in frontmatter.',
+    };
+
+    const _file = /** @type {FileConfig} */ ({
+      format: 'frontmatter',
+      extension: 'md',
+      yamlQuote: false,
+      bodyField: { key: 'body', inline: true },
+    });
+
+    const result = formatFrontMatter({ content, _file });
+
+    // Body should be in the frontmatter, not as separate content
+    expect(result).toBe(
+      `---
+title: Test Post
+body: This should stay in frontmatter.
+---
+`,
+    );
+  });
+
+  test('formats frontmatter with custom body key and inline=false', async () => {
+    const content = {
+      title: 'Test Post',
+      content: 'This should be separate content.',
+    };
+
+    const _file = /** @type {FileConfig} */ ({
+      format: 'frontmatter',
+      extension: 'md',
+      yamlQuote: false,
+      bodyField: { key: 'content', inline: false },
+    });
+
+    const result = formatFrontMatter({ content, _file });
+
+    // Content field should be extracted and placed after frontmatter
+    expect(result).toBe(
+      `---
+title: Test Post
+---
+
+This should be separate content.
+`,
+    );
+  });
+
+  test('formats frontmatter with custom body key and inline=true', async () => {
+    const content = {
+      title: 'Test Post',
+      description: 'This stays inline.',
+    };
+
+    const _file = /** @type {FileConfig} */ ({
+      format: 'frontmatter',
+      extension: 'md',
+      yamlQuote: false,
+      bodyField: { key: 'description', inline: true },
+    });
+
+    const result = formatFrontMatter({ content, _file });
+
+    // Description should stay in frontmatter
+    expect(result).toBe(
+      `---
+title: Test Post
+description: This stays inline.
+---
+`,
+    );
+  });
 });

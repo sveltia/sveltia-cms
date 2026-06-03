@@ -950,4 +950,118 @@ describe('Test parseEntryFile()', () => {
       /could not be parsed due to an unknown format/,
     );
   });
+
+  test('parses frontmatter with inline body (bodyField.inline = true)', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    const inlineBodyCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+        bodyField: { key: 'body', inline: true },
+      },
+    });
+
+    const inlineBodyCollectionFile = /** @type {any} */ ({
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+        bodyField: { key: 'body', inline: true },
+      },
+    });
+
+    const text =
+      '---\ntitle: Test Post\nbody: This is inline body content.\n---\n\nIgnored content.';
+
+    const result = parseFrontMatter({
+      collection: inlineBodyCollection,
+      collectionFile: inlineBodyCollectionFile,
+      format: 'yaml-frontmatter',
+      text,
+    });
+
+    expect(result.title).toBe('Test Post');
+    expect(result.body).toBe('This is inline body content.');
+    // With inline=true, content after frontmatter should NOT be added to body
+    expect(result.body).not.toContain('Ignored content');
+  });
+
+  test('parses frontmatter with custom body key', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    const customKeyCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+        bodyField: { key: 'content', inline: false },
+      },
+    });
+
+    const customKeyCollectionFile = /** @type {any} */ ({
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+        bodyField: { key: 'content', inline: false },
+      },
+    });
+
+    const text = '---\ntitle: Test Post\n---\n\nThis is the content field.';
+
+    const result = parseFrontMatter({
+      collection: customKeyCollection,
+      collectionFile: customKeyCollectionFile,
+      format: 'yaml-frontmatter',
+      text,
+    });
+
+    expect(result.title).toBe('Test Post');
+    expect(result.content).toBe('\nThis is the content field.');
+    expect(result.body).toBeUndefined();
+  });
+
+  test('frontmatter body value takes precedence over separate content', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    const precedenceCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+        bodyField: { key: 'body', inline: false },
+      },
+    });
+
+    const precedenceCollectionFile = /** @type {any} */ ({
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+        bodyField: { key: 'body', inline: false },
+      },
+    });
+
+    // Body field exists in both frontmatter and separate content
+    const text =
+      '---\ntitle: Test Post\nbody: Value in frontmatter\n---\n\nContent after delimiter';
+
+    const result = parseFrontMatter({
+      collection: precedenceCollection,
+      collectionFile: precedenceCollectionFile,
+      format: 'yaml-frontmatter',
+      text,
+    });
+
+    expect(result.title).toBe('Test Post');
+    // Frontmatter value should take precedence
+    expect(result.body).toBe('Value in frontmatter');
+    // Separate content should be ignored when body is in frontmatter
+    expect(result.body).not.toContain('Content after delimiter');
+  });
 });

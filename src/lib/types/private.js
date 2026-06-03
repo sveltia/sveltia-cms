@@ -3,6 +3,7 @@
  * @import { Writable } from 'svelte/store';
  * @import {
  * BackendName,
+ * BodyFieldOptions,
  * CmsConfig,
  * Collection,
  * CollectionDivider,
@@ -395,6 +396,7 @@
  * i18n structure into account. Entry collection only.
  * @property {string} [fullPath] File path of the default locale. File/singleton collection only.
  * @property {[string, string]} [fmDelimiters] Front matter delimiters.
+ * @property {BodyFieldOptions} [bodyField] Body field options for front matter formats.
  * @property {boolean} [yamlQuote] YAML quote configuration. DEPRECATED in favor of the global YAML
  * format options.
  */

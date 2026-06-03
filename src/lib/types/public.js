@@ -1078,6 +1078,16 @@
  */
 
 /**
+ * Body field options for front matter formats.
+ * @typedef {object} BodyFieldOptions
+ * @property {string} [key] Field name to store the body content when using a front matter format.
+ * Default: `body`.
+ * @property {boolean} [inline] Whether to store the body content in the front matter as a field
+ * along with other fields. If `false`, the body content is stored as the main content of the file,
+ * after the front matter block. Default: `false`.
+ */
+
+/**
  * Single file in a file/singleton collection.
  * @typedef {object} CollectionFile
  * @property {string} name Unique identifier for the file.
@@ -1098,6 +1108,7 @@
  * @property {string | string[]} [frontmatter_delimiter] Delimiters to be used for the front matter
  * format. This overrides the collection-level `frontmatter_delimiter` option. Default: depends on
  * the front matter type.
+ * @property {BodyFieldOptions} [body_field] Body field options for front matter formats.
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
  * @property {string} [preview_path] Preview URL path template.
  * @property {FieldKeyPath} [preview_path_date_field] Date field name used for `preview_path`.
@@ -1292,6 +1303,7 @@
  * `yaml-frontmatter`.
  * @property {string | string[]} [frontmatter_delimiter] Delimiters to be used for the front matter
  * format. Default: depends on the front matter type.
+ * @property {BodyFieldOptions} [body_field] Body field options for front matter formats.
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
  * @property {string} [preview_path] Preview URL path template.
  * @property {string} [preview_path_date_field] Date field name used for `preview_path`.

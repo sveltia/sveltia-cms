@@ -82,8 +82,10 @@ const frontMatterRegexCache = new Map();
  */
 export const parseFrontMatter = ({ collection, collectionFile, format, text }) => {
   const {
-    _file: { format: _format, fmDelimiters },
-  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+    format: _format,
+    fmDelimiters,
+    bodyField: { key: bodyKey = 'body', inline: bodyInline = false } = {},
+  } = (collectionFile ?? /** @type {InternalEntryCollection} */ (collection))._file;
 
   const [startDelimiter, endDelimiter] = (_format === 'frontmatter'
     ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
@@ -105,7 +107,7 @@ export const parseFrontMatter = ({ collection, collectionFile, format, text }) =
   if (!head && !body) {
     // Support Markdown without a front matter block, particularly for VitePress
     // The text can be an empty string, but it’s okay to return an empty body
-    return { body: text };
+    return { [bodyKey]: text };
   }
 
   let parsedHead = {};
@@ -123,7 +125,10 @@ export const parseFrontMatter = ({ collection, collectionFile, format, text }) =
     parsedHead = parseJSON(`{${head}}`);
   }
 
-  return { ...parsedHead, body };
+  return {
+    ...parsedHead,
+    ...(!bodyInline && !(parsedHead && bodyKey in parsedHead) ? { [bodyKey]: body } : {}),
+  };
 };
 
 /**

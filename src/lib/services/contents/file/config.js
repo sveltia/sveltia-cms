@@ -222,6 +222,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     extension: _extension,
     format: _format,
     frontmatter_delimiter: _delimiter,
+    body_field: bodyField,
     yaml_quote: yamlQuote,
   } = rawCollection;
 
@@ -253,6 +254,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
       ? getLocalePath({ _i18n, locale: _i18n.defaultLocale, path: filePath })
       : undefined,
     fmDelimiters: getFrontMatterDelimiters({ format, delimiter }),
+    bodyField: file?.body_field ?? bodyField,
     yamlQuote: !!yamlQuote,
   };
 };

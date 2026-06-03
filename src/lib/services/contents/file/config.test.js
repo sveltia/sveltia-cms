@@ -1635,4 +1635,58 @@ describe('Test getFileConfig()', () => {
     expect(result.fullPathRegEx?.test('my-post.md')).toBe(true);
     expect(result.fullPathRegEx?.test('index.md')).toBe(true);
   });
+
+  test('body_field option from collection', () => {
+    const result = getFileConfig({
+      rawCollection: {
+        ...rawFolderCollection,
+        body_field: { key: 'content', inline: true },
+      },
+      _i18n: i18nDisabled,
+    });
+
+    expect(result.bodyField).toEqual({ key: 'content', inline: true });
+  });
+
+  test('body_field option from collection file', () => {
+    const result = getFileConfig({
+      rawCollection: {
+        ...rawFileCollection,
+      },
+      file: {
+        ...rawFileCollectionFrontMatterFile,
+        body_field: { key: 'description', inline: false },
+      },
+      _i18n: i18nDisabled,
+    });
+
+    expect(result.bodyField).toEqual({ key: 'description', inline: false });
+  });
+
+  test('body_field from file overrides collection', () => {
+    const result = getFileConfig({
+      rawCollection: {
+        ...rawFileCollection,
+        body_field: { key: 'content', inline: true },
+      },
+      file: {
+        ...rawFileCollectionFrontMatterFile,
+        body_field: { key: 'text', inline: false },
+      },
+      _i18n: i18nDisabled,
+    });
+
+    expect(result.bodyField).toEqual({ key: 'text', inline: false });
+  });
+
+  test('body_field undefined when not specified', () => {
+    const result = getFileConfig({
+      rawCollection: {
+        ...rawFolderCollection,
+      },
+      _i18n: i18nDisabled,
+    });
+
+    expect(result.bodyField).toBeUndefined();
+  });
 });
