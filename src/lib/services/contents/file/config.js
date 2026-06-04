@@ -4,6 +4,7 @@ import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { MARKDOWN_EXTENSIONS } from '$lib/services/contents/file';
 import { getLocalePath } from '$lib/services/contents/i18n';
 
 /**
@@ -86,7 +87,7 @@ export const detectFileFormat = ({ extension, format }) => {
     return 'json';
   }
 
-  if (['md', 'mkd', 'mkdn', 'mdwn', 'mdown', 'markdown'].includes(extension)) {
+  if (MARKDOWN_EXTENSIONS.includes(extension)) {
     return 'frontmatter'; // auto detect
   }
 
@@ -163,7 +164,7 @@ export const getEntryPathRegEx = ({
     getFilePathMatcher(subPath, indexFileName),
     i18nMultiFile ? localeFileMatcher : '',
     '\\.',
-    detectFileExtension({ format, extension }),
+    escapeRegExp(detectFileExtension({ format, extension })),
     '$',
   ].join('');
 

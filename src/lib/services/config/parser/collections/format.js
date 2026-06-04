@@ -1,3 +1,9 @@
+import {
+  ALLOWED_FRONTMATTER_EXTENSIONS,
+  MARKDOWN_EXTENSIONS,
+  TEMPLATE_ENGINE_EXTENSIONS,
+} from '$lib/services/contents/file';
+
 /**
  * @import { Field, FileExtension, FileFormat } from '$lib/types/public';
  */
@@ -6,22 +12,7 @@
  * Field types that can be used for the single `body` field special case.
  * @type {string[]}
  */
-const bodyFieldType = ['code', 'markdown', 'richtext', 'text'];
-/**
- * Markdown file extensions that support front matter formats.
- * @type {string[]}
- */
-const markdownExtensions = ['md', 'markdown', 'mdx'];
-/**
- * Template engine extensions that support any front matter format.
- * @type {string[]}
- */
-const templateEngineExtensions = ['astro', 'njk'];
-/**
- * Allowed extensions for the `frontmatter` auto-detect format.
- * @type {string[]}
- */
-const allowedFrontmatterExtensions = [...markdownExtensions, ...templateEngineExtensions];
+const BODY_FIELD_TYPES = ['code', 'markdown', 'richtext', 'text'];
 
 /**
  * Check if there is a mismatch between the file extension and format.
@@ -50,7 +41,7 @@ export const isFormatMismatch = (extension, format, fields = []) => {
   if (isFrontMatterFormat && fields.length === 1) {
     const [{ name, widget = 'string' }] = fields;
 
-    if (name === 'body' && bodyFieldType.includes(widget)) {
+    if (name === 'body' && BODY_FIELD_TYPES.includes(widget)) {
       return false;
     }
   }
@@ -61,7 +52,7 @@ export const isFormatMismatch = (extension, format, fields = []) => {
   const normalizedFormat = format === 'yml' ? 'yaml' : format;
 
   // For md/markdown/mdx extensions, only -frontmatter formats are valid
-  if (markdownExtensions.includes(normalizedExtension)) {
+  if (MARKDOWN_EXTENSIONS.includes(normalizedExtension)) {
     // Valid formats: 'frontmatter' (auto-detect) or any *-frontmatter format
     return !isFrontMatterFormat;
   }
@@ -72,7 +63,7 @@ export const isFormatMismatch = (extension, format, fields = []) => {
     const fmFormatType = normalizedFormat.replace('-frontmatter', '');
 
     // Template engines (njk, astro) work with any front-matter format
-    if (templateEngineExtensions.includes(normalizedExtension)) {
+    if (TEMPLATE_ENGINE_EXTENSIONS.includes(normalizedExtension)) {
       return false;
     }
 
@@ -83,7 +74,7 @@ export const isFormatMismatch = (extension, format, fields = []) => {
   // The 'frontmatter' auto-detect format works with markdown extensions and some template engines
   // (already handled above), so reject it for other extensions
   if (normalizedFormat === 'frontmatter') {
-    return !allowedFrontmatterExtensions.includes(normalizedExtension);
+    return !ALLOWED_FRONTMATTER_EXTENSIONS.includes(normalizedExtension);
   }
 
   // For known formats, ensure extension matches (yaml/toml/json)

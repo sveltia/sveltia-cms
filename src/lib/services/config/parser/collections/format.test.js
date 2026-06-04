@@ -96,6 +96,14 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('md', 'yaml-frontmatter')).toBe(false);
     });
 
+    it('should return false when html.md extension with yaml-frontmatter', () => {
+      expect(isFormatMismatch('html.md', 'yaml-frontmatter')).toBe(false);
+    });
+
+    it('should return false when mkd extension with yaml-frontmatter', () => {
+      expect(isFormatMismatch('mkd', 'yaml-frontmatter')).toBe(false);
+    });
+
     it('should return false when markdown extension with toml-frontmatter', () => {
       expect(isFormatMismatch('markdown', 'toml-frontmatter')).toBe(false);
     });
