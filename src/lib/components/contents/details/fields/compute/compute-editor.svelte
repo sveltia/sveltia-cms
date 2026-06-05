@@ -11,7 +11,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
   import { getListFormatter } from '$lib/services/contents/i18n';
-  import { NUMERIC_VALUE_REGEX } from '$lib/services/utils/regex';
+  import { isNumeric } from '$lib/services/utils/number';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -56,7 +56,7 @@
   const getIndex = () => {
     const [index] = keyPath.split('.').splice(-2, 1);
 
-    return index?.match(NUMERIC_VALUE_REGEX) ? Number(index) : undefined;
+    return index && isNumeric(index) ? Number(index) : undefined;
   };
 
   /**

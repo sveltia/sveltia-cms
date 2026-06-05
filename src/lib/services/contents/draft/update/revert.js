@@ -2,7 +2,7 @@ import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
-import { NUMERIC_VALUE_REGEX } from '$lib/services/utils/regex';
+import { isNumeric } from '$lib/services/utils/number';
 
 /**
  * @import {
@@ -27,7 +27,7 @@ export const resolveOriginalKeyPath = (valueMap, keyPath) => {
   const parts = keyPath.split('.');
 
   for (let i = parts.length - 1; i >= 1; i -= 1) {
-    if (NUMERIC_VALUE_REGEX.test(parts[i])) {
+    if (isNumeric(parts[i])) {
       const itemPrefix = parts.slice(0, i + 1).join('.');
       const originalPrefix = valueMap[`${itemPrefix}.__sc_item_original_key_path`];
 

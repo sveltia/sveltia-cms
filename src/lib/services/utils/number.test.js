@@ -1,6 +1,55 @@
 import { describe, expect, test } from 'vitest';
 
-import { toFixed } from './number';
+import { isNumeric, toFixed } from './number';
+
+describe('Test isNumeric()', () => {
+  test('returns true for single digit strings', () => {
+    expect(isNumeric('0')).toBe(true);
+    expect(isNumeric('1')).toBe(true);
+    expect(isNumeric('5')).toBe(true);
+    expect(isNumeric('9')).toBe(true);
+  });
+
+  test('returns true for multi-digit numeric strings', () => {
+    expect(isNumeric('10')).toBe(true);
+    expect(isNumeric('123')).toBe(true);
+    expect(isNumeric('9999')).toBe(true);
+    expect(isNumeric('1000000')).toBe(true);
+  });
+
+  test('returns false for empty string', () => {
+    expect(isNumeric('')).toBe(false);
+  });
+
+  test('returns false for negative numbers', () => {
+    expect(isNumeric('-1')).toBe(false);
+    expect(isNumeric('-123')).toBe(false);
+  });
+
+  test('returns false for decimal numbers', () => {
+    expect(isNumeric('1.5')).toBe(false);
+    expect(isNumeric('3.14')).toBe(false);
+    expect(isNumeric('0.5')).toBe(false);
+  });
+
+  test('returns false for strings with leading or trailing whitespace', () => {
+    expect(isNumeric(' 1')).toBe(false);
+    expect(isNumeric('1 ')).toBe(false);
+    expect(isNumeric(' 123 ')).toBe(false);
+  });
+
+  test('returns false for non-numeric strings', () => {
+    expect(isNumeric('abc')).toBe(false);
+    expect(isNumeric('12a')).toBe(false);
+    expect(isNumeric('a12')).toBe(false);
+  });
+
+  test('returns false for strings with special characters', () => {
+    expect(isNumeric('1-2')).toBe(false);
+    expect(isNumeric('1,000')).toBe(false);
+    expect(isNumeric('$100')).toBe(false);
+  });
+});
 
 describe('toFixed', () => {
   test('should convert a number to a fixed decimal string with 2 decimal places', () => {

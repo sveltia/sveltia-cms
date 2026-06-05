@@ -18,7 +18,7 @@ import { getOptionLabel } from '$lib/services/contents/fields/select/helper';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { NUMERIC_VALUE_REGEX } from '$lib/services/utils/regex';
+import { isNumeric } from '$lib/services/utils/number';
 
 /**
  * @import {
@@ -145,7 +145,7 @@ const resolveNextSegment = ({
   const { cleanKey, typeName } = parseExplicitType(key);
   const { widget: fieldType = 'text' } = field;
   const explicitType = typeName != null ? typeName : pendingExplicitType;
-  const isNumericKey = NUMERIC_VALUE_REGEX.test(cleanKey);
+  const isNumericKey = isNumeric(cleanKey);
   const isWildcardKey = cleanKey === '*';
 
   // Handle multi-value field types with numeric keys, e.g. `authors.0`
