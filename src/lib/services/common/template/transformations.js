@@ -3,13 +3,16 @@ import { DEFAULT_TRANSFORMATION_REGEX } from '$lib/services/common/transformatio
 
 /**
  * @import { ReplaceSubContext } from '$lib/services/common/template/replacers';
+ * @import { FillTemplateOptions } from '$lib/types/private';
  */
+
 /**
  * Processes transformations for a template placeholder.
  * @internal
  * @param {string[]} transformations Array of transformation strings.
  * @param {ReplaceSubContext} replaceSubContext Context for replacement.
- * @param {(tag: string, context: any) => any} replaceTemplateTag Replaces tags.
+ * @param {(tag: string, context: FillTemplateOptions & ReplaceSubContext) => any}
+ * replaceTemplateTag Replaces tags.
  * @returns {{ transformations: string[], hasDefaultTransformation: boolean }} Result.
  */
 export const processTransformations = (transformations, replaceSubContext, replaceTemplateTag) => {

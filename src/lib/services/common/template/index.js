@@ -12,8 +12,8 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { renameIfNeeded } from '$lib/services/utils/file';
 
 /**
- * @import { FillTemplateOptions } from '$lib/types/private';
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
+ * @import { FillTemplateOptions } from '$lib/types/private';
  */
 
 /**
