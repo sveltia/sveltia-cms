@@ -4,7 +4,12 @@ import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { MARKDOWN_EXTENSIONS } from '$lib/services/contents/file';
+import {
+  EXTENSION_FORMAT_MAP,
+  FORMAT_EXTENSION_MAP,
+  FRONTMATTER_DELIMITER_MAP,
+  MARKDOWN_EXTENSIONS,
+} from '$lib/services/contents/file';
 import { getLocalePath } from '$lib/services/contents/i18n';
 
 /**
@@ -42,20 +47,8 @@ export const detectFileExtension = ({ extension, format }) => {
     return extension;
   }
 
-  if (format === 'raw') {
-    return 'txt';
-  }
-
-  if (format === 'yaml' || format === 'yml') {
-    return 'yml';
-  }
-
-  if (format === 'toml') {
-    return 'toml';
-  }
-
-  if (format === 'json') {
-    return 'json';
+  if (format) {
+    return FORMAT_EXTENSION_MAP[format] ?? 'md';
   }
 
   return 'md';
@@ -75,23 +68,11 @@ export const detectFileFormat = ({ extension, format }) => {
     return format; // supported or custom format
   }
 
-  if (extension === 'yaml' || extension === 'yml') {
-    return 'yaml';
-  }
-
-  if (extension === 'toml') {
-    return 'toml';
-  }
-
-  if (extension === 'json') {
-    return 'json';
-  }
-
   if (MARKDOWN_EXTENSIONS.includes(extension)) {
     return 'frontmatter'; // auto detect
   }
 
-  return 'yaml-frontmatter';
+  return EXTENSION_FORMAT_MAP[extension] ?? 'yaml-frontmatter';
 };
 
 /**
@@ -190,19 +171,7 @@ export const getFrontMatterDelimiters = ({ format, delimiter }) => {
     return /** @type {[string, string]} */ (delimiter);
   }
 
-  if (format === 'json-frontmatter') {
-    return ['{', '}'];
-  }
-
-  if (format === 'toml-frontmatter') {
-    return ['+++', '+++'];
-  }
-
-  if (format === 'yaml-frontmatter') {
-    return ['---', '---'];
-  }
-
-  return undefined;
+  return FRONTMATTER_DELIMITER_MAP[format] ?? undefined;
 };
 
 /**
