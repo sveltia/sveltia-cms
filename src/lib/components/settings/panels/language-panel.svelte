@@ -3,7 +3,7 @@
   import { Option, Select } from '@sveltia/ui';
 
   import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { prefs } from '$lib/services/user/prefs';
+  import { prefs } from '$lib/services/user/prefs.svelte';
 
   /**
    * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
@@ -30,7 +30,7 @@
         aria-label={_('prefs.language.ui_language.select_language')}
         value={appLocale.current}
         onChange={(event) => {
-          $prefs = { ...$prefs, locale: event.detail.value };
+          prefs.locale = event.detail.value;
         }}
       >
         {#each appLocales as locale (locale)}

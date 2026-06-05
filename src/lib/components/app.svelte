@@ -12,8 +12,8 @@
   import { backend } from '$lib/services/backends';
   import { cmsConfigLoaded, DEV_SITE_URL, initCmsConfig } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
-  import { user } from '$lib/services/user';
-  import { initUserEnvDetection } from '$lib/services/user/env';
+  import { user } from '$lib/services/user/account.svelte';
+  import { initUserEnvDetection } from '$lib/services/user/env.svelte';
 
   /**
    * @import { CmsConfig } from '$lib/types/public';
@@ -75,7 +75,7 @@
   let transitioned = $state(false);
 
   $effect(() => {
-    if ($dataLoaded && $user) {
+    if ($dataLoaded && user.account) {
       startViewTransition('forwards', () => {
         transitioned = true;
       });
@@ -122,7 +122,7 @@
         <BackendStatusIndicator />
       {/if}
       <div role="none" class="main">
-        {#if $user && $dataLoaded && transitioned}
+        {#if user.account && $dataLoaded && transitioned}
           <MainRouter />
         {:else}
           <EntrancePage />

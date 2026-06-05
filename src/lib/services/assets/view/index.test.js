@@ -99,13 +99,8 @@ vi.mock('$lib/services/assets/view/sort', () => ({
   sortAssets: vi.fn(),
 }));
 
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: {
-    subscribe: vi.fn((callback) => {
-      callback({ devModeEnabled: false });
-      return vi.fn();
-    }),
-  },
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: { devModeEnabled: false },
 }));
 
 vi.mock('$lib/services/backends', () => ({
@@ -666,12 +661,10 @@ describe('assets/view/index', () => {
       vi.resetModules();
 
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      const { prefs } = await import('$lib/services/user/prefs');
 
-      vi.mocked(prefs.subscribe).mockImplementation((callback) => {
-        callback(/** @type {any} */ ({ devModeEnabled: false }));
-        return vi.fn();
-      });
+      vi.doMock('$lib/services/user/prefs.svelte', () => ({
+        prefs: { devModeEnabled: false },
+      }));
 
       await import('.');
 
@@ -685,12 +678,10 @@ describe('assets/view/index', () => {
       vi.resetModules();
 
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      const { prefs } = await import('$lib/services/user/prefs');
 
-      vi.mocked(prefs.subscribe).mockImplementation((callback) => {
-        callback(/** @type {any} */ ({ devModeEnabled: true }));
-        return vi.fn();
-      });
+      vi.doMock('$lib/services/user/prefs.svelte', () => ({
+        prefs: { devModeEnabled: true },
+      }));
 
       await import('.');
 

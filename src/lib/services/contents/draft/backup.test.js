@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfigVersion } from '$lib/services/config';
 import { entryDraftInteracted, entryDraftModified } from '$lib/services/contents/draft';
-import { prefs } from '$lib/services/user/prefs';
+import { prefs } from '$lib/services/user/prefs.svelte';
 
 vi.mock('@sveltia/utils/storage');
 vi.mock('@sveltia/utils/file', () => ({
@@ -33,8 +33,11 @@ vi.mock('$lib/services/backends', () => ({
     }),
   },
 }));
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: { subscribe: vi.fn(() => vi.fn()) },
+
+const mockPrefs = vi.hoisted(() => ({ useDraftBackup: /** @type {boolean | undefined} */ (true) }));
+
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: mockPrefs,
 }));
 vi.mock('svelte/store', async () => {
   const actual = await vi.importActual('svelte/store');
@@ -82,6 +85,7 @@ describe('draft/backup', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockPrefs.useDraftBackup = true;
 
     // Import module (happens once, uses the mock set up above)
     const backupModule = await import('./backup');
@@ -351,6 +355,8 @@ describe('draft/backup', () => {
     });
 
     it('should not save backup when preference is disabled', async () => {
+      mockPrefs.useDraftBackup = false;
+
       mockGet.mockImplementation((store) => {
         if (store === prefs) {
           return { useDraftBackup: false };
@@ -375,6 +381,8 @@ describe('draft/backup', () => {
     });
 
     it('should default to enabled (true) when useDraftBackup is undefined', async () => {
+      mockPrefs.useDraftBackup = undefined;
+
       mockGet.mockImplementation((store) => {
         if (store === prefs) {
           // useDraftBackup is not set → `?? true` defaults to true
@@ -958,6 +966,8 @@ describe('draft/backup', () => {
 
   describe('restoreBackupIfNeeded', () => {
     it('should not restore if preference is disabled', async () => {
+      mockPrefs.useDraftBackup = false;
+
       mockGet.mockImplementation((store) => {
         if (store === prefs) {
           return { useDraftBackup: false };
@@ -972,6 +982,8 @@ describe('draft/backup', () => {
     });
 
     it('should default to enabled when useDraftBackup is undefined', async () => {
+      mockPrefs.useDraftBackup = undefined;
+
       mockGet.mockImplementation((store) => {
         if (store === prefs) {
           // useDraftBackup is not set → `?? true` defaults to true
@@ -1204,6 +1216,8 @@ describe('draft/backup', () => {
 
   describe('showBackupToastIfNeeded', () => {
     it('should not show toast if preference is disabled', async () => {
+      mockPrefs.useDraftBackup = false;
+
       mockGet.mockImplementation((store) => {
         if (store === prefs) {
           return { useDraftBackup: false };
@@ -1218,6 +1232,8 @@ describe('draft/backup', () => {
     });
 
     it('should default to enabled when useDraftBackup is undefined', async () => {
+      mockPrefs.useDraftBackup = undefined;
+
       mockGet.mockImplementation((store) => {
         if (store === prefs) {
           // useDraftBackup not set → defaults to true

@@ -6,7 +6,7 @@
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { getListFormatter } from '$lib/services/contents/i18n';
-  import { hasMouse } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -175,7 +175,7 @@
     <div role="none" class="content">
       {#if showUploadButton}
         <div role="none">
-          {#if $hasMouse}
+          {#if env.hasMouse}
             {_('drop_files_or_click_to_browse', { values: { count: multiple ? 2 : 1 } })}
           {:else}
             {_('tap_to_browse')}

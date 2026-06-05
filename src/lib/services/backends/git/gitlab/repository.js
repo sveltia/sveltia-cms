@@ -1,9 +1,8 @@
 import { _ } from '@sveltia/i18n';
-import { get } from 'svelte/store';
 
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
-import { user } from '$lib/services/user';
+import { user } from '$lib/services/user/account.svelte';
 
 /**
  * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
@@ -33,7 +32,7 @@ export const getBaseURLs = (repoURL, branch) => ({
  */
 export const checkRepositoryAccess = async () => {
   const { owner, repo } = repository;
-  const userId = /** @type {number} */ (get(user)?.id);
+  const userId = /** @type {number} */ (user.account?.id);
 
   const { ok } = /** @type {Response} */ (
     await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/members/all/${userId}`, {

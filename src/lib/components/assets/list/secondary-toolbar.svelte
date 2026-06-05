@@ -10,14 +10,14 @@
   import { ASSET_KINDS } from '$lib/services/assets/kinds';
   import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
   import { sortKeys } from '$lib/services/assets/view/sort-keys';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   const hasListedAssets = $derived(!!$listedAssets.length);
   const hasMultipleAssets = $derived($listedAssets.length > 1);
 </script>
 
 <Toolbar variant="secondary" aria-label={_('asset_list')}>
-  {#if !($isSmallScreen || $isMediumScreen)}
+  {#if !(env.isSmallScreen || env.isMediumScreen)}
     <ItemSelector allItems={Object.values($assetGroups).flat(1)} selectedItems={selectedAssets} />
   {/if}
   <Spacer flex />
@@ -36,7 +36,7 @@
     aria-controls="asset-list"
   />
   <ViewSwitcher disabled={!hasListedAssets} {currentView} aria-controls="asset-list" />
-  {#if !($isSmallScreen || $isMediumScreen)}
+  {#if !(env.isSmallScreen || env.isMediumScreen)}
     <Divider orientation="vertical" />
     <Button
       variant="ghost"

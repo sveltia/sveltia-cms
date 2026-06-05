@@ -25,7 +25,7 @@ vi.mock('$lib/services/integrations/media-libraries/default');
 vi.mock('$lib/services/contents/draft/events', () => ({
   callEventHooks: vi.fn(),
 }));
-vi.mock('$lib/services/user/prefs', () => ({
+vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { subscribe: vi.fn(() => vi.fn()) },
 }));
 vi.mock('svelte/store', async () => {

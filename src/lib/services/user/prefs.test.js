@@ -1,50 +1,16 @@
+/* eslint-disable jsdoc/require-param-description */
+/* eslint-disable jsdoc/require-returns */
+/* eslint-disable jsdoc/require-description */
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock dependencies
 const mockLocalStorage = {
   get: vi.fn(),
   set: vi.fn(),
 };
 
-/** @type {any} */
-let prefsSubscribeCallback;
-
-const mockPrefsErrorStore = {
-  subscribe: vi.fn(),
-  set: vi.fn(),
-};
-
-const mockPrefsStore = {
-  subscribe: vi.fn((callback) => {
-    prefsSubscribeCallback = callback;
-
-    return vi.fn();
-  }),
-};
-
-const mockWritable = vi.fn((initialValue, startCallback) => {
-  if (startCallback) {
-    // Save the start callback and invoke it
-    const setter = vi.fn((value) => {
-      // Call the subscribe callback when set is called
-      if (prefsSubscribeCallback) {
-        prefsSubscribeCallback(value);
-      }
-    });
-
-    setTimeout(() => startCallback(setter), 0);
-
-    return mockPrefsStore;
-  }
-
-  // Return error store for prefsError
-  return mockPrefsErrorStore;
-});
-
 const mockAppLocale = { set: vi.fn() };
-const mockGet = vi.fn(() => ['en', 'ja', 'fr']);
 
 vi.mock('@sveltia/utils/storage', () => ({
   LocalStorage: mockLocalStorage,
@@ -54,31 +20,26 @@ vi.mock('fast-deep-equal', () => ({
   default: vi.fn((a, b) => JSON.stringify(a) === JSON.stringify(b)),
 }));
 
-vi.mock('svelte/store', () => ({
-  get: mockGet,
-  writable: mockWritable,
-}));
-
 vi.mock('@sveltia/i18n', () => ({
   locale: mockAppLocale,
   locales: ['en', 'ja', 'fr'],
 }));
 
+/** @param {number} [ms] */
+const wait = (ms = 50) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
 describe('prefs service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLocalStorage.get.mockResolvedValue({});
-    mockWritable.mockClear();
-    prefsSubscribeCallback = undefined;
 
-    // Setup document.documentElement.dataset
     global.document = /** @type {any} */ ({
-      documentElement: {
-        dataset: {},
-      },
+      documentElement: { dataset: {} },
     });
 
-    // Setup window.matchMedia
     global.window = /** @type {any} */ ({
       matchMedia: vi.fn(() => ({ matches: false })),
     });
@@ -88,111 +49,151 @@ describe('prefs service', () => {
     vi.resetModules();
   });
 
-  it('should export prefs and prefsError stores', async () => {
-    const module = await import('./prefs.js');
+  it('should export prefs and prefsError', async () => {
+    const module = await import('./prefs.svelte.js');
 
     expect(module.prefs).toBeDefined();
-    expect(module.prefsError).toBeDefined();
+    expect(module).toHaveProperty('prefsError');
   });
 
-  it('should handle LocalStorage.set failure gracefully', async () => {
-    mockLocalStorage.get.mockResolvedValue({ locale: 'en' });
-    mockLocalStorage.set.mockRejectedValue(new Error('Storage error'));
+  it('should populate prefs from LocalStorage on init', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'ja' });
 
-    await import('./prefs.js');
+    const { prefs } = await import('./prefs.svelte.js');
 
-    // Wait for async initialization
-    await new Promise((resolve) => {
-      setTimeout(resolve, 50);
-    });
+    await wait();
 
-    // Manually trigger subscribe callback with different prefs to test save failure
-    if (prefsSubscribeCallback) {
-      const testPrefs = { locale: 'fr', theme: 'dark' };
-
-      prefsSubscribeCallback(testPrefs);
-
-      await new Promise((resolve) => {
-        setTimeout(resolve, 50);
-      });
-
-      // Should not throw even if set fails (catch block on lines 54-55)
-      expect(mockLocalStorage.set).toHaveBeenCalled();
-    }
+    expect(prefs.locale).toBe('ja');
   });
 
-  it('should set app locale when valid locale is provided', async () => {
+  it('should apply default values when loading from empty storage', async () => {
+    mockLocalStorage.get.mockResolvedValue(null);
+
+    const { prefs } = await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(prefs.useDraftBackup).toBe(true);
+    expect(prefs.closeOnSave).toBe(true);
+    expect(prefs.closeWithEscape).toBe(true);
+    expect(prefs.underlineLinks).toBe(true);
+    expect(prefs.beta).toBe(false);
+    expect(prefs.devModeEnabled).toBe(false);
+    expect(prefs.defaultTranslationService).toBe('google');
+    expect(prefs.apiKeys).toEqual({});
+  });
+
+  it('should set app locale when valid locale is loaded', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'ja' });
+
+    await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(mockAppLocale.set).toHaveBeenCalledWith('ja');
+  });
+
+  it('should not set app locale when invalid locale is loaded', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'zz' });
+
+    await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(mockAppLocale.set).not.toHaveBeenCalled();
+  });
+
+  it('should set app locale when prefs.locale is mutated directly', async () => {
     mockLocalStorage.get.mockResolvedValue({});
 
-    await import('./prefs.js');
+    const { prefs } = await import('./prefs.svelte.js');
 
-    // Wait for initialization
-    await new Promise((resolve) => {
-      setTimeout(resolve, 50);
-    });
-
-    // Trigger the subscribe callback with a valid locale
-    if (prefsSubscribeCallback) {
-      prefsSubscribeCallback({ locale: 'ja' });
-
-      await new Promise((resolve) => {
-        setTimeout(resolve, 50);
-      });
-
-      // Lines 67-68 should be covered
-      expect(mockAppLocale.set).toHaveBeenCalledWith('ja');
-    }
-  });
-
-  it('should not set app locale when invalid locale is provided', async () => {
-    mockLocalStorage.get.mockResolvedValue({});
-
-    await import('./prefs.js');
-
-    // Wait for initialization
-    await new Promise((resolve) => {
-      setTimeout(resolve, 50);
-    });
-
+    await wait();
     mockAppLocale.set.mockClear();
 
-    // Trigger the subscribe callback with an invalid locale
-    if (prefsSubscribeCallback) {
-      prefsSubscribeCallback({ locale: 'invalid-locale' });
+    prefs.locale = 'fr';
 
-      await new Promise((resolve) => {
-        setTimeout(resolve, 50);
-      });
+    await wait();
 
-      expect(mockAppLocale.set).not.toHaveBeenCalled();
-    }
+    expect(mockAppLocale.set).toHaveBeenCalledWith('fr');
   });
 
   it('should use dark theme when system prefers dark mode', async () => {
-    mockLocalStorage.get.mockResolvedValue({});
-
-    // Mock matchMedia to return dark mode preference
     global.window = /** @type {any} */ ({
       matchMedia: vi.fn(() => ({ matches: true })),
     });
 
-    await import('./prefs.js');
+    mockLocalStorage.get.mockResolvedValue({ theme: 'auto' });
 
-    // Wait for initialization
-    await new Promise((resolve) => {
-      setTimeout(resolve, 50);
+    await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(global.document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('should use light theme when system prefers light mode', async () => {
+    global.window = /** @type {any} */ ({
+      matchMedia: vi.fn(() => ({ matches: false })),
     });
 
-    // Trigger the subscribe callback with auto theme
-    if (prefsSubscribeCallback) {
-      prefsSubscribeCallback({ theme: 'auto' });
+    mockLocalStorage.get.mockResolvedValue({ theme: 'auto' });
 
-      await new Promise((resolve) => {
-        setTimeout(resolve, 50);
-      });
+    await import('./prefs.svelte.js');
 
-      // Should set theme to 'dark' based on matchMedia result (line 71)
-      expect(global.document.documentElement.dataset.theme).toBe('dark');
-    }
+    await wait();
+
+    expect(global.document.documentElement.dataset.theme).toBe('light');
+  });
+
+  it('should use an explicit theme without auto-detection', async () => {
+    mockLocalStorage.get.mockResolvedValue({ theme: 'dark' });
+
+    await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(global.document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('should set prefsError on LocalStorage.get failure', async () => {
+    mockLocalStorage.get.mockRejectedValue(new Error('Permission denied'));
+
+    const module = await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(module.prefsError.current).toEqual({ type: 'permission_denied' });
+  });
+
+  it('should save prefs to LocalStorage when changed', async () => {
+    mockLocalStorage.get.mockResolvedValue({});
+    mockLocalStorage.set.mockResolvedValue(undefined);
+
+    const { prefs } = await import('./prefs.svelte.js');
+
+    await wait();
+    mockLocalStorage.set.mockClear();
+    mockLocalStorage.get.mockResolvedValue({ beta: false });
+
+    prefs.beta = true;
+
+    await wait();
+
+    expect(mockLocalStorage.set).toHaveBeenCalled();
+  });
+
+  it('should handle LocalStorage.set failure gracefully', async () => {
+    mockLocalStorage.get.mockResolvedValue({});
+    mockLocalStorage.set.mockRejectedValue(new Error('Storage error'));
+
+    const { prefs } = await import('./prefs.svelte.js');
+
+    await wait();
+
+    prefs.beta = true;
+
+    // Should not throw
+    await expect(wait()).resolves.toBeUndefined();
   });
 });

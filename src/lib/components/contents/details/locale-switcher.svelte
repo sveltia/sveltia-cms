@@ -7,7 +7,7 @@
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -34,7 +34,7 @@
   const collectionFile = $derived($entryDraft?.collectionFile);
   const { allLocales } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const listedLocales = $derived(
-    $isSmallScreen || $isMediumScreen
+    env.isSmallScreen || env.isMediumScreen
       ? [...allLocales]
       : allLocales.filter((locale) => !($thatPane?.mode === 'edit' && $thatPane.locale === locale)),
   );
@@ -46,7 +46,7 @@
     ),
   );
   const canPreview = $derived($entryDraft?.canPreview ?? true);
-  const useDropDown = $derived($isSmallScreen || $isMediumScreen || allLocales.length >= 5);
+  const useDropDown = $derived(env.isSmallScreen || env.isMediumScreen || allLocales.length >= 5);
   const SelectComponent = $derived(useDropDown ? Select : SelectButtonGroup);
   const OptionComponent = $derived(useDropDown ? Option : SelectButton);
   const variant = $derived(useDropDown ? undefined : 'tertiary');

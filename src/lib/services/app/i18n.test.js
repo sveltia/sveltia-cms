@@ -7,7 +7,6 @@ const mockJaData = { hello: 'こんにちは', world: '世界' };
 const mockAddMessages = vi.fn();
 const mockInit = vi.fn();
 const mockGetLocaleFromNavigator = vi.fn();
-const mockGet = vi.fn();
 const mockGetPathInfo = vi.fn();
 
 vi.mock('$lib/locales/en.yaml', () => ({ default: mockEnData }));
@@ -17,24 +16,24 @@ vi.mock('@sveltia/i18n', () => ({
   addMessages: mockAddMessages,
   getLocaleFromNavigator: mockGetLocaleFromNavigator,
   init: mockInit,
-}));
-
-vi.mock('svelte/store', () => ({
-  get: mockGet,
-  toStore: vi.fn(() => ({ subscribe: vi.fn() })),
+  locale: { current: 'en' },
 }));
 
 vi.mock('@sveltia/utils/file', () => ({
   getPathInfo: mockGetPathInfo,
 }));
 
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: { locale: 'en' },
+/** @type {{ locale: string | null }} */
+const mockPrefs = { locale: 'en' };
+
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: mockPrefs,
 }));
 
 describe('i18n', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrefs.locale = 'en';
 
     // Set up getPathInfo to extract filename correctly
     mockGetPathInfo.mockImplementation((path) => {
@@ -46,8 +45,6 @@ describe('i18n', () => {
 
   describe('initAppLocale', () => {
     it('should load locale modules and initialize locales', async () => {
-      mockGet.mockReturnValue({ locale: 'en' });
-
       const { initAppLocale } = await import('./i18n.js');
 
       initAppLocale();
@@ -63,7 +60,7 @@ describe('i18n', () => {
     });
 
     it('should fall back to navigator locale when no prefs locale', async () => {
-      mockGet.mockReturnValue({ locale: null });
+      mockPrefs.locale = null;
       mockGetLocaleFromNavigator.mockReturnValue('ja-JP');
 
       const { initAppLocale } = await import('./i18n.js');
@@ -77,7 +74,7 @@ describe('i18n', () => {
     });
 
     it('should fall back to en when no prefs and no navigator locale', async () => {
-      mockGet.mockReturnValue({ locale: null });
+      mockPrefs.locale = null;
       mockGetLocaleFromNavigator.mockReturnValue(null);
 
       const { initAppLocale } = await import('./i18n.js');
@@ -91,7 +88,7 @@ describe('i18n', () => {
     });
 
     it('should handle empty navigator locale string', async () => {
-      mockGet.mockReturnValue({ locale: null });
+      mockPrefs.locale = null;
       mockGetLocaleFromNavigator.mockReturnValue('');
 
       const { initAppLocale } = await import('./i18n.js');

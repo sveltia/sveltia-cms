@@ -7,7 +7,7 @@ import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/
 import { getField } from '$lib/services/contents/entry/fields';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helper';
 import { translator } from '$lib/services/integrations/translators';
-import { prefs } from '$lib/services/user/prefs';
+import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -115,7 +115,7 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
   const count = Object.keys(copingFieldMap).length;
 
   const apiKey =
-    get(prefs).apiKeys?.[serviceId] ||
+    prefs.apiKeys?.[serviceId] ||
     (await new Promise((resolve) => {
       // The promise will be resolved once the user enters an API key on the dialog
       translatorApiKeyDialogState.set({ show: true, multiple: count > 1, resolve });

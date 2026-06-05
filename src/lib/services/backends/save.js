@@ -4,8 +4,8 @@ import { get } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';
-import { user } from '$lib/services/user';
-import { prefs } from '$lib/services/user/prefs';
+import { user } from '$lib/services/user/account.svelte';
+import { prefs } from '$lib/services/user/prefs.svelte';
 import { getBlob } from '$lib/services/utils/file';
 
 /**
@@ -29,7 +29,7 @@ import { getBlob } from '$lib/services/utils/file';
  * and `login`. `undefined` for the local and test-repo backends.
  */
 export const getCommitAuthor = () => {
-  const userData = /** @type {User} */ (get(user));
+  const userData = /** @type {User} */ (user.account);
 
   if (!userData) {
     return undefined;
@@ -146,7 +146,7 @@ export const saveChanges = async ({ changes, savingEntries = [], savingAssets = 
     author: getCommitAuthor(),
   };
 
-  if (get(prefs).devModeEnabled) {
+  if (prefs.devModeEnabled) {
     // eslint-disable-next-line no-console
     console.debug('Commit changes:', changes);
     // eslint-disable-next-line no-console

@@ -5,7 +5,7 @@
 
   import { hasOverlay } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
-  import { isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -85,7 +85,7 @@
   {...rest}
   bind:this={container}
 >
-  {#if $isSmallScreen || !primarySidebar || !main}
+  {#if env.isSmallScreen || !primarySidebar || !main}
     {@render primarySidebar?.()}
     {@render main?.()}
   {:else if sidebarWidth !== undefined}

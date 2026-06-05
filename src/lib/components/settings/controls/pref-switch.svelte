@@ -1,7 +1,7 @@
 <script>
   import { Switch } from '@sveltia/ui';
 
-  import { prefs } from '$lib/services/user/prefs';
+  import { prefs } from '$lib/services/user/prefs.svelte';
 
   /**
    * @typedef {object} Props
@@ -23,12 +23,12 @@
   let checked = $state(true);
 
   $effect(() => {
-    checked = Boolean(/** @type {Record<string, any>} */ ($prefs)[key] ?? defaultValue);
+    checked = Boolean(/** @type {Record<string, any>} */ (prefs)[key] ?? defaultValue);
   });
 
   $effect(() => {
-    if (/** @type {Record<string, any>} */ ($prefs)[key] !== checked) {
-      /** @type {Record<string, any>} */ ($prefs)[key] = checked;
+    if (/** @type {Record<string, any>} */ (prefs)[key] !== checked) {
+      /** @type {Record<string, any>} */ (prefs)[key] = checked;
     }
   });
 </script>

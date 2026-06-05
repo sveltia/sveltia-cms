@@ -1,7 +1,7 @@
 import equal from 'fast-deep-equal';
-import { derived, get, writable } from 'svelte/store';
+import { derived, writable } from 'svelte/store';
 
-import { prefs } from '$lib/services/user/prefs';
+import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * Regex to match internal properties added to list items, which should be excluded from output.
@@ -69,7 +69,7 @@ export const entryDraftModified = derived([entryDraft], ([draft]) => {
 });
 
 entryDraft.subscribe((draft) => {
-  if (get(prefs).devModeEnabled) {
+  if (prefs.devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('entryDraft', draft);
   }

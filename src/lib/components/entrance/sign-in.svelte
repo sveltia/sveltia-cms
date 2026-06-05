@@ -5,13 +5,8 @@
 
   import { allBackendServices } from '$lib/services/backends';
   import { cmsConfig } from '$lib/services/config';
-  import {
-    signInAutomatically,
-    signInError,
-    signingIn,
-    signInManually,
-  } from '$lib/services/user/auth';
-  import { isBrave, isLocalBackendSupported, isLocalHost } from '$lib/services/user/env';
+  import { auth, signInAutomatically, signInManually } from '$lib/services/user/auth.svelte';
+  import { env } from '$lib/services/user/env.svelte';
   import { makeLink } from '$lib/services/utils/string';
 
   /**
@@ -28,7 +23,7 @@
   const repositoryName = $derived(
     isTestRepo ? undefined : /** @type {GitBackend} */ (configuredBackend)?.repo?.split('/').pop(),
   );
-  const showLocalBackendOption = $derived($isLocalHost && !isTestRepo);
+  const showLocalBackendOption = $derived(env.isLocalHost && !isTestRepo);
   const tokenAuthDisabled = $derived(
     !isTestRepo &&
       /** @type {GitBackend} */ (configuredBackend).auth_methods?.includes('token') === false,
@@ -76,28 +71,28 @@
   onMount(() => {
     // Skip automatic sign-in if there’s already an error (e.g. repository access denied), so the
     // error message is preserved and the user can try again with different credentials
-    if (!$signInError.message) {
+    if (!auth.signInError.message) {
       signInAutomatically();
     }
   });
 </script>
 
 <div role="none" class="buttons">
-  {#if $signingIn}
+  {#if auth.signingIn}
     <div role="alert" class="message">{_('signing_in')}</div>
   {:else if backend}
     {#if showLocalBackendOption}
       <Button
         variant="primary"
         label={_('work_with_local_repo')}
-        disabled={!$isLocalBackendSupported}
+        disabled={!env.isLocalBackendSupported}
         onclick={async () => {
           await signInManually('local');
         }}
       />
-      {#if !$isLocalBackendSupported}
+      {#if !env.isLocalBackendSupported}
         <div role="alert">
-          {#if $isBrave}
+          {#if env.isBrave}
             {@html makeLink(
               _('local_workflow.disabled'),
               'https://sveltiacms.app/en/docs/workflows/local#enabling-file-system-access-api-in-brave',
@@ -106,7 +101,7 @@
             {_('local_workflow.unsupported_browser')}
           {/if}
         </div>
-      {:else if !$signInError.message}
+      {:else if !auth.signInError.message}
         <div role="none">
           {#if repositoryName}
             {_('work_with_local_repo_description', { values: { repo: repositoryName } })}
@@ -138,10 +133,10 @@
       />
     {/if}
   {/if}
-  {#if $signInError.message && $signInError.context === 'authentication'}
+  {#if auth.signInError.message && auth.signInError.context === 'authentication'}
     <div role="alert" class="error iconic">
       <Icon name="error" />
-      {$signInError.message}
+      {auth.signInError.message}
     </div>
   {/if}
 </div>

@@ -6,7 +6,7 @@
   import PageContainer from '$lib/components/common/page-container.svelte';
   import AccountMenu from '$lib/components/global/toolbar/items/account-menu.svelte';
   import HelpMenu from '$lib/components/global/toolbar/items/help-menu.svelte';
-  import { prefs } from '$lib/services/user/prefs';
+  import { prefs } from '$lib/services/user/prefs.svelte';
 </script>
 
 <PageContainer aria-label={_('menu')}>
@@ -24,7 +24,7 @@
             <h3>{_('account')}</h3>
             <AccountMenu />
           </section>
-          {#if $prefs.devModeEnabled}
+          {#if prefs.devModeEnabled}
             <section>
               <h3>{_('help')}</h3>
               <HelpMenu />

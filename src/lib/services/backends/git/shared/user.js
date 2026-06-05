@@ -1,7 +1,5 @@
-import { get } from 'svelte/store';
-
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { user } from '$lib/services/user';
+import { user } from '$lib/services/user/account.svelte';
 
 /**
  * @import { AuthTokens, User } from '$lib/types/private';
@@ -28,7 +26,7 @@ export const fetchUserProfile = async ({ token, refreshToken }, backendName, fie
     await fetchAPI('/user', { token, refreshToken })
   );
 
-  const _user = get(user);
+  const _user = user.account;
 
   // Update the tokens because these may have been renewed in `refreshAccessToken` while fetching
   // the user info

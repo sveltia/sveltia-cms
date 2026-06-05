@@ -41,7 +41,7 @@ vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/expanders');
 vi.mock('$lib/services/contents/entry/history');
-vi.mock('$lib/services/user/prefs', () => ({
+vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { subscribe: vi.fn(() => vi.fn()) },
 }));
 vi.mock('svelte/store', async () => {

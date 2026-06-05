@@ -49,8 +49,10 @@ vi.mock('$lib/services/config', () => ({
   cmsConfig: { mockStore: 'cmsConfig' },
 }));
 
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: { mockStore: 'prefs' },
+const mockPrefs = { devModeEnabled: false };
+
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: mockPrefs,
 }));
 
 // Import after mocks
@@ -89,12 +91,9 @@ describe('Gitea Index Service', () => {
         };
       }
 
-      if (store && typeof store === 'object' && store.mockStore === 'prefs') {
-        return { devModeEnabled: false };
-      }
-
       return {};
     });
+    mockPrefs.devModeEnabled = false;
   });
 
   describe('init', () => {
@@ -185,10 +184,6 @@ describe('Gitea Index Service', () => {
           };
         }
 
-        if (store && typeof store === 'object' && store.mockStore === 'prefs') {
-          return { devModeEnabled: false };
-        }
-
         return {};
       });
 
@@ -215,10 +210,6 @@ describe('Gitea Index Service', () => {
               api_root: 'https://custom-api.gitea.com',
             },
           };
-        }
-
-        if (store && typeof store === 'object' && store.mockStore === 'prefs') {
-          return { devModeEnabled: false };
         }
 
         return {};
@@ -256,10 +247,6 @@ describe('Gitea Index Service', () => {
           };
         }
 
-        if (store && typeof store === 'object' && store.mockStore === 'prefs') {
-          return { devModeEnabled: false };
-        }
-
         return {};
       });
 
@@ -282,10 +269,6 @@ describe('Gitea Index Service', () => {
           };
         }
 
-        if (store && typeof store === 'object' && store.mockStore === 'prefs') {
-          return { devModeEnabled: false };
-        }
-
         return {};
       });
 
@@ -298,6 +281,8 @@ describe('Gitea Index Service', () => {
     test('should handle dev mode logging', () => {
       const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
+      mockPrefs.devModeEnabled = true;
+
       getMock.mockImplementation((/** @type {any} */ store) => {
         if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
           return {
@@ -306,10 +291,6 @@ describe('Gitea Index Service', () => {
               repo: 'test/repo',
             },
           };
-        }
-
-        if (store && typeof store === 'object' && store.mockStore === 'prefs') {
-          return { devModeEnabled: true };
         }
 
         return {};

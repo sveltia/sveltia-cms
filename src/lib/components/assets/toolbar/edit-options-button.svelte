@@ -7,7 +7,7 @@
   import { canEditAsset } from '$lib/services/assets/kinds';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { backend } from '$lib/services/backends';
-  import { prefs } from '$lib/services/user/prefs';
+  import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
 
   /**
@@ -91,7 +91,7 @@
           openNewTab(publicURL);
         }}
       />
-      {#if $prefs.devModeEnabled}
+      {#if prefs.devModeEnabled}
         <MenuItem
           disabled={!$backend?.repository || !repoBlobURL}
           label={_('view_on_x', {

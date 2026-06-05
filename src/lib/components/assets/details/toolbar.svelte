@@ -10,10 +10,10 @@
   import { goBack } from '$lib/services/app/navigation';
   import { overlaidAsset } from '$lib/services/assets';
   import { selectedAssetFolder } from '$lib/services/assets/folders';
-  import { isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   const assets = $derived($overlaidAsset ? [$overlaidAsset] : []);
-  const useButton = $derived(!$isSmallScreen);
+  const useButton = $derived(!env.isSmallScreen);
 </script>
 
 {#snippet overflowButtons()}
@@ -43,12 +43,12 @@
       {$overlaidAsset?.name}
     </TruncatedText>
   </h2>
-  {#if !$isSmallScreen}
+  {#if !env.isSmallScreen}
     {@render overflowButtons()}
   {/if}
   <EditOptionsButton asset={$overlaidAsset}>
     {#snippet extraItems()}
-      {#if $isSmallScreen}
+      {#if env.isSmallScreen}
         {@render overflowButtons()}
       {/if}
     {/snippet}

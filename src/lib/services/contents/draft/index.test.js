@@ -3,14 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { entryDraft, entryDraftModified, filterRealValues, i18nAutoDupEnabled } from '.';
 
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: {
-    subscribe: vi.fn((callback) => {
-      callback({ devModeEnabled: false });
-
-      return vi.fn();
-    }),
-  },
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: { devModeEnabled: false },
 }));
 
 describe('draft/index', () => {
@@ -337,14 +331,8 @@ describe('draft/index', () => {
       vi.resetModules();
 
       // Mock prefs with devModeEnabled true
-      vi.doMock('$lib/services/user/prefs', () => ({
-        prefs: {
-          subscribe: vi.fn((callback) => {
-            callback({ devModeEnabled: true });
-
-            return vi.fn();
-          }),
-        },
+      vi.doMock('$lib/services/user/prefs.svelte', () => ({
+        prefs: { devModeEnabled: true },
       }));
 
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});

@@ -36,20 +36,22 @@ const mockWritable = vi.fn();
 vi.mock('svelte/store', () => ({
   derived: mockDerived,
   writable: mockWritable,
+  toStore: vi.fn((getter) => {
+    getter();
+    return { subscribe: vi.fn() };
+  }),
 }));
 
 vi.mock('$lib/services/backends', () => ({
   backend: { subscribe: vi.fn() },
 }));
 
-vi.mock('$lib/services/user', () => ({
-  user: { subscribe: vi.fn() },
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: { account: null },
 }));
 
-vi.mock('$lib/services/user/env', () => ({
-  hasMouse: { subscribe: vi.fn() },
-  isLargeScreen: { subscribe: vi.fn() },
-  isLocalHost: { subscribe: vi.fn() },
+vi.mock('$lib/services/user/env.svelte', () => ({
+  env: { hasMouse: true, isLargeScreen: true, isLocalHost: false },
 }));
 
 describe('onboarding', () => {

@@ -42,8 +42,8 @@ vi.mock('$lib/services/backends/git/gitea/repository', () => ({
   },
 }));
 
-vi.mock('$lib/services/user', () => ({
-  user: {}, // Mock user store
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: { account: { name: 'John Doe', email: 'john.doe@example.com' } },
 }));
 
 describe('Gitea Commits Service', () => {
@@ -122,27 +122,6 @@ describe('Gitea Commits Service', () => {
 
   describe('commitChanges', () => {
     beforeEach(() => {
-      // Mock user store to return user information
-      getMock.mockImplementation((store) => {
-        if (store === undefined) {
-          // @ts-ignore
-          return (key, options) => {
-            switch (key) {
-              case 'branch_not_found':
-                return `Branch ${options?.values?.branch || 'unknown'} not found in repository ${options?.values?.repo || 'unknown'}`;
-              default:
-                return key;
-            }
-          };
-        }
-        // Mock user store
-
-        return {
-          name: 'John Doe',
-          email: 'john.doe@example.com',
-        };
-      });
-
       encodeBase64Mock.mockResolvedValue('base64encodedcontent');
       createCommitMessageMock.mockReturnValue('Add new file');
     });

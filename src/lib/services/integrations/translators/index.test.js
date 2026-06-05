@@ -88,14 +88,14 @@ vi.mock('./mistral.js', () => ({
 }));
 
 vi.mock('svelte/store', () => {
-  // Use globalThis to avoid hoisting issues
-  const mockDerived = vi.fn((stores, callback) => {
-    /** @type {any} */ (globalThis).testDerivedCallback = callback; // Capture the callback
+  // Capture the getter function passed to toStore for direct testing
+  const mockToStore = vi.fn((getter) => {
+    /** @type {any} */ (globalThis).testToStoreGetter = getter; // Capture the getter
     return { subscribe: vi.fn() };
   });
 
   return {
-    derived: mockDerived,
+    toStore: mockToStore,
     get: vi.fn(),
     writable: vi.fn(() => ({
       subscribe: vi.fn(),
@@ -105,9 +105,22 @@ vi.mock('svelte/store', () => {
   };
 });
 
+/** @type {{ defaultTranslationService: string | undefined }} */
+const mockPrefs = vi.hoisted(
+  () =>
+    /** @type {{ defaultTranslationService: string | undefined }} */ ({
+      defaultTranslationService: 'google',
+    }),
+);
+
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: mockPrefs,
+}));
+
 describe('Translator Services Index', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrefs.defaultTranslationService = 'google';
   });
 
   describe('allTranslationServices', () => {
@@ -203,34 +216,40 @@ describe('Translator Services Index', () => {
     });
 
     it('should test derived callback with default prefs', () => {
-      const callback = /** @type {any} */ (globalThis).testDerivedCallback;
+      const getter = /** @type {any} */ (globalThis).testToStoreGetter;
 
-      expect(callback).toBeDefined();
+      expect(getter).toBeDefined();
 
-      // Test the callback with empty prefs (should default to google)
-      const result = callback([{}]);
+      // Test the getter with empty prefs (should default to google)
+      mockPrefs.defaultTranslationService = undefined;
+
+      const result = getter();
 
       expect(result).toBe(allTranslationServices.google);
     });
 
     it('should test derived callback with openai prefs', () => {
-      const callback = /** @type {any} */ (globalThis).testDerivedCallback;
+      const getter = /** @type {any} */ (globalThis).testToStoreGetter;
 
-      expect(callback).toBeDefined();
+      expect(getter).toBeDefined();
 
-      // Test the callback with prefs specifying openai
-      const result = callback([{ defaultTranslationService: 'openai' }]);
+      // Test the getter with prefs specifying openai
+      mockPrefs.defaultTranslationService = 'openai';
+
+      const result = getter();
 
       expect(result).toBe(allTranslationServices.openai);
     });
 
     it('should test derived callback fallback for unknown service', () => {
-      const callback = /** @type {any} */ (globalThis).testDerivedCallback;
+      const getter = /** @type {any} */ (globalThis).testToStoreGetter;
 
-      expect(callback).toBeDefined();
+      expect(getter).toBeDefined();
 
-      // Test the callback with prefs specifying an unknown service
-      const result = callback([{ defaultTranslationService: 'deepl' }]);
+      // Test the getter with prefs specifying an unknown service
+      mockPrefs.defaultTranslationService = 'deepl';
+
+      const result = getter();
 
       // Should fallback to google when service is not found
       expect(result).toBe(allTranslationServices.google);

@@ -6,7 +6,7 @@
   import TranslatorSelector from '$lib/components/settings/controls/translator-selector.svelte';
   import { showContentOverlay, translatorApiKeyDialogState } from '$lib/services/contents/editor';
   import { translator } from '$lib/services/integrations/translators';
-  import { prefs } from '$lib/services/user/prefs';
+  import { prefs } from '$lib/services/user/prefs.svelte';
 
   const { serviceId, apiLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived($translator);
 
@@ -34,8 +34,8 @@
     const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
 
     if (apiKeyPattern?.test(_value)) {
-      $prefs.apiKeys ??= {};
-      $prefs.apiKeys[serviceId] = _value;
+      prefs.apiKeys ??= {};
+      prefs.apiKeys[serviceId] = _value;
       $translatorApiKeyDialogState.show = false;
       $translatorApiKeyDialogState.resolve?.(_value);
     }

@@ -13,7 +13,7 @@ import {
   i18nAutoDupEnabled,
 } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy';
-import { prefs } from '$lib/services/user/prefs';
+import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -93,7 +93,7 @@ export const getBackup = async (collectionName, slug = '') => {
  * @param {EntryDraft} draft Draft.
  */
 export const saveBackup = async (draft) => {
-  if (!(get(prefs).useDraftBackup ?? true) || !get(entryDraftInteracted)) {
+  if (!(prefs.useDraftBackup ?? true) || !get(entryDraftInteracted)) {
     return;
   }
 
@@ -228,7 +228,7 @@ export const restoreBackup = ({ backup, collectionName, fileName }) => {
  * @param {string} [args.slug] Entry slug. Existing entry only.
  */
 export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '' }) => {
-  if (!(get(prefs).useDraftBackup ?? true)) {
+  if (!(prefs.useDraftBackup ?? true)) {
     return;
   }
 
@@ -265,7 +265,7 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
  * Check if the current entry’s draft backup has been saved, and if so, show a toast notification.
  */
 export const showBackupToastIfNeeded = async () => {
-  if (!(get(prefs).useDraftBackup ?? true)) {
+  if (!(prefs.useDraftBackup ?? true)) {
     return;
   }
 

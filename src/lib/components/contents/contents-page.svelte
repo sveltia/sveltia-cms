@@ -37,7 +37,7 @@
   import { showContentOverlay } from '$lib/services/contents/editor';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { isSearchRoute } from '$lib/services/search/navigation';
-  import { isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import { InternalCollection } from '$lib/types/private';
@@ -83,7 +83,7 @@
     const { _collectionName, routeType, subPath } = match.groups;
 
     if (!_collectionName) {
-      if ($isSmallScreen) {
+      if (env.isSmallScreen) {
         // Show the collection list only
         $selectedCollection = undefined;
         $showContentOverlay = false;
@@ -212,14 +212,14 @@
 
 <PageContainer uiSettingsKey="contents-page" aria-label={_('content_library')}>
   {#snippet primarySidebar()}
-    {#if !$isSmallScreen || isIndexPage}
+    {#if !env.isSmallScreen || isIndexPage}
       <PrimarySidebar {isSearchPage} />
     {/if}
   {/snippet}
   {#snippet main()}
     {#if isSearchPage}
       <SearchMainArea />
-    {:else if !$isSmallScreen || !isIndexPage}
+    {:else if !env.isSmallScreen || !isIndexPage}
       <PageContainerMainArea
         aria-label={_('x_collection', {
           values: {

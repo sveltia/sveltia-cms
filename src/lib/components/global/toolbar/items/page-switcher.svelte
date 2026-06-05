@@ -7,7 +7,7 @@
   import { backendName } from '$lib/services/backends';
   import { cmsConfig } from '$lib/services/config';
   import { searchMode } from '$lib/services/search';
-  import { isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   const pages = $derived.by(() => {
     const _pages = [
@@ -28,7 +28,7 @@
         key: 'assets',
         label: _('assets'),
         icon: 'photo',
-        link: $isSmallScreen
+        link: env.isSmallScreen
           ? '/assets'
           : `/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`,
         searchMode: 'assets',
@@ -53,7 +53,7 @@
       // });
     }
 
-    if ($isSmallScreen) {
+    if (env.isSmallScreen) {
       _pages.push({
         key: 'menu',
         label: _('menu'),

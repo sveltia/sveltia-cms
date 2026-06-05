@@ -18,8 +18,8 @@ vi.mock('$lib/services/contents/draft/validate/messages', () => ({
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/utils/misc');
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: { subscribe: vi.fn(() => vi.fn()) },
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: { devModeEnabled: false },
 }));
 vi.mock('svelte/store', async () => {
   const actual = await vi.importActual('svelte/store');

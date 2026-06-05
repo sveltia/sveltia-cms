@@ -9,7 +9,7 @@
   import { getAssetFolder } from '$lib/services/assets/folders';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { currentView } from '$lib/services/contents/collection/view';
-  import { isLargeScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   const folder = $derived(getAssetFolder({ collectionName: $selectedCollection?.name }));
   const assets = $derived(
@@ -22,7 +22,7 @@
   const uploadDisabled = $derived(entryRelative || hasTemplateTags);
 </script>
 
-{#if internalPath !== undefined && $isLargeScreen && $currentView.showMedia}
+{#if internalPath !== undefined && env.isLargeScreen && $currentView.showMedia}
   <Group id="collection-assets" class="secondary-sidebar" aria-label={_('collection_assets')}>
     <DropZone
       disabled={uploadDisabled}

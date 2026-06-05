@@ -1,7 +1,6 @@
 import { generateUUID } from '@sveltia/utils/crypto';
-import { get } from 'svelte/store';
 
-import { user } from '$lib/services/user';
+import { user } from '$lib/services/user/account.svelte';
 
 /**
  * @import { GetDefaultValueMapFuncArgs, User } from '$lib/types/private';
@@ -14,7 +13,7 @@ import { user } from '$lib/services/user';
  * @returns {any} Default value.
  */
 const getDefaultValue = ({ fieldConfig, locale, dynamicValue }) => {
-  const { email = '', login = '', name = '' } = /** @type {User} */ (get(user));
+  const { email = '', login = '', name = '' } = /** @type {User} */ (user.account);
   const { default: defaultValue } = /** @type {HiddenField} */ (fieldConfig);
   const value = dynamicValue ?? defaultValue;
 

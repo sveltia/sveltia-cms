@@ -17,7 +17,7 @@
     targetAssetFolder,
   } from '$lib/services/assets/folders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   const assets = $derived.by(() => {
     if ($selectedAssets.length) return [...$selectedAssets];
@@ -29,7 +29,7 @@
 </script>
 
 <Toolbar variant="primary" aria-label={_('folder')}>
-  {#if $isSmallScreen}
+  {#if env.isSmallScreen}
     <BackButton
       aria-label={_('back_to_asset_folder_list')}
       onclick={() => {
@@ -41,11 +41,11 @@
     {#key appLocale.current}
       {$selectedAssetFolder ? getFolderLabelByCollection($selectedAssetFolder) : ''}
     {/key}
-    {#if !$isSmallScreen && $selectedAssetFolder?.internalPath !== undefined}
+    {#if !env.isSmallScreen && $selectedAssetFolder?.internalPath !== undefined}
       <span role="none">/{$selectedAssetFolder.internalPath}</span>
     {/if}
   </h2>
-  {#if !($isSmallScreen || $isMediumScreen)}
+  {#if !(env.isSmallScreen || env.isMediumScreen)}
     <PreviewAssetButton asset={$focusedAsset} />
     <CopyAssetsButton assets={$focusedAsset ? [$focusedAsset] : []} />
     <DownloadAssetsButton {assets} />
@@ -62,8 +62,8 @@
     <EditOptionsButton asset={$focusedAsset} />
   {/if}
   <FloatingActionButtonWrapper>
-    {#if !$isSmallScreen || ($listedAssets.length && !uploadDisabled)}
-      <UploadAssetsButton label={$isSmallScreen ? undefined : _('upload')} />
+    {#if !env.isSmallScreen || ($listedAssets.length && !uploadDisabled)}
+      <UploadAssetsButton label={env.isSmallScreen ? undefined : _('upload')} />
     {/if}
   </FloatingActionButtonWrapper>
 </Toolbar>

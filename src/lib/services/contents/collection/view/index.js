@@ -10,7 +10,7 @@ import { filterEntries } from '$lib/services/contents/collection/view/filter';
 import { groupEntries } from '$lib/services/contents/collection/view/group';
 import { entryListSettings, initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
-import { prefs } from '$lib/services/user/prefs';
+import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -233,7 +233,7 @@ backend.subscribe((_backend) => {
 listedEntries.subscribe((entries) => {
   selectedEntries.set([]);
 
-  if (get(prefs).devModeEnabled) {
+  if (prefs.devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('listedEntries', entries);
   }
@@ -247,7 +247,7 @@ selectedCollection.subscribe((collection) => {
   viewBeforeReorder = undefined;
   reordering.set(false);
 
-  if (collection && get(prefs).devModeEnabled) {
+  if (collection && prefs.devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('selectedCollection', collection);
   }

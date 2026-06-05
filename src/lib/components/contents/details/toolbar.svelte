@@ -37,8 +37,8 @@
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
-  import { prefs } from '$lib/services/user/prefs';
+  import { env } from '$lib/services/user/env.svelte';
+  import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
 
   /**
@@ -121,7 +121,7 @@
     try {
       const savedEntry = await saveEntry({ skipCI });
 
-      if ($prefs?.closeOnSave ?? true) {
+      if (prefs.closeOnSave ?? true) {
         _goBack();
         $entryDraft = null;
       } else {
@@ -162,7 +162,7 @@
 </script>
 
 {#snippet overflowButtons()}
-  {@const Component = $isSmallScreen ? MenuItem : Button}
+  {@const Component = env.isSmallScreen ? MenuItem : Button}
   {@const canDuplicate =
     !isIndexFile &&
     entryCollection?.duplicate !== false &&
@@ -202,7 +202,7 @@
 <Toolbar variant="primary" aria-label={_('primary')}>
   <BackButton
     aria-label={_('cancel_editing')}
-    useShortcut={$prefs.closeWithEscape}
+    useShortcut={prefs.closeWithEscape}
     onclick={() => {
       _goBack();
     }}
@@ -218,7 +218,7 @@
             : collection && originalEntry && appLocale.current
               ? getEntrySummary(collection, originalEntry)
               : ''}
-          {#if $isSmallScreen}
+          {#if env.isSmallScreen}
             {entrySummary}
           {:else}
             {_('edit_entry_title', {
@@ -238,7 +238,7 @@
       }}
     />
   {/if}
-  {#if !$isSmallScreen && !disabled && !collectionFile && !isNew}
+  {#if !env.isSmallScreen && !disabled && !collectionFile && !isNew}
     {@render overflowButtons()}
   {/if}
   <MenuButton
@@ -251,7 +251,7 @@
   >
     {#snippet popup()}
       <Menu aria-label={_('editor_options')}>
-        {#if $isSmallScreen && !disabled && !collectionFile && !isNew}
+        {#if env.isSmallScreen && !disabled && !collectionFile && !isNew}
           {@render overflowButtons()}
         {/if}
         <MenuItem
@@ -268,7 +268,7 @@
             revertChanges();
           }}
         />
-        {#if !($isSmallScreen || $isMediumScreen)}
+        {#if !(env.isSmallScreen || env.isMediumScreen)}
           <Divider />
           <MenuItemCheckbox
             label={_('show_preview')}

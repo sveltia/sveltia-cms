@@ -10,16 +10,12 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/user', () => ({
-  user: { subscribe: vi.fn() },
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: { account: { login: 'test-user' } },
 }));
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn(() => 'Translation message'),
 }));
-vi.mock('svelte/store', () => ({
-  get: vi.fn().mockReturnValue({ login: 'test-user' }),
-}));
-
 describe('GitHub repository service', () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -3,7 +3,7 @@ import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
 import merge from 'deepmerge';
-import { derived, get, writable } from 'svelte/store';
+import { derived, writable } from 'svelte/store';
 import { stringify } from 'yaml';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
@@ -12,7 +12,7 @@ import { getAllEntryFolders } from '$lib/services/config/folders/entries';
 import { fetchCmsConfig } from '$lib/services/config/loader';
 import { parseCmsConfig } from '$lib/services/config/parser';
 import { allEntryFolders } from '$lib/services/contents';
-import { prefs } from '$lib/services/user/prefs';
+import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -165,7 +165,7 @@ export const initCmsConfig = async (manualConfig) => {
 };
 
 cmsConfig.subscribe((config) => {
-  if (get(prefs).devModeEnabled) {
+  if (prefs.devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('cmsConfig', config);
     // eslint-disable-next-line no-console
@@ -183,7 +183,7 @@ cmsConfig.subscribe((config) => {
   allEntryFolders.set(_allEntryFolders);
   allAssetFolders.set(_allAssetFolders);
 
-  if (get(prefs).devModeEnabled) {
+  if (prefs.devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('allEntryFolders', _allEntryFolders);
     // eslint-disable-next-line no-console

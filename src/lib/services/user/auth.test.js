@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies
 const mockLocalStorage = {
@@ -15,22 +15,10 @@ const mockBackend = {
 
 const mockBackendStore = { subscribe: vi.fn() };
 const mockCmsConfigStore = { subscribe: vi.fn() };
-const mockUser = { set: vi.fn() };
+const mockUser = vi.hoisted(() => ({ account: /** @type {any} */ (undefined) }));
 const mockDataLoaded = { set: vi.fn() };
-
-const mockPrefs = {
-  /**
-   * Mock prefs update function that executes the callback.
-   * @param {(p: object) => object} callback Update callback.
-   */
-  update: vi.fn((callback) => {
-    // Execute the callback to ensure line 167 is covered
-    if (typeof callback === 'function') {
-      callback({});
-    }
-  }),
-};
-
+/** @type {Record<string, unknown>} */
+const mockPrefs = {};
 const mockGoto = vi.fn();
 const mockParseLocation = vi.fn();
 const mockGet = vi.fn();
@@ -78,20 +66,25 @@ vi.mock('$lib/services/contents', () => ({
   dataLoaded: mockDataLoaded,
 }));
 
-vi.mock('$lib/services/user', () => ({
+vi.mock('$lib/services/user/account.svelte', () => ({
   user: mockUser,
 }));
 
-vi.mock('$lib/services/user/prefs', () => ({
+vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: mockPrefs,
 }));
 
 describe('auth service', () => {
   /** @type {any} */
   let authModule;
+  /** @type {any} */
+  let auth;
 
   beforeEach(async () => {
+    vi.resetModules();
     vi.clearAllMocks();
+    mockUser.account = undefined;
+    Object.keys(mockPrefs).forEach((k) => delete mockPrefs[k]);
 
     mockGet.mockImplementation((store) => {
       // Handle the backend store
@@ -125,13 +118,20 @@ describe('auth service', () => {
     });
     mockParseLocation.mockReturnValue({ path: '/' });
 
-    // Import the module after mocks are set up
-    authModule = await import('./auth.js');
+    authModule = await import('./auth.svelte.js');
+    ({ auth } = authModule);
+  });
 
-    // Spy on the exported stores rather than reassigning them
-    vi.spyOn(authModule.signInError, 'set');
-    vi.spyOn(authModule.unauthenticated, 'set');
-    vi.spyOn(authModule.signingIn, 'set');
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  describe('initial state', () => {
+    it('should export auth with correct default values', () => {
+      expect(auth.signInError).toEqual({ message: '', context: 'authentication' });
+      expect(auth.unauthenticated).toBe(true);
+      expect(auth.signingIn).toBe(false);
+    });
   });
 
   describe('parseMagicLink', () => {
@@ -462,7 +462,7 @@ describe('auth service', () => {
     it('should reset signInError to initial state', () => {
       authModule.resetError();
 
-      expect(authModule.signInError.set).toHaveBeenCalledWith({
+      expect(auth.signInError).toEqual({
         message: '',
         context: 'authentication',
       });
@@ -477,7 +477,7 @@ describe('auth service', () => {
 
       authModule.logError(error);
 
-      expect(authModule.signInError.set).toHaveBeenCalledWith({
+      expect(auth.signInError).toEqual({
         message: 'Cause message',
         context: 'authentication',
       });
@@ -491,7 +491,7 @@ describe('auth service', () => {
 
       authModule.logError(error);
 
-      expect(authModule.signInError.set).toHaveBeenCalledWith({
+      expect(auth.signInError).toEqual({
         message: 'Not project root error',
         context: 'authentication',
       });
@@ -510,7 +510,7 @@ describe('auth service', () => {
 
       authModule.logError(error);
 
-      expect(authModule.signInError.set).toHaveBeenCalledWith({
+      expect(auth.signInError).toEqual({
         message: 'Picker dismissed error',
         context: 'authentication',
       });
@@ -529,7 +529,7 @@ describe('auth service', () => {
 
       authModule.logError(error);
 
-      expect(authModule.signInError.set).toHaveBeenCalledWith({
+      expect(auth.signInError).toEqual({
         message: 'Authentication aborted error',
         context: 'authentication',
       });
@@ -542,7 +542,7 @@ describe('auth service', () => {
 
       authModule.logError(error);
 
-      expect(authModule.signInError.set).toHaveBeenCalledWith({
+      expect(auth.signInError).toEqual({
         message: 'Unexpected error',
         context: 'authentication',
       });
@@ -555,7 +555,7 @@ describe('auth service', () => {
 
       authModule.logError(error, 'dataFetch');
 
-      expect(authModule.signInError.set).toHaveBeenCalledWith({
+      expect(auth.signInError).toEqual({
         message: 'Data fetch error',
         context: 'dataFetch',
       });
@@ -597,7 +597,7 @@ describe('auth service', () => {
         auto: true,
       });
       // Should apply copied prefs from magic link
-      expect(mockPrefs.update).toHaveBeenCalled();
+      expect(mockPrefs).toMatchObject({ theme: 'dark' });
       // Should remove token from URL
       expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
     });
@@ -635,7 +635,7 @@ describe('auth service', () => {
         auto: true,
       });
       // Should NOT apply prefs since they come from magic link
-      expect(mockPrefs.update).not.toHaveBeenCalled();
+      expect(mockPrefs.theme).toBeUndefined();
       // Should NOT call goto since no magic link was parsed
       expect(mockGoto).not.toHaveBeenCalled();
     });
@@ -655,8 +655,7 @@ describe('auth service', () => {
       await authModule.signInAutomatically();
 
       expect(mockBackend.signIn).not.toHaveBeenCalled();
-      // Should not call unauthenticated.set because function returns early
-      expect(authModule.unauthenticated.set).not.toHaveBeenCalled();
+      expect(auth.unauthenticated).toBe(true);
     });
 
     it('should check multiple cache sources', async () => {
@@ -680,8 +679,7 @@ describe('auth service', () => {
       expect(mockLocalStorage.get).toHaveBeenCalledWith('sveltia-cms.user');
       expect(mockLocalStorage.get).toHaveBeenCalledWith('decap-cms-user');
       expect(mockLocalStorage.get).toHaveBeenCalledWith('netlify-cms-user');
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
+      expect(auth.signingIn).toBe(false);
     });
 
     it('should sign in with cached user data and set signingIn state', async () => {
@@ -707,16 +705,14 @@ describe('auth service', () => {
 
       await authModule.signInAutomatically();
 
-      expect(mockUser.set).toHaveBeenCalledWith(cachedUser); // Set before sign-in
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
       expect(mockBackend.signIn).toHaveBeenCalledWith({
         token: 'test-token',
         refreshToken: undefined,
         auto: true,
       });
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(false);
-      expect(mockUser.set).toHaveBeenCalledWith(cachedUser); // Set after sign-in
+      expect(auth.signingIn).toBe(false);
+      expect(auth.unauthenticated).toBe(false);
+      expect(mockUser.account).toEqual(cachedUser);
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
     });
 
@@ -746,14 +742,13 @@ describe('auth service', () => {
       await authModule.signInAutomatically();
 
       expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
       expect(mockBackend.signIn).toHaveBeenCalledWith({
         token: 'qr-token',
         refreshToken: undefined,
         auto: true,
       });
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      expect(mockPrefs.update).toHaveBeenCalled();
+      expect(auth.signingIn).toBe(false);
+      expect(mockPrefs).toMatchObject({ theme: 'dark' });
     });
 
     it('should handle QR code authentication without prefs', async () => {
@@ -784,7 +779,7 @@ describe('auth service', () => {
 
       expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
       // Should sign in without prefs update (line 127 condition is false)
-      expect(mockPrefs.update).not.toHaveBeenCalled();
+      expect(mockPrefs.theme).toBeUndefined();
     });
 
     it('should handle invalid QR code data gracefully', async () => {
@@ -888,11 +883,9 @@ describe('auth service', () => {
 
       await authModule.signInAutomatically();
 
-      expect(mockUser.set).toHaveBeenCalledWith(cachedUser); // Set before sign-in
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      expect(mockUser.set).toHaveBeenCalledWith(undefined); // Reset after failure
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      expect(auth.signingIn).toBe(false);
+      expect(mockUser.account).toBeUndefined();
+      expect(auth.unauthenticated).toBe(true);
     });
 
     it('should handle fetch files failure with auth error', async () => {
@@ -915,10 +908,10 @@ describe('auth service', () => {
 
       await authModule.signInAutomatically();
 
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      expect(auth.unauthenticated).toBe(true);
       // Should clear the cached token so the sign-in form is shown
       expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
-      expect(mockUser.set).toHaveBeenCalledWith(undefined);
+      expect(mockUser.account).toBeUndefined();
     });
 
     it('should handle fetch files failure with non-auth error', async () => {
@@ -941,11 +934,11 @@ describe('auth service', () => {
 
       await authModule.signInAutomatically();
 
-      expect(authModule.signInError.set).toHaveBeenCalled();
+      expect(auth.signInError.message).not.toBe('');
       // Should clear the cached token so the sign-in form is shown
       expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
-      expect(mockUser.set).toHaveBeenCalledWith(undefined);
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      expect(mockUser.account).toBeUndefined();
+      expect(auth.unauthenticated).toBe(true);
     });
 
     it('should not clear cache on non-auth fetch files failure', async () => {
@@ -968,7 +961,7 @@ describe('auth service', () => {
 
       await authModule.signInAutomatically();
 
-      expect(authModule.signInError.set).toHaveBeenCalled();
+      expect(auth.signInError.message).not.toBe('');
       // Should NOT clear the cached token for non-auth errors like missing branches
       expect(mockLocalStorage.set).not.toHaveBeenCalledWith('sveltia-cms.user', {});
     });
@@ -1001,7 +994,7 @@ describe('auth service', () => {
       expect(mockBackend.signIn).not.toHaveBeenCalled();
       expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
       // unauthenticated should be set to false since _user is still truthy
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(false);
+      expect(auth.unauthenticated).toBe(false);
     });
   });
 
@@ -1015,14 +1008,13 @@ describe('auth service', () => {
 
       await authModule.signInManually('github', 'manual-token');
 
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
       expect(mockBackend.signIn).toHaveBeenCalledWith({
         token: 'manual-token',
         auto: false,
       });
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(false);
-      expect(mockUser.set).toHaveBeenCalledWith(user);
+      expect(auth.signingIn).toBe(false);
+      expect(auth.unauthenticated).toBe(false);
+      expect(mockUser.account).toEqual(user);
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
     });
 
@@ -1041,10 +1033,9 @@ describe('auth service', () => {
 
       await authModule.signInManually('github', 'invalid-token');
 
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
-      expect(authModule.signInError.set).toHaveBeenCalled();
+      expect(auth.signingIn).toBe(false);
+      expect(auth.unauthenticated).toBe(true);
+      expect(auth.signInError.message).not.toBe('');
     });
 
     it('should handle PAT token authentication failure', async () => {
@@ -1064,11 +1055,10 @@ describe('auth service', () => {
 
       await authModule.signInManually('github', 'invalid-pat-token');
 
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      expect(auth.signingIn).toBe(false);
+      expect(auth.unauthenticated).toBe(true);
       // Lines 210-214 should be covered - specific error for invalid PAT
-      expect(authModule.signInError.set).toHaveBeenCalledWith({
+      expect(auth.signInError).toEqual({
         message: 'The provided token is invalid',
         context: 'authentication',
       });
@@ -1091,11 +1081,10 @@ describe('auth service', () => {
       // No token provided - OAuth flow
       await authModule.signInManually('github');
 
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      expect(auth.signingIn).toBe(false);
+      expect(auth.unauthenticated).toBe(true);
       // Should use general error handling (else branch of lines 210-214)
-      expect(authModule.signInError.set).toHaveBeenCalled();
+      expect(auth.signInError.message).not.toBe('');
     });
 
     it('should return early if sign in returns no user', async () => {
@@ -1104,11 +1093,10 @@ describe('auth service', () => {
 
       await authModule.signInManually('github', 'token');
 
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      expect(auth.signingIn).toBe(false);
+      expect(auth.unauthenticated).toBe(true);
       // Lines 226-227 should be covered - early return when no user
-      expect(mockUser.set).not.toHaveBeenCalled();
+      expect(mockUser.account).toBeUndefined();
       expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
     });
 
@@ -1118,7 +1106,7 @@ describe('auth service', () => {
       await authModule.signInManually('github', 'token');
 
       expect(mockBackend.signIn).not.toHaveBeenCalled();
-      expect(authModule.signingIn.set).not.toHaveBeenCalled();
+      expect(auth.signingIn).toBe(false);
     });
 
     it('should handle fetch files failure with auth error', async () => {
@@ -1138,13 +1126,12 @@ describe('auth service', () => {
 
       await authModule.signInManually('github', 'manual-token');
 
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      expect(authModule.signInError.set).toHaveBeenCalled();
+      expect(auth.signingIn).toBe(false);
+      expect(auth.signInError.message).not.toBe('');
       // Should clear the cached token so the sign-in form is shown
       expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
-      expect(mockUser.set).toHaveBeenCalledWith(undefined);
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      expect(mockUser.account).toBeUndefined();
+      expect(auth.unauthenticated).toBe(true);
     });
 
     it('should not clear cache on non-auth fetch files failure', async () => {
@@ -1165,9 +1152,8 @@ describe('auth service', () => {
 
       await authModule.signInManually('github', 'manual-token');
 
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(true);
-      expect(authModule.signingIn.set).toHaveBeenCalledWith(false);
-      expect(authModule.signInError.set).toHaveBeenCalled();
+      expect(auth.signingIn).toBe(false);
+      expect(auth.signInError.message).not.toBe('');
       // Should NOT clear the cached token for non-auth errors like missing branches
       expect(mockLocalStorage.set).not.toHaveBeenCalledWith('sveltia-cms.user', {});
     });
@@ -1183,8 +1169,8 @@ describe('auth service', () => {
       expect(mockBackend.signOut).toHaveBeenCalled();
       expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
       expect(mockBackendName.set).toHaveBeenCalledWith(undefined);
-      expect(mockUser.set).toHaveBeenCalledWith(undefined);
-      expect(authModule.unauthenticated.set).toHaveBeenCalledWith(true);
+      expect(mockUser.account).toBeUndefined();
+      expect(auth.unauthenticated).toBe(true);
       expect(mockDataLoaded.set).toHaveBeenCalledWith(false);
     });
 

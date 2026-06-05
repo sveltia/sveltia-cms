@@ -9,20 +9,17 @@ import {
   UPDATABLE_EVENT_TYPES,
 } from './events';
 
-// Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
+const mockUser = vi.hoisted(() => ({ login: 'testuser', name: 'Test User' }));
 
+// Mock dependencies
 vi.mock('$lib/services/contents/entry/assets', () => ({
   getAssociatedAssets: vi.fn(),
 }));
 
-vi.mock('$lib/services/user', () => ({
-  user: {},
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: { account: mockUser },
 }));
 
-const { get } = await import('svelte/store');
 const { getAssociatedAssets } = await import('$lib/services/contents/entry/assets');
 
 /**
@@ -206,11 +203,9 @@ describe('events module', () => {
       // Clear the registry before each test
       eventHookRegistry.clear();
 
-      // Mock user store
-      vi.mocked(get).mockReturnValue({
-        login: 'testuser',
-        name: 'Test User',
-      });
+      // Reset user mock
+      mockUser.login = 'testuser';
+      mockUser.name = 'Test User';
 
       // Mock getAssociatedAssets
       vi.mocked(getAssociatedAssets).mockReturnValue([]);
@@ -423,10 +418,8 @@ describe('events module', () => {
 
       eventHookRegistry.add({ name: 'preSave', handler });
 
-      vi.mocked(get).mockReturnValue({
-        login: 'john.doe',
-        name: 'John Doe',
-      });
+      mockUser.login = 'john.doe';
+      mockUser.name = 'John Doe';
 
       const draft = {
         collection: {
@@ -464,7 +457,8 @@ describe('events module', () => {
 
       eventHookRegistry.add({ name: 'preSave', handler });
 
-      vi.mocked(get).mockReturnValue({});
+      mockUser.login = '';
+      mockUser.name = '';
 
       const draft = {
         collection: {

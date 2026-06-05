@@ -8,8 +8,8 @@ import { resolveOriginalKeyPath, revertChanges, revertFields, revertLocale } fro
 
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/entry/fields');
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: { subscribe: vi.fn(() => vi.fn()) },
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: { devModeEnabled: false },
 }));
 vi.mock('svelte/store', async () => {
   const actual = await vi.importActual('svelte/store');

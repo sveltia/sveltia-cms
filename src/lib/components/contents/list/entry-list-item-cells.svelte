@@ -15,7 +15,7 @@
   } from '$lib/services/contents/collection/entries/index-file';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import { Entry, InternalEntryCollection, ViewType } from '$lib/types/private';
@@ -43,7 +43,7 @@
   } = $props();
 </script>
 
-{#if showCheckbox && !($isSmallScreen || $isMediumScreen)}
+{#if showCheckbox && !(env.isSmallScreen || env.isMediumScreen)}
   <GridCell class="checkbox">
     <Checkbox
       role="none"

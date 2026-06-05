@@ -47,8 +47,11 @@ vi.mock('$lib/services/backends/git/shared/api', () => ({
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { subscribe: vi.fn() },
 }));
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: { subscribe: vi.fn() },
+
+const mockPrefs = vi.hoisted(() => ({ devModeEnabled: false }));
+
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: mockPrefs,
 }));
 
 describe('GitLab backend service', () => {
@@ -71,9 +74,11 @@ describe('GitLab backend service', () => {
     Object.keys(apiConfig).forEach((key) => delete (/** @type {any} */ (apiConfig)[key]));
     Object.keys(graphqlVars).forEach((key) => delete (/** @type {any} */ (graphqlVars)[key]));
 
+    vi.mocked(get).mockReset();
     vi.mocked(get).mockReturnValue({
       devModeEnabled: false,
     });
+    mockPrefs.devModeEnabled = false;
   });
 
   describe('init', () => {
@@ -242,13 +247,8 @@ describe('GitLab backend service', () => {
         },
       };
 
-      const mockPrefs = {
-        devModeEnabled: true,
-      };
-
-      vi.mocked(get)
-        .mockReturnValueOnce(mockConfig) // for cmsConfig
-        .mockReturnValueOnce(mockPrefs); // for prefs
+      mockPrefs.devModeEnabled = true;
+      vi.mocked(get).mockReturnValueOnce(mockConfig); // for cmsConfig
 
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
@@ -266,13 +266,7 @@ describe('GitLab backend service', () => {
         },
       };
 
-      const mockPrefs = {
-        devModeEnabled: false,
-      };
-
-      vi.mocked(get)
-        .mockReturnValueOnce(mockConfig) // for cmsConfig
-        .mockReturnValueOnce(mockPrefs); // for prefs
+      vi.mocked(get).mockReturnValueOnce(mockConfig); // for cmsConfig
 
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 

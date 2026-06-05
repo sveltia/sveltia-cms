@@ -15,7 +15,7 @@ import { getBaseURLs, repository } from '$lib/services/backends/git/gitea/reposi
 import { apiConfig } from '$lib/services/backends/git/shared/api';
 import { getRepoURL } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
-import { prefs } from '$lib/services/user/prefs';
+import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { ApiEndpointConfig, BackendService, RepositoryInfo } from '$lib/types/private';
@@ -77,7 +77,7 @@ export const init = () => {
     }),
   );
 
-  if (get(prefs).devModeEnabled) {
+  if (prefs.devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('repositoryInfo', repository);
   }

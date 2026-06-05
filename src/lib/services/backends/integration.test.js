@@ -64,11 +64,11 @@ vi.mock('$lib/services/contents', () => ({
   getEntryFoldersByPath: vi.fn(),
 }));
 
-vi.mock('$lib/services/user', () => ({
+vi.mock('$lib/services/user/account.svelte', () => ({
   user: {},
 }));
 
-vi.mock('$lib/services/user/prefs', () => ({
+vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: {},
 }));
 

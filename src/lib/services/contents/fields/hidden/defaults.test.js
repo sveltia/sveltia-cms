@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { user } from '$lib/services/user';
+import { user } from '$lib/services/user/account.svelte';
 
 import { getDefaultValueMap } from './defaults';
 
@@ -18,18 +18,13 @@ vi.mock('@sveltia/utils/crypto', () => ({
 }));
 
 // Mock user store with default empty values
-vi.mock('$lib/services/user', async () => {
-  const { writable } = await import('svelte/store');
+const mockUserState = vi.hoisted(() => ({
+  account: /** @type {any} */ ({ backendName: 'github', login: '', name: '', email: '' }),
+}));
 
-  return {
-    user: writable({
-      backendName: 'github',
-      login: '',
-      name: '',
-      email: '',
-    }),
-  };
-});
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: mockUserState,
+}));
 
 /** @type {Pick<HiddenField, 'widget' | 'name'>} */
 const baseFieldConfig = {
@@ -337,7 +332,7 @@ describe('Test getDefaultValueMap()', () => {
 
   describe('author placeholders', () => {
     test('should replace {{author-login}} placeholder with value', () => {
-      user.set({ backendName: 'github', login: 'johndoe', name: '', email: '' });
+      user.account = { backendName: 'github', login: 'johndoe', name: '', email: '' };
 
       /** @type {HiddenField} */
       const fieldConfig = {
@@ -353,7 +348,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should replace {{author-name}} placeholder with value', () => {
-      user.set({ backendName: 'github', login: '', name: 'John Doe', email: '' });
+      user.account = { backendName: 'github', login: '', name: 'John Doe', email: '' };
 
       /** @type {HiddenField} */
       const fieldConfig = {
@@ -369,7 +364,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should replace {{author-email}} placeholder with value', () => {
-      user.set({ backendName: 'github', login: '', name: '', email: 'john@example.com' });
+      user.account = { backendName: 'github', login: '', name: '', email: 'john@example.com' };
 
       /** @type {HiddenField} */
       const fieldConfig = {
@@ -385,12 +380,12 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should replace all author placeholders in single string', () => {
-      user.set({
+      user.account = {
         backendName: 'github',
         login: 'johndoe',
         name: 'John Doe',
         email: 'john@example.com',
-      });
+      };
 
       /** @type {HiddenField} */
       const fieldConfig = {
@@ -408,12 +403,12 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     test('should handle author placeholders with other placeholders', () => {
-      user.set({
+      user.account = {
         backendName: 'github',
         login: 'johndoe',
         name: 'John Doe',
         email: 'john@example.com',
-      });
+      };
 
       /** @type {HiddenField} */
       const fieldConfig = {

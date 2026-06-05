@@ -7,10 +7,10 @@
   import { goto, openProductionSite } from '$lib/services/app/navigation';
   import { canShowMobileSignInDialog, showMobileSignInDialog } from '$lib/services/app/onboarding';
   import { backend, backendName } from '$lib/services/backends';
-  import { user } from '$lib/services/user';
-  import { signOut } from '$lib/services/user/auth';
-  import { isSmallScreen } from '$lib/services/user/env';
-  import { prefs } from '$lib/services/user/prefs';
+  import { user } from '$lib/services/user/account.svelte';
+  import { signOut } from '$lib/services/user/auth.svelte';
+  import { env } from '$lib/services/user/env.svelte';
+  import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
 
   /**
@@ -37,10 +37,10 @@
       ? _('working_with_local_repo')
       : isTestRepo
         ? _('working_with_test_repo')
-        : _('signed_in_as_x', { values: { name: $user?.login } })}
+        : _('signed_in_as_x', { values: { name: user.account?.login } })}
     disabled={isLocalRepo || isTestRepo}
     onclick={() => {
-      openNewTab($user?.profileURL);
+      openNewTab(user.account?.profileURL);
     }}
   />
   <Divider />
@@ -50,7 +50,7 @@
       openProductionSite();
     }}
   />
-  {#if $prefs.devModeEnabled}
+  {#if prefs.devModeEnabled}
     <MenuItem
       label={_('git_repository')}
       disabled={!$backend?.repository?.treeBaseURL}
@@ -69,7 +69,7 @@
   <MenuItem
     label={_('settings')}
     onclick={() => {
-      if ($isSmallScreen) {
+      if (env.isSmallScreen) {
         goto('/settings', { transitionType: 'forwards' });
       } else {
         showPrefsDialog = true;
@@ -77,7 +77,7 @@
     }}
   />
   <!-- When dev mode is enabled, the shortcuts menu item appears in the Help menu -->
-  {#if !$prefs.devModeEnabled}
+  {#if !prefs.devModeEnabled}
     <ShortcutsMenuItem {menuButton} />
   {/if}
   {#if $canShowMobileSignInDialog}

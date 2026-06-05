@@ -27,8 +27,8 @@
   import { processFile } from '$lib/services/assets/process';
   import { cmsConfig } from '$lib/services/config';
   import { selectAssetsView } from '$lib/services/contents/editor';
-  import { isSmallScreen } from '$lib/services/user/env';
-  import { prefs } from '$lib/services/user/prefs';
+  import { env } from '$lib/services/user/env.svelte';
+  import { prefs } from '$lib/services/user/prefs.svelte';
 
   /**
    * @import {
@@ -241,8 +241,8 @@
         return;
       }
 
-      apiKey = $prefs.apiKeys?.[serviceId] ?? '';
-      [userName, password] = ($prefs.logins?.[serviceId] ?? '').split(' ');
+      apiKey = prefs.apiKeys?.[serviceId] ?? '';
+      [userName, password] = (prefs.logins?.[serviceId] ?? '').split(' ');
       hasAuthInfo = authType === 'none' || !!apiKey || !!password;
       listedAssets = null;
     })();
@@ -291,7 +291,7 @@
                   variant="tile"
                   crossorigin="anonymous"
                 />
-                {#if viewType === 'list' || (!$isSmallScreen && !isStockAssets)}
+                {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
                   <AssetPath
                     path={isStockAssets ? undefined : description}
                     caption={isStockAssets ? description : undefined}
@@ -367,8 +367,8 @@
             if (apiKeyPattern?.test(_value)) {
               apiKey = _value;
               hasAuthInfo = true;
-              $prefs.apiKeys ??= {};
-              $prefs.apiKeys[serviceId] = apiKey;
+              prefs.apiKeys ??= {};
+              prefs.apiKeys[serviceId] = apiKey;
               getAssets();
             }
           }}
@@ -408,8 +408,8 @@
               userName = input.userName;
               password = input.password;
               hasAuthInfo = true;
-              $prefs.logins ??= {};
-              $prefs.logins[serviceId] = [userName, password].join(' ');
+              prefs.logins ??= {};
+              prefs.logins[serviceId] = [userName, password].join(' ');
               getAssets();
             } else {
               authState = 'error';

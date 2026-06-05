@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
-  import { isLargeScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -29,7 +29,7 @@
 </script>
 
 <div role="none" class="wrapper">
-  {#if $isLargeScreen}
+  {#if env.isLargeScreen}
     <SelectButtonGroup {disabled} aria-label={_('switch_view')} {...rest}>
       <SelectButton
         {disabled}

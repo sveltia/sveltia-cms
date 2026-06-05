@@ -1,28 +1,23 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getUserProfile } from '$lib/services/backends/git/github/user';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { user } from '$lib/services/user';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/user', () => ({
-  user: { subscribe: vi.fn() },
-}));
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  writable: vi.fn(() => ({ subscribe: vi.fn(), set: vi.fn(), update: vi.fn() })),
-  derived: vi.fn(() => ({ subscribe: vi.fn() })),
-  readonly: vi.fn(() => ({ subscribe: vi.fn() })),
+
+const mockUserState = vi.hoisted(() => ({ account: /** @type {any} */ (null) }));
+
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: mockUserState,
 }));
 
 describe('GitHub user service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock get function to return null initially
-    vi.mocked(get).mockReturnValue(null);
+    // Default: no user logged in
+    mockUserState.account = null;
   });
 
   describe('getUserProfile', () => {
@@ -110,15 +105,9 @@ describe('GitHub user service', () => {
       };
 
       // Mock the user store to return updated tokens
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === user) {
-          return {
-            token: 'new-access-token', // Renewed token
-            refreshToken: 'new-refresh-token',
-          };
-        }
-
-        return null;
+      mockUserState.account = /** @type {any} */ ({
+        token: 'new-access-token', // Renewed token
+        refreshToken: 'new-refresh-token',
       });
 
       vi.mocked(fetchAPI).mockResolvedValue(mockUserResponse);

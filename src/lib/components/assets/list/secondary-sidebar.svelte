@@ -5,10 +5,10 @@
   import InfoPanel from '$lib/components/assets/shared/info-panel.svelte';
   import { focusedAsset } from '$lib/services/assets';
   import { currentView } from '$lib/services/assets/view';
-  import { isLargeScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 </script>
 
-{#if $isLargeScreen && $currentView.showInfo}
+{#if env.isLargeScreen && $currentView.showInfo}
   <Group id="asset-info" class="secondary-sidebar" aria-label={_('asset_info')}>
     {#if $focusedAsset}
       <InfoPanel asset={$focusedAsset} showPreview={true} />

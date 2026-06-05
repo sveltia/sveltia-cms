@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Dialog, Table, TableCell, TableRow } from '@sveltia/ui';
 
-  import { isMacOS } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @typedef {object} Props
@@ -47,7 +47,7 @@
           <TableCell class="feature">{_(`keyboard_shortcuts_.${feature}`)}</TableCell>
           <TableCell class="keys">
             {#each keys.split('+') as key (key)}
-              <kbd>{key.replace('Accel', $isMacOS ? '⌘' : 'Ctrl')}</kbd>
+              <kbd>{key.replace('Accel', env.isMacOS ? '⌘' : 'Ctrl')}</kbd>
             {/each}
           </TableCell>
         </TableRow>

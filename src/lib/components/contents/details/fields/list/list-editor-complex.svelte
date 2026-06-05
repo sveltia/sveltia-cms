@@ -30,7 +30,7 @@
   import { getField } from '$lib/services/contents/entry/fields';
   import { formatSummary, getListFieldInfo } from '$lib/services/contents/fields/list/helper';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -529,7 +529,7 @@
               {#if thumbnails[index]}
                 <Image src={thumbnails[index]} variant="icon" cover />
               {/if}
-              <TruncatedText lines={$isSmallScreen ? 2 : 1}>
+              <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
                 {_formatSummary(index, summaryTemplate)}
               </TruncatedText>
             </div>

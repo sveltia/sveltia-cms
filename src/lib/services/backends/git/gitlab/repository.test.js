@@ -10,19 +10,12 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/user', () => ({
-  user: { subscribe: vi.fn() },
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: { account: { id: 123 } },
 }));
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn(() => 'Translation message'),
 }));
-vi.mock('svelte/store', () => ({
-  get: vi.fn().mockReturnValue({ id: 123 }),
-  writable: vi.fn(() => ({ subscribe: vi.fn(), set: vi.fn(), update: vi.fn() })),
-  derived: vi.fn(() => ({ subscribe: vi.fn() })),
-  readonly: vi.fn(() => ({ subscribe: vi.fn() })),
-}));
-
 describe('GitLab repository service', () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -1,8 +1,8 @@
 import { addMessages, locale as appLocale, getLocaleFromNavigator, init } from '@sveltia/i18n';
 import { getPathInfo } from '@sveltia/utils/file';
-import { get, toStore } from 'svelte/store';
+import { toStore } from 'svelte/store';
 
-import { prefs } from '$lib/services/user/prefs';
+import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { Readable } from 'svelte/store';
@@ -31,6 +31,6 @@ export const initAppLocale = () => {
 
   init({
     fallbackLocale: 'en',
-    initialLocale: get(prefs).locale || (getLocaleFromNavigator() ?? '').split('-')[0] || 'en',
+    initialLocale: prefs.locale || (getLocaleFromNavigator() ?? '').split('-')[0] || 'en',
   });
 };

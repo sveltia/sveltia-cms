@@ -38,7 +38,7 @@
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
@@ -144,7 +144,7 @@
     restoring = true;
     await tick();
     $editorFirstPane = _editorFirstPane;
-    $editorSecondPane = $isSmallScreen || $isMediumScreen ? null : _editorSecondPane;
+    $editorSecondPane = env.isSmallScreen || env.isMediumScreen ? null : _editorSecondPane;
     await tick();
     restoring = false;
 
@@ -169,7 +169,7 @@
 
     $editorFirstPane = { mode: 'edit', locale: $editorFirstPane?.locale ?? defaultLocale };
 
-    if ($isSmallScreen || $isMediumScreen) {
+    if (env.isSmallScreen || env.isMediumScreen) {
       $editorSecondPane = null;
     } else if (!showPreview || !canPreview) {
       const otherLocales = i18nEnabled
@@ -340,7 +340,7 @@
   });
 
   $effect(() => {
-    void [collection, showPreview, canPreview, $isSmallScreen, $isMediumScreen];
+    void [collection, showPreview, canPreview, env.isSmallScreen, env.isMediumScreen];
 
     untrack(() => {
       switchPanes();
@@ -511,7 +511,7 @@
             {/if}
           </div>
           <!-- @todo Enable sidebar for mobile -->
-          {#if !$isSmallScreen}
+          {#if !env.isSmallScreen}
             <Sidebar />
           {/if}
         {/key}

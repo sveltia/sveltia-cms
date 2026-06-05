@@ -11,7 +11,7 @@ import { sortAssets } from '$lib/services/assets/view/sort';
 import { backend } from '$lib/services/backends';
 import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
 import { getCollectionFile, getCollectionFileLabel } from '$lib/services/contents/collection/files';
-import { prefs } from '$lib/services/user/prefs';
+import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -129,7 +129,7 @@ backend.subscribe((_backend) => {
 listedAssets.subscribe((assets) => {
   selectedAssets.set([]);
 
-  if (get(prefs).devModeEnabled) {
+  if (prefs.devModeEnabled) {
     // eslint-disable-next-line no-console
     console.info('listedAssets', assets);
   }

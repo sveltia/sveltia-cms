@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';
-import { user } from '$lib/services/user';
 
 import { getCommitAuthor, saveChanges, updateCache, updateStores } from './save.js';
 
@@ -49,12 +48,23 @@ vi.mock('$lib/services/contents', () => ({
   },
 }));
 
-vi.mock('$lib/services/user', () => ({
-  user: {},
+const mockUserState = vi.hoisted(() => ({
+  account: /** @type {any} */ ({
+    name: 'Test User',
+    email: 'test@example.com',
+    id: 'user123',
+    login: 'testuser',
+  }),
 }));
 
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: {},
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: mockUserState,
+}));
+
+const mockPrefs = vi.hoisted(() => ({ devModeEnabled: false }));
+
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: mockPrefs,
 }));
 
 vi.mock('$lib/services/utils/file', () => ({
@@ -68,6 +78,13 @@ describe('save', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrefs.devModeEnabled = false;
+    mockUserState.account = {
+      name: 'Test User',
+      email: 'test@example.com',
+      id: 'user123',
+      login: 'testuser',
+    };
 
     // Setup default mock behavior - return different objects for different stores
     vi.mocked(get).mockImplementation((store) => {
@@ -76,16 +93,6 @@ describe('save', () => {
         return {
           commitChanges: mockCommitChanges,
           repository: { databaseName: 'test-db' },
-        };
-      }
-
-      // Check if this is the user store
-      if (store === user) {
-        return {
-          name: 'Test User',
-          email: 'test@example.com',
-          id: 'user123',
-          login: 'testuser',
         };
       }
 
@@ -104,12 +111,12 @@ describe('save', () => {
 
   describe('getCommitAuthor', () => {
     test('should return commit author when user has name and email', () => {
-      vi.mocked(get).mockReturnValue({
+      mockUserState.account = {
         name: 'John Doe',
         email: 'john@example.com',
         id: 'user123',
         login: 'johndoe',
-      });
+      };
 
       const result = getCommitAuthor();
 
@@ -122,12 +129,12 @@ describe('save', () => {
     });
 
     test('should return undefined when user has no name', () => {
-      vi.mocked(get).mockReturnValue({
+      mockUserState.account = {
         name: '',
         email: 'john@example.com',
         id: 'user123',
         login: 'johndoe',
-      });
+      };
 
       const result = getCommitAuthor();
 
@@ -135,12 +142,12 @@ describe('save', () => {
     });
 
     test('should return undefined when user has no email', () => {
-      vi.mocked(get).mockReturnValue({
+      mockUserState.account = {
         name: 'John Doe',
         email: '',
         id: 'user123',
         login: 'johndoe',
-      });
+      };
 
       const result = getCommitAuthor();
 
@@ -148,12 +155,12 @@ describe('save', () => {
     });
 
     test('should return undefined when user has neither name nor email', () => {
-      vi.mocked(get).mockReturnValue({
+      mockUserState.account = {
         name: '',
         email: '',
         id: 'user123',
         login: 'johndoe',
-      });
+      };
 
       const result = getCommitAuthor();
 
@@ -161,7 +168,7 @@ describe('save', () => {
     });
 
     test('should return undefined when user is null', () => {
-      vi.mocked(get).mockReturnValue(null);
+      mockUserState.account = null;
 
       const result = getCommitAuthor();
 
@@ -868,23 +875,21 @@ describe('save', () => {
     });
 
     test('should handle missing user information', async () => {
-      // Setup separate mock for this test
+      // Setup user with empty name/email
+      mockUserState.account = {
+        name: '', // Empty name
+        email: '', // Empty email
+        id: 'user123',
+        login: 'testuser',
+      };
+
+      // Setup mock for backend store
       vi.mocked(get).mockImplementation((store) => {
         // Check if this is the backend store
         if (store === backend) {
           return {
             commitChanges: mockCommitChanges,
             repository: { databaseName: 'test-db' },
-          };
-        }
-
-        // Check if this is the user store - return user with empty name/email
-        if (store === user) {
-          return {
-            name: '', // Empty name
-            email: '', // Empty email
-            id: 'user123',
-            login: 'testuser',
           };
         }
 
@@ -963,29 +968,7 @@ describe('save', () => {
       // Mock console.debug to track debug calls
       const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
-      // Setup separate mock for this test with devModeEnabled = true
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === backend) {
-          return {
-            commitChanges: mockCommitChanges,
-            repository: { databaseName: 'test-db' },
-          };
-        }
-
-        if (store === user) {
-          return {
-            name: 'Test User',
-            email: 'test@example.com',
-            id: 'user123',
-            login: 'testuser',
-          };
-        }
-
-        // Mock prefs with devModeEnabled = true
-        return {
-          devModeEnabled: true,
-        };
-      });
+      mockPrefs.devModeEnabled = true;
 
       /** @type {FileChange[]} */
       const changes = [

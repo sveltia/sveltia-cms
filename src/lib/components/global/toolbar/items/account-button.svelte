@@ -4,13 +4,13 @@
 
   import AccountMenu from '$lib/components/global/toolbar/items/account-menu.svelte';
   import { backendName } from '$lib/services/backends';
-  import { user } from '$lib/services/user';
+  import { user } from '$lib/services/user/account.svelte';
 
   /** @type {MenuButton | undefined} */
   let menuButton = $state();
 
   const isLocalRepo = $derived($backendName === 'local');
-  const hasAvatar = $derived(!!$user?.avatarURL);
+  const hasAvatar = $derived(!!user.account?.avatarURL);
 </script>
 
 <div role="none" class="wrapper">
@@ -27,7 +27,7 @@
       {#if isLocalRepo}
         <Icon name="arrow_drop_down" class="small-arrow" />
       {:else if hasAvatar}
-        <img class="avatar" loading="lazy" src={$user?.avatarURL} alt="" />
+        <img class="avatar" loading="lazy" src={user.account?.avatarURL} alt="" />
       {:else}
         <Icon name="account_circle" />
       {/if}

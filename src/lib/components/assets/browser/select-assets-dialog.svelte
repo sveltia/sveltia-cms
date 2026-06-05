@@ -36,8 +36,8 @@
     getStockAssetMediaLibraryOptions,
   } from '$lib/services/integrations/media-libraries/stock';
   import { normalize } from '$lib/services/search/util';
-  import { isSmallScreen } from '$lib/services/user/env';
-  import { prefs } from '$lib/services/user/prefs';
+  import { env } from '$lib/services/user/env.svelte';
+  import { prefs } from '$lib/services/user/prefs.svelte';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -162,7 +162,7 @@
   const isEnabledMediaService = $derived(
     enabledStockAssetProviderEntries.some(
       ([serviceId, { authType }]) =>
-        serviceId === libraryName && (authType === 'none' || !!$prefs?.apiKeys?.[libraryName]),
+        serviceId === libraryName && (authType === 'none' || !!prefs.apiKeys?.[libraryName]),
     ),
   );
   const enabledExternalServiceEntries = $derived(
@@ -176,7 +176,7 @@
       .map(([serviceId]) => serviceId)
       .includes(/** @type {any} */ (libraryName)),
   );
-  const Selector = $derived($isSmallScreen ? Select : Listbox);
+  const Selector = $derived(env.isSmallScreen ? Select : Listbox);
 
   /**
    * Process a dropped file.
@@ -298,7 +298,7 @@
     {/if}
     <SearchBar
       dir="auto"
-      flex={$isSmallScreen}
+      flex={env.isSmallScreen}
       bind:value={rawSearchTerms}
       debounce={!isDefaultLibrary}
       disabled={selectedResources.some((r) => r.file)}
@@ -334,7 +334,7 @@
   }}
 >
   {#snippet headerExtra()}
-    {#if !$isSmallScreen}
+    {#if !env.isSmallScreen}
       {@render headerItems()}
     {/if}
   {/snippet}
@@ -397,7 +397,7 @@
           </OptionGroup>
         {/if}
       </Selector>
-      {#if $isSmallScreen}
+      {#if env.isSmallScreen}
         <div role="none" class="filter-tools">
           {@render headerItems()}
         </div>

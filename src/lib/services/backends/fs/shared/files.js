@@ -15,7 +15,7 @@ import { createFileList } from '$lib/services/backends/process';
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
-import { isBrave } from '$lib/services/user/env';
+import { env } from '$lib/services/user/env.svelte';
 import { createPathRegEx, getBlob, getGitHash } from '$lib/services/utils/file';
 
 /**
@@ -338,7 +338,7 @@ export const loadFiles = async (rootDirHandle) => {
  * @see https://developer.mozilla.org/en-US/docs/Web/API/File_System_API#browser_compatibility
  * @see https://github.com/sveltia/sveltia-cms/discussions/676
  */
-export const canMoveFile = () => 'move' in FileSystemFileHandle.prototype && !get(isBrave);
+export const canMoveFile = () => 'move' in FileSystemFileHandle.prototype && !env.isBrave;
 
 /**
  * Write data to a file using the provided file handle. This function is used to write data to a

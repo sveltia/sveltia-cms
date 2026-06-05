@@ -7,18 +7,9 @@ import { getDefaultValueMap } from './defaults';
 vi.mock('$lib/services/config');
 
 // Mock user store with default empty values
-vi.mock('$lib/services/user', async () => {
-  const { writable } = await import('svelte/store');
-
-  return {
-    user: writable({
-      backendName: 'github',
-      login: '',
-      name: '',
-      email: '',
-    }),
-  };
-});
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: { account: { backendName: 'github', login: '', name: '', email: '' } },
+}));
 
 /**
  * @import { ObjectField } from '$lib/types/public';

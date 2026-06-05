@@ -11,7 +11,7 @@
   import { allEntries } from '$lib/services/contents';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-  import { isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @typedef {object} Props
@@ -32,7 +32,7 @@
 </script>
 
 <div role="none" class="primary-sidebar">
-  {#if $isSmallScreen}
+  {#if env.isSmallScreen}
     <header>
       <h2>{_('contents')}</h2>
       <PublishButton />
@@ -53,7 +53,7 @@
               {@const { name, label, icon } = collection}
               <Option
                 label={label || name}
-                selected={$isSmallScreen || isSearchPage
+                selected={env.isSmallScreen || isSearchPage
                   ? false
                   : $selectedCollection?.name === name}
                 onSelect={() => {
@@ -82,7 +82,7 @@
       </OptionGroup>
     {/if}
     {#if singletons.length}
-      {#if $isSmallScreen || collections.length}
+      {#if env.isSmallScreen || collections.length}
         <!-- Use the user-friendly “Files” label instead of “Singletons” -->
         <OptionGroup label={_('files')}>
           {#each singletons as file, index (file.name ?? index)}

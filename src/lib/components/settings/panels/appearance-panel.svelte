@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
-  import { prefs } from '$lib/services/user/prefs';
+  import { prefs } from '$lib/services/user/prefs.svelte';
 
   /**
    * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
@@ -27,7 +27,7 @@
     <SelectButtonGroup
       aria-label={_('prefs.appearance.select_theme')}
       onChange={(event) => {
-        $prefs = { ...$prefs, theme: event.detail.value };
+        prefs.theme = event.detail.value;
       }}
     >
       {#each ['auto', 'dark', 'light'] as value (value)}
@@ -35,7 +35,7 @@
           variant="tertiary"
           label={_(`prefs.theme.${value}`)}
           {value}
-          selected={(!$prefs.theme && value === 'auto') || $prefs.theme === value}
+          selected={(!prefs.theme && value === 'auto') || prefs.theme === value}
         />
       {/each}
     </SelectButtonGroup>

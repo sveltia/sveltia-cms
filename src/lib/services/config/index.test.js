@@ -50,10 +50,8 @@ vi.mock('$lib/services/contents', () => ({
   allEntryFolders: { set: vi.fn() },
 }));
 
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: {
-    subscribe: vi.fn(() => () => {}),
-  },
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: { devModeEnabled: false },
 }));
 
 vi.mock('$lib/services/backends', () => ({
@@ -780,7 +778,6 @@ describe('config/index', () => {
 
     it('should log config to console in dev mode', async () => {
       const { initCmsConfig } = await import('.');
-      const { get } = await import('svelte/store');
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
       const mockConfig = {
@@ -799,15 +796,9 @@ describe('config/index', () => {
       fetchcmsConfigMock.mockResolvedValue(mockConfig);
       getHashMock.mockResolvedValue('test-hash');
 
-      // Mock get to return devModeEnabled: true for prefs store
-      vi.mocked(get).mockImplementation((store) => {
-        if (store && typeof store === 'function') {
-          return (/** @type {string} */ key) => key;
-        }
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
 
-        // Return devModeEnabled: true for prefs check
-        return { devModeEnabled: true };
-      });
+      prefs.devModeEnabled = true;
 
       await initCmsConfig();
 
@@ -823,6 +814,7 @@ describe('config/index', () => {
 
       expect(calls.length).toBeGreaterThan(0);
 
+      prefs.devModeEnabled = false;
       consoleSpy.mockRestore();
     });
 

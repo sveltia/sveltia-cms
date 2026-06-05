@@ -19,13 +19,13 @@
   import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
   import { canShowMobileSignInDialog } from '$lib/services/app/onboarding';
   import { searchMode } from '$lib/services/search';
-  import { isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /** @type {Record<string, any>} */
   const pages = $derived({
     collections: ContentsPage,
     assets: AssetsPage,
-    search: $isSmallScreen
+    search: env.isSmallScreen
       ? SearchPage
       : $searchMode
         ? { contents: ContentsPage, assets: AssetsPage }[$searchMode]
@@ -81,7 +81,7 @@
   <MobileSignInDialog />
 {/if}
 
-{#if !$isSmallScreen}
+{#if !env.isSmallScreen}
   <GlobalToolbar />
 {/if}
 
@@ -89,7 +89,7 @@
   <SelectedPage />
 </div>
 
-{#if $isSmallScreen}
+{#if env.isSmallScreen}
   <BottomNavigation />
 {/if}
 

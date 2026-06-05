@@ -19,7 +19,7 @@
   import { viewFilters } from '$lib/services/contents/collection/view/filter';
   import { viewGroups } from '$lib/services/contents/collection/view/group';
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
-  import { isMediumScreen, isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import { InternalEntryCollection } from '$lib/types/private';
@@ -38,7 +38,7 @@
 
 {#if entryCollection && !$reordering}
   <Toolbar variant="secondary" aria-label={_('entry_list')}>
-    {#if !($isSmallScreen || $isMediumScreen)}
+    {#if !(env.isSmallScreen || env.isMediumScreen)}
       <ItemSelector
         allItems={$entryGroups.flatMap(({ entries }) => entries)}
         selectedItems={selectedEntries}
@@ -72,7 +72,7 @@
     {#if thumbnailFieldNames.length}
       <ViewSwitcher disabled={!hasListedEntries} {currentView} aria-controls="entry-list" />
     {/if}
-    {#if !($isSmallScreen || $isMediumScreen)}
+    {#if !(env.isSmallScreen || env.isMediumScreen)}
       <Divider orientation="vertical" />
       <Button
         variant="ghost"

@@ -9,6 +9,7 @@ import { getUserProfile } from './user.js';
 // Mock dependencies with vi.hoisted to ensure proper hoisting
 const getMock = vi.hoisted(() => vi.fn());
 const fetchAPIMock = vi.hoisted(() => vi.fn());
+const mockUserState = vi.hoisted(() => ({ account: /** @type {any} */ (null) }));
 
 vi.mock('svelte/store', () => ({
   get: getMock,
@@ -22,22 +23,16 @@ vi.mock('$lib/services/backends/git/shared/api', () => ({
   fetchAPI: fetchAPIMock,
 }));
 
-vi.mock('$lib/services/user', () => ({
-  user: { mockStore: 'user' },
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: mockUserState,
 }));
 
 describe('Gitea User Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default mock for user store
-    getMock.mockImplementation((/** @type {any} */ store) => {
-      if (store && typeof store === 'object' && store.mockStore === 'user') {
-        return null; // Default: no user logged in
-      }
-
-      return {};
-    });
+    // Default: no user logged in
+    mockUserState.account = null;
   });
 
   afterEach(() => {
@@ -98,15 +93,9 @@ describe('Gitea User Service', () => {
       };
 
       // Mock user store returning updated tokens
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'user') {
-          return {
-            token: 'new-access-token',
-            refreshToken: 'new-refresh-token',
-          };
-        }
-
-        return {};
+      mockUserState.account = /** @type {any} */ ({
+        token: 'new-access-token',
+        refreshToken: 'new-refresh-token',
       });
 
       fetchAPIMock.mockResolvedValue(mockApiResponse);
@@ -148,15 +137,9 @@ describe('Gitea User Service', () => {
       };
 
       // Mock user store returning same tokens
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'user') {
-          return {
-            token: 'same-access-token',
-            refreshToken: 'same-refresh-token',
-          };
-        }
-
-        return {};
+      mockUserState.account = /** @type {any} */ ({
+        token: 'same-access-token',
+        refreshToken: 'same-refresh-token',
       });
 
       fetchAPIMock.mockResolvedValue(mockApiResponse);
@@ -233,13 +216,7 @@ describe('Gitea User Service', () => {
       };
 
       // User store returns null (no logged in user)
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'user') {
-          return null;
-        }
-
-        return {};
-      });
+      mockUserState.account = null;
 
       fetchAPIMock.mockResolvedValue(mockApiResponse);
 
@@ -266,15 +243,9 @@ describe('Gitea User Service', () => {
       };
 
       // User store returns user object but without token property
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'user') {
-          return {
-            name: 'Some User',
-            // No token property
-          };
-        }
-
-        return {};
+      mockUserState.account = /** @type {any} */ ({
+        name: 'Some User',
+        // No token property
       });
 
       fetchAPIMock.mockResolvedValue(mockApiResponse);

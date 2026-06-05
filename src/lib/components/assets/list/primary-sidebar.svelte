@@ -14,7 +14,7 @@
     getCollectionFile,
     getCollectionFileIndex,
   } from '$lib/services/contents/collection/files';
-  import { isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @typedef {object} Props
@@ -46,7 +46,7 @@
 </script>
 
 <div role="none" class="primary-sidebar">
-  {#if $isSmallScreen}
+  {#if env.isSmallScreen}
     <header>
       <h2>{_('assets')}</h2>
     </header>
@@ -70,7 +70,7 @@
           {@const uploadDisabled = entryRelative || hasTemplateTags}
           {@const selected = equal($selectedAssetFolder, folder)}
           <Option
-            selected={$isSmallScreen || isSearchPage ? false : selected}
+            selected={env.isSmallScreen || isSearchPage ? false : selected}
             label={appLocale.current ? getFolderLabelByCollection(folder) : ''}
             onSelect={() => {
               goto(`/assets/${internalPath ?? '-/all'}`, {

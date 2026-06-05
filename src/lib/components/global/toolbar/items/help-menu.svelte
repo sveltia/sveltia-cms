@@ -4,7 +4,7 @@
 
   import ReleaseNotesMenuItem from '$lib/components/help/release-notes-menu-item.svelte';
   import ShortcutsMenuItem from '$lib/components/help/shortcuts-menu-item.svelte';
-  import { prefs } from '$lib/services/user/prefs';
+  import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
 
   /**
@@ -31,7 +31,7 @@
 
 <Menu aria-label={_('help')}>
   <ShortcutsMenuItem {menuButton} />
-  {#if $prefs.devModeEnabled}
+  {#if prefs.devModeEnabled}
     {@render link('documentation', 'https://sveltiacms.app/en/docs')}
     <ReleaseNotesMenuItem />
     {@render link(

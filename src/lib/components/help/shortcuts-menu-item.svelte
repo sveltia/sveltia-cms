@@ -3,7 +3,7 @@
   import { MenuItem } from '@sveltia/ui';
 
   import ShortcutsDialog from '$lib/components/help/shortcuts-dialog.svelte';
-  import { hasMouse } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @typedef {object} Props
@@ -21,7 +21,7 @@
 </script>
 
 <!-- Assume the user has a physical keyboard if the pointer is mouse (on desktop) -->
-{#if $hasMouse}
+{#if env.hasMouse}
   <MenuItem
     label={_('keyboard_shortcuts')}
     onclick={() => {

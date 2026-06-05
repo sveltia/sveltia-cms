@@ -4,11 +4,12 @@
 
   import { backend, isLastCommitPublished } from '$lib/services/backends';
   import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
-  import { isSmallScreen } from '$lib/services/user/env';
-  import { prefs } from '$lib/services/user/prefs';
+  import { env } from '$lib/services/user/env.svelte';
+  import { prefs } from '$lib/services/user/prefs.svelte';
   import { isSecureURL } from '$lib/services/utils/networking';
 
-  const { deployHookURL, deployHookAuthHeader } = $derived($prefs);
+  const deployHookURL = $derived(prefs.deployHookURL);
+  const deployHookAuthHeader = $derived(prefs.deployHookAuthHeader);
   const triggerDeployment = $derived($backend?.triggerDeployment);
   const canPublish = $derived(
     (!!deployHookURL || typeof triggerDeployment === 'function') && !$isLastCommitPublished,
@@ -57,7 +58,7 @@
 {#if $skipCIConfigured}
   <Button
     variant="secondary"
-    size={$isSmallScreen ? 'small' : 'medium'}
+    size={env.isSmallScreen ? 'small' : 'medium'}
     label={_('publish_changes')}
     disabled={!canPublish}
     onclick={() => publish()}

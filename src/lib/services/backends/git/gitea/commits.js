@@ -1,11 +1,10 @@
 import { _ } from '@sveltia/i18n';
 import { encodeBase64 } from '@sveltia/utils/file';
-import { get } from 'svelte/store';
 
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
-import { user } from '$lib/services/user';
+import { user } from '$lib/services/user/account.svelte';
 
 /**
  * @import { CommitOptions, CommitResults, FileChange, FileCommit, User } from '$lib/types/private';
@@ -54,7 +53,7 @@ export const fetchLastCommit = async () => {
 export const commitChanges = async (changes, options) => {
   const { owner, repo, branch } = repository;
   const commitMessage = createCommitMessage(changes, options);
-  const { name, email } = /** @type {User} */ (get(user));
+  const { name, email } = /** @type {User} */ (user.account);
   const date = new Date().toJSON();
 
   const files = await Promise.all(

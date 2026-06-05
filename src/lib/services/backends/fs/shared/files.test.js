@@ -22,7 +22,7 @@ import {
 } from './files';
 
 // Provide a minimal FileSystemFileHandle global so canMoveFile() can inspect the prototype.
-// Tests that require canMoveFile() === false can set isBrave to true via the store.
+// Tests that require canMoveFile() === false can set env.isBrave to true directly.
 // @ts-ignore - We only need the prototype.move property for testing
 globalThis.FileSystemFileHandle ??= { prototype: { move: () => {} } };
 
@@ -1135,11 +1135,11 @@ describe('canMoveFile', () => {
   test('should return false when Brave browser is detected', async () => {
     vi.stubGlobal('FileSystemFileHandle', { prototype: { move: () => {} } });
 
-    const { isBrave } = await import('$lib/services/user/env');
+    const { env } = await import('$lib/services/user/env.svelte');
 
-    isBrave.set(true);
+    env.isBrave = true;
     expect(canMoveFile()).toBe(false);
-    isBrave.set(false);
+    env.isBrave = false;
   });
 });
 
@@ -1256,9 +1256,9 @@ describe('moveFile', () => {
     mockSourceHandle.getFile = vi.fn(async () => mockFile);
     mockDestHandle.createWritable = vi.fn().mockResolvedValue(mockDestWritable);
 
-    const { isBrave } = await import('$lib/services/user/env');
+    const { env } = await import('$lib/services/user/env.svelte');
 
-    isBrave.set(true); // Force canMoveFile() to return false
+    env.isBrave = true; // Force canMoveFile() to return false
 
     /** @type {import('vitest').MockedFunction<any>} */ (rootDirHandle.getFileHandle)
       .mockResolvedValueOnce(mockSourceHandle)
@@ -1270,7 +1270,7 @@ describe('moveFile', () => {
       path: 'newfile.txt',
     });
 
-    isBrave.set(false);
+    env.isBrave = false;
 
     expect(result).toBe(mockDestHandle);
     expect(mockSourceHandle.move).not.toHaveBeenCalled();
@@ -1458,9 +1458,9 @@ describe('saveFile', () => {
 
     mockFileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
 
-    const { isBrave } = await import('$lib/services/user/env');
+    const { env } = await import('$lib/services/user/env.svelte');
 
-    isBrave.set(true); // Force canMoveFile() to return false
+    env.isBrave = true; // Force canMoveFile() to return false
 
     /** @type {import('vitest').MockedFunction<any>} */ (
       rootDirHandle.getFileHandle
@@ -1472,7 +1472,7 @@ describe('saveFile', () => {
       data: 'test content',
     });
 
-    isBrave.set(false);
+    env.isBrave = false;
 
     expect(mockWritableStream.write).toHaveBeenCalledWith('test content');
     expect(mockFileHandle.move).not.toHaveBeenCalled();

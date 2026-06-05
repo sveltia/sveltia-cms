@@ -8,12 +8,12 @@
   import SearchResults from '$lib/components/search/search-results.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { searchMode, searchTerms } from '$lib/services/search';
-  import { isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 </script>
 
 <PageContainerMainArea>
   {#snippet primaryToolbar()}
-    {#if $isSmallScreen}
+    {#if env.isSmallScreen}
       <Toolbar variant="primary">
         <BackButton
           aria-label={_(

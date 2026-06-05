@@ -23,7 +23,7 @@
     listedEntries,
     reordering,
   } from '$lib/services/contents/collection/view';
-  import { isSmallScreen } from '$lib/services/user/env';
+  import { env } from '$lib/services/user/env.svelte';
 
   let showDeleteDialog = $state(false);
 
@@ -58,7 +58,7 @@
 
 {#if $selectedCollection}
   <Toolbar variant="primary" aria-label={_('collection')}>
-    {#if $isSmallScreen}
+    {#if env.isSmallScreen}
       <BackButton
         aria-label={_('back_to_collection_list')}
         onclick={() => {
@@ -67,7 +67,7 @@
       />
     {/if}
     <h2 role="none">{collectionLabel}</h2>
-    {#if $isSmallScreen}
+    {#if env.isSmallScreen}
       <Spacer flex />
     {:else}
       <div role="none" class="description">
@@ -79,7 +79,7 @@
     {#if isEntryCollection && $reordering}
       <ReorderControls />
     {:else if isEntryCollection}
-      {#if !$isSmallScreen}
+      {#if !env.isSmallScreen}
         <Button
           variant="ghost"
           label={_('delete')}
@@ -102,10 +102,10 @@
         />
       {/if}
       <FloatingActionButtonWrapper>
-        {#if !$isSmallScreen || ($listedEntries.length && !creationDisabled)}
+        {#if !env.isSmallScreen || ($listedEntries.length && !creationDisabled)}
           <CreateEntryButton
             collectionName={name}
-            label={$isSmallScreen ? undefined : _('create')}
+            label={env.isSmallScreen ? undefined : _('create')}
             keyShortcuts="Accel+E"
           />
         {/if}

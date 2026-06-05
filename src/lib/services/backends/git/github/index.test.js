@@ -15,6 +15,8 @@ import {
 import { repository } from '$lib/services/backends/git/github/repository';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 
+const mockPrefs = vi.hoisted(() => ({ devModeEnabled: false }));
+
 // Mock dependencies
 vi.mock('svelte/store', () => ({
   get: vi.fn(),
@@ -24,11 +26,8 @@ vi.mock('svelte/store', () => ({
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { subscribe: vi.fn() },
 }));
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: { subscribe: vi.fn() },
-}));
-vi.mock('$lib/services/user', () => ({
-  user: { subscribe: vi.fn() },
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: mockPrefs,
 }));
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key) => key),
@@ -71,6 +70,8 @@ describe('GitHub backend service', () => {
     vi.mocked(getTokenPageURL).mockReturnValue(
       'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
     );
+    mockPrefs.devModeEnabled = false;
+    vi.mocked(get).mockReset();
   });
 
   test('exports correct service structure', () => {
@@ -118,9 +119,7 @@ describe('GitHub backend service', () => {
         },
       };
 
-      const mockPrefs = { devModeEnabled: false };
-
-      vi.mocked(get).mockReturnValueOnce(mockCmsConfig).mockReturnValueOnce(mockPrefs);
+      vi.mocked(get).mockReturnValueOnce(mockCmsConfig);
 
       const result = init();
 
@@ -179,9 +178,7 @@ describe('GitHub backend service', () => {
         },
       };
 
-      const mockPrefs = { devModeEnabled: false };
-
-      vi.mocked(get).mockReturnValueOnce(mockCmsConfig).mockReturnValueOnce(mockPrefs);
+      vi.mocked(get).mockReturnValueOnce(mockCmsConfig);
 
       const result = init();
 
@@ -226,9 +223,7 @@ describe('GitHub backend service', () => {
         },
       };
 
-      const mockPrefs = { devModeEnabled: false };
-
-      vi.mocked(get).mockReturnValueOnce(mockCmsConfig).mockReturnValueOnce(mockPrefs);
+      vi.mocked(get).mockReturnValueOnce(mockCmsConfig);
 
       const result = init();
       const expectedAuthURL = `${DEFAULT_PKCE_AUTH_ROOT}/${DEFAULT_PKCE_AUTH_PATH}`;
@@ -257,9 +252,7 @@ describe('GitHub backend service', () => {
         },
       };
 
-      const mockPrefs = { devModeEnabled: false };
-
-      vi.mocked(get).mockReturnValueOnce(mockCmsConfig).mockReturnValueOnce(mockPrefs);
+      vi.mocked(get).mockReturnValueOnce(mockCmsConfig);
 
       const result = init();
       const expectedAuthURL = `${DEFAULT_AUTH_ROOT}/${DEFAULT_AUTH_PATH}`;
@@ -289,9 +282,8 @@ describe('GitHub backend service', () => {
         },
       };
 
-      const mockPrefs = { devModeEnabled: true };
-
-      vi.mocked(get).mockReturnValueOnce(mockCmsConfig).mockReturnValueOnce(mockPrefs);
+      mockPrefs.devModeEnabled = true;
+      vi.mocked(get).mockReturnValueOnce(mockCmsConfig);
 
       init();
 
@@ -309,9 +301,7 @@ describe('GitHub backend service', () => {
         },
       };
 
-      const mockPrefs = { devModeEnabled: false };
-
-      vi.mocked(get).mockReturnValueOnce(mockCmsConfig).mockReturnValueOnce(mockPrefs);
+      vi.mocked(get).mockReturnValueOnce(mockCmsConfig);
 
       init();
 

@@ -1,10 +1,9 @@
 import { isObject } from '@sveltia/utils/object';
 import { flatten, unflatten } from 'flat';
 import { fromJS, isMap } from 'immutable';
-import { get } from 'svelte/store';
 
 import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
-import { user } from '$lib/services/user';
+import { user } from '$lib/services/user/account.svelte';
 
 /**
  * @import { MapOf } from 'immutable';
@@ -103,7 +102,7 @@ export const createEntryMap = ({
  * @param {Entry} args.savingEntry Entry being saved. This object may be mutated by the hook.
  */
 export const callEventHooks = async ({ type, draft, savingEntry }) => {
-  const { login = '', name = '' } = /** @type {User} */ (get(user));
+  const { login = '', name = '' } = /** @type {User} */ (user.account);
   const { collection, collectionFile, isNew, collectionName, fileName } = draft;
 
   const {

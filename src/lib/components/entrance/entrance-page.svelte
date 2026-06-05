@@ -10,9 +10,9 @@
   import { inAuthPopup } from '$lib/services/backends/git/shared/auth';
   import { cmsConfig, cmsConfigErrors, cmsConfigLoaded } from '$lib/services/config';
   import { dataLoaded, dataLoadedProgress } from '$lib/services/contents';
-  import { user } from '$lib/services/user';
-  import { signInError, unauthenticated } from '$lib/services/user/auth';
-  import { prefs, prefsError } from '$lib/services/user/prefs';
+  import { user } from '$lib/services/user/account.svelte';
+  import { auth } from '$lib/services/user/auth.svelte';
+  import { prefs, prefsError } from '$lib/services/user/prefs.svelte';
 
   $effect(() => {
     if ($cmsConfigLoaded) {
@@ -47,23 +47,23 @@
           {/each}
         </ul>
       </div>
-    {:else if $prefsError}
+    {:else if prefsError.current}
       <div role="alert" class="message">
-        {_(`prefs.error.${$prefsError.type}`)}
+        {_(`prefs.error.${prefsError.current.type}`)}
       </div>
-    {:else if !$cmsConfig || !$prefs}
+    {:else if !$cmsConfig || !Object.keys(prefs).length}
       <div role="alert" class="message">{_('loading_cms_config')}</div>
-    {:else if $signInError.message && $signInError.context === 'dataFetch'}
+    {:else if auth.signInError.message && auth.signInError.context === 'dataFetch'}
       <div role="alert">
         <div role="none" class="message">{_('loading_site_data_error')}</div>
         <div role="none" class="error">
-          {@render parseMarkdown($signInError.message)}
+          {@render parseMarkdown(auth.signInError.message)}
         </div>
       </div>
       <SignIn />
     {:else if $inAuthPopup}
       <div role="alert" class="message">{_('authorizing')}</div>
-    {:else if !$user || $unauthenticated}
+    {:else if !user.account || auth.unauthenticated}
       <SignIn />
     {:else if !$dataLoaded}
       <div role="alert" class="message">{_('loading_site_data')}</div>

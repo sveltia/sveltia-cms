@@ -17,8 +17,8 @@ vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/editor');
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/integrations/translators');
-vi.mock('$lib/services/user/prefs', () => ({
-  prefs: { subscribe: vi.fn(() => vi.fn()) },
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: { apiKeys: {} },
 }));
 vi.mock('marked');
 vi.mock('turndown');
@@ -201,8 +201,10 @@ describe('draft/update/copy', () => {
 
     it('should call translateFields when translate is true', async () => {
       const { translator } = await import('$lib/services/integrations/translators');
-      const { prefs } = await import('$lib/services/user/prefs');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
       const mockTranslate = vi.fn().mockResolvedValue(['Japanese Title', 'Japanese Body']);
+
+      prefs.apiKeys = { google: 'test-api-key' };
 
       mockGet.mockImplementation((store) => {
         if (store === translator) {
@@ -211,10 +213,6 @@ describe('draft/update/copy', () => {
             markdownSupported: true,
             translate: mockTranslate,
           };
-        }
-
-        if (store === prefs) {
-          return { apiKeys: { google: 'test-api-key' } };
         }
 
         if (store === entryDraft) {
@@ -468,7 +466,9 @@ describe('draft/update/copy', () => {
   describe('translateFields (internal)', () => {
     it('should handle missing API key gracefully', async () => {
       const { translator } = await import('$lib/services/integrations/translators');
-      const { prefs } = await import('$lib/services/user/prefs');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+
+      prefs.apiKeys = {};
 
       mockGet.mockImplementation((store) => {
         if (store === translator) {
@@ -477,10 +477,6 @@ describe('draft/update/copy', () => {
             markdownSupported: false,
             translate: vi.fn(),
           };
-        }
-
-        if (store === prefs) {
-          return { apiKeys: {} };
         }
 
         if (store === entryDraft) {
@@ -523,8 +519,10 @@ describe('draft/update/copy', () => {
 
     it('should handle translation API errors gracefully', async () => {
       const { translator } = await import('$lib/services/integrations/translators');
-      const { prefs } = await import('$lib/services/user/prefs');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
       const mockTranslate = vi.fn().mockRejectedValue(new Error('Translation API failed'));
+
+      prefs.apiKeys = { google: 'test-api-key' };
 
       mockGet.mockImplementation((store) => {
         if (store === translator) {
@@ -533,10 +531,6 @@ describe('draft/update/copy', () => {
             markdownSupported: true,
             translate: mockTranslate,
           };
-        }
-
-        if (store === prefs) {
-          return { apiKeys: { google: 'test-api-key' } };
         }
 
         if (store === entryDraft) {
@@ -576,8 +570,10 @@ describe('draft/update/copy', () => {
 
     it('should handle markdown conversion during translation', async () => {
       const { translator } = await import('$lib/services/integrations/translators');
-      const { prefs } = await import('$lib/services/user/prefs');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
       const mockTranslate = vi.fn().mockResolvedValue(['Japanese Title']);
+
+      prefs.apiKeys = { google: 'test-api-key' };
 
       mockGet.mockImplementation((store) => {
         if (store === translator) {
@@ -586,10 +582,6 @@ describe('draft/update/copy', () => {
             markdownSupported: true,
             translate: mockTranslate,
           };
-        }
-
-        if (store === prefs) {
-          return { apiKeys: { google: 'test-api-key' } };
         }
 
         if (store === entryDraft) {
@@ -623,8 +615,10 @@ describe('draft/update/copy', () => {
 
     it('should handle multiple field translation', async () => {
       const { translator } = await import('$lib/services/integrations/translators');
-      const { prefs } = await import('$lib/services/user/prefs');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
       const mockTranslate = vi.fn().mockResolvedValue(['Japanese Title', 'Japanese Body']);
+
+      prefs.apiKeys = { google: 'test-api-key' };
 
       mockGet.mockImplementation((store) => {
         if (store === translator) {
@@ -633,10 +627,6 @@ describe('draft/update/copy', () => {
             markdownSupported: true,
             translate: mockTranslate,
           };
-        }
-
-        if (store === prefs) {
-          return { apiKeys: { google: 'test-api-key' } };
         }
 
         if (store === entryDraft) {
@@ -676,12 +666,14 @@ describe('draft/update/copy', () => {
 
     it('should convert markdown to HTML before translation when markdownSupported is false', async () => {
       const { translator } = await import('$lib/services/integrations/translators');
-      const { prefs } = await import('$lib/services/user/prefs');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
       const { parse } = await import('marked');
       const mockTranslate = vi.fn().mockResolvedValue(['<h1>Japanese Title</h1>']);
 
       vi.mocked(parse).mockReturnValue('<h1>English Title</h1>');
       vi.mocked(turndownService.turndown).mockReturnValue('# Japanese Title');
+
+      prefs.apiKeys = { google: 'test-api-key' };
 
       mockGet.mockImplementation((store) => {
         if (store === translator) {
@@ -690,10 +682,6 @@ describe('draft/update/copy', () => {
             markdownSupported: false, // triggers both parse() and turndown()
             translate: mockTranslate,
           };
-        }
-
-        if (store === prefs) {
-          return { apiKeys: { google: 'test-api-key' } };
         }
 
         if (store === entryDraft) {

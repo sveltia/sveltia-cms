@@ -2,7 +2,7 @@ import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
 import { getCollectionLabel } from '$lib/services/contents/collection';
-import { user } from '$lib/services/user';
+import { user } from '$lib/services/user/account.svelte';
 
 /**
  * @import { CommitOptions, FileChange, User } from '$lib/types/private';
@@ -39,7 +39,7 @@ export const createCommitMessage = (
     automatic_deployments: autoDeploy,
   } = /** @type {GitBackend} */ (get(cmsConfig)?.backend ?? {});
 
-  const { email = '', login = '', name = '' } = /** @type {User} */ (get(user));
+  const { email = '', login = '', name = '' } = /** @type {User} */ (user.account);
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const collectionLabel = collection ? getCollectionLabel(collection, { useSingular: true }) : '';

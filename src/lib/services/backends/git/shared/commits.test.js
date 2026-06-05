@@ -11,21 +11,17 @@ const mockCmsConfig = {
   },
 };
 
-const mockUser = {
+const mockUser = vi.hoisted(() => ({
   login: 'test-user',
   name: 'Test User',
   email: '',
-};
+}));
 
 vi.mock('svelte/store', () => ({
   get: vi.fn((store) => {
     // Mock different returns based on what store is being accessed
     if (store?.name === 'cmsConfig') {
       return mockCmsConfig;
-    }
-
-    if (store?.name === 'user') {
-      return mockUser;
     }
 
     return null;
@@ -40,8 +36,8 @@ vi.mock('$lib/services/contents/collection', () => ({
   getCollectionLabel: vi.fn(() => 'Blog Post'),
 }));
 
-vi.mock('$lib/services/user', () => ({
-  user: { name: 'user' },
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: { account: mockUser },
 }));
 
 describe('git/shared/commits', () => {

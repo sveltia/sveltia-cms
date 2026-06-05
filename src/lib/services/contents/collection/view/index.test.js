@@ -83,8 +83,8 @@ const {
     _locale: w('en'),
     /** @type {import('svelte/store').Writable<any[]>} */
     _selectedEntries: w(/** @type {any[]} */ ([])),
-    /** @type {import('svelte/store').Writable<any>} */
-    _prefs: w(/** @type {any} */ ({ devModeEnabled: false })),
+    /** @type {any} */
+    _prefs: /** @type {any} */ ({ devModeEnabled: false }),
     /** @type {import('svelte/store').Writable<any>} */
     _backend: w(/** @type {any} */ (null)),
     /** @type {import('svelte/store').Writable<any>} */
@@ -126,7 +126,7 @@ vi.mock('$lib/services/contents/collection/view/sort', () => ({
   sortEntries: vi.fn((entries) => entries),
 }));
 
-vi.mock('$lib/services/user/prefs', () => ({
+vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: _prefs,
 }));
 
@@ -145,7 +145,7 @@ describe('collection/view/index', () => {
     _allEntries.set(undefined);
     _selectedCollection.set(undefined);
     _locale.set('en');
-    _prefs.set({ devModeEnabled: false });
+    _prefs.devModeEnabled = false;
     _backend.set(null);
     _entryListSettings.set(undefined);
     currentView.set({ type: 'list' });
@@ -450,7 +450,7 @@ describe('collection/view/index', () => {
     const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
     // Update prefs to enable dev mode
-    _prefs.set({ devModeEnabled: true });
+    _prefs.devModeEnabled = true;
     _selectedCollection.set(/** @type {any} */ ({ name: 'posts' }));
 
     consoleInfoSpy.mockRestore();
@@ -570,7 +570,7 @@ describe('collection/view/index', () => {
   test('listedEntries logs to console when devModeEnabled is true', () => {
     const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
-    _prefs.set({ devModeEnabled: true });
+    _prefs.devModeEnabled = true;
 
     /** @type {any[]} */
     const mockEntries = [
@@ -594,7 +594,7 @@ describe('collection/view/index', () => {
   test('selectedCollection logs to console when devModeEnabled is true and collection exists', () => {
     const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
-    _prefs.set({ devModeEnabled: true });
+    _prefs.devModeEnabled = true;
 
     const mockCollection = { name: 'posts', folder: '_posts' };
 
@@ -810,7 +810,7 @@ describe('collection/view/index', () => {
   test('selectedCollection subscription with devModeEnabled true', () => {
     const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
-    _prefs.set({ devModeEnabled: true });
+    _prefs.devModeEnabled = true;
 
     const mockCollection = { name: 'posts', folder: '_posts' };
 
