@@ -1,6 +1,8 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { derived, get, writable } from 'svelte/store';
 
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
+
 /**
  * @import { Readable, Writable } from 'svelte/store';
  * @import { AssetFolderInfo, TypedFieldKeyPath } from '$lib/types/private';
@@ -106,7 +108,7 @@ const getAssetFolderPathCache = () => {
     } else {
       // Pre-compile both regex variants so we don’t recreate them on every path lookup.
       // The internal path can contain template tags like `{{slug}}`, which we normalize to `.+?`.
-      const normalizedPath = internalPath.replace(/{{.+?}}/g, '.+?');
+      const normalizedPath = internalPath.replace(TEMPLATE_TAG_REPLACE_REGEX, '.+?');
 
       items.push({
         folder,

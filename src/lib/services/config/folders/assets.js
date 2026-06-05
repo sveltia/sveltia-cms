@@ -1,6 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { compare, stripSlashes } from '@sveltia/utils/string';
 
+import { hasTemplateTags } from '$lib/services/common/template';
 import { getValidCollections } from '$lib/services/contents/collection';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/files';
 
@@ -123,7 +124,7 @@ export const normalizeAssetFolder = ({
       // setting) or starting with `@` (framework-specific)
       /^($|[.@])/.test(publicFolder) ? publicFolder : `/${stripSlashes(publicFolder)}`,
     entryRelative,
-    hasTemplateTags: /{{.+?}}/.test(mediaFolder),
+    hasTemplateTags: hasTemplateTags(mediaFolder),
   };
 };
 

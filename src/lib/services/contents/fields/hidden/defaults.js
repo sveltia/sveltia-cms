@@ -1,6 +1,6 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 
-import { TEMPLATE_REGEX } from '$lib/services/common/template';
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -22,7 +22,7 @@ const getDefaultValue = ({ fieldConfig, locale, dynamicValue }) => {
     return value;
   }
 
-  return value.replaceAll(TEMPLATE_REGEX, (_match, tag) => {
+  return value.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (_match, tag) => {
     if (tag === 'locale') {
       return locale;
     }

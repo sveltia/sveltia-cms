@@ -10,6 +10,7 @@ import {
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
 import { processFile } from '$lib/services/assets/process';
+import { TEMPLATE_TAG_REGEX, TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
 import { fillTemplate } from '$lib/services/common/template';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -313,7 +314,7 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName, 
     getAssetFolder({ collectionName }),
     get(globalAssetFolder),
     get(allAssetFolders).findLast((folder) =>
-      dirName.match(`^${(folder.publicPath ?? '').replace(/{{.+?}}/g, '.+?')}\\b`),
+      dirName.match(`^${(folder.publicPath ?? '').replace(TEMPLATE_TAG_REPLACE_REGEX, '.+?')}\\b`),
     ),
   ].filter((folder) => !!folder);
 
@@ -323,7 +324,7 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName, 
     let { internalPath } = folder;
 
     // Deal with template tags like `/assets/images/{{slug}}`
-    if (internalPath !== undefined && /{{.+?}}/.test(internalPath)) {
+    if (internalPath !== undefined && TEMPLATE_TAG_REGEX.test(internalPath)) {
       const collection = _collectionName
         ? getCollection(_collectionName)
         : entry

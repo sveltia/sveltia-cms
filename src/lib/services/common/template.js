@@ -3,6 +3,7 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { truncate } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
+import { TEMPLATE_TAG_REGEX, TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
 import { slugify } from '$lib/services/common/slug';
 import {
   applyTransformations,
@@ -34,8 +35,6 @@ import { renameIfNeeded } from '$lib/services/utils/file';
 const DATE_TIME_FIELDS = ['year', 'month', 'day', 'hour', 'minute', 'second'];
 const INNER_TAG_REGEX = /^{{(?<innerTag>.+?)}}$/;
 
-export const TEMPLATE_REGEX = /{{(.+?)}}(?!'\))/g;
-
 /**
  * Regex to match escaped `{{variable}}` placeholders.
  */
@@ -52,6 +51,13 @@ const UUID_TYPES = {
   // eslint-disable-next-line jsdoc/require-jsdoc
   uuid_shorter: () => generateUUID('shorter'),
 };
+
+/**
+ * Checks if a string contains template tags.
+ * @param {string} str The string to check.
+ * @returns {boolean} True if the string contains template tags, false otherwise.
+ */
+export const hasTemplateTags = (str) => TEMPLATE_TAG_REGEX.test(str);
 
 /**
  * Handles date-time related template tags.
@@ -344,7 +350,7 @@ export const fillTemplate = (template, options) => {
   // Use a negative lookahead assertion to support a template tag for the `default` transformation
   // like `{{fields.slug | default('{{fields.title}}')}}`
   let slug = template
-    .replace(TEMPLATE_REGEX, (_match, tag) => replaceTemplatePlaceholder(tag, context))
+    .replace(TEMPLATE_TAG_REPLACE_REGEX, (_match, tag) => replaceTemplatePlaceholder(tag, context))
     .trim();
 
   // We don’t have to rename it when creating a path with a slug given. Skip truncation because the

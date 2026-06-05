@@ -1,7 +1,8 @@
 import { unique } from '@sveltia/utils/array';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 
-import { TEMPLATE_REGEX } from '$lib/services/common/template';
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
+import { hasTemplateTags } from '$lib/services/common/template';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -124,7 +125,7 @@ const getObjectId = (obj) => {
  * @returns {string} Bracketed field name, e.g. `{{name.first}}`.
  */
 export const normalizeFieldName = (fieldName) => {
-  if (/{{.+?}}/.test(fieldName)) {
+  if (hasTemplateTags(fieldName)) {
     return fieldName;
   }
 
@@ -219,7 +220,7 @@ export const replaceTemplateFields = (templates, fieldNames, context, fallbackCo
  * @returns {string[]} Array of field names.
  */
 export const extractFieldNames = (template) =>
-  [...template.matchAll(TEMPLATE_REGEX)].map((m) => m[1]);
+  [...template.matchAll(TEMPLATE_TAG_REPLACE_REGEX)].map((m) => m[1]);
 
 /**
  * Normalize and prepare field templates for processing.

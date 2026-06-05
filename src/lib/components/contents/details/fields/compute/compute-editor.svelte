@@ -7,7 +7,7 @@
   import { TextInput } from '@sveltia/ui';
   import { getContext, untrack } from 'svelte';
 
-  import { TEMPLATE_REGEX } from '$lib/services/common/template';
+  import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
   import { getListFormatter } from '$lib/services/contents/i18n';
@@ -74,7 +74,7 @@
         return getIndex() ?? '';
       }
 
-      return valueTemplate.replaceAll(TEMPLATE_REGEX, (_match, tagName) => {
+      return valueTemplate.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (_match, tagName) => {
         if (tagName === 'index') {
           return String(getIndex() ?? '');
         }
