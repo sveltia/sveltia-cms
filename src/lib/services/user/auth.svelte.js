@@ -39,9 +39,9 @@ const clearUserCache = async () => {
 
 /**
  * Clear the cached token for authentication/access errors so the sign-in form is shown instead of a
- * dead-end error. Don't clear for configuration errors like missing branches or repositories where
+ * dead-end error. Don’t clear for configuration errors like missing branches or repositories where
  * the credentials are still valid.
- * @param {Error} error Exception to check if it's an authentication error.
+ * @param {Error} error Exception to check if it’s an authentication error.
  */
 const clearUserCacheIfNeeded = async (error) => {
   const isAuthError =
@@ -163,7 +163,7 @@ export const getBackend = (_user) => {
 
 /**
  * Check if the user info is cached, set the backend, and automatically start loading files if the
- * backend is Git-based and user's auth token is found.
+ * backend is Git-based and user’s auth token is found.
  */
 export const signInAutomatically = async () => {
   resetError();
@@ -184,7 +184,7 @@ export const signInAutomatically = async () => {
   const _backend = getBackend(_user);
 
   if (_user && _backend) {
-    // Temporarily populate the `user` store with the cache, otherwise it's not updated in
+    // Temporarily populate the `user` store with the cache, otherwise it’s not updated in
     // `refreshAccessToken`
     user.account = /** @type {User} */ (_user);
 

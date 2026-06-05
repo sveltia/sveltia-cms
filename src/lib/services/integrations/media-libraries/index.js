@@ -16,14 +16,14 @@ import { cmsConfig } from '$lib/services/config';
 export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {
   const _cmsConfig = get(cmsConfig);
 
-  // `all` provides shared defaults merged into the `default` library's `config`. Other libraries
+  // `all` provides shared defaults merged into the `default` library’s `config`. Other libraries
   // (e.g. Cloudinary) pass `config` directly to their SDK, so we must not pollute it.
   const sharedConfig =
     libraryName === 'default'
       ? { ..._cmsConfig?.media_libraries?.all, ...fieldConfig?.media_libraries?.all }
       : undefined;
 
-  // Merge shared options into the library config's `config` property (default library only).
+  // Merge shared options into the library config’s `config` property (default library only).
   /**
    * Merge shared (`all`) options into library-specific options.
    * @param {Record<string, any> | null | undefined} opts Library-specific options.

@@ -351,7 +351,7 @@ export const filterAndPrepareEntries = (
           // An empty values array means no constraint — skip this filter
           if (values.length === 0) return true;
 
-          // `slug` refers to the entry's slug, not a regular content field.
+          // `slug` refers to the entry’s slug, not a regular content field.
           // `fields.fieldName` strips the prefix so a field literally named `slug` can be
           // targeted via `fields.slug` without ambiguity.
           const isEntrySlug = field === 'slug';
@@ -822,14 +822,14 @@ export const getOptions = ({
   currentSlug = undefined,
 }) => {
   const { collection: collectionName, file: fileName, filters } = fieldConfig;
-  // Resolve template strings in filter values against the current entry's locale content and slug.
+  // Resolve template strings in filter values against the current entry’s locale content and slug.
   // The resolved values are also baked into the cache key so stale options are not returned when
   // the relevant field value changes while the user is editing.
   const resolvedFilters = resolveFilterValues(filters ?? [], currentLocaleValues, currentSlug);
   // Use object identity for `fieldConfig` and `refEntries` instead of `JSON.stringify`, which would
   // serialize the entire entries array (potentially hundreds of entries × many fields). The
   // resolved template values are included as a plain string so the cache is invalidated when the
-  // current entry's relevant field value changes.
+  // current entry’s relevant field value changes.
   const resolvedKey = resolvedFilters.flatMap(({ values }) => values).join('\x00');
   const ids = `${getObjectId(fieldConfig)}|${getObjectId(refEntries)}`;
   const cacheKey = `${locale}|${ids}|${resolvedKey}`;
