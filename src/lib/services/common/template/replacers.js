@@ -20,14 +20,18 @@ import { getField } from '$lib/services/contents/entry/fields';
  */
 
 /**
- * @typedef {object} ReplaceSubContext
+ * @typedef {object} ReplaceSubContextBase
  * @property {string} identifierField Field name to identify the title.
  * @property {string | undefined} basePath Base path for the entry file.
  */
 
 /**
+ * @typedef {FillTemplateOptions & ReplaceSubContextBase} ReplaceSubContext
+ */
+
+/**
  * @typedef {object} ReplaceContext
- * @property {FillTemplateOptions & ReplaceSubContext} replaceSubContext Context for `replaceSub`.
+ * @property {ReplaceSubContext} replaceSubContext Context for `replaceSub`.
  * @property {GetFieldArgs} getFieldArgs Arguments for `getField`.
  */
 
@@ -35,7 +39,7 @@ import { getField } from '$lib/services/contents/entry/fields';
  * Template tag replacer subroutine.
  * @internal
  * @param {string} tag Field name or special tag.
- * @param {FillTemplateOptions & ReplaceSubContext} context Replacement context.
+ * @param {ReplaceSubContext} context Replacement context.
  * @returns {any} Replaced value.
  */
 export const replaceTemplateTag = (tag, context) => {
