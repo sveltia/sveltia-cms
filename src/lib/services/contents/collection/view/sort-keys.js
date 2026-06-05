@@ -28,6 +28,18 @@ import { getField } from '$lib/services/contents/entry/fields';
 export const DEFAULT_SORT_KEYS = ['title', 'name', 'date', 'author', 'description'];
 
 /**
+ * Supported sort orders.
+ * @type {SortOrder[]}
+ */
+export const SORT_ORDERS = ['ascending', 'descending'];
+
+/**
+ * Common date field keys that require special handling in sorting.
+ * @type {string[]}
+ */
+export const DATE_FIELDS = ['date', 'commit_date'];
+
+/**
  * Map of special sort keys and their types.
  * @type {Record<string, StringConstructor | DateConstructor>}
  */

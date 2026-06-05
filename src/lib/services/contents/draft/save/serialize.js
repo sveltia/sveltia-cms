@@ -10,13 +10,8 @@ import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
+import { TOML_FORMATS } from '$lib/services/contents/file';
 import { getOrCreate } from '$lib/services/utils/cache';
-
-/**
- * Cache of wildcard key-path regexes used in {@link finalizeContent}, keyed by `keyPath`.
- * @type {Map<string, RegExp>}
- */
-const wildcardKeyPathRegexCache = new Map();
 
 /**
  * @import {
@@ -27,6 +22,12 @@ const wildcardKeyPathRegexCache = new Map();
  * } from '$lib/types/private';
  * @import { DateTimeField, Field, RawEntryContent } from '$lib/types/public';
  */
+
+/**
+ * Cache of wildcard key-path regexes used in {@link finalizeContent}, keyed by `keyPath`.
+ * @type {Map<string, RegExp>}
+ */
+const wildcardKeyPathRegexCache = new Map();
 
 /**
  * Check whether a value is empty, such as `undefined`, `null`, an empty string, an empty array, or
@@ -233,7 +234,7 @@ export const serializeContent = ({ draft, locale, valueMap }) => {
     },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
-  const isTomlOutput = ['toml', 'toml-frontmatter'].includes(_file.format);
+  const isTomlOutput = TOML_FORMATS.includes(_file.format);
 
   const content = finalizeContent({
     collectionName,

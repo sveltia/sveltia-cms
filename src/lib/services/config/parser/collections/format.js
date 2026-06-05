@@ -13,6 +13,11 @@ import {
  * @type {string[]}
  */
 const BODY_FIELD_TYPES = ['code', 'markdown', 'richtext', 'text'];
+/**
+ * Known file formats.
+ * @type {FileFormat[]}
+ */
+const KNOWN_FORMATS = ['yaml', 'toml', 'json'];
 
 /**
  * Check if there is a mismatch between the file extension and format.
@@ -79,11 +84,9 @@ export const isFormatMismatch = (extension, format, fields = []) => {
 
   // For known formats, ensure extension matches (yaml/toml/json)
   // For custom extensions, only validate against known formats they explicitly don’t support
-  const knownFormats = ['yaml', 'toml', 'json'];
-
-  if (knownFormats.includes(normalizedFormat)) {
+  if (KNOWN_FORMATS.includes(normalizedFormat)) {
     // If format is yaml/toml/json, extension should match or be custom
-    return knownFormats.includes(normalizedExtension) && normalizedExtension !== normalizedFormat;
+    return KNOWN_FORMATS.includes(normalizedExtension) && normalizedExtension !== normalizedFormat;
   }
 
   // Unknown format - don’t enforce mismatch

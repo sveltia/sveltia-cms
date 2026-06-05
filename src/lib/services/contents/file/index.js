@@ -64,3 +64,10 @@ export const FRONTMATTER_DELIMITER_MAP = {
   'toml-frontmatter': ['+++', '+++'],
   'yaml-frontmatter': ['---', '---'],
 };
+
+/**
+ * List of file formats that use TOML syntax and thus require special handling, such as native date
+ * objects instead of strings for date/datetime fields.
+ * @type {FileFormat[]}
+ */
+export const TOML_FORMATS = ['toml', 'toml-frontmatter'];

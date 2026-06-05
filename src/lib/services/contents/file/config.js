@@ -1,6 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
+import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -16,11 +17,6 @@ import { getLocalePath } from '$lib/services/contents/i18n';
  * @import { CustomFileFormat, FileConfig, InternalI18nOptions } from '$lib/types/private';
  * @import { Collection, CollectionFile, FileExtension, FileFormat } from '$lib/types/public';
  */
-
-/**
- * Regex to match escaped `{{variable}}` placeholders.
- */
-export const ESCAPED_PLACEHOLDER_REGEX = /\\\{\\\{.+?\\\}\\\}/g;
 
 /**
  * @type {Map<string, CustomFileFormat>}

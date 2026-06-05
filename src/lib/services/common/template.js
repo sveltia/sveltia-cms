@@ -34,6 +34,11 @@ const DATE_TIME_FIELDS = ['year', 'month', 'day', 'hour', 'minute', 'second'];
 const TEMPLATE_REGEX = /{{(.+?)}}(?!'\))/g;
 
 /**
+ * Regex to match escaped `{{variable}}` placeholders.
+ */
+export const ESCAPED_PLACEHOLDER_REGEX = /\\\{\\\{.+?\\\}\\\}/g;
+
+/**
  * UUID generator functions mapped by tag name.
  */
 const UUID_TYPES = {

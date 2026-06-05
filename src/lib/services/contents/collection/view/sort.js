@@ -17,7 +17,7 @@ import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
  * includes `title`, `summary`, and `description`, which are commonly used in entry collections.
  * @type {string[]}
  */
-export const markdownFieldKeys = ['title', 'summary', 'description'];
+export const MARKDOWN_FIELD_KEYS = ['title', 'summary', 'description'];
 
 /**
  * Get a function that computes the sort key for a single entry. Pre-computing this once (O(n))
@@ -113,7 +113,7 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
   const isMarkdownField =
     fieldConfig?.widget === 'richtext' ||
     fieldConfig?.widget === 'markdown' ||
-    markdownFieldKeys.includes(key);
+    MARKDOWN_FIELD_KEYS.includes(key);
 
   const getSortKey = getSortKeyGetter({
     key: resolvedKey,

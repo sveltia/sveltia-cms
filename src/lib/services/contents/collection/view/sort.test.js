@@ -2,7 +2,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getSortKeyGetter, markdownFieldKeys, sortEntries } from './sort';
+import { getSortKeyGetter, MARKDOWN_FIELD_KEYS, sortEntries } from './sort';
 
 /**
  * @import { Entry, InternalCollection } from '$lib/types/private';
@@ -41,9 +41,9 @@ const { getEntrySummary } = await import('$lib/services/contents/entry/summary')
 const { getDate } = await import('$lib/services/contents/fields/date-time/helper');
 const { removeMarkdownSyntax } = await import('$lib/services/utils/markdown');
 
-describe('markdownFieldKeys', () => {
+describe('MARKDOWN_FIELD_KEYS', () => {
   test('should export markdown field keys', () => {
-    expect(markdownFieldKeys).toEqual(['title', 'summary', 'description']);
+    expect(MARKDOWN_FIELD_KEYS).toEqual(['title', 'summary', 'description']);
   });
 });
 
@@ -1199,7 +1199,7 @@ describe('sortEntries', () => {
 
     const result = sortEntries(mockEntries, mockCollection, conditions);
 
-    // 'slug' is not in markdownFieldKeys and widget is not richtext/markdown,
+    // 'slug' is not in MARKDOWN_FIELD_KEYS and widget is not richtext/markdown,
     // so the plain String(str) branch is used (isMarkdownField=false)
     expect(result.map((e) => e.slug)).toEqual(['entry-1', 'entry-2', 'entry-3']);
     expect(vi.mocked(removeMarkdownSyntax)).not.toHaveBeenCalled();

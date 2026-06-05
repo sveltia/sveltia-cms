@@ -2,11 +2,12 @@
   import { _ } from '@sveltia/i18n';
   import { Divider, Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
 
+  import { DATE_FIELDS, SORT_ORDERS } from '$lib/services/contents/collection/view/sort-keys';
   import { getField } from '$lib/services/contents/entry/fields';
 
   /**
    * @import { Writable } from 'svelte/store';
-   * @import { AssetListView, EntryListView, SortOrder } from '$lib/types/private';
+   * @import { AssetListView, EntryListView } from '$lib/types/private';
    */
 
   /**
@@ -30,20 +31,16 @@
     collectionName = undefined,
     /* eslint-enable prefer-const */
   } = $props();
-
-  /** @type {SortOrder[]} */
-  const sortOrders = ['ascending', 'descending'];
-  const dateFields = ['date', 'commit_date'];
 </script>
 
 <MenuButton variant="ghost" label={label || _('sort')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
     <Menu aria-label={_('sorting_options')} aria-controls={ariaControls}>
       {#each sortKeys as { key, label: _label } (key)}
-        {#each sortOrders as order (order)}
+        {#each SORT_ORDERS as order (order)}
           <MenuItemRadio
             label={_(
-              dateFields.includes(key) ||
+              DATE_FIELDS.includes(key) ||
                 (!!collectionName &&
                   getField({ collectionName, keyPath: key })?.widget === 'datetime')
                 ? `${order}_date`
