@@ -1,6 +1,6 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { user } from '$lib/services/user/account.svelte';
 
 /**

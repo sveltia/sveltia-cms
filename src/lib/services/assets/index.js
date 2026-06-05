@@ -10,8 +10,11 @@ import {
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
 import { processFile } from '$lib/services/assets/process';
-import { TEMPLATE_TAG_REGEX, TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
 import { fillTemplate } from '$lib/services/common/template';
+import {
+  TEMPLATE_TAG_REGEX,
+  TEMPLATE_TAG_REPLACE_REGEX,
+} from '$lib/services/common/template/constants';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';

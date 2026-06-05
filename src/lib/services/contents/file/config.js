@@ -1,7 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
-import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template';
+import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';

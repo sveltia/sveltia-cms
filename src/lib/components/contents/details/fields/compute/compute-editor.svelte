@@ -7,7 +7,7 @@
   import { TextInput } from '@sveltia/ui';
   import { getContext, untrack } from 'svelte';
 
-  import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
+  import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
   import { getListFormatter } from '$lib/services/contents/i18n';

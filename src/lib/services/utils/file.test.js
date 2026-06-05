@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template';
+import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import {
   createPath,
   createPathRegEx,

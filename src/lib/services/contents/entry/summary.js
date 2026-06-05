@@ -4,7 +4,7 @@ import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import {
   applyTransformations,
   DATE_TRANSFORMATION_REGEX,

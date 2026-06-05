@@ -13,3 +13,28 @@ export const TEMPLATE_TAG_REGEX = /{{.+?}}/;
  * template expression.
  */
 export const TEMPLATE_TAG_REPLACE_REGEX = /{{(.+?)}}(?!'\))/g;
+
+/**
+ * Regex to match escaped `{{variable}}` placeholders.
+ */
+export const ESCAPED_PLACEHOLDER_REGEX = /\\\{\\\{.+?\\\}\\\}/g;
+
+/**
+ * Date-time field names that are supported as template tags.
+ */
+export const DATE_TIME_FIELDS = ['year', 'month', 'day', 'hour', 'minute', 'second'];
+
+/**
+ * Regex to match inner tags within transformation values.
+ */
+export const INNER_TAG_REGEX = /^{{(?<innerTag>.+?)}}$/;
+
+/**
+ * UUID generator functions mapped by tag name.
+ * Note: Functions are called dynamically to generate UUIDs on demand.
+ */
+export const UUID_TYPES = {
+  uuid: 'uuid',
+  uuid_short: 'uuid_short',
+  uuid_shorter: 'uuid_shorter',
+};

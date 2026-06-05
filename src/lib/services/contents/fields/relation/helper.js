@@ -1,8 +1,8 @@
 import { unique } from '@sveltia/utils/array';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
 import { hasTemplateTags } from '$lib/services/common/template';
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';

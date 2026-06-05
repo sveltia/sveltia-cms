@@ -1,7 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { derived, get, writable } from 'svelte/store';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';

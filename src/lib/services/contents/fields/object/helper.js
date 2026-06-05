@@ -1,6 +1,6 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { TRANSFORMATION_SPLIT_REGEX } from '$lib/services/common/transformations';
 import {
   getFieldDisplayValue,

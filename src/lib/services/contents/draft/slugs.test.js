@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { describe, expect, it, vi } from 'vitest';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 
 import {
   getCanonicalSlug,

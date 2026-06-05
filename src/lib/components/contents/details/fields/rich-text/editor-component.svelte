@@ -8,7 +8,7 @@
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common';
+  import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
   import {
     applyTransformations,
     TRANSFORMATION_SPLIT_REGEX,
