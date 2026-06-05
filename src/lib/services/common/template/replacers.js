@@ -35,7 +35,7 @@ import { getField } from '$lib/services/contents/entry/fields';
  * Template tag replacer subroutine.
  * @internal
  * @param {string} tag Field name or special tag.
- * @param {any} context Replacement context.
+ * @param {FillTemplateOptions & ReplaceSubContext} context Replacement context.
  * @returns {any} Replaced value.
  */
 export const replaceTemplateTag = (tag, context) => {

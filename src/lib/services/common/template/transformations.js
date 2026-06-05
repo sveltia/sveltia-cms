@@ -2,10 +2,13 @@ import { INNER_TAG_REGEX } from '$lib/services/common/template/constants';
 import { DEFAULT_TRANSFORMATION_REGEX } from '$lib/services/common/transformations';
 
 /**
+ * @import { ReplaceSubContext } from '$lib/services/common/template/replacers';
+ */
+/**
  * Processes transformations for a template placeholder.
  * @internal
  * @param {string[]} transformations Array of transformation strings.
- * @param {any} replaceSubContext Context for replacement.
+ * @param {ReplaceSubContext} replaceSubContext Context for replacement.
  * @param {(tag: string, context: any) => any} replaceTemplateTag Replaces tags.
  * @returns {{ transformations: string[], hasDefaultTransformation: boolean }} Result.
  */
