@@ -3,6 +3,7 @@ import { get } from 'svelte/store';
 import { stringify as stringifyYAML } from 'yaml';
 
 import { cmsConfig } from '$lib/services/config';
+import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';
 import { customFileFormatRegistry } from '$lib/services/contents/file/config';
 
 /**
@@ -161,7 +162,7 @@ export const formatEntryFile = async ({ content, _file }) => {
     return '';
   }
 
-  if (/^(?:(?:yaml|toml|json)-)?frontmatter$/.test(format)) {
+  if (format === 'frontmatter' || FRONTMATTER_FORMATS.includes(/** @type {any} */ (format))) {
     return formatFrontMatter({ content, _file });
   }
 

@@ -21,6 +21,9 @@ dayjs.extend(dayjsCustomParseFormat);
 dayjs.extend(dayjsLocalizedFormat);
 dayjs.extend(dayjsUTC);
 
+const DATE_ONLY_MATCH_REGEX = /^(?<date>\d{4}-[01]\d-[0-3]\d)\b/;
+const TIME_SUFFIX_MATCH_REGEX = /(?:^|T)(?<time>[0-2]\d:[0-5]\d)\b/;
+
 /**
  * Parse the DateTime field configuration and return as normalized format.
  * @param {DateTimeField} fieldConfig Field config.
@@ -228,10 +231,10 @@ export const getInputValue = (currentValue, fieldConfig) => {
 
   // If the current value is the standard format, return it as is
   const value = dateOnly
-    ? currentValue.match(/^(?<date>\d{4}-[01]\d-[0-3]\d)\b/)?.groups?.date
+    ? currentValue.match(DATE_ONLY_MATCH_REGEX)?.groups?.date
     : timeOnly
       ? // Match both `YYYY-MM-DDTHH:mm(:ss)` and `HH:mm(:ss)` formats
-        currentValue.match(/(?:^|T)(?<time>[0-2]\d:[0-5]\d)\b/)?.groups?.time
+        currentValue.match(TIME_SUFFIX_MATCH_REGEX)?.groups?.time
       : undefined;
 
   if (value) {

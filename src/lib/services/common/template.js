@@ -7,6 +7,7 @@ import { slugify } from '$lib/services/common/slug';
 import {
   applyTransformations,
   DEFAULT_TRANSFORMATION_REGEX,
+  TRANSFORMATION_SPLIT_REGEX,
 } from '$lib/services/common/transformations';
 import { cmsConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
@@ -31,7 +32,9 @@ import { renameIfNeeded } from '$lib/services/utils/file';
  */
 
 const DATE_TIME_FIELDS = ['year', 'month', 'day', 'hour', 'minute', 'second'];
-const TEMPLATE_REGEX = /{{(.+?)}}(?!'\))/g;
+const INNER_TAG_REGEX = /^{{(?<innerTag>.+?)}}$/;
+
+export const TEMPLATE_REGEX = /{{(.+?)}}(?!'\))/g;
 
 /**
  * Regex to match escaped `{{variable}}` placeholders.
@@ -229,7 +232,7 @@ const processTransformations = (transformations, replaceSubContext) => {
 
       // Support a template tag for the `default` transformation like
       // `{{fields.slug | default('{{fields.title}}')}}`
-      const { innerTag } = defaultValue.match(/^{{(?<innerTag>.+?)}}$/)?.groups ?? {};
+      const { innerTag } = defaultValue.match(INNER_TAG_REGEX)?.groups ?? {};
 
       if (innerTag !== undefined) {
         transformations[index] =
@@ -248,7 +251,7 @@ const processTransformations = (transformations, replaceSubContext) => {
  * @returns {string} Replaced string.
  */
 const replaceTemplatePlaceholder = (placeholder, { replaceSubContext, getFieldArgs }) => {
-  const [tag, ...rawTransformations] = placeholder.split(/\s*\|\s*/);
+  const [tag, ...rawTransformations] = placeholder.split(TRANSFORMATION_SPLIT_REGEX);
   let value = replaceTemplateTag(tag, replaceSubContext);
 
   const { transformations, hasDefaultTransformation } = processTransformations(

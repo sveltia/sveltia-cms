@@ -1,3 +1,5 @@
+export const NUMERIC_VALUE_REGEX = /^\d+$/;
+
 // cspell:disable-next-line
 const FULL_REGEX_PATTERN = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuy]*))?$/;
 

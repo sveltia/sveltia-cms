@@ -1,6 +1,6 @@
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { matchesFilter } from '$lib/services/common/view';
-import { getRegex } from '$lib/services/utils/misc';
+import { getRegex } from '$lib/services/utils/regex';
 
 /**
  * @import { Asset, FilteringConditions } from '$lib/types/private';

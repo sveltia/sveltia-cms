@@ -10,7 +10,7 @@ vi.mock('@sveltia/utils/string', () => ({
   }),
 }));
 
-vi.mock('$lib/services/utils/misc', () => ({
+vi.mock('$lib/services/utils/regex', () => ({
   getRegex: vi.fn(),
 }));
 
@@ -21,7 +21,7 @@ describe('Test buildGroupMap()', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    const { getRegex } = await import('$lib/services/utils/misc');
+    const { getRegex } = await import('$lib/services/utils/regex');
 
     getRegexMock = vi.mocked(getRegex);
     getRegexMock.mockReturnValue(null);

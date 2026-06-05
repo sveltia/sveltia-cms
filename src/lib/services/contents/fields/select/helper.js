@@ -1,5 +1,7 @@
 import { isObjectArray } from '@sveltia/utils/array';
 
+import { NUMERIC_VALUE_REGEX } from '$lib/services/utils/regex';
+
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
  * @import { FieldKeyPath, SelectField } from '$lib/types/public';
@@ -51,7 +53,9 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
     const prefix = `${keyPath}.`;
 
     rawValues = Object.entries(valueMap)
-      .filter(([key]) => key.startsWith(prefix) && /^\d+$/.test(key.slice(prefix.length)))
+      .filter(
+        ([key]) => key.startsWith(prefix) && NUMERIC_VALUE_REGEX.test(key.slice(prefix.length)),
+      )
       .map(([, _value]) => _value);
   }
 

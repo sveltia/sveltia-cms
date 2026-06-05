@@ -1,6 +1,7 @@
 import { unique } from '@sveltia/utils/array';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 
+import { TEMPLATE_REGEX } from '$lib/services/common/template';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -53,6 +54,9 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * @property {string[]} allFieldNames All field names extracted from templates.
  * @property {boolean} hasListFields Whether any field names include a list wildcard (*).
  */
+
+const FIELD_TEMPLATE_REGEX = /^{{fields\.(.+?)}}$/;
+const LIST_KEY_PATH_MATCH_REGEX = /\.(\d+)$/;
 
 /**
  * @type {Map<string, RelationOption[]>}
@@ -215,7 +219,7 @@ export const replaceTemplateFields = (templates, fieldNames, context, fallbackCo
  * @returns {string[]} Array of field names.
  */
 export const extractFieldNames = (template) =>
-  [...template.matchAll(/{{(.+?)}}/g)].map((m) => m[1]);
+  [...template.matchAll(TEMPLATE_REGEX)].map((m) => m[1]);
 
 /**
  * Normalize and prepare field templates for processing.
@@ -305,7 +309,7 @@ export const resolveFilterValues = (filters, currentLocaleValues, currentSlug = 
         return currentSlug ? [currentSlug] : [];
       }
 
-      const match = v.match(/^{{fields\.(.+?)}}$/);
+      const match = v.match(FIELD_TEMPLATE_REGEX);
 
       if (!match) return [v];
 
@@ -488,7 +492,7 @@ export const processSingleSubfieldList = ({
     .filter(([k]) => regex.test(k))
     .map(([k, v]) => {
       // The filter above guarantees the regex matches, so `indexMatch` is always non-null
-      const indexMatch = /** @type {RegExpMatchArray} */ (k.match(/\.(\d+)$/));
+      const indexMatch = /** @type {RegExpMatchArray} */ (k.match(LIST_KEY_PATH_MATCH_REGEX));
 
       return { index: parseInt(indexMatch[1], 10), value: v };
     })

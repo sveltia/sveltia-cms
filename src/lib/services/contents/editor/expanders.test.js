@@ -47,6 +47,7 @@ vi.mock('$lib/services/contents/draft', () => {
 });
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
+  LIST_KEY_PATH_REGEX: /\.\d+$/,
   getField: vi.fn(),
 }));
 

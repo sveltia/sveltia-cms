@@ -2,7 +2,7 @@ import { IndexedDB } from '@sveltia/utils/storage';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
-import { getRegex } from '$lib/services/utils/misc';
+import { getRegex } from '$lib/services/utils/regex';
 
 /**
  * @import { Writable } from 'svelte/store';

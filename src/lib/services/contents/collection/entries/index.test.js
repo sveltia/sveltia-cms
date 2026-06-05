@@ -54,7 +54,7 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
   getPropertyValue: vi.fn(),
 }));
 
-vi.mock('$lib/services/utils/misc', () => ({
+vi.mock('$lib/services/utils/regex', () => ({
   getRegex: vi.fn(),
 }));
 
@@ -161,7 +161,7 @@ describe('getEntriesByCollection()', () => {
     const { getCollection } = await import('$lib/services/contents/collection');
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
     const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
-    const { getRegex } = await import('$lib/services/utils/misc');
+    const { getRegex } = await import('$lib/services/utils/regex');
 
     const collection = {
       name: 'posts',
@@ -199,7 +199,7 @@ describe('getEntriesByCollection()', () => {
     const { getCollection } = await import('$lib/services/contents/collection');
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
     const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
-    const { getRegex } = await import('$lib/services/utils/misc');
+    const { getRegex } = await import('$lib/services/utils/regex');
 
     const collection = {
       name: 'posts',
@@ -242,7 +242,7 @@ describe('getEntriesByCollection()', () => {
     const { getCollection } = await import('$lib/services/contents/collection');
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
     const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
-    const { getRegex } = await import('$lib/services/utils/misc');
+    const { getRegex } = await import('$lib/services/utils/regex');
 
     const collection = {
       name: 'posts',
@@ -437,7 +437,7 @@ describe('getEntriesByCollection()', () => {
     const { getCollection } = await import('$lib/services/contents/collection');
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
     const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
-    const { getRegex } = await import('$lib/services/utils/misc');
+    const { getRegex } = await import('$lib/services/utils/regex');
 
     const collection = {
       name: 'posts',

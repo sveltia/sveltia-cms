@@ -1,5 +1,5 @@
 /**
- * @import { FileExtension, FileFormat } from '$lib/types/public';
+ * @import { FileExtension, FileFormat, FrontMatterFormat } from '$lib/types/public';
  */
 
 /**
@@ -64,6 +64,12 @@ export const FRONTMATTER_DELIMITER_MAP = {
   'toml-frontmatter': ['+++', '+++'],
   'yaml-frontmatter': ['---', '---'],
 };
+
+/**
+ * File formats that use front matter syntax, excluding the `frontmatter` auto-detect format.
+ * @type {FrontMatterFormat[]}
+ */
+export const FRONTMATTER_FORMATS = ['yaml-frontmatter', 'toml-frontmatter', 'json-frontmatter'];
 
 /**
  * List of file formats that use TOML syntax and thus require special handling, such as native date

@@ -13,6 +13,8 @@ import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-
  * } from '$lib/types/private';
  */
 
+const KEY_PATH_REGEX = /(.+?)(?:\.[^.]*)?$/;
+
 /**
  * Validate a keyvalue field, updating `validity` in place and resolving the canonical key path.
  * @param {object} args Arguments.
@@ -39,7 +41,7 @@ export const validateKeyValueField = ({
   // Given that values for a KeyValue field are flatten into `field.key1`, `field.key2` ...
   // `field.keyN`, we should validate only once against all these values. The key can be
   // empty, so use `.*` in the regex instead of `.+`
-  const _keyPath = /** @type {string} */ (keyPath.match(/(.+?)(?:\.[^.]*)?$/)?.[1]);
+  const _keyPath = /** @type {string} */ (keyPath.match(KEY_PATH_REGEX)?.[1]);
 
   const parentFieldConfig = getField({
     ...getFieldArgs,

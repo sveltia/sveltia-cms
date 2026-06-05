@@ -22,6 +22,8 @@ import { prefs } from '$lib/services/user/prefs.svelte';
  * @import { ApiEndpointConfig, BackendService, RepositoryInfo } from '$lib/types/private';
  */
 
+const REPO_PATH_REGEX = /(?<owner>.+)\/(?<repo>[^/]+)$/;
+
 /**
  * Initialize the GitLab backend.
  * @returns {RepositoryInfo | undefined} Repository info, or nothing when the configured backend is
@@ -54,9 +56,7 @@ export const init = () => {
    * @see https://docs.gitlab.com/user/namespace/
    * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/80055
    */
-  const { owner, repo } =
-    /** @type {string} */ (projectPath).match(/(?<owner>.+)\/(?<repo>[^/]+)$/)?.groups ?? {};
-
+  const { owner, repo } = /** @type {string} */ (projectPath).match(REPO_PATH_REGEX)?.groups ?? {};
   const repoPath = `${owner}/${repo}`;
   const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
   const repoURL = getRepoURL(restApiRoot, repoPath);

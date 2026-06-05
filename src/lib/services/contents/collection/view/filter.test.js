@@ -44,13 +44,13 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
   getPropertyValue: vi.fn(),
 }));
 
-vi.mock('$lib/services/utils/misc', () => ({
+vi.mock('$lib/services/utils/regex', () => ({
   getRegex: vi.fn(),
 }));
 
 describe('Test filterEntries()', async () => {
   const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
-  const { getRegex } = await import('$lib/services/utils/misc');
+  const { getRegex } = await import('$lib/services/utils/regex');
 
   /** @type {InternalCollection} */
   const mockCollection = {
@@ -659,7 +659,7 @@ describe('Test viewFilters store', () => {
       getPropertyValue: vi.fn(),
     }));
 
-    vi.doMock('$lib/services/utils/misc', () => ({
+    vi.doMock('$lib/services/utils/regex', () => ({
       getRegex: vi.fn(),
     }));
 

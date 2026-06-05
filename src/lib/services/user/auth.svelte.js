@@ -19,6 +19,8 @@ import { prefs } from '$lib/services/user/prefs.svelte';
  * @typedef {'authentication' | 'dataFetch'} SignInErrorContext
  */
 
+const MAGIC_LINK_REGEX = /^\/signin\/(?<encodedData>.+)/;
+
 export const auth = $state({
   /** @type {{ message: string, context: SignInErrorContext }} */
   signInError: { message: '', context: 'authentication' },
@@ -93,7 +95,7 @@ export const logError = (ex, context = 'authentication') => {
  */
 export const parseMagicLink = () => {
   const { path } = parseLocation();
-  const { encodedData } = path.match(/^\/signin\/(?<encodedData>.+)/)?.groups ?? {};
+  const { encodedData } = path.match(MAGIC_LINK_REGEX)?.groups ?? {};
 
   if (!encodedData) {
     return { _user: undefined, copiedPrefs: undefined };

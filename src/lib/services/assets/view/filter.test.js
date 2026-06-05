@@ -7,7 +7,7 @@ vi.mock('$lib/services/assets/kinds', () => ({
   getAssetKind: vi.fn(),
 }));
 
-vi.mock('$lib/services/utils/misc', () => ({
+vi.mock('$lib/services/utils/regex', () => ({
   getRegex: vi.fn(),
 }));
 
@@ -23,7 +23,7 @@ describe('assets/view/filter', () => {
     vi.clearAllMocks();
 
     const { getAssetKind } = await import('$lib/services/assets/kinds');
-    const { getRegex } = await import('$lib/services/utils/misc');
+    const { getRegex } = await import('$lib/services/utils/regex');
 
     getAssetKindMock = /** @type {any} */ (vi.mocked(getAssetKind));
     getRegexMock = /** @type {any} */ (vi.mocked(getRegex));

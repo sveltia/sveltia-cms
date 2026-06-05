@@ -11,6 +11,7 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { currentView } from '$lib/services/contents/collection/view';
 import { entryListSettings } from '$lib/services/contents/collection/view/settings';
 import { getField } from '$lib/services/contents/entry/fields';
+import { NUMERIC_VALUE_REGEX } from '$lib/services/utils/regex';
 
 /**
  * @import { Readable } from 'svelte/store';
@@ -253,7 +254,7 @@ export const getSortKeyLabel = ({ collection, key }) => {
     return key
       .split('.')
       .map((_key, index, arr) => {
-        if (/^\d+$/.test(_key)) {
+        if (NUMERIC_VALUE_REGEX.test(_key)) {
           return undefined;
         }
 

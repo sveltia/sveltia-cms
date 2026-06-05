@@ -55,6 +55,8 @@
    * @property {string | undefined} currentValue Field value.
    */
 
+  const DATA_URL_REGEX = /^data:(?<type>image\/.+?);base64,.+/;
+
   const defaultConfig = $cmsConfig?.field_defaults?.richtext ?? {};
   /** @type {FieldEditorContext} */
   const { fieldContext = undefined } = getContext('field-editor') ?? {};
@@ -290,7 +292,7 @@
 
         if (img) {
           const { src, alt } = img;
-          const dataMatcher = src.match(/^data:(?<type>image\/.+?);base64,.+/);
+          const dataMatcher = src.match(DATA_URL_REGEX);
           /** @type {File | undefined} */
           let file = undefined;
 

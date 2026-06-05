@@ -37,6 +37,8 @@ const SEARCH_PARAMS = {
   per_page: 80,
 };
 
+const DESCRIPTION_REGEX = /\/photo\/(?<alt>.+?)-\d+\/$/;
+
 /**
  * Get the best matching locale supported by Pexels API.
  * @returns {string} Locale code.
@@ -60,7 +62,7 @@ export const getLocale = () => {
 export const parseResults = (results) =>
   results.map(({ id, url, alt, src: { large2x, medium }, photographer }) => ({
     id: String(id),
-    description: url.match(/\/photo\/(?<alt>.+?)-\d+\/$/)?.groups?.alt.replace(/-/g, ' ') ?? alt,
+    description: url.match(DESCRIPTION_REGEX)?.groups?.alt.replace(/-/g, ' ') ?? alt,
     previewURL: medium,
     downloadURL: large2x,
     fileName: `pexels-${photographer.split(/\s+/).join('-').toLowerCase()}-${id}.jpg`,

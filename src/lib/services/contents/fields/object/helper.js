@@ -1,5 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
+import { TEMPLATE_REGEX } from '$lib/services/common/template';
+import { TRANSFORMATION_SPLIT_REGEX } from '$lib/services/common/transformations';
 import {
   getFieldDisplayValue,
   getVisibleFieldDisplayValue,
@@ -52,8 +54,8 @@ export const formatSummary = ({
     return getVisibleFieldDisplayValue({ valueMap, locale, keyPath, keyPathRegex, getFieldArgs });
   }
 
-  return summaryTemplate.replaceAll(/{{(.+?)}}/g, (_match, /** @type {string} */ placeholder) => {
-    const [tag, ...transformations] = placeholder.split(/\s*\|\s*/);
+  return summaryTemplate.replaceAll(TEMPLATE_REGEX, (_match, /** @type {string} */ placeholder) => {
+    const [tag, ...transformations] = placeholder.split(TRANSFORMATION_SPLIT_REGEX);
 
     return getFieldDisplayValue({
       ...getFieldArgs,

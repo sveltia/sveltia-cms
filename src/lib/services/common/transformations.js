@@ -43,6 +43,10 @@ export const DEFAULT_TRANSFORMATION_REGEX = /^default\('(?<defaultValue>.+?)'\)$
 export const TERNARY_TRANSFORMATION_REGEX =
   /^ternary\('(?<truthyValue>.*?)',\s*'(?<falsyValue>.*?)'\)$/;
 export const TRUNCATE_TRANSFORMATION_REGEX = /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/;
+export const TRANSFORMATION_SPLIT_REGEX = /\s*\|\s*/;
+
+const DATE_ONLY_REGEX = /^\d{4}-[01]\d-[0-3]\d$/;
+const DATE_PART_REGEX = /T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z$/;
 
 /**
  * Transform the input value to its uppercase string representation.
@@ -76,8 +80,8 @@ export const applyDateTransformation = (value, { format, timeZone }, fieldConfig
   const useUTC =
     timeZone === 'utc' ||
     utc ||
-    (dateOnly && !!sValue.match(/^\d{4}-[01]\d-[0-3]\d$/)) ||
-    (dateOnly && !!sValue.match(/T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z$/));
+    (dateOnly && !!sValue.match(DATE_ONLY_REGEX)) ||
+    (dateOnly && !!sValue.match(DATE_PART_REGEX));
 
   const date = (useUTC ? dayjs.utc : dayjs)(sValue);
 

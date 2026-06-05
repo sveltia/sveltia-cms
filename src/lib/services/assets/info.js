@@ -26,6 +26,9 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * @import { MediaField } from '$lib/types/public';
  */
 
+const TAG_MATCH_REGEX = /{{(?<tag>.+?)}}/;
+const TAG_REPLACE_REGEX = /{{(.+?)}}/g;
+const URL_REGEX = /^(?:https?|data|blob):/;
 /**
  * Set of asset paths that are currently being requested. This is used to prevent multiple requests
  * for the same asset when the same asset is used in multiple places.
@@ -219,11 +222,11 @@ export const getAssetPublicURL = (
     ? asset.path.replace(
         // Deal with template tags like `/assets/images/{{slug}}`
         createPathRegEx(asset.folder.internalPath ?? '', (segment) => {
-          const tag = segment.match(/{{(?<tag>.+?)}}/)?.groups?.tag;
+          const tag = segment.match(TAG_MATCH_REGEX)?.groups?.tag;
 
           return tag ? `(?<${tag}>[^/]+)` : escapeRegExp(segment);
         }),
-        publicPath?.replaceAll(/{{(.+?)}}/g, '$<$1>') ?? '',
+        publicPath?.replaceAll(TAG_REPLACE_REGEX, '$<$1>') ?? '',
       )
     : asset.path.replace(
         asset.folder.internalPath ?? '',
@@ -290,7 +293,7 @@ export const getMediaFieldURL = async ({
     return undefined;
   }
 
-  if (/^(?:https?|data|blob):/.test(value)) {
+  if (URL_REGEX.test(value)) {
     return value;
   }
 

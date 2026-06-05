@@ -7,7 +7,6 @@ import { getPairs } from '$lib/services/contents/fields/key-value/helper';
 
 import {
   DEFAULT_VALIDITY,
-  LIST_KEY_PATH_REGEX,
   validateAnyField,
   validateField,
   validateFields,
@@ -26,7 +25,7 @@ vi.mock('$lib/services/contents/draft/validate/messages', () => ({
 }));
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/config');
-vi.mock('$lib/services/utils/misc');
+vi.mock('$lib/services/utils/regex');
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { devModeEnabled: false },
 }));
@@ -307,7 +306,7 @@ describe('draft/validate/fields', () => {
         pattern: ['^\\d{10}$', 'Must be 10 digits'],
       });
 
-      const { getRegex } = await import('$lib/services/utils/misc');
+      const { getRegex } = await import('$lib/services/utils/regex');
 
       vi.mocked(getRegex).mockReturnValue(/^\d{10}$/);
 
@@ -382,7 +381,7 @@ describe('draft/validate/fields', () => {
         pattern: ['^\\d{10}$', '10 digits'],
       });
 
-      const { getRegex } = await import('$lib/services/utils/misc');
+      const { getRegex } = await import('$lib/services/utils/regex');
 
       vi.mocked(getRegex).mockReturnValue(/^\d{10}$/);
 
@@ -465,21 +464,6 @@ describe('draft/validate/fields', () => {
   });
 
   describe('Internal helpers (exported for testing)', () => {
-    describe('LIST_KEY_PATH_REGEX', () => {
-      it('should match list key paths', () => {
-        expect(LIST_KEY_PATH_REGEX.test('field.0')).toBe(true);
-        expect(LIST_KEY_PATH_REGEX.test('field.1')).toBe(true);
-        expect(LIST_KEY_PATH_REGEX.test('field.999')).toBe(true);
-        expect(LIST_KEY_PATH_REGEX.test('nested.field.0')).toBe(true);
-      });
-
-      it('should not match non-list key paths', () => {
-        expect(LIST_KEY_PATH_REGEX.test('field')).toBe(false);
-        expect(LIST_KEY_PATH_REGEX.test('field.name')).toBe(false);
-        expect(LIST_KEY_PATH_REGEX.test('field.0.subfield')).toBe(false);
-      });
-    });
-
     describe('DEFAULT_VALIDITY', () => {
       it('should have all validity flags set to false', () => {
         expect(DEFAULT_VALIDITY).toEqual({

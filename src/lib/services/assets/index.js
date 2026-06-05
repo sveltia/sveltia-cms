@@ -32,6 +32,8 @@ import { createPath, decodeFilePath, resolvePath } from '$lib/services/utils/fil
  * } from '$lib/types/private';
  */
 
+const ENTRY_FOLDER_REGEX = /^(?<entryFolder>.+?)(?:\/[^/]+)?$/;
+
 /**
  * List of all assets.
  * @type {Writable<Asset[]>}
@@ -192,7 +194,7 @@ export const getAssetByRelativePathAndCollection = ({
   // The regex matches any non-empty string (`entryFilePath` is guaranteed non-empty above). Named
   // capture groups always produce a `groups` object, so no optional chaining needed.
   const { entryFolder } = /** @type {{ entryFolder: string }} */ (
-    /** @type {RegExpMatchArray} */ (entryFilePath.match(/(?<entryFolder>.+?)(?:\/[^/]+)?$/)).groups
+    /** @type {RegExpMatchArray} */ (entryFilePath.match(ENTRY_FOLDER_REGEX)).groups
   );
 
   // Strip the `media_folder` prefix from the stored path before joining with `mediaFolder`, to

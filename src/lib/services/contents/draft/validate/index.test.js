@@ -17,7 +17,7 @@ vi.mock('$lib/services/contents/draft/validate/messages', () => ({
 }));
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/config');
-vi.mock('$lib/services/utils/misc');
+vi.mock('$lib/services/utils/regex');
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { devModeEnabled: false },
 }));

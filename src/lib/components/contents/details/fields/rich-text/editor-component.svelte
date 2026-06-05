@@ -8,7 +8,11 @@
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { applyTransformations } from '$lib/services/common/transformations';
+  import { TEMPLATE_REGEX } from '$lib/services/common/template';
+  import {
+    applyTransformations,
+    TRANSFORMATION_SPLIT_REGEX,
+  } from '$lib/services/common/transformations';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { validateFields } from '$lib/services/contents/draft/validate/fields';
@@ -234,8 +238,8 @@
 
     const flatValues = flatten(_values);
 
-    const result = template.replaceAll(/{{(.+?)}}/g, (__, placeholder) => {
-      const [tag, ...transformations] = placeholder.trim().split(/\s*\|\s*/);
+    const result = template.replaceAll(TEMPLATE_REGEX, (__, placeholder) => {
+      const [tag, ...transformations] = placeholder.trim().split(TRANSFORMATION_SPLIT_REGEX);
       const fieldName = tag.replace(/^fields\./, '');
       let value = flatValues[fieldName];
 

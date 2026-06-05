@@ -15,7 +15,7 @@ import {
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
-import { getRegex } from '$lib/services/utils/misc';
+import { getRegex } from '$lib/services/utils/regex';
 
 /**
  * @import { Writable } from 'svelte/store';

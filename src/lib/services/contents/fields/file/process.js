@@ -14,6 +14,8 @@ import { getGitHash } from '$lib/services/utils/file';
  * @import { DefaultMediaLibraryConfig } from '$lib/types/public';
  */
 
+const FOLDER_PATH_REGEX = /(?<path>.+?)(?:\/[^/]+)?$/;
+
 /**
  * Get the blob URL of an unsaved file that matches the given file.
  * @internal
@@ -113,8 +115,7 @@ const getSavedAssetsForEntry = (draft, folder) => {
   let entryFolderPath = entryFilePath.substring(0, entryFilePath.lastIndexOf('.'));
 
   if (lastSubPathSegment && !lastSubPathSegment.includes('{{')) {
-    entryFolderPath =
-      entryFolderPath.match(/(?<path>.+?)(?:\/[^/]+)?$/)?.groups?.path ?? entryFolderPath;
+    entryFolderPath = entryFolderPath.match(FOLDER_PATH_REGEX)?.groups?.path ?? entryFolderPath;
   }
 
   const expectedPrefix = [entryFolderPath, folder.internalSubPath].filter(Boolean).join('/');

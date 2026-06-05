@@ -2,7 +2,12 @@ import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
 import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
-import { getField, isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
+import {
+  getField,
+  isFieldMultiple,
+  isFieldRequired,
+  LIST_KEY_PATH_REGEX,
+} from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES, MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { resolveCodeField } from '$lib/services/contents/fields/code/validate';
 import { validateDateTimeField } from '$lib/services/contents/fields/date-time/validate';
@@ -12,7 +17,7 @@ import { validateListField } from '$lib/services/contents/fields/list/validate';
 import { validateNumberField } from '$lib/services/contents/fields/number/validate';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { validateStringField } from '$lib/services/contents/fields/string/validate';
-import { getRegex } from '$lib/services/utils/misc';
+import { getRegex } from '$lib/services/utils/regex';
 
 /**
  * @import {
@@ -53,13 +58,6 @@ import { getRegex } from '$lib/services/utils/misc';
  * @property {LocaleValidationMessagesMap} validationMessages Validation messages for each field in
  * each locale.
  */
-
-/**
- * Regular expression to match the list key path, e.g. `field.0`, `field.1`, etc.
- * @type {RegExp}
- * @internal
- */
-export const LIST_KEY_PATH_REGEX = /\.\d+$/;
 
 /**
  * Default validity state for a field.

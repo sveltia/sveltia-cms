@@ -17,7 +17,7 @@ vi.mock('@sveltia/i18n', () => ({
   _: (/** @type {string} */ key) => (key === 'other' ? 'Other' : key),
 }));
 
-vi.mock('$lib/services/utils/misc', () => ({
+vi.mock('$lib/services/utils/regex', () => ({
   getRegex: vi.fn(),
 }));
 
@@ -36,7 +36,7 @@ describe('assets/view/group', () => {
 
     const { compare } = await import('@sveltia/utils/string');
     const { get } = await import('svelte/store');
-    const { getRegex } = await import('$lib/services/utils/misc');
+    const { getRegex } = await import('$lib/services/utils/regex');
 
     compareMock = /** @type {any} */ (vi.mocked(compare));
     getMock = /** @type {any} */ (vi.mocked(get));

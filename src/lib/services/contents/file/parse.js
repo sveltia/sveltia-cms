@@ -5,6 +5,7 @@ import { parse as libParseYAML } from 'yaml';
 
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';
 import {
   customFileFormatRegistry,
   getFrontMatterDelimiters,
@@ -186,7 +187,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
       format = detectFrontMatterFormat(text);
     }
 
-    if (/^(?:yaml|toml|json)-frontmatter$/.test(format)) {
+    if (FRONTMATTER_FORMATS.includes(/** @type {any} */ (format))) {
       return parseFrontMatter({
         collection,
         collectionFile,

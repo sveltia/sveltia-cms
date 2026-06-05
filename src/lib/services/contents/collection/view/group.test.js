@@ -35,7 +35,7 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
   getPropertyValue: vi.fn(),
 }));
 
-vi.mock('$lib/services/utils/misc', () => ({
+vi.mock('$lib/services/utils/regex', () => ({
   getRegex: vi.fn(),
 }));
 
@@ -320,7 +320,7 @@ describe('groupEntries', () => {
   });
 
   test('should handle regex patterns', async () => {
-    const { getRegex } = await import('$lib/services/utils/misc');
+    const { getRegex } = await import('$lib/services/utils/regex');
 
     // @ts-ignore - Mock data for testing
     const entries = [
@@ -414,7 +414,7 @@ describe('groupEntries', () => {
   });
 
   test('should reverse groups when sorting is descending on the same field', async () => {
-    const { getRegex } = await import('$lib/services/utils/misc');
+    const { getRegex } = await import('$lib/services/utils/regex');
 
     // @ts-ignore - Mock data for testing
     const entries = [
@@ -485,7 +485,7 @@ describe('groupEntries', () => {
   });
 
   test('should fall back to Other group when entry value does not match regex', async () => {
-    const { getRegex } = await import('$lib/services/utils/misc');
+    const { getRegex } = await import('$lib/services/utils/regex');
 
     // @ts-ignore - Mock data for testing
     const entries = [
@@ -851,7 +851,7 @@ describe('Test viewGroups store', () => {
       getPropertyValue: vi.fn(),
     }));
 
-    vi.doMock('$lib/services/utils/misc', () => ({
+    vi.doMock('$lib/services/utils/regex', () => ({
       getRegex: vi.fn(),
     }));
 

@@ -10,6 +10,8 @@ import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
  * @import { Field, FieldKeyPath, LocaleCode, RelationField } from '$lib/types/public';
  */
 
+const PATH_MATCH_REGEX = /(?<path>.+?)\.[^.]*$/;
+
 /**
  * Copy the default locale value to other locales if the field’s i18n strategy is `duplicate`.
  * @internal
@@ -27,9 +29,7 @@ export const copyDefaultLocaleValue = ({ getFieldArgs, fieldConfig, sourceLangua
       // Don’t duplicate the value if the parent object doesn’t exist
       if (keyPath.includes('.')) {
         // The regex always matches since keyPath is guaranteed to contain a dot (checked above).
-        const parentKeyPath = /** @type {string} */ (
-          keyPath.match(/(?<path>.+?)\.[^.]*$/)?.groups?.path
-        );
+        const parentKeyPath = /** @type {string} */ (keyPath.match(PATH_MATCH_REGEX)?.groups?.path);
 
         if (
           !Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${parentKeyPath}.`)) &&

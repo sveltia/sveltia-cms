@@ -5,7 +5,7 @@ import { selectedCollection } from '$lib/services/contents/collection';
 import { currentView } from '$lib/services/contents/collection/view';
 import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
 import { getPropertyValue } from '$lib/services/contents/entry/fields';
-import { getRegex } from '$lib/services/utils/misc';
+import { getRegex } from '$lib/services/utils/regex';
 
 /**
  * @import { Entry, FilteringConditions, InternalEntryCollection } from '$lib/types/private';

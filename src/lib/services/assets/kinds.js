@@ -31,6 +31,8 @@ export const ASSET_KINDS = [...MEDIA_KINDS, 'document', 'other'];
  */
 export const DOC_EXTENSION_REGEX = /\.(?:csv|docx?|odp|ods|odt|pdf|pptx?|rtf|xlsx?)$/i;
 
+const MEDIA_TYPE_REGEX = /^(?<type>image|video|audio)\//;
+
 /**
  * Check if the given asset kind is media.
  * @param {string} kind Kind, e.g. `image` or `video`.
@@ -115,6 +117,6 @@ export const canEditAsset = (asset) => {
  */
 export const getAssetKind = (name) =>
   /** @type {AssetKind} */ (
-    mime.getType(name)?.match(/^(?<type>image|audio|video)\//)?.groups?.type ??
+    mime.getType(name)?.match(MEDIA_TYPE_REGEX)?.groups?.type ??
       (DOC_EXTENSION_REGEX.test(name) ? 'document' : 'other')
   );

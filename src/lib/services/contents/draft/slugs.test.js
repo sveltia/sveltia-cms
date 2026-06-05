@@ -1,6 +1,8 @@
 // @ts-nocheck
 import { describe, expect, it, vi } from 'vitest';
 
+import { TEMPLATE_REGEX } from '$lib/services/common/template';
+
 import {
   getCanonicalSlug,
   getFillSlugOptions,
@@ -17,7 +19,7 @@ vi.mock('$lib/services/common/template', () => ({
       return options.currentSlug || options.content?._slug || '';
     }
 
-    return template.replace(/{{(.+?)}}/g, (match, field) => options.content?.[field] || '');
+    return template.replace(TEMPLATE_REGEX, (match, field) => options.content?.[field] || '');
   }),
 }));
 

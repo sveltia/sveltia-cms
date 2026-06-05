@@ -18,6 +18,7 @@ import { getOptionLabel } from '$lib/services/contents/fields/select/helper';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { NUMERIC_VALUE_REGEX } from '$lib/services/utils/regex';
 
 /**
  * @import {
@@ -45,6 +46,16 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * SelectField,
  * } from '$lib/types/public';
  */
+
+const TYPE_MATCH_REGEX = /^(.*?)<([^>]+)>(.*)$/;
+const NUMERIC_INDEX_REGEX = /(?:^|\.)(\d+)(?:\.|$)/;
+
+/**
+ * Regular expression to match the list key path, e.g. `field.0`, `field.1`, etc.
+ * @type {RegExp}
+ * @internal
+ */
+export const LIST_KEY_PATH_REGEX = /\.\d+$/;
 
 /**
  * @type {Map<string, Field | undefined>}
@@ -93,7 +104,7 @@ export const isFieldMultiple = (fieldConfig) => {
  */
 const parseExplicitType = (key) => {
   // Match patterns like "*<type>", "<type>", or "0<type>" or "fieldName<type>"
-  const match = key.match(/^(.*?)<([^>]+)>(.*)$/);
+  const match = key.match(TYPE_MATCH_REGEX);
 
   if (!match) {
     return { cleanKey: key };
@@ -134,7 +145,7 @@ const resolveNextSegment = ({
   const { cleanKey, typeName } = parseExplicitType(key);
   const { widget: fieldType = 'text' } = field;
   const explicitType = typeName != null ? typeName : pendingExplicitType;
-  const isNumericKey = /^\d+$/.test(cleanKey);
+  const isNumericKey = NUMERIC_VALUE_REGEX.test(cleanKey);
   const isWildcardKey = cleanKey === '*';
 
   // Handle multi-value field types with numeric keys, e.g. `authors.0`
@@ -226,7 +237,7 @@ export const getField = (args) => {
   // resolve variable-type list/object fields). Wildcard paths (e.g. `sections.*.type`) never match
   // a real flat-entry key, so the lookup always returns `undefined` and the result is identical
   // regardless of entry content — no need to serialize `valueMap` into the cache key.
-  const hasNumericIndex = /(?:^|\.)(\d+)(?:\.|$)/.test(keyPath);
+  const hasNumericIndex = NUMERIC_INDEX_REGEX.test(keyPath);
 
   const cacheKey = hasNumericIndex
     ? JSON.stringify(args)

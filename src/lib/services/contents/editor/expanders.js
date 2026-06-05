@@ -2,7 +2,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
-import { getField } from '$lib/services/contents/entry/fields';
+import { getField, LIST_KEY_PATH_REGEX } from '$lib/services/contents/entry/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -102,7 +102,7 @@ export const getExpanderKeys = ({
   keyPath.split('.').forEach((_keyPart, index, arr) => {
     const _keyPath = arr.slice(0, index + 1).join('.');
     const config = getField({ ...getFieldArgs, keyPath: _keyPath });
-    const endingWithNumber = /\.\d+$/.test(_keyPath);
+    const endingWithNumber = LIST_KEY_PATH_REGEX.test(_keyPath);
 
     if (config?.widget === 'object') {
       if (endingWithNumber) {

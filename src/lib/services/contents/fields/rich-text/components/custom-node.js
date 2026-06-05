@@ -20,6 +20,8 @@ import {
  * @import { EditorComponentDefinition } from '$lib/types/public';
  */
 
+const TAG_NAME_REGEX = /^<(?<tagName>[a-z]+)/i;
+
 /**
  * Dynamically create a custom {@link DecoratorNode} class.
  * @param {EditorComponentDefinition} componentDef Component definition passed with the
@@ -45,9 +47,9 @@ export const createCustomNodeClass = (componentDef) => {
 
   const tagName =
     typeof preview === 'string'
-      ? (preview.trim().match(/^<(?<tagName>[a-z]+)/i)?.groups?.tagName ??
+      ? (preview.trim().match(TAG_NAME_REGEX)?.groups?.tagName ??
         (typeof block === 'string'
-          ? block.trim().match(/^<(?<tagName>[a-z]+)/i)?.groups?.tagName
+          ? block.trim().match(TAG_NAME_REGEX)?.groups?.tagName
           : /* v8 ignore next */ undefined))
       : undefined;
 
