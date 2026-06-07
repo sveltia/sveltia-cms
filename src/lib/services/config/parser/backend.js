@@ -77,7 +77,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       errors.add(_('config.error.missing_repository'));
     }
 
-    if (typeof repo !== 'string' || !/(.+)\/([^/]+)$/.test(repo)) {
+    if (typeof repo !== 'string' || !/^[^/:]+(?:\/[^/:]+)+$/.test(repo)) {
       errors.add(_('config.error.invalid_repository'));
     }
 

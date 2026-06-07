@@ -380,7 +380,25 @@ describe('parseBackendConfig', () => {
       expect(error).toBe('Invalid repository format');
     });
 
-    it('should allow repository format with multiple slashes (regex matches)', async () => {
+    it('should accept repository format with multiple slashes (GitLab nested groups)', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'gitlab',
+          repo: 'owner/group/subgroup/repo',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      // The regex ^[^/:]+(?:\/[^/:]+)+$ allows multiple slash-separated segments
+      expect(collectors.errors.size).toBe(0);
+    });
+
+    it('should reject full repository URL (contains colon)', async () => {
       const { parseBackendConfig } = await import('./backend.js');
       const collectors = createCollectors();
 
@@ -388,16 +406,59 @@ describe('parseBackendConfig', () => {
       const config = {
         backend: {
           name: 'github',
-          repo: 'owner/repo/extra',
+          repo: 'https://github.com/owner/repo',
         },
       };
 
       parseBackendConfig(config, collectors);
 
-      // The regex /(.+)\/([^/]+)$/ matches 'owner/repo/extra' as:
-      // (.+) = 'owner/repo', \/ = '/', ([^/]+) = 'extra'
-      // So this is actually valid
-      expect(collectors.errors.size).toBe(0);
+      expect(collectors.errors.size).toBe(1);
+
+      const [error] = [...collectors.errors];
+
+      expect(error).toBe('Invalid repository format');
+    });
+
+    it('should reject repository starting with slash', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'github',
+          repo: '/owner/repo',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(1);
+
+      const [error] = [...collectors.errors];
+
+      expect(error).toBe('Invalid repository format');
+    });
+
+    it('should reject repository ending with slash', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'github',
+          repo: 'owner/repo/',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(1);
+
+      const [error] = [...collectors.errors];
+
+      expect(error).toBe('Invalid repository format');
     });
   });
 
