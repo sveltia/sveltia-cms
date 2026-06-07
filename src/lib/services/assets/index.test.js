@@ -29,7 +29,14 @@ import {
 
 // Mock all dependencies
 vi.mock('@sveltia/utils/file');
-vi.mock('@sveltia/utils/string');
+vi.mock('@sveltia/utils/string', async () => {
+  const actual = await vi.importActual('@sveltia/utils/string');
+
+  return {
+    ...actual,
+    stripSlashes: vi.fn(),
+  };
+});
 vi.mock('flat');
 vi.mock('$lib/services/integrations/media-libraries/default');
 vi.mock('$lib/services/common/slug');
@@ -3685,6 +3692,76 @@ describe('assets/index', () => {
 
       // Asset not in allAssets → undefined; the test's purpose is to exercise the predicate
       expect(result).toBeUndefined();
+
+      // Restore allAssetFolders
+      allAssetFolders.set([]);
+    });
+
+    it('should treat regex metacharacters in publicPath as literals', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder, allAssetFolders } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      vi.mocked(stripSlashes).mockReturnValue('/(a+)+/image.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/(a+)+',
+        basename: 'image.jpg',
+        filename: 'image',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValue(undefined);
+      vi.mocked(createPath).mockReturnValue('uploads/(a+)+/image.jpg');
+
+      const mockAsset = {
+        path: 'uploads/(a+)+/image.jpg',
+        name: 'image.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'uploads/(a+)+',
+          publicPath: '/(a+)+',
+          collectionName: undefined,
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      // Set up folder with regex metacharacters in publicPath
+      allAssetFolders.set([mockAsset.folder]);
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/(a+)+/image.jpg',
+        entry: undefined,
+        collectionName: '',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAsset);
+
+      // Now test that it doesn't match a path that would match if interpreted as regex
+      vi.clearAllMocks();
+      vi.mocked(stripSlashes).mockReturnValue('/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaA/image.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaA',
+        basename: 'image.jpg',
+        filename: 'image',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValue(undefined);
+      // When the folder doesn't match, createPath might be called with different args or not at all
+      vi.mocked(createPath).mockReturnValue('some/other/path/image.jpg');
+
+      const nonMatchResult = getAssetByAbsolutePath({
+        path: '/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaA/image.jpg',
+        entry: undefined,
+        collectionName: '',
+        fileName: undefined,
+      });
+
+      expect(nonMatchResult).toBeUndefined();
 
       // Restore allAssetFolders
       allAssetFolders.set([]);

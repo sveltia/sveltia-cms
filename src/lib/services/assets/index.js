@@ -1,5 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { stripSlashes } from '@sveltia/utils/string';
+import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import { derived, get, writable } from 'svelte/store';
 
@@ -12,8 +12,8 @@ import {
 import { processFile } from '$lib/services/assets/process';
 import { fillTemplate } from '$lib/services/common/template';
 import {
+  ESCAPED_PLACEHOLDER_REGEX,
   TEMPLATE_TAG_REGEX,
-  TEMPLATE_TAG_REPLACE_REGEX,
 } from '$lib/services/common/template/constants';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -316,9 +316,12 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName, 
     getAssetFolder({ collectionName, fileName }),
     getAssetFolder({ collectionName }),
     get(globalAssetFolder),
-    get(allAssetFolders).findLast((folder) =>
-      dirName.match(`^${(folder.publicPath ?? '').replace(TEMPLATE_TAG_REPLACE_REGEX, '.+?')}\\b`),
-    ),
+    get(allAssetFolders).findLast((folder) => {
+      const publicPath = folder.publicPath ?? '';
+      const normalizedPath = escapeRegExp(publicPath).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
+
+      return dirName.match(`^${normalizedPath}${publicPath ? '(?=\\/|$)' : '$'}`);
+    }),
   ].filter((folder) => !!folder);
 
   // Use `find` to stop scanning folders as soon as the asset is found
