@@ -508,6 +508,34 @@ describe('assets/folders', () => {
       expect(result[0].internalPath).toBe('content/posts/{{slug}}');
     });
 
+    it('should treat regex metacharacters in folder paths as literals', () => {
+      allAssetFolders.set([
+        {
+          collectionName: 'posts',
+          internalPath: '(a+)+',
+          publicPath: '/assets',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ]);
+
+      getPathInfoMock.mockReturnValue({
+        filename: 'image.jpg',
+        basename: 'image.jpg',
+        dirname: '(a+)+',
+      });
+
+      expect(getAssetFoldersByPath('(a+)+/image.jpg')).toHaveLength(1);
+
+      getPathInfoMock.mockReturnValue({
+        filename: 'image.jpg',
+        basename: 'image.jpg',
+        dirname: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaA',
+      });
+
+      expect(getAssetFoldersByPath('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaA/image.jpg')).toEqual([]);
+    });
+
     it('should match entry relative paths', () => {
       getPathInfoMock.mockReturnValue({
         filename: 'banner.jpg',
