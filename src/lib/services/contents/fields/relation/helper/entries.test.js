@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { processEntry } from '$lib/services/contents/fields/relation/entries';
-import { getSubFieldMatch } from '$lib/services/contents/fields/relation/list-fields';
+import { processEntry } from '$lib/services/contents/fields/relation/helper/entries';
+import { getSubFieldMatch } from '$lib/services/contents/fields/relation/helper/list-fields';
 
 /**
  * @import { Entry } from '$lib/types/private';

@@ -2,11 +2,16 @@ import { compare, escapeRegExp } from '@sveltia/utils/string';
 
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-
-import { getObjectId, getOptionLabelMap } from './cache.js';
-import { processEntry } from './entries.js';
-import { filterAndPrepareEntries, resolveFilterValues } from './filters.js';
-import { prepareFieldTemplates } from './templates.js';
+import {
+  getObjectId,
+  getOptionLabelMap,
+} from '$lib/services/contents/fields/relation/helper/cache';
+import { processEntry } from '$lib/services/contents/fields/relation/helper/entries';
+import {
+  filterAndPrepareEntries,
+  resolveFilterValues,
+} from '$lib/services/contents/fields/relation/helper/filters';
+import { prepareFieldTemplates } from '$lib/services/contents/fields/relation/helper/templates';
 
 /**
  * @import {

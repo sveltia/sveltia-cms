@@ -7,7 +7,7 @@
 <script>
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
-  import { getOptions } from '$lib/services/contents/fields/relation';
+  import { getOptions } from '$lib/services/contents/fields/relation/helper';
   import { getCanonicalLocale, getDirection, getListFormatter } from '$lib/services/contents/i18n';
 
   /**

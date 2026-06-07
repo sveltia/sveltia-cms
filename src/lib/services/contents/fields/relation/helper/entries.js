@@ -1,9 +1,11 @@
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
-
-import { analyzeListFields, processListFields } from './list-fields.js';
-import { createSimpleOption } from './options.js';
-import { replaceTemplateFields } from './templates.js';
+import {
+  analyzeListFields,
+  processListFields,
+} from '$lib/services/contents/fields/relation/helper/list-fields';
+import { createSimpleOption } from '$lib/services/contents/fields/relation/helper/options';
+import { replaceTemplateFields } from '$lib/services/contents/fields/relation/helper/templates';
 
 /**
  * @import {

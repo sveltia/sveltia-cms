@@ -37,7 +37,7 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummary: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/fields/relation', () => ({
+vi.mock('$lib/services/contents/fields/relation/helper', () => ({
   getOptions: vi.fn(),
 }));
 
@@ -47,7 +47,7 @@ describe('getBacklinks()', async () => {
   const { getCollection } = await import('$lib/services/contents/collection');
   const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
   const { getEntrySummary } = await import('$lib/services/contents/entry/summary');
-  const { getOptions } = await import('$lib/services/contents/fields/relation');
+  const { getOptions } = await import('$lib/services/contents/fields/relation/helper');
 
   /** @type {Entry} */
   const targetEntry = {

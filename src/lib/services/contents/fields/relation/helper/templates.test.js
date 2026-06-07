@@ -5,7 +5,7 @@ import {
   getFieldReplacement,
   prepareFieldTemplates,
   replaceTemplateFields,
-} from '$lib/services/contents/fields/relation/templates';
+} from '$lib/services/contents/fields/relation/helper/templates';
 
 // Mock dependencies
 vi.mock('$lib/services/contents/entry/summary', () => ({

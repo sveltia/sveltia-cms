@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   filterAndPrepareEntries,
   resolveFilterValues,
-} from '$lib/services/contents/fields/relation/filters';
+} from '$lib/services/contents/fields/relation/helper/filters';
 
 /**
  * @import { Entry } from '$lib/types/private';

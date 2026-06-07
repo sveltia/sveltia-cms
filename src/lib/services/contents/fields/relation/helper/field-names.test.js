@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   isComplexListField,
   normalizeFieldName,
-} from '$lib/services/contents/fields/relation/field-names';
+} from '$lib/services/contents/fields/relation/helper/field-names';
 
 describe('Test normalizeFieldName()', () => {
   test('should return field name as-is if already in template format', () => {
