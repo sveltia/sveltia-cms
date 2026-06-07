@@ -17,7 +17,7 @@ import {
   LIST_KEY_PATH_REGEX,
 } from '$lib/services/contents/entry/fields';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helper';
-import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helper';
+import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { getOptionLabel } from '$lib/services/contents/fields/select/helper';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
@@ -54,7 +54,7 @@ vi.mock('$lib/services/contents/fields/date-time/helper', () => ({
   parseDateTimeConfig: vi.fn(() => ({})),
 }));
 
-vi.mock('$lib/services/contents/fields/relation/helper', () => ({
+vi.mock('$lib/services/contents/fields/relation', () => ({
   getReferencedOptionLabel: vi.fn(),
 }));
 

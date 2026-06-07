@@ -1208,6 +1208,14 @@
  */
 
 /**
+ * Relation field option.
+ * @typedef {object} RelationOption
+ * @property {string} label Option label.
+ * @property {any} value Option value.
+ * @property {string} searchValue Searchable value.
+ */
+
+/**
  * Arguments for a field parser function.
  * @typedef {object} FieldParserArgs
  * @property {Field} config Field configuration.

@@ -9,7 +9,7 @@
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getOptions } from '$lib/services/contents/fields/relation/helper';
+  import { getOptions } from '$lib/services/contents/fields/relation';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';

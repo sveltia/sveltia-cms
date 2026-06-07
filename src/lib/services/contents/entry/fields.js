@@ -12,7 +12,7 @@ import {
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { MEDIA_FIELD_TYPES, MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helper';
-import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helper';
+import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { getOptionLabel } from '$lib/services/contents/fields/select/helper';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
