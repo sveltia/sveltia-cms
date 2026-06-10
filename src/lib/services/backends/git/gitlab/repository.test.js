@@ -16,6 +16,7 @@ const { mockUserAccount } = vi.hoisted(() => ({
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/user/account.svelte', () => ({
   user: {
+    // eslint-disable-next-line jsdoc/require-jsdoc
     get account() {
       return mockUserAccount;
     },
