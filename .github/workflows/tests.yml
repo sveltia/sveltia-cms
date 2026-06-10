@@ -17,7 +17,7 @@ jobs:
             command: pnpm build
     steps:
       - name: Checkout the branch
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6.0.3
       - name: Install pnpm
         uses: pnpm/action-setup@v6.0.8
         with:
