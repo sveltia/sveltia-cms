@@ -5,7 +5,7 @@ import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/r
 import { user } from '$lib/services/user/account.svelte';
 
 /**
- * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
+ * @import { RepositoryBaseURLs, RepositoryInfo, User } from '$lib/types/private';
  */
 
 /** @type {RepositoryInfo} */
@@ -28,20 +28,25 @@ export const getBaseURLs = (repoURL, branch) => ({
 /**
  * Check if the user has access to the current repository.
  * @throws {Error} If the user is not a collaborator of the repository.
- * @see https://docs.gitlab.com/api/members.html#get-a-member-of-a-group-or-project-including-inherited-and-invited-members
+ * @see https://docs.gitlab.com/api/projects/#list-all-members-of-a-project
+ * @see https://docs.gitlab.com/api/service_accounts/#list-all-project-service-accounts
  */
 export const checkRepositoryAccess = async () => {
   const { owner, repo } = repository;
-  const userId = /** @type {number} */ (user.account?.id);
+  const { id, login, bot } = /** @type {User} */ (user.account);
+  const baseURL = `/projects/${encodeURIComponent(`${owner}/${repo}`)}`;
+  const url = bot ? `${baseURL}/service_accounts` : `${baseURL}/users?search=${login}`;
 
-  const { ok } = /** @type {Response} */ (
-    await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/members/all/${userId}`, {
+  const response = /** @type {Response} */ (
+    await fetchAPI(url, {
       headers: { Accept: 'application/json' },
       responseType: 'raw',
     })
   );
 
-  if (!ok) {
+  const users = response.ok ? /** @type {{ id: number }[]} */ (await response.json()) : [];
+
+  if (!users.some((u) => u.id === id)) {
     throw new Error('Not a collaborator of the repository', {
       cause: new Error(_('repository_no_access', { values: { repo } })),
     });

@@ -8,10 +8,18 @@ import {
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 
+const { mockUserAccount } = vi.hoisted(() => ({
+  mockUserAccount: { id: 123, login: 'test-user', bot: false },
+}));
+
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/user/account.svelte', () => ({
-  user: { account: { id: 123 } },
+  user: {
+    get account() {
+      return mockUserAccount;
+    },
+  },
 }));
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn(() => 'Translation message'),
@@ -19,6 +27,7 @@ vi.mock('@sveltia/i18n', () => ({
 describe('GitLab repository service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.assign(mockUserAccount, { id: 123, login: 'test-user', bot: false });
   });
 
   describe('repository object', () => {
@@ -54,19 +63,22 @@ describe('GitLab repository service', () => {
   });
 
   describe('checkRepositoryAccess', () => {
-    test('succeeds when user is a member', async () => {
+    test('succeeds when the user is an active collaborator', async () => {
       Object.assign(repository, {
         owner: 'test-owner',
         repo: 'test-repo',
       });
 
-      const mockResponse = { ok: true };
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue([{ id: 123, state: 'active' }]),
+      };
 
       vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
       expect(fetchAPI).toHaveBeenCalledWith(
-        '/projects/test-owner%2Ftest-repo/members/all/123',
+        '/projects/test-owner%2Ftest-repo/users?search=test-user',
         expect.objectContaining({
           headers: { Accept: 'application/json' },
           responseType: 'raw',
@@ -74,17 +86,62 @@ describe('GitLab repository service', () => {
       );
     });
 
-    test('throws error when user is not a member', async () => {
+    test('throws error when the user is not an active collaborator', async () => {
       Object.assign(repository, {
         owner: 'test-owner',
         repo: 'test-repo',
       });
 
-      const mockResponse = { ok: false };
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue([{ id: 456, state: 'active' }]),
+      };
 
       vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+    });
+
+    test('throws error when the access check request itself fails', async () => {
+      Object.assign(repository, {
+        owner: 'test-owner',
+        repo: 'test-repo',
+      });
+
+      const mockResponse = {
+        ok: false,
+        json: vi.fn(),
+      };
+
+      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+
+      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+      expect(mockResponse.json).not.toHaveBeenCalled();
+    });
+
+    test('uses service account lookup for bot users', async () => {
+      Object.assign(repository, {
+        owner: 'test-owner',
+        repo: 'test-repo',
+      });
+
+      Object.assign(mockUserAccount, { id: 999, login: 'bot-user', bot: true });
+
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue([{ id: 999 }]),
+      };
+
+      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+
+      await expect(checkRepositoryAccess()).resolves.toBeUndefined();
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/test-owner%2Ftest-repo/service_accounts',
+        expect.objectContaining({
+          headers: { Accept: 'application/json' },
+          responseType: 'raw',
+        }),
+      );
     });
   });
 
