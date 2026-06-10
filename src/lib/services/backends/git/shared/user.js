@@ -43,6 +43,7 @@ export const fetchUserProfile = async ({ token, refreshToken }, backendName, fie
     email: response.email,
     avatarURL: response.avatar_url,
     profileURL: response[fieldMap.profileURL],
+    bot: response.bot ?? false,
     token,
     refreshToken,
   };

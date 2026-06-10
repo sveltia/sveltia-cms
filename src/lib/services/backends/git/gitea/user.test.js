@@ -72,6 +72,7 @@ describe('Gitea User Service', () => {
         email: 'john.doe@example.com',
         avatarURL: 'https://gitea.example.com/avatars/johndoe.jpg',
         profileURL: 'https://gitea.example.com/johndoe',
+        bot: false,
         token: 'test-access-token',
         refreshToken: 'test-refresh-token',
       });
@@ -116,6 +117,7 @@ describe('Gitea User Service', () => {
         email: 'jane.smith@example.com',
         avatarURL: 'https://gitea.example.com/avatars/janesmith.jpg',
         profileURL: 'https://gitea.example.com/janesmith',
+        bot: false,
         token: 'new-access-token',
         refreshToken: 'new-refresh-token',
       });
@@ -177,6 +179,7 @@ describe('Gitea User Service', () => {
         email: '',
         avatarURL: '',
         profileURL: 'https://gitea.example.com/minimal_user',
+        bot: false,
         token: 'test-token',
         refreshToken: 'test-refresh',
       });

@@ -47,6 +47,7 @@ describe('GitLab user service', () => {
         email: 'test@example.com',
         avatarURL: 'https://example.com/avatar.jpg',
         profileURL: 'https://gitlab.com/testuser',
+        bot: false,
         token: 'test-token',
         refreshToken: 'refresh-token',
       });
@@ -82,6 +83,7 @@ describe('GitLab user service', () => {
         email: 'another@example.com',
         avatarURL: 'https://gitlab.com/avatar2.jpg',
         profileURL: 'https://gitlab.com/anotheruser',
+        bot: false,
         token: 'test-token',
         refreshToken: 'refresh-token',
       });
@@ -120,6 +122,7 @@ describe('GitLab user service', () => {
         email: undefined,
         avatarURL: undefined,
         profileURL: undefined,
+        bot: false,
         token: 'test-token',
         refreshToken: undefined,
       });
@@ -154,6 +157,7 @@ describe('GitLab user service', () => {
         email: 'test@example.com',
         avatarURL: undefined, // No avatar_url in mock response
         profileURL: undefined, // No web_url in mock response
+        bot: false,
         token: 'new-access-token', // Should use the renewed token
         refreshToken: 'new-refresh-token',
       });

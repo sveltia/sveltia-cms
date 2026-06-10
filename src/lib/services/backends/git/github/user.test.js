@@ -47,6 +47,7 @@ describe('GitHub user service', () => {
         email: 'test@example.com',
         avatarURL: 'https://avatars.githubusercontent.com/u/12345',
         profileURL: 'https://github.com/testuser',
+        bot: false,
         token: 'test-token',
         refreshToken: 'test-refresh',
       });
@@ -125,6 +126,7 @@ describe('GitHub user service', () => {
         email: 'test@example.com',
         avatarURL: 'https://avatars.githubusercontent.com/u/12345',
         profileURL: 'https://github.com/testuser',
+        bot: false,
         token: 'new-access-token', // Should use the renewed token
         refreshToken: 'new-refresh-token',
       });

@@ -69,6 +69,7 @@
  * @property {string} [email] User email.
  * @property {string} [avatarURL] Avatar URL.
  * @property {string} [profileURL] Profile URL.
+ * @property {boolean} [bot] Whether the user is a service account.
  */
 
 /**
