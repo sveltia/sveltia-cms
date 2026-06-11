@@ -2,6 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Icon } from '@sveltia/ui';
   import { waitForVisibility } from '@sveltia/utils/element';
+  import { sleep } from '@sveltia/utils/misc';
   import { flushSync } from 'svelte';
 
   import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets/info';
@@ -138,6 +139,11 @@
 
     // Revoke the thumbnail blob URL
     if (asset && isThumbnail && src?.startsWith('blob:')) {
+      // Wait a bit before revoking the thumbnail blob URL to ensure the image is rendered.
+      // Otherwise, especially on Chrome, the image may fail to render without this delay. @see
+      // https://github.com/sveltia/sveltia-cms/issues/793
+      await sleep(500);
+
       URL.revokeObjectURL(src);
     }
   };
