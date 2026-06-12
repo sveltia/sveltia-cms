@@ -508,6 +508,22 @@
  * If `false`, time input/output is disabled. This option is available for backward compatibility
  * with Netlify CMS; use the `format` or `type` option instead.
  * @property {boolean} [picker_utc] Whether to make the date input/output UTC. Default: `false`.
+ * This option is available for backward compatibility with Netlify/Decap CMS. The newer
+ * `input_timezone` and `output_utc` options provide more flexibility and supersede this option when
+ * explicitly set. `picker_utc: true` is equivalent to `input_timezone: 'utc'`.
+ * @property {'local' | 'utc' | string} [input_timezone] Timezone used by the date/time input. This
+ * option supersedes `picker_utc`. If set to `local`, the browser’s local timezone is used. If set
+ * to `utc`, UTC is used. A custom IANA timezone name such as `America/New_York` or `Asia/Tokyo` may
+ * also be provided as a string. Default: `local`.
+ * @property {boolean} [output_utc] Whether to convert stored values to UTC. This option supersedes
+ * `picker_utc`. If `false`, output values preserve the timezone semantics of `input_timezone`:
+ * `local` omits timezone information, `utc` appends a `Z` suffix, and custom timezones preserve
+ * their offset (e.g., `-05:00`). If `true`, the input value is converted to UTC for storage. When
+ * no custom `format` is specified, a `Z` suffix is appended to the ISO 8601 output. When a custom
+ * `format` is used, the value is stored in UTC but formatted according to that pattern — which
+ * won’t include an explicit timezone indicator unless the format itself contains `Z`. Note that
+ * `input_timezone: 'utc'` already implies UTC semantics, so `output_utc` has no additional effect
+ * in that case. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#Datetime
  * @see https://sveltiacms.app/en/docs/fields/datetime
  */

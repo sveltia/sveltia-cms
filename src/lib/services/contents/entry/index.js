@@ -14,6 +14,7 @@ import {
   getIndexFile,
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
+import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/helper';
 
 /**
@@ -68,14 +69,16 @@ export const extractDateTime = ({ dateFieldName, fields, content }) => {
   }
 
   const config = /** @type {DateTimeField} */ (fieldConfig);
-  const { picker_utc: utc = false } = config;
   const date = getDate(fieldValue, config);
 
   if (!isValidDate(date)) {
     return undefined;
   }
 
-  return getDateTimeParts({ date, timeZone: utc ? 'UTC' : undefined });
+  const { utc, outputUTC } = parseDateTimeConfig(config);
+  const timeZone = utc || outputUTC ? 'UTC' : undefined;
+
+  return getDateTimeParts({ date, timeZone });
 };
 
 /**

@@ -2,6 +2,7 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import dayjs from 'dayjs';
 import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
 import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
+import dayjsTimeZone from 'dayjs/plugin/timezone';
 import dayjsUTC from 'dayjs/plugin/utc';
 
 import { getCanonicalLocale } from '$lib/services/contents/i18n';
@@ -12,6 +13,9 @@ import {
   TIME_SUFFIX_REGEX,
 } from '$lib/services/utils/date';
 
+import { parseDateTimeConfig } from './config.js';
+import { getTimeZoneForStoredValue } from './timezone.js';
+
 /**
  * @import { DateTimeFieldNormalizedProps, InternalLocaleCode } from '$lib/types/private';
  * @import { DateTimeField } from '$lib/types/public';
@@ -20,51 +24,10 @@ import {
 dayjs.extend(dayjsCustomParseFormat);
 dayjs.extend(dayjsLocalizedFormat);
 dayjs.extend(dayjsUTC);
+dayjs.extend(dayjsTimeZone);
 
 const DATE_ONLY_MATCH_REGEX = /^(?<date>\d{4}-[01]\d-[0-3]\d)\b/;
 const TIME_SUFFIX_MATCH_REGEX = /(?:^|T)(?<time>[0-2]\d:[0-5]\d)\b/;
-
-/**
- * Parse the DateTime field configuration and return as normalized format.
- * @param {DateTimeField} fieldConfig Field config.
- * @returns {DateTimeFieldNormalizedProps} Normalized properties.
- */
-export const parseDateTimeConfig = (fieldConfig) => {
-  const {
-    type = 'datetime-local',
-    min = undefined,
-    max = undefined,
-    step = undefined,
-    format,
-    date_format: dateFormat = undefined,
-    time_format: timeFormat = undefined,
-    picker_utc: utc = false,
-  } = fieldConfig;
-
-  const dateFormatStr = typeof dateFormat === 'string' ? dateFormat : '';
-  const timeFormatStr = typeof timeFormat === 'string' ? timeFormat : '';
-  // The new `type` option takes precedence over the `date_format` and `time_format` options, which
-  // are supported for backward compatibility with Netlify CMS configurations
-  const dateOnly = type === 'date' || timeFormat === false;
-  const timeOnly = type === 'time' || dateFormat === false;
-  // Set a default max value if not provided to prevent issues with browsers that allow 6-digit
-  // years (Chrome, Edge and Safari)
-  const defaultMax = dateOnly ? '9999-12-31' : timeOnly ? undefined : '9999-12-31T23:59';
-
-  return {
-    type: dateOnly ? 'date' : timeOnly ? 'time' : 'datetime-local',
-    min: typeof min === 'string' && min ? min : undefined,
-    max: typeof max === 'string' && max ? max : defaultMax,
-    step:
-      (typeof step === 'number' && Number.isInteger(step) && step > 0) || step === 'any'
-        ? step
-        : undefined,
-    format: format || [dateFormatStr, timeFormatStr].join(' ').trim() || undefined,
-    dateOnly,
-    timeOnly,
-    utc,
-  };
-};
 
 /**
  * Check if the given value is a valid `Date` object.
@@ -81,13 +44,72 @@ export const isValidDate = (input) => input instanceof Date && !Number.isNaN(inp
 export const getParser = (utc) => (utc ? dayjs.utc : dayjs);
 
 /**
+ * Parse a value with Day.js, falling back to the default parser when the supplied format fails.
+ * @param {object} args Arguments.
+ * @param {string} args.value Value to parse.
+ * @param {string} args.format Format string.
+ * @param {boolean} args.parseAsUTC Whether to parse as UTC.
+ * @returns {dayjs.Dayjs} Parsed dayjs instance.
+ */
+const parseWithFormatFallback = ({ value, format, parseAsUTC }) => {
+  const parse = getParser(parseAsUTC);
+  const parsed = parse(value, format);
+
+  return parsed.isValid() ? parsed : parse(value);
+};
+
+/**
+ * Build the display-ready date/time strings from the current parts.
+ * @param {object} args Arguments.
+ * @param {Date} [args.date] Date to derive parts from.
+ * @param {string} [args.timeZone] IANA timezone name.
+ * @param {DateTimeFieldNormalizedProps['inputTimeZone']} [args.inputTimeZone] Input timezone
+ * setting.
+ * @param {boolean} [args.dateOnly] Whether the field is date-only.
+ * @param {boolean} [args.timeOnly] Whether the field is time-only.
+ * @param {boolean} [args.includeUTCSeconds] Whether to append UTC seconds/milliseconds.
+ * @returns {string} Formatted display string.
+ */
+const formatDateTimeValue = ({
+  date,
+  timeZone,
+  inputTimeZone,
+  dateOnly,
+  timeOnly,
+  includeUTCSeconds = false,
+}) => {
+  const tz = timeZone || (inputTimeZone === 'utc' ? 'UTC' : undefined);
+  const { year, month, day, hour, minute } = getDateTimeParts({ date, timeZone: tz });
+  const dateStr = `${year}-${month}-${day}`;
+  const timeStr = `${hour}:${minute}`;
+
+  if (dateOnly) {
+    return dateStr;
+  }
+
+  if (timeOnly) {
+    return timeStr;
+  }
+
+  if (includeUTCSeconds && tz === 'UTC') {
+    return `${dateStr}T${timeStr}:00.000Z`;
+  }
+
+  return `${dateStr}T${timeStr}`;
+};
+
+/**
  * Get a `Date` object given the current value.
  * @param {string | undefined} currentValue Value in the entry draft datastore.
  * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {Date | undefined} Date or `undefined` if invalid.
  */
 export const getDate = (currentValue, fieldConfig) => {
-  const { format, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+  const { format, timeOnly, utc, outputUTC } = parseDateTimeConfig(fieldConfig);
+  // Parse the stored value as UTC when: `input_timezone` is 'utc', OR `output_utc` is `true`. With
+  // a custom format, the stored string carries no timezone info, so we must specify UTC explicitly
+  // — otherwise the browser’s local offset is applied and the epoch is wrong.
+  const parseAsUTC = utc || outputUTC;
 
   if (!currentValue) {
     return undefined;
@@ -98,23 +120,16 @@ export const getDate = (currentValue, fieldConfig) => {
 
   // If a format is specified, use Day.js to parse
   if (format) {
-    const parse = getParser(utc);
-    // Parse using the specified format
-    let parsed = parse(currentValue, format);
+    const parsed = parseWithFormatFallback({ value: currentValue, format, parseAsUTC });
 
-    // Fallback: Try parsing without format
-    if (!parsed.isValid()) {
-      parsed = parse(currentValue);
-
-      if (!parsed.isValid()) {
-        // eslint-disable-next-line no-console
-        console.error('Invalid Date', currentValue);
-
-        return undefined;
-      }
+    if (parsed.isValid()) {
+      return parsed.toDate();
     }
 
-    return parsed.toDate();
+    // eslint-disable-next-line no-console
+    console.error('Invalid Date', currentValue);
+
+    return undefined;
   }
 
   if (timeOnly) {
@@ -137,45 +152,51 @@ export const getDate = (currentValue, fieldConfig) => {
 /**
  * Get the current date/time.
  * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {string} [timeZone] IANA timezone name.
  * @returns {string} Current date/time in the ISO 8601 format.
  */
-export const getCurrentDateTime = (fieldConfig) => {
-  const { dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+export const getCurrentDateTime = (fieldConfig, timeZone) => {
+  const { dateOnly, timeOnly, inputTimeZone } = parseDateTimeConfig(fieldConfig);
 
-  const { year, month, day, hour, minute } = getDateTimeParts({
-    timeZone: utc ? 'UTC' : undefined,
+  return formatDateTimeValue({
+    timeZone,
+    inputTimeZone,
+    dateOnly,
+    timeOnly,
+    includeUTCSeconds: true,
   });
-
-  const dateStr = `${year}-${month}-${day}`;
-  const timeStr = `${hour}:${minute}`;
-
-  if (dateOnly) {
-    return dateStr;
-  }
-
-  if (timeOnly) {
-    return timeStr;
-  }
-
-  if (utc) {
-    return `${dateStr}T${timeStr}:00.000Z`;
-  }
-
-  return `${dateStr}T${timeStr}`;
 };
 
 /**
- * Get the current value given the input value.
- * @param {string | undefined} inputValue Value on the date/time input control.
- * @param {string | undefined} currentValue Value in the entry draft datastore.
- * @param {DateTimeField} fieldConfig Field configuration.
- * @returns {string | undefined} New value.
+ * Get the final storable value from the input value.
+ * @param {object} args Arguments.
+ * @param {string | undefined} args.inputValue Raw value from the input field.
+ * @param {string | undefined} args.currentValue Current value in the entry.
+ * @param {DateTimeField} args.fieldConfig Field configuration.
+ * @param {string | undefined} [args.timeZone] IANA timezone name.
+ * @param {boolean} [args.outputUTC] Whether to output UTC time.
+ * @returns {string | undefined} The final value.
  */
-export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
-  const { format, dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+export const getCurrentValue = ({ inputValue, currentValue, fieldConfig, timeZone, outputUTC }) => {
+  const {
+    format,
+    dateOnly,
+    timeOnly,
+    inputTimeZone,
+    outputUTC: configOutputUTC,
+  } = parseDateTimeConfig(fieldConfig);
+
+  const _outputUTC = outputUTC ?? configOutputUTC;
   const inputFormat = dateOnly ? 'YYYY-MM-DD' : timeOnly ? 'HH:mm' : 'YYYY-MM-DDTHH:mm';
-  // Append seconds (and milliseconds) for data format & framework compatibility
-  const timeSuffix = `:00${currentValue?.endsWith('.000') ? '.000' : ''}`;
+
+  const effectiveTimeZone =
+    inputTimeZone === 'utc'
+      ? 'UTC'
+      : inputTimeZone === 'local'
+        ? _outputUTC
+          ? timeZone
+          : undefined
+        : timeZone || inputTimeZone;
 
   if (inputValue === '') {
     return '';
@@ -186,19 +207,27 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
   }
 
   if (format) {
-    const parse = getParser(utc);
+    // When the input is in UTC, parse as UTC; otherwise parse as local (timezone conversion happens
+    // below via `.tz()` or `.utc()`)
+    const parse = getParser(inputTimeZone === 'utc');
     let parsed = parse(inputValue, inputFormat);
 
-    // Fallback: Try parsing without format
     if (!parsed.isValid()) {
       parsed = parse(inputValue);
+    }
 
-      if (!parsed.isValid()) {
-        // eslint-disable-next-line no-console
-        console.info('Invalid date', inputValue);
+    // Return empty string for invalid dates to avoid storing 'Invalid Date'
+    if (!parsed.isValid()) {
+      return '';
+    }
 
-        return '';
-      }
+    // Apply IANA timezone context first, then optionally convert to UTC
+    if (effectiveTimeZone) {
+      parsed = parsed.tz(effectiveTimeZone, true);
+    }
+
+    if (_outputUTC && inputTimeZone !== 'utc') {
+      parsed = parsed.utc();
     }
 
     return parsed.format(format);
@@ -208,21 +237,45 @@ export const getCurrentValue = (inputValue, currentValue, fieldConfig) => {
     return inputValue;
   }
 
-  if (utc) {
-    return `${inputValue}:00.000Z`;
+  const hasSeconds = /:\d{2}$/.test(inputValue);
+  // Append seconds (and milliseconds) for data format & framework compatibility
+  const timeSuffix = currentValue ? `:00${currentValue.endsWith('.000') ? '.000' : ''}` : ':00';
+
+  if (timeOnly) {
+    return hasSeconds ? inputValue : `${inputValue}${timeSuffix}`;
   }
 
-  return `${inputValue}${timeSuffix}`;
+  if (inputTimeZone === 'utc') {
+    // Input is already in UTC; store with `Z` suffix (no conversion needed)
+    return dayjs.utc(inputValue).format();
+  }
+
+  if (_outputUTC) {
+    // Convert the local/custom-timezone input to UTC for storage.
+    const dt = timeZone ? dayjs.tz(inputValue, timeZone) : dayjs(inputValue);
+
+    return dt.utc().format();
+  }
+
+  if (timeZone && inputTimeZone !== 'local') {
+    // Preserve the configured custom timezone offset when output_utc is false.
+    return dayjs.tz(inputValue, timeZone).format('YYYY-MM-DDTHH:mm:ssZ');
+  }
+
+  return hasSeconds ? inputValue : `${inputValue}${timeSuffix}`;
 };
 
 /**
  * Get the input value given the current value.
- * @param {string | undefined} currentValue Value in the entry draft datastore.
- * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {object} args Arguments.
+ * @param {string | undefined} args.currentValue Value in the entry draft datastore.
+ * @param {DateTimeField} args.fieldConfig Field configuration.
+ * @param {string} [args.timeZone] IANA timezone name.
  * @returns {string | undefined} New value.
  */
-export const getInputValue = (currentValue, fieldConfig) => {
-  const { dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+export const getInputValue = ({ currentValue, fieldConfig, timeZone }) => {
+  const { dateOnly, timeOnly, inputTimeZone, format, outputUTC } = parseDateTimeConfig(fieldConfig);
+  const displayTimeZone = getTimeZoneForStoredValue(currentValue, fieldConfig) ?? timeZone;
 
   // If the default value is an empty string, the input will be blank by default
   if (!currentValue) {
@@ -241,31 +294,40 @@ export const getInputValue = (currentValue, fieldConfig) => {
     return value;
   }
 
-  // 'currentValue' is always truthy here (the empty-string guard above returned early).
-  const dateForParts = getDate(currentValue, fieldConfig);
+  // `currentValue` is always truthy here (the empty-string guard above returned early). When a
+  // custom timezone is active with a format and `output_utc` is `false`, `getDate()` would parse
+  // the stored value as browser-local time (wrong epoch when local ≠ input timezone). Interpret it
+  // as being in the selected timezone using `.tz(tz, true)` instead. Note: the `output_utc: true`
+  // case is handled correctly by `getDate()` via `parseAsUTC`.
+  let dateForParts;
+
+  if (displayTimeZone && format && !outputUTC) {
+    try {
+      const parsed = dayjs(currentValue, format).tz(displayTimeZone, true);
+
+      // `.tz()` returns invalid (without throwing) in rare edge cases; fall through to `??=` below
+      dateForParts = parsed.isValid() ? parsed.toDate() : undefined;
+    } catch {
+      // `.tz()` can throw a RangeError for invalid dates in some dayjs versions
+    }
+
+    dateForParts ??= getDate(currentValue, fieldConfig);
+  } else {
+    dateForParts = getDate(currentValue, fieldConfig);
+  }
 
   // If `getDate` returned `undefined` (parsing failed), return empty string
   if (!dateForParts) {
     return '';
   }
 
-  const { year, month, day, hour, minute } = getDateTimeParts({
+  return formatDateTimeValue({
     date: dateForParts,
-    timeZone: utc ? 'UTC' : undefined,
+    timeZone: displayTimeZone,
+    inputTimeZone,
+    dateOnly,
+    timeOnly,
   });
-
-  const dateStr = `${year}-${month}-${day}`;
-  const timeStr = `${hour}:${minute}`;
-
-  if (dateOnly) {
-    return dateStr;
-  }
-
-  if (timeOnly) {
-    return timeStr;
-  }
-
-  return `${dateStr}T${timeStr}`;
 };
 
 /**
@@ -277,30 +339,26 @@ export const getInputValue = (currentValue, fieldConfig) => {
  * @returns {string} Display value.
  */
 export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue }) => {
-  const { format, dateOnly, timeOnly, utc } = parseDateTimeConfig(fieldConfig);
+  const { format, dateOnly, timeOnly, utc, singleCustomTimeZone } =
+    parseDateTimeConfig(fieldConfig);
+
+  const displayTimeZone = utc ? 'UTC' : singleCustomTimeZone;
 
   if (typeof currentValue !== 'string' || !currentValue.trim()) {
     return '';
   }
 
   if (format) {
-    const parse = getParser(utc);
-    // Parse using the specified format
-    let parsed = parse(currentValue, format);
+    const parsed = parseWithFormatFallback({ value: currentValue, format, parseAsUTC: utc });
 
-    // Fallback: Try parsing without format
-    if (!parsed.isValid()) {
-      parsed = parse(currentValue);
-
-      if (!parsed.isValid()) {
-        // eslint-disable-next-line no-console
-        console.error('Invalid Date', currentValue);
-
-        return '';
-      }
+    if (parsed.isValid()) {
+      return parsed.format(format);
     }
 
-    return parsed.format(format);
+    // eslint-disable-next-line no-console
+    console.error('Invalid Date', currentValue);
+
+    return '';
   }
 
   const date = getDate(currentValue, fieldConfig);
@@ -311,23 +369,27 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
   }
 
   if (timeOnly) {
-    return date.toLocaleTimeString(canonicalLocale, TIME_FORMAT_OPTIONS);
+    return date.toLocaleTimeString(canonicalLocale, {
+      ...TIME_FORMAT_OPTIONS,
+      timeZone: displayTimeZone,
+    });
   }
 
   if (dateOnly) {
     return date.toLocaleDateString(canonicalLocale, {
       ...DATE_FORMAT_OPTIONS,
       timeZone:
-        utc || DATE_REGEX.test(currentValue) || TIME_SUFFIX_REGEX.test(currentValue)
+        displayTimeZone ||
+        (utc || DATE_REGEX.test(currentValue) || TIME_SUFFIX_REGEX.test(currentValue)
           ? 'UTC'
-          : undefined,
+          : undefined),
     });
   }
 
   return date.toLocaleString(canonicalLocale, {
     ...DATE_FORMAT_OPTIONS,
     ...TIME_FORMAT_OPTIONS,
-    timeZone: utc ? 'UTC' : undefined,
-    timeZoneName: utc ? undefined : 'short',
+    timeZone: displayTimeZone,
+    timeZoneName: undefined,
   });
 };

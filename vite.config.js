@@ -292,6 +292,9 @@ export default defineConfig({
       include: ['src/lib/{components,services}/**/*.js'],
       reporter: ['text', 'json-summary', 'json'],
     },
+    env: {
+      TZ: 'UTC',
+    },
     silent: true,
   },
 });

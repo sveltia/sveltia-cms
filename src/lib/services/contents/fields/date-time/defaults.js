@@ -1,3 +1,4 @@
+import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import {
   getCurrentDateTime,
   getCurrentValue,
@@ -27,7 +28,17 @@ const getDefaultValue = ({ fieldConfig, dynamicValue }) => {
   // @see https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0
   // @see https://github.com/decaporg/decap-website/commit/01e54d8392e368e5d7b9fec307f50af584b12c91
   if (value === '{{now}}') {
-    return /** @type {string} */ (getCurrentValue(getCurrentDateTime(config), '', config));
+    const { singleCustomTimeZone: timeZone, outputUTC } = parseDateTimeConfig(config);
+
+    return /** @type {string} */ (
+      getCurrentValue({
+        inputValue: getCurrentDateTime(config, timeZone),
+        currentValue: '',
+        fieldConfig: config,
+        timeZone,
+        outputUTC,
+      })
+    );
   }
 
   return value;

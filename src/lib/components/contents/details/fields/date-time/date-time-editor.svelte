@@ -10,13 +10,17 @@
   import { Button } from '@sveltia/ui';
   import { untrack } from 'svelte';
 
+  import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
   import {
     getCurrentDateTime,
     getCurrentValue,
     getDate,
     getInputValue,
-    parseDateTimeConfig,
   } from '$lib/services/contents/fields/date-time/helper';
+  import {
+    getInitialTimeZone,
+    getTimeZoneLabel,
+  } from '$lib/services/contents/fields/date-time/timezone';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -43,13 +47,16 @@
 
   let inputValue = $state('');
 
-  const { type, min, max, step, dateOnly, utc } = $derived(parseDateTimeConfig(fieldConfig));
+  const { type, min, max, step, dateOnly, utc, singleCustomTimeZone } = $derived(
+    parseDateTimeConfig(fieldConfig),
+  );
+  const timeZone = $derived(getInitialTimeZone(currentValue, fieldConfig));
 
   /**
    * Update {@link inputValue} based on {@link currentValue}.
    */
   const setInputValue = () => {
-    const _inputValue = getInputValue(currentValue, fieldConfig);
+    const _inputValue = getInputValue({ currentValue, fieldConfig, timeZone });
 
     // Avoid a cycle dependency & infinite loop
     if (_inputValue !== undefined && _inputValue !== inputValue) {
@@ -61,7 +68,7 @@
    * Update {@link currentValue} based on {@link inputValue}.
    */
   const setCurrentValue = () => {
-    const _currentValue = getCurrentValue(inputValue, currentValue, fieldConfig);
+    const _currentValue = getCurrentValue({ inputValue, currentValue, fieldConfig, timeZone });
 
     // Avoid a cycle dependency & infinite loop
     if (
@@ -69,7 +76,7 @@
       _currentValue !== currentValue &&
       // Compare the actual date/time: if a user edits an existing entry in a different location
       // than where it was originally written, `inputValue` and `_currentValue` may shift to the
-      // current time zone, but the epoch won’t change. Don’t update `currentValue` in that case.
+      // current timezone, but the epoch won’t change. Don’t update `currentValue` in that case.
       Number(getDate(_currentValue, fieldConfig)) !== Number(getDate(currentValue, fieldConfig))
     ) {
       currentValue = _currentValue;
@@ -77,6 +84,7 @@
   };
 
   $effect(() => {
+    // Keep the displayed value in sync with the stored entry value.
     void [currentValue];
 
     untrack(() => {
@@ -85,6 +93,7 @@
   });
 
   $effect(() => {
+    // Only update currentValue when inputValue changes (not when timezone changes)
     void [inputValue];
 
     untrack(() => {
@@ -104,17 +113,12 @@
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
   />
-  {#if utc}
-    <span role="none" class="utc">UTC</span>
-  {/if}
   {#if !readonly}
     <Button
       variant="tertiary"
       label={_(dateOnly ? 'today' : 'now')}
       onclick={() => {
-        const dt = getCurrentDateTime(fieldConfig);
-
-        inputValue = utc ? dt.replace(/:00\.000Z$/, '') : dt;
+        inputValue = getCurrentDateTime(fieldConfig, timeZone);
       }}
     />
   {/if}
@@ -130,15 +134,24 @@
   {/if}
 </div>
 
+{#if singleCustomTimeZone}
+  <div role="none" class="timezone">
+    {getTimeZoneLabel(singleCustomTimeZone, getDate(currentValue, fieldConfig))}
+  </div>
+{:else if utc}
+  <div role="none" class="timezone">UTC</div>
+{/if}
+
 <style>
   div {
     display: flex;
     align-items: center;
   }
 
-  .utc {
-    margin: 0 8px;
+  .timezone {
+    margin: 4px 8px 0;
     color: var(--sui-secondary-foreground-color);
     font-size: var(--sui-font-size-small);
+    white-space: nowrap;
   }
 </style>

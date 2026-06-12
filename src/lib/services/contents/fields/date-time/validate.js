@@ -1,4 +1,5 @@
-import { getInputValue, parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
+import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
+import { getInputValue } from '$lib/services/contents/fields/date-time/helper';
 
 /**
  * @import { EntryValidityState, ValidateFieldFuncArgs } from '$lib/types/private';
@@ -19,7 +20,7 @@ import { getInputValue, parseDateTimeConfig } from '$lib/services/contents/field
  */
 export const validateDateTimeField = ({ fieldConfig, value }) => {
   const config = /** @type {DateTimeField} */ (fieldConfig);
-  const { type, min, max } = parseDateTimeConfig(config);
+  const { type, min, max, singleCustomTimeZone: timeZone } = parseDateTimeConfig(config);
   const hasMin = typeof min === 'string' && !!min;
   const hasMax = typeof max === 'string' && !!max;
   let rangeUnderflow = false;
@@ -27,7 +28,7 @@ export const validateDateTimeField = ({ fieldConfig, value }) => {
 
   if (value && (hasMin || hasMax)) {
     // Convert stored value to native input format for comparison
-    const inputValue = getInputValue(value, config);
+    const inputValue = getInputValue({ currentValue: value, fieldConfig: config, timeZone });
 
     if (inputValue) {
       const inputElement = document.createElement('input');

@@ -9,7 +9,7 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/entry/fields';
-import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
+import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { TOML_FORMATS } from '$lib/services/contents/file';
 import { getOrCreate } from '$lib/services/utils/cache';
 

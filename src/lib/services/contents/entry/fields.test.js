@@ -51,7 +51,6 @@ vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => 
 
 vi.mock('$lib/services/contents/fields/date-time/helper', () => ({
   getDateTimeFieldDisplayValue: vi.fn(),
-  parseDateTimeConfig: vi.fn(() => ({})),
 }));
 
 vi.mock('$lib/services/contents/fields/relation/helper', () => ({

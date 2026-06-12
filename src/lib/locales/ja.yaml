@@ -681,6 +681,7 @@ config:
     invalid_variable_type: 変数タイプ名 `{$name}` は無効です。特殊文字を含めることはできません。
     duplicate_variable_type: 変数タイプ名は一意でなければなりませんが、`{$name}` が複数回使用されています。
     date_field_type: "Sveltia CMS では非推奨の Date フィールドタイプはサポートされていません。代わりに `type: date` オプション付きの DateTime フィールドタイプを使用してください。"
+    invalid_timezone: "無効なタイムゾーン: {$timeZone}。有効な IANA タイムゾーン識別子を使用してください。例: `America/New_York` または `Asia/Tokyo`。"
     unsupported_deprecated_option: Sveltia CMS では非推奨の `{$prop}` オプションはサポートされていません。代わりに `{$newProp}` オプションを使用してください。
     allow_multiple: Sveltia CMS では `allow_multiple` オプションはサポートされていません。代わりにデフォルトで `false` の `multiple` オプションを使用してください。
     invalid_list_field: List フィールドは `field`、`fields`、`types` オプションを同時に持つことはできません。
@@ -698,6 +699,7 @@ config:
     open_authoring_unsupported: Sveltia CMS ではまだオープンオーサリングはサポートされていません。
     nested_collections_unsupported: Sveltia CMS ではネストされたコレクションはまだサポートされていません。
     unsupported_ignored_option: "`{$prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。"
+    conflicting_timezone_options: "`picker_utc` と新しいタイムゾーンオプション (`input_timezone` または `output_utc`) の両方が設定されています。新しいオプションが優先されます。設定から `picker_utc` を削除することを検討してください。"
   compatibility_link: "詳しくは互換性情報をご覧ください: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented"
 local_workflow:
   indicator: ローカル

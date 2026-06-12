@@ -57,7 +57,7 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
   hasRootField,
 }));
 
-vi.mock('$lib/services/contents/fields/date-time/helper', () => ({
+vi.mock('$lib/services/contents/fields/date-time/config', () => ({
   parseDateTimeConfig,
 }));
 

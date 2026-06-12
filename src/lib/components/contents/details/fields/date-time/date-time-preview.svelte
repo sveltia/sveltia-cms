@@ -5,7 +5,12 @@
   @see https://sveltiacms.app/en/docs/fields/datetime
 -->
 <script>
-  import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helper';
+  import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
+  import {
+    getDate,
+    getDateTimeFieldDisplayValue,
+  } from '$lib/services/contents/fields/date-time/helper';
+  import { getTimeZoneLabel } from '$lib/services/contents/fields/date-time/timezone';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
 
   /**
@@ -28,6 +33,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  const { utc, singleCustomTimeZone } = $derived(parseDateTimeConfig(fieldConfig));
   const displayValue = $derived(
     getDateTimeFieldDisplayValue({ locale, fieldConfig, currentValue }),
   );
@@ -36,8 +42,10 @@
 {#if displayValue}
   <p lang={getCanonicalLocale(locale)} dir={getDirection(locale)}>
     {displayValue}
-    {#if fieldConfig.picker_utc}
-      UTC
+    {#if singleCustomTimeZone}
+      — {getTimeZoneLabel(singleCustomTimeZone, getDate(currentValue, fieldConfig))}
+    {:else if utc}
+      — UTC
     {/if}
   </p>
 {/if}

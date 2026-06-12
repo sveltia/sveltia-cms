@@ -1053,6 +1053,10 @@
  * @property {boolean} dateOnly Whether the field is date only.
  * @property {boolean} timeOnly Whether the field is time only.
  * @property {boolean} utc Whether the field’s picker is UTC.
+ * @property {'local' | 'utc' | string} inputTimeZone Timezone used by the date input.
+ * @property {boolean} outputUTC Whether to convert stored values to UTC.
+ * @property {string | undefined} singleCustomTimeZone The custom timezone to use for input
+ * processing and display when exactly one custom timezone is configured, or undefined otherwise.
  */
 
 /**

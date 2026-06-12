@@ -1,7 +1,7 @@
 import { _ } from '@sveltia/i18n';
 
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
-import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
+import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getFormattedDateTime } from '$lib/services/contents/fields/date-time/validate';
 
 /**

@@ -194,5 +194,99 @@ describe('getDefaultValueMap', () => {
 
       expect(result).toEqual({ 'test.field': '2024-01-01T10:30:00.000Z' });
     });
+
+    test('should handle {{now}} with UTC input timezone', () => {
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '2023-12-25',
+        input_timezone: 'utc',
+      };
+
+      const keyPath = 'test.field';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue: '{{now}}',
+      });
+
+      expect(result['test.field']).toBeDefined();
+      expect(typeof result['test.field']).toBe('string');
+      expect(result['test.field']).not.toBe('{{now}}');
+    });
+
+    test('should handle {{now}} with custom timezone in input_timezone', () => {
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '2023-12-25',
+        input_timezone: 'America/New_York',
+      };
+
+      const keyPath = 'test.field';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue: '{{now}}',
+      });
+
+      expect(result['test.field']).toBeDefined();
+      expect(typeof result['test.field']).toBe('string');
+      expect(result['test.field']).not.toBe('{{now}}');
+    });
+
+    test('should handle {{now}} with Europe/London timezone in input_timezone', () => {
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '2023-12-25',
+        input_timezone: 'Europe/London',
+      };
+
+      const keyPath = 'test.field';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue: '{{now}}',
+      });
+
+      expect(result['test.field']).toBeDefined();
+      expect(typeof result['test.field']).toBe('string');
+      expect(result['test.field']).not.toBe('{{now}}');
+    });
+
+    test('should handle {{now}} with the local timezone fallback', () => {
+      // The local fallback keeps the browser timezone semantics without a custom timezone list.
+      // This test just verifies the behavior does not crash with edge case values.
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '2023-12-25',
+        input_timezone: 'local', // Use 'local' which is the standard fallback
+      };
+
+      const keyPath = 'test.field';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue: '{{now}}',
+      });
+
+      expect(result['test.field']).toBeDefined();
+      expect(typeof result['test.field']).toBe('string');
+      expect(result['test.field']).not.toBe('{{now}}');
+    });
   });
 });

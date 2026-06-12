@@ -5,7 +5,7 @@ import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjsUTC from 'dayjs/plugin/utc';
 
 import { slugify } from '$lib/services/common/slug';
-import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
+import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 
 /**
  * @import { DateTimeField, Field } from '$lib/types/public';

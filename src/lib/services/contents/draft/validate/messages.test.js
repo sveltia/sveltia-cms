@@ -3,7 +3,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/helper';
+import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 
 import { getFieldValidationMessages } from './messages';
 
@@ -20,7 +20,7 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
   isFieldMultiple: vi.fn(() => false),
 }));
 
-vi.mock('$lib/services/contents/fields/date-time/helper', () => ({
+vi.mock('$lib/services/contents/fields/date-time/config', () => ({
   parseDateTimeConfig: vi.fn(),
 }));
 
