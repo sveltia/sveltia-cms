@@ -49,6 +49,9 @@ describe('config/folders/assets', () => {
         publicPath: undefined,
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
       expect(result[1]).toEqual({
         collectionName: undefined,
@@ -56,6 +59,9 @@ describe('config/folders/assets', () => {
         publicPath: '/images',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -94,6 +100,9 @@ describe('config/folders/assets', () => {
         publicPath: '/uploads',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -113,9 +122,13 @@ describe('config/folders/assets', () => {
       expect(result[1]).toEqual({
         collectionName: undefined,
         internalPath: '',
+        internalSubPath: undefined,
         publicPath: '/',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -157,6 +170,9 @@ describe('config/folders/assets', () => {
         publicPath: '/static/posts',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
       expect(result[3]).toEqual({
         collectionName: 'pages',
@@ -166,7 +182,10 @@ describe('config/folders/assets', () => {
         internalPath: 'static/pages',
         publicPath: '/assets/pages',
         entryRelative: false,
-        hasTemplateTags: false, // tags are replaced, so no template tags remain
+        hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -202,6 +221,9 @@ describe('config/folders/assets', () => {
         publicPath: '.',
         entryRelative: true,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -251,6 +273,9 @@ describe('config/folders/assets', () => {
         publicPath: '/uploads/general',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -293,6 +318,9 @@ describe('config/folders/assets', () => {
         publicPath: '/images/about',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -343,6 +371,9 @@ describe('config/folders/assets', () => {
         publicPath: '/',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -426,9 +457,13 @@ describe('config/folders/assets', () => {
         typedKeyPath: undefined,
         isIndexFile: false,
         internalPath: 'src/assets',
+        internalSubPath: undefined,
         publicPath: '@assets',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -485,6 +520,9 @@ describe('config/folders/assets', () => {
         publicPath: '/static/posts',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -541,6 +579,9 @@ describe('config/folders/assets', () => {
         publicPath: '/static/banner',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -606,6 +647,9 @@ describe('config/folders/assets', () => {
         publicPath: '/uploads/logos',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -656,6 +700,9 @@ describe('config/folders/assets', () => {
         publicPath: '/images/featured',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -845,6 +892,9 @@ describe('config/folders/assets', () => {
         publicPath: './gallery',
         entryRelative: true,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -892,6 +942,9 @@ describe('config/folders/assets', () => {
         publicPath: './images',
         entryRelative: true,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -950,6 +1003,207 @@ describe('config/folders/assets', () => {
         publicPath: '/images/about/gallery',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
+      });
+    });
+
+    it('should handle asset collections with media folder', () => {
+      vi.mocked(getValidCollections).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections: [],
+        asset_collections: [
+          {
+            name: 'icons',
+            media_folder: 'static/icons',
+            public_folder: '/icons',
+            label: 'Icons',
+            icon: 'image',
+          },
+        ],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      // Should have: all assets, global assets, and asset collection
+      expect(result).toHaveLength(3);
+
+      const assetCollection = result.find((f) => f.collectionName === 'assets:icons');
+
+      expect(assetCollection).toEqual({
+        collectionName: 'assets:icons',
+        fileName: undefined,
+        typedKeyPath: undefined,
+        isIndexFile: false,
+        internalPath: 'static/icons',
+        publicPath: '/icons',
+        entryRelative: false,
+        hasTemplateTags: false,
+        label: 'Icons',
+        icon: 'image',
+        isAssetCollection: true,
+      });
+    });
+
+    it('should skip asset collections without media folder', () => {
+      vi.mocked(getValidCollections).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections: [],
+        asset_collections: [
+          {
+            name: 'logos',
+            // media_folder is undefined, should be skipped
+            label: 'Logos',
+          },
+        ],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      // Should have only: all assets and global assets (no asset collection)
+      expect(result).toHaveLength(2);
+      expect(result.some((f) => f.collectionName === 'assets:logos')).toBe(false);
+    });
+
+    it('should handle multiple asset collections', () => {
+      vi.mocked(getValidCollections).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections: [],
+        asset_collections: [
+          {
+            name: 'icons',
+            media_folder: 'static/icons',
+            public_folder: '/icons',
+            label: 'Icons',
+            icon: 'image',
+          },
+          {
+            name: 'logos',
+            media_folder: 'static/logos',
+            public_folder: '/logos',
+            label: 'Logos',
+            icon: 'label',
+          },
+        ],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      // Should have: all assets, global assets, icons, logos
+      expect(result).toHaveLength(4);
+
+      const iconsCollection = result.find((f) => f.collectionName === 'assets:icons');
+      const logosCollection = result.find((f) => f.collectionName === 'assets:logos');
+
+      expect(iconsCollection).toBeDefined();
+      expect(logosCollection).toBeDefined();
+      expect(iconsCollection?.label).toBe('Icons');
+      expect(logosCollection?.label).toBe('Logos');
+    });
+
+    it('should handle asset collections with absolute media folder', () => {
+      vi.mocked(getValidCollections).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections: [],
+        asset_collections: [
+          {
+            name: 'gallery',
+            media_folder: '/uploads/gallery',
+            public_folder: '/public/gallery',
+          },
+        ],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+      const assetCollection = result.find((f) => f.collectionName === 'assets:gallery');
+
+      expect(assetCollection).toEqual({
+        collectionName: 'assets:gallery',
+        fileName: undefined,
+        typedKeyPath: undefined,
+        isIndexFile: false,
+        internalPath: 'uploads/gallery',
+        internalSubPath: undefined,
+        publicPath: '/public/gallery',
+        entryRelative: false,
+        hasTemplateTags: false,
+        label: 'gallery',
+        icon: undefined,
+        isAssetCollection: true,
+      });
+    });
+
+    it('should handle empty asset collections array', () => {
+      vi.mocked(getValidCollections).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections: [],
+        asset_collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      // Should have only: all assets and global assets
+      expect(result).toHaveLength(2);
+    });
+
+    it('should handle asset collections when global folders are not configured', () => {
+      vi.mocked(getValidCollections).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        collections: [],
+        asset_collections: [
+          {
+            name: 'images',
+            media_folder: 'uploads/images',
+            public_folder: '/public/images',
+          },
+        ],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+      const assetCollection = result.find((f) => f.collectionName === 'assets:images');
+
+      expect(assetCollection).toEqual({
+        collectionName: 'assets:images',
+        fileName: undefined,
+        typedKeyPath: undefined,
+        isIndexFile: false,
+        internalPath: 'uploads/images',
+        internalSubPath: undefined,
+        publicPath: '/public/images',
+        entryRelative: false,
+        hasTemplateTags: false,
+        label: 'images',
+        icon: undefined,
+        isAssetCollection: true,
       });
     });
   });
@@ -1072,6 +1326,9 @@ describe('config/folders/assets', () => {
         publicPath: '/static/posts',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -1095,6 +1352,9 @@ describe('config/folders/assets', () => {
         publicPath: '/images',
         entryRelative: true,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -1116,7 +1376,10 @@ describe('config/folders/assets', () => {
         internalPath: 'static/pages',
         publicPath: '/assets/pages',
         entryRelative: false,
-        hasTemplateTags: false, // tags are replaced
+        hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -1139,6 +1402,9 @@ describe('config/folders/assets', () => {
         publicPath: '',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -1161,6 +1427,9 @@ describe('config/folders/assets', () => {
         publicPath: '@assets',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -1183,6 +1452,9 @@ describe('config/folders/assets', () => {
         publicPath: '/uploads',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -1205,6 +1477,9 @@ describe('config/folders/assets', () => {
         publicPath: '/uploads',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -1241,6 +1516,9 @@ describe('config/folders/assets', () => {
         publicPath: '/images',
         entryRelative: true,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
 
@@ -1289,6 +1567,9 @@ describe('config/folders/assets', () => {
         publicPath: '/static/posts',
         entryRelative: false,
         hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
       });
     });
   });

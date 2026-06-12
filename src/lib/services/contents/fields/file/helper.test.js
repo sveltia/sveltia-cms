@@ -18,15 +18,19 @@ vi.mock('$lib/services/assets', async () => {
   return { allAssets: writable(/** @type {import('$lib/types/private').Asset[]} */ ([])) };
 });
 vi.mock('$lib/services/assets/folders', async () => {
-  const actual = await vi.importActual('$lib/services/assets/folders');
+  const { writable, derived } = await import('svelte/store');
 
   return {
-    ...actual,
+    allAssetFolders: writable(/** @type {import('$lib/types/private').AssetFolderInfo[]} */ ([])),
+    globalAssetFolder: derived([writable([])], ([_allAssetFolders], set) => {
+      set(undefined);
+    }),
     getAssetFolder: vi.fn(),
   };
 });
 
 const { getAssetFolder } = await import('$lib/services/assets/folders');
+const { allAssetFolders } = await import('$lib/services/assets/folders');
 const { getHash } = await import('@sveltia/utils/crypto');
 const { getPathInfo } = await import('@sveltia/utils/file');
 const { default: equal } = await import('fast-deep-equal');
@@ -35,6 +39,7 @@ const { allAssets } = await import('$lib/services/assets');
 describe('contents/fields/file/helper', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    allAssetFolders.set([]);
   });
 
   afterEach(() => {
@@ -476,6 +481,151 @@ describe('contents/fields/file/helper', () => {
           typedKeyPath: 'fields.thumbnail',
           isIndexFile: true,
         });
+      });
+    });
+
+    describe('asset collection folders', () => {
+      it('should add asset collection folders to the map', () => {
+        const mockCollectionFolder = {
+          collectionName: 'posts',
+          internalPath: 'content/posts/media',
+          publicPath: '/media',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        const mockAssetCollection1 = {
+          collectionName: 'assets:icons',
+          isAssetCollection: true,
+          internalPath: 'static/icons',
+          publicPath: '/icons',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        const mockAssetCollection2 = {
+          collectionName: 'assets:images',
+          isAssetCollection: true,
+          internalPath: 'static/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        vi.mocked(getAssetFolder).mockReturnValue(mockCollectionFolder);
+        allAssetFolders.set([mockAssetCollection1, mockAssetCollection2]);
+
+        const result = getAssetLibraryFolderMap({
+          collectionName: 'posts',
+        });
+
+        expect(result['assets:icons']).toEqual({
+          folder: mockAssetCollection1,
+          enabled: true,
+        });
+        expect(result['assets:images']).toEqual({
+          folder: mockAssetCollection2,
+          enabled: true,
+        });
+      });
+
+      it('should not add asset collection folders without collectionName', () => {
+        const mockCollectionFolder = {
+          collectionName: 'posts',
+          internalPath: 'content/posts/media',
+          publicPath: '/media',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        const mockAssetCollectionWithoutName = {
+          collectionName: undefined,
+          isAssetCollection: true,
+          internalPath: 'static/assets',
+          publicPath: '/assets',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        vi.mocked(getAssetFolder).mockReturnValue(mockCollectionFolder);
+        allAssetFolders.set([mockAssetCollectionWithoutName]);
+
+        const result = getAssetLibraryFolderMap({
+          collectionName: 'posts',
+        });
+
+        // Should not have any dynamic asset collection properties (only the standard ones)
+        expect(Object.keys(result).sort()).toEqual(
+          ['collection', 'entry', 'field', 'file', 'global'].sort(),
+        );
+      });
+
+      it('should not add folders where isAssetCollection is false', () => {
+        const mockCollectionFolder = {
+          collectionName: 'posts',
+          internalPath: 'content/posts/media',
+          publicPath: '/media',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        const mockRegularFolder = {
+          collectionName: 'regular',
+          isAssetCollection: false,
+          internalPath: 'static/regular',
+          publicPath: '/regular',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        vi.mocked(getAssetFolder).mockReturnValue(mockCollectionFolder);
+        allAssetFolders.set([mockRegularFolder]);
+
+        const result = getAssetLibraryFolderMap({
+          collectionName: 'posts',
+        });
+
+        // Should not have 'regular' key
+        expect(result.regular).toBeUndefined();
+      });
+
+      it('should handle mixed asset collections and regular folders', () => {
+        const mockCollectionFolder = {
+          collectionName: 'posts',
+          internalPath: 'content/posts/media',
+          publicPath: '/media',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        const mockAssetCollection = {
+          collectionName: 'assets:icons',
+          isAssetCollection: true,
+          internalPath: 'static/icons',
+          publicPath: '/icons',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        const mockRegularFolder = {
+          collectionName: 'regular',
+          isAssetCollection: false,
+          internalPath: 'static/regular',
+          publicPath: '/regular',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        vi.mocked(getAssetFolder).mockReturnValue(mockCollectionFolder);
+        allAssetFolders.set([mockAssetCollection, mockRegularFolder]);
+
+        const result = getAssetLibraryFolderMap({
+          collectionName: 'posts',
+        });
+
+        // Should have asset collection but not the regular folder
+        expect(result['assets:icons']).toBeDefined();
+        expect(result.regular).toBeUndefined();
       });
     });
 

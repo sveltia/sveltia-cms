@@ -12,7 +12,12 @@ import { getValidCollectionFiles } from '$lib/services/contents/collection/files
  * InternalCmsConfig,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
- * @import { Collection, CollectionDivider, CollectionFile } from '$lib/types/public';
+ * @import {
+ * AssetCollection,
+ * Collection,
+ * CollectionDivider,
+ * CollectionFile,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -24,9 +29,12 @@ import { getValidCollectionFiles } from '$lib/services/contents/collection/files
  * @property {string} mediaFolder Raw `media_folder` option of the collection or collection file.
  * @property {string | undefined} publicFolder Raw `public_folder` option of the collection or
  * collection file.
- * @property {string | undefined} baseFolder `folder` option for the collection or base directory of
- * the collection file.
+ * @property {string | undefined} [baseFolder] `folder` option for the collection or base directory
+ * of the collection file.
  * @property {GlobalFolders | undefined} globalFolders Global folders information.
+ * @property {string} [label] Label for the asset folder. Asset collections only.
+ * @property {string} [icon] Icon for the asset folder. Asset collections only.
+ * @property {boolean} [isAssetCollection] Whether the asset folder is for an asset collection.
  */
 
 /**
@@ -84,6 +92,9 @@ export const normalizeAssetFolder = ({
   publicFolder,
   baseFolder,
   globalFolders,
+  label,
+  icon,
+  isAssetCollection = false,
 }) => {
   if (hasTags(mediaFolder)) {
     // Cannot substitute tags without global folder info
@@ -125,6 +136,9 @@ export const normalizeAssetFolder = ({
       /^($|[.@])/.test(publicFolder) ? publicFolder : `/${stripSlashes(publicFolder)}`,
     entryRelative,
     hasTemplateTags: hasTemplateTags(mediaFolder),
+    label,
+    icon,
+    isAssetCollection,
   };
 };
 
@@ -222,6 +236,38 @@ export const handleFieldMediaFolders = ({ fieldMediaFolders, validCollections, g
 };
 
 /**
+ * Add asset folders for asset collections.
+ * @param {object} args Arguments.
+ * @param {AssetCollection[]} args.assetCollections Asset collections from the CMS configuration.
+ * @param {GlobalFolders | undefined} args.globalFolders Global folders information.
+ */
+const addAssetCollections = ({ assetCollections, globalFolders }) => {
+  assetCollections.forEach((assetCollection) => {
+    const {
+      name,
+      label = name,
+      icon,
+      media_folder: _mediaFolder,
+      public_folder: _publicFolder,
+    } = assetCollection;
+
+    if (_mediaFolder === undefined) {
+      return;
+    }
+
+    addFolderIfNeeded({
+      collectionName: `assets:${name}`,
+      mediaFolder: `/${stripSlashes(_mediaFolder)}`,
+      publicFolder: _publicFolder,
+      globalFolders,
+      label,
+      icon,
+      isAssetCollection: true,
+    });
+  });
+};
+
+/**
  * Get all asset folders.
  * @param {InternalCmsConfig} config CMS configuration.
  * @param {CollectedMediaField[]} [fieldMediaFolders] Collected field-level media folders.
@@ -236,6 +282,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     public_folder: _globalPublicFolder,
     collections,
     singletons,
+    asset_collections: assetCollections,
   } = config;
 
   const isGlobalFolderConfigured = _globalMediaFolder !== undefined;
@@ -261,6 +308,9 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     publicPath: undefined,
     entryRelative: false,
     hasTemplateTags: false,
+    label: undefined,
+    icon: undefined,
+    isAssetCollection: false,
   };
 
   /** @type {AssetFolderInfo | undefined} */
@@ -329,6 +379,10 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
 
   if (globalAssetFolder) {
     allFolders.push(globalAssetFolder);
+  }
+
+  if (assetCollections?.length) {
+    addAssetCollections({ assetCollections, globalFolders });
   }
 
   allFolders.push(...assetFolders);

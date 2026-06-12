@@ -4,7 +4,7 @@ import equal from 'fast-deep-equal';
 import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
-import { getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
+import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
 
 /**
  * @import {
@@ -38,7 +38,8 @@ export const getAssetLibraryFolderMap = ({
   const entryAssetFolder = fileAssetFolder ?? collectionAssetFolder;
   const globalFolder = get(globalAssetFolder);
 
-  return {
+  /** @type {AssetLibraryFolderMap} */
+  const map = {
     field: {
       folder: fieldAssetFolder,
       enabled: fieldAssetFolder !== undefined,
@@ -65,6 +66,15 @@ export const getAssetLibraryFolderMap = ({
       enabled: globalFolder !== undefined,
     },
   };
+
+  // Add asset collection folders
+  get(allAssetFolders).forEach((folder) => {
+    if (folder.isAssetCollection && folder.collectionName) {
+      map[folder.collectionName] = { folder, enabled: true };
+    }
+  });
+
+  return map;
 };
 
 /**

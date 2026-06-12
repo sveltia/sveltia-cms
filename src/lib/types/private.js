@@ -450,6 +450,9 @@
  * associated entry.
  * @property {boolean} hasTemplateTags Whether the `internalPath` contains template tags like
  * `/assets/images/{{slug}}`, which require special handling like `entryRelative`.
+ * @property {string} [label] Label for the asset folder. Asset collections only.
+ * @property {string} [icon] Icon for the asset folder. Asset collections only.
+ * @property {boolean} [isAssetCollection] Whether the asset folder is for an asset collection.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  * @see https://sveltiacms.app/en/docs/media/internal#configuring-folder-paths
  */
@@ -843,7 +846,7 @@
  */
 
 /**
- * Asset library folder map key.
+ * Asset library folder map key for standard folders.
  * @typedef {'field' | 'entry' | 'file' | 'collection' | 'global'} AssetLibraryFolderMapKey
  */
 
@@ -855,8 +858,10 @@
  */
 
 /**
- * Information about all the default asset library folders and whether these are enabled.
- * @typedef {Record<AssetLibraryFolderMapKey, AssetLibraryFolderMapValue>} AssetLibraryFolderMap
+ * Information about all the default asset library folders and whether these are enabled. The map
+ * includes standard folder keys ('field', 'entry', 'file', 'collection', 'global') and dynamic keys
+ * for asset collections (e.g., 'assets:icons', 'assets:logos').
+ * @typedef {Record<string, AssetLibraryFolderMapValue>} AssetLibraryFolderMap
  */
 
 /**

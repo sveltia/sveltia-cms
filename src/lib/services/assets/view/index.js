@@ -47,7 +47,11 @@ export const showUploadAssetsConfirmDialog = derived(
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  * @see https://sveltiacms.app/en/docs/media/internal
  */
-export const getFolderLabelByCollection = ({ collectionName, fileName, internalPath }) => {
+export const getFolderLabelByCollection = ({ label, collectionName, fileName, internalPath }) => {
+  if (label) {
+    return label;
+  }
+
   if (collectionName === undefined) {
     return _(internalPath === undefined ? 'all_assets' : 'global_assets');
   }

@@ -363,12 +363,12 @@
       >
         {#if isDefaultLibraryEnabled}
           <OptionGroup label={_('asset_location.repository')}>
-            {#each Object.entries(assetLibraryFolderMap) as [id, { enabled }] (id)}
+            {#each Object.entries(assetLibraryFolderMap) as [id, { folder, enabled }] (id)}
               {#if enabled}
                 {@const name = `default-${id}`}
                 <Option
                   {name}
-                  label={_(`assets_dialog.folder.${id}`)}
+                  label={folder?.label ?? _(`assets_dialog.folder.${id}`)}
                   selected={libraryName === name}
                 />
               {/if}

@@ -1292,18 +1292,23 @@
  */
 
 /**
- * Common collection properties.
- * @typedef {object} CommonCollectionProps
+ * Base collection properties.
+ * @typedef {object} BaseCollectionProps
  * @property {string} name Unique identifier for the collection.
  * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
  * option value.
+ * @property {string} [icon] Name of a [Material Symbols
+ * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the collection
+ * list.
+ */
+
+/**
+ * Common collection properties.
+ * @typedef {object} CommonCollectionProps
  * @property {string} [label_singular] Singular UI label. It will be Blog Post if the `label` is
  * Blog Posts, for example. Default: `label` option value.
  * @property {string} [description] Short description of the collection to be displayed in the
  * editor UI.
- * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the collection
- * list.
  * @property {string} [media_folder] Internal media folder path for the collection. This overrides
  * the global `media_folder` option. It can be a relative path from the project root if it starts
  * with a slash. Otherwise it’s a path relative to the entry. If this option is omitted, the global
@@ -1397,7 +1402,7 @@
 /**
  * Entry collection definition. In Netlify/Decap CMS, an entry collection is called a folder
  * collection.
- * @typedef {CommonCollectionProps & EntryCollectionProps} EntryCollection
+ * @typedef {BaseCollectionProps & CommonCollectionProps & EntryCollectionProps} EntryCollection
  */
 
 /**
@@ -1410,12 +1415,25 @@
 
 /**
  * File collection definition.
- * @typedef {CommonCollectionProps & FileCollectionProps} FileCollection
+ * @typedef {BaseCollectionProps & CommonCollectionProps & FileCollectionProps} FileCollection
  */
 
 /**
  * Collection definition.
  * @typedef {EntryCollection | FileCollection} Collection
+ */
+
+/**
+ * @typedef {object} AssetCollectionProps
+ * @property {string} media_folder Internal media folder path for the collection, relative to the
+ * project root.
+ * @property {string} [public_folder] Public media folder path for an entry collection. If omitted,
+ * it defaults to the `media_folder` option value.
+ */
+
+/**
+ * Asset collection definition.
+ * @typedef {BaseCollectionProps & AssetCollectionProps} AssetCollection
  */
 
 /**
@@ -1712,6 +1730,7 @@
  * the CMS configuration file or the homepage file. They are not part of any collection and can be
  * accessed directly through the collection list. The list can also contain dividers. See the
  * [documentation](https://sveltiacms.app/en/docs/collections/singletons) for details.
+ * @property {AssetCollection[]} [asset_collections] Set of asset collections.
  * @property {I18nOptions} [i18n] Global i18n options.
  * @property {EditorOptions} [editor] Editor view options.
  * @property {OutputOptions} [output] Data output options. See the

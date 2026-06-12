@@ -347,6 +347,29 @@ describe('assets/view/index', () => {
       expect(result).toBe('nonexistent › some-file');
       expect(getCollectionFile).not.toHaveBeenCalled();
     });
+
+    it('should return provided label without calling collection functions', async () => {
+      const { getCollection, getCollectionLabel } =
+        await import('$lib/services/contents/collection');
+
+      vi.clearAllMocks();
+
+      const folder = {
+        label: 'Custom Folder Label',
+        collectionName: 'blog',
+        fileName: 'featured',
+        internalPath: 'static/blog/featured',
+        publicPath: '/static/blog/featured',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      const result = getFolderLabelByCollection(folder);
+
+      expect(result).toBe('Custom Folder Label');
+      expect(getCollection).not.toHaveBeenCalled();
+      expect(getCollectionLabel).not.toHaveBeenCalled();
+    });
   });
 
   describe('defaultView', () => {

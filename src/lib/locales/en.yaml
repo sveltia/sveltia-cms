@@ -776,6 +776,11 @@ config:
     invalid_public_folder: The configured public folder is invalid. It must be a string.
     public_folder_relative_path: The configured public folder is invalid. It must be an absolute path starting with “/”.
     public_folder_absolute_url: An absolute URL for the public folder option is not supported in Sveltia CMS.
+    invalid_asset_collections: The `asset_collections` option is invalid. It must be an array.
+    missing_asset_collection_name: The asset collection {$count} must have the `name` option defined as a non-empty string.
+    invalid_asset_collection_name: The asset collection name `{$name}` is invalid. It must not contain special characters.
+    duplicate_asset_collection_name: Asset collection names must be unique, but `{$name}` is used more than once.
+    asset_collection_invalid_media_folder: The `{$name}` asset collection must have the `media_folder` option defined as a string.
     invalid_collection_no_options: The collection must have either the `folder`, `files` or `divider` option defined.
     invalid_collection_multiple_options: The collection cannot have the `folder`, `files` and `divider` options together.
     file_format_mismatch: The `{$extension}` extension doesn’t match the `{$format}` format.

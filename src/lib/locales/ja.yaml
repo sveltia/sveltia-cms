@@ -661,6 +661,11 @@ config:
     invalid_public_folder: 設定されているパブリックフォルダーが正しくありません。この設定は文字列でなければなりません。
     public_folder_relative_path: 設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。
     public_folder_absolute_url: パブリックフォルダーオプションの絶対 URL は Sveltia CMS では非対応です。
+    invalid_asset_collections: "`asset_collections` オプションが正しくありません。配列である必要があります。"
+    missing_asset_collection_name: アセットコレクション {$count} には `name` オプションを空でない文字列として定義する必要があります。
+    invalid_asset_collection_name: アセットコレクション名 `{$name}` は無効です。特殊文字を含めることはできません。
+    duplicate_asset_collection_name: アセットコレクション名は一意でなければなりませんが、`{$name}` が複数回使用されています。
+    asset_collection_invalid_media_folder: "`{$name}` アセットコレクションには、`media_folder` オプションを文字列として定義する必要があります。"
     invalid_collection_no_options: コレクションは `folder`、`files`、`divider` オプションのいずれかを定義する必要があります。
     invalid_collection_multiple_options: コレクションは `folder`、`files`、`divider` オプションを同時に持つことはできません。
     file_format_mismatch: 拡張子 `{$extension}` は `{$format}` 形式と一致しません。
