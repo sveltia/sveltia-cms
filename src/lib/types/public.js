@@ -31,7 +31,7 @@
 
 /**
  * Cloud media storage name.
- * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'cloudflare_r2' |
+ * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'backblaze_b2' | 'cloudflare_r2' |
  * 'digitalocean_spaces' | 'scaleway_object_storage' | 'supabase_storage'} CloudMediaLibraryName
  */
 
@@ -181,8 +181,8 @@
  * @property {string} [name] Media library name (used when configuring via legacy `media_library`).
  * @property {string} access_key_id AWS access key ID or equivalent (safe to store in config).
  * @property {string} bucket Bucket name.
- * @property {string} [region] AWS region (e.g., 'us-east-1'). Required for Amazon S3, DigitalOcean
- * Spaces, Scaleway Object Storage, and Supabase Storage.
+ * @property {string} [region] AWS region (e.g., 'us-east-1'). Required for Amazon S3, Backblaze B2
+ * (e.g., 'us-east-005'), DigitalOcean Spaces, Scaleway Object Storage, and Supabase Storage.
  * @property {string} [account_id] Cloudflare account ID. Required for Cloudflare R2.
  * @property {'default' | 'eu' | 'fedramp'} [jurisdiction] Cloudflare R2 jurisdiction. Required for
  * buckets created in the EU or FedRAMP jurisdictions; the global endpoint returns an error for
@@ -237,6 +237,8 @@
  * Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [aws_s3] Options for the Amazon S3 media storage. Set to
  * `false` to explicitly disable.
+ * @property {S3MediaLibrary | false} [backblaze_b2] Options for the Backblaze B2 media storage. Set
+ * to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [cloudflare_r2] Options for the Cloudflare R2 media storage.
  * Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [digitalocean_spaces] Options for the DigitalOcean Spaces
