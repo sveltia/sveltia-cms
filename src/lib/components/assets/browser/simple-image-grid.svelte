@@ -11,8 +11,6 @@
    * @property {string} [viewType] View type.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
-   * @property {boolean} [showTitle] Whether to show the file name or title under the image while in
-   * grid view.
    * @property {(detail: { value: string }) => void} [onChange] Custom `change` event handler.
    * @property {Snippet} [children] Slot content.
    */
@@ -23,14 +21,13 @@
     viewType = 'grid',
     gridId = undefined,
     multiple = false,
-    showTitle = false,
     onChange = undefined,
     children = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 </script>
 
-<div role="none" class="wrapper" class:show-title={showTitle}>
+<div role="none" class="wrapper">
   <Listbox
     id={gridId}
     class={viewType}
@@ -118,11 +115,6 @@
           outline-style: solid;
           outline-color: var(--sui-primary-accent-color-light);
         }
-      }
-
-      &:not(.wrapper.show-title) .listbox.grid .option .name {
-        position: absolute;
-        inset-inline-start: -99999px;
       }
 
       .listbox.list {

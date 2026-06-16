@@ -78,7 +78,7 @@
 
 {#if filteredAssets.length}
   <div role="none" class="grid-wrapper">
-    <SimpleImageGrid {multiple} {gridId} {viewType} showTitle={true}>
+    <SimpleImageGrid {multiple} {gridId} {viewType}>
       <InfiniteScroll items={filteredAssets} itemKey="path">
         {#snippet renderItem(/** @type {Asset} */ asset)}
           {#await sleep() then}
