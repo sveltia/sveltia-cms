@@ -82,7 +82,14 @@ export const getOptions = ({
   const { identifier_field: identifierField = 'title' } = _type === 'entry' ? collection : {};
   const templates = prepareFieldTemplates(fieldConfig, identifierField);
   const { allFieldNames, hasListFields } = templates;
-  const filteredEntries = filterAndPrepareEntries(refEntries, locale, fileName, resolvedFilters);
+
+  const filteredEntries = filterAndPrepareEntries({
+    refEntries,
+    locale,
+    fileName,
+    entryFilters: resolvedFilters,
+    defaultLocale,
+  });
 
   const options = filteredEntries
     .flatMap(({ refEntry, content }) =>

@@ -44,23 +44,30 @@ export const resolveFilterValues = (filters, currentLocaleValues, currentSlug = 
 /**
  * Filter entries based on file name and entry filters.
  * @internal
- * @param {Entry[]} refEntries Reference entries.
- * @param {string} locale Current locale.
- * @param {string} [fileName] File name to filter by.
- * @param {RelationFieldFilterOptions[]} [entryFilters] Entry filters to apply.
+ * @param {object} args Arguments.
+ * @param {Entry[]} args.refEntries Reference entries.
+ * @param {string} args.locale Current locale.
+ * @param {string} [args.fileName] File name to filter by.
+ * @param {RelationFieldFilterOptions[]} [args.entryFilters] Entry filters to apply.
+ * @param {string} [args.defaultLocale] Default locale from collection’s i18n configuration.
  * @returns {{ refEntry: Entry, content: FlattenedEntryContent }[]} Filtered entries with content.
  */
-export const filterAndPrepareEntries = (
+export const filterAndPrepareEntries = ({
   refEntries,
   locale,
   fileName = undefined,
   entryFilters = [],
-) =>
+  defaultLocale = undefined,
+}) =>
   refEntries
     .filter((refEntry) => !fileName || fileName === refEntry.slug)
     .map((refEntry) => {
-      // Fall back to the default locale if needed
-      const { content } = refEntry.locales[locale] ?? refEntry.locales._default ?? {};
+      // Fall back to the collection’s default locale, then `_default` (no i18n) as a final fallback
+      const { content } =
+        refEntry.locales[locale] ??
+        (defaultLocale ? refEntry.locales[defaultLocale] : undefined) ??
+        refEntry.locales._default ??
+        {};
 
       return {
         refEntry,
