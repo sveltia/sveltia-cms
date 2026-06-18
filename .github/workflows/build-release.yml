@@ -1,0 +1,61 @@
+name: Build & Release (Tutory pt-BR)
+
+# CI próprio do FORK (wellmota/sveltia-cms), não do site.
+# Compila o Sveltia CMS deste fork — já com a UI pt-BR e os patches da Tutory
+# aplicados na branch tutory/pt-br — e publica o sveltia-cms.js como asset de
+# release. O site puxa esse asset numa versão fixada via
+# apps/web/scripts/update-cms-bundle.sh. Nada aqui builda o site.
+#
+# Dispara ao dar push numa tag v* (ex.: v0.167.2-tutory.1).
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do fork (na tag)
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Ajustar pnpm-workspace (campo packages exigido pelo pnpm 10)
+        run: grep -q '^packages:' pnpm-workspace.yaml || printf '\npackages:\n  - .\n' >> pnpm-workspace.yaml
+
+      - name: Instalar dependências
+        run: pnpm install --config.minimumReleaseAge=0 --frozen-lockfile=false
+
+      - name: Build do bundle
+        run: pnpm build
+
+      - name: Verificar pt-BR e patches no bundle
+        run: |
+          OUT=package/dist/sveltia-cms.js
+          [ -f "$OUT" ] || { echo "ERRO: não encontrei $OUT após o build."; exit 1; }
+          grep -q "Trabalhar com o repositório local" "$OUT" \
+            && echo "OK: strings pt-BR presentes" \
+            || { echo "ERRO: pt-BR não encontrado no bundle"; exit 1; }
+          grep -q "Ver no site" "$OUT" \
+            && echo "OK: patch de componente (badges + ação) presente" \
+            || { echo "ERRO: patch de componente não encontrado no bundle"; exit 1; }
+
+      - name: Publicar release com o bundle
+        uses: softprops/action-gh-release@v2
+        with:
+          files: package/dist/sveltia-cms.js
+          generate_release_notes: true
