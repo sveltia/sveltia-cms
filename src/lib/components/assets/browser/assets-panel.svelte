@@ -45,12 +45,31 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const filteredAssets = $derived(
-    (searchTerms ? assets.filter(({ name }) => normalize(name).includes(searchTerms)) : assets)
-      // Remove duplicates based on asset path to avoid Svelte key conflicts
-      // @todo better handle duplicates at the source
-      .filter((asset, index, arr) => arr.findIndex((other) => other.path === asset.path) === index),
-  );
+  /** @type {(Asset & { relPath: string })[]} */
+  const filteredAssets = $derived.by(() => {
+    let _assets = assets.map((asset) => {
+      const { folder, name, path } = asset;
+
+      // Compute the relative path for display and filtering purposes. If the asset is in a folder,
+      // we want to show the path relative to that folder. If the asset is not in a folder, we just
+      // show the file name.
+      const relPath =
+        basePath && !folder.entryRelative ? stripSlashes(path.replace(basePath, '')) : name;
+
+      return { ...asset, relPath };
+    });
+
+    if (searchTerms) {
+      // Filter assets by search terms in the relative path
+      _assets = _assets.filter(({ relPath }) => normalize(relPath).includes(searchTerms));
+    }
+
+    // Remove duplicates based on asset path to avoid Svelte key conflicts
+    // @todo better handle duplicates at the source
+    return _assets.filter(
+      (asset, index, arr) => arr.findIndex((other) => other.path === asset.path) === index,
+    );
+  });
 
   /**
    * Check if the given asset is already selected.
@@ -80,12 +99,9 @@
   <div role="none" class="grid-wrapper">
     <SimpleImageGrid {multiple} {gridId} {viewType}>
       <InfiniteScroll items={filteredAssets} itemKey="path">
-        {#snippet renderItem(/** @type {Asset} */ asset)}
+        {#snippet renderItem(/** @type {Asset & { relPath: string }} */ asset)}
           {#await sleep() then}
-            {@const { kind, name, path, unsaved, folder } = asset}
-            <!-- Show asset path relative to the base folder, or just file name -->
-            {@const relPath =
-              basePath && !folder.entryRelative ? stripSlashes(path.replace(basePath, '')) : name}
+            {@const { kind, unsaved, path, relPath } = asset}
             <SimpleImageGridItem
               value={path}
               {viewType}
