@@ -45,6 +45,10 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  // Split the search terms into an array of individual terms for filtering purposes. If no search
+  // terms are provided, use an empty array.
+  const searchTermsArray = $derived(searchTerms ? searchTerms.split(/\s+/).filter(Boolean) : []);
+
   /** @type {(Asset & { relPath: string })[]} */
   const filteredAssets = $derived.by(() => {
     let _assets = assets.map((asset) => {
@@ -59,9 +63,11 @@
       return { ...asset, relPath };
     });
 
-    if (searchTerms) {
+    if (searchTermsArray.length) {
       // Filter assets by search terms in the relative path
-      _assets = _assets.filter(({ relPath }) => normalize(relPath).includes(searchTerms));
+      _assets = _assets.filter(({ relPath }) =>
+        searchTermsArray.every((term) => normalize(relPath).includes(term)),
+      );
     }
 
     // Remove duplicates based on asset path to avoid Svelte key conflicts
