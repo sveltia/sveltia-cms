@@ -68,7 +68,7 @@
             controls={['audio', 'video'].includes(kind)}
           />
         {:else if blob?.type === 'application/pdf'}
-          <iframe src={blobURL} title={name}></iframe>
+          <iframe src={blobURL} title={name} sandbox="allow-scripts"></iframe>
         {:else if blob?.type && isTextFileType(blob.type)}
           {#await $overlaidAsset?.text ?? blob.text() then text}
             {#if name?.endsWith('.md')}

@@ -51,6 +51,7 @@
         allow="autoplay; encrypted-media; picture-in-picture"
         referrerpolicy="strict-origin-when-cross-origin"
         allowfullscreen
+        sandbox="allow-same-origin allow-scripts"
       ></iframe>
     </VisibilityObserver>
   {:else}
