@@ -8,7 +8,7 @@ import { entryDraft } from '$lib/services/contents/draft';
 
 /**
  * Validate the slugs and return the results. At this time, we only check if the slug is empty when
- * the slug editor is shown. A pattern check can be added later if needed.
+ * the slug editor is shown.
  * @internal
  * @returns {{ valid: boolean, validities: LocaleValidityMap }} Validation results.
  */
@@ -22,13 +22,19 @@ export const validateSlugs = () => {
     // Only validate slugs for locales that are currently enabled. A disabled locale’s slug is not
     // written to disk, so an empty value should not block saving.
     // @see https://github.com/sveltia/sveltia-cms/issues/740
-    const valueMissing = !!currentLocales?.[locale] && !!slugEditor[locale] && !slug?.trim();
+    const slugEnabled = !!currentLocales?.[locale] && !!slugEditor[locale];
+    const valueMissing = slugEnabled && !slug?.trim();
+    // A pattern mismatch is when the slug contains a forward slash or whitespace. This is not
+    // allowed because it would break the URL structure. A more detailed pattern check based on the
+    // global `slug` options can be added later if needed.
+    const patternMismatch = slugEnabled && /[/\s]/.test(slug ?? '');
+    const invalid = valueMissing || patternMismatch;
 
-    if (valueMissing) {
+    if (invalid) {
       valid = false;
     }
 
-    validities[locale] = { _slug: { valueMissing, valid: !valueMissing } };
+    validities[locale] = { _slug: { valueMissing, patternMismatch, valid: !invalid } };
   });
 
   return { valid, validities };

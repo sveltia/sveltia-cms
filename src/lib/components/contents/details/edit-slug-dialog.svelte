@@ -3,6 +3,7 @@
   import { Alert, Dialog, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
 
+  import { slugify } from '$lib/services/common/slug';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
@@ -16,6 +17,10 @@
    * @property {boolean} [open] Whether the dialog is open.
    */
 
+  /**
+   * @typedef {false | 'empty' | 'invalid' | 'duplicate'} SlugValidationResult
+   */
+
   /** @type {Props} */
   let { open = $bindable(false) } = $props();
 
@@ -26,7 +31,7 @@
   let otherSlugs = $state([]);
   /** @type {Record<InternalLocaleCode, string>} */
   const updatedSlugs = $state({});
-  /** @type {Record<InternalLocaleCode, false | 'empty' | 'duplicate'>} */
+  /** @type {Record<InternalLocaleCode, SlugValidationResult>} */
   const validations = $state({});
 
   const componentId = $props.id();
@@ -47,6 +52,27 @@
     );
   };
 
+  /**
+   * Validate the slug for a given locale.
+   * @param {InternalLocaleCode} locale The locale code to validate.
+   * @returns {SlugValidationResult} The validation result.
+   */
+  const validateSlug = (locale) => {
+    if (!updatedSlugs[locale].trim()) {
+      return 'empty';
+    }
+
+    if (/[/\s]/.test(updatedSlugs[locale])) {
+      return 'invalid';
+    }
+
+    if (otherSlugs.includes(updatedSlugs[locale])) {
+      return 'duplicate';
+    }
+
+    return false;
+  };
+
   $effect(() => {
     if (open) {
       init();
@@ -61,7 +87,9 @@
   okDisabled={equal(currentSlugs, updatedSlugs) ||
     Object.values(validations).some((invalid) => invalid !== false)}
   onOk={() => {
-    /** @type {EntryDraft} */ ($entryDraft).currentSlugs = updatedSlugs;
+    /** @type {EntryDraft} */ ($entryDraft).currentSlugs = Object.fromEntries(
+      Object.entries(updatedSlugs).map(([locale, slug]) => [locale, slugify(slug, { locale })]),
+    );
   }}
 >
   <Alert status="warning" --font-size="var(--sui-font-size-small)">
@@ -81,21 +109,14 @@
             flex
             bind:value={updatedSlugs[locale]}
             oninput={() => {
-              validations[locale] = !updatedSlugs[locale].trim()
-                ? 'empty'
-                : otherSlugs.includes(updatedSlugs[locale])
-                  ? 'duplicate'
-                  : false;
+              validations[locale] = validateSlug(locale);
             }}
             invalid={validations[locale] !== false}
             aria-errormessage="{componentId}-{locale}-error"
           />
           <p id="{componentId}-{locale}-error" class="error">
-            {#if validations[locale] === 'empty'}
-              {_('edit_slug_error.empty')}
-            {/if}
-            {#if validations[locale] === 'duplicate'}
-              {_('edit_slug_error.duplicate')}
+            {#if validations[locale]}
+              {_(`edit_slug_error.${validations[locale]}`)}
             {/if}
           </p>
         </div>

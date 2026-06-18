@@ -60,7 +60,10 @@
     {#if invalid}
       <ValidationError id="{fieldId}-error">
         {#if validity?.valueMissing}
-          {_('validation.value_missing')}
+          {_('edit_slug_error.empty')}
+        {/if}
+        {#if validity?.patternMismatch}
+          {_('edit_slug_error.invalid')}
         {/if}
       </ValidationError>
     {/if}

@@ -79,6 +79,47 @@ describe('draft/validate/slugs', () => {
       expect(result.validities.fr._slug.valueMissing).toBe(false);
     });
 
+    it('should invalidate slug when it contains a forward slash', () => {
+      mockEntryDraft.currentLocales = { en: true, fr: true };
+      mockEntryDraft.currentSlugs = { en: 'test/post', fr: 'test-article' };
+      mockEntryDraft.slugEditor = { en: true, fr: false };
+
+      const result = validateSlugs();
+
+      expect(result.valid).toBe(false);
+      expect(result.validities.en._slug.valid).toBe(false);
+      expect(result.validities.en._slug.valueMissing).toBe(false);
+      expect(result.validities.en._slug.patternMismatch).toBe(true);
+      expect(result.validities.fr._slug.valid).toBe(true);
+    });
+
+    it('should invalidate slug when it contains whitespace', () => {
+      mockEntryDraft.currentLocales = { en: true, fr: true };
+      mockEntryDraft.currentSlugs = { en: 'test post', fr: 'test-article' };
+      mockEntryDraft.slugEditor = { en: true, fr: false };
+
+      const result = validateSlugs();
+
+      expect(result.valid).toBe(false);
+      expect(result.validities.en._slug.valid).toBe(false);
+      expect(result.validities.en._slug.valueMissing).toBe(false);
+      expect(result.validities.en._slug.patternMismatch).toBe(true);
+      expect(result.validities.fr._slug.valid).toBe(true);
+    });
+
+    it('should treat an undefined slug as missing when the editor is shown', () => {
+      mockEntryDraft.currentLocales = { en: true };
+      mockEntryDraft.currentSlugs = { en: undefined };
+      mockEntryDraft.slugEditor = { en: true };
+
+      const result = validateSlugs();
+
+      expect(result.valid).toBe(false);
+      expect(result.validities.en._slug.valid).toBe(false);
+      expect(result.validities.en._slug.valueMissing).toBe(true);
+      expect(result.validities.en._slug.patternMismatch).toBe(false);
+    });
+
     it('should ignore slug for locales that are not currently enabled', () => {
       // Regression test for https://github.com/sveltia/sveltia-cms/issues/740
       mockEntryDraft.currentLocales = { en: true, fr: false };
