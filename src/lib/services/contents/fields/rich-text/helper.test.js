@@ -1,8 +1,13 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { buildMarkdownWithPreviews, encodeImageSrc, splitMarkdownBlocks } from './helper.js';
+import {
+  buildMarkdownWithPreviews,
+  encodeImageSrc,
+  sanitizeRichTextHTML,
+  splitMarkdownBlocks,
+} from './helper.js';
 
 describe('encodeImageSrc', () => {
   it('should encode spaces in image URLs without title', () => {
@@ -531,5 +536,288 @@ describe('splitMarkdownBlocks', () => {
       '<div>\nfirst block\n</div>',
       '<div>\nsecond block\n</div>',
     ]);
+  });
+});
+
+describe('SANITIZE_OPTIONS iframe security (XSS prevention)', () => {
+  it('should remove iframes with javascript: scheme', () => {
+    // Testing XSS prevention - javascript: URL in test payload
+
+    const malicious = '<iframe src="javascript:alert(1)"></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+    // eslint-disable-next-line no-script-url
+    expect(sanitized).not.toContain('javascript:');
+  });
+
+  it('should remove iframes with data: scheme', () => {
+    const malicious = '<iframe src="data:text/html,<script>alert(1)</script>"></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+    expect(sanitized).not.toContain('data:');
+  });
+
+  it('should remove iframes with blob: scheme', () => {
+    const malicious = '<iframe src="blob:http://example.com/uuid"></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+    expect(sanitized).not.toContain('blob:');
+  });
+
+  it('should remove iframes with file: scheme', () => {
+    const malicious = '<iframe src="file:///etc/passwd"></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+    expect(sanitized).not.toContain('file:');
+  });
+
+  it('should remove iframes with vbscript: scheme', () => {
+    const malicious = '<iframe src="vbscript:msgbox(1)"></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+    expect(sanitized).not.toContain('vbscript:');
+  });
+
+  it('should remove iframes with same-origin relative paths (leading slash)', () => {
+    const malicious = '<iframe src="/uploads/malicious.html"></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+    expect(sanitized).not.toContain('/uploads/');
+  });
+
+  it('should remove iframes with same-origin relative paths (double slash)', () => {
+    const malicious = '<iframe src="//example.com/malicious.html"></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+  });
+
+  it('should remove iframes with relative paths (dot notation)', () => {
+    const malicious = '<iframe src="./malicious.html"></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+  });
+
+  it('should remove iframes with relative paths (parent directory)', () => {
+    const malicious = '<iframe src="../uploads/malicious.html"></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+  });
+
+  it('should remove iframes without src attribute', () => {
+    const malicious = '<iframe></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+  });
+
+  it('should remove iframes with empty src attribute', () => {
+    const malicious = '<iframe src=""></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+  });
+
+  it('should remove iframes with whitespace-only src attribute', () => {
+    const malicious = '<iframe src="   "></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+  });
+
+  it('should block same-origin HTTPS iframes', () => {
+    // Mock window.location.origin to match the iframe src origin
+    vi.stubGlobal('window', {
+      location: { origin: 'https://example.com' },
+    });
+
+    try {
+      const sameOrigin = '<iframe src="https://example.com/malicious.html"></iframe>';
+      const sanitized = sanitizeRichTextHTML(sameOrigin);
+
+      expect(sanitized).not.toContain('iframe');
+    } finally {
+      // Restore original window
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('should remove iframes with about:blank', () => {
+    const malicious = '<iframe src="about:blank"></iframe>';
+    const sanitized = sanitizeRichTextHTML(malicious);
+
+    expect(sanitized).not.toContain('iframe');
+  });
+
+  it('should enforce sandbox="allow-scripts allow-same-origin" on valid HTTPS iframes', () => {
+    const embed = '<iframe src="https://www.youtube.com/embed/video123"></iframe>';
+    const sanitized = sanitizeRichTextHTML(embed);
+
+    expect(sanitized).toContain('iframe');
+    expect(sanitized).toContain('allow-scripts');
+    expect(sanitized).toContain('allow-same-origin');
+  });
+
+  it('should ensure both allow-scripts and allow-same-origin in sandbox', () => {
+    const embed =
+      '<iframe src="https://player.vimeo.com/video/123" sandbox="allow-same-origin allow-scripts"></iframe>';
+
+    const sanitized = sanitizeRichTextHTML(embed);
+
+    expect(sanitized).toContain('iframe');
+    expect(sanitized).toContain('allow-scripts');
+    expect(sanitized).toContain('allow-same-origin');
+  });
+
+  it('should add allow-scripts and allow-same-origin to custom sandbox attributes', () => {
+    const embed = '<iframe src="https://example.com/embed" sandbox="allow-popups"></iframe>';
+    const sanitized = sanitizeRichTextHTML(embed);
+
+    expect(sanitized).toContain('iframe');
+    expect(sanitized).toContain('allow-scripts');
+    expect(sanitized).toContain('allow-same-origin');
+    expect(sanitized).toContain('allow-popups');
+  });
+
+  it('should preserve allow and allowfullscreen attributes', () => {
+    const embed =
+      '<iframe src="https://www.youtube.com/embed/video" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+
+    const sanitized = sanitizeRichTextHTML(embed);
+
+    expect(sanitized).toContain('iframe');
+    expect(sanitized).toContain('allow="autoplay; encrypted-media"');
+    expect(sanitized).toContain('allowfullscreen');
+    expect(sanitized).toContain('allow-scripts');
+    expect(sanitized).toContain('allow-same-origin');
+  });
+
+  it('should preserve referrerpolicy attribute', () => {
+    const embed =
+      '<iframe src="https://www.youtube.com/embed/video" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+
+    const sanitized = sanitizeRichTextHTML(embed);
+
+    expect(sanitized).toContain('iframe');
+    expect(sanitized).toContain('referrerpolicy="strict-origin-when-cross-origin"');
+    expect(sanitized).toContain('allow-scripts');
+    expect(sanitized).toContain('allow-same-origin');
+  });
+
+  it('should allow HTTPS iframes from trusted external providers', () => {
+    const youtubeEmbed = '<iframe src="https://www.youtube.com/embed/abc"></iframe>';
+    const vimeoEmbed = '<iframe src="https://player.vimeo.com/video/123"></iframe>';
+    const externalEmbed = '<iframe src="https://example.com/embed/content"></iframe>';
+
+    expect(sanitizeRichTextHTML(youtubeEmbed)).toContain('iframe');
+    expect(sanitizeRichTextHTML(vimeoEmbed)).toContain('iframe');
+    expect(sanitizeRichTextHTML(externalEmbed)).toContain('iframe');
+  });
+
+  it('should block HTTP iframes', () => {
+    const httpEmbed = '<iframe src="http://example.com/embed"></iframe>';
+    const sanitized = sanitizeRichTextHTML(httpEmbed);
+
+    expect(sanitized).not.toContain('iframe');
+  });
+
+  it('should block multiple XSS vectors in a single document', () => {
+    const multipleThreats = `
+      <iframe src="javascript:alert('xss1')"></iframe>
+      <iframe src="/uploads/malicious.html"></iframe>
+      <iframe src="data:text/html,<script>alert('xss2')</script>"></iframe>
+      <iframe src="blob:http://evil.com/uuid"></iframe>
+      <iframe src="https://www.youtube.com/embed/safe"></iframe>
+    `;
+
+    const sanitized = sanitizeRichTextHTML(multipleThreats);
+    // Should only contain the safe HTTPS iframe
+    const iframeMatches = sanitized.match(/<iframe/g);
+
+    expect(iframeMatches).toHaveLength(1);
+    expect(sanitized).toContain('https://www.youtube.com/embed/safe');
+    // eslint-disable-next-line no-script-url
+    expect(sanitized).not.toContain('javascript:');
+    expect(sanitized).not.toContain('/uploads/');
+    expect(sanitized).not.toContain('data:');
+    expect(sanitized).not.toContain('blob:');
+  });
+
+  it('should handle case-insensitive scheme matching', () => {
+    // Testing XSS prevention with various capitalizations
+
+    const schemes = [
+      '<iframe src="JavaScript:alert(1)"></iframe>',
+      '<iframe src="JAVASCRIPT:alert(1)"></iframe>',
+      '<iframe src="JaVaScRiPt:alert(1)"></iframe>',
+      '<iframe src="DATA:text/html,xss"></iframe>',
+      '<iframe src="BloB:http://evil.com/x"></iframe>',
+    ];
+
+    schemes.forEach((html) => {
+      const sanitized = sanitizeRichTextHTML(html);
+
+      expect(sanitized).not.toContain('iframe');
+    });
+  });
+
+  it('should block iframes with obfuscated same-origin paths', () => {
+    const obfuscated = [
+      '<iframe src="  /uploads/file.html"></iframe>',
+      '<iframe src="\\uploads\\file.html"></iframe>',
+      '<iframe src="//localhost/file.html"></iframe>',
+    ];
+
+    obfuscated.forEach((html) => {
+      const sanitized = sanitizeRichTextHTML(html);
+
+      expect(sanitized).not.toContain('iframe');
+    });
+  });
+
+  it('should handle iframes with invalid URLs', () => {
+    const invalid = [
+      '<iframe src="not a url at all"></iframe>',
+      '<iframe src="ht!tp://broken.com"></iframe>',
+      '<iframe src="://no-protocol.com"></iframe>',
+    ];
+
+    invalid.forEach((html) => {
+      const sanitized = sanitizeRichTextHTML(html);
+
+      expect(sanitized).not.toContain('iframe');
+    });
+  });
+
+  it('should block malformed HTTPS URLs that throw in URL constructor', () => {
+    const malformed = [
+      '<iframe src="https://"></iframe>', // Missing host
+      '<iframe src="https:// bad spaces"></iframe>', // Spaces in URL
+      '<iframe src="https://[invalid:ipv6"></iframe>', // Malformed IPv6
+    ];
+
+    malformed.forEach((html) => {
+      const sanitized = sanitizeRichTextHTML(html);
+
+      expect(sanitized).not.toContain('iframe');
+    });
+  });
+
+  it('should normalize sandbox attributes when multiple are present', () => {
+    const bypassAttempt =
+      '<iframe src="https://example.com" sandbox="allow-scripts allow-same-origin" sandbox=""></iframe>';
+
+    const sanitized = sanitizeRichTextHTML(bypassAttempt);
+
+    expect(sanitized).toContain('allow-scripts');
+    expect(sanitized).toContain('allow-same-origin');
   });
 });

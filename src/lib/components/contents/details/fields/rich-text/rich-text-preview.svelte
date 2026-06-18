@@ -5,7 +5,6 @@
   @see https://sveltiacms.app/en/docs/fields/richtext
 -->
 <script>
-  import { sanitize } from 'isomorphic-dompurify';
   import { parse, use } from 'marked';
   import markedBidi from 'marked-bidi';
   import { isValidElement } from 'react';
@@ -25,7 +24,7 @@
     buildMarkdownWithPreviews,
     COMPONENT_QUERY_SELECTOR,
     IMAGE_QUERY_SELECTOR,
-    SANITIZE_OPTIONS,
+    sanitizeRichTextHTML,
     splitMarkdownBlocks,
   } from '$lib/services/contents/fields/rich-text/helper';
 
@@ -215,7 +214,7 @@
   const parseMarkdown = (block) => {
     const rawHTML = /** @type {string} */ (parse(block, { breaks: true }));
 
-    return doSanitize ? sanitize(rawHTML, SANITIZE_OPTIONS) : rawHTML;
+    return doSanitize ? sanitizeRichTextHTML(rawHTML) : rawHTML;
   };
 
   onMount(() => {

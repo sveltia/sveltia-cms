@@ -1,3 +1,5 @@
+import { sanitize } from 'isomorphic-dompurify';
+
 import { GLOBAL_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -12,8 +14,8 @@ import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * Sanitization options for DOMPurify to allow `blob` URLs for images, which are commonly used for
- * local previews of uploaded images. Also allow `iframe` tags with `allow` and `allowfullscreen`
- * attributes for embedded media previews.
+ * local previews of uploaded images. Also allow `iframe` tags with strict sandboxing for embedded
+ * media previews.
  * @see https://github.com/cure53/DOMPurify/issues/549
  * @see https://github.com/cure53/DOMPurify#control-permitted-attribute-values.
  * @see https://github.com/cure53/DOMPurify/wiki/Default-TAGs-ATTRIBUTEs-allow-list-&-blocklist
@@ -21,7 +23,80 @@ import { getOrCreate } from '$lib/services/utils/cache';
 export const SANITIZE_OPTIONS = {
   ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   ADD_TAGS: ['iframe'],
-  ADD_ATTR: ['allow', 'allowfullscreen'],
+  ADD_ATTR: ['allow', 'allowfullscreen', 'referrerpolicy', 'sandbox'],
+};
+
+/**
+ * Validate and secure an iframe element.
+ * @param {HTMLIFrameElement} iframe The iframe element to validate.
+ * @returns {boolean} `true` if the iframe is safe and should be kept, `false` if it should be
+ * removed.
+ */
+const validateIframe = (iframe) => {
+  const src = iframe.getAttribute('src')?.trim() || '';
+
+  // Require HTTPS (blocks dangerous schemes, relative paths, and HTTP)
+  if (!src.startsWith('https://')) {
+    return false;
+  }
+
+  try {
+    const url = new URL(src);
+
+    // Get current origin (handle cases where window might not be fully initialized)
+    const currentOrigin =
+      typeof window !== 'undefined' && window.location ? window.location.origin : '';
+
+    // Block same-origin iframes to prevent parent window access
+    if (currentOrigin && url.origin === currentOrigin) {
+      return false;
+    }
+  } catch {
+    // Invalid URL
+    return false;
+  }
+
+  // Enforce restrictive sandbox for cross-origin iframes. Since we already block same-origin
+  // iframes above, it’s safe to allow both `allow-scripts` and `allow-same-origin` here: the iframe
+  // can only access its own origin’s APIs (like Cache Storage for YouTube embeds), not the parent
+  // window.
+  const currentSandbox = iframe.getAttribute('sandbox') || '';
+  const sandboxTokens = new Set(currentSandbox.split(/\s+/).filter(Boolean));
+
+  // Required for embed functionality
+  sandboxTokens.add('allow-scripts');
+  sandboxTokens.add('allow-same-origin');
+
+  // Set the enforced sandbox attribute
+  iframe.setAttribute('sandbox', Array.from(sandboxTokens).join(' '));
+
+  return true;
+};
+
+/**
+ * Sanitize HTML with DOMPurify and enforce iframe security policies. This wrapper function handles
+ * post-processing of iframes to ensure they are secure.
+ * @param {string} html The HTML string to sanitize.
+ * @param {object} [options] Additional DOMPurify options.
+ * @returns {string} The sanitized HTML string with secure iframes.
+ */
+export const sanitizeRichTextHTML = (html, options = {}) => {
+  // First pass: sanitize with DOMPurify, returning a DOM element
+  const body = /** @type {HTMLBodyElement} */ (
+    sanitize(html, { ...SANITIZE_OPTIONS, ...options, RETURN_DOM: true })
+  );
+
+  // Second pass: validate and secure all iframes
+  const iframes = Array.from(body.querySelectorAll('iframe'));
+
+  iframes.forEach((iframe) => {
+    if (!validateIframe(iframe)) {
+      iframe.remove();
+    }
+  });
+
+  // Return the body’s HTML
+  return body.innerHTML;
 };
 
 /**
