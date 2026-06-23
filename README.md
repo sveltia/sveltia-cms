@@ -25,6 +25,16 @@ We provide comprehensive documentation to help you get started and make the most
 - [Migration Guides](https://sveltiacms.app/en/docs/migration): Instructions for migrating from other CMSs
 - [Roadmap](https://sveltiacms.app/en/docs/roadmap): Upcoming features and improvements
 
+## Showcase
+
+Our [industry-leading showcase](https://sveltiacms.app/en/showcase) features many real-world examples of Sveltia CMS, including:
+
+- [Examples of sites migrated from Decap CMS](https://sveltiacms.app/en/showcase?migrated-from=decap-cms)
+- [Examples of sites migrated from WordPress](https://sveltiacms.app/en/showcase?migrated-from=wordpress)
+- [Examples of sites built with Astro](https://sveltiacms.app/en/showcase?framework=astro)
+- [Examples of sites built with Eleventy](https://sveltiacms.app/en/showcase?framework=eleventy)
+- [Examples of sites using i18n support](https://sveltiacms.app/en/showcase?feature=i18n)
+
 ## Community
 
 Stay connected and get support through our community channels:
