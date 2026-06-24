@@ -2,11 +2,11 @@
 
 [Sveltia CMS](https://sveltiacms.app/en/) is a free, open-source, Git-based headless content management system for [Jamstack](https://jamstack.org/) sites. It’s a complete rewrite of Netlify CMS, now known as Decap CMS.
 
-Designed for content editors and developers alike, Sveltia CMS delivers a modern UX/DX, powerful features, and first-class internationalization (i18n) support — all in a small, maintenance-free, single-page web application served from a CDN. Its framework-agnostic, generic-purpose approach makes it suitable for a wide range of projects, from personal blogs and portfolios to marketing sites and knowledge bases.
+Designed for content editors and developers alike, Sveltia CMS delivers a modern UX/DX, powerful features, and first-class internationalization (i18n) support — all in a small, maintenance-free, single-page web application served from a CDN. Its generic-purpose approach makes it suitable for a wide range of projects, from personal blogs and portfolios to marketing sites and knowledge bases.
 
 As the de facto [successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), Sveltia CMS addresses 300+ issues and introduces numerous enhancements while maintaining high compatibility with existing installations. It far surpasses the neglected official successor, Decap CMS. More and more projects, including a U.S. government website, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to enjoy its significantly improved performance, security, reliability, and experience.
 
-It’s also a great choice for people leaving a traditional CMS or website builder and looking for a lightweight headless CMS that can easily integrate with a static site generator (SSG) like Astro.
+It’s also a great choice for people leaving a traditional CMS or website builder and looking for a lightweight headless CMS that can easily integrate with a static site generator (SSG) like Astro and Eleventy. Sveltia CMS is framework-agnostic and can be used for vanilla JavaScript sites as well.
 
 Explore 280+ real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 105+ sites migrated from Netlify/Decap CMS and 45+ from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
@@ -27,7 +27,7 @@ We provide comprehensive documentation to help you get started and make the most
 
 ## Showcase
 
-Our [industry-leading showcase](https://sveltiacms.app/en/showcase) features many real-world examples of Sveltia CMS, including:
+Our [industry-leading showcase](https://sveltiacms.app/en/showcase) features many real-world examples of Sveltia CMS users, including:
 
 - [Examples of sites migrated from Decap CMS](https://sveltiacms.app/en/showcase?migrated-from=decap-cms)
 - [Examples of sites migrated from WordPress](https://sveltiacms.app/en/showcase?migrated-from=wordpress)
