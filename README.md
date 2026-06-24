@@ -27,13 +27,13 @@ We provide comprehensive documentation to help you get started and make the most
 
 ## Showcase
 
-Our [industry-leading showcase](https://sveltiacms.app/en/showcase) features many real-world examples of Sveltia CMS users, including:
+Our [industry-leading showcase](https://sveltiacms.app/en/showcase) features various real-world examples of Sveltia CMS users, including:
 
-- [Examples of sites migrated from Decap CMS](https://sveltiacms.app/en/showcase?migrated-from=decap-cms)
-- [Examples of sites migrated from WordPress](https://sveltiacms.app/en/showcase?migrated-from=wordpress)
-- [Examples of sites built with Astro](https://sveltiacms.app/en/showcase?framework=astro)
-- [Examples of sites built with Eleventy](https://sveltiacms.app/en/showcase?framework=eleventy)
-- [Examples of sites using i18n support](https://sveltiacms.app/en/showcase?feature=i18n)
+- [Sites migrated from Decap CMS](https://sveltiacms.app/en/showcase?migrated-from=decap-cms)
+- [Sites migrated from WordPress](https://sveltiacms.app/en/showcase?migrated-from=wordpress)
+- [Sites built with Astro](https://sveltiacms.app/en/showcase?framework=astro)
+- [Sites built with Eleventy](https://sveltiacms.app/en/showcase?framework=eleventy)
+- [Sites using i18n support](https://sveltiacms.app/en/showcase?feature=i18n)
 
 ## Community
 
