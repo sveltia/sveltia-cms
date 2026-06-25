@@ -17,9 +17,9 @@ jobs:
             command: pnpm build
     steps:
       - name: Checkout the branch
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
       - name: Install pnpm
-        uses: pnpm/action-setup@v6.0.8
+        uses: pnpm/action-setup@v6.0.9
         with:
           version: latest
       - name: Setup Node.js environment
