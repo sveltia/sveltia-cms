@@ -41,7 +41,7 @@ export const createCustomNodeClass = (componentDef) => {
     toPreview,
   } = componentDef;
 
-  const isMultiLine = isMultiLinePattern(pattern);
+  const inline = !isMultiLinePattern(pattern);
   const preview = toPreview?.({});
   const block = toBlock({});
 
@@ -89,7 +89,7 @@ export const createCustomNodeClass = (componentDef) => {
      * @returns {boolean} Result.
      */
     isInline() {
-      return !isMultiLine;
+      return inline;
     }
 
     /**
@@ -210,6 +210,7 @@ export const createCustomNodeClass = (componentDef) => {
           label,
           collapsed,
           mode,
+          inline,
           summary,
           fields,
           values: this.__props,

@@ -31,6 +31,7 @@
    * @property {string} componentName Rich text editor component name.
    * @property {string} label Field label.
    * @property {EditorComponentMode} [mode] Editing mode for the component. Default: `'block'`.
+   * @property {boolean} [inline] Whether the component is inline. Default: `false`.
    * @property {boolean} [collapsed] Whether to collapse the object by default (`block` mode only).
    * Default: `false`.
    * @property {string} [summary] Summary template for the placeholder text (`dialog` mode only),
@@ -46,6 +47,7 @@
     componentName,
     label,
     mode = 'block',
+    inline = false,
     collapsed = false,
     summary,
     fields,
@@ -394,7 +396,7 @@
   <!-- Dialog mode: compact placeholder that opens a dialog on click -->
   <span
     role="button"
-    class="placeholder"
+    class="component {inline ? 'inline' : 'block'} placeholder"
     bind:this={wrapper}
     contenteditable="false"
     tabindex="0"
@@ -465,7 +467,7 @@
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <div
     role="group"
-    class="wrapper"
+    class="component {inline ? 'inline' : 'block'} wrapper"
     bind:this={wrapper}
     contenteditable="false"
     tabindex="0"
@@ -525,8 +527,25 @@
 {/if}
 
 <style>
+  .component {
+    &.block {
+      display: block;
+
+      &:not(:first-child) {
+        margin-top: var(--sui-paragraph-margin);
+      }
+
+      &:not(:last-child) {
+        margin-bottom: var(--sui-paragraph-margin);
+      }
+    }
+
+    &.inline {
+      display: inline-block;
+    }
+  }
+
   .wrapper {
-    display: inline-block; /* Cancel underline if the component is within a link */
     border: 1px solid var(--sui-secondary-border-color);
     border-radius: 4px;
     width: 100%;
@@ -569,14 +588,9 @@
         }
       }
     }
-
-    & + :global(.wrapper) {
-      margin-top: 16px;
-    }
   }
 
   .placeholder {
-    display: inline;
     border: dashed 1px currentColor;
     border-color: hsl(from currentColor h s l / 0.5);
     border-radius: 2px;
@@ -592,6 +606,14 @@
     &:focus {
       outline: 2px solid var(--sui-primary-accent-color-translucent);
       outline-offset: 1px;
+    }
+
+    &.block {
+      width: fit-content;
+    }
+
+    &.inline:not(:first-child) {
+      margin-inline-start: var(--sui-paragraph-margin);
     }
   }
 

@@ -419,6 +419,7 @@
 
 <style>
   .wrapper {
+    --sui-paragraph-margin: 20px;
     display: contents;
 
     &.minimal {
