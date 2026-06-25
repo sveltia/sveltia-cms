@@ -80,6 +80,7 @@
 
   /** @type {HTMLElement | undefined} */
   let container = $state();
+  let observerReady = $state(false);
 
   const entry = $derived($entryDraft?.originalEntry);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
@@ -220,9 +221,11 @@
   onMount(() => {
     const observer = new MutationObserver(mutationCallback);
 
-    if (container) {
-      observer.observe(container, { childList: true, subtree: true });
-    }
+    // Make sure to render the markdown after the observer is set up, otherwise the callback may not
+    // be called for the initial content.
+    // @see https://github.com/sveltia/sveltia-cms/issues/805
+    observer.observe(/** @type {HTMLElement} */ (container), { childList: true, subtree: true });
+    observerReady = true;
 
     return () => {
       observer.disconnect();
@@ -233,7 +236,7 @@
 </script>
 
 <div role="none" bind:this={container}>
-  {#if markdown}
+  {#if observerReady && markdown}
     {#each splitMarkdownBlocks(markdown) as block, index (`${index}-${block}`)}
       {@html parseMarkdown(block)}
     {/each}
