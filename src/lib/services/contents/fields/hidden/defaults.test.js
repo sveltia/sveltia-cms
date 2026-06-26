@@ -426,4 +426,262 @@ describe('Test getDefaultValueMap()', () => {
       );
     });
   });
+
+  describe('transformations', () => {
+    test('should apply upper transformation to locale placeholder', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '{{locale | upper}}',
+      };
+
+      const keyPath = 'locale_upper';
+      const locale = 'en';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ locale_upper: 'EN' });
+    });
+
+    test('should apply lower transformation to locale placeholder', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '{{locale | lower}}',
+      };
+
+      const keyPath = 'locale_lower';
+      const locale = 'EN-US';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ locale_lower: 'en-us' });
+    });
+
+    test('should apply date transformation to datetime placeholder', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: "{{datetime | date('YYYY-MM-DD')}}",
+      };
+
+      const keyPath = 'date_only';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ date_only: '2023-06-15' });
+    });
+
+    test('should apply date transformation with time format to datetime placeholder', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: "{{datetime | date('YYYY-MM-DD HH:mm')}}",
+      };
+
+      const keyPath = 'datetime_formatted';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      // The mock time is 10:30 AM UTC
+      expect(result).toEqual({ datetime_formatted: '2023-06-15 10:30' });
+    });
+
+    test('should apply upper transformation to author-name placeholder', () => {
+      user.account = { backendName: 'github', login: '', name: 'John Doe', email: '' };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '{{author-name | upper}}',
+      };
+
+      const keyPath = 'author_upper';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ author_upper: 'JOHN DOE' });
+    });
+
+    test('should apply slugify transformation to author-name placeholder', () => {
+      user.account = { backendName: 'github', login: '', name: 'John Doe', email: '' };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '{{author-name | slugify}}',
+      };
+
+      const keyPath = 'author_slug';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ author_slug: 'john-doe' });
+    });
+
+    test('should apply truncate transformation to author-name placeholder', () => {
+      user.account = { backendName: 'github', login: '', name: 'John Doe', email: '' };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '{{author-name | truncate(5)}}',
+      };
+
+      const keyPath = 'author_truncated';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ author_truncated: 'John…' });
+    });
+
+    test('should apply multiple chained transformations', () => {
+      user.account = { backendName: 'github', login: '', name: 'John Doe', email: '' };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '{{author-name | upper | slugify}}',
+      };
+
+      const keyPath = 'author_multi';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ author_multi: 'john-doe' });
+    });
+
+    test('should apply transformations to multiple placeholders independently', () => {
+      user.account = { backendName: 'github', login: 'johndoe', name: 'John Doe', email: '' };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '{{author-name | upper}}-{{author-login | lower}}-{{locale | upper}}',
+      };
+
+      const keyPath = 'multi_placeholder';
+      const locale = 'en';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ multi_placeholder: 'JOHN DOE-johndoe-EN' });
+    });
+
+    test('should apply default transformation to empty author-email placeholder', () => {
+      user.account = { backendName: 'github', login: '', name: '', email: '' };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: "{{author-email | default('no-email@example.com')}}",
+      };
+
+      const keyPath = 'email_with_default';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ email_with_default: 'no-email@example.com' });
+    });
+
+    test('should not apply default transformation when author-email has value', () => {
+      user.account = { backendName: 'github', login: '', name: '', email: 'john@example.com' };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: "{{author-email | default('no-email@example.com')}}",
+      };
+
+      const keyPath = 'email_with_default';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ email_with_default: 'john@example.com' });
+    });
+
+    test('should handle transformation with whitespace in placeholder', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: '{{ locale | upper }}',
+      };
+
+      const keyPath = 'locale_spaces';
+      const locale = 'en';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ locale_spaces: 'EN' });
+    });
+
+    test('should work with transformation in dynamicValue', () => {
+      user.account = { backendName: 'github', login: '', name: 'John Doe', email: '' };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: 'default-value',
+      };
+
+      const keyPath = 'test_hidden';
+      const locale = '_default';
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath,
+        locale,
+        defaultLocale: locale,
+        dynamicValue: '{{author-name | upper | slugify}}',
+      });
+
+      expect(result).toEqual({ test_hidden: 'john-doe' });
+    });
+
+    test('should combine datetime with date transformation', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: "created-{{datetime | date('YYYY-MM-DD')}}",
+      };
+
+      const keyPath = 'created_date';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ created_date: 'created-2023-06-15' });
+    });
+
+    test('should apply ternary transformation to placeholders', () => {
+      user.account = {
+        backendName: 'github',
+        login: 'johndoe',
+        name: 'John Doe',
+        email: 'john@example.com',
+      };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: "{{author-email | ternary('has-email', 'no-email')}}",
+      };
+
+      const keyPath = 'email_check';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ email_check: 'has-email' });
+    });
+
+    test('should handle complex multi-transformation chain', () => {
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: "{{datetime | date('YYYY-MM-DD HH:mm:ss') | truncate(10)}}",
+      };
+
+      const keyPath = 'complex';
+      const locale = '_default';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      // After date formatting and truncation to 10 characters
+      expect(result).toEqual({ complex: '2023-06-15…' });
+    });
+  });
 });
