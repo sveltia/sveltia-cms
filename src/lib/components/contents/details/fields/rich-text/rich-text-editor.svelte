@@ -43,7 +43,12 @@
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
-   * @import { EditorComponentDefinition, ImageField, MarkdownField } from '$lib/types/public';
+   * @import {
+   * EditorComponentDefinition,
+   * ImageField,
+   * MarkdownField,
+   * RichTextField,
+   * } from '$lib/types/public';
    */
 
   /**
@@ -52,7 +57,7 @@
 
   /**
    * @typedef {object} Props
-   * @property {MarkdownField} fieldConfig Field configuration.
+   * @property {MarkdownField | RichTextField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
 
@@ -113,8 +118,8 @@
     let nested = _allowNestedComponents;
 
     if (inEditorComponent) {
-      // Retrieve the parent Markdown field config
-      nested = /** @type {MarkdownField} */ (
+      // Retrieve the parent Markdown or RichText field config
+      nested = /** @type {MarkdownField | RichTextField} */ (
         getField({
           collectionName,
           fileName,

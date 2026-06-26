@@ -28,6 +28,18 @@
     splitMarkdownBlocks,
   } from '$lib/services/contents/fields/rich-text/helper';
 
+  /**
+   * @import { FieldPreviewProps } from '$lib/types/private';
+   * @import { MarkdownField, RichTextField } from '$lib/types/public';
+   * @import { ComponentPreview } from '$lib/services/contents/fields/rich-text/helper';
+   */
+
+  /**
+   * @typedef {object} Props
+   * @property {MarkdownField | RichTextField} fieldConfig Field configuration.
+   * @property {string | undefined} currentValue Field value.
+   */
+
   use(markedBidi());
 
   use({
@@ -49,18 +61,6 @@
       },
     },
   });
-
-  /**
-   * @import { FieldPreviewProps } from '$lib/types/private';
-   * @import { MarkdownField } from '$lib/types/public';
-   * @import { ComponentPreview } from '$lib/services/contents/fields/rich-text/helper';
-   */
-
-  /**
-   * @typedef {object} Props
-   * @property {MarkdownField} fieldConfig Field configuration.
-   * @property {string | undefined} currentValue Field value.
-   */
 
   const defaultConfig = $cmsConfig?.field_defaults?.richtext ?? {};
   /** @type {SvelteMap<HTMLElement, import('react-dom/client').Root>} */
