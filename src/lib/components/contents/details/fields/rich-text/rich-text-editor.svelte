@@ -90,7 +90,7 @@
     editor_components: _editorComponents = defaultConfig.editor_components ??
       // Include all built-in and custom components by default
       [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
-    nested_editor_components: _nestedComponents,
+    allow_nested_components: _allowNestedComponents,
     linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
     minimal = defaultConfig.minimal ?? false,
   } = $derived(fieldConfig);
@@ -109,8 +109,8 @@
       .map((name) => BUTTON_NAME_MAP[name])
       .filter(Boolean),
   );
-  const nestedComponents = $derived.by(() => {
-    let nested = _nestedComponents;
+  const allowNestedComponents = $derived.by(() => {
+    let nested = _allowNestedComponents;
 
     if (inEditorComponent) {
       // Retrieve the parent Markdown field config
@@ -123,19 +123,19 @@
           // Extract the parent field name, e.g. `body:c55:content` -> `body`
           keyPath: /** @type {string} */ (keyPath.match(/^[^:]+/)?.[0]),
         })
-      )?.nested_editor_components;
+      )?.allow_nested_components;
     }
 
-    return nested ?? defaultConfig.nested_editor_components ?? true;
+    return nested ?? defaultConfig.allow_nested_components ?? true;
   });
   const components = $derived.by(() => {
-    if (inEditorComponent && !nestedComponents) {
+    if (inEditorComponent && !allowNestedComponents) {
       return [];
     }
 
     return _editorComponents
       .filter((name) =>
-        nestedComponents === 'exclude_self' ? !parentComponentNames.includes(name) : true,
+        allowNestedComponents === 'exclude_self' ? !parentComponentNames.includes(name) : true,
       )
       .map((name) =>
         getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
