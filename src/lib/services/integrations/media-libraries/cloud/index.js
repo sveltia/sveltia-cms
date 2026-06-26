@@ -1,5 +1,6 @@
 import cloudinary from './cloudinary';
 import awsS3 from './s3/aws-s3';
+import backblazeB2 from './s3/backblaze-b2';
 import cloudflareR2 from './s3/cloudflare-r2';
 import digitaloceanSpaces from './s3/digitalocean-spaces';
 import scaleway from './s3/scaleway';
@@ -17,6 +18,7 @@ import uploadcare from './uploadcare';
  */
 export const allCloudStorageServices = {
   aws_s3: awsS3,
+  backblaze_b2: backblazeB2, // S3-compatible
   cloudflare_r2: cloudflareR2, // S3-compatible
   cloudinary,
   digitalocean_spaces: digitaloceanSpaces, // S3-compatible

@@ -31,7 +31,7 @@
 
 /**
  * Cloud media storage name.
- * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'cloudflare_r2' |
+ * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'backblaze_b2' | 'cloudflare_r2' |
  * 'digitalocean_spaces' | 'scaleway_object_storage' | 'supabase_storage'} CloudMediaLibraryName
  */
 
@@ -241,6 +241,8 @@
  * Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [digitalocean_spaces] Options for the DigitalOcean Spaces
  * media storage. Set to `false` to explicitly disable.
+ * @property {S3MediaLibrary | false} [backblaze_b2] Options for the Backblaze B2 media storage. Set
+ * to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [scaleway_object_storage] Options for the Scaleway Object
  * Storage media storage. Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [supabase_storage] Options for the Supabase Storage media

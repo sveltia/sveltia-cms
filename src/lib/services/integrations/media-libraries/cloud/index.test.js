@@ -9,7 +9,7 @@ describe('Cloud storage services', () => {
   });
 
   test('should be an empty object', () => {
-    expect(Object.keys(allCloudStorageServices)).toHaveLength(7);
+    expect(Object.keys(allCloudStorageServices)).toHaveLength(8);
   });
 
   test('should include cloudinary service', () => {
