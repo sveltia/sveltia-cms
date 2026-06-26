@@ -17,6 +17,7 @@
 
   import { cmsConfig } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getField } from '$lib/services/contents/entry/fields';
   import { getAssetLibraryFolderMap } from '$lib/services/contents/fields/file/helper';
   import { processResource } from '$lib/services/contents/fields/file/process';
   import {
@@ -59,7 +60,7 @@
 
   const defaultConfig = $cmsConfig?.field_defaults?.richtext ?? {};
   /** @type {FieldEditorContext} */
-  const { fieldContext = undefined } = getContext('field-editor') ?? {};
+  const { fieldContext, parentComponentNames, valueStoreKey } = getContext('field-editor') ?? {};
   const inEditorComponent = fieldContext === 'rich-text-editor-component';
 
   /** @type {FieldEditorProps & Props} */
@@ -89,10 +90,15 @@
     editor_components: _editorComponents = defaultConfig.editor_components ??
       // Include all built-in and custom components by default
       [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
+    nested_editor_components: _nestedComponents,
     linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
     minimal = defaultConfig.minimal ?? false,
   } = $derived(fieldConfig);
   const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
+  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
+  const collectionName = $derived($entryDraft?.collectionName ?? '');
+  const fileName = $derived($entryDraft?.fileName);
+  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
   const buttons = $derived(
     [
       ..._buttons,
@@ -103,13 +109,34 @@
       .map((name) => BUTTON_NAME_MAP[name])
       .filter(Boolean),
   );
-  const components = $derived.by(() => {
-    // Disable nested components
+  const nestedComponents = $derived.by(() => {
+    let nested = _nestedComponents;
+
     if (inEditorComponent) {
+      // Retrieve the parent Markdown field config
+      nested = /** @type {MarkdownField} */ (
+        getField({
+          collectionName,
+          fileName,
+          isIndexFile,
+          valueMap,
+          // Extract the parent field name, e.g. `body:c55:content` -> `body`
+          keyPath: /** @type {string} */ (keyPath.match(/^[^:]+/)?.[0]),
+        })
+      )?.nested_editor_components;
+    }
+
+    return nested ?? defaultConfig.nested_editor_components ?? true;
+  });
+  const components = $derived.by(() => {
+    if (inEditorComponent && !nestedComponents) {
       return [];
     }
 
     return _editorComponents
+      .filter((name) =>
+        nestedComponents === 'exclude_self' ? !parentComponentNames.includes(name) : true,
+      )
       .map((name) =>
         getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
       )
@@ -137,9 +164,6 @@
       return;
     }
 
-    const draft = $entryDraft;
-    const { collectionName, fileName, isIndexFile } = draft;
-
     const srcFieldConfig =
       /** @type {import('@sveltia/ui').TextEditorComponent & EditorComponentDefinition} */ (
         imageComponent
@@ -151,6 +175,7 @@
 
     const folderMap = getAssetLibraryFolderMap({ collectionName, fileName, isIndexFile });
     const folder = Object.values(folderMap).find(({ enabled }) => enabled)?.folder;
+    const draft = $entryDraft;
 
     // eslint-disable-next-line no-restricted-syntax
     for (const { file, src: externalSrc, alt = '' } of images) {
@@ -218,7 +243,7 @@
       event.stopPropagation();
 
       let alt = '';
-      let fileName = file.name;
+      let _fileName = file.name;
 
       /** @type {?HTMLImageElement} */
       const img = await new Promise((resolve) => {
@@ -234,12 +259,12 @@
           const name = new URL(img.src).pathname.split('/').pop() ?? '';
 
           if (RASTER_IMAGE_EXTENSION_REGEX.test(name) || VECTOR_IMAGE_EXTENSION_REGEX.test(name)) {
-            fileName = name;
+            _fileName = name;
           }
         }
       }
 
-      images = [{ file: new File([file], fileName, { type: file.type }), alt }];
+      images = [{ file: new File([file], _fileName, { type: file.type }), alt }];
     } else {
       // Handle pasted local files
       images = [...clipboardData.files]
@@ -253,9 +278,9 @@
         if (file?.name === 'image.png') {
           const { year, month, day, hour, minute, second } = getDateTimeParts();
           const suffix = images.length > 1 ? `-${index + 1}` : '';
-          const fileName = `${year}${month}${day}-${hour}${minute}${second}${suffix}.png`;
+          const _fileName = `${year}${month}${day}-${hour}${minute}${second}${suffix}.png`;
 
-          file = new File([file], fileName, { type: file.type });
+          file = new File([file], _fileName, { type: file.type });
         }
 
         return { file, alt };
@@ -304,9 +329,9 @@
                 const blob = await (await fetch(src)).blob();
                 const { year, month, day, hour, minute, second } = getDateTimeParts();
                 const extension = type.split('/')[1];
-                const fileName = `${year}${month}${day}-${hour}${minute}${second}.${extension}`;
+                const _fileName = `${year}${month}${day}-${hour}${minute}${second}.${extension}`;
 
-                file = new File([blob], fileName, { type });
+                file = new File([blob], _fileName, { type });
               } catch {
                 return;
               }

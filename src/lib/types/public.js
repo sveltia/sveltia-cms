@@ -754,6 +754,10 @@
  * @property {(RichTextEditorComponentName | string)[]} [editor_components] Names of components to
  * be enabled in the editor UI. This may include custom component names. Default: all the built-in
  * component names.
+ * @property {boolean | 'exclude_self'} [nested_editor_components] Whether to allow nested rich text
+ * editor components in the editor UI. If set to `'exclude_self'`, nested components are disabled if
+ * the parent components include the current component; this is useful to prevent unexpected
+ * behavior due to regex matching limitations. Default: `true`.
  * @property {RichTextEditorMode[]} [modes] Editor modes to be enabled. If it’s `[raw, rich_text]`,
  * rich text mode is disabled by default. Default: `[rich_text, raw]`.
  * @property {boolean} [sanitize_preview] Whether to sanitize the preview HTML. Default: `true`.

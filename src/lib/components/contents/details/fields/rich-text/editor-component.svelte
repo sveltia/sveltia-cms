@@ -432,6 +432,7 @@
             typedKeyPath="{keyPathPrefix}{fieldConfig.name}"
             {fieldConfig}
             context="rich-text-editor-component"
+            {componentName}
             {valueStoreKey}
           />
         {/each}
@@ -517,6 +518,7 @@
               typedKeyPath="{typedKeyPathPrefix}{fieldConfig.name}"
               {fieldConfig}
               context="rich-text-editor-component"
+              {componentName}
               {valueStoreKey}
             />
           </VisibilityObserver>

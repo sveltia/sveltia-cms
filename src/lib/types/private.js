@@ -1019,6 +1019,9 @@
  * Context for a field editor.
  * @typedef {object} FieldEditorContext
  * @property {FieldContext} [fieldContext] Where the field is rendered.
+ * @property {string[]} parentComponentNames Names of the parent rich text editor components. If
+ * nested, the first element is the top-level component, and the last element is the immediate
+ * parent component. If the field is not in a rich text editor component, the array is empty.
  * @property {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
  * @property {Writable<Component>} [extraHint] Component to render an extra hint in the field
  * editor.

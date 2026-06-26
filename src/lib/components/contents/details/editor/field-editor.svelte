@@ -51,6 +51,7 @@
    * @property {TypedFieldKeyPath} typedKeyPath Typed field key path.
    * @property {Field} fieldConfig Field configuration.
    * @property {FieldContext} [context] Where the field is rendered.
+   * @property {string} [componentName] Name of the parent rich text editor component, if any.
    * @property {DraftValueStoreKey} [valueStoreKey] Key to store the values in {@link EntryDraft}.
    */
 
@@ -62,6 +63,7 @@
     typedKeyPath,
     fieldConfig,
     context: fieldContext = parent.fieldContext ?? undefined,
+    componentName,
     valueStoreKey = parent.valueStoreKey ?? 'currentValues',
     /* eslint-enable prefer-const */
   } = $props();
@@ -85,7 +87,12 @@
   setContext(
     'field-editor',
     // svelte-ignore state_referenced_locally
-    /** @type {FieldEditorContext} */ ({ fieldContext, extraHint, valueStoreKey }),
+    /** @type {FieldEditorContext} */ ({
+      fieldContext,
+      parentComponentNames: [...(parent.parentComponentNames ?? []), componentName].filter(Boolean),
+      extraHint,
+      valueStoreKey,
+    }),
   );
 
   const inEditorComponent = $derived(fieldContext === 'rich-text-editor-component');
