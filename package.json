@@ -1,6 +1,6 @@
 {
   "name": "@sveltia/cms",
-  "version": "0.167.5",
+  "version": "0.168.0",
   "description": "Sveltia CMS is a modern, lightweight, Git-based headless content management system.",
   "keywords": [
     "svelte",
