@@ -8,6 +8,10 @@
   import { getContext, untrack } from 'svelte';
 
   import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+  import {
+    applyTransformations,
+    TRANSFORMATION_SPLIT_REGEX,
+  } from '$lib/services/common/transformations';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
   import { getListFormatter } from '$lib/services/contents/i18n';
@@ -74,7 +78,9 @@
         return getIndex() ?? '';
       }
 
-      return valueTemplate.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (_match, tagName) => {
+      return valueTemplate.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (_match, placeholder) => {
+        const [tagName, ...transformations] = placeholder.trim().split(TRANSFORMATION_SPLIT_REGEX);
+
         if (tagName === 'index') {
           return String(getIndex() ?? '');
         }
@@ -83,7 +89,7 @@
           return '';
         }
 
-        const value = getFieldDisplayValue({
+        let value = getFieldDisplayValue({
           collectionName,
           fileName,
           valueMap,
@@ -92,7 +98,13 @@
           isIndexFile,
         });
 
-        return Array.isArray(value) ? listFormatter.format(value) : String(value);
+        value = Array.isArray(value) ? listFormatter.format(value) : String(value);
+
+        if (transformations.length) {
+          return applyTransformations({ value, transformations, locale });
+        }
+
+        return value;
       });
     })();
 
