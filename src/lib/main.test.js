@@ -42,7 +42,7 @@ vi.mock('$lib/services/contents/file/config', () => ({
 vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => ({
   customComponentRegistry: new Map(),
 }));
-vi.mock('$lib/services/contents/draft/events', () => ({
+vi.mock('$lib/services/contents/api/events', () => ({
   eventHookRegistry: new Set(),
   SUPPORTED_EVENT_TYPES: [
     'preSave',

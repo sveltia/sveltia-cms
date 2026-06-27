@@ -5,7 +5,7 @@ import createClass from 'create-react-class';
 import { createElement } from 'react';
 import { mount } from 'svelte';
 
-import { eventHookRegistry, SUPPORTED_EVENT_TYPES } from '$lib/services/contents/draft/events';
+import { eventHookRegistry, SUPPORTED_EVENT_TYPES } from '$lib/services/contents/api/events';
 import {
   customPreviewStyleRegistry,
   customPreviewTemplateRegistry,

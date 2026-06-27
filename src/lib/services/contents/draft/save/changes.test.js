@@ -22,7 +22,7 @@ vi.mock('$lib/services/contents/draft/save/serialize');
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/file/format');
 vi.mock('$lib/services/integrations/media-libraries/default');
-vi.mock('$lib/services/contents/draft/events', () => ({
+vi.mock('$lib/services/contents/api/events', () => ({
   callEventHooks: vi.fn(),
 }));
 vi.mock('$lib/services/user/prefs.svelte', () => ({
@@ -217,7 +217,7 @@ describe('draft/save/changes', () => {
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
-      const { callEventHooks } = await import('$lib/services/contents/draft/events');
+      const { callEventHooks } = await import('$lib/services/contents/api/events');
 
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
@@ -267,7 +267,7 @@ describe('draft/save/changes', () => {
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
-      const { callEventHooks } = await import('$lib/services/contents/draft/events');
+      const { callEventHooks } = await import('$lib/services/contents/api/events');
 
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Modified in hook' });
@@ -325,7 +325,7 @@ describe('draft/save/changes', () => {
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
-      const { callEventHooks } = await import('$lib/services/contents/draft/events');
+      const { callEventHooks } = await import('$lib/services/contents/api/events');
 
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });

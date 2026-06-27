@@ -3,6 +3,7 @@ import { get } from 'svelte/store';
 import { isLastCommitPublished } from '$lib/services/backends';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
+import { callEventHooks } from '$lib/services/contents/api/events';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
@@ -11,7 +12,6 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
-import { callEventHooks } from '$lib/services/contents/draft/events';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
