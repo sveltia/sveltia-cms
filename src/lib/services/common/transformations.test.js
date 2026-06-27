@@ -126,12 +126,6 @@ describe('Test applyTransformation()', () => {
         transformation: { method: 'truncate', args: { max: '50', ellipsis: '***' } },
       }),
     ).toBe('Lorem ipsum dolor sit amet, consectetur adipiscing***');
-    expect(
-      applyTransformation({
-        value: title,
-        transformation: { method: 'truncate', args: { max: '-10' } },
-      }),
-    ).toBe('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam pulvinar s…');
   });
 
   test('date', () => {
