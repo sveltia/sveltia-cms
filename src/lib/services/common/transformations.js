@@ -43,12 +43,12 @@ const TRANSFORMATION_SPLIT_REGEX = /\s*\|\s*/;
 const DATE_ONLY_REGEX = /^\d{4}-[01]\d-[0-3]\d$/;
 const DATE_PART_REGEX = /T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z$/;
 
-const TRANSFORMATION_PARSERS = {
+const TRANSFORMATION_PARSERS = Object.entries({
   date: /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/,
   default: /^default\('(?<defaultValue>.+?)'\)$/,
   ternary: /^ternary\('(?<truthyValue>.*?)',\s*'(?<falsyValue>.*?)'\)$/,
   truncate: /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/,
-};
+});
 
 /**
  * Parse a single transformation string into a structured object.
@@ -57,7 +57,7 @@ const TRANSFORMATION_PARSERS = {
  */
 const parseTransformation = (transformation) => {
   // eslint-disable-next-line no-restricted-syntax
-  for (const [method, regex] of Object.entries(TRANSFORMATION_PARSERS)) {
+  for (const [method, regex] of TRANSFORMATION_PARSERS) {
     const entries = Object.entries(transformation.match(regex)?.groups ?? {});
 
     if (entries.length) {
