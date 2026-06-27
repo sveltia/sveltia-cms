@@ -1852,21 +1852,36 @@
  * @see https://sveltiacms.app/en/docs/api/events
  */
 
-// @todo Write descriptions for the options below
-/* eslint-disable jsdoc/require-property-description */
-
 /**
+ * Props for custom preview template React components.
  * @typedef {object} CustomPreviewTemplateProps
- * @property {Record<string, any>} entry
- * @property {(name: string) => any} widgetFor
- * @property {(name: string) => any} widgetsFor
- * @property {(name: string) => any} getAsset
- * @property {(collectionName: string, slug?: string) => any} getCollection
- * @property {Document} document
- * @property {Window} window
+ * @property {MapOf<ApiEntry>} entry Entry data wrapped in an Immutable Map with a `data` property
+ * containing the entry content. Access values using `entry.getIn(['data', 'fieldName'])`.
+ * @property {(keyPath: string) => any} widgetFor Function that returns a React element rendering a
+ * Svelte field preview component for a given field key path.
+ * @property {(name: string) => any} widgetsFor Function that returns widget data for a given field
+ * name. For list fields, returns an array of Immutable Maps; for object fields, returns a single
+ * Immutable Map. Each map has `data` (raw values) and `widgets` (React preview elements) keys.
+ * @property {(assetPath: string) => string} getAsset Function that returns the public URL for a
+ * given asset path. Returns an empty string if the asset is not found.
+ * @property {(collectionName: string, slug?: string) => Promise<(MapOf<{ data: RawEntryContent }>[]
+ * | MapOf<{ data: RawEntryContent }>)>} getCollection Async function that returns entries from a
+ * specified collection. Each entry is an Immutable Map with a `data` property containing the entry
+ * content. If the `slug` parameter is provided, the function returns a single entry; otherwise, it
+ * returns a list of entries.
+ * @property {MapOf<Record<string, any>>} fieldsMetaData Immutable Map containing metadata for each
+ * field, keyed by field name. Each field’s metadata includes author information from the Git
+ * commit: `author` (display name), `authorLogin` (username), and `authorEmail` (email address).
+ * @property {Document} document The iframe’s Document object, allowing access to the preview’s DOM.
+ * React components should use this instead of the global `document`.
+ * @property {Window} window The iframe’s Window object, allowing access to the preview’s window
+ * context. React components should use this instead of the global `window`.
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
+
+// @todo Write descriptions for the options below
+/* eslint-disable jsdoc/require-property-description */
 
 /**
  * @typedef {object} CustomFieldControlProps
