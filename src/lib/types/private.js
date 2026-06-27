@@ -1256,7 +1256,7 @@
  * Parsed transformation descriptor used by template placeholders and summary rendering.
  * @typedef {object} StringTransformation
  * @property {string} method The transformation name.
- * @property {Record<string, any>} args Transformation arguments.
+ * @property {Record<string, string>} args Transformation arguments.
  */
 
 export {};
