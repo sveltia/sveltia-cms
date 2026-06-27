@@ -1,7 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
-import { TRANSFORMATION_SPLIT_REGEX } from '$lib/services/common/transformations';
+import { parseTransformations } from '$lib/services/common/transformations';
 import {
   getFieldDisplayValue,
   getVisibleFieldDisplayValue,
@@ -64,7 +64,7 @@ export const formatSummary = ({
    * @returns {string} The display value to replace the template tag.
    */
   const replacer = (_match, placeholder) => {
-    const [tag, ...transformations] = placeholder.split(TRANSFORMATION_SPLIT_REGEX);
+    const { value: tag, transformations } = parseTransformations(placeholder);
 
     return getFieldDisplayValue({
       ...getFieldArgs,

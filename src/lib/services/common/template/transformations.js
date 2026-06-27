@@ -1,23 +1,23 @@
 import { INNER_TAG_REGEX } from '$lib/services/common/template/constants';
-import { DEFAULT_TRANSFORMATION_REGEX } from '$lib/services/common/transformations';
 
 /**
+ * @import { StringTransformation } from '$lib/types/private';
  * @import { ReplaceSubContext } from '$lib/services/common/template/replacers';
  */
 
 /**
  * Processes transformations for a template placeholder.
  * @internal
- * @param {string[]} transformations Array of transformation strings.
+ * @param {StringTransformation[]} transformations Transformation entries.
  * @param {ReplaceSubContext} replaceSubContext Context for replacement.
  * @param {(tag: string, context: ReplaceSubContext) => any} replaceTemplateTag Replaces tags.
- * @returns {{ transformations: string[], hasDefaultTransformation: boolean }} Result.
+ * @returns {{ transformations: StringTransformation[], hasDefaultTransformation: boolean }} Result.
  */
 export const processTransformations = (transformations, replaceSubContext, replaceTemplateTag) => {
   let hasDefaultTransformation = false;
 
   transformations.forEach((tf, index) => {
-    const { defaultValue } = tf.match(DEFAULT_TRANSFORMATION_REGEX)?.groups ?? {};
+    const { defaultValue } = tf.args;
 
     if (defaultValue !== undefined) {
       hasDefaultTransformation = true;
@@ -27,8 +27,10 @@ export const processTransformations = (transformations, replaceSubContext, repla
       const { innerTag } = defaultValue.match(INNER_TAG_REGEX)?.groups ?? {};
 
       if (innerTag !== undefined) {
-        transformations[index] =
-          `default('${replaceTemplateTag(innerTag, replaceSubContext) ?? ''}')`;
+        transformations[index] = {
+          method: 'default',
+          args: { defaultValue: replaceTemplateTag(innerTag, replaceSubContext) ?? '' },
+        };
       }
     }
   });

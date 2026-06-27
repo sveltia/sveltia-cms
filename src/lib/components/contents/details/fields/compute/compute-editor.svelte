@@ -8,10 +8,7 @@
   import { getContext, untrack } from 'svelte';
 
   import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
-  import {
-    applyTransformations,
-    TRANSFORMATION_SPLIT_REGEX,
-  } from '$lib/services/common/transformations';
+  import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
   import { getListFormatter } from '$lib/services/contents/i18n';
@@ -79,7 +76,7 @@
       }
 
       return valueTemplate.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (_match, placeholder) => {
-        const [tagName, ...transformations] = placeholder.trim().split(TRANSFORMATION_SPLIT_REGEX);
+        const { value: tagName, transformations } = parseTransformations(placeholder);
 
         if (tagName === 'index') {
           return String(getIndex() ?? '');

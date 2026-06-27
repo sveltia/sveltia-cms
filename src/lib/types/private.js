@@ -1252,4 +1252,11 @@
  * @property {'success' | 'error'} [status] Status of the change. Default: `success`.
  */
 
+/**
+ * Parsed transformation descriptor used by template placeholders and summary rendering.
+ * @typedef {object} StringTransformation
+ * @property {string} method The transformation name.
+ * @property {Record<string, any>} args Transformation arguments.
+ */
+
 export {};

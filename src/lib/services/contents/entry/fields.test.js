@@ -2243,7 +2243,7 @@ describe('Test getFieldDisplayValue()', () => {
         valueMap,
         keyPath: 'publishDate',
         locale: 'en',
-        transformations: ['upper'], // Non-date transformation
+        transformations: [{ method: 'upper', args: {} }], // Non-date transformation
       });
 
       expect(mockGetDateTimeFieldDisplayValue).toHaveBeenCalledWith(
@@ -2367,7 +2367,7 @@ describe('Test getFieldDisplayValue()', () => {
         valueMap,
         keyPath: 'publishDate',
         locale: 'en',
-        transformations: ["date('YYYY-MM-DD')"], // matches DATE_TRANSFORMATION_REGEX
+        transformations: [{ method: 'date', args: { format: 'YYYY-MM-DD' } }],
       });
 
       // getDateTimeFieldDisplayValue should NOT be called when a date() transformation is present
@@ -2386,7 +2386,7 @@ describe('Test getFieldDisplayValue()', () => {
         valueMap,
         keyPath: 'title',
         locale: 'en',
-        transformations: ['upper'],
+        transformations: [{ method: 'upper', args: {} }],
       });
 
       expect(result).toBe('HELLO WORLD');
@@ -2400,7 +2400,7 @@ describe('Test getFieldDisplayValue()', () => {
         valueMap,
         keyPath: 'nonexistent',
         locale: 'en',
-        transformations: ['upper'],
+        transformations: [{ method: 'upper', args: {} }],
       });
 
       expect(result).toBe('');

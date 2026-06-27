@@ -5,12 +5,7 @@ import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
-import {
-  applyTransformations,
-  DATE_TRANSFORMATION_REGEX,
-  TERNARY_TRANSFORMATION_REGEX,
-  TRANSFORMATION_SPLIT_REGEX,
-} from '$lib/services/common/transformations';
+import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import {
   getIndexFile,
   isCollectionIndexFile,
@@ -165,7 +160,7 @@ export const replaceSub = (tag, context) => {
  */
 export const replace = (placeholder, context) => {
   const { content: valueMap, collectionName, replaceSubContext, defaultLocale } = context;
-  const [tag, ...transformations] = placeholder.split(TRANSFORMATION_SPLIT_REGEX);
+  const { value: tag, transformations } = parseTransformations(placeholder);
   const keyPath = tag.replace(/^fields\./, '');
   const getFieldArgs = { collectionName, valueMap, keyPath };
   let value = replaceSub(tag, replaceSubContext);
@@ -175,9 +170,7 @@ export const replace = (placeholder, context) => {
     // raw field value from the entry content. Otherwise, use the field display value. This is to
     // avoid applying the transformation to the display value, which leads to unexpected results.
     // Also use raw value for ternary transformations to preserve boolean truthiness.
-    value = transformations.some(
-      (t) => DATE_TRANSFORMATION_REGEX.test(t) || TERNARY_TRANSFORMATION_REGEX.test(t),
-    )
+    value = transformations.some(({ method }) => method === 'date' || method === 'ternary')
       ? valueMap[keyPath]
       : getFieldDisplayValue({ ...getFieldArgs, locale: defaultLocale });
   }

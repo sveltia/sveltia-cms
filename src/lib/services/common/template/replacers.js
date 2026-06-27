@@ -9,10 +9,7 @@ import {
   handleUuidTag,
 } from '$lib/services/common/template/handlers';
 import { processTransformations } from '$lib/services/common/template/transformations';
-import {
-  applyTransformations,
-  TRANSFORMATION_SPLIT_REGEX,
-} from '$lib/services/common/transformations';
+import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { getField } from '$lib/services/contents/entry/fields';
 
 /**
@@ -105,11 +102,11 @@ export const replaceTemplateTag = (tag, context) => {
  */
 export const replaceTemplatePlaceholder = (placeholder, context) => {
   const { replaceSubContext, getFieldArgs } = context;
-  const [tag, ...rawTransformations] = placeholder.split(TRANSFORMATION_SPLIT_REGEX);
+  const { value: tag, transformations: parsedTransformations } = parseTransformations(placeholder);
   let value = replaceTemplateTag(tag, replaceSubContext);
 
   const { transformations, hasDefaultTransformation } = processTransformations(
-    rawTransformations,
+    parsedTransformations,
     replaceSubContext,
     replaceTemplateTag,
   );

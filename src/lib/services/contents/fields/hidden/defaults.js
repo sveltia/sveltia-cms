@@ -1,10 +1,7 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
-import {
-  applyTransformations,
-  TRANSFORMATION_SPLIT_REGEX,
-} from '$lib/services/common/transformations';
+import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -72,7 +69,7 @@ const getDefaultValue = ({ fieldConfig, locale, dynamicValue }) => {
   const context = { locale, account: /** @type {User} */ (user.account) };
 
   return value.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (_match, placeholder) => {
-    const [tag, ...transformations] = placeholder.trim().split(TRANSFORMATION_SPLIT_REGEX);
+    const { value: tag, transformations } = parseTransformations(placeholder);
     const val = replaceTemplateTag(tag, context);
 
     if (transformations.length) {

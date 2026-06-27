@@ -1,9 +1,6 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
-import {
-  applyTransformations,
-  DATE_TRANSFORMATION_REGEX,
-} from '$lib/services/common/transformations';
+import { applyTransformations } from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   getIndexFile,
@@ -27,6 +24,7 @@ import { isNumeric } from '$lib/services/utils/number';
  * GetFieldArgs,
  * InternalEntryCollection,
  * InternalLocaleCode,
+ * StringTransformation,
  * } from '$lib/types/private';
  * @import {
  * DateTimeField,
@@ -354,7 +352,7 @@ const numberFormatterCache = new Map();
  * @param {FlattenedEntryContent} [args.valueMap] Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
  * @param {InternalLocaleCode} args.locale Locale.
- * @param {string[]} [args.transformations] String transformations.
+ * @param {StringTransformation[]} [args.transformations] String transformations.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @returns {string} Resolved display value.
@@ -379,7 +377,7 @@ export const getFieldDisplayValue = ({
   if (fieldConfig?.widget === 'datetime') {
     // If the `date` transformation is provided, do nothing; it should be used instead of the field
     // `format` option, so the keep the original value for `applyTransformations()`
-    if (!transformations?.some((tf) => DATE_TRANSFORMATION_REGEX.test(tf))) {
+    if (!transformations?.some(({ method }) => method === 'date')) {
       value = getDateTimeFieldDisplayValue({
         locale,
         fieldConfig: /** @type {DateTimeField} */ (fieldConfig),

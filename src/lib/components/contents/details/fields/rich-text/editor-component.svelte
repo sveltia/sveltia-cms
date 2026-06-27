@@ -9,10 +9,7 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
-  import {
-    applyTransformations,
-    TRANSFORMATION_SPLIT_REGEX,
-  } from '$lib/services/common/transformations';
+  import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { validateFields } from '$lib/services/contents/draft/validate/fields';
@@ -241,7 +238,7 @@
     const flatValues = flatten(_values);
 
     const result = template.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (__, placeholder) => {
-      const [tag, ...transformations] = placeholder.trim().split(TRANSFORMATION_SPLIT_REGEX);
+      const { value: tag, transformations } = parseTransformations(placeholder);
       const fieldName = tag.replace(/^fields\./, '');
       let value = flatValues[fieldName];
 
