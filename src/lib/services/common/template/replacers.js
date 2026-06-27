@@ -135,7 +135,7 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     return String(value);
   }
 
-  // Slugify the value for a slug or filename. Don't limit the length here; it will be handled later
+  // Slugify the value for a slug or filename. Don’t limit the length here; it will be handled later
   // in `fillTemplate`.
   return slugify(String(value), { locale, maxLength: Infinity });
 };
