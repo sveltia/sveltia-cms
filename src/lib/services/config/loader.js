@@ -2,7 +2,9 @@ import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 import merge from 'deepmerge';
 
+import { SCHEMA_URL, SUPPORTED_TYPES } from '$lib/services/config/constants';
 import { parseTOML, parseYAML } from '$lib/services/contents/file/parse';
+import { env } from '$lib/services/user/env.svelte';
 import { isSecureURL } from '$lib/services/utils/networking';
 
 /**
@@ -10,16 +12,6 @@ import { isSecureURL } from '$lib/services/utils/networking';
  * @property {string} href File path or URL.
  * @property {string} [type] MIME type.
  */
-
-/**
- * Supported MIME types for configuration files.
- */
-const SUPPORTED_TYPES = [
-  'text/yaml', // legacy
-  'application/yaml', // default
-  'application/toml',
-  'application/json',
-];
 
 /**
  * Fetch a single configuration file.
@@ -30,12 +22,13 @@ const SUPPORTED_TYPES = [
  * @param {object} [options] Options.
  * @param {boolean} [options.manualInit] Whether a manual config is provided. This can affect error
  * handling.
+ * @param {boolean} [options.showSchemaTip] Whether to show schema help in the browser console.
  * @returns {Promise<object>} Configuration.
  * @throws {Error} When fetching or parsing has failed.
  */
 export const fetchFile = async (
   { href, type = 'application/yaml' },
-  { manualInit = false } = {},
+  { manualInit = false, showSchemaTip } = {},
 ) => {
   /** @type {Response} */
   let response;
@@ -69,19 +62,32 @@ export const fetchFile = async (
     });
   }
 
+  let schemaMissing = false;
   /** @type {object} */
   let result;
 
   try {
     if (type === 'application/json') {
       result = await response.json();
+
+      if (isObject(result) && result.$schema !== SCHEMA_URL) {
+        schemaMissing = true;
+      }
     } else {
       const text = await response.text();
 
       if (type === 'application/toml') {
         result = parseTOML(text);
+
+        if (!text.includes(`#:schema ${SCHEMA_URL}`)) {
+          schemaMissing = true;
+        }
       } else {
         result = parseYAML(text, { merge: true, maxAliasCount: -1 });
+
+        if (!text.includes(`# yaml-language-server: $schema=${SCHEMA_URL}`)) {
+          schemaMissing = true;
+        }
       }
     }
   } catch (ex) {
@@ -92,6 +98,11 @@ export const fetchFile = async (
     throw new Error(_('config.error.parse_failed'), {
       cause: new Error(_('config.error.parse_failed_invalid_object')),
     });
+  }
+
+  if (showSchemaTip && schemaMissing) {
+    // eslint-disable-next-line no-console
+    console.info(_('config.schema_tip'));
   }
 
   return result;
@@ -162,7 +173,11 @@ export const fetchCmsConfig = async ({ manualInit = false } = {}) => {
     throw new Error(_('config.error.insecure_urls', { values: { count: links.length } }));
   }
 
-  const objects = await Promise.all(links.map((link) => fetchFile(link, { manualInit })));
+  const showSchemaTip = env.isLocalHost && !manualInit && links.length === 1;
+
+  const objects = await Promise.all(
+    links.map((link) => fetchFile(link, { manualInit, showSchemaTip })),
+  );
 
   if (objects.length === 1) {
     return objects[0];

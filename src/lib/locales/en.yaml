@@ -822,6 +822,7 @@ config:
     unsupported_ignored_option: The `{$prop}` option is not supported in Sveltia CMS. It will be ignored.
     conflicting_timezone_options: Both `picker_utc` and newer timezone options (`input_timezone` or `output_utc`) are set. The new options take precedence. Consider removing `picker_utc` from your configuration.
   compatibility_link: "See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented"
+  schema_tip: For a better developer experience, you can validate your configuration file against the JSON schema of Sveltia CMS. See https://sveltiacms.app/en/docs/config-basics#validation-and-autocomplete for details.
 local_workflow:
   indicator: Local
   unsupported_browser: Local Workflow is not supported in your browser. Please use Chrome or Edge instead.
