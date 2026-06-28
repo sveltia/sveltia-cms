@@ -60,7 +60,7 @@ vi.mock('$lib/components/app.svelte', () => ({
 // Now import after all setup
 // @ts-ignore
 const CMS = (await import('./main.js')).default;
-const { customPreviewStyleRegistry } = await import('$lib/services/contents/editor');
+const { customPreviewStyleRegistry } = await import('$lib/services/contents/api/registries');
 
 describe('CMS.init()', () => {
   beforeEach(() => {

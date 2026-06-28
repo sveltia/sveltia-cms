@@ -1,12 +1,9 @@
 import { fromJS, isMap } from 'immutable';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  callEventHooks,
-  eventHookRegistry,
-  SUPPORTED_EVENT_TYPES,
-  UPDATABLE_EVENT_TYPES,
-} from './events';
+import { eventHookRegistry } from '$lib/services/contents/api/registries';
+
+import { callEventHooks, SUPPORTED_EVENT_TYPES, UPDATABLE_EVENT_TYPES } from './events';
 
 const mockUser = vi.hoisted(() => ({ login: 'testuser', name: 'Test User' }));
 

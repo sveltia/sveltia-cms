@@ -809,7 +809,7 @@ describe('Test formatEntryFile()', () => {
   test('uses custom formatter when available', async () => {
     const customFormatter = vi.fn().mockResolvedValue('custom formatted content');
     // Mock the custom file formats
-    const { customFileFormatRegistry } = await import('$lib/services/contents/file/config');
+    const { customFileFormatRegistry } = await import('$lib/services/contents/api/registries');
 
     customFileFormatRegistry.set('customFormat', {
       formatter: customFormatter,

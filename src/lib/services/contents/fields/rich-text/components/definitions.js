@@ -1,5 +1,6 @@
 import { _ } from '@sveltia/i18n';
 
+import { customComponentRegistry } from '$lib/services/contents/api/registries';
 import { replaceQuotes } from '$lib/services/contents/fields/rich-text/components/utils';
 import {
   IMAGE_OR_LINKED_IMAGE_REGEX,
@@ -10,12 +11,6 @@ import { escapeAttr } from '$lib/services/utils/string';
 /**
  * @import { EditorComponentDefinition } from '$lib/types/public';
  */
-
-/**
- * Custom components registered using `CMS.registerEditorComponent`.
- * @type {Map<string, EditorComponentDefinition>}
- */
-export const customComponentRegistry = new Map();
 
 /**
  * Built-in image component definition. The labels are localized in `getComponentDef()`.

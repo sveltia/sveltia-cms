@@ -16,6 +16,7 @@
   import { getContext, untrack } from 'svelte';
 
   import { cmsConfig } from '$lib/services/config';
+  import { customComponentRegistry } from '$lib/services/contents/api/registries';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getField } from '$lib/services/contents/entry/fields';
   import { getAssetLibraryFolderMap } from '$lib/services/contents/fields/file/helper';
@@ -29,10 +30,7 @@
     NODE_NAME_MAP,
   } from '$lib/services/contents/fields/rich-text';
   import { EditorComponent } from '$lib/services/contents/fields/rich-text/components';
-  import {
-    customComponentRegistry,
-    getComponentDef,
-  } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import {

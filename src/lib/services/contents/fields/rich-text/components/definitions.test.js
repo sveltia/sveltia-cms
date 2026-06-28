@@ -3,8 +3,9 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { customComponentRegistry } from '$lib/services/contents/api/registries.js';
+
 import {
-  customComponentRegistry,
   getBuiltInComponentDefs,
   getComponentDef,
   IMAGE_COMPONENT,

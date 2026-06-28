@@ -5,13 +5,14 @@ import createClass from 'create-react-class';
 import { createElement } from 'react';
 import { mount } from 'svelte';
 
-import { eventHookRegistry, SUPPORTED_EVENT_TYPES } from '$lib/services/contents/api/events';
+import { SUPPORTED_EVENT_TYPES } from '$lib/services/contents/api/events';
 import {
+  customComponentRegistry,
+  customFileFormatRegistry,
   customPreviewStyleRegistry,
   customPreviewTemplateRegistry,
-} from '$lib/services/contents/editor';
-import { customComponentRegistry } from '$lib/services/contents/fields/rich-text/components/definitions';
-import { customFileFormatRegistry } from '$lib/services/contents/file/config';
+  eventHookRegistry,
+} from '$lib/services/contents/api/registries';
 
 import App from './components/app.svelte';
 

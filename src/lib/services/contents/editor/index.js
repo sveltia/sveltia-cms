@@ -1,10 +1,8 @@
 import { writable } from 'svelte/store';
 
 /**
- * @import { ComponentType } from 'react';
  * @import { Writable } from 'svelte/store';
  * @import { EntryEditorPane, InternalLocaleCode, SelectAssetsView } from '$lib/types/private';
- * @import { CustomPreviewTemplateProps } from '$lib/types/public';
  */
 
 /**
@@ -67,19 +65,3 @@ export const editorSecondPane = writable(null);
  * @type {Writable<SelectAssetsView | undefined>}
  */
 export const selectAssetsView = writable();
-
-/**
- * Custom entry preview stylesheet URLs registered with the `CMS.registerPreviewStyle()` API.
- * @type {Set<string>}
- * @see https://decapcms.org/docs/customization/
- * @see https://sveltiacms.app/en/docs/api/preview-styles
- */
-export const customPreviewStyleRegistry = new Set();
-
-/**
- * Custom entry preview templates registered with the `CMS.registerPreviewTemplate()` API.
- * @type {Map<string, ComponentType<CustomPreviewTemplateProps>>}
- * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
- * @see https://sveltiacms.app/en/docs/api/preview-templates
- */
-export const customPreviewTemplateRegistry = new Map();

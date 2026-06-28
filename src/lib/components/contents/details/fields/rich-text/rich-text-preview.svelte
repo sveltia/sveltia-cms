@@ -14,12 +14,10 @@
 
   import { getMediaFieldURL } from '$lib/services/assets/info';
   import { cmsConfig } from '$lib/services/config';
+  import { customComponentRegistry } from '$lib/services/contents/api/registries';
   import { entryDraft } from '$lib/services/contents/draft';
   import { BUILTIN_COMPONENTS } from '$lib/services/contents/fields/rich-text';
-  import {
-    customComponentRegistry,
-    getComponentDef,
-  } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
   import {
     buildMarkdownWithPreviews,
     COMPONENT_QUERY_SELECTOR,

@@ -4,8 +4,8 @@
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import EntryPreviewIframe from '$lib/components/contents/details/preview/entry-preview-iframe.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
+  import { customPreviewStyleRegistry } from '$lib/services/contents/api/registries';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { customPreviewStyleRegistry } from '$lib/services/contents/editor';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';

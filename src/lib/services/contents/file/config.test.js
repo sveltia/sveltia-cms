@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { customFileFormatRegistry } from '$lib/services/contents/api/registries';
 import {
-  customFileFormatRegistry,
   detectFileExtension,
   detectFileFormat,
   getEntryPathRegEx,

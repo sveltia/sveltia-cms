@@ -3,9 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Import the stores and functions to test
 import {
-  copyFromLocaleToast,
   customPreviewStyleRegistry,
   customPreviewTemplateRegistry,
+} from '$lib/services/contents/api/registries';
+
+import {
+  copyFromLocaleToast,
   editorFirstPane,
   editorSecondPane,
   selectAssetsView,

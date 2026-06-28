@@ -3,8 +3,8 @@ import { get } from 'svelte/store';
 import { stringify as stringifyYAML } from 'yaml';
 
 import { cmsConfig } from '$lib/services/config';
+import { customFileFormatRegistry } from '$lib/services/contents/api/registries';
 import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';
-import { customFileFormatRegistry } from '$lib/services/contents/file/config';
 
 /**
  * @import { FileConfig, InternalLocaleCode } from '$lib/types/private';

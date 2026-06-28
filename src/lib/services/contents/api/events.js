@@ -3,12 +3,13 @@ import { flatten } from 'flat';
 import { isMap } from 'immutable';
 
 import { createEntryMap } from '$lib/services/contents/api/entries';
+import { eventHookRegistry } from '$lib/services/contents/api/registries';
 import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
  * @import { Entry, EntryDraft, User } from '$lib/types/private';
- * @import { AppEventListener, AppEventType } from '$lib/types/public';
+ * @import { AppEventType } from '$lib/types/public';
  */
 
 /**
@@ -29,11 +30,6 @@ export const SUPPORTED_EVENT_TYPES = [
  * @type {AppEventType[]}
  */
 export const UPDATABLE_EVENT_TYPES = ['preSave', 'prePublish'];
-
-/**
- * @type {Set<AppEventListener>}
- */
-export const eventHookRegistry = new Set();
 
 /**
  * Call the registered event hooks.

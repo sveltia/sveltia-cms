@@ -3,6 +3,7 @@ import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { warnDeprecation } from '$lib/services/config/deprecations';
+import { customFileFormatRegistry } from '$lib/services/contents/api/registries';
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import {
@@ -14,14 +15,9 @@ import {
 import { getLocalePath } from '$lib/services/contents/i18n';
 
 /**
- * @import { CustomFileFormat, FileConfig, InternalI18nOptions } from '$lib/types/private';
+ * @import { FileConfig, InternalI18nOptions } from '$lib/types/private';
  * @import { Collection, CollectionFile, FileExtension, FileFormat } from '$lib/types/public';
  */
-
-/**
- * @type {Map<string, CustomFileFormat>}
- */
-export const customFileFormatRegistry = new Map();
 
 /**
  * Detect a file extension from the given entry file configuration.

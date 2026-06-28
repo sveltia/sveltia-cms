@@ -649,11 +649,11 @@ describe('Test parseEntryFile()', () => {
 
     const collectionModule = await import('$lib/services/contents/collection');
     const collectionFileModule = await import('$lib/services/contents/collection/files');
-    const fileModule = await import('$lib/services/contents/file/config');
+    const regModule = await import('$lib/services/contents/api/registries');
 
     getCollection = collectionModule.getCollection;
     getCollectionFile = collectionFileModule.getCollectionFile;
-    customFileFormatRegistry = fileModule.customFileFormatRegistry;
+    customFileFormatRegistry = regModule.customFileFormatRegistry;
   });
 
   test('parses YAML format', async () => {
