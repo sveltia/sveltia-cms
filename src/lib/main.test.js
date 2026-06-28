@@ -957,7 +957,7 @@ describe('Script element detection and module type warning', () => {
     };
 
     // Clear and reset document mock
-    // @ts-ignoree
+    // @ts-ignore
     global.document.querySelector = vi.fn(() => mockScriptElement);
 
     // Re-import module to trigger the script detection code
