@@ -8,6 +8,7 @@ import { mount } from 'svelte';
 import { SUPPORTED_EVENT_TYPES } from '$lib/services/contents/api/events';
 import {
   customComponentRegistry,
+  customFieldTypeRegistry,
   customFileFormatRegistry,
   customPreviewStyleRegistry,
   customPreviewTemplateRegistry,
@@ -17,14 +18,13 @@ import {
 import App from './components/app.svelte';
 
 /**
- * @import { ComponentType } from 'react';
  * @import {
  * AppEventListener,
  * CmsConfig,
- * CustomFieldControlProps,
- * CustomFieldPreviewProps,
+ * CustomFieldControl,
+ * CustomFieldPreview,
  * CustomFieldSchema,
- * CustomPreviewTemplateProps,
+ * CustomPreviewTemplate,
  * EditorComponentDefinition,
  * FileFormatter,
  * FileParser,
@@ -263,7 +263,7 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
 /**
  * Register a custom preview template.
  * @param {string} name Template name.
- * @param {ComponentType<CustomPreviewTemplateProps>} component React component.
+ * @param {CustomPreviewTemplate} component React component.
  * @throws {TypeError} If `name` is not a string or `component` is not a function.
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
  * @see https://sveltiacms.app/en/docs/api/preview-templates
@@ -277,7 +277,7 @@ const registerPreviewTemplate = (name, component) => {
 
   if (typeof component !== 'function') {
     throw new TypeError(
-      'The `component` option for `CMS.registerPreviewTemplate()` must be a function',
+      'The `component` option for `CMS.registerPreviewTemplate()` must be a React component',
     );
   }
 
@@ -287,15 +287,38 @@ const registerPreviewTemplate = (name, component) => {
 /**
  * Register a custom field type (widget).
  * @param {string} name Field type name.
- * @param {ComponentType<CustomFieldControlProps> | string} control Component for the edit pane.
- * @param {ComponentType<CustomFieldPreviewProps>} [preview] Component for the preview pane.
+ * @param {CustomFieldControl | string} control Component for the edit pane.
+ * @param {CustomFieldPreview} [preview] Component for the preview pane.
  * @param {CustomFieldSchema} [schema] Field schema.
+ * @throws {TypeError} If `name` is not a string, `control` is not a function or string, `preview`
+ * is not a function, or `schema` is not an object.
  * @see https://decapcms.org/docs/custom-widgets/
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
 const registerFieldType = (name, control, preview, schema) => {
   console.warn('Custom field types (widgets) are not yet supported in Sveltia CMS.');
-  void [name, control, preview, schema];
+
+  if (typeof name !== 'string') {
+    throw new TypeError('The `name` option for `CMS.registerFieldType()` must be a string');
+  }
+
+  if (typeof control !== 'function' && typeof control !== 'string') {
+    throw new TypeError(
+      'The `control` option for `CMS.registerFieldType()` must be a React component or a string',
+    );
+  }
+
+  if (preview !== undefined && typeof preview !== 'function') {
+    throw new TypeError(
+      'The `preview` option for `CMS.registerFieldType()` must be a React component',
+    );
+  }
+
+  if (schema !== undefined && !isObject(schema)) {
+    throw new TypeError('The `schema` option for `CMS.registerFieldType()` must be an object');
+  }
+
+  customFieldTypeRegistry.set(name, { control, preview, schema });
 };
 
 const CMS = new Proxy(

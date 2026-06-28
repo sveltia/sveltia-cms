@@ -1,9 +1,11 @@
 /**
- * @import { ComponentType } from 'react';
  * @import { CustomFileFormat } from '$lib/types/private';
  * @import {
  * AppEventListener,
- * CustomPreviewTemplateProps,
+ * CustomFieldControl,
+ * CustomFieldPreview,
+ * CustomFieldSchema,
+ * CustomPreviewTemplate,
  * EditorComponentDefinition,
  * } from '$lib/types/public';
  */
@@ -15,6 +17,15 @@
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
 export const customComponentRegistry = new Map();
+
+/**
+ * Custom field types registered using the `CMS.registerField` API.
+ * @type {Map<string, { control: CustomFieldControl | string, preview?: CustomFieldPreview, schema?:
+ * CustomFieldSchema }>}
+ * @see https://decapcms.org/docs/custom-widgets/#registerwidget
+ * @see https://sveltiacms.app/en/docs/api/field-types
+ */
+export const customFieldTypeRegistry = new Map();
 
 /**
  * Custom file formats registered using the `CMS.registerFileFormat` API.
@@ -34,7 +45,7 @@ export const customPreviewStyleRegistry = new Set();
 
 /**
  * Custom entry preview templates registered with the `CMS.registerPreviewTemplate` API.
- * @type {Map<string, ComponentType<CustomPreviewTemplateProps>>}
+ * @type {Map<string, CustomPreviewTemplate>}
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
