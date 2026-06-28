@@ -1430,6 +1430,7 @@
  */
 
 /**
+ * Properties for an asset collection.
  * @typedef {object} AssetCollectionProps
  * @property {string} media_folder Internal media folder path for the collection, relative to the
  * project root.
@@ -1682,6 +1683,7 @@
  */
 
 /**
+ * Issue reporting options.
  * @typedef {object} IssueReports
  * @property {string} url URL of the issue reporting endpoint. Default:
  * `https://github.com/sveltia/sveltia-cms/issues/new`.
@@ -1881,6 +1883,7 @@
  */
 
 /**
+ * Custom preview template React component.
  * @typedef {ComponentType<CustomPreviewTemplateProps>} CustomPreviewTemplate
  */
 
@@ -1888,6 +1891,7 @@
 /* eslint-disable jsdoc/require-property-description */
 
 /**
+ * Props for custom field control React components.
  * @typedef {object} CustomFieldControlProps
  * @property {any} value
  * @property {Record<string, any>} field
@@ -1899,10 +1903,12 @@
  */
 
 /**
+ * Custom field control React component.
  * @typedef {ComponentType<CustomFieldControlProps>} CustomFieldControl
  */
 
 /**
+ * Props for custom field preview React components.
  * @typedef {object} CustomFieldPreviewProps
  * @property {any} value
  * @property {Record<string, any>} field
@@ -1915,10 +1921,12 @@
  */
 
 /**
+ * Custom field preview React component.
  * @typedef {ComponentType<CustomFieldPreviewProps>} CustomFieldPreview
  */
 
 /**
+ * Custom field schema definition.
  * @typedef {object} CustomFieldSchema
  * @property {Record<string, any>} properties
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
