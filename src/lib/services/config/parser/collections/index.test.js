@@ -348,9 +348,7 @@ describe('Collections Parser', () => {
           name: 'posts',
           folder: 'content/posts',
           fields: [{ name: 'title', widget: 'string' }],
-          index_file: {
-            /* no fields */
-          },
+          index_file: {/* no fields */},
         },
       };
 
