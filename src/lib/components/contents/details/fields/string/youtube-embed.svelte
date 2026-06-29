@@ -48,10 +48,10 @@
         src={encodeURI(embedURL)}
         title={_('youtube_video_player')}
         frameborder="0"
-        allow="autoplay; encrypted-media; picture-in-picture"
+        allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
         referrerpolicy="strict-origin-when-cross-origin"
         allowfullscreen
-        sandbox="allow-same-origin allow-scripts"
+        sandbox="allow-same-origin allow-scripts allow-popups"
       ></iframe>
     </VisibilityObserver>
   {:else}
