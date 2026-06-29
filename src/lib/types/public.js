@@ -1869,28 +1869,43 @@
  */
 
 /**
+ * Widget preview data returned by `widgetsFor`.
+ * @typedef {object} WidgetsForData
+ * @property {unknown} data Raw values for the field.
+ * @property {Record<string, ReactElement>} widgets Widget preview elements keyed by child field
+ * name.
+ */
+
+/**
+ * Return value of the `widgetsFor` callback.
+ * @typedef {Array<MapOf<WidgetsForData>> | MapOf<WidgetsForData> | string | number | boolean | null
+ * | undefined} WidgetsForResult
+ */
+
+/**
  * Props for custom preview template React components.
  * @typedef {object} CustomPreviewTemplateProps
- * @property {MapOf<ApiEntry>} entry Entry data wrapped in an Immutable Map with a `data` property
- * containing the entry content. Access values using `entry.getIn(['data', 'fieldName'])`.
- * @property {(keyPath: string) => any} widgetFor Function that returns a React element rendering a
- * Svelte field preview component for a given field key path.
- * @property {(name: string) => any} widgetsFor Function that returns widget data for a given field
- * name. For list fields, returns an array of Immutable Maps; for object fields, returns a single
- * Immutable Map. Each map has `data` (raw values) and `widgets` (React preview elements) keys.
+ * @property {MapOf<ApiEntry>} entry Entry data for the preview, wrapped in an Immutable Map. Read
+ * the entry content from `entry.getIn(['data', 'fieldName'])`.
+ * @property {(keyPath: FieldKeyPath) => ReactElement} widgetFor Function that returns a React
+ * element mounting a Svelte field preview for the given field key path.
+ * @property {(keyPath: FieldKeyPath) => WidgetsForResult} widgetsFor Function that returns widget
+ * data for a given field name. For list fields, it returns an array of objects; for object fields,
+ * a single object; and for primitive fields, the raw value. Each object has `data` (raw values) and
+ * `widgets` (React preview elements) entries.
  * @property {(path: string) => ApiAsset | undefined} getAsset Function that returns the asset item
  * for a given path. Returns `undefined` if the asset is not found.
  * @property {(collectionName: string, slug?: string) => Promise<(MapOf<{ data: RawEntryContent }>[]
  * | MapOf<{ data: RawEntryContent }>)>} getCollection Async function that returns entries from a
  * specified collection. Each entry is an Immutable Map with a `data` property containing the entry
- * content. If the `slug` parameter is provided, the function returns a single entry; otherwise, it
- * returns a list of entries.
- * @property {MapOf<Record<string, any>>} fieldsMetaData Immutable Map containing metadata for each
- * field, keyed by field name.
- * @property {Document} document The iframe’s Document object, allowing access to the preview’s DOM.
- * React components should use this instead of the global `document`.
- * @property {Window} window The iframe’s Window object, allowing access to the preview’s window
- * context. React components should use this instead of the global `window`.
+ * content. When `slug` is provided, it returns the matching entry; otherwise it returns the full
+ * list of entries.
+ * @property {MapOf<Record<string, any>>} fieldsMetaData Immutable Map of metadata for each field,
+ * keyed by field name. For relation fields, it can include referenced entry data.
+ * @property {Document} document The preview iframe’s Document object, allowing access to the
+ * preview DOM. React components should use this instead of the global `document`.
+ * @property {Window} window The preview iframe’s Window object, allowing access to the preview
+ * window context. React components should use this instead of the global `window`.
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
