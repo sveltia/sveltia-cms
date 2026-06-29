@@ -95,6 +95,7 @@
       [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
     allow_nested_components: _allowNestedComponents,
     linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
+    use_markdown_shortcuts: useMarkdownShortcuts = defaultConfig.use_markdown_shortcuts ?? true,
     minimal = defaultConfig.minimal ?? false,
   } = $derived(fieldConfig);
   const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
@@ -425,6 +426,7 @@
         {modes}
         {buttons}
         {components}
+        {useMarkdownShortcuts}
         bind:value={inputValue}
         flex
         {readonly}
