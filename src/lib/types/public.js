@@ -770,8 +770,10 @@
  * the format `[![alt](src)](link)`, where clicking the image navigates to the provided link. This
  * feature can be disabled if it causes conflicts with certain frameworks.
  * @property {boolean} [use_markdown_shortcuts] Whether to enable Markdown shortcuts in the rich
- * text editor. Default: `true`. The shortcuts include  `-` and `*` for a bulleted list, `1.` for a
- * numbered list, `>` for a blockquote, and `#` for a heading.
+ * text editor. Default: `true`. When enabled, typing `-` or `*` at the start of a line creates a
+ * bulleted list, `1.` creates a numbered list, `>` creates a blockquote, and `#`, `##`, `###`
+ * create headings. Note that standard keyboard shortcuts like `Ctrl+B` for bold and `Ctrl+I` for
+ * italic are always enabled regardless of this option.
  * @see https://decapcms.org/docs/widgets/#Markdown
  * @see https://sveltiacms.app/en/docs/fields/richtext
  */
