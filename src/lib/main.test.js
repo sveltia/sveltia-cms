@@ -627,18 +627,6 @@ describe('CMS.registerPreviewTemplate()', () => {
     expect(() => CMS.registerPreviewTemplate('posts', component)).not.toThrow();
   });
 
-  test('logs warning about unsupported custom preview templates', () => {
-    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const component = () => null;
-
-    // @ts-ignore
-    CMS.registerPreviewTemplate('test', component);
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'Custom preview templates are not yet supported in Sveltia CMS.',
-    );
-    consoleSpy.mockRestore();
-  });
-
   test('throws TypeError when name is not a string', () => {
     const component = () => null;
 

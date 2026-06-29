@@ -269,8 +269,6 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
 const registerPreviewTemplate = (name, component) => {
-  console.warn('Custom preview templates are not yet supported in Sveltia CMS.');
-
   if (typeof name !== 'string') {
     throw new TypeError('The `name` option for `CMS.registerPreviewTemplate()` must be a string');
   }

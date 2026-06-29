@@ -1855,6 +1855,15 @@
  */
 
 /**
+ * Asset data returned by the API.
+ * @typedef {object} ApiAsset
+ * @property {string} url Asset blob URL.
+ * @property {string} path Asset path.
+ * @property {any} field Unknown. Always `undefined`.
+ * @property {File | undefined} fileObj Asset file object if available.
+ */
+
+/**
  * Props for custom preview template React components.
  * @typedef {object} CustomPreviewTemplateProps
  * @property {MapOf<ApiEntry>} entry Entry data wrapped in an Immutable Map with a `data` property
@@ -1864,16 +1873,15 @@
  * @property {(name: string) => any} widgetsFor Function that returns widget data for a given field
  * name. For list fields, returns an array of Immutable Maps; for object fields, returns a single
  * Immutable Map. Each map has `data` (raw values) and `widgets` (React preview elements) keys.
- * @property {(assetPath: string) => string} getAsset Function that returns the public URL for a
- * given asset path. Returns an empty string if the asset is not found.
+ * @property {(path: string) => ApiAsset | undefined} getAsset Function that returns the asset item
+ * for a given path. Returns `undefined` if the asset is not found.
  * @property {(collectionName: string, slug?: string) => Promise<(MapOf<{ data: RawEntryContent }>[]
  * | MapOf<{ data: RawEntryContent }>)>} getCollection Async function that returns entries from a
  * specified collection. Each entry is an Immutable Map with a `data` property containing the entry
  * content. If the `slug` parameter is provided, the function returns a single entry; otherwise, it
  * returns a list of entries.
  * @property {MapOf<Record<string, any>>} fieldsMetaData Immutable Map containing metadata for each
- * field, keyed by field name. Each field’s metadata includes author information from the Git
- * commit: `author` (display name), `authorLogin` (username), and `authorEmail` (email address).
+ * field, keyed by field name.
  * @property {Document} document The iframe’s Document object, allowing access to the preview’s DOM.
  * React components should use this instead of the global `document`.
  * @property {Window} window The iframe’s Window object, allowing access to the preview’s window
@@ -1914,7 +1922,7 @@
  * @property {Record<string, any>} field
  * @property {Record<string, any>} metadata
  * @property {Record<string, any>} entry
- * @property {(name: string) => any} getAsset
+ * @property {(path: string) => ApiAsset | undefined} getAsset
  * @property {Record<string, any>} fieldsMetaData
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
