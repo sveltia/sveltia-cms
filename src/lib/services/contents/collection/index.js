@@ -26,6 +26,8 @@ import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
  * EntryCollection,
  * FieldKeyPath,
  * FileCollection,
+ * FileField,
+ * ImageField,
  * } from '$lib/types/public';
  */
 
@@ -159,9 +161,12 @@ export const getThumbnailFieldNames = (rawCollection) => {
 
   // Collect the names of all non-nested Image/File fields for inference
   if (fields?.length) {
-    return fields
-      .filter(({ widget: fieldType = 'string' }) => ['image', 'file'].includes(fieldType))
-      .map(({ name }) => name);
+    return /** @type {(ImageField | FileField)[]} */ (
+      fields.filter(({ widget: fieldType = 'string' }) => ['image', 'file'].includes(fieldType))
+    ).map(({ multiple, name }) =>
+      // If `multiple` is true, append `.*` to the name to indicate that it’s an array
+      multiple ? `${name}.*` : name,
+    );
   }
 
   return [];

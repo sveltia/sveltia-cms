@@ -503,6 +503,20 @@ describe('getThumbnailFieldNames()', () => {
     expect(getThumbnailFieldNames(collection)).toEqual(['featured', 'attachment']);
   });
 
+  test('appends wildcard to multiple image and file fields', () => {
+    const collection = {
+      name: 'posts',
+      folder: 'content/posts',
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'featured', widget: 'image', multiple: true },
+        { name: 'attachment', widget: 'file', multiple: false },
+      ],
+    };
+
+    expect(getThumbnailFieldNames(collection)).toEqual(['featured.*', 'attachment']);
+  });
+
   test('returns empty array when no image/file fields and no explicit thumbnail', () => {
     const collection = {
       name: 'posts',
