@@ -15,6 +15,7 @@ import {
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
+import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getRegex } from '$lib/services/utils/regex';
 
 /**
@@ -157,7 +158,7 @@ export const hasAsset = async ({
   const getURLArgs = { entry, collectionName, fileName };
   const { widget: fieldType = 'string' } = field;
 
-  if (['image', 'file'].includes(fieldType)) {
+  if (MEDIA_FIELD_TYPES.includes(fieldType)) {
     const match = isBlobURL
       ? (await getMediaFieldURL({ ...getURLArgs, value })) === assetURL
       : value === assetURL;

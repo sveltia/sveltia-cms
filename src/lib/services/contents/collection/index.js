@@ -7,6 +7,7 @@ import {
   getValidCollectionFiles,
   isValidCollectionFile,
 } from '$lib/services/contents/collection/files';
+import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getFileConfig } from '$lib/services/contents/file/config';
 import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
 
@@ -161,7 +162,7 @@ export const getThumbnailFieldNames = (rawCollection) => {
   // Collect the names of all non-nested Image/File fields for inference
   if (fields?.length) {
     return /** @type {MediaField[]} */ (
-      fields.filter(({ widget: fieldType = 'string' }) => ['image', 'file'].includes(fieldType))
+      fields.filter(({ widget: fieldType = 'string' }) => MEDIA_FIELD_TYPES.includes(fieldType))
     ).map(({ multiple, name }) =>
       // If `multiple` is true, append `.*` to the name to indicate that it’s an array
       multiple ? `${name}.*` : name,
