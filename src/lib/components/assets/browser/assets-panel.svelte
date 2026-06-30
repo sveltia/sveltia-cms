@@ -3,7 +3,6 @@
   import { EmptyState, InfiniteScroll } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
-  import equal from 'fast-deep-equal';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
@@ -82,7 +81,7 @@
    * @param {Asset} asset The asset to check.
    * @returns {boolean} `true` if the asset is selected, `false` otherwise.
    */
-  const isSelected = (asset) => selectedResources.some((r) => equal(r.asset, asset));
+  const isSelected = (asset) => selectedResources.some((r) => r.asset?.path === asset.path);
 
   /**
    * Handle selection change of an asset.
@@ -90,7 +89,7 @@
    * @param {boolean} selected `true` if the asset is now selected, `false` otherwise.
    */
   const onSelectionChange = (asset, selected) => {
-    const otherResources = selectedResources.filter((r) => !equal(r.asset, asset));
+    const otherResources = selectedResources.filter((r) => r.asset?.path !== asset.path);
 
     if (selected) {
       selectedResources = [...otherResources, { asset }];
