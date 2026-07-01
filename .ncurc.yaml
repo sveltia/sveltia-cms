@@ -4,5 +4,3 @@ reject:
   - eslint
   # https://github.com/sveltia/sveltia-cms/issues/540
   - terra-draw-leaflet-adapter
-  # https://github.com/sveltia/sveltia-cms/issues/806
-  - vite

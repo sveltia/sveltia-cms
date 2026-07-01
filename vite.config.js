@@ -275,6 +275,12 @@ export default defineConfig({
         mixedExports: false,
         pluginTimings: false,
       },
+      // Work around a `ReferenceError` with Vite 8.1.0
+      // https://github.com/sveltia/sveltia-cms/issues/806
+      // https://github.com/vitejs/vite/issues/22779
+      experimental: {
+        lazyBarrel: false,
+      },
     },
     outDir: 'package/dist',
   },
