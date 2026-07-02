@@ -268,6 +268,44 @@ describe('Test formatSummary() — comprehensive tests', () => {
           }),
         ).toEqual('HELLO WORL…');
       });
+
+      test('should handle nested templates in default transformation', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: {
+              'images.0.alt': '', // Empty value to trigger default
+              'images.0.title': 'Main Title',
+              'images.0.name': 'Image Name',
+            },
+            summaryTemplate: "{{fields.alt | default('{{fields.title}}')}}",
+          }),
+        ).toEqual('Main Title');
+      });
+
+      test('should handle nested templates in ternary transformation', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: {
+              'images.0.title': 'Main Title',
+              'images.0.name': 'Fallback Name',
+              'images.0.featured': true,
+            },
+            summaryTemplate: "{{fields.featured | ternary('{{fields.title}}', '{{fields.name}}')}}",
+          }),
+        ).toEqual('Main Title');
+      });
+
+      test('should handle nested templates with missing inner field', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'images.0.name': 'Name Value' },
+            summaryTemplate: "{{fields.alt | default('{{fields.title}}')}}",
+          }),
+        ).toEqual('');
+      });
     });
 
     describe('edge cases and error handling', () => {
@@ -477,6 +515,28 @@ describe('Test formatSummary() — comprehensive tests', () => {
             summaryTemplate: '{{fields.tag | upper}}',
           }),
         ).toEqual('JAVASCRIPT');
+      });
+
+      test('should handle nested templates in default transformation for single-field lists', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            keyPath: 'tags',
+            valueMap: { 'tags.0': '', 'tags.1': 'fallback-value' },
+            summaryTemplate: "{{fields.tag | default('{{fields.tag}}')}}",
+          }),
+        ).toEqual('');
+      });
+
+      test('should handle nested templates with mismatched field name', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            keyPath: 'tags',
+            valueMap: { 'tags.0': '' },
+            summaryTemplate: "{{fields.tag | default('{{fields.nonexistent}}')}}",
+          }),
+        ).toEqual('');
       });
     });
 

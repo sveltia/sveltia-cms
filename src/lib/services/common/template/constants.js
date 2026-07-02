@@ -7,12 +7,11 @@
 export const TEMPLATE_TAG_REGEX = /{{.+?}}/;
 
 /**
- * Regex to match and replace template tags like {{slug}}. The negative lookahead (?!'\)) ensures
- * that we do not match template tags that are immediately followed by a closing parenthesis and a
- * single quote, which is a common pattern in some templating languages to denote the end of a
- * template expression.
+ * Regex to match and replace template tags like {{slug}}. The negative lookahead ensures that we do
+ * not match template tags that are immediately followed by patterns indicating they are nested
+ * inside transformation arguments: `')` for the last argument, or `',` for non-last arguments.
  */
-export const TEMPLATE_TAG_REPLACE_REGEX = /{{(.+?)}}(?!'\))/g;
+export const TEMPLATE_TAG_REPLACE_REGEX = /{{(.+?)}}(?!'[),])/g;
 
 /**
  * Regex to match escaped `{{variable}}` placeholders.

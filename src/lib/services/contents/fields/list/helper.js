@@ -1,6 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { parseTransformations } from '$lib/services/common/transformations';
 import {
   getField,
@@ -100,6 +101,31 @@ export const formatSummary = ({
   }
 
   /**
+   * Get field value by tag for nested template processing.
+   * @param {string} innerTag Inner tag to process.
+   * @returns {string} Field value.
+   */
+  const getFieldValue = (innerTag) => {
+    const { value: innerFieldTag } = parseTransformations(innerTag);
+    const innerFieldName = innerFieldTag.replace(/^fields\./, '');
+    const innerKeyPath = `${keyPathWithIndex}.${innerFieldName}`;
+
+    if (hasSingleSubField) {
+      const listFieldConfig = /** @type {ListField} */ (getField({ ...getFieldArgs, keyPath }));
+
+      if (!('field' in listFieldConfig) || listFieldConfig.field.name !== innerFieldName) {
+        return '';
+      }
+    }
+
+    return getFieldDisplayValue({
+      ...getFieldArgs,
+      keyPath: hasSingleSubField ? keyPathWithIndex : innerKeyPath,
+      locale,
+    });
+  };
+
+  /**
    * Replacer function for template tags in the summary template. It extracts the field value based
    * on the placeholder, applies any transformations, and returns the display value to replace the
    * tag.
@@ -109,7 +135,9 @@ export const formatSummary = ({
    * @returns {string} The display value to replace the template tag in the summary.
    */
   const replacer = (_match, placeholder) => {
-    const { value: tag, transformations } = parseTransformations(placeholder);
+    const { value: tag, transformations: parsedTransformations } =
+      parseTransformations(placeholder);
+
     const fieldName = tag.replace(/^fields\./, '');
     const _keyPath = `${keyPathWithIndex}.${fieldName}`;
 
@@ -126,7 +154,7 @@ export const formatSummary = ({
       ...getFieldArgs,
       keyPath: hasSingleSubField ? keyPathWithIndex : _keyPath,
       locale,
-      transformations,
+      transformations: processNestedTemplates(parsedTransformations, getFieldValue),
     });
   };
 

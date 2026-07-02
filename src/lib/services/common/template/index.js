@@ -80,8 +80,9 @@ export const fillTemplate = (template, options) => {
     getFieldArgs: { collectionName, keyPath: '', valueMap, isIndexFile },
   };
 
-  // Use a negative lookahead assertion to support a template tag for the `default` transformation
-  // like `{{fields.slug | default('{{fields.title}}')}}`
+  // Use a negative lookahead assertion to support nested template tags in transformations like
+  // `{{fields.slug | default('{{fields.title}}')}}` or `{{draft | ternary('{{subtitle}}',
+  // '{{title}}')}}`
   let slug = template
     .replace(TEMPLATE_TAG_REPLACE_REGEX, (_match, tag) => replaceTemplatePlaceholder(tag, context))
     .trim();

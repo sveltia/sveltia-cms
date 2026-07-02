@@ -8,7 +8,7 @@ import {
   handleSlugTag,
   handleUuidTag,
 } from '$lib/services/common/template/handlers';
-import { processTransformations } from '$lib/services/common/template/transformations';
+import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { getField } from '$lib/services/contents/entry/fields';
 
@@ -105,13 +105,16 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
   const { value: tag, transformations: parsedTransformations } = parseTransformations(placeholder);
   let value = replaceTemplateTag(tag, replaceSubContext);
 
-  const { transformations, hasDefaultTransformation } = processTransformations(
-    parsedTransformations,
-    replaceSubContext,
-    replaceTemplateTag,
+  // Process nested templates in transformation arguments
+  const transformations = processNestedTemplates(parsedTransformations, (innerTag) =>
+    String(replaceTemplateTag(innerTag, replaceSubContext) ?? ''),
   );
 
   // Fall back with a random ID unless the `default` transformation is defined
+  const hasDefaultTransformation = parsedTransformations.some(
+    (tf) => tf.args.defaultValue !== undefined,
+  );
+
   if (value === undefined && !hasDefaultTransformation) {
     return generateUUID('short');
   }

@@ -297,6 +297,44 @@ describe('Test formatSummary() — comprehensive tests', async () => {
         }),
       ).toEqual('4.5');
     });
+
+    test('should handle nested templates in default transformation', () => {
+      expect(
+        formatSummary({
+          ...baseArgs,
+          valueMap: {
+            'metadata.description': '', // Empty value to trigger default
+            'metadata.title': 'Main Title',
+            'metadata.name': 'Object Name',
+          },
+          summaryTemplate: "{{fields.description | default('{{fields.title}}')}}",
+        }),
+      ).toEqual('Main Title');
+    });
+
+    test('should handle nested templates in ternary transformation', () => {
+      expect(
+        formatSummary({
+          ...baseArgs,
+          valueMap: {
+            'metadata.title': 'Main Title',
+            'metadata.name': 'Fallback Name',
+            'metadata.featured': true,
+          },
+          summaryTemplate: "{{fields.featured | ternary('{{fields.title}}', '{{fields.name}}')}}",
+        }),
+      ).toEqual('Main Title');
+    });
+
+    test('should handle nested templates with missing inner field', () => {
+      expect(
+        formatSummary({
+          ...baseArgs,
+          valueMap: { 'metadata.name': 'Name Value' },
+          summaryTemplate: "{{fields.description | default('{{fields.title}}')}}",
+        }),
+      ).toEqual('');
+    });
   });
 
   describe('edge cases and error handling', () => {

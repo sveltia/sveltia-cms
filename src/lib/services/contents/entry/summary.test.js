@@ -152,6 +152,106 @@ describe('Test getEntrySummary()', () => {
     expect(format("{{draft | ternary('Draft', 'Public')}}")).toEqual('Public');
   });
 
+  test('nested templates in default transformation', () => {
+    // Test the issue from GitHub #813: default transformation with nested template
+    const entryWithSubtitle = {
+      ...entry,
+      locales: {
+        de: {
+          ...entry.locales.de,
+          content: {
+            title: 'Main Title',
+            subtitle: 'Subtitle Here',
+          },
+        },
+      },
+    };
+
+    const entryWithoutSubtitle = {
+      ...entry,
+      locales: {
+        de: {
+          ...entry.locales.de,
+          content: {
+            title: 'Main Title',
+            subtitle: '',
+          },
+        },
+      },
+    };
+
+    // When subtitle exists, should show subtitle
+    expect(
+      getEntrySummary(
+        { ...collection, summary: "{{fields.subtitle | default('{{fields.title}}')}}" },
+        entryWithSubtitle,
+        { locale: 'de', useTemplate: true },
+      ),
+    ).toEqual('Subtitle Here');
+
+    // When subtitle is missing, should fall back to title
+    expect(
+      getEntrySummary(
+        { ...collection, summary: "{{fields.subtitle | default('{{fields.title}}')}}" },
+        entryWithoutSubtitle,
+        { locale: 'de', useTemplate: true },
+      ),
+    ).toEqual('Main Title');
+  });
+
+  test('nested templates in ternary transformation', () => {
+    // Test the issue from GitHub #813: ternary transformation with nested templates
+    const entryWithSubtitle = {
+      ...entry,
+      locales: {
+        de: {
+          ...entry.locales.de,
+          content: {
+            title: 'Main Title',
+            subtitle: 'Subtitle Here',
+          },
+        },
+      },
+    };
+
+    const entryWithoutSubtitle = {
+      ...entry,
+      locales: {
+        de: {
+          ...entry.locales.de,
+          content: {
+            title: 'Main Title',
+            subtitle: '',
+          },
+        },
+      },
+    };
+
+    // When subtitle exists, should show subtitle (with fields. prefix)
+    expect(
+      getEntrySummary(
+        {
+          ...collection,
+          summary: "{{fields.subtitle | ternary('{{fields.subtitle}}', '{{fields.title}}')}}",
+        },
+        entryWithSubtitle,
+        { locale: 'de', useTemplate: true },
+      ),
+    ).toEqual('Subtitle Here');
+
+    // When subtitle is empty/falsy, should show title (with fields. prefix)
+    expect(
+      getEntrySummary(
+        {
+          ...collection,
+          summary: "{{fields.subtitle | ternary('{{fields.subtitle}}', '{{fields.title}}')}}",
+        },
+        entryWithoutSubtitle,
+        { locale: 'de', useTemplate: true },
+      ),
+    ).toEqual('Main Title');
+  });
+
   test('Markdown', () => {
     const markdownStr =
       'This `code` on [GitHub](https://github.com/sveltia/sveltia-cms) _is_ ~~so~~ **good**!';

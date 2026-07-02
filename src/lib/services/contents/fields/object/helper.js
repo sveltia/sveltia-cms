@@ -1,6 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { parseTransformations } from '$lib/services/common/transformations';
 import {
   getFieldDisplayValue,
@@ -55,6 +56,21 @@ export const formatSummary = ({
   }
 
   /**
+   * Get field value by tag for nested template processing.
+   * @param {string} innerTag Inner tag to process.
+   * @returns {string} Field value.
+   */
+  const getFieldValue = (innerTag) => {
+    const { value: innerFieldTag } = parseTransformations(innerTag);
+
+    return getFieldDisplayValue({
+      ...getFieldArgs,
+      keyPath: `${keyPath}.${innerFieldTag.replace(/^fields\./, '')}`,
+      locale,
+    });
+  };
+
+  /**
    * Replacer function for template tags in the summary template. It extracts the field value based
    * on the placeholder, applies any transformations, and returns the display value to replace the
    * tag.
@@ -64,13 +80,14 @@ export const formatSummary = ({
    * @returns {string} The display value to replace the template tag.
    */
   const replacer = (_match, placeholder) => {
-    const { value: tag, transformations } = parseTransformations(placeholder);
+    const { value: tag, transformations: parsedTransformations } =
+      parseTransformations(placeholder);
 
     return getFieldDisplayValue({
       ...getFieldArgs,
       keyPath: `${keyPath}.${tag.replace(/^fields\./, '')}`,
       locale,
-      transformations,
+      transformations: processNestedTemplates(parsedTransformations, getFieldValue),
     });
   };
 

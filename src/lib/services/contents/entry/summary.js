@@ -5,6 +5,7 @@ import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import {
   getIndexFile,
@@ -160,10 +161,15 @@ export const replaceSub = (tag, context) => {
  */
 export const replace = (placeholder, context) => {
   const { content: valueMap, collectionName, replaceSubContext, defaultLocale } = context;
-  const { value: tag, transformations } = parseTransformations(placeholder);
+  const { value: tag, transformations: parsedTransformations } = parseTransformations(placeholder);
   const keyPath = tag.replace(/^fields\./, '');
   const getFieldArgs = { collectionName, valueMap, keyPath };
   let value = replaceSub(tag, replaceSubContext);
+
+  // Process nested templates in transformation arguments
+  const transformations = processNestedTemplates(parsedTransformations, (innerTag) =>
+    replace(innerTag, context),
+  );
 
   if (value === undefined) {
     // If the `date` transformation is defined, e.g. `{{publish_date | date('YYYY-MM')}}`, use the
