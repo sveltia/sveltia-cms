@@ -121,13 +121,22 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
 
 describe('Preview Templates', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockGetCollection.mockReturnValue({
       _i18n: { defaultLocale: 'en' },
     });
     mockGetEntriesByCollection.mockReturnValue([]);
     mockGetField.mockReturnValue({ widget: 'text' });
-    mockCreateEntryMap.mockReturnValue({});
+    mockCreateEntryMap.mockImplementation((args) =>
+      ImmutableMap({
+        data: ImmutableMap(args?.content ?? {}),
+        slug: args?.slug ?? '',
+        path: args?.path ?? '',
+        collection: args?.collectionName ?? '',
+        newRecord: args?.isNew ?? false,
+        meta: ImmutableMap({ path: args?.path ?? '' }),
+      }),
+    );
   });
 
   describe('createFieldPreviewMounter', () => {
@@ -506,6 +515,47 @@ describe('Preview Templates', () => {
       expect(result instanceof ImmutableMap).toBe(true);
     });
 
+    it('should use cached entries when multiple relation fields reference same collection', () => {
+      const mockRefEntry1 = {
+        slug: 'post-1',
+        locales: { en: { content: { title: 'Post 1' } } },
+      };
+
+      const mockRefEntry2 = {
+        slug: 'post-2',
+        locales: { en: { content: { title: 'Post 2' } } },
+      };
+
+      mockGetField
+        .mockReturnValueOnce({
+          widget: 'relation',
+          collection: 'posts',
+          value_field: '{{slug}}',
+        })
+        .mockReturnValueOnce({
+          widget: 'relation',
+          collection: 'posts',
+          value_field: '{{slug}}',
+        });
+
+      // Should only be called once - second field uses cache
+      mockGetEntriesByCollection.mockReturnValueOnce([mockRefEntry1, mockRefEntry2]);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { relatedPost1: 'post-1', relatedPost2: 'post-2' },
+          isIndexFile: false,
+        },
+      });
+
+      expect(result instanceof ImmutableMap).toBe(true);
+      // Verify entries were only fetched once (cache was used for second field)
+      expect(mockGetEntriesByCollection).toHaveBeenCalledTimes(1);
+    });
+
     it('should use slug matching by default', () => {
       const mockEntry = {
         slug: 'test-entry',
@@ -671,6 +721,74 @@ describe('Preview Templates', () => {
       expect(result).toBeDefined();
     });
 
+    it('should use createEntryMap to preserve entry props for preview templates', async () => {
+      /** @type {Partial<Entry>} */
+      const mockEntry = {
+        slug: 'test-entry',
+        locales: { en: { content: { title: 'Test Entry' }, path: '/posts/test-entry' } },
+      };
+
+      mockGetCollection.mockReturnValue({
+        _i18n: { defaultLocale: 'en' },
+      });
+      mockGetEntriesByCollection.mockReturnValue([mockEntry]);
+      mockCreateEntryMap.mockReturnValueOnce(
+        ImmutableMap({
+          slug: 'test-entry',
+          collection: 'posts',
+          path: '/posts/test-entry',
+          data: ImmutableMap({ title: 'Test Entry' }),
+        }),
+      );
+
+      const result = await getCollectionByName('posts', 'test-entry');
+
+      expect(mockCreateEntryMap).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: 'test-entry',
+          path: '/posts/test-entry',
+          collectionName: 'posts',
+          associatedAssets: [],
+        }),
+      );
+      expect(result?.get('slug')).toBe('test-entry');
+      expect(result?.get('collection')).toBe('posts');
+      expect(result?.get('path')).toBe('/posts/test-entry');
+    });
+
+    it('should populate associated assets when resolving collection entries', async () => {
+      /** @type {Partial<Entry>} */
+      const mockEntry = {
+        slug: 'test-entry',
+        locales: { en: { content: { title: 'Test Entry' } } },
+      };
+
+      const mockAssetFolder = { collectionName: 'posts', internalPath: 'assets' };
+      const mockAssets = [{ name: 'image1.jpg', path: '/assets/image1.jpg' }];
+
+      mockGetCollection.mockReturnValueOnce({
+        _i18n: { defaultLocale: 'en' },
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([mockEntry]);
+      mockGetAssetFolder.mockReturnValueOnce(mockAssetFolder);
+      mockIsAssetInFolder.mockReturnValueOnce(true);
+      mockGet.mockImplementation((store) => {
+        if (store && 'value' in store) {
+          return mockAssets;
+        }
+
+        return store?.value;
+      });
+
+      await getCollectionByName('posts', 'test-entry');
+
+      expect(mockCreateEntryMap).toHaveBeenCalledWith(
+        expect.objectContaining({
+          associatedAssets: mockAssets,
+        }),
+      );
+    });
+
     it('should find correct entry when multiple entries exist with different slugs', async () => {
       const mockEntry1 = {
         slug: 'post-1',
@@ -699,6 +817,74 @@ describe('Preview Templates', () => {
       expect(result instanceof ImmutableMap).toBe(true);
       // The result should have the data from the matching entry
       expect(result?.get('data')).toBeDefined();
+    });
+
+    it('should handle entries with missing properties gracefully', async () => {
+      /** @type {Partial<Entry>} */
+      const mockEntry = {
+        // No slug property
+        locales: { en: { content: { title: 'Entry' } } }, // No path property
+      };
+
+      mockGetCollection.mockReturnValueOnce({
+        _i18n: { defaultLocale: 'en' },
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([mockEntry]);
+
+      const result = await getCollectionByName('posts');
+
+      expect(result).toBeDefined();
+      expect(mockCreateEntryMap).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: '',
+          path: '',
+        }),
+      );
+    });
+
+    it('should handle entries without locales property', async () => {
+      /** @type {Partial<Entry>} */
+      const mockEntry = {
+        slug: 'test-entry',
+        // No locales property
+      };
+
+      mockGetCollection.mockReturnValueOnce({
+        _i18n: { defaultLocale: 'en' },
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([mockEntry]);
+
+      const result = await getCollectionByName('posts');
+
+      expect(result).toBeDefined();
+      expect(mockCreateEntryMap).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: {},
+          locales: {},
+          otherLocales: [],
+          path: '',
+        }),
+      );
+    });
+
+    it('should handle undefined entry when slug not found', async () => {
+      mockGetCollection.mockReturnValueOnce({
+        _i18n: { defaultLocale: 'en' },
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([]);
+
+      const result = await getCollectionByName('posts', 'nonexistent-slug');
+
+      expect(result).toBeDefined();
+      expect(mockCreateEntryMap).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: {},
+          slug: '',
+          path: '',
+          locales: {},
+          otherLocales: [],
+        }),
+      );
     });
   });
 

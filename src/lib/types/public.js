@@ -1895,11 +1895,10 @@
  * `widgets` (React preview elements) entries.
  * @property {(path: string) => ApiAsset | undefined} getAsset Function that returns the asset item
  * for a given path. Returns `undefined` if the asset is not found.
- * @property {(collectionName: string, slug?: string) => Promise<(MapOf<{ data: RawEntryContent }>[]
- * | MapOf<{ data: RawEntryContent }>)>} getCollection Async function that returns entries from a
- * specified collection. Each entry is an Immutable Map with a `data` property containing the entry
- * content. When `slug` is provided, it returns the matching entry; otherwise it returns the full
- * list of entries.
+ * @property {(collectionName: string, slug?: string) => Promise<(MapOf<ApiEntry>[] |
+ * MapOf<ApiEntry>)>} getCollection Async function that returns entries from a specified collection.
+ * Each entry is an Immutable Map with a `data` property containing the entry content. When `slug`
+ * is provided, it returns the matching entry; otherwise it returns the full list of entries.
  * @property {MapOf<Record<string, any>>} fieldsMetaData Immutable Map of metadata for each field,
  * keyed by field name. For relation fields, it can include referenced entry data.
  * @property {Document} document The preview iframe’s Document object, allowing access to the

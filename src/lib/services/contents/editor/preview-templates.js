@@ -17,9 +17,17 @@ import { getField } from '$lib/services/contents/entry/fields';
 /**
  * @import { MapOf } from 'immutable';
  * @import { ReactElement } from 'react';
- * @import { Entry, EntryDraft, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
+ * @import {
+ * Asset,
+ * Entry,
+ * EntryDraft,
+ * FlattenedEntryContent,
+ * GetFieldArgs,
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
  * @import {
  * ApiAsset,
+ * ApiEntry,
  * CustomPreviewTemplateProps,
  * Field,
  * FieldKeyPath,
@@ -151,6 +159,53 @@ export const createWidgetsFor =
   };
 
 /**
+ * Get assets associated with a collection or entry folder.
+ * @internal
+ * @param {object} args Arguments.
+ * @param {string} [args.collectionName] Collection name.
+ * @param {string} [args.fileName] File name.
+ * @returns {Asset[]} Assets filtered to the relevant folder.
+ */
+export const getAssociatedPreviewAssets = ({ collectionName, fileName }) => {
+  const assetFolder = getAssetFolder({ collectionName, fileName });
+
+  if (!assetFolder) {
+    return [];
+  }
+
+  return get(allAssets).filter((asset) => isAssetInFolder(asset, assetFolder));
+};
+
+/**
+ * Convert an entry to an Immutable Map for preview templates.
+ * @internal
+ * @param {object} args Arguments.
+ * @param {Entry | undefined} args.entry Entry object to convert.
+ * @param {InternalLocaleCode} args.locale Locale to use for content and path extraction.
+ * @param {string} args.collectionName Collection name.
+ * @param {Asset[]} args.associatedAssets Associated assets to include.
+ * @param {FlattenedEntryContent} [args.content] Optional content override (if not provided,
+ * extracted from entry).
+ * @returns {MapOf<ApiEntry>} Immutable Map of entry data.
+ */
+const convertEntryToMap = ({ entry, locale, collectionName, associatedAssets, content }) => {
+  const entryContent = content ?? entry?.locales?.[locale]?.content ?? {};
+
+  return /** @type {MapOf<ApiEntry>} */ (
+    createEntryMap({
+      content: entryContent,
+      otherLocales: Object.keys(entry?.locales ?? {}).filter((l) => l !== locale),
+      locales: entry?.locales ?? {},
+      slug: entry?.slug ?? '',
+      path: entry?.locales?.[locale]?.path ?? '',
+      isNew: false,
+      collectionName,
+      associatedAssets,
+    })
+  );
+};
+
+/**
  * Create an asset getter function.
  * @internal
  * @param {object} args Arguments.
@@ -181,8 +236,7 @@ export const createGetAsset =
  * otherwise, returns all entries.
  * @param {string} name Collection name.
  * @param {string} [slug] Optional entry slug to filter by.
- * @returns {Promise<(MapOf<{ data: RawEntryContent }>[] | MapOf<{ data: RawEntryContent }>)>}
- * Promise resolving to collection entries.
+ * @returns {Promise<(MapOf<ApiEntry>[] | MapOf<ApiEntry>)>} Collection entries.
  */
 export const getCollectionByName = async (name, slug) => {
   const collection = getCollection(name);
@@ -194,14 +248,19 @@ export const getCollectionByName = async (name, slug) => {
   const { defaultLocale } = collection._i18n;
   const entries = getEntriesByCollection(name);
 
+  const convertArgs = {
+    locale: defaultLocale,
+    collectionName: name,
+    associatedAssets: getAssociatedPreviewAssets({ collectionName: name }),
+  };
+
   /**
-   * Convert an entry to an Immutable Map with unflattened content.
+   * Convert an entry to an Immutable Map with unflattened content and the same metadata shape as
+   * other entry maps.
    * @param {Entry | undefined} entry Entry object to convert.
-   * @returns {MapOf<{ data: RawEntryContent }>} Immutable Map of entry data.
+   * @returns {MapOf<ApiEntry>} Immutable Map of entry data.
    */
-  const convertEntry = (entry) =>
-    // Use `ImmutableMap` instead of `fromJS` for shallow conversion
-    ImmutableMap({ data: unflatten(entry?.locales[defaultLocale]?.content ?? {}) });
+  const convertEntry = (entry) => convertEntryToMap({ ...convertArgs, entry });
 
   if (slug) {
     return convertEntry(entries.find((entry) => entry.slug === slug));
@@ -306,26 +365,17 @@ export const preparePreviewTemplateProps = ({ draft, locale }) => {
   const rawContent = unflatten(valueMap);
   /** @type {Omit<GetFieldArgs, 'keyPath'>} */
   const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
-  const assetFolder = getAssetFolder({ collectionName, fileName });
   // Create factory functions with bound dependencies
   const mountFieldPreview = createFieldPreviewMounter({ locale, getFieldArgs });
   const widgetFor = createWidgetFor(mountFieldPreview);
 
   return {
-    entry: createEntryMap({
-      content: valueMap,
-      otherLocales: Object.keys(entry.locales).filter((l) => l !== locale),
-      locales: entry.locales,
-      /* v8 ignore next */
-      slug: entry.slug ?? '',
-      /* v8 ignore next */
-      path: entry.locales[locale].path ?? '',
-      isNew: false,
+    entry: convertEntryToMap({
+      entry,
+      locale,
       collectionName,
-      // Collection assets, not entry assets
-      associatedAssets: assetFolder
-        ? get(allAssets).filter((asset) => isAssetInFolder(asset, assetFolder))
-        : [],
+      associatedAssets: getAssociatedPreviewAssets({ collectionName, fileName }),
+      content: valueMap,
     }),
     widgetFor,
     widgetsFor: createWidgetsFor(rawContent, widgetFor),
