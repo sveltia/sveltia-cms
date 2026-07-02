@@ -46,6 +46,7 @@
   } = $props();
 
   let inputValue = $state('');
+  let isInputFocused = $state(false);
 
   const { type, min, max, step, dateOnly, utc, singleCustomTimeZone } = $derived(
     parseDateTimeConfig(fieldConfig),
@@ -53,9 +54,14 @@
   const timeZone = $derived(getInitialTimeZone(currentValue, fieldConfig));
 
   /**
-   * Update {@link inputValue} based on {@link currentValue}.
+   * Update {@link inputValue} based on {@link currentValue}. Only update if the input is not
+   * currently focused to avoid interfering with user typing.
    */
   const setInputValue = () => {
+    if (isInputFocused) {
+      return;
+    }
+
     const _inputValue = getInputValue({ currentValue, fieldConfig, timeZone });
 
     // Avoid a cycle dependency & infinite loop
@@ -100,6 +106,22 @@
       setCurrentValue();
     });
   });
+
+  /**
+   * Handle input focus event.
+   */
+  const handleFocus = () => {
+    isInputFocused = true;
+  };
+
+  /**
+   * Handle input blur event - sync values when user finishes editing.
+   */
+  const handleBlur = () => {
+    isInputFocused = false;
+    // After losing focus, ensure inputValue is synced with currentValue
+    setInputValue();
+  };
 </script>
 
 <div role="none">
@@ -112,6 +134,8 @@
     aria-invalid={invalid}
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
+    onfocus={handleFocus}
+    onblur={handleBlur}
   />
   {#if !readonly}
     <Button
