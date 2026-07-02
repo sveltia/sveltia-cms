@@ -97,7 +97,7 @@
   />
 {:else}
   <CheckboxGroup aria-labelledby="{fieldId}-label">
-    {#each options as { label, value } (value)}
+    {#each options as { label, value }, index (`${index}-${value}`)}
       <Checkbox
         {label}
         {value}

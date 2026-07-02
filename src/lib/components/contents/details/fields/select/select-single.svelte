@@ -59,7 +59,7 @@
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
   >
-    {#each options as { label, value, searchValue } (value)}
+    {#each options as { label, value, searchValue }, index (`${index}-${value}`)}
       <Option {label} {value} {valueType} {searchValue} selected={value === currentValue} wrap />
     {/each}
   </Select>
@@ -74,7 +74,7 @@
       currentValue = value;
     }}
   >
-    {#each options as { label, value } (value)}
+    {#each options as { label, value }, index (`${index}-${value}`)}
       <Radio {label} {value} {valueType} checked={value === currentValue} />
     {/each}
   </RadioGroup>
