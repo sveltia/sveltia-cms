@@ -2,6 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Divider, Menu, MenuItem } from '@sveltia/ui';
 
+  import AppInstallMenuItem from '$lib/components/global/toolbar/items/app-install-menu-item.svelte';
   import ShortcutsMenuItem from '$lib/components/help/shortcuts-menu-item.svelte';
   import SettingsDialog from '$lib/components/settings/settings-dialog.svelte';
   import { goto, openProductionSite } from '$lib/services/app/navigation';
@@ -88,6 +89,7 @@
       }}
     />
   {/if}
+  <AppInstallMenuItem />
   <Divider />
   <MenuItem
     label={_('sign_out')}

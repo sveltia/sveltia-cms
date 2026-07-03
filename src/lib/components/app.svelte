@@ -6,7 +6,13 @@
   import BackendStatusIndicator from '$lib/components/global/infobars/backend-status-indicator.svelte';
   import UpdateNotification from '$lib/components/global/infobars/update-notification.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
-  import { appLogoType, appLogoURL, appTitle } from '$lib/services/app/branding';
+  import {
+    appIconURLs,
+    appLogoType,
+    appLogoURL,
+    appManifestURL,
+    appTitle,
+  } from '$lib/services/app/branding';
   import { initAppLocale } from '$lib/services/app/i18n';
   import { announcedPageStatus, startViewTransition } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
@@ -93,6 +99,12 @@
   {#if $cmsConfigLoaded}
     <title>{$appTitle}</title>
     <link rel="icon" href={$appLogoURL} type={$appLogoType} />
+    {#if $appIconURLs}
+      <link rel="apple-touch-icon" href={$appIconURLs.large} />
+    {/if}
+    {#if $appManifestURL}
+      <link rel="manifest" href={$appManifestURL} />
+    {/if}
   {/if}
   {#if DEV_SITE_URL}
     <link href="{DEV_SITE_URL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />

@@ -20,11 +20,13 @@ ignorePaths:
   - src/**/*.test.js
 words:
   - analyzing
+  - appinstalled
   - astrolicious
   - astros
   - Backblaze
   - backlink
   - backlinks
+  - beforeinstallprompt
   - brotlied
   - BYOK
   - camelcase

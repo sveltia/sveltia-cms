@@ -19,6 +19,7 @@ signed_in_as_x: Signed In as {$name}
 working_with_local_repo: Working with Local Repository
 working_with_test_repo: Working with Test Repository
 sign_out: Sign Out
+install_as_app: Install as App
 create: New
 select: Select
 select_all: Select All
