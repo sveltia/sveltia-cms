@@ -140,10 +140,9 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
     }
 
     const blob = await getAssetBlob(asset);
+    const transform = isPDF ? renderPDF : transformImage;
 
-    thumbnailBlob = isPDF
-      ? await renderPDF(blob, THUMBNAIL_TRANSFORM_OPTIONS)
-      : await transformImage(blob, THUMBNAIL_TRANSFORM_OPTIONS);
+    thumbnailBlob = await transform(blob, THUMBNAIL_TRANSFORM_OPTIONS);
 
     await thumbnailDB?.set(asset.sha, thumbnailBlob);
   }
