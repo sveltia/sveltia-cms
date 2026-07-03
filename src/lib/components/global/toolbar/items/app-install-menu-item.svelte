@@ -7,26 +7,26 @@
   /** @type {any} */
   let installPrompt;
 
+  /**
+   * Show the install button when the app is installable.
+   * @param {any} event `BeforeInstallPromptEvent` event.
+   * @see https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/How_to/Trigger_install_prompt
+   */
+  const beforeInstallPromptHandler = (event) => {
+    event.preventDefault();
+    installPrompt = event;
+    canInstall = true;
+  };
+
+  /**
+   * Hide the install button when the app is installed.
+   */
+  const appInstalledHandler = () => {
+    installPrompt = null;
+    canInstall = false;
+  };
+
   onMount(() => {
-    /**
-     * Show the install button when the app is installable.
-     * @param {any} event `BeforeInstallPromptEvent` event.
-     * @see https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/How_to/Trigger_install_prompt
-     */
-    const beforeInstallPromptHandler = (event) => {
-      event.preventDefault();
-      installPrompt = event;
-      canInstall = true;
-    };
-
-    /**
-     * Hide the install button when the app is installed.
-     */
-    const appInstalledHandler = () => {
-      installPrompt = null;
-      canInstall = false;
-    };
-
     window.addEventListener('beforeinstallprompt', beforeInstallPromptHandler);
     window.addEventListener('appinstalled', appInstalledHandler);
 
