@@ -103,7 +103,7 @@ export const appIconURLs = derived([appLogoURL], ([logoURL], set) => {
 });
 
 /**
- * The app manifest URL, derived from the app title and logo. It generates a data URL containing a
+ * The app manifest URL, derived from the app title and logo. It generates a blob URL containing a
  * JSON manifest for the CMS, which can be used for PWA support.
  * @type {Readable<string | undefined>}
  * @see https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Manifest
@@ -113,10 +113,12 @@ export const appManifestURL = derived([appTitle, appIconURLs], ([title, iconURLs
     return undefined;
   }
 
+  const { origin, pathname } = window.location;
+
   const manifest = {
     name: title,
     short_name: title,
-    start_url: '.',
+    start_url: `${origin}${pathname}`,
     display: 'standalone',
     icons: [
       { src: iconURLs.small, sizes: '192x192', type: 'image/webp' },
@@ -124,5 +126,9 @@ export const appManifestURL = derived([appTitle, appIconURLs], ([title, iconURLs
     ],
   };
 
-  return `data:application/manifest+json,${encodeURIComponent(JSON.stringify(manifest))}`;
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+
+  // Use a blob URL instead of a data URL to prevent a long string from being inlined in the HTML.
+  // The blob URL will be revoked when the page is unloaded.
+  return URL.createObjectURL(blob);
 });

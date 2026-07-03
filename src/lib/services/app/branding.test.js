@@ -1,6 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
 
@@ -593,10 +593,67 @@ describe('branding', () => {
   });
 
   describe('appManifestURL derived store', () => {
+    let blobContentMap = new Map();
+
     beforeEach(() => {
       vi.clearAllMocks();
-      vi.resetModules();
       global.fetch = vi.fn();
+      blobContentMap = new Map();
+
+      // Mock window.location for manifest URL generation
+      if (typeof window === 'undefined') {
+        globalThis.window = {
+          // @ts-expect-error - partial Location mock for testing
+          location: {
+            origin: 'http://localhost:5173',
+            pathname: '/',
+          },
+        };
+      } else {
+        // @ts-expect-error - partial Location mock for testing
+        window.location = {
+          origin: 'http://localhost:5173',
+          pathname: '/',
+        };
+      }
+
+      // Capture blob content when Blob is created
+      const OriginalBlob = Blob;
+
+      // @ts-expect-error - test mock of Blob constructor
+      globalThis.Blob = class TestBlob extends OriginalBlob {
+        /**
+         * Test blob constructor that captures content.
+         * @param {BlobPart[]} blobParts Blob parts to store.
+         * @param {BlobPropertyBag} options Blob options.
+         */
+        constructor(blobParts, options) {
+          super(blobParts, options);
+
+          // Store the content for later retrieval
+          if (blobParts && blobParts.length > 0) {
+            const content = blobParts[0];
+
+            blobContentMap.set(this, typeof content === 'string' ? content : content.toString());
+          }
+        }
+      };
+
+      // Mock URL.createObjectURL to return a data URL with the actual manifest content
+      vi.spyOn(URL, 'createObjectURL').mockImplementation((blob) => {
+        const content = blobContentMap.get(blob) || '{}';
+
+        return `data:application/manifest+json,${encodeURIComponent(content)}`;
+      });
+    });
+
+    afterEach(() => {
+      // Restore original Blob
+      const OriginalBlob = Blob;
+
+      globalThis.Blob = OriginalBlob;
+      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
 
     it('returns undefined when iconURLs is not available', () => {
@@ -668,7 +725,7 @@ describe('branding', () => {
       expect(manifest).toMatchObject({
         name: customTitle,
         short_name: customTitle,
-        start_url: '.',
+        start_url: 'http://localhost:5173/',
         display: 'standalone',
       });
 
