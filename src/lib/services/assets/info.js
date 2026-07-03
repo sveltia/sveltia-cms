@@ -12,17 +12,14 @@ import { cmsConfig } from '$lib/services/config';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { getMergedLibraryOptions } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 import { createPath, createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
-import { transformImage } from '$lib/services/utils/media/image/transform';
+import {
+  THUMBNAIL_TRANSFORM_OPTIONS,
+  transformImage,
+} from '$lib/services/utils/media/image/transform';
 import { renderPDF } from '$lib/services/utils/media/pdf';
 
 /**
- * @import {
- * Asset,
- * Entry,
- * InternalCmsConfig,
- * InternalImageTransformationOptions,
- * TypedFieldKeyPath,
- * } from '$lib/types/private';
+ * @import { Asset, Entry, InternalCmsConfig, TypedFieldKeyPath } from '$lib/types/private';
  * @import { MediaField } from '$lib/types/public';
  */
 
@@ -143,10 +140,10 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
     }
 
     const blob = await getAssetBlob(asset);
-    /** @type {InternalImageTransformationOptions} */
-    const options = { format: 'webp', quality: 85, width: 512, height: 512, fit: 'contain' };
 
-    thumbnailBlob = isPDF ? await renderPDF(blob, options) : await transformImage(blob, options);
+    thumbnailBlob = isPDF
+      ? await renderPDF(blob, THUMBNAIL_TRANSFORM_OPTIONS)
+      : await transformImage(blob, THUMBNAIL_TRANSFORM_OPTIONS);
 
     await thumbnailDB?.set(asset.sha, thumbnailBlob);
   }

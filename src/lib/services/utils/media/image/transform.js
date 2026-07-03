@@ -7,6 +7,19 @@ import { resizeCanvas } from '$lib/services/utils/media/image/resize';
  */
 
 /**
+ * Options for transforming an image to a thumbnail, which is a WebP image with a maximum width and
+ * height of 512 pixels, and a quality of 85.
+ * @type {InternalImageTransformationOptions}
+ */
+export const THUMBNAIL_TRANSFORM_OPTIONS = {
+  format: 'webp',
+  quality: 85,
+  width: 512,
+  height: 512,
+  fit: 'contain',
+};
+
+/**
  * Create an image source from a Blob URL. This function creates an `<img>` element, waits for it to
  * load, and returns the image element along with its natural dimensions.
  * @param {object} args Arguments.
