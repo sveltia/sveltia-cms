@@ -4,7 +4,7 @@
 
 Designed for content editors and developers alike, Sveltia CMS delivers a modern UX/DX, powerful features, and first-class internationalization (i18n) support — all in a small, maintenance-free, single-page web application served from a CDN. Its generic-purpose approach makes it suitable for a wide range of projects, from personal blogs and portfolios to marketing sites and knowledge bases.
 
-As the de facto [successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), Sveltia CMS addresses 300 issues, or 680 issues if including duplicates, and introduces numerous enhancements while maintaining high compatibility with existing installations. It far surpasses the neglected official successor, Decap CMS. More and more projects, including a U.S. government website, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to enjoy its significantly improved performance, security, reliability, and experience.
+As the de facto [successor to Netlify CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), Sveltia CMS addresses 300 issues, or 680 issues if including duplicates, introducing numerous enhancements while maintaining high compatibility with existing installations. It far surpasses the neglected official successor, Decap CMS. More and more projects, including a U.S. government website, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to enjoy its significantly improved performance, security, reliability, and experience.
 
 Sveltia CMS is framework-agnostic and can also be used for vanilla JavaScript sites. It’s a great choice for people leaving a traditional CMS or website builder and looking for a lightweight headless CMS that seamlessly integrates with a static site generator (SSG), such as Astro, Eleventy, and Hugo.
 
@@ -29,10 +29,11 @@ We provide comprehensive documentation to help you get started and make the most
 
 Our [industry-leading showcase](https://sveltiacms.app/en/showcase) features various real-world examples of Sveltia CMS users, including:
 
-- [Sites migrated from Decap CMS](https://sveltiacms.app/en/showcase?migrated-from=decap-cms)
+- [Sites migrated from Decap CMS](https://sveltiacms.app/en/showcase?migrated-from=decap-cms): Most popular
 - [Sites migrated from WordPress](https://sveltiacms.app/en/showcase?migrated-from=wordpress)
 - [Sites built with Astro](https://sveltiacms.app/en/showcase?framework=astro)
 - [Sites built with Eleventy](https://sveltiacms.app/en/showcase?framework=eleventy)
+- [Sites built with vanilla JavaScript](https://sveltiacms.app/en/showcase?framework=none): Trending
 - [Sites using i18n support](https://sveltiacms.app/en/showcase?feature=i18n)
 
 ## Community
