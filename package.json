@@ -47,7 +47,7 @@
     "@lexical/markdown": "^0.46.0",
     "@sindresorhus/transliterate": "^2.3.1",
     "@sveltia/i18n": "^1.1.2",
-    "@sveltia/ui": "^0.41.0",
+    "@sveltia/ui": "^0.41.1",
     "@sveltia/utils": "^0.10.7",
     "create-react-class": "^15.7.0",
     "dayjs": "^1.11.21",
@@ -88,7 +88,7 @@
     "eslint": "^9.39.4",
     "eslint-config-airbnb-extended": "^3.1.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^63.0.10",
+    "eslint-plugin-jsdoc": "^63.0.12",
     "eslint-plugin-package-json": "^1.5.0",
     "eslint-plugin-svelte": "^3.20.0",
     "eslint-plugin-unused-imports": "^4.4.1",
@@ -103,7 +103,7 @@
     "svelte-check": "^4.7.1",
     "ts-json-schema-generator": "^2.9.0",
     "typescript": "^6.0.3",
-    "vite": "^8.1.2",
+    "vite": "^8.1.3",
     "vitest": "^4.1.9"
   },
   "publishConfig": {
