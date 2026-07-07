@@ -271,6 +271,7 @@ export const getAssetBaseURL = (fieldConfig) => {
  * path. Can be `undefined` when editing a new draft.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
  * @param {MediaField} [args.fieldConfig] Field configuration.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
  * @param {boolean} [args.thumbnail] Whether to use a thumbnail of the image.
@@ -281,6 +282,7 @@ export const getMediaFieldURL = async ({
   entry,
   collectionName,
   fileName,
+  componentName,
   fieldConfig,
   typedKeyPath,
   thumbnail = false,
@@ -303,7 +305,14 @@ export const getMediaFieldURL = async ({
     }
   }
 
-  const asset = getAssetByPath({ value, entry, collectionName, fileName, typedKeyPath });
+  const asset = getAssetByPath({
+    value,
+    entry,
+    collectionName,
+    fileName,
+    componentName,
+    typedKeyPath,
+  });
 
   if (!asset) {
     return undefined;

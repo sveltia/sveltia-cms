@@ -100,6 +100,26 @@ describe('contents/fields/file/helper', () => {
         expect(result.field.folder).toEqual(mockFieldFolder);
       });
 
+      it('should pass componentName to getAssetFolder for field folders', () => {
+        vi.mocked(getAssetFolder).mockReturnValue(undefined);
+
+        getAssetLibraryFolderMap({
+          collectionName: 'posts',
+          fileName: 'post-1.md',
+          componentName: 'custom-editor',
+          typedKeyPath: 'fields.banner',
+          isIndexFile: false,
+        });
+
+        expect(vi.mocked(getAssetFolder)).toHaveBeenNthCalledWith(1, {
+          collectionName: 'posts',
+          fileName: 'post-1.md',
+          componentName: 'custom-editor',
+          typedKeyPath: 'fields.banner',
+          isIndexFile: false,
+        });
+      });
+
       it('should disable field folder when getAssetFolder returns undefined', () => {
         vi.mocked(getAssetFolder).mockReturnValue(undefined);
 

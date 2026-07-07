@@ -249,6 +249,65 @@ describe('assets/folders', () => {
       });
     });
 
+    it('should match a field-level folder by component name', () => {
+      const mockFolders = [
+        {
+          collectionName: 'posts',
+          fileName: undefined,
+          componentName: 'custom-editor',
+          typedKeyPath: undefined,
+          isIndexFile: false,
+          internalPath: 'content/posts/custom-editor',
+          publicPath: '/custom-editor',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        {
+          collectionName: 'posts',
+          fileName: undefined,
+          componentName: undefined,
+          typedKeyPath: undefined,
+          isIndexFile: false,
+          internalPath: 'content/posts/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ];
+
+      allAssetFolders.set(mockFolders);
+
+      const result = getAssetFolder({
+        componentName: 'custom-editor',
+      });
+
+      expect(result).toEqual(mockFolders[0]);
+    });
+
+    it('should normalize typed key paths before matching', () => {
+      const mockFolders = [
+        {
+          collectionName: 'posts',
+          fileName: undefined,
+          typedKeyPath: 'content',
+          isIndexFile: false,
+          internalPath: 'content/posts/hero',
+          publicPath: '/hero',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ];
+
+      allAssetFolders.set(mockFolders);
+
+      const result = getAssetFolder({
+        collectionName: 'posts',
+        typedKeyPath: 'body:c55:content',
+      });
+
+      expect(result).toEqual(mockFolders[0]);
+    });
+
     it('should return undefined when no folder matches', () => {
       const result = getAssetFolder({
         collectionName: 'nonexistent',

@@ -27,6 +27,7 @@
    * @property {string} collectionName The collection name.
    * @property {string | undefined} fileName The file name.
    * @property {string} [typedKeyPath] Field key path for field-level media folders.
+   * @property {string} [componentName] Custom editor component name for a field-level asset folder.
    * @property {Entry | undefined} entry The entry object.
    * @property {() => void} [onReplace] Event handler for replace action.
    * @property {() => void} [onRemove] Event handler for remove action.
@@ -45,6 +46,7 @@
     collectionName = '',
     fileName = undefined,
     typedKeyPath = undefined,
+    componentName = undefined,
     entry = undefined,
     onReplace,
     onRemove,
@@ -63,6 +65,16 @@
 
   const { widget: fieldType } = $derived(fieldConfig);
   const isImageField = $derived(fieldType === 'image');
+
+  const getURLArgs = $derived({
+    value,
+    entry,
+    collectionName,
+    fileName,
+    componentName,
+    typedKeyPath,
+    fieldConfig,
+  });
 
   /**
    * Get the path to display for the asset or file. For an unsaved file, this will be the same as
@@ -118,8 +130,6 @@
 
     // Update the `src` when an asset is selected
     if (value) {
-      const getURLArgs = { value, entry, collectionName, fileName, fieldConfig, typedKeyPath };
-
       if (isImageField && /^https?:/.test(value)) {
         asset = undefined;
         kind = 'image';

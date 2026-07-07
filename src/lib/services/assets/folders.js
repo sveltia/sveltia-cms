@@ -51,22 +51,40 @@ export const targetAssetFolder = derived(
 /**
  * Get an asset folder that matches the given conditions.
  * @param {object} cond Conditions.
- * @param {string | undefined} cond.collectionName Collection name.
+ * @param {string} [cond.collectionName] Collection name.
  * @param {string} [cond.fileName] Collection file name. File/singleton collection only.
+ * @param {string} [cond.componentName] Custom editor component name for a field-level asset folder.
  * @param {TypedFieldKeyPath} [cond.typedKeyPath] Field key path. Required for field-level media
  * folders.
  * @param {boolean} [cond.isIndexFile] Whether the asset folder is for the special index file used
  * specifically in Hugo. It works only for field-level media folders in an entry collection.
  * @returns {AssetFolderInfo | undefined} Asset folder information if found.
  */
-export const getAssetFolder = (cond) =>
-  get(allAssetFolders).find(
-    (folder) =>
+export const getAssetFolder = (cond) => {
+  const typedKeyPath =
+    'typedKeyPath' in cond
+      ? // Extract the actual key path, e.g. `body:c55:content` -> `content`
+        cond.typedKeyPath?.match(/[^:]+$/)?.[0]
+      : cond.typedKeyPath;
+
+  return get(allAssetFolders).find((folder) => {
+    if (!('typedKeyPath' in cond ? folder.typedKeyPath === typedKeyPath : !folder.typedKeyPath)) {
+      return false;
+    }
+
+    // If the condition has a `componentName`, it is a field-level media folder for a custom editor
+    // component. In that case, the `collectionName` and `fileName` are not relevant for the match.
+    if ('componentName' in cond) {
+      return folder.componentName === cond.componentName;
+    }
+
+    return (
       folder.collectionName === cond.collectionName &&
       folder.fileName === cond.fileName &&
-      ('typedKeyPath' in cond ? folder.typedKeyPath === cond.typedKeyPath : !folder.typedKeyPath) &&
-      ('isIndexFile' in cond ? folder.isIndexFile === cond.isIndexFile : !folder.isIndexFile),
-  );
+      ('isIndexFile' in cond ? folder.isIndexFile === cond.isIndexFile : !folder.isIndexFile)
+    );
+  });
+};
 
 /**
  * Cache for {@link getAssetFoldersByPath} to avoid recreating regexes on every call.

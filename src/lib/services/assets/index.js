@@ -161,6 +161,8 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
  * path. Can be `undefined` when editing a new draft.
  * @param {InternalCollection} context.collection Associated collection.
  * @param {InternalCollectionFile} [context.file] Associated collection file.
+ * @param {string} [context.componentName] Custom editor component name for a field-level asset
+ * folder.
  * @param {TypedFieldKeyPath} [context.typedKeyPath] Field key path for field-level media folders.
  * @returns {Asset | undefined} Found asset.
  */
@@ -169,6 +171,7 @@ export const getAssetByRelativePathAndCollection = ({
   entry,
   collection,
   file,
+  componentName,
   typedKeyPath,
 }) => {
   const { locales } = entry;
@@ -181,7 +184,12 @@ export const getAssetByRelativePathAndCollection = ({
   // use the correct `media_folder` (e.g. a field with `media_folder: images1` instead of the
   // collection-level `/src/assets/images/blog`).
   const fieldFolder = typedKeyPath
-    ? getAssetFolder({ collectionName: collection.name, fileName: file?.name, typedKeyPath })
+    ? getAssetFolder({
+        collectionName: collection.name,
+        fileName: file?.name,
+        componentName,
+        typedKeyPath,
+      })
     : undefined;
 
   const mediaFolder = fieldFolder?.entryRelative
@@ -225,15 +233,24 @@ export const getAssetByRelativePathAndCollection = ({
  * path. Can be `undefined` when editing a new draft.
  * @param {string} [args.collectionName] Collection name, used when no entry is available.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
  * @returns {Asset | undefined} Corresponding asset.
  */
-export const getAssetByRelativePath = ({ path, entry, collectionName, fileName, typedKeyPath }) => {
+export const getAssetByRelativePath = ({
+  path,
+  entry,
+  collectionName,
+  fileName,
+  componentName,
+  typedKeyPath,
+}) => {
   if (!entry) {
     // Without an entry we use collectionName/fileName to scan configured folders. For
     // entry-relative folders, internalPath + internalSubPath is used as a best-effort path.
     const scanningFolders = /** @type {AssetFolderInfo[]} */ (
       [
+        componentName ? getAssetFolder({ componentName, typedKeyPath }) : undefined,
         collectionName && typedKeyPath
           ? getAssetFolder({ collectionName, fileName, typedKeyPath })
           : undefined,
@@ -273,7 +290,7 @@ export const getAssetByRelativePath = ({ path, entry, collectionName, fileName, 
 
   const assets = getAssociatedCollections(entry).flatMap((collection) => {
     const collectionFiles = getCollectionFilesByEntry(collection, entry);
-    const args = { path, entry, collection, typedKeyPath };
+    const args = { path, entry, collection, componentName, typedKeyPath };
 
     if (collectionFiles.length) {
       return collectionFiles.map((file) => getAssetByRelativePathAndCollection({ ...args, file }));
@@ -297,10 +314,18 @@ export const getAssetByRelativePath = ({ path, entry, collectionName, fileName, 
  * path. Can be `undefined` when editing a new draft.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
  * @returns {Asset | undefined} Corresponding asset.
  */
-export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName, typedKeyPath }) => {
+export const getAssetByAbsolutePath = ({
+  path,
+  entry,
+  collectionName,
+  fileName,
+  componentName,
+  typedKeyPath,
+}) => {
   const exactMatch = getAssetPathMap().get(stripSlashes(path));
 
   if (exactMatch) {
@@ -312,6 +337,7 @@ export const getAssetByAbsolutePath = ({ path, entry, collectionName, fileName, 
   let foundAsset = undefined;
 
   const scanningFolders = [
+    componentName ? getAssetFolder({ componentName, typedKeyPath }) : undefined,
     typedKeyPath ? getAssetFolder({ collectionName, fileName, typedKeyPath }) : undefined,
     getAssetFolder({ collectionName, fileName }),
     getAssetFolder({ collectionName }),
@@ -392,19 +418,20 @@ export const isRelativePath = (path) => !/^[/@]/.test(path);
  * path. Can be `undefined` when editing a new draft.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
  * @returns {Asset | undefined} Corresponding asset.
  */
-export const getAssetByPath = ({ value, entry, collectionName, fileName, typedKeyPath }) => {
+export const getAssetByPath = ({ value, ...rest }) => {
   // Remove potential fragment before decoding
   const path = decodeFilePath(value.split('#')[0]);
 
   // Handle a relative path
   if (isRelativePath(path)) {
-    return getAssetByRelativePath({ path, entry, collectionName, fileName, typedKeyPath });
+    return getAssetByRelativePath({ path, ...rest });
   }
 
-  return getAssetByAbsolutePath({ path, entry, collectionName, fileName, typedKeyPath });
+  return getAssetByAbsolutePath({ path, ...rest });
 };
 
 /**

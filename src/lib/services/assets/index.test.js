@@ -1034,6 +1034,51 @@ describe('assets/index', () => {
       expect(resolvePath).toHaveBeenCalledWith('content/posts/images/photo.jpg');
     });
 
+    it('should pass componentName to getAssetFolder when resolving a field-level asset', async () => {
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        subPath: 'my-post.md',
+        locales: {
+          en: {
+            path: 'content/posts/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        media_folder: 'images',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+      vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
+      vi.mocked(getAssetFolder).mockReturnValue(undefined);
+      allAssets.set([]);
+
+      getAssetByRelativePathAndCollection({
+        path: 'photo.jpg',
+        entry: mockEntry,
+        collection: mockCollection,
+        componentName: 'custom-editor',
+        typedKeyPath: 'hero',
+      });
+
+      expect(getAssetFolder).toHaveBeenCalledWith({
+        collectionName: 'posts',
+        fileName: undefined,
+        componentName: 'custom-editor',
+        typedKeyPath: 'hero',
+      });
+    });
+
     it('should find asset by resolved path using file media_folder when provided', async () => {
       const { resolvePath, createPath } = await import('$lib/services/utils/file');
 
@@ -1866,6 +1911,52 @@ describe('assets/index', () => {
 
       expect(result).toEqual(mockAsset);
       expect(getAssetFolder).toHaveBeenCalledWith({ collectionName: 'posts', fileName: undefined });
+    });
+
+    it('should query getAssetFolder with componentName when no entry is provided', async () => {
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'uploads/custom/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'uploads/custom',
+          publicPath: '/custom',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFolder = {
+        internalPath: 'uploads/custom',
+        publicPath: '/custom',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
+      vi.mocked(createPath).mockReturnValue('uploads/custom/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByRelativePath({
+        path: 'photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        componentName: 'custom-editor',
+        typedKeyPath: 'hero',
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(getAssetFolder).toHaveBeenNthCalledWith(1, {
+        componentName: 'custom-editor',
+        typedKeyPath: 'hero',
+      });
     });
 
     it('should query getAssetFolder with typedKeyPath when both collectionName and typedKeyPath are provided with no entry', async () => {
@@ -3106,6 +3197,120 @@ describe('assets/index', () => {
       });
 
       expect(result).toEqual(mockAsset);
+    });
+
+    it('should call getAssetFolder with componentName before typedKeyPath when resolving absolute paths', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/custom/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/custom',
+          publicPath: '/custom',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFieldFolder = {
+        internalPath: 'content/posts/custom',
+        publicPath: '/custom',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+        typedKeyPath: 'hero',
+      };
+
+      vi.mocked(stripSlashes).mockReturnValue('/custom/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/custom',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValue(mockFieldFolder);
+      vi.mocked(createPath).mockReturnValue('content/posts/custom/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/custom/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+        componentName: 'custom-editor',
+        typedKeyPath: 'hero',
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(getAssetFolder).toHaveBeenNthCalledWith(1, {
+        componentName: 'custom-editor',
+        typedKeyPath: 'hero',
+      });
+    });
+
+    it('should call getAssetFolder with componentName before typedKeyPath when resolving absolute paths', async () => {
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/custom/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts/custom',
+          publicPath: '/custom',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockFieldFolder = {
+        internalPath: 'content/posts/custom',
+        publicPath: '/custom',
+        collectionName: 'posts',
+        entryRelative: false,
+        hasTemplateTags: false,
+        typedKeyPath: 'hero',
+      };
+
+      vi.mocked(stripSlashes).mockReturnValue('/custom/photo.jpg');
+      vi.mocked(getPathInfo).mockReturnValue({
+        dirname: '/custom',
+        basename: 'photo.jpg',
+        filename: 'photo',
+        extension: '.jpg',
+      });
+      vi.mocked(getAssetFolder).mockReturnValue(mockFieldFolder);
+      vi.mocked(createPath).mockReturnValue('content/posts/custom/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByAbsolutePath({
+        path: '/custom/photo.jpg',
+        entry: undefined,
+        collectionName: 'posts',
+        fileName: undefined,
+        componentName: 'custom-editor',
+        typedKeyPath: 'hero',
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(getAssetFolder).toHaveBeenNthCalledWith(1, {
+        componentName: 'custom-editor',
+        typedKeyPath: 'hero',
+      });
     });
 
     it('should call getAssetFolder with typedKeyPath as first scanning folder when provided', async () => {

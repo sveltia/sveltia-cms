@@ -48,8 +48,9 @@
    */
 
   /** @type {FieldEditorContext} */
-  const { fieldContext = undefined } = getContext('field-editor') ?? {};
+  const { fieldContext = undefined, parentComponentNames = [] } = getContext('field-editor') ?? {};
   const inEditorComponent = fieldContext === 'rich-text-editor-component';
+  const componentName = parentComponentNames.at(-1);
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -98,7 +99,13 @@
   const defaultLibraryOptions = $derived(getDefaultMediaLibraryOptions({ fieldConfig }));
   const libraryConfig = $derived(defaultLibraryOptions.config);
   const assetLibraryFolderMap = $derived(
-    getAssetLibraryFolderMap({ collectionName, fileName, typedKeyPath, isIndexFile }),
+    getAssetLibraryFolderMap({
+      collectionName,
+      fileName,
+      componentName,
+      typedKeyPath,
+      isIndexFile,
+    }),
   );
   const targetFolder = $derived(
     /** @type {AssetFolderInfo} */ (
@@ -127,6 +134,7 @@
     showRemoveButton,
     collectionName,
     fileName,
+    componentName,
     typedKeyPath,
     entry,
   });

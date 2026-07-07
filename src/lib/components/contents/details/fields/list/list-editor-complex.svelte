@@ -49,7 +49,9 @@
    */
 
   /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues', parentComponentNames = [] } =
+    getContext('field-editor') ?? {};
+  const componentName = parentComponentNames.at(-1);
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -314,6 +316,7 @@
       entry: $entryDraft?.originalEntry,
       collectionName,
       fileName,
+      componentName,
       typedKeyPath: hasSingleSubField
         ? `${typedKeyPath}.*`
         : `${typedKeyPath}.*.${fieldNameNormalized}`,

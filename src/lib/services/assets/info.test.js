@@ -1217,7 +1217,7 @@ describe('assets/info', () => {
       expect(vi.mocked(getAssetByPath)).toHaveBeenCalled();
     });
 
-    it('should pass typedKeyPath to getAssetByPath when provided', async () => {
+    it('should pass componentName and typedKeyPath to getAssetByPath when provided', async () => {
       const { getAssetByPath } = await import('$lib/services/assets');
 
       // Ensure Cloudinary is disabled so the relative path reaches getAssetByPath
@@ -1236,6 +1236,7 @@ describe('assets/info', () => {
       const result = await getMediaFieldURL({
         value: 'hero-image.jpg',
         collectionName: 'posts',
+        componentName: 'custom-editor',
         typedKeyPath: 'hero',
       });
 
@@ -1244,6 +1245,7 @@ describe('assets/info', () => {
         expect.objectContaining({
           value: 'hero-image.jpg',
           collectionName: 'posts',
+          componentName: 'custom-editor',
           typedKeyPath: 'hero',
         }),
       );

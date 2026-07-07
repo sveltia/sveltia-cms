@@ -21,6 +21,7 @@ import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/service
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
+ * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Key path to the field.
  * @param {boolean} [args.isIndexFile] Whether the asset folder is for the special index file used
  * specifically in Hugo. It works only for field-level media folders in an entry collection.
@@ -29,10 +30,18 @@ import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/service
 export const getAssetLibraryFolderMap = ({
   collectionName,
   fileName,
+  componentName,
   typedKeyPath,
   isIndexFile,
 }) => {
-  const fieldAssetFolder = getAssetFolder({ collectionName, fileName, typedKeyPath, isIndexFile });
+  const fieldAssetFolder = getAssetFolder({
+    collectionName,
+    fileName,
+    componentName,
+    typedKeyPath,
+    isIndexFile,
+  });
+
   const fileAssetFolder = fileName ? getAssetFolder({ collectionName, fileName }) : undefined;
   const collectionAssetFolder = getAssetFolder({ collectionName });
   const entryAssetFolder = fileAssetFolder ?? collectionAssetFolder;
