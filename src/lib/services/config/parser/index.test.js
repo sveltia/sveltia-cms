@@ -88,6 +88,18 @@ vi.mock('$lib/services/config/deprecations', () => ({
   warnDeprecation: vi.fn(),
 }));
 
+const mockParseFields = vi.fn();
+
+vi.mock('$lib/services/config/parser/fields', () => ({
+  parseFields: mockParseFields,
+}));
+
+const mockCustomComponentRegistry = new Map();
+
+vi.mock('$lib/services/contents/api/registries', () => ({
+  customComponentRegistry: mockCustomComponentRegistry,
+}));
+
 vi.mock('$lib/services/integrations/media-libraries/cloud', () => ({
   CLOUD_MEDIA_LIBRARY_NAMES: [],
 }));
@@ -108,6 +120,8 @@ function createCollectors() {
 describe('Config Parser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCustomComponentRegistry.clear();
+    mockParseFields.mockReset();
 
     mockGetStore.mockImplementation((store) => store);
 
@@ -143,6 +157,37 @@ describe('Config Parser', () => {
       parseCmsConfig(config, collectors);
 
       expect(collectors.errors.size).toBe(0);
+    });
+
+    it('should parse fields for registered custom editor components', async () => {
+      const { parseCmsConfig } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: '/media',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      const customFields = [{ name: 'caption', widget: 'string' }];
+
+      mockCustomComponentRegistry.set('custom-component', { fields: customFields });
+
+      parseCmsConfig(config, collectors);
+
+      expect(mockParseFields).toHaveBeenCalledWith(
+        customFields,
+        { cmsConfig: config, componentName: 'custom-component' },
+        collectors,
+      );
     });
 
     it('should collect errors for missing backend', async () => {

@@ -585,6 +585,52 @@ describe('config/folders/assets', () => {
       });
     });
 
+    it('should handle field-level media folders for custom editor components', () => {
+      vi.mocked(getValidCollections).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections: [],
+      };
+
+      const fieldMediaFolders = [
+        {
+          fieldConfig: {
+            media_folder: '/uploads/custom',
+            public_folder: '/static/custom',
+          },
+          context: {
+            collection: undefined,
+            collectionFile: undefined,
+            componentName: 'custom-component',
+            typedKeyPath: 'fields.hero',
+            isIndexFile: false,
+          },
+        },
+      ];
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config, fieldMediaFolders);
+      const fieldFolder = result.find((f) => f.componentName === 'custom-component');
+
+      expect(fieldFolder).toEqual({
+        collectionName: undefined,
+        fileName: undefined,
+        componentName: 'custom-component',
+        typedKeyPath: 'fields.hero',
+        isIndexFile: false,
+        internalPath: 'uploads/custom',
+        publicPath: '/static/custom',
+        entryRelative: false,
+        hasTemplateTags: false,
+        label: undefined,
+        icon: undefined,
+        isAssetCollection: false,
+      });
+    });
+
     it('should handle field-level media folders on file collections', () => {
       vi.mocked(getValidCollections).mockReturnValue([
         // @ts-ignore - simplified collection for testing

@@ -431,11 +431,13 @@
  * Global, collection-level, file-level or field-level asset folder information.
  * @typedef {object} AssetFolderInfo
  * @property {string | undefined} collectionName Collection name or `undefined` for the All Assets
- * and Global Assets folders.
+ * and Global Assets folders as well as field-level asset folders in custom editor components.
  * @property {string} [fileName] Collection file name. File/singleton collection only.
  * @property {TypedFieldKeyPath} [typedKeyPath] Field key path for a field-level asset folder.
  * @property {boolean} [isIndexFile] Whether the asset folder is for the special index file used
  * specifically in Hugo. It works only for field-level asset folders in an entry collection.
+ * @property {string} [componentName] Custom editor component name for a field-level asset folder,
+ * registered with `CMS.registerEditorComponent()`.
  * @property {string | undefined} internalPath Folder path on the repository/filesystem, relative to
  * the project root directory. It can be a partial path if the collection’s `media_folder` property
  * is a relative path, because the complete path is entry-specific in that case. It will be

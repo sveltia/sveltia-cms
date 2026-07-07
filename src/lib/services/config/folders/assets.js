@@ -22,8 +22,10 @@ import { getValidCollectionFiles } from '$lib/services/contents/collection/files
 
 /**
  * @typedef {object} NormalizeAssetFolderArgs
- * @property {string} collectionName Collection name.
+ * @property {string | undefined} collectionName Collection name or `undefined` for the All Assets
+ * and Global Assets folders as well as field-level asset folders in custom editor components.
  * @property {string} [fileName] Collection file name. File/singleton collection only.
+ * @property {string} [componentName] Custom editor component name for a field-level asset folder.
  * @property {TypedFieldKeyPath} [typedKeyPath] Key path to the field.
  * @property {boolean} [isIndexFile] Whether the field is part of an index file entry.
  * @property {string} mediaFolder Raw `media_folder` option of the collection or collection file.
@@ -86,6 +88,7 @@ export const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =
 export const normalizeAssetFolder = ({
   collectionName,
   fileName,
+  componentName,
   typedKeyPath,
   isIndexFile = false,
   mediaFolder,
@@ -126,6 +129,7 @@ export const normalizeAssetFolder = ({
   return {
     collectionName,
     fileName,
+    componentName,
     typedKeyPath,
     isIndexFile,
     internalPath: stripSlashes(entryRelative ? (baseFolder ?? '') : mediaFolder),
@@ -212,24 +216,26 @@ export const iterateFiles = ({ collectionName, files, globalFolders }) => {
  */
 export const handleFieldMediaFolders = ({ fieldMediaFolders, validCollections, globalFolders }) => {
   fieldMediaFolders.forEach(({ fieldConfig, context }) => {
-    const _collection = /** @type {Collection} */ (context.collection);
+    const { collection, collectionFile, componentName, typedKeyPath, isIndexFile } = context;
 
     const isValidCollection =
-      _collection.name === '_singletons' ||
-      validCollections.some((c) => c.name === _collection.name);
+      !!collection &&
+      (collection.name === '_singletons' ||
+        validCollections.some((c) => c.name === collection.name));
 
-    if (!isValidCollection) {
+    if (!isValidCollection && !componentName) {
       return;
     }
 
     addFolderIfNeeded({
-      collectionName: _collection.name,
-      fileName: context.collectionFile?.name,
+      collectionName: collection?.name,
+      fileName: collectionFile?.name,
+      componentName,
+      typedKeyPath,
+      isIndexFile,
       mediaFolder: /** @type {string} */ (fieldConfig.media_folder),
       publicFolder: fieldConfig.public_folder,
-      baseFolder: 'folder' in _collection ? _collection.folder : undefined,
-      typedKeyPath: /** @type {string} */ (context.typedKeyPath),
-      isIndexFile: /** @type {boolean} */ (context.isIndexFile),
+      baseFolder: collection && 'folder' in collection ? collection.folder : undefined,
       globalFolders,
     });
   });
