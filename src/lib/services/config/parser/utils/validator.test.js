@@ -27,6 +27,7 @@ function mockTranslate(key, options) {
     'config.error.duplicate_field_names': 'Duplicate field name: {name}',
     'config.error_locator.collection': 'Collection: {collection}',
     'config.error_locator.file': 'File: {file}',
+    'config.error_locator.component': 'Component: {component}',
     'config.error_locator.field': 'Field: {field}',
     'config.compatibility_link':
       'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented',
@@ -168,6 +169,25 @@ describe('messages', () => {
       expect(message).toContain('File: Post 1');
     });
 
+    it('should include component locator when context has componentName', () => {
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        componentName: 'my-component',
+      };
+
+      addMessage({
+        strKey: 'test_error',
+        context,
+        collectors,
+      });
+
+      const message = Array.from(collectors.errors)[0];
+
+      expect(message).toContain('Component: my-component');
+    });
+
     it('should include field locator when context has typedKeyPath', () => {
       const collectors = createCollectors();
 
@@ -187,13 +207,14 @@ describe('messages', () => {
       expect(message).toContain('Field: fields.0.name');
     });
 
-    it('should include all locators when context has collection, file, and field', () => {
+    it('should include all locators when context has collection, file, component, and field', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
       const context = {
         collection: { name: 'posts', label: 'Posts' },
         collectionFile: { name: 'post-1', label: 'Post 1' },
+        componentName: 'my-component',
         typedKeyPath: 'fields.0.name',
       };
 
@@ -207,6 +228,7 @@ describe('messages', () => {
 
       expect(message).toContain('Collection: Posts');
       expect(message).toContain('File: Post 1');
+      expect(message).toContain('Component: my-component');
       expect(message).toContain('Field: fields.0.name');
     });
 

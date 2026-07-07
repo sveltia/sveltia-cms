@@ -635,6 +635,7 @@ config:
   error_locator:
     collection: "{$collection} コレクション"
     file: "{$file} ファイル"
+    component: "{$component} コンポーネント"
     field: "`{$field}` フィールド"
   error:
     no_secure_context: Sveltia CMS は HTTPS またはローカルホスト URL でのみ動作します。

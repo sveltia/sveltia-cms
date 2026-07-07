@@ -745,6 +745,7 @@ config:
   error_locator:
     collection: "{$collection} collection"
     file: "{$file} file"
+    component: "{$component} component"
     field: "`{$field}` field"
   error:
     no_secure_context: Sveltia CMS only works with HTTPS or localhost URLs.

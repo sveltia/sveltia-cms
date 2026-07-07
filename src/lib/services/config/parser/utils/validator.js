@@ -28,7 +28,7 @@ export const addMessage = ({
   context = {},
   collectors,
 }) => {
-  const { collection, collectionFile, typedKeyPath } = context;
+  const { collection, collectionFile, componentName, typedKeyPath } = context;
   const { errors, warnings } = collectors;
   const locators = [];
 
@@ -44,6 +44,14 @@ export const addMessage = ({
     locators.push(
       _('config.error_locator.file', {
         values: { file: collectionFile.label ?? collectionFile.name },
+      }),
+    );
+  }
+
+  if (componentName) {
+    locators.push(
+      _('config.error_locator.component', {
+        values: { component: componentName },
       }),
     );
   }
