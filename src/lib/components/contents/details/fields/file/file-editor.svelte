@@ -122,8 +122,7 @@
   const listedAssets = $derived(
     listAssets({ kind, folder: targetFolder, folderPath: targetFolderPath, unsavedAssets }),
   );
-  // Ignore the `multiple` option when the field is used in a rich text editor component
-  const multiple = $derived(isMultiple(fieldConfig) && !inEditorComponent);
+  const multiple = $derived(isMultiple(fieldConfig));
   const maxSize = $derived(/** @type {number} */ (libraryConfig.max_file_size));
   const showRemoveButton = $derived(
     !required &&
