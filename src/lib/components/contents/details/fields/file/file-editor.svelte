@@ -48,7 +48,11 @@
    */
 
   /** @type {FieldEditorContext} */
-  const { fieldContext = undefined, parentComponentNames = [] } = getContext('field-editor') ?? {};
+  const {
+    valueStoreKey = 'currentValues',
+    fieldContext = undefined,
+    parentComponentNames = [],
+  } = getContext('field-editor') ?? {};
   const inEditorComponent = fieldContext === 'rich-text-editor-component';
   const componentName = parentComponentNames.at(-1);
 
@@ -198,7 +202,7 @@
     let hasValidResource = false;
 
     const lastIndex = multiple
-      ? (Object.keys($entryDraft.currentValues[locale])
+      ? (Object.keys($entryDraft[valueStoreKey][locale])
           .filter((key) => key.startsWith(`${keyPath}.`))
           .map((key) => Number(key.replace(`${keyPath}.`, '')))
           .pop() ?? -1)
@@ -211,7 +215,7 @@
         if (multiple) {
           const targetIndex = replaceMode ? replaceIndex : lastIndex + 1 + index;
 
-          $entryDraft.currentValues[locale][`${keyPath}.${targetIndex}`] = value;
+          $entryDraft[valueStoreKey][locale][`${keyPath}.${targetIndex}`] = value;
         } else {
           // Encode spaces as `%20` when the field is used in the rich text editor component to
           // avoid issues with Markdown parsers that do not support unencoded spaces in URLs.
@@ -283,7 +287,7 @@
       return;
     }
 
-    const valueMap = $state.snapshot($entryDraft.currentValues[locale]);
+    const valueMap = $state.snapshot($entryDraft[valueStoreKey][locale]);
     /** @type {string[]} */
     const updatedValue = [];
 
@@ -295,10 +299,10 @@
         updatedValue.push(valueMap[currentKey]);
       } else if (nextKey in valueMap) {
         updatedValue.push(valueMap[nextKey]);
-        $entryDraft.currentValues[locale][currentKey] = valueMap[nextKey];
+        $entryDraft[valueStoreKey][locale][currentKey] = valueMap[nextKey];
       } else {
-        $entryDraft.currentValues[locale][currentKey] = null;
-        delete $entryDraft.currentValues[locale][currentKey];
+        $entryDraft[valueStoreKey][locale][currentKey] = null;
+        delete $entryDraft[valueStoreKey][locale][currentKey];
         break;
       }
     }
@@ -316,11 +320,11 @@
     }
 
     [
-      $entryDraft.currentValues[locale][`${keyPath}.${index}`],
-      $entryDraft.currentValues[locale][`${keyPath}.${index + 1}`],
+      $entryDraft[valueStoreKey][locale][`${keyPath}.${index}`],
+      $entryDraft[valueStoreKey][locale][`${keyPath}.${index + 1}`],
     ] = [
-      $entryDraft.currentValues[locale][`${keyPath}.${index + 1}`],
-      $entryDraft.currentValues[locale][`${keyPath}.${index}`],
+      $entryDraft[valueStoreKey][locale][`${keyPath}.${index + 1}`],
+      $entryDraft[valueStoreKey][locale][`${keyPath}.${index}`],
     ];
   };
 

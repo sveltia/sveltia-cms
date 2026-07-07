@@ -5,6 +5,8 @@
   @see https://sveltiacms.app/en/docs/fields/relation
 -->
 <script>
+  import { getContext } from 'svelte';
+
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
@@ -12,7 +14,7 @@
   import { getOptions } from '$lib/services/contents/fields/relation/helper';
 
   /**
-   * @import { FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { RelationField, SelectField } from '$lib/types/public';
    */
 
@@ -21,6 +23,9 @@
    * @property {RelationField} fieldConfig Field configuration.
    * @property {string | string[] | undefined} currentValue Field value.
    */
+
+  /** @type {FieldEditorContext} */
+  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -48,7 +53,7 @@
       ? [getCollectionFileEntry(collectionName, fileName)].filter((entry) => !!entry)
       : getEntriesByCollection(collectionName),
   );
-  const currentLocaleValues = $derived($entryDraft?.currentValues[locale]);
+  const currentLocaleValues = $derived($entryDraft?.[valueStoreKey]?.[locale]);
   const currentSlug = $derived($entryDraft?.currentSlugs[locale] ?? $entryDraft?.currentSlugs._);
   /** @type {SelectField} */
   const selectFieldConfig = $derived({
