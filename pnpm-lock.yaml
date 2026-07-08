@@ -21,8 +21,8 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2(svelte@5.56.4(@typescript-eslint/types@8.63.0))
       '@sveltia/ui':
-        specifier: ^0.41.2
-        version: 0.41.2(svelte@5.56.4(@typescript-eslint/types@8.63.0))(typescript@6.0.3)
+        specifier: ^0.41.3
+        version: 0.41.3(svelte@5.56.4(@typescript-eslint/types@8.63.0))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.10.7
         version: 0.10.7
@@ -1208,8 +1208,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.41.2':
-    resolution: {integrity: sha512-37ephPMrMeKdNqNegP1dM9/QsGfNv1ExfmxmOu9DM14lCK1xLPPkRm1tBhr1VnzorUPHN9+mgPxtUayHgg9W8A==}
+  '@sveltia/ui@0.41.3':
+    resolution: {integrity: sha512-6AOy92E7W6YRKFFtu0PTYQZHEd9frgnzaD1Yue7+FbV6EhZaKR8MpnzoOBUxF0JS81OLDFnZLk9+t3yZFyVoFw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -1917,8 +1917,8 @@ packages:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
 
-  electron-to-chromium@1.5.387:
-    resolution: {integrity: sha512-TaxwufTFDufvPEoXdhwVrA3UdFWBeWGkYoJ1K8ldF1xe6gKfth6iRNS5lTQ5JPNOHdGQm8PT1QYKUqFLCiUefQ==}
+  electron-to-chromium@1.5.388:
+    resolution: {integrity: sha512-Pl/aJaqOOxYxda3vcx1IKSJimwYXHDkEnGn0F+kG2EE68dDtx2uCinaS+Vih8Z91B9t8CSAbiF/HKyWcnXjhzw==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -4879,7 +4879,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.56.4(@typescript-eslint/types@8.63.0)
 
-  '@sveltia/ui@0.41.2(svelte@5.56.4(@typescript-eslint/types@8.63.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.41.3(svelte@5.56.4(@typescript-eslint/types@8.63.0))(typescript@6.0.3)':
     dependencies:
       '@lexical/code': 0.46.0(typescript@6.0.3)
       '@lexical/code-prism': 0.46.0(typescript@6.0.3)
@@ -5326,7 +5326,7 @@ snapshots:
     dependencies:
       baseline-browser-mapping: 2.10.42
       caniuse-lite: 1.0.30001802
-      electron-to-chromium: 1.5.387
+      electron-to-chromium: 1.5.388
       node-releases: 2.0.50
       update-browserslist-db: 1.2.3(browserslist@4.28.5)
 
@@ -5662,7 +5662,7 @@ snapshots:
       es-errors: 1.3.0
       gopd: 1.2.0
 
-  electron-to-chromium@1.5.387: {}
+  electron-to-chromium@1.5.388: {}
 
   emoji-regex@8.0.0: {}
 
