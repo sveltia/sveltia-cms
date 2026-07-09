@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-[Sveltia CMS](https://sveltiacms.app/en/) is a leading open-source Git-based headless CMS for [Jamstack](https://jamstack.org/) sites. It’s a complete, modern rewrite of Netlify CMS, now known as Decap CMS.
+[Sveltia CMS](https://sveltiacms.app/en/) is a leading Git-based headless CMS for [Jamstack](https://jamstack.org/) sites. It’s open-source and a complete modern rewrite of Netlify CMS, now known as Decap CMS.
 
 Designed for content editors and developers alike, Sveltia CMS delivers a great UX/DX, powerful features, and first-class internationalization (i18n) support — all in a small, maintenance-free, single-page web application served from a CDN. Its generic-purpose approach makes it suitable for a wide range of projects, from personal blogs and portfolios to marketing sites and knowledge bases.
 
