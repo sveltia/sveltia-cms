@@ -6,7 +6,7 @@ Designed for content editors and developers alike, Sveltia CMS delivers a great 
 
 As the de facto [successor to Netlify/Decap CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), Sveltia CMS addresses 300 issues (680 including duplicates) reported in their repository. It introduces numerous enhancements while maintaining high compatibility with existing installations. More and more projects, including a U.S. government website, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to enjoy its significantly improved performance, security, reliability, and experience.
 
-Sveltia CMS is framework-agnostic and can also be used for vanilla JavaScript sites. It’s an excellent option for people moving away from a traditional CMS or website builder and looking for a free, lightweight CMS that seamlessly integrates with a static site generator (SSG), such as Astro, Eleventy, and Hugo.
+Sveltia CMS is framework-agnostic and can also be used for vanilla JavaScript sites. It’s an excellent option for people moving away from a traditional CMS or website builder and looking for a free, lightweight CMS that works well with a static site generator (SSG) like Astro, Eleventy, or Hugo.
 
 Explore 330 real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 110 sites migrated from Netlify/Decap CMS and 50 sites from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
