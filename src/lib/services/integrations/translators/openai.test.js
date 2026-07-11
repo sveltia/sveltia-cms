@@ -436,8 +436,8 @@ describe('OpenAI Translator Service', () => {
       expect(requestBody.instructions).toContain('markdown formatting');
       expect(requestBody.instructions).toContain('HTML tags');
       expect(requestBody.instructions).toContain('JSON array');
-      expect(requestBody.model).toBe('gpt-5.4-nano');
-      expect(requestBody.temperature).toBe(0.3);
+      expect(requestBody.model).toBe('gpt-5.6-luna');
+      expect(requestBody).not.toHaveProperty('temperature');
       expect(requestBody.store).toBe(false);
     });
 

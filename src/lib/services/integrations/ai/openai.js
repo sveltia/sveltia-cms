@@ -46,14 +46,7 @@ const isOutputTextItem = (item) =>
  * @returns {Promise<string>} Response text.
  * @throws {Error} When the API call fails or returns an invalid response.
  */
-export const complete = async ({
-  apiKey,
-  model,
-  systemPrompt,
-  userMessage,
-  temperature = 0.3,
-  maxTokens = 4000,
-}) => {
+export const complete = async ({ apiKey, model, systemPrompt, userMessage, maxTokens = 4000 }) => {
   const response = await fetch(apiEndpoint, {
     method: 'POST',
     headers: {
@@ -65,7 +58,6 @@ export const complete = async ({
       instructions: systemPrompt,
       input: userMessage,
       store: false,
-      temperature,
       max_output_tokens: maxTokens,
     }),
   });
