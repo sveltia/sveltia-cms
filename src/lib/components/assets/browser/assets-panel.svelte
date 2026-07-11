@@ -106,7 +106,7 @@
       <InfiniteScroll items={filteredAssets} itemKey="path">
         {#snippet renderItem(/** @type {Asset & { relPath: string }} */ asset)}
           {#await sleep() then}
-            {@const { kind, unsaved, path, relPath } = asset}
+            {const { kind, unsaved, path, relPath } = asset}
             <SimpleImageGridItem
               value={path}
               {viewType}

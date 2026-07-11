@@ -39,16 +39,16 @@
 <PanelContainer title={_('entry_sidebar.validation.title')}>
   {#if validities && hasResults}
     {#each Object.entries(validationMessages) as [locale, messagesByKey] (locale)}
-      {@const valueMap = currentValues?.[locale]}
-      {@const label = getLocaleLabel(locale)}
+      {const valueMap = currentValues?.[locale]}
+      {const label = getLocaleLabel(locale)}
       <section class="locale" role="group">
         {#if label}
           <h4>{label}</h4>
         {/if}
         {#if Object.values(validities[locale]).some((v) => v.valid === false)}
           {#each Object.keys(valueMap) as keyPath (keyPath)}
-            {@const field = getField({ ...getFieldArgs, valueMap, keyPath })}
-            {@const messages = messagesByKey[keyPath] ?? []}
+            {const field = getField({ ...getFieldArgs, valueMap, keyPath })}
+            {const messages = messagesByKey[keyPath] ?? []}
             {#if messages.length}
               <Button
                 class="ref"

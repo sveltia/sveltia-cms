@@ -112,7 +112,7 @@
   {#each $entryGroups as { name, entries } (name)}
     {#await sleep() then}
       <GridBody label={name !== '*' ? name : undefined}>
-        {@const localEntries = reorderGroups[name] ?? entries}
+        {const localEntries = reorderGroups[name] ?? entries}
         {#each localEntries as entry, index (entry.id)}
           <EntryReorderListItem
             {collection}

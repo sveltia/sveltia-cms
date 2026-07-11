@@ -45,7 +45,7 @@
         }}
       />
       {#each groups as group (`${group.field}|${String(group.pattern)}`)}
-        {@const { label: _label, field, pattern } = group}
+        {const { label: _label, field, pattern } = group}
         <MenuItemRadio
           label={_label}
           checked={$currentView.group?.field === field &&

@@ -146,7 +146,7 @@
       {#each usedEntries as entry (entry.id)}
         {#each getAssociatedCollections(entry) as collection (collection.name)}
           {#key appLocale.current}
-            {@const collectionLabel = getCollectionLabel(collection)}
+            {const collectionLabel = getCollectionLabel(collection)}
             {#each getCollectionFilesByEntry(collection, entry) as file (file.name)}
               {@render usedEntryLink({
                 link: `/collections/${collection.name}/entries/${file.name}`,

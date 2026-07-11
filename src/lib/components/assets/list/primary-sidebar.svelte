@@ -77,14 +77,14 @@
     <OptionGroup label={_('asset_location.repository')}>
       {#each folders as folder, index ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
         {#await sleep() then}
-          {@const { collectionName, fileName, internalPath, entryRelative, hasTemplateTags } =
+          {const { collectionName, fileName, internalPath, entryRelative, hasTemplateTags } =
             folder}
-          {@const collection = collectionName ? getCollection(collectionName) : undefined}
-          {@const collectionFile =
+          {const collection = collectionName ? getCollection(collectionName) : undefined}
+          {const collectionFile =
             collection && fileName ? getCollectionFile(collection, fileName) : undefined}
           <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
-          {@const uploadDisabled = entryRelative || hasTemplateTags}
-          {@const selected = equal($selectedAssetFolder, folder)}
+          {const uploadDisabled = entryRelative || hasTemplateTags}
+          {const selected = equal($selectedAssetFolder, folder)}
           <Option
             selected={env.isSmallScreen || isSearchPage ? false : selected}
             label={appLocale.current ? getFolderLabelByCollection(folder) : ''}
@@ -147,7 +147,7 @@
             {#snippet endIcon()}
               {#key $allAssets}
                 {#await sleep() then}
-                  {@const count = (
+                  {const count = (
                     internalPath !== undefined ? getAssetsByFolder(folder) : $allAssets
                   ).length}
                   <span class="count" aria-label="({_('x_assets', { values: { count } })})">

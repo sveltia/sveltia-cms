@@ -55,7 +55,7 @@
 {#if hasValues}
   <Subsection {label}>
     {#each subFields as subField (subField.name)}
-      {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
+      {const subFieldKeyPath = `${keyPath}.${subField.name}`}
       <VisibilityObserver>
         <FieldPreview
           keyPath={subFieldKeyPath}

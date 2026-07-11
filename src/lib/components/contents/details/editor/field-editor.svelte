@@ -306,7 +306,7 @@
       {#if !(fieldType in editors)}
         <div role="none">{_('unsupported_field_type_x', { values: { name: fieldType } })}</div>
       {:else if isList}
-        {@const Editor = editors[fieldType]}
+        {const Editor = editors[fieldType]}
         <Editor
           {locale}
           {keyPath}
@@ -326,7 +326,7 @@
         {#if prefix}
           <div role="none" class="prefix">{prefix}</div>
         {/if}
-        {@const Editor = editors[fieldType]}
+        {const Editor = editors[fieldType]}
         <Editor
           {locale}
           {keyPath}
@@ -348,7 +348,7 @@
       {/if}
     </div>
     {#if !readonly && (hint || $extraHint)}
-      {@const ExtraHint = $extraHint}
+      {const ExtraHint = $extraHint}
       <div role="none" class="footer">
         {#if hint}
           <p class="hint">{@html _sanitize(hint)}</p>

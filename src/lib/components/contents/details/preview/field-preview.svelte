@@ -90,7 +90,7 @@
       <h4>{label || fieldName}</h4>
     {/if}
     {#if fieldType in previews}
-      {@const Preview = previews[fieldType]}
+      {const Preview = previews[fieldType]}
       <Preview {keyPath} {typedKeyPath} {locale} {fieldConfig} {currentValue} />
     {/if}
   </section>

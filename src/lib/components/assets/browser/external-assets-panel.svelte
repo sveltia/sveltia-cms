@@ -274,7 +274,7 @@
         <InfiniteScroll items={listedAssets ?? []} itemKey="id">
           {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
             {#await sleep() then}
-              {@const { id, previewURL, description, kind: _kind } = asset}
+              {const { id, previewURL, description, kind: _kind } = asset}
               <SimpleImageGridItem
                 value={id}
                 {viewType}

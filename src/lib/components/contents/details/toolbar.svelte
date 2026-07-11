@@ -162,8 +162,8 @@
 </script>
 
 {#snippet overflowButtons()}
-  {@const Component = env.isSmallScreen ? MenuItem : Button}
-  {@const canDuplicate =
+  {const Component = env.isSmallScreen ? MenuItem : Button}
+  {const canDuplicate =
     !isIndexFile &&
     entryCollection?.duplicate !== false &&
     !$collectionState.creationDisabled &&
@@ -171,7 +171,7 @@
     // duplicate assets along with the entry.
     // @see https://github.com/sveltia/sveltia-cms/issues/526
     !entryCollection?.path}
-  {@const canDelete = entryCollection?.delete !== false}
+  {const canDelete = entryCollection?.delete !== false}
   {#if canDuplicate}
     <Component
       variant="ghost"
@@ -213,7 +213,7 @@
         {#if isNew}
           {_('create_entry_title', { values: { name: collectionLabelSingular } })}
         {:else}
-          {@const entrySummary = collectionFile
+          {const entrySummary = collectionFile
             ? getCollectionFileLabel(collectionFile)
             : collection && originalEntry && appLocale.current
               ? getEntrySummary(collection, originalEntry)
@@ -338,7 +338,7 @@
 </Toast>
 
 <Toast id={$copyFromLocaleToast.id} bind:show={$copyFromLocaleToast.show}>
-  {@const { status, message, count, sourceLanguage } = $copyFromLocaleToast}
+  {const { status, message, count, sourceLanguage } = $copyFromLocaleToast}
   <Alert {status}>
     {_(`editor.${message}`, {
       values: {
