@@ -3,6 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // Simplified locale data used by the locale module mocks
 const mockEnData = { hello: 'Hello', world: 'World' };
 const mockJaData = { hello: 'こんにちは', world: '世界' };
+
+/** @type {Record<string, Record<string, string> | undefined>} */
+const mockComponentStrings = {
+  en: { button: 'Button' },
+  ja: { button: 'ボタン' },
+};
+
 // Mock all dependencies first
 const mockAddMessages = vi.fn();
 const mockInit = vi.fn();
@@ -17,6 +24,10 @@ vi.mock('@sveltia/i18n', () => ({
   getLocaleFromNavigator: mockGetLocaleFromNavigator,
   init: mockInit,
   locale: { current: 'en' },
+}));
+
+vi.mock('@sveltia/ui', () => ({
+  resources: mockComponentStrings,
 }));
 
 vi.mock('@sveltia/utils/file', () => ({
@@ -50,8 +61,16 @@ describe('i18n', () => {
       initAppLocale();
 
       expect(mockAddMessages).toHaveBeenCalledTimes(2);
-      expect(mockAddMessages).toHaveBeenCalledWith('en', { hello: 'Hello', world: 'World' });
-      expect(mockAddMessages).toHaveBeenCalledWith('ja', { hello: 'こんにちは', world: '世界' });
+      expect(mockAddMessages).toHaveBeenCalledWith('en', {
+        hello: 'Hello',
+        world: 'World',
+        _sui: { button: 'Button' },
+      });
+      expect(mockAddMessages).toHaveBeenCalledWith('ja', {
+        hello: 'こんにちは',
+        world: '世界',
+        _sui: { button: 'ボタン' },
+      });
 
       expect(mockInit).toHaveBeenCalledWith({
         fallbackLocale: 'en',
@@ -70,6 +89,26 @@ describe('i18n', () => {
       expect(mockInit).toHaveBeenCalledWith({
         fallbackLocale: 'en',
         initialLocale: 'ja',
+      });
+    });
+
+    it('should use an empty object when no component strings exist for a locale', async () => {
+      mockComponentStrings.en = undefined;
+      mockComponentStrings.ja = undefined;
+
+      const { initAppLocale } = await import('./i18n.js');
+
+      initAppLocale();
+
+      expect(mockAddMessages).toHaveBeenCalledWith('en', {
+        hello: 'Hello',
+        world: 'World',
+        _sui: {},
+      });
+      expect(mockAddMessages).toHaveBeenCalledWith('ja', {
+        hello: 'こんにちは',
+        world: '世界',
+        _sui: {},
       });
     });
 

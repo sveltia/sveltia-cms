@@ -1,4 +1,5 @@
 import { addMessages, locale as appLocale, getLocaleFromNavigator, init } from '@sveltia/i18n';
+import { resources as componentStrings } from '@sveltia/ui';
 import { getPathInfo } from '@sveltia/utils/file';
 import { toStore } from 'svelte/store';
 
@@ -26,7 +27,10 @@ export const initAppLocale = () => {
   Object.entries(modules).forEach(([path, content]) => {
     const locale = getPathInfo(path).filename;
 
-    addMessages(locale, /** @type {Record<string, any>} */ (content));
+    addMessages(locale, {
+      .../** @type {Record<string, any>} */ (content),
+      _sui: componentStrings[locale] ?? {},
+    });
   });
 
   init({
