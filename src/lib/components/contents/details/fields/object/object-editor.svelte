@@ -243,7 +243,7 @@
     <div role="none" class="item-list" id="object-{fieldId}-item-list">
       {#if parentExpanded}
         {#each subFields as subField (subField.name)}
-          {const subFieldKeyPath = `${keyPath}.${subField.name}`}
+          {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
           <VisibilityObserver>
             <FieldEditor
               keyPath={subFieldKeyPath}
@@ -256,7 +256,7 @@
           </VisibilityObserver>
         {/each}
       {:else}
-        {const formattedSummary = _formatSummary()}
+        {@const formattedSummary = _formatSummary()}
         {#if formattedSummary}
           <div role="none" class="summary" id="object-{fieldId}-summary">
             <TruncatedText lines={env.isSmallScreen ? 2 : 1}>

@@ -39,7 +39,7 @@
     )}
   </p>
   {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}
-    {const label = service.serviceLabel}
+    {@const label = service.serviceLabel}
     <section>
       <h4>{label}</h4>
       <div role="none">

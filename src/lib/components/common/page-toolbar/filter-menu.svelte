@@ -38,8 +38,8 @@
     <Menu aria-label={_('filtering_options')} aria-controls={ariaControls}>
       {#if multiple}
         {#each filters as filter (`${filter.field}|${String(filter.pattern)}`)}
-          {const { label: _label, field, pattern } = filter}
-          {const index = ($currentView.filters || []).findIndex(
+          {@const { label: _label, field, pattern } = filter}
+          {@const index = ($currentView.filters || []).findIndex(
             (f) => f.field === field && String(f.pattern) === String(pattern),
           )}
           <MenuItemCheckbox
@@ -72,7 +72,7 @@
           }}
         />
         {#each filters as filter (`${filter.field}|${String(filter.pattern)}`)}
-          {const { label: _label, field, pattern } = filter}
+          {@const { label: _label, field, pattern } = filter}
           <MenuItemRadio
             label={_label}
             checked={$currentView.filter?.field === field &&

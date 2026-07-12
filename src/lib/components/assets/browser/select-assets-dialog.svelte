@@ -340,7 +340,7 @@
   {/snippet}
   {#snippet footerExtra()}
     {#if isEnabledMediaService}
-      {const { showServiceLink, serviceLabel, serviceURL } =
+      {@const { showServiceLink, serviceLabel, serviceURL } =
         allStockAssetProviders[/** @type {StockAssetProviderName} */ (libraryName)] ?? {}}
       {#if showServiceLink}
         <a href={serviceURL} class="service-link">
@@ -365,7 +365,7 @@
           <OptionGroup label={_('asset_location.repository')}>
             {#each Object.entries(assetLibraryFolderMap) as [id, { folder, enabled }] (id)}
               {#if enabled}
-                {const name = `default-${id}`}
+                {@const name = `default-${id}`}
                 <Option
                   {name}
                   label={folder?.label ?? _(`assets_dialog.folder.${id}`)}

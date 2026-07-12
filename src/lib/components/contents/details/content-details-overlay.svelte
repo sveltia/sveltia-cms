@@ -368,7 +368,7 @@
 
 {#snippet firstPane()}
   {#if $editorFirstPane}
-    {const { locale, mode } = $editorFirstPane}
+    {@const { locale, mode } = $editorFirstPane}
     <div class="pane-wrapper">
       <Group
         class="pane"
@@ -392,7 +392,7 @@
 
 {#snippet secondPane()}
   {#if $editorSecondPane}
-    {const { locale, mode } = $editorSecondPane}
+    {@const { locale, mode } = $editorSecondPane}
     <div class="pane-wrapper">
       <Group
         class="pane"

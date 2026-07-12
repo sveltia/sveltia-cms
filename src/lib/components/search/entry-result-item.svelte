@@ -42,8 +42,8 @@
 </script>
 
 {#snippet resultRow(/** @type {RowArgs} */ { collection, collectionFile })}
-  {const { defaultLocale } = (collectionFile ?? collection)._i18n ?? DEFAULT_I18N_CONFIG}
-  {const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
+  {@const { defaultLocale } = (collectionFile ?? collection)._i18n ?? DEFAULT_I18N_CONFIG}
+  {@const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
   {#if content}
     <GridRow
       onclick={() => {

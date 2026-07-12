@@ -42,7 +42,7 @@
     deleteEntries($selectedEntries, associatedAssets);
   }}
 >
-  {const all = $selectedEntries.length > 1 && $selectedEntries.length === $listedEntries.length}
+  {@const all = $selectedEntries.length > 1 && $selectedEntries.length === $listedEntries.length}
   {_(
     associatedAssets.length
       ? all

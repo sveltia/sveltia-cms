@@ -50,7 +50,7 @@
         {#each collections as collection, index (collection.name ?? index)}
           {#await sleep() then}
             {#if !('divider' in collection)}
-              {const { name, label, icon } = collection}
+              {@const { name, label, icon } = collection}
               <Option
                 label={label || name}
                 selected={env.isSmallScreen || isSearchPage
@@ -65,7 +65,7 @@
                 {/snippet}
                 {#snippet endIcon()}
                   {#key $allEntries}
-                    {const count = (
+                    {@const count = (
                       'files' in collection ? collection.files : getEntriesByCollection(name)
                     ).length}
                     <span class="count" aria-label="({_('x_entries', { values: { count } })})">
@@ -97,7 +97,7 @@
         </OptionGroup>
       {:else}
         <!-- Show the singletons just like a file collection -->
-        {const count = singletons.length}
+        {@const count = singletons.length}
         <OptionGroup label={_('collections')}>
           <Option
             label={_('files')}

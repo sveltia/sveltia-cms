@@ -60,13 +60,13 @@
 
 {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
   <VisibilityObserver>
-    {const itemKeyPath = `${keyPath}.${index}`}
-    {const subFieldName = Array.isArray(types)
+    {@const itemKeyPath = `${keyPath}.${index}`}
+    {@const subFieldName = Array.isArray(types)
       ? $entryDraft?.currentValues[locale][`${itemKeyPath}.${typeKey}`]
       : undefined}
-    {const typeConfig = types?.find(({ name }) => name === subFieldName)}
-    {const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
-    {const subFields = subFieldName
+    {@const typeConfig = types?.find(({ name }) => name === subFieldName)}
+    {@const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
+    {@const subFields = subFieldName
       ? (typeConfig?.fields ?? [])
       : (fields ?? (field ? [field] : []))}
     <Subsection {label}>

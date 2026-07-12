@@ -30,7 +30,7 @@
 <ListContainer aria-label={_('entry_list')}>
   {#if collection}
     {#if allEntries.length}
-      {const { defaultLocale } = collection._i18n}
+      {@const { defaultLocale } = collection._i18n}
       <ListingGrid
         {viewType}
         id="entry-list"

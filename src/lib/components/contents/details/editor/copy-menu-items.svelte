@@ -47,7 +47,7 @@
 </script>
 
 {#each otherLocales as otherLocale (otherLocale)}
-  {const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
+  {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
   {#await isMenuDisabled(languagePair) then disabled}
     <MenuItem
       label={_(translate ? 'translate_from_x' : 'copy_from_x', {

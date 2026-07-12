@@ -426,15 +426,15 @@
 <div role="none" id="list-{fieldId}-item-list" class="item-list" class:collapsed={!parentExpanded}>
   {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
     <VisibilityObserver>
-      {const itemKeyPath = `${keyPath}.${index}`}
-      {const expanded = $entryDraft?.expanderStates?._[itemKeyPath] ?? true}
-      {const typeConfig = hasVariableTypes
+      {@const itemKeyPath = `${keyPath}.${index}`}
+      {@const expanded = $entryDraft?.expanderStates?._[itemKeyPath] ?? true}
+      {@const typeConfig = hasVariableTypes
         ? types?.find(({ name }) => name === item[typeKey])
         : undefined}
-      {const subFields = hasVariableTypes
+      {@const subFields = hasVariableTypes
         ? (typeConfig?.fields ?? [])
         : (fields ?? (field ? [field] : []))}
-      {const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
+      {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
       <!-- @todo Support drag sorting. -->
       <div role="none" class="item">
         <ObjectHeader
