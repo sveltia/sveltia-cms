@@ -14,7 +14,7 @@
     if (canvas && $showMobileSignInDialog) {
       const { origin, pathname } = window.location;
       const snapshot = $state.snapshot(prefs);
-      const encodedData = btoa(JSON.stringify({ token: user.account?.token, prefs: snapshot }));
+      const encodedData = btoa(JSON.stringify({ prefs: snapshot }));
       const url = `${origin}${pathname}#/signin/${encodedData}`;
 
       toCanvas(canvas, url);
