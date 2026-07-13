@@ -8,7 +8,7 @@ As the de facto [successor to Netlify/Decap CMS](https://sveltiacms.app/en/docs/
 
 Sveltia CMS is framework-agnostic and can also be used for vanilla JavaScript sites. It’s an excellent option for people moving away from a traditional CMS or website builder and looking for a lightweight headless CMS that works well with a static site generator (SSG) like Astro, Eleventy, or Hugo.
 
-Explore 330 real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 110 sites migrated from Netlify/Decap CMS and 50 sites from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
+Explore 340 real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 120 sites migrated from Netlify/Decap CMS and 50 sites from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
