@@ -17,10 +17,15 @@ import cloudinaryService, {
   upload,
 } from './cloudinary';
 
-// Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
+// Mock dependencies while preserving the real writable implementation used by the module.
+vi.mock('svelte/store', async (importOriginal) => {
+  const actual = /** @type {Record<string, unknown>} */ (await importOriginal());
+
+  return {
+    ...actual,
+    get: vi.fn(),
+  };
+});
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { subscribe: vi.fn() },

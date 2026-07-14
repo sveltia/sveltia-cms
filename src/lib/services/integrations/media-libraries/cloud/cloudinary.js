@@ -2,11 +2,12 @@
 
 import { sleep } from '@sveltia/utils/misc';
 import { isObject } from '@sveltia/utils/object';
-import { get } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
 
 /**
+ * @import { Writable } from 'svelte/store';
  * @import {
  * ExternalAsset,
  * MediaLibraryFetchOptions,
@@ -28,6 +29,24 @@ import { cmsConfig } from '$lib/services/config';
  * @property {number} [width] Image width in pixels.
  * @property {number} [height] Image height in pixels.
  */
+
+/**
+ * Whether the Cloudinary Media Library integration is activated.
+ * @type {Writable<boolean>}
+ */
+export const activated = writable(false);
+
+/**
+ * Whether the Cloudinary Media Library console is loaded.
+ * @type {Writable<boolean>}
+ */
+export const consoleLoaded = writable(false);
+
+/**
+ * Whether the Cloudinary Media Library dialog is open.
+ * @type {Writable<boolean>}
+ */
+export const dialogOpen = writable(false);
 
 /**
  * @typedef {object} CloudinaryListResponse

@@ -728,6 +728,7 @@ cloud_storage:
       button_label: Activate Cloudinary
       description: After signing in, click the Sign In button again to continue.
     auth_key_label: API Secret
+    open_library: Open Cloudinary
   uploadcare:
     auth_key_label: API Secret Key
   aws_s3:

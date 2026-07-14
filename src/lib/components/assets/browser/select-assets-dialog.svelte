@@ -32,6 +32,10 @@
   } from '$lib/services/contents/fields/file/process';
   import { getMediaLibraryOptions } from '$lib/services/integrations/media-libraries';
   import {
+    activated as cloudinaryActivated,
+    dialogOpen as cloudinaryDialogOpen,
+  } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
+  import {
     allStockAssetProviders,
     getStockAssetMediaLibraryOptions,
   } from '$lib/services/integrations/media-libraries/stock';
@@ -325,7 +329,6 @@
   size="x-large"
   okLabel={_('insert')}
   okDisabled={!selectedResources.length}
-  keepContent={true}
   focusInput={false}
   bind:open
   {onOk}
@@ -378,7 +381,16 @@
         {#if canEnterURL || !!Object.keys(enabledCloudServiceEntries).length}
           <OptionGroup label={_('asset_location.external')}>
             {#each enabledCloudServiceEntries as [, { serviceId, serviceLabel }] (serviceId)}
-              <Option name={serviceId} label={serviceLabel} selected={libraryName === serviceId} />
+              <Option
+                name={serviceId}
+                label={serviceLabel}
+                selected={libraryName === serviceId}
+                onclick={() => {
+                  if (serviceId === 'cloudinary' && $cloudinaryActivated) {
+                    $cloudinaryDialogOpen = true;
+                  }
+                }}
+              />
             {/each}
             {#if canEnterURL}
               <Option
@@ -438,24 +450,12 @@
       {/if}
       {#each enabledExternalServiceEntries as [serviceId, serviceProps] (serviceId)}
         {#if serviceId === 'cloudinary'}
-          <!-- Always include the Cloudinary panel in the DOM, otherwise the iframe will be
-            destroyed when the component is unmounted and the user has to sign in again due to the
-            third-party cookie limitation. The `keepContent` prop on the `<Dialog>` is also needed
-            for that reason -->
           <CloudinaryPanel
             {kind}
             {fieldConfig}
             {multiple}
             hidden={libraryName !== 'cloudinary'}
             onSelect={(resources) => {
-              // Check if the dialog is open to prevent selected resources from being inserted to
-              // other fields. This is required because `CloudinaryPanel` uses messaging to
-              // communicate with the embedded iframe, which is shared by all fields using the
-              // Cloudinary media storage.
-              if (!open) {
-                return;
-              }
-
               // Close the dialog after selection
               selectedResources = resources;
               onOk();

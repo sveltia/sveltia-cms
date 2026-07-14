@@ -622,6 +622,7 @@ cloud_storage:
       button_label: Cloudinary を有効化
       description: ログイン後、再度 Sign In ボタンをクリックして続行してください。
     auth_key_label: API Secret
+    open_library: Cloudinary を開く
   uploadcare:
     auth_key_label: API Secret Key
   aws_s3:

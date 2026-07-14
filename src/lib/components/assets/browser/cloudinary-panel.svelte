@@ -13,10 +13,12 @@
   import { onMount } from 'svelte';
 
   import {
+    activated,
     CONFIG_PROPS,
     CONSOLE_BASE_URL,
+    consoleLoaded,
+    dialogOpen,
     FRAME_ORIGIN,
-    FRAME_SRC_PARAMS,
     getMergedLibraryOptions,
   } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
   import { openNewTab } from '$lib/services/utils/window';
@@ -49,34 +51,8 @@
   /** @type {CloudinaryMediaLibrary} */
   const libOptions = $derived(getMergedLibraryOptions(fieldConfig) ?? {});
 
-  let mlId = '';
-  let authenticated = $state(false);
-  let consoleLoaded = $state(false);
-  /** @type {HTMLIFrameElement | undefined} */
-  let iframe = $state();
-
-  /**
-   * Set the iframe src URL with appropriate query parameters.
-   */
-  const initFrame = () => {
-    if (!iframe) {
-      return;
-    }
-
-    mlId = window.crypto.randomUUID();
-
-    const params = new URLSearchParams({
-      ...Object.fromEntries(
-        Object.entries(libOptions.config ?? {}).filter(([k]) => FRAME_SRC_PARAMS.includes(k)),
-      ),
-      ml_id: mlId,
-      pmHost: window.location.origin,
-      new_cms: 'true',
-      remove_header: 'true',
-    });
-
-    iframe.src = `${CONSOLE_BASE_URL}/cms?${params}`;
-  };
+  /** @type {HTMLIFrameElement | null} */
+  let iframe = null;
 
   /**
    * Send configuration message to the Cloudinary Media Library iframe.
@@ -96,7 +72,7 @@
 
     const data = {
       type: 'ML_WIDGET_SHOW',
-      data: { mlId, config },
+      data: { mlId: iframe?.dataset?.mlId, config },
     };
 
     // eslint-disable-next-line no-console
@@ -159,20 +135,26 @@
     console.debug('Cloudinary Panel received message:', data);
 
     if (data.type === 'login' && data.consoleDomain) {
-      authenticated = true;
+      $activated = true;
+      $dialogOpen = true;
     }
 
     if (data.type === 'consoleLoaded') {
-      consoleLoaded = true;
+      $consoleLoaded = true;
     }
 
     if (data.type === 'ML_WIDGET_INSERT_DATA') {
+      $dialogOpen = false;
       onInsert(data.data);
+    }
+
+    if (data.type === 'ML_WIDGET_HIDE') {
+      $dialogOpen = false;
     }
   };
 
   onMount(() => {
-    initFrame();
+    iframe = document.querySelector('iframe#cloudinary-iframe');
     window.addEventListener('message', onMessage);
 
     return () => {
@@ -181,47 +163,34 @@
   });
 
   $effect(() => {
-    if (libOptions && consoleLoaded) {
+    if (libOptions && $consoleLoaded) {
       sendMessage();
     }
   });
 </script>
 
-<iframe
-  bind:this={iframe}
-  title={_('cloud_storage.cloudinary.iframe_title')}
-  hidden={hidden || !authenticated}
-  allow="camera; storage-access"
-  sandbox="allow-same-origin allow-scripts allow-popups allow-forms
-    allow-storage-access-by-user-activation"
->
-</iframe>
-
-{#if !hidden && !authenticated}
+{#if !hidden}
   <EmptyState>
-    <Button
-      variant="primary"
-      label={_('cloud_storage.cloudinary.activate.button_label')}
-      onclick={async () => {
-        // Let the user sign in to Cloudinary first in a separate tab, otherwise third-party cookies
-        // in the iframe won’t work, and authentication will fail. Allow `window.opener` so
-        // Cloudinary can send the login message back via `postMessage`.
-        openNewTab(`${CONSOLE_BASE_URL}/cms_login?cms=true`, { noopener: false });
-      }}
-    />
-    <div role="none">{_('cloud_storage.cloudinary.activate.description')}</div>
+    {#if $activated}
+      <Button
+        variant="primary"
+        label={_('cloud_storage.cloudinary.open_library')}
+        onclick={() => {
+          $dialogOpen = true;
+        }}
+      />
+    {:else}
+      <Button
+        variant="primary"
+        label={_('cloud_storage.cloudinary.activate.button_label')}
+        onclick={() => {
+          // Let the user sign in to Cloudinary first in a separate tab, otherwise third-party
+          // cookies in the iframe won’t work, and authentication will fail. Allow `window.opener`
+          // so Cloudinary can send the login message back via `postMessage`.
+          openNewTab(`${CONSOLE_BASE_URL}/cms_login?cms=true`, { noopener: false });
+        }}
+      />
+      <div role="none">{_('cloud_storage.cloudinary.activate.description')}</div>
+    {/if}
   </EmptyState>
 {/if}
-
-<style>
-  iframe {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border: none;
-
-    &[hidden] {
-      display: none;
-    }
-  }
-</style>
