@@ -192,7 +192,8 @@
   title={_('cloud_storage.cloudinary.iframe_title')}
   hidden={hidden || !authenticated}
   allow="camera; storage-access"
-  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+  sandbox="allow-same-origin allow-scripts allow-popups allow-forms
+    allow-storage-access-by-user-activation"
 >
 </iframe>
 
