@@ -24,10 +24,6 @@
     isTestRepo ? undefined : /** @type {GitBackend} */ (configuredBackend)?.repo?.split('/').pop(),
   );
   const showLocalBackendOption = $derived(env.isLocalHost && !isTestRepo);
-  const tokenAuthDisabled = $derived(
-    !isTestRepo &&
-      /** @type {GitBackend} */ (configuredBackend).auth_methods?.includes('token') === false,
-  );
 
   /**
    * The label to use for the Sign In button, which is usually the backend’s label but can be
@@ -45,28 +41,30 @@
   });
 
   /**
-   * Whether the Sign In button should be disabled if the configuration is missing or if the
-   * administrator has explicitly disabled the authentication method.
+   * Whether the option to sign in using a PAT should be hidden.
+   */
+  const tokenOptionHidden = $derived(
+    !isTestRepo &&
+      /** @type {GitBackend} */ (configuredBackend).auth_methods?.includes('token') === false,
+  );
+
+  /**
+   * Whether the option to sign in using OAuth should be hidden.
+   */
+  const oauthOptionHidden = $derived(
+    !isTestRepo &&
+      /** @type {GitBackend} */ (configuredBackend).auth_methods?.includes('oauth') === false,
+  );
+
+  /**
+   * Whether the option to sign in using OAuth should be disabled. This is used for Gitea with PKCE
+   * authentication, which requires an app ID to be provided. We can’t check this during config
+   * validation because token authentication doesn’t require an ID, so we check it here instead.
    * @see https://github.com/sveltia/sveltia-cms/issues/721
    */
-  const signInDisabled = $derived.by(() => {
-    // If OAuth authentication is explicitly disabled, the button should be disabled
-    if (
-      !isTestRepo &&
-      /** @type {GitBackend} */ (configuredBackend).auth_methods?.includes('oauth') === false
-    ) {
-      return true;
-    }
-
-    // Gitea with PKCE authentication requires an app ID. If it’s not provided, the button should be
-    // disabled. We can’t check this during config validation because token authentication doesn’t
-    // require an app ID, so we check it here instead.
-    if (backendName === 'gitea' && !(/** @type {GiteaBackend} */ (configuredBackend).app_id)) {
-      return true;
-    }
-
-    return false;
-  });
+  const oauthOptionDisabled = $derived(
+    backendName === 'gitea' && !(/** @type {GiteaBackend} */ (configuredBackend).app_id),
+  );
 
   onMount(() => {
     // Skip automatic sign-in if there’s already an error (e.g. repository access denied), so the
@@ -112,21 +110,22 @@
       {/if}
       <Spacer />
     {/if}
-    <Button
-      variant={showLocalBackendOption ? 'secondary' : 'primary'}
-      label={isTestRepo
-        ? _('work_with_test_repo')
-        : _('sign_in_with_x', { values: { service: signInServiceLabel } })}
-      disabled={signInDisabled}
-      onclick={async () => {
-        await signInManually(backendName);
-      }}
-    />
-    {#if !isTestRepo}
+    {#if !oauthOptionHidden}
+      <Button
+        variant={showLocalBackendOption ? 'secondary' : 'primary'}
+        label={isTestRepo
+          ? _('work_with_test_repo')
+          : _('sign_in_with_x', { values: { service: signInServiceLabel } })}
+        disabled={oauthOptionDisabled}
+        onclick={async () => {
+          await signInManually(backendName);
+        }}
+      />
+    {/if}
+    {#if !isTestRepo && !tokenOptionHidden}
       <Button
         variant="secondary"
         label={_('sign_in_using_access_token', { values: { service: signInServiceLabel } })}
-        disabled={tokenAuthDisabled}
         onclick={() => {
           showTokenDialog = true;
         }}
