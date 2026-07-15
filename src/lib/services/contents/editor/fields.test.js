@@ -8,7 +8,7 @@ import {
   getExpanderKeys,
   getInitialExpanderState,
   syncExpanderStates,
-} from './expanders.js';
+} from './fields.js';
 
 // Mock dependencies before importing
 vi.mock('$lib/services/contents/draft', () => {
@@ -51,7 +51,7 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
 }));
 
-describe('editor/expanders', () => {
+describe('editor/fields', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 

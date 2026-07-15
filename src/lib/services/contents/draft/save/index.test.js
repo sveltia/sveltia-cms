@@ -16,7 +16,7 @@ import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
-import { expandInvalidFields } from '$lib/services/contents/editor/expanders';
+import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 
 import { saveEntry } from '.';
@@ -39,7 +39,7 @@ vi.mock('$lib/services/contents/api/events', () => ({
 vi.mock('$lib/services/contents/draft/save/changes');
 vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
-vi.mock('$lib/services/contents/editor/expanders');
+vi.mock('$lib/services/contents/editor/fields');
 vi.mock('$lib/services/contents/entry/history');
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { subscribe: vi.fn(() => vi.fn()) },

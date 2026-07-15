@@ -34,7 +34,7 @@
     showContentOverlay,
     showDuplicateToast,
   } from '$lib/services/contents/editor';
-  import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/editor/expanders';
+  import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/editor/fields';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
