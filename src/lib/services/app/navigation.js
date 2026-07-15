@@ -198,6 +198,22 @@ export const goto = async (
 export const goBack = (path, options = {}) => {
   const transitionType = 'backwards';
 
+  // Use the Navigation API if available, which is more reliable than `window.history`
+  if (window.navigation?.currentEntry) {
+    const { index } = window.navigation.currentEntry;
+    const { sameDocument, url } = window.navigation.entries()[index - 1] ?? {};
+
+    if (sameDocument && url && parseLocation(url).path === path) {
+      startViewTransition(transitionType, () => {
+        window.navigation.back();
+      });
+    } else {
+      goto(path, { ...options, transitionType });
+    }
+
+    return;
+  }
+
   if (window.history.state?.from) {
     startViewTransition(transitionType, () => {
       window.history.back();

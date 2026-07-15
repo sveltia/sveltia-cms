@@ -50,6 +50,11 @@ Object.defineProperty(globalThis, 'window', {
       back: vi.fn(),
       state: null,
     },
+    navigation: {
+      currentEntry: null,
+      entries: vi.fn(() => []),
+      back: vi.fn(),
+    },
     open: vi.fn(),
     dispatchEvent: vi.fn(),
   },
@@ -124,6 +129,17 @@ describe('navigation', () => {
         replaceState: vi.fn(),
         back: vi.fn(),
         state: null,
+      },
+      writable: true,
+      configurable: true,
+    });
+
+    // Mock window.navigation
+    Object.defineProperty(window, 'navigation', {
+      value: {
+        currentEntry: null,
+        entries: vi.fn(() => []),
+        back: vi.fn(),
       },
       writable: true,
       configurable: true,
@@ -416,6 +432,78 @@ describe('navigation', () => {
   });
 
   describe('goBack', () => {
+    it('should use window.navigation.back() when the previous entry matches the fallback path', () => {
+      const mockNavigationBack = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: { index: 1 },
+          entries: vi.fn(() => [{ sameDocument: true, url: 'https://example.com/#/default' }]),
+          back: mockNavigationBack,
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      document.startViewTransition = mockStartViewTransition;
+
+      goBack('/default');
+
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
+        types: ['backwards'],
+        update: expect.any(Function),
+      });
+
+      const callArgs = /** @type {any} */ (mockStartViewTransition).mock.calls[0]?.[1];
+
+      if (callArgs) {
+        callArgs();
+      }
+
+      expect(mockNavigationBack).toHaveBeenCalled();
+    });
+
+    it('should fall back to goto when the previous navigation entry does not match the target path', () => {
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: { index: 1 },
+          entries: vi.fn(() => [{ sameDocument: true, url: 'https://example.com/#/collections' }]),
+          back: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      goBack('/default');
+
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        { from: 'https://example.com/#/collections' },
+        '',
+        'https://example.com/#/default',
+      );
+    });
+
+    it('should fall back to goto when the previous navigation entry is missing', () => {
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: { index: 1 },
+          entries: vi.fn(() => []),
+          back: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      goBack('/default');
+
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        { from: 'https://example.com/#/collections' },
+        '',
+        'https://example.com/#/default',
+      );
+    });
+
     it('should use history.back() when history state has from property', () => {
       // Mock history with state
       Object.defineProperty(window, 'history', {
