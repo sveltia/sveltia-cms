@@ -5,12 +5,13 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { highlightEditorField } from '$lib/services/contents/editor/fields';
   import { getField } from '$lib/services/contents/entry/fields';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
-   * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
-   * @import { FieldKeyPath, VisibleField } from '$lib/types/public';
+   * @import { EntryDraft } from '$lib/types/private';
+   * @import { VisibleField } from '$lib/types/public';
    */
 
   const { validationMessages, collectionName, fileName, currentValues, isIndexFile, validities } =
@@ -21,19 +22,6 @@
   );
 
   const getFieldArgs = $derived({ collectionName, fileName, currentValues, isIndexFile });
-
-  /**
-   * Focuses the field in the editor corresponding to the given locale and key path.
-   * @param {object} args Arguments.
-   * @param {InternalLocaleCode} args.locale Locale code.
-   * @param {FieldKeyPath} args.keyPath Key path of the field.
-   */
-  const focusField = ({ locale, keyPath }) => {
-    window.postMessage(
-      { type: 'highlight-editor-field', payload: { locale, keyPath } },
-      window.location.origin,
-    );
-  };
 </script>
 
 <PanelContainer title={_('entry_sidebar.validation.title')}>
@@ -54,7 +42,7 @@
                 class="ref"
                 variant="ghost"
                 onclick={() => {
-                  focusField({ locale, keyPath });
+                  highlightEditorField({ locale, keyPath });
                 }}
               >
                 <span class="summary">

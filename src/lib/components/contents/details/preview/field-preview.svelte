@@ -3,6 +3,7 @@
 
   import { previews } from '$lib/components/contents/details/fields';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { highlightEditorField } from '$lib/services/contents/editor/fields';
   import { isFieldMultiple } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
@@ -53,17 +54,6 @@
           .filter((val) => val !== undefined)
       : valueMap[keyPath],
   );
-
-  /**
-   * Called whenever the preview field is clicked. Posts a message to the window to highlight the
-   * corresponding field in the editor.
-   */
-  const highlightEditorField = () => {
-    window.postMessage(
-      { type: 'highlight-editor-field', payload: { locale, keyPath } },
-      window.location.origin,
-    );
-  };
 </script>
 
 {#if fieldType !== 'hidden' && preview && (locale === defaultLocale || canTranslate || canDuplicate)}
@@ -78,12 +68,12 @@
     onkeydown={(event) => {
       if (event.key === 'Enter') {
         event.stopPropagation();
-        highlightEditorField();
+        highlightEditorField({ locale, keyPath });
       }
     }}
     onclick={(event) => {
       event.stopPropagation();
-      highlightEditorField();
+      highlightEditorField({ locale, keyPath });
     }}
   >
     {#if showLabel}

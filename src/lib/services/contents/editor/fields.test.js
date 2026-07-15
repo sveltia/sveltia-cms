@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -7,6 +7,7 @@ import {
   expandInvalidFields,
   getExpanderKeys,
   getInitialExpanderState,
+  highlightEditorField,
   syncExpanderStates,
 } from './fields.js';
 
@@ -50,6 +51,31 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
   LIST_KEY_PATH_REGEX: /\.\d+$/,
   getField: vi.fn(),
 }));
+
+describe('highlightEditorField', () => {
+  beforeEach(() => {
+    vi.stubGlobal('window', {
+      location: { origin: 'https://example.com' },
+      postMessage: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('posts a highlight message for the given field', () => {
+    const locale = 'en';
+    const keyPath = 'title';
+
+    highlightEditorField({ locale, keyPath });
+
+    expect(window.postMessage).toHaveBeenCalledWith(
+      { type: 'highlight-editor-field', payload: { locale, keyPath } },
+      'https://example.com',
+    );
+  });
+});
 
 describe('editor/fields', () => {
   beforeEach(() => {

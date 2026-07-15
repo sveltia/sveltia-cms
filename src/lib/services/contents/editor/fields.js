@@ -162,3 +162,16 @@ export const expandInvalidFields = ({ collectionName, fileName, currentValues })
 
   syncExpanderStates(stateMap);
 };
+
+/**
+ * Highlight the corresponding field in the editor by posting a message to the window.
+ * @param {object} args Arguments object.
+ * @param {InternalLocaleCode} args.locale The locale of the field to highlight.
+ * @param {FieldKeyPath} args.keyPath The key path of the field to highlight.
+ */
+export const highlightEditorField = ({ locale, keyPath }) => {
+  window.postMessage(
+    { type: 'highlight-editor-field', payload: { locale, keyPath } },
+    window.location.origin,
+  );
+};
