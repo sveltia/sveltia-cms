@@ -10,7 +10,8 @@ import { hasMatch, normalize } from '$lib/services/search/util';
 
 /**
  * @import { Readable } from 'svelte/store';
- * @import { Entry } from '$lib/types/private';
+ * @import { Entry, EntrySearchResult, InternalLocaleCode } from '$lib/types/private';
+ * @import { FieldKeyPath } from '$lib/types/public';
  * @import { NormalizedValueCache } from '$lib/services/search/util';
  */
 
@@ -20,11 +21,15 @@ import { hasMatch, normalize } from '$lib/services/search/util';
  * @param {Entry} args.entry Entry to scan.
  * @param {string} args.terms Search terms.
  * @param {NormalizedValueCache} [args.normalizedValueCache] Normalized value cache.
- * @returns {number} Points scored for the entry based on matches.
+ * @returns {EntrySearchResult} Single search result.
  */
 export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) => {
   // Count the number of matches, weighting the collection name and title
   let points = 0;
+  /** @type {InternalLocaleCode | undefined} */
+  let locale = undefined;
+  /** @type {FieldKeyPath | undefined} */
+  let keyPath = undefined;
   const collections = getAssociatedCollections(entry);
 
   if (collections.length) {
@@ -50,18 +55,26 @@ export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) =>
   }
 
   // Check if the entry content matches
-  Object.values(entry.locales).forEach(({ content }) => {
-    points += Object.values(content).filter(
-      (value) =>
+  Object.entries(entry.locales).forEach(([_locale, { content }]) => {
+    points += Object.entries(content).filter(([_keyPath, value]) => {
+      const matched =
         (typeof value === 'string' &&
           !!value &&
           hasMatch({ value, terms, normalizedValueCache })) ||
         (typeof value === 'number' &&
-          hasMatch({ value: String(value), terms, normalizedValueCache })),
-    ).length;
+          hasMatch({ value: String(value), terms, normalizedValueCache }));
+
+      // If this is the first match, store the locale and key path
+      if (matched && !locale && !keyPath) {
+        locale = _locale;
+        keyPath = _keyPath;
+      }
+
+      return matched;
+    }).length;
   });
 
-  return points;
+  return { entry, points, locale, keyPath };
 };
 
 /**
@@ -69,7 +82,7 @@ export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) =>
  * @param {object} args Arguments.
  * @param {Entry[]} args.entries All entries to search in.
  * @param {string} args.terms Search terms.
- * @returns {Entry[]} Search results sorted by relevance.
+ * @returns {EntrySearchResult[]} Search results sorted by relevance.
  */
 export const searchEntries = ({ entries, terms }) => {
   terms = normalize(terms);
@@ -82,15 +95,14 @@ export const searchEntries = ({ entries, terms }) => {
   const normalizedValueCache = new Map();
 
   return entries
-    .map((entry) => ({ entry, points: scanEntry({ entry, terms, normalizedValueCache }) }))
+    .map((entry) => scanEntry({ entry, terms, normalizedValueCache }))
     .filter(({ points }) => points > 0)
-    .sort((a, b) => b.points - a.points)
-    .map(({ entry }) => entry);
+    .sort((a, b) => b.points - a.points);
 };
 
 /**
  * Hold entry search results for the current search terms.
- * @type {Readable<Entry[]>}
+ * @type {Readable<EntrySearchResult[]>}
  * @todo Search relation fields.
  */
 export const entrySearchResults = derived(

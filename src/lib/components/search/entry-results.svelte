@@ -10,7 +10,7 @@
   import { entrySearchResults } from '$lib/services/search/entries';
 
   /**
-   * @import { Entry } from '$lib/types/private';
+   * @import { EntrySearchResult } from '$lib/types/private';
    */
 
   $effect(() => {
@@ -34,9 +34,9 @@
       >
         {#key $searchTerms}
           <InfiniteScroll items={$entrySearchResults} itemKey="id">
-            {#snippet renderItem(/** @type {Entry} */ entry)}
+            {#snippet renderItem(/** @type {EntrySearchResult} */ result)}
               {#await sleep() then}
-                <EntryResultItem {entry} />
+                <EntryResultItem {result} />
               {/await}
             {/snippet}
           </InfiniteScroll>

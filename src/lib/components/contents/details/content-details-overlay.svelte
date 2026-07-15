@@ -304,6 +304,21 @@
   };
 
   /**
+   * Highlight the editor field if the URL state contains a highlight object, such as when the user
+   * clicks a search result or validation error. Then clear the highlight state so that it doesn’t
+   * trigger again on navigation.
+   */
+  const highlightEditorFieldIfNeeded = async () => {
+    const { state } = window.history;
+    const { locale, keyPath } = state?.highlight ?? {};
+
+    if (typeof locale === 'string' && typeof keyPath === 'string' && locale && keyPath) {
+      await highlightEditorField({ locale, keyPath });
+      window.history.replaceState({ ...state, highlight: null }, '');
+    }
+  };
+
+  /**
    * Called when a message event is received. If the event is a highlight event, calls
    * {@link highlightEditorField} with the event payload.
    * @param {MessageEvent} event The message event.
@@ -354,14 +369,17 @@
 
   $effect(() => {
     if (wrapper) {
-      if (!$showContentOverlay) {
-        showBackupToastIfNeeded();
-      } else if (hidden) {
-        hidden = false;
-        switchPanes();
-        moveFocus();
-        resetBackupToastState();
-      }
+      (async () => {
+        if (!$showContentOverlay) {
+          await showBackupToastIfNeeded();
+        } else if (hidden) {
+          hidden = false;
+          await switchPanes();
+          await moveFocus();
+          await highlightEditorFieldIfNeeded();
+          resetBackupToastState();
+        }
+      })();
     }
   });
 </script>

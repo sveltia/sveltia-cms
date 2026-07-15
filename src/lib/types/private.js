@@ -622,6 +622,15 @@
  */
 
 /**
+ * Search result for an entry.
+ * @typedef {object} EntrySearchResult
+ * @property {Entry} entry Entry that matched the search terms.
+ * @property {number} points Points scored for the entry based on matches.
+ * @property {InternalLocaleCode} [locale] First matching locale, if available.
+ * @property {FieldKeyPath} [keyPath] First matching key path, if available.
+ */
+
+/**
  * Entry backlink information.
  * @typedef {object} EntryBacklink
  * @property {string} collectionName Source collection name.

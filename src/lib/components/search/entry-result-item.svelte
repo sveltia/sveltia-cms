@@ -16,7 +16,11 @@
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
   /**
-   * @import { Entry, InternalCollection, InternalCollectionFile } from '$lib/types/private';
+   * @import {
+   * EntrySearchResult,
+   * InternalCollection,
+   * InternalCollectionFile,
+   * } from '$lib/types/private';
    */
 
   /**
@@ -28,16 +32,17 @@
 
   /**
    * @typedef {object} Props
-   * @property {Entry} entry Single entry.
+   * @property {EntrySearchResult} result Single search result.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
-    entry,
+    result,
     /* eslint-enable prefer-const */
   } = $props();
 
+  const { entry, locale, keyPath } = $derived(result);
   const { locales, subPath } = $derived(entry);
 </script>
 
@@ -48,6 +53,7 @@
     <GridRow
       onclick={() => {
         goto(`/collections/${collection.name}/entries/${collectionFile?.name || subPath}`, {
+          state: { highlight: { locale, keyPath } },
           transitionType: 'forwards',
         });
       }}
