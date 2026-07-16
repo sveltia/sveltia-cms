@@ -25,7 +25,7 @@
     getTargetFolderPath,
     hasSameAsset,
     listAssets,
-  } from '$lib/services/contents/fields/file/helper';
+  } from '$lib/services/contents/fields/file/helpers';
   import {
     convertFileItemToAsset,
     getUnsavedAssets,

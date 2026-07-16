@@ -6,7 +6,7 @@ import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
-import { getOptions } from '$lib/services/contents/fields/relation/helper';
+import { getOptions } from '$lib/services/contents/fields/relation/helpers';
 
 /**
  * @import {

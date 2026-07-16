@@ -5,10 +5,10 @@ import {
   processComplexListField,
   processListFields,
   processSingleSubfieldList,
-} from '$lib/services/contents/fields/relation/helper/list-fields';
+} from '$lib/services/contents/fields/relation/helpers/list-fields';
 
 /**
- * @import { TemplateStrings } from '$lib/services/contents/fields/relation/helper/templates';
+ * @import { TemplateStrings } from '$lib/services/contents/fields/relation/helpers/templates';
  */
 
 describe('Test analyzeListFields()', () => {

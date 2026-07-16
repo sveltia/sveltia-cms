@@ -3,9 +3,9 @@ import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 import {
   analyzeListFields,
   processListFields,
-} from '$lib/services/contents/fields/relation/helper/list-fields';
-import { createSimpleOption } from '$lib/services/contents/fields/relation/helper/options';
-import { replaceTemplateFields } from '$lib/services/contents/fields/relation/helper/templates';
+} from '$lib/services/contents/fields/relation/helpers/list-fields';
+import { createSimpleOption } from '$lib/services/contents/fields/relation/helpers/options';
+import { replaceTemplateFields } from '$lib/services/contents/fields/relation/helpers/templates';
 
 /**
  * @import {

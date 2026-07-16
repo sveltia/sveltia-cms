@@ -7,7 +7,7 @@
 <script>
   import ListPreviewComplex from '$lib/components/contents/details/fields/list/list-preview-complex.svelte';
   import ListPreviewSimple from '$lib/components/contents/details/fields/list/list-preview-simple.svelte';
-  import { getListFieldInfo } from '$lib/services/contents/fields/list/helper';
+  import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';

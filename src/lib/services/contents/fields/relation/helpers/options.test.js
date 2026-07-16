@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { createSimpleOption } from '$lib/services/contents/fields/relation/helper/options';
+import { createSimpleOption } from '$lib/services/contents/fields/relation/helpers/options';
 
 /**
- * @import { TemplateStrings } from '$lib/services/contents/fields/relation/helper/templates';
+ * @import { TemplateStrings } from '$lib/services/contents/fields/relation/helpers/templates';
  */
 
 // Mock dependencies

@@ -28,7 +28,7 @@
     syncExpanderStates,
   } from '$lib/services/contents/editor/fields';
   import { getField } from '$lib/services/contents/entry/fields';
-  import { formatSummary, getListFieldInfo } from '$lib/services/contents/fields/list/helper';
+  import { formatSummary, getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
 

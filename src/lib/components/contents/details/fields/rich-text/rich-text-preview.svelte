@@ -24,12 +24,12 @@
     IMAGE_QUERY_SELECTOR,
     sanitizeRichTextHTML,
     splitMarkdownBlocks,
-  } from '$lib/services/contents/fields/rich-text/helper';
+  } from '$lib/services/contents/fields/rich-text/helpers';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { MarkdownField, RichTextField } from '$lib/types/public';
-   * @import { ComponentPreview } from '$lib/services/contents/fields/rich-text/helper';
+   * @import { ComponentPreview } from '$lib/services/contents/fields/rich-text/helpers';
    */
 
   /**

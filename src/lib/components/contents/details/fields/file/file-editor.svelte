@@ -23,7 +23,7 @@
     getAssetLibraryFolderMap,
     getTargetFolderPath,
     listAssets,
-  } from '$lib/services/contents/fields/file/helper';
+  } from '$lib/services/contents/fields/file/helpers';
   import { getUnsavedAssets, processResource } from '$lib/services/contents/fields/file/process';
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';

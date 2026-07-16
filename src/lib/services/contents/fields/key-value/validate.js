@@ -1,6 +1,6 @@
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
-import { getPairs } from '$lib/services/contents/fields/key-value/helper';
+import { getPairs } from '$lib/services/contents/fields/key-value/helpers';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 
 /**

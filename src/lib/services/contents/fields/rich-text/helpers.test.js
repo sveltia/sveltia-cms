@@ -7,7 +7,7 @@ import {
   encodeImageSrc,
   sanitizeRichTextHTML,
   splitMarkdownBlocks,
-} from './helper.js';
+} from './helpers.js';
 
 describe('encodeImageSrc', () => {
   it('should encode spaces in image URLs without title', () => {

@@ -10,7 +10,7 @@
   import { untrack } from 'svelte';
 
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getPairs } from '$lib/services/contents/fields/key-value/helper';
+  import { getPairs } from '$lib/services/contents/fields/key-value/helpers';
 
   /**
    * @import { Writable } from 'svelte/store';

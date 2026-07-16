@@ -20,7 +20,7 @@
     getGeometryBounds,
     isValidGeoJSON,
     roundCoordinates,
-  } from '$lib/services/contents/fields/map/helper';
+  } from '$lib/services/contents/fields/map/helpers';
   import { sendRequest } from '$lib/services/utils/networking';
   import { toFixed } from '$lib/services/utils/number';
 

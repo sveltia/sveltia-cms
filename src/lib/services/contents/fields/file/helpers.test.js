@@ -6,7 +6,7 @@ import {
   hasSameAsset,
   isAssetInSelectedFolder,
   listAssets,
-} from './helper';
+} from './helpers';
 
 // Mock dependencies
 vi.mock('@sveltia/utils/crypto');
@@ -36,7 +36,7 @@ const { getPathInfo } = await import('@sveltia/utils/file');
 const { default: equal } = await import('fast-deep-equal');
 const { allAssets } = await import('$lib/services/assets');
 
-describe('contents/fields/file/helper', () => {
+describe('contents/fields/file/helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     allAssetFolders.set([]);

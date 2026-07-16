@@ -2,7 +2,7 @@ import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/con
 import {
   getCurrentDateTime,
   getCurrentValue,
-} from '$lib/services/contents/fields/date-time/helper';
+} from '$lib/services/contents/fields/date-time/helpers';
 
 /**
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';

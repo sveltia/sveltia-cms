@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
-import { getPairs, savePairs, validatePairs } from './helper';
+import { getPairs, savePairs, validatePairs } from './helpers';
 
 /**
  * @import { KeyValueField } from '$lib/types/public';

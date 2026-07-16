@@ -1,8 +1,8 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
 import { getField } from '$lib/services/contents/entry/fields';
-import { isComplexListField } from '$lib/services/contents/fields/relation/helper/field-names';
-import { replaceTemplateFields } from '$lib/services/contents/fields/relation/helper/templates';
+import { isComplexListField } from '$lib/services/contents/fields/relation/helpers/field-names';
+import { replaceTemplateFields } from '$lib/services/contents/fields/relation/helpers/templates';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**

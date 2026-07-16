@@ -16,10 +16,10 @@ import {
   isFieldRequired,
   LIST_KEY_PATH_REGEX,
 } from '$lib/services/contents/entry/fields';
-import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helper';
-import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helper';
+import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helpers';
+import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helpers';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
-import { getOptionLabel } from '$lib/services/contents/fields/select/helper';
+import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 
 // Mock dependencies
@@ -49,15 +49,15 @@ vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => 
   getComponentDef: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/fields/date-time/helper', () => ({
+vi.mock('$lib/services/contents/fields/date-time/helpers', () => ({
   getDateTimeFieldDisplayValue: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/fields/relation/helper', () => ({
+vi.mock('$lib/services/contents/fields/relation/helpers', () => ({
   getReferencedOptionLabel: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/fields/select/helper', () => ({
+vi.mock('$lib/services/contents/fields/select/helpers', () => ({
   getOptionLabel: vi.fn(),
 }));
 

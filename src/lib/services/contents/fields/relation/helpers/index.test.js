@@ -5,7 +5,7 @@ import {
   getOptions,
   getReferencedOptionLabel,
   optionCacheMap,
-} from '$lib/services/contents/fields/relation/helper';
+} from '$lib/services/contents/fields/relation/helpers';
 
 /**
  * @import {

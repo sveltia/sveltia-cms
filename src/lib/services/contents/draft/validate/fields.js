@@ -12,7 +12,7 @@ import { MEDIA_FIELD_TYPES, MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/cont
 import { resolveCodeField } from '$lib/services/contents/fields/code/validate';
 import { validateDateTimeField } from '$lib/services/contents/fields/date-time/validate';
 import { validateKeyValueField } from '$lib/services/contents/fields/key-value/validate';
-import { getListFieldInfo } from '$lib/services/contents/fields/list/helper';
+import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { validateListField } from '$lib/services/contents/fields/list/validate';
 import { validateNumberField } from '$lib/services/contents/fields/number/validate';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';

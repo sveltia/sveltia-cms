@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { getGeometryBounds, isValidGeoJSON, roundCoordinates } from './helper';
+import { getGeometryBounds, isValidGeoJSON, roundCoordinates } from './helpers';
 
 describe('Test isValidGeoJSON()', () => {
   describe('Point (default geometry type)', () => {

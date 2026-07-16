@@ -6,7 +6,7 @@ import { getSlugEditorProp } from '$lib/services/contents/draft/create';
 import { showDuplicateToast } from '$lib/services/contents/editor';
 import { getField, LIST_KEY_PATH_REGEX } from '$lib/services/contents/entry/fields';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
-import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helper';
+import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
 
 /**
  * @import { EntryDraft } from '$lib/types/private';

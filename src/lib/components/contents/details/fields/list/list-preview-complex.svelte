@@ -13,7 +13,7 @@
   import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getListFieldInfo } from '$lib/services/contents/fields/list/helper';
+  import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField, isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
-import { getPairs } from '$lib/services/contents/fields/key-value/helper';
+import { getPairs } from '$lib/services/contents/fields/key-value/helpers';
 
 import {
   DEFAULT_VALIDITY,
@@ -16,8 +16,8 @@ import {
 
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/draft');
-vi.mock('$lib/services/contents/fields/key-value/helper');
-vi.mock('$lib/services/contents/fields/list/helper');
+vi.mock('$lib/services/contents/fields/key-value/helpers');
+vi.mock('$lib/services/contents/fields/list/helpers');
 vi.mock('$lib/services/contents/fields/rich-text');
 vi.mock('$lib/services/contents/fields/string/validate');
 vi.mock('$lib/services/contents/draft/validate/messages', () => ({
@@ -91,7 +91,7 @@ describe('draft/validate/fields', () => {
     });
 
     // Mock getListFieldInfo
-    const { getListFieldInfo } = await import('$lib/services/contents/fields/list/helper');
+    const { getListFieldInfo } = await import('$lib/services/contents/fields/list/helpers');
     const getListFieldInfoMock = vi.mocked(getListFieldInfo);
 
     getListFieldInfoMock.mockReturnValue({
@@ -430,7 +430,7 @@ describe('draft/validate/fields', () => {
         fields: [{ name: 'title', widget: 'string' }],
       });
 
-      const listHelperModule = await import('$lib/services/contents/fields/list/helper');
+      const listHelperModule = await import('$lib/services/contents/fields/list/helpers');
       const { getListFieldInfo } = vi.mocked(listHelperModule);
 
       getListFieldInfo.mockReturnValue({ hasSubFields: true });
@@ -588,7 +588,7 @@ describe('draft/validate/fields', () => {
         };
 
         const { getListFieldInfo } = vi.mocked(
-          await import('$lib/services/contents/fields/list/helper'),
+          await import('$lib/services/contents/fields/list/helpers'),
         );
 
         getListFieldInfo.mockReturnValue({ hasSubFields: false });
@@ -619,7 +619,7 @@ describe('draft/validate/fields', () => {
         };
 
         const { getListFieldInfo } = vi.mocked(
-          await import('$lib/services/contents/fields/list/helper'),
+          await import('$lib/services/contents/fields/list/helpers'),
         );
 
         getListFieldInfo.mockReturnValue({ hasSubFields: true });

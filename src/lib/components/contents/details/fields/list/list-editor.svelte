@@ -9,7 +9,7 @@
 
   import ListEditorComplex from '$lib/components/contents/details/fields/list/list-editor-complex.svelte';
   import ListEditorSimple from '$lib/components/contents/details/fields/list/list-editor-simple.svelte';
-  import { getListFieldInfo } from '$lib/services/contents/fields/list/helper';
+  import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';

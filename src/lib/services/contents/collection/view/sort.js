@@ -4,7 +4,7 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
-import { getDate } from '$lib/services/contents/fields/date-time/helper';
+import { getDate } from '$lib/services/contents/fields/date-time/helpers';
 import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
 
 /**

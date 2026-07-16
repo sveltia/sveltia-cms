@@ -5,13 +5,13 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import {
   getObjectId,
   getOptionLabelMap,
-} from '$lib/services/contents/fields/relation/helper/cache';
-import { processEntry } from '$lib/services/contents/fields/relation/helper/entries';
+} from '$lib/services/contents/fields/relation/helpers/cache';
+import { processEntry } from '$lib/services/contents/fields/relation/helpers/entries';
 import {
   filterAndPrepareEntries,
   resolveFilterValues,
-} from '$lib/services/contents/fields/relation/helper/filters';
-import { prepareFieldTemplates } from '$lib/services/contents/fields/relation/helper/templates';
+} from '$lib/services/contents/fields/relation/helpers/filters';
+import { prepareFieldTemplates } from '$lib/services/contents/fields/relation/helpers/templates';
 
 /**
  * @import {

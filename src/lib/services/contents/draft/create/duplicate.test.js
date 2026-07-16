@@ -22,7 +22,7 @@ vi.mock('$lib/services/contents/fields/hidden/defaults', () => ({
   getDefaultValueMap: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/fields/uuid/helper', () => ({
+vi.mock('$lib/services/contents/fields/uuid/helpers', () => ({
   getInitialValue: vi.fn(),
 }));
 
@@ -61,7 +61,7 @@ describe('contents/draft/create/duplicate', () => {
     const { showDuplicateToast } = await import('$lib/services/contents/editor');
     const { getField } = await import('$lib/services/contents/entry/fields');
     const { getDefaultValueMap } = await import('$lib/services/contents/fields/hidden/defaults');
-    const { getInitialValue } = await import('$lib/services/contents/fields/uuid/helper');
+    const { getInitialValue } = await import('$lib/services/contents/fields/uuid/helpers.js');
     const { getSlugEditorProp } = await import('$lib/services/contents/draft/create');
 
     mockGet = getMock;

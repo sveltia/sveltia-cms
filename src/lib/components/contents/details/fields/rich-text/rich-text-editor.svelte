@@ -19,7 +19,7 @@
   import { customComponentRegistry } from '$lib/services/contents/api/registries';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getField } from '$lib/services/contents/entry/fields';
-  import { getAssetLibraryFolderMap } from '$lib/services/contents/fields/file/helper';
+  import { getAssetLibraryFolderMap } from '$lib/services/contents/fields/file/helpers';
   import { processResource } from '$lib/services/contents/fields/file/process';
   import {
     BUILTIN_COMPONENTS,

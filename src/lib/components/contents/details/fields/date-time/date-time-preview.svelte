@@ -9,7 +9,7 @@
   import {
     getDate,
     getDateTimeFieldDisplayValue,
-  } from '$lib/services/contents/fields/date-time/helper';
+  } from '$lib/services/contents/fields/date-time/helpers';
   import { getTimeZoneLabel } from '$lib/services/contents/fields/date-time/timezone';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
 

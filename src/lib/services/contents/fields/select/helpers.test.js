@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { getOptionLabel } from './helper';
+import { getOptionLabel } from './helpers';
 
 /**
  * @import { SelectField } from '$lib/types/public';

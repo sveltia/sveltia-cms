@@ -1,5 +1,5 @@
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
-import { getFieldReplacement } from '$lib/services/contents/fields/relation/helper/templates';
+import { getFieldReplacement } from '$lib/services/contents/fields/relation/helpers/templates';
 
 /**
  * @import { FlattenedEntryContent, InternalLocaleCode, RelationOption } from '$lib/types/private';

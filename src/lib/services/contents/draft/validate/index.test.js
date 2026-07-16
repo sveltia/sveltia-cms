@@ -8,8 +8,8 @@ import { validateEntry } from '.';
 
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/draft');
-vi.mock('$lib/services/contents/fields/key-value/helper');
-vi.mock('$lib/services/contents/fields/list/helper');
+vi.mock('$lib/services/contents/fields/key-value/helpers');
+vi.mock('$lib/services/contents/fields/list/helpers');
 vi.mock('$lib/services/contents/fields/rich-text');
 vi.mock('$lib/services/contents/fields/string/validate');
 vi.mock('$lib/services/contents/draft/validate/messages', () => ({
@@ -79,7 +79,7 @@ describe('draft/validate', () => {
     vi.mocked(validateStringField).mockReturnValue({ tooShort: false, tooLong: false });
 
     // Mock getListFieldInfo
-    const { getListFieldInfo } = await import('$lib/services/contents/fields/list/helper');
+    const { getListFieldInfo } = await import('$lib/services/contents/fields/list/helpers');
 
     vi.mocked(getListFieldInfo).mockReturnValue({ hasSubFields: false });
   });

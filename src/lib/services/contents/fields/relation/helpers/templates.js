@@ -2,7 +2,7 @@ import { unique } from '@sveltia/utils/array';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
-import { normalizeFieldName } from '$lib/services/contents/fields/relation/helper/field-names';
+import { normalizeFieldName } from '$lib/services/contents/fields/relation/helpers/field-names';
 
 /**
  * @import { FlattenedEntryContent, InternalLocaleCode, RelationOption } from '$lib/types/private';

@@ -8,10 +8,10 @@ import {
 } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { MEDIA_FIELD_TYPES, MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
-import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helper';
-import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helper';
+import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helpers';
+import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helpers';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
-import { getOptionLabel } from '$lib/services/contents/fields/select/helper';
+import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 import { getOrCreate } from '$lib/services/utils/cache';

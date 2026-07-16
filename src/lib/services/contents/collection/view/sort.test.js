@@ -26,7 +26,7 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummary: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/fields/date-time/helper', () => ({
+vi.mock('$lib/services/contents/fields/date-time/helpers', () => ({
   getDate: vi.fn(),
 }));
 
@@ -38,7 +38,7 @@ const { getIndexFile } = await import('$lib/services/contents/collection/entries
 const { getSortKeyType } = await import('$lib/services/contents/collection/view/sort-keys');
 const { getField, getPropertyValue } = await import('$lib/services/contents/entry/fields');
 const { getEntrySummary } = await import('$lib/services/contents/entry/summary');
-const { getDate } = await import('$lib/services/contents/fields/date-time/helper');
+const { getDate } = await import('$lib/services/contents/fields/date-time/helpers');
 const { removeMarkdownSyntax } = await import('$lib/services/utils/markdown');
 
 describe('MARKDOWN_FIELD_KEYS', () => {

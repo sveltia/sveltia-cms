@@ -16,7 +16,7 @@
     getCurrentValue,
     getDate,
     getInputValue,
-  } from '$lib/services/contents/fields/date-time/helper';
+  } from '$lib/services/contents/fields/date-time/helpers';
   import {
     getInitialTimeZone,
     getTimeZoneLabel,

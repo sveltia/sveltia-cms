@@ -10,7 +10,7 @@
 
   import { warnDeprecation } from '$lib/services/config/deprecations';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getInitialValue } from '$lib/services/contents/fields/uuid/helper';
+  import { getInitialValue } from '$lib/services/contents/fields/uuid/helpers';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
   /**

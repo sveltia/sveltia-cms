@@ -16,7 +16,7 @@
     getPairs,
     savePairs,
     validatePairs,
-  } from '$lib/services/contents/fields/key-value/helper';
+  } from '$lib/services/contents/fields/key-value/helpers';
   import { getDirection } from '$lib/services/contents/i18n';
 
   /**

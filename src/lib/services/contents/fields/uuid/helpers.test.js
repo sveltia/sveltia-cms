@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { getInitialValue } from './helper';
+import { getInitialValue } from './helpers';
 
 /**
  * @import { UuidField } from '$lib/types/public';
