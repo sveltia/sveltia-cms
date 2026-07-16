@@ -27,7 +27,7 @@ vi.mock('@sveltia/i18n', () => ({
 }));
 
 vi.mock('@sveltia/ui', () => ({
-  resources: mockComponentStrings,
+  strings: mockComponentStrings,
 }));
 
 vi.mock('@sveltia/utils/file', () => ({

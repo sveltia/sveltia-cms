@@ -1,5 +1,5 @@
 import { addMessages, locale as appLocale, getLocaleFromNavigator, init } from '@sveltia/i18n';
-import { resources as componentStrings } from '@sveltia/ui';
+import { strings as componentStrings } from '@sveltia/ui';
 import { getPathInfo } from '@sveltia/utils/file';
 import { toStore } from 'svelte/store';
 
