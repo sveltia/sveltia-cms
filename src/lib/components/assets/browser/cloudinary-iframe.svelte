@@ -59,4 +59,9 @@
     height: calc(100% - 32px);
     border: none;
   }
+
+  /* Avoid scrolling issue https://github.com/sveltia/sveltia-cms/issues/824 */
+  :global(dialog[inert]) > iframe {
+    display: none;
+  }
 </style>
