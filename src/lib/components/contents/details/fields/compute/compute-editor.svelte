@@ -66,7 +66,8 @@
   const setCurrentValue = () => {
     // Check if the `keyPath` is valid, otherwise a list item containing this compute field cannot
     // be removed due to the `currentValue` update below
-    if (!(keyPath in valueMap)) {
+    // @todo Figure out how to handle nested fields
+    if (keyPath.includes('.') && !(keyPath in valueMap)) {
       return;
     }
 
