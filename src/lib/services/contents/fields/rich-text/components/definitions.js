@@ -119,8 +119,12 @@ export const getBuiltInComponentDefs = () => {
  * @returns {EditorComponentDefinition | undefined} Definition.
  */
 export const getComponentDef = (name) => {
-  if (customComponentRegistry.has(name)) {
-    return customComponentRegistry.get(name);
+  const customComponentDef = customComponentRegistry.get(name);
+
+  if (customComponentDef) {
+    // Add a prefix to the component ID to avoid conflicts with built-in components and Lexical’s
+    // built-in node types, such as `code`.
+    return { ...customComponentDef, id: `x-${name}` };
   }
 
   // Common props with localized labels

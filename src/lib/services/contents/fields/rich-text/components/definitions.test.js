@@ -371,7 +371,12 @@ describe('definitions', () => {
 
       const result = getComponentDef('custom-component');
 
-      expect(result).toBe(customComponent);
+      expect(result).toBeDefined();
+      expect(result?.id).toBe('x-custom-component');
+      expect(result?.label).toBe('Custom Component');
+      expect(result?.pattern).toEqual(/custom/);
+      expect(result?.toBlock).toBe(customComponent.toBlock);
+      expect(result?.toPreview).toBe(customComponent.toPreview);
     });
 
     it('should prioritize custom components over built-in ones', () => {
@@ -388,8 +393,12 @@ describe('definitions', () => {
 
       const result = getComponentDef('image');
 
-      expect(result).toBe(customImageComponent);
+      expect(result).toBeDefined();
+      expect(result?.id).toBe('x-image');
       expect(result?.label).toBe('Custom Image Component');
+      expect(result?.pattern).toEqual(/custom-image/);
+      expect(result?.toBlock).toBe(customImageComponent.toBlock);
+      expect(result?.toPreview).toBe(customImageComponent.toPreview);
     });
 
     it('should return undefined for non-existent component', () => {
@@ -578,7 +587,12 @@ describe('definitions', () => {
 
       const result = getComponentDef('custom');
 
-      expect(result).toBe(customComponent);
+      expect(result).toBeDefined();
+      expect(result?.id).toBe('x-custom');
+      expect(result?.label).toBe('Custom');
+      expect(result?.pattern).toEqual(/test/);
+      expect(result?.toBlock).toBe(customComponent.toBlock);
+      expect(result?.toPreview).toBe(customComponent.toPreview);
 
       customComponentRegistry.delete('custom');
     });
