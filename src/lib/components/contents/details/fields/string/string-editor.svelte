@@ -46,7 +46,8 @@
    * Update {@link inputValue} based on {@link currentValue}. Remove the suffix/prefix if needed.
    */
   const setInputValue = () => {
-    let newValue = typeof currentValue === 'string' ? currentValue : '';
+    // Parse the currentValue to string if it’s not a string (e.g., number, boolean, etc.)
+    let newValue = typeof currentValue === 'string' ? currentValue : String(currentValue ?? '');
 
     if (prefix && newValue.startsWith(prefix)) {
       newValue = newValue.slice(prefix.length);
