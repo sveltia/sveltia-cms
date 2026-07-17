@@ -361,6 +361,39 @@ describe('Test parseFrontMatter()', () => {
     expect(Object.keys(result)).toEqual(['body']);
   });
 
+  test('does not treat later delimiter lines as front matter', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    const mockCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+      },
+    });
+
+    const mockCollectionFile = /** @type {any} */ ({
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+      },
+    });
+
+    const text = 'foo\n\n---\nbar\n\n---\nbaz';
+
+    const result = parseFrontMatter({
+      collection: mockCollection,
+      collectionFile: mockCollectionFile,
+      format: 'yaml-frontmatter',
+      text,
+    });
+
+    expect(result.body).toBe(text);
+    expect(Object.keys(result)).toEqual(['body']);
+  });
+
   test('handles empty front matter', async () => {
     const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 

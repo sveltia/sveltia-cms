@@ -94,11 +94,11 @@ export const parseFrontMatter = ({ collection, collectionFile, format, text }) =
   const ed = escapeRegExp(endDelimiter);
   const cacheKey = `${sd}|${ed}`;
 
-  // Front matter matching: allow an empty head
+  // Front matter matching: allow an empty head and only match a block at the start of the file.
   const regex = getOrCreate(
     frontMatterRegexCache,
     cacheKey,
-    () => new RegExp(`^${sd}\\n(?:(?<head>.*?)\\n)?${ed}$(?:\\n(?<body>.+))?`, 'ms'),
+    () => new RegExp(`^${sd}\n(?:(?<head>[\\s\\S]*?))\n${ed}(?:\n(?<body>[\\s\\S]*))?$`, 's'),
   );
 
   const { head, body } = text.match(regex)?.groups ?? {};
@@ -124,9 +124,13 @@ export const parseFrontMatter = ({ collection, collectionFile, format, text }) =
     parsedHead = parseJSON(`{${head}}`);
   }
 
+  if (!parsedHead || typeof parsedHead !== 'object' || Array.isArray(parsedHead)) {
+    parsedHead = {};
+  }
+
   return {
     ...parsedHead,
-    ...(!bodyInline && !(parsedHead && bodyKey in parsedHead) ? { [bodyKey]: body } : {}),
+    ...(!bodyInline && !(bodyKey in parsedHead) ? { [bodyKey]: body } : {}),
   };
 };
 
