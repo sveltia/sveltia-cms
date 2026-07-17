@@ -2,7 +2,7 @@
 
 import { isObject } from '@sveltia/utils/object';
 import createClass from 'create-react-class';
-import { createElement } from 'react';
+import { createElement, Fragment } from 'react';
 import { mount } from 'svelte';
 
 import { SUPPORTED_EVENT_TYPES } from '$lib/services/contents/api/events';
@@ -372,6 +372,7 @@ window.initCMS = init;
 window.createClass = createClass;
 window.createElement = createElement;
 window.h = createElement;
+window.rf = Fragment;
 
 const cssLinkElement = document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]');
 

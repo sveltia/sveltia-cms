@@ -3,10 +3,11 @@ interface Window {
   CMS_MANUAL_INIT?: boolean;
   initCMS: Function;
   showDirectoryPicker: Function;
-  // React
+  // React stuff exposed on `window`. See `main.js`
   createClass: Function;
   createElement: Function;
   h: Function;
+  rf: any;
 }
 
 interface Navigator {
