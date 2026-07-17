@@ -24,6 +24,7 @@
     isTestRepo ? undefined : /** @type {GitBackend} */ (configuredBackend)?.repo?.split('/').pop(),
   );
   const showLocalBackendOption = $derived(env.isLocalHost && !isTestRepo);
+  const trimmedToken = $derived(token.trim());
 
   /**
    * The label to use for the Sign In button, which is usually the backend’s label but can be
@@ -146,9 +147,16 @@
   title={_('sign_in_using_access_token')}
   textboxAttrs={{ spellcheck: false, 'aria-label': _('personal_access_token') }}
   okLabel={_('sign_in')}
-  okDisabled={!token.trim()}
-  onOk={async () => {
-    await signInManually(backendName, token.trim());
+  okDisabled={!trimmedToken}
+  onOk={() => {
+    signInManually(backendName, trimmedToken);
+  }}
+  onkeydown={(event) => {
+    if (!event.isComposing && event.key === 'Enter' && trimmedToken) {
+      event.preventDefault();
+      showTokenDialog = false;
+      signInManually(backendName, trimmedToken);
+    }
   }}
 >
   {_('sign_in_using_access_token_description')}
