@@ -6,4 +6,6 @@ engineStrict: true
 minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
+  - lexical
+  - "@lexical/*"
   - "@sveltia/*"
