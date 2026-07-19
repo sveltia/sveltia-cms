@@ -72,6 +72,10 @@ describe('git/shared/auth', () => {
       closed: false,
       close: vi.fn(),
       postMessage: vi.fn(),
+      location: {
+        href: '',
+        replace: vi.fn(),
+      },
     };
 
     // @ts-ignore - Mock window for testing
@@ -719,17 +723,24 @@ describe('git/shared/auth', () => {
       // Don't await immediately since LocalStorage.set is called internally
       const authPromise = initClientSideAuth(args);
 
-      // Wait a bit for the async LocalStorage.set calls to complete
+      // Wait for the async operations and authorize call to complete
       await new Promise((resolve) => {
-        setTimeout(resolve, 10);
+        setTimeout(resolve, 50);
       });
 
+      expect(mockWindow.open).toHaveBeenCalledWith(
+        'https://localhost:3000/',
+        'auth',
+        expect.any(String),
+      );
       expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.auth', expect.any(Object));
       expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', { backendName: 'gitlab' });
 
       const messageHandler = mockWindow.addEventListener.mock.calls.find(
         ([event]) => event === 'message',
       )?.[1];
+
+      expect(messageHandler).toBeDefined();
 
       messageHandler({
         data: 'authorizing:gitlab',
@@ -742,6 +753,49 @@ describe('git/shared/auth', () => {
       });
 
       await authPromise;
+    });
+
+    it('should throw AbortError when popup cannot be opened', async () => {
+      mockWindow.open.mockReturnValue(null);
+
+      const args = {
+        backendName: 'gitlab',
+        clientId: 'test-client-id',
+        authURL: 'https://gitlab.com/oauth/authorize',
+        scope: 'api',
+      };
+
+      await expect(initClientSideAuth(args)).rejects.toMatchObject({
+        message: 'Authentication aborted',
+        name: 'AbortError',
+      });
+    });
+
+    it('should throw AbortError when popup is closed during async operations', async () => {
+      // Create a mock popup that appears closed
+      const closedPopup = {
+        closed: true,
+        close: vi.fn(),
+        postMessage: vi.fn(),
+        location: {
+          href: '',
+          replace: vi.fn(),
+        },
+      };
+
+      mockWindow.open.mockReturnValue(closedPopup);
+
+      const args = {
+        backendName: 'gitlab',
+        clientId: 'test-client-id',
+        authURL: 'https://gitlab.com/oauth/authorize',
+        scope: 'api',
+      };
+
+      await expect(initClientSideAuth(args)).rejects.toMatchObject({
+        message: 'Authentication aborted',
+        name: 'AbortError',
+      });
     });
   });
 
@@ -1068,17 +1122,24 @@ describe('git/shared/auth', () => {
 
       const authPromise = handleAuthFlow({ auto: false, apiConfig });
 
-      // Wait for LocalStorage operations
+      // Wait for async operations and authorize call to complete
       await new Promise((resolve) => {
-        setTimeout(resolve, 10);
+        setTimeout(resolve, 50);
       });
 
+      expect(mockWindow.open).toHaveBeenCalledWith(
+        'https://localhost:3000/',
+        'auth',
+        expect.any(String),
+      );
       expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.auth', expect.any(Object));
       expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', { backendName: 'gitlab' });
 
       const messageHandler = mockWindow.addEventListener.mock.calls.find(
         ([event]) => event === 'message',
       )?.[1];
+
+      expect(messageHandler).toBeDefined();
 
       messageHandler({
         data: 'authorizing:gitlab',
@@ -1123,16 +1184,23 @@ describe('git/shared/auth', () => {
 
       const authPromise = handleAuthFlow({ auto: false, apiConfig });
 
-      // Wait for LocalStorage operations
+      // Wait for async operations and authorize call to complete
       await new Promise((resolve) => {
-        setTimeout(resolve, 10);
+        setTimeout(resolve, 50);
       });
 
+      expect(mockWindow.open).toHaveBeenCalledWith(
+        'https://localhost:3000/',
+        'auth',
+        expect.any(String),
+      );
       expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.auth', expect.any(Object));
 
       const messageHandler = mockWindow.addEventListener.mock.calls.find(
         ([event]) => event === 'message',
       )?.[1];
+
+      expect(messageHandler).toBeDefined();
 
       messageHandler({
         data: 'authorizing:gitea',

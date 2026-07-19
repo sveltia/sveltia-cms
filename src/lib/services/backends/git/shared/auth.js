@@ -41,14 +41,16 @@ export const openPopup = ({ authURL }) => {
  * @param {object} args Arguments.
  * @param {string} args.backendName Backend name, e.g. `github`.
  * @param {string} args.authURL Authentication site URL.
+ * @param {Window | null} [args.popup] Optional pre-opened popup window. If not provided, a new
+ * popup will be opened.
  * @returns {Promise<AuthTokens>} Auth access token and refresh token.
  * @throws {Error} When authentication failed or the popup window is closed before the auth process
  * is complete.
  * @see https://decapcms.org/docs/backends-overview/
  * @see https://sveltiacms.app/en/docs/backends
  */
-export const authorize = async ({ backendName, authURL }) => {
-  const popup = openPopup({ authURL });
+export const authorize = async ({ backendName, authURL, popup }) => {
+  popup ??= openPopup({ authURL });
 
   return new Promise((resolve, reject) => {
     /**
@@ -201,9 +203,18 @@ export const createAuthSecrets = async () => {
  * @see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-with-proof-key-for-code-exchange-pkce
  */
 export const initClientSideAuth = async ({ backendName, clientId, authURL, scope }) => {
-  const { csrfToken, codeVerifier, codeChallenge } = await createAuthSecrets();
   const { origin, pathname } = window.location;
   const redirectURL = `${origin}${pathname}`;
+  // Open the popup immediately to prevent Safari from blocking it. Safari blocks popups that aren’t
+  // opened synchronously from a user interaction.
+  const popup = openPopup({ authURL: redirectURL });
+
+  if (!popup) {
+    throw Object.assign(new Error('Authentication aborted'), { name: 'AbortError' });
+  }
+
+  // Perform async operations after opening the popup
+  const { csrfToken, codeVerifier, codeChallenge } = await createAuthSecrets();
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -226,9 +237,15 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
   // `finishClientSideAuth` below will work
   await LocalStorage.set('sveltia-cms.user', { backendName });
 
+  // Check if the popup was closed while we were doing async operations
+  if (popup.closed) {
+    throw Object.assign(new Error('Authentication aborted'), { name: 'AbortError' });
+  }
+
   return authorize({
     backendName,
     authURL: redirectURL,
+    popup,
   });
 };
 
