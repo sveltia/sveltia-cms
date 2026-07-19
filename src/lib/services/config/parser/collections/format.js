@@ -67,7 +67,7 @@ export const isFormatMismatch = (extension, format, fields = []) => {
     // Front-matter format: yaml-frontmatter, toml-frontmatter, json-frontmatter
     const fmFormatType = normalizedFormat.replace('-frontmatter', '');
 
-    // Template engines (njk, astro) work with any front-matter format
+    // Template engines (njk) work with any front-matter format
     if (TEMPLATE_ENGINE_EXTENSIONS.includes(normalizedExtension)) {
       return false;
     }

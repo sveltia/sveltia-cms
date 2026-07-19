@@ -90,6 +90,10 @@ describe('Test detectFileFormat()', () => {
     expect(detectFileFormat({ extension: 'json' })).toBe('json');
   });
 
+  test('detects raw from astro extension', () => {
+    expect(detectFileFormat({ extension: 'astro' })).toBe('raw');
+  });
+
   test('detects frontmatter from markdown extensions', () => {
     const markdownExtensions = ['md', 'mkd', 'mkdn', 'mdwn', 'mdown', 'markdown'];
 

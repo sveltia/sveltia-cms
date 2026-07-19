@@ -21,7 +21,7 @@ export const MARKDOWN_EXTENSIONS = [
  * Template engine extensions that support any front matter format.
  * @type {string[]}
  */
-export const TEMPLATE_ENGINE_EXTENSIONS = ['astro', 'njk'];
+export const TEMPLATE_ENGINE_EXTENSIONS = ['njk'];
 
 /**
  * Allowed extensions for the `frontmatter` auto-detect format.
@@ -53,6 +53,10 @@ export const EXTENSION_FORMAT_MAP = {
   yml: 'yaml',
   toml: 'toml',
   json: 'json',
+  // Astro files default to the `raw` format, which allows editing the entire file content directly.
+  // The front matter in Astro is not YAML but JavaScript, so we cannot use the `yaml-frontmatter`
+  // format. The `raw` format is the best fit for Astro files.
+  astro: 'raw',
 };
 
 /**

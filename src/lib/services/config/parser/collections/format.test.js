@@ -255,19 +255,19 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('njk', 'json-frontmatter')).toBe(false);
     });
 
-    it('should return false when astro extension with yaml-frontmatter', () => {
-      // Template engines support any front-matter format
-      expect(isFormatMismatch('astro', 'yaml-frontmatter')).toBe(false);
+    it('should return true when astro extension with yaml-frontmatter', () => {
+      // Astro is treated as a raw file format, not a front-matter-compatible template engine
+      expect(isFormatMismatch('astro', 'yaml-frontmatter')).toBe(true);
     });
 
-    it('should return false when astro extension with toml-frontmatter', () => {
-      // Template engines support any front-matter format
-      expect(isFormatMismatch('astro', 'toml-frontmatter')).toBe(false);
+    it('should return true when astro extension with toml-frontmatter', () => {
+      // Astro is treated as a raw file format, not a front-matter-compatible template engine
+      expect(isFormatMismatch('astro', 'toml-frontmatter')).toBe(true);
     });
 
-    it('should return false when astro extension with json-frontmatter', () => {
-      // Template engines support any front-matter format
-      expect(isFormatMismatch('astro', 'json-frontmatter')).toBe(false);
+    it('should return true when astro extension with json-frontmatter', () => {
+      // Astro is treated as a raw file format, not a front-matter-compatible template engine
+      expect(isFormatMismatch('astro', 'json-frontmatter')).toBe(true);
     });
 
     it('should return false when html extension with json format (custom extension)', () => {
@@ -365,9 +365,9 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('njk', 'frontmatter')).toBe(false);
     });
 
-    it('should return false when astro extension with frontmatter', () => {
-      // frontmatter is valid with template engine extensions like astro
-      expect(isFormatMismatch('astro', 'frontmatter')).toBe(false);
+    it('should return true when astro extension with frontmatter', () => {
+      // Astro is treated as a raw file format, not a front-matter-compatible template engine
+      expect(isFormatMismatch('astro', 'frontmatter')).toBe(true);
     });
 
     it('should return true when custom extension with frontmatter', () => {
@@ -578,20 +578,20 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('njk', 'toml-frontmatter')).toBe(false);
     });
 
-    it('should allow astro with frontmatter', () => {
-      expect(isFormatMismatch('astro', 'frontmatter')).toBe(false);
+    it('should reject astro with frontmatter', () => {
+      expect(isFormatMismatch('astro', 'frontmatter')).toBe(true);
     });
 
-    it('should allow astro with yaml-frontmatter', () => {
-      expect(isFormatMismatch('astro', 'yaml-frontmatter')).toBe(false);
+    it('should reject astro with yaml-frontmatter', () => {
+      expect(isFormatMismatch('astro', 'yaml-frontmatter')).toBe(true);
     });
 
-    it('should allow astro with json-frontmatter', () => {
-      expect(isFormatMismatch('astro', 'json-frontmatter')).toBe(false);
+    it('should reject astro with json-frontmatter', () => {
+      expect(isFormatMismatch('astro', 'json-frontmatter')).toBe(true);
     });
 
-    it('should allow astro with toml-frontmatter', () => {
-      expect(isFormatMismatch('astro', 'toml-frontmatter')).toBe(false);
+    it('should reject astro with toml-frontmatter', () => {
+      expect(isFormatMismatch('astro', 'toml-frontmatter')).toBe(true);
     });
   });
 });
