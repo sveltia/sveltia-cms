@@ -163,6 +163,28 @@ describe('Test getEntrySummary()', () => {
     expect(format('{{fields.slug}}')).toEqual('dotnet');
   });
 
+  test('falls back to the entry slug when the title is empty in a template', () => {
+    const entryWithEmptyTitle = {
+      ...entry,
+      locales: {
+        de: {
+          ...entry.locales.de,
+          content: {
+            ...entry.locales.de.content,
+            title: '',
+          },
+        },
+      },
+    };
+
+    const result = getEntrySummary({ ...collection, summary: '{{title}}' }, entryWithEmptyTitle, {
+      locale: 'de',
+      useTemplate: true,
+    });
+
+    expect(result).toBe('net');
+  });
+
   test('transformations', () => {
     expect(format("{{date | date('MMM D, YYYY')}}")).toEqual('Jan 23, 2024');
     expect(format("{{draft | ternary('Draft', 'Public')}}")).toEqual('Public');
@@ -997,6 +1019,19 @@ describe('Test replace()', () => {
     const result = replace('title', context);
 
     expect(result).toBe('Test Entry');
+  });
+
+  test('should use the fallback summary when title is empty', () => {
+    const result = replace('title', {
+      ...context,
+      content: {
+        ...context.content,
+        title: '',
+      },
+      fallbackSummary: 'Fallback summary',
+    });
+
+    expect(result).toBe('Fallback summary');
   });
 
   test('should handle fields.* syntax', () => {

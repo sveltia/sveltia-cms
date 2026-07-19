@@ -40,6 +40,7 @@ import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fie
  * @property {string} collectionName Collection name.
  * @property {ReplacerSubContext} replaceSubContext Context for the `replaceSub` function.
  * @property {InternalLocaleCode} defaultLocale Default locale.
+ * @property {string | undefined} [fallbackSummary] Fallback summary for the entry.
  */
 
 const BODY_HEADER_REGEX = /^#+\s+(?<header>.+?)(?:\s+\{#.+?\})?\s*$/m;
@@ -160,7 +161,14 @@ export const replaceSub = (tag, context) => {
  * @returns {string} Replaced string.
  */
 export const replace = (placeholder, context) => {
-  const { content: valueMap, collectionName, replaceSubContext, defaultLocale } = context;
+  const {
+    content: valueMap,
+    collectionName,
+    replaceSubContext,
+    defaultLocale,
+    fallbackSummary,
+  } = context;
+
   const { value: tag, transformations: parsedTransformations } = parseTransformations(placeholder);
   const keyPath = tag.replace(/^fields\./, '');
   const getFieldArgs = { collectionName, valueMap, keyPath };
@@ -179,6 +187,11 @@ export const replace = (placeholder, context) => {
     value = transformations.some(({ method }) => method === 'date' || method === 'ternary')
       ? valueMap[keyPath]
       : getFieldDisplayValue({ ...getFieldArgs, locale: defaultLocale });
+
+    // If the field is `title` and the value is empty, use the fallback summary if available
+    if (keyPath === 'title' && !value) {
+      value = fallbackSummary;
+    }
   }
 
   if (value === undefined) {
@@ -244,11 +257,11 @@ export const getEntrySummary = (
   const { content = {}, path: entryPath = '' } =
     locales[locale ?? defaultLocale] ?? Object.values(locales)[0] ?? {};
 
+  const fallbackSummary =
+    getEntrySummaryFromContent(content, { identifierField }) || slug.replaceAll('-', ' ');
+
   if (!useTemplate || !summaryTemplate) {
-    return sanitizeEntrySummary(
-      getEntrySummaryFromContent(content, { identifierField }) || slug.replaceAll('-', ' '),
-      { allowMarkdown },
-    );
+    return sanitizeEntrySummary(fallbackSummary, { allowMarkdown });
   }
 
   /** @type {ReplaceContext} */
@@ -264,6 +277,7 @@ export const getEntrySummary = (
       commitAuthor,
     },
     defaultLocale,
+    fallbackSummary,
   };
 
   return sanitizeEntrySummary(
