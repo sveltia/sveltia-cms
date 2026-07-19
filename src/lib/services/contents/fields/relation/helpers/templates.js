@@ -1,6 +1,6 @@
 import { unique } from '@sveltia/utils/array';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { replaceTemplateTags } from '$lib/services/common/template';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 import { normalizeFieldName } from '$lib/services/contents/fields/relation/helpers/field-names';
 
@@ -98,8 +98,17 @@ export const replaceTemplateFields = (templates, fieldNames, context, fallbackCo
  * @param {string} template Template string with field names in {{}} brackets.
  * @returns {string[]} Array of field names.
  */
-export const extractFieldNames = (template) =>
-  [...template.matchAll(TEMPLATE_TAG_REPLACE_REGEX)].map((m) => m[1]);
+export const extractFieldNames = (template) => {
+  /** @type {string[]} */
+  const names = [];
+
+  replaceTemplateTags(template, (_match, placeholder) => {
+    names.push(placeholder);
+    return '';
+  });
+
+  return names;
+};
 
 /**
  * Normalize and prepare field templates for processing.

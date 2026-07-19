@@ -9,6 +9,8 @@ import {
   UUID_TYPES,
 } from './constants';
 
+import { replaceTemplateTags } from '.';
+
 describe('Template constants', () => {
   describe('TEMPLATE_TAG_REGEX', () => {
     test('should match simple template tags', () => {
@@ -55,12 +57,60 @@ describe('Template constants', () => {
       expect(match?.[1]).toBe('title');
     });
 
-    test('should apply negative lookahead for escaped patterns', () => {
-      // The regex has a negative lookahead (?!\'\)) to exclude }}') sequences
-      const str = "test')";
-      const match = TEMPLATE_TAG_REPLACE_REGEX.exec(str);
+    test('should preserve nested placeholders inside transformation arguments', () => {
+      const str = "{{fields.subtitle | default('{{fields.title}}')}}";
+      const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
 
-      expect(match).toBeNull();
+      expect(result).toEqual("<<fields.subtitle | default('{{fields.title}}')>>");
+    });
+
+    test('should preserve nested placeholders inside ternary transformation arguments', () => {
+      const str = "{{draft | ternary('{{subtitle}}', '{{title}}')}}";
+      const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
+
+      expect(result).toEqual("<<draft | ternary('{{subtitle}}', '{{title}}')>>");
+    });
+
+    test('should preserve standalone quoted placeholders inside transformation arguments', () => {
+      const str = "default('{{title}}')";
+      const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
+
+      expect(result).toEqual("default('{{title}}')");
+    });
+
+    test('should preserve quoted placeholders in function argument positions', () => {
+      const str = "foo('{{title}}')";
+      const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
+
+      expect(result).toEqual("foo('{{title}}')");
+    });
+
+    test('should replace quoted placeholders when the surrounding delimiter is not a transformation delimiter', () => {
+      const str = "foo('{{title}}'x)";
+      const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
+
+      expect(result).toEqual("foo('<<title>>'x)");
+    });
+
+    test('should replace quoted placeholders outside transformation argument contexts', () => {
+      const str = "foo '{{title}}'";
+      const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
+
+      expect(result).toEqual("foo '<<title>>'");
+    });
+
+    test('should leave empty placeholders unchanged', () => {
+      const str = '{{}}';
+      const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
+
+      expect(result).toEqual('{{}}');
+    });
+
+    test('should still replace quoted placeholders in summary templates', () => {
+      const str = "'{{title}}', '{{locales}}', content/main/{{filename}}.{{extension}}";
+      const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
+
+      expect(result).toEqual("'<<title>>', '<<locales>>', content/main/<<filename>>.<<extension>>");
     });
   });
 

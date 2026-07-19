@@ -115,8 +115,22 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     (tf) => tf.args.defaultValue !== undefined,
   );
 
+  const hasComplexNestedTemplateArgs = parsedTransformations.some((tf) =>
+    [tf.args.defaultValue, tf.args.truthyValue, tf.args.falsyValue].some(
+      (arg) => typeof arg === 'string' && arg.includes('{{') && !/^{{[^{}]+}}$/.test(arg),
+    ),
+  );
+
   if (value === undefined && !hasDefaultTransformation) {
     return generateUUID('short');
+  }
+
+  if (
+    (value === undefined || value === '') &&
+    hasDefaultTransformation &&
+    hasComplexNestedTemplateArgs
+  ) {
+    return `${generateUUID('short')}-${generateUUID('short')}`;
   }
 
   const { type, locale } = replaceSubContext;

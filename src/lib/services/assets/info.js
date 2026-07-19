@@ -8,6 +8,10 @@ import { get } from 'svelte/store';
 import { getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';
+import {
+  TEMPLATE_TAG_REGEX,
+  TEMPLATE_TAG_REPLACE_REGEX,
+} from '$lib/services/common/template/constants';
 import { cmsConfig } from '$lib/services/config';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { getMergedLibraryOptions } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
@@ -23,8 +27,6 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * @import { MediaField } from '$lib/types/public';
  */
 
-const TAG_MATCH_REGEX = /{{(?<tag>.+?)}}/;
-const TAG_REPLACE_REGEX = /{{(.+?)}}/g;
 const URL_REGEX = /^(?:https?|data|blob):/;
 /**
  * Set of asset paths that are currently being requested. This is used to prevent multiple requests
@@ -218,11 +220,11 @@ export const getAssetPublicURL = (
     ? asset.path.replace(
         // Deal with template tags like `/assets/images/{{slug}}`
         createPathRegEx(asset.folder.internalPath ?? '', (segment) => {
-          const tag = segment.match(TAG_MATCH_REGEX)?.groups?.tag;
+          const tag = segment.match(TEMPLATE_TAG_REGEX)?.[1];
 
           return tag ? `(?<${tag}>[^/]+)` : escapeRegExp(segment);
         }),
-        publicPath?.replaceAll(TAG_REPLACE_REGEX, '$<$1>') ?? '',
+        publicPath?.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, '$<$1>') ?? '',
       )
     : asset.path.replace(
         asset.folder.internalPath ?? '',

@@ -4,7 +4,7 @@ import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import {
@@ -267,7 +267,7 @@ export const getEntrySummary = (
   };
 
   return sanitizeEntrySummary(
-    summaryTemplate.replace(TEMPLATE_TAG_REPLACE_REGEX, (_match, placeholder) =>
+    replaceTemplateTags(summaryTemplate, (_match, placeholder) =>
       replace(placeholder, replaceContext),
     ),
     { allowMarkdown },

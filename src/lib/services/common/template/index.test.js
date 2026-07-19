@@ -4,6 +4,8 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
+import { processNestedTemplates } from './nested';
+
 import { fillTemplate, hasTemplateTags } from '.';
 
 /**
@@ -703,6 +705,20 @@ describe('fillTemplate()', async () => {
       'fallback',
     );
     expect(fillTemplate('{{title | upper}}', { collection, content })).toMatch(/[0-9a-f]{12}/);
+  });
+
+  test('processNestedTemplates preserves malformed nested template values', () => {
+    const transformations = [{ method: 'default', args: { defaultValue: '{{title' } }];
+
+    expect(processNestedTemplates(transformations, () => 'resolved')).toEqual(transformations);
+  });
+
+  test('processNestedTemplates resolves nested template values', () => {
+    const transformations = [{ method: 'default', args: { defaultValue: '{{fallbackField}}' } }];
+
+    expect(processNestedTemplates(transformations, (tag) => `${tag}-resolved`)).toEqual([
+      { method: 'default', args: { defaultValue: 'fallbackField-resolved' } },
+    ]);
   });
 
   test('preview path empty slug handling', async () => {

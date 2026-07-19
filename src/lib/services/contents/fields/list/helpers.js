@@ -1,6 +1,6 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { parseTransformations } from '$lib/services/common/transformations';
 import {
@@ -158,5 +158,5 @@ export const formatSummary = ({
     });
   };
 
-  return summaryTemplate.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, replacer);
+  return replaceTemplateTags(summaryTemplate, replacer);
 };

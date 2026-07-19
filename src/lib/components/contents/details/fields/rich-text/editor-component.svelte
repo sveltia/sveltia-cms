@@ -8,7 +8,7 @@
   import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+  import { replaceTemplateTags } from '$lib/services/common/template';
   import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
@@ -237,7 +237,7 @@
 
     const flatValues = flatten(_values);
 
-    const result = template.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (__, placeholder) => {
+    const result = replaceTemplateTags(template, (__, placeholder) => {
       const { value: tag, transformations } = parseTransformations(placeholder);
       const fieldName = tag.replace(/^fields\./, '');
       let value = flatValues[fieldName];
@@ -260,7 +260,7 @@
 
     // Return `null` if the result (after stripping all placeholder-based content) is empty. This
     // handles the case where all field values are empty but literal text (e.g. ' — ') remains.
-    const strippedTemplate = template.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, '');
+    const strippedTemplate = replaceTemplateTags(template, () => '');
 
     if (result !== strippedTemplate && result.trim()) {
       return result.trim();

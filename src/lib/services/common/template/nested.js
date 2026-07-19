@@ -5,6 +5,27 @@ import { INNER_TAG_REGEX } from '$lib/services/common/template/constants';
  */
 
 /**
+ * Resolve a single nested template value in transformation arguments.
+ * @param {string} value The transformation argument value.
+ * @param {(tag: string) => string} resolveTag Function to resolve a nested tag.
+ * @returns {string} Resolved value.
+ */
+const resolveNestedTemplateValues = (value, resolveTag) => {
+  if (!value.includes('{{')) {
+    return value;
+  }
+
+  const { innerTag } = value.match(INNER_TAG_REGEX)?.groups ?? {};
+
+  if (innerTag === undefined) {
+    return value;
+  }
+
+  /* v8 ignore next */
+  return String(resolveTag(innerTag) ?? '');
+};
+
+/**
  * Process nested template tags in transformation arguments (e.g., `default('{{fields.title}}')`).
  * This handles nested templates in `default`, `ternary`, and other transformations that accept
  * string arguments which may contain template tags.
@@ -20,29 +41,29 @@ export const processNestedTemplates = (transformations, resolveTag) =>
 
     // Handle nested template in default transformation
     if (defaultValue !== undefined) {
-      const { innerTag } = defaultValue.match(INNER_TAG_REGEX)?.groups ?? {};
+      const resolvedDefaultValue = resolveNestedTemplateValues(defaultValue, resolveTag);
 
-      if (innerTag !== undefined) {
-        newArgs.defaultValue = resolveTag(innerTag);
+      if (resolvedDefaultValue !== defaultValue) {
+        newArgs.defaultValue = resolvedDefaultValue;
         hasChanges = true;
       }
     }
 
     // Handle nested templates in ternary transformation
     if (truthyValue !== undefined) {
-      const { innerTag: truthyInnerTag } = truthyValue.match(INNER_TAG_REGEX)?.groups ?? {};
+      const resolvedTruthyValue = resolveNestedTemplateValues(truthyValue, resolveTag);
 
-      if (truthyInnerTag !== undefined) {
-        newArgs.truthyValue = resolveTag(truthyInnerTag);
+      if (resolvedTruthyValue !== truthyValue) {
+        newArgs.truthyValue = resolvedTruthyValue;
         hasChanges = true;
       }
     }
 
     if (falsyValue !== undefined) {
-      const { innerTag: falsyInnerTag } = falsyValue.match(INNER_TAG_REGEX)?.groups ?? {};
+      const resolvedFalsyValue = resolveNestedTemplateValues(falsyValue, resolveTag);
 
-      if (falsyInnerTag !== undefined) {
-        newArgs.falsyValue = resolveTag(falsyInnerTag);
+      if (resolvedFalsyValue !== falsyValue) {
+        newArgs.falsyValue = resolvedFalsyValue;
         hasChanges = true;
       }
     }

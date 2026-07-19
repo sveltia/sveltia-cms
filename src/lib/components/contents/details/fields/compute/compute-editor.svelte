@@ -7,7 +7,7 @@
   import { TextInput } from '@sveltia/ui';
   import { getContext, untrack } from 'svelte';
 
-  import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+  import { replaceTemplateTags } from '$lib/services/common/template';
   import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
@@ -76,7 +76,7 @@
         return getIndex() ?? '';
       }
 
-      return valueTemplate.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (_match, placeholder) => {
+      return replaceTemplateTags(valueTemplate, (_match, placeholder) => {
         const { value: tagName, transformations } = parseTransformations(placeholder);
 
         if (tagName === 'index') {

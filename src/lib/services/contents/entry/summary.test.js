@@ -141,6 +141,22 @@ describe('Test getEntrySummary()', () => {
     expect(result).toEqual('net [de, en]');
   });
 
+  test('handles quoted placeholders in summary templates', () => {
+    const result = getEntrySummary(
+      {
+        ...collection,
+        summary: "'{{title}}', '{{locales}}', content/main/{{filename}}.{{extension}}",
+      },
+      entry,
+      {
+        locale: 'de',
+        useTemplate: true,
+      },
+    );
+
+    expect(result).toEqual("'.Net', 'de', content/main/index.md");
+  });
+
   test('fields', () => {
     expect(format('{{title}}')).toEqual('.Net');
     expect(format('{{fields.title}}')).toEqual('.Net');

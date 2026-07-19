@@ -2,10 +2,7 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { truncate } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
-import {
-  TEMPLATE_TAG_REGEX,
-  TEMPLATE_TAG_REPLACE_REGEX,
-} from '$lib/services/common/template/constants';
+import { TEMPLATE_TAG_REGEX } from '$lib/services/common/template/constants';
 import { replaceTemplatePlaceholder } from '$lib/services/common/template/replacers';
 import { cmsConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
@@ -15,6 +12,80 @@ import { renameIfNeeded } from '$lib/services/utils/file';
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
  * @import { FillTemplateOptions } from '$lib/types/private';
  */
+
+/**
+ * Replace template tags in a string while leaving nested template tags inside transformation
+ * arguments untouched. For example, this keeps `default('{{title}}')` from being treated as a
+ * separate replacement target when the outer template is processed.
+ * @param {string} str The string containing template tags.
+ * @param {(match: string, placeholder: string) => string} replacer Replacement callback.
+ * @returns {string} Result of the replacements.
+ */
+export const replaceTemplateTags = (str, replacer) => {
+  let result = '';
+  let searchIndex = 0;
+
+  while (searchIndex < str.length) {
+    const openIndex = str.indexOf('{{', searchIndex);
+
+    if (openIndex === -1) {
+      result += str.slice(searchIndex);
+      break;
+    }
+
+    result += str.slice(searchIndex, openIndex);
+
+    let cursor = openIndex + 2;
+    let quoteState = false;
+
+    while (cursor < str.length) {
+      const char = str[cursor];
+      const nextChar = str[cursor + 1];
+
+      if (char === "'" && !quoteState) {
+        quoteState = true;
+      } else if (char === "'" && quoteState) {
+        quoteState = false;
+      }
+
+      if (!quoteState && char === '}' && nextChar === '}') {
+        const closeIndex = cursor;
+        const hasLeadingQuote = str[openIndex - 1] === "'";
+        const hasTrailingQuote = str[closeIndex + 2] === "'";
+        const openingDelimiter = str[openIndex - 2];
+        const closingDelimiter = str[closeIndex + 3];
+        const placeholder = str.slice(openIndex + 2, closeIndex);
+
+        /* v8 ignore next */
+        const isNestedTransformationArgument =
+          hasLeadingQuote &&
+          hasTrailingQuote &&
+          ['(', ',', '[', '|'].includes(openingDelimiter ?? '') &&
+          [')', ',', ']'].includes(closingDelimiter ?? '');
+
+        if (!placeholder) {
+          result += str.slice(openIndex, closeIndex + 2);
+        } else if (isNestedTransformationArgument) {
+          result += str.slice(openIndex, closeIndex + 2);
+        } else {
+          result += replacer(str.slice(openIndex, closeIndex + 2), placeholder);
+        }
+
+        searchIndex = closeIndex + 2;
+        break;
+      }
+
+      cursor += 1;
+    }
+
+    if (cursor >= str.length) {
+      result += str.slice(openIndex);
+      break;
+    }
+  }
+
+  return result;
+};
 
 /**
  * Checks if a string contains template tags.
@@ -83,9 +154,9 @@ export const fillTemplate = (template, options) => {
   // Use a negative lookahead assertion to support nested template tags in transformations like
   // `{{fields.slug | default('{{fields.title}}')}}` or `{{draft | ternary('{{subtitle}}',
   // '{{title}}')}}`
-  let slug = template
-    .replace(TEMPLATE_TAG_REPLACE_REGEX, (_match, tag) => replaceTemplatePlaceholder(tag, context))
-    .trim();
+  let slug = replaceTemplateTags(template, (_match, tag) =>
+    replaceTemplatePlaceholder(tag, context),
+  ).trim();
 
   // We don’t have to rename it when creating a path with a slug given. Skip truncation because the
   // slug has already been truncated during its own generation, and truncating the entire filled

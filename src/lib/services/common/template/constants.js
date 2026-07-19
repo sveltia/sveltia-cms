@@ -4,14 +4,12 @@
  * used here because we only need to know if at least one match exists, and using `test()` with a
  * global regex can lead to unexpected results due to the internal state of the regex engine.
  */
-export const TEMPLATE_TAG_REGEX = /{{.+?}}/;
+export const TEMPLATE_TAG_REGEX = /{{(.+?)}}/;
 
 /**
- * Regex to match and replace template tags like {{slug}}. The negative lookahead ensures that we do
- * not match template tags that are immediately followed by patterns indicating they are nested
- * inside transformation arguments: `')` for the last argument, or `',` for non-last arguments.
+ * Regex to match and replace template tags like {{slug}}.
  */
-export const TEMPLATE_TAG_REPLACE_REGEX = /{{(.+?)}}(?!'[),])/g;
+export const TEMPLATE_TAG_REPLACE_REGEX = new RegExp(TEMPLATE_TAG_REGEX.source, 'g');
 
 /**
  * Regex to match escaped `{{variable}}` placeholders.
