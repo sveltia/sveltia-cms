@@ -68,12 +68,14 @@
   /** @type {FieldEditorContext} */
   const { fieldContext, parentComponentNames, valueStoreKey } = getContext('field-editor') ?? {};
   const inEditorComponent = fieldContext === 'rich-text-editor-component';
+  const componentName = parentComponentNames.at(-1);
 
   /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     locale,
     keyPath,
+    typedKeyPath,
     fieldId,
     fieldConfig,
     currentValue = $bindable(),
@@ -156,6 +158,17 @@
   const imageComponent = $derived(
     components.find(({ id }) => id === 'image' || id === 'linked-image'),
   );
+  const targetAssetFolder = $derived(
+    getDefaultAssetFolder(
+      getAssetLibraryFolderMap({
+        collectionName,
+        fileName,
+        componentName,
+        typedKeyPath,
+        isIndexFile,
+      }),
+    ),
+  );
 
   /**
    * Insert images to the editor content.
@@ -180,9 +193,8 @@
       fieldConfig: /** @type {ImageField} */ (srcFieldConfig),
     });
 
-    const folderMap = getAssetLibraryFolderMap({ collectionName, fileName, isIndexFile });
-    const folder = getDefaultAssetFolder(folderMap);
     const draft = $entryDraft;
+    const folder = targetAssetFolder;
 
     // eslint-disable-next-line no-restricted-syntax
     for (const { file, src: externalSrc, alt = '' } of images) {
