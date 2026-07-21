@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   getAssetLibraryFolderMap,
+  getDefaultAssetFolder,
   getTargetFolderPath,
   hasSameAsset,
   isAssetInSelectedFolder,
@@ -703,6 +704,40 @@ describe('contents/fields/file/helpers', () => {
         expect(result.file.enabled).toBe(false);
         expect(result.entry.enabled).toBe(true);
       });
+    });
+  });
+
+  describe('getDefaultAssetFolder', () => {
+    it('should return the first enabled folder from the folder map', () => {
+      const enabledFolder = /** @type {import('$lib/types/private').AssetFolderInfo} */ ({
+        collectionName: 'posts',
+        internalPath: 'content/posts/media',
+        publicPath: '/media',
+        entryRelative: false,
+        hasTemplateTags: false,
+      });
+
+      const result = getDefaultAssetFolder({
+        field: { folder: undefined, enabled: false },
+        entry: { folder: undefined, enabled: false },
+        file: { folder: undefined, enabled: false },
+        collection: { folder: enabledFolder, enabled: true },
+        global: { folder: undefined, enabled: false },
+      });
+
+      expect(result).toBe(enabledFolder);
+    });
+
+    it('should return undefined when no folders are enabled', () => {
+      const result = getDefaultAssetFolder({
+        field: { folder: undefined, enabled: false },
+        entry: { folder: undefined, enabled: false },
+        file: { folder: undefined, enabled: false },
+        collection: { folder: undefined, enabled: false },
+        global: { folder: undefined, enabled: false },
+      });
+
+      expect(result).toBeUndefined();
     });
   });
 

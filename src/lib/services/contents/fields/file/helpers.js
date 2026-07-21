@@ -87,6 +87,15 @@ export const getAssetLibraryFolderMap = ({
 };
 
 /**
+ * Get the default asset library folder for a File/Image field.
+ * @param {AssetLibraryFolderMap} folderMap Asset library folder map.
+ * @returns {AssetFolderInfo} Default asset library folder.
+ */
+export const getDefaultAssetFolder = (folderMap) =>
+  // There is always at least one enabled folder in the map, so this will never be undefined
+  /** @type {AssetFolderInfo} */ (Object.values(folderMap).find(({ enabled }) => enabled)?.folder);
+
+/**
  * Get the target folder path for a File/Image field.
  * @param {object} args Arguments.
  * @param {Entry | undefined} args.entry Original entry.

@@ -21,6 +21,7 @@
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import {
     getAssetLibraryFolderMap,
+    getDefaultAssetFolder,
     getTargetFolderPath,
     listAssets,
   } from '$lib/services/contents/fields/file/helpers';
@@ -33,7 +34,6 @@
   /**
    * @import {
    * Asset,
-   * AssetFolderInfo,
    * FieldEditorContext,
    * FieldEditorProps,
    * SelectedResource,
@@ -111,11 +111,7 @@
       isIndexFile,
     }),
   );
-  const targetFolder = $derived(
-    /** @type {AssetFolderInfo} */ (
-      Object.values(assetLibraryFolderMap).find(({ enabled }) => enabled)?.folder
-    ),
-  );
+  const targetFolder = $derived(getDefaultAssetFolder(assetLibraryFolderMap));
   const targetFolderPath = $derived(
     getTargetFolderPath({ entry: $entryDraft?.originalEntry, folder: targetFolder }),
   );
