@@ -121,7 +121,7 @@ describe('Gemini Translator Service', () => {
       expect(result).toEqual(['Bonjour le monde']);
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('gemini-3.1-flash-lite:generateContent'),
+        expect.stringContaining('gemini-3.5-flash-lite:generateContent'),
         expect.objectContaining({
           method: 'POST',
           headers: {

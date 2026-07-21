@@ -11,7 +11,7 @@ global.fetch = vi.fn();
 
 const defaultOptions = {
   apiKey: 'AIzaSyTestKey1234567890abcdefghijk',
-  model: 'gemini-3.1-flash-lite',
+  model: 'gemini-3.5-flash-lite',
   systemPrompt: 'You are a helpful assistant.',
   userMessage: 'Hello!',
 };

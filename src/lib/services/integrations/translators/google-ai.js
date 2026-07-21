@@ -14,7 +14,7 @@ import { availability, createAiTranslate } from './shared.js';
 
 const serviceId = 'google-ai';
 const serviceLabel = 'Google Gemini';
-const model = 'gemini-3.1-flash-lite';
+const model = 'gemini-3.5-flash-lite';
 
 /**
  * Translation service using Google Gemini Flash-Lite. Supports markdown content and preserves
