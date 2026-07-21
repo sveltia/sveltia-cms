@@ -208,6 +208,19 @@ export const restoreBackup = ({ backup, collectionName, fileName }) => {
           });
         }
 
+        const newValueMap = draft.currentValues[locale];
+        const keys = Object.keys(newValueMap);
+
+        keys.forEach((keyPath) => {
+          const value = newValueMap[keyPath];
+
+          // Remove an optional object field’s default `null` value when subfields are added
+          // @see https://github.com/sveltia/sveltia-cms/issues/840
+          if (value === null && keys.some((k) => k.startsWith(`${keyPath}.`))) {
+            newValueMap[keyPath] = {};
+          }
+        });
+
         if (!draft.originalValues[locale]) {
           draft.originalValues[locale] = {};
         }

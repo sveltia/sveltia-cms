@@ -863,6 +863,38 @@ describe('draft/backup', () => {
       }).not.toThrow();
     });
 
+    it('replaces a null optional object field with an empty object when child values exist', () => {
+      const backup = {
+        timestamp: new Date(),
+        cmsConfigVersion: 'v1.0.0',
+        collectionName: 'posts',
+        slug: 'my-post',
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: {
+          en: {
+            title: 'Restored Title',
+            author: null,
+            'author.name': 'Alice',
+            'author.role': 'Editor',
+          },
+        },
+        files: {},
+      };
+
+      let updatedDraft;
+
+      vi.mocked(entryDraft.update).mockImplementation((updater) => {
+        updatedDraft = createMockDraft();
+        updater(updatedDraft);
+      });
+
+      restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+
+      expect(updatedDraft.currentValues.en.author).toEqual({});
+      expect(updatedDraft.currentValues.en['author.name']).toBe('Alice');
+    });
+
     it('reconciles a stale order field with the live entry value when originalEntry exists', async () => {
       const { getOrderFieldKey } =
         await import('$lib/services/contents/collection/entries/reorder');
