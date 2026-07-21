@@ -139,7 +139,7 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
 
   // Sanitize path traversal attempts first by removing `.` and `..` segments to prevent writing
   // outside the intended directory structure. This must happen before slugification to ensure that
-  // inputs like `../foo` don't become `..-foo` (with `/` converted to `-`).
+  // inputs like `../foo` don’t become `..-foo` (with `/` converted to `-`).
   value = sanitizePath(String(value));
 
   // Return the value as-is when generating the preview path or media folder path
