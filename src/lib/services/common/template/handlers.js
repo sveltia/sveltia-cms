@@ -4,6 +4,10 @@ import { DATE_TIME_FIELDS } from '$lib/services/common/template/constants';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 
 /**
+ * @import { ReplaceSubContext } from '$lib/services/common/template/replacers';
+ */
+
+/**
  * Handles date-time related template tags.
  * @internal
  * @param {string} tag The template tag.
@@ -35,16 +39,16 @@ export const handleUuidTag = (tag) => {
 /**
  * Handles slug-related template tags.
  * @internal
- * @param {string} tag The template tag.
- * @param {string | undefined} currentSlug Current slug value.
- * @param {string} type Template type.
- * @param {boolean} isIndexFile Whether this is an index file.
+ * @param {string} tag Field name or special tag.
+ * @param {ReplaceSubContext} context Replacement context.
  * @returns {string | undefined} The slug value or undefined if not a slug tag.
  */
-export const handleSlugTag = (tag, currentSlug, type, isIndexFile) => {
-  if (tag !== 'slug' || !currentSlug) {
+export const handleSlugTag = (tag, context) => {
+  if (tag !== 'slug') {
     return undefined;
   }
+
+  const { type, isIndexFile, currentSlug, content, identifierField } = context;
 
   // Return an empty string instead of `_index` when generating the preview path for an index file
   // @see https://github.com/sveltia/sveltia-cms/issues/468
@@ -52,7 +56,7 @@ export const handleSlugTag = (tag, currentSlug, type, isIndexFile) => {
     return '';
   }
 
-  return currentSlug;
+  return currentSlug ?? getEntrySummaryFromContent(content, { identifierField });
 };
 
 /**
@@ -91,24 +95,4 @@ export const handleFilePathTag = (tag, entryFilePath, basePath) => {
     default:
       return undefined;
   }
-};
-
-/**
- * Gets field value from the value map.
- * @internal
- * @param {string} tag The template tag.
- * @param {Record<string, any>} valueMap Value map object.
- * @param {string} identifierField Identifier field name.
- * @returns {any} The field value.
- */
-export const getFieldValue = (tag, valueMap, identifierField) => {
-  if (tag.startsWith('fields.')) {
-    return valueMap[tag.replace(/^fields\./, '')];
-  }
-
-  if (tag === 'slug') {
-    return getEntrySummaryFromContent(valueMap, { identifierField });
-  }
-
-  return valueMap[tag];
 };

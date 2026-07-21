@@ -2,6 +2,33 @@ import { describe, expect, test } from 'vitest';
 
 import { handleDateTimeTag, handleFilePathTag, handleSlugTag, handleUuidTag } from './handlers';
 
+/**
+ * Creates a typed slug handler context for tests.
+ * @param {Partial<Parameters<typeof handleSlugTag>[1]>} [overrides] Override values for the
+ * context.
+ * @returns {Parameters<typeof handleSlugTag>[1]} The slug handler context.
+ */
+const createSlugContext = (overrides = {}) =>
+  /** @type {Parameters<typeof handleSlugTag>[1]} */ ({
+    collection: {
+      name: 'posts',
+      folder: 'content/posts',
+      fields: [],
+      _type: 'entry',
+      _file: {
+        extension: 'md',
+        format: 'yaml-frontmatter',
+        basePath: 'content/posts',
+      },
+    },
+    currentSlug: undefined,
+    type: undefined,
+    isIndexFile: false,
+    content: {},
+    identifierField: 'title',
+    ...overrides,
+  });
+
 describe('Template handler functions', () => {
   describe('handleDateTimeTag()', () => {
     test('should return date-time field value when tag matches', () => {
@@ -65,31 +92,73 @@ describe('Template handler functions', () => {
 
   describe('handleSlugTag()', () => {
     test('should return slug when tag is slug and currentSlug exists', () => {
-      expect(handleSlugTag('slug', 'my-post', 'path', false)).toBe('my-post');
-      expect(handleSlugTag('slug', 'another-slug', 'filename', false)).toBe('another-slug');
+      expect(handleSlugTag('slug', createSlugContext({ currentSlug: 'my-post' }))).toBe('my-post');
+      expect(handleSlugTag('slug', createSlugContext({ currentSlug: 'another-slug' }))).toBe(
+        'another-slug',
+      );
     });
 
     test('should return undefined when tag is not slug', () => {
-      expect(handleSlugTag('title', 'my-post', 'path', false)).toBeUndefined();
-      expect(handleSlugTag('year', 'my-post', 'path', false)).toBeUndefined();
+      expect(handleSlugTag('title', createSlugContext({ currentSlug: 'my-post' }))).toBeUndefined();
+      expect(handleSlugTag('year', createSlugContext({ currentSlug: 'my-post' }))).toBeUndefined();
     });
 
-    test('should return undefined when currentSlug is undefined', () => {
-      expect(handleSlugTag('slug', undefined, 'path', false)).toBeUndefined();
+    test('should fall back to the entry summary when currentSlug is undefined', () => {
+      expect(
+        handleSlugTag(
+          'slug',
+          createSlugContext({ currentSlug: undefined, content: { title: 'My Entry' } }),
+        ),
+      ).toBe('My Entry');
+      expect(
+        handleSlugTag(
+          'slug',
+          createSlugContext({
+            currentSlug: undefined,
+            content: { author: 'Jane Doe' },
+            identifierField: 'author',
+          }),
+        ),
+      ).toBe('Jane Doe');
     });
 
     test('should return empty string for preview_path with index file', () => {
-      expect(handleSlugTag('slug', '_index', 'preview_path', true)).toBe('');
-      expect(handleSlugTag('slug', 'any-slug', 'preview_path', true)).toBe('');
+      expect(
+        handleSlugTag(
+          'slug',
+          createSlugContext({ currentSlug: '_index', type: 'preview_path', isIndexFile: true }),
+        ),
+      ).toBe('');
+      expect(
+        handleSlugTag(
+          'slug',
+          createSlugContext({ currentSlug: 'any-slug', type: 'preview_path', isIndexFile: true }),
+        ),
+      ).toBe('');
     });
 
     test('should return slug for preview_path with non-index file', () => {
-      expect(handleSlugTag('slug', 'my-post', 'preview_path', false)).toBe('my-post');
+      expect(
+        handleSlugTag(
+          'slug',
+          createSlugContext({ currentSlug: 'my-post', type: 'preview_path', isIndexFile: false }),
+        ),
+      ).toBe('my-post');
     });
 
     test('should return slug for non-preview_path types even with index file', () => {
-      expect(handleSlugTag('slug', '_index', 'path', true)).toBe('_index');
-      expect(handleSlugTag('slug', '_index', 'filename', true)).toBe('_index');
+      expect(
+        handleSlugTag(
+          'slug',
+          createSlugContext({ currentSlug: '_index', type: undefined, isIndexFile: true }),
+        ),
+      ).toBe('_index');
+      expect(
+        handleSlugTag(
+          'slug',
+          createSlugContext({ currentSlug: '_index', type: undefined, isIndexFile: true }),
+        ),
+      ).toBe('_index');
     });
   });
 

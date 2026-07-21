@@ -2,7 +2,6 @@ import { generateUUID } from '@sveltia/utils/crypto';
 
 import { slugify } from '$lib/services/common/slug';
 import {
-  getFieldValue,
   handleDateTimeTag,
   handleFilePathTag,
   handleSlugTag,
@@ -41,18 +40,7 @@ import { sanitizePath } from '$lib/services/utils/file';
  * @returns {any} Replaced value.
  */
 export const replaceTemplateTag = (tag, context) => {
-  const {
-    type,
-    content: valueMap,
-    currentSlug,
-    entryFilePath,
-    locale,
-    dateTimeParts,
-    identifierField,
-    basePath,
-    isIndexFile = false,
-  } = context;
-
+  const { type, content, entryFilePath, locale, dateTimeParts, basePath } = context;
   // Handle date-time fields. Parts are pre-calculated in `fillTemplate` to avoid redundant
   // calculations for multiple date-time tags in the same template.
   const _dateTimeParts = /** @type {Record<string, string>} */ (dateTimeParts);
@@ -63,7 +51,7 @@ export const replaceTemplateTag = (tag, context) => {
   }
 
   // Handle slug tag
-  const slugValue = handleSlugTag(tag, currentSlug, type ?? '', isIndexFile);
+  const slugValue = handleSlugTag(tag, context);
 
   if (slugValue !== undefined) {
     return slugValue;
@@ -88,10 +76,14 @@ export const replaceTemplateTag = (tag, context) => {
     if (filePathValue !== undefined) {
       return filePathValue;
     }
+
+    // `{{fields.*}}` tags are not supported in the media folder path and preview path templates, so
+    // we return `undefined` instead of the field value to avoid generating invalid paths.
+    return undefined;
   }
 
   // Handle field values
-  return getFieldValue(tag, valueMap, identifierField);
+  return content[tag.replace(/^fields\./, '')];
 };
 
 /**

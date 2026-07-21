@@ -927,7 +927,7 @@ describe('fillTemplate()', async () => {
     expect(uuidShorterResult).toMatch(/^[0-9a-f]{8}$/);
   });
 
-  test('getFieldValue handles fields.* pattern', async () => {
+  test('fillTemplate resolves fields.* tags from content', async () => {
     await setupCmsConfig();
 
     expect(fillTemplate('{{fields.title}}', { collection, content: { title: 'My Title' } })).toBe(
@@ -936,6 +936,19 @@ describe('fillTemplate()', async () => {
     expect(fillTemplate('{{fields.author}}', { collection, content: { author: 'John Doe' } })).toBe(
       'john-doe',
     );
+  });
+
+  test('fillTemplate does not resolve fields.* tags for preview paths', async () => {
+    await setupCmsConfig();
+
+    const result = fillTemplate('{{fields.title}}', {
+      collection,
+      content: { title: 'My Title' },
+      type: 'preview_path',
+      entryFilePath: 'content/posts/2024/my-post.md',
+    });
+
+    expect(result).toMatch(/^[0-9a-f]{12}$/);
   });
 
   test('getFieldValue handles slug tag specially', async () => {
@@ -1122,7 +1135,7 @@ describe('fillTemplate()', async () => {
     expect(result).toBe('/2024/uploads');
   });
 
-  test('fillTemplate falls through to field value when tag is not a file path tag in preview_path with entryFilePath', async () => {
+  test('fillTemplate falls back to a generated ID for preview_path tags that are not file path tags', async () => {
     await setupCmsConfig();
 
     const result = fillTemplate('{{title}}', {
@@ -1132,10 +1145,10 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/2024/my-post.md',
     });
 
-    expect(result).toBe('My Post Title');
+    expect(result).toMatch(/^[0-9a-f]{12}$/);
   });
 
-  test('fillTemplate falls through to field value for media_folder with non-filepath tag and entryFilePath', async () => {
+  test('fillTemplate falls back to a generated ID for media_folder tags that are not file path tags', async () => {
     await setupCmsConfig();
 
     const result = fillTemplate('{{category}}', {
@@ -1145,7 +1158,7 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/2024/my-post.md',
     });
 
-    expect(result).toBe('photography');
+    expect(result).toMatch(/^[0-9a-f]{12}$/);
   });
 
   test('processTransformations uses empty string when inner default tag resolves to undefined', async () => {
@@ -1181,10 +1194,9 @@ describe('fillTemplate()', async () => {
     expect(result2).toBe('/2024/article');
   });
 
-  test('fillTemplate sanitizes path traversal in media_folder field values', async () => {
+  test('fillTemplate does not resolve field values in media_folder path templates', async () => {
     await setupCmsConfig();
 
-    // Test that normal values work first (using the same pattern as existing tests)
     const resultNormal = fillTemplate('{{folder}}', {
       collection,
       content: { folder: 'normal-folder' },
@@ -1192,9 +1204,8 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/my-post.md',
     });
 
-    expect(resultNormal).toBe('normal-folder');
+    expect(resultNormal).toMatch(/^[0-9a-f]{12}$/);
 
-    // Single parent directory traversal
     const result1 = fillTemplate('{{folder}}', {
       collection,
       content: { folder: '../secret' },
@@ -1202,9 +1213,8 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/my-post.md',
     });
 
-    expect(result1).toBe('secret');
+    expect(result1).toMatch(/^[0-9a-f]{12}$/);
 
-    // Multiple parent directory traversals
     const result2 = fillTemplate('{{folder}}', {
       collection,
       content: { folder: '../../../../.github/workflows' },
@@ -1212,40 +1222,10 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/my-post.md',
     });
 
-    expect(result2).toBe('.github/workflows');
-
-    // Mixed traversal with legitimate path
-    const result3 = fillTemplate('{{folder}}', {
-      collection,
-      content: { folder: 'images/../../../config' },
-      type: 'media_folder',
-      entryFilePath: 'content/posts/my-post.md',
-    });
-
-    expect(result3).toBe('images/config');
-
-    // Current directory references
-    const result4 = fillTemplate('{{folder}}', {
-      collection,
-      content: { folder: './images/./photos' },
-      type: 'media_folder',
-      entryFilePath: 'content/posts/my-post.md',
-    });
-
-    expect(result4).toBe('images/photos');
-
-    // Multiple slashes are preserved (but will be normalized by resolvePath later)
-    const result5 = fillTemplate('{{folder}}', {
-      collection,
-      content: { folder: 'images//photos' },
-      type: 'media_folder',
-      entryFilePath: 'content/posts/my-post.md',
-    });
-
-    expect(result5).toBe('images//photos');
+    expect(result2).toMatch(/^[0-9a-f]{12}$/);
   });
 
-  test('fillTemplate sanitizes path traversal in preview_path field values', async () => {
+  test('fillTemplate does not resolve field values in preview_path templates', async () => {
     await setupCmsConfig();
 
     const result1 = fillTemplate('{{category}}', {
@@ -1255,7 +1235,7 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/my-post.md',
     });
 
-    expect(result1).toBe('admin');
+    expect(result1).toMatch(/^[0-9a-f]{12}$/);
 
     const result2 = fillTemplate('{{path}}', {
       collection,
@@ -1264,10 +1244,10 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/my-post.md',
     });
 
-    expect(result2).toBe('config/secrets');
+    expect(result2).toMatch(/^[0-9a-f]{12}$/);
   });
 
-  test('fillTemplate preserves legitimate multi-segment paths in media_folder', async () => {
+  test('fillTemplate preserves date-time parts while falling back for unsupported field values in media_folder', async () => {
     await setupCmsConfig();
 
     const result = fillTemplate('{{year}}/{{month}}/{{category}}', {
@@ -1278,7 +1258,7 @@ describe('fillTemplate()', async () => {
       dateTimeParts: { year: '2024', month: '07' },
     });
 
-    expect(result).toBe('2024/07/photography/nature');
+    expect(result).toMatch(/^2024\/07\/[0-9a-f]{12}$/);
   });
 
   test('fillTemplate sanitizes path traversal in slugs', async () => {
