@@ -11,6 +11,7 @@ import {
 import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { getField } from '$lib/services/contents/entry/fields';
+import { sanitizePath } from '$lib/services/utils/file';
 
 /**
  * @import { FillTemplateOptions, GetFieldArgs } from '$lib/types/private';
@@ -144,12 +145,17 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     });
   }
 
-  // Return the value as is when generating the preview path or media folder path
+  // Sanitize path traversal attempts first by removing `.` and `..` segments to prevent writing
+  // outside the intended directory structure. This must happen before slugification to ensure that
+  // inputs like `../foo` don't become `..-foo` (with `/` converted to `-`).
+  value = sanitizePath(String(value));
+
+  // Return the value as-is when generating the preview path or media folder path
   if (type) {
-    return String(value);
+    return value;
   }
 
   // Slugify the value for a slug or filename. Don’t limit the length here; it will be handled later
   // in `fillTemplate`.
-  return slugify(String(value), { locale, maxLength: Infinity });
+  return slugify(value, { locale, maxLength: Infinity });
 };

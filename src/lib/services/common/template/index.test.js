@@ -28,6 +28,12 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
 }));
 vi.mock('$lib/services/utils/file', () => ({
   renameIfNeeded: vi.fn((slug) => slug),
+  sanitizePath: vi.fn((path) =>
+    path
+      .split('/')
+      .filter((/** @type {string} */ segment) => segment !== '.' && segment !== '..')
+      .join('/'),
+  ),
 }));
 
 describe('fillTemplate()', async () => {
@@ -1173,6 +1179,151 @@ describe('fillTemplate()', async () => {
     });
 
     expect(result2).toBe('/2024/article');
+  });
+
+  test('fillTemplate sanitizes path traversal in media_folder field values', async () => {
+    await setupCmsConfig();
+
+    // Test that normal values work first (using the same pattern as existing tests)
+    const resultNormal = fillTemplate('{{folder}}', {
+      collection,
+      content: { folder: 'normal-folder' },
+      type: 'media_folder',
+      entryFilePath: 'content/posts/my-post.md',
+    });
+
+    expect(resultNormal).toBe('normal-folder');
+
+    // Single parent directory traversal
+    const result1 = fillTemplate('{{folder}}', {
+      collection,
+      content: { folder: '../secret' },
+      type: 'media_folder',
+      entryFilePath: 'content/posts/my-post.md',
+    });
+
+    expect(result1).toBe('secret');
+
+    // Multiple parent directory traversals
+    const result2 = fillTemplate('{{folder}}', {
+      collection,
+      content: { folder: '../../../../.github/workflows' },
+      type: 'media_folder',
+      entryFilePath: 'content/posts/my-post.md',
+    });
+
+    expect(result2).toBe('.github/workflows');
+
+    // Mixed traversal with legitimate path
+    const result3 = fillTemplate('{{folder}}', {
+      collection,
+      content: { folder: 'images/../../../config' },
+      type: 'media_folder',
+      entryFilePath: 'content/posts/my-post.md',
+    });
+
+    expect(result3).toBe('images/config');
+
+    // Current directory references
+    const result4 = fillTemplate('{{folder}}', {
+      collection,
+      content: { folder: './images/./photos' },
+      type: 'media_folder',
+      entryFilePath: 'content/posts/my-post.md',
+    });
+
+    expect(result4).toBe('images/photos');
+
+    // Multiple slashes are preserved (but will be normalized by resolvePath later)
+    const result5 = fillTemplate('{{folder}}', {
+      collection,
+      content: { folder: 'images//photos' },
+      type: 'media_folder',
+      entryFilePath: 'content/posts/my-post.md',
+    });
+
+    expect(result5).toBe('images//photos');
+  });
+
+  test('fillTemplate sanitizes path traversal in preview_path field values', async () => {
+    await setupCmsConfig();
+
+    const result1 = fillTemplate('{{category}}', {
+      collection,
+      content: { category: '../admin' },
+      type: 'preview_path',
+      entryFilePath: 'content/posts/my-post.md',
+    });
+
+    expect(result1).toBe('admin');
+
+    const result2 = fillTemplate('{{path}}', {
+      collection,
+      content: { path: '../../config/secrets' },
+      type: 'preview_path',
+      entryFilePath: 'content/posts/my-post.md',
+    });
+
+    expect(result2).toBe('config/secrets');
+  });
+
+  test('fillTemplate preserves legitimate multi-segment paths in media_folder', async () => {
+    await setupCmsConfig();
+
+    const result = fillTemplate('{{year}}/{{month}}/{{category}}', {
+      collection,
+      content: { category: 'photography/nature' },
+      type: 'media_folder',
+      entryFilePath: 'content/posts/my-post.md',
+      dateTimeParts: { year: '2024', month: '07' },
+    });
+
+    expect(result).toBe('2024/07/photography/nature');
+  });
+
+  test('fillTemplate sanitizes path traversal in slugs', async () => {
+    await setupCmsConfig();
+
+    const result = fillTemplate('{{title}}', {
+      collection,
+      content: { title: '../foo' },
+    });
+
+    // Path traversal should be removed, then slugified
+    expect(result).toBe('foo');
+  });
+
+  test('fillTemplate sanitizes multiple path traversal segments in slugs', async () => {
+    await setupCmsConfig();
+
+    const result = fillTemplate('{{title}}', {
+      collection,
+      content: { title: '../../../secret' },
+    });
+
+    expect(result).toBe('secret');
+  });
+
+  test('fillTemplate sanitizes current directory references in slugs', async () => {
+    await setupCmsConfig();
+
+    const result = fillTemplate('{{title}}', {
+      collection,
+      content: { title: './hidden' },
+    });
+
+    expect(result).toBe('hidden');
+  });
+
+  test('fillTemplate sanitizes mixed path segments in slugs', async () => {
+    await setupCmsConfig();
+
+    const result = fillTemplate('{{title}}', {
+      collection,
+      content: { title: '../../config/../admin' },
+    });
+
+    expect(result).toBe('config-admin');
   });
 });
 

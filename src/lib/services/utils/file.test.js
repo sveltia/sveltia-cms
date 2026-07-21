@@ -11,6 +11,7 @@ import {
   getBlob,
   getGitHash,
   resolvePath,
+  sanitizePath,
 } from '$lib/services/utils/file';
 
 // Mock svelte/store
@@ -517,6 +518,68 @@ describe('Test resolvePath()', () => {
     expect(resolvePath('a/b/file.txt/../..')).toBe('a'); // Going back twice: removes file.txt then b, a remains
     // Case where segment exists after going back
     expect(resolvePath('a/b/c/../../file.txt')).toBe('a/file.txt'); // Go back twice, then file.txt at same level
+  });
+});
+
+describe('Test sanitizePath()', () => {
+  test('should leave normal paths unchanged', () => {
+    expect(sanitizePath('folder/file.txt')).toBe('folder/file.txt');
+    expect(sanitizePath('a/b/c/file.txt')).toBe('a/b/c/file.txt');
+    expect(sanitizePath('images/photos/summer.jpg')).toBe('images/photos/summer.jpg');
+  });
+
+  test('should remove single parent directory reference', () => {
+    expect(sanitizePath('../secret')).toBe('secret');
+    expect(sanitizePath('folder/../file.txt')).toBe('folder/file.txt');
+    expect(sanitizePath('../admin/config')).toBe('admin/config');
+  });
+
+  test('should remove multiple parent directory references', () => {
+    expect(sanitizePath('../../../../.github/workflows')).toBe('.github/workflows');
+    expect(sanitizePath('../../config/secrets')).toBe('config/secrets');
+    expect(sanitizePath('../../../etc/passwd')).toBe('etc/passwd');
+  });
+
+  test('should remove current directory references', () => {
+    expect(sanitizePath('./images/./photos')).toBe('images/photos');
+    expect(sanitizePath('folder/./file.txt')).toBe('folder/file.txt');
+    expect(sanitizePath('./././folder')).toBe('folder');
+  });
+
+  test('should handle mixed traversal attempts', () => {
+    expect(sanitizePath('images/../../../config')).toBe('images/config');
+    expect(sanitizePath('./folder/../file.txt')).toBe('folder/file.txt');
+    expect(sanitizePath('../folder/./subfolder/../file.txt')).toBe('folder/subfolder/file.txt');
+  });
+
+  test('should preserve empty segments and multi-slashes', () => {
+    // Unlike resolvePath, sanitizePath doesn't collapse multiple slashes
+    expect(sanitizePath('images//photos')).toBe('images//photos');
+    expect(sanitizePath('folder///file.txt')).toBe('folder///file.txt');
+  });
+
+  test('should handle paths with only dangerous segments', () => {
+    expect(sanitizePath('../..')).toBe('');
+    expect(sanitizePath('./.')).toBe('');
+    expect(sanitizePath('../../..')).toBe('');
+  });
+
+  test('should preserve legitimate path separators', () => {
+    expect(sanitizePath('photography/nature')).toBe('photography/nature');
+    expect(sanitizePath('2024/07/images')).toBe('2024/07/images');
+  });
+
+  test('should handle edge cases', () => {
+    expect(sanitizePath('')).toBe('');
+    expect(sanitizePath('file.txt')).toBe('file.txt');
+    expect(sanitizePath('/')).toBe('/');
+  });
+
+  test('should handle paths with special characters in segment names', () => {
+    // Segments named '.' or '..' are removed, but segments containing them are kept
+    expect(sanitizePath('.github/workflows')).toBe('.github/workflows');
+    expect(sanitizePath('folder/..gitignore')).toBe('folder/..gitignore');
+    expect(sanitizePath('my..folder/file.txt')).toBe('my..folder/file.txt');
   });
 });
 

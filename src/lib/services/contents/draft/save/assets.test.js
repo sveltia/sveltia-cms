@@ -16,6 +16,12 @@ vi.mock('$lib/services/utils/file', () => ({
   encodeFilePath: vi.fn((path) => encodeURIComponent(path)),
   createPath: vi.fn((parts) => parts.filter(Boolean).join('/')),
   resolvePath: vi.fn((path) => path),
+  sanitizePath: vi.fn((path) =>
+    path
+      .split('/')
+      .filter((/** @type {string} */ segment) => segment !== '.' && segment !== '..')
+      .join('/'),
+  ),
 }));
 vi.mock('$lib/services/contents/draft/slugs', () => ({
   getFillSlugOptions: vi.fn(() => ({ content: {}, collection: {} })),

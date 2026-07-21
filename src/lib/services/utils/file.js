@@ -167,6 +167,19 @@ export const formatFileName = (
 export const createPath = (segments) => segments.filter(Boolean).join('/');
 
 /**
+ * Sanitize a path by removing potentially dangerous path traversal segments (`.` and `..`). This
+ * prevents path traversal attacks when paths are constructed from user input.
+ * @param {string} path Path to sanitize, e.g. `../../../secret` or `images/../config`.
+ * @returns {string} Sanitized path with `.` and `..` segments removed, e.g. `secret` or
+ * `images/config`.
+ */
+export const sanitizePath = (path) =>
+  path
+    .split('/')
+    .filter((segment) => segment !== '.' && segment !== '..')
+    .join('/');
+
+/**
  * Resolve the given file path. This processes only dot(s) in the middle of the path; leading dots
  * like `../../foo/image.jpg` will be untouched.
  * @param {string} path Unresolved path, e.g. `foo/bar/baz/../../image.jpg`.
