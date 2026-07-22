@@ -1860,6 +1860,125 @@ describe('assets/index', () => {
       // internalSubPath is undefined → mediaFolder falls back to '' (empty string)
       expect(createPath).toHaveBeenCalledWith(['content/posts', '', 'photo.jpg']);
     });
+
+    it('should resolve asset with absolute media_folder and relative public_folder (Astro i18n pattern)', async () => {
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+
+      // Asset lives in shared folder at repo root
+      const mockAsset = {
+        path: 'src/assets/blog/cover.jpg',
+        name: 'cover.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'src/assets/blog',
+          publicPath: '../../../assets/blog',
+          collectionName: 'blog',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      // Entry in i18n locale subfolder
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        subPath: 'en/my-post.md',
+        locales: {
+          en: {
+            path: 'src/content/blog/en/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post', cover: '../../../assets/blog/cover.jpg' },
+          },
+        },
+      });
+
+      // Astro content collections pattern: absolute media_folder + relative public_folder
+      const mockCollection = /** @type {any} */ ({
+        name: 'blog',
+        media_folder: '/src/assets/blog',
+        public_folder: '../../../assets/blog',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      // The stored value includes the public_folder prefix
+      const storedPath = '../../../assets/blog/cover.jpg';
+
+      vi.mocked(createPath).mockReturnValue('src/assets/blog/cover.jpg');
+      vi.mocked(resolvePath).mockReturnValue('src/assets/blog/cover.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByRelativePathAndCollection({
+        path: storedPath,
+        entry: mockEntry,
+        collection: mockCollection,
+      });
+
+      expect(result).toEqual(mockAsset);
+      // Should strip public_folder prefix and resolve against absolute media_folder
+      expect(createPath).toHaveBeenCalledWith(['src/assets/blog', 'cover.jpg']);
+      expect(resolvePath).toHaveBeenCalledWith('src/assets/blog/cover.jpg');
+    });
+
+    it('should resolve asset with absolute media_folder when stored path does not include public_folder prefix', async () => {
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'src/assets/blog/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'src/assets/blog',
+          publicPath: '../../../assets/blog',
+          collectionName: 'blog',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        subPath: 'en/my-post.md',
+        locales: {
+          en: {
+            path: 'src/content/blog/en/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'blog',
+        media_folder: '/src/assets/blog',
+        public_folder: '../../../assets/blog',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      // Stored value does NOT include public_folder prefix (e.g., directly entered or legacy)
+      const storedPath = 'photo.jpg';
+
+      vi.mocked(createPath).mockReturnValue('src/assets/blog/photo.jpg');
+      vi.mocked(resolvePath).mockReturnValue('src/assets/blog/photo.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByRelativePathAndCollection({
+        path: storedPath,
+        entry: mockEntry,
+        collection: mockCollection,
+      });
+
+      expect(result).toEqual(mockAsset);
+      // Should resolve directly against absolute media_folder without stripping prefix
+      expect(createPath).toHaveBeenCalledWith(['src/assets/blog', 'photo.jpg']);
+      expect(resolvePath).toHaveBeenCalledWith('src/assets/blog/photo.jpg');
+    });
   });
 
   describe('getAssetByRelativePath', () => {

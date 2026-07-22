@@ -196,6 +196,10 @@ export const getAssetByRelativePathAndCollection = ({
     ? (fieldFolder.internalSubPath ?? '')
     : /** @type {string | undefined} */ ((file ?? collection).media_folder);
 
+  const publicFolder = fieldFolder?.publicPath
+    ? fieldFolder.publicPath
+    : /** @type {string | undefined} */ ((file ?? collection).public_folder);
+
   const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
   const { path: entryFilePath, content: entryContent } = locales[locale];
 
@@ -215,12 +219,34 @@ export const getAssetByRelativePathAndCollection = ({
   // `images/photo.jpg` are equivalent relative paths.
   const normalizedPath = path.replace(/^\.\//, '');
 
-  const localPath =
+  let localPath =
     mediaFolder && normalizedPath.startsWith(`${mediaFolder}/`)
       ? normalizedPath.slice(mediaFolder.length + 1)
       : normalizedPath;
 
-  const resolvedPath = resolvePath(createPath([entryFolder, mediaFolder, localPath]));
+  let resolvedPath;
+
+  // When `media_folder` is absolute (starts with `/`) and `public_folder` is entry-relative (e.g.
+  // starts with `.` or `..`), we need special handling for the Astro content collections pattern
+  // where images are stored in a shared folder but referenced with relative paths from each entry.
+  // Strip the `public_folder` prefix from the stored value and resolve directly against the
+  // absolute `media_folder`, bypassing `entryFolder` concatenation.
+  if (mediaFolder?.startsWith('/') && publicFolder) {
+    // Normalize `public_folder` by removing leading `./`
+    const normalizedPublicFolder = publicFolder.replace(/^\.\//, '');
+
+    // Check if the stored path starts with the public folder
+    if (normalizedPath.startsWith(`${normalizedPublicFolder}/`)) {
+      // Strip the public folder prefix to get just the filename/subpath
+      localPath = normalizedPath.slice(normalizedPublicFolder.length + 1);
+    }
+
+    // Resolve against the absolute media_folder (strip leading `/` to make it repo-relative)
+    resolvedPath = resolvePath(createPath([mediaFolder.slice(1), localPath]));
+  } else {
+    // Original logic: concatenate entryFolder + mediaFolder + localPath for entry-relative folders
+    resolvedPath = resolvePath(createPath([entryFolder, mediaFolder, localPath]));
+  }
 
   return getAssetPathMap().get(resolvedPath);
 };
