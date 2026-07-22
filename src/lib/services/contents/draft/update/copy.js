@@ -113,13 +113,16 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
   const { serviceId } = get(translator);
   const { sourceLanguage, targetLanguage } = options;
   const count = Object.keys(copingFieldMap).length;
+  let apiKey = prefs.apiKeys?.[serviceId];
 
-  const apiKey =
-    prefs.apiKeys?.[serviceId] ||
-    (await new Promise((resolve) => {
-      // The promise will be resolved once the user enters an API key on the dialog
-      translatorApiKeyDialogState.set({ show: true, multiple: count > 1, resolve });
-    }));
+  if (!apiKey) {
+    const { promise, resolve } = Promise.withResolvers();
+
+    translatorApiKeyDialogState.set({ show: true, multiple: count > 1, resolve });
+
+    // The promise will be resolved once the user enters an API key on the dialog
+    apiKey = await promise;
+  }
 
   if (!apiKey) {
     return;
