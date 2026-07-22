@@ -10,6 +10,14 @@
 
   const { serviceId, apiLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived($translator);
 
+  // eslint-disable-next-line svelte/prefer-writable-derived
+  let inputValue = $state('');
+
+  $effect(() => {
+    // Update the input value when a different translator service is selected
+    inputValue = prefs.apiKeys?.[serviceId] ?? '';
+  });
+
   $effect(() => {
     if (!$showContentOverlay && $translatorApiKeyDialogState.show) {
       // Close the dialog when the Content Editor is closed
@@ -17,29 +25,35 @@
       $translatorApiKeyDialogState.resolve?.();
     }
   });
+
+  /**
+   * Saves the API key to the user preferences if it matches the expected pattern.
+   */
+  const saveKey = () => {
+    const apiKey = inputValue.trim();
+
+    if (apiKeyPattern?.test(apiKey)) {
+      prefs.apiKeys ??= {};
+      prefs.apiKeys[serviceId] = apiKey;
+      $translatorApiKeyDialogState.show = false;
+      $translatorApiKeyDialogState.resolve?.(apiKey);
+    }
+  };
 </script>
 
 <PromptDialog
   bind:open={$translatorApiKeyDialogState.show}
+  bind:value={inputValue}
   title={_('translate_fields', {
     values: { count: $translatorApiKeyDialogState.multiple ? 2 : 1 },
   })}
-  showOk={false}
   textboxAttrs={{
     spellcheck: false,
     monospace: true,
     'aria-label': _('api_key'),
   }}
-  oninput={(event) => {
-    const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
-
-    if (apiKeyPattern?.test(_value)) {
-      prefs.apiKeys ??= {};
-      prefs.apiKeys[serviceId] = _value;
-      $translatorApiKeyDialogState.show = false;
-      $translatorApiKeyDialogState.resolve?.(_value);
-    }
-  }}
+  oninput={() => saveKey()}
+  onOk={() => saveKey()}
   onCancel={() => {
     $translatorApiKeyDialogState.resolve?.();
   }}

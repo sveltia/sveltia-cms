@@ -110,7 +110,7 @@ export const updateToast = (status, message, { count, sourceLanguage }) => {
  * @param {CopyingFieldMap} args.copingFieldMap Copied or translated field values.
  */
 export const translateFields = async ({ currentValues, options, copingFieldMap }) => {
-  const { serviceId, markdownSupported, translate } = get(translator);
+  const { serviceId } = get(translator);
   const { sourceLanguage, targetLanguage } = options;
   const count = Object.keys(copingFieldMap).length;
 
@@ -124,6 +124,10 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
   if (!apiKey) {
     return;
   }
+
+  // Get the translator service again in case the user has selected a different service in the API
+  // key dialog, which will update the `translator` store
+  const { markdownSupported, translate } = get(translator);
 
   updateToast('info', 'translation.started', { count, sourceLanguage });
 
