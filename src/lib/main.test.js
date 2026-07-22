@@ -137,7 +137,7 @@ describe('CMS.registerCustomFormat()', () => {
     expect(() => CMS.registerCustomFormat('test', '.test', { toFile })).not.toThrow();
   });
 
-  test('throws TypeError if name is not a string', () => {
+  test('throws TypeError if name is not a non-empty string', () => {
     const toFile = () => {};
 
     // @ts-ignore
@@ -146,6 +146,8 @@ describe('CMS.registerCustomFormat()', () => {
     expect(() => CMS.registerCustomFormat(null, '.test', { toFile })).toThrow(TypeError);
     // @ts-ignore
     expect(() => CMS.registerCustomFormat({}, '.test', { toFile })).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => CMS.registerCustomFormat('   ', '.test', { toFile })).toThrow(TypeError);
   });
 
   test('throws with proper error message for invalid name', () => {
@@ -153,11 +155,11 @@ describe('CMS.registerCustomFormat()', () => {
 
     // @ts-ignore
     expect(() => CMS.registerCustomFormat(123, '.test', { toFile })).toThrow(
-      'The `name` option for `CMS.registerCustomFormat()` must be a string',
+      'The `name` option for `CMS.registerCustomFormat()` must be a non-empty string',
     );
   });
 
-  test('throws TypeError if extension is not a string', () => {
+  test('throws TypeError if extension is not a non-empty string', () => {
     const toFile = () => {};
 
     // @ts-ignore
@@ -166,6 +168,8 @@ describe('CMS.registerCustomFormat()', () => {
     expect(() => CMS.registerCustomFormat('test', null, { toFile })).toThrow(TypeError);
     // @ts-ignore
     expect(() => CMS.registerCustomFormat('test', {}, { toFile })).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => CMS.registerCustomFormat('test', '   ', { toFile })).toThrow(TypeError);
   });
 
   test('throws with proper error message for invalid extension', () => {
@@ -173,7 +177,7 @@ describe('CMS.registerCustomFormat()', () => {
 
     // @ts-ignore
     expect(() => CMS.registerCustomFormat('test', 123, { toFile })).toThrow(
-      'The `extension` option for `CMS.registerCustomFormat()` must be a string',
+      'The `extension` option for `CMS.registerCustomFormat()` must be a non-empty string',
     );
   });
 
@@ -275,11 +279,16 @@ describe('CMS.registerEditorComponent()', () => {
     );
   });
 
-  test('throws TypeError if id is not a string', () => {
+  test('throws TypeError if id is not a non-empty string', () => {
     const definition = { ...validDefinition, id: 123 };
 
     // @ts-ignore
     expect(() => CMS.registerEditorComponent(definition)).toThrow(TypeError);
+
+    const whitespaceDefinition = { ...validDefinition, id: '   ' };
+
+    // @ts-ignore
+    expect(() => CMS.registerEditorComponent(whitespaceDefinition)).toThrow(TypeError);
   });
 
   test('throws with proper error message for invalid id', () => {
@@ -287,15 +296,20 @@ describe('CMS.registerEditorComponent()', () => {
 
     // @ts-ignore
     expect(() => CMS.registerEditorComponent(definition)).toThrow(
-      'The `definition.id` must be a string',
+      'The `definition.id` must be a non-empty string',
     );
   });
 
-  test('throws TypeError if label is not a string', () => {
+  test('throws TypeError if label is not a non-empty string', () => {
     const definition = { ...validDefinition, label: 123 };
 
     // @ts-ignore
     expect(() => CMS.registerEditorComponent(definition)).toThrow(TypeError);
+
+    const whitespaceDefinition = { ...validDefinition, label: '   ' };
+
+    // @ts-ignore
+    expect(() => CMS.registerEditorComponent(whitespaceDefinition)).toThrow(TypeError);
   });
 
   test('throws with proper error message for invalid label', () => {
@@ -303,7 +317,7 @@ describe('CMS.registerEditorComponent()', () => {
 
     // @ts-ignore
     expect(() => CMS.registerEditorComponent(definition)).toThrow(
-      'The `definition.label` must be a string',
+      'The `definition.label` must be a non-empty string',
     );
   });
 
@@ -447,19 +461,21 @@ describe('CMS.registerPreviewStyle()', () => {
     );
   });
 
-  test('throws TypeError if style is not a string', () => {
+  test('throws TypeError if style is not a non-empty string', () => {
     // @ts-ignore
     expect(() => CMS.registerPreviewStyle(123)).toThrow(TypeError);
     // @ts-ignore
     expect(() => CMS.registerPreviewStyle(null)).toThrow(TypeError);
     // @ts-ignore
     expect(() => CMS.registerPreviewStyle({})).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => CMS.registerPreviewStyle('   ')).toThrow(TypeError);
   });
 
   test('throws with proper error message for invalid style', () => {
     // @ts-ignore
     expect(() => CMS.registerPreviewStyle(123)).toThrow(
-      'The `style` option for `CMS.registerPreviewStyle()` must be a string',
+      'The `style` option for `CMS.registerPreviewStyle()` must be a non-empty string',
     );
   });
 
@@ -627,14 +643,16 @@ describe('CMS.registerPreviewTemplate()', () => {
     expect(() => CMS.registerPreviewTemplate('posts', component)).not.toThrow();
   });
 
-  test('throws TypeError when name is not a string', () => {
+  test('throws TypeError when name is not a non-empty string', () => {
     const component = () => null;
 
     // @ts-ignore
     expect(() => CMS.registerPreviewTemplate(123, component)).toThrow(TypeError);
     // @ts-ignore
+    expect(() => CMS.registerPreviewTemplate('   ', component)).toThrow(TypeError);
+    // @ts-ignore
     expect(() => CMS.registerPreviewTemplate(123, component)).toThrow(
-      'The `name` option for `CMS.registerPreviewTemplate()` must be a string',
+      'The `name` option for `CMS.registerPreviewTemplate()` must be a non-empty string',
     );
   });
 
@@ -713,7 +731,7 @@ describe('CMS.registerFieldType()', () => {
     consoleSpy.mockRestore();
   });
 
-  test('throws TypeError if name is not a string', () => {
+  test('throws TypeError if name is not a non-empty string', () => {
     const control = () => null;
 
     // @ts-ignore
@@ -724,6 +742,8 @@ describe('CMS.registerFieldType()', () => {
     expect(() => CMS.registerFieldType({}, control)).toThrow(TypeError);
     // @ts-ignore
     expect(() => CMS.registerFieldType(undefined, control)).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => CMS.registerFieldType('   ', control)).toThrow(TypeError);
   });
 
   test('throws with proper error message for invalid name', () => {
@@ -731,7 +751,7 @@ describe('CMS.registerFieldType()', () => {
 
     // @ts-ignore
     expect(() => CMS.registerFieldType(123, control)).toThrow(
-      'The `name` option for `CMS.registerFieldType()` must be a string',
+      'The `name` option for `CMS.registerFieldType()` must be a non-empty string',
     );
   });
 

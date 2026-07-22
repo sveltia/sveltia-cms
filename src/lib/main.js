@@ -14,6 +14,7 @@ import {
   customPreviewTemplateRegistry,
   eventHookRegistry,
 } from '$lib/services/contents/api/registries';
+import { isNonEmptyString } from '$lib/services/utils/string';
 
 import App from './components/app.svelte';
 
@@ -124,12 +125,16 @@ const init = async ({ config } = {}) => {
  * @see https://sveltiacms.app/en/docs/api/file-formats
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile } = {}) => {
-  if (typeof name !== 'string') {
-    throw new TypeError('The `name` option for `CMS.registerCustomFormat()` must be a string');
+  if (!isNonEmptyString(name)) {
+    throw new TypeError(
+      'The `name` option for `CMS.registerCustomFormat()` must be a non-empty string',
+    );
   }
 
-  if (typeof extension !== 'string') {
-    throw new TypeError('The `extension` option for `CMS.registerCustomFormat()` must be a string');
+  if (!isNonEmptyString(extension)) {
+    throw new TypeError(
+      'The `extension` option for `CMS.registerCustomFormat()` must be a non-empty string',
+    );
   }
 
   if (typeof fromFile !== 'function' && typeof toFile !== 'function') {
@@ -165,12 +170,12 @@ const registerEditorComponent = (definition) => {
     );
   }
 
-  if (typeof definition.id !== 'string') {
-    throw new TypeError('The `definition.id` must be a string');
+  if (!isNonEmptyString(definition.id)) {
+    throw new TypeError('The `definition.id` must be a non-empty string');
   }
 
-  if (typeof definition.label !== 'string') {
-    throw new TypeError('The `definition.label` must be a string');
+  if (!isNonEmptyString(definition.label)) {
+    throw new TypeError('The `definition.label` must be a non-empty string');
   }
 
   if (typeof definition.pattern !== 'object' || !(definition.pattern instanceof RegExp)) {
@@ -233,8 +238,10 @@ const registerEventListener = (eventListener) => {
  * @see https://sveltiacms.app/en/docs/api/preview-styles
  */
 const registerPreviewStyle = (style, { raw = false } = {}) => {
-  if (typeof style !== 'string') {
-    throw new TypeError('The `style` option for `CMS.registerPreviewStyle()` must be a string');
+  if (!isNonEmptyString(style)) {
+    throw new TypeError(
+      'The `style` option for `CMS.registerPreviewStyle()` must be a non-empty string',
+    );
   }
 
   if (typeof raw !== 'boolean') {
@@ -269,8 +276,10 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
 const registerPreviewTemplate = (name, component) => {
-  if (typeof name !== 'string') {
-    throw new TypeError('The `name` option for `CMS.registerPreviewTemplate()` must be a string');
+  if (!isNonEmptyString(name)) {
+    throw new TypeError(
+      'The `name` option for `CMS.registerPreviewTemplate()` must be a non-empty string',
+    );
   }
 
   if (typeof component !== 'function') {
@@ -296,8 +305,10 @@ const registerPreviewTemplate = (name, component) => {
 const registerFieldType = (name, control, preview, schema) => {
   console.warn('Custom field types (widgets) are not yet supported in Sveltia CMS.');
 
-  if (typeof name !== 'string') {
-    throw new TypeError('The `name` option for `CMS.registerFieldType()` must be a string');
+  if (!isNonEmptyString(name)) {
+    throw new TypeError(
+      'The `name` option for `CMS.registerFieldType()` must be a non-empty string',
+    );
   }
 
   if (typeof control !== 'function' && typeof control !== 'string') {

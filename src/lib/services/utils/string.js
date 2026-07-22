@@ -1,6 +1,13 @@
 import { sanitize } from 'isomorphic-dompurify';
 
 /**
+ * Check if a value is a non-empty string.
+ * @param {any} value Value to check.
+ * @returns {value is string} Whether the value is a non-empty string.
+ */
+export const isNonEmptyString = (value) => typeof value === 'string' && !!value.trim();
+
+/**
  * Escape a string for safe use as an HTML attribute value inside double quotes. Bare `&` characters
  * are encoded as `&amp;`, but pre-existing HTML entities (e.g. `&amp;`, `&quot;`) are left
  * untouched to avoid double-encoding.
