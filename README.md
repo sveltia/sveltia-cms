@@ -12,7 +12,7 @@ Explore 370 real-world examples in our [showcase](https://sveltiacms.app/en/show
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
-[![690 Netlify/Decap CMS issues solved in Sveltia CMS (including duplicates)](https://sveltiacms.app/images/highlights/decap-issues.webp?20260715)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
+[![710 Netlify/Decap CMS issues solved in Sveltia CMS (including duplicates)](https://sveltiacms.app/images/highlights/decap-issues.webp?20260722)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
 
 [![See it in action. Visit Sveltia CMS Showcase](https://sveltiacms.app/images/highlights/showcase.webp)](https://sveltiacms.app/en/showcase)
 
