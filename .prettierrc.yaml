@@ -6,16 +6,19 @@ plugins:
   - prettier-plugin-svelte
 overrides:
   - files:
-      - "*.svelte"
+      - '*.svelte'
     options:
       parser: svelte
   - files:
-      - "*.css"
-      - "*.scss"
-      - "*.yaml"
+      - '*.css'
+      - '*.scss'
     options:
       singleQuote: false
   - files:
-      - "*.md"
+      - '*.md'
     options:
       proseWrap: never
+  - files:
+      - '*.yaml'
+    options:
+      singleQuote: true

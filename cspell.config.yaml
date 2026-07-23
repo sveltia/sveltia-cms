@@ -1,4 +1,4 @@
-version: "0.2"
+version: '0.2'
 language: en
 dictionaries:
   - css
@@ -10,8 +10,8 @@ enableFiletypes:
   - svelte
   - xml
 files:
-  - "**/.*"
-  - "**/*.{css,js,json,jsonc,html,md,scss,svelte,svg,yaml,yml,xml}"
+  - '**/.*'
+  - '**/*.{css,js,json,jsonc,html,md,scss,svelte,svg,yaml,yml,xml}'
 useGitignore: true
 ignorePaths:
   - pnpm-lock.yaml
@@ -153,4 +153,4 @@ words:
   - Zola
 overrides:
   - language: en-gb
-    filename: "**/*.md"
+    filename: '**/*.md'

@@ -6,4 +6,4 @@ engineStrict: true
 minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
-  - "@sveltia/*"
+  - '@sveltia/*'
