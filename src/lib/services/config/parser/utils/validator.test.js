@@ -23,12 +23,14 @@ function mockTranslate(key, options) {
     'config.error.invalid_duplicate_names': 'Invalid name found: {name}',
     'config.error.my_custom_key': 'Custom duplicate message: {name}',
     'config.error.missing_field_names': 'Missing field name at position {count}',
+    'config.error.invalid_field_name': 'Invalid field name <a>learn more</a>',
     'config.error.invalid_field_names': 'Invalid field name: {name}',
     'config.error.duplicate_field_names': 'Duplicate field name: {name}',
     'config.error_locator.collection': 'Collection: {collection}',
     'config.error_locator.file': 'File: {file}',
     'config.error_locator.component': 'Component: {component}',
     'config.error_locator.field': 'Field: {field}',
+    'config.custom_extra': 'Custom extra message',
     'config.compatibility_link':
       'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented',
   };
@@ -315,6 +317,21 @@ describe('messages', () => {
       expect(Array.from(collectors.errors)).toContain('Test error message');
     });
 
+    it('should wrap invalid field name messages in a link', () => {
+      const collectors = createCollectors();
+
+      addMessage({
+        strKey: 'invalid_field_name',
+        values: { name: 'invalid.name' },
+        collectors,
+      });
+
+      const message = Array.from(collectors.errors)[0];
+
+      expect(message).toContain('href=');
+      expect(message).toContain('learn more');
+    });
+
     it('should use file.label when available', () => {
       const collectors = createCollectors();
 
@@ -413,6 +430,20 @@ describe('messages', () => {
       expect(message).toMatch(
         /Unsupported option: oldField \(use newField\) See the compatibility notes/,
       );
+    });
+
+    it('should use an undefined link value for non-compatibility extra messages', () => {
+      const collectors = createCollectors();
+
+      addMessage({
+        strKey: 'test_error',
+        extraStrKey: 'custom_extra',
+        collectors,
+      });
+
+      const message = Array.from(collectors.errors)[0];
+
+      expect(message).toContain('Custom extra message');
     });
   });
 

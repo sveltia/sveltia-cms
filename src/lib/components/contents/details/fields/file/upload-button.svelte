@@ -101,7 +101,7 @@
     />
     {#if onFilePaste}
       <Button
-        label={_(isImageField ? 'paste' : 'paste_image')}
+        label={_(isImageField ? 'paste_image' : 'paste')}
         variant="tertiary"
         size="small"
         {disabled}

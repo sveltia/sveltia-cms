@@ -4,6 +4,7 @@ import { isObject } from '@sveltia/utils/object';
 import { gitBackendServices, unsupportedBackends, validBackendNames } from '$lib/services/backends';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { makeLink } from '$lib/services/utils/string';
 
 /**
  * @import { CmsConfig, GitBackend } from '$lib/types/public';
@@ -20,6 +21,14 @@ const UNSUPPORTED_OPTIONS = [
   // @todo Remove this warning when Sveltia CMS adds support for open authoring.
   { type: 'warning', prop: 'open_authoring', strKey: 'open_authoring_unsupported' },
 ];
+
+const UNSUPPORTED_BACKEND_DOC_URL =
+  'https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented';
+
+const UNSUPPORTED_BACKEND_SUGGESTION_URL =
+  'https://sveltiacms.app/en/docs/backends#supported-backends';
+
+const AUTH_DOC_URL = 'https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authentication';
 
 /**
  * Parse and validate the backend configuration from the site config.
@@ -49,9 +58,18 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     const _backend = unsupportedBackends[name];
     const type = _backend ? (_backend.deprecated ? 'deprecated' : 'known') : 'custom';
     const label = _backend?.label;
-    const message = _(`config.error.unsupported_${type}_backend`, { values: { name: label } });
 
-    errors.add(`${message} ${_('config.error.unsupported_backend_suggestion')}`);
+    const message = makeLink(
+      _(`config.error.unsupported_${type}_backend`, { values: { name: label } }),
+      UNSUPPORTED_BACKEND_DOC_URL,
+    );
+
+    const suggestion = makeLink(
+      _('config.error.unsupported_backend_suggestion'),
+      UNSUPPORTED_BACKEND_SUGGESTION_URL,
+    );
+
+    errors.add(`${message} ${suggestion}`);
 
     return;
   }
@@ -72,6 +90,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     }
 
     const allowTokenAuth = !authMethods || authMethods.includes('token');
+    const authDocURL = AUTH_DOC_URL.replace('BACKEND_NAME', name);
 
     if (repo === undefined) {
       errors.add(_('config.error.missing_repository'));
@@ -82,11 +101,11 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     }
 
     if (authType === 'implicit') {
-      errors.add(_('config.error.oauth_implicit_flow').replace('BACKEND_NAME', name));
+      errors.add(makeLink(_('config.error.oauth_implicit_flow'), authDocURL));
     }
 
     if (name === 'github' && authType === 'pkce') {
-      errors.add(_('config.error.github_pkce_unsupported'));
+      errors.add(makeLink(_('config.error.github_pkce_unsupported'), authDocURL));
     }
 
     if (name === 'gitlab' && authType === 'pkce' && !appId) {

@@ -70,6 +70,14 @@
   };
 
   /**
+   * Format a list of strings for display in the current locale.
+   * @param {string[]} list List of strings.
+   * @returns {string} Formatted list.
+   */
+  const formatList = (list) =>
+    getListFormatter(appLocale.current, { type: 'disjunction' }).format(list);
+
+  /**
    * Cache the selected files, and notify the list.
    * @param {File[]} allFiles Files.
    */
@@ -103,14 +111,12 @@
 
 {#snippet typeMismatchAlert()}
   {#if accept === SUPPORTED_IMAGE_TYPES.join(',')}
-    {_('dropped_image_type_mismatch')}
+    {_('dropped_image_type_mismatch', {
+      values: { types: formatList(['GIF', 'JPEG', 'PNG', 'WebP', 'SVG']) },
+    })}
   {:else}
     {_('dropped_file_type_mismatch', {
-      values: {
-        type: getListFormatter(appLocale.current, {
-          type: 'disjunction',
-        }).format(/** @type {string} */ (accept).split(/,\s*/)),
-      },
+      values: { types: formatList(/** @type {string} */ (accept).split(/,\s*/)) },
     })}
   {/if}
 {/snippet}

@@ -381,7 +381,7 @@
           dir="ltr"
           flex
           spellcheck="false"
-          aria-label={_('user_name')}
+          aria-label={_('username')}
           disabled={authState === 'requested'}
           bind:value={input.userName}
         />
@@ -428,10 +428,10 @@
 <Toast bind:show={uploadingToast.show}>
   <Alert status={uploadingToast.status}>
     {#if uploadingToast.status === 'info'}
-      {_('uploading_files_progress', { values: { count: uploadingToast.length } })}
+      {_('uploading_files_progress')}
     {/if}
     {#if uploadingToast.status === 'error'}
-      {_('uploading_files_failed', { values: { count: uploadingToast.length } })}
+      {_('uploading_files_failed')}
     {/if}
   </Alert>
 </Toast>

@@ -119,7 +119,7 @@
     </section>
   {/if}
   <section>
-    <h4>{_('public_url')}</h4>
+    <h4>{_('public_urls', { values: { count: 1 } })}</h4>
     <p>
       {#if publicURL}
         <a href={publicURL} target="_blank" rel="noopener noreferrer">{publicURL}</a>
@@ -129,7 +129,7 @@
     </p>
   </section>
   <section>
-    <h4>{_('file_path')}</h4>
+    <h4>{_('file_paths', { values: { count: 1 } })}</h4>
     <p>
       {#if repoBlobURL}
         <a href={repoBlobURL}>/{path}</a>

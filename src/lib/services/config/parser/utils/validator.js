@@ -1,6 +1,7 @@
 import { _, locale as appLocale } from '@sveltia/i18n';
 
 import { getListFormatter } from '$lib/services/contents/i18n';
+import { makeLink } from '$lib/services/utils/string';
 
 /**
  * @import {
@@ -9,6 +10,12 @@ import { getListFormatter } from '$lib/services/contents/i18n';
  * UnsupportedOption,
  * } from '$lib/types/private';
  */
+
+const INVALID_FIELD_NAME_DOC_URL =
+  'https://sveltiacms.app/en/docs/troubleshooting#using-proper-naming-conventions';
+
+const COMPATIBILITY_DOC_URL =
+  'https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented';
 
 /**
  * Add an error or warning message to the error collector with context information.
@@ -67,9 +74,19 @@ export const addMessage = ({
   const collector = type === 'error' ? errors : warnings;
   const locale = appLocale.current;
   const locatorStr = locators.length ? `${getListFormatter(locale).format(locators)}: ` : '';
-  const message = _(`config.${type}.${strKey}`, { values });
+  let message = _(`config.${type}.${strKey}`, { values });
 
-  collector.add(`${locatorStr}${message}${extraStrKey ? ` ${_(`config.${extraStrKey}`)}` : ''}`);
+  if (strKey === 'invalid_field_name') {
+    message = makeLink(message, INVALID_FIELD_NAME_DOC_URL);
+  }
+
+  const extraMessage = extraStrKey
+    ? _(`config.${extraStrKey}`, {
+        values: { link: extraStrKey === 'compatibility_link' ? COMPATIBILITY_DOC_URL : undefined },
+      })
+    : '';
+
+  collector.add(`${locatorStr}${message}${extraMessage ? ` ${extraMessage}` : ''}`);
 };
 
 /**

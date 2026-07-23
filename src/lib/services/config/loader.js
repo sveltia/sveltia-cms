@@ -6,12 +6,18 @@ import { SCHEMA_URL, SUPPORTED_TYPES } from '$lib/services/config/constants';
 import { parseTOML, parseYAML } from '$lib/services/contents/file/parse';
 import { env } from '$lib/services/user/env.svelte';
 import { isSecureURL } from '$lib/services/utils/networking';
+import { makeLink } from '$lib/services/utils/string';
 
 /**
  * @typedef {object} ConfigLink
  * @property {string} href File path or URL.
  * @property {string} [type] MIME type.
  */
+
+const LOAD_CONFIG_DOC_URL =
+  'https://sveltiacms.app/en/docs/api/initialization#providing-a-full-configuration';
+
+const SCHEMA_TIP_URL = 'https://sveltiacms.app/en/docs/config-basics#validation-and-autocomplete';
 
 /**
  * Fetch a single configuration file.
@@ -43,6 +49,8 @@ export const fetchFile = async (
     ? 'config.error.fetch_failed_with_manual_init'
     : 'config.error.fetch_failed';
 
+  const errorMessage = makeLink(_(fetchErrorKey), LOAD_CONFIG_DOC_URL);
+
   try {
     const url = new URL(href, window.location.href);
 
@@ -51,13 +59,13 @@ export const fetchFile = async (
 
     response = await fetch(url);
   } catch (ex) {
-    throw new Error(_(fetchErrorKey), { cause: ex });
+    throw new Error(errorMessage, { cause: ex });
   }
 
   const { ok, status } = response;
 
   if (!ok) {
-    throw new Error(_(fetchErrorKey), {
+    throw new Error(errorMessage, {
       cause: new Error(_('config.error.fetch_failed_not_ok', { values: { status } })),
     });
   }
@@ -102,7 +110,7 @@ export const fetchFile = async (
 
   if (showSchemaTip && schemaMissing) {
     // eslint-disable-next-line no-console
-    console.info(_('config.schema_tip'));
+    console.info(_('config.schema_tip', { values: { link: SCHEMA_TIP_URL } }));
   }
 
   return result;

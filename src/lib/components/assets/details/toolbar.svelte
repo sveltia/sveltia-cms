@@ -21,7 +21,7 @@
   <DownloadAssetsButton {assets} {useButton} />
   <DeleteAssetsButton
     {assets}
-    buttonDescription={_('delete_asset')}
+    buttonDescription={_('delete_assets', { values: { count: 1 } })}
     dialogDescription={_('confirm_deleting_this_asset')}
     onDelete={() => {
       goBack(`/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`);
