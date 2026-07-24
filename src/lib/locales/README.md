@@ -12,7 +12,6 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
    - [Sveltia UI strings](https://raw.githubusercontent.com/sveltia/sveltia-ui/refs/heads/main/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-ui/upload/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-ui) to submit a PR
    - [Sveltia CMS strings](https://raw.githubusercontent.com/sveltia/sveltia-cms/refs/heads/main/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-cms/upload/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-cms) to submit a PR
    - **PR title**: “Add [language] localization” (e.g., “Add French localization”) or “Update [language] localization” if updating an existing translation.
-   - If you’re not familiar with PRs, simply attach your translated YAML files to your issue and we’ll merge them for you.
 4. **Get reviewed**: We’ll review your translations and provide feedback if necessary.
    - We can check your translated files for YAML and MF2 syntax errors, but we can’t review the quality of the translation as we don’t speak your language. If you want, ask other native speakers to review your translation on your pull request, issue or in your own community.
    - Once approved, they’ll be merged and included in the next release.
