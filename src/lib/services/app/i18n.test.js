@@ -93,7 +93,7 @@ describe('i18n', () => {
       });
 
       expect(mockInit).toHaveBeenCalledWith({
-        fallbackLocale: 'en',
+        fallbackLocale: 'en-US',
         initialLocale: 'en-US',
       });
     });
@@ -107,8 +107,8 @@ describe('i18n', () => {
       initAppLocale();
 
       expect(mockInit).toHaveBeenCalledWith({
-        fallbackLocale: 'en',
-        initialLocale: 'ja',
+        fallbackLocale: 'en-US',
+        initialLocale: 'ja-JP',
       });
     });
 
@@ -153,8 +153,8 @@ describe('i18n', () => {
       initAppLocale();
 
       expect(mockInit).toHaveBeenCalledWith({
-        fallbackLocale: 'en',
-        initialLocale: 'en',
+        fallbackLocale: 'en-US',
+        initialLocale: 'en-US',
       });
     });
 
@@ -167,8 +167,8 @@ describe('i18n', () => {
       initAppLocale();
 
       expect(mockInit).toHaveBeenCalledWith({
-        fallbackLocale: 'en',
-        initialLocale: 'en',
+        fallbackLocale: 'en-US',
+        initialLocale: 'en-US',
       });
     });
   });

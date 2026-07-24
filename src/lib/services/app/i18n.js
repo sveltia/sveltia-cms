@@ -34,7 +34,7 @@ export const initAppLocale = () => {
   });
 
   init({
-    fallbackLocale: 'en',
-    initialLocale: prefs.locale || (getLocaleFromNavigator() ?? '').split('-')[0] || 'en',
+    fallbackLocale: 'en-US',
+    initialLocale: prefs.locale || getLocaleFromNavigator() || 'en-US',
   });
 };
