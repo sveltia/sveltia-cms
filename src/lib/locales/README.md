@@ -48,12 +48,13 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 - Avoid gendered terms and stereotypes.
 - Be mindful of cultural sensitivities.
 
-### Other Notes
-
-- RTL (right-to-left) languages are supported. The CMS automatically adjusts the layout based on the language direction.
-
 ## Maintenance & Support
 
 - **Updates**: We periodically sync new English strings and notify translators of changes needed.
 - **Questions?**: Comment on your issue or ping [@kyoshino](https://github.com/kyoshino). We’re here to help!
 - **Feedback**: We’re exploring more efficient translation management tools and welcome your suggestions.
+
+## Other Notes
+
+- There is no easy way to test translations in the CMS UI yet. We’ll provide a preview feature in the future.
+- RTL (right-to-left) languages are supported. The CMS automatically adjusts the layout based on the language direction.
