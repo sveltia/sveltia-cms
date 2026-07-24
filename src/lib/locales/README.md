@@ -13,8 +13,9 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
    - [Sveltia CMS strings](https://raw.githubusercontent.com/sveltia/sveltia-cms/refs/heads/main/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-cms/upload/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-cms) to submit a PR
    - **PR title**: “Add [language] localization” (e.g., “Add French localization”) or “Update [language] localization” if updating an existing translation.
    - If you’re not familiar with PRs, simply attach your translated YAML files to your issue and we’ll merge them for you.
-4. **Get reviewed**: We’ll review your translations and provide feedback if necessary. Once approved, they’ll be merged and included in the next release.
+4. **Get reviewed**: We’ll review your translations and provide feedback if necessary.
    - We can check your translated files for YAML and MF2 syntax errors, but we can’t review the quality of the translation as we don’t speak your language. If you want, ask other native speakers to review your translation on your pull request, issue or in your own community.
+   - Once approved, they’ll be merged and included in the next release.
 
 ## Requirements
 
@@ -33,7 +34,7 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 
 - If you use VS Code, install the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) for syntax highlighting and validation.
 - **Indentation**: Maintain correct YAML indentation for hierarchy.
-- **Comments**: Preserve all comments — they provide context for translators. Don’t translate them.
+- **Comments**: Preserve all comments — they provide context for translators. Don’t translate or delete them.
 - **Quotes**: Use single quotes only when YAML requires them (e.g., for colons or brackets). Otherwise omit: `key: value` not `key: 'value'`.
 - **Typographic quotes**: Use [curly quotes](https://typographyforlawyers.com/straight-and-curly-quotes.html) (“ ”) for content if your language uses them, but straight quotes (" ") for code snippets and technical terms, just like the original English files.
 - **Preserve formatting**: Keep any HTML or Markdown formatting (links, code snippets, etc.).
