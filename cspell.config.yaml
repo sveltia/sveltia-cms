@@ -18,6 +18,8 @@ ignorePaths:
   - data/**/*.json
   - package/**
   - src/**/*.test.js
+  - src/lib/locales/*.yaml
+  - '!src/lib/locales/en-*.yaml'
 words:
   - analyzing
   - appinstalled
