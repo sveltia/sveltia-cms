@@ -7,7 +7,7 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 1. **Check existing translations**: See if your language is already on the [waiting list](https://github.com/sveltia/sveltia-cms/labels/l10n) or [already translated](https://github.com/sveltia/sveltia-cms/tree/main/src/lib/locales).
 2. **File an issue**: [Create a new issue](https://github.com/sveltia/sveltia-cms/issues/new?type=task&labels=l10n) with your language code (e.g., “French localization”).
    - **This is required** — pull requests (PRs) without issues will be closed to prevent duplicate effort.
-   - If you want us to generate an AI-assisted draft translation for your language, please request it in your issue.
+   - If you want us to provide an AI-generated draft translation for your language, please request it in your issue.
 3. **Translate both repositories**:
    - [Sveltia UI strings](https://raw.githubusercontent.com/sveltia/sveltia-ui/refs/heads/main/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-ui/upload/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-ui) to submit a PR
    - [Sveltia CMS strings](https://raw.githubusercontent.com/sveltia/sveltia-cms/refs/heads/main/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-cms/upload/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-cms) to submit a PR
@@ -39,7 +39,7 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 ### MessageFormat 2 Syntax
 
 - Strings use [Unicode MessageFormat 2](https://messageformat.unicode.org/) (MF2) for pluralization and gender-specific translations.
-- Use correct [pluralization rules](https://www.unicode.org/cldr/charts/48/supplemental/language_plural_rules.html) for your language to add the necessary plural forms in your translation. Some languages have multiple plural forms (e.g., Arabic, Polish, Russian), while others have only one (e.g., Japanese, Chinese).
+- Use correct [pluralization rules](https://www.unicode.org/cldr/charts/48/supplemental/language_plural_rules.html) for your language to add the necessary plural forms in your translation. Some languages have multiple plural forms (e.g., Arabic, Polish, Russian), while others have only one (e.g., Chinese, Japanese).
 - Refer to the [MF2 translator guide](https://messageformat.unicode.org/docs/translators/) and [Sveltia I18n documentation](https://github.com/sveltia/sveltia-i18n#message-format) for syntax details.
 
 ### Language & Tone
