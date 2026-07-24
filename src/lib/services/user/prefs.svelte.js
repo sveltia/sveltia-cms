@@ -34,6 +34,12 @@ $effect.root(() => {
       _prefs.beta ??= false;
       _prefs.devModeEnabled ??= false;
       _prefs.defaultTranslationService ??= 'google';
+
+      // Migrate old locale value to new format
+      if (_prefs.locale === 'en') {
+        _prefs.locale = navigator.languages.find((lang) => appLocales.includes(lang)) ?? 'en-US';
+      }
+
       Object.assign(prefs, _prefs);
     } catch {
       prefsError.current = { type: 'permission_denied' };

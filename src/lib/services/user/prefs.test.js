@@ -22,7 +22,7 @@ vi.mock('fast-deep-equal', () => ({
 
 vi.mock('@sveltia/i18n', () => ({
   locale: mockAppLocale,
-  locales: ['en', 'ja', 'fr'],
+  locales: ['en-CA', 'en-GB', 'en-US', 'ja', 'fr'],
 }));
 
 /** @param {number} [ms] */
@@ -42,6 +42,10 @@ describe('prefs service', () => {
 
     global.window = /** @type {any} */ ({
       matchMedia: vi.fn(() => ({ matches: false })),
+    });
+
+    global.navigator = /** @type {any} */ ({
+      languages: ['en-US', 'ja'],
     });
   });
 
@@ -101,6 +105,34 @@ describe('prefs service', () => {
     await wait();
 
     expect(mockAppLocale.set).not.toHaveBeenCalled();
+  });
+
+  it('should migrate legacy locale "en" to the first supported navigator locale', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'en' });
+    global.navigator = /** @type {any} */ ({
+      languages: ['en-GB', 'ja'],
+    });
+
+    const { prefs } = await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(prefs.locale).toBe('en-GB');
+    expect(mockAppLocale.set).toHaveBeenCalledWith('en-GB');
+  });
+
+  it('should fall back to en-US when legacy locale "en" has no supported navigator match', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'en' });
+    global.navigator = /** @type {any} */ ({
+      languages: ['de-DE', 'fr-FR'],
+    });
+
+    const { prefs } = await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(prefs.locale).toBe('en-US');
+    expect(mockAppLocale.set).toHaveBeenCalledWith('en-US');
   });
 
   it('should set app locale when prefs.locale is mutated directly', async () => {

@@ -6,7 +6,9 @@ const mockJaData = { hello: 'こんにちは', world: '世界' };
 
 /** @type {Record<string, Record<string, string> | undefined>} */
 const mockComponentStrings = {
-  en: { button: 'Button' },
+  'en-CA': { button: 'Button' },
+  'en-GB': { button: 'Button (UK)' },
+  'en-US': { button: 'Button (US)' },
   ja: { button: 'ボタン' },
 };
 
@@ -16,7 +18,9 @@ const mockInit = vi.fn();
 const mockGetLocaleFromNavigator = vi.fn();
 const mockGetPathInfo = vi.fn();
 
-vi.mock('$lib/locales/en.yaml', () => ({ default: mockEnData }));
+vi.mock('$lib/locales/en-CA.yaml', () => ({ default: mockEnData }));
+vi.mock('$lib/locales/en-GB.yaml', () => ({ default: mockEnData }));
+vi.mock('$lib/locales/en-US.yaml', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/ja.yaml', () => ({ default: mockJaData }));
 
 vi.mock('@sveltia/i18n', () => ({
@@ -35,7 +39,7 @@ vi.mock('@sveltia/utils/file', () => ({
 }));
 
 /** @type {{ locale: string | null }} */
-const mockPrefs = { locale: 'en' };
+const mockPrefs = { locale: 'en-US' };
 
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: mockPrefs,
@@ -44,7 +48,11 @@ vi.mock('$lib/services/user/prefs.svelte', () => ({
 describe('i18n', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPrefs.locale = 'en';
+    mockPrefs.locale = 'en-US';
+    mockComponentStrings['en-CA'] = { button: 'Button' };
+    mockComponentStrings['en-GB'] = { button: 'Button (UK)' };
+    mockComponentStrings['en-US'] = { button: 'Button (US)' };
+    mockComponentStrings.ja = { button: 'ボタン' };
 
     // Set up getPathInfo to extract filename correctly
     mockGetPathInfo.mockImplementation((path) => {
@@ -60,11 +68,21 @@ describe('i18n', () => {
 
       initAppLocale();
 
-      expect(mockAddMessages).toHaveBeenCalledTimes(2);
-      expect(mockAddMessages).toHaveBeenCalledWith('en', {
+      expect(mockAddMessages).toHaveBeenCalledTimes(4);
+      expect(mockAddMessages).toHaveBeenCalledWith('en-CA', {
         hello: 'Hello',
         world: 'World',
         _sui: { button: 'Button' },
+      });
+      expect(mockAddMessages).toHaveBeenCalledWith('en-GB', {
+        hello: 'Hello',
+        world: 'World',
+        _sui: { button: 'Button (UK)' },
+      });
+      expect(mockAddMessages).toHaveBeenCalledWith('en-US', {
+        hello: 'Hello',
+        world: 'World',
+        _sui: { button: 'Button (US)' },
       });
       expect(mockAddMessages).toHaveBeenCalledWith('ja', {
         hello: 'こんにちは',
@@ -74,7 +92,7 @@ describe('i18n', () => {
 
       expect(mockInit).toHaveBeenCalledWith({
         fallbackLocale: 'en',
-        initialLocale: 'en',
+        initialLocale: 'en-US',
       });
     });
 
@@ -93,14 +111,26 @@ describe('i18n', () => {
     });
 
     it('should use an empty object when no component strings exist for a locale', async () => {
-      mockComponentStrings.en = undefined;
+      mockComponentStrings['en-CA'] = undefined;
+      mockComponentStrings['en-GB'] = undefined;
+      mockComponentStrings['en-US'] = undefined;
       mockComponentStrings.ja = undefined;
 
       const { initAppLocale } = await import('./i18n.js');
 
       initAppLocale();
 
-      expect(mockAddMessages).toHaveBeenCalledWith('en', {
+      expect(mockAddMessages).toHaveBeenCalledWith('en-CA', {
+        hello: 'Hello',
+        world: 'World',
+        _sui: {},
+      });
+      expect(mockAddMessages).toHaveBeenCalledWith('en-GB', {
+        hello: 'Hello',
+        world: 'World',
+        _sui: {},
+      });
+      expect(mockAddMessages).toHaveBeenCalledWith('en-US', {
         hello: 'Hello',
         world: 'World',
         _sui: {},

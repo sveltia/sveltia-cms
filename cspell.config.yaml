@@ -132,6 +132,7 @@ words:
   - unflattened
   - unflattening
   - unlinkable
+  - unlocalised
   - unlocalized
   - unpatched
   - unproxify
@@ -154,3 +155,5 @@ words:
 overrides:
   - language: en-gb
     filename: '**/*.md'
+  - language: en-gb
+    filename: src/lib/locales/en-{CA,GB}.yaml
