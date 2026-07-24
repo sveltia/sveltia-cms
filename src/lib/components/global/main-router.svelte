@@ -10,6 +10,7 @@
   import TranslatorApiKeyDialog from '$lib/components/contents/details/editor/translator-api-key-dialog.svelte';
   import EntryParseErrorsToast from '$lib/components/contents/shared/entry-parse-errors-toast.svelte';
   import MobilePromoInfobar from '$lib/components/global/infobars/mobile-promo-infobar.svelte';
+  import NewLanguageInfobar from '$lib/components/global/infobars/new-language-infobar.svelte';
   import BottomNavigation from '$lib/components/global/toolbar/bottom-navigation.svelte';
   import GlobalToolbar from '$lib/components/global/toolbar/global-toolbar.svelte';
   import MenuPage from '$lib/components/menu/menu-page.svelte';
@@ -76,6 +77,8 @@
     selectPage();
   }}
 />
+
+<NewLanguageInfobar />
 
 {#if $canShowMobileSignInDialog}
   <MobilePromoInfobar />

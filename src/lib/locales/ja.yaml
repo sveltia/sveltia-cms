@@ -228,6 +228,11 @@ menu: メニュー
 mobile_promo_title: Sveltia CMS がモバイルに対応しました！
 mobile_promo_button: 試してみる
 
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS が {$locale} に対応しました！
+change_language: 言語を変更
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: 管理対象サイトを開く
