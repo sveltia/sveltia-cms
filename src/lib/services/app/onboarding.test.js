@@ -32,14 +32,32 @@ const mockDerived = vi.fn((stores, callback) => {
 });
 
 const mockWritable = vi.fn();
+const mockGet = vi.fn();
+const mockIndexedDBGet = vi.fn();
+const mockIndexedDBSet = vi.fn();
+/** @type {Record<string, any> | undefined} */
+let mockOnboardingState;
+
+// eslint-disable-next-line prefer-arrow-callback, func-names
+const mockIndexedDBConstructor = vi.fn(function () {
+  return {
+    get: mockIndexedDBGet,
+    set: mockIndexedDBSet,
+  };
+});
 
 vi.mock('svelte/store', () => ({
   derived: mockDerived,
+  get: mockGet,
   writable: mockWritable,
   toStore: vi.fn((getter) => {
     getter();
     return { subscribe: vi.fn() };
   }),
+}));
+
+vi.mock('@sveltia/utils/storage', () => ({
+  IndexedDB: mockIndexedDBConstructor,
 }));
 
 vi.mock('$lib/services/backends', () => ({
@@ -57,6 +75,12 @@ vi.mock('$lib/services/user/env.svelte', () => ({
 describe('onboarding', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockOnboardingState = undefined;
+    mockGet.mockReturnValue({ repository: { databaseName: 'test-db' } });
+    mockIndexedDBGet.mockImplementation(async () => mockOnboardingState);
+    mockIndexedDBSet.mockImplementation(async (_key, value) => {
+      mockOnboardingState = value;
+    });
   });
 
   describe('store creation', () => {
@@ -76,6 +100,94 @@ describe('onboarding', () => {
       await import('./onboarding.js');
 
       expect(mockWritable).toHaveBeenCalledWith(false);
+    });
+  });
+
+  describe('getState', () => {
+    it('should return undefined when the repository has no database name', async () => {
+      vi.resetModules();
+      mockGet.mockReturnValue({ repository: {} });
+
+      const { getState } = await import('./onboarding.js');
+
+      await expect(getState('dismissed')).resolves.toBeUndefined();
+      expect(mockIndexedDBConstructor).not.toHaveBeenCalled();
+    });
+
+    it('should return undefined when the backend store is missing', async () => {
+      vi.resetModules();
+      mockGet.mockReturnValue(undefined);
+
+      const { getState } = await import('./onboarding.js');
+
+      await expect(getState('dismissed')).resolves.toBeUndefined();
+      expect(mockIndexedDBConstructor).not.toHaveBeenCalled();
+    });
+
+    it('should return undefined when no onboarding state is stored', async () => {
+      vi.resetModules();
+      mockIndexedDBGet.mockResolvedValue(undefined);
+
+      const { getState } = await import('./onboarding.js');
+
+      await expect(getState('dismissed')).resolves.toBeUndefined();
+      expect(mockIndexedDBConstructor).toHaveBeenCalledWith('test-db', 'ui-settings');
+    });
+
+    it('should return a stored onboarding state value', async () => {
+      vi.resetModules();
+      mockIndexedDBGet.mockResolvedValue({ dismissed: true });
+
+      const { getState } = await import('./onboarding.js');
+
+      await expect(getState('dismissed')).resolves.toBe(true);
+      expect(mockIndexedDBConstructor).toHaveBeenCalledWith('test-db', 'ui-settings');
+      expect(mockIndexedDBSet).not.toHaveBeenCalled();
+    });
+
+    it('should return early when setState has no database available', async () => {
+      vi.resetModules();
+      mockGet.mockReturnValue({ repository: {} });
+
+      const { setState } = await import('./onboarding.js');
+
+      await expect(setState('dismissed', true)).resolves.toBeUndefined();
+      expect(mockIndexedDBConstructor).not.toHaveBeenCalled();
+      expect(mockIndexedDBSet).not.toHaveBeenCalled();
+    });
+
+    it('should write a state value when a database is available', async () => {
+      vi.resetModules();
+      mockOnboardingState = { viewed: false };
+
+      const { setState } = await import('./onboarding.js');
+
+      await expect(setState('dismissed', true)).resolves.toBeUndefined();
+      expect(mockIndexedDBSet).toHaveBeenCalledWith('onboarding', {
+        viewed: false,
+        dismissed: true,
+      });
+    });
+
+    it('should create a new onboarding state object when none exists yet', async () => {
+      vi.resetModules();
+      mockOnboardingState = undefined;
+
+      const { setState } = await import('./onboarding.js');
+
+      await expect(setState('dismissed', true)).resolves.toBeUndefined();
+      expect(mockIndexedDBSet).toHaveBeenCalledWith('onboarding', { dismissed: true });
+    });
+
+    it('should set and retrieve an onboarding state value', async () => {
+      vi.resetModules();
+      mockOnboardingState = { dismissed: false };
+
+      const { getState, setState } = await import('./onboarding.js');
+
+      await setState('dismissed', true);
+      await expect(getState('dismissed')).resolves.toBe(true);
+      expect(mockIndexedDBSet).toHaveBeenCalledWith('onboarding', { dismissed: true });
     });
   });
 
