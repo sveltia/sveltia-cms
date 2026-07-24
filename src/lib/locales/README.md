@@ -30,6 +30,7 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 
 ### YAML Formatting
 
+- If you use VS Code, install the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) for syntax highlighting and validation.
 - **Indentation**: Maintain correct YAML indentation for hierarchy.
 - **Comments**: Preserve all comments — they provide context for translators. Don’t translate them.
 - **Quotes**: Use single quotes only when YAML requires them (e.g., for colons or brackets). Otherwise omit: `key: value` not `key: 'value'`.
@@ -51,7 +52,7 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 ## Maintenance & Support
 
 - **Updates**: We periodically sync new English strings and notify translators of changes needed.
-- **Questions?**: Comment on your issue or ping [@kyoshino](https://github.com/kyoshino). We’re here to help!
+- **Questions?** Comment on your issue or ping [@kyoshino](https://github.com/kyoshino). We’re here to help!
 - **Feedback**: We’re exploring more efficient translation management tools and welcome your suggestions.
 
 ## Other Notes
