@@ -68,7 +68,9 @@ describe('i18n', () => {
 
       initAppLocale();
 
-      expect(mockAddMessages).toHaveBeenCalledTimes(4);
+      expect(mockAddMessages.mock.calls.map(([locale]) => locale)).toEqual(
+        expect.arrayContaining(Object.keys(mockComponentStrings)),
+      );
       expect(mockAddMessages).toHaveBeenCalledWith('en-CA', {
         hello: 'Hello',
         world: 'World',
