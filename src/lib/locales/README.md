@@ -33,13 +33,13 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 - **Indentation**: Maintain correct YAML indentation for hierarchy.
 - **Comments**: Preserve all comments — they provide context for translators. Don’t translate them.
 - **Quotes**: Use single quotes only when YAML requires them (e.g., for colons or brackets). Otherwise omit: `key: value` not `key: 'value'`.
-- **Typographic quotes**: Use [curly quotes](https://typographyforlawyers.com/straight-and-curly-quotes.html) (“ ”) for content, but straight quotes (" ") for code snippets and technical terms, just like the original English files.
+- **Typographic quotes**: Use [curly quotes](https://typographyforlawyers.com/straight-and-curly-quotes.html) (“ ”) for content if your language uses them, but straight quotes (" ") for code snippets and technical terms, just like the original English files.
 - **Preserve formatting**: Keep any HTML or Markdown formatting (links, code snippets, etc.).
 
 ### MessageFormat 2 Syntax
 
 - Strings use [Unicode MessageFormat 2](https://messageformat.unicode.org/) (MF2) for pluralization and gender-specific translations.
-- Your language may have more plural forms than English. Use correct pluralization rules for your language.
+- Use correct [pluralization rules](https://www.unicode.org/cldr/charts/48/supplemental/language_plural_rules.html) for your language to add the necessary plural forms in your translation. Some languages have multiple plural forms (e.g., Arabic, Polish, Russian), while others have only one (e.g., Japanese, Chinese).
 - Refer to the [MF2 translator guide](https://messageformat.unicode.org/docs/translators/) and [Sveltia I18n documentation](https://github.com/sveltia/sveltia-i18n#message-format) for syntax details.
 
 ### Language & Tone
@@ -47,6 +47,10 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 - Use neutral, inclusive language.
 - Avoid gendered terms and stereotypes.
 - Be mindful of cultural sensitivities.
+
+### Other Notes
+
+- RTL (right-to-left) languages are supported. The CMS automatically adjusts the layout based on the language direction.
 
 ## Maintenance & Support
 
