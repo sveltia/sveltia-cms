@@ -18,7 +18,7 @@ We will block anyone who sends AI-generated poor-quality PRs. Please don’t was
 
 ## Localizations
 
-As we get closer to the 1.0 release, we’ll be welcoming [localizers](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
+We’re now looking for volunteers to help us translate Sveltia CMS into different languages. If you’re interested in helping, please check out our [localization guide](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
 ## Discussions
 
