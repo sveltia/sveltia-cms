@@ -2,7 +2,13 @@
 
 Thank you for your interest in translating the Sveltia CMS user interface! Here’s a guide to help you get started with localizing the application.
 
-## Quick Start
+## Requirements
+
+- **GitHub account**: For now, we only accept contributions via GitHub pull requests.
+- **Language proficiency**: We want accurate and natural-sounding translations. If you are not a native speaker of the target language or do not have professional proficiency in it, please collaborate with someone who is.
+- **Quality check**: Review and edit your translations for accuracy and context, especially if you have used an AI translation tool. Remember that AI can make mistakes, particularly with short phrases or technical terms.
+
+## Steps to Contribute
 
 1. **Check existing translations**: See if your language is already on the [waiting list](https://github.com/sveltia/sveltia-cms/labels/l10n) or [already translated](https://github.com/sveltia/sveltia-cms/tree/main/src/lib/locales).
 2. **File an issue**: [Create a new issue](https://github.com/sveltia/sveltia-cms/issues/new?type=task&labels=l10n) with your language code (e.g., “French localization”).
@@ -15,12 +21,6 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 4. **Get reviewed**: We’ll review your translations and provide feedback if necessary.
    - We can check your translated files for YAML and MF2 syntax errors, but we can’t review the quality of the translation as we don’t speak your language. If you want, ask other native speakers to review your translation on your pull request, issue or in your own community.
    - Once approved, they’ll be merged and included in the next release.
-
-## Requirements
-
-- **GitHub account**: For now, we only accept contributions via GitHub pull requests.
-- **Language proficiency**: We want accurate and natural-sounding translations. If you are not a native speaker of the target language or do not have professional proficiency in it, please collaborate with someone who is.
-- **Quality check**: Review and edit your translations for accuracy and context, especially if you have used an AI translation tool. Remember that AI can make mistakes, particularly with short phrases or technical terms.
 
 ## Technical Guidelines
 
