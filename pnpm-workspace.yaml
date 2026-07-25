@@ -7,3 +7,9 @@ minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
   - '@sveltia/*'
+
+auditConfig:
+  ignoreGhsas:
+    # dev dependencies only, ignore for now
+    # https://github.com/advisories/GHSA-mh99-v99m-4gvg
+    - GHSA-mh99-v99m-4gvg

@@ -88,7 +88,7 @@
     "eslint": "^9.39.5",
     "eslint-config-airbnb-extended": "^3.1.1",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^63.2.0",
+    "eslint-plugin-jsdoc": "^63.2.2",
     "eslint-plugin-package-json": "^1.6.0",
     "eslint-plugin-svelte": "^3.22.0",
     "eslint-plugin-unused-imports": "^4.4.1",
