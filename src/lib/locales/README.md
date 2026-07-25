@@ -10,8 +10,8 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 
 ## Steps to Contribute
 
-1. **Check existing translations**: See if your language is already on the [waiting list](https://github.com/sveltia/sveltia-cms/labels/l10n) or [already translated](https://github.com/sveltia/sveltia-cms/tree/main/src/lib/locales).
-2. **File an issue**: [Create a new issue](https://github.com/sveltia/sveltia-cms/issues/new?type=task&labels=l10n) with your language code (e.g., “French localization”).
+1. **Check existing translations**: See if your language is already on the [waiting list](https://github.com/sveltia/sveltia-cms/issues?q=is%3Aissue%20state%3Aopen%20label%3Al10n) or [already translated](https://github.com/sveltia/sveltia-cms/tree/main/src/lib/locales).
+2. **File an issue**: [Create a new issue](https://github.com/sveltia/sveltia-cms/issues/new?type=task&labels=l10n) with your language name (e.g., “French localization”).
    - **This is required** — pull requests (PRs) without issues will be closed to prevent duplicate effort.
    - If you want us to provide an AI-generated draft translation for your language, please request it in your issue.
 3. **Translate both repositories**:
