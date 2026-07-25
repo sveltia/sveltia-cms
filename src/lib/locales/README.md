@@ -18,8 +18,8 @@ Thank you for your interest in translating the Sveltia CMS user interface! Hereâ
 
 ## Requirements
 
-- **Native speaker**: We want accurate, natural translations. If youâ€™re not a native speaker of the target language, please collaborate with someone who is.
-- **Quality check**: Review and edit for accuracy and context, especially if using AI translation tools.
+- **Language proficiency**: We want accurate and natural-sounding translations. If you are not a native speaker of the target language or do not have professional proficiency in it, please collaborate with someone who is.
+- **Quality check**: Review and edit your translations for accuracy and context, especially if you have used an AI translation tool. Remember that AI can make mistakes, particularly with short phrases or technical terms.
 
 ## Technical Guidelines
 
