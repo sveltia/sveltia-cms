@@ -18,6 +18,7 @@ Thank you for your interest in translating the Sveltia CMS user interface! Hereâ
 
 ## Requirements
 
+- **GitHub account**: For now, we only accept contributions via GitHub pull requests.
 - **Language proficiency**: We want accurate and natural-sounding translations. If you are not a native speaker of the target language or do not have professional proficiency in it, please collaborate with someone who is.
 - **Quality check**: Review and edit your translations for accuracy and context, especially if you have used an AI translation tool. Remember that AI can make mistakes, particularly with short phrases or technical terms.
 
