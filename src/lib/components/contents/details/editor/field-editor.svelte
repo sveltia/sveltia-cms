@@ -212,6 +212,17 @@
       fieldType === 'uuid',
   );
   const invalid = $derived(validity?.valid === false);
+  const editorProps = $derived({
+    locale,
+    keyPath,
+    typedKeyPath,
+    fieldId,
+    fieldLabel,
+    fieldConfig,
+    readonly,
+    required,
+    invalid,
+  });
 
   $effect(() => {
     // Convert invalid single value to list. This is in place to handle the case when a field is
@@ -247,6 +258,24 @@
     }
   });
 </script>
+
+{#snippet beforeInput()}
+  {#if beforeInputLabel}
+    <div role="none" class="before-input">{@html _sanitize(beforeInputLabel)}</div>
+  {/if}
+  {#if prefix}
+    <div role="none" class="prefix">{prefix}</div>
+  {/if}
+{/snippet}
+
+{#snippet afterInput()}
+  {#if suffix}
+    <div role="none" class="suffix">{suffix}</div>
+  {/if}
+  {#if afterInputLabel}
+    <div role="none" class="after-input">{@html _sanitize(afterInputLabel)}</div>
+  {/if}
+{/snippet}
 
 {#if $entryDraft && canEdit && fieldType !== 'hidden'}
   <FieldEditorGroup
@@ -307,44 +336,12 @@
         <div role="none">{_('unsupported_field_type_x', { values: { name: fieldType } })}</div>
       {:else if isList}
         {@const Editor = editors[fieldType]}
-        <Editor
-          {locale}
-          {keyPath}
-          {typedKeyPath}
-          {fieldId}
-          {fieldLabel}
-          {fieldConfig}
-          {currentValue}
-          {readonly}
-          {required}
-          {invalid}
-        />
+        <Editor {...editorProps} {currentValue} />
       {:else}
-        {#if beforeInputLabel}
-          <div role="none" class="before-input">{@html _sanitize(beforeInputLabel)}</div>
-        {/if}
-        {#if prefix}
-          <div role="none" class="prefix">{prefix}</div>
-        {/if}
         {@const Editor = editors[fieldType]}
-        <Editor
-          {locale}
-          {keyPath}
-          {typedKeyPath}
-          {fieldId}
-          {fieldLabel}
-          {fieldConfig}
-          bind:currentValue={$entryDraft[valueStoreKey][locale][keyPath]}
-          {readonly}
-          {required}
-          {invalid}
-        />
-        {#if suffix}
-          <div role="none" class="suffix">{suffix}</div>
-        {/if}
-        {#if afterInputLabel}
-          <div role="none" class="after-input">{@html _sanitize(afterInputLabel)}</div>
-        {/if}
+        {@render beforeInput()}
+        <Editor {...editorProps} bind:currentValue={$entryDraft[valueStoreKey][locale][keyPath]} />
+        {@render afterInput()}
       {/if}
     </div>
     {#if !readonly && (hint || $extraHint)}
