@@ -5,13 +5,12 @@ import { mount, unmount } from 'svelte';
 import { get } from 'svelte/store';
 
 import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
-import { allAssets, getAssetByPath, isAssetInFolder } from '$lib/services/assets';
+import { allAssets, isAssetInFolder } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
-import { AssetProxy } from '$lib/services/contents/api/asset-proxy';
 import { createEntryMap } from '$lib/services/contents/api/entries';
+import { createGetAsset, getMetaData } from '$lib/services/contents/api/react-helpers';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { getField } from '$lib/services/contents/entry/fields';
 
 /**
@@ -26,7 +25,6 @@ import { getField } from '$lib/services/contents/entry/fields';
  * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import {
- * ApiAsset,
  * ApiEntry,
  * CustomPreviewTemplateProps,
  * Field,
@@ -65,14 +63,14 @@ export const createFieldPreviewMounter =
     });
 
 /**
- * Create a widget preview function.
+ * Create a widget preview function for React preview templates.
  * @internal
- * @param {(target: HTMLElement, keyPath: FieldKeyPath) => Record<string, any>} mountFieldPreview
- * Function to mount field preview components.
+ * @param {(target: HTMLElement, keyPath: FieldKeyPath) => Record<string, any>} mountComponent
+ * Function to mount Svelte components for field preview.
  * @returns {(keyPath: string) => ReactElement} Function that creates widget preview components.
  */
 export const createWidgetFor =
-  (mountFieldPreview) =>
+  (mountComponent) =>
   /**
    * Get a widget preview component for a field.
    * @param {string} keyPath Field key path.
@@ -85,11 +83,11 @@ export const createWidgetFor =
 
     /**
      * Mount or unmount the Svelte component when the div is added or removed from the DOM.
-     * @param {HTMLElement} div The div element to mount the Svelte component into.
+     * @param {HTMLElement | null} div The div element to mount the Svelte component into.
      */
     const ref = (div) => {
       if (div) {
-        component = mountFieldPreview(div, keyPath);
+        component = mountComponent(div, keyPath);
       } else if (component) {
         unmount(component);
       }
@@ -206,32 +204,6 @@ const convertEntryToMap = ({ entry, locale, collectionName, associatedAssets, co
 };
 
 /**
- * Create an asset getter function.
- * @internal
- * @param {object} args Arguments.
- * @param {Entry} args.entry Entry object.
- * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] File name.
- * @returns {(path: string) => ApiAsset | undefined} Function that gets asset URLs.
- */
-export const createGetAsset =
-  ({ entry, collectionName, fileName }) =>
-  /**
-   * Get the asset URL for a given asset path.
-   * @param {string} path Path to the asset.
-   * @returns {ApiAsset | undefined} Asset item.
-   */
-  (path) => {
-    const asset = getAssetByPath({ value: path, entry, collectionName, fileName });
-
-    if (asset) {
-      return new AssetProxy(asset);
-    }
-
-    return undefined;
-  };
-
-/**
  * Get entries from a collection. If `slug` is provided, returns the entry with the matching slug;
  * otherwise, returns all entries.
  * @param {string} name Collection name.
@@ -267,67 +239,6 @@ export const getCollectionByName = async (name, slug) => {
   }
 
   return entries.map(convertEntry);
-};
-
-/**
- * Get metadata for fields. For relation fields, looks up and stores the referenced entry content
- * keyed by collection name and value, matching the `fieldsMetaData` structure expected by
- * Netlify/Decap CMS preview templates.
- * @internal
- * @param {object} args Arguments.
- * @param {InternalLocaleCode} args.locale Current locale.
- * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
- * @returns {MapOf<any>} Immutable Map of entry metadata.
- */
-export const getMetaData = ({ locale, getFieldArgs }) => {
-  const { valueMap = {} } = getFieldArgs;
-  /** @type {Record<string, any>} */
-  const metaData = {};
-  /** @type {Map<string, Entry[]>} */
-  const refEntriesCache = new Map();
-
-  Object.entries(valueMap).forEach(([key, value]) => {
-    const keyPath = /** @type {FieldKeyPath} */ (key.replace(/\.\d+$/, ''));
-    const field = getField({ ...getFieldArgs, keyPath });
-
-    // Populate metadata for relation fields by looking up referenced entries
-    if (field?.widget === 'relation') {
-      const {
-        value_field: valueField = '{{slug}}',
-        collection: refCollection,
-        file: refFile,
-      } = field;
-
-      const refEntries = (() => {
-        const cacheKey = `${refCollection}:${refFile ?? ''}`;
-        const cache = refEntriesCache.get(cacheKey);
-
-        if (cache) {
-          return cache;
-        }
-
-        const entries = (
-          refFile
-            ? [getCollectionFileEntry(refCollection, refFile)]
-            : getEntriesByCollection(refCollection)
-        ).filter((entry) => !!entry);
-
-        refEntriesCache.set(cacheKey, entries);
-
-        return entries;
-      })();
-
-      metaData[keyPath] ??= {};
-      metaData[keyPath][refCollection] ??= {};
-      metaData[keyPath][refCollection][value] = refEntries.find((entry) =>
-        valueField === '{{slug}}'
-          ? entry.slug === value
-          : entry.locales[locale]?.content?.[valueField] === value,
-      )?.locales[locale]?.content;
-    }
-  });
-
-  return /** @type {MapOf<any>} */ (fromJS(metaData));
 };
 
 /**
