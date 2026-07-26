@@ -3,7 +3,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { parse as libParseTOML } from 'smol-toml';
 import { parse as libParseYAML } from 'yaml';
 
-import { customFileFormatRegistry } from '$lib/services/contents/api/registries';
+import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';

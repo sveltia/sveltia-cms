@@ -1,9 +1,9 @@
 import { get } from 'svelte/store';
 
+import { callEventHooks } from '$lib/services/api/events';
 import { isLastCommitPublished } from '$lib/services/backends';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
-import { callEventHooks } from '$lib/services/contents/api/events';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,

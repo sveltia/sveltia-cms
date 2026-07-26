@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { customComponentRegistry } from '$lib/services/contents/api/registries.js';
+import { customComponentRegistry } from '$lib/services/api/registries.js';
 
 import {
   getBuiltInComponentDefs,

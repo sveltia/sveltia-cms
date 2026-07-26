@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   customPreviewStyleRegistry,
   customPreviewTemplateRegistry,
-} from '$lib/services/contents/api/registries';
+} from '$lib/services/api/registries';
 
 import {
   copyFromLocaleToast,

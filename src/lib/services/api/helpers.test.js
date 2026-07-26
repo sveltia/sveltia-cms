@@ -17,7 +17,7 @@ vi.mock('$lib/services/assets', () => ({
   getAssetByPath: mockGetAssetByPath,
 }));
 
-vi.mock('$lib/services/contents/api/asset-proxy', () => ({
+vi.mock('$lib/services/api/asset-proxy', () => ({
   /**
    *
    */

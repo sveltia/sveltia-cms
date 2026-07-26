@@ -1,10 +1,10 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { callEventHooks } from '$lib/services/api/events';
 import { isLastCommitPublished } from '$lib/services/backends';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
-import { callEventHooks } from '$lib/services/contents/api/events';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
@@ -33,7 +33,7 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
 }));
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/draft/backup');
-vi.mock('$lib/services/contents/api/events', () => ({
+vi.mock('$lib/services/api/events', () => ({
   callEventHooks: vi.fn(),
 }));
 vi.mock('$lib/services/contents/draft/save/changes');

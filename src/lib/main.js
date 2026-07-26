@@ -5,7 +5,7 @@ import createClass from 'create-react-class';
 import { createElement, Fragment } from 'react';
 import { mount } from 'svelte';
 
-import { SUPPORTED_EVENT_TYPES } from '$lib/services/contents/api/events';
+import { SUPPORTED_EVENT_TYPES } from '$lib/services/api/events';
 import {
   customComponentRegistry,
   customFieldTypeRegistry,
@@ -13,7 +13,7 @@ import {
   customPreviewStyleRegistry,
   customPreviewTemplateRegistry,
   eventHookRegistry,
-} from '$lib/services/contents/api/registries';
+} from '$lib/services/api/registries';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
 import App from './components/app.svelte';

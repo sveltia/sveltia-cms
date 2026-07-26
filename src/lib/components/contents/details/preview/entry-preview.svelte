@@ -7,7 +7,7 @@
   import {
     customPreviewStyleRegistry,
     customPreviewTemplateRegistry,
-  } from '$lib/services/contents/api/registries';
+  } from '$lib/services/api/registries';
   import { entryDraft } from '$lib/services/contents/draft';
   import { preparePreviewTemplateProps } from '$lib/services/contents/editor/preview-templates';
 

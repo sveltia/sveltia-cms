@@ -15,8 +15,8 @@
   } from 'lexical';
   import { getContext, untrack } from 'svelte';
 
+  import { customComponentRegistry } from '$lib/services/api/registries';
   import { cmsConfig } from '$lib/services/config';
-  import { customComponentRegistry } from '$lib/services/contents/api/registries';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getField } from '$lib/services/contents/entry/fields';
   import {

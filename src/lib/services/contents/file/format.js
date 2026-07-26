@@ -2,8 +2,8 @@ import { stringify as stringifyTOML } from 'smol-toml';
 import { get } from 'svelte/store';
 import { stringify as stringifyYAML } from 'yaml';
 
+import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { cmsConfig } from '$lib/services/config';
-import { customFileFormatRegistry } from '$lib/services/contents/api/registries';
 import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';
 
 /**

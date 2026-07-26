@@ -1,9 +1,9 @@
+import { customComponentRegistry } from '$lib/services/api/registries';
 import { parseBackendConfig } from '$lib/services/config/parser/backend';
 import { parseCollections } from '$lib/services/config/parser/collections';
 import { parseFields } from '$lib/services/config/parser/fields';
 import { parseMediaConfig } from '$lib/services/config/parser/media';
 import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
-import { customComponentRegistry } from '$lib/services/contents/api/registries';
 
 /**
  * @import { CmsConfig } from '$lib/types/public';

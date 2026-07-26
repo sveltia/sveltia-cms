@@ -106,7 +106,7 @@ vi.mock('$lib/services/assets/folders', () => ({
   getAssetFolder: mockGetAssetFolder,
 }));
 
-vi.mock('$lib/services/contents/api/helpers', () => ({
+vi.mock('$lib/services/api/helpers', () => ({
   createEntryMap: mockCreateEntryMap,
   convertEntryToMap: mockConvertEntryToMap,
   createGetAsset: mockCreateGetAsset,

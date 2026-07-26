@@ -12,9 +12,9 @@
   import { onMount } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
 
+  import { customComponentRegistry } from '$lib/services/api/registries';
   import { getMediaFieldURL } from '$lib/services/assets/info';
   import { cmsConfig } from '$lib/services/config';
-  import { customComponentRegistry } from '$lib/services/contents/api/registries';
   import { entryDraft } from '$lib/services/contents/draft';
   import { BUILTIN_COMPONENTS } from '$lib/services/contents/fields/rich-text';
   import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';

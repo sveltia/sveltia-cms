@@ -5,9 +5,9 @@ import { mount, unmount } from 'svelte';
 import { get } from 'svelte/store';
 
 import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
+import { convertEntryToMap, createGetAsset, getMetaData } from '$lib/services/api/helpers';
 import { allAssets, isAssetInFolder } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
-import { convertEntryToMap, createGetAsset, getMetaData } from '$lib/services/contents/api/helpers';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getField } from '$lib/services/contents/entry/fields';

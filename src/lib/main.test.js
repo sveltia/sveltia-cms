@@ -42,7 +42,7 @@ vi.mock('$lib/services/contents/file/config', () => ({
 vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => ({
   customComponentRegistry: new Map(),
 }));
-vi.mock('$lib/services/contents/api/events', () => ({
+vi.mock('$lib/services/api/events', () => ({
   eventHookRegistry: new Set(),
   SUPPORTED_EVENT_TYPES: [
     'preSave',
@@ -60,7 +60,7 @@ vi.mock('$lib/components/app.svelte', () => ({
 // Now import after all setup
 // @ts-ignore
 const CMS = (await import('./main.js')).default;
-const { customPreviewStyleRegistry } = await import('$lib/services/contents/api/registries');
+const { customPreviewStyleRegistry } = await import('$lib/services/api/registries');
 
 describe('CMS.init()', () => {
   beforeEach(() => {

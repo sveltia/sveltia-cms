@@ -682,7 +682,7 @@ describe('Test parseEntryFile()', () => {
 
     const collectionModule = await import('$lib/services/contents/collection');
     const collectionFileModule = await import('$lib/services/contents/collection/files');
-    const regModule = await import('$lib/services/contents/api/registries');
+    const regModule = await import('$lib/services/api/registries');
 
     getCollection = collectionModule.getCollection;
     getCollectionFile = collectionFileModule.getCollectionFile;

@@ -96,7 +96,7 @@ vi.mock('$lib/services/config/parser/fields', () => ({
 
 const mockCustomComponentRegistry = new Map();
 
-vi.mock('$lib/services/contents/api/registries', () => ({
+vi.mock('$lib/services/api/registries', () => ({
   customComponentRegistry: mockCustomComponentRegistry,
 }));
 

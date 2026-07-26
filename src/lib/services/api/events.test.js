@@ -1,7 +1,7 @@
 import { fromJS, isMap } from 'immutable';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { eventHookRegistry } from '$lib/services/contents/api/registries';
+import { eventHookRegistry } from '$lib/services/api/registries';
 
 import { callEventHooks, SUPPORTED_EVENT_TYPES, UPDATABLE_EVENT_TYPES } from './events';
 

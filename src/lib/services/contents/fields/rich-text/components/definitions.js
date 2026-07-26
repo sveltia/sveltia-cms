@@ -1,6 +1,6 @@
 import { _ } from '@sveltia/i18n';
 
-import { customComponentRegistry } from '$lib/services/contents/api/registries';
+import { customComponentRegistry } from '$lib/services/api/registries';
 import { replaceQuotes } from '$lib/services/contents/fields/rich-text/components/utils';
 import {
   IMAGE_OR_LINKED_IMAGE_REGEX,

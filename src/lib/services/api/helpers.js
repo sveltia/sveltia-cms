@@ -1,8 +1,8 @@
 import { unflatten } from 'flat';
 import { fromJS } from 'immutable';
 
+import { AssetProxy } from '$lib/services/api/asset-proxy';
 import { getAssetByPath } from '$lib/services/assets';
-import { AssetProxy } from '$lib/services/contents/api/asset-proxy';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { getField } from '$lib/services/contents/entry/fields';
