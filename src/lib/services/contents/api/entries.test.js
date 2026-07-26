@@ -1,7 +1,7 @@
 import { isMap } from 'immutable';
 import { describe, expect, it } from 'vitest';
 
-import { createEntryMap } from './entries';
+import { convertEntryToMap, createEntryMap } from './entries';
 
 /**
  * Tests use simplified test objects that don't match full type definitions.
@@ -137,6 +137,74 @@ describe('entry module', () => {
 
       expect(isMap(map.get('data'))).toBe(true);
       expect(map.get('data').size).toBe(0);
+    });
+  });
+
+  describe('convertEntryToMap', () => {
+    it('should convert an entry using the selected locale and include other locales', () => {
+      const entry = {
+        slug: 'hello',
+        locales: {
+          en: {
+            slug: 'hello',
+            content: { title: 'Hello' },
+            path: 'posts/hello.md',
+          },
+          ja: {
+            slug: 'hello',
+            content: { title: 'こんにちは' },
+            path: 'posts/hello.ja.md',
+          },
+        },
+      };
+
+      const map = convertEntryToMap({
+        entry: /** @type {any} */ (entry),
+        locale: 'en',
+        collectionName: 'posts',
+        associatedAssets: [],
+      });
+
+      expect(map.get('slug')).toBe('hello');
+      expect(map.getIn(['data', 'title'])).toBe('Hello');
+      expect(map.get('path')).toBe('posts/hello.md');
+      expect(map.getIn(['i18n', 'ja', 'data', 'title'])).toBe('こんにちは');
+    });
+
+    it('should prefer explicit content over entry locale content', () => {
+      const entry = {
+        locales: {
+          en: {
+            content: { title: 'Fallback' },
+            path: 'posts/fallback.md',
+          },
+        },
+      };
+
+      const map = convertEntryToMap({
+        entry: /** @type {any} */ (entry),
+        locale: 'en',
+        collectionName: 'posts',
+        associatedAssets: [],
+        content: { title: 'Override' },
+      });
+
+      expect(map.getIn(['data', 'title'])).toBe('Override');
+      expect(map.get('path')).toBe('posts/fallback.md');
+    });
+
+    it('should fall back to empty content and path when the locale data is missing', () => {
+      const map = convertEntryToMap({
+        entry: undefined,
+        locale: 'en',
+        collectionName: 'posts',
+        associatedAssets: [],
+      });
+
+      expect(map.get('slug')).toBe('');
+      expect(map.get('path')).toBe('');
+      expect(map.getIn(['data', 'title'])).toBeUndefined();
+      expect(map.get('collection')).toBe('posts');
     });
   });
 });

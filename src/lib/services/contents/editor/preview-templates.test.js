@@ -26,6 +26,7 @@ const {
   mockGetEntriesByCollection,
   mockGetField,
   mockCreateEntryMap,
+  mockConvertEntryToMap,
   mockCreateElement,
   mockGetAssetFolder,
   mockIsAssetInFolder,
@@ -37,6 +38,7 @@ const {
   mockGetEntriesByCollection: vi.fn(() => []),
   mockGetField: vi.fn(() => ({ widget: 'text' })),
   mockCreateEntryMap: vi.fn(() => ({})),
+  mockConvertEntryToMap: vi.fn(() => ({})),
   mockCreateElement: vi.fn((tag, props) => ({ type: tag, ...props })),
   mockGetAssetFolder: vi.fn(),
   mockIsAssetInFolder: vi.fn(),
@@ -102,6 +104,7 @@ vi.mock('$lib/services/assets/folders', () => ({
 
 vi.mock('$lib/services/contents/api/entries', () => ({
   createEntryMap: mockCreateEntryMap,
+  convertEntryToMap: mockConvertEntryToMap,
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -133,6 +136,19 @@ describe('Preview Templates', () => {
         newRecord: args?.isNew ?? false,
         meta: ImmutableMap({ path: args?.path ?? '' }),
       }),
+    );
+    mockConvertEntryToMap.mockImplementation(
+      ({ entry, locale, collectionName, associatedAssets, content }) =>
+        mockCreateEntryMap({
+          content: content ?? entry?.locales?.[locale]?.content ?? {},
+          otherLocales: Object.keys(entry?.locales ?? {}).filter((item) => item !== locale),
+          locales: entry?.locales ?? {},
+          slug: entry?.slug ?? '',
+          path: entry?.locales?.[locale]?.path ?? '',
+          isNew: false,
+          collectionName,
+          associatedAssets: associatedAssets ?? [],
+        }),
     );
   });
 

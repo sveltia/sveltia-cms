@@ -7,7 +7,7 @@ import { get } from 'svelte/store';
 import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
 import { allAssets, isAssetInFolder } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
-import { createEntryMap } from '$lib/services/contents/api/entries';
+import { convertEntryToMap } from '$lib/services/contents/api/entries';
 import { createGetAsset, getMetaData } from '$lib/services/contents/api/react-helpers';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
@@ -20,7 +20,6 @@ import { getField } from '$lib/services/contents/entry/fields';
  * Asset,
  * Entry,
  * EntryDraft,
- * FlattenedEntryContent,
  * GetFieldArgs,
  * InternalLocaleCode,
  * } from '$lib/types/private';
@@ -172,35 +171,6 @@ export const getAssociatedPreviewAssets = ({ collectionName, fileName }) => {
   }
 
   return get(allAssets).filter((asset) => isAssetInFolder(asset, assetFolder));
-};
-
-/**
- * Convert an entry to an Immutable Map for preview templates.
- * @internal
- * @param {object} args Arguments.
- * @param {Entry | undefined} args.entry Entry object to convert.
- * @param {InternalLocaleCode} args.locale Locale to use for content and path extraction.
- * @param {string} args.collectionName Collection name.
- * @param {Asset[]} args.associatedAssets Associated assets to include.
- * @param {FlattenedEntryContent} [args.content] Optional content override (if not provided,
- * extracted from entry).
- * @returns {MapOf<ApiEntry>} Immutable Map of entry data.
- */
-const convertEntryToMap = ({ entry, locale, collectionName, associatedAssets, content }) => {
-  const entryContent = content ?? entry?.locales?.[locale]?.content ?? {};
-
-  return /** @type {MapOf<ApiEntry>} */ (
-    createEntryMap({
-      content: entryContent,
-      otherLocales: Object.keys(entry?.locales ?? {}).filter((l) => l !== locale),
-      locales: entry?.locales ?? {},
-      slug: entry?.slug ?? '',
-      path: entry?.locales?.[locale]?.path ?? '',
-      isNew: false,
-      collectionName,
-      associatedAssets,
-    })
-  );
 };
 
 /**
