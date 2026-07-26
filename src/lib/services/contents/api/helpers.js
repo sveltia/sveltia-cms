@@ -14,7 +14,8 @@ import { getField } from '$lib/services/contents/entry/fields';
  * Entry,
  * FlattenedEntryContent,
  * GetFieldArgs,
- * InternalLocaleCode, } from '$lib/types/private';
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
  * @import { ApiAsset, ApiEntry, FieldKeyPath } from '$lib/types/public';
  */
 
