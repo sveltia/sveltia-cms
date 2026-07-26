@@ -27,6 +27,8 @@ const {
   mockGetField,
   mockCreateEntryMap,
   mockConvertEntryToMap,
+  mockCreateGetAsset,
+  mockGetMetaData,
   mockCreateElement,
   mockGetAssetFolder,
   mockIsAssetInFolder,
@@ -39,6 +41,8 @@ const {
   mockGetField: vi.fn(() => ({ widget: 'text' })),
   mockCreateEntryMap: vi.fn(() => ({})),
   mockConvertEntryToMap: vi.fn(() => ({})),
+  mockCreateGetAsset: vi.fn(() => vi.fn()),
+  mockGetMetaData: vi.fn(() => ({})),
   mockCreateElement: vi.fn((tag, props) => ({ type: tag, ...props })),
   mockGetAssetFolder: vi.fn(),
   mockIsAssetInFolder: vi.fn(),
@@ -102,9 +106,11 @@ vi.mock('$lib/services/assets/folders', () => ({
   getAssetFolder: mockGetAssetFolder,
 }));
 
-vi.mock('$lib/services/contents/api/entries', () => ({
+vi.mock('$lib/services/contents/api/helpers', () => ({
   createEntryMap: mockCreateEntryMap,
   convertEntryToMap: mockConvertEntryToMap,
+  createGetAsset: mockCreateGetAsset,
+  getMetaData: mockGetMetaData,
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -150,6 +156,8 @@ describe('Preview Templates', () => {
           associatedAssets: associatedAssets ?? [],
         }),
     );
+    mockCreateGetAsset.mockImplementation(() => vi.fn());
+    mockGetMetaData.mockImplementation(() => ({}));
   });
 
   describe('createFieldPreviewMounter', () => {
