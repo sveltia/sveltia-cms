@@ -54,6 +54,7 @@
           .filter((val) => val !== undefined)
       : valueMap[keyPath],
   );
+  const previewProps = $derived({ locale, keyPath, typedKeyPath, fieldConfig, currentValue });
 </script>
 
 {#if fieldType !== 'hidden' && preview && (locale === defaultLocale || canTranslate || canDuplicate)}
@@ -81,7 +82,7 @@
     {/if}
     {#if fieldType in previews}
       {@const Preview = previews[fieldType]}
-      <Preview {keyPath} {typedKeyPath} {locale} {fieldConfig} {currentValue} />
+      <Preview {...previewProps} />
     {/if}
   </section>
 {/if}
