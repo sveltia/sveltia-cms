@@ -100,8 +100,8 @@
           .label {
             overflow: hidden;
             margin: 12px;
-            height: 40px;
-            line-height: 1.5;
+            height: calc(var(--sui-line-height-compact) * 2);
+            line-height: var(--sui-line-height-compact);
           }
         }
 
