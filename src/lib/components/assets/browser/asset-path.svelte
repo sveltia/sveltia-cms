@@ -16,6 +16,11 @@
    * @property {Snippet} [children] Slot content.
    */
 
+  /**
+   * Options for {@link sanitize}.
+   */
+  const SANITIZE_OPTIONS = { ALLOWED_TAGS: ['wbr'] };
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -26,14 +31,13 @@
   } = $props();
 
   const segments = $derived(path ? stripSlashes(path).split('/') : caption ? [caption] : []);
-  const sanitizeOptions = { ALLOWED_TAGS: ['wbr'] };
 
   /**
    * Get a label with `<wbr>` tags for line breaking after hyphens, underscores, and dots.
    * @param {string} str The string to process.
    * @returns {string} The processed string with `<wbr>` tags for line breaking.
    */
-  const getLabel = (str) => sanitize(str.replace(/([-_.])/g, '$1<wbr>'), sanitizeOptions);
+  const getLabel = (str) => sanitize(str.replace(/([-_.])/g, '$1<wbr>'), SANITIZE_OPTIONS);
 </script>
 
 {#if segments.length}

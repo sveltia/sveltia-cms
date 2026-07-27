@@ -7,6 +7,7 @@
   import { showContentOverlay, translatorApiKeyDialogState } from '$lib/services/contents/editor';
   import { translator } from '$lib/services/integrations/translators';
   import { prefs } from '$lib/services/user/prefs.svelte';
+  import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
   const { serviceId, apiLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived($translator);
 
@@ -70,6 +71,6 @@
     })
       // Remove invisible characters used for link detection in the locale string
       .replace(/[\u2068\u2069]/g, ''),
-    { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] },
+    LINK_SANITIZE_OPTIONS,
   )}
 </PromptDialog>

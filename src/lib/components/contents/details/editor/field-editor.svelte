@@ -55,6 +55,14 @@
    * @property {DraftValueStoreKey} [valueStoreKey] Key to store the values in {@link EntryDraft}.
    */
 
+  /**
+   * Options for {@link sanitize}.
+   */
+  const SANITIZE_OPTIONS = {
+    ALLOWED_TAGS: ['strong', 'em', 'del', 'code', 'a', 'br'],
+    ALLOWED_ATTR: ['href'],
+  };
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -76,10 +84,7 @@
    * @returns {string} Sanitized string.
    */
   const _sanitize = (str) =>
-    sanitize(/** @type {string} */ (parseInline(str.replaceAll('\\n', '<br>'))), {
-      ALLOWED_TAGS: ['strong', 'em', 'del', 'code', 'a', 'br'],
-      ALLOWED_ATTR: ['href'],
-    });
+    sanitize(/** @type {string} */ (parseInline(str.replaceAll('\\n', '<br>'))), SANITIZE_OPTIONS);
 
   /** @type {Writable<Component>} */
   const extraHint = writable();

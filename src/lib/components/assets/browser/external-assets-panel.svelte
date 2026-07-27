@@ -29,6 +29,7 @@
   import { selectAssetsView } from '$lib/services/contents/editor';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
+  import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
   /**
    * @import {
@@ -332,7 +333,7 @@
           })
             // Remove invisible characters used for link detection in the locale string
             .replace(/[\u2068\u2069]/g, ''),
-          { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] },
+          LINK_SANITIZE_OPTIONS,
         )}
       {/if}
       {#if serviceType === 'cloud_storage'}
@@ -347,7 +348,7 @@
               },
             }),
           }),
-          { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href', 'target', 'rel'] },
+          LINK_SANITIZE_OPTIONS,
         )}
       {/if}
     </p>

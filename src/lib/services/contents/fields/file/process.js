@@ -8,6 +8,7 @@ import { getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { processFile } from '$lib/services/assets/process';
 import { getGitHash } from '$lib/services/utils/file';
+import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
 /**
  * @import { Asset, AssetFolderInfo, EntryDraft, SelectedResource } from '$lib/types/private';
@@ -195,7 +196,7 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
 
   return {
     value,
-    credit: credit ? sanitize(credit, { ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['href'] }) : '',
+    credit: credit ? sanitize(credit, LINK_SANITIZE_OPTIONS) : '',
     oversizedFileName,
   };
 };

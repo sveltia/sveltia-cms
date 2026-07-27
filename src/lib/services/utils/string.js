@@ -20,7 +20,7 @@ export const escapeAttr = (str) =>
 /**
  * Sanitization options for anchor tag links.
  */
-const LINK_SANITIZE_OPTIONS = {
+export const LINK_SANITIZE_OPTIONS = {
   ALLOWED_TAGS: ['a'],
   ALLOWED_ATTR: ['href', 'target', 'rel'],
 };

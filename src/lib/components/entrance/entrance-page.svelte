@@ -14,6 +14,14 @@
   import { auth } from '$lib/services/user/auth.svelte';
   import { prefs, prefsError } from '$lib/services/user/prefs.svelte';
 
+  /**
+   * Options for {@link sanitize}.
+   */
+  const SANITIZE_OPTIONS = {
+    ALLOWED_TAGS: ['a', 'code'],
+    ALLOWED_ATTR: ['href'],
+  };
+
   $effect(() => {
     if ($cmsConfigLoaded) {
       $announcedPageStatus = _('welcome_message', { values: { name: $appTitle } });
@@ -22,10 +30,7 @@
 </script>
 
 {#snippet parseMarkdown(/** @type {string} */ str)}
-  {@html sanitize(/** @type {string} */ (marked.parseInline(str)), {
-    ALLOWED_TAGS: ['a', 'code'],
-    ALLOWED_ATTR: ['href'],
-  })}
+  {@html sanitize(/** @type {string} */ (marked.parseInline(str)), SANITIZE_OPTIONS)}
 {/snippet}
 
 <div role="none" class="container">

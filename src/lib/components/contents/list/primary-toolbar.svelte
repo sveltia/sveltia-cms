@@ -25,6 +25,14 @@
   } from '$lib/services/contents/collection/view';
   import { env } from '$lib/services/user/env.svelte';
 
+  /**
+   * Options for {@link sanitize}.
+   */
+  const SANITIZE_OPTIONS = {
+    ALLOWED_TAGS: ['strong', 'em', 'del', 'code', 'a'],
+    ALLOWED_ATTR: ['href'],
+  };
+
   let showDeleteDialog = $state(false);
 
   /**
@@ -33,10 +41,7 @@
    * @returns {string} Sanitized string.
    */
   const _sanitize = (str) =>
-    sanitize(/** @type {string} */ (marked.parseInline(str)), {
-      ALLOWED_TAGS: ['strong', 'em', 'del', 'code', 'a'],
-      ALLOWED_ATTR: ['href'],
-    });
+    sanitize(/** @type {string} */ (marked.parseInline(str)), SANITIZE_OPTIONS);
 
   const name = $derived($selectedCollection?.name ?? '');
   const description = $derived($selectedCollection?.description);
