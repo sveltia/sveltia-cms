@@ -114,7 +114,7 @@ describe('Test processResource()', () => {
     expect(result.oversizedFileName).toBeUndefined();
     expect(domPurifyMock).toHaveBeenCalledWith('Photo credit', {
       ALLOWED_TAGS: ['a'],
-      ALLOWED_ATTR: ['href'],
+      ALLOWED_ATTR: ['href', 'target', 'rel'],
     });
   });
 
@@ -418,7 +418,7 @@ describe('Test processResource()', () => {
       'Photo by <a href="https://example.com">Author</a> with <script>alert("xss")</script>',
       {
         ALLOWED_TAGS: ['a'],
-        ALLOWED_ATTR: ['href'],
+        ALLOWED_ATTR: ['href', 'target', 'rel'],
       },
     );
   });
