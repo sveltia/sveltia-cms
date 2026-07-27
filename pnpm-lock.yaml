@@ -21,11 +21,11 @@ importers:
         specifier: ^1.1.3
         version: 1.1.3(svelte@5.56.8(@typescript-eslint/types@8.65.0))
       '@sveltia/ui':
-        specifier: ^0.45.0
-        version: 0.45.0(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)
+        specifier: ^0.46.0
+        version: 0.46.0(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)
       '@sveltia/utils':
-        specifier: ^0.10.7
-        version: 0.10.7
+        specifier: ^0.11.0
+        version: 0.11.0
       create-react-class:
         specifier: ^15.7.0
         version: 15.7.0
@@ -84,8 +84,8 @@ importers:
         specifier: ^1.6.4
         version: 1.6.4
       smol-toml:
-        specifier: ^1.7.0
-        version: 1.7.0
+        specifier: ^1.7.1
+        version: 1.7.1
       svgo:
         specifier: ^4.0.2
         version: 4.0.2
@@ -139,8 +139,8 @@ importers:
         specifier: ^10.1.8
         version: 10.1.8(eslint@9.39.5(supports-color@10.2.2))
       eslint-plugin-jsdoc:
-        specifier: ^63.2.2
-        version: 63.2.2(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)
+        specifier: ^63.3.0
+        version: 63.3.0(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)
       eslint-plugin-package-json:
         specifier: ^1.6.2
         version: 1.6.2(eslint@9.39.5(supports-color@10.2.2))
@@ -1208,13 +1208,13 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.45.0':
-    resolution: {integrity: sha512-HmCInx9rBwR7tMQlk5cGb1EL3pEKaPpRrVziaIbROKeKdH5ajT+sDd+5GeMkwtfaUVN3V1uXSsm9eF9hWuDSnw==}
+  '@sveltia/ui@0.46.0':
+    resolution: {integrity: sha512-D+dIm/LUkTfJ4yae82S7tHD+dSiYHZlCP96W2DTgS3e+Gh25GaSI0RKf2CwN+zjoHmU0qfEoVjUOy2JZaqcuzw==}
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/utils@0.10.7':
-    resolution: {integrity: sha512-uB8Yd/v5iiVLgtuSKVoKA1Oja/TbTJeWxQstK0tDtloU8kxUWPicySQ4dqhmfrxgB4XQnEu5TJsmQFOGnhM2UA==}
+  '@sveltia/utils@0.11.0':
+    resolution: {integrity: sha512-M9KkDfghIoLKGOZDX2hyPijo5Nq3gCDyZMOkgFnzA8J1XKKrS2Z1bWKFODPNsOk1wbyD6BiwMayPhkWZQao3Tw==}
 
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
@@ -2110,8 +2110,8 @@ packages:
       '@typescript-eslint/parser':
         optional: true
 
-  eslint-plugin-jsdoc@63.2.2:
-    resolution: {integrity: sha512-xCoHKeaRwAhZ+i2ZUY11few2Lmy9qpJLDsY139c4KNJLMSZYoFJ5UMYkDjdTkO9PfkFOKmVO+7i4Yjx+x7VQWQ==}
+  eslint-plugin-jsdoc@63.3.0:
+    resolution: {integrity: sha512-3075zO1xCb7rxIx4gv1LsF5dh9dr84hRP85M8suIxp34TDMXNeSroMG3m8tZNxFFyHztzhaXmShIWPMNDOnknA==}
     engines: {node: ^22.13.0 || >=24}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
@@ -3430,8 +3430,8 @@ packages:
     resolution: {integrity: sha512-qMCMfhY040cVHT43K9BFygqYbUPFZKHOg7K73mtTWJRb8pyP3fzf4Ixd5SzdEJQ6MRUg/WBnOLxghZtKKurENQ==}
     engines: {node: '>=10'}
 
-  smol-toml@1.7.0:
-    resolution: {integrity: sha512-aqVvWoyO21L23mb+drl4RmMXbf6N7FdHjAhTRA9ZBL7apWBgfWC16KjrASI+1p9GAroljyMHj6fK67i0UiTNvQ==}
+  smol-toml@1.7.1:
+    resolution: {integrity: sha512-PPlsspAZ4jbMBu5DMFhfUGDQLu/vrL4SyBROVS37x8ynnVmFIs1VPBz1Co8Xks3TvpIaZXmU85y4DrQ+UyVFoQ==}
     engines: {node: '>= 18'}
 
   sort-object-keys@2.1.0:
@@ -4886,7 +4886,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.56.8(@typescript-eslint/types@8.65.0)
 
-  '@sveltia/ui@0.45.0(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.46.0(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)':
     dependencies:
       '@lexical/code': 0.48.0(typescript@6.0.3)
       '@lexical/code-prism': 0.48.0(typescript@6.0.3)
@@ -4901,14 +4901,14 @@ snapshots:
       '@lexical/table': 0.48.0(typescript@6.0.3)
       '@lexical/utils': 0.48.0(typescript@6.0.3)
       '@sveltia/i18n': 1.1.3(svelte@5.56.8(@typescript-eslint/types@8.65.0))
-      '@sveltia/utils': 0.10.7
+      '@sveltia/utils': 0.11.0
       lexical: 0.48.0(typescript@6.0.3)
       prismjs: 1.30.0
       svelte: 5.56.8(@typescript-eslint/types@8.65.0)
     transitivePeerDependencies:
       - typescript
 
-  '@sveltia/utils@0.10.7':
+  '@sveltia/utils@0.11.0':
     dependencies:
       base32-encode: 2.0.0
 
@@ -5449,7 +5449,7 @@ snapshots:
     dependencies:
       '@cspell/cspell-types': 10.0.1
       comment-json: 5.0.0
-      smol-toml: 1.7.0
+      smol-toml: 1.7.1
       yaml: 2.9.0
 
   cspell-dictionary@10.0.1:
@@ -5955,7 +5955,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-jsdoc@63.2.2(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2):
+  eslint-plugin-jsdoc@63.3.0(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2):
     dependencies:
       '@es-joy/jsdoccomment': 0.90.0
       '@es-joy/resolve.exports': 1.2.0
@@ -7326,7 +7326,7 @@ snapshots:
       astral-regex: 2.0.0
       is-fullwidth-code-point: 3.0.0
 
-  smol-toml@1.7.0: {}
+  smol-toml@1.7.1: {}
 
   sort-object-keys@2.1.0: {}
 
