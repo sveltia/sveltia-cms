@@ -9,6 +9,17 @@ import {
 } from '$lib/services/contents/i18n';
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
+/**
+ * Default options for `Intl.DisplayNames()`. Use `English (US)` instead of `American English` for a
+ * better language listing.
+ * @type {Intl.DisplayNamesOptions}
+ */
+const LANG_FORMATTER_OPTIONS = {
+  type: 'language',
+  languageDisplay: 'standard',
+  style: 'short',
+};
+
 // Controllable locale mock so we can set appLocale.current to null/undefined to cover the
 // `appLocale.current ?? 'en'` fallback branch in getLocaleLabel's default parameter.
 const mockLocale = vi.hoisted(() => ({ current: /** @type {string | null} */ (''), set: vi.fn() }));
@@ -358,13 +369,14 @@ describe('Test getLocaleLabel()', () => {
 
   test('handles locale variants correctly in English', () => {
     // Test locale variants in English (default display locale)
-    expect(getLocaleLabel('en-US')).toBe('American English');
-    expect(getLocaleLabel('en-GB')).toBe('British English');
-    expect(getLocaleLabel('fr-CA')).toBe('Canadian French');
+    // Uses languageDisplay: 'standard' for format like "English (US)" instead of "American English"
+    expect(getLocaleLabel('en-US')).toBe('English (US)');
+    expect(getLocaleLabel('en-GB')).toBe('English (UK)');
+    expect(getLocaleLabel('fr-CA')).toBe('French (Canada)');
     expect(getLocaleLabel('zh-CN')).toBe('Chinese (China)');
     expect(getLocaleLabel('zh-TW')).toBe('Chinese (Taiwan)');
-    expect(getLocaleLabel('pt-BR')).toBe('Brazilian Portuguese');
-    expect(getLocaleLabel('es-MX')).toBe('Mexican Spanish');
+    expect(getLocaleLabel('pt-BR')).toBe('Portuguese (Brazil)');
+    expect(getLocaleLabel('es-MX')).toBe('Spanish (Mexico)');
   });
 
   test('handles locale variants correctly with custom displayLocale', () => {
@@ -510,13 +522,37 @@ describe('Test getLocaleLabel() cache', () => {
   });
 
   test('uses Intl.DisplayNames with undefined locale when displayLocale is falsy', () => {
-    // Passing displayLocale: '' triggers the else branch at index.js:64
+    // Passing displayLocale: '' triggers the else branch at index.js:88
     const spy = vi.spyOn(Intl, 'DisplayNames');
 
     getLocaleLabel('en', { displayLocale: '' });
 
     // Should have been called with undefined as first argument (the else branch)
-    expect(spy).toHaveBeenCalledWith(undefined, { type: 'language' });
+    expect(spy).toHaveBeenCalledWith(undefined, LANG_FORMATTER_OPTIONS);
+    spy.mockRestore();
+  });
+});
+
+describe('Test getLocaleLabel() formatterOptions', () => {
+  test('uses default LANG_FORMATTER_OPTIONS when not provided', () => {
+    const spy = vi.spyOn(Intl, 'DisplayNames');
+
+    // Call with a unique displayLocale to ensure cache miss
+    getLocaleLabel('en', { displayLocale: 'pt' });
+
+    expect(spy).toHaveBeenCalledWith('pt', LANG_FORMATTER_OPTIONS);
+    spy.mockRestore();
+  });
+
+  test('uses custom formatterOptions when provided', () => {
+    const spy = vi.spyOn(Intl, 'DisplayNames');
+    /** @type {Intl.DisplayNamesOptions} */
+    const customOptions = { type: 'language', style: 'long' };
+
+    // Call with a unique displayLocale to ensure cache miss
+    getLocaleLabel('en', { displayLocale: 'pl', formatterOptions: customOptions });
+
+    expect(spy).toHaveBeenCalledWith('pl', customOptions);
     spy.mockRestore();
   });
 });

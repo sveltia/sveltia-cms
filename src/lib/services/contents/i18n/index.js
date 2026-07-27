@@ -6,6 +6,18 @@ import { locale as appLocale, isRTL } from '@sveltia/i18n';
  */
 
 /**
+ * Default options for `Intl.DisplayNames()`. Use `English (US)` instead of `American English` for a
+ * better language listing.
+ * @type {Intl.DisplayNamesOptions}
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DisplayNames/DisplayNames
+ */
+const LANG_FORMATTER_OPTIONS = {
+  type: 'language',
+  languageDisplay: 'standard',
+  style: 'short',
+};
+
+/**
  * Get the canonical locale of the given locale that can be used for various `Intl` methods.
  * @param {InternalLocaleCode} locale Locale.
  * @returns {LocaleCode | undefined} Locale or `undefined` if not determined.
@@ -46,12 +58,16 @@ const displayNamesCache = new Map();
  * @param {object} [options] Options.
  * @param {InternalLocaleCode} [options.displayLocale] Locale code to display the locale name. If
  * not given, use the current application locale. Default is `en`.
+ * @param {Intl.DisplayNamesOptions} [options.formatterOptions] Options for `Intl.DisplayNames()`.
  * @returns {string | undefined} Locale label like `English`. If the locale is not valid, returns
  * `undefined`.
  */
 export const getLocaleLabel = (
   locale,
-  { displayLocale = getCanonicalLocale(appLocale.current ?? 'en') } = {},
+  {
+    displayLocale = getCanonicalLocale(appLocale.current ?? 'en'),
+    formatterOptions = LANG_FORMATTER_OPTIONS,
+  } = {},
 ) => {
   const canonicalLocale = getCanonicalLocale(locale);
 
@@ -65,11 +81,11 @@ export const getLocaleLabel = (
     formatter = displayNamesCache.get(displayLocale);
 
     if (!formatter) {
-      formatter = new Intl.DisplayNames(displayLocale, { type: 'language' });
+      formatter = new Intl.DisplayNames(displayLocale, formatterOptions);
       displayNamesCache.set(displayLocale, formatter);
     }
   } else {
-    formatter = new Intl.DisplayNames(undefined, { type: 'language' });
+    formatter = new Intl.DisplayNames(undefined, formatterOptions);
   }
 
   try {

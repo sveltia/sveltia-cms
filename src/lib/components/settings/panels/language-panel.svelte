@@ -20,6 +20,18 @@
     onChange = undefined,
     /* eslint-enable prefer-const, no-unused-vars */
   } = $props();
+
+  /**
+   * Locale list sorted by label.
+   */
+  const locales = $derived(
+    appLocales
+      .map((code) => ({
+        value: code,
+        label: getLocaleLabel(code, { displayLocale: code }) ?? code,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
 </script>
 
 <section>
@@ -33,13 +45,8 @@
           prefs.locale = event.detail.value;
         }}
       >
-        {#each appLocales as locale (locale)}
-          <Option
-            label={getLocaleLabel(locale, { displayLocale: locale }) ?? locale}
-            value={locale}
-            selected={locale === appLocale.current}
-            dir="auto"
-          />
+        {#each locales as { value, label } (value)}
+          <Option {value} {label} selected={value === appLocale.current} dir="auto" />
         {/each}
       </Select>
     {/key}
