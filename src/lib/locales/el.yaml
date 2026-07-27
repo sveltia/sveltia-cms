@@ -1,0 +1,1745 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Νέο
+select: Επιλογή
+select_all: Επιλογή όλων
+upload: Μεταφόρτωση
+copy: Αντιγραφή
+download: Λήψη
+duplicate: Δημιουργία αντιγράφου
+delete: Διαγραφή
+reorder: Αναδιάταξη
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Άκυρο
+done: Τέλος
+save: Αποθήκευση
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Αποθήκευση…
+
+# Publishing actions: used when committing changes to the repository
+publish: Δημοσίευση
+# Progress indicator shown on the publish button during publishing
+publishing: Δημοσίευση…
+
+# Modification actions: editing and updating content
+rename: Μετονομασία
+update: Ενημέρωση
+replace: Αντικατάσταση
+
+# List and collection actions: adding and removing items
+add: Προσθήκη
+remove: Κατάργηση
+clear: Εκκαθάριση
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Ανάπτυξη
+expand_all: Ανάπτυξη όλων
+collapse: Σύμπτυξη
+collapse_all: Σύμπτυξη όλων
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Εισαγωγή
+restore: Επαναφορά
+discard: Απόρριψη
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Αναζήτηση…
+no_results: Δεν βρέθηκαν αποτελέσματα.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Γενικό
+primary: Κύριο
+secondary: Δευτερεύον
+collection: Συλλογή
+folder: Φάκελος
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: Κλειδί API
+details: Λεπτομέρειες
+back: Πίσω
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Φόρτωση…
+# Dismiss button for temporary notifications and infobars
+later: Αργότερα
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Slug
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Singleton
+singletons: Singletons
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Αδυναμία αντιγραφής στο πρόχειρο.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: 'Καλώς ήρθατε στο {$name}'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: 'Με την υποστήριξη του {$name}'
+
+# Shown during initial configuration and data loading
+loading_cms_config: Φόρτωση ρυθμίσεων CMS…
+loading_site_data: Φόρτωση δεδομένων ιστότοπου…
+loading_site_data_error: Παρουσιάστηκε σφάλμα κατά τη φόρτωση των δεδομένων του ιστότοπου.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: 'Σύνδεση με {$service}'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Σύνδεση με χρήση token πρόσβασης
+sign_in_using_access_token_description: Εισαγάγετε το token σας παρακάτω. Πρέπει να έχει πρόσβαση ανάγνωσης/γραφής στο περιεχόμενο του repository.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: Μπορείτε να δημιουργήσετε ένα token στη <a>σελίδα ρυθμίσεων χρήστη του {$service}</a>.
+# Input field label for personal access token
+personal_access_token: Προσωπικό token πρόσβασης
+
+# Authentication progress indicators
+authorizing: Εξουσιοδότηση…
+signing_in: Σύνδεση…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Εργασία με τοπικό repository
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: Όταν σας ζητηθεί, επιλέξτε τον αρχικό φάκελο του repository “{$repo}”.
+work_with_local_repo_description_no_repo: Όταν σας ζητηθεί, επιλέξτε τον αρχικό φάκελο του Git repository σας.
+# Button label for demo/test repository
+work_with_test_repo: Εργασία με δοκιμαστικό repository
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: Ο επιλεγμένος φάκελος δεν είναι ο αρχικός φάκελος του repository. Παρακαλούμε δοκιμάστε ξανά.
+  picker_dismissed: Δεν ήταν δυνατή η επιλογή του αρχικού φακέλου του repository. Παρακαλούμε δοκιμάστε ξανά.
+  authentication_aborted: Η ταυτοποίηση ακυρώθηκε. Παρακαλούμε δοκιμάστε ξανά.
+  invalid_token: Το token που παρείχατε δεν είναι έγκυρο. Παρακαλούμε ελέγξτε το και δοκιμάστε ξανά.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Το Git σύστημα σας δεν υποστηρίζεται από την υπηρεσία ταυτοποίησης.
+  UNSUPPORTED_DOMAIN: Το domain σας δεν επιτρέπεται να χρησιμοποιήσει την υπηρεσία ταυτοποίησης.
+  MISCONFIGURED_CLIENT: Το client ID ή το secret της εφαρμογής OAuth δεν έχει ρυθμιστεί.
+  AUTH_CODE_REQUEST_FAILED: Αποτυχία λήψης κώδικα εξουσιοδότησης. Παρακαλούμε δοκιμάστε αργότερα.
+  CSRF_DETECTED: Ανιχνεύθηκε πιθανή επίθεση CSRF. Η ροή ταυτοποίησης διακόπηκε.
+  TOKEN_REQUEST_FAILED: Αποτυχία αιτήματος token πρόσβασης. Παρακαλούμε δοκιμάστε αργότερα.
+  TOKEN_REFRESH_FAILED: Αποτυχία ανανέωσης του token πρόσβασης. Παρακαλούμε δοκιμάστε αργότερα.
+  MALFORMED_RESPONSE: Ο διακομιστής αποκρίθηκε με κακοσχηματισμένα δεδομένα. Παρακαλούμε δοκιμάστε αργότερα.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: 'Το backend {$name} απαιτεί την έκδοση {$name} {$version} ή μεταγενέστερη.'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: Δεν έχετε πρόσβαση στο repository “{$repo}”.
+repository_not_found: Το repository “{$repo}” δεν υπάρχει.
+repository_empty: Το repository “{$repo}” δεν έχει κλάδους (branches).
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: Το repository “{$repo}” δεν διαθέτει τον κλάδο “{$branch}”.
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Μη αναμενόμενο σφάλμα
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Παρουσιάστηκε σφάλμα κατά την ανάλυση ενός αρχείου καταχώρισης. Ελέγξτε την κονσόλα του φυλλομετρητή για λεπτομέρειες. }}
+    *   {{ Παρουσιάστηκαν σφάλματα κατά την ανάλυση αρχείων καταχώρισης. Ελέγξτε την κονσόλα του φυλλομετρητή για λεπτομέρειες. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Όνομα χρήστη
+password: Κωδικός πρόσβασης
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Σύνδεση
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Σύνδεση με κινητό
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Σαρώστε τον παρακάτω QR κωδικό με το τηλέφωνο ή το tablet σας για σύνδεση χωρίς κωδικό πρόσβασης. Οι ρυθμίσεις σας θα αντιγραφούν αυτόματα.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'Συνδεδεμένος ως {$name}'
+working_with_local_repo: Εργασία με τοπικό repository
+working_with_test_repo: Εργασία με δοκιμαστικό repository
+
+# Account menu: action items for sign-out and app installation
+sign_out: Αποσύνδεση
+install_as_app: Εγκατάσταση ως εφαρμογή
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Περιεχόμενα
+assets: Πόροι
+editorial_workflow: Ροή εργασίας σύνταξης
+cms_config: Ρυθμίσεις CMS
+# Mobile menu page title (shown only on small screens)
+menu: Μενού
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Το Sveltia CMS είναι πλέον διαθέσιμο σε κινητά!
+mobile_promo_button: Δοκιμάστε το
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Άνοιγμα ενεργού ιστοτόπου
+# Page switcher button group aria-label for switching between main sections
+switch_page: Αλλαγή σελίδας
+
+# Search input placeholders
+search_placeholder_contents: Αναζήτηση περιεχομένου…
+search_placeholder_assets: Αναζήτηση πόρων…
+search_placeholder_all: Αναζήτηση περιεχομένου και πόρων…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Δημιουργία καταχώρισης ή πόρων
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Δημοσίευση αλλαγών
+publishing_changes: Δημοσίευση αλλαγών…
+# Error notification when publishing fails
+publishing_changes_failed: Δεν ήταν δυνατή η δημοσίευση των αλλαγών. Παρακαλούμε δοκιμάστε ξανά.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Εμφάνιση ειδοποιήσεων
+notifications: Ειδοποιήσεις
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Εμφάνιση μενού λογαριασμού
+# Account section heading in the account menu and mobile menu page
+account: Λογαριασμός
+
+# Account menu items: links to external resources
+live_site: Ενεργός ιστότοπος
+git_repository: Git Repository
+settings: Ρυθμίσεις
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Εμφάνιση μενού βοήθειας
+# Help section heading in dropdowns and mobile menu
+help: Βοήθεια
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Συντομεύσεις πληκτρολογίου
+documentation: Τεκμηρίωση
+release_notes: Σημειώσεις έκδοσης
+announcements: Ανακοινώσεις
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: 'Έκδοση {$version}'
+# Additional help menu items
+report_issue: Αναφορά προβλήματος
+share_feedback: Υποβολή σχολίων
+get_help: Λήψη βοήθειας
+donate: Δωρεά
+join_discord: Ελάτε στο Discord μας
+bluesky: Ακολουθήστε μας στο Bluesky
+
+# Update notification: infobar message and button
+update_available: Μια νέα έκδοση του Sveltia CMS είναι διαθέσιμη.
+update_now: Ενημέρωση τώρα
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: 'Το {$service} αντιμετωπίζει ένα μικρό πρόβλημα. Η ροή εργασίας σας ενδέχεται να επηρεαστεί.'
+  major_incident: 'Το {$service} αντιμετωπίζει ένα σοβαρό πρόβλημα. Ίσως θέλετε να περιμένετε μέχρι να βελτιωθεί η κατάσταση.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Βιβλιοθήκη περιεχομένου
+asset_library: Βιβλιοθήκη πόρων
+
+# Primary sidebar section headings and list aria-labels
+collections: Συλλογές
+entries: Καταχωρίσεις
+files: Αρχεία
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Ο ιστότοπος σας
+  external: Εξωτερικές τοποθεσίες
+  stock_photos: Φωτογραφίες αρχείου (Stock)
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Πόροι συλλογής
+# List aria-labels for different list types
+entry_list: Λίστα καταχωρίσεων
+file_list: Λίστα αρχείων
+asset_list: Λίστα πόρων
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: Συλλογή “{$collection}”
+# {$folder} is the current asset folder label
+x_asset_folder: Φάκελος πόρων “{$folder}”
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Τώρα βλέπετε τη λίστα συλλογών.
+viewing_asset_folder_list: Τώρα βλέπετε τη λίστα φακέλων πόρων.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Τώρα βλέπετε τη συλλογή “{$collection}”, η οποία δεν έχει ακόμα καταχωρίσεις. }}
+    one {{ Τώρα βλέπετε τη συλλογή “{$collection}”, η οποία έχει μία καταχώριση. }}
+    *   {{ Τώρα βλέπετε τη συλλογή “{$collection}”, η οποία έχει {$count} καταχωρίσεις. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Τώρα βλέπετε τον φάκελο πόρων “{$folder}”, ο οποίος δεν έχει ακόμα πόρους. }}
+    one {{ Τώρα βλέπετε τον φάκελο πόρων “{$folder}”, ο οποίος έχει έναν πόρο. }}
+    *   {{ Τώρα βλέπετε τον φάκελο πόρων “{$folder}”, ο οποίος έχει {$count} πόρους. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: Πατήστε Enter για επεξεργασία του αρχείου “{$file}”.
+
+# Error messages: collection or file not found
+collection_not_found: Η συλλογή δεν βρέθηκε.
+file_not_found: Το αρχείο δεν βρέθηκε.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} από {$total} επιλεγμένα'
+
+# View switcher: toggle between list and grid views
+switch_view: Αλλαγή προβολής
+list_view: Προβολή λίστας
+grid_view: Προβολή πλέγματος
+switch_to_list_view: Αλλαγή σε προβολή λίστας
+switch_to_grid_view: Αλλαγή σε προβολή πλέγματος
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Ταξινόμηση
+sorting_options: Επιλογές ταξινόμησης
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Καμία
+  name: Όνομα
+  slug: Slug
+  # Sort by the last commit’s author name
+  commit_author: Ενημερώθηκε από
+  # Sort by the last commit date
+  commit_date: Ενημερώθηκε στις
+  # Sort by the entry’s computed summary text
+  _summary: Σύνοψη
+  # Manual order defined by the user via drag-and-drop
+  _manual: Χειροκίνητα
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, Α έως Ω'
+ascending_date: '{$label}, παλιότερα προς νεότερα'
+descending: '{$label}, Ω έως Α'
+descending_date: '{$label}, νεότερα προς παλιότερα'
+
+# Filter menu: button labels and options
+filter: Φίλτρο
+filtering_options: Επιλογές φιλτραρίσματος
+
+# Group menu: button labels and options
+group: Ομαδοποίηση
+grouping_options: Επιλογές ομαδοποίησης
+
+# Asset type filter and group labels
+type: Τύπος
+all: Όλα
+# Asset type labels
+image: Εικόνα
+video: Βίντεο
+audio: Ήχος
+document: Έγγραφο
+other: Άλλο
+
+# Toolbar toggles: show/hide panels
+show_assets: Εμφάνιση πόρων
+hide_assets: Απόκρυψη πόρων
+show_info: Εμφάνιση πληροφοριών
+hide_info: Απόκρυψη πληροφοριών
+
+# Folder display labels when no specific path is configured
+all_assets: Όλοι οι πόροι
+global_assets: Γενικοί πόροι
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: Η καταχώριση δεν βρέθηκε.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Η δημιουργία νέων καταχωρίσεων σε αυτή τη συλλογή έχει απενεργοποιηθεί από τον διαχειριστή.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: Δεν μπορείτε να προσθέσετε νέες καταχωρίσεις σε αυτή τη συλλογή επειδή έφτασε το όριο των {$quota} καταχωρίσεων.
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    one {{ Αυτή η συλλογή πλησιάζει το όριο των {$quota} καταχωρίσεων. Μπορείτε να δημιουργήσετε μόνο {$remaining} ακόμη καταχώριση. }}
+    *   {{ Αυτή η συλλογή πλησιάζει το όριο των {$quota} καταχωρίσεων. Μπορείτε να δημιουργήσετε μόνο {$remaining} ακόμη καταχωρίσεις. }}
+
+# Navigation: back links and list labels
+back_to_collection: Επιστροφή στη συλλογή
+collection_list: Λίστα συλλογών
+back_to_collection_list: Επιστροφή στη λίστα συλλογών
+asset_folder_list: Λίστα φακέλων πόρων
+back_to_asset_folder_list: Επιστροφή στη λίστα φακέλων πόρων
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Αποτελέσματα αναζήτησης
+# {$terms} is the current search query text
+search_results_for_x: Αποτελέσματα αναζήτησης για “{$terms}”
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Τώρα βλέπετε αποτελέσματα αναζήτησης για “{$terms}”. Δεν βρέθηκαν καταχωρίσεις. }}
+    one {{ Τώρα βλέπετε αποτελέσματα αναζήτησης για “{$terms}”. Βρέθηκε μία καταχώριση. }}
+    *   {{ Τώρα βλέπετε αποτελέσματα αναζήτησης για “{$terms}”. Βρέθηκαν {$count} καταχωρίσεις. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Τώρα βλέπετε αποτελέσματα αναζήτησης για “{$terms}”. Δεν βρέθηκαν πόροι. }}
+    one {{ Τώρα βλέπετε αποτελέσματα αναζήτησης για “{$terms}”. Βρέθηκε ένας πόρος. }}
+    *   {{ Τώρα βλέπετε αποτελέσματα αναζήτησης για “{$terms}”. Βρέθηκαν {$count} πόροι. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Καμία καταχώριση }}
+    one {{ {$count} καταχώριση }}
+    *   {{ {$count} καταχωρίσεις }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Κανένας πόρος }}
+    one {{ {$count} πόρος }}
+    *   {{ {$count} πόροι }}
+
+# Empty state messages
+no_files_found: Δεν βρέθηκαν αρχεία.
+no_entries_found: Δεν βρέθηκαν καταχωρίσεις.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Μεταφόρτωση νέων πόρων
+
+# Edit options menu: button and item labels
+edit_options: Επιλογές επεξεργασίας
+show_edit_options: Εμφάνιση επιλογών επεξεργασίας
+# Edit menu items with specific asset names
+edit_asset: Επεξεργασία πόρου
+# {$name} is the selected asset name
+edit_x: 'Επεξεργασία {$name}'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Αναδίπλωση μεγάλων γραμμών
+
+# Rename asset: dialog and validation
+rename_asset: Μετονομασία πόρου
+# {$name} is the current asset name
+rename_x: 'Μετονομασία {$name}'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Εισαγάγετε ένα νέο όνομα παρακάτω. }}
+    one {{ Εισαγάγετε ένα νέο όνομα παρακάτω. Μια καταχώριση που χρησιμοποιεί τον πόρο θα ενημερωθεί επίσης. }}
+    *   {{ Εισαγάγετε ένα νέο όνομα παρακάτω. {$count} καταχωρίσεις που χρησιμοποιούν τον πόρο θα ενημερωθούν επίσης. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: Το όνομα του αρχείου δεν μπορεί να είναι κενό.
+  character: Το όνομα του αρχείου δεν μπορεί να περιέχει ειδικούς χαρακτήρες.
+  duplicate: Αυτό το όνομα αρχείου χρησιμοποιείται ήδη για άλλον πόρο.
+
+# Replace asset: menu item and dialog title
+replace_asset: Αντικατάσταση πόρου
+# {$name} is the asset being replaced
+replace_x: 'Αντικατάσταση {$name}'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Κλικ για περιήγηση…
+# Browse prompt shown on touch devices
+tap_to_browse: Πατήστε για περιήγηση…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Σύρετε ένα αρχείο εδώ ή κάντε κλικ για περιήγηση… }}
+    *   {{ Σύρετε αρχεία εδώ ή κάντε κλικ για περιήγηση… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Σύρετε ένα αρχείο εδώ ή }}
+    *   {{ Σύρετε αρχεία εδώ ή }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Σύρετε μια εικόνα εδώ ή }}
+    *   {{ Σύρετε εικόνες εδώ ή }}
+
+# File picker and clipboard actions used by upload controls
+browse: Περιήγηση
+# Generic clipboard paste action used by non-image file fields
+paste: Επικόλληση
+# Clipboard paste action used by image fields
+paste_image: Επικόλληση εικόνας
+
+# Clipboard paste errors
+no_image_in_clipboard: Δεν βρέθηκε εικόνα στο πρόχειρο.
+clipboard_access_denied: Δεν επιτράπηκε η πρόσβαση στο πρόχειρο.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Σύρετε ένα αρχείο εδώ }}
+    *   {{ Σύρετε αρχεία εδώ }}
+
+# File type validation errors
+unsupported_file_type: Μη υποστηριζόμενος τύπος αρχείου
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Το αρχείο που σύρατε δεν ανήκει στους εξής τύπους: {$types}. Παρακαλούμε δοκιμάστε ξανά.'
+dropped_image_type_mismatch: 'Το αρχείο που σύρατε δεν υποστηρίζεται. Γίνονται δεκτές μόνο εικόνες των εξής τύπων: {$types}. Παρακαλούμε δοκιμάστε ξανά.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Επιλογή αρχείου }}
+    *   {{ Επιλογή αρχείων }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Διαγραφή πόρου }}
+    *   {{ Διαγραφή πόρων }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Διαγραφή επιλεγμένου πόρου }}
+    *   {{ Διαγραφή επιλεγμένων πόρων }}
+confirm_deleting_this_asset: Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτόν τον πόρο;
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Είστε βέβαιοι ότι θέλετε να διαγράψετε τον επιλεγμένο πόρο; }}
+    *   {{ Είστε βέβαιοι ότι θέλετε να διαγράψετε τους επιλεγμένους {$count} πόρους; }}
+confirm_deleting_all_assets: Είστε βέβαιοι ότι θέλετε να διαγράψετε όλους τους πόρους;
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Διαγραφή καταχώρισης }}
+    *   {{ Διαγραφή καταχωρίσεων }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Διαγραφή επιλεγμένης καταχώρισης }}
+    *   {{ Διαγραφή επιλεγμένων καταχωρίσεων }}
+confirm_deleting_this_entry: Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την καταχώριση;
+confirm_deleting_this_entry_with_assets: Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την καταχώριση και τους σχετικούς πόρους;
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Είστε βέβαιοι ότι θέλετε να διαγράψετε την επιλεγμένη καταχώριση; }}
+    *   {{ Είστε βέβαιοι ότι θέλετε να διαγράψετε τις επιλεγμένες {$count} καταχωρίσεις; }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Είστε βέβαιοι ότι θέλετε να διαγράψετε την επιλεγμένη καταχώριση και τους σχετικούς πόρους; }}
+    *   {{ Είστε βέβαιοι ότι θέλετε να διαγράψετε τις επιλεγμένες {$count} καταχωρίσεις και τους σχετικούς πόρους; }}
+confirm_deleting_all_entries: Είστε βέβαιοι ότι θέλετε να διαγράψετε όλες τις καταχωρίσεις;
+confirm_deleting_all_entries_with_assets: Είστε βέβαιοι ότι θέλετε να διαγράψετε όλες τις καταχωρίσεις και τους σχετικούς πόρους;
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Αναδιάταξη καταχωρίσεων
+done_reordering_entries: Τέλος αναδιάταξης καταχωρίσεων
+cancel_reordering_entries: Άκυρο αναδιάταξης καταχωρίσεων
+
+# Reorder error message
+saving_reorder_failed: Αποτυχία αποθήκευσης της νέας σειράς καταχωρίσεων. Παρακαλούμε δοκιμάστε ξανά.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Επεξεργασία αρχείου. Αυτό μπορεί να πάρει λίγο χρόνο. }}
+    *   {{ Επεξεργασία αρχείων. Αυτό μπορεί να πάρει λίγο χρόνο. }}
+
+# Uploading section aria-label
+uploading_files: Μεταφόρτωση αρχείων
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: 'Το αρχείο “{$name}” θα αντικατασταθεί από αυτό το αρχείο:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Αυτό το αρχείο θα αποθηκευτεί στον φάκελο “{$folder}”: }}
+    *   {{ Αυτά τα {$count} αρχεία θα αποθηκευτούν στον φάκελο “{$folder}”: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Αρχεία μεγάλου μεγέθους
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Αυτό το αρχείο δεν μπορεί να μεταφορτωθεί επειδή υπερβαίνει το μέγιστο όριο των {$size}. Παρακαλούμε μειώστε το μέγεθος ή επιλέξτε άλλο αρχείο. }}
+    *   {{ Αυτά τα αρχεία δεν μπορούν να μεταφορτωθούν επειδή υπερβαίνουν το μέγιστο όριο των {$size}. Παρακαλούμε μειώστε τα μεγέθη ή επιλέξτε διαφορετικά αρχεία. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ένα αρχείο με το ίδιο όνομα υπάρχει ήδη σε αυτόν τον φάκελο. Θέλετε να το αντικαταστήσετε; }}
+    *   {{ {$count} αρχεία με τα ίδια ονόματα υπάρχουν ήδη σε αυτόν τον φάκελο. Θέλετε να τα αντικαταστήσετε; }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ Ένα αρχείο με το όνομα “{$name}” υπάρχει ήδη σε αυτόν τον φάκελο. Θέλετε να το αντικαταστήσετε; }}
+    *   {{ {$count} αρχεία με τα ίδια ονόματα υπάρχουν ήδη σε αυτόν τον φάκελο. Θέλετε να τα αντικαταστήσετε; }}
+file_name_conflict_resolution: Επίλυση σύγκρουσης ονόματος αρχείου
+# Option to keep both files (rename the new one)
+keep_both: Διατήρηση και των δύο
+
+# Upload progress and error messages
+uploading_files_progress: Μεταφόρτωση…
+uploading_files_failed: Η μεταφόρτωση απέτυχε.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (μετατράπηκε από {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Αυτή η συλλογή δεν έχει ακόμα καταχωρίσεις.
+# Button to create first entry
+create_new_entry: Δημιουργία νέας καταχώρισης
+# “Entry” option label in the create button menu
+entry: Καταχώριση
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Αρχείο ευρετηρίου
+
+# Empty state for file collections
+no_files_in_collection: Δεν υπάρχουν διαθέσιμα αρχεία σε αυτή τη συλλογή.
+
+# Entry duplication
+duplicate_entry: Δημιουργία αντιγράφου καταχώρισης
+entry_duplicated: Η καταχώριση αντιγράφηκε ως νέο προσχέδιο.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ένα πεδίο έχει σφάλμα. Παρακαλούμε διορθώστε το για να αποθηκεύσετε την καταχώριση. }}
+    *   {{ {$count} πεδία έχουν σφάλματα. Παρακαλούμε διορθώστε τα για να αποθηκεύσετε την καταχώριση. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Η καταχώριση αποθηκεύτηκε. }}
+    *   {{ {$count} καταχωρίσεις αποθηκεύτηκαν. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Η καταχώριση αποθηκεύτηκε και δημοσιεύτηκε. }}
+    *   {{ {$count} καταχωρίσεις αποθηκεύτηκαν και δημοσιεύτηκαν. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Η καταχώριση διαγράφηκε. }}
+    *   {{ {$count} καταχωρίσεις διαγράφηκαν. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ο πόρος αποθηκεύτηκε. }}
+    *   {{ {$count} πόροι αποθηκεύτηκαν. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ο πόρος αποθηκεύτηκε και δημοσιεύτηκε. }}
+    *   {{ {$count} πόροι αποθηκεύτηκαν και δημοσιεύτηκαν. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Το URL αντιγράφηκε στο πρόχειρο. }}
+    *   {{ {$count} URLs αντιγράφηκαν στο πρόχειρο. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Η διαδρομή αρχείου αντιγράφηκε στο πρόχειρο. }}
+    *   {{ {$count} διαδρομές αρχείων αντιγράφηκαν στο πρόχειρο. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Τα δεδομένα αρχείου αντιγράφηκαν στο πρόχειρο. }}
+    *   {{ Τα δεδομένα {$count} αρχείων αντιγράφηκαν στο πρόχειρο. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ο πόρος λήφθηκε. }}
+    *   {{ {$count} πόροι λήφθηκαν. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ο πόρος μετακινήθηκε. }}
+    *   {{ {$count} πόροι μετακινήθηκαν. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ο πόρος μετονομάστηκε. }}
+    *   {{ {$count} πόροι μετονομάστηκαν. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ο πόρος διαγράφηκε. }}
+    *   {{ {$count} πόροι διαγράφηκαν. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Επεξεργαστής περιεχομένου
+
+# Draft backup: restore dialog
+restore_backup_title: Επαναφορά προσχεδίου
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Αυτή η καταχώριση έχει ένα αντίγραφο ασφαλείας από τις {$datetime}. Θέλετε να επαναφέρετε το επεξεργασμένο προσχέδιο;
+
+# Draft backup notifications
+draft_backup_saved: Το αντίγραφο ασφαλείας προσχεδίου αποθηκεύτηκε.
+draft_backup_restored: Το αντίγραφο ασφαλείας προσχεδίου επαναφέρθηκε.
+draft_backup_deleted: Το αντίγραφο ασφαλείας προσχεδίου διαγράφηκε.
+
+# Editor toolbar actions
+cancel_editing: Ακύρωση επεξεργασίας
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: Δημιουργία {$name}
+# {$collection} is the collection label
+create_entry_announcement: Τώρα δημιουργείτε μια νέα καταχώριση στη συλλογή “{$collection}”.
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: Τώρα επεξεργάζεστε την καταχώριση “{$entry}” στη συλλογή “{$collection}”.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: Τώρα επεξεργάζεστε το αρχείο “{$file}” στη συλλογή “{$collection}”.
+# {$file} is the singleton file name
+edit_singleton_announcement: Τώρα επεξεργάζεστε το αρχείο “{$file}”.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Αποθήκευση και δημοσίευση
+save_without_publishing: Αποθήκευση χωρίς δημοσίευση
+
+# Editor options menu
+show_editor_options: Εμφάνιση επιλογών επεξεργαστή
+editor_options: Επιλογές επεξεργαστή
+
+# Preview controls
+show_preview: Εμφάνιση προεπισκόπησης
+
+# Editor settings
+sync_scrolling: Συγχρονισμένη κύλιση
+
+# Locale controls
+switch_locale: Αλλαγή γλώσσας
+# Short status indicators appended to locale names
+locale_content_disabled_short: (απενεργοποιημένο)
+locale_content_error_short: (σφάλμα)
+
+# Pane labels
+edit: Επεξεργασία
+preview: Προεπισκόπηση
+
+# Pane controls; not to be confused with pages
+swap_panes: Εναλλαγή πλαισίων
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Επεξεργασία περιεχομένου στα {$locale}
+preview_x_locale: Προεπισκόπηση περιεχομένου στα {$locale}
+
+# Preview iframe labels
+content_preview: Προεπισκόπηση περιεχομένου
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Εμφάνιση επιλογών περιεχομένου στα {$locale}
+content_options_x_locale: 'Επιλογές περιεχομένου στα {$locale}'
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: Πεδίο “{$field}”
+
+# Field options menu
+show_field_options: Εμφάνιση επιλογών πεδίου
+field_options: Επιλογές πεδίου
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Μη υποστηριζόμενος τύπος πεδίου: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: 'Ενεργοποίηση {$locale}'
+reenable_x_locale: 'Επανενεργοποίηση {$locale}'
+disable_x_locale: 'Απενεργοποίηση {$locale}'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: Το περιεχόμενο στα {$locale} έχει απενεργοποιηθεί.
+locale_x_now_disabled: Το περιεχόμενο στα {$locale} είναι τώρα απενεργοποιημένο. Θα διαγραφεί όταν αποθηκεύσετε την καταχώριση.
+
+# Repository and site links
+view_in_repository: Προβολή στο repository
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: 'Προβολή στο {$service}'
+view_on_live_site: Προβολή στον ενεργό ιστότοπο
+
+# Content copying from other locales
+copy_from: Αντιγραφή από…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: 'Αντιγραφή από {$locale}'
+
+# Translation features
+translation_options: Επιλογές μετάφρασης
+translate: Μετάφραση
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Μετάφραση πεδίου }}
+    *   {{ Μετάφραση πεδίων }}
+translate_from: Μετάφραση από…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: 'Μετάφραση από {$locale}'
+
+# Revert changes
+revert_changes: Αναίρεση αλλαγών
+revert_all_changes: Αναίρεση όλων των αλλαγών
+
+# Slug editing
+edit_slug: Επεξεργασία Slug
+edit_slug_warning: Η αλλαγή του slug ενδέχεται να καταστρέψει εσωτερικούς και εξωτερικούς συνδέσμους προς την καταχώριση. Επί του παρόντος, το Sveltia CMS δεν ενημερώνει αναφορές που έχουν δημιουργηθεί με πεδία «Σχέσης» (Relation), οπότε θα χρειαστεί να τις ενημερώσετε χειροκίνητα μαζί με άλλους συνδέσμους.
+edit_slug_error:
+  empty: Το slug δεν μπορεί να είναι κενό.
+  invalid: Το slug δεν μπορεί να περιέχει ειδικούς χαρακτήρες, συμπεριλαμβανομένων κενών και καθέτων (/).
+  duplicate: Αυτό το slug χρησιμοποιείται για άλλη καταχώριση.
+
+# Required field indicator
+required: Απαιτείται
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Τίποτα προς μετάφραση.
+    started: Μετάφραση…
+    error: Η μετάφραση απέτυχε.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Δεν μεταφράστηκαν πεδία από τα {$source}. }}
+        one {{ Το πεδίο μεταφράστηκε από τα {$source}. }}
+        *   {{ {$count} πεδία μεταφράστηκαν από τα {$source}. }}
+  copy:
+    none: Τίποτα προς αντιγραφή.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Δεν αντιγράφηκαν πεδία από τα {$source}. }}
+        one {{ Το πεδίο αντιγράφηκε από τα {$source}. }}
+        *   {{ {$count} πεδία αντιγράφηκαν από τα {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Αυτό το πεδίο είναι υποχρεωτικό.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: Η ημερομηνία/ώρα πρέπει να είναι στις ή μετά τις {$min}.
+    date: Η ημερομηνία πρέπει να είναι στις ή μετά τις {$min}.
+    time: Η ώρα πρέπει να είναι στις ή μετά τις {$min}.
+    number: Η τιμή πρέπει να είναι μεγαλύτερη ή ίση με {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ Πρέπει να επιλέξετε τουλάχιστον {$min} επιλογή. }}
+        *   {{ Πρέπει να επιλέξετε τουλάχιστον {$min} επιλογές. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ Πρέπει να προσθέσετε τουλάχιστον {$min} αντικείμενο. }}
+        *   {{ Πρέπει να προσθέσετε τουλάχιστον {$min} αντικείμενα. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: Η ημερομηνία/ώρα πρέπει να είναι στις ή πριν τις {$max}.
+    date: Η ημερομηνία πρέπει να είναι στις ή πριν τις {$max}.
+    time: Η ώρα πρέπει να είναι στις ή πριν τις {$max}.
+    number: Η τιμή πρέπει να είναι μικρότερη ή ίση με {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ Δεν μπορείτε να επιλέξετε περισσότερες από {$max} επιλογή. }}
+        *   {{ Δεν μπορείτε να επιλέξετε περισσότερες από {$max} επιλογές. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ Δεν μπορείτε να προσθέσετε περισσότερα από {$max} αντικείμενο. }}
+        *   {{ Δεν μπορείτε να προσθέσετε περισσότερα από {$max} αντικείμενα. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ Πρέπει να εισαγάγετε τουλάχιστον {$min} χαρακτήρα. }}
+      *   {{ Πρέπει να εισαγάγετε τουλάχιστον {$min} χαρακτήρες. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ Δεν μπορείτε να εισαγάγετε περισσότερους από {$max} χαρακτήρα. }}
+      *   {{ Δεν μπορείτε να εισαγάγετε περισσότερους από {$max} χαρακτήρες. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Παρακαλούμε εισαγάγετε έναν αριθμό.
+    email: Παρακαλούμε εισαγάγετε μια έγκυρη διεύθυνση email.
+    url: Παρακαλούμε εισαγάγετε ένα έγκυρο URL.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Πλαίσια πλευρικής στήλης
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Επικύρωση
+    placeholder: Τα αποτελέσματα επικύρωσης θα εμφανίζονται εδώ.
+    no_errors_found: Δεν βρέθηκαν σφάλματα.
+
+  # History panel: shows entry commit history
+  history:
+    title: Ιστορικό
+    fetch_failed: Αποτυχία φόρτωσης ιστορικού.
+    no_history: Δεν βρέθηκε ιστορικό.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Backlinks
+    no_entries: Καμία καταχώριση δεν αναφέρεται σε αυτήν.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Σφάλμα
+    description: Παρουσιάστηκε σφάλμα κατά την αποθήκευση της καταχώρισης. Παρακαλούμε δοκιμάστε αργότερα.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: Τώρα βλέπετε τις λεπτομέρειες του πόρου “{$name}”.
+
+# Asset editor container aria-label
+asset_editor: Επεξεργαστής πόρων
+
+# Preview unavailable message
+preview_unavailable: Η προεπισκόπηση δεν είναι διαθέσιμη.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ Δημόσιο URL }}
+    *   {{ Δημόσια URLs }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Διαδρομή αρχείου }}
+    *   {{ Διαδρομές αρχείων }}
+file_data: Δεδομένα αρχείου
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Πληροφορίες πόρου
+select_asset_show_info: Επιλέξτε έναν πόρο για να δείτε τις πληροφορίες του.
+
+kind: Είδος
+size: Μέγεθος
+dimensions: Διαστάσεις
+duration: Διάρκεια
+# Short heading for a list of entries using the selected asset
+used_in: Χρησιμοποιείται σε
+created_date: Ημερομηνία δημιουργίας
+location: Τοποθεσία
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Χάρτης που δείχνει γεωγραφικό πλάτος {$latitude}, γεωγραφικό μήκος {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Κατάργηση αυτού του αντικειμένου
+move_up: Μετακίνηση πάνω
+move_down: Μετακίνηση κάτω
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: Προσθήκη {$name}
+
+# List item context menu
+add_item_above: Προσθήκη στοιχείου από πάνω
+add_item_below: Προσθήκη στοιχείου από κάτω
+
+# Variable-type list selector
+select_list_type: Επιλογή τύπου λίστας
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Διαφάνεια
+
+# Select field: empty option placeholder
+unselected_option: (Καμία)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Επιλογή αρχείου
+    image: Επιλογή εικόνας
+
+  # Search input labels
+  search_for_file: Αναζήτηση αρχείων
+  search_for_image: Αναζήτηση εικόνων
+
+  # Locations panel aria-label
+  locations: Τοποθεσίες
+
+  # Asset folder options
+  folder:
+    field: Πόροι πεδίου
+    entry: Πόροι καταχώρισης
+    file: Πόροι αρχείου
+    collection: Πόροι συλλογής
+    global: Γενικοί πόροι
+
+  # Error messages
+  error:
+    invalid_key: Το κλειδί API σας δεν είναι έγκυρο ή έχει λήξει. Παρακαλούμε ελέγξτε το και δοκιμάστε ξανά.
+    search_fetch_failed: Παρουσιάστηκε σφάλμα κατά την αναζήτηση πόρων. Παρακαλούμε δοκιμάστε αργότερα.
+    image_fetch_failed: Παρουσιάστηκε σφάλμα κατά τη λήψη του επιλεγμένου πόρου. Παρακαλούμε δοκιμάστε αργότερα.
+
+  # Stock photo panels
+  available_images: Διαθέσιμες εικόνες
+
+  # URL entry option
+  enter_url: Εισαγωγή URL
+  enter_file_url: 'Εισαγάγετε το URL του αρχείου:'
+  enter_image_url: 'Εισαγάγετε το URL της εικόνας:'
+
+  # Large file warning dialog
+  large_file:
+    title: Αρχείο μεγάλου μεγέθους
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Αναφορά Δημιουργού
+    description: 'Χρησιμοποιήστε την ακόλουθη αναφορά αν είναι δυνατόν:'
+
+  # Unsaved asset badge
+  unsaved: Μη αποθηκευμένο
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Δεν εισήχθησαν χαρακτήρες. Ελάχιστο: {$min}. Μέγιστο: {$max}. }}
+      one {{ Εισήχθη {$count} χαρακτήρας. Ελάχιστο: {$min}. Μέγιστο: {$max}. }}
+      *   {{ Εισήχθησαν {$count} χαρακτήρες. Ελάχιστο: {$min}. Μέγιστο: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Δεν εισήχθησαν χαρακτήρες. Ελάχιστο: {$min}. }}
+      one {{ Εισήχθη {$count} χαρακτήρας. Ελάχιστο: {$min}. }}
+      *   {{ Εισήχθησαν {$count} χαρακτήρες. Ελάχιστο: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Δεν εισήχθησαν χαρακτήρες. Μέγιστο: {$max}. }}
+      one {{ Εισήχθη {$count} χαρακτήρας. Μέγιστο: {$max}. }}
+      *   {{ Εισήχθησαν {$count} χαρακτήρες. Μέγιστο: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: Πρόγραμμα αναπαραγωγής βίντεο YouTube
+
+# Date/time field: quick action buttons
+today: Σήμερα
+now: Τώρα
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Εικόνα
+  src: Πηγή
+  alt: Εναλλακτικό κείμενο
+  title: Τίτλος
+  link: Σύνδεσμος
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Κλειδί
+  value: Τιμή
+  action: Ενέργεια
+  empty_key: Το κλειδί είναι υποχρεωτικό.
+  duplicate_key: Το κλειδί πρέπει να είναι μοναδικό.
+
+# Map field: location search and geolocation
+find_place: Αναζήτηση τοποθεσίας
+use_your_location: Χρήση της τοποθεσίας σας
+
+# Geolocation error dialog
+geolocation_error_title: Σφάλμα γεωεντοπισμού
+geolocation_error_body: Παρουσιάστηκε σφάλμα κατά την ανάκτηση της τοποθεσίας σας.
+geolocation_unsupported: Ο γεωεντοπισμός API δεν υποστηρίζεται από αυτόν τον φυλλομετρητή.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Ναι
+  'false': Όχι
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: Η υπηρεσία δεν έχει ρυθμιστεί σωστά.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: Κλειδί API
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: Εισαγάγετε το {$key} για το {$service}.
+      requested: Επικύρωση…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: Το {$key} που παρείχατε δεν είναι έγκυρο. Παρακαλούμε ελέγξτε το και δοκιμάστε ξανά.
+    password:
+      # {$service} is the cloud service name
+      initial: Εισαγάγετε τον κωδικό πρόσβασής σας για το {$service}.
+      requested: Σύνδεση…
+      error: Το όνομα χρήστη ή ο κωδικός πρόσβασης είναι λανθασμένα. Παρακαλούμε ελέγξτε τα και δοκιμάστε ξανά.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Βιβλιοθήκη μέσων Cloudinary
+    activate:
+      button_label: Ενεργοποίηση Cloudinary
+      description: Αφού συνδεθείτε, κάντε πάλι κλικ στο κουμπί Σύνδεση για να συνεχίσετε.
+    auth_key_label: API Secret
+    open_library: Άνοιγμα Cloudinary
+
+  uploadcare:
+    auth_key_label: API Secret Key
+
+  aws_s3:
+    auth_key_label: Secret Access Key
+
+  cloudflare_r2:
+    auth_key_label: Secret Access Key
+
+  digitalocean_spaces:
+    auth_key_label: Secret Access Key
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ Υπάρχει ένα σφάλμα στις ρυθμίσεις του CMS. Παρακαλούμε λύστε το πρόβλημα και δοκιμάστε ξανά. }}
+      *   {{ Υπάρχουν σφάλματα στις ρυθμίσεις του CMS. Παρακαλούμε λύστε τα προβλήματα και δοκιμάστε ξανά. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: 'Συλλογή {$collection}'
+    file: 'Αρχείο {$file}'
+    component: '{$component} component'
+    # Don’t localize `{$field}`
+    field: 'Πεδίο `{$field}`'
+
+  # Configuration error messages
+  error:
+    no_secure_context: Το Sveltia CMS λειτουργεί μόνο με HTTPS ή localhost URLs.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ Το URL του αρχείου ρυθμίσεων πρέπει να χρησιμοποιεί το πρωτόκολλο HTTPS ή μια διεύθυνση localhost. }}
+        *   {{ Τα URLs των αρχείων ρυθμίσεων πρέπει να χρησιμοποιούν το πρωτόκολλο HTTPS ή διευθύνσεις localhost. }}
+    fetch_failed: Δεν ήταν δυνατή η ανάκτηση του αρχείου ρυθμίσεων.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: Η απόκριση HTTP επέστρεψε με κατάσταση {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Δεν ήταν δυνατή η ανάκτηση του αρχείου ρυθμίσεων. Για να αποτρέψετε τη φόρτωση του αρχείου `config.yml`, προσθέστε <a>`load_config_file: false`</a> στο αντικείμενο ρυθμίσεων που μεταβιβάζεται στο `CMS.init()`.'
+    parse_failed: Αδυναμία ανάλυσης του αρχείου ρυθμίσεων.
+    parse_failed_invalid_object: Το αρχείο ρυθμίσεων δεν είναι έγκυρο αντικείμενο JavaScript.
+    parse_failed_unsupported_type: Το αρχείο ρυθμίσεων δεν είναι υποστηριζόμενος τύπος αρχείου. Υποστηρίζονται μόνο YAML, TOML και JSON.
+    no_collection: Δεν έχουν οριστεί συλλογές.
+    missing_backend: Το backend δεν έχει οριστεί.
+    missing_backend_name: Το όνομα του backend δεν έχει οριστεί.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: Το backend {$name} <a>δεν υποστηρίζεται</a> στο Sveltia CMS.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Το παρωχημένο backend {$name} <a>δεν υποστηρίζεται</a> στο Sveltia CMS.
+    unsupported_custom_backend: Προσαρμοσμένα backends <a>δεν υποστηρίζονται</a> στο Sveltia CMS.
+    unsupported_backend_suggestion: Χρησιμοποιήστε ένα από τα <a>υποστηριζόμενα backends</a> αντ’ αυτού.
+    missing_repository: Το repository δεν έχει οριστεί.
+    invalid_repository: Το ρυθμισμένο repository είναι άκυρο. Πρέπει να είναι σε μορφή «owner/repo».
+    oauth_implicit_flow: Η ρυθμισμένη μέθοδος ταυτοποίησης (implicit flow) δεν υποστηρίζεται στο Sveltia CMS. Χρησιμοποιήστε μια διαφορετική <a>μέθοδο ταυτοποίησης</a>.
+    github_pkce_unsupported: Η εξουσιοδότηση PKCE δεν υποστηρίζεται ακόμη λόγω των περιορισμών του GitHub. Χρησιμοποιήστε μια διαφορετική <a>μέθοδο ταυτοποίησης</a>.
+    oauth_no_app_id: Το OAuth application ID δεν έχει οριστεί.
+    # Don’t localize `auth_methods`
+    no_auth_methods: Η επιλογή `auth_methods` πρέπει να περιέχει τουλάχιστον μία μέθοδο.
+    missing_media_folder: Ο φάκελος μέσων δεν έχει οριστεί.
+    invalid_media_folder: Ο ρυθμισμένος φάκελος μέσων είναι άκυρος. Πρέπει να είναι string.
+    invalid_public_folder: Ο ρυθμισμένος δημόσιος φάκελος είναι άκυρος. Πρέπει να είναι string.
+    public_folder_relative_path: Ο ρυθμισμένος δημόσιος φάκελος είναι άκυρος. Πρέπει να είναι μια απόλυτη διαδρομή που ξεκινά με «/».
+    public_folder_absolute_url: Δεν υποστηρίζεται absolute URL για την επιλογή του δημόσιου φακέλου στο Sveltia CMS.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: Η επιλογή `asset_collections` είναι άκυρη. Πρέπει να είναι ένα array.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: Η συλλογή πόρων {$count} πρέπει να έχει την επιλογή `name` ορισμένη ως μη κενό string.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: Το όνομα της συλλογής πόρων `{$name}` είναι άκυρο. Δεν πρέπει να περιέχει ειδικούς χαρακτήρες.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: Τα ονόματα των συλλογών πόρων πρέπει να είναι μοναδικά, αλλά το `{$name}` χρησιμοποιείται περισσότερες από μία φορές.
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: Η συλλογή πόρων `{$name}` πρέπει να έχει την επιλογή `media_folder` ορισμένη ως string.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: Η συλλογή πρέπει να έχει ορισμένη είτε την επιλογή `folder`, `files` ή `divider`.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: Η συλλογή δεν μπορεί να έχει ταυτόχρονα τις επιλογές `folder`, `files` και `divider`.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: Η επέκταση `{$extension}` δεν ταιριάζει με τη μορφή `{$format}`.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: Το πρότυπο slug `{$slug}` είναι άκυρο καθώς δεν μπορεί να περιέχει καθέτους (/). Για την οργάνωση καταχωρίσεων σε υποφακέλους, χρησιμοποιήστε την επιλογή `path` αντί για το `slug`.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: Η συλλογή {$count} πρέπει να έχει την επιλογή `name` ορισμένη ως μη κενό string.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: Το όνομα της συλλογής `{$name}` είναι άκυρο. Δεν πρέπει να περιέχει ειδικούς χαρακτήρες.
+    duplicate_collection_name: Τα ονόματα των συλλογών πρέπει να είναι μοναδικά, αλλά το `{$name}` χρησιμοποιείται περισσότερες από μία φορές.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: Το αρχείο συλλογής {$count} πρέπει να έχει την επιλογή `name` ορισμένη ως μη κενό string.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: Το όνομα του αρχείου συλλογής `{$name}` είναι άκυρο. Δεν πρέπει να περιέχει ειδικούς χαρακτήρες.
+    duplicate_collection_file_name: Τα ονόματα των αρχείων συλλογής πρέπει να είναι μοναδικά, αλλά το `{$name}` χρησιμοποιείται περισσότερες από μία φορές.
+    # Don’t localize `fields`
+    collection_no_fields: Η συλλογή πρέπει να έχει την επιλογή `fields` ορισμένη με τουλάχιστον ένα πεδίο.
+    # Don’t localize `fields`
+    collection_file_no_fields: Το αρχείο συλλογής πρέπει να έχει την επιλογή `fields` ορισμένη με τουλάχιστον ένα πεδίο.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: Η επιλογή `i18n` πρέπει να είναι ορισμένη για το αρχείο συλλογής εάν χρησιμοποιείται το `locale` placeholder στη διαδρομή `file`.
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: Το πεδίο {$count} πρέπει να έχει την επιλογή `name` ορισμένη ως μη κενό string.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: Το όνομα του πεδίου `{$name}` είναι άκυρο. Δεν πρέπει να περιέχει ειδικούς χαρακτήρες. Αν θέλετε να εμφωλεύσετε (nest) πεδία, <a>χρησιμοποιήστε πεδία Object αντί για dot notation</a>.
+    duplicate_field_name: Τα ονόματα των πεδίων πρέπει να είναι μοναδικά, αλλά το `{$name}` χρησιμοποιείται περισσότερες από μία φορές.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: Ο τύπος μεταβλητής {$count} πρέπει να έχει την επιλογή `name` ορισμένη ως μη κενό string.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: Το όνομα του τύπου μεταβλητής `{$name}` είναι άκυρο. Δεν πρέπει να περιέχει ειδικούς χαρακτήρες.
+    duplicate_variable_type: Τα ονόματα των τύπων μεταβλητών πρέπει να είναι μοναδικά, αλλά το `{$name}` χρησιμοποιείται περισσότερες από μία φορές.
+    date_field_type: 'Ο παρωχημένος τύπος πεδίου Date δεν υποστηρίζεται στο Sveltia CMS. Χρησιμοποιήστε τον τύπο DateTime με την επιλογή `type: date`.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Άκυρη ζώνη ώρας: {$timeZone}. Πρέπει να είναι ένας έγκυρος αναγνωριστικός κωδικός IANA, όπως `Europe/Athens`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: Η παρωχημένη επιλογή `{$prop}` δεν υποστηρίζεται στο Sveltia CMS. Χρησιμοποιήστε την επιλογή `{$newProp}` αντ’ αυτού.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: Η επιλογή `allow_multiple` δεν υποστηρίζεται στο Sveltia CMS. Χρησιμοποιήστε την επιλογή `multiple`, η οποία έχει ως προεπιλογή το `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: Το πεδίο List δεν μπορεί να έχει ταυτόχρονα τις επιλογές `field`, `fields` και `types`.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: Ο τύπος μεταβλητής του πεδίου List είναι άκυρος. Η επιλογή `widget` είναι ορισμένη σε `{$widget}` αλλά πρέπει να είναι `object`.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: Το πεδίο Object δεν μπορεί να έχει ταυτόχρονα τις επιλογές `fields` και `types`.
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: Το πεδίο Object πρέπει να έχει ορισμένη είτε την επιλογή `fields` ή την `types`.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: Η συλλογή αναφοράς `{$collection}` είναι άκυρη ή δεν έχει οριστεί.
+    relation_field_invalid_collection_file: Το αρχείο αναφοράς `{$file}` είναι άκυρο ή δεν έχει οριστεί.
+    # Don’t localize `file`
+    relation_field_missing_file_name: Η επιλογή `file` πρέπει να οριστεί για μια σχέση με μια συλλογή αρχείων.
+    relation_field_invalid_value_field: Το πεδίο τιμής αναφοράς `{$field}` είναι άκυρο ή δεν έχει οριστεί.
+    unexpected: Μη αναμενόμενο σφάλμα
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: Το OAuth application ID δεν έχει οριστεί. Οι χρήστες πρέπει να παρέχουν διακριτικό πρόσβασης για να συνδεθούν.
+    editorial_workflow_unsupported: Η ροή εργασίας σύνταξης δεν υποστηρίζεται ακόμη στο Sveltia CMS.
+    open_authoring_unsupported: Η ανοιχτή συγγραφή (open authoring) δεν υποστηρίζεται ακόμη στο Sveltia CMS.
+    nested_collections_unsupported: Οι εμφωλευμένες (nested) συλλογές δεν υποστηρίζονται ακόμη στο Sveltia CMS.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: Η επιλογή `{$prop}` δεν υποστηρίζεται στο Sveltia CMS και θα αγνοηθεί.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: Είναι ορισμένες ταυτόχρονα η επιλογή `picker_utc` και οι νεότερες επιλογές ζώνης ώρας (`input_timezone` ή `output_utc`). Οι νέες επιλογές έχουν προτεραιότητα. Σκεφτείτε να αφαιρέσετε το `picker_utc` από τις ρυθμίσεις σας.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Δείτε τις σημειώσεις συμβατότητας για λεπτομέρειες: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: Για καλύτερη εμπειρία ανάπτυξης (Dx), μπορείτε να επικυρώσετε το αρχείο ρυθμίσεών σας έναντι του JSON σχήματος του Sveltia CMS. Δείτε το {$link} για λεπτομέρειες.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Τοπικό
+  # Browser compatibility warnings
+  unsupported_browser: Το Local Workflow δεν υποστηρίζεται από το φυλλομετρητή σας. Παρακαλούμε χρησιμοποιήστε Chrome ή Edge.
+  disabled: Το Local Workflow είναι απενεργοποιημένο στον φυλλομετρητή σας. <a>Δείτε πώς να το ενεργοποιήσετε</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: Προσχέδια
+  in_review: Σε αξιολόγηση
+  ready: Έτοιμο
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Κατηγορίες
+
+# Site Configuration Editor
+site_configuration_editor: Επεξεργαστής ρυθμίσεων ιστοτόπου
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: Το κλειδί API αποθηκεύτηκε.
+    api_key_removed: Το κλειδί API αφαιρέθηκε.
+    api_key_invalid: Το κλειδί API που παρείχατε δεν είναι έγκυρο. Παρακαλούμε ελέγξτε το και δοκιμάστε ξανά.
+
+  # Preferences operation errors
+  error:
+    permission_denied: Η πρόσβαση στην αποθήκευση cookies απορρίφθηκε. Παρακαλούμε ελέγξτε τα δικαιώματα του φυλλομετρητή.
+
+  # Appearance panel
+  appearance:
+    title: Εμφάνιση
+    theme: Θέμα
+    select_theme: Επιλογή θέματος
+
+  # Theme options
+  theme:
+    auto: Αυτόματο
+    dark: Σκούρο
+    light: Ανοιχτό
+
+  # Language panel
+  language:
+    title: Γλώσσα
+    ui_language:
+      title: Γλώσσα περιβάλλοντος χρήστη
+      select_language: Επιλογή γλώσσας
+
+  # Contents panel
+  contents:
+    title: Περιεχόμενα
+    editor:
+      title: Επεξεργαστής
+      use_draft_backup:
+        switch_label: Αυτόματη δημιουργία αντιγράφων ασφαλείας προσχεδίων
+      close_on_save:
+        switch_label: Κλείσιμο του επεξεργαστή μετά την αποθήκευση ενός προσχεδίου
+      close_with_escape:
+        switch_label: Κλείσιμο του επεξεργαστή με το πλήκτρο Escape
+
+  # Internationalization panel
+  i18n:
+    title: Διεθνοποίηση
+    translators:
+      default:
+        title: Προεπιλεγμένη υπηρεσία μετάφρασης
+        select_service: Επιλογή υπηρεσίας
+      api_keys:
+        title: Κλειδιά API υπηρεσιών μετάφρασης
+        description: Διαχείριση κλειδιών API για <a>υπηρεσίες μετάφρασης</a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: 'Κλειδί {$service}'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Εγγραφείτε στο <a {$homeHref}>{$service}</a> και εισαγάγετε <a {$apiKeyHref}>το κλειδί API σας</a> εδώ για να ενεργοποιήσετε τη γρήγορη μετάφραση πεδίων κειμένου.
+
+  # Media panel
+  media:
+    title: Μέσα
+    stock_photos:
+      api_keys:
+        title: Κλειδιά API υπηρεσιών φωτογραφιών stock
+        description: Διαχείριση κλειδιών API για <a>υπηρεσίες φωτογραφιών stock</a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: 'Κλειδί API {$service}'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Εγγραφείτε στο <a {$homeHref}>{$service} API</a> και εισαγάγετε <a {$apiKeyHref}>το κλειδί API σας</a> εδώ για να εισάγετε δωρεάν φωτογραφίες σε πεδία εικόνων.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: Φωτογραφίες stock από {$service}
+      no_services: Δεν έχουν ρυθμιστεί <a>υπηρεσίες φωτογραφιών</a>.
+    cloud_storage:
+      api_keys:
+        title: Κλειδιά API υπηρεσιών αποθήκευσης στο σύννεφο
+        description: Διαχείριση κλειδιών API για <a>υπηρεσίες αποθήκευσης στο σύννεφο</a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: 'Κλειδί API {$service}'
+      no_services: Δεν έχουν ρυθμιστεί <a>υπηρεσίες αποθήκευσης στο σύννεφο</a>.
+
+  # Accessibility panel
+  accessibility:
+    title: Προσβασιμότητα
+    underline_links:
+      title: Υπογράμμιση συνδέσμων
+      description: Εμφάνιση υπογράμμισης για συνδέσμους στην προεπισκόπηση και στις ετικέτες του περιβάλλοντος χρήστη.
+      switch_label: Πάντα υπογράμμιση συνδέσμων
+
+  # Advanced panel
+  advanced:
+    title: Για προχωρημένους
+    beta:
+      title: Δυνατότητες Beta
+      description: Ενεργοποίηση ορισμένων δυνατοτήτων beta που μπορεί να είναι ασταθείς ή μη μεταφρασμένες.
+      switch_label: Συμμετοχή στο πρόγραμμα Beta
+    developer_mode:
+      title: Λειτουργία Developer
+      description: Ενεργοποίηση δυνατοτήτων για προγραμματιστές, συμπεριλαμβανομένων λεπτομερών καταγραφών κονσόλας και εγγενών μενού πλαισίου.
+      switch_label: Ενεργοποίηση λειτουργίας developer
+    deploy_hook:
+      title: Deploy Hook
+      description: Εισαγάγετε ένα webhook URL που θα καλείται όταν ενεργοποιείτε χειροκίνητα μια δημοσίευση επιλέγοντας Δημοσίευση Αλλαγών. Μπορεί να μείνει κενό εάν χρησιμοποιείτε GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: Hook URL
+        saved: Το URL του Hook αποθηκεύτηκε.
+        removed: Το URL του Hook αφαιρέθηκε.
+      # Authorization header input
+      auth:
+        field_label: Κεφαλίδα εξουσιοδότησης (π.χ. Bearer <token>) (προαιρετικό)
+        saved: Η κεφαλίδα εξουσιοδότησης αποθηκεύτηκε.
+        removed: Η κεφαλίδα εξουσιοδότησης αφαιρέθηκε.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: Προβολή βιβλιοθήκης περιεχομένου
+  view_asset_library: Προβολή βιβλιοθήκης πόρων
+  search: Αναζήτηση για καταχωρίσεις και πόρους
+  create_entry: Δημιουργία νέας καταχώρισης
+  save_entry: Αποθήκευση καταχώρισης
+  cancel_editing: Ακύρωση επεξεργασίας καταχώρισης
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: Εικόνα AVIF
+  bmp: Εικόνα Bitmap
+  gif: Εικόνα GIF
+  ico: Εικονίδιο
+  jpeg: Εικόνα JPEG
+  jpg: Εικόνα JPEG
+  png: Εικόνα PNG
+  svg: Εικόνα SVG
+  tif: Εικόνα TIFF
+  tiff: Εικόνα TIFF
+  webp: Εικόνα WebP
+  # Video formats
+  avi: Βίντεο AVI
+  m4v: Βίντεο MP4
+  mov: Βίντεο QuickTime
+  mp4: Βίντεο MP4
+  mpeg: Βίντεο MPEG
+  mpg: Βίντεο MPEG
+  ogg: Βίντεο Ogg
+  ogv: Βίντεο Ogg
+  ts: Βίντεο MPEG
+  webm: Βίντεο WebM
+  3gp: Βίντεο 3GPP
+  3g2: Βίντεο 3GPP2
+  # Audio formats
+  aac: Ήχος AAC
+  mid: MIDI
+  midi: MIDI
+  m4a: Ήχος MP4
+  mp3: Ήχος MP3
+  oga: Ήχος Ogg
+  opus: Ήχος OPUS
+  wav: Ήχος WAV
+  weba: Ήχος WebM
+  # Document formats
+  csv: Υπολογιστικό φύλλο CSV
+  doc: Έγγραφο Word
+  docx: Έγγραφο Word
+  odp: Παρουσίαση OpenDocument
+  ods: Υπολογιστικό φύλλο OpenDocument
+  odt: Κείμενο OpenDocument
+  pdf: Έγγραφο PDF
+  ppt: Παρουσίαση PowerPoint
+  pptx: Παρουσίαση PowerPoint
+  rtf: Έγγραφο εμπλουτισμένου κειμένου
+  xls: Υπολογιστικό φύλλο Excel
+  xlsx: Υπολογιστικό φύλλο Excel
+  # Text formats
+  html: Κείμενο HTML
+  js: JavaScript
+  json: Κείμενο JSON
+  md: Κείμενο Markdown
+  toml: Κείμενο TOML
+  yaml: Κείμενο YAML
+  yml: Κείμενο YAML
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} bytes'
+  kb: '{$size} KB'
+  mb: '{$size} MB'
+  gb: '{$size} GB'
+  tb: '{$size} TB'
