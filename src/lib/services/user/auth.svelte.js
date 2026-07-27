@@ -178,12 +178,13 @@ export const signInAutomatically = async () => {
   ({ _user, copiedPrefs } = parseMagicLink());
   _user ??= await getUserCache();
 
+  // Initialize the backend, which is needed on the login page
+  const _backend = getBackend(_user);
+
   // If no cached user info is found, simply return as we cannot sign in automatically
   if (!_user) {
     return;
   }
-
-  const _backend = getBackend(_user);
 
   if (_user && _backend) {
     // Temporarily populate the `user` store with the cache, otherwise it’s not updated in
