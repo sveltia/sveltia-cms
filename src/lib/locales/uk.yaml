@@ -1,0 +1,1827 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Створити
+select: Вибрати
+select_all: Вибрати все
+upload: Завантажити
+copy: Копіювати
+download: Звантажити
+duplicate: Дублювати
+delete: Видалити
+reorder: Змінити порядок
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Скасувати
+done: Готово
+save: Зберегти
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Збереження…
+
+# Publishing actions: used when committing changes to the repository
+publish: Опублікувати
+# Progress indicator shown on the publish button during publishing
+publishing: Публікування…
+
+# Modification actions: editing and updating content
+rename: Перейменувати
+update: Оновити
+replace: Замінити
+
+# List and collection actions: adding and removing items
+add: Додати
+remove: Вилучити
+clear: Очистити
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Розгорнути
+expand_all: Розгорнути все
+collapse: Згорнути
+collapse_all: Згорнути все
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Вставити
+restore: Відновити
+discard: Відкинути
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Пошук…
+no_results: Нічого не знайдено.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Глобальна
+primary: Основна
+secondary: Другорядна
+collection: Колекція
+folder: Тека
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: Ключ API
+details: Подробиці
+back: Назад
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Завантаження…
+# Dismiss button for temporary notifications and infobars
+later: Пізніше
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Слаг
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Одиничний
+singletons: Одиничні
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Не вдалося скопіювати до буфера обміну.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: Ласкаво просимо до {$name}
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: Працює на {$name}
+
+# Shown during initial configuration and data loading
+loading_cms_config: Завантаження конфігурації CMS…
+loading_site_data: Завантаження даних сайту…
+loading_site_data_error: Під час завантаження даних сайту сталася помилка.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: Увійти через {$service}
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Увійти за допомогою токена доступу
+sign_in_using_access_token_description: Введіть свій токен нижче. Він повинен мати доступ на читання/запис до вмісту репозиторію.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: Ви можете згенерувати токен на <a>сторінці налаштувань користувача {$service}</a>.
+# Input field label for personal access token
+personal_access_token: Персональний токен доступу
+
+# Authentication progress indicators
+authorizing: Авторизація…
+signing_in: Вхід…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Працювати з локальним репозиторієм
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: Коли з’явиться запит, виберіть кореневу теку репозиторію «{$repo}».
+work_with_local_repo_description_no_repo: Коли з’явиться запит, виберіть кореневу теку вашого Git-репозиторію.
+# Button label for demo/test repository
+work_with_test_repo: Працювати з тестовим репозиторієм
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: Вибрана тека не є кореневою текою репозиторію. Спробуйте ще раз.
+  picker_dismissed: Не вдалося вибрати кореневу теку репозиторію. Спробуйте ще раз.
+  authentication_aborted: Автентифікацію перервано. Спробуйте ще раз.
+  invalid_token: Наданий токен недійсний. Перевірте його та спробуйте ще раз.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Ваш Git-бекенд не підтримується автентифікатором.
+  UNSUPPORTED_DOMAIN: Ваш домен не має дозволу використовувати автентифікатор.
+  MISCONFIGURED_CLIENT: Ідентифікатор клієнта або секрет OAuth-застосунку не налаштовано.
+  AUTH_CODE_REQUEST_FAILED: Не вдалося отримати код авторизації. Спробуйте пізніше.
+  CSRF_DETECTED: Виявлено потенційну CSRF-атаку. Процес автентифікації перервано.
+  TOKEN_REQUEST_FAILED: Не вдалося запитати токен доступу. Спробуйте пізніше.
+  TOKEN_REFRESH_FAILED: Не вдалося оновити токен доступу. Спробуйте пізніше.
+  MALFORMED_RESPONSE: Сервер відповів некоректними даними. Спробуйте пізніше.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: Бекенд {$name} потребує {$name} {$version} або новішої версії.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: Ви не маєте доступу до репозиторію «{$repo}».
+repository_not_found: Репозиторію «{$repo}» не існує.
+repository_empty: Репозиторій «{$repo}» не має гілок.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: Репозиторій «{$repo}» не має гілки «{$branch}».
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Неочікувана помилка
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Під час розбору файлу запису сталася помилка. Перевірте консоль браузера для деталей. }}
+    *   {{ Під час розбору файлів записів сталися помилки. Перевірте консоль браузера для деталей. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Логін
+password: Пароль
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Увійти
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Увійти з мобільного
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Відскануйте QR-код нижче за допомогою телефона або планшета для входу без пароля. Ваші налаштування будуть скопійовані автоматично.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: Ви увійшли як {$name}
+working_with_local_repo: Робота з локальним репозиторієм
+working_with_test_repo: Робота з тестовим репозиторієм
+
+# Account menu: action items for sign-out and app installation
+sign_out: Вийти
+install_as_app: Встановити як застосунок
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Вміст
+assets: Ресурси
+editorial_workflow: Редакційний процес
+cms_config: Конфігурація CMS
+# Mobile menu page title (shown only on small screens)
+menu: Меню
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS тепер доступна на мобільних пристроях!
+mobile_promo_button: Спробувати
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS тепер доступна мовою {$locale}!
+change_language: Змінити мову
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Перейти на робочий сайт
+# Page switcher button group aria-label for switching between main sections
+switch_page: Перемкнути сторінку
+
+# Search input placeholders
+search_placeholder_contents: Пошук вмісту…
+search_placeholder_assets: Пошук ресурсів…
+search_placeholder_all: Пошук вмісту та ресурсів…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Створити запис або ресурси
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Опублікувати зміни
+publishing_changes: Публікування змін…
+# Error notification when publishing fails
+publishing_changes_failed: Не вдалося опублікувати зміни. Спробуйте ще раз.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Показати сповіщення
+notifications: Сповіщення
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Показати меню облікового запису
+# Account section heading in the account menu and mobile menu page
+account: Обліковий запис
+
+# Account menu items: links to external resources
+live_site: Робочий сайт
+git_repository: Git-репозиторій
+settings: Налаштування
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Показати меню довідки
+# Help section heading in dropdowns and mobile menu
+help: Довідка
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Комбінації клавіш
+documentation: Документація
+release_notes: Примітки до випуску
+announcements: Оголошення
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: Версія {$version}
+# Additional help menu items
+report_issue: Повідомити про проблему
+share_feedback: Поділитися відгуком
+get_help: Отримати допомогу
+donate: Підтримати
+join_discord: Приєднуйтесь до нас у Discord
+bluesky: Стежте за нами у Bluesky
+
+# Update notification: infobar message and button
+update_available: Доступна новіша версія Sveltia CMS.
+update_now: Оновити зараз
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service} має незначний збій. Це може вплинути на вашу роботу.'
+  major_incident: '{$service} має серйозний збій. Можливо, варто зачекати, доки ситуація покращиться.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Бібліотека вмісту
+asset_library: Бібліотека ресурсів
+
+# Primary sidebar section headings and list aria-labels
+collections: Колекції
+entries: Записи
+files: Файли
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Ваш сайт
+  external: Зовнішні розташування
+  stock_photos: Стокові фото
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Ресурси колекції
+# List aria-labels for different list types
+entry_list: Список записів
+file_list: Список файлів
+asset_list: Список ресурсів
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: Колекція «{$collection}»
+# {$folder} is the current asset folder label
+x_asset_folder: Тека ресурсів «{$folder}»
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Ви переглядаєте список колекцій.
+viewing_asset_folder_list: Ви переглядаєте список тек ресурсів.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Ви переглядаєте колекцію «{$collection}», у якій поки немає записів. }}
+    one  {{ Ви переглядаєте колекцію «{$collection}», у якій {$count} запис. }}
+    few  {{ Ви переглядаєте колекцію «{$collection}», у якій {$count} записи. }}
+    many {{ Ви переглядаєте колекцію «{$collection}», у якій {$count} записів. }}
+    *    {{ Ви переглядаєте колекцію «{$collection}», у якій {$count} записів. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Ви переглядаєте теку ресурсів «{$folder}», у якій поки немає ресурсів. }}
+    one  {{ Ви переглядаєте теку ресурсів «{$folder}», у якій {$count} ресурс. }}
+    few  {{ Ви переглядаєте теку ресурсів «{$folder}», у якій {$count} ресурси. }}
+    many {{ Ви переглядаєте теку ресурсів «{$folder}», у якій {$count} ресурсів. }}
+    *    {{ Ви переглядаєте теку ресурсів «{$folder}», у якій {$count} ресурсів. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: Натисніть Enter, щоб редагувати файл «{$file}».
+
+# Error messages: collection or file not found
+collection_not_found: Колекцію не знайдено.
+file_not_found: Файл не знайдено.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} з {$total} вибрано'
+
+# View switcher: toggle between list and grid views
+switch_view: Перемкнути вигляд
+list_view: Вигляд списком
+grid_view: Вигляд сіткою
+switch_to_list_view: Перемкнути на вигляд списком
+switch_to_grid_view: Перемкнути на вигляд сіткою
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Сортувати
+sorting_options: Параметри сортування
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Немає
+  name: Назва
+  slug: Слаг
+  # Sort by the last commit’s author name
+  commit_author: Ким оновлено
+  # Sort by the last commit date
+  commit_date: Дата оновлення
+  # Sort by the entry’s computed summary text
+  _summary: Зведення
+  # Manual order defined by the user via drag-and-drop
+  _manual: Вручну
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, від А до Я'
+ascending_date: '{$label}, від старих до нових'
+descending: '{$label}, від Я до А'
+descending_date: '{$label}, від нових до старих'
+
+# Filter menu: button labels and options
+filter: Фільтрувати
+filtering_options: Параметри фільтрування
+
+# Group menu: button labels and options
+group: Групувати
+grouping_options: Параметри групування
+
+# Asset type filter and group labels
+type: Тип
+all: Усі
+# Asset type labels
+image: Зображення
+video: Відео
+audio: Аудіо
+document: Документ
+other: Інше
+
+# Toolbar toggles: show/hide panels
+show_assets: Показати ресурси
+hide_assets: Сховати ресурси
+show_info: Показати інформацію
+hide_info: Сховати інформацію
+
+# Folder display labels when no specific path is configured
+all_assets: Усі ресурси
+global_assets: Глобальні ресурси
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: Запис не знайдено.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Створення нових записів у цій колекції вимкнено адміністратором.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: Ви не можете додавати нові записи до цієї колекції, оскільки вона досягла ліміту в {$quota} записів.
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    one  {{ Ця колекція наближається до ліміту в {$quota} записів. Ви можете створити ще лише {$remaining} запис. }}
+    few  {{ Ця колекція наближається до ліміту в {$quota} записів. Ви можете створити ще лише {$remaining} записи. }}
+    many {{ Ця колекція наближається до ліміту в {$quota} записів. Ви можете створити ще лише {$remaining} записів. }}
+    *    {{ Ця колекція наближається до ліміту в {$quota} записів. Ви можете створити ще лише {$remaining} записів. }}
+
+# Navigation: back links and list labels
+back_to_collection: Назад до колекції
+collection_list: Список колекцій
+back_to_collection_list: Назад до списку колекцій
+asset_folder_list: Список тек ресурсів
+back_to_asset_folder_list: Назад до списку тек ресурсів
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Результати пошуку
+# {$terms} is the current search query text
+search_results_for_x: Результати пошуку за запитом «{$terms}»
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Ви переглядаєте результати пошуку за запитом «{$terms}». Записів не знайдено. }}
+    one  {{ Ви переглядаєте результати пошуку за запитом «{$terms}». Знайдено {$count} запис. }}
+    few  {{ Ви переглядаєте результати пошуку за запитом «{$terms}». Знайдено {$count} записи. }}
+    many {{ Ви переглядаєте результати пошуку за запитом «{$terms}». Знайдено {$count} записів. }}
+    *    {{ Ви переглядаєте результати пошуку за запитом «{$terms}». Знайдено {$count} записів. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Ви переглядаєте результати пошуку за запитом «{$terms}». Ресурсів не знайдено. }}
+    one  {{ Ви переглядаєте результати пошуку за запитом «{$terms}». Знайдено {$count} ресурс. }}
+    few  {{ Ви переглядаєте результати пошуку за запитом «{$terms}». Знайдено {$count} ресурси. }}
+    many {{ Ви переглядаєте результати пошуку за запитом «{$terms}». Знайдено {$count} ресурсів. }}
+    *    {{ Ви переглядаєте результати пошуку за запитом «{$terms}». Знайдено {$count} ресурсів. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Немає записів }}
+    one  {{ {$count} запис }}
+    few  {{ {$count} записи }}
+    many {{ {$count} записів }}
+    *    {{ {$count} записів }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Немає ресурсів }}
+    one  {{ {$count} ресурс }}
+    few  {{ {$count} ресурси }}
+    many {{ {$count} ресурсів }}
+    *    {{ {$count} ресурсів }}
+
+# Empty state messages
+no_files_found: Файлів не знайдено.
+no_entries_found: Записів не знайдено.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Завантажити нові ресурси
+
+# Edit options menu: button and item labels
+edit_options: Параметри редагування
+show_edit_options: Показати параметри редагування
+# Edit menu items with specific asset names
+edit_asset: Редагувати ресурс
+# {$name} is the selected asset name
+edit_x: Редагувати {$name}
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Переносити довгі рядки
+
+# Rename asset: dialog and validation
+rename_asset: Перейменувати ресурс
+# {$name} is the current asset name
+rename_x: Перейменувати {$name}
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Введіть нову назву нижче. }}
+    one  {{ Введіть нову назву нижче. {$count} запис, що використовує цей ресурс, також буде оновлено. }}
+    few  {{ Введіть нову назву нижче. {$count} записи, що використовують цей ресурс, також буде оновлено. }}
+    many {{ Введіть нову назву нижче. {$count} записів, що використовують цей ресурс, також буде оновлено. }}
+    *    {{ Введіть нову назву нижче. {$count} записів, що використовують цей ресурс, також буде оновлено. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: Назва файлу не може бути порожньою.
+  character: Назва файлу не може містити спеціальних символів.
+  duplicate: Ця назва файлу використовується для іншого ресурсу.
+
+# Replace asset: menu item and dialog title
+replace_asset: Замінити ресурс
+# {$name} is the asset being replaced
+replace_x: Замінити {$name}
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Натисніть, щоб вибрати…
+# Browse prompt shown on touch devices
+tap_to_browse: Торкніться, щоб вибрати…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Перетягніть файл сюди або натисніть, щоб вибрати… }}
+    *   {{ Перетягніть файли сюди або натисніть, щоб вибрати… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Перетягніть файл сюди або }}
+    *   {{ Перетягніть файли сюди або }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Перетягніть файл зображення сюди або }}
+    *   {{ Перетягніть файли зображень сюди або }}
+
+# File picker and clipboard actions used by upload controls
+browse: Огляд
+# Generic clipboard paste action used by non-image file fields
+paste: Вставити
+# Clipboard paste action used by image fields
+paste_image: Вставити зображення
+
+# Clipboard paste errors
+no_image_in_clipboard: У буфері обміну немає зображення.
+clipboard_access_denied: Доступ до буфера обміну заборонено.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Перетягніть файл сюди }}
+    *   {{ Перетягніть файли сюди }}
+
+# File type validation errors
+unsupported_file_type: Непідтримуваний тип файлу
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Перетягнутий файл не належить до жодного з таких типів: {$types}. Спробуйте ще раз.'
+dropped_image_type_mismatch: 'Перетягнутий файл не підтримується. Приймається лише зображення таких типів: {$types}. Спробуйте ще раз.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Вибрати файл }}
+    *   {{ Вибрати файли }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Видалити ресурс }}
+    *   {{ Видалити ресурси }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Видалити вибраний ресурс }}
+    *   {{ Видалити вибрані ресурси }}
+confirm_deleting_this_asset: Ви впевнені, що хочете видалити цей ресурс?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Ви впевнені, що хочете видалити {$count} вибраний ресурс? }}
+    few  {{ Ви впевнені, що хочете видалити {$count} вибрані ресурси? }}
+    many {{ Ви впевнені, що хочете видалити {$count} вибраних ресурсів? }}
+    *    {{ Ви впевнені, що хочете видалити {$count} вибраних ресурсів? }}
+confirm_deleting_all_assets: Ви впевнені, що хочете видалити всі ресурси?
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Видалити запис }}
+    *   {{ Видалити записи }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Видалити вибраний запис }}
+    *   {{ Видалити вибрані записи }}
+confirm_deleting_this_entry: Ви впевнені, що хочете видалити цей запис?
+confirm_deleting_this_entry_with_assets: Ви впевнені, що хочете видалити цей запис і пов’язані ресурси?
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Ви впевнені, що хочете видалити {$count} вибраний запис? }}
+    few  {{ Ви впевнені, що хочете видалити {$count} вибрані записи? }}
+    many {{ Ви впевнені, що хочете видалити {$count} вибраних записів? }}
+    *    {{ Ви впевнені, що хочете видалити {$count} вибраних записів? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Ви впевнені, що хочете видалити {$count} вибраний запис і пов’язані ресурси? }}
+    few  {{ Ви впевнені, що хочете видалити {$count} вибрані записи і пов’язані ресурси? }}
+    many {{ Ви впевнені, що хочете видалити {$count} вибраних записів і пов’язані ресурси? }}
+    *    {{ Ви впевнені, що хочете видалити {$count} вибраних записів і пов’язані ресурси? }}
+confirm_deleting_all_entries: Ви впевнені, що хочете видалити всі записи?
+confirm_deleting_all_entries_with_assets: Ви впевнені, що хочете видалити всі записи і пов’язані ресурси?
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Змінити порядок записів
+done_reordering_entries: Завершити зміну порядку записів
+cancel_reordering_entries: Скасувати зміну порядку записів
+
+# Reorder error message
+saving_reorder_failed: Не вдалося зберегти новий порядок записів. Спробуйте ще раз.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Обробка файлу. Це може зайняти деякий час. }}
+    *   {{ Обробка файлів. Це може зайняти деякий час. }}
+
+# Uploading section aria-label
+uploading_files: Завантаження файлів
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: 'Файл «{$name}» буде замінено на цей файл:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one  {{ {$count} файл буде збережено до теки «{$folder}»: }}
+    few  {{ {$count} файли буде збережено до теки «{$folder}»: }}
+    many {{ {$count} файлів буде збережено до теки «{$folder}»: }}
+    *    {{ {$count} файлів буде збережено до теки «{$folder}»: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Завеликі файли
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Цей файл не можна завантажити, оскільки він перевищує максимальний розмір {$size}. Зменшіть розмір або виберіть інший файл. }}
+    *   {{ Ці файли не можна завантажити, оскільки вони перевищують максимальний розмір {$size}. Зменшіть розміри або виберіть інші файли. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one  {{ {$count} файл з такою самою назвою вже існує в цій теці. Замінити його? }}
+    few  {{ {$count} файли з такими самими назвами вже існують у цій теці. Замінити їх? }}
+    many {{ {$count} файлів з такими самими назвами вже існують у цій теці. Замінити їх? }}
+    *    {{ {$count} файлів з такими самими назвами вже існують у цій теці. Замінити їх? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    1    {{ Файл з назвою «{$name}» вже існує в цій теці. Замінити його? }}
+    one  {{ {$count} файл з такою самою назвою вже існує в цій теці. Замінити його? }}
+    few  {{ {$count} файли з такими самими назвами вже існують у цій теці. Замінити їх? }}
+    many {{ {$count} файлів з такими самими назвами вже існують у цій теці. Замінити їх? }}
+    *    {{ {$count} файлів з такими самими назвами вже існують у цій теці. Замінити їх? }}
+file_name_conflict_resolution: Вирішення конфлікту назв файлів
+# Option to keep both files (rename the new one)
+keep_both: Зберегти обидва
+
+# Upload progress and error messages
+uploading_files_progress: Завантаження…
+uploading_files_failed: Не вдалося завантажити.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (конвертовано з {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Ця колекція поки не має записів.
+# Button to create first entry
+create_new_entry: Створити новий запис
+# “Entry” option label in the create button menu
+entry: Запис
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Індексний файл
+
+# Empty state for file collections
+no_files_in_collection: У цій колекції немає доступних файлів.
+
+# Entry duplication
+duplicate_entry: Дублювати запис
+entry_duplicated: Запис продубльовано як нову чернетку.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one  {{ {$count} поле містить помилку. Виправте його, щоб зберегти запис. }}
+    few  {{ {$count} поля містять помилки. Виправте їх, щоб зберегти запис. }}
+    many {{ {$count} полів містять помилки. Виправте їх, щоб зберегти запис. }}
+    *    {{ {$count} полів містять помилки. Виправте їх, щоб зберегти запис. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Збережено {$count} запис. }}
+    few  {{ Збережено {$count} записи. }}
+    many {{ Збережено {$count} записів. }}
+    *    {{ Збережено {$count} записів. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Збережено та опубліковано {$count} запис. }}
+    few  {{ Збережено та опубліковано {$count} записи. }}
+    many {{ Збережено та опубліковано {$count} записів. }}
+    *    {{ Збережено та опубліковано {$count} записів. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Видалено {$count} запис. }}
+    few  {{ Видалено {$count} записи. }}
+    many {{ Видалено {$count} записів. }}
+    *    {{ Видалено {$count} записів. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Збережено {$count} ресурс. }}
+    few  {{ Збережено {$count} ресурси. }}
+    many {{ Збережено {$count} ресурсів. }}
+    *    {{ Збережено {$count} ресурсів. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Збережено та опубліковано {$count} ресурс. }}
+    few  {{ Збережено та опубліковано {$count} ресурси. }}
+    many {{ Збережено та опубліковано {$count} ресурсів. }}
+    *    {{ Збережено та опубліковано {$count} ресурсів. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one  {{ {$count} URL-адресу скопійовано до буфера обміну. }}
+    few  {{ {$count} URL-адреси скопійовано до буфера обміну. }}
+    many {{ {$count} URL-адрес скопійовано до буфера обміну. }}
+    *    {{ {$count} URL-адрес скопійовано до буфера обміну. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one  {{ {$count} шлях до файлу скопійовано до буфера обміну. }}
+    few  {{ {$count} шляхи до файлів скопійовано до буфера обміну. }}
+    many {{ {$count} шляхів до файлів скопійовано до буфера обміну. }}
+    *    {{ {$count} шляхів до файлів скопійовано до буфера обміну. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Дані {$count} файлу скопійовано до буфера обміну. }}
+    few  {{ Дані {$count} файлів скопійовано до буфера обміну. }}
+    many {{ Дані {$count} файлів скопійовано до буфера обміну. }}
+    *    {{ Дані {$count} файлів скопійовано до буфера обміну. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Звантажено {$count} ресурс. }}
+    few  {{ Звантажено {$count} ресурси. }}
+    many {{ Звантажено {$count} ресурсів. }}
+    *    {{ Звантажено {$count} ресурсів. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Переміщено {$count} ресурс. }}
+    few  {{ Переміщено {$count} ресурси. }}
+    many {{ Переміщено {$count} ресурсів. }}
+    *    {{ Переміщено {$count} ресурсів. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Перейменовано {$count} ресурс. }}
+    few  {{ Перейменовано {$count} ресурси. }}
+    many {{ Перейменовано {$count} ресурсів. }}
+    *    {{ Перейменовано {$count} ресурсів. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Видалено {$count} ресурс. }}
+    few  {{ Видалено {$count} ресурси. }}
+    many {{ Видалено {$count} ресурсів. }}
+    *    {{ Видалено {$count} ресурсів. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Редактор вмісту
+
+# Draft backup: restore dialog
+restore_backup_title: Відновити чернетку
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Цей запис має резервну копію від {$datetime}. Відновити відредаговану чернетку?
+
+# Draft backup notifications
+draft_backup_saved: Резервну копію чернетки збережено.
+draft_backup_restored: Резервну копію чернетки відновлено.
+draft_backup_deleted: Резервну копію чернетки видалено.
+
+# Editor toolbar actions
+cancel_editing: Скасувати редагування
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: 'Створення: {$name}'
+# {$collection} is the collection label
+create_entry_announcement: Ви створюєте новий запис у колекції «{$collection}».
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: Ви редагуєте запис «{$entry}» у колекції «{$collection}».
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: Ви редагуєте файл «{$file}» у колекції «{$collection}».
+# {$file} is the singleton file name
+edit_singleton_announcement: Ви редагуєте файл «{$file}».
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Зберегти та опублікувати
+save_without_publishing: Зберегти без публікації
+
+# Editor options menu
+show_editor_options: Показати параметри редактора
+editor_options: Параметри редактора
+
+# Preview controls
+show_preview: Показати попередній перегляд
+
+# Editor settings
+sync_scrolling: Синхронізувати прокручування
+
+# Locale controls
+switch_locale: Перемкнути локаль
+# Short status indicators appended to locale names
+locale_content_disabled_short: (вимкнено)
+locale_content_error_short: (помилка)
+
+# Pane labels
+edit: Редагувати
+preview: Перегляд
+
+# Pane controls; not to be confused with pages
+swap_panes: Поміняти панелі місцями
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Редагувати вміст ({$locale})
+preview_x_locale: Перегляд вмісту ({$locale})
+
+# Preview iframe labels
+content_preview: Попередній перегляд вмісту
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Показати параметри вмісту ({$locale})
+content_options_x_locale: Параметри вмісту ({$locale})
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: Поле «{$field}»
+
+# Field options menu
+show_field_options: Показати параметри поля
+field_options: Параметри поля
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Непідтримуваний тип поля: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: Увімкнути ({$locale})
+reenable_x_locale: Повторно увімкнути ({$locale})
+disable_x_locale: Вимкнути ({$locale})
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: Вміст ({$locale}) вимкнено.
+locale_x_now_disabled: Вміст ({$locale}) тепер вимкнено. Його буде видалено, коли ви збережете запис.
+
+# Repository and site links
+view_in_repository: Переглянути в репозиторії
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: Переглянути на {$service}
+view_on_live_site: Переглянути на робочому сайті
+
+# Content copying from other locales
+copy_from: Копіювати з…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: Копіювати з ({$locale})
+
+# Translation features
+translation_options: Параметри перекладу
+translate: Перекласти
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Перекласти поле }}
+    *   {{ Перекласти поля }}
+translate_from: Перекласти з…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: Перекласти з ({$locale})
+
+# Revert changes
+revert_changes: Скасувати зміни
+revert_all_changes: Скасувати всі зміни
+
+# Slug editing
+edit_slug: Редагувати слаг
+edit_slug_warning: Зміна слага може порушити внутрішні та зовнішні посилання на запис. Наразі Sveltia CMS не оновлює посилання, створені за допомогою полів Relation, тож вам доведеться вручну оновити такі посилання разом з іншими.
+edit_slug_error:
+  empty: Слаг не може бути порожнім.
+  invalid: Слаг не може містити спеціальних символів, зокрема косих рисок і пробілів.
+  duplicate: Цей слаг використовується для іншого запису.
+
+# Required field indicator
+required: Обов’язкове
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Немає чого перекладати.
+    started: Переклад…
+    error: Не вдалося перекласти.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0    {{ Не перекладено жодного поля з {$source}. }}
+        one  {{ Перекладено {$count} поле з {$source}. }}
+        few  {{ Перекладено {$count} поля з {$source}. }}
+        many {{ Перекладено {$count} полів з {$source}. }}
+        *    {{ Перекладено {$count} полів з {$source}. }}
+  copy:
+    none: Немає чого копіювати.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0    {{ Не скопійовано жодного поля з {$source}. }}
+        one  {{ Скопійовано {$count} поле з {$source}. }}
+        few  {{ Скопійовано {$count} поля з {$source}. }}
+        many {{ Скопійовано {$count} полів з {$source}. }}
+        *    {{ Скопійовано {$count} полів з {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Це поле обов’язкове.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: Дата/час має бути не раніше {$min}.
+    date: Дата має бути не раніше {$min}.
+    time: Час має бути не раніше {$min}.
+    number: Значення має бути більше або дорівнювати {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one  {{ Ви повинні вибрати щонайменше {$min} варіант. }}
+        few  {{ Ви повинні вибрати щонайменше {$min} варіанти. }}
+        many {{ Ви повинні вибрати щонайменше {$min} варіантів. }}
+        *    {{ Ви повинні вибрати щонайменше {$min} варіантів. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one  {{ Ви повинні додати щонайменше {$min} елемент. }}
+        few  {{ Ви повинні додати щонайменше {$min} елементи. }}
+        many {{ Ви повинні додати щонайменше {$min} елементів. }}
+        *    {{ Ви повинні додати щонайменше {$min} елементів. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: Дата/час має бути не пізніше {$max}.
+    date: Дата має бути не пізніше {$max}.
+    time: Час має бути не пізніше {$max}.
+    number: Значення має бути менше або дорівнювати {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one  {{ Ви не можете вибрати більше ніж {$max} варіант. }}
+        few  {{ Ви не можете вибрати більше ніж {$max} варіанти. }}
+        many {{ Ви не можете вибрати більше ніж {$max} варіантів. }}
+        *    {{ Ви не можете вибрати більше ніж {$max} варіантів. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one  {{ Ви не можете додати більше ніж {$max} елемент. }}
+        few  {{ Ви не можете додати більше ніж {$max} елементи. }}
+        many {{ Ви не можете додати більше ніж {$max} елементів. }}
+        *    {{ Ви не можете додати більше ніж {$max} елементів. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one  {{ Ви повинні ввести щонайменше {$min} символ. }}
+      few  {{ Ви повинні ввести щонайменше {$min} символи. }}
+      many {{ Ви повинні ввести щонайменше {$min} символів. }}
+      *    {{ Ви повинні ввести щонайменше {$min} символів. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one  {{ Ви не можете ввести більше ніж {$max} символ. }}
+      few  {{ Ви не можете ввести більше ніж {$max} символи. }}
+      many {{ Ви не можете ввести більше ніж {$max} символів. }}
+      *    {{ Ви не можете ввести більше ніж {$max} символів. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Введіть число.
+    email: Введіть дійсну електронну адресу.
+    url: Введіть дійсний URL.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Бічні панелі
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Перевірка
+    placeholder: Тут відображатимуться результати перевірки.
+    no_errors_found: Помилок не знайдено.
+
+  # History panel: shows entry commit history
+  history:
+    title: Історія
+    fetch_failed: Не вдалося завантажити історію.
+    no_history: Історію не знайдено.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Зворотні посилання
+    no_entries: Жоден запис не посилається на цей запис.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Помилка
+    description: Під час збереження запису сталася помилка. Спробуйте пізніше.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: Ви переглядаєте подробиці ресурсу «{$name}».
+
+# Asset editor container aria-label
+asset_editor: Редактор ресурсів
+
+# Preview unavailable message
+preview_unavailable: Попередній перегляд недоступний.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ Публічна URL-адреса }}
+    *   {{ Публічні URL-адреси }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Шлях до файлу }}
+    *   {{ Шляхи до файлів }}
+file_data: Дані файлу
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Інформація про ресурс
+select_asset_show_info: Виберіть ресурс, щоб побачити інформацію про нього.
+
+kind: Вид
+size: Розмір
+dimensions: Розміри
+duration: Тривалість
+# Short heading for a list of entries using the selected asset
+used_in: Використовується в
+created_date: Дата створення
+location: Розташування
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Карта з широтою {$latitude}, довготою {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Вилучити цей елемент
+move_up: Перемістити вгору
+move_down: Перемістити вниз
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: Додати {$name}
+
+# List item context menu
+add_item_above: Додати елемент вище
+add_item_below: Додати елемент нижче
+
+# Variable-type list selector
+select_list_type: Виберіть тип списку
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Непрозорість
+
+# Select field: empty option placeholder
+unselected_option: (Немає)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Вибрати файл
+    image: Вибрати зображення
+
+  # Search input labels
+  search_for_file: Пошук файлів
+  search_for_image: Пошук зображень
+
+  # Locations panel aria-label
+  locations: Розташування
+
+  # Asset folder options
+  folder:
+    field: Ресурси поля
+    entry: Ресурси запису
+    file: Ресурси файлу
+    collection: Ресурси колекції
+    global: Глобальні ресурси
+
+  # Error messages
+  error:
+    invalid_key: Ваш ключ API недійсний або прострочений. Перевірте його і спробуйте знову.
+    search_fetch_failed: Під час пошуку ресурсів сталася помилка. Спробуйте пізніше.
+    image_fetch_failed: Під час звантаження вибраного ресурсу сталася помилка. Спробуйте пізніше.
+
+  # Stock photo panels
+  available_images: Доступні зображення
+
+  # URL entry option
+  enter_url: Ввести URL
+  enter_file_url: 'Введіть URL файлу:'
+  enter_image_url: 'Введіть URL зображення:'
+
+  # Large file warning dialog
+  large_file:
+    title: Великий файл
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Авторство фото
+    description: 'За можливості вкажіть таке авторство:'
+
+  # Unsaved asset badge
+  unsaved: Не збережено
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0    {{ Не введено жодного символу. Мінімум: {$min}. Максимум: {$max}. }}
+      one  {{ Введено {$count} символ. Мінімум: {$min}. Максимум: {$max}. }}
+      few  {{ Введено {$count} символи. Мінімум: {$min}. Максимум: {$max}. }}
+      many {{ Введено {$count} символів. Мінімум: {$min}. Максимум: {$max}. }}
+      *    {{ Введено {$count} символів. Мінімум: {$min}. Максимум: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0    {{ Не введено жодного символу. Мінімум: {$min}. }}
+      one  {{ Введено {$count} символ. Мінімум: {$min}. }}
+      few  {{ Введено {$count} символи. Мінімум: {$min}. }}
+      many {{ Введено {$count} символів. Мінімум: {$min}. }}
+      *    {{ Введено {$count} символів. Мінімум: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0    {{ Не введено жодного символу. Максимум: {$max}. }}
+      one  {{ Введено {$count} символ. Максимум: {$max}. }}
+      few  {{ Введено {$count} символи. Максимум: {$max}. }}
+      many {{ Введено {$count} символів. Максимум: {$max}. }}
+      *    {{ Введено {$count} символів. Максимум: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: Відеопрогравач YouTube
+
+# Date/time field: quick action buttons
+today: Сьогодні
+now: Зараз
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Зображення
+  src: Джерело
+  alt: Альтернативний текст
+  title: Заголовок
+  link: Посилання
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Ключ
+  value: Значення
+  action: Дія
+  empty_key: Ключ обов’язковий.
+  duplicate_key: Ключ має бути унікальним.
+
+# Map field: location search and geolocation
+find_place: Знайти місце
+use_your_location: Використати ваше місцезнаходження
+
+# Geolocation error dialog
+geolocation_error_title: Помилка геолокації
+geolocation_error_body: Під час визначення вашого місцезнаходження сталася помилка.
+geolocation_unsupported: API геолокації не підтримується цим браузером.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Так
+  'false': Ні
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: Службу налаштовано неправильно.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: Ключ API
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: Введіть свій {$key} для {$service}.
+      requested: Перевірка…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: Наданий {$key} недійсний. Перевірте ще раз і спробуйте знову.
+    password:
+      # {$service} is the cloud service name
+      initial: Введіть свій пароль для {$service}.
+      requested: Вхід…
+      error: Логін або пароль неправильні. Перевірте ще раз і спробуйте знову.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Медіабібліотека Cloudinary
+    activate:
+      button_label: Активувати Cloudinary
+      description: Після входу знову натисніть кнопку «Увійти», щоб продовжити.
+    auth_key_label: Секрет API
+    open_library: Відкрити Cloudinary
+
+  uploadcare:
+    auth_key_label: Секретний ключ API
+
+  aws_s3:
+    auth_key_label: Секретний ключ доступу
+
+  cloudflare_r2:
+    auth_key_label: Секретний ключ доступу
+
+  digitalocean_spaces:
+    auth_key_label: Секретний ключ доступу
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ У конфігурації CMS є помилка. Вирішіть проблему та спробуйте ще раз. }}
+      *   {{ У конфігурації CMS є помилки. Вирішіть проблеми та спробуйте ще раз. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: 'колекція {$collection}'
+    file: 'файл {$file}'
+    component: 'компонент {$component}'
+    # Don’t localize `{$field}`
+    field: 'поле `{$field}`'
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS працює лише з URL-адресами HTTPS або localhost.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ URL-адреса файлу конфігурації має використовувати протокол HTTPS або адресу localhost. }}
+        *   {{ URL-адреси файлу конфігурації мають використовувати протокол HTTPS або адреси localhost. }}
+    fetch_failed: Не вдалося отримати файл конфігурації.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: HTTP-відповідь повернулася зі статусом {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Не вдалося отримати файл конфігурації. Щоб запобігти завантаженню файлу `config.yml`, додайте <a>`load_config_file: false`</a> до конфігурації, що передається в `CMS.init()`.'
+    parse_failed: Не вдалося розібрати файл конфігурації.
+    parse_failed_invalid_object: Файл конфігурації не є дійсним об’єктом JavaScript.
+    parse_failed_unsupported_type: Файл конфігурації має непідтримуваний тип. Підтримуються лише YAML, TOML і JSON.
+    no_collection: Колекції не визначено.
+    missing_backend: Бекенд не визначено.
+    missing_backend_name: Назву бекенду не визначено.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: Бекенд {$name} <a>не підтримується</a> в Sveltia CMS.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Застарілий бекенд {$name} <a>не підтримується</a> в Sveltia CMS.
+    unsupported_custom_backend: Власні бекенди <a>не підтримуються</a> в Sveltia CMS.
+    unsupported_backend_suggestion: Натомість використовуйте один із <a>бекендів, що підтримуються</a>.
+    missing_repository: Репозиторій не визначено.
+    invalid_repository: Налаштований репозиторій недійсний. Він має бути у форматі «owner/repo».
+    oauth_implicit_flow: Налаштований метод автентифікації (implicit flow) не підтримується в Sveltia CMS. Використовуйте інший <a>метод автентифікації</a>.
+    github_pkce_unsupported: Авторизація PKCE поки не підтримується через обмеження GitHub. Використовуйте інший <a>метод автентифікації</a>.
+    oauth_no_app_id: Ідентифікатор OAuth-застосунку не визначено.
+    # Don’t localize `auth_methods`
+    no_auth_methods: Параметр `auth_methods` має містити щонайменше один метод.
+    missing_media_folder: Теку медіа не визначено.
+    invalid_media_folder: Налаштована тека медіа недійсна. Вона має бути рядком.
+    invalid_public_folder: Налаштована публічна тека недійсна. Вона має бути рядком.
+    public_folder_relative_path: Налаштована публічна тека недійсна. Вона має бути абсолютним шляхом, що починається з «/».
+    public_folder_absolute_url: Абсолютний URL для параметра публічної теки не підтримується в Sveltia CMS.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: Параметр `asset_collections` недійсний. Він має бути масивом.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: Колекція ресурсів {$count} повинна мати параметр `name`, визначений як непорожній рядок.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: Назва колекції ресурсів `{$name}` недійсна. Вона не може містити спеціальних символів.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: Назви колекцій ресурсів мають бути унікальними, але `{$name}` використовується більше одного разу.
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: Колекція ресурсів `{$name}` повинна мати параметр `media_folder`, визначений як рядок.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: Колекція повинна мати визначений один із параметрів `folder`, `files` або `divider`.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: Колекція не може мати параметри `folder`, `files` та `divider` одночасно.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: Розширення `{$extension}` не відповідає формату `{$format}`.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: Шаблон слага `{$slug}` недійсний, оскільки не може містити косих рисок `/`. Щоб організувати записи в підтеках, використовуйте параметр `path` замість `slug`.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: Колекція {$count} повинна мати параметр `name`, визначений як непорожній рядок.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: Назва колекції `{$name}` недійсна. Вона не може містити спеціальних символів.
+    duplicate_collection_name: Назви колекцій мають бути унікальними, але `{$name}` використовується більше одного разу.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: Файл колекції {$count} повинен мати параметр `name`, визначений як непорожній рядок.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: Назва файлу колекції `{$name}` недійсна. Вона не може містити спеціальних символів.
+    duplicate_collection_file_name: Назви файлів колекцій мають бути унікальними, але `{$name}` використовується більше одного разу.
+    # Don’t localize `fields`
+    collection_no_fields: Колекція повинна мати параметр `fields` із щонайменше одним полем.
+    # Don’t localize `fields`
+    collection_file_no_fields: Файл колекції повинен мати параметр `fields` із щонайменше одним полем.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: Файл колекції повинен мати визначений параметр `i18n`, якщо в шляху `file` використовується заповнювач `locale`.
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: Поле {$count} повинно мати параметр `name`, визначений як непорожній рядок.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: Назва поля `{$name}` недійсна. Вона не може містити спеціальних символів. Якщо ви хочете вкладати поля, <a>використовуйте поля Object замість крапкової нотації</a>.
+    duplicate_field_name: Назви полів мають бути унікальними, але `{$name}` використовується більше одного разу.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: Змінний тип {$count} повинен мати параметр `name`, визначений як непорожній рядок.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: Назва змінного типу `{$name}` недійсна. Вона не може містити спеціальних символів.
+    duplicate_variable_type: Назви змінних типів мають бути унікальними, але `{$name}` використовується більше одного разу.
+    date_field_type: 'Застарілий тип поля Date не підтримується в Sveltia CMS. Натомість використовуйте тип поля DateTime з параметром `type: date`.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Недійсний часовий пояс: {$timeZone}. Має бути дійсним ідентифікатором часового поясу IANA, наприклад `America/New_York` або `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: Застарілий параметр `{$prop}` не підтримується в Sveltia CMS. Натомість використовуйте параметр `{$newProp}`.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: Параметр `allow_multiple` не підтримується в Sveltia CMS. Натомість використовуйте параметр `multiple`, який за замовчуванням має значення `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: Поле List не може мати параметри `field`, `fields` та `types` одночасно.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: Змінний тип поля List недійсний. Параметр `widget` встановлено на `{$widget}`, але він має бути `object`.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: Поле Object не може мати параметри `fields` та `types` одночасно.
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: Поле Object повинно мати визначений один із параметрів `fields` або `types`.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: Колекція `{$collection}`, на яку є посилання, недійсна або не визначена.
+    relation_field_invalid_collection_file: Файл `{$file}`, на який є посилання, недійсний або не визначений.
+    # Don’t localize `file`
+    relation_field_missing_file_name: Параметр `file` має бути визначений для зв’язку з файловою колекцією.
+    relation_field_invalid_value_field: Поле значення `{$field}`, на яке є посилання, недійсне або не визначене.
+    unexpected: Неочікувана помилка
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: Ідентифікатор OAuth-застосунку не визначено. Користувачі повинні надати токен доступу для входу.
+    editorial_workflow_unsupported: Редакційний процес поки не підтримується в Sveltia CMS.
+    open_authoring_unsupported: Відкрите авторство поки не підтримується в Sveltia CMS.
+    nested_collections_unsupported: Вкладені колекції поки не підтримуються в Sveltia CMS.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: Параметр `{$prop}` не підтримується в Sveltia CMS. Його буде проігноровано.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: Встановлено як `picker_utc`, так і новіші параметри часового поясу (`input_timezone` або `output_utc`). Новіші параметри мають пріоритет. Розгляньте можливість видалення `picker_utc` з вашої конфігурації.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Докладніше дивиться у примітках щодо сумісності: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: Для кращого досвіду розробки ви можете перевірити свій файл конфігурації за JSON-схемою Sveltia CMS. Докладніше дивиться {$link}.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Локальний
+  # Browser compatibility warnings
+  unsupported_browser: Локальний робочий процес не підтримується у вашому браузері. Використовуйте Chrome або Edge.
+  disabled: Локальний робочий процес вимкнено у вашому браузері. <a>Ось як його ввімкнути</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: Чернетки
+  in_review: На розгляді
+  ready: Готово
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Категорії
+
+# Site Configuration Editor
+site_configuration_editor: Редактор конфігурації сайту
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: Ключ API збережено.
+    api_key_removed: Ключ API видалено.
+    api_key_invalid: Наданий ключ API недійсний. Перевірте і спробуйте знову.
+
+  # Preferences operation errors
+  error:
+    permission_denied: Доступ до сховища cookie заборонено. Перевірте дозволи браузера та спробуйте ще раз.
+
+  # Appearance panel
+  appearance:
+    title: Зовнішній вигляд
+    theme: Тема
+    select_theme: Вибрати тему
+
+  # Theme options
+  theme:
+    auto: Авто
+    dark: Темна
+    light: Світла
+
+  # Language panel
+  language:
+    title: Мова
+    ui_language:
+      title: Мова інтерфейсу
+      select_language: Вибрати мову
+
+  # Contents panel
+  contents:
+    title: Вміст
+    editor:
+      title: Редактор
+      use_draft_backup:
+        switch_label: Автоматично створювати резервні копії чернеток записів
+      close_on_save:
+        switch_label: Закривати редактор після збереження чернетки
+      close_with_escape:
+        switch_label: Закривати редактор клавішею Escape
+
+  # Internationalization panel
+  i18n:
+    title: Інтернаціоналізація
+    translators:
+      default:
+        title: Служба перекладу за замовчуванням
+        select_service: Вибрати службу
+      api_keys:
+        title: Ключі API служб перекладу
+        description: Керуйте ключами API для <a>служб перекладу</a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: Ключ {$service}
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Зареєструйтеся в <a {$homeHref}>{$service}</a> та введіть <a {$apiKeyHref}>свій ключ API</a>, щоб увімкнути швидкий переклад текстових полів.
+
+  # Media panel
+  media:
+    title: Медіа
+    stock_photos:
+      api_keys:
+        title: Ключі API служб стокових фото
+        description: Керуйте ключами API для <a>служб стокових фото</a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: Ключ API {$service}
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Зареєструйтеся в <a {$homeHref}>{$service} API</a> та введіть <a {$apiKeyHref}>свій ключ API</a>, щоб вставляти безкоштовні стокові фото в поля зображень.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: Фото надані {$service}
+      no_services: <a>Служби стокових фото</a> не налаштовано.
+    cloud_storage:
+      api_keys:
+        title: Ключі API служб хмарного сховища
+        description: Керуйте ключами API для <a>служб хмарного сховища</a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: Ключ API {$service}
+      no_services: <a>Служби хмарного сховища</a> не налаштовано.
+
+  # Accessibility panel
+  accessibility:
+    title: Доступність
+    underline_links:
+      title: Підкреслення посилань
+      description: Показувати підкреслення посилань у попередньому перегляді запису та в написах інтерфейсу.
+      switch_label: Завжди підкреслювати посилання
+
+  # Advanced panel
+  advanced:
+    title: Додатково
+    beta:
+      title: Бета-функції
+      description: Увімкнути деякі бета-функції, які можуть бути нестабільними або неперекладеними.
+      switch_label: Приєднатися до бета-програми
+    developer_mode:
+      title: Режим розробника
+      description: Увімкнути деякі функції для розробників, зокрема детальні журнали консолі та власні контекстні меню.
+      switch_label: Увімкнути режим розробника
+    deploy_hook:
+      title: Хук розгортання
+      description: Введіть URL вебхука, який викликатиметься, коли ви вручну запускаєте розгортання, вибираючи «Опублікувати зміни». Це можна залишити порожнім, якщо ви використовуєте GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: URL хука
+        saved: URL хука збережено.
+        removed: URL хука видалено.
+      # Authorization header input
+      auth:
+        field_label: Заголовок авторизації (напр., Bearer <token>) (необов'язково)
+        saved: Заголовок авторизації збережено.
+        removed: Заголовок авторизації видалено.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: Переглянути бібліотеку вмісту
+  view_asset_library: Переглянути бібліотеку ресурсів
+  search: Шукати записи та ресурси
+  create_entry: Створити новий запис
+  save_entry: Зберегти запис
+  cancel_editing: Скасувати редагування запису
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: Зображення AVIF
+  bmp: Зображення Bitmap
+  gif: Зображення GIF
+  ico: Значок
+  jpeg: Зображення JPEG
+  jpg: Зображення JPEG
+  png: Зображення PNG
+  svg: Зображення SVG
+  tif: Зображення TIFF
+  tiff: Зображення TIFF
+  webp: Зображення WebP
+  # Video formats
+  avi: Відео AVI
+  m4v: Відео MP4
+  mov: Відео QuickTime
+  mp4: Відео MP4
+  mpeg: Відео MPEG
+  mpg: Відео MPEG
+  ogg: Відео Ogg
+  ogv: Відео Ogg
+  ts: Відео MPEG
+  webm: Відео WebM
+  3gp: Відео 3GPP
+  3g2: Відео 3GPP2
+  # Audio formats
+  aac: Аудіо AAC
+  mid: MIDI
+  midi: MIDI
+  m4a: Аудіо MP4
+  mp3: Аудіо MP3
+  oga: Аудіо Ogg
+  opus: Аудіо OPUS
+  wav: Аудіо WAV
+  weba: Аудіо WebM
+  # Document formats
+  csv: Таблиця CSV
+  doc: Документ Word
+  docx: Документ Word
+  odp: Презентація OpenDocument
+  ods: Таблиця OpenDocument
+  odt: Текст OpenDocument
+  pdf: Документ PDF
+  ppt: Презентація PowerPoint
+  pptx: Презентація PowerPoint
+  rtf: Документ Rich Text
+  xls: Таблиця Excel
+  xlsx: Таблиця Excel
+  # Text formats
+  html: Текст HTML
+  js: JavaScript
+  json: Текст JSON
+  md: Текст Markdown
+  toml: Текст TOML
+  yaml: Текст YAML
+  yml: Текст YAML
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} байт'
+  kb: '{$size} кБ'
+  mb: '{$size} МБ'
+  gb: '{$size} ГБ'
+  tb: '{$size} ТБ'
