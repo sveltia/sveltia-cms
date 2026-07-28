@@ -6,14 +6,13 @@
 -->
 <script>
   import { TextArea } from '@sveltia/ui';
-  import { escapeRegExp } from '@sveltia/utils/string';
   import { getContext, onMount, untrack } from 'svelte';
 
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
   import { getDirection } from '$lib/services/contents/i18n';
 
   /**
-   * @import { EntryDraft, FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { SimpleListField } from '$lib/types/public';
    */
 
@@ -56,25 +55,10 @@
    * Update the value for the List field without subfield(s). This has to be called from the `input`
    * event handler on `<TextArea>`, not a `inputValue` reaction, because it causes an infinite loop
    * due to {@link setInputValue}.
-   * @param {string[]} [listItems] List items to set. If not provided, split {@link inputValue}.
+   * @param {string[]} [value] List items to set. If not provided, split {@link inputValue}.
    */
-  const updateSimpleList = (listItems = inputValue.split(/\n/g)) => {
-    Object.keys($entryDraft?.[valueStoreKey] ?? {}).forEach((_locale) => {
-      if (i18n !== 'duplicate' && _locale !== locale) {
-        return;
-      }
-
-      Object.keys($entryDraft?.[valueStoreKey][_locale] ?? {}).forEach((_keyPath) => {
-        if (_keyPath.match(`^${escapeRegExp(keyPath)}\\.\\d+$`)) {
-          delete $entryDraft?.[valueStoreKey][_locale][_keyPath];
-        }
-      });
-
-      listItems.forEach((val, index) => {
-        /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][`${keyPath}.${index}`] =
-          val;
-      });
-    });
+  const updateList = (value = inputValue.split(/\n/g)) => {
+    updateNonPrimitiveValue({ valueStoreKey, locale, keyPath, i18n, value });
   };
 
   /**
@@ -86,7 +70,7 @@
       .map((val) => val.trim())
       .filter((val) => !!val);
 
-    updateSimpleList(currentValue);
+    updateList(currentValue);
   };
 
   onMount(() => {
@@ -114,7 +98,7 @@
   {invalid}
   aria-errormessage="{fieldId}-error"
   oninput={() => {
-    updateSimpleList();
+    updateList();
   }}
   onblur={() => {
     cleanUpValue();
