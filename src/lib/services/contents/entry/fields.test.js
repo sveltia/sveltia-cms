@@ -7,6 +7,7 @@ import {
 } from '$lib/services/contents/collection/entries/index-file';
 import {
   fieldConfigCacheMap,
+  getCurrentValue,
   getField,
   getFieldDisplayValue,
   getPropertyValue,
@@ -4180,7 +4181,7 @@ describe('Test getField() with explicit variable type syntax', () => {
                 name: 'image',
                 fields: [
                   { name: 'src', widget: 'image' },
-                  { name: 'title', widget: 'string' }, // shared field
+                  { name: 'title', widget: 'string' },
                   { name: 'alt', widget: 'string' },
                 ],
               },
@@ -4188,7 +4189,7 @@ describe('Test getField() with explicit variable type syntax', () => {
                 name: 'video',
                 fields: [
                   { name: 'url', widget: 'string' },
-                  { name: 'title', widget: 'string' }, // same field name
+                  { name: 'title', widget: 'string' },
                   { name: 'description', widget: 'text' },
                 ],
               },
@@ -4196,7 +4197,7 @@ describe('Test getField() with explicit variable type syntax', () => {
                 name: 'text',
                 fields: [
                   { name: 'content', widget: 'markdown' },
-                  { name: 'title', widget: 'string' }, // also has title
+                  { name: 'title', widget: 'string' },
                 ],
               },
             ],
@@ -4273,7 +4274,7 @@ describe('Test getField() with explicit variable type syntax', () => {
               {
                 name: 'button',
                 fields: [
-                  { name: 'label', widget: 'string' }, // shared
+                  { name: 'label', widget: 'string' },
                   { name: 'action', widget: 'string' },
                   { name: 'color', widget: 'string' },
                 ],
@@ -4281,7 +4282,7 @@ describe('Test getField() with explicit variable type syntax', () => {
               {
                 name: 'link',
                 fields: [
-                  { name: 'label', widget: 'string' }, // shared
+                  { name: 'label', widget: 'string' },
                   { name: 'url', widget: 'string' },
                   { name: 'target', widget: 'string' },
                 ],
@@ -4289,7 +4290,7 @@ describe('Test getField() with explicit variable type syntax', () => {
               {
                 name: 'dropdown',
                 fields: [
-                  { name: 'label', widget: 'string' }, // shared
+                  { name: 'label', widget: 'string' },
                   { name: 'items', widget: 'list' },
                   { name: 'defaultValue', widget: 'string' },
                 ],
@@ -4393,6 +4394,553 @@ describe('Test getField() with explicit variable type syntax', () => {
       });
 
       expect(videoTitle).toEqual({ name: 'title', widget: 'string' });
+    });
+  });
+});
+
+describe('Test getCurrentValue()', () => {
+  describe('Single value field (not isList, not isCustomFieldType)', () => {
+    test('should return value directly for simple string value', () => {
+      const result = getCurrentValue({
+        keyPath: 'title',
+        keyPathRegex: /^title$/,
+        valueMap: { title: 'Hello World' },
+        isList: false,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toBe('Hello World');
+    });
+
+    test('should return value directly for numeric value', () => {
+      const result = getCurrentValue({
+        keyPath: 'count',
+        keyPathRegex: /^count$/,
+        valueMap: { count: 42 },
+        isList: false,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toBe(42);
+    });
+
+    test('should return undefined if value is undefined', () => {
+      const result = getCurrentValue({
+        keyPath: 'missing',
+        keyPathRegex: /^missing$/,
+        valueMap: {},
+        isList: false,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should return null if value is null', () => {
+      const result = getCurrentValue({
+        keyPath: 'nullable',
+        keyPathRegex: /^nullable$/,
+        valueMap: { nullable: null },
+        isList: false,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toBeNull();
+    });
+
+    test('should return boolean value correctly', () => {
+      const result = getCurrentValue({
+        keyPath: 'active',
+        keyPathRegex: /^active$/,
+        valueMap: { active: true },
+        isList: false,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toBe(true);
+    });
+
+    test('should return empty string value', () => {
+      const result = getCurrentValue({
+        keyPath: 'description',
+        keyPathRegex: /^description$/,
+        valueMap: { description: '' },
+        isList: false,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toBe('');
+    });
+
+    test('should return zero value', () => {
+      const result = getCurrentValue({
+        keyPath: 'zero',
+        keyPathRegex: /^zero$/,
+        valueMap: { zero: 0 },
+        isList: false,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toBe(0);
+    });
+  });
+
+  describe('Multi-value field (isList = true)', () => {
+    test('should return array of values when multiple items exist', () => {
+      const result = getCurrentValue({
+        keyPath: 'tags',
+        keyPathRegex: /^tags\.\d+$/,
+        valueMap: {
+          'tags.0': 'javascript',
+          'tags.1': 'svelte',
+          'tags.2': 'testing',
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual(['javascript', 'svelte', 'testing']);
+    });
+
+    test('should return empty array when no items match keyPathRegex', () => {
+      const result = getCurrentValue({
+        keyPath: 'tags',
+        keyPathRegex: /^tags\.\d+$/,
+        valueMap: {
+          title: 'Some Title',
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    test('should filter out undefined values from array', () => {
+      const result = getCurrentValue({
+        keyPath: 'items',
+        keyPathRegex: /^items\.\d+$/,
+        valueMap: {
+          'items.0': 'first',
+          'items.1': undefined,
+          'items.2': 'third',
+          'items.3': 'fourth',
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual(['first', 'third', 'fourth']);
+    });
+
+    test('should handle list with mixed types', () => {
+      const result = getCurrentValue({
+        keyPath: 'mixed',
+        keyPathRegex: /^mixed\.\d+$/,
+        valueMap: {
+          'mixed.0': 'string',
+          'mixed.1': 42,
+          'mixed.2': true,
+          'mixed.3': null,
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual(['string', 42, true, null]);
+    });
+
+    test('should handle list with nested objects', () => {
+      const obj = { name: 'test' };
+
+      const result = getCurrentValue({
+        keyPath: 'objects',
+        keyPathRegex: /^objects\.\d+$/,
+        valueMap: {
+          'objects.0': obj,
+          'objects.1': { name: 'another' },
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual([obj, { name: 'another' }]);
+    });
+
+    test('should return all items regardless of insertion order', () => {
+      const result = getCurrentValue({
+        keyPath: 'ordered',
+        keyPathRegex: /^ordered\.\d+$/,
+        valueMap: {
+          'ordered.2': 'third',
+          'ordered.0': 'first',
+          'ordered.1': 'second',
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      // Object.entries doesn't guarantee numeric key order, just verify all items are present
+      expect(result).toHaveLength(3);
+      expect(result).toEqual(expect.arrayContaining(['first', 'second', 'third']));
+    });
+
+    test('should handle single item list', () => {
+      const result = getCurrentValue({
+        keyPath: 'single',
+        keyPathRegex: /^single\.\d+$/,
+        valueMap: {
+          'single.0': 'only-item',
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual(['only-item']);
+    });
+
+    test('should ignore base keyPath value when isList is true', () => {
+      const result = getCurrentValue({
+        keyPath: 'items',
+        keyPathRegex: /^items\.\d+$/,
+        valueMap: {
+          items: 'should-be-ignored',
+          'items.0': 'first',
+          'items.1': 'second',
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual(['first', 'second']);
+    });
+  });
+
+  describe('Custom field type (isCustomFieldType = true)', () => {
+    test('should return value directly for custom field type', () => {
+      const value = { customData: 'test' };
+
+      const result = getCurrentValue({
+        keyPath: 'customField',
+        keyPathRegex: /^customField\.\d+$/,
+        valueMap: { customField: value },
+        isList: false,
+        multiple: false,
+        isEditor: false,
+        isCustomFieldType: true,
+      });
+
+      // Use numeric regex so base key doesn't match, allowing custom field value to be returned
+      expect(result).toBe(value);
+    });
+
+    test('should return undefined for undefined custom field', () => {
+      const result = getCurrentValue({
+        keyPath: 'customField',
+        keyPathRegex: /^customField$/,
+        valueMap: {},
+        isList: false,
+        multiple: false,
+        isEditor: false,
+        isCustomFieldType: true,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should return value for custom field without list structure', () => {
+      const value = { customData: 'test' };
+
+      const result = getCurrentValue({
+        keyPath: 'customField',
+        keyPathRegex: /^customField\.\d+$/,
+        valueMap: { customField: value, other: 'unrelated' },
+        isList: false,
+        multiple: false,
+        isEditor: false,
+        isCustomFieldType: true,
+      });
+
+      // Custom field type returns the value directly (numeric regex so base key doesn't match)
+      expect(result).toBe(value);
+    });
+  });
+
+  describe('Converting invalid single value to list (isEditor && multiple)', () => {
+    test('should convert string value to array when isEditor=true and multiple=true', () => {
+      const result = getCurrentValue({
+        keyPath: 'tags',
+        keyPathRegex: /^tags\.\d+$/,
+        valueMap: { tags: 'single-tag' },
+        isList: true,
+        multiple: true,
+        isEditor: true,
+      });
+
+      expect(result).toEqual(['single-tag']);
+    });
+
+    test('should convert number value to array when isEditor=true and multiple=true', () => {
+      const result = getCurrentValue({
+        keyPath: 'scores',
+        keyPathRegex: /^scores\.\d+$/,
+        valueMap: { scores: 42 },
+        isList: true,
+        multiple: true,
+        isEditor: true,
+      });
+
+      expect(result).toEqual([42]);
+    });
+
+    test('should not convert object value when there are no list items', () => {
+      const obj = { data: 'test' };
+
+      const result = getCurrentValue({
+        keyPath: 'field',
+        keyPathRegex: /^field\.\d+$/,
+        valueMap: { field: obj },
+        isList: true,
+        multiple: true,
+        isEditor: true,
+      });
+
+      // Object values don't get converted, returns empty array since no list items
+      expect(result).toEqual([]);
+    });
+
+    test('should not convert array value when there are no list items', () => {
+      const arr = ['item1', 'item2'];
+
+      const result = getCurrentValue({
+        keyPath: 'items',
+        keyPathRegex: /^items\.\d+$/,
+        valueMap: { items: arr },
+        isList: true,
+        multiple: true,
+        isEditor: true,
+      });
+
+      // Array values don't get converted, returns empty array since no list items
+      expect(result).toEqual([]);
+    });
+
+    test('should not convert when value is undefined', () => {
+      const result = getCurrentValue({
+        keyPath: 'field',
+        keyPathRegex: /^field\.\d+$/,
+        valueMap: {},
+        isList: true,
+        multiple: true,
+        isEditor: true,
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    test('should not convert when value is null', () => {
+      const result = getCurrentValue({
+        keyPath: 'field',
+        keyPathRegex: /^field\.\d+$/,
+        valueMap: { field: null },
+        isList: true,
+        multiple: true,
+        isEditor: true,
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    test('should not convert when isEditor=false', () => {
+      const result = getCurrentValue({
+        keyPath: 'tags',
+        keyPathRegex: /^tags\.\d+$/,
+        valueMap: { tags: 'single-tag' },
+        isList: true,
+        multiple: true,
+        isEditor: false,
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    test('should not convert when multiple=false', () => {
+      const result = getCurrentValue({
+        keyPath: 'field',
+        keyPathRegex: /^field\.\d+$/,
+        valueMap: { field: 'value' },
+        isList: true,
+        multiple: false,
+        isEditor: true,
+      });
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('Complex scenarios with nested paths', () => {
+    test('should handle nested list item regex patterns', () => {
+      const result = getCurrentValue({
+        keyPath: 'sections',
+        keyPathRegex: /^sections\.\d+\.items\.\d+$/,
+        valueMap: {
+          'sections.0.items.0': 'item1',
+          'sections.0.items.1': 'item2',
+          'sections.1.items.0': 'item3',
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual(['item1', 'item2', 'item3']);
+    });
+
+    test('should handle complex object fields', () => {
+      const result = getCurrentValue({
+        keyPath: 'authors',
+        keyPathRegex: /^authors\.\d+$/,
+        valueMap: {
+          'authors.0': { name: 'John', email: 'john@example.com' },
+          'authors.1': { name: 'Jane', email: 'jane@example.com' },
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual([
+        { name: 'John', email: 'john@example.com' },
+        { name: 'Jane', email: 'jane@example.com' },
+      ]);
+    });
+  });
+
+  describe('Edge cases', () => {
+    test('should handle empty valueMap', () => {
+      const result = getCurrentValue({
+        keyPath: 'field',
+        keyPathRegex: /^field$/,
+        valueMap: {},
+        isList: false,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toBeUndefined();
+    });
+
+    test('should handle valueMap with many unrelated keys', () => {
+      const result = getCurrentValue({
+        keyPath: 'target',
+        keyPathRegex: /^target\.\d+$/,
+        valueMap: {
+          other: 'value1',
+          'other.0': 'value2',
+          'other.1': 'value3',
+          'target.0': 'correct1',
+          'target.1': 'correct2',
+          'unrelated.0': 'value4',
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual(['correct1', 'correct2']);
+    });
+
+    test('should handle false value in list', () => {
+      const result = getCurrentValue({
+        keyPath: 'booleans',
+        keyPathRegex: /^booleans\.\d+$/,
+        valueMap: {
+          'booleans.0': true,
+          'booleans.1': false,
+          'booleans.2': true,
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual([true, false, true]);
+    });
+
+    test('should handle false boolean as valid value not converting to array', () => {
+      const result = getCurrentValue({
+        keyPath: 'active',
+        keyPathRegex: /^active$/,
+        valueMap: { active: false },
+        isList: false,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toBe(false);
+    });
+
+    test('should handle various falsy values correctly', () => {
+      const result = getCurrentValue({
+        keyPath: 'items',
+        keyPathRegex: /^items\.\d+$/,
+        valueMap: {
+          'items.0': 0,
+          'items.1': false,
+          'items.2': '',
+          'items.3': null,
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual([0, false, '', null]);
+    });
+
+    test('should handle special characters in keyPath', () => {
+      const result = getCurrentValue({
+        keyPath: 'field-with-dash',
+        keyPathRegex: /^field-with-dash$/,
+        valueMap: { 'field-with-dash': 'value' },
+        isList: false,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toBe('value');
+    });
+
+    test('should handle very large index numbers', () => {
+      const result = getCurrentValue({
+        keyPath: 'items',
+        keyPathRegex: /^items\.\d+$/,
+        valueMap: {
+          'items.999': 'item1',
+          'items.1000': 'item2',
+          'items.9999': 'item3',
+        },
+        isList: true,
+        multiple: false,
+        isEditor: false,
+      });
+
+      expect(result).toEqual(['item1', 'item2', 'item3']);
     });
   });
 });

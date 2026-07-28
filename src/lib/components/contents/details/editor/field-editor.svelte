@@ -18,7 +18,11 @@
     resolveOriginalKeyPath,
     revertChanges,
   } from '$lib/services/contents/draft/update/revert';
-  import { isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
+  import {
+    getCurrentValue,
+    isFieldMultiple,
+    isFieldRequired,
+  } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
   /**
@@ -145,30 +149,17 @@
   const canCopy = $derived(!inEditorComponent && canTranslate && otherLocales.length);
   const canRevert = $derived(!inEditorComponent && !(canDuplicate && locale !== defaultLocale));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
-  const currentValue = $derived.by(() => {
-    const valueMap = $state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {});
-    const value = valueMap[keyPath];
-
-    if (!isList) {
-      return value;
-    }
-
-    // Multiple values are flattened in the value map object
-    const list = Object.entries(valueMap).filter(([_keyPath]) => keyPathRegex.test(_keyPath));
-
-    if (list.length) {
-      return list.map(([, val]) => val).filter((val) => val !== undefined);
-    }
-
-    // Convert invalid single value to list. This is in place to handle the case when a field is
-    // changed from single to multiple. (Continue to the `$effect` block below.)
-    // @todo Move this logic to entry normalization module
-    if (multiple && value !== undefined && typeof value !== 'object') {
-      return [value];
-    }
-
-    return [];
-  });
+  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {}));
+  const currentValue = $derived(
+    getCurrentValue({
+      valueMap,
+      keyPath,
+      keyPathRegex,
+      isList,
+      multiple,
+      isEditor: true,
+    }),
+  );
   const originalValue = $derived.by(() => {
     if (isList) {
       return Object.entries(originalValues?.[locale] ?? {})
@@ -178,7 +169,7 @@
     }
 
     // For fields inside list items, use the original key path if the item was reordered
-    const currentMap = $state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {});
+    const currentMap = valueMap;
     const resolved = resolveOriginalKeyPath(currentMap, keyPath);
 
     if (resolved) {
@@ -191,7 +182,7 @@
     if (fieldType === 'list') {
       // For list fields, compare all flat entries under the keyPath prefix, because `currentValue`
       // and `originalValue` may not capture complex (nested) list items correctly
-      const currentMap = $state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {});
+      const currentMap = valueMap;
       const originalMap = originalValues?.[locale] ?? {};
       const keyPathPrefix = `${keyPath}.`;
 

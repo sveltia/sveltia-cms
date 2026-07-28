@@ -556,3 +556,58 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
 
   return content[key];
 };
+
+/**
+ * Get the current value of a field, taking into account whether it’s a single or multi-value field.
+ * Our internal representation of multi-value fields is a flattened object, so we need to gather all
+ * the values for a given key path into an array.
+ * @param {object} args Arguments.
+ * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
+ * @param {FieldKeyPath} args.keyPath Key path of the field.
+ * @param {RegExp} args.keyPathRegex Regular expression to match the key path prefix.
+ * @param {boolean} args.isList Whether the field is a list field.
+ * @param {boolean} args.multiple Whether the field is a multi-value field.
+ * @param {boolean} args.isEditor Whether the field is being rendered in the editor.
+ * @param {boolean} [args.isCustomFieldType] Whether the field is a custom field type. It may have
+ * arbitrary data structures, so we can’t assume they are multi-value fields.
+ * @returns {any} Current value of the field. For multi-value fields, returns an array of values;
+ * for single-value fields, returns the value directly.
+ */
+export const getCurrentValue = ({
+  valueMap,
+  keyPath,
+  keyPathRegex,
+  isList,
+  multiple,
+  isEditor,
+  isCustomFieldType = false,
+}) => {
+  const value = valueMap[keyPath];
+
+  // Single value field: custom widget requires the list check below as we don’t know the shape
+  if (!isList && !isCustomFieldType) {
+    return value;
+  }
+
+  // Multiple values are flattened in the value map object
+  const list = Object.entries(valueMap).filter(([_keyPath]) => keyPathRegex.test(_keyPath));
+
+  // Multi-value field
+  if (list.length) {
+    return list.map(([, val]) => val).filter((val) => val !== undefined);
+  }
+
+  // Single value custom field
+  if (isCustomFieldType) {
+    return value;
+  }
+
+  // Convert invalid single value to list. This is in place to handle the case when a field is
+  // changed from single to multiple. (Continue to the `$effect` block below.)
+  // @todo Move this logic to entry normalization module
+  if (isEditor && multiple && value !== undefined && typeof value !== 'object') {
+    return [value];
+  }
+
+  return [];
+};

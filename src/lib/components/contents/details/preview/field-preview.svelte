@@ -4,7 +4,7 @@
   import { previews } from '$lib/components/contents/details/fields';
   import { entryDraft } from '$lib/services/contents/draft';
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
-  import { isFieldMultiple } from '$lib/services/contents/entry/fields';
+  import { getCurrentValue, isFieldMultiple } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
   /**
@@ -45,14 +45,15 @@
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
   const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
-  // Multiple values are flattened in the value map object
   const currentValue = $derived(
-    isList
-      ? Object.entries(valueMap)
-          .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-          .map(([, val]) => val)
-          .filter((val) => val !== undefined)
-      : valueMap[keyPath],
+    getCurrentValue({
+      valueMap,
+      keyPath,
+      keyPathRegex,
+      isList,
+      multiple,
+      isEditor: false,
+    }),
   );
   const previewProps = $derived({ locale, keyPath, typedKeyPath, fieldConfig, currentValue });
 </script>
