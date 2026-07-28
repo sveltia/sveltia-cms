@@ -330,7 +330,19 @@ const CMS = new Proxy(
 );
 
 export default CMS;
-export { init };
+
+// Export all the functions at once instead of `export const init`, etc. to prevent annotations from
+// being stripped in the generated `main.d.ts` file
+export {
+  init,
+  registerCustomFormat,
+  registerEditorComponent,
+  registerEventListener,
+  registerFieldType,
+  registerPreviewStyle,
+  registerPreviewTemplate,
+  registerFieldType as registerWidget, // alias for backward compatibility with Netlify/Decap CMS
+};
 
 window.CMS = CMS;
 window.initCMS = init;
