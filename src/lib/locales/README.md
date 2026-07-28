@@ -14,7 +14,7 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 2. **File an issue**: [Create a new issue](https://github.com/sveltia/sveltia-cms/issues/new?type=task&labels=l10n) with your language name (e.g., “French localization”).
    - **This is required** — pull requests (PRs) that are not linked to issues or sent by unassigned people will be closed to prevent unnecessary duplication of effort.
    - If you want us to provide an AI-generated draft translation for your language, please request it in your issue.
-3. **Translate both repositories**:
+3. **Translate two files**:
    - [Sveltia UI strings](https://raw.githubusercontent.com/sveltia/sveltia-ui/e3655496eb2c548d7b965da991b9f3548269ecec/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-ui/upload/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-ui) to submit a PR
    - [Sveltia CMS strings](https://raw.githubusercontent.com/sveltia/sveltia-cms/1295bf44e4e833dcf6d626d6e20198df12f877a3/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-cms/upload/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-cms) to submit a PR
    - **PR title**: “Add [language] localization” (e.g., “Add French localization”) or “Update [language] localization” if updating an existing translation.
