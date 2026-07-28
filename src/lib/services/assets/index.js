@@ -10,7 +10,7 @@ import {
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
 import { processFile } from '$lib/services/assets/process';
-import { fillTemplate } from '$lib/services/common/template';
+import { fillTemplate, hasTemplateTags } from '$lib/services/common/template';
 import {
   ESCAPED_PLACEHOLDER_REGEX,
   TEMPLATE_TAG_REGEX,
@@ -192,7 +192,7 @@ export const getAssetByRelativePathAndCollection = ({
       })
     : undefined;
 
-  const mediaFolder = fieldFolder?.entryRelative
+  let mediaFolder = fieldFolder?.entryRelative
     ? (fieldFolder.internalSubPath ?? '')
     : /** @type {string | undefined} */ ((file ?? collection).media_folder);
 
@@ -205,6 +205,20 @@ export const getAssetByRelativePathAndCollection = ({
 
   if (!entryFilePath || !entryContent) {
     return undefined;
+  }
+
+  // Resolve template tags like `{{filename}}` or `{{slug}}` in an entry-relative `media_folder`
+  // (e.g. Hexo’s Post Asset Folder convention) so the asset can be located correctly.
+  // @see https://github.com/sveltia/sveltia-cms/issues/853
+  if (mediaFolder && hasTemplateTags(mediaFolder)) {
+    mediaFolder = fillTemplate(mediaFolder, {
+      type: 'media_folder',
+      collection,
+      content: entryContent,
+      currentSlug: entry.slug,
+      entryFilePath,
+      isIndexFile: isCollectionIndexFile(collection, entry),
+    });
   }
 
   // The regex matches any non-empty string (`entryFilePath` is guaranteed non-empty above). Named

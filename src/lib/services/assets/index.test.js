@@ -1979,6 +1979,75 @@ describe('assets/index', () => {
       expect(createPath).toHaveBeenCalledWith(['src/assets/blog', 'photo.jpg']);
       expect(resolvePath).toHaveBeenCalledWith('src/assets/blog/photo.jpg');
     });
+
+    it('should resolve template tags like {{filename}} in an entry-relative media_folder', async () => {
+      // Regression for Hexo’s Post Asset Folder convention: `media_folder: "{{filename}}"` stores
+      // assets in a subfolder named after the entry file, e.g. `source/_posts/abc/img0.jpg` for
+      // `source/_posts/abc.md`. Previously the raw `{{filename}}` string was used verbatim instead
+      // of being resolved, so the asset could never be found.
+      // @see https://github.com/sveltia/sveltia-cms/issues/853
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+      const { fillTemplate, hasTemplateTags } = await import('$lib/services/common/template');
+
+      const mockAsset = {
+        path: 'source/_posts/abc/img0.jpg',
+        name: 'img0.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'source/_posts',
+          publicPath: '',
+          collectionName: 'posts',
+          entryRelative: true,
+          hasTemplateTags: true,
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'abc',
+        slug: 'abc',
+        locales: {
+          en: {
+            path: 'source/_posts/abc.md',
+            sha: 'sha123',
+            slug: 'abc',
+            content: { title: 'Abc' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        folder: '/source/_posts',
+        media_folder: '{{filename}}',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      vi.mocked(hasTemplateTags).mockReturnValueOnce(true);
+      vi.mocked(fillTemplate).mockReturnValueOnce('abc');
+      vi.mocked(createPath).mockReturnValue('source/_posts/abc/img0.jpg');
+      vi.mocked(resolvePath).mockReturnValue('source/_posts/abc/img0.jpg');
+      allAssets.set([mockAsset]);
+
+      const result = getAssetByRelativePathAndCollection({
+        path: 'img0.jpg',
+        entry: mockEntry,
+        collection: mockCollection,
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(fillTemplate).toHaveBeenCalledWith(
+        '{{filename}}',
+        expect.objectContaining({
+          type: 'media_folder',
+          collection: mockCollection,
+          entryFilePath: 'source/_posts/abc.md',
+        }),
+      );
+      // The resolved 'abc' folder (not the literal '{{filename}}') must be used
+      expect(createPath).toHaveBeenCalledWith(['source/_posts', 'abc', 'img0.jpg']);
+    });
   });
 
   describe('getAssetByRelativePath', () => {
