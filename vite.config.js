@@ -107,7 +107,7 @@ const copyPackageFiles = () => ({
         devDependencies: Object.fromEntries(
           DEV_DEPENDENCIES.map((key) => [key, dependencies[key] ?? devDependencies[key]]),
         ),
-        files: ['dist', 'schema', 'types', 'main.d.ts'],
+        files: ['dist', 'schema', 'services', 'types', 'main.d.ts'],
         main: './dist/sveltia-cms.mjs',
         module: './dist/sveltia-cms.mjs',
         exports: {

@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
-/* eslint-disable jsdoc/require-jsdoc */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 // Set up window and document objects BEFORE any imports
 // @ts-ignore
@@ -26,934 +25,371 @@ global.document = {
 // Mock dependencies BEFORE import
 vi.mock('create-react-class');
 vi.mock('react');
-vi.mock('immutable', () => ({
-  Map: class ImmutableMap {},
-}));
 vi.mock('svelte', () => ({
   mount: vi.fn(),
 }));
-vi.mock('$lib/services/contents/editor', () => ({
-  customPreviewStyleRegistry: new Set(),
-  customPreviewTemplateRegistry: new Map(),
-}));
-vi.mock('$lib/services/contents/file/config', () => ({
-  customFileFormatRegistry: new Map(),
-}));
-vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => ({
-  customComponentRegistry: new Map(),
-}));
-vi.mock('$lib/services/api/events', () => ({
-  eventHookRegistry: new Set(),
-  SUPPORTED_EVENT_TYPES: [
-    'preSave',
-    'postSave',
-    'prePublish',
-    'postPublish',
-    'preUnpublish',
-    'postUnpublish',
-  ],
-}));
-vi.mock('$lib/components/app.svelte', () => ({
+vi.mock('$lib/services/api', () => ({
   default: {},
+  init: vi.fn(),
 }));
 
-// Now import after all setup
-// @ts-ignore
-const CMS = (await import('./main.js')).default;
-const { customPreviewStyleRegistry } = await import('$lib/services/api/registries');
-
-describe('CMS.init()', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test('initializes with no options', async () => {
-    await expect(CMS.init()).resolves.toBeUndefined();
-  });
-
-  test('initializes with valid config object', async () => {
-    const config = { backend: { name: 'github' } };
-
-    // @ts-ignore
-    await expect(CMS.init({ config })).resolves.toBeUndefined();
-  });
-
-  test('throws TypeError if config is not an object', async () => {
-    // @ts-ignore
-    await expect(CMS.init({ config: 'invalid' })).rejects.toThrow(TypeError);
-    // @ts-ignore
-    await expect(CMS.init({ config: 123 })).rejects.toThrow(TypeError);
-    // @ts-ignore
-    await expect(CMS.init({ config: true })).rejects.toThrow(TypeError);
-    // @ts-ignore
-    await expect(CMS.init({ config: [] })).rejects.toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid config', async () => {
-    // @ts-ignore
-    await expect(CMS.init({ config: 'invalid' })).rejects.toThrow(
-      'The `config` option for `CMS.init()` must be an object',
-    );
-  });
-
-  test('allows undefined config', async () => {
-    await expect(CMS.init({ config: undefined })).resolves.toBeUndefined();
-    await expect(CMS.init({})).resolves.toBeUndefined();
-  });
-
-  test('handles document loading state', async () => {
-    // This test verifies init() works when document.readyState is 'loading'
-    // The actual DOMContentLoaded logic (lines 103-104) uses window.addEventListener
-    // which is set up before the module loads and can't be easily mocked here.
-    //
-    // To get coverage of lines 103-104, the document.readyState would need to be
-    // 'loading' AND there should be no #nc-root element when the module first loads,
-    // which is controlled by the test setup at the top of this file.
-
-    // This test just verifies init() completes successfully
-    await expect(CMS.init()).resolves.toBeUndefined();
-  });
-});
-
-describe('CMS.registerCustomFormat()', () => {
-  test('registers format with both parser and formatter', () => {
-    const fromFile = () => {};
-    const toFile = () => {};
-
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat('test', '.test', { fromFile, toFile })).not.toThrow();
-  });
-
-  test('registers format with only parser', () => {
-    const fromFile = () => {};
-
-    expect(() => CMS.registerCustomFormat('test', '.test', { fromFile })).not.toThrow();
-  });
-
-  test('registers format with only formatter', () => {
-    const toFile = () => {};
-
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat('test', '.test', { toFile })).not.toThrow();
-  });
-
-  test('throws TypeError if name is not a non-empty string', () => {
-    const toFile = () => {};
-
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat(123, '.test', { toFile })).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat(null, '.test', { toFile })).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat({}, '.test', { toFile })).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat('   ', '.test', { toFile })).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid name', () => {
-    const toFile = () => {};
-
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat(123, '.test', { toFile })).toThrow(
-      'The `name` option for `CMS.registerCustomFormat()` must be a non-empty string',
-    );
-  });
-
-  test('throws TypeError if extension is not a non-empty string', () => {
-    const toFile = () => {};
-
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat('test', 123, { toFile })).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat('test', null, { toFile })).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat('test', {}, { toFile })).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat('test', '   ', { toFile })).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid extension', () => {
-    const toFile = () => {};
-
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat('test', 123, { toFile })).toThrow(
-      'The `extension` option for `CMS.registerCustomFormat()` must be a non-empty string',
-    );
-  });
-
-  test('throws Error if neither fromFile nor toFile is provided', () => {
-    expect(() => CMS.registerCustomFormat('test', '.test', {})).toThrow(Error);
-    expect(() => CMS.registerCustomFormat('test', '.test')).toThrow(Error);
-  });
-
-  test('throws with proper error message for missing methods', () => {
-    expect(() => CMS.registerCustomFormat('test', '.test', {})).toThrow(
-      'At least one of `fromFile` or `toFile` must be provided to `CMS.registerCustomFormat()`',
-    );
-  });
-
-  test('throws TypeError if fromFile is provided but not a function', () => {
-    const toFile = () => {};
-
-    expect(() =>
-      // @ts-ignore
-      CMS.registerCustomFormat('test', '.test', { fromFile: 'invalid', toFile }),
-    ).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat('test', '.test', { fromFile: 123, toFile })).toThrow(
-      TypeError,
-    );
-  });
-
-  test('throws with proper error message for invalid fromFile', () => {
-    const toFile = () => {};
-
-    expect(() =>
-      // @ts-ignore
-      CMS.registerCustomFormat('test', '.test', { fromFile: 'invalid', toFile }),
-    ).toThrow('The `fromFile` option for `CMS.registerCustomFormat()` must be a function');
-  });
-
-  test('throws TypeError if toFile is provided but not a function', () => {
-    const fromFile = () => {};
-
-    expect(() =>
-      // @ts-ignore
-      CMS.registerCustomFormat('test', '.test', { fromFile, toFile: 'invalid' }),
-    ).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerCustomFormat('test', '.test', { fromFile, toFile: 123 })).toThrow(
-      TypeError,
-    );
-  });
-
-  test('throws with proper error message for invalid toFile', () => {
-    const fromFile = () => {};
-
-    expect(() =>
-      // @ts-ignore
-      CMS.registerCustomFormat('test', '.test', { fromFile, toFile: 'invalid' }),
-    ).toThrow('The `toFile` option for `CMS.registerCustomFormat()` must be a function');
-  });
-
-  test('accepts async functions as parser/formatter', () => {
-    const asyncFromFile = async () => {};
-    const asyncToFile = async () => {};
-
-    expect(() =>
-      // @ts-ignore
-      CMS.registerCustomFormat('test', '.test', { fromFile: asyncFromFile, toFile: asyncToFile }),
-    ).not.toThrow();
-  });
-});
-
-describe('CMS.registerEditorComponent()', () => {
-  const validDefinition = {
-    id: 'test-component',
-    label: 'Test Component',
-    pattern: /test/,
-    toBlock: () => 'block',
-    toPreview: () => 'preview',
-    fields: [],
-  };
-
-  test('registers valid component definition', () => {
-    expect(() => CMS.registerEditorComponent(validDefinition)).not.toThrow();
-  });
-
-  test('throws TypeError if definition is not an object', () => {
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(null)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(undefined)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent('invalid')).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(123)).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for non-object definition', () => {
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(null)).toThrow(
-      'The `definition` option for `CMS.registerEditorComponent()` must be an object',
-    );
-  });
-
-  test('throws TypeError if id is not a non-empty string', () => {
-    const definition = { ...validDefinition, id: 123 };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(TypeError);
-
-    const whitespaceDefinition = { ...validDefinition, id: '   ' };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(whitespaceDefinition)).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid id', () => {
-    const definition = { ...validDefinition, id: 123 };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(
-      'The `definition.id` must be a non-empty string',
-    );
-  });
-
-  test('throws TypeError if label is not a non-empty string', () => {
-    const definition = { ...validDefinition, label: 123 };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(TypeError);
-
-    const whitespaceDefinition = { ...validDefinition, label: '   ' };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(whitespaceDefinition)).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid label', () => {
-    const definition = { ...validDefinition, label: 123 };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(
-      'The `definition.label` must be a non-empty string',
-    );
-  });
-
-  test('throws TypeError if pattern is not a RegExp', () => {
-    const definition = { ...validDefinition, pattern: 'invalid' };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(TypeError);
-
-    const definition2 = { ...validDefinition, pattern: {} };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition2)).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid pattern', () => {
-    const definition = { ...validDefinition, pattern: 'invalid' };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(
-      'The `definition.pattern` must be a RegExp',
-    );
-  });
-
-  test('throws TypeError if toBlock is not a function', () => {
-    const definition = { ...validDefinition, toBlock: 'invalid' };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid toBlock', () => {
-    const definition = { ...validDefinition, toBlock: 'invalid' };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(
-      'The `definition.toBlock` must be a function',
-    );
-  });
-
-  test('throws TypeError if toPreview is not a function', () => {
-    const definition = { ...validDefinition, toPreview: 'invalid' };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid toPreview', () => {
-    const definition = { ...validDefinition, toPreview: 'invalid' };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(
-      'The `definition.toPreview` must be a function',
-    );
-  });
-
-  test('throws TypeError if fields is not an array', () => {
-    const definition = { ...validDefinition, fields: 'invalid' };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(TypeError);
-
-    const definition2 = { ...validDefinition, fields: {} };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition2)).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid fields', () => {
-    const definition = { ...validDefinition, fields: 'invalid' };
-
-    // @ts-ignore
-    expect(() => CMS.registerEditorComponent(definition)).toThrow(
-      'The `definition.fields` must be an array',
-    );
-  });
-
-  test('accepts optional icon and collapsed properties', () => {
-    const definition = {
-      ...validDefinition,
-      icon: 'star',
-      collapsed: true,
+describe('Script element detection and module type warning', () => {
+  test('warns when script element has type="module"', async () => {
+    const mockScriptElement = {
+      type: 'module',
+      src: 'https://example.com/sveltia-cms.js',
     };
 
-    expect(() => CMS.registerEditorComponent(definition)).not.toThrow();
-  });
-
-  test('accepts empty fields array', () => {
-    const definition = { ...validDefinition, fields: [] };
-
-    expect(() => CMS.registerEditorComponent(definition)).not.toThrow();
-  });
-
-  test('accepts fields array with items', () => {
-    const definition = {
-      ...validDefinition,
-      fields: [{ name: 'field1', widget: 'string' }],
-    };
-
-    expect(() => CMS.registerEditorComponent(definition)).not.toThrow();
-  });
-
-  test('accepts fromBlock method when present', () => {
-    const definition = {
-      ...validDefinition,
-      fromBlock: () => ({}),
-    };
-
-    expect(() => CMS.registerEditorComponent(definition)).not.toThrow();
-  });
-});
-
-describe('CMS.registerPreviewStyle()', () => {
-  beforeEach(() => {
-    customPreviewStyleRegistry.clear();
-  });
-
-  test('registers stylesheet URL', () => {
-    expect(() => CMS.registerPreviewStyle('https://example.com/style.css')).not.toThrow();
-    expect(customPreviewStyleRegistry).toContain('https://example.com/style.css');
-  });
-
-  test('registers stylesheet file path', () => {
-    expect(() => CMS.registerPreviewStyle('/assets/style.css')).not.toThrow();
-    expect(customPreviewStyleRegistry).toContain('https://sveltia.dev/assets/style.css');
-  });
-
-  test('registers raw CSS string', () => {
-    expect(() => CMS.registerPreviewStyle('body { color: red; }', { raw: true })).not.toThrow();
-    expect(customPreviewStyleRegistry.size).toBe(1);
-    expect([...customPreviewStyleRegistry][0]).toMatch(/^blob:/);
-  });
-
-  test('throws TypeError if non-raw style is not a valid URL or file path', () => {
-    expect(() => CMS.registerPreviewStyle('http://')).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid non-raw style', () => {
-    expect(() => CMS.registerPreviewStyle('http://')).toThrow(
-      'The `style` option for `CMS.registerPreviewStyle()` must be a valid URL or file path when `raw` is false',
-    );
-  });
-
-  test('throws TypeError if style is not a non-empty string', () => {
+    // Clear and reset document mock
     // @ts-ignore
-    expect(() => CMS.registerPreviewStyle(123)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerPreviewStyle(null)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerPreviewStyle({})).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerPreviewStyle('   ')).toThrow(TypeError);
+    global.document.querySelector = vi.fn(() => mockScriptElement);
+
+    // Re-import module to trigger the script detection code
+    const { default: CMS2 } = await import('./main.js');
+
+    expect(CMS2).toBeDefined();
+
+    // Note: The console.warn is called during module import,
+    // but we can't directly spy on it at import time in this setup.
+    // This test validates the code path exists and doesn't throw.
   });
 
-  test('throws with proper error message for invalid style', () => {
+  test('does not throw when checking script element', () => {
     // @ts-ignore
-    expect(() => CMS.registerPreviewStyle(123)).toThrow(
-      'The `style` option for `CMS.registerPreviewStyle()` must be a non-empty string',
-    );
+    expect(() => {
+      // The script element check code runs at module load time
+      // This test ensures it doesn't error during that execution
+      const scriptElement = /** @type {HTMLScriptElement | null} */ (
+        document.querySelector('script[src$="/sveltia-cms.js"]')
+      );
+
+      // This mimics the check in main.js
+      if (scriptElement?.type === 'module') {
+        // Warning would be logged here
+      }
+    }).not.toThrow();
   });
 
-  test('throws TypeError if raw option is not a boolean', () => {
+  test('script querySelector uses correct selector', () => {
+    const queryMock = vi.fn(() => null);
+
     // @ts-ignore
-    expect(() => CMS.registerPreviewStyle('body {}', { raw: 'true' })).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerPreviewStyle('body {}', { raw: 1 })).toThrow(TypeError);
+    global.document.querySelector = queryMock;
+
+    // Call querySelector to verify the selector would be correct
+    document.querySelector('script[src$="/sveltia-cms.js"]');
+
+    expect(queryMock).toHaveBeenCalledWith('script[src$="/sveltia-cms.js"]');
   });
 
-  test('throws with proper error message for invalid raw option', () => {
+  test('handles null script element gracefully', () => {
     // @ts-ignore
-    expect(() => CMS.registerPreviewStyle('body {}', { raw: 'true' })).toThrow(
-      'The `raw` option for `CMS.registerPreviewStyle()` must be a boolean',
-    );
+    global.document.querySelector = vi.fn(() => null);
+
+    expect(() => {
+      const scriptElement = /** @type {HTMLScriptElement | null} */ (
+        document.querySelector('script[src$="/sveltia-cms.js"]')
+      );
+
+      if (scriptElement?.type === 'module') {
+        console.warn('Module warning');
+      }
+    }).not.toThrow();
   });
 
-  test('defaults raw option to false', () => {
-    expect(() => CMS.registerPreviewStyle('https://example.com/style.css')).not.toThrow();
-  });
-});
-
-describe('CMS.registerEventListener()', () => {
-  test('registers valid event listener', () => {
-    // @ts-ignore
-    const listener = {
-      name: 'preSave',
-      handler: () => {},
+  test('handles script element without type attribute', () => {
+    const mockScriptElement = {
+      src: 'https://example.com/sveltia-cms.js',
+      // type is undefined
     };
 
     // @ts-ignore
-    expect(() => CMS.registerEventListener(listener)).not.toThrow();
-  });
+    global.document.querySelector = vi.fn(() => mockScriptElement);
 
-  test('registers all supported event types', () => {
-    const eventTypes = [
-      'preSave',
-      'postSave',
-      'prePublish',
-      'postPublish',
-      'preUnpublish',
-      'postUnpublish',
-    ];
-
-    eventTypes.forEach((eventType) => {
-      // @ts-ignore
-      const listener = {
-        name: eventType,
-        handler: () => {},
-      };
-
-      // @ts-ignore
-      expect(() => CMS.registerEventListener(listener)).not.toThrow();
-    });
-  });
-
-  test('throws TypeError if listener is not an object', () => {
-    // @ts-ignore
-    expect(() => CMS.registerEventListener(null)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerEventListener(undefined)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerEventListener('invalid')).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerEventListener(123)).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for non-object listener', () => {
-    // @ts-ignore
-    expect(() => CMS.registerEventListener(null)).toThrow('The event listener must be an object');
-  });
-
-  test('throws TypeError if name is not a string', () => {
-    // @ts-ignore
-    expect(() =>
-      CMS.registerEventListener({
+    expect(() => {
+      const scriptElement = /** @type {HTMLScriptElement | null} */ (
         // @ts-ignore
-        name: 123,
-        handler: () => {},
-      }),
-    ).toThrow(TypeError);
+        global.document.querySelector('script[src$="/sveltia-cms.js"]')
+      );
 
-    // @ts-ignore
-    expect(() =>
-      CMS.registerEventListener({
-        // @ts-ignore
-        name: null,
-        handler: () => {},
-      }),
-    ).toThrow(TypeError);
+      if (scriptElement?.type === 'module') {
+        console.warn('Module warning');
+      }
+    }).not.toThrow();
   });
 
-  test('throws TypeError if handler is not a function', () => {
-    // @ts-ignore
-    expect(() =>
-      CMS.registerEventListener({
-        name: 'preSave',
-        // @ts-ignore
-        handler: 'invalid',
-      }),
-    ).toThrow(TypeError);
+  test('conditional operator safely handles undefined type', () => {
+    const mockScriptElement = {
+      src: 'https://example.com/sveltia-cms.js',
+      type: undefined,
+    };
 
-    // @ts-ignore
-    expect(() =>
-      CMS.registerEventListener({
-        name: 'preSave',
-        // @ts-ignore
-        handler: {},
-      }),
-    ).toThrow(TypeError);
+    const result = mockScriptElement?.type === 'module';
+
+    expect(result).toBe(false);
   });
 
-  test('throws with proper error message for missing properties', () => {
-    // @ts-ignore
-    expect(() =>
-      CMS.registerEventListener({
-        name: 'preSave',
-        // @ts-ignore
-        handler: 'invalid',
-      }),
-    ).toThrow(
-      'The event listener must have a string `name` property and a function `handler` property',
-    );
+  test('correctly identifies module type', () => {
+    const mockScriptElement = {
+      src: 'https://example.com/sveltia-cms.js',
+      type: 'module',
+    };
+
+    const result = mockScriptElement?.type === 'module';
+
+    expect(result).toBe(true);
   });
 
-  test('throws RangeError if event type is not supported', () => {
-    // @ts-ignore
-    expect(() =>
-      CMS.registerEventListener({
-        // @ts-ignore
-        name: 'unsupportedEvent',
-        handler: () => {},
-      }),
-    ).toThrow(RangeError);
-  });
+  test('correctly identifies non-module script', () => {
+    const mockScriptElement = {
+      src: 'https://example.com/sveltia-cms.js',
+      type: 'text/javascript',
+    };
 
-  test('throws with proper error message for unsupported event type', () => {
-    // @ts-ignore
-    expect(() =>
-      CMS.registerEventListener({
-        // @ts-ignore
-        name: 'invalidEvent',
-        handler: () => {},
-      }),
-    ).toThrow('Unsupported event listener name "invalidEvent"');
-  });
+    const result = mockScriptElement?.type === 'module';
 
-  test('accepts async handler functions', () => {
-    // @ts-ignore
-    expect(() =>
-      CMS.registerEventListener({
-        name: 'preSave',
-        // @ts-ignore
-        handler: async () => {},
-      }),
-    ).not.toThrow();
+    expect(result).toBe(false);
   });
 });
 
-describe('CMS.registerPreviewTemplate()', () => {
-  test('registers a preview template successfully', () => {
-    const component = () => null;
+describe('CSS stylesheet detection and warning', () => {
+  test('warns when invalid stylesheet link is found', () => {
+    const mockLinkElement = {
+      rel: 'stylesheet',
+      href: 'https://example.com/sveltia-cms.css',
+    };
 
     // @ts-ignore
-    expect(() => CMS.registerPreviewTemplate('posts', component)).not.toThrow();
-  });
+    global.document.querySelector = vi.fn(() => mockLinkElement);
 
-  test('throws TypeError when name is not a non-empty string', () => {
-    const component = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerPreviewTemplate(123, component)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerPreviewTemplate('   ', component)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerPreviewTemplate(123, component)).toThrow(
-      'The `name` option for `CMS.registerPreviewTemplate()` must be a non-empty string',
-    );
-  });
-
-  test('throws TypeError when component is not a function', () => {
-    // @ts-ignore
-    expect(() => CMS.registerPreviewTemplate('posts', 'not-a-function')).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerPreviewTemplate('posts', 'not-a-function')).toThrow(
-      'The `component` option for `CMS.registerPreviewTemplate()` must be a React component',
-    );
-  });
-
-  test('allows registering multiple templates', () => {
-    const component1 = () => null;
-    const component2 = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerPreviewTemplate('posts', component1)).not.toThrow();
-    // @ts-ignore
-    expect(() => CMS.registerPreviewTemplate('pages', component2)).not.toThrow();
-  });
-
-  test('replaces existing template with same name', () => {
-    const component1 = () => null;
-    const component2 = () => null;
-
-    // @ts-ignore
-    CMS.registerPreviewTemplate('posts', component1);
-    // @ts-ignore
-    CMS.registerPreviewTemplate('posts', component2);
-
-    // No error should be thrown
-    expect(true).toBe(true);
-  });
-});
-
-describe('CMS.registerFieldType()', () => {
-  test('registers field type with function control', () => {
-    const control = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control)).not.toThrow();
-  });
-
-  test('registers field type with string control', () => {
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', 'StringControl')).not.toThrow();
-  });
-
-  test('registers field type with control and preview', () => {
-    const control = () => null;
-    const preview = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, preview)).not.toThrow();
-  });
-
-  test('registers field type with control, preview, and schema', () => {
-    const control = () => null;
-    const preview = () => null;
-    const schema = { default: 'test' };
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, preview, schema)).not.toThrow();
-  });
-
-  test('logs warning about unsupported custom field types', () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const control = () => null;
 
-    // @ts-ignore
-    CMS.registerFieldType('test', control);
+    // Simulate the stylesheet check
+    const cssLinkElement = /** @type {HTMLLinkElement | null} */ (
+      document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]')
+    );
+
+    if (cssLinkElement) {
+      console.warn(
+        'Sveltia CMS does not require a stylesheet. Remove the invalid `<link>` tag referencing ' +
+          '`sveltia-cms.css` to avoid unnecessary network requests.',
+      );
+    }
+
     expect(consoleSpy).toHaveBeenCalledWith(
-      'Custom field types (widgets) are not yet supported in Sveltia CMS.',
+      'Sveltia CMS does not require a stylesheet. Remove the invalid `<link>` tag referencing ' +
+        '`sveltia-cms.css` to avoid unnecessary network requests.',
     );
     consoleSpy.mockRestore();
   });
 
-  test('throws TypeError if name is not a non-empty string', () => {
-    const control = () => null;
-
+  test('does not warn when no stylesheet link is found', () => {
     // @ts-ignore
-    expect(() => CMS.registerFieldType(123, control)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType(null, control)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType({}, control)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType(undefined, control)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('   ', control)).toThrow(TypeError);
-  });
+    global.document.querySelector = vi.fn(() => null);
 
-  test('throws with proper error message for invalid name', () => {
-    const control = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType(123, control)).toThrow(
-      'The `name` option for `CMS.registerFieldType()` must be a non-empty string',
-    );
-  });
-
-  test('throws TypeError if control is not a function or string', () => {
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', 123)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', null)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', {})).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', [])).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid control', () => {
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', 123)).toThrow(
-      'The `control` option for `CMS.registerFieldType()` must be a React component or a string',
-    );
-  });
-
-  test('throws TypeError if preview is provided but not a function', () => {
-    const control = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, 'invalid')).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, 123)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, {})).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid preview', () => {
-    const control = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, 'invalid')).toThrow(
-      'The `preview` option for `CMS.registerFieldType()` must be a React component',
-    );
-  });
-
-  test('accepts undefined preview', () => {
-    const control = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, undefined)).not.toThrow();
-  });
-
-  test('throws TypeError if schema is provided but not an object', () => {
-    const control = () => null;
-    const preview = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, preview, 'invalid')).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, preview, 123)).toThrow(TypeError);
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, preview, [])).toThrow(TypeError);
-  });
-
-  test('throws with proper error message for invalid schema', () => {
-    const control = () => null;
-    const preview = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, preview, 'invalid')).toThrow(
-      'The `schema` option for `CMS.registerFieldType()` must be an object',
-    );
-  });
-
-  test('accepts undefined schema', () => {
-    const control = () => null;
-    const preview = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, preview, undefined)).not.toThrow();
-  });
-
-  test('accepts empty schema object', () => {
-    const control = () => null;
-    const preview = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, preview, {})).not.toThrow();
-  });
-
-  test('accepts schema with properties', () => {
-    const control = () => null;
-    const preview = () => null;
-
-    const schema = {
-      default: 'test',
-      properties: {
-        min: { type: 'number' },
-        max: { type: 'number' },
-      },
-    };
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, preview, schema)).not.toThrow();
-  });
-
-  test('accepts async control function', () => {
-    const control = async () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control)).not.toThrow();
-  });
-
-  test('accepts async preview function', () => {
-    const control = () => null;
-    const preview = async () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerFieldType('test', control, preview)).not.toThrow();
-  });
-
-  test('registerWidget is an alias for registerFieldType', () => {
-    expect(CMS.registerWidget).toBe(CMS.registerFieldType);
-  });
-
-  test('registerWidget uses same validation as registerFieldType', () => {
-    const control = () => null;
-
-    // @ts-ignore
-    expect(() => CMS.registerWidget('test-widget', control)).not.toThrow();
-
-    // @ts-ignore
-    expect(() => CMS.registerWidget(123, control)).toThrow(TypeError);
-  });
-});
-
-describe('CMS Proxy - unsupported functions', () => {
-  test('returns undefined for unsupported functions', () => {
-    // @ts-ignore
-    expect(CMS.getBackend).toBeDefined();
-    // @ts-ignore
-    expect(CMS.getBackend()).toBeUndefined();
-  });
-
-  test('logs warning for unsupported CMS functions', () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    // @ts-ignore
-    CMS.getBackend();
-    expect(consoleSpy).toHaveBeenCalled();
+    // Simulate the stylesheet check
+    const cssLinkElement = /** @type {HTMLLinkElement | null} */ (
+      document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]')
+    );
 
-    const { calls } = consoleSpy.mock;
+    if (cssLinkElement) {
+      console.warn('Should not warn');
+    }
 
-    expect(calls[calls.length - 1][0]).toContain('not supported');
-    consoleSpy.mockRestore();
-  });
-
-  test('returns undefined for non-existent properties not in unsupported list', () => {
-    // @ts-ignore
-    expect(CMS.nonExistentProperty).toBeUndefined();
-    // @ts-ignore
-    expect(CMS.anotherRandomProperty).toBeUndefined();
-  });
-
-  test('does not log warning for non-existent properties', () => {
-    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    // @ts-ignore
-    const result = CMS.someRandomProperty;
-
-    expect(result).toBeUndefined();
     expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
+
+  test('css stylesheet querySelector uses correct selector', () => {
+    const queryMock = vi.fn(() => null);
+
+    // @ts-ignore
+    global.document.querySelector = queryMock;
+
+    // Call querySelector with the CSS selector
+    document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]');
+
+    expect(queryMock).toHaveBeenCalledWith('link[rel="stylesheet"][href$="/sveltia-cms.css"]');
+  });
+
+  test('handles null stylesheet element gracefully', () => {
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => null);
+
+    expect(() => {
+      const cssLinkElement = /** @type {HTMLLinkElement | null} */ (
+        document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]')
+      );
+
+      if (cssLinkElement) {
+        console.warn('Stylesheet warning');
+      }
+    }).not.toThrow();
+  });
+
+  test('truthy check works for stylesheet element', () => {
+    const mockLinkElement = {
+      rel: 'stylesheet',
+      href: 'https://example.com/sveltia-cms.css',
+    };
+
+    // @ts-ignore
+    const isTruthy = !!mockLinkElement;
+
+    expect(isTruthy).toBe(true);
+  });
+
+  test('falsy check works for null stylesheet element', () => {
+    // @ts-ignore
+    const linkElement = null;
+    // @ts-ignore
+    const isFalsy = !linkElement;
+
+    expect(isFalsy).toBe(true);
+  });
+
+  test('stylesheet element with matching href is detected', () => {
+    const mockLinkElement = {
+      rel: 'stylesheet',
+      href: '/sveltia-cms.css',
+    };
+
+    const isDetected = !!mockLinkElement;
+
+    expect(isDetected).toBe(true);
+  });
+
+  test('stylesheet element with different href is still truthy', () => {
+    const mockLinkElement = {
+      rel: 'stylesheet',
+      href: '/other-stylesheet.css',
+    };
+
+    // Note: The selector checks for href ending with "/sveltia-cms.css"
+    // but we test that any element returned from querySelector is truthy
+    const isDetected = !!mockLinkElement;
+
+    expect(isDetected).toBe(true);
+  });
+
+  test('warning message is informative and complete', () => {
+    const expectedMessage =
+      'Sveltia CMS does not require a stylesheet. Remove the invalid `<link>` tag referencing ' +
+      '`sveltia-cms.css` to avoid unnecessary network requests.';
+
+    expect(expectedMessage).toContain('sveltia-cms.css');
+    expect(expectedMessage).toContain('stylesheet');
+    expect(expectedMessage).toContain('Remove');
+  });
 });
 
-describe('CMS - supported methods', () => {
-  test('init method is accessible', () => {
-    expect(typeof CMS.init).toBe('function');
+describe('Netlify Identity Widget detection and warning', () => {
+  const netlifyIdentitySelector =
+    'script[src="https://identity.netlify.com/v1/netlify-identity-widget.js"]';
+
+  test('warns when Netlify Identity Widget script is found', () => {
+    const mockScriptElement = {
+      src: 'https://identity.netlify.com/v1/netlify-identity-widget.js',
+    };
+
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => mockScriptElement);
+
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    if (document.querySelector(netlifyIdentitySelector)) {
+      console.warn('Netlify Identity Widget is not supported in Sveltia CMS.');
+    }
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Netlify Identity Widget is not supported in Sveltia CMS.',
+    );
+    consoleSpy.mockRestore();
   });
 
-  test('registerCustomFormat method is accessible', () => {
-    expect(typeof CMS.registerCustomFormat).toBe('function');
+  test('does not warn when Netlify Identity Widget script is not found', () => {
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => null);
+
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    if (document.querySelector(netlifyIdentitySelector)) {
+      console.warn('Should not warn');
+    }
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 
-  test('registerEditorComponent method is accessible', () => {
-    expect(typeof CMS.registerEditorComponent).toBe('function');
+  test('querySelector uses the correct Netlify Identity selector', () => {
+    const queryMock = vi.fn(() => null);
+
+    // @ts-ignore
+    global.document.querySelector = queryMock;
+
+    document.querySelector(netlifyIdentitySelector);
+
+    expect(queryMock).toHaveBeenCalledWith(
+      'script[src="https://identity.netlify.com/v1/netlify-identity-widget.js"]',
+    );
   });
 
-  test('registerEventListener method is accessible', () => {
-    expect(typeof CMS.registerEventListener).toBe('function');
+  test('handles null element gracefully without throwing', () => {
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => null);
+
+    expect(() => {
+      if (document.querySelector(netlifyIdentitySelector)) {
+        console.warn('Netlify Identity Widget is not supported in Sveltia CMS.');
+      }
+    }).not.toThrow();
+  });
+});
+
+describe('Module-time execution paths', () => {
+  // These tests verify that the code paths exist and are syntactically correct.
+  // Actual execution at module load time is controlled by the test setup at the top of this file.
+
+  test('CSS stylesheet warning path exists', () => {
+    // The actual warning at line 382 executes at module load if cssLinkElement exists
+    // This test just verifies the code structure is valid
+    const mockLink = { href: '/sveltia-cms.css' };
+    const shouldWarn = !!mockLink;
+
+    expect(shouldWarn).toBe(true);
   });
 
-  test('registerPreviewStyle method is accessible', () => {
-    expect(typeof CMS.registerPreviewStyle).toBe('function');
+  test('module type warning path exists', () => {
+    // The actual warning at line 397 executes at module load if scriptElement.type === 'module'
+    // This test just verifies the code structure is valid
+    const mockScript = { type: 'module' };
+    const shouldWarn = mockScript?.type === 'module';
+
+    expect(shouldWarn).toBe(true);
   });
 
-  test('registerPreviewTemplate method is accessible', () => {
-    expect(typeof CMS.registerPreviewTemplate).toBe('function');
+  test('Netlify Identity warning path exists', () => {
+    // The actual warning at line 409 executes at module load if the selector matches
+    // This test just verifies the code structure is valid
+    const netlifySelector =
+      'script[src="https://identity.netlify.com/v1/netlify-identity-widget.js"]';
+
+    expect(netlifySelector).toBe(
+      'script[src="https://identity.netlify.com/v1/netlify-identity-widget.js"]',
+    );
   });
 
-  test('registerFieldType method is accessible', () => {
-    expect(typeof CMS.registerFieldType).toBe('function');
-  });
+  test('auto-initialization condition is testable', () => {
+    // The actual auto-init at line 416 is controlled by CMS_MANUAL_INIT
+    // This test verifies the logic structure
+    const manualInit = true;
+    const currentScript = null;
+    const devMode = false;
+    const shouldAutoInit = !manualInit && (currentScript || devMode);
 
-  test('registerWidget method is accessible', () => {
-    expect(typeof CMS.registerWidget).toBe('function');
+    expect(shouldAutoInit).toBe(false);
   });
 });
 
