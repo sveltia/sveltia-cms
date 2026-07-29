@@ -960,7 +960,7 @@ describe('Test getField()', () => {
         expect(mockGetCollection).toHaveBeenCalledTimes(2);
       });
 
-      test('should use cache for identical valueMap objects', () => {
+      test('should NOT cache results with variable type fields', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
@@ -978,11 +978,11 @@ describe('Test getField()', () => {
         // Second call with same valueMap object
         getField(args);
 
-        // Should only call `getCollection` once due to caching
-        expect(mockGetCollection).toHaveBeenCalledTimes(1);
+        // Should call `getCollection` twice because fields with variable types are not cached
+        expect(mockGetCollection).toHaveBeenCalledTimes(2);
       });
 
-      test('should use cache for equivalent valueMap objects with different references', () => {
+      test('should NOT cache even with equivalent valueMap objects', () => {
         // @ts-expect-error - Simplified mock for testing
         mockGetCollection.mockReturnValue(mockCollection);
 
@@ -1002,8 +1002,8 @@ describe('Test getField()', () => {
         getField(args1);
         getField(args2);
 
-        // Should only call `getCollection` once due to JSON.stringify cache key
-        expect(mockGetCollection).toHaveBeenCalledTimes(1);
+        // Should call `getCollection` twice because variable type fields are not cached
+        expect(mockGetCollection).toHaveBeenCalledTimes(2);
       });
     });
   });
@@ -1094,6 +1094,172 @@ describe('Test getField()', () => {
       getField({ collectionName: 'posts', keyPath: 'body' });
 
       expect(mockGetCollection).toHaveBeenCalledTimes(2);
+    });
+
+    describe('Conditional caching with variable type fields', () => {
+      test('should cache simple fields without variable types', () => {
+        // @ts-expect-error - Simplified mock for testing
+        mockGetCollection.mockReturnValue(mockCollection);
+
+        const args = {
+          collectionName: 'posts',
+          keyPath: 'author.name',
+        };
+
+        // First call - should populate cache
+        getField(args);
+        expect(mockGetCollection).toHaveBeenCalledTimes(1);
+
+        // Second call - should use cache
+        getField(args);
+        expect(mockGetCollection).toHaveBeenCalledTimes(1); // No additional call
+      });
+
+      test('should NOT cache fields in paths containing variable type list fields', () => {
+        // @ts-expect-error - Simplified mock for testing
+        mockGetCollection.mockReturnValue(mockCollection);
+
+        const args = {
+          collectionName: 'posts',
+          keyPath: 'blocks.0.content',
+          valueMap: { 'blocks.0.type': 'text' },
+        };
+
+        // First call - should NOT populate cache (blocks has variable types)
+        getField(args);
+        expect(mockGetCollection).toHaveBeenCalledTimes(1);
+
+        // Second call - should NOT use cache
+        getField(args);
+        expect(mockGetCollection).toHaveBeenCalledTimes(2); // New call because variable type field
+      });
+
+      test('should NOT cache fields in paths containing variable type object fields', () => {
+        // @ts-expect-error - Simplified mock for testing
+        mockGetCollection.mockReturnValue(mockCollection);
+
+        const args = {
+          collectionName: 'posts',
+          keyPath: 'widget.label',
+          valueMap: { 'widget.type': 'button' },
+        };
+
+        // First call - should NOT populate cache (widget has variable types)
+        getField(args);
+        expect(mockGetCollection).toHaveBeenCalledTimes(1);
+
+        // Second call - should NOT use cache
+        getField(args);
+        expect(mockGetCollection).toHaveBeenCalledTimes(2); // New call because variable type field
+      });
+
+      test('should cache simple list item access without variable types', () => {
+        // @ts-expect-error - Simplified mock for testing
+        mockGetCollection.mockReturnValue(mockCollection);
+
+        const args = {
+          collectionName: 'posts',
+          keyPath: 'tags.0',
+        };
+
+        // First call - should populate cache (tags is a simple list field)
+        getField(args);
+        expect(mockGetCollection).toHaveBeenCalledTimes(1);
+
+        // Second call - should use cache
+        getField(args);
+        expect(mockGetCollection).toHaveBeenCalledTimes(1); // No additional call
+      });
+
+      test('should NOT cache nested variable type fields', () => {
+        // @ts-expect-error - Simplified mock for testing
+        mockGetCollection.mockReturnValue(mockCollection);
+
+        const args = {
+          collectionName: 'posts',
+          keyPath: 'blocks.1.src',
+          valueMap: { 'blocks.1.type': 'image' },
+        };
+
+        // First call
+        getField(args);
+        expect(mockGetCollection).toHaveBeenCalledTimes(1);
+
+        // Second call with different index
+        const args2 = {
+          collectionName: 'posts',
+          keyPath: 'blocks.2.src',
+          valueMap: { 'blocks.2.type': 'image' },
+        };
+
+        getField(args2);
+        // Different keyPath, should be separate calls
+        expect(mockGetCollection).toHaveBeenCalledTimes(2);
+      });
+
+      test('should create proper simplified cache keys for simple fields', () => {
+        // @ts-expect-error - Simplified mock for testing
+        mockGetCollection.mockReturnValue(mockCollection);
+
+        // Cache should work based on: collectionName|fileName|componentName|keyPath|isIndexFile
+        const args1 = {
+          collectionName: 'posts',
+          keyPath: 'title',
+        };
+
+        const args2 = {
+          collectionName: 'posts',
+          keyPath: 'title',
+          fileName: undefined,
+          componentName: undefined,
+        };
+
+        getField(args1);
+        getField(args2);
+
+        // Both should use the same cache entry
+        expect(mockGetCollection).toHaveBeenCalledTimes(1);
+      });
+
+      test('should handle cache keys with different file names', () => {
+        // @ts-expect-error - Simplified mock for testing
+        mockGetCollection.mockReturnValue(mockFileCollection);
+
+        getField({
+          collectionName: 'config',
+          fileName: 'site-config',
+          keyPath: 'title',
+        });
+
+        getField({
+          collectionName: 'config',
+          fileName: 'site-config',
+          keyPath: 'title',
+        });
+
+        // Should use cache when fileName is the same
+        expect(mockGetCollection).toHaveBeenCalledTimes(1);
+      });
+
+      test('should not mix cache entries for different files', () => {
+        // @ts-expect-error - Simplified mock for testing
+        mockGetCollection.mockReturnValue(mockFileCollection);
+
+        getField({
+          collectionName: 'config',
+          fileName: 'site-config',
+          keyPath: 'title',
+        });
+
+        getField({
+          collectionName: 'config',
+          fileName: 'other-config',
+          keyPath: 'title',
+        });
+
+        // Different file names should create different cache entries
+        expect(mockGetCollection).toHaveBeenCalledTimes(2);
+      });
     });
   });
 
@@ -4129,7 +4295,7 @@ describe('Test getField() with explicit variable type syntax', () => {
   });
 
   describe('Caching with explicit types', () => {
-    test('should cache results with explicit type syntax', () => {
+    test('should NOT cache results with explicit type syntax on variable type fields', () => {
       // @ts-expect-error - Simplified mock for testing
       mockGetCollection.mockReturnValue(mockCollectionWithVariableTypes);
 
@@ -4143,7 +4309,8 @@ describe('Test getField() with explicit variable type syntax', () => {
       expect(mockGetCollection).toHaveBeenCalledTimes(1);
 
       getField(args);
-      expect(mockGetCollection).toHaveBeenCalledTimes(1); // Should use cache
+      // Should NOT use cache for variable type fields
+      expect(mockGetCollection).toHaveBeenCalledTimes(2);
     });
 
     test('should create separate cache entries for different explicit types', () => {

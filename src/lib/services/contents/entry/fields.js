@@ -46,7 +46,6 @@ import { isNumeric } from '$lib/services/utils/number';
  */
 
 const TYPE_MATCH_REGEX = /^(.*?)<([^>]+)>(.*)$/;
-const NUMERIC_INDEX_REGEX = /(?:^|\.)(\d+)(?:\.|$)/;
 
 /**
  * Regular expression to match the list key path, e.g. `field.0`, `field.1`, etc.
@@ -231,15 +230,13 @@ export const getField = (args) => {
     isIndexFile = false,
   } = args;
 
-  // `valueMap` is only consulted during traversal when a keyPath segment is a numeric index (to
-  // resolve variable-type list/object fields). Wildcard paths (e.g. `sections.*.type`) never match
-  // a real flat-entry key, so the lookup always returns `undefined` and the result is identical
-  // regardless of entry content — no need to serialize `valueMap` into the cache key.
-  const hasNumericIndex = NUMERIC_INDEX_REGEX.test(keyPath);
-
-  const cacheKey = hasNumericIndex
-    ? JSON.stringify(args)
-    : `${collectionName}|${fileName ?? ''}|${componentName ?? ''}|${keyPath}|${isIndexFile ? '1' : '0'}`;
+  const cacheKey = [
+    collectionName,
+    fileName ?? '',
+    componentName ?? '',
+    keyPath,
+    isIndexFile ? '1' : '0',
+  ].join('|');
 
   if (fieldConfigCacheMap.has(cacheKey)) {
     return fieldConfigCacheMap.get(cacheKey);
@@ -272,6 +269,7 @@ export const getField = (args) => {
   let field;
   /** @type {string | undefined} - Track explicit type for current nesting level */
   let currentExplicitType;
+  let hasVariableTypeField = false;
 
   keyPathArray.forEach((key, index) => {
     if (index === 0) {
@@ -303,6 +301,10 @@ export const getField = (args) => {
       field = result.field;
       currentExplicitType = result.explicitType;
     }
+
+    if (field && 'types' in field) {
+      hasVariableTypeField = true;
+    }
   });
 
   // If we have an explicit type but haven’t applied it yet (e.g., for "field<button>" with no
@@ -314,7 +316,10 @@ export const getField = (args) => {
     field = types.find(({ name }) => name === currentExplicitType);
   }
 
-  fieldConfigCacheMap.set(cacheKey, field);
+  // Cache the field config if no variable type list/object field is found
+  if (!hasVariableTypeField) {
+    fieldConfigCacheMap.set(cacheKey, field);
+  }
 
   return field;
 };
