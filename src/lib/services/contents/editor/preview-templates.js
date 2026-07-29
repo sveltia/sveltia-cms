@@ -2,12 +2,13 @@ import { unflatten } from 'flat';
 import { fromJS, Map as ImmutableMap } from 'immutable';
 import { createElement } from 'react';
 import { mount, unmount } from 'svelte';
-import { get } from 'svelte/store';
 
 import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
-import { convertEntryToMap, createGetAsset, getMetaData } from '$lib/services/api/helpers';
-import { allAssets, isAssetInFolder } from '$lib/services/assets';
-import { getAssetFolder } from '$lib/services/assets/folders';
+import {
+  buildPreviewData,
+  convertEntryToMap,
+  getAssociatedPreviewAssets,
+} from '$lib/services/api/helpers';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -15,13 +16,7 @@ import { getField } from '$lib/services/contents/entry/fields';
 /**
  * @import { MapOf } from 'immutable';
  * @import { ReactElement } from 'react';
- * @import {
- * Asset,
- * Entry,
- * EntryDraft,
- * GetFieldArgs,
- * InternalLocaleCode,
- * } from '$lib/types/private';
+ * @import { Entry, EntryDraft, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
  * @import {
  * ApiEntry,
  * CustomPreviewTemplateProps,
@@ -155,24 +150,6 @@ export const createWidgetsFor =
   };
 
 /**
- * Get assets associated with a collection or entry folder.
- * @internal
- * @param {object} args Arguments.
- * @param {string} [args.collectionName] Collection name.
- * @param {string} [args.fileName] File name.
- * @returns {Asset[]} Assets filtered to the relevant folder.
- */
-export const getAssociatedPreviewAssets = ({ collectionName, fileName }) => {
-  const assetFolder = getAssetFolder({ collectionName, fileName });
-
-  if (!assetFolder) {
-    return [];
-  }
-
-  return get(allAssets).filter((asset) => isAssetInFolder(asset, assetFolder));
-};
-
-/**
  * Get entries from a collection. If `slug` is provided, returns the entry with the matching slug;
  * otherwise, returns all entries.
  * @param {string} name Collection name.
@@ -222,46 +199,22 @@ export const getCollectionByName = async (name, slug) => {
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
 export const preparePreviewTemplateProps = ({ draft, locale }) => {
-  const { collectionName, fileName, isIndexFile, originalEntry, currentValues } = draft;
-
-  // Create a synthetic entry object with current values for live preview updates
-  const entry = /** @type {Entry} */ ({
-    ...originalEntry,
-    locales: Object.fromEntries(
-      Object.entries(currentValues).map(([_locale, content]) => [
-        _locale,
-        {
-          slug: originalEntry?.locales[_locale]?.slug ?? originalEntry?.slug,
-          path: originalEntry?.locales[_locale]?.path ?? originalEntry?.subPath,
-          content,
-        },
-      ]),
-    ),
+  const { entryMap, valueMap, getFieldArgs, fieldsMetaData, getAsset } = buildPreviewData({
+    draft,
+    locale,
   });
 
-  /* v8 ignore next */
-  const valueMap = entry.locales[locale].content ?? {};
-  /** @type {RawEntryContent} */
-  const rawContent = unflatten(valueMap);
-  /** @type {Omit<GetFieldArgs, 'keyPath'>} */
-  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
   // Create factory functions with bound dependencies
   const mountFieldPreview = createFieldPreviewMounter({ locale, getFieldArgs });
   const widgetFor = createWidgetFor(mountFieldPreview);
 
   return {
-    entry: convertEntryToMap({
-      entry,
-      locale,
-      collectionName,
-      associatedAssets: getAssociatedPreviewAssets({ collectionName, fileName }),
-      content: valueMap,
-    }),
+    entry: entryMap,
     widgetFor,
-    widgetsFor: createWidgetsFor(rawContent, widgetFor),
-    getAsset: createGetAsset({ entry, collectionName, fileName }),
+    widgetsFor: createWidgetsFor(unflatten(valueMap), widgetFor),
+    getAsset,
     getCollection: getCollectionByName,
-    fieldsMetaData: getMetaData({ locale, getFieldArgs }),
+    fieldsMetaData,
     // There are some undocumented props in Netlify/Decap CMS that Sveltia CMS doesn’t implement:
     // boundGetAsset, collection, config, isLoadingAsset, locale, onFieldClick, fields, state
   };
