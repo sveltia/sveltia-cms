@@ -6,11 +6,11 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
+  import { Placeholder } from '@sveltia/ui';
   import { createElement } from 'react';
   import { createRoot } from 'react-dom/client';
   import { mount } from 'svelte';
 
-  import Placeholder from '$lib/components/common/placeholder.svelte';
   import { escapeAttr } from '$lib/services/utils/string';
 
   /**

@@ -6,11 +6,10 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Checkbox, Icon, TruncatedText } from '@sveltia/ui';
+  import { Button, Checkbox, Icon, TruncatedText, VisibilityObserver } from '@sveltia/ui';
   import { toRaw } from '@sveltia/utils/object';
   import { getContext, onMount, tick } from 'svelte';
 
-  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';

@@ -1,8 +1,8 @@
 <script>
   import { _ } from '@sveltia/i18n';
+  import { VisibilityObserver } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
-  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import { getYouTubeEmbedURL } from '$lib/services/utils/media/video/youtube';
 
   /**

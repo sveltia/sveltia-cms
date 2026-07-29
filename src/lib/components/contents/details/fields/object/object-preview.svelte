@@ -5,7 +5,8 @@
   @see https://sveltiacms.app/en/docs/fields/object
 -->
 <script>
-  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
+  import { VisibilityObserver } from '@sveltia/ui';
+
   import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';

@@ -1,11 +1,10 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Dialog, Icon, Spacer } from '@sveltia/ui';
+  import { Button, Dialog, Icon, Spacer, VisibilityObserver } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { flatten, unflatten } from 'flat';
   import { onMount, untrack } from 'svelte';
 
-  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import { replaceTemplateTags } from '$lib/services/common/template';

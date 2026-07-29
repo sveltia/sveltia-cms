@@ -1,7 +1,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
+  import { VisibilityObserver } from '@sveltia/ui';
 
-  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import EntryPreviewIframe from '$lib/components/contents/details/preview/entry-preview-iframe.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import {

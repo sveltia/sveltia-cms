@@ -1,5 +1,6 @@
 <script>
-  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
+  import { VisibilityObserver } from '@sveltia/ui';
+
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import SlugEditor from '$lib/components/contents/details/editor/slug-editor.svelte';
   import { entryDraft } from '$lib/services/contents/draft';

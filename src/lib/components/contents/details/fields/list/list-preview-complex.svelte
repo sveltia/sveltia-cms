@@ -5,11 +5,11 @@
   @see https://sveltiacms.app/en/docs/fields/list
 -->
 <script>
+  import { VisibilityObserver } from '@sveltia/ui';
   import { isObject } from '@sveltia/utils/object';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
 
-  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';

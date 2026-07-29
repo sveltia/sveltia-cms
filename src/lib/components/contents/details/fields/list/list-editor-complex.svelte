@@ -7,7 +7,16 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Icon, Menu, MenuButton, MenuItem, Spacer, TruncatedText } from '@sveltia/ui';
+  import {
+    Button,
+    Icon,
+    Menu,
+    MenuButton,
+    MenuItem,
+    Spacer,
+    TruncatedText,
+    VisibilityObserver,
+  } from '@sveltia/ui';
   import { isObject } from '@sveltia/utils/object';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
@@ -15,7 +24,6 @@
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import ExpandIcon from '$lib/components/common/expand-icon.svelte';
-  import VisibilityObserver from '$lib/components/common/visibility-observer.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
