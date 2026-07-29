@@ -30,5 +30,5 @@ export default {
   apiKeyPattern,
   markdownSupported: true,
   availability,
-  translate: createAiTranslate(complete, model, apiLabel, { reasoning: false }),
+  translate: createAiTranslate(complete, model, apiLabel, { reasoning: 'none' }),
 };

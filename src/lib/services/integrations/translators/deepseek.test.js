@@ -265,7 +265,7 @@ describe('DeepSeek Translator Service', () => {
       );
 
       await expect(deepseekTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'DeepSeek API error: 401 Unauthorized - Invalid API key',
+        'Chat Completions API error: 401 Unauthorized - Invalid API key',
       );
     });
 
@@ -281,7 +281,7 @@ describe('DeepSeek Translator Service', () => {
       );
 
       await expect(deepseekTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'DeepSeek API error: 500 Internal Server Error',
+        'Chat Completions API error: 500 Internal Server Error',
       );
     });
 
@@ -296,7 +296,7 @@ describe('DeepSeek Translator Service', () => {
       );
 
       await expect(deepseekTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'DeepSeek API error: 503 Service Unavailable',
+        'Chat Completions API error: 503 Service Unavailable',
       );
     });
 
@@ -312,7 +312,7 @@ describe('DeepSeek Translator Service', () => {
       );
 
       await expect(deepseekTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Invalid response format from DeepSeek API.',
+        'Invalid response format from Chat Completions API.',
       );
     });
 

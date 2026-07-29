@@ -129,7 +129,7 @@ describe('OpenAI AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'OpenAI API error: 401 Unauthorized - Invalid API key',
+        'Responses API error: 401 Unauthorized - Invalid API key',
       );
     });
 
@@ -139,7 +139,7 @@ describe('OpenAI AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'OpenAI API error: 429 Too Many Requests',
+        'Responses API error: 429 Too Many Requests',
       );
     });
 
@@ -149,7 +149,7 @@ describe('OpenAI AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'OpenAI API error: 500 Internal Server Error',
+        'Responses API error: 500 Internal Server Error',
       );
     });
 
@@ -157,7 +157,7 @@ describe('OpenAI AI Client', () => {
       vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Invalid response format from OpenAI API.',
+        'Invalid response format from Responses API.',
       );
     });
 
@@ -167,7 +167,7 @@ describe('OpenAI AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Invalid response format from OpenAI API.',
+        'Invalid response format from Responses API.',
       );
     });
 
@@ -179,7 +179,7 @@ describe('OpenAI AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Invalid response format from OpenAI API.',
+        'Invalid response format from Responses API.',
       );
     });
   });

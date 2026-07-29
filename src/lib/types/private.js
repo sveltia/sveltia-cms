@@ -308,8 +308,9 @@
  * @property {number} [temperature] Sampling temperature (0–1). Default is 0.3. GPT-5.6 does not
  * support this parameter, so it will be ignored for that model.
  * @property {number} [maxTokens] Maximum output tokens. Default is 4000.
- * @property {boolean} [reasoning] Whether to enable reasoning mode. Only supported by certain
- * providers (e.g., DeepSeek, Mistral AI). Default varies by provider.
+ * @property {'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'} [reasoning]
+ * Reasoning effort. Only supported by certain providers (e.g., DeepSeek, Mistral AI). Default
+ * varies by provider.
  */
 
 /**

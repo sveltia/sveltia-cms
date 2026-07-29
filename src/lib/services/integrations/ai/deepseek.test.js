@@ -114,14 +114,14 @@ describe('DeepSeek AI Client', () => {
       expect(body.max_tokens).toBe(512);
     });
 
-    it('should send thinking=disabled when reasoning option is false', async () => {
+    it('should send thinking=disabled when reasoning option is none', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
         new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
           status: 200,
         }),
       );
 
-      await complete({ ...defaultOptions, reasoning: false });
+      await complete({ ...defaultOptions, reasoning: 'none' });
 
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
@@ -137,7 +137,7 @@ describe('DeepSeek AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'DeepSeek API error: 401 Unauthorized - Invalid API key',
+        'Chat Completions API error: 401 Unauthorized - Invalid API key',
       );
     });
 
@@ -147,7 +147,7 @@ describe('DeepSeek AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'DeepSeek API error: 429 Too Many Requests',
+        'Chat Completions API error: 429 Too Many Requests',
       );
     });
 
@@ -157,7 +157,7 @@ describe('DeepSeek AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'DeepSeek API error: 500 Internal Server Error',
+        'Chat Completions API error: 500 Internal Server Error',
       );
     });
 
@@ -165,7 +165,7 @@ describe('DeepSeek AI Client', () => {
       vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Invalid response format from DeepSeek API.',
+        'Invalid response format from Chat Completions API.',
       );
     });
 
@@ -175,7 +175,7 @@ describe('DeepSeek AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Invalid response format from DeepSeek API.',
+        'Invalid response format from Chat Completions API.',
       );
     });
 
@@ -185,7 +185,7 @@ describe('DeepSeek AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Invalid response format from DeepSeek API.',
+        'Invalid response format from Chat Completions API.',
       );
     });
   });

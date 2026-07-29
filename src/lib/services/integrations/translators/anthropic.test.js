@@ -248,7 +248,7 @@ describe('Anthropic Translator Service', () => {
       );
 
       await expect(anthropicTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Anthropic API error: 401 Unauthorized - Invalid API key',
+        'Messages API error: 401 Unauthorized - Invalid API key',
       );
     });
 
@@ -269,7 +269,7 @@ describe('Anthropic Translator Service', () => {
       );
 
       await expect(anthropicTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Anthropic API error: 500 Internal Server Error',
+        'Messages API error: 500 Internal Server Error',
       );
     });
 
@@ -285,7 +285,7 @@ describe('Anthropic Translator Service', () => {
       mockFetch.mockResolvedValueOnce(mockResponse);
 
       await expect(anthropicTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Anthropic API error: 503 Service Unavailable',
+        'Messages API error: 503 Service Unavailable',
       );
     });
 
@@ -306,7 +306,7 @@ describe('Anthropic Translator Service', () => {
       );
 
       await expect(anthropicTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Invalid response format from Anthropic API.',
+        'Invalid response format from Messages API.',
       );
     });
 

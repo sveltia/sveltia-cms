@@ -110,7 +110,7 @@ describe('Anthropic AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Anthropic API error: 401 Unauthorized - Invalid API key',
+        'Messages API error: 401 Unauthorized - Invalid API key',
       );
     });
 
@@ -120,7 +120,7 @@ describe('Anthropic AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Anthropic API error: 500 Internal Server Error',
+        'Messages API error: 500 Internal Server Error',
       );
     });
 
@@ -130,7 +130,7 @@ describe('Anthropic AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Anthropic API error: 503 Service Unavailable',
+        'Messages API error: 503 Service Unavailable',
       );
     });
 
@@ -138,7 +138,7 @@ describe('Anthropic AI Client', () => {
       vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Invalid response format from Anthropic API.',
+        'Invalid response format from Messages API.',
       );
     });
 
@@ -148,7 +148,7 @@ describe('Anthropic AI Client', () => {
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(
-        'Invalid response format from Anthropic API.',
+        'Invalid response format from Messages API.',
       );
     });
   });

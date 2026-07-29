@@ -140,7 +140,7 @@ export const resolveLanguageNames = (sourceLanguage, targetLanguage) => {
  * the service’s AI module.
  * @param {string} model Model identifier to use for translation.
  * @param {string} apiLabel Label for the service used in error messages, e.g. `'Anthropic API'`.
- * @param {object} [extraOptions] Extra options to pass to `complete`, e.g. `{ reasoning: false }`.
+ * @param {object} [extraOptions] Extra options to pass to `complete`, e.g. `{ reasoning: 'none' }`.
  * @returns {(texts: string[], options: TranslationOptions) => Promise<string[]>} Translate
  * function.
  */

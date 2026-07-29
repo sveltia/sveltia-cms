@@ -260,7 +260,7 @@ describe('Mistral AI Translator Service', () => {
       );
 
       await expect(mistralTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Mistral AI API error: 401 Unauthorized - Invalid API key',
+        'Chat Completions API error: 401 Unauthorized - Invalid API key',
       );
     });
 
@@ -276,7 +276,7 @@ describe('Mistral AI Translator Service', () => {
       );
 
       await expect(mistralTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Mistral AI API error: 500 Internal Server Error',
+        'Chat Completions API error: 500 Internal Server Error',
       );
     });
 
@@ -291,7 +291,7 @@ describe('Mistral AI Translator Service', () => {
       );
 
       await expect(mistralTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Mistral AI API error: 503 Service Unavailable',
+        'Chat Completions API error: 503 Service Unavailable',
       );
     });
 
@@ -307,7 +307,7 @@ describe('Mistral AI Translator Service', () => {
       );
 
       await expect(mistralTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Invalid response format from Mistral AI API.',
+        'Invalid response format from Chat Completions API.',
       );
     });
 

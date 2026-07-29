@@ -189,7 +189,7 @@ describe('OpenAI Translator Service', () => {
       );
 
       await expect(openaiTranslator.translate(['Hello'], mockOptions)).rejects.toThrow(
-        'OpenAI API error: 401 Unauthorized - Invalid API key',
+        'Responses API error: 401 Unauthorized - Invalid API key',
       );
     });
 
@@ -204,7 +204,7 @@ describe('OpenAI Translator Service', () => {
       );
 
       await expect(openaiTranslator.translate(['Hello'], mockOptions)).rejects.toThrow(
-        'OpenAI API error: 429 Too Many Requests',
+        'Responses API error: 429 Too Many Requests',
       );
     });
 
@@ -220,7 +220,7 @@ describe('OpenAI Translator Service', () => {
       mockFetch.mockResolvedValueOnce(mockResponse);
 
       await expect(openaiTranslator.translate(['Hello'], mockOptions)).rejects.toThrow(
-        'OpenAI API error: 500 Internal Server Error',
+        'Responses API error: 500 Internal Server Error',
       );
     });
 
@@ -239,7 +239,7 @@ describe('OpenAI Translator Service', () => {
       );
 
       await expect(openaiTranslator.translate(['Hello'], mockOptions)).rejects.toThrow(
-        'Invalid response format from OpenAI API.',
+        'Invalid response format from Responses API.',
       );
     });
 
