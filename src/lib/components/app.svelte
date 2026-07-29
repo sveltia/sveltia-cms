@@ -44,8 +44,10 @@
   let localeLoaded = $state(false);
 
   $effect.pre(() => {
-    initAppLocale();
-    localeLoaded = true;
+    if (!localeLoaded) {
+      initAppLocale();
+      localeLoaded = true;
+    }
   });
 
   $effect.pre(() => {
