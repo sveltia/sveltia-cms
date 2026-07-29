@@ -2,19 +2,39 @@
 import { Map as ImmutableMap, isMap } from 'immutable';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { convertEntryToMap, createEntryMap, createGetAsset, getMetaData } from './helpers';
+import {
+  buildEntry,
+  buildPreviewData,
+  convertEntryToMap,
+  createEntryMap,
+  createGetAsset,
+  getAssociatedPreviewAssets,
+  getMetaData,
+} from './helpers';
 
 // Mock dependencies using vi.hoisted()
-const { mockGetField, mockGetAssetByPath, mockGetEntriesByCollection, mockGetCollectionFileEntry } =
-  vi.hoisted(() => ({
-    mockGetField: vi.fn(() => ({ widget: 'text' })),
-    mockGetAssetByPath: vi.fn(),
-    mockGetEntriesByCollection: vi.fn(() => []),
-    mockGetCollectionFileEntry: vi.fn(),
-  }));
+const {
+  mockGetField,
+  mockGetAssetByPath,
+  mockGetEntriesByCollection,
+  mockGetCollectionFileEntry,
+  mockGetAssetFolder,
+  mockIsAssetInFolder,
+  mockGet,
+} = vi.hoisted(() => ({
+  mockGetField: vi.fn(() => ({ widget: 'text' })),
+  mockGetAssetByPath: vi.fn(),
+  mockGetEntriesByCollection: vi.fn(() => []),
+  mockGetCollectionFileEntry: vi.fn(),
+  mockGetAssetFolder: vi.fn(),
+  mockIsAssetInFolder: vi.fn(),
+  mockGet: vi.fn((store) => store?.value ?? []),
+}));
 
 vi.mock('$lib/services/assets', () => ({
+  allAssets: { value: [] },
   getAssetByPath: mockGetAssetByPath,
+  isAssetInFolder: mockIsAssetInFolder,
 }));
 
 vi.mock('$lib/services/api/asset-proxy', () => ({
@@ -42,6 +62,14 @@ vi.mock('$lib/services/contents/collection/files', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: mockGetField,
+}));
+
+vi.mock('$lib/services/assets/folders', () => ({
+  getAssetFolder: mockGetAssetFolder,
+}));
+
+vi.mock('svelte/store', () => ({
+  get: mockGet,
 }));
 
 describe('entry module', () => {
@@ -242,6 +270,223 @@ describe('entry module', () => {
       expect(map.get('path')).toBe('');
       expect(map.getIn(['data', 'title'])).toBeUndefined();
       expect(map.get('collection')).toBe('posts');
+    });
+  });
+
+  describe('buildEntry', () => {
+    it('should build entry with current values replacing locales', () => {
+      const originalEntry = {
+        slug: 'hello',
+        subPath: 'posts/hello.md',
+        locales: {
+          en: {
+            slug: 'hello',
+            path: 'posts/hello.md',
+            content: { title: 'Hello', body: 'Old content' },
+          },
+          ja: {
+            slug: 'hello',
+            path: 'posts/hello.ja.md',
+            content: { title: 'こんにちは', body: '古いコンテンツ' },
+          },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'Hello Updated', body: 'New content' },
+        ja: { title: 'こんにちは更新', body: '新しいコンテンツ' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.slug).toBe('hello');
+      expect(result.subPath).toBe('posts/hello.md');
+      expect(result.locales.en.slug).toBe('hello');
+      expect(result.locales.en.path).toBe('posts/hello.md');
+      expect(result.locales.en.content).toEqual({ title: 'Hello Updated', body: 'New content' });
+      expect(result.locales.ja.content).toEqual({
+        title: 'こんにちは更新',
+        body: '新しいコンテンツ',
+      });
+    });
+
+    it('should preserve locale-specific slugs', () => {
+      const originalEntry = {
+        slug: 'default-slug',
+        locales: {
+          en: { slug: 'english-slug', path: 'posts/en.md', content: {} },
+          ja: { slug: 'japanese-slug', path: 'posts/ja.md', content: {} },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'New English' },
+        ja: { title: '新しい日本語' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.locales.en.slug).toBe('english-slug');
+      expect(result.locales.ja.slug).toBe('japanese-slug');
+    });
+
+    it('should fall back to original slug when locale-specific slug is missing', () => {
+      const originalEntry = {
+        slug: 'default-slug',
+        locales: {
+          en: { path: 'posts/en.md', content: {} }, // No slug
+          ja: { slug: 'japanese-slug', path: 'posts/ja.md', content: {} },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'English' },
+        ja: { title: '日本語' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.locales.en.slug).toBe('default-slug');
+      expect(result.locales.ja.slug).toBe('japanese-slug');
+    });
+
+    it('should preserve locale-specific paths', () => {
+      const originalEntry = {
+        slug: 'test',
+        subPath: 'posts/test.md',
+        locales: {
+          en: { slug: 'test', path: 'posts/en/test.md', content: {} },
+          ja: { slug: 'test', path: 'posts/ja/test.md', content: {} },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'English' },
+        ja: { title: '日本語' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.locales.en.path).toBe('posts/en/test.md');
+      expect(result.locales.ja.path).toBe('posts/ja/test.md');
+    });
+
+    it('should fall back to subPath when locale-specific path is missing', () => {
+      const originalEntry = {
+        slug: 'test',
+        subPath: 'posts/default.md',
+        locales: {
+          en: { slug: 'test', content: {} }, // No path
+          ja: { slug: 'test', path: 'posts/ja.md', content: {} },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'English' },
+        ja: { title: '日本語' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.locales.en.path).toBe('posts/default.md');
+      expect(result.locales.ja.path).toBe('posts/ja.md');
+    });
+
+    it('should handle undefined originalEntry gracefully', () => {
+      const currentValues = {
+        en: { title: 'Content' },
+      };
+
+      const result = buildEntry({ originalEntry: undefined, currentValues });
+
+      expect(result).toBeDefined();
+      expect(result.locales.en.content).toEqual({ title: 'Content' });
+      expect(result.locales.en.slug).toBeUndefined();
+      expect(result.locales.en.path).toBeUndefined();
+    });
+
+    it('should handle empty currentValues', () => {
+      const originalEntry = {
+        slug: 'test',
+        subPath: 'posts/test.md',
+        locales: {
+          en: { slug: 'test', path: 'posts/test.md', content: { title: 'Old' } },
+        },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues: {} });
+
+      expect(result.slug).toBe('test');
+      expect(result.subPath).toBe('posts/test.md');
+      expect(result.locales).toEqual({});
+    });
+
+    it('should handle entry with undefined subPath', () => {
+      const originalEntry = {
+        slug: 'test',
+        locales: {
+          en: { slug: 'test', content: {} }, // No path in locale either
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'Content' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.locales.en.path).toBeUndefined();
+    });
+
+    it('should preserve all other properties from originalEntry', () => {
+      const originalEntry = {
+        slug: 'test',
+        subPath: 'posts/test.md',
+        sha: 'abc123',
+        status: 'published',
+        customProp: 'custom-value',
+        locales: {
+          en: { slug: 'test', path: 'posts/test.md', content: { title: 'Old' } },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'New' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.sha).toBe('abc123');
+      expect(result.status).toBe('published');
+      expect(result.customProp).toBe('custom-value');
+    });
+
+    it('should handle multiple new locales in currentValues', () => {
+      const originalEntry = {
+        slug: 'test',
+        subPath: 'posts/test.md',
+        locales: {
+          en: { slug: 'test', path: 'posts/test.md', content: {} },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'English' },
+        ja: { title: '日本語' },
+        fr: { title: 'Français' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(Object.keys(result.locales)).toEqual(['en', 'ja', 'fr']);
+      expect(result.locales.en.content).toEqual({ title: 'English' });
+      expect(result.locales.ja.content).toEqual({ title: '日本語' });
+      expect(result.locales.fr.content).toEqual({ title: 'Français' });
+      // ja and fr should fall back to original slug and subPath
+      expect(result.locales.ja.slug).toBe('test');
+      expect(result.locales.ja.path).toBe('posts/test.md');
+      expect(result.locales.fr.slug).toBe('test');
+      expect(result.locales.fr.path).toBe('posts/test.md');
     });
   });
 });
@@ -572,6 +817,201 @@ describe('React Helpers', () => {
       });
 
       expect(result instanceof ImmutableMap).toBe(true);
+    });
+  });
+
+  describe('getAssociatedPreviewAssets', () => {
+    beforeEach(() => {
+      mockGetAssetFolder.mockReset();
+      mockIsAssetInFolder.mockReset();
+      mockGet.mockReset();
+    });
+
+    it('should return empty array when asset folder is not found', () => {
+      mockGetAssetFolder.mockReturnValueOnce(null);
+
+      const result = getAssociatedPreviewAssets({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual([]);
+      expect(mockGetAssetFolder).toHaveBeenCalledWith({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+    });
+
+    it('should filter and return assets when asset folder is found', () => {
+      const mockAssetFolder = { collectionName: 'posts', internalPath: 'assets' };
+
+      const mockAssets = [
+        { name: 'image1.jpg', path: '/assets/image1.jpg' },
+        { name: 'image2.jpg', path: '/assets/image2.jpg' },
+      ];
+
+      mockGetAssetFolder.mockReturnValueOnce(mockAssetFolder);
+      mockGet.mockReturnValueOnce(mockAssets);
+      mockIsAssetInFolder.mockImplementation(() => true);
+
+      const result = getAssociatedPreviewAssets({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAssets);
+      expect(mockGetAssetFolder).toHaveBeenCalledWith({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+      expect(mockIsAssetInFolder).toHaveBeenCalledTimes(2);
+    });
+
+    it('should filter assets based on folder membership', () => {
+      const mockAssetFolder = { collectionName: 'posts', internalPath: 'assets' };
+
+      const mockAssets = [
+        { name: 'image1.jpg', path: '/assets/image1.jpg' },
+        { name: 'image2.jpg', path: '/other/image2.jpg' },
+      ];
+
+      mockGetAssetFolder.mockReturnValueOnce(mockAssetFolder);
+      mockGet.mockReturnValueOnce(mockAssets);
+      mockIsAssetInFolder.mockImplementation((asset) => asset.path.includes('/assets/'));
+
+      const result = getAssociatedPreviewAssets({
+        collectionName: 'posts',
+        fileName: 'index.md',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('image1.jpg');
+    });
+  });
+
+  describe('buildPreviewData', () => {
+    beforeEach(() => {
+      mockGetField.mockReset();
+      mockGetField.mockReturnValue({ widget: 'text' });
+      mockGetAssetFolder.mockReset();
+      mockIsAssetInFolder.mockReset();
+      mockGet.mockReset();
+      mockGet.mockReturnValue([]);
+    });
+
+    it('should build preview data with all required properties', () => {
+      const mockDraft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        originalEntry: {
+          slug: 'test-post',
+          locales: {
+            en: {
+              slug: 'test-post',
+              path: '/posts/test-post',
+              content: { title: 'Test Post' },
+            },
+          },
+        },
+        currentValues: {
+          en: { title: 'Updated Title' },
+        },
+      };
+
+      const result = buildPreviewData({
+        draft: mockDraft,
+        locale: 'en',
+      });
+
+      expect(result).toHaveProperty('entryMap');
+      expect(result).toHaveProperty('valueMap');
+      expect(result).toHaveProperty('getFieldArgs');
+      expect(result).toHaveProperty('fieldsMetaData');
+      expect(result).toHaveProperty('getAsset');
+      expect(isMap(result.entryMap)).toBe(true);
+      expect(result.valueMap).toEqual({ title: 'Updated Title' });
+      expect(result.getFieldArgs).toEqual({
+        collectionName: 'posts',
+        fileName: undefined,
+        valueMap: { title: 'Updated Title' },
+        isIndexFile: false,
+      });
+      expect(isMap(result.fieldsMetaData)).toBe(true);
+      expect(typeof result.getAsset).toBe('function');
+    });
+
+    it('should use current values for the specified locale', () => {
+      const mockDraft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        originalEntry: {
+          slug: 'test-post',
+          locales: {
+            en: {
+              slug: 'test-post',
+              path: '/posts/test-post',
+              content: { title: 'English Title' },
+            },
+            ja: {
+              slug: 'テスト記事',
+              path: '/ja/posts/テスト記事',
+              content: { title: '日本語タイトル' },
+            },
+          },
+        },
+        currentValues: {
+          en: { title: 'Updated EN' },
+          ja: { title: '更新されたJA' },
+        },
+      };
+
+      const resultEn = buildPreviewData({
+        draft: mockDraft,
+        locale: 'en',
+      });
+
+      const resultJa = buildPreviewData({
+        draft: mockDraft,
+        locale: 'ja',
+      });
+
+      expect(resultEn.valueMap).toEqual({ title: 'Updated EN' });
+      expect(resultJa.valueMap).toEqual({ title: '更新されたJA' });
+    });
+
+    it('should include entryMap from converted entry data', () => {
+      mockGetAssetFolder.mockReturnValueOnce(null);
+
+      const mockDraft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        originalEntry: {
+          slug: 'test-post',
+          locales: {
+            en: {
+              slug: 'test-post',
+              path: '/posts/test-post',
+              content: { title: 'Test Post' },
+            },
+          },
+        },
+        currentValues: {
+          en: { title: 'Updated Title' },
+        },
+      };
+
+      const result = buildPreviewData({
+        draft: mockDraft,
+        locale: 'en',
+      });
+
+      expect(result.entryMap).toBeDefined();
+      expect(isMap(result.entryMap)).toBe(true);
+      expect(result.entryMap.get('slug')).toBe('test-post');
+      expect(result.entryMap.get('collection')).toBe('posts');
     });
   });
 });

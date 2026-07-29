@@ -1,8 +1,10 @@
 import { unflatten } from 'flat';
 import { fromJS } from 'immutable';
+import { get } from 'svelte/store';
 
 import { AssetProxy } from '$lib/services/api/asset-proxy';
-import { getAssetByPath } from '$lib/services/assets';
+import { allAssets, getAssetByPath, isAssetInFolder } from '$lib/services/assets';
+import { getAssetFolder } from '$lib/services/assets/folders';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -12,11 +14,21 @@ import { getField } from '$lib/services/contents/entry/fields';
  * @import {
  * Asset,
  * Entry,
+ * EntryDraft,
  * FlattenedEntryContent,
  * GetFieldArgs,
  * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import { ApiAsset, ApiEntry, FieldKeyPath } from '$lib/types/public';
+ */
+
+/**
+ * @typedef {object} PreviewData
+ * @property {MapOf<ApiEntry>} entryMap Immutable Map of entry data for the current locale.
+ * @property {FlattenedEntryContent} valueMap Flattened content values for the current locale.
+ * @property {Omit<GetFieldArgs, 'keyPath'>} getFieldArgs Arguments for getField function.
+ * @property {MapOf<any>} fieldsMetaData Metadata for fields in the current locale.
+ * @property {(path: string) => ApiAsset | undefined} getAsset Function to get asset URLs.
  */
 
 /**
@@ -189,4 +201,76 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
   });
 
   return /** @type {import('immutable').MapOf<any>} */ (fromJS(metaData));
+};
+
+/**
+ * Build a synthetic entry object with current values for live preview updates.
+ * @internal
+ * @param {object} args Arguments.
+ * @param {Entry | undefined} args.originalEntry The original entry object.
+ * @param {Record<InternalLocaleCode, FlattenedEntryContent>} args.currentValues Object with
+ * locale keys mapping to current content values.
+ * @returns {Entry} A new entry object with updated locale content while preserving original
+ * slugs and paths.
+ */
+export const buildEntry = ({ originalEntry, currentValues }) =>
+  /** @type {Entry} */ ({
+    ...originalEntry,
+    locales: Object.fromEntries(
+      Object.entries(currentValues).map(([locale, content]) => [
+        locale,
+        {
+          slug: originalEntry?.locales[locale]?.slug ?? originalEntry?.slug,
+          path: originalEntry?.locales[locale]?.path ?? originalEntry?.subPath,
+          content,
+        },
+      ]),
+    ),
+  });
+
+/**
+ * Get assets associated with a collection or entry folder.
+ * @param {object} args Arguments.
+ * @param {string} [args.collectionName] Collection name.
+ * @param {string} [args.fileName] File name.
+ * @returns {Asset[]} Assets filtered to the relevant folder.
+ */
+export const getAssociatedPreviewAssets = ({ collectionName, fileName }) => {
+  const assetFolder = getAssetFolder({ collectionName, fileName });
+
+  if (assetFolder) {
+    return get(allAssets).filter((asset) => isAssetInFolder(asset, assetFolder));
+  }
+
+  return [];
+};
+
+/**
+ * Build shared preview data used by both preview templates and custom field types.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft being previewed.
+ * @param {InternalLocaleCode} args.locale Current locale.
+ * @returns {PreviewData} Object containing computed preview data.
+ */
+export const buildPreviewData = ({ draft, locale }) => {
+  const { collectionName, fileName, isIndexFile, originalEntry, currentValues } = draft;
+  const entry = buildEntry({ originalEntry, currentValues });
+  /* v8 ignore next */
+  const valueMap = entry.locales[locale].content ?? {};
+  /** @type {Omit<GetFieldArgs, 'keyPath'>} */
+  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
+
+  return {
+    entryMap: convertEntryToMap({
+      entry,
+      locale,
+      collectionName,
+      associatedAssets: getAssociatedPreviewAssets({ collectionName, fileName }),
+      content: valueMap,
+    }),
+    valueMap,
+    getFieldArgs,
+    fieldsMetaData: getMetaData({ locale, getFieldArgs }),
+    getAsset: createGetAsset({ entry, collectionName, fileName }),
+  };
 };

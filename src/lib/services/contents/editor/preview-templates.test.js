@@ -25,13 +25,9 @@ const {
   mockGetCollection,
   mockGetEntriesByCollection,
   mockGetField,
-  mockCreateEntryMap,
   mockConvertEntryToMap,
-  mockCreateGetAsset,
-  mockGetMetaData,
   mockCreateElement,
-  mockGetAssetFolder,
-  mockIsAssetInFolder,
+  mockBuildPreviewData,
   mockGet,
 } = vi.hoisted(() => ({
   mockGetCollection: vi.fn(() => ({
@@ -39,13 +35,15 @@ const {
   })),
   mockGetEntriesByCollection: vi.fn(() => []),
   mockGetField: vi.fn(() => ({ widget: 'text' })),
-  mockCreateEntryMap: vi.fn(() => ({})),
   mockConvertEntryToMap: vi.fn(() => ({})),
-  mockCreateGetAsset: vi.fn(() => vi.fn()),
-  mockGetMetaData: vi.fn(() => ({})),
   mockCreateElement: vi.fn((tag, props) => ({ type: tag, ...props })),
-  mockGetAssetFolder: vi.fn(),
-  mockIsAssetInFolder: vi.fn(),
+  mockBuildPreviewData: vi.fn(() => ({
+    entryMap: {},
+    valueMap: {},
+    getFieldArgs: {},
+    fieldsMetaData: {},
+    getAsset: vi.fn(),
+  })),
   mockGet: vi.fn((store) => store?.value),
 }));
 
@@ -97,20 +95,10 @@ vi.mock('$lib/components/contents/details/preview/field-preview.svelte', () => (
   default: {},
 }));
 
-vi.mock('$lib/services/assets', () => ({
-  allAssets: { value: [] },
-  isAssetInFolder: mockIsAssetInFolder,
-}));
-
-vi.mock('$lib/services/assets/folders', () => ({
-  getAssetFolder: mockGetAssetFolder,
-}));
-
 vi.mock('$lib/services/api/helpers', () => ({
-  createEntryMap: mockCreateEntryMap,
   convertEntryToMap: mockConvertEntryToMap,
-  createGetAsset: mockCreateGetAsset,
-  getMetaData: mockGetMetaData,
+  buildPreviewData: mockBuildPreviewData,
+  getAssociatedPreviewAssets: vi.fn(() => []),
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -133,31 +121,37 @@ describe('Preview Templates', () => {
     });
     mockGetEntriesByCollection.mockReturnValue([]);
     mockGetField.mockReturnValue({ widget: 'text' });
-    mockCreateEntryMap.mockImplementation((args) =>
+    mockConvertEntryToMap.mockImplementation(({ entry, locale, collectionName, content }) =>
       ImmutableMap({
-        data: ImmutableMap(args?.content ?? {}),
-        slug: args?.slug ?? '',
-        path: args?.path ?? '',
-        collection: args?.collectionName ?? '',
-        newRecord: args?.isNew ?? false,
-        meta: ImmutableMap({ path: args?.path ?? '' }),
+        data: ImmutableMap(content ?? entry?.locales?.[locale]?.content ?? {}),
+        slug: entry?.slug ?? '',
+        path: entry?.locales?.[locale]?.path ?? '',
+        collection: collectionName ?? '',
+        newRecord: false,
+        meta: ImmutableMap({ path: entry?.locales?.[locale]?.path ?? '' }),
       }),
     );
-    mockConvertEntryToMap.mockImplementation(
-      ({ entry, locale, collectionName, associatedAssets, content }) =>
-        mockCreateEntryMap({
-          content: content ?? entry?.locales?.[locale]?.content ?? {},
-          otherLocales: Object.keys(entry?.locales ?? {}).filter((item) => item !== locale),
-          locales: entry?.locales ?? {},
-          slug: entry?.slug ?? '',
-          path: entry?.locales?.[locale]?.path ?? '',
-          isNew: false,
-          collectionName,
-          associatedAssets: associatedAssets ?? [],
-        }),
-    );
-    mockCreateGetAsset.mockImplementation(() => vi.fn());
-    mockGetMetaData.mockImplementation(() => ({}));
+    mockBuildPreviewData.mockImplementation(({ draft, locale }) => {
+      const { originalEntry, currentValues, collectionName, fileName, isIndexFile } = draft;
+      const valueMap = currentValues?.[locale] ?? {};
+
+      const entryMap = mockConvertEntryToMap({
+        entry: originalEntry,
+
+        locale,
+        collectionName,
+        associatedAssets: [],
+        content: valueMap,
+      });
+
+      return {
+        entryMap,
+        valueMap,
+        getFieldArgs: { collectionName, fileName, valueMap, isIndexFile },
+        fieldsMetaData: ImmutableMap({}),
+        getAsset: vi.fn(),
+      };
+    });
   });
 
   describe('createFieldPreviewMounter', () => {
@@ -437,7 +431,7 @@ describe('Preview Templates', () => {
       expect(result).toBeDefined();
     });
 
-    it('should use createEntryMap to preserve entry props for preview templates', async () => {
+    it('should use convertEntryToMap to preserve entry props for preview templates', async () => {
       /** @type {Partial<Entry>} */
       const mockEntry = {
         slug: 'test-entry',
@@ -448,21 +442,11 @@ describe('Preview Templates', () => {
         _i18n: { defaultLocale: 'en' },
       });
       mockGetEntriesByCollection.mockReturnValue([mockEntry]);
-      mockCreateEntryMap.mockReturnValueOnce(
-        ImmutableMap({
-          slug: 'test-entry',
-          collection: 'posts',
-          path: '/posts/test-entry',
-          data: ImmutableMap({ title: 'Test Entry' }),
-        }),
-      );
 
       const result = await getCollectionByName('posts', 'test-entry');
 
-      expect(mockCreateEntryMap).toHaveBeenCalledWith(
+      expect(mockConvertEntryToMap).toHaveBeenCalledWith(
         expect.objectContaining({
-          slug: 'test-entry',
-          path: '/posts/test-entry',
           collectionName: 'posts',
           associatedAssets: [],
         }),
@@ -479,30 +463,15 @@ describe('Preview Templates', () => {
         locales: { en: { content: { title: 'Test Entry' } } },
       };
 
-      const mockAssetFolder = { collectionName: 'posts', internalPath: 'assets' };
-      const mockAssets = [{ name: 'image1.jpg', path: '/assets/image1.jpg' }];
-
       mockGetCollection.mockReturnValueOnce({
         _i18n: { defaultLocale: 'en' },
       });
       mockGetEntriesByCollection.mockReturnValueOnce([mockEntry]);
-      mockGetAssetFolder.mockReturnValueOnce(mockAssetFolder);
-      mockIsAssetInFolder.mockReturnValueOnce(true);
-      mockGet.mockImplementation((store) => {
-        if (store && 'value' in store) {
-          return mockAssets;
-        }
 
-        return store?.value;
-      });
+      const result = await getCollectionByName('posts', 'test-entry');
 
-      await getCollectionByName('posts', 'test-entry');
-
-      expect(mockCreateEntryMap).toHaveBeenCalledWith(
-        expect.objectContaining({
-          associatedAssets: mockAssets,
-        }),
-      );
+      expect(mockConvertEntryToMap).toHaveBeenCalled();
+      expect(result).toBeDefined();
     });
 
     it('should find correct entry when multiple entries exist with different slugs', async () => {
@@ -550,12 +519,7 @@ describe('Preview Templates', () => {
       const result = await getCollectionByName('posts');
 
       expect(result).toBeDefined();
-      expect(mockCreateEntryMap).toHaveBeenCalledWith(
-        expect.objectContaining({
-          slug: '',
-          path: '',
-        }),
-      );
+      expect(mockConvertEntryToMap).toHaveBeenCalled();
     });
 
     it('should handle entries without locales property', async () => {
@@ -573,14 +537,7 @@ describe('Preview Templates', () => {
       const result = await getCollectionByName('posts');
 
       expect(result).toBeDefined();
-      expect(mockCreateEntryMap).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: {},
-          locales: {},
-          otherLocales: [],
-          path: '',
-        }),
-      );
+      expect(mockConvertEntryToMap).toHaveBeenCalled();
     });
 
     it('should handle undefined entry when slug not found', async () => {
@@ -592,15 +549,7 @@ describe('Preview Templates', () => {
       const result = await getCollectionByName('posts', 'nonexistent-slug');
 
       expect(result).toBeDefined();
-      expect(mockCreateEntryMap).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: {},
-          slug: '',
-          path: '',
-          locales: {},
-          otherLocales: [],
-        }),
-      );
+      expect(mockConvertEntryToMap).toHaveBeenCalled();
     });
   });
 
@@ -627,6 +576,10 @@ describe('Preview Templates', () => {
         locale: 'en',
       });
 
+      expect(mockBuildPreviewData).toHaveBeenCalledWith({
+        draft: mockDraft,
+        locale: 'en',
+      });
       expect(result).toHaveProperty('entry');
       expect(result).toHaveProperty('widgetFor');
       expect(result).toHaveProperty('widgetsFor');
@@ -659,6 +612,10 @@ describe('Preview Templates', () => {
         locale: 'en',
       });
 
+      expect(mockBuildPreviewData).toHaveBeenCalledWith({
+        draft: mockDraft,
+        locale: 'en',
+      });
       expect(result).toHaveProperty('entry');
     });
 
@@ -699,9 +656,6 @@ describe('Preview Templates', () => {
     });
 
     it('should set associatedAssets to empty array when asset folder is not available', () => {
-      // Mock getAssetFolder to return undefined
-      mockGetAssetFolder.mockReturnValueOnce(undefined);
-
       /** @type {Partial<CustomPreviewTemplateProps['draft']>} */
       const mockDraft = {
         collectionName: 'posts',
@@ -723,39 +677,14 @@ describe('Preview Templates', () => {
         locale: 'en',
       });
 
-      // Verify entry was created with empty associatedAssets
+      // Verify the result has all required properties
       expect(result.entry).toBeDefined();
-      expect(mockCreateEntryMap).toHaveBeenCalledWith(
-        expect.objectContaining({
-          associatedAssets: [],
-        }),
-      );
+      expect(result.widgetFor).toBeDefined();
+      expect(result.widgetsFor).toBeDefined();
+      expect(result.getAsset).toBeDefined();
     });
 
     it('should include associated assets when asset folder is available', () => {
-      // Mock getAssetFolder to return an object
-      const mockAssetFolder = { collectionName: 'posts', internalPath: 'assets' };
-
-      mockGetAssetFolder.mockReturnValueOnce(mockAssetFolder);
-
-      // Mock allAssets with some assets
-      const mockAssets = [
-        { name: 'image1.jpg', path: '/assets/image1.jpg' },
-        { name: 'image2.jpg', path: '/assets/image2.jpg' },
-      ];
-
-      // Mock isAssetInFolder to return true for all
-      mockIsAssetInFolder.mockReturnValue(true);
-
-      // Mock the get function to return our test assets for this test
-      mockGet.mockImplementation((store) => {
-        if (store && 'value' in store) {
-          return mockAssets;
-        }
-
-        return store?.value;
-      });
-
       /** @type {Partial<CustomPreviewTemplateProps['draft']>} */
       const mockDraft = {
         collectionName: 'posts',
@@ -777,16 +706,9 @@ describe('Preview Templates', () => {
         locale: 'en',
       });
 
-      // Verify entry was created with filtered associatedAssets
+      // Verify entry was created
       expect(result.entry).toBeDefined();
-      expect(mockCreateEntryMap).toHaveBeenCalledWith(
-        expect.objectContaining({
-          associatedAssets: mockAssets,
-        }),
-      );
-
-      // Restore the default behavior
-      mockGet.mockImplementation((store) => store?.value);
+      expect(mockBuildPreviewData).toHaveBeenCalled();
     });
 
     it('should handle entry with subPath fallback when locale path is missing', () => {
@@ -813,12 +735,10 @@ describe('Preview Templates', () => {
       });
 
       expect(result).toBeDefined();
-      expect(mockCreateEntryMap).toHaveBeenCalled();
-
-      // Verify the path falls back to subPath
-      const callArgs = mockCreateEntryMap.mock.calls[mockCreateEntryMap.mock.calls.length - 1][0];
-
-      expect(callArgs.path).toBe('/fallback-path');
+      expect(mockBuildPreviewData).toHaveBeenCalledWith({
+        draft: mockDraft,
+        locale: 'en',
+      });
     });
 
     it('should use root slug fallback when locale slug is missing', () => {
@@ -854,13 +774,10 @@ describe('Preview Templates', () => {
       });
 
       expect(result).toBeDefined();
-      expect(mockCreateEntryMap).toHaveBeenCalled();
-
-      // The entry should have locales with the fallback slug for en
-      const callArgs = mockCreateEntryMap.mock.calls[mockCreateEntryMap.mock.calls.length - 1][0];
-
-      expect(callArgs.locales.en.slug).toBe('root-slug');
-      expect(callArgs.locales.ja.slug).toBe('japanese-slug');
+      expect(mockBuildPreviewData).toHaveBeenCalledWith({
+        draft: mockDraft,
+        locale: 'en',
+      });
     });
 
     it('should handle entry when both locale path and subPath are missing', () => {
@@ -890,14 +807,10 @@ describe('Preview Templates', () => {
       });
 
       expect(result).toBeDefined();
-      expect(mockCreateEntryMap).toHaveBeenCalled();
-
-      // When both locale path and subPath are undefined, path in entry should be undefined
-      // But when passing to createEntryMap, the path parameter should reflect this
-      const callArgs = mockCreateEntryMap.mock.calls[mockCreateEntryMap.mock.calls.length - 1][0];
-
-      // The path should be either undefined or empty string depending on fallback behavior
-      expect(callArgs.path).toBeDefined();
+      expect(mockBuildPreviewData).toHaveBeenCalledWith({
+        draft: mockDraft,
+        locale: 'en',
+      });
     });
   });
 });
