@@ -5,7 +5,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import mime from 'mime';
 import { get } from 'svelte/store';
 
-import { getAssetByPath, isRelativePath } from '$lib/services/assets';
+import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';
 import {
@@ -150,6 +150,20 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
   }
 
   return URL.createObjectURL(thumbnailBlob);
+};
+
+/**
+ * Revoke the blob URL for the given asset if it’s not being used in any elements.
+ * @param {Asset} asset Asset.
+ */
+export const revokeAssetBlobURLIfNeeded = ({ blobURL }) => {
+  window.requestAnimationFrame(() => {
+    if (blobURL && !document.querySelector(`[src="${blobURL}"]`)) {
+      URL.revokeObjectURL(blobURL);
+      // Update the database directly because the passed `asset` can be a proxy
+      delete get(allAssets).find((a) => a.blobURL === blobURL)?.blobURL;
+    }
+  });
 };
 
 /**

@@ -1,11 +1,15 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Icon } from '@sveltia/ui';
-  import { waitForVisibility } from '@sveltia/utils/element';
+  import { removeVisibilityResolver, waitForVisibility } from '@sveltia/utils/element';
   import { sleep } from '@sveltia/utils/misc';
-  import { flushSync } from 'svelte';
+  import { flushSync, onMount } from 'svelte';
 
-  import { getAssetBlobURL, getAssetThumbnailURL } from '$lib/services/assets/info';
+  import {
+    getAssetBlobURL,
+    getAssetThumbnailURL,
+    revokeAssetBlobURLIfNeeded,
+  } from '$lib/services/assets/info';
   import { THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
 
   /**
@@ -186,6 +190,20 @@
     if (mediaElement && mediaSrc) {
       checkLoaded();
     }
+  });
+
+  // eslint-disable-next-line arrow-body-style
+  onMount(() => {
+    // Clean up
+    return () => {
+      if (asset) {
+        revokeAssetBlobURLIfNeeded(asset);
+      }
+
+      if (mediaElement) {
+        removeVisibilityResolver(mediaElement);
+      }
+    };
   });
 </script>
 

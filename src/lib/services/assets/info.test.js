@@ -16,6 +16,7 @@ import {
   getAssetPublicURL,
   getAssetThumbnailURL,
   getMediaFieldURL,
+  revokeAssetBlobURLIfNeeded,
 } from './info';
 
 // Mock all dependencies
@@ -2379,6 +2380,220 @@ describe('assets/info', () => {
       getAssetBaseURL(fieldConfig);
 
       expect(vi.mocked(cloudinaryModule.getMergedLibraryOptions)).toHaveBeenCalledWith(fieldConfig);
+    });
+  });
+
+  describe('revokeAssetBlobURLIfNeeded', () => {
+    /** @type {any} */
+    let mockAssets;
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+
+      // Create mock assets for store
+      mockAssets = [
+        { blobURL: 'blob:url-1', path: 'assets/1.jpg', name: '1.jpg' },
+        { blobURL: 'blob:url-2', path: 'assets/2.jpg', name: '2.jpg' },
+        { blobURL: 'blob:url-3', path: 'assets/3.jpg', name: '3.jpg' },
+      ];
+
+      // Mock window.requestAnimationFrame to execute callback immediately
+      // @ts-ignore
+      global.window = {
+        requestAnimationFrame: vi.fn((callback) => {
+          callback();
+          return 1;
+        }),
+      };
+
+      // Mock document.querySelector
+      // @ts-ignore
+      global.document = {
+        querySelector: vi.fn(),
+      };
+
+      // Setup get mock to handle the allAssets store
+      const getMock = vi.mocked(get);
+      const previousImplementation = getMock.getMockImplementation();
+
+      getMock.mockImplementation((store) => {
+        // Handle existing store types
+        if (store && typeof store === 'object' && '_mockValue' in store) {
+          if (store._mockValue === 'backend') return mockBackend;
+          if (store._mockValue === 'cmsConfig') return mockCmsConfig;
+          if (store._mockValue === 'globalAssetFolder') return mockAsset.folder;
+        }
+
+        // For allAssets or any other store without _mockValue identifier, return mock assets
+        // We identify allAssets by checking if it has a subscribe method (standard Svelte store)
+        if (
+          store &&
+          typeof store === 'object' &&
+          'subscribe' in store &&
+          !('_mockValue' in store)
+        ) {
+          return mockAssets;
+        }
+
+        return previousImplementation?.(store);
+      });
+    });
+
+    afterEach(() => {
+      // @ts-ignore
+      delete global.window;
+      // @ts-ignore
+      delete global.document;
+    });
+
+    it('should do nothing if asset does not have a blobURL', () => {
+      const assetWithoutBlobURL = /** @type {any} */ ({
+        path: 'assets/test.jpg',
+        name: 'test.jpg',
+      });
+
+      // @ts-ignore
+      revokeAssetBlobURLIfNeeded(assetWithoutBlobURL);
+
+      expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing if element with blobURL exists in DOM', () => {
+      const asset = /** @type {any} */ ({
+        blobURL: 'blob:url-1',
+        path: 'assets/1.jpg',
+        name: '1.jpg',
+      });
+
+      // Mock querySelector to return an element (found)
+      // @ts-ignore
+      vi.mocked(global.document.querySelector).mockReturnValue({});
+
+      // @ts-ignore
+      revokeAssetBlobURLIfNeeded(asset);
+
+      expect(global.document.querySelector).toHaveBeenCalledWith('[src="blob:url-1"]');
+      expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+    });
+
+    it('should revoke blobURL and remove from store if element is not in DOM', () => {
+      const asset = /** @type {any} */ ({
+        blobURL: 'blob:url-2',
+        path: 'assets/2.jpg',
+        name: '2.jpg',
+      });
+
+      // Mock querySelector to return null (not found)
+      vi.mocked(global.document.querySelector).mockReturnValue(null);
+
+      // @ts-ignore
+      revokeAssetBlobURLIfNeeded(asset);
+
+      expect(global.document.querySelector).toHaveBeenCalledWith('[src="blob:url-2"]');
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-2');
+      // Check that the asset was removed from store
+      expect(
+        mockAssets.find((/** @type {any} */ a) => a.blobURL === 'blob:url-2')?.blobURL,
+      ).toBeUndefined();
+    });
+
+    it('should schedule callback with requestAnimationFrame', () => {
+      const asset = /** @type {any} */ ({
+        blobURL: 'blob:url-3',
+        path: 'assets/3.jpg',
+        name: '3.jpg',
+      });
+
+      // @ts-ignore
+      revokeAssetBlobURLIfNeeded(asset);
+
+      expect(global.window.requestAnimationFrame).toHaveBeenCalled();
+    });
+
+    it('should handle escaped quotes in blobURL selector', () => {
+      const assetWithQuote = /** @type {any} */ ({
+        blobURL: 'blob:url-with"quote',
+        path: 'assets/test.jpg',
+        name: 'test.jpg',
+      });
+
+      vi.mocked(global.document.querySelector).mockReturnValue(null);
+
+      // @ts-ignore
+      revokeAssetBlobURLIfNeeded(assetWithQuote);
+
+      expect(global.document.querySelector).toHaveBeenCalledWith('[src="blob:url-with"quote"]');
+    });
+
+    it('should work with proxy objects', () => {
+      const realAsset = /** @type {any} */ ({ blobURL: 'blob:url-1', path: 'assets/1.jpg' });
+
+      // Simulate a proxy by wrapping the object
+      const proxyAsset = new Proxy(realAsset, {
+        get: (target, prop) => target[/** @type {any} */ (prop)],
+      });
+
+      vi.mocked(global.document.querySelector).mockReturnValue(null);
+
+      // @ts-ignore
+      revokeAssetBlobURLIfNeeded(proxyAsset);
+
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-1');
+    });
+
+    it('should update the store even if asset is a proxy', () => {
+      // Create an asset in the store
+      const storeAsset = /** @type {any} */ ({ blobURL: 'blob:url-1', path: 'assets/1.jpg' });
+
+      mockAssets[0] = storeAsset;
+
+      // Create a proxy to simulate how the function receives the asset
+      const proxyAsset = new Proxy(storeAsset, {
+        get: (target, prop) => target[/** @type {any} */ (prop)],
+      });
+
+      vi.mocked(global.document.querySelector).mockReturnValue(null);
+
+      // @ts-ignore
+      revokeAssetBlobURLIfNeeded(proxyAsset);
+
+      // Verify the blobURL was deleted from the store
+      const foundAsset = mockAssets.find((/** @type {any} */ a) => a === storeAsset);
+
+      expect(foundAsset?.blobURL).toBeUndefined();
+    });
+
+    it('should handle assets with special characters in blobURL', () => {
+      const assetWithSpecialChars = /** @type {any} */ ({
+        blobURL: 'blob:special!@#$%^&*()',
+        path: 'assets/test.jpg',
+        name: 'test.jpg',
+      });
+
+      vi.mocked(global.document.querySelector).mockReturnValue(null);
+
+      // @ts-ignore
+      revokeAssetBlobURLIfNeeded(assetWithSpecialChars);
+
+      expect(global.document.querySelector).toHaveBeenCalledWith('[src="blob:special!@#$%^&*()"]');
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:special!@#$%^&*()');
+    });
+
+    it('should remove only the matching asset from store by blobURL', () => {
+      const assetToRevoke = /** @type {any} */ ({ blobURL: 'blob:url-1', path: 'assets/1.jpg' });
+      const otherAsset1 = /** @type {any} */ ({ blobURL: 'blob:url-2', path: 'assets/2.jpg' });
+      const otherAsset2 = /** @type {any} */ ({ blobURL: 'blob:url-3', path: 'assets/3.jpg' });
+
+      mockAssets = [assetToRevoke, otherAsset1, otherAsset2];
+
+      vi.mocked(global.document.querySelector).mockReturnValue(null);
+
+      revokeAssetBlobURLIfNeeded(assetToRevoke);
+
+      // Verify only the correct asset was modified
+      expect(mockAssets[0].blobURL).toBeUndefined();
+      expect(mockAssets[1].blobURL).toBe('blob:url-2');
+      expect(mockAssets[2].blobURL).toBe('blob:url-3');
     });
   });
 });
