@@ -252,6 +252,19 @@ describe('getFieldValidationMessages', () => {
     });
   });
 
+  describe('customError', () => {
+    it('falls back to the default custom error message when no custom message is provided', () => {
+      const messages = getFieldValidationMessages(
+        args({
+          validity: { customError: true },
+          fieldConfig: { name: 'f', widget: 'string' },
+        }),
+      );
+
+      expect(messages).toEqual(['validation.invalid_value']);
+    });
+  });
+
   describe('multiple errors', () => {
     it('collects messages for all violated constraints in order', () => {
       const messages = getFieldValidationMessages(

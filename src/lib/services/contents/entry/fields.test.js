@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { getCollection, isEntryCollection } from '$lib/services/contents/collection';
 import {
   getIndexFile,
@@ -10,6 +11,7 @@ import {
   getCurrentValue,
   getField,
   getFieldDisplayValue,
+  getFieldKind,
   getPropertyValue,
   getVisibleFieldDisplayValue,
   hasRootField,
@@ -42,6 +44,22 @@ vi.mock('$lib/services/contents/i18n', () => ({
 }));
 
 vi.mock('$lib/services/contents/fields', () => ({
+  BUILTIN_FIELD_TYPES: [
+    'boolean',
+    'string',
+    'text',
+    'number',
+    'datetime',
+    'date',
+    'select',
+    'relation',
+    'list',
+    'object',
+    'file',
+    'image',
+    'markdown',
+    'richtext',
+  ],
   MEDIA_FIELD_TYPES: ['file', 'image'],
   MULTI_VALUE_FIELD_TYPES: ['file', 'image', 'relation', 'select'],
 }));
@@ -64,6 +82,10 @@ vi.mock('$lib/services/contents/fields/select/helpers', () => ({
 
 vi.mock('$lib/services/integrations/media-libraries/shared', () => ({
   isMultiple: vi.fn(),
+}));
+
+vi.mock('$lib/services/api/registries', () => ({
+  customFieldTypeRegistry: new Map(),
 }));
 
 const mockGetCollection = vi.mocked(getCollection);
@@ -5108,6 +5130,261 @@ describe('Test getCurrentValue()', () => {
       });
 
       expect(result).toEqual(['item1', 'item2', 'item3']);
+    });
+  });
+
+  describe('Test getFieldKind()', () => {
+    beforeEach(() => {
+      // Import fresh mocks for each test
+      vi.resetModules();
+    });
+
+    describe('builtin field types', () => {
+      test('should return "builtin" for string widget (explicit)', () => {
+        const fieldConfig = { name: 'title', widget: 'string' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for text widget', () => {
+        const fieldConfig = { name: 'description', widget: 'text' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for number widget', () => {
+        const fieldConfig = { name: 'count', widget: 'number' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for boolean widget', () => {
+        const fieldConfig = { name: 'published', widget: 'boolean' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for datetime widget', () => {
+        const fieldConfig = { name: 'date', widget: 'datetime' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for date widget', () => {
+        const fieldConfig = { name: 'publish_date', widget: 'date' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for select widget', () => {
+        const fieldConfig = {
+          name: 'status',
+          widget: 'select',
+          options: ['draft', 'published'],
+        };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for relation widget', () => {
+        const fieldConfig = {
+          name: 'author',
+          widget: 'relation',
+          collection: 'authors',
+        };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for list widget', () => {
+        const fieldConfig = { name: 'tags', widget: 'list' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for object widget', () => {
+        const fieldConfig = { name: 'meta', widget: 'object', fields: [] };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for file widget', () => {
+        const fieldConfig = { name: 'document', widget: 'file' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for image widget', () => {
+        const fieldConfig = { name: 'featured_image', widget: 'image' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for markdown widget', () => {
+        const fieldConfig = { name: 'body', widget: 'markdown' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should return "builtin" for richtext widget', () => {
+        const fieldConfig = { name: 'content', widget: 'richtext' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+    });
+
+    describe('default widget type', () => {
+      test('should default to "string" widget when widget is not specified', () => {
+        const fieldConfig = { name: 'title' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should default to "string" widget when widget is undefined', () => {
+        const fieldConfig = { name: 'title', widget: undefined };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should use provided widget even when widget is falsy (but explicitly set)', () => {
+        const fieldConfig = /** @type {any} */ ({ name: 'field', widget: null });
+
+        // null is falsy, so it defaults to 'string', which is builtin
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+    });
+
+    describe('custom field types', () => {
+      test('should return "custom" for registered custom field type', () => {
+        // @ts-ignore - Mock custom field type for testing
+        customFieldTypeRegistry.set('star-rating', { control: 'my-control' });
+
+        const fieldConfig = { name: 'rating', widget: 'star-rating' };
+
+        expect(getFieldKind(fieldConfig)).toBe('custom');
+
+        // Cleanup
+        customFieldTypeRegistry.delete('star-rating');
+      });
+
+      test('should return "unknown" when only the field name matches the registry', () => {
+        // @ts-ignore - Mock custom field type for testing
+        customFieldTypeRegistry.set('my-custom-field', { control: 'my-control' });
+
+        // The registry is keyed by widget name, so a matching field `name` must not count
+        const fieldConfig = { name: 'my-custom-field', widget: 'unknown-widget' };
+
+        expect(getFieldKind(fieldConfig)).toBe('unknown');
+
+        // Cleanup
+        customFieldTypeRegistry.delete('my-custom-field');
+      });
+
+      test('should return "builtin" for custom field name when widget is builtin', () => {
+        // @ts-ignore - Mock custom field type for testing
+        customFieldTypeRegistry.set('custom-button', { control: 'button-control' });
+
+        const fieldConfig = { name: 'custom-button', widget: 'string' };
+
+        // The widget 'string' is builtin, so the widget type takes priority
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+
+        // Cleanup
+        customFieldTypeRegistry.delete('custom-button');
+      });
+
+      test('should return "custom" for multiple registered custom field types', () => {
+        // @ts-ignore - Mock custom field types for testing
+        customFieldTypeRegistry.set('widget-a', { control: 'control-a' });
+        // @ts-ignore - Mock custom field types for testing
+        customFieldTypeRegistry.set('widget-b', { control: 'control-b' });
+
+        expect(getFieldKind({ name: 'field-a', widget: 'widget-a' })).toBe('custom');
+        expect(getFieldKind({ name: 'field-b', widget: 'widget-b' })).toBe('custom');
+
+        // Cleanup
+        customFieldTypeRegistry.delete('widget-a');
+        customFieldTypeRegistry.delete('widget-b');
+      });
+    });
+
+    describe('unknown field types', () => {
+      test('should return "unknown" for non-existent widget type', () => {
+        const fieldConfig = { name: 'field', widget: 'non-existent-widget' };
+
+        expect(getFieldKind(fieldConfig)).toBe('unknown');
+      });
+
+      test('should return "unknown" for unregistered custom field name without builtin widget', () => {
+        const fieldConfig = {
+          name: 'unregistered-custom-field',
+          widget: 'custom-unknown-widget',
+        };
+
+        expect(getFieldKind(fieldConfig)).toBe('unknown');
+      });
+
+      test('should return "unknown" for empty widget name', () => {
+        const fieldConfig = { name: 'field', widget: '' };
+
+        expect(getFieldKind(fieldConfig)).toBe('unknown');
+      });
+
+      test('should return "unknown" for typo in builtin widget name', () => {
+        const fieldConfig = { name: 'field', widget: 'strng' }; // typo: 'strng' instead of 'string'
+
+        expect(getFieldKind(fieldConfig)).toBe('unknown');
+      });
+    });
+
+    describe('priority and edge cases', () => {
+      test('should check widget type before checking custom registry', () => {
+        // @ts-ignore - Mock custom field type for testing
+        customFieldTypeRegistry.set('string', { control: 'string-control' }); // Register 'string' as custom
+
+        const fieldConfig = { name: 'string', widget: 'string' };
+
+        // Should return 'builtin' because 'string' is a builtin widget type
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+
+        // Cleanup
+        customFieldTypeRegistry.delete('string');
+      });
+
+      test('should handle field names with special characters', () => {
+        const fieldConfig = { name: 'field-with-dashes', widget: 'string' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should handle field names with underscores', () => {
+        const fieldConfig = { name: 'field_with_underscores', widget: 'number' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should handle field names with numbers', () => {
+        const fieldConfig = { name: 'field123', widget: 'text' };
+
+        expect(getFieldKind(fieldConfig)).toBe('builtin');
+      });
+
+      test('should be case-sensitive for widget type', () => {
+        const fieldConfig = { name: 'field', widget: 'String' }; // uppercase
+
+        expect(getFieldKind(fieldConfig)).toBe('unknown');
+      });
+
+      test('should be case-sensitive for custom field type', () => {
+        // @ts-ignore - Mock custom field type for testing
+        customFieldTypeRegistry.set('CustomWidget', { control: 'field-control' });
+
+        expect(getFieldKind({ name: 'field', widget: 'CustomWidget' })).toBe('custom');
+        expect(getFieldKind({ name: 'field', widget: 'customwidget' })).toBe('unknown');
+
+        // Cleanup
+        customFieldTypeRegistry.delete('CustomWidget');
+      });
     });
   });
 });

@@ -6,6 +6,8 @@ import ColorEditor from '$lib/components/contents/details/fields/color/color-edi
 import ColorPreview from '$lib/components/contents/details/fields/color/color-preview.svelte';
 import ComputeEditor from '$lib/components/contents/details/fields/compute/compute-editor.svelte';
 import ComputePreview from '$lib/components/contents/details/fields/compute/compute-preview.svelte';
+import CustomEditor from '$lib/components/contents/details/fields/custom/custom-editor.svelte';
+import CustomPreview from '$lib/components/contents/details/fields/custom/custom-preview.svelte';
 import DateTimeEditor from '$lib/components/contents/details/fields/date-time/date-time-editor.svelte';
 import DateTimePreview from '$lib/components/contents/details/fields/date-time/date-time-preview.svelte';
 import FileEditor from '$lib/components/contents/details/fields/file/file-editor.svelte';
@@ -86,3 +88,6 @@ export const previews = {
   text: TextPreview,
   uuid: UuidPreview,
 };
+
+// Export custom field components for use in field editor
+export { CustomEditor, CustomPreview };

@@ -15,6 +15,7 @@ import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
+import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 
@@ -81,6 +82,10 @@ const assignManualSortOrder = (draft) => {
 export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { isNew, collection, collectionName, fileName, currentValues, originalEntry } = draft;
+
+  // Custom field validators can be async, so wait for any in-flight results before validating.
+  // Otherwise a field made invalid moments ago would be validated against a stale verdict.
+  await awaitCustomFieldValidations();
 
   if (!validateEntry()) {
     expandInvalidFields({ collectionName, fileName, currentValues });

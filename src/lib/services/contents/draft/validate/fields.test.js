@@ -2,7 +2,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { entryDraft } from '$lib/services/contents/draft';
-import { getField, isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
+import {
+  getField,
+  getFieldKind,
+  isFieldMultiple,
+  isFieldRequired,
+} from '$lib/services/contents/entry/fields';
 import { getPairs } from '$lib/services/contents/fields/key-value/helpers';
 
 import {
@@ -511,6 +516,8 @@ describe('draft/validate/fields', () => {
         widget: 'string',
       });
 
+      vi.mocked(getFieldKind).mockReturnValue('builtin');
+
       const result = validateFields('currentValues');
 
       expect(result).toBeDefined();
@@ -530,6 +537,8 @@ describe('draft/validate/fields', () => {
         name: 'custom',
         widget: 'custom-registered',
       });
+
+      vi.mocked(getFieldKind).mockReturnValue('custom');
 
       const result = validateFields('currentValues');
 
@@ -552,6 +561,8 @@ describe('draft/validate/fields', () => {
         name: 'unsupported',
         widget: 'completely-unknown-widget',
       });
+
+      vi.mocked(getFieldKind).mockReturnValue('unknown');
 
       const result = validateFields('currentValues');
 
@@ -576,6 +587,8 @@ describe('draft/validate/fields', () => {
         // widget is intentionally undefined - will use default 'string'
       });
 
+      vi.mocked(getFieldKind).mockReturnValue('builtin');
+
       const result = validateFields('currentValues');
 
       expect(result).toBeDefined();
@@ -596,6 +609,7 @@ describe('draft/validate/fields', () => {
           rangeOverflow: false,
           patternMismatch: false,
           typeMismatch: false,
+          customError: false,
         });
       });
 

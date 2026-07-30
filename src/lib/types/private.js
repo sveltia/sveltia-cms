@@ -665,8 +665,9 @@
 
 /**
  * Validation state of a field value. The key is a validation property name, and the value is a
- * boolean. These are the same properties as the native HTML5 constraint validation.
- * @typedef {Record<string, boolean>} EntryValidityState
+ * boolean. These are the same properties as the native HTML5 constraint validation, plus custom
+ * widget validation support.
+ * @typedef {Record<string, boolean> & { customErrorMessage?: string }} EntryValidityState
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 

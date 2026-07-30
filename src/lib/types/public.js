@@ -1883,24 +1883,29 @@
  */
 
 /**
- * Props for custom preview template React components.
- * @typedef {object} CustomPreviewTemplateProps
+ * Shared component props for {@link CustomPreviewTemplate} and {@link CustomFieldPreview}.
+ * @typedef {object} CustomPreviewBaseProps
  * @property {MapOf<ApiEntry>} entry Entry data for the preview, wrapped in an Immutable Map. Read
  * the entry content from `entry.getIn(['data', 'fieldName'])`.
+ * @property {(path: string) => ApiAsset | undefined} getAsset Function that returns the asset item
+ * for a given path. Returns `undefined` if the asset is not found.
+ * @property {MapOf<Record<string, any>>} fieldsMetaData Immutable Map of metadata from all fields
+ * in the entry, keyed by field name. For relation fields, contains referenced entry data.
+ */
+
+/**
+ * Base props for custom preview template React components.
+ * @typedef {object} CustomPreviewTemplateBaseProps
  * @property {(keyPath: FieldKeyPath) => ReactElement} widgetFor Function that returns a React
  * element mounting a Svelte field preview for the given field key path.
  * @property {(keyPath: FieldKeyPath) => WidgetsForResult} widgetsFor Function that returns widget
  * data for a given field name. For list fields, it returns an array of objects; for object fields,
  * a single object; and for primitive fields, the raw value. Each object has `data` (raw values) and
  * `widgets` (React preview elements) entries.
- * @property {(path: string) => ApiAsset | undefined} getAsset Function that returns the asset item
- * for a given path. Returns `undefined` if the asset is not found.
  * @property {(collectionName: string, slug?: string) => Promise<(MapOf<ApiEntry>[] |
  * MapOf<ApiEntry>)>} getCollection Async function that returns entries from a specified collection.
  * Each entry is an Immutable Map with a `data` property containing the entry content. When `slug`
  * is provided, it returns the matching entry; otherwise it returns the full list of entries.
- * @property {MapOf<Record<string, any>>} fieldsMetaData Immutable Map of metadata for each field,
- * keyed by field name. For relation fields, it can include referenced entry data.
  * @property {Document} document The preview iframe’s Document object, allowing access to the
  * preview DOM. React components should use this instead of the global `document`.
  * @property {Window} window The preview iframe’s Window object, allowing access to the preview
@@ -1910,41 +1915,59 @@
  */
 
 /**
+ * Props for custom preview template React components.
+ * @typedef {CustomPreviewBaseProps & CustomPreviewTemplateBaseProps} CustomPreviewTemplateProps
+ */
+
+/**
  * Custom preview template React component.
  * @typedef {ComponentType<CustomPreviewTemplateProps>} CustomPreviewTemplate
  */
 
-// @todo Write descriptions for the options below
-/* eslint-disable jsdoc/require-property-description */
-
 /**
  * Props for custom field control React components.
  * @typedef {object} CustomFieldControlProps
- * @property {any} value
- * @property {Record<string, any>} field
- * @property {string} forID
- * @property {string} classNameWrapper
- * @property {(value: any) => void} onChange
+ * @property {any} value Current field value. The widget should display this value and call
+ * `onChange` when the user modifies it.
+ * @property {MapOf<CustomField>} field Immutable Map of current field configuration from the CMS
+ * config, containing all field properties including `name`, `label`, `widget`, and custom
+ * properties. Use `field.get('name')` or similar methods to access individual properties.
+ * @property {string} forID HTML `id` attribute that should be used for the main input element to
+ * enable proper label association and accessibility.
+ * @property {string} classNameWrapper CSS class name that can be applied to the input element for
+ * consistent styling with built-in widgets.
+ * @property {(value: any) => void} onChange Callback function that must be called with the new
+ * value whenever the user changes the field. This updates the entry draft.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
 
 /**
- * Custom field control React component.
+ * Custom field control React component. Component instances may optionally implement an `isValid`
+ * instance method for custom validation. The method should return:
+ * - `true` or `{ error: false }` when valid.
+ * - `false`, `{ error: "message" }`, or `{ error: { message: "text" } }` when invalid.
+ * - A Promise that resolves to any of the above formats.
  * @typedef {ComponentType<CustomFieldControlProps>} CustomFieldControl
+ * @see https://decapcms.org/docs/custom-widgets/#advanced-field-validation
  */
 
 /**
- * Props for custom field preview React components.
- * @typedef {object} CustomFieldPreviewProps
- * @property {any} value
- * @property {Record<string, any>} field
- * @property {Record<string, any>} metadata
- * @property {Record<string, any>} entry
- * @property {(path: string) => ApiAsset | undefined} getAsset
- * @property {Record<string, any>} fieldsMetaData
+ * Base props for custom field preview React components.
+ * @typedef {object} CustomFieldPreviewBaseProps
+ * @property {any} value Current field value to display in the preview.
+ * @property {MapOf<CustomField>} field Immutable Map of current field configuration. Use
+ * `field.get('name')` to access properties.
+ * @property {MapOf<any>} metadata Immutable Map of any available metadata for the current field,
+ * extracted from `fieldsMetaData` using the field name as key. For relation fields, contains
+ * referenced entry data.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
+ */
+
+/**
+ * Props for custom preview template React components.
+ * @typedef {CustomPreviewBaseProps & CustomFieldPreviewBaseProps} CustomFieldPreviewProps
  */
 
 /**
@@ -1953,9 +1976,10 @@
  */
 
 /**
- * Custom field schema definition.
+ * Custom field schema definition for validation and configuration.
  * @typedef {object} CustomFieldSchema
- * @property {Record<string, any>} properties
+ * @property {Record<string, any>} properties JSON Schema object describing the field’s
+ * configuration options and validation rules.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
  */

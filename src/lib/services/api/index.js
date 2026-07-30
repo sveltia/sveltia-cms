@@ -258,9 +258,6 @@ const registerPreviewTemplate = (name, component) => {
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
 const registerFieldType = (name, control, preview, schema) => {
-  // eslint-disable-next-line no-console
-  console.warn('Custom field types (widgets) are not yet supported in Sveltia CMS.');
-
   if (!isNonEmptyString(name)) {
     throw new TypeError(
       'The `name` option for `CMS.registerFieldType()` must be a non-empty string',

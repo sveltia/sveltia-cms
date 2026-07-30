@@ -1,11 +1,11 @@
 import { get } from 'svelte/store';
 
-import { editors } from '$lib/components/contents/details/fields';
-import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { entryDraft } from '$lib/services/contents/draft';
+import { validateCustomField } from '$lib/services/contents/draft/validate/custom-fields';
 import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
 import {
   getField,
+  getFieldKind,
   isFieldMultiple,
   isFieldRequired,
   LIST_KEY_PATH_REGEX,
@@ -74,6 +74,7 @@ export const DEFAULT_VALIDITY = {
   rangeOverflow: false,
   patternMismatch: false,
   typeMismatch: false,
+  customError: false,
 };
 
 /**
@@ -157,7 +158,10 @@ export const validateAnyField = (args) => {
 
   // @ts-ignore Some field types don’t have `pattern` property
   const { widget: fieldType = 'string', i18n = false, pattern: validation } = fieldConfig;
-  const multiple = isFieldMultiple(fieldConfig);
+
+  const multiple =
+    isFieldMultiple(fieldConfig) ||
+    (getFieldKind(fieldConfig) === 'custom' && Array.isArray(value));
 
   const { min = 0, max = Infinity } = /** @type {MinMaxValueField} */ (
     MIN_MAX_VALUE_FIELD_TYPES.includes(fieldType) ? fieldConfig : {}
@@ -250,6 +254,9 @@ export const validateAnyField = (args) => {
   if (validateFieldFn) {
     Object.assign(validity, validateFieldFn({ fieldConfig, locale, value }).validity);
   }
+
+  // Validate custom field if applicable (uses cached result)
+  validateCustomField({ locale, keyPath, validity });
 
   return new Proxy(validity, validityProxyHandler);
 };
@@ -357,10 +364,8 @@ export const validateFields = (valueStoreKey) => {
         return;
       }
 
-      const fieldType = fieldConfig.widget ?? 'string';
-
       // Skip unsupported field types: not built-in or custom
-      if (!(fieldType in editors) && !customFieldTypeRegistry.has(fieldType)) {
+      if (getFieldKind(fieldConfig) === 'unknown') {
         return;
       }
 

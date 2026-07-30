@@ -12,7 +12,8 @@
   import FieldEditorGroup from '$lib/components/contents/details/editor/field-editor-group.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
-  import { editors } from '$lib/components/contents/details/fields';
+  import { CustomEditor, editors } from '$lib/components/contents/details/fields';
+  import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { entryDraft, INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
   import {
     resolveOriginalKeyPath,
@@ -20,6 +21,7 @@
   } from '$lib/services/contents/draft/update/revert';
   import {
     getCurrentValue,
+    getFieldKind,
     isFieldMultiple,
     isFieldRequired,
   } from '$lib/services/contents/entry/fields';
@@ -37,6 +39,7 @@
    * } from '$lib/types/private';
    * @import {
    * BooleanField,
+   * CustomField,
    * Field,
    * FieldKeyPath,
    * NumberField,
@@ -150,6 +153,7 @@
   const canRevert = $derived(!inEditorComponent && !(canDuplicate && locale !== defaultLocale));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
   const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {}));
+  const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({
       valueMap,
@@ -158,6 +162,7 @@
       isList,
       multiple,
       isEditor: true,
+      isCustomFieldType: !!customFieldType,
     }),
   );
   const originalValue = $derived.by(() => {
@@ -224,7 +229,7 @@
     // Convert invalid single value to list. This is in place to handle the case when a field is
     // changed from single to multiple. (Continued from the `currentValue` store above.)
     // @todo Move this logic to entry normalization module
-    if ($entryDraft && multiple && Array.isArray(currentValue)) {
+    if ($entryDraft && !customFieldType && multiple && Array.isArray(currentValue)) {
       const listItem = $entryDraft[valueStoreKey][locale]?.[`${keyPath}.0`];
       const [value] = currentValue;
 
@@ -239,7 +244,7 @@
     // Convert invalid list to single value. This is in place to handle the case when a field is
     // changed from multiple to single.
     // @todo Move this logic to entry normalization module
-    if ($entryDraft && !multiple && currentValue === undefined) {
+    if ($entryDraft && !customFieldType && !multiple && currentValue === undefined) {
       const listItem = $entryDraft[valueStoreKey][locale]?.[`${keyPath}.0`];
 
       if (listItem !== undefined) {
@@ -328,7 +333,15 @@
       </ValidationError>
     {/if}
     <div role="none" class="field-wrapper" class:has-extra-labels={hasExtraLabels}>
-      {#if !(fieldType in editors)}
+      {#if customFieldType}
+        {@render beforeInput()}
+        <CustomEditor
+          {...{ ...editorProps, fieldConfig: /** @type {CustomField} */ (fieldConfig) }}
+          control={customFieldType.control}
+          {currentValue}
+        />
+        {@render afterInput()}
+      {:else if getFieldKind(fieldConfig) === 'unknown'}
         <div role="none">{_('unsupported_field_type_x', { values: { name: fieldType } })}</div>
       {:else if isList}
         {@const Editor = editors[fieldType]}

@@ -1091,6 +1091,10 @@ validation:
     email: Please enter a valid email.
     url: Please enter a valid URL.
 
+  # Custom field validation error
+  invalid_value: Invalid value.
+  unexpected_error: Unexpected error occurred.
+
 # ==============================================================================
 # Entry Sidebar
 # ==============================================================================

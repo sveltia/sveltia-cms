@@ -142,5 +142,9 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
     messages.push(_(`validation.type_mismatch.${type}`));
   }
 
+  if (validity.customError) {
+    messages.push(validity.customErrorMessage ?? _('validation.invalid_value'));
+  }
+
   return messages;
 };

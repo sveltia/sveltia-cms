@@ -1,5 +1,6 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
+import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { applyTransformations } from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
 import {
@@ -7,7 +8,11 @@ import {
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
-import { MEDIA_FIELD_TYPES, MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
+import {
+  BUILTIN_FIELD_TYPES,
+  MEDIA_FIELD_TYPES,
+  MULTI_VALUE_FIELD_TYPES,
+} from '$lib/services/contents/fields';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helpers';
 import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helpers';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
@@ -325,6 +330,25 @@ export const getField = (args) => {
 };
 
 /**
+ * Determine the given field’s kind: one of the built-in field types, custom field type or unknown.
+ * @param {Field} fieldConfig Field configuration.
+ * @returns {'builtin' | 'custom' | 'unknown'} Result.
+ */
+export const getFieldKind = (fieldConfig) => {
+  const fieldType = fieldConfig.widget ?? 'string';
+
+  if (/** @type {string[]} */ (BUILTIN_FIELD_TYPES).includes(fieldType)) {
+    return 'builtin';
+  }
+
+  if (customFieldTypeRegistry.has(fieldType)) {
+    return 'custom';
+  }
+
+  return 'unknown';
+};
+
+/**
  * Check if the field requires data input (and data output if the `omit_empty_optional_fields`
  * option is `true`).
  * @param {object} args Arguments.
@@ -589,7 +613,7 @@ export const getCurrentValue = ({
 }) => {
   const value = valueMap[keyPath];
 
-  // Single value field: custom widget requires the list check below as we don’t know the shape
+  // Single value field: custom field requires the list check below as we don’t know the shape
   if (!isList && !isCustomFieldType) {
     return value;
   }

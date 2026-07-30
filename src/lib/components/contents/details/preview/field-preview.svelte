@@ -1,7 +1,8 @@
 <script>
   import { escapeRegExp } from '@sveltia/utils/string';
 
-  import { previews } from '$lib/components/contents/details/fields';
+  import { CustomPreview, previews } from '$lib/components/contents/details/fields';
+  import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { entryDraft } from '$lib/services/contents/draft';
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
   import { getCurrentValue, isFieldMultiple } from '$lib/services/contents/entry/fields';
@@ -9,7 +10,7 @@
 
   /**
    * @import { InternalLocaleCode, TypedFieldKeyPath } from '$lib/types/private';
-   * @import { Field, FieldKeyPath, VisibleField } from '$lib/types/public';
+   * @import { CustomField, Field, FieldKeyPath, VisibleField } from '$lib/types/public';
    */
 
   /**
@@ -45,6 +46,7 @@
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
   const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
+  const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({
       valueMap,
@@ -53,6 +55,7 @@
       isList,
       multiple,
       isEditor: false,
+      isCustomFieldType: !!customFieldType,
     }),
   );
   const previewProps = $derived({ locale, keyPath, typedKeyPath, fieldConfig, currentValue });
@@ -81,7 +84,12 @@
     {#if showLabel}
       <h4>{label || fieldName}</h4>
     {/if}
-    {#if fieldType in previews}
+    {#if customFieldType?.preview}
+      <CustomPreview
+        {...{ ...previewProps, fieldConfig: /** @type {CustomField} */ (fieldConfig) }}
+        preview={customFieldType.preview}
+      />
+    {:else if fieldType in previews}
       {@const Preview = previews[fieldType]}
       <Preview {...previewProps} />
     {/if}

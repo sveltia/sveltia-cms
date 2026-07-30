@@ -119,7 +119,7 @@ export const convertEntryToMap = ({ entry, locale, collectionName, associatedAss
 };
 
 /**
- * Create an asset getter function for React components (preview templates and custom widgets).
+ * Create an asset getter function for React components (preview templates and custom field types).
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry object.
  * @param {string} args.collectionName Collection name.
@@ -146,7 +146,7 @@ export const createGetAsset =
 /**
  * Get metadata for fields. For relation fields, looks up and stores the referenced entry content
  * keyed by collection name and value, matching the `fieldsMetaData` structure expected by
- * Netlify/Decap CMS preview templates and custom widgets.
+ * Netlify/Decap CMS preview templates and custom field types.
  * @param {object} args Arguments.
  * @param {InternalLocaleCode} args.locale Current locale.
  * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
@@ -208,10 +208,10 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
  * @internal
  * @param {object} args Arguments.
  * @param {Entry | undefined} args.originalEntry The original entry object.
- * @param {Record<InternalLocaleCode, FlattenedEntryContent>} args.currentValues Object with
- * locale keys mapping to current content values.
- * @returns {Entry} A new entry object with updated locale content while preserving original
- * slugs and paths.
+ * @param {Record<InternalLocaleCode, FlattenedEntryContent>} args.currentValues Object with locale
+ * keys mapping to current content values.
+ * @returns {Entry} A new entry object with updated locale content while preserving original slugs
+ * and paths.
  */
 export const buildEntry = ({ originalEntry, currentValues }) =>
   /** @type {Entry} */ ({
