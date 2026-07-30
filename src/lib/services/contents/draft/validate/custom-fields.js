@@ -88,7 +88,6 @@ export const resetCustomFieldValidation = () => {
 const parseValidationResult = (result) => {
   // Handle Netlify/Decap CMS validation result formats:
   // - Boolean: `true` (valid) or `false` (invalid)
-  // - Object: `{ error: false }` (valid) or `{ error: 'message' }` (invalid with message)
   // - Object: `{ error: { message: 'text' } }` (invalid with nested message, per docs)
   if (result === false) {
     return { valid: false };
@@ -96,11 +95,6 @@ const parseValidationResult = (result) => {
 
   if (typeof result === 'object' && result !== null) {
     const { error } = result;
-
-    // SelectControl format: `{ error: 'message' }`
-    if (typeof error === 'string') {
-      return { valid: false, message: error };
-    }
 
     // Documentation format: `{ error: { message: 'text' } }`
     if (typeof error === 'object' && error !== null && typeof error.message === 'string') {

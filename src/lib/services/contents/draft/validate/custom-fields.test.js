@@ -60,26 +60,6 @@ describe('draft/validate/custom-fields', () => {
     expect(validity).toEqual({ customError: true });
   });
 
-  it('uses a string validation message from the widget result', async () => {
-    const instance = { isValid: vi.fn().mockResolvedValue({ error: 'Please fix this' }) };
-
-    registerCustomFieldInstance({ locale: 'en', keyPath: 'test.error', instance });
-
-    await triggerCustomFieldValidation({
-      locale: 'en',
-      keyPath: 'test.error',
-      value: 'invalid',
-      fieldConfig,
-    });
-
-    /** @type {EntryValidityState} */
-    const validity = {};
-
-    validateCustomField({ locale: 'en', keyPath: 'test.error', validity });
-
-    expect(validity).toEqual({ customError: true, customErrorMessage: 'Please fix this' });
-  });
-
   it('uses the documented object validation message format', async () => {
     const instance = {
       isValid: vi.fn().mockResolvedValue({ error: { message: 'Nested message' } }),
@@ -249,7 +229,9 @@ describe('draft/validate/custom-fields', () => {
   });
 
   it('clears stale validation state when a widget is unregistered and re-registered', async () => {
-    const firstInstance = { isValid: vi.fn().mockResolvedValue({ error: 'Stale message' }) };
+    const firstInstance = {
+      isValid: vi.fn().mockResolvedValue({ error: { message: 'Stale message' } }),
+    };
 
     registerCustomFieldInstance({ locale: 'en', keyPath: 'test.reuse', instance: firstInstance });
 
@@ -290,7 +272,10 @@ describe('draft/validate/custom-fields', () => {
 
   it('clears a previous error message once the field becomes valid', async () => {
     const instance = {
-      isValid: vi.fn().mockResolvedValueOnce({ error: 'Too short' }).mockResolvedValueOnce(true),
+      isValid: vi
+        .fn()
+        .mockResolvedValueOnce({ error: { message: 'Too short' } })
+        .mockResolvedValueOnce(true),
     };
 
     registerCustomFieldInstance({ locale: 'en', keyPath: 'test.field', instance });
@@ -325,7 +310,10 @@ describe('draft/validate/custom-fields', () => {
   describe('locale isolation', () => {
     it('keeps validation results separate per locale', async () => {
       const enInstance = { isValid: vi.fn().mockResolvedValue(true) };
-      const jaInstance = { isValid: vi.fn().mockResolvedValue({ error: 'Japanese is invalid' }) };
+
+      const jaInstance = {
+        isValid: vi.fn().mockResolvedValue({ error: { message: 'Japanese is invalid' } }),
+      };
 
       registerCustomFieldInstance({ locale: 'en', keyPath: 'title', instance: enInstance });
       registerCustomFieldInstance({ locale: 'ja', keyPath: 'title', instance: jaInstance });
@@ -359,7 +347,10 @@ describe('draft/validate/custom-fields', () => {
     });
 
     it('does not unregister another locale’s instance', async () => {
-      const enInstance = { isValid: vi.fn().mockResolvedValue({ error: 'English is invalid' }) };
+      const enInstance = {
+        isValid: vi.fn().mockResolvedValue({ error: { message: 'English is invalid' } }),
+      };
+
       const jaInstance = { isValid: vi.fn().mockResolvedValue(true) };
 
       registerCustomFieldInstance({ locale: 'en', keyPath: 'title', instance: enInstance });
@@ -415,7 +406,7 @@ describe('draft/validate/custom-fields', () => {
       });
 
       // Resolve out of order: the newer call settles first, the stale one afterwards
-      resolvers[1]({ error: 'New value is invalid' });
+      resolvers[1]({ error: { message: 'New value is invalid' } });
       resolvers[0](true);
 
       await Promise.all([first, second]);
@@ -455,7 +446,7 @@ describe('draft/validate/custom-fields', () => {
       });
 
       unregisterCustomFieldInstance({ locale: 'en', keyPath: 'test.late' });
-      resolve({ error: 'Too late' });
+      resolve({ error: { message: 'Too late' } });
       await promise;
 
       // Re-register so `validateCustomField()` reaches the cache lookup
@@ -507,7 +498,7 @@ describe('draft/validate/custom-fields', () => {
       await Promise.resolve();
       expect(settled).toBe(false);
 
-      resolve({ error: 'Invalid after all' });
+      resolve({ error: { message: 'Invalid after all' } });
       await Promise.all([trigger, waiter]);
 
       expect(settled).toBe(true);
@@ -526,7 +517,9 @@ describe('draft/validate/custom-fields', () => {
 
   describe('resetCustomFieldValidation', () => {
     it('discards instances and cached results', async () => {
-      const instance = { isValid: vi.fn().mockResolvedValue({ error: 'From previous draft' }) };
+      const instance = {
+        isValid: vi.fn().mockResolvedValue({ error: { message: 'From previous draft' } }),
+      };
 
       registerCustomFieldInstance({ locale: 'en', keyPath: 'title', instance });
 

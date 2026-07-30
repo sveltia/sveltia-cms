@@ -1945,8 +1945,8 @@
 /**
  * Custom field control React component. Component instances may optionally implement an `isValid`
  * instance method for custom validation. The method should return:
- * - `true` or `{ error: false }` when valid.
- * - `false`, `{ error: "message" }`, or `{ error: { message: "text" } }` when invalid.
+ * - `true` when valid.
+ * - `false` or `{ error: { message: "text" } }` when invalid.
  * - A Promise that resolves to any of the above formats.
  * @typedef {ComponentType<CustomFieldControlProps>} CustomFieldControl
  * @see https://decapcms.org/docs/custom-widgets/#advanced-field-validation
