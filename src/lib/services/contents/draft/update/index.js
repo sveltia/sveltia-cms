@@ -40,6 +40,9 @@ export const updateNonPrimitiveValue = ({ valueStoreKey, locale, keyPath, i18n, 
       });
       /* v8 ignore end */
 
+      // Make sure validation is triggered even if no items provided
+      draft[valueStoreKey][_locale][keyPath] = Array.isArray(value) ? [] : {};
+
       // Add the new value(s) for the List field in the current locale.
       Object.entries(flatten(value)).forEach(([key, val]) => {
         draft[valueStoreKey][_locale][`${keyPath}.${key}`] = val;

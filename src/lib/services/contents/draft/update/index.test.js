@@ -198,8 +198,8 @@ describe('draft/update/index', () => {
       const updateCallback = mockUpdate.mock.calls[0][0];
       const result = updateCallback(draftWithExactMatch);
 
-      // Exact match should be removed
-      expect(result.currentValues.en.author).toBeUndefined();
+      // Exact match should be removed, then field initialized with empty object
+      expect(result.currentValues.en.author).toEqual({});
       // Nested values should be removed then re-added with flatten
       expect(result.currentValues.en['author.name']).toBe('Jane');
       expect(result.currentValues.en['author.email']).toBe('jane@example.com');
@@ -335,10 +335,10 @@ describe('draft/update/index', () => {
 
       // Old empty values should be removed
       expect(result.currentValues.en['empty.old']).toBeUndefined();
+      // Field should be initialized with empty object
+      expect(result.currentValues.en.empty).toEqual({});
       // Other fields should remain
       expect(result.currentValues.en['other.field']).toBe('keep');
-      // No new values should be added
-      expect(Object.keys(result.currentValues.en)).toEqual(['other.field']);
     });
 
     it('should handle empty array value', () => {
@@ -366,6 +366,8 @@ describe('draft/update/index', () => {
       // Old array items should be removed
       expect(result.currentValues.en['items.0']).toBeUndefined();
       expect(result.currentValues.en['items.1']).toBeUndefined();
+      // Array should be initialized with empty array
+      expect(result.currentValues.en.items).toEqual([]);
     });
 
     it('should toggle i18nAutoDupEnabled correctly', () => {
@@ -427,6 +429,53 @@ describe('draft/update/index', () => {
       });
 
       expect(result.extraValues.en['style.color']).toBe('blue');
+    });
+
+    it('should initialize field with empty array to trigger validation for array values', () => {
+      /** @type {any[]} */
+      const newValue = [];
+
+      updateNonPrimitiveValue({
+        valueStoreKey: 'currentValues',
+        keyPath: 'items',
+        locale: 'en',
+        i18n: 'none',
+        value: newValue,
+      });
+
+      const callbackFn = mockUpdate.mock.calls[0][0];
+
+      const result = callbackFn({
+        currentValues: {
+          en: {},
+        },
+      });
+
+      // Field should be initialized with empty array even when value is empty
+      expect(result.currentValues.en.items).toEqual([]);
+    });
+
+    it('should initialize field with empty object to trigger validation for object values', () => {
+      const newValue = {};
+
+      updateNonPrimitiveValue({
+        valueStoreKey: 'currentValues',
+        keyPath: 'config',
+        locale: 'en',
+        i18n: 'none',
+        value: newValue,
+      });
+
+      const callbackFn = mockUpdate.mock.calls[0][0];
+
+      const result = callbackFn({
+        currentValues: {
+          en: {},
+        },
+      });
+
+      // Field should be initialized with empty object even when value is empty
+      expect(result.currentValues.en.config).toEqual({});
     });
 
     it('should update only the target locale when i18n is not "duplicate"', () => {
@@ -522,8 +571,8 @@ describe('draft/update/index', () => {
       const updateCallback = mockUpdate.mock.calls[0][0];
       const result = updateCallback(draftWithSimilarFields);
 
-      // Exact match should be removed
-      expect(result.currentValues.en.author).toBeUndefined();
+      // Exact match should be removed, then field initialized with empty object
+      expect(result.currentValues.en.author).toEqual({});
       // Fields with similar prefix but different keyPath should be kept
       expect(result.currentValues.en['author-note']).toBe('Keep this');
       expect(result.currentValues.en.authors).toBe('Keep this too');
@@ -576,8 +625,8 @@ describe('draft/update/index', () => {
       expect(result.currentValues.en.field).toBe('old');
       expect(result.currentValues.en['field.nested']).toBe('old nested');
 
-      // Japanese should be updated
-      expect(result.currentValues.ja.field).toBeUndefined();
+      // Japanese should be updated - field initialized with empty object
+      expect(result.currentValues.ja.field).toEqual({});
       expect(result.currentValues.ja['field.nested']).toBe('新しいネスト');
 
       // French should be unchanged
@@ -625,16 +674,16 @@ describe('draft/update/index', () => {
       const updateCallback = mockUpdate.mock.calls[0][0];
       const result = updateCallback(draftMultiLocaleForDuplicate);
 
-      // All locales should be updated
-      expect(result.currentValues.en.settings).toBeUndefined();
+      // All locales should be updated - settings initialized with empty object
+      expect(result.currentValues.en.settings).toEqual({});
       expect(result.currentValues.en['settings.theme']).toBe('light');
       expect(result.currentValues.en['settings.mode']).toBe('auto');
 
-      expect(result.currentValues.ja.settings).toBeUndefined();
+      expect(result.currentValues.ja.settings).toEqual({});
       expect(result.currentValues.ja['settings.theme']).toBe('light');
       expect(result.currentValues.ja['settings.mode']).toBe('auto');
 
-      expect(result.currentValues.fr.settings).toBeUndefined();
+      expect(result.currentValues.fr.settings).toEqual({});
       expect(result.currentValues.fr['settings.theme']).toBe('light');
       expect(result.currentValues.fr['settings.mode']).toBe('auto');
     });
@@ -683,8 +732,8 @@ describe('draft/update/index', () => {
       expect(result.currentValues.en.title).toBe('English Title');
       expect(result.currentValues.en['title.short']).toBe('EN');
 
-      // Japanese should be updated (matching locale)
-      expect(result.currentValues.ja.title).toBeUndefined();
+      // Japanese should be updated (matching locale) - title initialized with empty object
+      expect(result.currentValues.ja.title).toEqual({});
       expect(result.currentValues.ja['title.short']).toBe('日本語タイトル短形');
 
       // French should not be modified (early return triggered)
@@ -727,8 +776,8 @@ describe('draft/update/index', () => {
       const updateCallback = mockUpdate.mock.calls[0][0];
       const result = updateCallback(draftComplexPaths);
 
-      // Exact match should be removed
-      expect(result.currentValues.en.section).toBeUndefined();
+      // Exact match should be removed, then field initialized with empty object
+      expect(result.currentValues.en.section).toEqual({});
       // Nested matches should be removed then re-added
       expect(result.currentValues.en['section.title']).toBe('new title');
       expect(result.currentValues.en['section.description']).toBe('new desc');
@@ -774,8 +823,8 @@ describe('draft/update/index', () => {
       const updateCallback = mockUpdate.mock.calls[0][0];
       const result = updateCallback(draftFieldsTest);
 
-      // Exact match deleted
-      expect(result.currentValues.en.config).toBeUndefined();
+      // Exact match deleted, then field initialized with empty object
+      expect(result.currentValues.en.config).toEqual({});
       // Nested matches deleted then re-added
       expect(result.currentValues.en['config.enabled']).toBe(false);
       expect(result.currentValues.en['config.timeout']).toBe(3000);
@@ -819,8 +868,8 @@ describe('draft/update/index', () => {
       const updateCallback = mockUpdate.mock.calls[0][0];
       const result = updateCallback(testDraft);
 
-      // Exact match 'user' should be deleted
-      expect(result.currentValues.en.user).toBeUndefined();
+      // Exact match 'user' should be deleted, then field initialized with empty object
+      expect(result.currentValues.en.user).toEqual({});
       // Nested match 'user.name' should be deleted then re-added
       expect(result.currentValues.en['user.name']).toBeUndefined();
       // Non-nested should be preserved
