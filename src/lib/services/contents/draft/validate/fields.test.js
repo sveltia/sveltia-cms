@@ -29,6 +29,42 @@ vi.mock('$lib/services/utils/regex');
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { devModeEnabled: false },
 }));
+vi.mock('$lib/components/contents/details/fields', () => {
+  const editors = {};
+
+  const supportedTypes = [
+    'string',
+    'text',
+    'number',
+    'datetime',
+    'list',
+    'object',
+    'keyvalue',
+    'code',
+    'image',
+    'file',
+  ];
+
+  supportedTypes.forEach((type) => {
+    Object.defineProperty(editors, type, {
+      value: true,
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+  });
+
+  return { editors };
+});
+vi.mock('$lib/services/api/registries', () => {
+  const registry = new Map();
+
+  // Add a custom registered type
+  registry.set('custom-registered', true);
+  return {
+    customFieldTypeRegistry: registry,
+  };
+});
 vi.mock('svelte/store', async () => {
   const actual = await vi.importActual('svelte/store');
 
@@ -460,6 +496,92 @@ describe('draft/validate/fields', () => {
 
       expect(result).toBeDefined();
       expect(result.validationMessages.en.tags).toBeUndefined();
+    });
+
+    it('should process field types in editors (line 360 false branch: fieldType in editors)', () => {
+      // Test the false branch of line 360: when field type IS in editors
+      mockEntryDraft.currentValues = {
+        en: {
+          supported: 'test',
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'supported',
+        widget: 'string',
+      });
+
+      const result = validateFields('currentValues');
+
+      expect(result).toBeDefined();
+      // Field should be processed (not skipped) because 'string' is in editors
+      expect(result.validities.en.supported).toBeDefined();
+    });
+
+    it('should process field types in custom registry (line 360 false branch: registered in customFieldTypeRegistry)', () => {
+      // Test the false branch of line 360: when field type is registered in customFieldTypeRegistry
+      mockEntryDraft.currentValues = {
+        en: {
+          custom: 'test',
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'custom',
+        widget: 'custom-registered',
+      });
+
+      const result = validateFields('currentValues');
+
+      expect(result).toBeDefined();
+      // Field should be processed (not skipped) because 'custom-registered' is in the registry
+      expect(result.validities.en.custom).toBeDefined();
+    });
+
+    it('should skip unsupported field types (line 360 true branch: not in editors and not in registry)', () => {
+      // When a field type is not in editors AND not registered in customFieldTypeRegistry, the
+      // field should be skipped entirely (line 360-366 early return). This covers the true branch
+      // of: !(fieldType in editors) && !customFieldTypeRegistry.has(fieldType)
+      mockEntryDraft.currentValues = {
+        en: {
+          unsupported: 'value',
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'unsupported',
+        widget: 'completely-unknown-widget',
+      });
+
+      const result = validateFields('currentValues');
+
+      expect(result).toBeDefined();
+      // Unsupported field should be skipped due to early return at line 360
+      // 'completely-unknown-widget' is not in editors and not in customFieldTypeRegistry
+      expect(result.validities.en.unsupported).toBeUndefined();
+      expect(result.validationMessages.en.unsupported).toBeUndefined();
+    });
+
+    it('should use default string widget type when widget is undefined (line 360 nullish coalesce branch)', () => {
+      // Line 360: const fieldType = fieldConfig.widget ?? 'string';
+      // When widget is undefined, fieldType defaults to 'string' which is in editors
+      mockEntryDraft.currentValues = {
+        en: {
+          noWidget: 'value',
+        },
+      };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'noWidget',
+        // widget is intentionally undefined - will use default 'string'
+      });
+
+      const result = validateFields('currentValues');
+
+      expect(result).toBeDefined();
+      // Field should be processed because default widget type 'string' is in editors
+      expect(result.validities.en.noWidget).toBeDefined();
+      expect(result.validities.en.noWidget.valid).toBe(true);
     });
   });
 

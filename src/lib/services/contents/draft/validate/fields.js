@@ -1,5 +1,7 @@
 import { get } from 'svelte/store';
 
+import { editors } from '$lib/components/contents/details/fields';
+import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { entryDraft } from '$lib/services/contents/draft';
 import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
 import {
@@ -352,6 +354,13 @@ export const validateFields = (valueStoreKey) => {
       });
 
       if (!fieldConfig) {
+        return;
+      }
+
+      const fieldType = fieldConfig.widget ?? 'string';
+
+      // Skip unsupported field types: not built-in or custom
+      if (!(fieldType in editors) && !customFieldTypeRegistry.has(fieldType)) {
         return;
       }
 
