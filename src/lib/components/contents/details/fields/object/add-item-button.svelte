@@ -36,7 +36,7 @@
 </script>
 
 {#if Array.isArray(types)}
-  <MenuButton variant="tertiary" {label} disabled={_disabled}>
+  <MenuButton variant="tertiary" size="small" {label} disabled={_disabled}>
     {#snippet startIcon()}
       <Icon name="add" />
     {/snippet}
@@ -50,7 +50,7 @@
     {/snippet}
   </MenuButton>
 {:else}
-  <Button variant="tertiary" {label} disabled={_disabled} onclick={() => addItem()}>
+  <Button variant="tertiary" size="small" {label} disabled={_disabled} onclick={() => addItem()}>
     {#snippet startIcon()}
       <Icon name="add" />
     {/snippet}

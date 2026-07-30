@@ -17,6 +17,7 @@
     TruncatedText,
     VisibilityObserver,
   } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { isObject } from '@sveltia/utils/object';
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
@@ -137,6 +138,10 @@
    * @type {(string | undefined)[]}
    */
   const thumbnails = $state([]);
+  /**
+   * @type {HTMLElement | undefined}
+   */
+  let itemList = $state();
 
   /**
    * Initialize the expander state.
@@ -175,7 +180,7 @@
    * @param {string} [args.type] Variable type name. If the field doesn’t have variable types, it
    * will be `undefined`.
    */
-  const addItem = ({ index = addToTop ? 0 : items.length, dupIndex, type } = {}) => {
+  const addItem = async ({ index = addToTop ? 0 : items.length, dupIndex, type } = {}) => {
     updateComplexList(({ valueList, expanderStateList }) => {
       const subFields = type
         ? (types?.find(({ name }) => name === type)?.fields ?? [])
@@ -214,6 +219,20 @@
 
     // Expand the parent if it is collapsed to show the newly added item
     syncExpanderStates({ [parentExpandedKeyPath]: true });
+
+    if (itemList) {
+      await sleep(50);
+      // Move the placeholder into view
+      (addToTop ? itemList.firstElementChild : itemList.lastElementChild)?.scrollIntoView();
+      // Wait until the placeholder is replaced with the actual content
+      await sleep(100);
+      // Scroll again for the sticky toolbar
+      itemList.closest('.content')?.scrollBy({ top: -50, behavior: 'instant' });
+      // Move focus to the expander button
+      (addToTop ? itemList.firstElementChild : itemList.lastElementChild)
+        ?.querySelector('button')
+        ?.focus();
+    }
   };
 
   /**
@@ -386,52 +405,59 @@
 {/snippet}
 
 <div role="none" class="toolbar top">
-  <Button
-    iconic
-    disabled={!items.length}
-    aria-label={parentExpanded ? _('collapse') : _('expand')}
-    aria-expanded={parentExpanded}
-    aria-controls="list-{fieldId}-item-list"
-    onclick={() => {
-      syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
-    }}
-  >
-    {#snippet startIcon()}
-      <ExpandIcon expanded={parentExpanded} />
-    {/snippet}
-  </Button>
-  <div role="none" class="summary" id="object-{fieldId}-summary">
-    {items.length}
-    {(items.length === 1 ? labelSingular : undefined) || label || fieldName}
+  <div role="none" class="label">
+    <Button
+      iconic
+      disabled={!items.length}
+      aria-label={parentExpanded ? _('collapse') : _('expand')}
+      aria-expanded={parentExpanded}
+      aria-controls="list-{fieldId}-item-list"
+      onclick={() => {
+        syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
+      }}
+    >
+      {#snippet startIcon()}
+        <ExpandIcon expanded={parentExpanded} />
+      {/snippet}
+    </Button>
+    <div role="none" class="summary" id="object-{fieldId}-summary">
+      {items.length}
+      {(items.length === 1 ? labelSingular : undefined) || label || fieldName}
+    </div>
   </div>
-  <Spacer flex />
-  {#if parentExpanded && items.length > 1}
-    <Button
-      variant="tertiary"
-      size="small"
-      label={_('expand_all')}
-      disabled={itemExpanderStates.every(([, value]) => value)}
-      onclick={() => {
-        syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, true])));
-      }}
-    />
-    <Button
-      variant="tertiary"
-      size="small"
-      label={_('collapse_all')}
-      disabled={itemExpanderStates.every(([, value]) => !value)}
-      onclick={() => {
-        syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, false])));
-      }}
-    />
-  {/if}
+  <div role="none" class="actions">
+    {#if allowAdd && (addToTop || !items.length || !parentExpanded)}
+      <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
+    {/if}
+    {#if parentExpanded && items.length > 1}
+      <Button
+        variant="tertiary"
+        size="small"
+        label={_('expand_all')}
+        disabled={itemExpanderStates.every(([, value]) => value)}
+        onclick={() => {
+          syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, true])));
+        }}
+      />
+      <Button
+        variant="tertiary"
+        size="small"
+        label={_('collapse_all')}
+        disabled={itemExpanderStates.every(([, value]) => !value)}
+        onclick={() => {
+          syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, false])));
+        }}
+      />
+    {/if}
+  </div>
 </div>
-{#if allowAdd && (addToTop || !items.length)}
-  <div role="none" class="toolbar top add">
-    <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
-  </div>
-{/if}
-<div role="none" id="list-{fieldId}-item-list" class="item-list" class:collapsed={!parentExpanded}>
+<div
+  role="none"
+  id="list-{fieldId}-item-list"
+  class="item-list"
+  class:collapsed={!parentExpanded}
+  bind:this={itemList}
+>
   {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
     <VisibilityObserver>
       {@const itemKeyPath = `${keyPath}.${index}`}
@@ -550,10 +576,10 @@
     </VisibilityObserver>
   {/each}
 </div>
-{#if allowAdd && !addToTop && items.length}
+{#if allowAdd && !addToTop && items.length && parentExpanded}
   <div role="none" class="toolbar bottom add">
-    <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
     <Spacer flex />
+    <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
   </div>
 {/if}
 
@@ -561,24 +587,45 @@
   .toolbar {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 0 8px;
+    position: sticky;
+    z-index: 10;
+    background-color: var(--sui-primary-background-color);
+    min-height: var(--sui-secondary-toolbar-size);
 
-    &.top.add {
-      margin-block: 8px 16px !important;
+    &.top {
+      top: 0;
     }
 
-    &.bottom.add {
-      margin-block: 16px 0 !important;
+    &.bottom {
+      bottom: 0;
+    }
+
+    & > div {
+      display: flex;
+      align-items: center;
+
+      &.actions {
+        flex-wrap: wrap;
+        margin-block: 8px;
+        margin-inline-start: auto;
+      }
     }
   }
 
   .item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
     &.collapsed {
       display: none;
     }
   }
 
   .item {
-    margin: 16px 0;
+    flex: none;
     border-width: 2px;
     border-color: var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);
