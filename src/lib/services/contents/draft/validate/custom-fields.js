@@ -102,7 +102,7 @@ const parseValidationResult = (result) => {
     }
   }
 
-  // Any other shape, including `true` and `{ error: false }`, is treated as valid
+  // Any other shape, including `true`, is treated as valid
   return { valid: true };
 };
 
