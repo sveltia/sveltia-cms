@@ -111,7 +111,7 @@ welcome_message: 'مرحباً بك في {$name}'
 powered_by: 'مدعوم بواسطة {$name}'
 
 # Shown during initial configuration and data loading
-loading_cms_config: جاري تحميل تكوين نظام إدارة المحتوى…
+loading_cms_config: تحميل إعدادات نظام إدارة المحتوى…
 loading_site_data: جاري تحميل بيانات الموقع…
 loading_site_data_error: حدث خطأ أثناء تحميل بيانات الموقع.
 
@@ -121,8 +121,8 @@ loading_site_data_error: حدث خطأ أثناء تحميل بيانات الم
 sign_in_with_x: 'تسجيل الدخول باستخدام {$service}'
 
 # Access token dialog: alternative authentication method
-sign_in_using_access_token: تسجيل الدخول باستخدام رمز الوصول
-sign_in_using_access_token_description: أدخل رمزك أدناه. يجب أن يمتلك صلاحية القراءة/الكتابة لمحتوى المستودع.
+sign_in_using_access_token: تسجيل الدخول باستخدام رمز الوصول (Access Token)
+sign_in_using_access_token_description: أدخل رمزك أدناه. يجب أن يمتلك صلاحية القراءة/الكتابة لمحتوى المستودع (Repository).
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: يمكنك إنشاء رمز من <a>صفحة إعدادات المستخدم في {$service}</a>.
@@ -180,11 +180,7 @@ unexpected_error: خطأ غير متوقع
 entry_parse_errors: |
   .input {$count :integer}
   .match $count
-    zero {{ حدث خطأ أثناء تحليل ملف إدخال. تحقق من وحدة تحكم المتصفح للحصول على التفاصيل. }}
     one {{ حدث خطأ أثناء تحليل ملف إدخال. تحقق من وحدة تحكم المتصفح للحصول على التفاصيل. }}
-    two {{ حدث خطأ أثناء تحليل ملفي إدخال. تحقق من وحدة تحكم المتصفح للحصول على التفاصيل. }}
-    few {{ حدثت أخطاء أثناء تحليل {$count} ملفات إدخال. تحقق من وحدة تحكم المتصفح للحصول على التفاصيل. }}
-    many {{ حدثت أخطاء أثناء تحليل {$count} ملف إدخال. تحقق من وحدة تحكم المتصفح للحصول على التفاصيل. }}
     *   {{ حدثت أخطاء أثناء تحليل ملفات الإدخال. تحقق من وحدة تحكم المتصفح للحصول على التفاصيل. }}
 
 # ==============================================================================
@@ -352,22 +348,16 @@ viewing_asset_folder_list: أنت تعرض الآن قائمة مجلدات ال
 viewing_x_collection: |
   .input {$count :integer}
   .match $count
-    zero {{ أنت تعرض الآن مجموعة "{$collection}"، والتي لا تحتوي على أي إدخالات بعد. }}
+    0 {{ أنت تعرض الآن مجموعة "{$collection}"، والتي لا تحتوي على أي إدخالات بعد. }}
     one {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على إدخال واحد. }}
-    two {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على إدخالين. }}
-    few {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على {$count} إدخالات. }}
-    many {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على {$count} إدخالاً. }}
     *   {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على {$count} إدخال. }}
 # Asset folder view announcements with asset counts
 # {$folder} is the folder label and {$count} is the number of assets in it
 viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
-    zero {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي لا يحتوي على أي أصول بعد. }}
+    0 {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي لا يحتوي على أي أصول بعد. }}
     one {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على اصل واحد. }}
-    two {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على أصلين. }}
-    few {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} أصول. }}
-    many {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} أصلاً. }}
     *   {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} أصل. }}
 
 # Singleton file selection announcement
@@ -465,9 +455,6 @@ creating_entries_nearing_quota: |
   .input {$remaining :integer}
   .match $remaining
     one {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} إدخالاً. يمكنك إنشاء إدخال واحد فقط بعد. }}
-    two {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} إدخالاً. يمكنك إنشاء إدخالين فقط بعد. }}
-    few {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} إدخالاً. يمكنك إنشاء {$remaining} إدخالات فقط بعد. }}
-    many {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} إدخالاً. يمكنك إنشاء {$remaining} إدخالاً فقط بعد. }}
     *   {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} إدخالاً. يمكنك إنشاء {$remaining} إدخال فقط بعد. }}
 
 # Navigation: back links and list labels
@@ -493,22 +480,16 @@ search_results_for_x: نتائج البحث عن "{$terms}"
 viewing_entry_search_results: |
   .input {$count :integer}
   .match $count
-    zero {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي إدخالات. }}
+    0 {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي إدخالات. }}
     one {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا إدخالاً واحداً. }}
-    two {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا إدخالين. }}
-    few {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} إدخالات. }}
-    many {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} إدخالاً. }}
     *   {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} إدخال. }}
 # Asset search results with counts
 # {$terms} is the search query and {$count} is the number of matching assets
 viewing_asset_search_results: |
   .input {$count :integer}
   .match $count
-    zero {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي أصول. }}
+    0 {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي أصول. }}
     one {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا أصلاً واحداً. }}
-    two {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا أصلين. }}
-    few {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} أصول. }}
-    many {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} أصلاً. }}
     *   {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} أصل. }}
 
 # Result count labels
@@ -517,21 +498,15 @@ viewing_asset_search_results: |
 x_entries: |
   .input {$count :integer}
   .match $count
-    zero {{ لا توجد إدخالات }}
+    0 {{ لا توجد إدخالات }}
     one {{ إدخال واحد }}
-    two {{ إدخالان }}
-    few {{ {$count} إدخالات }}
-    many {{ {$count} إدخالاً }}
     *   {{ {$count} إدخال }}
 # {$count} is the number of matching assets
 x_assets: |
   .input {$count :integer}
   .match $count
-    zero {{ لا توجد أصول }}
+    0 {{ لا توجد أصول }}
     one {{ أصل واحد }}
-    two {{ أصلان }}
-    few {{ {$count} أصول }}
-    many {{ {$count} أصلاً }}
     *   {{ {$count} أصل }}
 
 # Empty state messages
@@ -566,11 +541,8 @@ rename_x: 'إعادة تسمية {$name}'
 enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
-    zero {{ أدخل اسماً جديداً أدناه. }}
+    0 {{ أدخل اسماً جديداً أدناه. }}
     one {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث إدخال واحد يستخدم هذا الأصل. }}
-    two {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث إدخالين يستخدمان هذا الأصل. }}
-    few {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث {$count} إدخالات تستخدم هذا الأصل. }}
-    many {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث {$count} إدخالاً يستخدم هذا الأصل. }}
     *   {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث {$count} إدخال يستخدم هذا الأصل. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
@@ -669,9 +641,6 @@ confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
     one {{ هل أنت تأكد من أنك تريد حذف الأصل المحدد؟ }}
-    two {{ هل أنت تأكد من أنك تريد حذف الأصلين المحددين؟ }}
-    few {{ هل أنت تأكد من أنك تريد حذف {$count} أصول محدده؟ }}
-    many {{ هل أنت تأكد من أنك تريد حذف {$count} أصلاً محدداً؟ }}
     *   {{ هل أنت تأكد من أنك تريد حذف {$count} أصل محدد؟ }}
 confirm_deleting_all_assets: هل أنت تأكد من أنك تريد حذف جميع الأصول؟
 
@@ -695,18 +664,12 @@ confirm_deleting_selected_entries: |
   .input {$count :integer}
   .match $count
     one {{ هل أنت تأكد من أنك تريد حذف الإدخال المحدد؟ }}
-    two {{ هل أنت تأكد من أنك تريد حذف الإدخالين المحددين؟ }}
-    few {{ هل أنت تأكد من أنك تريد حذف {$count} إدخالات محدده؟ }}
-    many {{ هل أنت تأكد من أنك تريد حذف {$count} إدخالاً محدداً؟ }}
     *   {{ هل أنت تأكد من أنك تريد حذف {$count} إدخال محدد؟ }}
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
     one {{ هل أنت تأكد من أنك تريد حذف الإدخال المحدد والأصول المرتبطة به؟ }}
-    two {{ هل أنت تأكد من أنك تريد حذف الإدخالين المحددين والأصول المرتبطة بهما؟ }}
-    few {{ هل أنت تأكد من أنك تريد حذف {$count} إدخالات محدده والأصول المرتبطة بها؟ }}
-    many {{ هل أنت تأكد من أنك تريد حذف {$count} إدخالاً محدداً والأصول المرتبطة بها؟ }}
     *   {{ هل أنت تأكد من أنك تريد حذف {$count} إدخال محدد والأصول المرتبطة بها؟ }}
 confirm_deleting_all_entries: هل أنت تأكد من أنك تريد حذف جميع الإدخالات؟
 confirm_deleting_all_entries_with_assets: هل أنت تأكد من أنك تريد حذف جميع الإدخالات والأصول المرتبطة بها؟
@@ -735,9 +698,6 @@ processing_files: |
   .input {$count :integer}
   .match $count
     one {{ جاري معالجة ملف. قد يستغرق هذا بعض الوقت. }}
-    two {{ جاري معالجة ملفين. قد يستغرق هذا بعض الوقت. }}
-    few {{ جاري معالجة {$count} ملفات. قد يستغرق هذا بعض الوقت. }}
-    many {{ جاري معالجة {$count} ملفاً. قد يستغرق هذا بعض الوقت. }}
     *   {{ جاري معالجة الملفات. قد يستغرق هذا بعض الوقت. }}
 
 # Uploading section aria-label
@@ -754,9 +714,6 @@ confirm_uploading_files: |
   .input {$count :integer}
   .match $count
     one {{ سيتم حفظ هذا الملف في مجلد "{$folder}": }}
-    two {{ سيتم حفظ هذين الملفين في مجلد "{$folder}": }}
-    few {{ سيتم حفظ هذه الـ {$count} ملفات في مجلد "{$folder}": }}
-    many {{ سيتم حفظ هذه الـ {$count} ملفاً في مجلد "{$folder}": }}
     *   {{ سيتم حفظ هذه الملفات في مجلد "{$folder}": }}
 
 # File size validation
@@ -767,9 +724,6 @@ warning_oversized_files: |
   .input {$count :integer}
   .match $count
     one {{ لا يمكن رفع هذا الملف لأنه يتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الحجم أو اختيار ملف آخر. }}
-    two {{ لا يمكن رفع هذين الملفين لأنهما يتجاوزان الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الحجم أو اختيار ملفين آخرين. }}
-    few {{ لا يمكن رفع هذه الملفات لأنها تتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الأحجام أو اختيار ملفات أخرى. }}
-    many {{ لا يمكن رفع هذه الملفات لأنها تتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الأحجام أو اختيار ملفات أخرى. }}
     *   {{ لا يمكن رفع هذه الملفات لأنها تتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الأحجام أو اختيار ملفات أخرى. }}
 
 # File name conflict resolution
@@ -778,9 +732,6 @@ file_name_conflict_confirmation: |
   .input {$count :integer}
   .match $count
     one {{ يوجد ملف بنفس الاسم بالفعل في هذا المجلد. هل تريد استبداله؟ }}
-    two {{ يوجد ملفان بنفس الاسم بالفعل في هذا المجلد. هل تريد استبدالهما؟ }}
-    few {{ توجد {$count} ملفات بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
-    many {{ يوجد {$count} ملفاً بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
     *   {{ توجد ملفات بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
 # {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
 file_name_conflict_confirmation_with_name: |
@@ -788,9 +739,6 @@ file_name_conflict_confirmation_with_name: |
   .input {$name :string}
   .match $count
     one {{ يوجد ملف باسم "{$name}" بالفعل في هذا المجلد. هل تريد استبداله؟ }}
-    two {{ يوجد ملفان بنفس الاسم بالفعل في هذا المجلد. هل تريد استبدالهما؟ }}
-    few {{ توجد {$count} ملفات بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
-    many {{ يوجد {$count} ملفاً بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
     *   {{ توجد ملفات بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
 file_name_conflict_resolution: حل تعارض أسماء الملفات
 # Option to keep both files (rename the new one)
