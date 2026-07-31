@@ -180,8 +180,8 @@ unexpected_error: خطأ غير متوقع
 entry_parse_errors: |
   .input {$count :integer}
   .match $count
-    one {{ حدث خطأ أثناء تحليل ملف إدخال. تحقق من وحدة تحكم المتصفح للحصول على التفاصيل. }}
-    *   {{ حدثت أخطاء أثناء تحليل ملفات الإدخال. تحقق من وحدة تحكم المتصفح للحصول على التفاصيل. }}
+    one {{ حدث خطأ أثناء تحليل ملف إدخال. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
+    *   {{ حدثت أخطاء أثناء تحليل ملفات الإدخال. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
 
 # ==============================================================================
 # Authentication and Account
@@ -221,9 +221,9 @@ install_as_app: التثبيت كتطبيق
 
 # Main page titles in the global navigation and page switcher button group
 contents: المحتويات
-assets: الأصول
+assets: الوسائط
 editorial_workflow: سير العمل التحريري
-cms_config: تكوين نظام إدارة المحتوى
+cms_config: إعدادات نظام إدارة المحتوى
 # Mobile menu page title (shown only on small screens)
 menu: القائمة
 
@@ -244,11 +244,11 @@ switch_page: تبديل الصفحة
 
 # Search input placeholders
 search_placeholder_contents: البحث في المحتويات…
-search_placeholder_assets: البحث في الأصول…
-search_placeholder_all: البحث في المحتويات والأصول…
+search_placeholder_assets: البحث في الوسائط…
+search_placeholder_all: البحث في المحتويات والوسائط…
 
 # Create button: aria-label for the create menu in the toolbar
-create_entry_or_assets: إنشاء إدخال أو أصول
+create_entry_or_assets: إنشاء عنصر أو وسائط
 
 # Publishing actions: button labels and progress indicators
 publish_changes: نشر التغييرات
@@ -279,7 +279,7 @@ help: المساعدة
 keyboard_shortcuts: اختصارات لوحة المفاتيح
 documentation: التوثيق
 release_notes: ملاحظات الإصدار
-announcements: الإعلانات
+announcements: التبليغات
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
 version_x: 'الإصدار {$version}'
@@ -310,11 +310,11 @@ backend_status:
 
 # Page container aria-labels
 content_library: مكتبة المحتوى
-asset_library: مكتبة الأصول
+asset_library: مكتبة الوسائط
 
 # Primary sidebar section headings and list aria-labels
 collections: المجموعات
-entries: الإدخالات
+entries: العناصر
 files: الملفات
 
 # Asset location selector: option group labels
@@ -326,39 +326,39 @@ asset_location:
 
 # Sidebar and list labels
 # Collection assets panel aria-label
-collection_assets: أصول المجموعة
+collection_assets: وسائط المجموعة
 # List aria-labels for different list types
-entry_list: قائمة الإدخالات
+entry_list: قائمة العناصر
 file_list: قائمة الملفات
-asset_list: قائمة الأصول
+asset_list: قائمة الوسائط
 
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
 x_collection: مجموعة "{$collection}"
 # {$folder} is the current asset folder label
-x_asset_folder: مجلد الأصول "{$folder}"
+x_asset_folder: مجلد الوسائط "{$folder}"
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users
 viewing_collection_list: أنت تعرض الآن قائمة المجموعات.
-viewing_asset_folder_list: أنت تعرض الآن قائمة مجلدات الأصول.
+viewing_asset_folder_list: أنت تعرض الآن قائمة مجلدات الوسائط.
 # Collection view announcements with entry counts
 # {$collection} is the collection label and {$count} is the number of entries in it
 viewing_x_collection: |
   .input {$count :integer}
   .match $count
-    0 {{ أنت تعرض الآن مجموعة "{$collection}"، والتي لا تحتوي على أي إدخالات بعد. }}
-    one {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على إدخال واحد. }}
-    *   {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على {$count} إدخال. }}
+    0 {{ أنت تعرض الآن مجموعة "{$collection}"، والتي لا تحتوي على أي عناصر بعد. }}
+    one {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على عنصر واحد. }}
+    *   {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على {$count} عنصر. }}
 # Asset folder view announcements with asset counts
 # {$folder} is the folder label and {$count} is the number of assets in it
 viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
-    0 {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي لا يحتوي على أي أصول بعد. }}
-    one {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على اصل واحد. }}
-    *   {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} أصل. }}
+    0 {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي لا يحتوي على أي وسائط بعد. }}
+    one {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على وسيط واحد. }}
+    *   {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} وسائط. }}
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -429,14 +429,14 @@ document: مستند
 other: آخر
 
 # Toolbar toggles: show/hide panels
-show_assets: إظهار الأصول
-hide_assets: إخفاء الأصول
+show_assets: إظهار الوسائط
+hide_assets: إخفاء الوسائط
 show_info: إظهار المعلومات
 hide_info: إخفاء المعلومات
 
 # Folder display labels when no specific path is configured
-all_assets: كل الأصول
-global_assets: الأصول العامة
+all_assets: كل الوسائط
+global_assets: الوسائط العامة
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -444,25 +444,25 @@ global_assets: الأصول العامة
 # Strings related to creating, editing, and managing entries and collections.
 
 # Error message when entry cannot be found
-entry_not_found: لم يتم العثور على الإدخال.
+entry_not_found: لم يتم العثور على عنصر.
 
 # Entry creation restrictions: tooltip and advisory messages
-creating_entries_disabled_by_admin: تم تعطيل إنشاء إدخالات جديدة في هذه المجموعة بواسطة المسؤول.
+creating_entries_disabled_by_admin: تم تعطيل إنشاء عناصر جديدة في هذه المجموعة بواسطة المسؤول.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: لا يمكنك إضافة إدخالات جديدة إلى هذه المجموعة لأنها وصلت إلى الحد الأقصى البالغ {$quota} إدخالاً.
+creating_entries_disabled_by_quota: لا يمكنك إضافة عناصر جديدة إلى هذه المجموعة لأنها وصلت إلى الحد الأقصى البالغ {$quota} إدخالاً.
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
   .input {$remaining :integer}
   .match $remaining
-    one {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} إدخالاً. يمكنك إنشاء إدخال واحد فقط بعد. }}
-    *   {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} إدخالاً. يمكنك إنشاء {$remaining} إدخال فقط بعد. }}
+    one {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصر. يمكنك إنشاء {$remaining} إدخال فقط بعد.  }}
+    *   {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصر. يمكنك إنشاء {$remaining} إدخال فقط بعد. }}
 
 # Navigation: back links and list labels
 back_to_collection: العودة إلى المجموعة
 collection_list: قائمة المجموعات
 back_to_collection_list: العودة إلى قائمة المجموعات
-asset_folder_list: قائمة مجلدات الأصول
-back_to_asset_folder_list: العودة إلى قائمة مجلدات الأصول
+asset_folder_list: قائمة مجلدات الوسائط
+back_to_asset_folder_list: العودة إلى قائمة مجلدات الوسائط
 
 # ==============================================================================
 # Search
@@ -480,17 +480,17 @@ search_results_for_x: نتائج البحث عن "{$terms}"
 viewing_entry_search_results: |
   .input {$count :integer}
   .match $count
-    0 {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي إدخالات. }}
-    one {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا إدخالاً واحداً. }}
-    *   {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} إدخال. }}
+    0 {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي عناصر. }}
+    one {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا عنصر واحد. }}
+    *   {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} عناصر. }}
 # Asset search results with counts
 # {$terms} is the search query and {$count} is the number of matching assets
 viewing_asset_search_results: |
   .input {$count :integer}
   .match $count
-    0 {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي أصول. }}
-    one {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا أصلاً واحداً. }}
-    *   {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} أصل. }}
+    0 {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي وسائط. }}
+    one {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا وسيط واحداً. }}
+    *   {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} وسيط. }}
 
 # Result count labels
 # Used in search result headings to show counts
@@ -498,20 +498,20 @@ viewing_asset_search_results: |
 x_entries: |
   .input {$count :integer}
   .match $count
-    0 {{ لا توجد إدخالات }}
-    one {{ إدخال واحد }}
-    *   {{ {$count} إدخال }}
+    0 {{ لا توجد عناصر }}
+    one {{ عنصر واحد }}
+    *   {{ {$count} عنصر }}
 # {$count} is the number of matching assets
 x_assets: |
   .input {$count :integer}
   .match $count
-    0 {{ لا توجد أصول }}
-    one {{ أصل واحد }}
-    *   {{ {$count} أصل }}
+    0 {{ لا توجد وسائط }}
+    one {{ وسيط واحد }}
+    *   {{ {$count} وسيط }}
 
 # Empty state messages
 no_files_found: لم يتم العثور على ملفات.
-no_entries_found: لم يتم العثور على إدخالات.
+no_entries_found: لم يتم العثور على عناصر.
 
 # ==============================================================================
 # Asset Management
@@ -519,13 +519,13 @@ no_entries_found: لم يتم العثور على إدخالات.
 # Strings for uploading, editing, and managing assets (images, documents, etc.).
 
 # Upload dialog: title and button label
-upload_assets: رفع أصول جديدة
+upload_assets: رفع وسائط جديدة
 
 # Edit options menu: button and item labels
 edit_options: خيارات التعديل
 show_edit_options: إظهار خيارات التعديل
 # Edit menu items with specific asset names
-edit_asset: تعديل الأصل
+edit_asset: تعديل الوسيط
 # {$name} is the selected asset name
 edit_x: 'تعديل {$name}'
 
@@ -533,7 +533,7 @@ edit_x: 'تعديل {$name}'
 wrap_long_lines: التفاف الأسطر الطويلة
 
 # Rename asset: dialog and validation
-rename_asset: إعادة تسمية الأصل
+rename_asset: إعادة تسمية الوسيط
 # {$name} is the current asset name
 rename_x: 'إعادة تسمية {$name}'
 # Dialog body text indicating how many entries reference this asset
@@ -542,16 +542,16 @@ enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
     0 {{ أدخل اسماً جديداً أدناه. }}
-    one {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث إدخال واحد يستخدم هذا الأصل. }}
-    *   {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث {$count} إدخال يستخدم هذا الأصل. }}
+    one {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث إدخال واحد يستخدم هذا الوسيط. }}
+    *   {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث {$count} إدخال يستخدم هذا وسيط. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: لا يمكن أن يكون اسم الملف فارغاً.
   character: لا يمكن أن يحتوي اسم الملف على رموز خاصة.
-  duplicate: اسم الملف هذا مستخدم بالفعل لأصل آخر.
+  duplicate: اسم الملف هذا مستخدم بالفعل لوسيط آخر.
 
 # Replace asset: menu item and dialog title
-replace_asset: استبدال الأصل
+replace_asset: استبدال الوسيط
 # {$name} is the asset being replaced
 replace_x: 'استبدال {$name}'
 
@@ -565,24 +565,24 @@ tap_to_browse: اضغط للتصفح…
 drop_files_or_click_to_browse: |
   .input {$count :integer}
   .match $count
-    one {{ أسقط ملفاً هنا أو انقر للتصفح… }}
-    *   {{ أسقط الملفات هنا أو انقر للتصفح… }}
+    one {{ إسحب ملفاً هنا أو انقر للتصفح… }}
+    *   {{ إسحب الملفات هنا أو انقر للتصفح… }}
 # Partial drop zone text (ends with inline button)
 # {$count} is the number of files expected by the current picker mode
 # After the “or” text, the inline buttons are rendered with the localized strings
 drop_files_or: |
   .input {$count :integer}
   .match $count
-    one {{ أسقط ملفاً هنا أو }}
-    *   {{ أسقط الملفات هنا أو }}
+    one {{ إسحب ملفاً هنا أو }}
+    *   {{ إسحب الملفات هنا أو }}
 # Image-specific drop zone text
 # {$count} is the number of image files expected by the current picker mode
 # After the “or” text, the inline buttons are rendered with the localized strings
 drop_image_files_or: |
   .input {$count :integer}
   .match $count
-    one {{ أسقط ملف صورة هنا أو }}
-    *   {{ أسقط ملفات صور هنا أو }}
+    one {{ إسحب ملف صورة هنا أو }}
+    *   {{ إسحب ملفات صور هنا أو }}
 
 # File picker and clipboard actions used by upload controls
 browse: تصفح
@@ -600,8 +600,8 @@ clipboard_access_denied: تم رفض الوصول إلى الحافظة.
 drop_files_here: |
   .input {$count :integer}
   .match $count
-    one {{ أسقط الملف هنا }}
-    *   {{ أسقط الملفات هنا }}
+    one {{ إسحب الملف هنا }}
+    *   {{ إسحب الملفات هنا }}
 
 # File type validation errors
 unsupported_file_type: نوع ملف غير مدعوم
@@ -627,22 +627,22 @@ choose_files: |
 delete_assets: |
   .input {$count :integer}
   .match $count
-    one {{ حذف الأصل }}
-    *   {{ حذف الأصول }}
+    one {{ حذف الوسيط }}
+    *   {{ حذف الوسائط }}
 # {$count} is the number of selected assets
 delete_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ حذف الأصل المحدد }}
-    *   {{ حذف الأصول المحددة }}
-confirm_deleting_this_asset: هل أنت تأكد من أنك تريد حذف هذا الأصل؟
+    one {{ حذف الوسيط المحدد }}
+    *   {{ حذف الوسائط المحددة }}
+confirm_deleting_this_asset: هل أنت تأكد من أنك تريد حذف هذا الوسيط؟
 # {$count} is the number of selected assets
 confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ هل أنت تأكد من أنك تريد حذف الأصل المحدد؟ }}
+    one {{ هل أنت تأكد من أنك تريد حذف الوسيط المحدد؟ }}
     *   {{ هل أنت تأكد من أنك تريد حذف {$count} أصل محدد؟ }}
-confirm_deleting_all_assets: هل أنت تأكد من أنك تريد حذف جميع الأصول؟
+confirm_deleting_all_assets: هل أنت تأكد من أنك تريد حذف جميع الوسائط؟
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -658,21 +658,21 @@ delete_selected_entries: |
     one {{ حذف الإدخال المحدد }}
     *   {{ حذف الإدخالات المحددة }}
 confirm_deleting_this_entry: هل أنت تأكد من أنك تريد حذف هذا الإدخال؟
-confirm_deleting_this_entry_with_assets: هل أنت تأكد من أنك تريد حذف هذا الإدخال والأصول المرتبطة به؟
+confirm_deleting_this_entry_with_assets: هل أنت تأكد من أنك تريد حذف هذا العنصر والوسيط المرتبطة به؟
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
   .match $count
-    one {{ هل أنت تأكد من أنك تريد حذف الإدخال المحدد؟ }}
-    *   {{ هل أنت تأكد من أنك تريد حذف {$count} إدخال محدد؟ }}
+    one {{ هل أنت تأكد من أنك تريد حذف العنصر المحدد؟ }}
+    *   {{ هل أنت تأكد من أنك تريد حذف {$count} عنصر محدد؟ }}
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
-    one {{ هل أنت تأكد من أنك تريد حذف الإدخال المحدد والأصول المرتبطة به؟ }}
-    *   {{ هل أنت تأكد من أنك تريد حذف {$count} إدخال محدد والأصول المرتبطة بها؟ }}
-confirm_deleting_all_entries: هل أنت تأكد من أنك تريد حذف جميع الإدخالات؟
-confirm_deleting_all_entries_with_assets: هل أنت تأكد من أنك تريد حذف جميع الإدخالات والأصول المرتبطة بها؟
+    one {{ هل أنت تأكد من أنك تريد حذف العنصر المحدد والوسائط المرتبطة به؟ }}
+    *   {{ هل أنت تأكد من أنك تريد حذف {$count} عنصر محدد والوسائط المرتبطة بها؟ }}
+confirm_deleting_all_entries: هل أنت تأكد من أنك تريد حذف جميع العناصر؟
+confirm_deleting_all_entries_with_assets: هل أنت تأكد من أنك تريد حذف جميع العناصر والوسائط المرتبطة بها؟
 
 # ==============================================================================
 # Entry Reordering
@@ -680,9 +680,9 @@ confirm_deleting_all_entries_with_assets: هل أنت تأكد من أنك تر�
 # Strings for manually reordering entries via drag-and-drop.
 
 # Reorder mode: toggle buttons
-reorder_entries: إعادة ترتيب الإدخالات
-done_reordering_entries: تم إعادة ترتيب الإدخالات
-cancel_reordering_entries: إلغاء إعادة ترتيب الإدخالات
+reorder_entries: إعادة ترتيب العناصر
+done_reordering_entries: تم إعادة ترتيب العناصر
+cancel_reordering_entries: إلغاء إعادة ترتيب العناصر
 
 # Reorder error message
 saving_reorder_failed: فشل في حفظ الترتيب الجديد للإدخالات. يرجى المحاولة مرة أخرى.
@@ -762,11 +762,11 @@ file_meta_converted_from_x: (تم التحويل من {$type})
 # Strings for creating and managing entries in collections
 
 # Empty state messages
-no_entries_created: لا توجد مدخلات في هذه المجموعة بعد.
+no_entries_created: لا توجد عناصر في هذه المجموعة بعد.
 # Button to create first entry
-create_new_entry: إنشاء مدخل جديد
+create_new_entry: إنشاء عنصر جديد
 # “Entry” option label in the create button menu
-entry: مدخل
+entry: عنصر
 
 # Special entry types
 # Fallback label for collection index files when no custom label is configured
@@ -776,8 +776,8 @@ index_file: ملف الفهرس
 no_files_in_collection: لا توجد ملفات متاحة في هذه المجموعة.
 
 # Entry duplication
-duplicate_entry: تكرار المدخل
-entry_duplicated: تم تكرار المدخل كمسودة جديدة.
+duplicate_entry: تكرار العنصر
+entry_duplicated: تم تكرار العنصر كمسودة جديدة.
 
 # Validation errors
 # Toast shown when entry has validation errors preventing save
@@ -785,8 +785,8 @@ entry_duplicated: تم تكرار المدخل كمسودة جديدة.
 entry_validation_errors: |
   .input {$count :integer}
   .match $count
-    one {{ يحتوي حقل واحد على خطأ. يرجى تصحيحه لحفظ المدخل. }}
-    *   {{ تحتوي {$count} حقول على أخطاء. يرجى تصحيحها لحفظ المدخل. }}
+    one {{ يحتوي حقل واحد على خطأ. يرجى تصحيحه لحفظ العنصر. }}
+    *   {{ تحتوي {$count} حقول على أخطاء. يرجى تصحيحها لحفظ العنصر. }}
 
 # ==============================================================================
 # Success Notifications
@@ -798,31 +798,31 @@ entry_validation_errors: |
 entry_saved: |
   .input {$count :integer}
   .match $count
-    one {{ تم حفظ المدخل. }}
-    *   {{ تم حفظ {$count} مدخلات. }}
+    one {{ تم حفظ العنصر. }}
+    *   {{ تم حفظ {$count} عناصر. }}
 entry_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ تم حفظ المدخل ونشره. }}
-    *   {{ تم حفظ {$count} مدخلات ونشرها. }}
+    one {{ تم حفظ العنصر ونشره. }}
+    *   {{ تم حفظ {$count} عناصر ونشرها. }}
 entries_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ تم حذف المدخل. }}
-    *   {{ تم حذف {$count} مدخلات. }}
+    one {{ تم حذف العنصر. }}
+    *   {{ تم حذف {$count} عنصر. }}
 
 # Asset operations
 # {$count} is the number of assets or asset-derived values affected by the operation
 assets_saved: |
   .input {$count :integer}
   .match $count
-    one {{ تم حفظ العنصر. }}
-    *   {{ تم حفظ {$count} عناصر. }}
+    one {{ تم حفظ الوسيط. }}
+    *   {{ تم حفظ {$count} وسائط. }}
 assets_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ تم حفظ العنصر ونشره. }}
-    *   {{ تم حفظ {$count} عناصر ونشرها. }}
+    one {{ تم حفظ الوسيط ونشره. }}
+    *   {{ تم حفظ {$count} وسائط ونشرها. }}
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
@@ -841,23 +841,23 @@ asset_data_copied: |
 assets_downloaded: |
   .input {$count :integer}
   .match $count
-    one {{ تم تنزيل العنصر. }}
-    *   {{ تم تنزيل {$count} عناصر. }}
+    one {{ تم تنزيل الوسيط. }}
+    *   {{ تم تنزيل {$count} وسائط. }}
 assets_moved: |
   .input {$count :integer}
   .match $count
-    one {{ تم نقل العنصر. }}
-    *   {{ تم نقل {$count} عناصر. }}
+    one {{ تم نقل الوسيط. }}
+    *   {{ تم نقل {$count} وسائط. }}
 assets_renamed: |
   .input {$count :integer}
   .match $count
-    one {{ تم إعادة تسمية العنصر. }}
-    *   {{ تم إعادة تسمية {$count} عناصر. }}
+    one {{ تم إعادة تسمية الوسيط. }}
+    *   {{ تم إعادة تسمية {$count} وسائط. }}
 assets_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ تم حذف العنصر. }}
-    *   {{ تم حذف {$count} عناصر. }}
+    one {{ تم حذف الوسيط. }}
+    *   {{ تم حذف {$count} وسائط. }}
 
 # ==============================================================================
 # Content Editor
@@ -885,12 +885,12 @@ cancel_editing: إلغاء التحرير
 # {$name} is the singular label of the collection being created in
 create_entry_title: إنشاء {$name}
 # {$collection} is the collection label
-create_entry_announcement: أنت تقوم الآن بإنشاء مدخل جديد في مجموعة “{$collection}”.
+create_entry_announcement: أنت تقوم الآن بإنشاء عنصر جديد في مجموعة “{$collection}”.
 # Editing an existing entry
 # {$collection} is the collection label and {$entry} is the entry label or slug
 edit_entry_title: '{$collection} › {$entry}'
 # {$entry} is the current entry label and {$collection} is the collection label
-edit_entry_announcement: أنت تقوم الآن بتعديل المدخل “{$entry}” في مجموعة “{$collection}”.
+edit_entry_announcement: أنت تقوم الآن بتعديل العنصر “{$entry}” في مجموعة “{$collection}”.
 # {$file} is the file name and {$collection} is the collection label
 edit_file_announcement: أنت تقوم الآن بتعديل الملف “{$file}” في مجموعة “{$collection}”.
 # {$file} is the singleton file name
@@ -989,12 +989,12 @@ revert_changes: التراجع عن التغييرات
 revert_all_changes: التراجع عن جميع التغييرات
 
 # Slug editing
-edit_slug: تعديل الاسم اللطيف (Slug)
-edit_slug_warning: قد يؤدي تغيير الاسم اللطيف إلى كسر الروابط الداخلية والخارجية للمدخل. حالياً، لا يتيح Sveltia CMS تحديث المراجع التي تم إنشاؤها باستخدام حقول العلاقات، لذلك ستحتاج إلى تحديث هذه المراجع والروابط الأخرى يدوياً.
+edit_slug: تعديل المعرف الفريد (Slug)
+edit_slug_warning: قد يؤدي تغيير المعرف الفريد (Slug) إلى كسر الروابط الداخلية والخارجية للمدخل. حالياً، لا يتيح Sveltia CMS تحديث المراجع التي تم إنشاؤها باستخدام حقول العلاقات، لذلك ستحتاج إلى تحديث هذه المراجع والروابط الأخرى يدوياً.
 edit_slug_error:
-  empty: لا يمكن أن يكون الاسم اللطيف فارغاً.
-  invalid: لا يمكن أن يحتوي الاسم اللطيف على رموز خاصة، بما في ذلك الشرطات المائلة والمسافات.
-  duplicate: هذا الاسم اللطيف مستخدم بالفعل لمخل آخر.
+  empty: لا يمكن أن يكون المعرف الفريد (Slug) فارغاً.
+  invalid: لا يمكن أن يحتوي المعرف الفريد (Slug) على رموز خاصة، بما في ذلك الشرطات المائلة والمسافات.
+  duplicate: هذا المعرف الفريد (Slug) مستخدم بالفعل لمخل آخر.
 
 # Required field indicator
 required: مطلوب
@@ -1134,10 +1134,10 @@ saving_entry:
 
 # Asset details announcement
 # {$name} is the selected asset name
-viewing_x_asset_details: أنت تعرض الآن تفاصيل العنصر “{$name}”.
+viewing_x_asset_details: أنت تعرض الآن تفاصيل الوسيط “{$name}”.
 
 # Asset editor container aria-label
-asset_editor: محرر العناصر
+asset_editor: محرر الوسائط
 
 # Preview unavailable message
 preview_unavailable: المعاينة غير متاحة.
@@ -1163,7 +1163,7 @@ file_data: بيانات الملف
 # Section headings and labels in the asset information panel.
 
 # Panel title and empty state shown in the asset sidebar
-asset_info: معلومات العنصر
+asset_info: معلومات الوسيط
 select_asset_show_info: حدد عنصراً لإظهار معلوماته.
 
 kind: النوع
@@ -1228,17 +1228,17 @@ assets_dialog:
 
   # Asset folder options
   folder:
-    field: عناصر الحقل
-    entry: عناصر المدخل
-    file: عناصر الملف
-    collection: عناصر المجموعة
-    global: عناصر عامة
+    field: حقل الوسائط
+    entry: عنصر الوسائط 
+    file: ملف الوسائط
+    collection: مجموعة الوسائط
+    global: وسائط عامة
 
   # Error messages
   error:
     invalid_key: مفتاح API الخاص بك غير صالح أو منتهي الصلاحية. يرجى التحقق منه والمحاولة مرة أخرى.
-    search_fetch_failed: حدث خطأ أثناء البحث عن العناصر. يرجى المحاولة مرة أخرى لاحقاً.
-    image_fetch_failed: حدث خطأ أثناء تنزيل العنصر المحدد. يرجى المحاولة مرة أخرى لاحقاً.
+    search_fetch_failed: حدث خطأ أثناء البحث عن الوسائط. يرجى المحاولة مرة أخرى لاحقاً.
+    image_fetch_failed: حدث خطأ أثناء تنزيل الوسيط المحدد. يرجى المحاولة مرة أخرى لاحقاً.
 
   # Stock photo panels
   available_images: الصور المتاحة
@@ -1314,7 +1314,7 @@ use_your_location: استخدام موقعك
 # Geolocation error dialog
 geolocation_error_title: خطأ في تحديد الموقع الجغرافي
 geolocation_error_body: حدث خطأ أثناء جلب موقعك.
-geolocation_unsupported: واجهة برمجة تطبيقات تحديد الموقع الجغرافي غير مدعومة في هذا المتصفح.
+geolocation_unsupported: الـ API .الخاص بتحديد الموقع غير مدعوم بواسطة هذا المتصفح
 
 # Boolean field: display labels
 # Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
@@ -1329,7 +1329,7 @@ boolean:
 
 cloud_storage:
   # Configuration error
-  invalid: لم يتم تكوين الخدمة بشكل صحيح.
+  invalid: لم يتم إعداد الخدمة بشكل صحيح.
 
   # Authentication states
   auth:
@@ -1378,8 +1378,8 @@ config:
   errors: |
     .input {$count :integer}
     .match $count
-      one {{ هناك خطأ في تكوين CMS. يرجى حل المشكلة والمحاولة مرة أخرى. }}
-      *   {{ هناك أخطاء في تكوين CMS. يرجى حل المشكلات والمحاولة مرة أخرى. }}
+      one {{ هناك خطأ في إعداد الـ CMS. يرجى حل المشكلة والمحاولة مرة أخرى. }}
+      *   {{ هناك أخطاء في إعداد الـ CMS. يرجى حل المشكلات والمحاولة مرة أخرى. }}
 
   # Error location prefixes
   error_locator:
@@ -1397,47 +1397,47 @@ config:
     insecure_urls: |
       .input {$count :integer}
       .match $count
-        one {{ يجب أن يستخدم رابط ملف التكوين بروتوكول HTTPS أو عنوان localhost. }}
-        *   {{ يجب أن تستخدم روابط ملفات التكوين بروتوكول HTTPS أو عناوين localhost. }}
-    fetch_failed: تعذر جلب ملف التكوين.
+        one {{ يجب أن يستخدم رابط ملف الأعدادات بروتوكول HTTPS أو عنوان localhost. }}
+        *   {{ يجب أن تستخدم روابط ملفات الأعدادات بروتوكول HTTPS أو عناوين localhost. }}
+    fetch_failed: تعذر جلب ملف الأعدادات.
     # {$status} is the HTTP status code returned while fetching the config file
     fetch_failed_not_ok: تم إرجاع استجابة HTTP مع الحالة {$status}.
     # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
-    fetch_failed_with_manual_init: 'تعذر جلب ملف التكوين. لمنع تحميل ملف `config.yml`، أضف <a>`load_config_file: false`</a> إلى كائن التكوين الممرر إلى `CMS.init()`.'
-    parse_failed: تعذر تحليل ملف التكوين.
-    parse_failed_invalid_object: ملف التكوين ليس كائن JavaScript صالباً.
-    parse_failed_unsupported_type: ملف التكوين ليس نوع ملف مدعوم. يتم دعم YAML و TOML و JSON فقط.
+    fetch_failed_with_manual_init: 'تعذر جلب ملف الأعدادات. لمنع تحميل ملف `config.yml`، أضف <a>`load_config_file: false`</a> إلى كائن الأعدادات الممرر إلى `CMS.init()`.'
+    parse_failed: تعذر تحليل ملف الأعدادات.
+    parse_failed_invalid_object: ملف الأعدادات ليس كائن JavaScript صالباً.
+    parse_failed_unsupported_type: ملف الأعدادات ليس نوع ملف مدعوم. يتم دعم YAML و TOML و JSON فقط.
     no_collection: لم يتم تعريف المجموعات.
     missing_backend: لم يتم تعريف الخادم الخلفي (Backend).
-    missing_backend_name: لم يتم تعريف اسم الخادم الخلفي.
+    missing_backend_name: لم يتم تعريف اسم الخادم الخلفي (Backend).
     # {$name} is the backend name from the CMS configuration
-    unsupported_known_backend: الخادم الخلفي {$name} <a>غير مدعوم</a> في Sveltia CMS.
+    unsupported_known_backend: الخادم الخلفي (Backend) {$name} <a>غير مدعوم</a> في Sveltia CMS.
     # {$name} is the backend name from the CMS configuration
-    unsupported_deprecated_backend: الخادم الخلفي المهجور {$name} <a>غير مدعوم</a> في Sveltia CMS.
-    unsupported_custom_backend: الخوادم الخلفية المخصصة <a>غير مدعومة</a> في Sveltia CMS.
-    unsupported_backend_suggestion: استخدم أحد <a>الخوادم الخلفية المدعومة</a> بدلاً من ذلك.
+    unsupported_deprecated_backend: الخادم الخلفي (Backend) المهجور {$name} <a>غير مدعوم</a> في Sveltia CMS.
+    unsupported_custom_backend: الخوادم الخلفية (Backends) المخصصة <a>غير مدعومة</a> في Sveltia CMS.
+    unsupported_backend_suggestion: استخدم أحد <a>الخوادم الخلفية (Backends) المدعومة</a> بدلاً من ذلك.
     missing_repository: لم يتم تعريف المستودع.
-    invalid_repository: المستودع المكوَّن غير صالح. يجب أن يكون بصيغة “owner/repo”.
-    oauth_implicit_flow: طريقة المصادقة المكوّنة (الانسياب الضمني) غير مدعومة في Sveltia CMS. استخدم <a>طريقة مصادقة</a> مختلفة بدلاً من ذلك.
+    invalid_repository: المستودع المعد غير صالح. يجب أن يكون بصيغة “owner/repo”.
+    oauth_implicit_flow: طريقة المصادقة المُعدة (الانسياب الضمني) غير مدعومة في Sveltia CMS. استخدم <a>طريقة مصادقة</a> مختلفة بدلاً من ذلك.
     github_pkce_unsupported: تفويض PKCE غير مدعوم بعد بسبب قيود GitHub. استخدم <a>طريقة مصادقة</a> مختلفة بدلاً من ذلك.
     oauth_no_app_id: معرف تطبيق OAuth غير محدد.
     # Don’t localize `auth_methods`
     no_auth_methods: يجب أن يحتوي الخيار `auth_methods` على طريقة واحدة على الأقل.
     missing_media_folder: مجلد الوسائط غير محدد.
-    invalid_media_folder: مجلد الوسائط المكوَّن غير صالح. يجب أن يكون سلسلة نصية.
-    invalid_public_folder: المجلد العام المكوَّن غير صالح. يجب أن يكون سلسلة نصية.
-    public_folder_relative_path: المجلد العام المكوَّن غير صالح. يجب أن يكون مساراً مطلقاً يبدأ بـ “/”.
+    invalid_media_folder: مجلد الوسائط المعد غير صالح. يجب أن يكون سلسلة نصية.
+    invalid_public_folder: المجلد العام المعد غير صالح. يجب أن يكون سلسلة نصية.
+    public_folder_relative_path: المجلد العام المعد غير صالح. يجب أن يكون مساراً مطلقاً يبدأ بـ “/”.
     public_folder_absolute_url: استخدام رابط URL مطلق لخيار المجلد العام غير مدعوم في Sveltia CMS.
     # Don’t localize `asset_collections`
     invalid_asset_collections: الخيار `asset_collections` غير صالح. يجب أن يكون مصفوفة.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
-    missing_asset_collection_name: يجب أن تكون مجموعة العناصر {$count} تمتلك خيار `name` معرفاً كسلسلة نصية غير فارغة.
+    missing_asset_collection_name: يجب أن تكون مجموعة الوسائط {$count} تمتلك خيار `name` معرفاً كسلسلة نصية غير فارغة.
     # {$name} is the invalid or duplicate asset collection name
-    invalid_asset_collection_name: اسم مجموعة العناصر `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
+    invalid_asset_collection_name: اسم مجموعة الوسائط `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
     # {$name} is the duplicate asset collection name
-    duplicate_asset_collection_name: يجب أن تكون أسماء مجموعات العناصر فريدة، ولكن `{$name}` مستخدم أكثر من مرة.
+    duplicate_asset_collection_name: يجب أن تكون أسماء مجموعات الوسائط فريدة، ولكن `{$name}` مستخدم أكثر من مرة.
     # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: يجب أن تكون مجموعة العناصر `{$name}` تمتلك خيار `media_folder` معرفاً كسلسلة نصية.
+    asset_collection_invalid_media_folder: يجب أن تكون مجموعة الوسائط `{$name}` تمتلك خيار `media_folder` معرفاً كسلسلة نصية.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: يجب أن تحتوي المجموعة إما على خيار `folder` أو `files` أو `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1445,7 +1445,7 @@ config:
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: الامتداد `{$extension}` لا يتطابق مع التنسيق `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: قالب الاسم اللطيف `{$slug}` غير صالح لأنه لا يمكن أن يحتوي على شرطات مائلة. لتنظيم المدخلات في مجلدات فرعية، استخدم الخيار `path` بدلاً من `slug`.
+    invalid_slug_slash: قالب المعرف الفريد (Slug) `{$slug}` غير صالح لأنه لا يمكن أن يحتوي على شرطات مائلة. لتنظيم المدخلات في مجلدات فرعية، استخدم الخيار `path` بدلاً من `slug`.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: يجب أن تتضمن المجموعة {$count} الخيار `name` محددًا كسلسلة نصية غير فارغة.
     # {$name} is the invalid or duplicate collection name
@@ -1504,13 +1504,13 @@ config:
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: الخيار `{$prop}` غير مدعوم في Sveltia CMS. سيتم تجاهله.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
-    conflicting_timezone_options: تم ضبط كل من `picker_utc` وخيارات المنطقة الزمنية الأحدث (`input_timezone` أو `output_utc`). الخيارات الجديدة لها الأسبقية. يرجى النظر في إزالة `picker_utc` من التكوين الخاص بك.
+    conflicting_timezone_options: تم ضبط كل من `picker_utc` وخيارات المنطقة الزمنية الأحدث (`input_timezone` أو `output_utc`). الخيارات الجديدة لها الأسبقية. يرجى النظر في إزالة `picker_utc` من الأعدادات الخاص بك.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'راجع ملاحظات التوافق لمعرفة التفاصيل: {$link}'
 
   # Console tip shown after config load
-  schema_tip: للحصول على تجربة تطوير أفضل، يمكنك التحقق من صحة ملف التكوين الخاص بك مقابل مخطط JSON الخاص بـ Sveltia CMS. راجع {$link} لمعرفة التفاصيل.
+  schema_tip: للحصول على تجربة تطوير أفضل، يمكنك التحقق من صحة ملف الأعدادات الخاص بك مقابل مخطط JSON الخاص بـ Sveltia CMS. راجع {$link} لمعرفة التفاصيل.
 
 # ==============================================================================
 # Local Workflow
@@ -1671,11 +1671,11 @@ prefs:
 
 keyboard_shortcuts_:
   view_content_library: عرض مكتبة المحتوى
-  view_asset_library: عرض مكتبة العناصر
-  search: البحث عن المدخلات والعناصر
+  view_asset_library: عرض مكتبة الوسائط
+  search: البحث عن العناصر والوسائط
   create_entry: إنشاء مدخل جديد
-  save_entry: حفظ المدخل
-  cancel_editing: إلغاء تحرير المدخل
+  save_entry: حفظ العنصر
+  cancel_editing: إلغاء تحرير العنصر
 
 # ==============================================================================
 # File Type Labels
