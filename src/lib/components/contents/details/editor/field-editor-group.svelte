@@ -36,11 +36,16 @@
 
 <style>
   section {
+    position: relative;
     padding: var(--field-editor-padding);
 
-    &:not(:last-child) {
-      border-width: 0 0 1px;
-      border-color: var(--sui-secondary-border-color);
+    &:not(:last-child)::after {
+      position: absolute;
+      inset: auto var(--field-editor-padding) 0 var(--field-editor-padding);
+      overflow: hidden;
+      height: 1px;
+      background-color: var(--sui-tertiary-background-color);
+      content: '';
     }
 
     :global {
@@ -67,6 +72,12 @@
           margin-inline: 2px 0;
           color: var(--sui-error-foreground-color);
           font-size: var(--sui-font-size-large);
+        }
+      }
+
+      @media (hover: hover) {
+        &:not(:hover) > header button {
+          opacity: 0;
         }
       }
     }
