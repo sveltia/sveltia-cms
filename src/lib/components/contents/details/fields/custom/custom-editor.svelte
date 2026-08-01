@@ -6,7 +6,7 @@
 -->
 <script module>
   import { TextInput } from '@sveltia/ui';
-  import { mount } from 'svelte';
+  import { flushSync, mount } from 'svelte';
 
   /** @type {string | undefined} */
   let cachedFieldClassName = undefined;
@@ -22,6 +22,8 @@
       const target = document.createElement('div');
 
       mount(TextInput, { target });
+      // Wait for the component to be mounted
+      flushSync();
       cachedFieldClassName = target.querySelector('input')?.className ?? '';
     }
 
