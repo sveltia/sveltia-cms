@@ -12,6 +12,7 @@ import {
   customPreviewTemplateRegistry,
   eventHookRegistry,
 } from '$lib/services/api/registries';
+import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
@@ -261,6 +262,13 @@ const registerFieldType = (name, control, preview, schema) => {
   if (!isNonEmptyString(name)) {
     throw new TypeError(
       'The `name` option for `CMS.registerFieldType()` must be a non-empty string',
+    );
+  }
+
+  if (/** @type {string[]} */ (BUILTIN_FIELD_TYPES).includes(name)) {
+    throw new Error(
+      `The field type name "${name}" is reserved for a built-in field type. ` +
+        'Choose a different name for your custom field type.',
     );
   }
 

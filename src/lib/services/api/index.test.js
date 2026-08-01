@@ -792,6 +792,52 @@ describe('CMS.registerFieldType()', () => {
     );
   });
 
+  test('throws Error if name is a built-in field type', () => {
+    const control = () => null;
+
+    // Test with various built-in field types
+    const builtInTypes = [
+      'boolean',
+      'code',
+      'color',
+      'datetime',
+      'file',
+      'image',
+      'list',
+      'markdown',
+      'number',
+      'object',
+      'richtext',
+      'select',
+      'string',
+      'text',
+    ];
+
+    builtInTypes.forEach((type) => {
+      // @ts-ignore
+      expect(() => CMS.registerFieldType(type, control)).toThrow(Error);
+      // Ensure it's an Error, not a TypeError
+      // @ts-ignore
+      expect(() => CMS.registerFieldType(type, control)).not.toThrow(TypeError);
+    });
+  });
+
+  test('throws with proper error message for reserved built-in field type', () => {
+    const control = () => null;
+
+    // @ts-ignore
+    expect(() => CMS.registerFieldType('string', control)).toThrow(
+      'The field type name "string" is reserved for a built-in field type. ' +
+        'Choose a different name for your custom field type.',
+    );
+
+    // @ts-ignore
+    expect(() => CMS.registerFieldType('markdown', control)).toThrow(
+      'The field type name "markdown" is reserved for a built-in field type. ' +
+        'Choose a different name for your custom field type.',
+    );
+  });
+
   test('throws TypeError if control is not a function or string', () => {
     // @ts-ignore
     expect(() => CMS.registerFieldType('test', 123)).toThrow(TypeError);
