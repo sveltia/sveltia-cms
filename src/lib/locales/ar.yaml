@@ -152,7 +152,7 @@ sign_in_error:
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
   UNSUPPORTED_BACKEND: خادم Git الخاص بك غير مدعوم بواسطة أداة المصادقة.
   UNSUPPORTED_DOMAIN: نطاقك غير مسموح له باستخدام أداة المصادقة.
-  MISCONFIGURED_CLIENT: لم يتم تكوين معرف العميل أو السر الخاص بتطبيق OAuth.
+  MISCONFIGURED_CLIENT: لم يتم إعداد معرف العميل أو السر الخاص بتطبيق OAuth.
   AUTH_CODE_REQUEST_FAILED: فشل في تلقي رمز التفويض. يرجى المحاولة مرة أخرى لاحقاً.
   CSRF_DETECTED: تم اكتشاف هجوم CSRF محتمل. تم إلغاء عملية المصادقة.
   TOKEN_REQUEST_FAILED: فشل في طلب رمز الوصول. يرجى المحاولة مرة أخرى لاحقاً.
@@ -1621,7 +1621,7 @@ prefs:
       # Photo credit attribution
       # {$service} is the stock photo service name
       credit: الصور مقدمة من {$service}
-      no_services: لم يتم تكوين أي <a>خدمات صور جاهزة</a>.
+      no_services: لم يتم إعداد أي <a>خدمات صور جاهزة</a>.
     cloud_storage:
       api_keys:
         title: مفاتيح API لخدمات التخزين السحابي
@@ -1629,7 +1629,7 @@ prefs:
       # API key input label
       # {$service} is the cloud storage service name
       field_label: 'مفتاح API لـ {$service}'
-      no_services: لم يتم تكوين أي <a>خدمات تخزين سحابي</a>.
+      no_services: لم يتم إعداد أي <a>خدمات تخزين سحابي</a>.
 
   # Accessibility panel
   accessibility:
