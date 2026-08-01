@@ -148,7 +148,7 @@ sign_in_error:
   not_project_root: المجلد المحدد ليس المجلد الرئيسي للمستودع. يرجى المحاولة مرة أخرى.
   picker_dismissed: تعذر تحديد المجلد الرئيسي للمستودع. يرجى المحاولة مرة أخرى.
   authentication_aborted: تم إلغاء المصادقة. يرجى المحاولة مرة أخرى.
-  invalid_token: الرمز المزود غير صالحة. يرجى التحقق والمحاولة مرة أخرى.
+  invalid_token: الرمز المزود غير صالح. يرجى التحقق والمحاولة مرة أخرى.
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
   UNSUPPORTED_BACKEND: خادم Git الخاص بك غير مدعوم بواسطة أداة المصادقة.
   UNSUPPORTED_DOMAIN: نطاقك غير مسموح له باستخدام أداة المصادقة.
@@ -180,8 +180,8 @@ unexpected_error: خطأ غير متوقع
 entry_parse_errors: |
   .input {$count :integer}
   .match $count
-    one {{ حدث خطأ أثناء تحليل ملف إدخال. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
-    *   {{ حدثت أخطاء أثناء تحليل ملفات الإدخال. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
+    one {{ حدث خطأ أثناء تحليل ملف عنصر. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
+    *   {{ حدثت أخطاء أثناء تحليل ملفات العناصر. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
 
 # ==============================================================================
 # Authentication and Account
@@ -279,7 +279,7 @@ help: المساعدة
 keyboard_shortcuts: اختصارات لوحة المفاتيح
 documentation: التوثيق
 release_notes: ملاحظات الإصدار
-announcements: التبليغات
+announcements: الإعلانات
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
 version_x: 'الإصدار {$version}'
@@ -299,8 +299,8 @@ update_now: التحديث الآن
 # Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
 # {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
 backend_status:
-  minor_incident: 'يشهد {$service} حادثاً طفيفاً. قد يتأثر سير عملك.'
-  major_incident: 'يشهد {$service} حادثاً كبيراً. قد ترغب في الانتظار حتى يتحسن الوضع.'
+  minor_incident: 'يشهد {$service} عطلاً طفيفاً. قد يتأثر سير عملك.'
+  major_incident: 'يشهد {$service} عطلاً كبيراً. قد ترغب في الانتظار حتى يتحسن الوضع.'
 
 # ==============================================================================
 # Content and Asset Libraries
@@ -350,7 +350,7 @@ viewing_x_collection: |
   .match $count
     0 {{ أنت تعرض الآن مجموعة "{$collection}"، والتي لا تحتوي على أي عناصر بعد. }}
     one {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على عنصر واحد. }}
-    *   {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على {$count} عنصر. }}
+    *   {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على {$count} من العناصر. }}
 # Asset folder view announcements with asset counts
 # {$folder} is the folder label and {$count} is the number of assets in it
 viewing_x_asset_folder: |
@@ -358,7 +358,7 @@ viewing_x_asset_folder: |
   .match $count
     0 {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي لا يحتوي على أي وسائط بعد. }}
     one {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على وسيط واحد. }}
-    *   {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} وسائط. }}
+    *   {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} من الوسائط. }}
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -449,13 +449,13 @@ entry_not_found: لم يتم العثور على عنصر.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: تم تعطيل إنشاء عناصر جديدة في هذه المجموعة بواسطة المسؤول.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: لا يمكنك إضافة عناصر جديدة إلى هذه المجموعة لأنها وصلت إلى الحد الأقصى البالغ {$quota} إدخالاً.
+creating_entries_disabled_by_quota: لا يمكنك إضافة عناصر جديدة إلى هذه المجموعة لأنها وصلت إلى الحد الأقصى البالغ {$quota} عنصراً.
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
   .input {$remaining :integer}
   .match $remaining
-    one {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصر. يمكنك إنشاء {$remaining} إدخال فقط بعد.  }}
-    *   {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصر. يمكنك إنشاء {$remaining} إدخال فقط بعد. }}
+    one {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصراً. يمكنك إنشاء عنصر واحد فقط بعد.  }}
+    *   {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصراً. يمكنك إنشاء {$remaining} من العناصر فقط بعد. }}
 
 # Navigation: back links and list labels
 back_to_collection: العودة إلى المجموعة
@@ -481,16 +481,16 @@ viewing_entry_search_results: |
   .input {$count :integer}
   .match $count
     0 {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي عناصر. }}
-    one {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا عنصر واحد. }}
-    *   {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} عناصر. }}
+    one {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا عنصراً واحداً. }}
+    *   {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} من العناصر. }}
 # Asset search results with counts
 # {$terms} is the search query and {$count} is the number of matching assets
 viewing_asset_search_results: |
   .input {$count :integer}
   .match $count
     0 {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي وسائط. }}
-    one {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا وسيط واحداً. }}
-    *   {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} وسيط. }}
+    one {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا وسيطاً واحداً. }}
+    *   {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} من الوسائط. }}
 
 # Result count labels
 # Used in search result headings to show counts
@@ -500,14 +500,14 @@ x_entries: |
   .match $count
     0 {{ لا توجد عناصر }}
     one {{ عنصر واحد }}
-    *   {{ {$count} عنصر }}
+    *   {{ {$count} من العناصر }}
 # {$count} is the number of matching assets
 x_assets: |
   .input {$count :integer}
   .match $count
     0 {{ لا توجد وسائط }}
     one {{ وسيط واحد }}
-    *   {{ {$count} وسيط }}
+    *   {{ {$count} من الوسائط }}
 
 # Empty state messages
 no_files_found: لم يتم العثور على ملفات.
@@ -542,8 +542,8 @@ enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
     0 {{ أدخل اسماً جديداً أدناه. }}
-    one {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث إدخال واحد يستخدم هذا الوسيط. }}
-    *   {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث {$count} إدخال يستخدم هذا وسيط. }}
+    one {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث عنصر واحد يستخدم هذا الوسيط. }}
+    *   {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث {$count} من العناصر التي تستخدم هذا الوسيط. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: لا يمكن أن يكون اسم الملف فارغاً.
@@ -606,8 +606,8 @@ drop_files_here: |
 # File type validation errors
 unsupported_file_type: نوع ملف غير مدعوم
 # {$type} is the expected asset type label, such as image or document
-dropped_file_type_mismatch: 'الملف المفقود ليس من إحدى الأنواع التالية: {$types}. يرجى المحاولة مرة أخرى.'
-dropped_image_type_mismatch: 'الملف المفقود غير مدعوم. يتم قبول الصور من الأنواع التالية فقط: {$types}. يرجى المحاولة مرة أخرى.'
+dropped_file_type_mismatch: 'الملف المُسقَط ليس من إحدى الأنواع التالية: {$types}. يرجى المحاولة مرة أخرى.'
+dropped_image_type_mismatch: 'الملف المُسقَط غير مدعوم. يتم قبول الصور من الأنواع التالية فقط: {$types}. يرجى المحاولة مرة أخرى.'
 
 # File chooser button label
 # {$count} is the number of files the picker allows the user to choose
@@ -635,44 +635,44 @@ delete_selected_assets: |
   .match $count
     one {{ حذف الوسيط المحدد }}
     *   {{ حذف الوسائط المحددة }}
-confirm_deleting_this_asset: هل أنت تأكد من أنك تريد حذف هذا الوسيط؟
+confirm_deleting_this_asset: هل أنت متأكد من أنك تريد حذف هذا الوسيط؟
 # {$count} is the number of selected assets
 confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ هل أنت تأكد من أنك تريد حذف الوسيط المحدد؟ }}
-    *   {{ هل أنت تأكد من أنك تريد حذف {$count} وسيط محدد؟ }}
-confirm_deleting_all_assets: هل أنت تأكد من أنك تريد حذف جميع الوسائط؟
+    one {{ هل أنت متأكد من أنك تريد حذف الوسيط المحدد؟ }}
+    *   {{ هل أنت متأكد من أنك تريد حذف {$count} من الوسائط المحددة؟ }}
+confirm_deleting_all_assets: هل أنت متأكد من أنك تريد حذف جميع الوسائط؟
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
 delete_entries: |
   .input {$count :integer}
   .match $count
-    one {{ حذف الإدخال }}
-    *   {{ حذف الإدخالات }}
+    one {{ حذف العنصر }}
+    *   {{ حذف العناصر }}
 # {$count} is the number of selected entries
 delete_selected_entries: |
   .input {$count :integer}
   .match $count
-    one {{ حذف الإدخال المحدد }}
-    *   {{ حذف الإدخالات المحددة }}
-confirm_deleting_this_entry: هل أنت تأكد من أنك تريد حذف هذا الإدخال؟
-confirm_deleting_this_entry_with_assets: هل أنت تأكد من أنك تريد حذف هذا العنصر والوسيط المرتبطة به؟
+    one {{ حذف العنصر المحدد }}
+    *   {{ حذف العناصر المحددة }}
+confirm_deleting_this_entry: هل أنت متأكد من أنك تريد حذف هذا العنصر؟
+confirm_deleting_this_entry_with_assets: هل أنت متأكد من أنك تريد حذف هذا العنصر والوسائط المرتبطة به؟
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
   .match $count
-    one {{ هل أنت تأكد من أنك تريد حذف العنصر المحدد؟ }}
-    *   {{ هل أنت تأكد من أنك تريد حذف {$count} عنصر محدد؟ }}
+    one {{ هل أنت متأكد من أنك تريد حذف العنصر المحدد؟ }}
+    *   {{ هل أنت متأكد من أنك تريد حذف {$count} من العناصر المحددة؟ }}
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
-    one {{ هل أنت تأكد من أنك تريد حذف العنصر المحدد والوسائط المرتبطة به؟ }}
-    *   {{ هل أنت تأكد من أنك تريد حذف {$count} عنصر محدد والوسائط المرتبطة بها؟ }}
-confirm_deleting_all_entries: هل أنت تأكد من أنك تريد حذف جميع العناصر؟
-confirm_deleting_all_entries_with_assets: هل أنت تأكد من أنك تريد حذف جميع العناصر والوسائط المرتبطة بها؟
+    one {{ هل أنت متأكد من أنك تريد حذف العنصر المحدد والوسائط المرتبطة به؟ }}
+    *   {{ هل أنت متأكد من أنك تريد حذف {$count} من العناصر المحددة والوسائط المرتبطة بها؟ }}
+confirm_deleting_all_entries: هل أنت متأكد من أنك تريد حذف جميع العناصر؟
+confirm_deleting_all_entries_with_assets: هل أنت متأكد من أنك تريد حذف جميع العناصر والوسائط المرتبطة بها؟
 
 # ==============================================================================
 # Entry Reordering
@@ -685,7 +685,7 @@ done_reordering_entries: تم إعادة ترتيب العناصر
 cancel_reordering_entries: إلغاء إعادة ترتيب العناصر
 
 # Reorder error message
-saving_reorder_failed: فشل في حفظ الترتيب الجديد للإدخالات. يرجى المحاولة مرة أخرى.
+saving_reorder_failed: فشل في حفظ الترتيب الجديد للعناصر. يرجى المحاولة مرة أخرى.
 
 # ==============================================================================
 # File Upload and Processing
@@ -786,7 +786,7 @@ entry_validation_errors: |
   .input {$count :integer}
   .match $count
     one {{ يحتوي حقل واحد على خطأ. يرجى تصحيحه لحفظ العنصر. }}
-    *   {{ تحتوي {$count} حقول على أخطاء. يرجى تصحيحها لحفظ العنصر. }}
+    *   {{ تحتوي {$count} من الحقول على أخطاء. يرجى تصحيحها لحفظ العنصر. }}
 
 # ==============================================================================
 # Success Notifications
@@ -799,17 +799,17 @@ entry_saved: |
   .input {$count :integer}
   .match $count
     one {{ تم حفظ العنصر. }}
-    *   {{ تم حفظ {$count} عناصر. }}
+    *   {{ تم حفظ {$count} من العناصر. }}
 entry_saved_and_published: |
   .input {$count :integer}
   .match $count
     one {{ تم حفظ العنصر ونشره. }}
-    *   {{ تم حفظ {$count} عناصر ونشرها. }}
+    *   {{ تم حفظ {$count} من العناصر ونشرها. }}
 entries_deleted: |
   .input {$count :integer}
   .match $count
     one {{ تم حذف العنصر. }}
-    *   {{ تم حذف {$count} عنصر. }}
+    *   {{ تم حذف {$count} من العناصر. }}
 
 # Asset operations
 # {$count} is the number of assets or asset-derived values affected by the operation
@@ -817,47 +817,47 @@ assets_saved: |
   .input {$count :integer}
   .match $count
     one {{ تم حفظ الوسيط. }}
-    *   {{ تم حفظ {$count} وسائط. }}
+    *   {{ تم حفظ {$count} من الوسائط. }}
 assets_saved_and_published: |
   .input {$count :integer}
   .match $count
     one {{ تم حفظ الوسيط ونشره. }}
-    *   {{ تم حفظ {$count} وسائط ونشرها. }}
+    *   {{ تم حفظ {$count} من الوسائط ونشرها. }}
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
     one {{ تم نسخ الرابط إلى الحافظة. }}
-    *   {{ تم نسخ {$count} روابط إلى الحافظة. }}
+    *   {{ تم نسخ {$count} من الروابط إلى الحافظة. }}
 asset_paths_copied: |
   .input {$count :integer}
   .match $count
     one {{ تم نسخ مسار الملف إلى الحافظة. }}
-    *   {{ تم نسخ {$count} مسارات ملفات إلى الحافظة. }}
+    *   {{ تم نسخ {$count} من مسارات الملفات إلى الحافظة. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
     one {{ تم نسخ بيانات الملف إلى الحافظة. }}
-    *   {{ تم نسخ بيانات {$count} ملفات إلى الحافظة. }}
+    *   {{ تم نسخ بيانات {$count} من الملفات إلى الحافظة. }}
 assets_downloaded: |
   .input {$count :integer}
   .match $count
     one {{ تم تنزيل الوسيط. }}
-    *   {{ تم تنزيل {$count} وسائط. }}
+    *   {{ تم تنزيل {$count} من الوسائط. }}
 assets_moved: |
   .input {$count :integer}
   .match $count
     one {{ تم نقل الوسيط. }}
-    *   {{ تم نقل {$count} وسائط. }}
+    *   {{ تم نقل {$count} من الوسائط. }}
 assets_renamed: |
   .input {$count :integer}
   .match $count
     one {{ تم إعادة تسمية الوسيط. }}
-    *   {{ تم إعادة تسمية {$count} وسائط. }}
+    *   {{ تم إعادة تسمية {$count} من الوسائط. }}
 assets_deleted: |
   .input {$count :integer}
   .match $count
     one {{ تم حذف الوسيط. }}
-    *   {{ تم حذف {$count} وسائط. }}
+    *   {{ تم حذف {$count} من الوسائط. }}
 
 # ==============================================================================
 # Content Editor
@@ -994,7 +994,7 @@ edit_slug_warning: قد يؤدي تغيير المعرف الفريد (Slug) إ�
 edit_slug_error:
   empty: لا يمكن أن يكون المعرف الفريد (Slug) فارغاً.
   invalid: لا يمكن أن يحتوي المعرف الفريد (Slug) على رموز خاصة، بما في ذلك الشرطات المائلة والمسافات.
-  duplicate: هذا المعرف الفريد (Slug) مستخدم بالفعل لمخل آخر.
+  duplicate: هذا المعرف الفريد (Slug) مستخدم بالفعل لعنصر آخر.
 
 # Required field indicator
 required: مطلوب
@@ -1010,9 +1010,9 @@ editor:
     complete: |
       .input {$count :integer}
       .match $count
-        0   {{ لم يتم ترجمة أي حقول من {$source}. }}
-        one {{ تم ترجمة حقل واحد من {$source}. }}
-        *   {{ تم ترجمة {$count} حقول من {$source}. }}
+        0   {{ لم تتم ترجمة أي حقول من {$source}. }}
+        one {{ تمت ترجمة حقل واحد من {$source}. }}
+        *   {{ تمت ترجمة {$count} من الحقول من {$source}. }}
   copy:
     none: لا يوجد شيء لنسخه.
     # {$source} is the source language name and {$count} is the number of copied fields
@@ -1021,7 +1021,7 @@ editor:
       .match $count
         0   {{ لم يتم نسخ أي حقول من {$source}. }}
         one {{ تم نسخ حقل واحد من {$source}. }}
-        *   {{ تم نسخ {$count} حقول من {$source}. }}
+        *   {{ تم نسخ {$count} من الحقول من {$source}. }}
 
 # ==============================================================================
 # Field Validation
@@ -1044,13 +1044,13 @@ validation:
       .input {$min :integer}
       .match $min
         one {{ يجب عليك تحديد خيار واحد على الأقل. }}
-        *   {{ يجب عليك تحديد {$min} خيارات على الأقل. }}
+        *   {{ يجب عليك تحديد {$min} من الخيارات على الأقل. }}
     # {$min} is the minimum number of list items
     add: |
       .input {$min :integer}
       .match $min
         one {{ يجب عليك إضافة عنصر واحد على الأقل. }}
-        *   {{ يجب عليك إضافة {$min} عناصر على الأقل. }}
+        *   {{ يجب عليك إضافة {$min} من العناصر على الأقل. }}
 
   # Maximum value/count exceeded
   range_overflow:
@@ -1064,13 +1064,13 @@ validation:
       .input {$max :integer}
       .match $max
         one {{ لا يمكنك تحديد أكثر من خيار واحد. }}
-        *   {{ لا يمكنك تحديد أكثر من {$max} خيارات. }}
+        *   {{ لا يمكنك تحديد أكثر من {$max} من الخيارات. }}
     # {$max} is the maximum number of list items
     add: |
       .input {$max :integer}
       .match $max
         one {{ لا يمكنك إضافة أكثر من عنصر واحد. }}
-        *   {{ لا يمكنك إضافة أكثر من {$max} عناصر. }}
+        *   {{ لا يمكنك إضافة أكثر من {$max} من العناصر. }}
 
   # String length constraints
   # {$min :integer} and {$max :integer} are character-count limits
@@ -1078,18 +1078,18 @@ validation:
     .input {$min :integer}
     .match $min
       one {{ يجب عليك إدخال حرف واحد على الأقل. }}
-      *   {{ يجب عليك إدخال {$min} أحرف على الأقل. }}
+      *   {{ يجب عليك إدخال {$min} من الأحرف على الأقل. }}
   too_long: |
     .input {$max :integer}
     .match $max
       one {{ لا يمكنك إدخال أكثر من حرف واحد. }}
-      *   {{ لا يمكنك إدخال أكثر من {$max} أحرف. }}
+      *   {{ لا يمكنك إدخال أكثر من {$max} من الأحرف. }}
 
   # Type validation errors
   type_mismatch:
     number: يرجى إدخال رقم.
-    email: يرجى إدخال بريد إلكتروني صالحة.
-    url: يرجى إدخال رابط URL صالحة.
+    email: يرجى إدخال بريد إلكتروني صالح.
+    url: يرجى إدخال رابط URL صالح.
 
   # Custom field validation error
   invalid_value: قيمة غير صالحة.
@@ -1268,21 +1268,21 @@ character_counter:
     .match $count
       0   {{ لم يتم إدخال أي أحرف. الحد الأدنى: {$min}. الحد الأقصى: {$max}. }}
       one {{ تم إدخال حرف واحد. الحد الأدنى: {$min}. الحد الأقصى: {$max}. }}
-      *   {{ تم إدخال {$count} أحرف. الحد الأدنى: {$min}. الحد الأقصى: {$max}. }}
+      *   {{ تم إدخال {$count} من الأحرف. الحد الأدنى: {$min}. الحد الأقصى: {$max}. }}
   # {$count} is the current character count and {$min} is the minimum allowed count
   min: |
     .input {$count :integer}
     .match $count
       0   {{ لم يتم إدخال أي أحرف. الحد الأدنى: {$min}. }}
       one {{ تم إدخال حرف واحد. الحد الأدنى: {$min}. }}
-      *   {{ تم إدخال {$count} أحرف. الحد الأدنى: {$min}. }}
+      *   {{ تم إدخال {$count} من الأحرف. الحد الأدنى: {$min}. }}
   # {$count} is the current character count and {$max} is the maximum allowed count
   max: |
     .input {$count :integer}
     .match $count
       0   {{ لم يتم إدخال أي أحرف. الحد الأقصى: {$max}. }}
       one {{ تم إدخال حرف واحد. الحد الأقصى: {$max}. }}
-      *   {{ تم إدخال {$count} أحرف. الحد الأقصى: {$max}. }}
+      *   {{ تم إدخال {$count} من الأحرف. الحد الأقصى: {$max}. }}
 
 # YouTube video player iframe title
 youtube_video_player: مشغل فيديو يوتيوب
@@ -1314,7 +1314,7 @@ use_your_location: استخدام موقعك
 # Geolocation error dialog
 geolocation_error_title: خطأ في تحديد الموقع الجغرافي
 geolocation_error_body: حدث خطأ أثناء جلب موقعك.
-geolocation_unsupported: الـ API .الخاص بتحديد الموقع غير مدعوم بواسطة هذا المتصفح
+geolocation_unsupported: الـ API الخاص بتحديد الموقع غير مدعوم بواسطة هذا المتصفح.
 
 # Boolean field: display labels
 # Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
@@ -1543,7 +1543,7 @@ status:
 categories: الفئات
 
 # Site Configuration Editor
-site_configuration_editor: محرر تكوين الموقع
+site_configuration_editor: محرر إعدادات الموقع
 
 # Preferences panels
 prefs:
@@ -1648,11 +1648,11 @@ prefs:
       switch_label: الانضمام إلى البرنامج التجريبي
     developer_mode:
       title: وضع المطور
-      description: تمكين بعض الميزات الموجهة للمطورين، بما في ذلك سجلات وحدة التحكم التفصيلية وقوائم السياق الأصلية.
+      description: تمكين بعض الميزات الموجهة للمطورين، بما في ذلك سجلات Console التفصيلية وقوائم الـ Context.
       switch_label: تمكين وضع المطور
     deploy_hook:
       title: خطاف النشر (Deploy Hook)
-      description: أدخل رابط Webhook ليدعى عند تشغيل النشر يدوياً من خلال تحديد نشر التغييرات. يمكن ترك هذا الحقل فارغاً إذا كنت تستخدم GitHub Actions.
+      description: أدخل رابط Webhook ليتم تنفيذه عند تشغيل النشر يدوياً من خلال تحديد نشر التغييرات. يمكن ترك هذا الحقل فارغاً إذا كنت تستخدم GitHub Actions.
       # Hook URL input
       url:
         field_label: رابط الـ Hook
