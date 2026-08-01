@@ -641,7 +641,7 @@ confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
     one {{ هل أنت تأكد من أنك تريد حذف الوسيط المحدد؟ }}
-    *   {{ هل أنت تأكد من أنك تريد حذف {$count} أصل محدد؟ }}
+    *   {{ هل أنت تأكد من أنك تريد حذف {$count} وسيط محدد؟ }}
 confirm_deleting_all_assets: هل أنت تأكد من أنك تريد حذف جميع الوسائط؟
 
 # Delete entries: dialog titles and confirmation messages
@@ -870,7 +870,7 @@ content_editor: محرر المحتوى
 # Draft backup: restore dialog
 restore_backup_title: استعادة المسودة
 # {$datetime} is the localized timestamp of the saved draft backup
-restore_backup_description: يحتوي هذا المدخل على نسخة احتياطية من {$datetime}. هل تريد استعادة المسودة المحررة؟
+restore_backup_description: يحتوي هذا العنصر على نسخة احتياطية من {$datetime}. هل تريد استعادة المسودة المحررة؟
 
 # Draft backup notifications
 draft_backup_saved: تم حفظ النسخة الاحتياطية للمسودة.
@@ -958,7 +958,7 @@ disable_x_locale: 'تعطيل {$locale}'
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
 locale_x_has_been_disabled: تم تعطيل محتوى {$locale}.
-locale_x_now_disabled: محتوى {$locale} معطل الآن. سيتم حذفه عند حفظ المدخل.
+locale_x_now_disabled: محتوى {$locale} معطل الآن. سيتم حذفه عند حفظ العنصر.
 
 # Repository and site links
 view_in_repository: العرض في المستودع
@@ -990,7 +990,7 @@ revert_all_changes: التراجع عن جميع التغييرات
 
 # Slug editing
 edit_slug: تعديل المعرف الفريد (Slug)
-edit_slug_warning: قد يؤدي تغيير المعرف الفريد (Slug) إلى كسر الروابط الداخلية والخارجية للمدخل. حالياً، لا يتيح Sveltia CMS تحديث المراجع التي تم إنشاؤها باستخدام حقول العلاقات، لذلك ستحتاج إلى تحديث هذه المراجع والروابط الأخرى يدوياً.
+edit_slug_warning: قد يؤدي تغيير المعرف الفريد (Slug) إلى كسر الروابط الداخلية والخارجية للعنصر. حالياً، لا يتيح Sveltia CMS تحديث المراجع التي تم إنشاؤها باستخدام حقول العلاقات، لذلك ستحتاج إلى تحديث هذه المراجع والروابط الأخرى يدوياً.
 edit_slug_error:
   empty: لا يمكن أن يكون المعرف الفريد (Slug) فارغاً.
   invalid: لا يمكن أن يحتوي المعرف الفريد (Slug) على رموز خاصة، بما في ذلك الشرطات المائلة والمسافات.
@@ -1119,13 +1119,13 @@ entry_sidebar:
   # Backlinks panel: shows entries referencing this entry
   backlinks:
     title: الروابط الخلفية
-    no_entries: لا توجد مدخلات تشير إلى هذا المدخل.
+    no_entries: لا توجد عناصر تشير إلى هذا العنصر.
 
 # Entry save error dialog
 saving_entry:
   error:
     title: خطأ
-    description: حدث خطأ أثناء حفظ المدخل. يرجى المحاولة مرة أخرى لاحقاً.
+    description: حدث خطأ أثناء حفظ العنصر. يرجى المحاولة مرة أخرى لاحقاً.
 
 # ==============================================================================
 # Asset Editor
@@ -1445,7 +1445,7 @@ config:
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: الامتداد `{$extension}` لا يتطابق مع التنسيق `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: قالب المعرف الفريد (Slug) `{$slug}` غير صالح لأنه لا يمكن أن يحتوي على شرطات مائلة. لتنظيم المدخلات في مجلدات فرعية، استخدم الخيار `path` بدلاً من `slug`.
+    invalid_slug_slash: قالب المعرف الفريد (Slug) `{$slug}` غير صالح لأنه لا يمكن أن يحتوي على شرطات مائلة. لتنظيم العناصر في مجلدات فرعية، استخدم الخيار `path` بدلاً من `slug`.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: يجب أن تتضمن المجموعة {$count} الخيار `name` محددًا كسلسلة نصية غير فارغة.
     # {$name} is the invalid or duplicate collection name
@@ -1582,7 +1582,7 @@ prefs:
     editor:
       title: المحرر
       use_draft_backup:
-        switch_label: إنشاء نسخة احتياطية لمسودات المدخلات تلقائياً
+        switch_label: إنشاء نسخة احتياطية لمسودات العناصر تلقائياً
       close_on_save:
         switch_label: إغلاق المحرر بعد حفظ المسودة
       close_with_escape:
@@ -1603,7 +1603,7 @@ prefs:
       field_label: 'مفتاح {$service}'
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: اشترك في <a {$homeHref}>{$service}</a> وأدخل <a {$apiKeyHref}>مفتاح API الخاص بك</a> هنا لتمكين الترجمة السريعة لحقول المدخلات النصية.
+      description: اشترك في <a {$homeHref}>{$service}</a> وأدخل <a {$apiKeyHref}>مفتاح API الخاص بك</a> هنا لتمكين الترجمة السريعة لحقول العناصر النصية.
 
   # Media panel
   media:
@@ -1636,7 +1636,7 @@ prefs:
     title: إمكانية الوصول
     underline_links:
       title: وضع خط تحت الروابط
-      description: إظهار خط تحت الروابط في معاينة المدخل وتسميات واجهة المستخدم.
+      description: إظهار خط تحت الروابط في معاينة العنصر وتسميات واجهة المستخدم.
       switch_label: وضع خط تحت الروابط دائماً
 
   # Advanced panel
@@ -1673,7 +1673,7 @@ keyboard_shortcuts_:
   view_content_library: عرض مكتبة المحتوى
   view_asset_library: عرض مكتبة الوسائط
   search: البحث عن العناصر والوسائط
-  create_entry: إنشاء مدخل جديد
+  create_entry: إنشاء عنصر جديد
   save_entry: حفظ العنصر
   cancel_editing: إلغاء تحرير العنصر
 
