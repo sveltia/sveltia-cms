@@ -1229,7 +1229,7 @@ assets_dialog:
   # Asset folder options
   folder:
     field: حقل الوسائط
-    entry: عنصر الوسائط 
+    entry: عنصر الوسائط
     file: ملف الوسائط
     collection: مجموعة الوسائط
     global: وسائط عامة
