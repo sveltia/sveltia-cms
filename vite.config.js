@@ -295,6 +295,7 @@ export default defineConfig({
     generateExtraFiles(),
     // https://sonda.dev/configuration.html
     Sonda({
+      enabled: false,
       exclude: [/\.mjs$/],
     }),
   ],
