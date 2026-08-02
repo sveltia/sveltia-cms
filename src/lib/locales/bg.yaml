@@ -1,0 +1,1754 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Създай
+select: Избери
+select_all: Избери всички
+upload: Качи
+copy: Копирай
+download: Изтегли
+duplicate: Дублирай
+delete: Изтрий
+reorder: Пренареди
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Отказ
+done: Готово
+save: Запази
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Запазване…
+
+# Publishing actions: used when committing changes to the repository
+publish: Публикувай
+# Progress indicator shown on the publish button during publishing
+publishing: Публикуване…
+
+# Modification actions: editing and updating content
+rename: Преименувай
+update: Обнови
+replace: Замени
+
+# List and collection actions: adding and removing items
+add: Добави
+remove: Премахни
+clear: Изчисти
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Разгъни
+expand_all: Разгъни всички
+collapse: Свий
+collapse_all: Свий всички
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Вмъкни
+restore: Възстанови
+discard: Отхвърли
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Търсене…
+no_results: Няма намерени резултати.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Глобална
+primary: Основна
+secondary: Второстепенна
+collection: Колекция
+folder: Папка
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: API ключ
+details: Подробности
+back: Назад
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Зареждане…
+# Dismiss button for temporary notifications and infobars
+later: По-късно
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Слъг
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Единичен файл
+singletons: Единични файлове
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Копирането в клипборда е неуспешно.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: Добре дошли в {$name}
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: Работи с {$name}
+
+# Shown during initial configuration and data loading
+loading_cms_config: Зареждане на конфигурацията на CMS…
+loading_site_data: Зареждане на данните на сайта…
+loading_site_data_error: Възникна грешка при зареждането на данните на сайта.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: Вход с {$service}
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Вход с токен за достъп
+sign_in_using_access_token_description: Въведете своя токен по-долу. Той трябва да има права за четене и запис на съдържанието на хранилището.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: Можете да генерирате токен на <a>страницата с потребителски настройки на {$service}</a>.
+# Input field label for personal access token
+personal_access_token: Личен токен за достъп
+
+# Authentication progress indicators
+authorizing: Оторизиране…
+signing_in: Влизане…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Работа с локално хранилище
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: Когато бъдете подканени, изберете основната папка на хранилището „{$repo}“.
+work_with_local_repo_description_no_repo: Когато бъдете подканени, изберете основната папка на вашето Git хранилище.
+# Button label for demo/test repository
+work_with_test_repo: Работа с тестово хранилище
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: Избраната папка не е основна папка на хранилище. Опитайте отново.
+  picker_dismissed: Не беше избрана основна папка на хранилище. Опитайте отново.
+  authentication_aborted: Удостоверяването е прекратено. Опитайте отново.
+  invalid_token: Предоставеният токен е невалиден. Проверете го и опитайте отново.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Вашият Git бекенд не се поддържа от удостоверителя.
+  UNSUPPORTED_DOMAIN: Вашият домейн няма право да използва удостоверителя.
+  MISCONFIGURED_CLIENT: Клиентското ID или тайният ключ на OAuth приложението не са конфигурирани.
+  AUTH_CODE_REQUEST_FAILED: Получаването на код за оторизация е неуспешно. Опитайте по-късно.
+  CSRF_DETECTED: Открита е потенциална CSRF атака. Процесът по удостоверяване е прекратен.
+  TOKEN_REQUEST_FAILED: Заявката за токен за достъп е неуспешна. Опитайте по-късно.
+  TOKEN_REFRESH_FAILED: Обновяването на токена за достъп е неуспешно. Опитайте по-късно.
+  MALFORMED_RESPONSE: Сървърът върна невалидни данни. Опитайте по-късно.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: Бекендът {$name} изисква {$name} {$version} или по-нова версия.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: Нямате достъп до хранилището „{$repo}“.
+repository_not_found: Хранилището „{$repo}“ не съществува.
+repository_empty: Хранилището „{$repo}“ няма клонове.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: Хранилището „{$repo}“ няма клон „{$branch}“.
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Неочаквана грешка
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Възникна грешка при обработката на файл със запис. Вижте конзолата на браузъра за подробности. }}
+    *   {{ Възникнаха грешки при обработката на файлове със записи. Вижте конзолата на браузъра за подробности. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Потребителско име
+password: Парола
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Вход
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Вход от мобилно устройство
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Сканирайте QR кода по-долу с телефон или таблет за вход без парола. Настройките ви ще бъдат копирани автоматично.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: Влезли сте като {$name}
+working_with_local_repo: Работа с локално хранилище
+working_with_test_repo: Работа с тестово хранилище
+
+# Account menu: action items for sign-out and app installation
+sign_out: Изход
+install_as_app: Инсталиране като приложение
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Съдържание
+assets: Ресурси
+editorial_workflow: Редакционен процес
+cms_config: Конфигурация на CMS
+# Mobile menu page title (shown only on small screens)
+menu: Меню
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS вече е достъпна и на мобилни устройства!
+mobile_promo_button: Опитайте
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS вече е достъпна на {$locale}!
+change_language: Смяна на езика
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Отваряне на публикувания сайт
+# Page switcher button group aria-label for switching between main sections
+switch_page: Смяна на страницата
+
+# Search input placeholders
+search_placeholder_contents: Търсене на съдържание…
+search_placeholder_assets: Търсене на ресурси…
+search_placeholder_all: Търсене на съдържание и ресурси…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Създаване на запис или ресурси
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Публикуване на промените
+publishing_changes: Публикуване на промените…
+# Error notification when publishing fails
+publishing_changes_failed: Промените не бяха публикувани. Опитайте отново.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Показване на известията
+notifications: Известия
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Показване на менюто на профила
+# Account section heading in the account menu and mobile menu page
+account: Профил
+
+# Account menu items: links to external resources
+live_site: Публикуван сайт
+git_repository: Git хранилище
+settings: Настройки
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Показване на менюто за помощ
+# Help section heading in dropdowns and mobile menu
+help: Помощ
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Клавишни комбинации
+documentation: Документация
+release_notes: Бележки към версията
+announcements: Съобщения
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: Версия {$version}
+# Additional help menu items
+report_issue: Докладване на проблем
+share_feedback: Споделяне на мнение
+get_help: Получаване на помощ
+donate: Дарение
+join_discord: Присъединете се към нас в Discord
+bluesky: Последвайте ни в Bluesky
+
+# Update notification: infobar message and button
+update_available: Налична е най-новата версия на Sveltia CMS.
+update_now: Обнови сега
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service} има лек инцидент. Работата ви може да бъде засегната.'
+  major_incident: '{$service} има сериозен инцидент. Може да изчакате, докато ситуацията се подобри.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Библиотека със съдържание
+asset_library: Библиотека с ресурси
+
+# Primary sidebar section headings and list aria-labels
+collections: Колекции
+entries: Записи
+files: Файлове
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Вашият сайт
+  external: Външни местоположения
+  stock_photos: Стокови снимки
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Ресурси на колекцията
+# List aria-labels for different list types
+entry_list: Списък със записи
+file_list: Списък с файлове
+asset_list: Списък с ресурси
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: Колекция „{$collection}“
+# {$folder} is the current asset folder label
+x_asset_folder: Папка с ресурси „{$folder}“
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: В момента разглеждате списъка с колекции.
+viewing_asset_folder_list: В момента разглеждате списъка с папки с ресурси.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ В момента разглеждате колекцията „{$collection}“, която още няма записи. }}
+    one {{ В момента разглеждате колекцията „{$collection}“, която има един запис. }}
+    *   {{ В момента разглеждате колекцията „{$collection}“, която има {$count} записа. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ В момента разглеждате папката с ресурси „{$folder}“, която още няма ресурси. }}
+    one {{ В момента разглеждате папката с ресурси „{$folder}“, която има един ресурс. }}
+    *   {{ В момента разглеждате папката с ресурси „{$folder}“, която има {$count} ресурса. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: Натиснете Enter, за да редактирате файла „{$file}“.
+
+# Error messages: collection or file not found
+collection_not_found: Колекцията не е намерена.
+file_not_found: Файлът не е намерен.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} от {$total} избрани'
+
+# View switcher: toggle between list and grid views
+switch_view: Смяна на изгледа
+list_view: Списъчен изглед
+grid_view: Мрежест изглед
+switch_to_list_view: Превключване към списъчен изглед
+switch_to_grid_view: Превключване към мрежест изглед
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Сортиране
+sorting_options: Опции за сортиране
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Без
+  name: Име
+  slug: Слъг
+  # Sort by the last commit’s author name
+  commit_author: Обновено от
+  # Sort by the last commit date
+  commit_date: Обновено на
+  # Sort by the entry’s computed summary text
+  _summary: Обобщение
+  # Manual order defined by the user via drag-and-drop
+  _manual: Ръчно
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, от А до Я'
+ascending_date: '{$label}, от старо към ново'
+descending: '{$label}, от Я до А'
+descending_date: '{$label}, от ново към старо'
+
+# Filter menu: button labels and options
+filter: Филтър
+filtering_options: Опции за филтриране
+
+# Group menu: button labels and options
+group: Групиране
+grouping_options: Опции за групиране
+
+# Asset type filter and group labels
+type: Тип
+all: Всички
+# Asset type labels
+image: Изображение
+video: Видео
+audio: Аудио
+document: Документ
+other: Друго
+
+# Toolbar toggles: show/hide panels
+show_assets: Показване на ресурсите
+hide_assets: Скриване на ресурсите
+show_info: Показване на информацията
+hide_info: Скриване на информацията
+
+# Folder display labels when no specific path is configured
+all_assets: Всички ресурси
+global_assets: Глобални ресурси
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: Записът не е намерен.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Създаването на нови записи в тази колекция е забранено от администратора.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: Не можете да добавяте нови записи в тази колекция, защото тя достигна ограничението си от {$quota} записа.
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    one {{ Тази колекция наближава ограничението си от {$quota} записа. Можете да създадете още само {$remaining} запис. }}
+    *   {{ Тази колекция наближава ограничението си от {$quota} записа. Можете да създадете още само {$remaining} записа. }}
+
+# Navigation: back links and list labels
+back_to_collection: Обратно към колекцията
+collection_list: Списък с колекции
+back_to_collection_list: Обратно към списъка с колекции
+asset_folder_list: Списък с папки с ресурси
+back_to_asset_folder_list: Обратно към списъка с папки с ресурси
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Резултати от търсенето
+# {$terms} is the current search query text
+search_results_for_x: Резултати от търсенето за „{$terms}“
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ В момента разглеждате резултатите от търсенето за „{$terms}“. Не намерихме нито един запис. }}
+    one {{ В момента разглеждате резултатите от търсенето за „{$terms}“. Намерихме един запис. }}
+    *   {{ В момента разглеждате резултатите от търсенето за „{$terms}“. Намерихме {$count} записа. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ В момента разглеждате резултатите от търсенето за „{$terms}“. Не намерихме нито един ресурс. }}
+    one {{ В момента разглеждате резултатите от търсенето за „{$terms}“. Намерихме един ресурс. }}
+    *   {{ В момента разглеждате резултатите от търсенето за „{$terms}“. Намерихме {$count} ресурса. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Няма записи }}
+    one {{ {$count} запис }}
+    *   {{ {$count} записа }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Няма ресурси }}
+    one {{ {$count} ресурс }}
+    *   {{ {$count} ресурса }}
+
+# Empty state messages
+no_files_found: Няма намерени файлове.
+no_entries_found: Няма намерени записи.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Качване на нови ресурси
+
+# Edit options menu: button and item labels
+edit_options: Опции за редактиране
+show_edit_options: Показване на опциите за редактиране
+# Edit menu items with specific asset names
+edit_asset: Редактиране на ресурса
+# {$name} is the selected asset name
+edit_x: Редактиране на {$name}
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Пренасяне на дългите редове
+
+# Rename asset: dialog and validation
+rename_asset: Преименуване на ресурса
+# {$name} is the current asset name
+rename_x: Преименуване на {$name}
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Въведете ново име по-долу. }}
+    one {{ Въведете ново име по-долу. Записът, който използва ресурса, също ще бъде обновен. }}
+    *   {{ Въведете ново име по-долу. {$count} записа, които използват ресурса, също ще бъдат обновени. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: Името на файла не може да е празно.
+  character: Името на файла не може да съдържа специални знаци.
+  duplicate: Това име на файл се използва от друг ресурс.
+
+# Replace asset: menu item and dialog title
+replace_asset: Замяна на ресурса
+# {$name} is the asset being replaced
+replace_x: Замяна на {$name}
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Щракнете, за да прегледате…
+# Browse prompt shown on touch devices
+tap_to_browse: Докоснете, за да прегледате…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Пуснете файл тук или щракнете, за да прегледате… }}
+    *   {{ Пуснете файлове тук или щракнете, за да прегледате… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Пуснете файл тук или }}
+    *   {{ Пуснете файлове тук или }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Пуснете файл с изображение тук или }}
+    *   {{ Пуснете файлове с изображения тук или }}
+
+# File picker and clipboard actions used by upload controls
+browse: Прегледай
+# Generic clipboard paste action used by non-image file fields
+paste: Постави
+# Clipboard paste action used by image fields
+paste_image: Постави изображение
+
+# Clipboard paste errors
+no_image_in_clipboard: В клипборда няма изображение.
+clipboard_access_denied: Достъпът до клипборда е отказан.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Пуснете файл тук }}
+    *   {{ Пуснете файлове тук }}
+
+# File type validation errors
+unsupported_file_type: Неподдържан тип файл
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Пуснатият файл не е от следните типове: {$types}. Опитайте отново.'
+dropped_image_type_mismatch: 'Пуснатият файл не се поддържа. Приемат се само изображения от следните типове: {$types}. Опитайте отново.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Избери файл }}
+    *   {{ Избери файлове }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Изтриване на ресурс }}
+    *   {{ Изтриване на ресурси }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Изтриване на избрания ресурс }}
+    *   {{ Изтриване на избраните ресурси }}
+confirm_deleting_this_asset: Сигурни ли сте, че искате да изтриете този ресурс?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Сигурни ли сте, че искате да изтриете избрания ресурс? }}
+    *   {{ Сигурни ли сте, че искате да изтриете избраните {$count} ресурса? }}
+confirm_deleting_all_assets: Сигурни ли сте, че искате да изтриете всички ресурси?
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Изтриване на запис }}
+    *   {{ Изтриване на записи }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Изтриване на избрания запис }}
+    *   {{ Изтриване на избраните записи }}
+confirm_deleting_this_entry: Сигурни ли сте, че искате да изтриете този запис?
+confirm_deleting_this_entry_with_assets: Сигурни ли сте, че искате да изтриете този запис и свързаните с него ресурси?
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Сигурни ли сте, че искате да изтриете избрания запис? }}
+    *   {{ Сигурни ли сте, че искате да изтриете избраните {$count} записа? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Сигурни ли сте, че искате да изтриете избрания запис и свързаните с него ресурси? }}
+    *   {{ Сигурни ли сте, че искате да изтриете избраните {$count} записа и свързаните с тях ресурси? }}
+confirm_deleting_all_entries: Сигурни ли сте, че искате да изтриете всички записи?
+confirm_deleting_all_entries_with_assets: Сигурни ли сте, че искате да изтриете всички записи и свързаните с тях ресурси?
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Пренареждане на записите
+done_reordering_entries: Готово с пренареждането на записите
+cancel_reordering_entries: Отказ от пренареждането на записите
+
+# Reorder error message
+saving_reorder_failed: Новата подредба на записите не беше запазена. Опитайте отново.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Файлът се обработва. Това може да отнеме известно време. }}
+    *   {{ Файловете се обработват. Това може да отнеме известно време. }}
+
+# Uploading section aria-label
+uploading_files: Качване на файлове
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '„{$name}“ ще бъде заменен с този файл:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Този файл ще бъде запазен в папката „{$folder}“: }}
+    *   {{ Тези {$count} файла ще бъдат запазени в папката „{$folder}“: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Прекалено големи файлове
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Този файл не може да бъде качен, защото надвишава максималния размер от {$size}. Намалете размера му или изберете друг файл. }}
+    *   {{ Тези файлове не могат да бъдат качени, защото надвишават максималния размер от {$size}. Намалете размерите им или изберете други файлове. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ В тази папка вече съществува файл със същото име. Искате ли да го замените? }}
+    *   {{ В тази папка вече съществуват {$count} файла със същите имена. Искате ли да ги замените? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ В тази папка вече съществува файл с име „{$name}“. Искате ли да го замените? }}
+    *   {{ В тази папка вече съществуват {$count} файла със същите имена. Искате ли да ги замените? }}
+file_name_conflict_resolution: Разрешаване на конфликт в имената на файловете
+# Option to keep both files (rename the new one)
+keep_both: Запази и двата
+
+# Upload progress and error messages
+uploading_files_progress: Качване…
+uploading_files_failed: Качването е неуспешно.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (преобразуван от {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Тази колекция още няма записи.
+# Button to create first entry
+create_new_entry: Създаване на нов запис
+# “Entry” option label in the create button menu
+entry: Запис
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Индексен файл
+
+# Empty state for file collections
+no_files_in_collection: В тази колекция няма налични файлове.
+
+# Entry duplication
+duplicate_entry: Дублиране на записа
+entry_duplicated: Записът е дублиран като нова чернова.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Едно поле съдържа грешка. Коригирайте я, за да запазите записа. }}
+    *   {{ {$count} полета съдържат грешки. Коригирайте ги, за да запазите записа. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Записът е запазен. }}
+    *   {{ {$count} записа са запазени. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Записът е запазен и публикуван. }}
+    *   {{ {$count} записа са запазени и публикувани. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Записът е изтрит. }}
+    *   {{ {$count} записа са изтрити. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ресурсът е запазен. }}
+    *   {{ {$count} ресурса са запазени. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ресурсът е запазен и публикуван. }}
+    *   {{ {$count} ресурса са запазени и публикувани. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ URL адресът е копиран в клипборда. }}
+    *   {{ {$count} URL адреса са копирани в клипборда. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Пътят до файла е копиран в клипборда. }}
+    *   {{ Пътищата до {$count} файла са копирани в клипборда. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Данните на файла са копирани в клипборда. }}
+    *   {{ Данните на {$count} файла са копирани в клипборда. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ресурсът е изтеглен. }}
+    *   {{ {$count} ресурса са изтеглени. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ресурсът е преместен. }}
+    *   {{ {$count} ресурса са преместени. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ресурсът е преименуван. }}
+    *   {{ {$count} ресурса са преименувани. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ресурсът е изтрит. }}
+    *   {{ {$count} ресурса са изтрити. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Редактор на съдържание
+
+# Draft backup: restore dialog
+restore_backup_title: Възстановяване на чернова
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Този запис има резервно копие от {$datetime}. Искате ли да възстановите редактираната чернова?
+
+# Draft backup notifications
+draft_backup_saved: Резервното копие на черновата е запазено.
+draft_backup_restored: Резервното копие на черновата е възстановено.
+draft_backup_deleted: Резервното копие на черновата е изтрито.
+
+# Editor toolbar actions
+cancel_editing: Отказ от редактирането
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: Създаване на {$name}
+# {$collection} is the collection label
+create_entry_announcement: В момента създавате нов запис в колекцията „{$collection}“.
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: В момента редактирате записа „{$entry}“ в колекцията „{$collection}“.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: В момента редактирате файла „{$file}“ в колекцията „{$collection}“.
+# {$file} is the singleton file name
+edit_singleton_announcement: В момента редактирате файла „{$file}“.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Запази и публикувай
+save_without_publishing: Запази без публикуване
+
+# Editor options menu
+show_editor_options: Показване на опциите на редактора
+editor_options: Опции на редактора
+
+# Preview controls
+show_preview: Показване на прегледа
+
+# Editor settings
+sync_scrolling: Синхронизирано превъртане
+
+# Locale controls
+switch_locale: Смяна на езика
+# Short status indicators appended to locale names
+locale_content_disabled_short: (изключено)
+locale_content_error_short: (грешка)
+
+# Pane labels
+edit: Редактиране
+preview: Преглед
+
+# Pane controls; not to be confused with pages
+swap_panes: Размяна на панелите
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Редактиране на съдържанието на {$locale}
+preview_x_locale: Преглед на съдържанието на {$locale}
+
+# Preview iframe labels
+content_preview: Преглед на съдържанието
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Показване на опциите за съдържанието на {$locale}
+content_options_x_locale: Опции за съдържанието на {$locale}
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: Поле „{$field}“
+
+# Field options menu
+show_field_options: Показване на опциите на полето
+field_options: Опции на полето
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Неподдържан тип поле: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: Включване на {$locale}
+reenable_x_locale: Повторно включване на {$locale}
+disable_x_locale: Изключване на {$locale}
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: Съдържанието на {$locale} беше изключено.
+locale_x_now_disabled: Съдържанието на {$locale} вече е изключено. То ще бъде изтрито, когато запазите записа.
+
+# Repository and site links
+view_in_repository: Преглед в хранилището
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: Преглед в {$service}
+view_on_live_site: Преглед в публикувания сайт
+
+# Content copying from other locales
+copy_from: Копиране от…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: Копиране от {$locale}
+
+# Translation features
+translation_options: Опции за превод
+translate: Преведи
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Превод на полето }}
+    *   {{ Превод на полетата }}
+translate_from: Превод от…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: Превод от {$locale}
+
+# Revert changes
+revert_changes: Отмяна на промените
+revert_all_changes: Отмяна на всички промени
+
+# Slug editing
+edit_slug: Редактиране на слъга
+edit_slug_warning: Промяната на слъга може да наруши вътрешните и външните връзки към записа. В момента Sveltia CMS не обновява препратките, създадени с полета Relation, така че ще трябва ръчно да обновите тези препратки заедно с останалите връзки.
+edit_slug_error:
+  empty: Слъгът не може да е празен.
+  invalid: Слъгът не може да съдържа специални знаци, включително наклонени черти и интервали.
+  duplicate: Този слъг се използва от друг запис.
+
+# Required field indicator
+required: Задължително
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Няма какво да се превежда.
+    started: Превеждане…
+    error: Преводът е неуспешен.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Няма преведени полета от {$source}. }}
+        one {{ Полето е преведено от {$source}. }}
+        *   {{ {$count} полета са преведени от {$source}. }}
+  copy:
+    none: Няма какво да се копира.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Няма копирани полета от {$source}. }}
+        one {{ Полето е копирано от {$source}. }}
+        *   {{ {$count} полета са копирани от {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Това поле е задължително.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: Датата и часът трябва да са {$min} или по-късно.
+    date: Датата трябва да е {$min} или по-късно.
+    time: Часът трябва да е {$min} или по-късно.
+    number: Стойността трябва да е по-голяма или равна на {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ Трябва да изберете поне {$min} опция. }}
+        *   {{ Трябва да изберете поне {$min} опции. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ Трябва да добавите поне {$min} елемент. }}
+        *   {{ Трябва да добавите поне {$min} елемента. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: Датата и часът трябва да са {$max} или по-рано.
+    date: Датата трябва да е {$max} или по-рано.
+    time: Часът трябва да е {$max} или по-рано.
+    number: Стойността трябва да е по-малка или равна на {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ Не можете да изберете повече от {$max} опция. }}
+        *   {{ Не можете да изберете повече от {$max} опции. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ Не можете да добавите повече от {$max} елемент. }}
+        *   {{ Не можете да добавите повече от {$max} елемента. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ Трябва да въведете поне {$min} знак. }}
+      *   {{ Трябва да въведете поне {$min} знака. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ Не можете да въведете повече от {$max} знак. }}
+      *   {{ Не можете да въведете повече от {$max} знака. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Въведете число.
+    email: Въведете валиден имейл адрес.
+    url: Въведете валиден URL адрес.
+
+  # Custom field validation error
+  invalid_value: Невалидна стойност.
+  unexpected_error: Възникна неочаквана грешка.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Панели на страничната лента
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Проверка
+    placeholder: Резултатите от проверката ще се показват тук.
+    no_errors_found: Не са намерени грешки.
+
+  # History panel: shows entry commit history
+  history:
+    title: История
+    fetch_failed: Историята не беше заредена.
+    no_history: Няма намерена история.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Обратни връзки
+    no_entries: Няма записи, които препращат към този запис.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Грешка
+    description: Възникна грешка при запазването на записа. Опитайте по-късно.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: В момента разглеждате подробностите за ресурса „{$name}“.
+
+# Asset editor container aria-label
+asset_editor: Редактор на ресурси
+
+# Preview unavailable message
+preview_unavailable: Прегледът не е наличен.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ Публичен URL адрес }}
+    *   {{ Публични URL адреси }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Път до файла }}
+    *   {{ Пътища до файловете }}
+file_data: Данни на файла
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Информация за ресурса
+select_asset_show_info: Изберете ресурс, за да видите информацията за него.
+
+kind: Вид
+size: Размер
+dimensions: Размери
+duration: Продължителност
+# Short heading for a list of entries using the selected asset
+used_in: Използван в
+created_date: Дата на създаване
+location: Местоположение
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Карта с географска ширина {$latitude} и географска дължина {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Премахване на този елемент
+move_up: Преместване нагоре
+move_down: Преместване надолу
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: Добави {$name}
+
+# List item context menu
+add_item_above: Добавяне на елемент отгоре
+add_item_below: Добавяне на елемент отдолу
+
+# Variable-type list selector
+select_list_type: Избор на тип списък
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Непрозрачност
+
+# Select field: empty option placeholder
+unselected_option: (Няма)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Избор на файл
+    image: Избор на изображение
+
+  # Search input labels
+  search_for_file: Търсене на файлове
+  search_for_image: Търсене на изображения
+
+  # Locations panel aria-label
+  locations: Местоположения
+
+  # Asset folder options
+  folder:
+    field: Ресурси на полето
+    entry: Ресурси на записа
+    file: Ресурси на файла
+    collection: Ресурси на колекцията
+    global: Глобални ресурси
+
+  # Error messages
+  error:
+    invalid_key: Вашият API ключ е невалиден или е изтекъл. Проверете го и опитайте отново.
+    search_fetch_failed: Възникна грешка при търсенето на ресурси. Опитайте по-късно.
+    image_fetch_failed: Възникна грешка при изтеглянето на избрания ресурс. Опитайте по-късно.
+
+  # Stock photo panels
+  available_images: Налични изображения
+
+  # URL entry option
+  enter_url: Въвеждане на URL адрес
+  enter_file_url: 'Въведете URL адреса на файла:'
+  enter_image_url: 'Въведете URL адреса на изображението:'
+
+  # Large file warning dialog
+  large_file:
+    title: Голям файл
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Кредит за снимката
+    description: 'Използвайте следния кредит, ако е възможно:'
+
+  # Unsaved asset badge
+  unsaved: Незапазен
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Няма въведени знаци. Минимум: {$min}. Максимум: {$max}. }}
+      one {{ {$count} въведен знак. Минимум: {$min}. Максимум: {$max}. }}
+      *   {{ {$count} въведени знака. Минимум: {$min}. Максимум: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Няма въведени знаци. Минимум: {$min}. }}
+      one {{ {$count} въведен знак. Минимум: {$min}. }}
+      *   {{ {$count} въведени знака. Минимум: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Няма въведени знаци. Максимум: {$max}. }}
+      one {{ {$count} въведен знак. Максимум: {$max}. }}
+      *   {{ {$count} въведени знака. Максимум: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: Видео плейър на YouTube
+
+# Date/time field: quick action buttons
+today: Днес
+now: Сега
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Изображение
+  src: Източник
+  alt: Алтернативен текст
+  title: Заглавие
+  link: Връзка
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Ключ
+  value: Стойност
+  action: Действие
+  empty_key: Ключът е задължителен.
+  duplicate_key: Ключът трябва да е уникален.
+
+# Map field: location search and geolocation
+find_place: Намиране на място
+use_your_location: Използване на вашето местоположение
+
+# Geolocation error dialog
+geolocation_error_title: Грешка при геолокацията
+geolocation_error_body: Възникна грешка при определянето на вашето местоположение.
+geolocation_unsupported: Geolocation API не се поддържа от този браузър.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Да
+  'false': Не
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: Услугата не е конфигурирана правилно.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: API ключ
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: Въведете своя {$key} за {$service}.
+      requested: Проверяване…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: Предоставеният {$key} е невалиден. Проверете го и опитайте отново.
+    password:
+      # {$service} is the cloud service name
+      initial: Въведете своята парола за {$service}.
+      requested: Влизане…
+      error: Потребителското име или паролата са грешни. Проверете ги и опитайте отново.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Медийна библиотека на Cloudinary
+    activate:
+      button_label: Активиране на Cloudinary
+      description: След като влезете, щракнете отново върху бутона за вход, за да продължите.
+    auth_key_label: API тайна
+    open_library: Отваряне на Cloudinary
+
+  uploadcare:
+    auth_key_label: Таен API ключ
+
+  aws_s3:
+    auth_key_label: Таен ключ за достъп
+
+  cloudflare_r2:
+    auth_key_label: Таен ключ за достъп
+
+  digitalocean_spaces:
+    auth_key_label: Таен ключ за достъп
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ Има грешка в конфигурацията на CMS. Отстранете проблема и опитайте отново. }}
+      *   {{ Има грешки в конфигурацията на CMS. Отстранете проблемите и опитайте отново. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: колекция {$collection}
+    file: файл {$file}
+    component: компонент {$component}
+    # Don’t localize `{$field}`
+    field: поле `{$field}`
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS работи само с HTTPS или localhost адреси.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ URL адресът на конфигурационния файл трябва да използва протокол HTTPS или localhost адрес. }}
+        *   {{ URL адресите на конфигурационните файлове трябва да използват протокол HTTPS или localhost адреси. }}
+    fetch_failed: Конфигурационният файл не можа да бъде получен.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: HTTP отговорът върна статус {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Конфигурационният файл не можа да бъде получен. За да предотвратите зареждането на файла `config.yml`, добавете <a>`load_config_file: false`</a> към конфигурационния обект, подаден на `CMS.init()`.'
+    parse_failed: Конфигурационният файл не можа да бъде обработен.
+    parse_failed_invalid_object: Конфигурационният файл не е валиден JavaScript обект.
+    parse_failed_unsupported_type: Конфигурационният файл не е от валиден тип. Поддържат се само YAML, TOML и JSON.
+    no_collection: Не са дефинирани колекции.
+    missing_backend: Бекендът не е дефиниран.
+    missing_backend_name: Името на бекенда не е дефинирано.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: Бекендът {$name} <a>не се поддържа</a> в Sveltia CMS.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Остарелият бекенд {$name} <a>не се поддържа</a> в Sveltia CMS.
+    unsupported_custom_backend: Персонализираните бекенди <a>не се поддържат</a> в Sveltia CMS.
+    unsupported_backend_suggestion: Използвайте един от <a>поддържаните бекенди</a>.
+    missing_repository: Хранилището не е дефинирано.
+    invalid_repository: Конфигурираното хранилище е невалидно. То трябва да е във формат „owner/repo“.
+    oauth_implicit_flow: Конфигурираният метод за удостоверяване (implicit flow) не се поддържа в Sveltia CMS. Използвайте друг <a>метод за удостоверяване</a>.
+    github_pkce_unsupported: PKCE оторизацията все още не се поддържа поради ограничения на GitHub. Използвайте друг <a>метод за удостоверяване</a>.
+    oauth_no_app_id: Идентификаторът на OAuth приложението не е дефиниран.
+    # Don’t localize `auth_methods`
+    no_auth_methods: Опцията `auth_methods` трябва да съдържа поне един метод.
+    missing_media_folder: Папката за медия не е дефинирана.
+    invalid_media_folder: Конфигурираната папка за медия е невалидна. Тя трябва да е низ.
+    invalid_public_folder: Конфигурираната публична папка е невалидна. Тя трябва да е низ.
+    public_folder_relative_path: Конфигурираната публична папка е невалидна. Тя трябва да е абсолютен път, започващ с „/“.
+    public_folder_absolute_url: Абсолютен URL адрес за опцията за публична папка не се поддържа в Sveltia CMS.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: Опцията `asset_collections` е невалидна. Тя трябва да е масив.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: Колекцията с ресурси {$count} трябва да има дефинирана опция `name` като непразен низ.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: Името на колекцията с ресурси `{$name}` е невалидно. То не трябва да съдържа специални знаци.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: Имената на колекциите с ресурси трябва да са уникални, но `{$name}` се използва повече от веднъж.
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: Колекцията с ресурси `{$name}` трябва да има дефинирана опция `media_folder` като низ.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: Колекцията трябва да има дефинирана една от опциите `folder`, `files` или `divider`.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: Колекцията не може да има опциите `folder`, `files` и `divider` едновременно.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: Разширението `{$extension}` не съответства на формата `{$format}`.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: Шаблонът за слъг `{$slug}` е невалиден, защото не може да съдържа наклонени черти. За да организирате записите в подпапки, използвайте опцията `path` вместо `slug`.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: Колекцията {$count} трябва да има дефинирана опция `name` като непразен низ.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: Името на колекцията `{$name}` е невалидно. То не трябва да съдържа специални знаци.
+    duplicate_collection_name: Имената на колекциите трябва да са уникални, но `{$name}` се използва повече от веднъж.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: Файлът от колекция {$count} трябва да има дефинирана опция `name` като непразен низ.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: Името на файла от колекция `{$name}` е невалидно. То не трябва да съдържа специални знаци.
+    duplicate_collection_file_name: Имената на файловете в колекциите трябва да са уникални, но `{$name}` се използва повече от веднъж.
+    # Don’t localize `fields`
+    collection_no_fields: Колекцията трябва да има дефинирана опция `fields` с поне едно поле.
+    # Don’t localize `fields`
+    collection_file_no_fields: Файлът от колекция трябва да има дефинирана опция `fields` с поне едно поле.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: Файлът от колекция трябва да има дефинирана опция `i18n`, ако в пътя `file` се използва заместителят `locale`.
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: Полето {$count} трябва да има дефинирана опция `name` като непразен низ.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: Името на полето `{$name}` е невалидно. То не трябва да съдържа специални знаци. Ако искате да влагате полета, <a>използвайте полета Object вместо точкова нотация</a>.
+    duplicate_field_name: Имената на полетата трябва да са уникални, но `{$name}` се използва повече от веднъж.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: Променливият тип {$count} трябва да има дефинирана опция `name` като непразен низ.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: Името на променливия тип `{$name}` е невалидно. То не трябва да съдържа специални знаци.
+    duplicate_variable_type: Имената на променливите типове трябва да са уникални, но `{$name}` се използва повече от веднъж.
+    date_field_type: 'Остарелият тип поле Date не се поддържа в Sveltia CMS. Използвайте типа поле DateTime с опцията `type: date`.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Невалидна часова зона: {$timeZone}. Трябва да е валиден идентификатор на часова зона по IANA, например `America/New_York` или `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: Остарялата опция `{$prop}` не се поддържа в Sveltia CMS. Използвайте опцията `{$newProp}`.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: Опцията `allow_multiple` не се поддържа в Sveltia CMS. Използвайте опцията `multiple`, чиято стойност по подразбиране е `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: Полето List не може да има опциите `field`, `fields` и `types` едновременно.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: Променливият тип на полето List е невалиден. Опцията `widget` е зададена на `{$widget}`, но трябва да е `object`.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: Полето Object не може да има опциите `fields` и `types` едновременно.
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: Полето Object трябва да има дефинирана опция `fields` или `types`.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: Посочената колекция `{$collection}` е невалидна или не е дефинирана.
+    relation_field_invalid_collection_file: Посоченият файл `{$file}` е невалиден или не е дефиниран.
+    # Don’t localize `file`
+    relation_field_missing_file_name: Опцията `file` трябва да е дефинирана за връзка към колекция от файлове.
+    relation_field_invalid_value_field: Посоченото поле за стойност `{$field}` е невалидно или не е дефинирано.
+    unexpected: Неочаквана грешка
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: Идентификаторът на OAuth приложението не е дефиниран. За да влязат, потребителите трябва да предоставят токен за достъп.
+    editorial_workflow_unsupported: Редакционният процес все още не се поддържа в Sveltia CMS.
+    open_authoring_unsupported: Отвореното авторство все още не се поддържа в Sveltia CMS.
+    nested_collections_unsupported: Вложените колекции все още не се поддържат в Sveltia CMS.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: Опцията `{$prop}` не се поддържа в Sveltia CMS. Тя ще бъде пренебрегната.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: Зададени са едновременно `picker_utc` и по-новите опции за часова зона (`input_timezone` или `output_utc`). Новите опции имат предимство. Обмислете премахването на `picker_utc` от вашата конфигурация.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Вижте бележките за съвместимост за подробности: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: За по-добро изживяване при разработка можете да проверите конфигурационния си файл спрямо JSON схемата на Sveltia CMS. Вижте {$link} за подробности.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Локално
+  # Browser compatibility warnings
+  unsupported_browser: Локалният работен процес не се поддържа във вашия браузър. Използвайте Chrome или Edge.
+  disabled: Локалният работен процес е изключен във вашия браузър. <a>Ето как да го включите</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: Чернови
+  in_review: За преглед
+  ready: Готови
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Категории
+
+# Site Configuration Editor
+site_configuration_editor: Редактор на конфигурацията на сайта
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: API ключът е запазен.
+    api_key_removed: API ключът е премахнат.
+    api_key_invalid: Предоставеният API ключ е невалиден. Проверете го и опитайте отново.
+
+  # Preferences operation errors
+  error:
+    permission_denied: Достъпът до бисквитките е отказан. Проверете разрешенията на браузъра си и опитайте отново.
+
+  # Appearance panel
+  appearance:
+    title: Външен вид
+    theme: Тема
+    select_theme: Избор на тема
+
+  # Theme options
+  theme:
+    auto: Автоматична
+    dark: Тъмна
+    light: Светла
+
+  # Language panel
+  language:
+    title: Език
+    ui_language:
+      title: Език на потребителския интерфейс
+      select_language: Избор на език
+
+  # Contents panel
+  contents:
+    title: Съдържание
+    editor:
+      title: Редактор
+      use_draft_backup:
+        switch_label: Автоматично създаване на резервни копия на черновите
+      close_on_save:
+        switch_label: Затваряне на редактора след запазване на чернова
+      close_with_escape:
+        switch_label: Затваряне на редактора с клавиша Escape
+
+  # Internationalization panel
+  i18n:
+    title: Интернационализация
+    translators:
+      default:
+        title: Услуга за превод по подразбиране
+        select_service: Избор на услуга
+      api_keys:
+        title: API ключове за услугите за превод
+        description: Управлявайте API ключовете за <a>услугите за превод</a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: Ключ за {$service}
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Регистрирайте се в <a {$homeHref}>{$service}</a> и въведете <a {$apiKeyHref}>своя API ключ</a> тук, за да включите бързия превод на текстовите полета.
+
+  # Media panel
+  media:
+    title: Медия
+    stock_photos:
+      api_keys:
+        title: API ключове за услугите за стокови снимки
+        description: Управлявайте API ключовете за <a>услугите за стокови снимки</a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: API ключ за {$service}
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Регистрирайте се за <a {$homeHref}>{$service} API</a> и въведете <a {$apiKeyHref}>своя API ключ</a> тук, за да вмъквате безплатни стокови снимки в полетата за изображения.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: Снимките са предоставени от {$service}
+      no_services: Не са конфигурирани <a>услуги за стокови снимки</a>.
+    cloud_storage:
+      api_keys:
+        title: API ключове за услугите за облачно съхранение
+        description: Управлявайте API ключовете за <a>услугите за облачно съхранение</a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: API ключ за {$service}
+      no_services: Не са конфигурирани <a>услуги за облачно съхранение</a>.
+
+  # Accessibility panel
+  accessibility:
+    title: Достъпност
+    underline_links:
+      title: Подчертаване на връзките
+      description: Показване на подчертаване на връзките в прегледа на записа и в етикетите на потребителския интерфейс.
+      switch_label: Винаги подчертавай връзките
+
+  # Advanced panel
+  advanced:
+    title: Разширени
+    beta:
+      title: Бета функции
+      description: Включване на някои бета функции, които може да са нестабилни или непреведени.
+      switch_label: Присъединяване към бета програмата
+    developer_mode:
+      title: Режим за разработчици
+      description: Включване на някои функции за разработчици, включително подробни записи в конзолата и системни контекстни менюта.
+      switch_label: Включване на режима за разработчици
+    deploy_hook:
+      title: Кука за внедряване
+      description: Въведете URL адрес на уебкука, който да бъде извикан, когато ръчно стартирате внедряване чрез „Публикуване на промените“. Може да го оставите празен, ако използвате GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: URL адрес на куката
+        saved: URL адресът на куката е запазен.
+        removed: URL адресът на куката е премахнат.
+      # Authorization header input
+      auth:
+        field_label: Заглавка Authorization (например Bearer <token>) (незадължително)
+        saved: Заглавката Authorization е запазена.
+        removed: Заглавката Authorization е премахната.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: Преглед на библиотеката със съдържание
+  view_asset_library: Преглед на библиотеката с ресурси
+  search: Търсене на записи и ресурси
+  create_entry: Създаване на нов запис
+  save_entry: Запазване на запис
+  cancel_editing: Отказ от редактирането на запис
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: AVIF изображение
+  bmp: Bitmap изображение
+  gif: GIF изображение
+  ico: Икона
+  jpeg: JPEG изображение
+  jpg: JPEG изображение
+  png: PNG изображение
+  svg: SVG изображение
+  tif: TIFF изображение
+  tiff: TIFF изображение
+  webp: WebP изображение
+  # Video formats
+  avi: AVI видео
+  m4v: MP4 видео
+  mov: QuickTime видео
+  mp4: MP4 видео
+  mpeg: MPEG видео
+  mpg: MPEG видео
+  ogg: Ogg видео
+  ogv: Ogg видео
+  ts: MPEG видео
+  webm: WebM видео
+  3gp: 3GPP видео
+  3g2: 3GPP2 видео
+  # Audio formats
+  aac: AAC аудио
+  mid: MIDI
+  midi: MIDI
+  m4a: MP4 аудио
+  mp3: MP3 аудио
+  oga: Ogg аудио
+  opus: OPUS аудио
+  wav: WAV аудио
+  weba: WebM аудио
+  # Document formats
+  csv: CSV електронна таблица
+  doc: Word документ
+  docx: Word документ
+  odp: OpenDocument презентация
+  ods: OpenDocument електронна таблица
+  odt: OpenDocument текст
+  pdf: PDF документ
+  ppt: PowerPoint презентация
+  pptx: PowerPoint презентация
+  rtf: Форматиран текстов документ
+  xls: Excel електронна таблица
+  xlsx: Excel електронна таблица
+  # Text formats
+  html: HTML текст
+  js: JavaScript
+  json: JSON текст
+  md: Markdown текст
+  toml: TOML текст
+  yaml: YAML текст
+  yml: YAML текст
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} байта'
+  kb: '{$size} КБ'
+  mb: '{$size} МБ'
+  gb: '{$size} ГБ'
+  tb: '{$size} ТБ'
