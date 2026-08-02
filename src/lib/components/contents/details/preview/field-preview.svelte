@@ -99,8 +99,8 @@
 <style>
   :global([role='document']) section {
     overflow: hidden;
-    margin: 8px 0;
-    padding: 8px 0;
+    /* Don’t set margin here because it makes scroll sync bumpy */
+    padding: 12px 0;
 
     h4 {
       color: var(--sui-secondary-foreground-color);
