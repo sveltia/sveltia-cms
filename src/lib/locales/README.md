@@ -11,7 +11,7 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 ## Steps to Contribute
 
 1. **Check existing translations**: See if your language is already on the [waiting list](https://github.com/sveltia/sveltia-cms/issues?q=is%3Aissue%20state%3Aopen%20label%3Al10n) or [already translated](https://github.com/sveltia/sveltia-cms/tree/main/src/lib/locales).
-2. **File an issue**: [Create a new issue](https://github.com/sveltia/sveltia-cms/issues/new?type=task&labels=l10n) with your language name (e.g., “French localization”).
+2. **File an issue**: [Create a new issue](https://github.com/sveltia/sveltia-cms/issues/new?type=feature&labels=l10n) with your language name (e.g., “French localization”).
    - **This is required** — pull requests (PRs) that are not linked to issues or sent by unassigned people will be closed to prevent unnecessary duplication of effort.
    - If you want us to provide an AI-generated draft translation for your language, please request it in your issue.
 3. **Translate two files**:
@@ -29,6 +29,7 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 - Localization files use [YAML](https://en.wikipedia.org/wiki/YAML) format, organized by [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language codes (e.g., `en-US.yaml`, `ja.yaml`).
 - Follow [Firefox l10n conventions](https://github.com/mozilla-l10n/firefox-l10n) for language codes: use short codes where possible (e.g., `ko` not `ko-KR`, `fr` not `fr-FR`). Otherwise, use the full code (e.g., `en-US`, `pt-BR`).
 - Use UTF-8 encoding and LF line endings (Unix format).
+- Add a trailing newline at the end of the file.
 
 ### YAML Formatting
 
@@ -36,7 +37,7 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 - **Indentation**: Maintain correct YAML indentation for hierarchy.
 - **Comments**: Preserve all comments — they provide context for translators. Don’t translate or delete them.
 - **Quotes**: Use single quotes only when YAML requires them (e.g., for colons or brackets). Otherwise omit: `key: value` not `key: 'value'`.
-- **Typographic quotes**: Use [curly quotes](https://typographyforlawyers.com/straight-and-curly-quotes.html) (“ ”) for content if your language uses them, but straight quotes (" ") for code snippets and technical terms, just like the original English files.
+- **Typographic quotes**: Use [curly quotes](https://typographyforlawyers.com/straight-and-curly-quotes.html) (“ ”) for content if your language uses them, but straight quotes (" ") for code snippets and technical terms, just like the original English files. Note that Claude does not use curly quotes by default, so you have to specify the usage in your prompt.
 - **Preserve formatting**: Keep any HTML or Markdown formatting (links, code snippets, etc.).
 
 ### MessageFormat 2 Syntax
