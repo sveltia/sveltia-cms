@@ -35,6 +35,7 @@
   <div role="none">
     <Button
       size="small"
+      iconic={!label}
       aria-label={expanded ? _('collapse') : _('expand')}
       aria-expanded={expanded}
       aria-controls={controlId}
@@ -66,7 +67,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 24px;
+    height: 28px;
     background-color: var(--sui-secondary-border-color);
 
     & > div {
@@ -87,11 +88,6 @@
         width: 40%;
         justify-content: flex-end;
       }
-    }
-
-    :global(button) {
-      padding: 0;
-      height: 16px;
     }
 
     .type {

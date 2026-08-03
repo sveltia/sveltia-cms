@@ -309,14 +309,10 @@
     gap: 4px;
     border: 1px solid var(--sui-control-border-color);
     border-radius: var(--sui-control-medium-border-radius);
+    width: 28px;
     height: -moz-available;
     height: -webkit-fill-available;
     height: stretch;
     background-color: var(--sui-secondary-border-color);
-
-    :global(button) {
-      padding: 0;
-      height: 16px;
-    }
   }
 </style>
