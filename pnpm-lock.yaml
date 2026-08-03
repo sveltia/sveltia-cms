@@ -21,8 +21,8 @@ importers:
         specifier: ^1.1.3
         version: 1.1.3(svelte@5.56.8(@typescript-eslint/types@8.65.0))
       '@sveltia/ui':
-        specifier: ^0.51.0
-        version: 0.51.0(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)
+        specifier: ^0.52.0
+        version: 0.52.0(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.0
         version: 0.12.0
@@ -1204,8 +1204,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.51.0':
-    resolution: {integrity: sha512-l/Mp7c8hzyiZ6xEBhyrYmS8xtILzfvFnWJT3LMGzIB5Uy6BLA9UNJlvmMaGx11XCnGYchnNzUFnJUyg7p0aOww==}
+  '@sveltia/ui@0.52.0':
+    resolution: {integrity: sha512-v10GLJV4NHUBxebTUReNLdvOjS4v+4NgyR6BBtC/5v8OfRNmyXN+D7wcfLvls02ZMAu7vgkQHE7W5sUN22Dwgw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2373,8 +2373,8 @@ packages:
     resolution: {integrity: sha512-w9UMqWwJxHNOvoNzSJ2oPF5wvYcvP7jUvYzhp67yEhTi17ZDBBC1z9pTdGuzjD+EFIqLSYRweZjqfiPzQ06Ebg==}
     engines: {node: '>= 0.4'}
 
-  get-tsconfig@4.14.0:
-    resolution: {integrity: sha512-yTb+8DXzDREzgvYmh6s9vHsSVCHeC0G3PI5bEXNBHtmshPnO+S5O7qgLEOn0I5QvMy6kpZN8K1NKGyilLb93wA==}
+  get-tsconfig@4.14.1:
+    resolution: {integrity: sha512-Dz/6HxkrxgNehhxLVeyv8sad9UzF2xBVeaKBQNDfJ5XiSXmp2gTR0eO0RWiT2NCKS5aGP9jjkOMggTN90qU50A==}
 
   git-hooks-list@4.2.1:
     resolution: {integrity: sha512-WNvqJjOxxs/8ZP9+DWdwWJ7cDsd60NHf39XnD82pDVrKO5q7xfPqpkK6hwEAmBa/ZSEE4IOoR75EzbbIuwGlMw==}
@@ -4885,7 +4885,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.56.8(@typescript-eslint/types@8.65.0)
 
-  '@sveltia/ui@0.51.0(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.52.0(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)':
     dependencies:
       '@lexical/code': 0.49.0(typescript@6.0.3)
       '@lexical/code-prism': 0.49.0(typescript@6.0.3)
@@ -5854,7 +5854,7 @@ snapshots:
 
   eslint-import-context@0.1.9(unrs-resolver@1.12.2):
     dependencies:
-      get-tsconfig: 4.14.0
+      get-tsconfig: 4.14.1
       stable-hash-x: 0.2.0
     optionalDependencies:
       unrs-resolver: 1.12.2
@@ -5872,7 +5872,7 @@ snapshots:
       debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.39.5(supports-color@10.2.2)
       eslint-import-context: 0.1.9(unrs-resolver@1.12.2)
-      get-tsconfig: 4.14.0
+      get-tsconfig: 4.14.1
       is-bun-module: 2.0.0
       stable-hash-x: 0.2.0
       tinyglobby: 0.2.17
@@ -5999,7 +5999,7 @@ snapshots:
       enhanced-resolve: 5.24.5
       eslint: 9.39.5(supports-color@10.2.2)
       eslint-plugin-es-x: 7.8.0(eslint@9.39.5(supports-color@10.2.2))
-      get-tsconfig: 4.14.0
+      get-tsconfig: 4.14.1
       globals: 15.15.0
       globrex: 0.1.2
       ignore: 5.3.2
@@ -6303,7 +6303,7 @@ snapshots:
       es-errors: 1.3.0
       get-intrinsic: 1.3.0
 
-  get-tsconfig@4.14.0:
+  get-tsconfig@4.14.1:
     dependencies:
       resolve-pkg-maps: 1.0.0
 
