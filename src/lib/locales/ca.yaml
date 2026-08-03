@@ -23,12 +23,12 @@ cancel: Cancel·la
 done: Fet
 save: Desa
 # Progress indicator shown on the save button while a save operation is in progress
-saving: S'està desant…
+saving: S’està desant…
 
 # Publishing actions: used when committing changes to the repository
 publish: Publica
 # Progress indicator shown on the publish button during publishing
-publishing: S'està publicant…
+publishing: S’està publicant…
 
 # Modification actions: editing and updating content
 rename: Reanomena
@@ -60,7 +60,7 @@ discard: Descarta
 # Status messages: search and results indicators
 # Shown in ARIA live regions during search operations
 searching: Cercant…
-no_results: No s'han trobat resultats.
+no_results: No s’han trobat resultats.
 
 # Toolbar region labels: used as aria-labels for different toolbar areas
 # These help screen readers identify which toolbar is being navigated
@@ -94,7 +94,7 @@ singletons: Singletons
 
 # Error messages
 # Toast notification when clipboard operations fail
-clipboard_error: No s'ha pogut copiar al porta-retalls.
+clipboard_error: No s’ha pogut copiar al porta-retalls.
 
 # ==============================================================================
 # Sign-In Page
@@ -111,9 +111,9 @@ welcome_message: 'Benvinguts al {$name}'
 powered_by: 'Amb la tecnologia del {$name}'
 
 # Shown during initial configuration and data loading
-loading_cms_config: S'està carregant la configuració del CMS…
-loading_site_data: S'estan carregant les dades del lloc…
-loading_site_data_error: S'ha produït un error en carregar les dades del lloc.
+loading_cms_config: S’està carregant la configuració del CMS…
+loading_site_data: S’estan carregant les dades del lloc…
+loading_site_data_error: S’ha produït un error en carregar les dades del lloc.
 
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
@@ -121,17 +121,17 @@ loading_site_data_error: S'ha produït un error en carregar les dades del lloc.
 sign_in_with_x: 'Inicia la sessió amb {$service}'
 
 # Access token dialog: alternative authentication method
-sign_in_using_access_token: Inicia la sessió amb un testimoni d'accés
+sign_in_using_access_token: Inicia la sessió amb un testimoni d’accés
 sign_in_using_access_token_description: Introduïu el vostre testimoni a continuació. Ha de tenir accés de lectura/escriptura al contingut del repositori.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
-sign_in_using_access_token_link: Podeu generar un testimoni a la <a>pàgina de configuració d'usuari del {$service}</a>.
+sign_in_using_access_token_link: Podeu generar un testimoni a la <a>pàgina de configuració d’usuari del {$service}</a>.
 # Input field label for personal access token
-personal_access_token: Testimoni d'accés personal
+personal_access_token: Testimoni d’accés personal
 
 # Authentication progress indicators
-authorizing: S'està autoritzant…
-signing_in: S'està iniciant la sessió…
+authorizing: S’està autoritzant…
+signing_in: S’està iniciant la sessió…
 
 # Local and test repository options
 # Button label and description for working with a local Git repository
@@ -146,17 +146,17 @@ work_with_test_repo: Treballa amb un repositori de prova
 # Error messages shown during sign-in failures
 sign_in_error:
   not_project_root: La carpeta seleccionada no és un directori arrel de repositori. Torneu-ho a provar.
-  picker_dismissed: No s'ha pogut seleccionar un directori arrel de repositori. Torneu-ho a provar.
-  authentication_aborted: S'ha avortat l'autenticació. Torneu-ho a provar.
+  picker_dismissed: No s’ha pogut seleccionar un directori arrel de repositori. Torneu-ho a provar.
+  authentication_aborted: S’ha avortat l’autenticació. Torneu-ho a provar.
   invalid_token: El testimoni proporcionat no és vàlid. Comproveu-ho i torneu-ho a provar.
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
-  UNSUPPORTED_BACKEND: El vostre rerefons Git no és compatible amb l'autenticador.
-  UNSUPPORTED_DOMAIN: El vostre domini no té permès utilitzar l'autenticador.
-  MISCONFIGURED_CLIENT: L'ID de client o el secret de l'aplicació OAuth no estan configurats.
-  AUTH_CODE_REQUEST_FAILED: No s'ha pogut rebre un codi d'autorització. Proveu-ho de nou més tard.
-  CSRF_DETECTED: S'ha detectat un possible atac CSRF. S'ha avortat el flux d'autenticació.
-  TOKEN_REQUEST_FAILED: No s'ha pogut demanar un testimoni d'accés. Proveu-ho de nou més tard.
-  TOKEN_REFRESH_FAILED: No s'ha pogut renovar el testimoni d'accés. Proveu-ho de nou més tard.
+  UNSUPPORTED_BACKEND: El vostre rerefons Git no és compatible amb l’autenticador.
+  UNSUPPORTED_DOMAIN: El vostre domini no té permès utilitzar l’autenticador.
+  MISCONFIGURED_CLIENT: L’ID de client o el secret de l’aplicació OAuth no estan configurats.
+  AUTH_CODE_REQUEST_FAILED: No s’ha pogut rebre un codi d’autorització. Proveu-ho de nou més tard.
+  CSRF_DETECTED: S’ha detectat un possible atac CSRF. S’ha avortat el flux d’autenticació.
+  TOKEN_REQUEST_FAILED: No s’ha pogut demanar un testimoni d’accés. Proveu-ho de nou més tard.
+  TOKEN_REFRESH_FAILED: No s’ha pogut renovar el testimoni d’accés. Proveu-ho de nou més tard.
   MALFORMED_RESPONSE: El servidor ha respost amb dades mal formades. Proveu-ho de nou més tard.
 
 # Backend and repository validation errors
@@ -180,8 +180,8 @@ unexpected_error: Error inesperat
 entry_parse_errors: |
   .input {$count :integer}
   .match $count
-    one {{ S'ha produït un error en analitzar un fitxer d'entrada. Comproveu la consola del navegador per a més detalls. }}
-    *   {{ S'han produït errors en analitzar fitxers d'entrada. Comproveu la consola del navegador per a més detalls. }}
+    one {{ S’ha produït un error en analitzar un fitxer d’entrada. Comproveu la consola del navegador per a més detalls. }}
+    *   {{ S’han produït errors en analitzar fitxers d’entrada. Comproveu la consola del navegador per a més detalls. }}
 
 # ==============================================================================
 # Authentication and Account
@@ -190,7 +190,7 @@ entry_parse_errors: |
 # flows throughout the application.
 
 # Sign-in page and external assets panel: credential input field aria-labels
-username: Nom d'usuari
+username: Nom d’usuari
 password: Contrasenya
 
 # Sign-in actions: primary button labels and account menu items
@@ -206,8 +206,8 @@ sign_in_with_mobile_instruction: Escanegeu el codi QR següent amb el telèfon o
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
 signed_in_as_x: 'Sessió iniciada com a {$name}'
-working_with_local_repo: S'està treballant amb un repositori local
-working_with_test_repo: S'està treballant amb un repositori de prova
+working_with_local_repo: S’està treballant amb un repositori local
+working_with_test_repo: S’està treballant amb un repositori de prova
 
 # Account menu: action items for sign-out and app installation
 sign_out: Tanca la sessió
@@ -252,9 +252,9 @@ create_entry_or_assets: Crea una entrada o recursos
 
 # Publishing actions: button labels and progress indicators
 publish_changes: Publica els canvis
-publishing_changes: S'estan publicant els canvis…
+publishing_changes: S’estan publicant els canvis…
 # Error notification when publishing fails
-publishing_changes_failed: No s'han pogut publicar els canvis. Torneu-ho a provar.
+publishing_changes_failed: No s’han pogut publicar els canvis. Torneu-ho a provar.
 
 # Notifications: button aria-labels and section headings
 show_notifications: Mostra les notificacions
@@ -271,7 +271,7 @@ git_repository: Repositori Git
 settings: Configuració
 
 # Help menu: button aria-labels and section headings
-show_help_menu: Mostra el menú d'ajuda
+show_help_menu: Mostra el menú d’ajuda
 # Help section heading in dropdowns and mobile menu
 help: Ajuda
 
@@ -284,7 +284,7 @@ announcements: Anuncis
 # {$version} is the current app version string
 version_x: 'Versió {$version}'
 # Additional help menu items
-report_issue: Informa d'un problema
+report_issue: Informa d’un problema
 share_feedback: Comparteix comentaris
 get_help: Demana ajuda
 donate: Feu un donatiu
@@ -322,13 +322,13 @@ asset_location:
   # Assets stored in the site’s Git repository
   repository: El vostre lloc
   external: Ubicacions externes
-  stock_photos: Banc d'imatges
+  stock_photos: Banc d’imatges
 
 # Sidebar and list labels
 # Collection assets panel aria-label
 collection_assets: Recursos de la col·lecció
 # List aria-labels for different list types
-entry_list: Llista d'entrades
+entry_list: Llista d’entrades
 file_list: Llista de fitxers
 asset_list: Llista de recursos
 
@@ -365,8 +365,8 @@ viewing_x_asset_folder: |
 singleton_selected_announcement: Premeu Retorn per editar el fitxer «{$file}».
 
 # Error messages: collection or file not found
-collection_not_found: No s'ha trobat la col·lecció.
-file_not_found: No s'ha trobat el fitxer.
+collection_not_found: No s’ha trobat la col·lecció.
+file_not_found: No s’ha trobat el fitxer.
 
 # Selection count indicator
 # Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
@@ -387,7 +387,7 @@ switch_to_grid_view: Canvia a la vista de graella
 
 # Sort menu: button labels and options
 sort: Ordena
-sorting_options: Opcions d'ordenació
+sorting_options: Opcions d’ordenació
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -408,7 +408,7 @@ sort_keys:
 ascending: '{$label}, A–Z'
 ascending_date: '{$label}, antic al nou'
 descending: '{$label}, Z–A'
-descending_date: "{$label}, nou a l'antic"
+descending_date: '{$label}, nou a l’antic'
 
 # Filter menu: button labels and options
 filter: Filtra
@@ -416,7 +416,7 @@ filtering_options: Opcions de filtratge
 
 # Group menu: button labels and options
 group: Agrupa
-grouping_options: Opcions d'agrupació
+grouping_options: Opcions d’agrupació
 
 # Asset type filter and group labels
 type: Tipus
@@ -444,18 +444,18 @@ global_assets: Recursos globals
 # Strings related to creating, editing, and managing entries and collections.
 
 # Error message when entry cannot be found
-entry_not_found: No s'ha trobat l'entrada.
+entry_not_found: No s’ha trobat l’entrada.
 
 # Entry creation restrictions: tooltip and advisory messages
-creating_entries_disabled_by_admin: La creació d'entrades noves en aquesta col·lecció està desactivada per l'administrador.
+creating_entries_disabled_by_admin: La creació d’entrades noves en aquesta col·lecció està desactivada per l’administrador.
 # {$quota} is the collection’s maximum entry count
 creating_entries_disabled_by_quota: No podeu afegir entrades noves a aquesta col·lecció perquè ha arribat al seu límit de {$quota} entrades.
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
   .input {$remaining :integer}
   .match $remaining
-    one {{ Aquesta col·lecció s'acosta al seu límit de {$quota} entrades. Només podeu crear {$remaining} entrada més. }}
-    *   {{ Aquesta col·lecció s'acosta al seu límit de {$quota} entrades. Només podeu crear {$remaining} entrades més. }}
+    one {{ Aquesta col·lecció s’acosta al seu límit de {$quota} entrades. Només podeu crear {$remaining} entrada més. }}
+    *   {{ Aquesta col·lecció s’acosta al seu límit de {$quota} entrades. Només podeu crear {$remaining} entrades més. }}
 
 # Navigation: back links and list labels
 back_to_collection: Torna a la col·lecció
@@ -510,8 +510,8 @@ x_assets: |
     *   {{ {$count} recursos }}
 
 # Empty state messages
-no_files_found: No s'ha trobat cap fitxer.
-no_entries_found: No s'ha trobat cap entrada.
+no_files_found: No s’ha trobat cap fitxer.
+no_entries_found: No s’ha trobat cap entrada.
 
 # ==============================================================================
 # Asset Management
@@ -522,8 +522,8 @@ no_entries_found: No s'ha trobat cap entrada.
 upload_assets: Puja recursos nous
 
 # Edit options menu: button and item labels
-edit_options: Opcions d'edició
-show_edit_options: Mostra les opcions d'edició
+edit_options: Opcions d’edició
+show_edit_options: Mostra les opcions d’edició
 # Edit menu items with specific asset names
 edit_asset: Edita el recurs
 # {$name} is the selected asset name
@@ -542,13 +542,13 @@ enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
     0   {{ Introduïu un nom nou a continuació. }}
-    one {{ Introduïu un nom nou a continuació. També s'actualitzarà una entrada que usa aquest recurs. }}
-    *   {{ Introduïu un nom nou a continuació. També s'actualitzaran {$count} entrades que usen aquest recurs. }}
+    one {{ Introduïu un nom nou a continuació. També s’actualitzarà una entrada que usa aquest recurs. }}
+    *   {{ Introduïu un nom nou a continuació. També s’actualitzaran {$count} entrades que usen aquest recurs. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: El nom del fitxer no pot ser buit.
   character: El nom del fitxer no pot contenir caràcters especials.
-  duplicate: Aquest nom de fitxer ja s'usa per a un altre recurs.
+  duplicate: Aquest nom de fitxer ja s’usa per a un altre recurs.
 
 # Replace asset: menu item and dialog title
 replace_asset: Reemplaça el recurs
@@ -581,8 +581,8 @@ drop_files_or: |
 drop_image_files_or: |
   .input {$count :integer}
   .match $count
-    one {{ Deixeu anar un fitxer d'imatge aquí o }}
-    *   {{ Deixeu anar fitxers d'imatge aquí o }}
+    one {{ Deixeu anar un fitxer d’imatge aquí o }}
+    *   {{ Deixeu anar fitxers d’imatge aquí o }}
 
 # File picker and clipboard actions used by upload controls
 browse: Explora
@@ -592,8 +592,8 @@ paste: Enganxa
 paste_image: Enganxa la imatge
 
 # Clipboard paste errors
-no_image_in_clipboard: No s'ha trobat cap imatge al porta-retalls.
-clipboard_access_denied: S'ha denegat l'accés al porta-retalls.
+no_image_in_clipboard: No s’ha trobat cap imatge al porta-retalls.
+clipboard_access_denied: S’ha denegat l’accés al porta-retalls.
 
 # Drag-and-drop overlay text (shown while dragging)
 # {$count} is the number of files expected by the current picker mode
@@ -607,7 +607,7 @@ drop_files_here: |
 unsupported_file_type: Tipus de fitxer no compatible
 # {$type} is the expected asset type label, such as image or document
 dropped_file_type_mismatch: 'El fitxer deixat anar no és cap dels tipus següents: {$types}. Torneu-ho a provar.'
-dropped_image_type_mismatch: "El fitxer deixat anar no és compatible. Només s'accepta una imatge dels tipus següents: {$types}. Torneu-ho a provar."
+dropped_image_type_mismatch: 'El fitxer deixat anar no és compatible. Només s’accepta una imatge dels tipus següents: {$types}. Torneu-ho a provar.'
 
 # File chooser button label
 # {$count} is the number of files the picker allows the user to choose
@@ -649,13 +649,13 @@ confirm_deleting_all_assets: Segur que voleu suprimir tots els recursos?
 delete_entries: |
   .input {$count :integer}
   .match $count
-    one {{ Suprimeix l'entrada }}
+    one {{ Suprimeix l’entrada }}
     *   {{ Suprimeix les entrades }}
 # {$count} is the number of selected entries
 delete_selected_entries: |
   .input {$count :integer}
   .match $count
-    one {{ Suprimeix l'entrada seleccionada }}
+    one {{ Suprimeix l’entrada seleccionada }}
     *   {{ Suprimeix les entrades seleccionades }}
 confirm_deleting_this_entry: Segur que voleu suprimir aquesta entrada?
 confirm_deleting_this_entry_with_assets: Segur que voleu suprimir aquesta entrada i els recursos associats?
@@ -663,13 +663,13 @@ confirm_deleting_this_entry_with_assets: Segur que voleu suprimir aquesta entrad
 confirm_deleting_selected_entries: |
   .input {$count :integer}
   .match $count
-    one {{ Segur que voleu suprimir l'entrada seleccionada? }}
+    one {{ Segur que voleu suprimir l’entrada seleccionada? }}
     *   {{ Segur que voleu suprimir les {$count} entrades seleccionades? }}
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Segur que voleu suprimir l'entrada seleccionada i els recursos associats? }}
+    one {{ Segur que voleu suprimir l’entrada seleccionada i els recursos associats? }}
     *   {{ Segur que voleu suprimir les {$count} entrades seleccionades i els recursos associats? }}
 confirm_deleting_all_entries: Segur que voleu suprimir totes les entrades?
 confirm_deleting_all_entries_with_assets: Segur que voleu suprimir totes les entrades i els recursos associats?
@@ -685,7 +685,7 @@ done_reordering_entries: He acabat de reordenar les entrades
 cancel_reordering_entries: Cancel·la la reordenació de les entrades
 
 # Reorder error message
-saving_reorder_failed: No s'ha pogut desar l'ordre nou de les entrades. Torneu-ho a provar.
+saving_reorder_failed: No s’ha pogut desar l’ordre nou de les entrades. Torneu-ho a provar.
 
 # ==============================================================================
 # File Upload and Processing
@@ -697,11 +697,11 @@ saving_reorder_failed: No s'ha pogut desar l'ordre nou de les entrades. Torneu-h
 processing_files: |
   .input {$count :integer}
   .match $count
-    one {{ S'està processant un fitxer. Pot trigar una mica. }}
-    *   {{ S'estan processant fitxers. Pot trigar una mica. }}
+    one {{ S’està processant un fitxer. Pot trigar una mica. }}
+    *   {{ S’estan processant fitxers. Pot trigar una mica. }}
 
 # Uploading section aria-label
-uploading_files: S'estan pujant fitxers
+uploading_files: S’estan pujant fitxers
 
 # Replace file confirmation
 # Dialog body when replacing an existing file
@@ -745,8 +745,8 @@ file_name_conflict_resolution: Resolució de conflicte de noms de fitxer
 keep_both: Mantén tots dos
 
 # Upload progress and error messages
-uploading_files_progress: S'està pujant…
-uploading_files_failed: No s'ha pogut pujar.
+uploading_files_progress: S’està pujant…
+uploading_files_failed: No s’ha pogut pujar.
 
 # File metadata display
 # Shows file type and size in upload preview and asset info
@@ -776,7 +776,7 @@ index_file: Fitxer índex
 no_files_in_collection: No hi ha cap fitxer disponible en aquesta col·lecció.
 
 # Entry duplication
-duplicate_entry: Duplica l'entrada
+duplicate_entry: Duplica l’entrada
 entry_duplicated: Entrada duplicada com a esborrany nou.
 
 # Validation errors
@@ -785,8 +785,8 @@ entry_duplicated: Entrada duplicada com a esborrany nou.
 entry_validation_errors: |
   .input {$count :integer}
   .match $count
-    one {{ Un camp té un error. Corretgeu-lo per desar l'entrada. }}
-    *   {{ {$count} camps tenen errors. Corretgiu-los per desar l'entrada. }}
+    one {{ Un camp té un error. Corretgeu-lo per desar l’entrada. }}
+    *   {{ {$count} camps tenen errors. Corretgiu-los per desar l’entrada. }}
 
 # ==============================================================================
 # Success Notifications
@@ -868,29 +868,29 @@ assets_deleted: |
 content_editor: Editor de continguts
 
 # Draft backup: restore dialog
-restore_backup_title: Restaura l'esborrany
+restore_backup_title: Restaura l’esborrany
 # {$datetime} is the localized timestamp of the saved draft backup
-restore_backup_description: Aquesta entrada té una còpia de seguretat de {$datetime}. Voleu restaurar l'esborrany editat?
+restore_backup_description: Aquesta entrada té una còpia de seguretat de {$datetime}. Voleu restaurar l’esborrany editat?
 
 # Draft backup notifications
-draft_backup_saved: Còpia de seguretat de l'esborrany desada.
-draft_backup_restored: Còpia de seguretat de l'esborrany restaurada.
-draft_backup_deleted: Còpia de seguretat de l'esborrany suprimida.
+draft_backup_saved: Còpia de seguretat de l’esborrany desada.
+draft_backup_restored: Còpia de seguretat de l’esborrany restaurada.
+draft_backup_deleted: Còpia de seguretat de l’esborrany suprimida.
 
 # Editor toolbar actions
-cancel_editing: Cancel·la l'edició
+cancel_editing: Cancel·la l’edició
 
 # Editor page titles and announcements
 # Creating a new entry
 # {$name} is the singular label of the collection being created in
-create_entry_title: S'està creant {$name}
+create_entry_title: S’està creant {$name}
 # {$collection} is the collection label
 create_entry_announcement: Ara esteu creant una entrada nova a la col·lecció «{$collection}».
 # Editing an existing entry
 # {$collection} is the collection label and {$entry} is the entry label or slug
 edit_entry_title: '{$collection} › {$entry}'
 # {$entry} is the current entry label and {$collection} is the collection label
-edit_entry_announcement: Ara esteu editant l'entrada «{$entry}» de la col·lecció «{$collection}».
+edit_entry_announcement: Ara esteu editant l’entrada «{$entry}» de la col·lecció «{$collection}».
 # {$file} is the file name and {$collection} is the collection label
 edit_file_announcement: Ara esteu editant el fitxer «{$file}» de la col·lecció «{$collection}».
 # {$file} is the singleton file name
@@ -902,8 +902,8 @@ save_and_publish: Desa i publica
 save_without_publishing: Desa sense publicar
 
 # Editor options menu
-show_editor_options: Mostra les opcions de l'editor
-editor_options: Opcions de l'editor
+show_editor_options: Mostra les opcions de l’editor
+editor_options: Opcions de l’editor
 
 # Preview controls
 show_preview: Mostra la previsualització
@@ -957,8 +957,8 @@ disable_x_locale: 'Desactiva el {$locale}'
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
-locale_x_has_been_disabled: El contingut en {$locale} s'ha desactivat.
-locale_x_now_disabled: El contingut en {$locale} està ara desactivat. Se suprimirà quan deseu l'entrada.
+locale_x_has_been_disabled: El contingut en {$locale} s’ha desactivat.
+locale_x_now_disabled: El contingut en {$locale} està ara desactivat. Se suprimirà quan deseu l’entrada.
 
 # Repository and site links
 view_in_repository: Mostra al repositori
@@ -990,11 +990,11 @@ revert_all_changes: Reverteix tots els canvis
 
 # Slug editing
 edit_slug: Edita el slug
-edit_slug_warning: Canviar el slug pot trencar els enllaços interns i externs cap a l'entrada. Actualment, Sveltia CMS no actualitza les referències creades amb camps de relació, de manera que haureu d'actualitzar manualment aquestes referències juntament amb altres enllaços.
+edit_slug_warning: Canviar el slug pot trencar els enllaços interns i externs cap a l’entrada. Actualment, Sveltia CMS no actualitza les referències creades amb camps de relació, de manera que haureu d’actualitzar manualment aquestes referències juntament amb altres enllaços.
 edit_slug_error:
   empty: El slug no pot ser buit.
   invalid: El slug no pot contenir caràcters especials, incloses les barres i els espais.
-  duplicate: Aquest slug ja s'usa per a una altra entrada.
+  duplicate: Aquest slug ja s’usa per a una altra entrada.
 
 # Required field indicator
 required: Obligatori
@@ -1004,24 +1004,24 @@ required: Obligatori
 editor:
   translation:
     none: No hi ha res a traduir.
-    started: S'està traduint…
-    error: No s'ha pogut traduir.
+    started: S’està traduint…
+    error: No s’ha pogut traduir.
     # {$source} is the source language name and {$count} is the number of translated fields
     complete: |
       .input {$count :integer}
       .match $count
-        0   {{ No s'ha traduït cap camp del {$source}. }}
-        one {{ S'ha traduït un camp del {$source}. }}
-        *   {{ S'han traduït {$count} camps del {$source}. }}
+        0   {{ No s’ha traduït cap camp del {$source}. }}
+        one {{ S’ha traduït un camp del {$source}. }}
+        *   {{ S’han traduït {$count} camps del {$source}. }}
   copy:
     none: No hi ha res a copiar.
     # {$source} is the source language name and {$count} is the number of copied fields
     complete: |
       .input {$count :integer}
       .match $count
-        0   {{ No s'ha copiat cap camp del {$source}. }}
-        one {{ S'ha copiat un camp del {$source}. }}
-        *   {{ S'han copiat {$count} camps del {$source}. }}
+        0   {{ No s’ha copiat cap camp del {$source}. }}
+        one {{ S’ha copiat un camp del {$source}. }}
+        *   {{ S’han copiat {$count} camps del {$source}. }}
 
 # ==============================================================================
 # Field Validation
@@ -1037,7 +1037,7 @@ validation:
     # {$min} is the minimum allowed value, already formatted for the input type
     datetime-local: La data/hora ha de ser posterior o igual a {$min}.
     date: La data ha de ser posterior o igual a {$min}.
-    time: L'hora ha de ser posterior o igual a {$min}.
+    time: L’hora ha de ser posterior o igual a {$min}.
     number: El valor ha de ser superior o igual a {$min}.
     # {$min} is the minimum number of selected options
     select: |
@@ -1049,15 +1049,15 @@ validation:
     add: |
       .input {$min :integer}
       .match $min
-        one {{ Heu d'afegir almenys {$min} element. }}
-        *   {{ Heu d'afegir almenys {$min} elements. }}
+        one {{ Heu d’afegir almenys {$min} element. }}
+        *   {{ Heu d’afegir almenys {$min} elements. }}
 
   # Maximum value/count exceeded
   range_overflow:
     # {$max} is the maximum allowed value, already formatted for the input type
     datetime-local: La data/hora ha de ser anterior o igual a {$max}.
     date: La data ha de ser anterior o igual a {$max}.
-    time: L'hora ha de ser anterior o igual a {$max}.
+    time: L’hora ha de ser anterior o igual a {$max}.
     number: El valor ha de ser inferior o igual a {$max}.
     # {$max} is the maximum number of selected options
     select: |
@@ -1077,8 +1077,8 @@ validation:
   too_short: |
     .input {$min :integer}
     .match $min
-      one {{ Heu d'introduir almenys {$min} caràcter. }}
-      *   {{ Heu d'introduir almenys {$min} caràcters. }}
+      one {{ Heu d’introduir almenys {$min} caràcter. }}
+      *   {{ Heu d’introduir almenys {$min} caràcters. }}
   too_long: |
     .input {$max :integer}
     .match $max
@@ -1093,7 +1093,7 @@ validation:
 
   # Custom field validation error
   invalid_value: Valor no vàlid.
-  unexpected_error: S'ha produït un error inesperat.
+  unexpected_error: S’ha produït un error inesperat.
 
 # ==============================================================================
 # Entry Sidebar
@@ -1108,13 +1108,13 @@ entry_sidebar:
   validation:
     title: Validació
     placeholder: Aquí es mostraran els resultats de la validació.
-    no_errors_found: No s'ha trobat cap error.
+    no_errors_found: No s’ha trobat cap error.
 
   # History panel: shows entry commit history
   history:
     title: Historial
-    fetch_failed: No s'ha pogut carregar l'historial.
-    no_history: No s'ha trobat cap historial.
+    fetch_failed: No s’ha pogut carregar l’historial.
+    no_history: No s’ha trobat cap historial.
 
   # Backlinks panel: shows entries referencing this entry
   backlinks:
@@ -1125,7 +1125,7 @@ entry_sidebar:
 saving_entry:
   error:
     title: Error
-    description: S'ha produït un error en desar l'entrada. Proveu-ho de nou més tard.
+    description: S’ha produït un error en desar l’entrada. Proveu-ho de nou més tard.
 
 # ==============================================================================
 # Asset Editor
@@ -1229,7 +1229,7 @@ assets_dialog:
   # Asset folder options
   folder:
     field: Recursos del camp
-    entry: Recursos de l'entrada
+    entry: Recursos de l’entrada
     file: Recursos del fitxer
     collection: Recursos de la col·lecció
     global: Recursos globals
@@ -1237,16 +1237,16 @@ assets_dialog:
   # Error messages
   error:
     invalid_key: La vostra clau API no és vàlida o ha caducat. Comproveu-la i torneu-ho a provar.
-    search_fetch_failed: S'ha produït un error en cercar recursos. Proveu-ho de nou més tard.
-    image_fetch_failed: S'ha produït un error en baixar el recurs seleccionat. Proveu-ho de nou més tard.
+    search_fetch_failed: S’ha produït un error en cercar recursos. Proveu-ho de nou més tard.
+    image_fetch_failed: S’ha produït un error en baixar el recurs seleccionat. Proveu-ho de nou més tard.
 
   # Stock photo panels
   available_images: Imatges disponibles
 
   # URL entry option
   enter_url: Introduïu un URL
-  enter_file_url: "Introduïu l'URL del fitxer:"
-  enter_image_url: "Introduïu l'URL de la imatge:"
+  enter_file_url: 'Introduïu l’URL del fitxer:'
+  enter_image_url: 'Introduïu l’URL de la imatge:'
 
   # Large file warning dialog
   large_file:
@@ -1266,23 +1266,23 @@ character_counter:
   min_max: |
     .input {$count :integer}
     .match $count
-      0   {{ No s'ha introduït cap caràcter. Mínim: {$min}. Màxim: {$max}. }}
-      one {{ S'ha introduït {$count} caràcter. Mínim: {$min}. Màxim: {$max}. }}
-      *   {{ S'han introduït {$count} caràcters. Mínim: {$min}. Màxim: {$max}. }}
+      0   {{ No s’ha introduït cap caràcter. Mínim: {$min}. Màxim: {$max}. }}
+      one {{ S’ha introduït {$count} caràcter. Mínim: {$min}. Màxim: {$max}. }}
+      *   {{ S’han introduït {$count} caràcters. Mínim: {$min}. Màxim: {$max}. }}
   # {$count} is the current character count and {$min} is the minimum allowed count
   min: |
     .input {$count :integer}
     .match $count
-      0   {{ No s'ha introduït cap caràcter. Mínim: {$min}. }}
-      one {{ S'ha introduït {$count} caràcter. Mínim: {$min}. }}
-      *   {{ S'han introduït {$count} caràcters. Mínim: {$min}. }}
+      0   {{ No s’ha introduït cap caràcter. Mínim: {$min}. }}
+      one {{ S’ha introduït {$count} caràcter. Mínim: {$min}. }}
+      *   {{ S’han introduït {$count} caràcters. Mínim: {$min}. }}
   # {$count} is the current character count and {$max} is the maximum allowed count
   max: |
     .input {$count :integer}
     .match $count
-      0   {{ No s'ha introduït cap caràcter. Màxim: {$max}. }}
-      one {{ S'ha introduït {$count} caràcter. Màxim: {$max}. }}
-      *   {{ S'han introduït {$count} caràcters. Màxim: {$max}. }}
+      0   {{ No s’ha introduït cap caràcter. Màxim: {$max}. }}
+      one {{ S’ha introduït {$count} caràcter. Màxim: {$max}. }}
+      *   {{ S’han introduït {$count} caràcters. Màxim: {$max}. }}
 
 # YouTube video player iframe title
 youtube_video_player: Reproductor de vídeos del YouTube
@@ -1313,8 +1313,8 @@ use_your_location: Usa la vostra ubicació
 
 # Geolocation error dialog
 geolocation_error_title: Error de geolocalització
-geolocation_error_body: S'ha produït un error en obtenir la vostra ubicació.
-geolocation_unsupported: L'API de geolocalització no és compatible amb aquest navegador.
+geolocation_error_body: S’ha produït un error en obtenir la vostra ubicació.
+geolocation_unsupported: L’API de geolocalització no és compatible amb aquest navegador.
 
 # Boolean field: display labels
 # Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
@@ -1337,21 +1337,21 @@ cloud_storage:
       key_label: Clau API
       # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
       initial: Introduïu la vostra {$key} per al {$service}.
-      requested: S'està validant…
+      requested: S’està validant…
       # {$key} is the credential label the user entered, e.g., API Key
       error: La {$key} proporcionada no és vàlida. Comproveu-la i torneu-ho a provar.
     password:
       # {$service} is the cloud service name
       initial: Introduïu la vostra contrasenya per al {$service}.
-      requested: S'està iniciant la sessió…
-      error: El nom d'usuari o la contrasenya no són correctes. Comproveu-los i torneu-ho a provar.
+      requested: S’està iniciant la sessió…
+      error: El nom d’usuari o la contrasenya no són correctes. Comproveu-los i torneu-ho a provar.
 
   # Service-specific configurations
   cloudinary:
     iframe_title: Biblioteca multimèdia de Cloudinary
     activate:
       button_label: Activa Cloudinary
-      description: Un cop iniciada la sessió, feu clic de nou al botó d'inici de sessió per continuar.
+      description: Un cop iniciada la sessió, feu clic de nou al botó d’inici de sessió per continuar.
     auth_key_label: API Secret
     open_library: Obre Cloudinary
 
@@ -1397,112 +1397,112 @@ config:
     insecure_urls: |
       .input {$count :integer}
       .match $count
-        one {{ L'URL del fitxer de configuració ha d'usar el protocol HTTPS o una adreça localhost. }}
-        *   {{ Els URLs del fitxer de configuració han d'usar el protocol HTTPS o adreces localhost. }}
-    fetch_failed: No s'ha pogut recuperar el fitxer de configuració.
+        one {{ L’URL del fitxer de configuració ha d’usar el protocol HTTPS o una adreça localhost. }}
+        *   {{ Els URLs del fitxer de configuració han d’usar el protocol HTTPS o adreces localhost. }}
+    fetch_failed: No s’ha pogut recuperar el fitxer de configuració.
     # {$status} is the HTTP status code returned while fetching the config file
-    fetch_failed_not_ok: La resposta HTTP ha retornat amb l'estat {$status}.
+    fetch_failed_not_ok: La resposta HTTP ha retornat amb l’estat {$status}.
     # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
-    fetch_failed_with_manual_init: 'No s''ha pogut recuperar el fitxer de configuració. Per evitar que es carregui el fitxer `config.yml`, afegiu <a>`load_config_file: false`</a> a l''objecte de configuració passat a `CMS.init()`.'
-    parse_failed: No s'ha pogut analitzar el fitxer de configuració.
+    fetch_failed_with_manual_init: 'No s’ha pogut recuperar el fitxer de configuració. Per evitar que es carregui el fitxer `config.yml`, afegiu <a>`load_config_file: false`</a> a l’objecte de configuració passat a `CMS.init()`.'
+    parse_failed: No s’ha pogut analitzar el fitxer de configuració.
     parse_failed_invalid_object: El fitxer de configuració no és un objecte JavaScript vàlid.
-    parse_failed_unsupported_type: El fitxer de configuració no és un tipus de fitxer vàlid. Només s'admeten YAML, TOML i JSON.
-    no_collection: No s'han definit col·leccions.
-    missing_backend: No s'ha definit el rerefons.
-    missing_backend_name: No s'ha definit el nom del rerefons.
+    parse_failed_unsupported_type: El fitxer de configuració no és un tipus de fitxer vàlid. Només s’admeten YAML, TOML i JSON.
+    no_collection: No s’han definit col·leccions.
+    missing_backend: No s’ha definit el rerefons.
+    missing_backend_name: No s’ha definit el nom del rerefons.
     # {$name} is the backend name from the CMS configuration
     unsupported_known_backend: El rerefons {$name} no està <a>suportat</a> a Sveltia CMS.
     # {$name} is the backend name from the CMS configuration
     unsupported_deprecated_backend: El rerefons obsolet {$name} no està <a>suportat</a> a Sveltia CMS.
     unsupported_custom_backend: Els rerefons personalitzats no estan <a>suportats</a> a Sveltia CMS.
     unsupported_backend_suggestion: Useu un dels <a>rerefons suportats</a> en el seu lloc.
-    missing_repository: No s'ha definit el repositori.
+    missing_repository: No s’ha definit el repositori.
     invalid_repository: El repositori configurat no és vàlid. Ha de tenir el format «owner/repo».
-    oauth_implicit_flow: El mètode d'autenticació configurat (flux implícit) no és compatible amb Sveltia CMS. Useu un <a>mètode d'autenticació</a> diferent.
-    github_pkce_unsupported: L'autorització PKCE encara no és compatible a causa de les limitacions de GitHub. Useu un <a>mètode d'autenticació</a> diferent.
-    oauth_no_app_id: No s'ha definit l'ID de l'aplicació OAuth.
+    oauth_implicit_flow: El mètode d’autenticació configurat (flux implícit) no és compatible amb Sveltia CMS. Useu un <a>mètode d’autenticació</a> diferent.
+    github_pkce_unsupported: L’autorització PKCE encara no és compatible a causa de les limitacions de GitHub. Useu un <a>mètode d’autenticació</a> diferent.
+    oauth_no_app_id: No s’ha definit l’ID de l’aplicació OAuth.
     # Don’t localize `auth_methods`
-    no_auth_methods: L'opció `auth_methods` ha de contenir almenys un mètode.
-    missing_media_folder: No s'ha definit la carpeta multimèdia.
+    no_auth_methods: L’opció `auth_methods` ha de contenir almenys un mètode.
+    missing_media_folder: No s’ha definit la carpeta multimèdia.
     invalid_media_folder: La carpeta multimèdia configurada no és vàlida. Ha de ser una cadena.
     invalid_public_folder: La carpeta pública configurada no és vàlida. Ha de ser una cadena.
     public_folder_relative_path: La carpeta pública configurada no és vàlida. Ha de ser un camí absolut que comenci per «/».
-    public_folder_absolute_url: No s'admet un URL absolut per a l'opció de carpeta pública a Sveltia CMS.
+    public_folder_absolute_url: No s’admet un URL absolut per a l’opció de carpeta pública a Sveltia CMS.
     # Don’t localize `asset_collections`
-    invalid_asset_collections: L'opció `asset_collections` no és vàlida. Ha de ser una matriu.
+    invalid_asset_collections: L’opció `asset_collections` no és vàlida. Ha de ser una matriu.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
-    missing_asset_collection_name: La col·lecció de recursos {$count} ha de tenir l'opció `name` definida com a cadena no buida.
+    missing_asset_collection_name: La col·lecció de recursos {$count} ha de tenir l’opció `name` definida com a cadena no buida.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: El nom de la col·lecció de recursos `{$name}` no és vàlid. No pot contenir caràcters especials.
     # {$name} is the duplicate asset collection name
-    duplicate_asset_collection_name: Els noms de les col·leccions de recursos han de ser únics, però `{$name}` s'usa més d'una vegada.
+    duplicate_asset_collection_name: Els noms de les col·leccions de recursos han de ser únics, però `{$name}` s’usa més d’una vegada.
     # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: La col·lecció de recursos `{$name}` ha de tenir l'opció `media_folder` definida com a cadena.
+    asset_collection_invalid_media_folder: La col·lecció de recursos `{$name}` ha de tenir l’opció `media_folder` definida com a cadena.
     # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: La col·lecció ha de tenir definida l'opció `folder`, `files` o `divider`.
+    invalid_collection_no_options: La col·lecció ha de tenir definida l’opció `folder`, `files` o `divider`.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_multiple_options: La col·lecció no pot tenir alhora les opcions `folder`, `files` i `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
-    file_format_mismatch: L'extensió `{$extension}` no coincideix amb el format `{$format}`.
+    file_format_mismatch: L’extensió `{$extension}` no coincideix amb el format `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: La plantilla de slug `{$slug}` no és vàlida perquè no pot contenir barres. Per organitzar les entrades en subcarpetes, useu l'opció `path` en lloc de `slug`.
+    invalid_slug_slash: La plantilla de slug `{$slug}` no és vàlida perquè no pot contenir barres. Per organitzar les entrades en subcarpetes, useu l’opció `path` en lloc de `slug`.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
-    missing_collection_name: La col·lecció {$count} ha de tenir l'opció `name` definida com a cadena no buida.
+    missing_collection_name: La col·lecció {$count} ha de tenir l’opció `name` definida com a cadena no buida.
     # {$name} is the invalid or duplicate collection name
     invalid_collection_name: El nom de la col·lecció `{$name}` no és vàlid. No pot contenir caràcters especials.
-    duplicate_collection_name: Els noms de les col·leccions han de ser únics, però `{$name}` s'usa més d'una vegada.
+    duplicate_collection_name: Els noms de les col·leccions han de ser únics, però `{$name}` s’usa més d’una vegada.
     # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
-    missing_collection_file_name: El fitxer de col·lecció {$count} ha de tenir l'opció `name` definida com a cadena no buida.
+    missing_collection_file_name: El fitxer de col·lecció {$count} ha de tenir l’opció `name` definida com a cadena no buida.
     # {$name} is the invalid or duplicate collection file name
     invalid_collection_file_name: El nom del fitxer de col·lecció `{$name}` no és vàlid. No pot contenir caràcters especials.
-    duplicate_collection_file_name: Els noms dels fitxers de col·lecció han de ser únics, però `{$name}` s'usa més d'una vegada.
+    duplicate_collection_file_name: Els noms dels fitxers de col·lecció han de ser únics, però `{$name}` s’usa més d’una vegada.
     # Don’t localize `fields`
-    collection_no_fields: La col·lecció ha de tenir l'opció `fields` definida amb almenys un camp.
+    collection_no_fields: La col·lecció ha de tenir l’opció `fields` definida amb almenys un camp.
     # Don’t localize `fields`
-    collection_file_no_fields: El fitxer de col·lecció ha de tenir l'opció `fields` definida amb almenys un camp.
+    collection_file_no_fields: El fitxer de col·lecció ha de tenir l’opció `fields` definida amb almenys un camp.
     # Don’t localize `i18n`, `locale` and `file`
-    collection_file_i18n_required: El fitxer de col·lecció ha de tenir definida l'opció `i18n` si el marcador `locale` s'usa al camí `file`.
+    collection_file_i18n_required: El fitxer de col·lecció ha de tenir definida l’opció `i18n` si el marcador `locale` s’usa al camí `file`.
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
-    missing_field_name: El camp {$count} ha de tenir l'opció `name` definida com a cadena no buida.
+    missing_field_name: El camp {$count} ha de tenir l’opció `name` definida com a cadena no buida.
     # {$name} is the invalid or duplicate field name
     invalid_field_name: El nom del camp `{$name}` no és vàlid. No pot contenir caràcters especials. Si voleu imbricar camps, <a>useu camps Object en lloc de la notació de punt</a>.
-    duplicate_field_name: Els noms dels camps han de ser únics, però `{$name}` s'usa més d'una vegada.
+    duplicate_field_name: Els noms dels camps han de ser únics, però `{$name}` s’usa més d’una vegada.
     # {$count} is the 1-based variable type index in the current types array
-    missing_variable_type: El tipus variable {$count} ha de tenir l'opció `name` definida com a cadena no buida.
+    missing_variable_type: El tipus variable {$count} ha de tenir l’opció `name` definida com a cadena no buida.
     # {$name} is the invalid or duplicate variable type name
     invalid_variable_type: El nom del tipus variable `{$name}` no és vàlid. No pot contenir caràcters especials.
-    duplicate_variable_type: Els noms dels tipus variables han de ser únics, però `{$name}` s'usa més d'una vegada.
-    date_field_type: 'El tipus de camp Date obsolet no és compatible amb Sveltia CMS. Useu el tipus de camp DateTime amb l''opció `type: date` en el seu lloc.'
+    duplicate_variable_type: Els noms dels tipus variables han de ser únics, però `{$name}` s’usa més d’una vegada.
+    date_field_type: 'El tipus de camp Date obsolet no és compatible amb Sveltia CMS. Useu el tipus de camp DateTime amb l’opció `type: date` en el seu lloc.'
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Zona horària no vàlida: {$timeZone}. Ha de ser un identificador de zona horària IANA vàlid com `America/New_York` o `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
-    unsupported_deprecated_option: L'opció obsoleta `{$prop}` no és compatible amb Sveltia CMS. Useu l'opció `{$newProp}` en el seu lloc.
+    unsupported_deprecated_option: L’opció obsoleta `{$prop}` no és compatible amb Sveltia CMS. Useu l’opció `{$newProp}` en el seu lloc.
     # Don’t localize `allow_multiple`, `multiple`, and `false`
-    allow_multiple: L'opció `allow_multiple` no és compatible amb Sveltia CMS. Useu l'opció `multiple`, que per defecte és `false`.
+    allow_multiple: L’opció `allow_multiple` no és compatible amb Sveltia CMS. Useu l’opció `multiple`, que per defecte és `false`.
     # Don’t localize `field`, `fields`, and `types`
     invalid_list_field: El camp List no pot tenir alhora les opcions `field`, `fields` i `types`.
     # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
-    invalid_list_variable_type: El tipus variable del camp List no és vàlid. L'opció `widget` està definida com a `{$widget}` però ha de ser `object`.
+    invalid_list_variable_type: El tipus variable del camp List no és vàlid. L’opció `widget` està definida com a `{$widget}` però ha de ser `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: El camp Object no pot tenir alhora les opcions `fields` i `types`.
     # Don’t localize `fields`, and `types`
-    object_field_missing_fields: El camp Object ha de tenir definida l'opció `fields` o `types`.
+    object_field_missing_fields: El camp Object ha de tenir definida l’opció `fields` o `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: La col·lecció referenciada `{$collection}` no és vàlida o no està definida.
     relation_field_invalid_collection_file: El fitxer referenciat `{$file}` no és vàlid o no està definit.
     # Don’t localize `file`
-    relation_field_missing_file_name: L'opció `file` ha de estar definida per a una relació amb una col·lecció de fitxers.
+    relation_field_missing_file_name: L’opció `file` ha de estar definida per a una relació amb una col·lecció de fitxers.
     relation_field_invalid_value_field: El camp de valor referenciat `{$field}` no és vàlid o no està definit.
     unexpected: Error inesperat
 
   # Warning messages (logged to console)
   warning:
-    oauth_no_app_id: No s'ha definit l'ID de l'aplicació OAuth. Es demanarà als usuaris que proporcioneu un testimoni d'accés per iniciar la sessió.
+    oauth_no_app_id: No s’ha definit l’ID de l’aplicació OAuth. Es demanarà als usuaris que proporcioneu un testimoni d’accés per iniciar la sessió.
     editorial_workflow_unsupported: El flux editorial encara no és compatible amb Sveltia CMS.
     open_authoring_unsupported: La creació oberta (Open Authoring) encara no és compatible amb Sveltia CMS.
     nested_collections_unsupported: Les col·leccions imbricades encara no són compatibles amb Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
-    unsupported_ignored_option: L'opció `{$prop}` no és compatible amb Sveltia CMS. S'ignorarà.
+    unsupported_ignored_option: L’opció `{$prop}` no és compatible amb Sveltia CMS. S’ignorarà.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Tant `picker_utc` com les opcions més noves de zona horària (`input_timezone` o `output_utc`) estan definides. Les opcions noves tenen precedència. Considereu eliminar `picker_utc` de la vostra configuració.
 
@@ -1510,7 +1510,7 @@ config:
   compatibility_link: 'Vegeu les notes de compatibilitat per a més detalls: {$link}'
 
   # Console tip shown after config load
-  schema_tip: Per a una millor experiència de desenvolupador, podeu validar el fitxer de configuració contra l'esquema JSON de Sveltia CMS. Vegeu {$link} per a més detalls.
+  schema_tip: Per a una millor experiència de desenvolupador, podeu validar el fitxer de configuració contra l’esquema JSON de Sveltia CMS. Vegeu {$link} per a més detalls.
 
 # ==============================================================================
 # Local Workflow
@@ -1522,7 +1522,7 @@ local_workflow:
   indicator: Local
   # Browser compatibility warnings
   unsupported_browser: El flux de treball local no és compatible amb el vostre navegador. Useu Chrome o Edge en el seu lloc.
-  disabled: El flux de treball local està desactivat al vostre navegador. <a>Aquí s'explica com habilitar-lo</a>.
+  disabled: El flux de treball local està desactivat al vostre navegador. <a>Aquí s’explica com habilitar-lo</a>.
 
 # ==============================================================================
 # Editorial Workflow
@@ -1555,7 +1555,7 @@ prefs:
 
   # Preferences operation errors
   error:
-    permission_denied: S'ha denegat l'accés a l'emmagatzematge de galetes. Comproveu els permisos del navegador i torneu-ho a provar.
+    permission_denied: S’ha denegat l’accés a l’emmagatzematge de galetes. Comproveu els permisos del navegador i torneu-ho a provar.
 
   # Appearance panel
   appearance:
@@ -1582,11 +1582,11 @@ prefs:
     editor:
       title: Editor
       use_draft_backup:
-        switch_label: Fes còpia de seguretat automàtica dels esborranys d'entrada
+        switch_label: Fes còpia de seguretat automàtica dels esborranys d’entrada
       close_on_save:
-        switch_label: Tanca l'editor després de desar un esborrany
+        switch_label: Tanca l’editor després de desar un esborrany
       close_with_escape:
-        switch_label: Tanca l'editor amb la tecla d'escapada (Esc)
+        switch_label: Tanca l’editor amb la tecla d’escapada (Esc)
 
   # Internationalization panel
   i18n:
@@ -1610,33 +1610,33 @@ prefs:
     title: Multimèdia
     stock_photos:
       api_keys:
-        title: Claus API dels serveis de bancs d'imatges
-        description: Gestionar les claus API per als <a>serveis de bancs d'imatges</a>.
+        title: Claus API dels serveis de bancs d’imatges
+        description: Gestionar les claus API per als <a>serveis de bancs d’imatges</a>.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
       field_label: 'Clau API de {$service}'
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: Registrau-vos a l'<a {$homeHref}>API de {$service}</a> i introduïu <a {$apiKeyHref}>la vostra clau API</a> aquí per inserir fotos de banc d'imatges gratuïtes als camps d'imatge de les entrades.
+      description: Registrau-vos a l’<a {$homeHref}>API de {$service}</a> i introduïu <a {$apiKeyHref}>la vostra clau API</a> aquí per inserir fotos de banc d’imatges gratuïtes als camps d’imatge de les entrades.
       # Photo credit attribution
       # {$service} is the stock photo service name
       credit: Fotos proporcionades per {$service}
-      no_services: No hi ha cap <a>servei de banc d'imatges</a> configurat.
+      no_services: No hi ha cap <a>servei de banc d’imatges</a> configurat.
     cloud_storage:
       api_keys:
-        title: Claus API dels serveis d'emmagatzematge al núvol
-        description: Gestionar les claus API per als <a>serveis d'emmagatzematge al núvol</a>.
+        title: Claus API dels serveis d’emmagatzematge al núvol
+        description: Gestionar les claus API per als <a>serveis d’emmagatzematge al núvol</a>.
       # API key input label
       # {$service} is the cloud storage service name
       field_label: 'Clau API de {$service}'
-      no_services: No hi ha cap <a>servei d'emmagatzematge al núvol</a> configurat.
+      no_services: No hi ha cap <a>servei d’emmagatzematge al núvol</a> configurat.
 
   # Accessibility panel
   accessibility:
     title: Accessibilitat
     underline_links:
       title: Subratlla els enllaços
-      description: Mostra el subratllat dels enllaços a la previsualització de l'entrada i a les etiquetes de la interfície d'usuari.
+      description: Mostra el subratllat dels enllaços a la previsualització de l’entrada i a les etiquetes de la interfície d’usuari.
       switch_label: Subratlla sempre els enllaços
 
   # Advanced panel
@@ -1660,9 +1660,9 @@ prefs:
         removed: URL del ganxo suprimit.
       # Authorization header input
       auth:
-        field_label: Capçalera d'autorització (p. ex., Bearer <testimoni>) (opcional)
-        saved: Capçalera d'autorització desada.
-        removed: Capçalera d'autorització suprimida.
+        field_label: Capçalera d’autorització (p. ex., Bearer <testimoni>) (opcional)
+        saved: Capçalera d’autorització desada.
+        removed: Capçalera d’autorització suprimida.
 
 # ==============================================================================
 # Keyboard Shortcuts
@@ -1675,7 +1675,7 @@ keyboard_shortcuts_:
   search: Cerca entrades i recursos
   create_entry: Crea una entrada nova
   save_entry: Desa una entrada
-  cancel_editing: Cancel·la l'edició de l'entrada
+  cancel_editing: Cancel·la l’edició de l’entrada
 
 # ==============================================================================
 # File Type Labels
@@ -1729,8 +1729,8 @@ file_type_labels:
   ppt: Presentació de PowerPoint
   pptx: Presentació de PowerPoint
   rtf: Document de text enriquit
-  xls: Full de càlcul d'Excel
-  xlsx: Full de càlcul d'Excel
+  xls: Full de càlcul d’Excel
+  xlsx: Full de càlcul d’Excel
   # Text formats
   html: Text HTML
   js: JavaScript
