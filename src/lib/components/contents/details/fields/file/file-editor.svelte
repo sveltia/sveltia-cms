@@ -187,9 +187,14 @@
     oversizedFileNames = [];
 
     const resources = await Promise.all(
-      selectedResources.map((resource) =>
-        processResource({ draft: $entryDraft, resource, libraryConfig }),
-      ),
+      selectedResources.map((resource) => {
+        // Set the target folder for non-hotlinking stock assets from Pexels, etc.
+        if (resource.file && !resource.folder) {
+          resource.folder = targetFolder;
+        }
+
+        return processResource({ draft: $entryDraft, resource, libraryConfig });
+      }),
     );
 
     /** @type {string[]} */
