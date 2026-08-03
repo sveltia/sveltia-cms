@@ -109,8 +109,8 @@ importers:
         specifier: ^7.2.0
         version: 7.2.0(svelte@5.56.8(@typescript-eslint/types@8.65.0))(vite@8.2.0(@types/node@26.1.2)(yaml@2.9.0))
       '@types/leaflet':
-        specifier: ^1.9.21
-        version: 1.9.21
+        specifier: ^1.9.22
+        version: 1.9.22
       '@types/node':
         specifier: ^26.1.2
         version: 26.1.2
@@ -196,8 +196,8 @@ importers:
 
 packages:
 
-  '@altano/repository-tools@2.0.3':
-    resolution: {integrity: sha512-cSR/ZYDF6Wp9OeAJMyLYYN1GenAAhV17W+w38ELP+3c5Ltsy9jkkCymi33nz/qnXyef3n6Fbr1h2yt3dvUN5sQ==}
+  '@altano/repository-tools@2.0.5':
+    resolution: {integrity: sha512-dG0CH69cWUKaXOrfIdhldDt8zB3Tp4OQNVvnOWIS0wL+MiIkjyJC3WLFZGrO2r5anW00DxbDnEhpNHIkGCoNuw==}
 
   '@asamuzakjp/css-color@6.0.5':
     resolution: {integrity: sha512-mbhpPMmnw/kwW19aRNmSUl1QzLbdGo1SCuE49BT98MNwqF6zaHb3o2owssFc/PEO/4t2UjqtCNwocuDtJornzA==}
@@ -1233,8 +1233,8 @@ packages:
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
 
-  '@types/leaflet@1.9.21':
-    resolution: {integrity: sha512-TbAd9DaPGSnzp6QvtYngntMZgcRk+igFELwR2N99XZn7RXUdKgsXMR+28bUO0rPsWp8MIu/f47luLIQuSLYv/w==}
+  '@types/leaflet@1.9.22':
+    resolution: {integrity: sha512-h3lhECYEKDasG7LFHu+GiHqAvsgLuQvlJvVZzJDGONo3sEL+wUOqSFLnwkZlK0qVxnxbuGFW8iBlJNYs5wgndA==}
 
   '@types/node@26.1.2':
     resolution: {integrity: sha512-Vu4a5UFA9rIIFJ7rB/Vaafh9lrCQszopTCx6KjFboXTGQbPNasehVR5TEiithSDGyd1DEiUByggTZsg8jukeIg==}
@@ -1592,8 +1592,8 @@ packages:
     resolution: {integrity: sha512-mlmkfc2WqdDtMl/id4qm3A7RjW6jxcbAoMjdRmsPiwQP0ufD4oXItYMnPgVHe80lnAIy+1xwzhHE1s4FoIceSw==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  baseline-browser-mapping@2.11.9:
-    resolution: {integrity: sha512-cp447VUsGS07+n1Dqf7YSQ8maeJrjEhaDxTm1ZefbqDtypHBC5GzGMQbklR6IPR13Y8OAJRHZWEMtZipJLCttg==}
+  baseline-browser-mapping@2.11.10:
+    resolution: {integrity: sha512-35JEvJ5/KKlbCHjMCsONI2w6HE88STjVdHk+C7d8LtcFxUjZR1KeLP9izofn2qs0KUxX5r4z73bwH/rd+JHacw==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -3109,8 +3109,8 @@ packages:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
 
-  package-json-validator@1.5.2:
-    resolution: {integrity: sha512-eHXskJQU4aCiSfjhRfTVtCJ+22/EzLHgYgZv5Gj3teb3NJrnTMzq5BnKAWKvR+PLpknCO1PmOCImDuO+dX4Vaw==}
+  package-json-validator@1.6.0:
+    resolution: {integrity: sha512-pd5HlhSA4oymER74A8ODqcOHz3sQAQjmTysx1oiJrIMRtIWl9pqxX5L3aUqRb5CBFpXroA8j6fhJmaFKhVUuxQ==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
 
   parent-module@1.0.1:
@@ -3601,8 +3601,8 @@ packages:
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
-  tinyexec@1.2.4:
-    resolution: {integrity: sha512-SHf/r48b7vOrjve9PxJo3MN5v5yuyjHvdUcrQffT3WXMUfnGmHDVbC4k3sHJaJTgZCwpUplIaAo5ANtMyp3YHg==}
+  tinyexec@1.3.0:
+    resolution: {integrity: sha512-QKAl9m8gWWGHV8jZcPeym6j+XULi6tOf1mT83WYJ4Lk2ytW/uwAWkrP0uFsdoYMdueVJ0qs26wZ+23xeB4ibNQ==}
     engines: {node: '>=18'}
 
   tinyglobby@0.2.17:
@@ -3964,7 +3964,7 @@ packages:
 
 snapshots:
 
-  '@altano/repository-tools@2.0.3': {}
+  '@altano/repository-tools@2.0.5': {}
 
   '@asamuzakjp/css-color@6.0.5':
     dependencies:
@@ -4931,7 +4931,7 @@ snapshots:
 
   '@types/json5@0.0.29': {}
 
-  '@types/leaflet@1.9.21':
+  '@types/leaflet@1.9.22':
     dependencies:
       '@types/geojson': 7946.0.16
 
@@ -5306,7 +5306,7 @@ snapshots:
     dependencies:
       to-data-view: 2.0.0
 
-  baseline-browser-mapping@2.11.9: {}
+  baseline-browser-mapping@2.11.10: {}
 
   bidi-js@1.0.3:
     dependencies:
@@ -5329,7 +5329,7 @@ snapshots:
 
   browserslist@4.28.7:
     dependencies:
-      baseline-browser-mapping: 2.11.9
+      baseline-browser-mapping: 2.11.10
       caniuse-lite: 1.0.30001806
       electron-to-chromium: 1.5.399
       node-releases: 2.0.51
@@ -6010,7 +6010,7 @@ snapshots:
 
   eslint-plugin-package-json@1.6.2(eslint@9.39.5(supports-color@10.2.2)):
     dependencies:
-      '@altano/repository-tools': 2.0.3
+      '@altano/repository-tools': 2.0.5
       '@types/estree': 1.0.9
       change-case: 5.4.4
       detect-indent: 7.0.2
@@ -6019,7 +6019,7 @@ snapshots:
       eslint-fix-utils: 0.4.3(@types/estree@1.0.9)(eslint@9.39.5(supports-color@10.2.2))
       eslint-json-compat-utils: 0.2.3(eslint@9.39.5(supports-color@10.2.2))(jsonc-eslint-parser@3.1.0)
       jsonc-eslint-parser: 3.1.0
-      package-json-validator: 1.5.2
+      package-json-validator: 1.6.0
       semver: 7.8.5
       sort-object-keys: 2.1.0
       sort-package-json: 4.0.0
@@ -6996,7 +6996,7 @@ snapshots:
 
   p-try@2.2.0: {}
 
-  package-json-validator@1.5.2:
+  package-json-validator@1.6.0:
     dependencies:
       npm-package-arg: 13.0.2
       semver: 7.8.5
@@ -7585,7 +7585,7 @@ snapshots:
 
   tinybench@2.9.0: {}
 
-  tinyexec@1.2.4: {}
+  tinyexec@1.3.0: {}
 
   tinyglobby@0.2.17:
     dependencies:
@@ -7803,7 +7803,7 @@ snapshots:
       picomatch: 4.0.5
       std-env: 4.2.0
       tinybench: 2.9.0
-      tinyexec: 1.2.4
+      tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
       vite: 8.2.0(@types/node@26.1.2)(yaml@2.9.0)
