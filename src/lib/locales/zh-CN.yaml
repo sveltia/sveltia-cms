@@ -1,0 +1,1694 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: 新建
+select: 选择
+select_all: 全选
+upload: 上传
+copy: 复制
+download: 下载
+duplicate: 生成副本
+delete: 删除
+reorder: 排序
+
+# Dialog and form actions: confirmation and cancellation
+cancel: 取消
+done: 完成
+save: 保存
+# Progress indicator shown on the save button while a save operation is in progress
+saving: 保存中……
+
+# Publishing actions: used when committing changes to the repository
+publish: 发布
+# Progress indicator shown on the publish button during publishing
+publishing: 发布中……
+
+# Modification actions: editing and updating content
+rename: 重命名
+update: 更新
+replace: 替换
+
+# List and collection actions: adding and removing items
+add: 添加
+remove: 移除
+clear: 清除
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: 展开
+expand_all: 全部展开
+collapse: 折叠
+collapse_all: 全部折叠
+
+# Content manipulation: inserting, restoring, and discarding
+insert: 插入
+restore: 恢复
+discard: 放弃
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: 搜索中……
+no_results: 未找到结果。
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: 全局
+primary: 主要
+secondary: 次要
+collection: 集合
+folder: 文件夹
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don't fit into other categories.
+
+# Field and input labels
+api_key: API 密钥
+details: 详情
+back: 返回
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: 加载中……
+# Dismiss button for temporary notifications and infobars
+later: 稍后
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: 别名
+# Fallback labels for singleton collections when names aren't configured
+singleton: 独立条目
+singletons: 独立条目
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: 无法复制到剪贴板。
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: '欢迎使用 {$name}'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: '由 {$name} 提供'
+
+# Shown during initial configuration and data loading
+loading_cms_config: 加载 CMS 配置……
+loading_site_data: 加载站点数据……
+loading_site_data_error: 加载站点数据时出错。
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: '使用 {$service} 登录'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: 使用访问令牌登录
+sign_in_using_access_token_description: 在下方输入令牌，需要有仓库内容的读写权限。
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: 可到 <a>{$service} 用户设置页面</a>生成令牌。
+# Input field label for personal access token
+personal_access_token: 个人访问令牌
+
+# Authentication progress indicators
+authorizing: 认证中……
+signing_in: 登录中……
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: 使用本地仓库
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: 在弹出的对话框中，选择「{$repo}」仓库的根目录。
+work_with_local_repo_description_no_repo: 在弹出的对话框中，选择您的 Git 仓库的根目录。
+# Button label for demo/test repository
+work_with_test_repo: 使用测试仓库
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: 所选文件夹不是仓库根目录。请重试。
+  picker_dismissed: 无法选择仓库根目录。请重试。
+  authentication_aborted: 认证已中止。请重试。
+  invalid_token: 提供的令牌无效。请检查后重试。
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: 认证器不支持您的 Git 后端。
+  UNSUPPORTED_DOMAIN: 该域名无权使用此认证器。
+  MISCONFIGURED_CLIENT: OAuth 应用的客户端 ID 或 Secret 未配置。
+  AUTH_CODE_REQUEST_FAILED: 未能收到授权码。请稍后重试。
+  CSRF_DETECTED: 检测到潜在的 CSRF 攻击。认证流程已中止。
+  TOKEN_REQUEST_FAILED: 请求访问令牌失败。请稍后重试。
+  TOKEN_REFRESH_FAILED: 刷新访问令牌失败。请稍后重试。
+  MALFORMED_RESPONSE: 服务器返回了格式异常的数据。请稍后重试。
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: '{$name} 后端需要 {$name} {$version} 或更高版本。'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: 您没有访问「{$repo}」仓库的权限。
+repository_not_found: 「{$repo}」仓库不存在。
+repository_empty: 「{$repo}」仓库没有分支。
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: 「{$repo}」仓库没有「{$branch}」分支。
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: 意外错误
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    * {{ 解析条目文件出错。请检查浏览器控制台。 }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: 用户名
+password: 密码
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: 登录
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: 手机扫码登录
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: 使用手机或平板扫描下方二维码即可免密登录，设置会自动复制到设备。
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user's login name
+signed_in_as_x: '当前以 {$name} 身份登录'
+working_with_local_repo: 正在使用本地仓库
+working_with_test_repo: 正在使用测试仓库
+
+# Account menu: action items for sign-out and app installation
+sign_out: 退出登录
+install_as_app: 安装为应用
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: 内容
+assets: 资源
+editorial_workflow: 编辑工作流
+cms_config: CMS 配置
+# Mobile menu page title (shown only on small screens)
+menu: 菜单
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS 现已支持移动端！
+mobile_promo_button: 立即体验
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., "French"
+new_language_available: Sveltia CMS 现已支持 {$locale}！
+change_language: 切换语言
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: 访问在线站点
+# Page switcher button group aria-label for switching between main sections
+switch_page: 切换页面
+
+# Search input placeholders
+search_placeholder_contents: 搜索内容……
+search_placeholder_assets: 搜索资源……
+search_placeholder_all: 搜索内容和资源……
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: 创建条目或资源
+
+# Publishing actions: button labels and progress indicators
+publish_changes: 发布更改
+publishing_changes: 正在发布更改……
+# Error notification when publishing fails
+publishing_changes_failed: 无法发布更改。请重试。
+
+# Notifications: button aria-labels and section headings
+show_notifications: 显示通知
+notifications: 通知
+
+# Account menu: button aria-labels and section headings
+show_account_menu: 显示账户菜单
+# Account section heading in the account menu and mobile menu page
+account: 账户
+
+# Account menu items: links to external resources
+live_site: 在线站点
+git_repository: Git 仓库
+settings: 设置
+
+# Help menu: button aria-labels and section headings
+show_help_menu: 显示帮助菜单
+# Help section heading in dropdowns and mobile menu
+help: 帮助
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: 快捷键
+documentation: 文档
+release_notes: 版本发布说明
+announcements: 公告
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: '版本 {$version}'
+# Additional help menu items
+report_issue: 报告问题
+share_feedback: 分享反馈
+get_help: 获取帮助
+donate: 捐赠
+join_discord: 加入我们的 Discord
+bluesky: 关注我们的 Bluesky
+
+# Update notification: infobar message and button
+update_available: Sveltia CMS 有新版本可用。
+update_now: 立即更新
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service} 发生轻微故障，可能影响工作流。'
+  major_incident: '{$service} 发生严重故障，建议等恢复后再操作。'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: 内容库
+asset_library: 资源库
+
+# Primary sidebar section headings and list aria-labels
+collections: 集合
+entries: 条目
+files: 文件
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site's Git repository
+  repository: 您的站点
+  external: 外部位置
+  stock_photos: 图库照片
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: 集合资源
+# List aria-labels for different list types
+entry_list: 条目列表
+file_list: 文件列表
+asset_list: 资源列表
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: '「{$collection}」集合'
+# {$folder} is the current asset folder label
+x_asset_folder: '「{$folder}」资源文件夹'
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: 您正在浏览集合列表。
+viewing_asset_folder_list: 您正在浏览资源文件夹列表。
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 您正在浏览「{$collection}」集合，目前没有条目。 }}
+    *   {{ 您正在浏览「{$collection}」集合，有 {$count} 个条目。 }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 您正在浏览「{$folder}」资源文件夹，目前没有资源。 }}
+    *   {{ 您正在浏览「{$folder}」资源文件夹，有 {$count} 个资源。 }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: 按回车键编辑「{$file}」文件。
+
+# Error messages: collection or file not found
+collection_not_found: 未找到集合。
+file_not_found: 未找到文件。
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., "2 of 10 selected")
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '已选 {$selected} / {$total} 个'
+
+# View switcher: toggle between list and grid views
+switch_view: 切换视图
+list_view: 列表视图
+grid_view: 网格视图
+switch_to_list_view: 切换到列表视图
+switch_to_grid_view: 切换到网格视图
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: 排序
+sorting_options: 排序选项
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: 无
+  name: 名称
+  slug: 别名
+  # Sort by the last commit's author name
+  commit_author: 更新者
+  # Sort by the last commit date
+  commit_date: 更新时间
+  # Sort by the entry's computed summary text
+  _summary: 摘要
+  # Manual order defined by the user via drag-and-drop
+  _manual: 手动
+# Sort order labels used with field names
+# Example: "Name, A to Z" or "Updated on, new to old"
+# {$label} is the localized sort field label
+ascending: '{$label} (A–Z)'
+ascending_date: '{$label}（旧到新）'
+descending: '{$label} (Z–A)'
+descending_date: '{$label}（新到旧）'
+
+# Filter menu: button labels and options
+filter: 筛选
+filtering_options: 筛选选项
+
+# Group menu: button labels and options
+group: 分组
+grouping_options: 分组选项
+
+# Asset type filter and group labels
+type: 类型
+all: 全部
+# Asset type labels
+image: 图片
+video: 视频
+audio: 音频
+document: 文档
+other: 其他
+
+# Toolbar toggles: show/hide panels
+show_assets: 显示资源
+hide_assets: 隐藏资源
+show_info: 显示信息
+hide_info: 隐藏信息
+
+# Folder display labels when no specific path is configured
+all_assets: 全部资源
+global_assets: 全局资源
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: 未找到条目。
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: 管理员禁止在此集合中创建新条目。
+# {$quota} is the collection's maximum entry count
+creating_entries_disabled_by_quota: 您无法向此集合添加新条目，因已达到 {$quota} 个条目的上限。
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    * {{ 此集合已接近 {$quota} 个条目的上限。您只能再创建 {$remaining} 个条目。 }}
+
+# Navigation: back links and list labels
+back_to_collection: 返回集合
+collection_list: 集合列表
+back_to_collection_list: 返回集合列表
+asset_folder_list: 资源文件夹列表
+back_to_asset_folder_list: 返回资源文件夹列表
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: 搜索结果
+# {$terms} is the current search query text
+search_results_for_x: '「{$terms}」的搜索结果'
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 您正在浏览「{$terms}」的搜索结果。未找到任何条目。 }}
+    *   {{ 您正在浏览「{$terms}」的搜索结果。共找到 {$count} 个条目。 }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 您正在浏览「{$terms}」的搜索结果。未找到任何资源。 }}
+    *   {{ 您正在浏览「{$terms}」的搜索结果。共找到 {$count} 个资源。 }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 无条目 }}
+    *   {{ {$count} 个条目 }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 无资源 }}
+    *   {{ {$count} 个资源 }}
+
+# Empty state messages
+no_files_found: 未找到文件。
+no_entries_found: 未找到条目。
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: 上传新资源
+
+# Edit options menu: button and item labels
+edit_options: 编辑选项
+show_edit_options: 显示编辑选项
+# Edit menu items with specific asset names
+edit_asset: 编辑资源
+# {$name} is the selected asset name
+edit_x: '编辑 {$name}'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: 自动换行
+
+# Rename asset: dialog and validation
+rename_asset: 重命名资源
+# {$name} is the current asset name
+rename_x: '重命名 {$name}'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    * {{ 请输入新名称。使用该资源的 {$count} 个条目也将随之更新。 }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: 文件名不能为空。
+  character: 文件名不能包含特殊字符。
+  duplicate: 该文件名已用于其他资源。
+
+# Replace asset: menu item and dialog title
+replace_asset: 替换资源
+# {$name} is the asset being replaced
+replace_x: '替换 {$name}'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: 点击浏览……
+# Browse prompt shown on touch devices
+tap_to_browse: 轻触浏览……
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    * {{ 将文件拖放到此处或点击浏览…… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the "or" text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    * {{ 将文件拖放到此处或 }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the "or" text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    * {{ 将图片拖放到此处或 }}
+
+# File picker and clipboard actions used by upload controls
+browse: 浏览
+# Generic clipboard paste action used by non-image file fields
+paste: 粘贴
+# Clipboard paste action used by image fields
+paste_image: 粘贴图片
+
+# Clipboard paste errors
+no_image_in_clipboard: 剪贴板中未找到图片。
+clipboard_access_denied: 剪贴板访问被拒绝。
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    * {{ 将文件拖放到此处 }}
+
+# File type validation errors
+unsupported_file_type: 不支持的文件类型
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: '拖放的文件不属于以下类型：{$types}。请重试。'
+dropped_image_type_mismatch: '拖放的文件不受支持。仅接受以下类型的图片：{$types}。请重试。'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    * {{ 选择文件 }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    * {{ 删除资源 }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    * {{ 删除选中的资源 }}
+confirm_deleting_this_asset: 您确定要删除此资源吗？
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    * {{ 您确定要删除选中的 {$count} 个资源吗？ }}
+confirm_deleting_all_assets: 您确定要删除所有资源吗？
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    * {{ 删除条目 }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    * {{ 删除选中的条目 }}
+confirm_deleting_this_entry: 您确定要删除此条目吗？
+confirm_deleting_this_entry_with_assets: 您确定要删除此条目及其关联资源吗？
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    * {{ 您确定要删除选中的 {$count} 个条目吗？ }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    * {{ 您确定要删除选中的 {$count} 个条目及其关联资源吗？ }}
+confirm_deleting_all_entries: 您确定要删除所有条目吗？
+confirm_deleting_all_entries_with_assets: 您确定要删除所有条目及其关联资源吗？
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: 重新排序条目
+done_reordering_entries: 完成排序
+cancel_reordering_entries: 取消排序
+
+# Reorder error message
+saving_reorder_failed: 保存新的条目顺序失败。请重试。
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    * {{ 正在处理文件，可能耗时。 }}
+
+# Uploading section aria-label
+uploading_files: 正在上传文件
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '将用此文件替换「{$name}」：'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    * {{ 这些文件将保存到「{$folder}」文件夹： }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: 文件大小超限
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    * {{ 这些文件无法上传，已超过大小限制 {$size}。请压缩文件或选择其他文件。 }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    * {{ 此文件夹中已存在同名文件。是否要替换？ }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    * {{ 此文件夹中名为「{$name}」的文件已存在。是否要替换？ }}
+file_name_conflict_resolution: 文件名冲突解决
+# Option to keep both files (rename the new one)
+keep_both: 两者都保留
+
+# Upload progress and error messages
+uploading_files_progress: 上传中……
+uploading_files_failed: 上传失败。
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (由 {$type} 转换而来)
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: 此集合目前没有条目。
+# Button to create first entry
+create_new_entry: 创建新条目
+# "Entry" option label in the create button menu
+entry: 条目
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: 索引文件
+
+# Empty state for file collections
+no_files_in_collection: 此集合中没有可用文件。
+
+# Entry duplication
+duplicate_entry: 复制条目
+entry_duplicated: 条目已复制为新草稿。
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    * {{ 有 {$count} 个字段存在错误。请更正后保存条目。 }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    * {{ 条目已保存。 }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    * {{ 条目已保存并发布。 }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    * {{ 条目已删除。 }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    * {{ 资源已保存。 }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    * {{ 资源已保存并发布。 }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    * {{ URL 已复制到剪贴板。 }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    * {{ 文件路径已复制到剪贴板。 }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    * {{ 文件数据已复制到剪贴板。 }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    * {{ 资源已下载。 }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    * {{ 资源已移动。 }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    * {{ 资源已重命名。 }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    * {{ 资源已删除。 }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: 内容编辑器
+
+# Draft backup: restore dialog
+restore_backup_title: 恢复草稿
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: 此条目有 {$datetime} 的备份。是否恢复已编辑的草稿？
+
+# Draft backup notifications
+draft_backup_saved: 草稿备份已保存。
+draft_backup_restored: 草稿备份已恢复。
+draft_backup_deleted: 草稿备份已删除。
+
+# Editor toolbar actions
+cancel_editing: 取消编辑
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: 创建 {$name}
+# {$collection} is the collection label
+create_entry_announcement: 您正在「{$collection}」集合中创建新条目。
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: 您正在「{$collection}」集合中编辑「{$entry}」条目。
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: 您正在「{$collection}」集合中编辑「{$file}」文件。
+# {$file} is the singleton file name
+edit_singleton_announcement: 您正在编辑「{$file}」文件。
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: 保存并发布
+save_without_publishing: 保存但不发布
+
+# Editor options menu
+show_editor_options: 显示编辑器选项
+editor_options: 编辑器选项
+
+# Preview controls
+show_preview: 显示预览
+
+# Editor settings
+sync_scrolling: 同步滚动
+
+# Locale controls
+switch_locale: 切换语言
+# Short status indicators appended to locale names
+locale_content_disabled_short: (已禁用)
+locale_content_error_short: (错误)
+
+# Pane labels
+edit: 编辑
+preview: 预览
+
+# Pane controls; not to be confused with pages
+swap_panes: 交换面板
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: 编辑 {$locale} 内容
+preview_x_locale: 预览 {$locale} 内容
+
+# Preview iframe labels
+content_preview: 内容预览
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: 显示 {$locale} 内容选项
+content_options_x_locale: '{$locale} 内容选项'
+
+# Field container labels
+# {$field} is the field's display label
+x_field: '「{$field}」字段'
+
+# Field options menu
+show_field_options: 显示字段选项
+field_options: 字段选项
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: '不支持的字段类型：{$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: '启用 {$locale}'
+reenable_x_locale: '重新启用 {$locale}'
+disable_x_locale: '禁用 {$locale}'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: 已禁用 {$locale} 内容。
+locale_x_now_disabled: '{$locale} 内容已关闭，保存条目时会被删除。'
+
+# Repository and site links
+view_in_repository: 在仓库中查看
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: '在 {$service} 上查看'
+view_on_live_site: 在在线站点查看
+
+# Content copying from other locales
+copy_from: 从其他语言复制……
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: '从 {$locale} 复制'
+
+# Translation features
+translation_options: 翻译选项
+translate: 翻译
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    * {{ 翻译字段 }}
+translate_from: 从其他语言翻译……
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: '从 {$locale} 翻译'
+
+# Revert changes
+revert_changes: 撤销更改
+revert_all_changes: 撤销所有更改
+
+# Slug editing
+edit_slug: 编辑别名
+edit_slug_warning: 修改别名可能破坏指向此条目的内部和外部链接。Sveltia CMS 不会自动更新 Relation 字段创建的引用，请手动更新引用及其他链接。
+edit_slug_error:
+  empty: 别名不能为空。
+  invalid: 别名不能包含特殊字符（包括斜杠和空格）。
+  duplicate: 此别名已用于其他条目。
+
+# Required field indicator
+required: 必填
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: 没有需要翻译的内容。
+    started: 翻译中……
+    error: 翻译失败。
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        * {{ 从 {$source} 翻译了 {$count} 个字段。 }}
+  copy:
+    none: 没有需要复制的内容。
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        * {{ 从 {$source} 复制了 {$count} 个字段。 }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: 此字段为必填项。
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: 日期/时间不能早于 {$min}。
+    date: 日期不能早于 {$min}。
+    time: 时间不能早于 {$min}。
+    number: 值必须大于或等于 {$min}。
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        * {{ 您必须至少选择 {$min} 个选项。 }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        * {{ 您必须至少添加 {$min} 个项目。 }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: 日期/时间不能晚于 {$max}。
+    date: 日期不能晚于 {$max}。
+    time: 时间不能晚于 {$max}。
+    number: 值必须小于或等于 {$max}。
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        * {{ 您不能选择超过 {$max} 个选项。 }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        * {{ 您不能添加超过 {$max} 个项目。 }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      * {{ 至少输入 {$min} 个字符。 }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      * {{ 输入不能超过 {$max} 个字符。 }}
+
+  # Type validation errors
+  type_mismatch:
+    number: 请输入数字。
+    email: 请输入有效的电子邮件地址。
+    url: 请输入有效的 URL。
+
+  # Custom field validation error
+  invalid_value: 无效的值。
+  unexpected_error: 意外错误。
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: 侧边栏面板
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: 验证
+    placeholder: 验证结果将显示在此处。
+    no_errors_found: 未发现错误。
+
+  # History panel: shows entry commit history
+  history:
+    title: 历史
+    fetch_failed: 加载历史记录失败。
+    no_history: 未找到历史记录。
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: 反向链接
+    no_entries: 没有条目引用此条目。
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: 错误
+    description: 保存条目时出错。请稍后重试。
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: 您正在查看「{$name}」资源的详细信息。
+
+# Asset editor container aria-label
+asset_editor: 资源编辑器
+
+# Preview unavailable message
+preview_unavailable: 预览不可用。
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    * {{ 公开 URL }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    * {{ 文件路径 }}
+file_data: 文件数据
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: 资源信息
+select_asset_show_info: 选择资源即显示信息。
+
+kind: 类型
+size: 大小
+dimensions: 尺寸
+duration: 时长
+# Short heading for a list of entries using the selected asset
+used_in: 使用于
+created_date: 创建日期
+location: 位置
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: 显示纬度 {$latitude}、经度 {$longitude} 的地图
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: 移除此项
+move_up: 上移
+move_down: 下移
+
+# Add item button label
+# Example: "Add Image", "Add Author"
+# {$name} is the label of the item type that can be added
+add_x: 添加 {$name}
+
+# List item context menu
+add_item_above: 在上方添加项目
+add_item_below: 在下方添加项目
+
+# Variable-type list selector
+select_list_type: 选择列表类型
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: 不透明度
+
+# Select field: empty option placeholder
+unselected_option: (无)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: 选择文件
+    image: 选择图片
+
+  # Search input labels
+  search_for_file: 搜索文件
+  search_for_image: 搜索图片
+
+  # Locations panel aria-label
+  locations: 位置
+
+  # Asset folder options
+  folder:
+    field: 字段资源
+    entry: 条目资源
+    file: 文件资源
+    collection: 集合资源
+    global: 全局资源
+
+  # Error messages
+  error:
+    invalid_key: 您的 API 密钥无效或已过期。请检查后重试。
+    search_fetch_failed: 搜索资源时出错。请稍后重试。
+    image_fetch_failed: 下载所选资源时出错。请稍后重试。
+
+  # Stock photo panels
+  available_images: 可用的图片
+
+  # URL entry option
+  enter_url: 输入 URL
+  enter_file_url: '输入文件的 URL：'
+  enter_image_url: '输入图片的 URL：'
+
+  # Large file warning dialog
+  large_file:
+    title: 大文件
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: 图片来源
+    description: '请尽可能使用以下署名：'
+
+  # Unsaved asset badge
+  unsaved: 未保存
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      * {{ 输入 {$count} 个字符。最少：{$min}。最多：{$max}。 }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      * {{ 输入 {$count} 个字符。最少：{$min}。 }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      * {{ 输入 {$count} 个字符。最多：{$max}。 }}
+
+# YouTube video player iframe title
+youtube_video_player: YouTube 视频播放器
+
+# Date/time field: quick action buttons
+today: 今天
+now: 现在
+
+# Rich-text editor: component field labels
+editor_components:
+  image: 图片
+  src: 来源
+  alt: 替代文本
+  title: 标题
+  link: 链接
+
+# Key-Value field: column headers and validation
+key_value:
+  key: 键
+  value: 值
+  action: 操作
+  empty_key: 键为必填项。
+  duplicate_key: 键必须唯一。
+
+# Map field: location search and geolocation
+find_place: 查找地点
+use_your_location: 使用您的位置
+
+# Geolocation error dialog
+geolocation_error_title: 地理位置错误
+geolocation_error_body: 获取您的位置时出错。
+geolocation_unsupported: 此浏览器不支持地理位置 API。
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': 是
+  'false': 否
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: 服务配置不正确。
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: API 密钥
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: 请输入 {$service} 的 {$key}。
+      requested: 验证中……
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: 提供的 {$key} 无效。请检查后重试。
+    password:
+      # {$service} is the cloud service name
+      initial: 请输入 {$service} 的密码。
+      requested: 登录中……
+      error: 用户名或密码不正确。请检查后重试。
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Cloudinary 媒体库
+    activate:
+      button_label: 激活 Cloudinary
+      description: 登录后，再次点击「登录」按钮继续。
+    auth_key_label: API 密钥
+    open_library: 打开 Cloudinary
+
+  uploadcare:
+    auth_key_label: API 密钥
+
+  aws_s3:
+    auth_key_label: 秘密访问密钥
+
+  cloudflare_r2:
+    auth_key_label: 秘密访问密钥
+
+  digitalocean_spaces:
+    auth_key_label: 秘密访问密钥
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      * {{ CMS 配置中存在错误。请解决后重试。 }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: '{$collection} 集合'
+    file: '{$file} 文件'
+    component: '{$component} 组件'
+    # Don't localize `{$field}`
+    field: '`{$field}` 字段'
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS 仅支持 HTTPS 或 localhost 地址。
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        * {{ 配置文件 URL 必须使用 HTTPS 协议或 localhost 地址。 }}
+    fetch_failed: 无法获取配置文件。
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: HTTP 响应返回状态码 {$status}。
+    # Don't localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: '无法获取配置文件。要阻止加载 `config.yml`，请在传递给 `CMS.init()` 的配置对象中添加 <a>`load_config_file: false`</a>。'
+    parse_failed: 无法解析配置文件。
+    parse_failed_invalid_object: 配置文件不是有效的 JavaScript 对象。
+    parse_failed_unsupported_type: 配置文件不是有效的文件类型。仅支持 YAML、TOML 和 JSON。
+    no_collection: 未定义集合。
+    missing_backend: 未定义后端。
+    missing_backend_name: 未定义后端名称。
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: Sveltia CMS <a>不支持</a>{$name} 后端。
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Sveltia CMS <a>不支持</a>已弃用的 {$name} 后端。
+    unsupported_custom_backend: Sveltia CMS <a>不支持</a>自定义后端。
+    unsupported_backend_suggestion: 请改用<a>支持的后端</a>。
+    missing_repository: 未定义仓库。
+    invalid_repository: 配置的仓库无效。格式必须为「owner/repo」。
+    oauth_implicit_flow: Sveltia CMS 不支持配置的认证方法（隐式授权）。请改用其他<a>认证方法</a>。
+    github_pkce_unsupported: 由于 GitHub 的限制，暂不支持 PKCE 授权。请改用其他<a>认证方法</a>。
+    oauth_no_app_id: 未定义 OAuth 应用程序 ID。
+    # Don't localize `auth_methods`
+    no_auth_methods: '`auth_methods` 选项必须至少包含一种方法。'
+    missing_media_folder: 未定义媒体文件夹。
+    invalid_media_folder: 配置的媒体文件夹无效。必须为字符串。
+    invalid_public_folder: 配置的公共文件夹无效。必须为字符串。
+    public_folder_relative_path: 配置的公共文件夹无效。必须是以「/」开头的绝对路径。
+    public_folder_absolute_url: Sveltia CMS 不支持为公共文件夹选项设置绝对 URL。
+    # Don't localize `asset_collections`
+    invalid_asset_collections: '`asset_collections` 选项无效。必须为数组。'
+    # {$count} is the 1-based asset collection index in the configuration array. Don't localize `name`
+    missing_asset_collection_name: 资源集合 {$count} 必须将 `name` 选项定义为非空字符串。
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: 资源集合名称「{$name}」无效。不能包含特殊字符。
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: 资源集合名称必须唯一，但「{$name}」使用了多次。
+    # Don't localize `media_folder`
+    asset_collection_invalid_media_folder: '{$name} 资源集合必须将 `media_folder` 选项定义为字符串。'
+    # Don't localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: 集合必须定义 `folder`、`files` 或 `divider` 选项。
+    # Don't localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: 集合不能同时设置 `folder`、`files` 和 `divider` 选项。
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: '`{$extension}` 扩展名与 `{$format}` 格式不匹配。'
+    # {$slug} is the invalid slug template from the configuration; Don't localize `path` and `slug`
+    invalid_slug_slash: 别名模板「{$slug}」无效，因为它不能包含斜杠。要按子文件夹组织条目，请使用 `path` 选项而非 `slug`。
+    # {$count} is the 1-based collection index in the configuration array; Don't localize `name`
+    missing_collection_name: 集合 {$count} 必须将 `name` 选项定义为非空字符串。
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: 集合名称「{$name}」无效。不能包含特殊字符。
+    duplicate_collection_name: 集合名称必须唯一，但「{$name}」使用了多次。
+    # {$count} is the 1-based file index inside a file collection; Don't localize `name`
+    missing_collection_file_name: 集合文件 {$count} 必须将 `name` 选项定义为非空字符串。
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: 集合文件名「{$name}」无效。不能包含特殊字符。
+    duplicate_collection_file_name: 集合文件名必须唯一，但「{$name}」使用了多次。
+    # Don't localize `fields`
+    collection_no_fields: 集合必须将 `fields` 选项定义为至少包含一个字段。
+    # Don't localize `fields`
+    collection_file_no_fields: 集合文件必须将 `fields` 选项定义为至少包含一个字段。
+    # Don't localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: 如果在 `file` 路径中使用了 `locale` 占位符，则集合文件必须定义 `i18n` 选项。
+    # {$count} is the 1-based field index in the current fields array; Don't localize `name`
+    missing_field_name: 字段 {$count} 必须将 `name` 选项定义为非空字符串。
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: 字段名称「{$name}」无效。不能包含特殊字符。如果要嵌套字段，<a>请使用 Object 字段，而不是点号表示法</a>。
+    duplicate_field_name: 字段名称必须唯一，但「{$name}」使用了多次。
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: 变量类型 {$count} 必须将 `name` 选项定义为非空字符串。
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: 变量类型名称「{$name}」无效。不能包含特殊字符。
+    duplicate_variable_type: 变量类型名称必须唯一，但「{$name}」使用了多次。
+    date_field_type: 'Sveltia CMS 不支持已弃用的 Date 字段类型。请改用带有 `type: date` 选项的 DateTime 字段类型。'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: '无效的时区：{$timeZone}。必须是有效的 IANA 时区标识符，如 `America/New_York` 或 `Asia/Tokyo`。'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: 'Sveltia CMS 不支持已弃用的 `{$prop}` 选项。请改用 `{$newProp}` 选项。'
+    # Don't localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: 'Sveltia CMS 不支持 `allow_multiple` 选项。请改用 `multiple` 选项，其默认值为 `false`。'
+    # Don't localize `field`, `fields`, and `types`
+    invalid_list_field: List 字段不能同时设置 `field`、`fields` 和 `types` 选项。
+    # {$widget} is the configured widget value of the invalid variable type; Don't localize `widget` and `object`
+    invalid_list_variable_type: List 字段的变量类型无效。`widget` 选项设置为 `{$widget}`，但必须是 `object`。
+    # Don't localize `fields`, and `types`
+    invalid_object_field: Object 字段不能同时设置 `fields` 和 `types` 选项。
+    # Don't localize `fields`, and `types`
+    object_field_missing_fields: Object 字段必须定义 `fields` 或 `types` 选项。
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: 引用的集合「{$collection}」无效或未定义。
+    relation_field_invalid_collection_file: 引用的文件「{$file}」无效或未定义。
+    # Don't localize `file`
+    relation_field_missing_file_name: 关联文件集合时必须定义 `file` 选项。
+    relation_field_invalid_value_field: 引用的值字段「{$field}」无效或未定义。
+    unexpected: 意外错误
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: 未定义 OAuth 应用程序 ID。用户需要提供访问令牌才能登录。
+    editorial_workflow_unsupported: Sveltia CMS 暂不支持编辑工作流。
+    open_authoring_unsupported: Sveltia CMS 暂不支持开放撰写。
+    nested_collections_unsupported: Sveltia CMS 暂不支持嵌套集合。
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: 'Sveltia CMS 不支持 `{$prop}` 选项。该选项将会被忽略。'
+    # Don't localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: 同时设置了 `picker_utc` 和较新的时区选项（`input_timezone` 或 `output_utc`）。新选项将优先生效。请考虑从配置中移除 `picker_utc`。
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: '详见兼容性说明：{$link}'
+
+  # Console tip shown after config load
+  schema_tip: 要获得更好的开发者体验，可使用 Sveltia CMS 的 JSON schema 验证配置文件。详见 {$link}。
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: 本地
+  # Browser compatibility warnings
+  unsupported_browser: 您的浏览器不支持本地工作流。请使用 Chrome 或 Edge。
+  disabled: 浏览器已禁用本地工作流。<a>点击了解如何启用</a>。
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: 草稿
+  in_review: 审核中
+  ready: 就绪
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: 分类
+
+# Site Configuration Editor
+site_configuration_editor: 站点配置编辑器
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: API 密钥已保存。
+    api_key_removed: API 密钥已移除。
+    api_key_invalid: 提供的 API 密钥无效。请检查后重试。
+
+  # Preferences operation errors
+  error:
+    permission_denied: 浏览器拒绝了 Cookie 存储访问。请检查权限后重试。
+
+  # Appearance panel
+  appearance:
+    title: 外观
+    theme: 主题
+    select_theme: 选择主题
+
+  # Theme options
+  theme:
+    auto: 自动
+    dark: 深色
+    light: 浅色
+
+  # Language panel
+  language:
+    title: 语言
+    ui_language:
+      title: 界面语言
+      select_language: 选择语言
+
+  # Contents panel
+  contents:
+    title: 内容
+    editor:
+      title: 编辑器
+      use_draft_backup:
+        switch_label: 自动备份条目草稿
+      close_on_save:
+        switch_label: 保存草稿后关闭编辑器
+      close_with_escape:
+        switch_label: 按 Escape 键关闭编辑器
+
+  # Internationalization panel
+  i18n:
+    title: 国际化
+    translators:
+      default:
+        title: 默认翻译服务
+        select_service: 选择服务
+      api_keys:
+        title: 翻译服务 API 密钥
+        description: 管理<a>翻译服务</a>的 API 密钥。
+      # API key input label, e.g., "DeepL Key"
+      # {$service} is the translation service name
+      field_label: '{$service} 密钥'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: 注册 <a {$homeHref}>{$service}</a> 并在<a {$apiKeyHref}>此处</a>输入您的 API 密钥，即可快速翻译文本字段。
+      # placeholder: no description needed
+
+  # Media panel
+  media:
+    title: 媒体
+    stock_photos:
+      api_keys:
+        title: 图库照片服务 API 密钥
+        description: 管理<a>图库照片服务</a>的 API 密钥。
+      # API key input label, e.g., "Unsplash API Key"
+      # {$service} is the stock photo service name
+      field_label: '{$service} API 密钥'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: 注册 <a {$homeHref}>{$service} API</a> 并在<a {$apiKeyHref}>此处</a>输入您的 API 密钥，即可在图片字段中插入免费图库照片。
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: 照片由 {$service} 提供
+      no_services: 未配置<a>图库照片服务</a>。
+    cloud_storage:
+      api_keys:
+        title: 云存储服务 API 密钥
+        description: 管理<a>云存储服务</a>的 API 密钥。
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: '{$service} API 密钥'
+      no_services: 未配置<a>云存储服务</a>。
+
+  # Accessibility panel
+  accessibility:
+    title: 无障碍
+    underline_links:
+      title: 链接下划线
+      description: 在条目预览和界面标签中显示链接下划线。
+      switch_label: 始终显示链接下划线
+
+  # Advanced panel
+  advanced:
+    title: 高级
+    beta:
+      title: Beta 功能
+      description: 启用一些可能不稳定或未完全本地化的 Beta 功能。
+      switch_label: 加入 Beta 计划
+    developer_mode:
+      title: 开发者模式
+      description: 启用一些面向开发者的功能，包括详细的控制台日志和原生上下文菜单。
+      switch_label: 启用开发者模式
+    deploy_hook:
+      title: 部署钩子
+      description: 手动部署时（选择「发布更改」）会调用此 URL。使用 GitHub Actions 可留空。
+      # Hook URL input
+      url:
+        field_label: Hook URL
+        saved: Hook URL 已保存。
+        removed: Hook URL 已移除。
+      # Authorization header input
+      auth:
+        field_label: Authorization 标头（例如 Bearer &lt;token&gt;）（可选）
+        saved: Authorization 标头已保存。
+        removed: Authorization 标头已移除。
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: 查看内容库
+  view_asset_library: 查看资源库
+  search: 搜索条目和资源
+  create_entry: 创建新条目
+  save_entry: 保存条目
+  cancel_editing: 取消编辑条目
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: AVIF 图片
+  bmp: 位图图片
+  gif: GIF 图片
+  ico: 图标
+  jpeg: JPEG 图片
+  jpg: JPEG 图片
+  png: PNG 图片
+  svg: SVG 图片
+  tif: TIFF 图片
+  tiff: TIFF 图片
+  webp: WebP 图片
+  # Video formats
+  avi: AVI 视频
+  m4v: MP4 视频
+  mov: QuickTime 视频
+  mp4: MP4 视频
+  mpeg: MPEG 视频
+  mpg: MPEG 视频
+  ogg: Ogg 视频
+  ogv: Ogg 视频
+  ts: MPEG 视频
+  webm: WebM 视频
+  3gp: 3GPP 视频
+  3g2: 3GPP2 视频
+  # Audio formats
+  aac: AAC 音频
+  mid: MIDI
+  midi: MIDI
+  m4a: MP4 音频
+  mp3: MP3 音频
+  oga: Ogg 音频
+  opus: OPUS 音频
+  wav: WAV 音频
+  weba: WebM 音频
+  # Document formats
+  csv: CSV 表格
+  doc: Word 文档
+  docx: Word 文档
+  odp: OpenDocument 演示文稿
+  ods: OpenDocument 表格
+  odt: OpenDocument 文本
+  pdf: PDF 文档
+  ppt: PowerPoint 演示文稿
+  pptx: PowerPoint 演示文稿
+  rtf: 富文本文档
+  xls: Excel 表格
+  xlsx: Excel 表格
+  # Text formats
+  html: HTML 文本
+  js: JavaScript
+  json: JSON 文本
+  md: Markdown 文本
+  toml: TOML 文本
+  yaml: YAML 文本
+  yml: YAML 文本
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} B'
+  kb: '{$size} KB'
+  mb: '{$size} MB'
+  gb: '{$size} GB'
+  tb: '{$size} TB'
