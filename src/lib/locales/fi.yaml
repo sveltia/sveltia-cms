@@ -8,7 +8,7 @@
 # reusable strings for common operations like save, delete, cancel, etc.
 
 # Primary actions: creation, selection, and file operations
-create: Uusi
+create: Luo
 select: Valitse
 select_all: Valitse kaikki
 upload: Lähetä
@@ -41,10 +41,10 @@ remove: Poista
 clear: Tyhjennä
 
 # Expansion and collapse actions: used for accordions, trees, and expandable sections
-expand: Laajenna
-expand_all: Laajenna kaikki
-collapse: Supista
-collapse_all: Supista kaikki
+expand: Näytä
+expand_all: Näytä kaikki
+collapse: Piilota
+collapse_all: Piilota kaikki
 
 # Content manipulation: inserting, restoring, and discarding
 insert: Lisää
@@ -105,10 +105,10 @@ clipboard_error: Leikepöydälle kopiointi epäonnistui.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Tervetuloa käyttämään palvelua {$name}'
+welcome_message: 'Tervetuloa käyttämään {$name} -palvelua'
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Käyttövoimana {$name}'
+powered_by: 'Palvelun tarjoaa {$name}'
 
 # Shown during initial configuration and data loading
 loading_cms_config: Ladataan CMS-asetuksia…
@@ -121,13 +121,13 @@ loading_site_data_error: Sivuston tietojen lataamisessa tapahtui virhe.
 sign_in_with_x: 'Kirjaudu sisään palvelulla {$service}'
 
 # Access token dialog: alternative authentication method
-sign_in_using_access_token: Kirjaudu sisään pääsytunnuksella
-sign_in_using_access_token_description: Anna tunnuksesi alla. Sillä on oltava luku- ja kirjoitusoikeus arkiston sisältöön.
+sign_in_using_access_token: Kirjaudu sisään access tokenilla
+sign_in_using_access_token_description: Anna access tokenisi. Sillä on oltava luku- ja kirjoitusoikeus repositorion sisältöön.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
-sign_in_using_access_token_link: Voit luoda tunnuksen <a>{$service}-käyttäjäasetuksissa</a>.
+sign_in_using_access_token_link: Voit luoda tunnuksen <a>{$service}-palvelun käyttäjäasetuksissa</a>.
 # Input field label for personal access token
-personal_access_token: Henkilökohtainen pääsytunnus
+personal_access_token: Henkilökohtainen access token
 
 # Authentication progress indicators
 authorizing: Valtuutetaan…
@@ -135,28 +135,28 @@ signing_in: Kirjaudutaan sisään…
 
 # Local and test repository options
 # Button label and description for working with a local Git repository
-work_with_local_repo: Työskentele paikallisen arkiston kanssa
+work_with_local_repo: Työskentele paikallisen repositorion kanssa
 # {$repo} is the configured repository name shown when it is available
-work_with_local_repo_description: Kun sinulta pyydetään, valitse arkiston ”{$repo}” juurikansio.
-work_with_local_repo_description_no_repo: Kun sinulta pyydetään, valitse Git-arkistosi juurikansio.
+work_with_local_repo_description: Kun sinulta pyydetään, valitse repositorion ”{$repo}” juurikansio.
+work_with_local_repo_description_no_repo: Kun sinulta pyydetään, valitse Git-repositoriosi juurikansio.
 # Button label for demo/test repository
-work_with_test_repo: Työskentele testiarkiston kanssa
+work_with_test_repo: Työskentele testirepositorion kanssa
 
 # Authentication errors
 # Error messages shown during sign-in failures
 sign_in_error:
-  not_project_root: Valittu kansio ei ole arkiston juurikansio. Yritä uudelleen.
-  picker_dismissed: Arkiston juurikansiota ei voitu valita. Yritä uudelleen.
+  not_project_root: Valittu kansio ei ole repositorion juurikansio. Yritä uudelleen.
+  picker_dismissed: Repositorion juurikansiota ei voitu valita. Yritä uudelleen.
   authentication_aborted: Todennus keskeytettiin. Yritä uudelleen.
   invalid_token: Annettu tunnus on virheellinen. Tarkista se ja yritä uudelleen.
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
   UNSUPPORTED_BACKEND: Git-taustajärjestelmääsi ei tueta todentajassa.
   UNSUPPORTED_DOMAIN: Verkkotunnuksesi ei saa käyttää todentajaa.
-  MISCONFIGURED_CLIENT: OAuth-sovelluksen asiakastunnusta tai -salaisuutta ei ole määritetty.
+  MISCONFIGURED_CLIENT: OAuth-sovelluksen client ID:tä tai salaisuutta ei ole määritetty.
   AUTH_CODE_REQUEST_FAILED: Valtuutuskoodin vastaanottaminen epäonnistui. Yritä myöhemmin uudelleen.
   CSRF_DETECTED: Mahdollinen CSRF-hyökkäys havaittu. Todennus keskeytettiin.
-  TOKEN_REQUEST_FAILED: Pääsytunnuksen pyytäminen epäonnistui. Yritä myöhemmin uudelleen.
-  TOKEN_REFRESH_FAILED: Pääsytunnuksen päivittäminen epäonnistui. Yritä myöhemmin uudelleen.
+  TOKEN_REQUEST_FAILED: Access tokenin pyytäminen epäonnistui. Yritä myöhemmin uudelleen.
+  TOKEN_REFRESH_FAILED: Access tokenin päivittäminen epäonnistui. Yritä myöhemmin uudelleen.
   MALFORMED_RESPONSE: Palvelin vastasi virheellisillä tiedoilla. Yritä myöhemmin uudelleen.
 
 # Backend and repository validation errors
@@ -164,11 +164,11 @@ sign_in_error:
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
 backend_unsupported_version: 'Taustajärjestelmä {$name} vaatii version {$name} {$version} tai uudemman.'
 # {$repo} is the repository identifier, typically in owner/repo format
-repository_no_access: Sinulla ei ole pääsyä arkistoon ”{$repo}”.
-repository_not_found: Arkistoa ”{$repo}” ei ole olemassa.
-repository_empty: Arkistossa ”{$repo}” ei ole yhtään haaraa.
+repository_no_access: Sinulla ei ole pääsyä repositorioon ”{$repo}”.
+repository_not_found: Repositoriota ”{$repo}” ei ole olemassa.
+repository_empty: Repositoriolla ”{$repo}” ei ole yhtään haaraa.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
-branch_not_found: Arkistossa ”{$repo}” ei ole haaraa ”{$branch}”.
+branch_not_found: Repositoriossa ”{$repo}” ei ole haaraa ”{$branch}”.
 
 # General errors
 # Fallback error dialog title for unexpected errors
@@ -206,8 +206,8 @@ sign_in_with_mobile_instruction: Skannaa alla oleva QR-koodi puhelimellasi tai t
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
 signed_in_as_x: 'Kirjautuneena: {$name}'
-working_with_local_repo: Työskennellään paikallisen arkiston kanssa
-working_with_test_repo: Työskennellään testiarkiston kanssa
+working_with_local_repo: Työskennellään paikallisen repositorion kanssa
+working_with_test_repo: Työskennellään testirepositorion kanssa
 
 # Account menu: action items for sign-out and app installation
 sign_out: Kirjaudu ulos
@@ -221,14 +221,14 @@ install_as_app: Asenna sovelluksena
 
 # Main page titles in the global navigation and page switcher button group
 contents: Sisältö
-assets: Resurssit
-editorial_workflow: Toimituksellinen työnkulku
+assets: Assetit
+editorial_workflow: Editoinnin työnkulku
 cms_config: CMS-asetukset
 # Mobile menu page title (shown only on small screens)
 menu: Valikko
 
 # Mobile promo infobar: encouraging users to try the mobile version
-mobile_promo_title: Sveltia CMS on nyt saatavilla mobiilissa!
+mobile_promo_title: Sveltia CMS on nyt saatavilla mobiilille!
 mobile_promo_button: Kokeile
 
 # New language infobar: encouraging users to switch to a newly available language
@@ -244,11 +244,11 @@ switch_page: Vaihda sivua
 
 # Search input placeholders
 search_placeholder_contents: Hae sisältöä…
-search_placeholder_assets: Hae resursseja…
-search_placeholder_all: Hae sisältöä ja resursseja…
+search_placeholder_assets: Hae assetteja…
+search_placeholder_all: Hae sisältöä ja assetteja…
 
 # Create button: aria-label for the create menu in the toolbar
-create_entry_or_assets: Luo merkintä tai resursseja
+create_entry_or_assets: Luo merkintä tai assetteja
 
 # Publishing actions: button labels and progress indicators
 publish_changes: Julkaise muutokset
@@ -267,7 +267,7 @@ account: Tili
 
 # Account menu items: links to external resources
 live_site: Julkaistu sivusto
-git_repository: Git-arkisto
+git_repository: Git-repositorio
 settings: Asetukset
 
 # Help menu: button aria-labels and section headings
@@ -286,7 +286,7 @@ version_x: 'Versio {$version}'
 # Additional help menu items
 report_issue: Ilmoita ongelmasta
 share_feedback: Anna palautetta
-get_help: Hae apua
+get_help: Apua
 donate: Lahjoita
 join_discord: Liity Discordiin
 bluesky: Seuraa meitä Blueskyssä
@@ -299,8 +299,8 @@ update_now: Päivitä nyt
 # Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
 # {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
 backend_status:
-  minor_incident: 'Palvelussa {$service} on pieni häiriö. Työskentelysi saattaa häiriintyä.'
-  major_incident: 'Palvelussa {$service} on vakava häiriö. Saatat haluta odottaa, että tilanne paranee.'
+  minor_incident: 'Palvelussa {$service} on häiriö. Tämä saattaa vaikuttaa työskentelyysi.'
+  major_incident: 'Palvelussa {$service} on vakava häiriö. Suosittelemme odottamaan, että tilanne paranee.'
 
 # ==============================================================================
 # Content and Asset Libraries
@@ -310,7 +310,7 @@ backend_status:
 
 # Page container aria-labels
 content_library: Sisältökirjasto
-asset_library: Resurssikirjasto
+asset_library: Assettikirjasto
 
 # Primary sidebar section headings and list aria-labels
 collections: Kokoelmat
@@ -326,29 +326,29 @@ asset_location:
 
 # Sidebar and list labels
 # Collection assets panel aria-label
-collection_assets: Kokoelman resurssit
+collection_assets: Kokoelman assetit
 # List aria-labels for different list types
-entry_list: Merkintäluettelo
-file_list: Tiedostoluettelo
-asset_list: Resurssiluettelo
+entry_list: Merkintälistaus
+file_list: Tiedostolistaus
+asset_list: Assettilistaus
 
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
 x_collection: ”{$collection}”-kokoelma
 # {$folder} is the current asset folder label
-x_asset_folder: ”{$folder}”-resurssikansio
+x_asset_folder: ”{$folder}”-assettikansio
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users
-viewing_collection_list: Katselet nyt kokoelmaluetteloa.
-viewing_asset_folder_list: Katselet nyt resurssikansioluetteloa.
+viewing_collection_list: Katselet nyt kokoelmalistausta.
+viewing_asset_folder_list: Katselet nyt assettikansiolistausta.
 # Collection view announcements with entry counts
 # {$collection} is the collection label and {$count} is the number of entries in it
 viewing_x_collection: |
   .input {$count :integer}
   .match $count
-    0   {{ Katselet nyt kokoelmaa ”{$collection}”, jossa ei vielä ole merkintöjä. }}
+    0   {{ Katselet nyt kokoelmaa ”{$collection}”, jossa ei ole vielä merkintöjä. }}
     one {{ Katselet nyt kokoelmaa ”{$collection}”, jossa on yksi merkintä. }}
     *   {{ Katselet nyt kokoelmaa ”{$collection}”, jossa on {$count} merkintää. }}
 # Asset folder view announcements with asset counts
@@ -356,9 +356,9 @@ viewing_x_collection: |
 viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
-    0   {{ Katselet nyt resurssikansiota ”{$folder}”, jossa ei vielä ole resursseja. }}
-    one {{ Katselet nyt resurssikansiota ”{$folder}”, jossa on yksi resurssi. }}
-    *   {{ Katselet nyt resurssikansiota ”{$folder}”, jossa on {$count} resurssia. }}
+    0   {{ Katselet nyt resurssikansiota ”{$folder}”, jossa ei vielä ole assetteja. }}
+    one {{ Katselet nyt resurssikansiota ”{$folder}”, jossa on yksi assetti. }}
+    *   {{ Katselet nyt resurssikansiota ”{$folder}”, jossa on {$count} assettia. }}
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -375,9 +375,9 @@ x_of_x_selected: '{$selected}/{$total} valittu'
 
 # View switcher: toggle between list and grid views
 switch_view: Vaihda näkymää
-list_view: Luettelonäkymä
+list_view: Listausnäkymä
 grid_view: Ruudukkonäkymä
-switch_to_list_view: Vaihda luettelonäkymään
+switch_to_list_view: Vaihda listausnäkymään
 switch_to_grid_view: Vaihda ruudukkonäkymään
 
 # ==============================================================================
@@ -393,7 +393,7 @@ sort_keys:
   # No sorting; entries appear in their natural repository order
   none: Ei mitään
   name: Nimi
-  slug: Slug
+  slug: Polku
   # Sort by the last commit’s author name
   commit_author: Päivittäjä
   # Sort by the last commit date
@@ -429,14 +429,14 @@ document: Asiakirja
 other: Muu
 
 # Toolbar toggles: show/hide panels
-show_assets: Näytä resurssit
-hide_assets: Piilota resurssit
+show_assets: Näytä assetit
+hide_assets: Piilota assetit
 show_info: Näytä tiedot
 hide_info: Piilota tiedot
 
 # Folder display labels when no specific path is configured
-all_assets: Kaikki resurssit
-global_assets: Yleiset resurssit
+all_assets: Kaikki assetit
+global_assets: Yleiset assetit
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -459,10 +459,10 @@ creating_entries_nearing_quota: |
 
 # Navigation: back links and list labels
 back_to_collection: Takaisin kokoelmaan
-collection_list: Kokoelmaluettelo
-back_to_collection_list: Takaisin kokoelmaluetteloon
-asset_folder_list: Resurssikansioluettelo
-back_to_asset_folder_list: Takaisin resurssikansioluetteloon
+collection_list: Kokoelmalistaus
+back_to_collection_list: Takaisin kokoelmalistaukseen
+asset_folder_list: Assettikansiolistaus
+back_to_asset_folder_list: Takaisin assettikansiolistaukseen
 
 # ==============================================================================
 # Search
@@ -488,9 +488,9 @@ viewing_entry_search_results: |
 viewing_asset_search_results: |
   .input {$count :integer}
   .match $count
-    0   {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Resursseja ei löytynyt. }}
-    one {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Löysimme yhden resurssin. }}
-    *   {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Löysimme {$count} resurssia. }}
+    0   {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Assetteja ei löytynyt. }}
+    one {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Löysimme yhden assetin. }}
+    *   {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Löysimme {$count} assettia. }}
 
 # Result count labels
 # Used in search result headings to show counts
@@ -505,9 +505,9 @@ x_entries: |
 x_assets: |
   .input {$count :integer}
   .match $count
-    0   {{ Ei resursseja }}
-    one {{ {$count} resurssi }}
-    *   {{ {$count} resurssia }}
+    0   {{ Ei assetteja }}
+    one {{ {$count} assetti }}
+    *   {{ {$count} assettia }}
 
 # Empty state messages
 no_files_found: Tiedostoja ei löytynyt.
@@ -519,13 +519,13 @@ no_entries_found: Merkintöjä ei löytynyt.
 # Strings for uploading, editing, and managing assets (images, documents, etc.).
 
 # Upload dialog: title and button label
-upload_assets: Lähetä uusia resursseja
+upload_assets: Lähetä uusia assetteja
 
 # Edit options menu: button and item labels
 edit_options: Muokkausasetukset
 show_edit_options: Näytä muokkausasetukset
 # Edit menu items with specific asset names
-edit_asset: Muokkaa resurssia
+edit_asset: Muokkaa assettia
 # {$name} is the selected asset name
 edit_x: 'Muokkaa: {$name}'
 
@@ -542,16 +542,16 @@ enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
     0   {{ Anna uusi nimi alla. }}
-    one {{ Anna uusi nimi alla. Myös resurssia käyttävä merkintä päivitetään. }}
-    *   {{ Anna uusi nimi alla. Myös {$count} resurssia käyttävää merkintää päivitetään. }}
+    one {{ Anna uusi nimi alla. Myös asettia käyttävä merkintä päivitetään. }}
+    *   {{ Anna uusi nimi alla. Myös {$count} assettia käyttävää merkintää päivitetään. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: Tiedostonimi ei voi olla tyhjä.
   character: Tiedostonimi ei voi sisältää erikoismerkkejä.
-  duplicate: Tämä tiedostonimi on käytössä toisella resurssilla.
+  duplicate: Tämä nimi on käytössä toisella assetilla.
 
 # Replace asset: menu item and dialog title
-replace_asset: Korvaa resurssi
+replace_asset: Korvaa assetti
 # {$name} is the asset being replaced
 replace_x: 'Korvaa: {$name}'
 
