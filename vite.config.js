@@ -10,8 +10,9 @@ import { createGenerator } from 'ts-json-schema-generator';
 import { defineConfig } from 'vite';
 import { parse as parseYAML } from 'yaml';
 
-import { BUILTIN_FIELD_TYPES } from './src/lib/services/contents/fields';
-import svelteConfig from './svelte.config';
+// eslint-disable-next-line import-x/no-useless-path-segments
+import { BUILTIN_FIELD_TYPES } from './src/lib/services/contents/fields/index.js';
+import svelteConfig from './svelte.config.js';
 
 /**
  * List of dev dependencies to include in the published `package.json`.
