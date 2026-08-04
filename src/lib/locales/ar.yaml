@@ -1,0 +1,1957 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: إنشاء
+select: تحديد
+select_all: تحديد الكل
+upload: رفع
+copy: نسخ
+download: تنزيل
+duplicate: تكرار
+delete: حذف
+reorder: إعادة الترتيب
+
+# Dialog and form actions: confirmation and cancellation
+cancel: إلغاء
+done: تم
+save: حفظ
+# Progress indicator shown on the save button while a save operation is in progress
+saving: جاري الحفظ…
+
+# Publishing actions: used when committing changes to the repository
+publish: نشر
+# Progress indicator shown on the publish button during publishing
+publishing: جاري النشر…
+
+# Modification actions: editing and updating content
+rename: إعادة التسمية
+update: تحديث
+replace: استبدال
+
+# List and collection actions: adding and removing items
+add: إضافة
+remove: إزالة
+clear: مسح
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: توسيع
+expand_all: توسيع الكل
+collapse: طي
+collapse_all: طي الكل
+
+# Content manipulation: inserting, restoring, and discarding
+insert: إدراج
+restore: استعادة
+discard: تجاهل
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: جاري البحث…
+no_results: لم يتم العثور على نتائج.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: عام
+primary: رئيسي
+secondary: ثانوي
+collection: المجموعة
+folder: المجلد
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: مفتاح API
+details: التفاصيل
+back: رجوع
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: جاري التحميل…
+# Dismiss button for temporary notifications and infobars
+later: لاحقاً
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: المعرف الفريد (Slug)
+# Fallback labels for singleton collections when names aren’t configured
+singleton: مفرد
+singletons: مفردات
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: تعذر النسخ إلى الحافظة.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: 'مرحباً بك في {$name}'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: 'مدعوم بواسطة {$name}'
+
+# Shown during initial configuration and data loading
+loading_cms_config: تحميل إعدادات نظام إدارة المحتوى…
+loading_site_data: جاري تحميل بيانات الموقع…
+loading_site_data_error: حدث خطأ أثناء تحميل بيانات الموقع.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: 'تسجيل الدخول باستخدام {$service}'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: تسجيل الدخول باستخدام رمز الوصول (Access Token)
+sign_in_using_access_token_description: أدخل رمزك أدناه. يجب أن يمتلك صلاحية القراءة/الكتابة لمحتوى المستودع (Repository).
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: يمكنك إنشاء رمز من <a>صفحة إعدادات المستخدم في {$service}</a>.
+# Input field label for personal access token
+personal_access_token: رمز الوصول الشخصي
+
+# Authentication progress indicators
+authorizing: جاري المصادقة…
+signing_in: جاري تسجيل الدخول…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: العمل مع مستودع محلي
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: عند مطالبتك، حدد المجلد الرئيسي لمستودع "{$repo}".
+work_with_local_repo_description_no_repo: عند مطالبتك، حدد المجلد الرئيسي لمستودع Git الخاص بك.
+# Button label for demo/test repository
+work_with_test_repo: العمل مع مستودع تجريبي
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: المجلد المحدد ليس المجلد الرئيسي للمستودع. يرجى المحاولة مرة أخرى.
+  picker_dismissed: تعذر تحديد المجلد الرئيسي للمستودع. يرجى المحاولة مرة أخرى.
+  authentication_aborted: تم إلغاء المصادقة. يرجى المحاولة مرة أخرى.
+  invalid_token: الرمز المزود غير صالح. يرجى التحقق والمحاولة مرة أخرى.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: خادم Git الخاص بك غير مدعوم بواسطة أداة المصادقة.
+  UNSUPPORTED_DOMAIN: نطاقك غير مسموح له باستخدام أداة المصادقة.
+  MISCONFIGURED_CLIENT: لم يتم إعداد معرف العميل أو السر الخاص بتطبيق OAuth.
+  AUTH_CODE_REQUEST_FAILED: فشل في تلقي رمز التفويض. يرجى المحاولة مرة أخرى لاحقاً.
+  CSRF_DETECTED: تم اكتشاف هجوم CSRF محتمل. تم إلغاء عملية المصادقة.
+  TOKEN_REQUEST_FAILED: فشل في طلب رمز الوصول. يرجى المحاولة مرة أخرى لاحقاً.
+  TOKEN_REFRESH_FAILED: فشل في تحديث رمز الوصول. يرجى المحاولة مرة أخرى لاحقاً.
+  MALFORMED_RESPONSE: استجاب الخادم ببيانات غير صالحة. يرجى المحاولة مرة أخرى لاحقاً.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: 'يتطلب خادم {$name} الإصدار {$version} من {$name} أو أحدث.'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: ليس لديك صلاحية الوصول إلى مستودع "{$repo}".
+repository_not_found: المستودع "{$repo}" غير موجود.
+repository_empty: المستودع "{$repo}" لا يحتوي على أي فروع.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: المستودع "{$repo}" لا يحتوي على الفرع "{$branch}".
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: خطأ غير متوقع
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    0    {{ لم يحدث أي خطأ أثناء تحليل ملفات العناصر. }}
+    one  {{ حدث خطأ واحد أثناء تحليل ملف العناصر. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
+    two  {{ حدث خطأان أثناء تحليل ملفات العناصر. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
+    few  {{ حدثت {$count} أخطاء أثناء تحليل ملفات العناصر. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
+    many {{ حدث {$count} خطأً أثناء تحليل ملفات العناصر. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
+    *    {{ حدث {$count} خطأ أثناء تحليل ملفات العناصر. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: اسم المستخدم
+password: كلمة المرور
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: تسجيل الدخول
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: تسجيل الدخول باستخدام الجوال
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: امسح رمز QR أدناه باستخدام هاتفك أو جهازك اللوحي لتسجيل الدخول بدون كلمة مرور. سيتم نسخ إعداداتك تلقائياً.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'تم تسجيل الدخول باسم {$name}'
+working_with_local_repo: العمل مع مستودع محلي
+working_with_test_repo: العمل مع مستودع تجريبي
+
+# Account menu: action items for sign-out and app installation
+sign_out: تسجيل الخروج
+install_as_app: التثبيت كتطبيق
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: المحتويات
+assets: الوسائط
+editorial_workflow: سير العمل التحريري
+cms_config: إعدادات نظام إدارة المحتوى
+# Mobile menu page title (shown only on small screens)
+menu: القائمة
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS متاح الآن على الجوال!
+mobile_promo_button: جربه الآن
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS متاح الآن باللغة {$locale}!
+change_language: تغيير اللغة
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: زيارة الموقع المباشر
+# Page switcher button group aria-label for switching between main sections
+switch_page: تبديل الصفحة
+
+# Search input placeholders
+search_placeholder_contents: البحث في المحتويات…
+search_placeholder_assets: البحث في الوسائط…
+search_placeholder_all: البحث في المحتويات والوسائط…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: إنشاء عنصر أو وسائط
+
+# Publishing actions: button labels and progress indicators
+publish_changes: نشر التغييرات
+publishing_changes: جاري نشر التغييرات…
+# Error notification when publishing fails
+publishing_changes_failed: تعذر نشر التغييرات. يرجى المحاولة مرة أخرى.
+
+# Notifications: button aria-labels and section headings
+show_notifications: إظهار الإشعارات
+notifications: الإشعارات
+
+# Account menu: button aria-labels and section headings
+show_account_menu: إظهار قائمة الحساب
+# Account section heading in the account menu and mobile menu page
+account: الحساب
+
+# Account menu items: links to external resources
+live_site: الموقع المباشر
+git_repository: مستودع Git
+settings: الإعدادات
+
+# Help menu: button aria-labels and section headings
+show_help_menu: إظهار قائمة المساعدة
+# Help section heading in dropdowns and mobile menu
+help: المساعدة
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: اختصارات لوحة المفاتيح
+documentation: التوثيق
+release_notes: ملاحظات الإصدار
+announcements: الإعلانات
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: 'الإصدار {$version}'
+# Additional help menu items
+report_issue: الإبلاغ عن مشكلة
+share_feedback: مشاركة الملاحظات
+get_help: الحصول على المساعدة
+donate: التبرع
+join_discord: انضم إلينا على Discord
+bluesky: تابعنا على Bluesky
+
+# Update notification: infobar message and button
+update_available: أحدث إصدار من Sveltia CMS متاح الآن.
+update_now: التحديث الآن
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: 'يشهد {$service} عطلاً طفيفاً. قد يتأثر سير عملك.'
+  major_incident: 'يشهد {$service} عطلاً كبيراً. قد ترغب في الانتظار حتى يتحسن الوضع.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: مكتبة المحتوى
+asset_library: مكتبة الوسائط
+
+# Primary sidebar section headings and list aria-labels
+collections: المجموعات
+entries: العناصر
+files: الملفات
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: موقعك
+  external: مواقع خارجية
+  stock_photos: صور مجانية (Stock)
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: وسائط المجموعة
+# List aria-labels for different list types
+entry_list: قائمة العناصر
+file_list: قائمة الملفات
+asset_list: قائمة الوسائط
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: مجموعة "{$collection}"
+# {$folder} is the current asset folder label
+x_asset_folder: مجلد الوسائط "{$folder}"
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: أنت تعرض الآن قائمة المجموعات.
+viewing_asset_folder_list: أنت تعرض الآن قائمة مجلدات الوسائط.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0    {{ أنت تعرض الآن مجموعة "{$collection}"، والتي لا تحتوي على أي عناصر بعد. }}
+    one  {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على عنصر واحد. }}
+    two  {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على عنصرين اثنين. }}
+    few  {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على {$count} عناصر. }}
+    many {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على {$count} عنصراً. }}
+    *    {{ أنت تعرض الآن مجموعة "{$collection}"، والتي تحتوي على {$count} عنصر. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0    {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي لا يحتوي على أي وسائط بعد. }}
+    one  {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على عنصر وسائط واحد. }}
+    two  {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على عنصري وسائط. }}
+    few  {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} عناصر وسائط. }}
+    many {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} عنصر وسائط. }}
+    *    {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} عنصر وسائط. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: اضغط على Enter لتعديل الملف "{$file}".
+
+# Error messages: collection or file not found
+collection_not_found: لم يتم العثور على المجموعة.
+file_not_found: لم يتم العثور على الملف.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: 'تم تحديد {$selected} من أصل {$total}'
+
+# View switcher: toggle between list and grid views
+switch_view: تبديل العرض
+list_view: عرض القائمة
+grid_view: عرض الشبكة
+switch_to_list_view: التبديل إلى عرض القائمة
+switch_to_grid_view: التبديل إلى عرض الشبكة
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: فرز
+sorting_options: خيارات الفرز
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: بلا
+  name: الاسم
+  slug: المعرف الفريد (Slug)
+  # Sort by the last commit’s author name
+  commit_author: تم التحديث بواسطة
+  # Sort by the last commit date
+  commit_date: تم التحديث في
+  # Sort by the entry’s computed summary text
+  _summary: الملخص
+  # Manual order defined by the user via drag-and-drop
+  _manual: يدوي
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}، من أ إلى ي'
+ascending_date: '{$label}، من القديم إلى الحديث'
+descending: '{$label}، من ي إلى أ'
+descending_date: '{$label}، من الحديث إلى القديم'
+
+# Filter menu: button labels and options
+filter: تصفية
+filtering_options: خيارات التصفية
+
+# Group menu: button labels and options
+group: تجميع
+grouping_options: خيارات التجميع
+
+# Asset type filter and group labels
+type: النوع
+all: الكل
+# Asset type labels
+image: صورة
+video: فيديو
+audio: صوت
+document: مستند
+other: آخر
+
+# Toolbar toggles: show/hide panels
+show_assets: إظهار الوسائط
+hide_assets: إخفاء الوسائط
+show_info: إظهار المعلومات
+hide_info: إخفاء المعلومات
+
+# Folder display labels when no specific path is configured
+all_assets: كل الوسائط
+global_assets: الوسائط العامة
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: لم يتم العثور على العنصر.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: تم تعطيل إنشاء عناصر جديدة في هذه المجموعة بواسطة المسؤول.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: لا يمكنك إضافة عناصر جديدة إلى هذه المجموعة لأنها وصلت إلى الحد الأقصى البالغ {$quota} عنصراً.
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    0    {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصراً. لا يمكنك إنشاء أي عناصر بعد. }}
+    one  {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصراً. يمكنك إنشاء عنصر واحد فقط بعد. }}
+    two  {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصراً. يمكنك إنشاء عنصرين اثنين فقط بعد. }}
+    few  {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصراً. يمكنك إنشاء {$remaining} عناصر فقط بعد. }}
+    many {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصراً. يمكنك إنشاء {$remaining} عنصراً فقط بعد. }}
+    *    {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصراً. يمكنك إنشاء {$remaining} عنصر فقط بعد. }}
+
+# Navigation: back links and list labels
+back_to_collection: العودة إلى المجموعة
+collection_list: قائمة المجموعات
+back_to_collection_list: العودة إلى قائمة المجموعات
+asset_folder_list: قائمة مجلدات الوسائط
+back_to_asset_folder_list: العودة إلى قائمة مجلدات الوسائط
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: نتائج البحث
+# {$terms} is the current search query text
+search_results_for_x: نتائج البحث عن "{$terms}"
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0    {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي عناصر. }}
+    one  {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا عنصراً واحداً. }}
+    two  {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا عنصرين اثنين. }}
+    few  {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} عناصر. }}
+    many {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} عنصراً. }}
+    *    {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} عنصر. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0    {{ أنت تعرض الآن نتائج البحث عن "{$terms}". لم نتمكن من العثور على أي وسائط. }}
+    one  {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا عنصر وسائط واحداً. }}
+    two  {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا عنصري وسائط. }}
+    few  {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} عناصر وسائط. }}
+    many {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} عنصر وسائط. }}
+    *    {{ أنت تعرض الآن نتائج البحث عن "{$terms}". وجدنا {$count} عنصر وسائط. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0    {{ لا توجد عناصر }}
+    one  {{ عنصر واحد }}
+    two  {{ عنصران }}
+    few  {{ {$count} عناصر }}
+    many {{ {$count} عنصراً }}
+    *    {{ {$count} عنصر }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0    {{ لا توجد وسائط }}
+    one  {{ عنصر وسائط واحد }}
+    two  {{ عنصرا وسائط }}
+    few  {{ {$count} عناصر وسائط }}
+    many {{ {$count} عنصر وسائط }}
+    *    {{ {$count} عنصر وسائط }}
+
+# Empty state messages
+no_files_found: لم يتم العثور على ملفات.
+no_entries_found: لم يتم العثور على عناصر.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: رفع وسائط جديدة
+
+# Edit options menu: button and item labels
+edit_options: خيارات التعديل
+show_edit_options: إظهار خيارات التعديل
+# Edit menu items with specific asset names
+edit_asset: تعديل الوسيط
+# {$name} is the selected asset name
+edit_x: 'تعديل {$name}'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: التفاف الأسطر الطويلة
+
+# Rename asset: dialog and validation
+rename_asset: إعادة تسمية الوسيط
+# {$name} is the current asset name
+rename_x: 'إعادة تسمية {$name}'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0    {{ أدخل اسماً جديداً أدناه. }}
+    one  {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث عنصر واحد يستخدم هذا الوسيط. }}
+    two  {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث عنصرين اثنين يستخدمان هذا الوسيط. }}
+    few  {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث {$count} عناصر تستخدم هذا الوسيط. }}
+    many {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث {$count} عنصراً تستخدم هذا الوسيط. }}
+    *    {{ أدخل اسماً جديداً أدناه. سيتم أيضاً تحديث {$count} عنصر يستخدم هذا الوسيط. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: لا يمكن أن يكون اسم الملف فارغاً.
+  character: لا يمكن أن يحتوي اسم الملف على رموز خاصة.
+  duplicate: اسم الملف هذا مستخدم بالفعل لوسيط آخر.
+
+# Replace asset: menu item and dialog title
+replace_asset: استبدال الوسيط
+# {$name} is the asset being replaced
+replace_x: 'استبدال {$name}'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: انقر للتصفح…
+# Browse prompt shown on touch devices
+tap_to_browse: اضغط للتصفح…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    0    {{ إسحب الملفات هنا أو انقر للتصفح… }}
+    one  {{ إسحب ملفاً واحداً هنا أو انقر للتصفح… }}
+    two  {{ إسحب ملفين هنا أو انقر للتصفح… }}
+    few  {{ إسحب {$count} أجهزة أو ملفات هنا أو انقر للتصفح… }}
+    many {{ إسحب {$count} ملفاً هنا أو انقر للتصفح… }}
+    *    {{ إسحب {$count} ملف هنا أو انقر للتصفح… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    0    {{ إسحب الملفات هنا أو }}
+    one  {{ إسحب ملفاً واحداً هنا أو }}
+    two  {{ إسحب ملفين هنا أو }}
+    few  {{ إسحب {$count} أجهزة أو ملفات هنا أو }}
+    many {{ إسحب {$count} ملفاً هنا أو }}
+    *    {{ إسحب {$count} ملف هنا أو }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    0    {{ إسحب ملفات صور هنا أو }}
+    one  {{ إسحب ملف صورة واحداً هنا أو }}
+    two  {{ إسحب ملفي صور هنا أو }}
+    few  {{ إسحب {$count} ملفات صور هنا أو }}
+    many {{ إسحب {$count} ملف صورة هنا أو }}
+    *    {{ إسحب {$count} ملف صورة هنا أو }}
+
+# File picker and clipboard actions used by upload controls
+browse: تصفح
+# Generic clipboard paste action used by non-image file fields
+paste: لصق
+# Clipboard paste action used by image fields
+paste_image: لصق صورة
+
+# Clipboard paste errors
+no_image_in_clipboard: لم يتم العثور على صورة في الحافظة.
+clipboard_access_denied: تم رفض الوصول إلى الحافظة.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    0    {{ إسحب الملفات هنا }}
+    one  {{ إسحب الملف هنا }}
+    two  {{ إسحب الملفين هنا }}
+    few  {{ إسحب الـ {$count} ملفات هنا }}
+    many {{ إسحب الـ {$count} ملفاً هنا }}
+    *    {{ إسحب الـ {$count} ملف هنا }}
+
+# File type validation errors
+unsupported_file_type: نوع ملف غير مدعوم
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'الملف المُسقَط ليس من إحدى الأنواع التالية: {$types}. يرجى المحاولة مرة أخرى.'
+dropped_image_type_mismatch: 'الملف المُسقَط غير مدعوم. يتم قبول الصور من الأنواع التالية فقط: {$types}. يرجى المحاولة مرة أخرى.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    0    {{ اختيار ملفات }}
+    one  {{ اختيار ملف واحد }}
+    two  {{ اختيار ملفين }}
+    few  {{ اختيار {$count} ملفات }}
+    many {{ اختيار {$count} ملفاً }}
+    *    {{ اختيار {$count} ملف }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    0    {{ حذف الوسائط }}
+    one  {{ حذف عنصر الوسائط }}
+    two  {{ حذف عنصري الوسائط }}
+    few  {{ حذف {$count} عناصر وسائط }}
+    many {{ حذف {$count} عنصر وسائط }}
+    *    {{ حذف {$count} عنصر وسائط }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    0    {{ حذف الوسائط المحددة }}
+    one  {{ حذف عنصر الوسائط المحدد }}
+    two  {{ حذف عنصري الوسائط المحددين }}
+    few  {{ حذف {$count} عناصر وسائط محددة }}
+    many {{ حذف {$count} عنصر وسائط محدداً }}
+    *    {{ حذف {$count} عنصر وسائط محدد }}
+confirm_deleting_this_asset: هل أنت متأكد من أنك تريد حذف هذا الوسيط؟
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    0    {{ حذف الوسائط المحددة }}
+    one  {{ حذف عنصر الوسائط المحدد }}
+    two  {{ حذف عنصري الوسائط المحددين }}
+    few  {{ حذف {$count} عناصر وسائط محددة }}
+    many {{ حذف {$count} عنصر وسائط محدداً }}
+    *    {{ حذف {$count} عنصر وسائط محدد }}
+confirm_deleting_all_assets: هل أنت متأكد من أنك تريد حذف جميع الوسائط؟
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    0    {{ حذف العناصر }}
+    one  {{ حذف العنصر }}
+    two  {{ حذف العنصرين }}
+    few  {{ حذف {$count} عناصر }}
+    many {{ حذف {$count} عنصراً }}
+    *    {{ حذف {$count} عنصر }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    0    {{ حذف العناصر المحددة }}
+    one  {{ حذف العنصر المحدد }}
+    two  {{ حذف العنصرين المحددين }}
+    few  {{ حذف {$count} عناصر محددة }}
+    many {{ حذف {$count} عنصراً محدداً }}
+    *    {{ حذف {$count} عنصر محدد }}
+confirm_deleting_this_entry: هل أنت متأكد من أنك تريد حذف هذا العنصر؟
+confirm_deleting_this_entry_with_assets: هل أنت متأكد من أنك تريد حذف هذا العنصر والوسائط المرتبطة به؟
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    0    {{ هل أنت متأكد من أنك تريد حذف العناصر المحددة؟ }}
+    one  {{ هل أنت متأكد من أنك تريد حذف العنصر المحدد؟ }}
+    two  {{ هل أنت متأكد من أنك تريد حذف العنصرين المحددين؟ }}
+    few  {{ هل أنت متأكد من أنك تريد حذف {$count} عناصر محددة؟ }}
+    many {{ هل أنت متأكد من أنك تريد حذف {$count} عنصراً محدداً؟ }}
+    *    {{ هل أنت متأكد من أنك تريد حذف {$count} عنصر محدد؟ }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    0    {{ هل أنت متأكد من أنك تريد حذف العناصر المحددة والوسائط المرتبطة بها؟ }}
+    one  {{ هل أنت متأكد من أنك تريد حذف العنصر المحدد والوسائط المرتبطة به؟ }}
+    two  {{ هل أنت متأكد من أنك تريد حذف العنصرين المحددين والوسائط المرتبطة بهما؟ }}
+    few  {{ هل أنت متأكد من أنك تريد حذف {$count} عناصر محددة والوسائط المرتبطة بها؟ }}
+    many {{ هل أنت متأكد من أنك تريد حذف {$count} عنصراً محدداً والوسائط المرتبطة بها؟ }}
+    *    {{ هل أنت متأكد من أنك تريد حذف {$count} عنصر محدد والوسائط المرتبطة بها؟ }}
+confirm_deleting_all_entries: هل أنت متأكد من أنك تريد حذف جميع العناصر؟
+confirm_deleting_all_entries_with_assets: هل أنت متأكد من أنك تريد حذف جميع العناصر والوسائط المرتبطة بها؟
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: إعادة ترتيب العناصر
+done_reordering_entries: تم إعادة ترتيب العناصر
+cancel_reordering_entries: إلغاء إعادة ترتيب العناصر
+
+# Reorder error message
+saving_reorder_failed: فشل في حفظ الترتيب الجديد للعناصر. يرجى المحاولة مرة أخرى.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    0    {{ جاري معالجة الملفات. قد يستغرق هذا بعض الوقت. }}
+    one  {{ جاري معالجة ملف واحد. قد يستغرق هذا بعض الوقت. }}
+    two  {{ جاري معالجة ملفين اثنين. قد يستغرق هذا بعض الوقت. }}
+    few  {{ جاري معالجة {$count} ملفات. قد يستغرق هذا بعض الوقت. }}
+    many {{ جاري معالجة {$count} ملفاً. قد يستغرق هذا بعض الوقت. }}
+    *    {{ جاري معالجة {$count} ملف. قد يستغرق هذا بعض الوقت. }}
+
+# Uploading section aria-label
+uploading_files: جاري رفع الملفات
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: 'سيتم استبدال "{$name}" بهذا الملف:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    0    {{ سيتم حفظ هذه الملفات في مجلد "{$folder}": }}
+    one  {{ سيتم حفظ هذا الملف في مجلد "{$folder}": }}
+    two  {{ سيتم حفظ هذين الملفين في مجلد "{$folder}": }}
+    few  {{ سيتم حفظ هذه الـ {$count} ملفات في مجلد "{$folder}": }}
+    many {{ سيتم حفظ هذه الـ {$count} ملفاً في مجلد "{$folder}": }}
+    *    {{ سيتم حفظ هذه الـ {$count} ملف في مجلد "{$folder}": }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: ملفات تتجاوز الحجم المسموح
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    0    {{ لا يمكن رفع هذه الملفات لأنها تتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الأحجام أو اختيار ملفات أخرى. }}
+    one  {{ لا يمكن رفع هذا الملف لأنه يتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الحجم أو اختيار ملف آخر. }}
+    two  {{ لا يمكن رفع هذين الملفين لأنهما يتجاوزان الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الحجم أو اختيار ملفين آخرين. }}
+    few  {{ لا يمكن رفع هذه الـ {$count} ملفات لأنها تتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الأحجام أو اختيار ملفات أخرى. }}
+    many {{ لا يمكن رفع هذه الـ {$count} ملفاً لأنها تتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الأحجام أو اختيار ملفات أخرى. }}
+    *    {{ لا يمكن رفع هذه الـ {$count} ملف لأنها تتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الأحجام أو اختيار ملفات أخرى. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    0    {{ توجد ملفات بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
+    one  {{ يوجد ملف بنفس الاسم بالفعل في هذا المجلد. هل تريد استبداله؟ }}
+    two  {{ يوجد ملفان بنفس الاسم بالفعل في هذا المجلد. هل تريد استبدالهما؟ }}
+    few  {{ توجد {$count} ملفات بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
+    many {{ يوجد {$count} ملفاً بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
+    *    {{ يوجد {$count} ملف بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    0    {{ توجد ملفات بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
+    one  {{ يوجد ملف باسم "{$name}" بالفعل في هذا المجلد. هل تريد استبداله؟ }}
+    two  {{ يوجد ملفان بنفس الاسم بالفعل في هذا المجلد. هل تريد استبدالهما؟ }}
+    few  {{ توجد {$count} ملفات بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
+    many {{ يوجد {$count} ملفاً بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
+    *    {{ يوجد {$count} ملف بنفس الأسماء بالفعل في هذا المجلد. هل تريد استبدالها؟ }}
+file_name_conflict_resolution: حل تعارض أسماء الملفات
+# Option to keep both files (rename the new one)
+keep_both: الاحتفاظ بكليهما
+
+# Upload progress and error messages
+uploading_files_progress: جارٍ الرفع…
+uploading_files_failed: فشل الرفع.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (تم التحويل من {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: لا توجد عناصر في هذه المجموعة بعد.
+# Button to create first entry
+create_new_entry: إنشاء عنصر جديد
+# “Entry” option label in the create button menu
+entry: عنصر
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: ملف الفهرس
+
+# Empty state for file collections
+no_files_in_collection: لا توجد ملفات متاحة في هذه المجموعة.
+
+# Entry duplication
+duplicate_entry: تكرار العنصر
+entry_duplicated: تم تكرار العنصر كمسودة جديدة.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تحتوي الحقول على أخطاء. يرجى تصحيحها لحفظ العنصر. }}
+    one  {{ يحتوي حقل واحد على خطأ. يرجى تصحيحه لحفظ العنصر. }}
+    two  {{ يحتوي حقلان على أخطاء. يرجى تصحيحهما لحفظ العنصر. }}
+    few  {{ تحتوي {$count} حقول على أخطاء. يرجى تصحيحها لحفظ العنصر. }}
+    many {{ يحتوي {$count} حشلاً على أخطاء. يرجى تصحيحها لحفظ العنصر. }}
+    *    {{ يحتوي {$count} حقل على أخطاء. يرجى تصحيحها لحفظ العنصر. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم حفظ العناصر. }}
+    one  {{ تم حفظ العنصر. }}
+    two  {{ تم حفظ العنصرين. }}
+    few  {{ تم حفظ {$count} عناصر. }}
+    many {{ تم حفظ {$count} عنصراً. }}
+    *    {{ تم حفظ {$count} عنصر. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم حفظ العناصر ونشرها. }}
+    one  {{ تم حفظ العنصر ونشره. }}
+    two  {{ تم حفظ العنصرين ونشرهما. }}
+    few  {{ تم حفظ {$count} عناصر ونشرها. }}
+    many {{ تم حفظ {$count} عنصراً ونشرها. }}
+    *    {{ تم حفظ {$count} عنصر ونشرها. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم حذف العناصر. }}
+    one  {{ تم حذف العنصر. }}
+    two  {{ تم حذف العنصرين. }}
+    few  {{ تم حذف {$count} عناصر. }}
+    many {{ تم حذف {$count} عنصراً. }}
+    *    {{ تم حذف {$count} عنصر. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم حفظ الوسائط. }}
+    one  {{ تم حفظ الوسيط. }}
+    two  {{ تم حفظ الوسيطين. }}
+    few  {{ تم حفظ {$count} وسائط. }}
+    many {{ تم حفظ {$count} وسيطاً. }}
+    *    {{ تم حفظ {$count} وسيط. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم حفظ الوسائط ونشرها. }}
+    one  {{ تم حفظ الوسيط ونشره. }}
+    two  {{ تم حفظ الوسيطين ونشرهما. }}
+    few  {{ تم حفظ {$count} وسائط ونشرها. }}
+    many {{ تم حفظ {$count} وسيطاً ونشرها. }}
+    *    {{ تم حفظ {$count} وسيط ونشرها. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم نسخ الروابط إلى الحافظة. }}
+    one  {{ تم نسخ الرابط إلى الحافظة. }}
+    two  {{ تم نسخ الرابطين إلى الحافظة. }}
+    few  {{ تم نسخ {$count} روابط إلى الحافظة. }}
+    many {{ تم نسخ {$count} رابطاً إلى الحافظة. }}
+    *    {{ تم نسخ {$count} رابط إلى الحافظة. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم نسخ مسارات الملفات إلى الحافظة. }}
+    one  {{ تم نسخ مسار الملف إلى الحافظة. }}
+    two  {{ تم نسخ مساري الملفين إلى الحافظة. }}
+    few  {{ تم نسخ {$count} مسارات ملفات إلى الحافظة. }}
+    many {{ تم نسخ {$count} مسار ملف إلى الحافظة. }}
+    *    {{ تم نسخ {$count} مسار ملف إلى الحافظة. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم نسخ بيانات الملفات إلى الحافظة. }}
+    one  {{ تم نسخ بيانات الملف إلى الحافظة. }}
+    two  {{ تم نسخ بيانات الملفين إلى الحافظة. }}
+    few  {{ تم نسخ بيانات {$count} ملفات إلى الحافظة. }}
+    many {{ تم نسخ بيانات {$count} ملفاً إلى الحافظة. }}
+    *    {{ تم نسخ بيانات {$count} ملف إلى الحافظة. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم تنزيل الوسائط. }}
+    one  {{ تم تنزيل الوسيط. }}
+    two  {{ تم تنزيل الوسيطين. }}
+    few  {{ تم تنزيل {$count} وسائط. }}
+    many {{ تم تنزيل {$count} وسيطاً. }}
+    *    {{ تم تنزيل {$count} وسيط. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم نقل الوسائط. }}
+    one  {{ تم نقل الوسيط. }}
+    two  {{ تم نقل الوسيطين. }}
+    few  {{ تم نقل {$count} وسائط. }}
+    many {{ تم نقل {$count} وسيطاً. }}
+    *    {{ تم نقل {$count} وسيط. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم إعادة تسمية الوسائط. }}
+    one  {{ تم إعادة تسمية الوسيط. }}
+    two  {{ تم إعادة تسمية الوسيطين. }}
+    few  {{ تم إعادة تسمية {$count} وسائط. }}
+    many {{ تم إعادة تسمية {$count} وسيطاً. }}
+    *    {{ تم إعادة تسمية {$count} وسيط. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم حذف الوسائط. }}
+    one  {{ تم حذف الوسيط. }}
+    two  {{ تم حذف الوسيطين. }}
+    few  {{ تم حذف {$count} وسائط. }}
+    many {{ تم حذف {$count} وسيطاً. }}
+    *    {{ تم حذف {$count} وسيط. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: محرر المحتوى
+
+# Draft backup: restore dialog
+restore_backup_title: استعادة المسودة
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: يحتوي هذا العنصر على نسخة احتياطية من {$datetime}. هل تريد استعادة المسودة المحررة؟
+
+# Draft backup notifications
+draft_backup_saved: تم حفظ النسخة الاحتياطية للمسودة.
+draft_backup_restored: تم استعادة النسخة الاحتياطية للمسودة.
+draft_backup_deleted: تم حذف النسخة الاحتياطية للمسودة.
+
+# Editor toolbar actions
+cancel_editing: إلغاء التحرير
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: إنشاء {$name}
+# {$collection} is the collection label
+create_entry_announcement: أنت تقوم الآن بإنشاء عنصر جديد في مجموعة “{$collection}”.
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: أنت تقوم الآن بتعديل العنصر “{$entry}” في مجموعة “{$collection}”.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: أنت تقوم الآن بتعديل الملف “{$file}” في مجموعة “{$collection}”.
+# {$file} is the singleton file name
+edit_singleton_announcement: أنت تقوم الآن بتعديل الملف “{$file}”.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: حفظ ونشر
+save_without_publishing: حفظ دون نشر
+
+# Editor options menu
+show_editor_options: إظهار خيارات المحرر
+editor_options: خيارات المحرر
+
+# Preview controls
+show_preview: إظهار المعاينة
+
+# Editor settings
+sync_scrolling: مزامنة التمرير
+
+# Locale controls
+switch_locale: تغيير اللغة
+# Short status indicators appended to locale names
+locale_content_disabled_short: (معطل)
+locale_content_error_short: (خطأ)
+
+# Pane labels
+edit: تحرير
+preview: معاينة
+
+# Pane controls; not to be confused with pages
+swap_panes: تبديل اللوحات
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: تحرير محتوى {$locale}
+preview_x_locale: معاينة محتوى {$locale}
+
+# Preview iframe labels
+content_preview: معاينة المحتوى
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: إظهار خيارات محتوى {$locale}
+content_options_x_locale: 'خيارات محتوى {$locale}'
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: حقل “{$field}”
+
+# Field options menu
+show_field_options: إظهار خيارات الحقل
+field_options: خيارات الحقل
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'نوع الحقل غير مدعوم: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: 'تفعيل {$locale}'
+reenable_x_locale: 'إعادة تفعيل {$locale}'
+disable_x_locale: 'تعطيل {$locale}'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: تم تعطيل محتوى {$locale}.
+locale_x_now_disabled: محتوى {$locale} معطل الآن. سيتم حذفه عند حفظ العنصر.
+
+# Repository and site links
+view_in_repository: العرض في المستودع
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: 'العرض على {$service}'
+view_on_live_site: العرض على الموقع المباشر
+
+# Content copying from other locales
+copy_from: نسخ من…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: 'نسخ من {$locale}'
+
+# Translation features
+translation_options: خيارات الترجمة
+translate: ترجمة
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ ترجمة الحقل }}
+    *   {{ ترجمة الحقول }}
+translate_from: ترجمة من…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: 'ترجمة من {$locale}'
+
+# Revert changes
+revert_changes: التراجع عن التغييرات
+revert_all_changes: التراجع عن جميع التغييرات
+
+# Slug editing
+edit_slug: تعديل المعرف الفريد (Slug)
+edit_slug_warning: قد يؤدي تغيير المعرف الفريد (Slug) إلى كسر الروابط الداخلية والخارجية للعنصر. حالياً، لا يتيح Sveltia CMS تحديث المراجع التي تم إنشاؤها باستخدام حقول العلاقات، لذلك ستحتاج إلى تحديث هذه المراجع والروابط الأخرى يدوياً.
+edit_slug_error:
+  empty: لا يمكن أن يكون المعرف الفريد (Slug) فارغاً.
+  invalid: لا يمكن أن يحتوي المعرف الفريد (Slug) على رموز خاصة، بما في ذلك الشرطات المائلة والمسافات.
+  duplicate: هذا المعرف الفريد (Slug) مستخدم بالفعل لعنصر آخر.
+
+# Required field indicator
+required: مطلوب
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: لا يوجد شيء لترجمته.
+    started: جارٍ الترجمة…
+    error: فشلت الترجمة.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0    {{ لم تتم ترجمة أي حقول من {$source}. }}
+        one  {{ تمت ترجمة حقل واحد من {$source}. }}
+        two  {{ تمت ترجمة حقلين من {$source}. }}
+        few  {{ تمت ترجمة {$count} حقول من {$source}. }}
+        many {{ تمت ترجمة {$count} حشلاً من {$source}. }}
+        *    {{ تمت ترجمة {$count} حقل من {$source}. }}
+  copy:
+    none: لا يوجد شيء لنسخه.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0    {{ لم يتم نسخ أي حقول من {$source}. }}
+        one  {{ تم نسخ حقل واحد من {$source}. }}
+        two  {{ تم نسخ حقلين من {$source}. }}
+        few  {{ تم نسخ {$count} حقول من {$source}. }}
+        many {{ تم نسخ {$count} حشلاً من {$source}. }}
+        *    {{ تم نسخ {$count} حقل من {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: هذا الحقل مطلوب.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: يجب أن يكون التاريخ/الوقت في أو بعد {$min}.
+    date: يجب أن يكون التاريخ في أو بعد {$min}.
+    time: يجب أن يكون الوقت في أو بعد {$min}.
+    number: يجب أن تكون القيمة أكبر من أو تساوي {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        0    {{ يجب عليك تحديد الخيارات. }}
+        one  {{ يجب عليك تحديد خيار واحد على الأقل. }}
+        two  {{ يجب عليك تحديد خيارين على الأقل. }}
+        few  {{ يجب عليك تحديد {$min} خيارات على الأقل. }}
+        many {{ يجب عليك تحديد {$min} خياراً على الأقل. }}
+        *    {{ يجب عليك تحديد {$min} خيار على الأقل. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        0    {{ يجب عليك إضافة العناصر. }}
+        one  {{ يجب عليك إضافة عنصر واحد على الأقل. }}
+        two  {{ يجب عليك إضافة عنصرين على الأقل. }}
+        few  {{ يجب عليك إضافة {$min} عناصر على الأقل. }}
+        many {{ يجب عليك إضافة {$min} عنصراً على الأقل. }}
+        *    {{ يجب عليك إضافة {$min} عنصر على الأقل. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: يجب أن يكون التاريخ/الوقت في أو قبل {$max}.
+    date: يجب أن يكون التاريخ في أو قبل {$max}.
+    time: يجب أن يكون الوقت في أو قبل {$max}.
+    number: يجب أن تكون القيمة أقل من أو تساوي {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        0    {{ لا يمكنك تحديد أي خيارات. }}
+        one  {{ لا يمكنك تحديد أكثر من خيار واحد. }}
+        two  {{ لا يمكنك تحديد أكثر من خيارين. }}
+        few  {{ لا يمكنك تحديد أكثر من {$max} خيارات. }}
+        many {{ لا يمكنك تحديد أكثر من {$max} خياراً. }}
+        *    {{ لا يمكنك تحديد أكثر من {$max} خيار. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        0    {{ لا يمكنك إضافة أي عناصر. }}
+        one  {{ لا يمكنك إضافة أكثر من عنصر واحد. }}
+        two  {{ لا يمكنك إضافة أكثر من عنصرين. }}
+        few  {{ لا يمكنك إضافة أكثر من {$max} عناصر. }}
+        many {{ لا يمكنك إضافة أكثر من {$max} عنصراً. }}
+        *    {{ لا يمكنك إضافة أكثر من {$max} عنصر. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      0    {{ يجب عليك إدخال الأحرف. }}
+      one  {{ يجب عليك إدخال حرف واحد على الأقل. }}
+      two  {{ يجب عليك إدخال حرفين على الأقل. }}
+      few  {{ يجب عليك إدخال {$min} أحرف على الأقل. }}
+      many {{ يجب عليك إدخال {$min} حرفاً على الأقل. }}
+      *    {{ يجب عليك إدخال {$min} حرف على الأقل. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      0    {{ لا يمكنك إدخال أي أحرف. }}
+      one  {{ لا يمكنك إدخال أكثر من حرف واحد. }}
+      two  {{ لا يمكنك إدخال أكثر من حرفين. }}
+      few  {{ لا يمكنك إدخال أكثر من {$max} أحرف. }}
+      many {{ لا يمكنك إدخال أكثر من {$max} حرفاً. }}
+      *    {{ لا يمكنك إدخال أكثر من {$max} حرف. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: يرجى إدخال رقم.
+    email: يرجى إدخال بريد إلكتروني صالح.
+    url: يرجى إدخال رابط URL صالح.
+
+  # Custom field validation error
+  invalid_value: قيمة غير صالحة.
+  unexpected_error: حدث خطأ غير متوقع.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: لوحات الشريط الجانبي
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: التحقق من الصحة
+    placeholder: ستظهر نتائج التحقق من الصحة هنا.
+    no_errors_found: لم يتم العثور على أخطاء.
+
+  # History panel: shows entry commit history
+  history:
+    title: السجل
+    fetch_failed: فشل تحميل السجل.
+    no_history: لم يتم العثور على سجل.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: الروابط الخلفية
+    no_entries: لا توجد عناصر تشير إلى هذا العنصر.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: خطأ
+    description: حدث خطأ أثناء حفظ العنصر. يرجى المحاولة مرة أخرى لاحقاً.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: أنت تعرض الآن تفاصيل الوسيط “{$name}”.
+
+# Asset editor container aria-label
+asset_editor: محرر الوسائط
+
+# Preview unavailable message
+preview_unavailable: المعاينة غير متاحة.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    0    {{ الروابط العامة }}
+    one  {{ الرابط العام }}
+    two  {{ الرابطان العامان }}
+    few  {{ الـ {$count} روابط عامة }}
+    many {{ الـ {$count} رابطاً عاماً }}
+    *    {{ الـ {$count} رابط عام }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    0    {{ مسارات الملفات }}
+    one  {{ مسار الملف }}
+    two  {{ مسارا الملفين }}
+    few  {{ {$count} مسارات ملفات }}
+    many {{ {$count} مسار ملف }}
+    *    {{ {$count} مسار ملف }}
+file_data: بيانات الملف
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: معلومات الوسيط
+select_asset_show_info: حدد عنصراً لإظهار معلوماته.
+
+kind: النوع
+size: الحجم
+dimensions: الأبعاد
+duration: المدة
+# Short heading for a list of entries using the selected asset
+used_in: مستخدم في
+created_date: تاريخ الإنشاء
+location: الموقع
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: خريطة توضح خط العرض {$latitude}، وخط الطول {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: إزالة هذا العنصر
+move_up: تحريك لأعلى
+move_down: تحريك لأسفل
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: إضافة {$name}
+
+# List item context menu
+add_item_above: إضافة عنصر أعلاه
+add_item_below: إضافة عنصر أدناه
+
+# Variable-type list selector
+select_list_type: حدد نوع القائمة
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: الشفافية
+
+# Select field: empty option placeholder
+unselected_option: (لاشيء)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: تحديد ملف
+    image: تحديد صورة
+
+  # Search input labels
+  search_for_file: البحث عن ملفات
+  search_for_image: البحث عن صور
+
+  # Locations panel aria-label
+  locations: المواقع
+
+  # Asset folder options
+  folder:
+    field: حقل الوسائط
+    entry: عنصر الوسائط
+    file: ملف الوسائط
+    collection: مجموعة الوسائط
+    global: وسائط عامة
+
+  # Error messages
+  error:
+    invalid_key: مفتاح API الخاص بك غير صالح أو منتهي الصلاحية. يرجى التحقق منه والمحاولة مرة أخرى.
+    search_fetch_failed: حدث خطأ أثناء البحث عن الوسائط. يرجى المحاولة مرة أخرى لاحقاً.
+    image_fetch_failed: حدث خطأ أثناء تنزيل الوسيط المحدد. يرجى المحاولة مرة أخرى لاحقاً.
+
+  # Stock photo panels
+  available_images: الصور المتاحة
+
+  # URL entry option
+  enter_url: إدخال رابط URL
+  enter_file_url: 'إدخال رابط URL للملف:'
+  enter_image_url: 'إدخال رابط URL للصورة:'
+
+  # Large file warning dialog
+  large_file:
+    title: ملف كبير
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: إسناد الصورة
+    description: 'يرجى استخدام الإسناد التالي إن أمكن:'
+
+  # Unsaved asset badge
+  unsaved: غير محفوظ
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0    {{ لم يتم إدخال أي أحرف. الحد الأدنى: {$min}. الحد الأقصى: {$max}. }}
+      one  {{ تم إدخال حرف واحد. الحد الأدنى: {$min}. الحد الأقصى: {$max}. }}
+      two  {{ تم إدخال حرفين. الحد الأدنى: {$min}. الحد الأقصى: {$max}. }}
+      few  {{ تم إدخال {$count} أحرف. الحد الأدنى: {$min}. الحد الأقصى: {$max}. }}
+      many {{ تم إدخال {$count} حرفاً. الحد الأدنى: {$min}. الحد الأقصى: {$max}. }}
+      *    {{ تم إدخال {$count} حرف. الحد الأدنى: {$min}. الحد الأقصى: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0    {{ لم يتم إدخال أي أحرف. الحد الأدنى: {$min}. }}
+      one  {{ تم إدخال حرف واحد. الحد الأدنى: {$min}. }}
+      two  {{ تم إدخال حرفين. الحد الأدنى: {$min}. }}
+      few  {{ تم إدخال {$count} أحرف. الحد الأدنى: {$min}. }}
+      many {{ تم إدخال {$count} حرفاً. الحد الأدنى: {$min}. }}
+      *    {{ تم إدخال {$count} حرف. الحد الأدنى: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0    {{ لم يتم إدخال أي أحرف. الحد الأقصى: {$max}. }}
+      one  {{ تم إدخال حرف واحد. الحد الأقصى: {$max}. }}
+      two  {{ تم إدخال حرفين. الحد الأقصى: {$max}. }}
+      few  {{ تم إدخال {$count} أحرف. الحد الأقصى: {$max}. }}
+      many {{ تم إدخال {$count} حرفاً. الحد الأقصى: {$max}. }}
+      *    {{ تم إدخال {$count} حرف. الحد الأقصى: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: مشغل فيديو يوتيوب
+
+# Date/time field: quick action buttons
+today: اليوم
+now: الآن
+
+# Rich-text editor: component field labels
+editor_components:
+  image: صورة
+  src: المصدر
+  alt: النص البديل
+  title: العنوان
+  link: الرابط
+
+# Key-Value field: column headers and validation
+key_value:
+  key: المفتاح
+  value: القيمة
+  action: الإجراء
+  empty_key: المفتاح مطلوب.
+  duplicate_key: يجب أن يكون المفتاح فريداً.
+
+# Map field: location search and geolocation
+find_place: البحث عن مكان
+use_your_location: استخدام موقعك
+
+# Geolocation error dialog
+geolocation_error_title: خطأ في تحديد الموقع الجغرافي
+geolocation_error_body: حدث خطأ أثناء جلب موقعك.
+geolocation_unsupported: الـ API الخاص بتحديد الموقع غير مدعوم بواسطة هذا المتصفح.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': نعم
+  'false': لا
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: لم يتم إعداد الخدمة بشكل صحيح.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: مفتاح API
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: أدخل {$key} الخاص بك لـ {$service}.
+      requested: جارٍ التحقق من الصحة…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: مفتاح {$key} المُدخل غير صالح. يرجى التحقق منه والمحاولة مرة أخرى.
+    password:
+      # {$service} is the cloud service name
+      initial: أدخل كلمة المرور الخاصة بك لـ {$service}.
+      requested: جارٍ تسجيل الدخول…
+      error: اسم المستخدم أو كلمة المرور غير صحيحة. يرجى التحقق والمحاولة مرة أخرى.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: مكتبة وسائط Cloudinary
+    activate:
+      button_label: تفعيل Cloudinary
+      description: بعد تسجيل الدخول، انقر فوق زر تسجيل الدخول مرة أخرى للمتابعة.
+    auth_key_label: السر الخاص بـ API
+    open_library: فتح Cloudinary
+
+  uploadcare:
+    auth_key_label: مفتاح السر الخاص بـ API
+
+  aws_s3:
+    auth_key_label: مفتاح الوصول السري
+
+  cloudflare_r2:
+    auth_key_label: مفتاح الوصول السري
+
+  digitalocean_spaces:
+    auth_key_label: مفتاح الوصول السري
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      0    {{ هناك أخطاء في إعداد الـ CMS. يرجى حل المشكلات والمحاولة مرة أخرى. }}
+      one  {{ هناك خطأ واحد في إعداد الـ CMS. يرجى حل المشكلة والمحاولة مرة أخرى. }}
+      two  {{ هناك خطآن في إعداد الـ CMS. يرجى حل المشكلتين والمحاولة مرة أخرى. }}
+      few  {{ هناك {$count} أخطاء في إعداد الـ CMS. يرجى حل المشكلات والمحاولة مرة أخرى. }}
+      many {{ هناك {$count} خطأً في إعداد الـ CMS. يرجى حل المشكلات والمحاولة مرة أخرى. }}
+      *    {{ هناك {$count} خطأ في إعداد الـ CMS. يرجى حل المشكلات والمحاولة مرة أخرى. }}
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: 'مجموعة {$collection}'
+    file: 'ملف {$file}'
+    component: 'مكون {$component}'
+    # Don’t localize `{$field}`
+    field: 'حقل `{$field}`'
+
+  # Configuration error messages
+  error:
+    no_secure_context: يعمل Sveltia CMS فقط مع روابط HTTPS أو عناوين localhost.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        0    {{ يجب أن تستخدم روابط ملفات الإعدادات بروتوكول HTTPS أو عناوين localhost. }}
+        one  {{ يجب أن يستخدم رابط ملف الإعدادات بروتوكول HTTPS أو عنوان localhost. }}
+        two  {{ يجب أن يستخدم رابطا ملفي الإعدادات بروتوكول HTTPS أو عناوين localhost. }}
+        few  {{ يجب أن تستخدم {$count} روابط لملفات الإعدادات بروتوكول HTTPS أو عناوين localhost. }}
+        many {{ يجب أن يستخدم {$count} رابطاً لملفات الإعدادات بروتوكول HTTPS أو عناوين localhost. }}
+        *    {{ يجب أن يستخدم {$count} رابط لملفات الإعدادات بروتوكول HTTPS أو عناوين localhost. }}
+    fetch_failed: تعذر جلب ملف الأعدادات.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: تم إرجاع استجابة HTTP مع الحالة {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'تعذر جلب ملف الأعدادات. لمنع تحميل ملف `config.yml`، أضف <a>`load_config_file: false`</a> إلى كائن الأعدادات الممرر إلى `CMS.init()`.'
+    parse_failed: تعذر تحليل ملف الأعدادات.
+    parse_failed_invalid_object: ملف الأعدادات ليس كائن JavaScript صالباً.
+    parse_failed_unsupported_type: ملف الأعدادات ليس نوع ملف مدعوم. يتم دعم YAML و TOML و JSON فقط.
+    no_collection: لم يتم تعريف المجموعات.
+    missing_backend: لم يتم تعريف الخادم الخلفي (Backend).
+    missing_backend_name: لم يتم تعريف اسم الخادم الخلفي (Backend).
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: الخادم الخلفي (Backend) {$name} <a>غير مدعوم</a> في Sveltia CMS.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: الخادم الخلفي (Backend) المهجور {$name} <a>غير مدعوم</a> في Sveltia CMS.
+    unsupported_custom_backend: الخوادم الخلفية (Backends) المخصصة <a>غير مدعومة</a> في Sveltia CMS.
+    unsupported_backend_suggestion: استخدم أحد <a>الخوادم الخلفية (Backends) المدعومة</a> بدلاً من ذلك.
+    missing_repository: لم يتم تعريف المستودع.
+    invalid_repository: المستودع المعد غير صالح. يجب أن يكون بصيغة “owner/repo”.
+    oauth_implicit_flow: طريقة المصادقة المُعدة (الانسياب الضمني) غير مدعومة في Sveltia CMS. استخدم <a>طريقة مصادقة</a> مختلفة بدلاً من ذلك.
+    github_pkce_unsupported: تفويض PKCE غير مدعوم بعد بسبب قيود GitHub. استخدم <a>طريقة مصادقة</a> مختلفة بدلاً من ذلك.
+    oauth_no_app_id: معرف تطبيق OAuth غير محدد.
+    # Don’t localize `auth_methods`
+    no_auth_methods: يجب أن يحتوي الخيار `auth_methods` على طريقة واحدة على الأقل.
+    missing_media_folder: مجلد الوسائط غير محدد.
+    invalid_media_folder: مجلد الوسائط المعد غير صالح. يجب أن يكون سلسلة نصية.
+    invalid_public_folder: المجلد العام المعد غير صالح. يجب أن يكون سلسلة نصية.
+    public_folder_relative_path: المجلد العام المعد غير صالح. يجب أن يكون مساراً مطلقاً يبدأ بـ “/”.
+    public_folder_absolute_url: استخدام رابط URL مطلق لخيار المجلد العام غير مدعوم في Sveltia CMS.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: الخيار `asset_collections` غير صالح. يجب أن يكون مصفوفة.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: يجب أن تكون مجموعة الوسائط {$count} تمتلك خيار `name` معرفاً كسلسلة نصية غير فارغة.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: اسم مجموعة الوسائط `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: يجب أن تكون أسماء مجموعات الوسائط فريدة، ولكن `{$name}` مستخدم أكثر من مرة.
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: يجب أن تكون مجموعة الوسائط `{$name}` تمتلك خيار `media_folder` معرفاً كسلسلة نصية.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: يجب أن تحتوي المجموعة إما على خيار `folder` أو `files` أو `divider`.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: لا يمكن للمجموعة أن تحتوي على الخيارات `folder` و `files` و `divider` معاً.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: الامتداد `{$extension}` لا يتطابق مع التنسيق `{$format}`.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: قالب المعرف الفريد (Slug) `{$slug}` غير صالح لأنه لا يمكن أن يحتوي على شرطات مائلة. لتنظيم العناصر في مجلدات فرعية، استخدم الخيار `path` بدلاً من `slug`.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: يجب أن تتضمن المجموعة {$count} الخيار `name` محددًا كسلسلة نصية غير فارغة.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: اسم المجموعة `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
+    duplicate_collection_name: يجب أن تكون أسماء المجموعات فريدة، ولكن `{$name}` مستخدم أكثر من مرة.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: يجب أن يحتوي ملف المجموعة {$count} على الخيار `name` محددًا كسلسلة نصية غير فارغة.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: اسم ملف المجموعة `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
+    duplicate_collection_file_name: يجب أن تكون أسماء ملفات المجموعات فريدة، ولكن `{$name}` مستخدم أكثر من مرة.
+    # Don’t localize `fields`
+    collection_no_fields: يجب أن تحتوي المجموعة على الخيار `fields` محددًا بحقل واحد على الأقل.
+    # Don’t localize `fields`
+    collection_file_no_fields: يجب أن يحتوي ملف المجموعة على الخيار `fields` محددًا بحقل واحد على الأقل.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: يجب أن يحتوي ملف المجموعة على الخيار `i18n` محددًا إذا تم استخدام العنصر البديل `locale` في مسار `file`.
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: يجب أن يحتوي الحقل {$count} على الخيار `name` محددًا كسلسلة نصية غير فارغة.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: اسم الحقل `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة. إذا كنت تريد تضمين الحقول داخل بعضها، <a>استخدم حقول Object بدلاً من تدوين النقطة</a>.
+    duplicate_field_name: يجب أن تكون أسماء الحقول فريدة، ولكن `{$name}` مستخدم أكثر من مرة.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: يجب أن يحتوي نوع المتغير {$count} على الخيار `name` محددًا كسلسلة نصية غير فارغة.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: اسم نوع المتغير `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
+    duplicate_variable_type: يجب أن تكون أسماء أنواع المتغيرات فريدة، ولكن `{$name}` مستخدم أكثر من مرة.
+    date_field_type: 'نوع الحقل Date المهجور غير مدعوم في Sveltia CMS. استخدم نوع الحقل DateTime مع الخيار `type: date` بدلاً من ذلك.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'منطقة زمنية غير صالحة: {$timeZone}. يجب أن تكون معرف منطقة زمنية صالحة من IANA مثل `America/New_York` أو `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: الخيار المهجور `{$prop}` غير مدعوم في Sveltia CMS. استخدم الخيار `{$newProp}` بدلاً من ذلك.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: الخيار `allow_multiple` غير مدعوم في Sveltia CMS. استخدم الخيار `multiple` بدلاً من ذلك، والذي يتخفف افتراضياً إلى `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: لا يمكن لحقل List أن يحتوي على الخيارات `field` و `fields` و `types` معاً.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: نوع المتغير لحقل List غير صالح. الخيار `widget` مضبوط على `{$widget}` ولكن يجب أن يكون `object`.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: لا يمكن لحقل Object أن يحتوي على الخيارين `fields` و `types` معاً.
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: يجب أن يحتوي حقل Object إما على الخيار `fields` أو `types` محددًا.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: المجموعة المشار إليها `{$collection}` غير صالحة أو غير معرفة.
+    relation_field_invalid_collection_file: الملف المشار إليه `{$file}` غير صالح أو غير معرف.
+    # Don’t localize `file`
+    relation_field_missing_file_name: يجب تحديد الخيار `file` للربط بملف مجموعة.
+    relation_field_invalid_value_field: حقل القيمة المشار إليه `{$field}` غير صالح أو غير معرف.
+    unexpected: خطأ غير متوقع
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: معرف تطبيق OAuth غير محدد. يلزم المستخدمون بتوفير رمز وصول لتسجيل الدخول.
+    editorial_workflow_unsupported: سير عمل التحرير غير مدعوم بعد في Sveltia CMS.
+    open_authoring_unsupported: التأليف المفتوح غير مدعوم بعد في Sveltia CMS.
+    nested_collections_unsupported: المجموعات المتداخلة غير مدعومة بعد في Sveltia CMS.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: الخيار `{$prop}` غير مدعوم في Sveltia CMS. سيتم تجاهله.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: تم ضبط كل من `picker_utc` وخيارات المنطقة الزمنية الأحدث (`input_timezone` أو `output_utc`). الخيارات الجديدة لها الأسبقية. يرجى النظر في إزالة `picker_utc` من الأعدادات الخاص بك.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'راجع ملاحظات التوافق لمعرفة التفاصيل: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: للحصول على تجربة تطوير أفضل، يمكنك التحقق من صحة ملف الأعدادات الخاص بك مقابل مخطط JSON الخاص بـ Sveltia CMS. راجع {$link} لمعرفة التفاصيل.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: محلي
+  # Browser compatibility warnings
+  unsupported_browser: سير العمل المحلي غير مدعوم في متصفحك. يرجى استخدام Chrome أو Edge بدلاً من ذلك.
+  disabled: سير العمل المحلي معطل في متصفحك. <a>إليك كيفية تفعيله</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: المسودات
+  in_review: قيد المراجعة
+  ready: جاهز
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: الفئات
+
+# Site Configuration Editor
+site_configuration_editor: محرر إعدادات الموقع
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: تم حفظ مفتاح API.
+    api_key_removed: تم إزالة مفتاح API.
+    api_key_invalid: مفتاح API المقدم غير صالحة. يرجى التحقق والمحاولة مرة أخرى.
+
+  # Preferences operation errors
+  error:
+    permission_denied: تم رفض الوصول إلى تخزين ملفات تعريف الارتباط. يرجى التحقق من أذونات متصفحك والمحاولة مرة أخرى.
+
+  # Appearance panel
+  appearance:
+    title: المظهر
+    theme: المظهر (Theme)
+    select_theme: حدد المظهر
+
+  # Theme options
+  theme:
+    auto: تلقائي
+    dark: داكن
+    light: فاتح
+
+  # Language panel
+  language:
+    title: اللغة
+    ui_language:
+      title: لغة واجهة المستخدم
+      select_language: حدد اللغة
+
+  # Contents panel
+  contents:
+    title: المحتويات
+    editor:
+      title: المحرر
+      use_draft_backup:
+        switch_label: إنشاء نسخة احتياطية لمسودات العناصر تلقائياً
+      close_on_save:
+        switch_label: إغلاق المحرر بعد حفظ المسودة
+      close_with_escape:
+        switch_label: إغلاق المحرر باستخدام مفتاح Escape
+
+  # Internationalization panel
+  i18n:
+    title: التدويل (Internationalization)
+    translators:
+      default:
+        title: خدمة الترجمة الافتراضية
+        select_service: حدد الخدمة
+      api_keys:
+        title: مفاتيح API لخدمة الترجمة
+        description: إدارة مفاتيح API لـ <a>خدمات الترجمة</a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: 'مفتاح {$service}'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: اشترك في <a {$homeHref}>{$service}</a> وأدخل <a {$apiKeyHref}>مفتاح API الخاص بك</a> هنا لتمكين الترجمة السريعة لحقول العناصر النصية.
+
+  # Media panel
+  media:
+    title: الوسائط
+    stock_photos:
+      api_keys:
+        title: مفاتيح API لخدمات الصور الجاهزة
+        description: إدارة مفاتيح API لـ <a>خدمات الصور الجاهزة</a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: 'مفتاح API لـ {$service}'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: اشترك في <a {$homeHref}>{$service} API</a> وأدخل <a {$apiKeyHref}>مفتاح API الخاص بك</a> هنا لإدراج صور جاهزة مجانية في حقول إدخال الصور.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: الصور مقدمة من {$service}
+      no_services: لم يتم إعداد أي <a>خدمات صور جاهزة</a>.
+    cloud_storage:
+      api_keys:
+        title: مفاتيح API لخدمات التخزين السحابي
+        description: إدارة مفاتيح API لـ <a>خدمات التخزين السحابي</a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: 'مفتاح API لـ {$service}'
+      no_services: لم يتم إعداد أي <a>خدمات تخزين سحابي</a>.
+
+  # Accessibility panel
+  accessibility:
+    title: إمكانية الوصول
+    underline_links:
+      title: وضع خط تحت الروابط
+      description: إظهار خط تحت الروابط في معاينة العنصر وتسميات واجهة المستخدم.
+      switch_label: وضع خط تحت الروابط دائماً
+
+  # Advanced panel
+  advanced:
+    title: خيارات متقدمة
+    beta:
+      title: الميزات التجريبية (Beta)
+      description: تمكين بعض الميزات التجريبية التي قد تكون غير مستقرة أو غير مترجمة.
+      switch_label: الانضمام إلى البرنامج التجريبي
+    developer_mode:
+      title: وضع المطور
+      description: تمكين بعض الميزات الموجهة للمطورين، بما في ذلك سجلات Console التفصيلية وقوائم الـ Context.
+      switch_label: تمكين وضع المطور
+    deploy_hook:
+      title: خطاف النشر (Deploy Hook)
+      description: أدخل رابط Webhook ليتم تنفيذه عند تشغيل النشر يدوياً من خلال تحديد نشر التغييرات. يمكن ترك هذا الحقل فارغاً إذا كنت تستخدم GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: رابط الـ Hook
+        saved: تم حفظ رابط الـ Hook.
+        removed: تم إزالة رابط الـ Hook.
+      # Authorization header input
+      auth:
+        field_label: ترويسة التفويض (Authorization header) (مثل Bearer <token>) (اختياري)
+        saved: تم حفظ ترويسة التفويض.
+        removed: تم إزالة ترويسة التفويض.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: عرض مكتبة المحتوى
+  view_asset_library: عرض مكتبة الوسائط
+  search: البحث عن العناصر والوسائط
+  create_entry: إنشاء عنصر جديد
+  save_entry: حفظ العنصر
+  cancel_editing: إلغاء تحرير العنصر
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: صورة AVIF
+  bmp: صورة Bitmap
+  gif: صورة GIF
+  ico: أيقونة ICO
+  jpeg: صورة JPEG
+  jpg: صورة JPEG
+  png: صورة PNG
+  svg: صورة SVG
+  tif: صورة TIFF
+  tiff: صورة TIFF
+  webp: صورة WebP
+  # Video formats
+  avi: فيديو AVI
+  m4v: فيديو MP4
+  mov: فيديو QuickTime
+  mp4: فيديو MP4
+  mpeg: فيديو MPEG
+  mpg: فيديو MPEG
+  ogg: فيديو Ogg
+  ogv: فيديو Ogg
+  ts: فيديو MPEG
+  webm: فيديو WebM
+  3gp: فيديو 3GPP
+  3g2: فيديو 3GPP2
+  # Audio formats
+  aac: صوت AAC
+  mid: ملف MIDI
+  midi: ملف MIDI
+  m4a: صوت MP4
+  mp3: صوت MP3
+  oga: صوت Ogg
+  opus: صوت OPUS
+  wav: صوت WAV
+  weba: صوت WebM
+  # Document formats
+  csv: جدول بيانات CSV
+  doc: مستند Word
+  docx: مستند Word
+  odp: عرض تقديمي OpenDocument
+  ods: جدول بيانات OpenDocument
+  odt: نص OpenDocument
+  pdf: مستند PDF
+  ppt: عرض تقديمي PowerPoint
+  pptx: عرض تقديمي PowerPoint
+  rtf: مستند نص منسق (RTF)
+  xls: جدول بيانات Excel
+  xlsx: جدول بيانات Excel
+  # Text formats
+  html: نص HTML
+  js: ملف JavaScript
+  json: نص JSON
+  md: نص Markdown
+  toml: نص TOML
+  yaml: نص YAML
+  yml: نص YAML
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} بايت'
+  kb: '{$size} ك.ب'
+  mb: '{$size} م.ب'
+  gb: '{$size} ج.ب'
+  tb: '{$size} ت.ب'
