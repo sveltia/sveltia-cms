@@ -5,6 +5,7 @@ import path from 'path';
 
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { isObject } from '@sveltia/utils/object';
+import Sonda from 'sonda/vite';
 import { createGenerator } from 'ts-json-schema-generator';
 import { defineConfig } from 'vite';
 import { parse as parseYAML } from 'yaml';
@@ -292,6 +293,11 @@ export default defineConfig({
     }),
     copyPackageFiles(),
     generateExtraFiles(),
+    // https://sonda.dev/configuration.html
+    Sonda({
+      enabled: false,
+      exclude: [/\.mjs$/],
+    }),
   ],
   test: {
     coverage: {
