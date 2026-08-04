@@ -1382,12 +1382,12 @@ config:
     unsupported_known_backend: "{$name} backend'i Sveltia CMS'te <a>desteklenmiyor</a>."
     # {$name} is the backend name from the CMS configuration
     unsupported_deprecated_backend: "Kullanımdan kaldırılan {$name} backend'i Sveltia CMS'te <a>desteklenmiyor</a>."
-    unsupported_custom_backend: Özel backend''ler Sveltia CMS''te <a>desteklenmiyor</a>.
-    unsupported_backend_suggestion: Bunun yerine <a>desteklenen backend''lerden</a> birini kullanın.
+    unsupported_custom_backend: "Özel backend'ler Sveltia CMS'te <a>desteklenmiyor</a>."
+    unsupported_backend_suggestion: "Bunun yerine <a>desteklenen backend'lerden</a> birini kullanın."
     missing_repository: Repo tanımlanmamış.
     invalid_repository: Yapılandırılan repo geçersiz. “owner/repo” biçiminde olmalıdır.
-    oauth_implicit_flow: Yapılandırılan kimlik doğrulama yöntemi (implicit flow) Sveltia CMS''te desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.
-    github_pkce_unsupported: GitHub kısıtlamaları nedeniyle PKCE yetkilendirmesi henüz desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.
+    oauth_implicit_flow: "Yapılandırılan kimlik doğrulama yöntemi (implicit flow) Sveltia CMS'te desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın."
+    github_pkce_unsupported: "GitHub kısıtlamaları nedeniyle PKCE yetkilendirmesi henüz desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın."
     oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış.
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` seçeneği en az bir yöntem içermelidir.'
