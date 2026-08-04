@@ -297,6 +297,7 @@ export default defineConfig({
     // https://sonda.dev/configuration.html
     Sonda({
       enabled: false,
+      brotli: true,
       exclude: [/\.mjs$/],
     }),
   ],
