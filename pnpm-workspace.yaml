@@ -8,8 +8,6 @@ minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@sveltia/*'
 
-auditConfig:
-  ignoreGhsas:
-    # dev dependencies only, ignore for now
-    # https://github.com/advisories/GHSA-rgw5-rvv9-x895
-    - GHSA-rgw5-rvv9-x895
+overrides:
+  # https://github.com/advisories/GHSA-rgw5-rvv9-x895
+  brace-expansion@>=4.0.0 <5.0.9: ^5.0.9
