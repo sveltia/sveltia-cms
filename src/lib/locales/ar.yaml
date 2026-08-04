@@ -444,7 +444,7 @@ global_assets: الوسائط العامة
 # Strings related to creating, editing, and managing entries and collections.
 
 # Error message when entry cannot be found
-entry_not_found: لم يتم العثور على عنصر.
+entry_not_found: لم يتم العثور على العنصر.
 
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: تم تعطيل إنشاء عناصر جديدة في هذه المجموعة بواسطة المسؤول.
