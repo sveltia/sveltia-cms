@@ -4,15 +4,16 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 
 ## Requirements
 
-- **GitHub account**: For now, we only accept contributions via GitHub pull requests.
-- **Language proficiency**: We want accurate and natural-sounding translations. If you are not a native speaker of the target language or do not have professional proficiency in it, please collaborate with someone who is.
+- **GitHub account**: For now, we only accept contributions via GitHub pull requests (PRs).
+- **Regular CMS user**: You must either be an active user of Sveltia CMS or a developer who implements it.
+- **Language proficiency**: You must either be a native speaker of the target language or have professional-level proficiency in it.
+- **Assignee**: As described below, you need to file an issue, if one doesn’t already exist, and get assigned to it. To prevent unnecessary duplication of effort, PRs that are not linked to an issue or sent by unassigned people will not be accepted.
 - **Quality check**: Review and edit your translations for accuracy and context, especially if you have used an AI translation tool. Remember that AI can make mistakes, particularly with short phrases or technical terms.
 
 ## Steps to Contribute
 
-1. **Check existing translations**: See if your language is already on the [waiting list](https://github.com/sveltia/sveltia-cms/issues?q=is%3Aissue%20state%3Aopen%20label%3Al10n) or [already translated](https://github.com/sveltia/sveltia-cms/tree/main/src/lib/locales).
+1. **Check existing translations**: See if your language is on the [waiting list](https://github.com/sveltia/sveltia-cms/issues?q=is%3Aissue%20state%3Aopen%20label%3Al10n) or [already translated](https://github.com/sveltia/sveltia-cms/tree/main/src/lib/locales).
 2. **File an issue**: [Create a new issue](https://github.com/sveltia/sveltia-cms/issues/new?type=feature&labels=l10n) with your language name (e.g., “French localization”) and get assigned by the maintainer.
-   - **This is required** — Pull requests (PRs) that are not linked to issues or sent by unassigned people will be closed to prevent unnecessary duplication of effort.
    - If you want us to provide an AI-generated draft translation for your language, please request it in your issue.
 3. **Translate two files**:
    - [Sveltia UI strings](https://raw.githubusercontent.com/sveltia/sveltia-ui/e3655496eb2c548d7b965da991b9f3548269ecec/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-ui/upload/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-ui) to submit a PR
