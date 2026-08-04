@@ -567,8 +567,9 @@
     &:is([data-component-name='image'], [data-component-name='linked-image']) {
       :global {
         @media (768px <= width) {
-          [data-field-type] {
-            border-width: 0;
+          /* Hide the bottom border */
+          [data-field-type]::after {
+            display: none;
           }
 
           [data-field-type='string'] {
