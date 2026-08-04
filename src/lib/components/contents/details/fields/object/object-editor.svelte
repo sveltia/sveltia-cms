@@ -209,6 +209,7 @@
   <div
     role="group"
     class="wrapper"
+    class:expanded={parentExpanded}
     aria-labelledby={parentExpanded ? undefined : `object-${fieldId}-summary`}
   >
     {#if !hideHeader}
@@ -270,9 +271,13 @@
 
 <style>
   .wrapper {
-    border-width: 2px;
+    border-inline-width: 2px;
     border-color: var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);
+
+    &.expanded {
+      border-bottom-width: 2px;
+    }
   }
 
   :global(.sui.checkbox) + .wrapper {

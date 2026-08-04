@@ -465,6 +465,7 @@
   <div
     role="group"
     class="component {inline ? 'inline' : 'block'} wrapper"
+    class:expanded
     bind:this={wrapper}
     contenteditable="false"
     tabindex="0"
@@ -544,14 +545,19 @@
   }
 
   .wrapper {
-    border: 1px solid var(--sui-secondary-border-color);
-    border-radius: 4px;
+    border-inline-width: 2px;
+    border-color: var(--sui-secondary-border-color);
+    border-radius: var(--sui-control-medium-border-radius);
     width: 100%;
     color: var(--sui-secondary-foreground-color); /* Reset color within a link */
     background-color: var(--sui-primary-background-color);
     white-space: normal;
     -webkit-user-select: none;
     user-select: none;
+
+    &.expanded {
+      border-bottom-width: 2px;
+    }
 
     &:focus {
       outline-color: var(--sui-primary-accent-color-translucent);
