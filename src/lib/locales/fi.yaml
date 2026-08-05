@@ -627,22 +627,22 @@ choose_files: |
 delete_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Poista resurssi }}
-    *   {{ Poista resurssit }}
+    one {{ Poista assetti }}
+    *   {{ Poista assetit }}
 # {$count} is the number of selected assets
 delete_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Poista valittu resurssi }}
-    *   {{ Poista valitut resurssit }}
-confirm_deleting_this_asset: Haluatko varmasti poistaa tämän resurssin?
+    one {{ Poista valittu assetti }}
+    *   {{ Poista valitut assetit }}
+confirm_deleting_this_asset: Haluatko varmasti poistaa tämän assetin?
 # {$count} is the number of selected assets
 confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Haluatko varmasti poistaa valitun resurssin? }}
-    *   {{ Haluatko varmasti poistaa valitut {$count} resurssia? }}
-confirm_deleting_all_assets: Haluatko varmasti poistaa kaikki resurssit?
+    one {{ Haluatko varmasti poistaa valitun assetin? }}
+    *   {{ Haluatko varmasti poistaa valitut {$count} assetit? }}
+confirm_deleting_all_assets: Haluatko varmasti poistaa kaikki assetit?
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -658,7 +658,7 @@ delete_selected_entries: |
     one {{ Poista valittu merkintä }}
     *   {{ Poista valitut merkinnät }}
 confirm_deleting_this_entry: Haluatko varmasti poistaa tämän merkinnän?
-confirm_deleting_this_entry_with_assets: Haluatko varmasti poistaa tämän merkinnän ja siihen liittyvät resurssit?
+confirm_deleting_this_entry_with_assets: Haluatko varmasti poistaa tämän merkinnän ja siihen liittyvät assetit?
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -669,8 +669,8 @@ confirm_deleting_selected_entries: |
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Haluatko varmasti poistaa valitun merkinnän ja siihen liittyvät resurssit? }}
-    *   {{ Haluatko varmasti poistaa valitut {$count} merkintää ja niihin liittyvät resurssit? }}
+    one {{ Haluatko varmasti poistaa valitun merkinnän ja siihen liittyvät assetit? }}
+    *   {{ Haluatko varmasti poistaa valitut {$count} merkintää ja niihin liittyvät assetit? }}
 confirm_deleting_all_entries: Haluatko varmasti poistaa kaikki merkinnät?
 confirm_deleting_all_entries_with_assets: Haluatko varmasti poistaa kaikki merkinnät ja niihin liittyvät resurssit?
 
@@ -685,7 +685,7 @@ done_reordering_entries: Uudelleenjärjestely valmis
 cancel_reordering_entries: Peruuta uudelleenjärjestely
 
 # Reorder error message
-saving_reorder_failed: Uuden merkintäjärjestyksen tallentaminen epäonnistui. Yritä uudelleen.
+saving_reorder_failed: Uuden järjestyksen tallentaminen epäonnistui. Yritä uudelleen.
 
 # ==============================================================================
 # File Upload and Processing
@@ -816,13 +816,13 @@ entries_deleted: |
 assets_saved: |
   .input {$count :integer}
   .match $count
-    one {{ Resurssi tallennettu. }}
-    *   {{ {$count} resurssia tallennettu. }}
+    one {{ Assetti tallennettu. }}
+    *   {{ {$count} assettia tallennettu. }}
 assets_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ Resurssi tallennettu ja julkaistu. }}
-    *   {{ {$count} resurssia tallennettu ja julkaistu. }}
+    one {{ Assetti tallennettu ja julkaistu. }}
+    *   {{ {$count} assettia tallennettu ja julkaistu. }}
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
@@ -841,23 +841,23 @@ asset_data_copied: |
 assets_downloaded: |
   .input {$count :integer}
   .match $count
-    one {{ Resurssi ladattu. }}
-    *   {{ {$count} resurssia ladattu. }}
+    one {{ Assetti ladattu. }}
+    *   {{ {$count} assettia ladattu. }}
 assets_moved: |
   .input {$count :integer}
   .match $count
-    one {{ Resurssi siirretty. }}
-    *   {{ {$count} resurssia siirretty. }}
+    one {{ Assetti siirretty. }}
+    *   {{ {$count} assettia siirretty. }}
 assets_renamed: |
   .input {$count :integer}
   .match $count
-    one {{ Resurssi nimetty uudelleen. }}
-    *   {{ {$count} resurssia nimetty uudelleen. }}
+    one {{ Assetti nimetty uudelleen. }}
+    *   {{ {$count} assettia nimetty uudelleen. }}
 assets_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ Resurssi poistettu. }}
-    *   {{ {$count} resurssia poistettu. }}
+    one {{ Assetti poistettu. }}
+    *   {{ {$count} assettia poistettu. }}
 
 # ==============================================================================
 # Content Editor
@@ -909,7 +909,7 @@ editor_options: Muokkainasetukset
 show_preview: Näytä esikatselu
 
 # Editor settings
-sync_scrolling: Synkronoi vieritys
+sync_scrolling: Synkronoi vierittäminen
 
 # Locale controls
 switch_locale: Vaihda kieltä
@@ -961,7 +961,7 @@ locale_x_has_been_disabled: Kielen {$locale} sisältö on poistettu käytöstä.
 locale_x_now_disabled: Kielen {$locale} sisältö on nyt pois käytöstä. Se poistetaan, kun tallennat merkinnän.
 
 # Repository and site links
-view_in_repository: Näytä arkistossa
+view_in_repository: Näytä repositoriossa
 # {$service} is the external service label, such as GitHub or GitLab
 view_on_x: 'Näytä palvelussa {$service}'
 view_on_live_site: Näytä julkaistulla sivustolla
@@ -989,8 +989,8 @@ revert_changes: Kumoa muutokset
 revert_all_changes: Kumoa kaikki muutokset
 
 # Slug editing
-edit_slug: Muokkaa slugia
-edit_slug_warning: Slugin muuttaminen saattaa rikkoa merkintään osoittavat sisäiset ja ulkoiset linkit. Sveltia CMS ei tällä hetkellä päivitä Relation-kentillä luotuja viittauksia, joten sinun on päivitettävä ne ja muut linkit manuaalisesti.
+edit_slug: Muokkaa polkua
+edit_slug_warning: Polun muuttaminen saattaa rikkoa merkintään osoittavat sisäiset ja ulkoiset linkit. Sveltia CMS ei tällä hetkellä päivitä Relation-kentillä luotuja viittauksia, joten sinun on päivitettävä ne ja muut linkit manuaalisesti.
 edit_slug_error:
   empty: Slug ei voi olla tyhjä.
   invalid: Slug ei voi sisältää erikoismerkkejä, mukaan lukien kauttaviivoja ja välilyöntejä.
@@ -1106,8 +1106,8 @@ entry_sidebar:
 
   # Validation panel: shows field validation errors
   validation:
-    title: Kelpoisuus
-    placeholder: Kelpoisuuden tulokset näytetään tässä.
+    title: Validaatio
+    placeholder: Validaation tulokset näytetään tässä.
     no_errors_found: Virheitä ei löytynyt.
 
   # History panel: shows entry commit history
@@ -1118,7 +1118,7 @@ entry_sidebar:
 
   # Backlinks panel: shows entries referencing this entry
   backlinks:
-    title: Takaisinlinkit
+    title: Backlinkit
     no_entries: Yksikään merkintä ei viittaa tähän merkintään.
 
 # Entry save error dialog
@@ -1134,10 +1134,10 @@ saving_entry:
 
 # Asset details announcement
 # {$name} is the selected asset name
-viewing_x_asset_details: Katselet resurssin ”{$name}” tietoja.
+viewing_x_asset_details: Katselet assetin ”{$name}” tietoja.
 
 # Asset editor container aria-label
-asset_editor: Resurssin muokkain
+asset_editor: Assetin muokkain
 
 # Preview unavailable message
 preview_unavailable: Esikatselu ei ole käytettävissä.
@@ -1163,8 +1163,8 @@ file_data: Tiedoston data
 # Section headings and labels in the asset information panel.
 
 # Panel title and empty state shown in the asset sidebar
-asset_info: Resurssin tiedot
-select_asset_show_info: Valitse resurssi nähdäksesi sen tiedot.
+asset_info: Assetin tiedot
+select_asset_show_info: Valitse assetti nähdäksesi sen tiedot.
 
 kind: Tyyppi
 size: Koko
