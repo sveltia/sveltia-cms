@@ -1248,7 +1248,7 @@ character_counter:
   # {$count} is the current character count and {$max} is the maximum allowed count
   max: |
     .input {$count :integer}
-    .match $max
+    .match $count
       0   {{ Karakter girilmedi. Maksimum: {$max}. }}
       *   {{ {$count} karakter girildi. Maksimum: {$max}. }}
 
