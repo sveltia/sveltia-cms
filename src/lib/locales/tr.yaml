@@ -121,13 +121,13 @@ loading_site_data_error: Site verileri yüklenirken bir hata oluştu.
 sign_in_with_x: '{$service} ile Giriş Yap'
 
 # Access token dialog: alternative authentication method
-sign_in_using_access_token: Erişim Token'ı Kullanarak Giriş Yap
-sign_in_using_access_token_description: Token'ınızı aşağıya girin. Token'ın repo içeriğine okuma/yazma erişimi olmalıdır.
+sign_in_using_access_token: Erişim Token’ı Kullanarak Giriş Yap
+sign_in_using_access_token_description: Token’ınızı aşağıya girin. Token’ın repo içeriğine okuma/yazma erişimi olmalıdır.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: <a>{$service} kullanıcı ayarları sayfasından</a> bir token oluşturabilirsiniz.
 # Input field label for personal access token
-personal_access_token: Kişisel Erişim Token'ı
+personal_access_token: Kişisel Erişim Token’ı
 
 # Authentication progress indicators
 authorizing: Yetkilendiriliyor…
@@ -150,25 +150,25 @@ sign_in_error:
   authentication_aborted: Kimlik doğrulama iptal edildi. Lütfen tekrar deneyin.
   invalid_token: Sağlanan token geçersiz. Lütfen kontrol edip tekrar deneyin.
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
-  UNSUPPORTED_BACKEND: Git backend'iniz kimlik doğrulama servisi tarafından desteklenmiyor.
+  UNSUPPORTED_BACKEND: Git backend’iniz kimlik doğrulama servisi tarafından desteklenmiyor.
   UNSUPPORTED_DOMAIN: Alan adınızın kimlik doğrulama servisini kullanmasına izin verilmiyor.
   MISCONFIGURED_CLIENT: OAuth uygulaması istemci kimliği (Client ID) veya gizli anahtarı (Client Secret) yapılandırılmamış.
   AUTH_CODE_REQUEST_FAILED: Yetkilendirme kodu alınamadı. Lütfen daha sonra tekrar deneyin.
   CSRF_DETECTED: Olası CSRF saldırısı tespit edildi. Kimlik doğrulama akışı iptal edildi.
-  TOKEN_REQUEST_FAILED: Erişim token'ı talep edilemedi. Lütfen daha sonra tekrar deneyin.
-  TOKEN_REFRESH_FAILED: Erişim token'ı yenilenemedi. Lütfen daha sonra tekrar deneyin.
+  TOKEN_REQUEST_FAILED: Erişim token’ı talep edilemedi. Lütfen daha sonra tekrar deneyin.
+  TOKEN_REFRESH_FAILED: Erişim token’ı yenilenemedi. Lütfen daha sonra tekrar deneyin.
   MALFORMED_RESPONSE: Sunucu bozuk veri ile yanıt verdi. Lütfen daha sonra tekrar deneyin.
 
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: "{$name} backend'i {$name} {$version} veya üzerini gerektirir."
+backend_unsupported_version: '{$name} backend’i {$name} {$version} veya üzerini gerektirir.'
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: “{$repo}” reposuna erişiminiz yok.
 repository_not_found: “{$repo}” reposu mevcut değil.
 repository_empty: “{$repo}” reposunda hiç branch yok.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
-branch_not_found: “{$repo}” reposunda “{$branch}” branch'i yok.
+branch_not_found: “{$repo}” reposunda “{$branch}” branch’i yok.
 
 # General errors
 # Fallback error dialog title for unexpected errors
@@ -287,11 +287,11 @@ report_issue: Sorun Bildir
 share_feedback: Geri Bildirim Paylaş
 get_help: Yardım Al
 donate: Bağış Yap
-join_discord: Discord'da Bize Katılın
-bluesky: Bluesky'da Bizi Takip Edin
+join_discord: Discord’da Bize Katılın
+bluesky: Bluesky’da Bizi Takip Edin
 
 # Update notification: infobar message and button
-update_available: Sveltia CMS'in en son versiyonu mevcut.
+update_available: Sveltia CMS’in en son versiyonu mevcut.
 update_now: Şimdi Güncelle
 
 # Backend status notifications
@@ -968,8 +968,8 @@ revert_changes: Değişiklikleri Geri Al
 revert_all_changes: Tüm Değişiklikleri Geri Al
 
 # Slug editing
-edit_slug: Slug'ı Düzenle
-edit_slug_warning: Slug'ı değiştirmek içerik ve dış bağlantıları bozabilir. Sveltia CMS şu anda Relation alanları ile oluşturulan referansları otomatik güncellememektedir, bu yüzden bu referansları manuel güncellemeniz gerekir.
+edit_slug: Slug’ı Düzenle
+edit_slug_warning: Slug’ı değiştirmek içerik ve dış bağlantıları bozabilir. Sveltia CMS şu anda Relation alanları ile oluşturulan referansları otomatik güncellememektedir, bu yüzden bu referansları manuel güncellemeniz gerekir.
 edit_slug_error:
   empty: Slug boş olamaz.
   invalid: Slug bölü çizgisi ve boşluk dahil özel karakterler içeremez.
@@ -1119,7 +1119,7 @@ public_urls: |
   .input {$count :integer}
   .match $count
     one {{ Genel URL }}
-    *   {{ Genel URL'ler }}
+    *   {{ Genel URL’ler }}
 # {$count} is the number of selected assets
 file_paths: |
   .input {$count :integer}
@@ -1207,7 +1207,7 @@ assets_dialog:
 
   # Error messages
   error:
-    invalid_key: API key'iniz geçersiz veya süresi dolmuş. Lütfen kontrol edip tekrar deneyin.
+    invalid_key: API key’iniz geçersiz veya süresi dolmuş. Lütfen kontrol edip tekrar deneyin.
     search_fetch_failed: Medya dosyaları aranırken bir hata oluştu. Lütfen daha sonra tekrar deneyin.
     image_fetch_failed: Seçilen medya dosyası indirilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.
 
@@ -1216,8 +1216,8 @@ assets_dialog:
 
   # URL entry option
   enter_url: URL Girin
-  enter_file_url: "Dosya URL'ini girin:"
-  enter_image_url: "Görsel URL'ini girin:"
+  enter_file_url: 'Dosya URL’ini girin:'
+  enter_image_url: 'Görsel URL’ini girin:'
 
   # Large file warning dialog
   large_file:
@@ -1282,7 +1282,7 @@ use_your_location: Konumunuzu Kullanın
 # Geolocation error dialog
 geolocation_error_title: Konum Hatası
 geolocation_error_body: Konumunuz alınırken bir hata oluştu.
-geolocation_unsupported: Konum API'si bu browser tarafından desteklenmiyor.
+geolocation_unsupported: Konum API’si bu browser tarafından desteklenmiyor.
 
 # Boolean field: display labels
 # Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
@@ -1318,10 +1318,10 @@ cloud_storage:
   cloudinary:
     iframe_title: Cloudinary medya kütüphanesi
     activate:
-      button_label: Cloudinary'yi Etkinleştir
+      button_label: Cloudinary’yi Etkinleştir
       description: Giriş yaptıktan sonra devam etmek için Giriş Yap düğmesine tekrar tıklayın.
     auth_key_label: API Secret
-    open_library: Cloudinary'yi Aç
+    open_library: Cloudinary’yi Aç
 
   uploadcare:
     auth_key_label: API Secret Key
@@ -1360,13 +1360,13 @@ config:
 
   # Configuration error messages
   error:
-    no_secure_context: Sveltia CMS sadece HTTPS veya localhost URL'leri ile çalışır.
+    no_secure_context: Sveltia CMS sadece HTTPS veya localhost URL’leri ile çalışır.
     # {$count} is the number of insecure configuration file URLs
     insecure_urls: |
       .input {$count :integer}
       .match $count
-        one {{ Yapılandırma dosyası URL'i HTTPS protokolü veya bir localhost adresi kullanmalıdır. }}
-        *   {{ Yapılandırma dosyası URL'leri HTTPS protokolü veya localhost adresleri kullanmalıdır. }}
+        one {{ Yapılandırma dosyası URL’i HTTPS protokolü veya bir localhost adresi kullanmalıdır. }}
+        *   {{ Yapılandırma dosyası URL’leri HTTPS protokolü veya localhost adresleri kullanmalıdır. }}
     fetch_failed: Yapılandırma dosyası alınamadı.
     # {$status} is the HTTP status code returned while fetching the config file
     fetch_failed_not_ok: HTTP yanıtı {$status} durumu ile döndü.
@@ -1379,15 +1379,15 @@ config:
     missing_backend: Backend tanımlanmamış.
     missing_backend_name: Backend adı tanımlanmamış.
     # {$name} is the backend name from the CMS configuration
-    unsupported_known_backend: "{$name} backend'i Sveltia CMS'te <a>desteklenmiyor</a>."
+    unsupported_known_backend: '{$name} backend’i Sveltia CMS’te <a>desteklenmiyor</a>.'
     # {$name} is the backend name from the CMS configuration
-    unsupported_deprecated_backend: "Kullanımdan kaldırılan {$name} backend'i Sveltia CMS'te <a>desteklenmiyor</a>."
-    unsupported_custom_backend: "Özel backend'ler Sveltia CMS'te <a>desteklenmiyor</a>."
-    unsupported_backend_suggestion: "Bunun yerine <a>desteklenen backend'lerden</a> birini kullanın."
+    unsupported_deprecated_backend: 'Kullanımdan kaldırılan {$name} backend’i Sveltia CMS’te <a>desteklenmiyor</a>.'
+    unsupported_custom_backend: 'Özel backend’ler Sveltia CMS’te <a>desteklenmiyor</a>.'
+    unsupported_backend_suggestion: 'Bunun yerine <a>desteklenen backend’lerden</a> birini kullanın.'
     missing_repository: Repo tanımlanmamış.
     invalid_repository: Yapılandırılan repo geçersiz. “owner/repo” biçiminde olmalıdır.
-    oauth_implicit_flow: "Yapılandırılan kimlik doğrulama yöntemi (implicit flow) Sveltia CMS'te desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın."
-    github_pkce_unsupported: "GitHub kısıtlamaları nedeniyle PKCE yetkilendirmesi henüz desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın."
+    oauth_implicit_flow: 'Yapılandırılan kimlik doğrulama yöntemi (implicit flow) Sveltia CMS’te desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.'
+    github_pkce_unsupported: 'GitHub kısıtlamaları nedeniyle PKCE yetkilendirmesi henüz desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.'
     oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış.
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` seçeneği en az bir yöntem içermelidir.'
@@ -1395,7 +1395,7 @@ config:
     invalid_media_folder: Yapılandırılan medya klasörü geçersiz. Bir metin dizgisi olmalıdır.
     invalid_public_folder: Yapılandırılan genel klasör geçersiz. Bir metin dizgisi olmalıdır.
     public_folder_relative_path: Yapılandırılan genel klasör geçersiz. “/” ile başlayan mutlak bir yol olmalıdır.
-    public_folder_absolute_url: Genel klasör seçeneği için mutlak bir URL Sveltia CMS'te desteklenmiyor.
+    public_folder_absolute_url: Genel klasör seçeneği için mutlak bir URL Sveltia CMS’te desteklenmiyor.
     # Don’t localize `asset_collections`
     invalid_asset_collections: '`asset_collections` seçeneği geçersiz. Bir dizi (array) olmalıdır.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
@@ -1440,13 +1440,13 @@ config:
     # {$name} is the invalid or duplicate variable type name
     invalid_variable_type: 'Değişken tür adı `{$name}` geçersiz. Özel karakterler içeremez.'
     duplicate_variable_type: 'Değişken tür adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
-    date_field_type: "Kullanımdan kaldırılan Date alan türü Sveltia CMS'te desteklenmiyor. Bunun yerine `type: date` seçeneği ile DateTime alan türünü kullanın."
+    date_field_type: 'Kullanımdan kaldırılan Date alan türü Sveltia CMS’te desteklenmiyor. Bunun yerine `type: date` seçeneği ile DateTime alan türünü kullanın.'
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Geçersiz saat dilimi: {$timeZone}. `America/New_York` veya `Asia/Tokyo` gibi geçerli bir IANA saat dilimi tanımlayıcısı olmalıdır.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
-    unsupported_deprecated_option: "Kullanımdan kaldırılan `{$prop}` seçeneği Sveltia CMS'te desteklenmiyor. Bunun yerine `{$newProp}` seçeneğini kullanın."
+    unsupported_deprecated_option: 'Kullanımdan kaldırılan `{$prop}` seçeneği Sveltia CMS’te desteklenmiyor. Bunun yerine `{$newProp}` seçeneğini kullanın.'
     # Don’t localize `allow_multiple`, `multiple`, and `false`
-    allow_multiple: "`allow_multiple` seçeneği Sveltia CMS'te desteklenmiyor. Varsayılanı `false` olan `multiple` seçeneğini kullanın."
+    allow_multiple: '`allow_multiple` seçeneği Sveltia CMS’te desteklenmiyor. Varsayılanı `false` olan `multiple` seçeneğini kullanın.'
     # Don’t localize `field`, `fields`, and `types`
     invalid_list_field: 'List alanı `field`, `fields` ve `types` seçeneklerini birlikte içeremez.'
     # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
@@ -1465,12 +1465,12 @@ config:
 
   # Warning messages (logged to console)
   warning:
-    oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış. Kullanıcıların giriş yapabilmesi için bir erişim token''ı sağlaması gerekir.
-    editorial_workflow_unsupported: Editöryal akış henüz Sveltia CMS''te desteklenmiyor.
-    open_authoring_unsupported: Açık yazarlık (Open authoring) henüz Sveltia CMS''te desteklenmiyor.
-    nested_collections_unsupported: İç içe koleksiyonlar henüz Sveltia CMS''te desteklenmiyor.
+    oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış. Kullanıcıların giriş yapabilmesi için bir erişim token’ı sağlaması gerekir.
+    editorial_workflow_unsupported: Editöryal akış henüz Sveltia CMS’te desteklenmiyor.
+    open_authoring_unsupported: Açık yazarlık (Open authoring) henüz Sveltia CMS’te desteklenmiyor.
+    nested_collections_unsupported: İç içe koleksiyonlar henüz Sveltia CMS’te desteklenmiyor.
     # {$prop} is the unsupported option name that will be ignored
-    unsupported_ignored_option: "`{$prop}` seçeneği Sveltia CMS'te desteklenmiyor. Yoksayılacaktır."
+    unsupported_ignored_option: '`{$prop}` seçeneği Sveltia CMS’te desteklenmiyor. Yoksayılacaktır.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Hem `picker_utc` hem de daha yeni saat dilimi seçenekleri (`input_timezone` veya `output_utc`) ayarlanmış. Yeni seçenekler önceliklidir. Yapılandırmanızdan `picker_utc` seçeneğini kaldırmayı düşünün.
 
@@ -1489,8 +1489,8 @@ local_workflow:
   # Badge text in account button
   indicator: Yerel
   # Browser compatibility warnings
-  unsupported_browser: Yerel İş Akışı browser'ınız tarafından desteklenmiyor. Lütfen Chrome veya Edge kullanın.
-  disabled: Yerel İş Akışı browser'ınızda devre dışı bırakılmış. <a>Nasıl etkinleştirileceğini burada görebilirsiniz</a>.
+  unsupported_browser: Yerel İş Akışı browser’ınız tarafından desteklenmiyor. Lütfen Chrome veya Edge kullanın.
+  disabled: Yerel İş Akışı browser’ınızda devre dışı bırakılmış. <a>Nasıl etkinleştirileceğini burada görebilirsiniz</a>.
 
 # ==============================================================================
 # Editorial Workflow
@@ -1564,36 +1564,36 @@ prefs:
         title: Varsayılan Çeviri Servisi
         select_service: Servis Seç
       api_keys:
-        title: Çeviri Servisi API Key'leri
-        description: <a>Çeviri servisleri</a> için API key'lerini yönetin.
+        title: Çeviri Servisi API Key’leri
+        description: <a>Çeviri servisleri</a> için API key’lerini yönetin.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: '{$service} Key'
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: Metin alanlarının hızlı çevirisini etkinleştirmek için <a {$homeHref}>{$service}</a> servisine kaydolun ve <a {$apiKeyHref}>API Key'inizi</a> buraya girin.
+      description: Metin alanlarının hızlı çevirisini etkinleştirmek için <a {$homeHref}>{$service}</a> servisine kaydolun ve <a {$apiKeyHref}>API Key’inizi</a> buraya girin.
 
   # Media panel
   media:
     title: Medya
     stock_photos:
       api_keys:
-        title: Stok Fotoğraf Servisi API Key'leri
-        description: <a>Stok fotoğraf servisleri</a> için API key'lerini yönetin.
+        title: Stok Fotoğraf Servisi API Key’leri
+        description: <a>Stok fotoğraf servisleri</a> için API key’lerini yönetin.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
       field_label: '{$service} API Key'
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: Görsel içerik alanlarına ücretsiz stok fotoğraflar eklemek için <a {$homeHref}>{$service} API</a> servisine kaydolun ve <a {$apiKeyHref}>API Key'inizi</a> buraya girin.
+      description: Görsel içerik alanlarına ücretsiz stok fotoğraflar eklemek için <a {$homeHref}>{$service} API</a> servisine kaydolun ve <a {$apiKeyHref}>API Key’inizi</a> buraya girin.
       # Photo credit attribution
       # {$service} is the stock photo service name
       credit: Fotoğraflar {$service} tarafından sağlanmaktadır
       no_services: Yapılandırılmış <a>stok fotoğraf servisi</a> yok.
     cloud_storage:
       api_keys:
-        title: Bulut Depolama Servisi API Key'leri
-        description: <a>Bulut depolama servisleri</a> için API key'lerini yönetin.
+        title: Bulut Depolama Servisi API Key’leri
+        description: <a>Bulut depolama servisleri</a> için API key’lerini yönetin.
       # API key input label
       # {$service} is the cloud storage service name
       field_label: '{$service} API Key'
@@ -1619,13 +1619,13 @@ prefs:
       description: Ayrıntılı konsol günlükleri ve yerel bağlam menüleri dahil geliştiricilere yönelik bazı özellikleri etkinleştirin.
       switch_label: Geliştirici Modunu Etkinleştir
     deploy_hook:
-      title: Dağıtım Webhook'u
-      description: Değişiklikleri Yayınla seçeneği ile manuel bir dağıtım tetiklediğinizde çağrılacak bir webhook URL'i girin. GitHub Actions kullanıyorsanız bu alan boş bırakılabilir.
+      title: Dağıtım Webhook’u
+      description: Değişiklikleri Yayınla seçeneği ile manuel bir dağıtım tetiklediğinizde çağrılacak bir webhook URL’i girin. GitHub Actions kullanıyorsanız bu alan boş bırakılabilir.
       # Hook URL input
       url:
-        field_label: Webhook URL'i
-        saved: Webhook URL'i kaydedildi.
-        removed: Webhook URL'i kaldırıldı.
+        field_label: Webhook URL’i
+        saved: Webhook URL’i kaydedildi.
+        removed: Webhook URL’i kaldırıldı.
       # Authorization header input
       auth:
         field_label: Yetkilendirme Başlığı (ör. Bearer <token>) (isteğe bağlı)
