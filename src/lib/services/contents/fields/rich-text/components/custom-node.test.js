@@ -1354,6 +1354,7 @@ describe('createCustomNodeClass', () => {
         destroy: vi.fn(),
       }));
 
+      // eslint-disable-next-line no-unused-vars
       let observerCallback;
 
       globalThis.MutationObserver = vi.fn(function MockMutationObserver(callback) {
@@ -1403,6 +1404,7 @@ describe('createCustomNodeClass', () => {
         destroy: vi.fn(),
       }));
 
+      // eslint-disable-next-line no-unused-vars
       let observerCallback;
 
       globalThis.MutationObserver = vi.fn(function MockMutationObserver(callback) {
