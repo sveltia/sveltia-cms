@@ -1,0 +1,1722 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Yeni
+select: Seç
+select_all: Tümünü Seç
+upload: Yükle
+copy: Kopyala
+download: İndir
+duplicate: Çoğalt
+delete: Sil
+reorder: Yeniden Sırala
+
+# Dialog and form actions: confirmation and cancellation
+cancel: İptal
+done: Bitti
+save: Kaydet
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Kaydediliyor…
+
+# Publishing actions: used when committing changes to the repository
+publish: Yayınla
+# Progress indicator shown on the publish button during publishing
+publishing: Yayınlanıyor…
+
+# Modification actions: editing and updating content
+rename: Yeniden Adlandır
+update: Güncelle
+replace: Değiştir
+
+# List and collection actions: adding and removing items
+add: Ekle
+remove: Kaldır
+clear: Temizle
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Genişlet
+expand_all: Tümünü Genişlet
+collapse: Daralt
+collapse_all: Tümünü Daralt
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Ekle
+restore: Geri Yükle
+discard: Vazgeç
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Aranıyor…
+no_results: Sonuç bulunamadı.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Genel
+primary: Birincil
+secondary: İkincil
+collection: Koleksiyon
+folder: Klasör
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: API Key
+details: Detaylar
+back: Geri
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Yükleniyor…
+# Dismiss button for temporary notifications and infobars
+later: Daha Sonra
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Slug
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Tekil Öğe
+singletons: Tekil Öğeler
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Panoya kopyalanamadı.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: '{$name} Uygulamasına Hoş Geldiniz'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: '{$name} ile güçlendirilmiştir'
+
+# Shown during initial configuration and data loading
+loading_cms_config: CMS Yapılandırması Yükleniyor…
+loading_site_data: Site Verileri Yükleniyor…
+loading_site_data_error: Site verileri yüklenirken bir hata oluştu.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: '{$service} ile Giriş Yap'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Erişim Token’ı Kullanarak Giriş Yap
+sign_in_using_access_token_description: Token’ınızı aşağıya girin. Token’ın repo içeriğine okuma/yazma erişimi olmalıdır.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: <a>{$service} kullanıcı ayarları sayfasından</a> bir token oluşturabilirsiniz.
+# Input field label for personal access token
+personal_access_token: Kişisel Erişim Token’ı
+
+# Authentication progress indicators
+authorizing: Yetkilendiriliyor…
+signing_in: Giriş yapılıyor…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Yerel Repo ile Çalış
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: İstendiğinde, “{$repo}” reposunun kök dizinini seçin.
+work_with_local_repo_description_no_repo: İstendiğinde, Git reponuzun kök dizinini seçin.
+# Button label for demo/test repository
+work_with_test_repo: Test Reposu ile Çalış
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: Seçilen klasör bir repo kök dizini değil. Lütfen tekrar deneyin.
+  picker_dismissed: Repo kök dizini seçilemedi. Lütfen tekrar deneyin.
+  authentication_aborted: Kimlik doğrulama iptal edildi. Lütfen tekrar deneyin.
+  invalid_token: Sağlanan token geçersiz. Lütfen kontrol edip tekrar deneyin.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Git backend’iniz kimlik doğrulama servisi tarafından desteklenmiyor.
+  UNSUPPORTED_DOMAIN: Alan adınızın kimlik doğrulama servisini kullanmasına izin verilmiyor.
+  MISCONFIGURED_CLIENT: OAuth uygulaması istemci kimliği (Client ID) veya gizli anahtarı (Client Secret) yapılandırılmamış.
+  AUTH_CODE_REQUEST_FAILED: Yetkilendirme kodu alınamadı. Lütfen daha sonra tekrar deneyin.
+  CSRF_DETECTED: Olası CSRF saldırısı tespit edildi. Kimlik doğrulama akışı iptal edildi.
+  TOKEN_REQUEST_FAILED: Erişim token’ı talep edilemedi. Lütfen daha sonra tekrar deneyin.
+  TOKEN_REFRESH_FAILED: Erişim token’ı yenilenemedi. Lütfen daha sonra tekrar deneyin.
+  MALFORMED_RESPONSE: Sunucu bozuk veri ile yanıt verdi. Lütfen daha sonra tekrar deneyin.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: '{$name} backend’i {$name} {$version} veya üzerini gerektirir.'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: “{$repo}” reposuna erişiminiz yok.
+repository_not_found: “{$repo}” reposu mevcut değil.
+repository_empty: “{$repo}” reposunda hiç branch yok.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: “{$repo}” reposunda “{$branch}” branch’i yok.
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Beklenmeyen Hata
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    *   {{ İçerik dosyaları ayrıştırılırken hatalar oluştu. Ayrıntılar için browser konsolunu kontrol edin. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Kullanıcı Adı
+password: Şifre
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Giriş Yap
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Mobil ile Giriş Yap
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Şifresiz giriş yapmak için aşağıdaki QR kodunu telefonunuz veya tabletinizle tarayın. Ayarlarınız otomatik olarak kopyalanacaktır.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: '{$name} olarak Giriş Yapıldı'
+working_with_local_repo: Yerel Repo ile Çalışılıyor
+working_with_test_repo: Test Reposu ile Çalışılıyor
+
+# Account menu: action items for sign-out and app installation
+sign_out: Çıkış Yap
+install_as_app: Uygulama Olarak Yükle
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: İçerikler
+assets: Medya Dosyaları
+editorial_workflow: Editöryal Akış
+cms_config: CMS Yapılandırması
+# Mobile menu page title (shown only on small screens)
+menu: Menü
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS artık mobilde!
+mobile_promo_button: Deneyin
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS artık {$locale} dilinde mevcut!
+change_language: Dili Değiştir
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Canlı Siteyi Ziyaret Et
+# Page switcher button group aria-label for switching between main sections
+switch_page: Sayfayı Değiştir
+
+# Search input placeholders
+search_placeholder_contents: İçeriklerde ara…
+search_placeholder_assets: Medya dosyalarında ara…
+search_placeholder_all: İçerik ve medya dosyalarında ara…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: İçerik veya Medya Dosyası Oluştur
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Değişiklikleri Yayınla
+publishing_changes: Değişiklikler Yayınlanıyor…
+# Error notification when publishing fails
+publishing_changes_failed: Değişiklikler yayınlanamadı. Lütfen tekrar deneyin.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Bildirimleri Göster
+notifications: Bildirimler
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Hesap Menüsünü Göster
+# Account section heading in the account menu and mobile menu page
+account: Hesap
+
+# Account menu items: links to external resources
+live_site: Canlı Site
+git_repository: Git Reposu
+settings: Ayarlar
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Yardım Menüsünü Göster
+# Help section heading in dropdowns and mobile menu
+help: Yardım
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Klavye Kısayolları
+documentation: Dokümantasyon
+release_notes: Versiyon Notları
+announcements: Duyurular
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: 'Versiyon {$version}'
+# Additional help menu items
+report_issue: Sorun Bildir
+share_feedback: Geri Bildirim Paylaş
+get_help: Yardım Al
+donate: Bağış Yap
+join_discord: Discord’da Bize Katılın
+bluesky: Bluesky’da Bizi Takip Edin
+
+# Update notification: infobar message and button
+update_available: Sveltia CMS’in en son versiyonu mevcut.
+update_now: Şimdi Güncelle
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service} küçük bir kesinti yaşıyor. İş akışınız etkilenebilir.'
+  major_incident: '{$service} büyük bir kesinti yaşıyor. Durum düzelene kadar beklemeniz gerekebilir.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: İçerik Kütüphanesi
+asset_library: Medya Kütüphanesi
+
+# Primary sidebar section headings and list aria-labels
+collections: Koleksiyonlar
+entries: İçerikler
+files: Dosyalar
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Siteniz
+  external: Harici Konumlar
+  stock_photos: Stok Fotoğraflar
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Koleksiyon Medya Dosyaları
+# List aria-labels for different list types
+entry_list: İçerik Listesi
+file_list: Dosya Listesi
+asset_list: Medya Dosyası Listesi
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: “{$collection}” Koleksiyonu
+# {$folder} is the current asset folder label
+x_asset_folder: “{$folder}” Medya Klasörü
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Şu anda koleksiyon listesini görüntülüyorsunuz.
+viewing_asset_folder_list: Şu anda medya klasör listesini görüntülüyorsunuz.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Şu anda henüz içeriği olmayan “{$collection}” koleksiyonunu görüntülüyorsunuz. }}
+    *   {{ Şu anda {$count} içeriğe sahip “{$collection}” koleksiyonunu görüntülüyorsunuz. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Şu anda henüz medya dosyası olmayan “{$folder}” medya klasörünü görüntülüyorsunuz. }}
+    *   {{ Şu anda {$count} medya dosyasına sahip “{$folder}” medya klasörünü görüntülüyorsunuz. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: “{$file}” dosyasını düzenlemek için Enter tuşuna basın.
+
+# Error messages: collection or file not found
+collection_not_found: Koleksiyon bulunamadı.
+file_not_found: Dosya bulunamadı.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$total} öğeden {$selected} tanesi seçildi'
+
+# View switcher: toggle between list and grid views
+switch_view: Görünümü Değiştir
+list_view: Liste Görünümü
+grid_view: Grid Görünümü
+switch_to_list_view: Liste Görünümüne Geç
+switch_to_grid_view: Grid Görünümüne Geç
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Sırala
+sorting_options: Sıralama Seçenekleri
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Yok
+  name: Ad
+  slug: Slug
+  # Sort by the last commit’s author name
+  commit_author: Güncelleyen
+  # Sort by the last commit date
+  commit_date: Güncelleme tarihi
+  # Sort by the entry’s computed summary text
+  _summary: Özet
+  # Manual order defined by the user via drag-and-drop
+  _manual: Manuel
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, A’dan Z’ye'
+ascending_date: '{$label}, eskiden yeniye'
+descending: '{$label}, Z’den A’ya'
+descending_date: '{$label}, yeniden eskiye'
+
+# Filter menu: button labels and options
+filter: Filtrele
+filtering_options: Filtreleme Seçenekleri
+
+# Group menu: button labels and options
+group: Grupla
+grouping_options: Gruplama Seçenekleri
+
+# Asset type filter and group labels
+type: Tür
+all: Tümü
+# Asset type labels
+image: Görsel
+video: Video
+audio: Ses
+document: Doküman
+other: Diğer
+
+# Toolbar toggles: show/hide panels
+show_assets: Medya Dosyalarını Göster
+hide_assets: Medya Dosyalarını Gizle
+show_info: Bilgileri Göster
+hide_info: Bilgileri Gizle
+
+# Folder display labels when no specific path is configured
+all_assets: Tüm Medya Dosyaları
+global_assets: Genel Medya Dosyaları
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: İçerik bulunamadı.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Bu koleksiyonda yeni içerik oluşturma yönetici tarafından devre dışı bırakıldı.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: '{$quota} içerik sınırına ulaşıldığı için bu koleksiyona yeni içerik ekleyemezsiniz.'
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    *   {{ Bu koleksiyon {$quota} içerik sınırına yaklaşıyor. Sadece {$remaining} içerik daha oluşturabilirsiniz. }}
+
+# Navigation: back links and list labels
+back_to_collection: Koleksiyona Geri Dön
+collection_list: Koleksiyon Listesi
+back_to_collection_list: Koleksiyon Listesine Geri Dön
+asset_folder_list: Medya Klasör Listesi
+back_to_asset_folder_list: Medya Klasör Listesine Geri Dön
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Arama Sonuçları
+# {$terms} is the current search query text
+search_results_for_x: “{$terms}” için Arama Sonuçları
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Şu anda “{$terms}” için arama sonuçlarını görüntülüyorsunuz. Hiçbir içerik bulunamadı. }}
+    *   {{ Şu anda “{$terms}” için arama sonuçlarını görüntülüyorsunuz. {$count} içerik bulundu. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Şu anda “{$terms}” için arama sonuçlarını görüntülüyorsunuz. Hiçbir medya dosyası bulunamadı. }}
+    *   {{ Şu anda “{$terms}” için arama sonuçlarını görüntülüyorsunuz. {$count} medya dosyası bulundu. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ İçerik yok }}
+    *   {{ {$count} içerik }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Medya dosyası yok }}
+    *   {{ {$count} medya dosyası }}
+
+# Empty state messages
+no_files_found: Dosya bulunamadı.
+no_entries_found: İçerik bulunamadı.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Yeni Medya Dosyaları Yükle
+
+# Edit options menu: button and item labels
+edit_options: Düzenleme Seçenekleri
+show_edit_options: Düzenleme Seçeneklerini Göster
+# Edit menu items with specific asset names
+edit_asset: Medya Dosyasını Düzenle
+# {$name} is the selected asset name
+edit_x: '{$name} Öğesini Düzenle'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Uzun Satırları Alt Satıra İndir
+
+# Rename asset: dialog and validation
+rename_asset: Medya Dosyasını Yeniden Adlandır
+# {$name} is the current asset name
+rename_x: '{$name} Öğesini Yeniden Adlandır'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Aşağıya yeni bir ad girin. }}
+    *   {{ Aşağıya yeni bir ad girin. Bu medya dosyasını kullanan {$count} içerik de güncellenecektir. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: Dosya adı boş olamaz.
+  character: Dosya adı özel karakterler içeremez.
+  duplicate: Bu dosya adı başka bir medya dosyası için kullanılıyor.
+
+# Replace asset: menu item and dialog title
+replace_asset: Medya Dosyasını Değiştir
+# {$name} is the asset being replaced
+replace_x: '{$name} Öğesini Değiştir'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Göz atmak için tıklayın…
+# Browse prompt shown on touch devices
+tap_to_browse: Göz atmak için dokunun…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bir dosyayı buraya sürükleyin veya göz atmak için tıklayın… }}
+    *   {{ Dosyaları buraya sürükleyin veya göz atmak için tıklayın… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bir dosyayı buraya sürükleyin veya }}
+    *   {{ Dosyaları buraya sürükleyin veya }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bir görsel dosyasını buraya sürükleyin veya }}
+    *   {{ Görsel dosyalarını buraya sürükleyin veya }}
+
+# File picker and clipboard actions used by upload controls
+browse: Göz at
+# Generic clipboard paste action used by non-image file fields
+paste: Yapıştır
+# Clipboard paste action used by image fields
+paste_image: Görseli Yapıştır
+
+# Clipboard paste errors
+no_image_in_clipboard: Panoda görsel bulunamadı.
+clipboard_access_denied: Pano erişimi reddedildi.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bir dosyayı buraya bırakın }}
+    *   {{ Dosyaları buraya bırakın }}
+
+# File type validation errors
+unsupported_file_type: Desteklenmeyen Dosya Türü
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Bırakılan dosya şu türlerden biri değil: {$types}. Lütfen tekrar deneyin.'
+dropped_image_type_mismatch: 'Bırakılan dosya desteklenmiyor. Sadece şu türlerdeki görseller kabul edilir: {$types}. Lütfen tekrar deneyin.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dosya Seç }}
+    *   {{ Dosyaları Seç }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Medya Dosyasını Sil }}
+    *   {{ Medya Dosyalarını Sil }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Seçili Medya Dosyasını Sil }}
+    *   {{ Seçili Medya Dosyalarını Sil }}
+confirm_deleting_this_asset: Bu medya dosyasını silmek istediğinizden emin misiniz?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Seçilen medya dosyasını silmek istediğinizden emin misiniz? }}
+    *   {{ Seçilen {$count} medya dosyasını silmek istediğinizden emin misiniz? }}
+confirm_deleting_all_assets: Tüm medya dosyalarını silmek istediğinizden emin misiniz?
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ İçeriği Sil }}
+    *   {{ İçerikleri Sil }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Seçili İçeriği Sil }}
+    *   {{ Seçili İçerikleri Sil }}
+confirm_deleting_this_entry: Bu içeriği silmek istediğinizden emin misiniz?
+confirm_deleting_this_entry_with_assets: Bu içeriği ve ilişkili medya dosyalarını silmek istediğinizden emin misiniz?
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Seçilen içeriği silmek istediğinizden emin misiniz? }}
+    *   {{ Seçilen {$count} içeriği silmek istediğinizden emin misiniz? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Seçilen içeriği ve ilişkili medya dosyalarını silmek istediğinizden emin misiniz? }}
+    *   {{ Seçilen {$count} içeriği ve ilişkili medya dosyalarını silmek istediğinizden emin misiniz? }}
+confirm_deleting_all_entries: Tüm içerikleri silmek istediğinizden emin misiniz?
+confirm_deleting_all_entries_with_assets: Tüm içerikleri ve ilişkili medya dosyalarını silmek istediğinizden emin misiniz?
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: İçerikleri Yeniden Sırala
+done_reordering_entries: İçerik Sıralamasını Tamamla
+cancel_reordering_entries: İçerik Sıralamasını İptal Et
+
+# Reorder error message
+saving_reorder_failed: Yeni içerik sırası kaydedilemedi. Lütfen tekrar deneyin.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dosya işleniyor. Bu biraz zaman alabilir. }}
+    *   {{ Dosyalar işleniyor. Bu biraz zaman alabilir. }}
+
+# Uploading section aria-label
+uploading_files: Dosyalar Yükleniyor
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '“{$name}” dosyası bu dosya ile değiştirilecek:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bu dosya “{$folder}” klasörüne kaydedilecek: }}
+    *   {{ Bu {$count} dosya “{$folder}” klasörüne kaydedilecek: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Aşırı Büyük Dosyalar
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bu dosya yüklenemiyor çünkü izin verilen maksimum {$size} boyutunu aşıyor. Lütfen boyutu küçültün veya farklı bir dosya seçin. }}
+    *   {{ Bu dosyalar yüklenemiyor çünkü izin verilen maksimum {$size} boyutunu aşıyor. Lütfen boyutları küçültün veya farklı dosyalar seçin. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bu klasörde aynı ada sahip bir dosya zaten var. Bunu değiştirmek istiyor musunuz? }}
+    *   {{ Bu klasörde aynı ada sahip {$count} dosya zaten var. Bunları değiştirmek istiyor musunuz? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ Bu klasörde “{$name}” adında bir dosya zaten var. Bunu değiştirmek istiyor musunuz? }}
+    *   {{ Bu klasörde aynı ada sahip {$count} dosya zaten var. Bunları değiştirmek istiyor musunuz? }}
+file_name_conflict_resolution: Dosya Adı Çakışması Çözümü
+# Option to keep both files (rename the new one)
+keep_both: İkisini de Tut
+
+# Upload progress and error messages
+uploading_files_progress: Yükleniyor…
+uploading_files_failed: Yükleme başarısız oldu.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: '({$type} türünden dönüştürüldü)'
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Bu koleksiyonda henüz içerik yok.
+# Button to create first entry
+create_new_entry: Yeni İçerik Oluştur
+# “Entry” option label in the create button menu
+entry: İçerik
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: İndeks Dosyası
+
+# Empty state for file collections
+no_files_in_collection: Bu koleksiyonda kullanılabilir dosya yok.
+
+# Entry duplication
+duplicate_entry: İçeriği Çoğalt
+entry_duplicated: İçerik yeni bir taslak olarak çoğaltıldı.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bir alanda hata var. İçeriği kaydetmek için lütfen bunu düzeltin. }}
+    *   {{ {$count} alanda hata var. İçeriği kaydetmek için lütfen bunları düzeltin. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} içerik kaydedildi. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} içerik kaydedildi ve yayınlandı. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} içerik silindi. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} medya dosyası kaydedildi. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} medya dosyası kaydedildi ve yayınlandı. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} URL panoya kopyalandı. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} dosya yolu panoya kopyalandı. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} dosyanın verisi panoya kopyalandı. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} medya dosyası indirildi. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} medya dosyası taşındı. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} medya dosyası yeniden adlandırıldı. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} medya dosyası silindi. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: İçerik Düzenleyici
+
+# Draft backup: restore dialog
+restore_backup_title: Taslağı Geri Yükle
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Bu içeriğin {$datetime} tarihli bir yedeği var. Düzenlenen taslağı geri yüklemek istiyor musunuz?
+
+# Draft backup notifications
+draft_backup_saved: Taslak yedeği kaydedildi.
+draft_backup_restored: Taslak yedeği geri yüklendi.
+draft_backup_deleted: Taslak yedeği silindi.
+
+# Editor toolbar actions
+cancel_editing: Düzenlemeyi İptal Et
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: '{$name} Oluşturuluyor'
+# {$collection} is the collection label
+create_entry_announcement: Şu anda “{$collection}” koleksiyonunda yeni bir içerik oluşturuyorsunuz.
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: Şu anda “{$collection}” koleksiyonundaki “{$entry}” içeriğini düzenliyorsunuz.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: Şu anda “{$collection}” koleksiyonundaki “{$file}” dosyasını düzenliyorsunuz.
+# {$file} is the singleton file name
+edit_singleton_announcement: Şu anda “{$file}” dosyasını düzenliyorsunuz.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Kaydet ve Yayınla
+save_without_publishing: Yayınlamadan Kaydet
+
+# Editor options menu
+show_editor_options: Düzenleyici Seçeneklerini Göster
+editor_options: Düzenleyici Seçenekleri
+
+# Preview controls
+show_preview: Önizlemeyi Göster
+
+# Editor settings
+sync_scrolling: Eşzamanlı Kaydırma
+
+# Locale controls
+switch_locale: Dili Değiştir
+# Short status indicators appended to locale names
+locale_content_disabled_short: (devre dışı)
+locale_content_error_short: (hata)
+
+# Pane labels
+edit: Düzenle
+preview: Önizleme
+
+# Pane controls; not to be confused with pages
+swap_panes: Bölmeleri Değiştir
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: '{$locale} İçeriğini Düzenle'
+preview_x_locale: '{$locale} İçeriğini Önizle'
+
+# Preview iframe labels
+content_preview: İçerik Önizlemesi
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: '{$locale} İçerik Seçeneklerini Göster'
+content_options_x_locale: '{$locale} İçerik Seçenekleri'
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: “{$field}” Alanı
+
+# Field options menu
+show_field_options: Alan Seçeneklerini Göster
+field_options: Alan Seçenekleri
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Desteklenmeyen alan türü: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: '{$locale} Dilini Etkinleştir'
+reenable_x_locale: '{$locale} Dilini Yeniden Etkinleştir'
+disable_x_locale: '{$locale} Dilini Devre Dışı Bırak'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: '{$locale} içeriği devre dışı bırakıldı.'
+locale_x_now_disabled: '{$locale} içeriği şu anda devre dışı. İçeriği kaydettiğinizde silinecektir.'
+
+# Repository and site links
+view_in_repository: Repoda Görüntüle
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: '{$service} Üzerinde Görüntüle'
+view_on_live_site: Canlı Sitede Görüntüle
+
+# Content copying from other locales
+copy_from: Şuradan kopyala…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: '{$locale} Dilinden Kopyala'
+
+# Translation features
+translation_options: Çeviri Seçenekleri
+translate: Çevir
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Alanı Çevir }}
+    *   {{ Alanları Çevir }}
+translate_from: Şuradan çevir…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: '{$locale} Dilinden Çevir'
+
+# Revert changes
+revert_changes: Değişiklikleri Geri Al
+revert_all_changes: Tüm Değişiklikleri Geri Al
+
+# Slug editing
+edit_slug: Slug’ı Düzenle
+edit_slug_warning: Slug’ı değiştirmek içerik ve dış bağlantıları bozabilir. Sveltia CMS şu anda Relation alanları ile oluşturulan referansları otomatik güncellememektedir, bu yüzden bu referansları manuel güncellemeniz gerekir.
+edit_slug_error:
+  empty: Slug boş olamaz.
+  invalid: Slug bölü çizgisi ve boşluk dahil özel karakterler içeremez.
+  duplicate: Bu slug başka bir içerik için kullanılıyor.
+
+# Required field indicator
+required: Zorunlu
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Çevrilecek öğe yok.
+    started: Çevriliyor…
+    error: Çeviri başarısız oldu.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ {$source} dilinden hiçbir alan çevrilmedi. }}
+        *   {{ {$source} dilinden {$count} alan çevrildi. }}
+  copy:
+    none: Kopyalanacak öğe yok.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ {$source} dilinden hiçbir alan kopyalanmadı. }}
+        *   {{ {$source} dilinden {$count} alan kopyalandı. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Bu alan zorunludur.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: Tarih/saat {$min} veya sonrasında olmalıdır.
+    date: Tarih {$min} veya sonrasında olmalıdır.
+    time: Saat {$min} veya sonrasında olmalıdır.
+    number: Değer en az {$min} olmalıdır.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        *   {{ En az {$min} seçenek seçmelisiniz. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        *   {{ En az {$min} öğe eklemelisiniz. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: Tarih/saat {$max} veya öncesinde olmalıdır.
+    date: Tarih {$max} veya öncesinde olmalıdır.
+    time: Saat {$max} veya öncesinde olmalıdır.
+    number: Değer en fazla {$max} olmalıdır.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        *   {{ En fazla {$max} seçenek seçebilirsiniz. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        *   {{ En fazla {$max} öğe ekleyebilirsiniz. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      *   {{ En az {$min} karakter girmelisiniz. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      *   {{ En fazla {$max} karakter girebilirsiniz. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Lütfen bir sayı girin.
+    email: Lütfen geçerli bir e-posta adresi girin.
+    url: Lütfen geçerli bir URL girin.
+
+  # Custom field validation error
+  invalid_value: Geçersiz değer.
+  unexpected_error: Beklenmeyen bir hata oluştu.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Yan Panel Bölümleri
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Doğrulama
+    placeholder: Doğrulama sonuçları burada gösterilecektir.
+    no_errors_found: Hata bulunamadı.
+
+  # History panel: shows entry commit history
+  history:
+    title: Geçmiş
+    fetch_failed: Geçmiş yüklenemedi.
+    no_history: Geçmiş bulunamadı.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Geri Bağlantılar
+    no_entries: Bu içeriğe referans veren hiçbir içerik yok.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Hata
+    description: İçerik kaydedilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: Şu anda “{$name}” medya dosyasının ayrıntılarını görüntülüyorsunuz.
+
+# Asset editor container aria-label
+asset_editor: Medya Dosyası Düzenleyici
+
+# Preview unavailable message
+preview_unavailable: Önizleme Kullanılamıyor.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ Genel URL }}
+    *   {{ Genel URL’ler }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dosya Yolu }}
+    *   {{ Dosya Yolları }}
+file_data: Dosya Verisi
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Medya Bilgisi
+select_asset_show_info: Bilgilerini görmek için bir medya dosyası seçin.
+
+kind: Tür
+size: Boyut
+dimensions: Boyutlar
+duration: Süre
+# Short heading for a list of entries using the selected asset
+used_in: Kullanıldığı yerler
+created_date: Oluşturulma Tarihi
+location: Konum
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Enlem {$latitude}, boylam {$longitude} gösteren harita
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Bu Öğeyi Kaldır
+move_up: Yukarı Taşı
+move_down: Aşağı Taşı
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: '{$name} Ekle'
+
+# List item context menu
+add_item_above: Üste Öğe Ekle
+add_item_below: Alta Öğe Ekle
+
+# Variable-type list selector
+select_list_type: Liste Türünü Seç
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Şeffaflık
+
+# Select field: empty option placeholder
+unselected_option: (Yok)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Dosya Seç
+    image: Görsel Seç
+
+  # Search input labels
+  search_for_file: Dosyalarda Ara
+  search_for_image: Görsellerde Ara
+
+  # Locations panel aria-label
+  locations: Konumlar
+
+  # Asset folder options
+  folder:
+    field: Alana Özel Medyalar
+    entry: İçeriğe Özel Medyalar
+    file: Dosyaya Özel Medyalar
+    collection: Koleksiyona Özel Medyalar
+    global: Genel Medyalar
+
+  # Error messages
+  error:
+    invalid_key: API key’iniz geçersiz veya süresi dolmuş. Lütfen kontrol edip tekrar deneyin.
+    search_fetch_failed: Medya dosyaları aranırken bir hata oluştu. Lütfen daha sonra tekrar deneyin.
+    image_fetch_failed: Seçilen medya dosyası indirilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.
+
+  # Stock photo panels
+  available_images: Kullanılabilir Görseller
+
+  # URL entry option
+  enter_url: URL Girin
+  enter_file_url: 'Dosya URL’ini girin:'
+  enter_image_url: 'Görsel URL’ini girin:'
+
+  # Large file warning dialog
+  large_file:
+    title: Büyük Dosya
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Fotoğraf Telifi
+    description: 'Mümkünse aşağıdaki telif bilgisini kullanın:'
+
+  # Unsaved asset badge
+  unsaved: Kaydedilmedi
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Karakter girilmedi. Minimum: {$min}. Maksimum: {$max}. }}
+      *   {{ {$count} karakter girildi. Minimum: {$min}. Maksimum: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Karakter girilmedi. Minimum: {$min}. }}
+      *   {{ {$count} karakter girildi. Minimum: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $max
+      0   {{ Karakter girilmedi. Maksimum: {$max}. }}
+      *   {{ {$count} karakter girildi. Maksimum: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: YouTube video oynatıcı
+
+# Date/time field: quick action buttons
+today: Bugün
+now: Şimdi
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Görsel
+  src: Kaynak
+  alt: Alt Metin
+  title: Başlık
+  link: Bağlantı
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Key
+  value: Value
+  action: İşlem
+  empty_key: Key zorunludur.
+  duplicate_key: Key benzersiz olmalıdır.
+
+# Map field: location search and geolocation
+find_place: Konum Bul
+use_your_location: Konumunuzu Kullanın
+
+# Geolocation error dialog
+geolocation_error_title: Konum Hatası
+geolocation_error_body: Konumunuz alınırken bir hata oluştu.
+geolocation_unsupported: Konum API’si bu browser tarafından desteklenmiyor.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Evet
+  'false': Hayır
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: Servis düzgün yapılandırılmamış.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: API Key
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: '{$service} için {$key} değerinizi girin.'
+      requested: Doğrulanıyor…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: 'Sağlanan {$key} geçersiz. Lütfen kontrol edip tekrar deneyin.'
+    password:
+      # {$service} is the cloud service name
+      initial: '{$service} için şifrenizi girin.'
+      requested: Giriş yapılıyor…
+      error: Kullanıcı adı veya şifre yanlış. Lütfen kontrol edip tekrar deneyin.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Cloudinary medya kütüphanesi
+    activate:
+      button_label: Cloudinary’yi Etkinleştir
+      description: Giriş yaptıktan sonra devam etmek için Giriş Yap düğmesine tekrar tıklayın.
+    auth_key_label: API Secret
+    open_library: Cloudinary’yi Aç
+
+  uploadcare:
+    auth_key_label: API Secret Key
+
+  aws_s3:
+    auth_key_label: Secret Access Key
+
+  cloudflare_r2:
+    auth_key_label: Secret Access Key
+
+  digitalocean_spaces:
+    auth_key_label: Secret Access Key
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ CMS yapılandırmasında bir hata var. Lütfen sorunu çözüp tekrar deneyin. }}
+      *   {{ CMS yapılandırmasında hatalar var. Lütfen sorunları çözüp tekrar deneyin. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: '“{$collection}” koleksiyonu'
+    file: '“{$file}” dosyası'
+    component: '“{$component}” bileşeni'
+    # Don’t localize `{$field}`
+    field: '`{$field}` alanı'
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS sadece HTTPS veya localhost URL’leri ile çalışır.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ Yapılandırma dosyası URL’i HTTPS protokolü veya bir localhost adresi kullanmalıdır. }}
+        *   {{ Yapılandırma dosyası URL’leri HTTPS protokolü veya localhost adresleri kullanmalıdır. }}
+    fetch_failed: Yapılandırma dosyası alınamadı.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: HTTP yanıtı {$status} durumu ile döndü.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Yapılandırma dosyası alınamadı. `config.yml` dosyasının yüklenmesini önlemek için `CMS.init()` fonksiyonuna geçirilen yapılandırma nesnesine <a>`load_config_file: false`</a> ekleyin.'
+    parse_failed: Yapılandırma dosyası ayrıştırılamadı.
+    parse_failed_invalid_object: Yapılandırma dosyası geçerli bir JavaScript nesnesi değil.
+    parse_failed_unsupported_type: Yapılandırma dosyası geçerli bir dosya türü değil. Sadece YAML, TOML ve JSON desteklenir.
+    no_collection: Koleksiyonlar tanımlanmamış.
+    missing_backend: Backend tanımlanmamış.
+    missing_backend_name: Backend adı tanımlanmamış.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: '{$name} backend’i Sveltia CMS’te <a>desteklenmiyor</a>.'
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: 'Kullanımdan kaldırılan {$name} backend’i Sveltia CMS’te <a>desteklenmiyor</a>.'
+    unsupported_custom_backend: 'Özel backend’ler Sveltia CMS’te <a>desteklenmiyor</a>.'
+    unsupported_backend_suggestion: 'Bunun yerine <a>desteklenen backend’lerden</a> birini kullanın.'
+    missing_repository: Repo tanımlanmamış.
+    invalid_repository: Yapılandırılan repo geçersiz. “owner/repo” biçiminde olmalıdır.
+    oauth_implicit_flow: 'Yapılandırılan kimlik doğrulama yöntemi (implicit flow) Sveltia CMS’te desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.'
+    github_pkce_unsupported: 'GitHub kısıtlamaları nedeniyle PKCE yetkilendirmesi henüz desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.'
+    oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış.
+    # Don’t localize `auth_methods`
+    no_auth_methods: '`auth_methods` seçeneği en az bir yöntem içermelidir.'
+    missing_media_folder: Medya klasörü tanımlanmamış.
+    invalid_media_folder: Yapılandırılan medya klasörü geçersiz. Bir metin dizgisi olmalıdır.
+    invalid_public_folder: Yapılandırılan genel klasör geçersiz. Bir metin dizgisi olmalıdır.
+    public_folder_relative_path: Yapılandırılan genel klasör geçersiz. “/” ile başlayan mutlak bir yol olmalıdır.
+    public_folder_absolute_url: Genel klasör seçeneği için mutlak bir URL Sveltia CMS’te desteklenmiyor.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: '`asset_collections` seçeneği geçersiz. Bir dizi (array) olmalıdır.'
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: 'Medya koleksiyonu {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: 'Medya koleksiyon adı `{$name}` geçersiz. Özel karakterler içeremez.'
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: 'Medya koleksiyon adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: '`{$name}` medya koleksiyonu için `media_folder` seçeneği bir metin olarak tanımlanmalıdır.'
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: 'Koleksiyonda `folder`, `files` veya `divider` seçeneklerinden biri tanımlanmalıdır.'
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: 'Koleksiyon `folder`, `files` ve `divider` seçeneklerini birlikte içeremez.'
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: '`{$extension}` uzantısı `{$format}` biçimi ile eşleşmiyor.'
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: '`{$slug}` slug şablonu bölü işareti içeremeyeceği için geçersizdir. İçerikleri alt klasörlerde düzenlemek için `slug` yerine `path` seçeneğini kullanın.'
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: 'Koleksiyon {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: 'Koleksiyon adı `{$name}` geçersiz. Özel karakterler içeremez.'
+    duplicate_collection_name: 'Koleksiyon adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: 'Koleksiyon dosyası {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: 'Koleksiyon dosya adı `{$name}` geçersiz. Özel karakterler içeremez.'
+    duplicate_collection_file_name: 'Koleksiyon dosya adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
+    # Don’t localize `fields`
+    collection_no_fields: 'Koleksiyon için `fields` seçeneği en az bir alan içerecek şekilde tanımlanmalıdır.'
+    # Don’t localize `fields`
+    collection_file_no_fields: 'Koleksiyon dosyası için `fields` seçeneği en az bir alan içerecek şekilde tanımlanmalıdır.'
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: '`file` yolunda `locale` yer tutucusu kullanılıyorsa koleksiyon dosyası için `i18n` seçeneği tanımlanmalıdır.'
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: 'Alan {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: 'Alan adı `{$name}` geçersiz. Özel karakterler içeremez. Alanları iç içe yerleştirmek istiyorsanız <a>nokta notasyonu yerine Object alanlarını kullanın</a>.'
+    duplicate_field_name: 'Alan adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: 'Değişken türü {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: 'Değişken tür adı `{$name}` geçersiz. Özel karakterler içeremez.'
+    duplicate_variable_type: 'Değişken tür adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
+    date_field_type: 'Kullanımdan kaldırılan Date alan türü Sveltia CMS’te desteklenmiyor. Bunun yerine `type: date` seçeneği ile DateTime alan türünü kullanın.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Geçersiz saat dilimi: {$timeZone}. `America/New_York` veya `Asia/Tokyo` gibi geçerli bir IANA saat dilimi tanımlayıcısı olmalıdır.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: 'Kullanımdan kaldırılan `{$prop}` seçeneği Sveltia CMS’te desteklenmiyor. Bunun yerine `{$newProp}` seçeneğini kullanın.'
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: '`allow_multiple` seçeneği Sveltia CMS’te desteklenmiyor. Varsayılanı `false` olan `multiple` seçeneğini kullanın.'
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: 'List alanı `field`, `fields` ve `types` seçeneklerini birlikte içeremez.'
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: 'List alanının değişken türü geçersiz. `widget` seçeneği `{$widget}` olarak ayarlanmış ancak `object` olmalıdır.'
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: 'Object alanı `fields` ve `types` seçeneklerini birlikte içeremez.'
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: 'Object alanında `fields` veya `types` seçeneklerinden biri tanımlanmalıdır.'
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: 'Referans verilen `{$collection}` koleksiyonu geçersiz veya tanımlanmamış.'
+    relation_field_invalid_collection_file: 'Referans verilen `{$file}` dosyası geçersiz veya tanımlanmamış.'
+    # Don’t localize `file`
+    relation_field_missing_file_name: 'Bir dosya koleksiyonuna bağıntı kurulması için `file` seçeneği tanımlanmalıdır.'
+    relation_field_invalid_value_field: 'Referans verilen değer alanı `{$field}` geçersiz veya tanımlanmamış.'
+    unexpected: Beklenmeyen hata
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış. Kullanıcıların giriş yapabilmesi için bir erişim token’ı sağlaması gerekir.
+    editorial_workflow_unsupported: Editöryal akış henüz Sveltia CMS’te desteklenmiyor.
+    open_authoring_unsupported: Açık yazarlık (Open authoring) henüz Sveltia CMS’te desteklenmiyor.
+    nested_collections_unsupported: İç içe koleksiyonlar henüz Sveltia CMS’te desteklenmiyor.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: '`{$prop}` seçeneği Sveltia CMS’te desteklenmiyor. Yoksayılacaktır.'
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: Hem `picker_utc` hem de daha yeni saat dilimi seçenekleri (`input_timezone` veya `output_utc`) ayarlanmış. Yeni seçenekler önceliklidir. Yapılandırmanızdan `picker_utc` seçeneğini kaldırmayı düşünün.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Ayrıntılar için uyumluluk notlarına bakın: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: Daha iyi bir geliştirici deneyimi için yapılandırma dosyanızı Sveltia CMS JSON şemasına göre doğrulayabilirsiniz. Ayrıntılar için {$link} sayfasına bakın.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Yerel
+  # Browser compatibility warnings
+  unsupported_browser: Yerel İş Akışı browser’ınız tarafından desteklenmiyor. Lütfen Chrome veya Edge kullanın.
+  disabled: Yerel İş Akışı browser’ınızda devre dışı bırakılmış. <a>Nasıl etkinleştirileceğini burada görebilirsiniz</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: Taslaklar
+  in_review: İncelemede
+  ready: Hazır
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Kategoriler
+
+# Site Configuration Editor
+site_configuration_editor: Site Yapılandırması Düzenleyicisi
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: API key kaydedildi.
+    api_key_removed: API key kaldırıldı.
+    api_key_invalid: Sağlanan API key geçersiz. Lütfen kontrol edip tekrar deneyin.
+
+  # Preferences operation errors
+  error:
+    permission_denied: Çerez (cookie) depolama erişimi reddedildi. Lütfen browser izinlerinizi kontrol edip tekrar deneyin.
+
+  # Appearance panel
+  appearance:
+    title: Görünüm
+    theme: Tema
+    select_theme: Tema Seç
+
+  # Theme options
+  theme:
+    auto: Otomatik
+    dark: Koyu
+    light: Açık
+
+  # Language panel
+  language:
+    title: Dil
+    ui_language:
+      title: Kullanıcı Arayüzü Dili
+      select_language: Dil Seç
+
+  # Contents panel
+  contents:
+    title: İçerikler
+    editor:
+      title: Düzenleyici
+      use_draft_backup:
+        switch_label: İçerik taslaklarını otomatik olarak yedekle
+      close_on_save:
+        switch_label: Bir taslağı kaydettikten sonra düzenleyiciyi kapat
+      close_with_escape:
+        switch_label: Düzenleyiciyi Escape tuşu ile kapat
+
+  # Internationalization panel
+  i18n:
+    title: Çoklu Dil (i18n)
+    translators:
+      default:
+        title: Varsayılan Çeviri Servisi
+        select_service: Servis Seç
+      api_keys:
+        title: Çeviri Servisi API Key’leri
+        description: <a>Çeviri servisleri</a> için API key’lerini yönetin.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: '{$service} Key'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Metin alanlarının hızlı çevirisini etkinleştirmek için <a {$homeHref}>{$service}</a> servisine kaydolun ve <a {$apiKeyHref}>API Key’inizi</a> buraya girin.
+
+  # Media panel
+  media:
+    title: Medya
+    stock_photos:
+      api_keys:
+        title: Stok Fotoğraf Servisi API Key’leri
+        description: <a>Stok fotoğraf servisleri</a> için API key’lerini yönetin.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: '{$service} API Key'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Görsel içerik alanlarına ücretsiz stok fotoğraflar eklemek için <a {$homeHref}>{$service} API</a> servisine kaydolun ve <a {$apiKeyHref}>API Key’inizi</a> buraya girin.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: Fotoğraflar {$service} tarafından sağlanmaktadır
+      no_services: Yapılandırılmış <a>stok fotoğraf servisi</a> yok.
+    cloud_storage:
+      api_keys:
+        title: Bulut Depolama Servisi API Key’leri
+        description: <a>Bulut depolama servisleri</a> için API key’lerini yönetin.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: '{$service} API Key'
+      no_services: Yapılandırılmış <a>bulut depolama servisi</a> yok.
+
+  # Accessibility panel
+  accessibility:
+    title: Erişilebilirlik
+    underline_links:
+      title: Bağlantıların Altını Çiz
+      description: İçerik önizlemesinde ve kullanıcı arayüzü etiketlerinde bağlantıların altını göster.
+      switch_label: Bağlantıların Altını Her Zaman Çiz
+
+  # Advanced panel
+  advanced:
+    title: Gelişmiş
+    beta:
+      title: Beta Özellikleri
+      description: Kararsız veya henüz yerelleştirilmemiş bazı beta özelliklerini etkinleştirin.
+      switch_label: Beta Programına Katıl
+    developer_mode:
+      title: Geliştirici Modu
+      description: Ayrıntılı konsol günlükleri ve yerel bağlam menüleri dahil geliştiricilere yönelik bazı özellikleri etkinleştirin.
+      switch_label: Geliştirici Modunu Etkinleştir
+    deploy_hook:
+      title: Dağıtım Webhook’u
+      description: Değişiklikleri Yayınla seçeneği ile manuel bir dağıtım tetiklediğinizde çağrılacak bir webhook URL’i girin. GitHub Actions kullanıyorsanız bu alan boş bırakılabilir.
+      # Hook URL input
+      url:
+        field_label: Webhook URL’i
+        saved: Webhook URL’i kaydedildi.
+        removed: Webhook URL’i kaldırıldı.
+      # Authorization header input
+      auth:
+        field_label: Yetkilendirme Başlığı (ör. Bearer <token>) (isteğe bağlı)
+        saved: Yetkilendirme başlığı kaydedildi.
+        removed: Yetkilendirme başlığı kaldırıldı.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: İçerik Kütüphanesini Görüntüle
+  view_asset_library: Medya Kütüphanesini Görüntüle
+  search: İçerikleri ve medyaları ara
+  create_entry: Yeni içerik oluştur
+  save_entry: İçeriği kaydet
+  cancel_editing: İçerik düzenlemeyi iptal et
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: AVIF görseli
+  bmp: Bitmap görseli
+  gif: GIF görseli
+  ico: İkon
+  jpeg: JPEG görseli
+  jpg: JPEG görseli
+  png: PNG görseli
+  svg: SVG görseli
+  tif: TIFF görseli
+  tiff: TIFF görseli
+  webp: WebP görseli
+  # Video formats
+  avi: AVI videosu
+  m4v: MP4 videosu
+  mov: QuickTime videosu
+  mp4: MP4 videosu
+  mpeg: MPEG videosu
+  mpg: MPEG videosu
+  ogg: Ogg videosu
+  ogv: Ogg videosu
+  ts: MPEG videosu
+  webm: WebM videosu
+  3gp: 3GPP videosu
+  3g2: 3GPP2 videosu
+  # Audio formats
+  aac: AAC sesi
+  mid: MIDI
+  midi: MIDI
+  m4a: MP4 sesi
+  mp3: MP3 sesi
+  oga: Ogg sesi
+  opus: OPUS sesi
+  wav: WAV sesi
+  weba: WebM sesi
+  # Document formats
+  csv: CSV tablosu
+  doc: Word dokümanı
+  docx: Word dokümanı
+  odp: OpenDocument sunumu
+  ods: OpenDocument tablosu
+  odt: OpenDocument metni
+  pdf: PDF dokümanı
+  ppt: PowerPoint sunumu
+  pptx: PowerPoint sunumu
+  rtf: Zengin metin dokümanı
+  xls: Excel tablosu
+  xlsx: Excel tablosu
+  # Text formats
+  html: HTML metni
+  js: JavaScript
+  json: JSON metni
+  md: Markdown metni
+  toml: TOML metni
+  yaml: YAML metni
+  yml: YAML metni
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} bayt'
+  kb: '{$size} KB'
+  mb: '{$size} MB'
+  gb: '{$size} GB'
+  tb: '{$size} TB'
