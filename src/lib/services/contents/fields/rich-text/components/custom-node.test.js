@@ -1319,6 +1319,108 @@ describe('createCustomNodeClass', () => {
     });
   });
 
+  describe('Wrapper focus behavior', () => {
+    it('should focus the wrapper when parent field is editable', async () => {
+      const { mount } = await import('svelte');
+
+      vi.clearAllMocks();
+
+      const mockParentField = {
+        getAttribute: vi.fn(),
+        className: 'field',
+        addEventListener: vi.fn(),
+      };
+
+      const mockWrapper = {
+        closest: vi.fn((selector) => {
+          if (selector === '[role="textbox"][aria-readonly="false"]') {
+            return mockParentField; // Return matching parent
+          }
+
+          if (selector === '.field') {
+            return mockParentField;
+          }
+
+          return null;
+        }),
+        addEventListener: vi.fn(),
+        parentElement: { nodeType: 1 },
+        isConnected: true,
+        focus: vi.fn(),
+      };
+
+      vi.mocked(mount).mockImplementation(() => ({
+        getElement: vi.fn(() => mockWrapper),
+        destroy: vi.fn(),
+      }));
+
+      let observerCallback;
+
+      globalThis.MutationObserver = vi.fn(function MockMutationObserver(callback) {
+        observerCallback = callback;
+        this.observe = vi.fn();
+        this.disconnect = vi.fn();
+      });
+
+      const CustomNode = createCustomNodeClass(mockComponentDef);
+      const node = new CustomNode({ title: 'Test' });
+
+      node.createDOM();
+
+      // Verify wrapper.focus() was called when closest returned a matching parent
+      expect(mockWrapper.focus).toHaveBeenCalled();
+    });
+
+    it('should not focus the wrapper when parent field is not editable', async () => {
+      const { mount } = await import('svelte');
+
+      vi.clearAllMocks();
+
+      const mockField = {
+        addEventListener: vi.fn(),
+      };
+
+      const mockWrapper = {
+        closest: vi.fn((selector) => {
+          if (selector === '[role="textbox"][aria-readonly="false"]') {
+            return null; // No matching editable parent
+          }
+
+          if (selector === '.field') {
+            return mockField; // Return field for cleanup listener
+          }
+
+          return null;
+        }),
+        addEventListener: vi.fn(),
+        parentElement: { nodeType: 1 },
+        isConnected: true,
+        focus: vi.fn(),
+      };
+
+      vi.mocked(mount).mockImplementation(() => ({
+        getElement: vi.fn(() => mockWrapper),
+        destroy: vi.fn(),
+      }));
+
+      let observerCallback;
+
+      globalThis.MutationObserver = vi.fn(function MockMutationObserver(callback) {
+        observerCallback = callback;
+        this.observe = vi.fn();
+        this.disconnect = vi.fn();
+      });
+
+      const CustomNode = createCustomNodeClass(mockComponentDef);
+      const node = new CustomNode({ title: 'Test' });
+
+      node.createDOM();
+
+      // Verify wrapper.focus() was NOT called when closest returned null
+      expect(mockWrapper.focus).not.toHaveBeenCalled();
+    });
+  });
+
   describe('MutationObserver cleanup', () => {
     it('should call cleanup when the wrapper is removed from the DOM', async () => {
       const { mount, unmount } = await import('svelte');

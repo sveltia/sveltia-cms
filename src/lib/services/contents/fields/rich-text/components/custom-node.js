@@ -225,7 +225,12 @@ export const createCustomNodeClass = (componentDef) => {
       wrapper = /** @type {HTMLElement} */ (component.getElement());
 
       window.requestAnimationFrame(() => {
-        wrapper.focus();
+        // Focus the wrapper if the parent field is editable. This is necessary because `i18n:
+        // duplicate` field is rendered as a read-only textbox in non-default locales, which may
+        // steal focus from the wrapper of the default locale
+        if (wrapper.closest('[role="textbox"][aria-readonly="false"]')) {
+          wrapper.focus();
+        }
 
         // Clean up when the parent field is unmounted (e.g. navigating away).
         wrapper.closest('.field')?.addEventListener('Unmount', cleanup, { once: true });
