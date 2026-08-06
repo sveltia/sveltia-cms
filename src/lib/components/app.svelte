@@ -5,6 +5,7 @@
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
   import BackendStatusIndicator from '$lib/components/global/infobars/backend-status-indicator.svelte';
   import UpdateNotification from '$lib/components/global/infobars/update-notification.svelte';
+  import LocaleLoadErrorToast from '$lib/components/global/locale-load-error-toast.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
   import {
     appIconURLs,
@@ -38,8 +39,9 @@
   } = $props();
 
   /**
-   * State to track whether the app locale has been initialized and loaded. We can’t use `isLoading`
-   * from the i18n service here because it becomes `false` as soon as Sveltia UI strings are loaded.
+   * State to track whether the app locale has been initialized. The strings for the default locale
+   * are always bundled with the app, so the UI can be rendered right away, even while the strings
+   * for another locale are being fetched from the CDN.
    */
   let localeLoaded = $state(false);
 
@@ -131,6 +133,7 @@
 <AppShell>
   {#if localeLoaded}
     <div role="none" class="outer">
+      <LocaleLoadErrorToast />
       <UpdateNotification />
       {#if $backend}
         <BackendStatusIndicator />

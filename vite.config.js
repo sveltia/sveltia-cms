@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
-import { existsSync } from 'fs';
-import { appendFile, cp, mkdir, readdir, readFile, writeFile } from 'fs/promises';
+import { existsSync, readdirSync } from 'fs';
+import { appendFile, cp, mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -35,6 +35,17 @@ const APP_LOCALES_DIR = 'src/lib/locales';
  * Path to the generated locale files.
  */
 const OUTPUT_LOCALES_DIR = 'package/locales';
+
+/**
+ * Get the list of the app’s locales based on the file names in the locales directory. The list is
+ * injected into the bundle as `import.meta.env.VITE_APP_LOCALES` so that the app can register all
+ * the available locales without bundling their strings.
+ * @returns {string[]} Locale codes, e.g. `['en-US', 'ja']`.
+ */
+const getAppLocales = () =>
+  readdirSync(APP_LOCALES_DIR)
+    .filter((name) => name.endsWith('.yaml'))
+    .map((name) => path.basename(name, '.yaml'));
 
 /**
  * Recursively squash multiline strings in a parsed YAML object into single lines.
@@ -236,8 +247,7 @@ const parseYAMLFile = async (filePath) =>
 /**
  * Generate JSON locale files from the YAML sources. The Sveltia CMS strings are merged with the
  * Sveltia UI strings, the latter being prefixed with `_sui`, in the same way as `initAppLocale`
- * does at runtime. These files are published so that developers can look up the string keys, for
- * example to override some strings with the `i18n` option.
+ * does at runtime. These files are published and will be lazily loaded.
  * @see https://unpkg.com/@sveltia/cms/locales/en-US.json - Our published locale file
  */
 const generateLocales = async () => {
@@ -247,14 +257,10 @@ const generateLocales = async () => {
     'locales',
   );
 
-  const locales = (await readdir(APP_LOCALES_DIR))
-    .filter((name) => name.endsWith('.yaml'))
-    .map((name) => path.basename(name, '.yaml'));
-
   await mkdir(OUTPUT_LOCALES_DIR, { recursive: true });
 
   await Promise.all(
-    locales.map(async (locale) => {
+    getAppLocales().map(async (locale) => {
       const uiLocalePath = path.resolve(uiLocalesDir, `${locale}.yaml`);
 
       const [appStrings, componentStrings] = await Promise.all([
@@ -297,6 +303,9 @@ export default defineConfig({
       $lib: path.resolve('./src/lib/'),
     },
     extensions: ['.js', '.svelte'],
+  },
+  define: {
+    'import.meta.env.VITE_APP_LOCALES': JSON.stringify(getAppLocales().join(',')),
   },
   build: {
     reportCompressedSize: false,

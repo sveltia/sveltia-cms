@@ -236,6 +236,11 @@ mobile_promo_button: Give it a try
 new_language_available: Sveltia CMS is now available in {$locale}!
 change_language: Change Language
 
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Switching to {$locale}…
+locale_load_failed: Couldn’t load the {$locale} translation. Please try again later.
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: Visit Live Site

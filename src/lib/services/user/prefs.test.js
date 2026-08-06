@@ -10,7 +10,19 @@ const mockLocalStorage = {
   set: vi.fn(),
 };
 
-const mockAppLocale = { set: vi.fn() };
+const mockAppLocale = {
+  current: '',
+  set: vi.fn((/** @type {string} */ locale) => {
+    mockAppLocale.current = locale;
+  }),
+};
+
+const mockWaitLocale = vi.fn(async () => undefined);
+/**
+ * Loaded locales, keyed by locale code.
+ * @type {Record<string, any>}
+ */
+const mockDictionary = {};
 
 vi.mock('@sveltia/utils/storage', () => ({
   LocalStorage: mockLocalStorage,
@@ -21,8 +33,10 @@ vi.mock('fast-deep-equal', () => ({
 }));
 
 vi.mock('@sveltia/i18n', () => ({
+  dictionary: mockDictionary,
   locale: mockAppLocale,
   locales: ['en-CA', 'en-GB', 'en-US', 'ja', 'fr'],
+  waitLocale: mockWaitLocale,
 }));
 
 /** @param {number} [ms] */
@@ -35,6 +49,13 @@ describe('prefs service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLocalStorage.get.mockResolvedValue({});
+    mockAppLocale.current = '';
+
+    // All the locales have their strings loaded unless a test says otherwise
+    Object.keys(mockDictionary).forEach((key) => delete mockDictionary[key]);
+    ['en-CA', 'en-GB', 'en-US', 'ja', 'fr'].forEach((key) => {
+      mockDictionary[key] = {};
+    });
 
     global.document = /** @type {any} */ ({
       documentElement: { dataset: {} },
@@ -97,6 +118,75 @@ describe('prefs service', () => {
     expect(mockAppLocale.set).toHaveBeenCalledWith('ja');
   });
 
+  it('should load the locale strings before setting the app locale', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'ja' });
+
+    await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(mockWaitLocale).toHaveBeenCalledWith('ja');
+    expect(mockWaitLocale.mock.invocationCallOrder[0]).toBeLessThan(
+      mockAppLocale.set.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('should not reload the locale strings when an unrelated preference is updated', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'ja' });
+
+    const { prefs } = await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(mockWaitLocale).toHaveBeenCalledTimes(1);
+    mockWaitLocale.mockClear();
+    mockAppLocale.set.mockClear();
+
+    prefs.beta = true;
+
+    await wait();
+
+    // Retrying can be costly, as the strings for a locale that failed to load are fetched again
+    expect(mockWaitLocale).not.toHaveBeenCalled();
+    expect(mockAppLocale.set).not.toHaveBeenCalled();
+  });
+
+  it('should revert to the previous locale when a switch fails', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'ja' });
+
+    const { prefs } = await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(mockAppLocale.set).toHaveBeenCalledWith('ja');
+
+    // The strings for the newly selected locale can’t be loaded
+    delete mockDictionary.fr;
+    prefs.locale = 'fr';
+
+    await wait();
+
+    expect(mockAppLocale.set).not.toHaveBeenCalledWith('fr');
+    expect(prefs.locale).toBe('ja');
+    expect(mockAppLocale.current).toBe('ja');
+  });
+
+  it('should keep the stored locale when its strings cannot be loaded on startup', async () => {
+    // `initAppLocale()` has already set the initial locale by the time the stored preference is
+    // applied, so there is a “previous” locale that must not be persisted here
+    mockAppLocale.current = 'en-US';
+    delete mockDictionary.fr;
+    mockLocalStorage.get.mockResolvedValue({ locale: 'fr' });
+
+    const { prefs } = await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(mockAppLocale.set).not.toHaveBeenCalled();
+    // The preference is kept as is, so that it can be retried on the next visit
+    expect(prefs.locale).toBe('fr');
+  });
+
   it('should not set app locale when invalid locale is loaded', async () => {
     mockLocalStorage.get.mockResolvedValue({ locale: 'zz' });
 
@@ -104,6 +194,7 @@ describe('prefs service', () => {
 
     await wait();
 
+    expect(mockWaitLocale).not.toHaveBeenCalled();
     expect(mockAppLocale.set).not.toHaveBeenCalled();
   });
 

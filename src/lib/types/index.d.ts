@@ -46,3 +46,11 @@ declare module '*.svg?raw&inline' {
   const content: string;
   export default content;
 }
+
+/**
+ * YAML files are transformed into JS object modules by the `yamlToJS` Vite plugin.
+ */
+declare module '*.yaml' {
+  const content: Record<string, any>;
+  export default content;
+}

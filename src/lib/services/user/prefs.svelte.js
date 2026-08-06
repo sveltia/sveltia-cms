@@ -1,6 +1,7 @@
-import { locale as appLocale, locales as appLocales } from '@sveltia/i18n';
+import { locale as appLocale, locales as appLocales, dictionary, waitLocale } from '@sveltia/i18n';
 import { LocalStorage } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
+import { untrack } from 'svelte';
 
 /**
  * @import { Preferences } from '$lib/types/private';
@@ -18,6 +19,11 @@ export const prefsError = $state({ current: undefined });
  * @type {Preferences}
  */
 export const prefs = $state({});
+
+/**
+ * Whether the stored locale preference has been applied to the app locale.
+ */
+let storedLocaleApplied = false;
 
 $effect.root(() => {
   (async () => {
@@ -63,18 +69,7 @@ $effect.root(() => {
       }
     })();
 
-    const {
-      locale,
-      theme,
-      underlineLinks = true,
-      beta = false,
-      devModeEnabled: devMode = false,
-    } = prefs;
-
-    if (locale && appLocales.includes(locale)) {
-      appLocale.set(locale);
-    }
-
+    const { theme, underlineLinks = true, beta = false, devModeEnabled: devMode = false } = prefs;
     const autoTheming = !theme || theme === 'auto';
     const autoTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
@@ -84,6 +79,38 @@ $effect.root(() => {
       underlineLinks,
       beta,
       devMode,
+    });
+  });
+
+  // Keep this separate from the effect above, so that switching the app locale is not retried
+  // whenever an unrelated preference is updated. A retry can be costly, because the strings for a
+  // locale that failed to load are fetched from the CDN again.
+  $effect(() => {
+    const { locale } = prefs;
+
+    if (!locale || !appLocales.includes(locale)) {
+      return;
+    }
+
+    // Don’t track the current locale, which would make this effect re-run on every locale change
+    const previousLocale = untrack(() => appLocale.current);
+    // Whether the user picked the language, as opposed to the stored preference being applied on
+    // startup. A failed switch is reverted, while a stored preference is kept so that it can be
+    // retried on the next visit
+    const switchedByUser = storedLocaleApplied;
+
+    storedLocaleApplied = true;
+
+    // Load the strings first if the locale is not bundled with the app, so the UI won’t briefly
+    // fall back to the default locale. The loader is registered in `initAppLocale()`.
+    waitLocale(locale).then(() => {
+      if (locale in dictionary) {
+        appLocale.set(locale);
+      } else if (switchedByUser && previousLocale) {
+        // The strings couldn’t be loaded, so keep using the language the user already had instead
+        // of falling back to the default locale
+        prefs.locale = previousLocale;
+      }
     });
   });
 });

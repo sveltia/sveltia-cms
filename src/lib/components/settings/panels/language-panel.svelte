@@ -1,7 +1,8 @@
 <script>
   import { _, locale as appLocale, locales as appLocales } from '@sveltia/i18n';
-  import { Option, Select } from '@sveltia/ui';
+  import { Alert, Option, Select, Toast } from '@sveltia/ui';
 
+  import { appLocaleLoading } from '$lib/services/app/i18n';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { prefs } from '$lib/services/user/prefs.svelte';
 
@@ -32,6 +33,18 @@
       }))
       .sort((a, b) => a.label.localeCompare(b.label)),
   );
+
+  /**
+   * Locale being switched to. Unlike `$appLocaleLoading`, this keeps the last value, so the message
+   * doesn’t disappear while the toast is fading out.
+   */
+  let switchingLocale = $state('');
+
+  $effect(() => {
+    if ($appLocaleLoading) {
+      switchingLocale = $appLocaleLoading;
+    }
+  });
 </script>
 
 <section>
@@ -52,3 +65,14 @@
     {/key}
   </div>
 </section>
+
+<!-- Hidden automatically once the strings are loaded, hence `duration={0}` -->
+<Toast show={!!$appLocaleLoading} duration={0}>
+  <Alert status="info">
+    {#if switchingLocale}
+      {_('switching_language', {
+        values: { locale: getLocaleLabel(switchingLocale) ?? switchingLocale },
+      })}
+    {/if}
+  </Alert>
+</Toast>
