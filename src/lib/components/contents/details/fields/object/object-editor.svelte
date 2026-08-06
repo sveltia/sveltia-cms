@@ -276,7 +276,8 @@
     border-color: var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);
 
-    &.expanded {
+    &.expanded,
+    &:has(.summary) {
       border-bottom-width: 2px;
     }
   }
