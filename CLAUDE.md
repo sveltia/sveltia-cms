@@ -12,47 +12,47 @@ Modern, Git-based headless CMS, drop-in replacement for Netlify/Decap CMS. Svelt
 
 ```bash
 pnpm dev              # dev server with hot reload
-pnpm build             # production build -> package/dist/
+pnpm build            # production build -> package/dist/
 pnpm build:watch
 pnpm preview
 
-pnpm check             # run all checks below — do this before committing
+pnpm check            # run all checks below — do this before committing
 pnpm check:eslint
 pnpm check:prettier
 pnpm check:stylelint
 pnpm check:svelte
 pnpm check:oxlint
 pnpm check:cspell
-pnpm check:imports     # custom script, more accurate than standard unused-import tools
+pnpm check:imports    # custom script, more accurate than standard unused-import tools
 pnpm check:audit
 
 pnpm test
 pnpm test:coverage
 
-pnpm format             # auto-fix Prettier formatting
+pnpm format           # auto-fix Prettier formatting
 ```
 
 ## Architecture
 
 ```
 src/lib/
-├── components/     # Svelte UI (app.svelte is the root component)
-│   ├── assets/     # asset management UI
-│   └── contents/   # content editing UI
-├── services/       # business logic & data
-│   ├── app/            # core app services
+├── components/        # Svelte UI (app.svelte is the root component)
+│   ├── assets/        # asset management UI
+│   └── contents/      # content editing UI
+├── services/          # business logic & data
+│   ├── app/           # core app services
 │   ├── assets/
-│   ├── api/               # api client wrappers
-│   ├── backends/        # GitHub/GitLab/Gitea integrations
-│   ├── config/           # CMS config handling
-│   ├── contents/         # content & collection management
-│   ├── integrations/     # external services
-│   ├── search/            # content search
-│   ├── user/              # auth & preferences
+│   ├── api/           # api client wrappers
+│   ├── backends/      # GitHub/GitLab/Gitea integrations
+│   ├── config/        # CMS config handling
+│   ├── contents/      # content & collection management
+│   ├── integrations/  # external services
+│   ├── search/        # content search
+│   ├── user/          # auth & preferences
 │   └── utils/
-├── types/          # JSDoc/TS type definitions
-├── locales/        # i18n
-└── main.js         # entry point
+├── types/             # JSDoc/TS type definitions
+├── locales/           # i18n
+└── main.js            # entry point
 ```
 
 Key config: `vite.config.js`, `svelte.config.js` (runes enabled), `jsconfig.json` (`$lib/*` alias), `eslint.config.js` (flat config, Airbnb + Svelte), `.prettierrc.yaml`, `.stylelintrc.yaml`.
@@ -75,9 +75,9 @@ Build output: `package/dist/sveltia-cms.js` (IIFE), `package/dist/sveltia-cms.mj
 
 ```javascript
 // import order
-import { get } from 'svelte/store';           // external
+import { get } from 'svelte/store'; // external
 
-import { cmsConfig } from '$lib/services/config';        // internal, $lib alias
+import { cmsConfig } from '$lib/services/config'; // internal, $lib alias
 import Button from '$lib/components/common/button.svelte';
 
 /**
