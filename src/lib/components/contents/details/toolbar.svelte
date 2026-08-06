@@ -191,7 +191,7 @@
     <Component
       variant="ghost"
       label={_('delete')}
-      aria-label={_('delete_entry')}
+      aria-label={_('delete_entries', { values: { count: 1 } })}
       onclick={() => {
         showDeleteDialog = true;
       }}
@@ -353,7 +353,7 @@
 
 <ConfirmationDialog
   bind:open={showDeleteDialog}
-  title={_('delete_entry')}
+  title={_('delete_entries', { values: { count: 1 } })}
   okLabel={_('delete')}
   onOk={async () => {
     if (originalEntry) {
