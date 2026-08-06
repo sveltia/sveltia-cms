@@ -24,8 +24,8 @@ importers:
         specifier: ^1.1.3
         version: 1.1.3(svelte@5.56.8(@typescript-eslint/types@8.66.0))
       '@sveltia/ui':
-        specifier: ^0.54.0
-        version: 0.54.0(svelte@5.56.8(@typescript-eslint/types@8.66.0))(typescript@6.0.3)
+        specifier: ^0.55.0
+        version: 0.55.0(svelte@5.56.8(@typescript-eslint/types@8.66.0))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.0
         version: 0.12.0
@@ -145,8 +145,8 @@ importers:
         specifier: ^63.3.3
         version: 63.3.3(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)
       eslint-plugin-package-json:
-        specifier: ^1.6.2
-        version: 1.6.2(eslint@9.39.5(supports-color@10.2.2))
+        specifier: ^1.6.3
+        version: 1.6.3(eslint@9.39.5(supports-color@10.2.2))
       eslint-plugin-svelte:
         specifier: ^3.22.0
         version: 3.22.0(eslint@9.39.5(supports-color@10.2.2))(svelte@5.56.8(@typescript-eslint/types@8.66.0))
@@ -1200,8 +1200,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.54.0':
-    resolution: {integrity: sha512-Ihm6Jsg0tvs1TqzKwBrgSp+kT0mnBhM01vUqF94sHf9RQsI2I4x72WCQZKVcYuygRQ9a4sq6wgcK1R6U1gDq/w==}
+  '@sveltia/ui@0.55.0':
+    resolution: {integrity: sha512-FZgW0YIkKTIl9dVaJxSFGaTW9sOQ5nNcIzc6wiodoYTE4jpYZEHRHk8LZohdfgnNlkGgwga73OAfAL838ILGrg==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -1909,8 +1909,8 @@ packages:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
 
-  electron-to-chromium@1.5.400:
-    resolution: {integrity: sha512-96EWDNjM59SYflgeV5Ylsf4EMiq1a25YjCnJH7cxn/AF2H3pILRweaUnoLax0yKHWdpOzY6JKEu45e8irqZIHA==}
+  electron-to-chromium@1.5.401:
+    resolution: {integrity: sha512-H6ViHN68nGYlChEvlIU67fn8O2/tpbWQPwck98yaJmh+08LSvHiydzDQ6oXNccLU3kNRVIRS9A4mA7CG+i6fLQ==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -2127,8 +2127,8 @@ packages:
       typescript:
         optional: true
 
-  eslint-plugin-package-json@1.6.2:
-    resolution: {integrity: sha512-Zp0CdqXKQqB9luUYa/TOwnGq3VlLotx1UDflZOzEt3D5A5kxu3Lj1VFJ087jKudEhc+K3kF20XV/aKZAlDuslw==}
+  eslint-plugin-package-json@1.6.3:
+    resolution: {integrity: sha512-32ZHJFzEtsWeZfFr/YMQzq7amG/9jewUuNIKmnkl7QoT7gwclxUwurqRMrjWK2S9lh4prZkNbymROQ6aDpb06Q==}
     engines: {node: ^22.22.2 || >=24.15.0}
     peerDependencies:
       '@eslint/json': '>=1.0.0'
@@ -2766,8 +2766,8 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  jsonc-eslint-parser@3.1.0:
-    resolution: {integrity: sha512-75EA7EWZExL/j+MDKQrRbdzcRI2HOkRlmUw8fZJc1ioqFEOvBsq7Rt+A6yCxOt9w/TYNpkt52gC6nm/g5tFIng==}
+  jsonc-eslint-parser@3.2.0:
+    resolution: {integrity: sha512-fjACeZ2chy9tiBakt5nU5SZhzk385pkSSfmhVvS13o4gqGiHVCNJXTNve8kqMeKv7A0L50mdaNUb7T8s+Egrnw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
   jsx-ast-utils@3.3.5:
@@ -3741,6 +3741,10 @@ packages:
   validate-npm-package-name@7.0.2:
     resolution: {integrity: sha512-hVDIBwsRruT73PbK7uP5ebUt+ezEtCmzZz3F59BSr2F6OVFnJ/6h8liuvdLrQ88Xmnk6/+xGGuq+pG9WwTuy3A==}
     engines: {node: ^20.17.0 || >=22.9.0}
+
+  verkit@0.3.2:
+    resolution: {integrity: sha512-zj/ob3UsvJGN0whEAKFp53REA5X66hvffVqoCtVQAakJKnKlH+/PcOfMoFwIG/o4rElqLv/ycAFlx8ZlXUorCg==}
+    engines: {node: '>=18.12.0'}
 
   vite@8.2.0:
     resolution: {integrity: sha512-pn+CFpM0lwDeKwmOq1ZaBK/9sjorZcgqxki6MbY/jPEVd9vichIlmlD4HmQ5wdP5EgqQCFRaACBxMC7uEGc6lQ==}
@@ -4859,7 +4863,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.56.8(@typescript-eslint/types@8.66.0)
 
-  '@sveltia/ui@0.54.0(svelte@5.56.8(@typescript-eslint/types@8.66.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.55.0(svelte@5.56.8(@typescript-eslint/types@8.66.0))(typescript@6.0.3)':
     dependencies:
       '@lexical/code': 0.49.0(typescript@6.0.3)
       '@lexical/code-prism': 0.49.0(typescript@6.0.3)
@@ -5305,7 +5309,7 @@ snapshots:
     dependencies:
       baseline-browser-mapping: 2.11.12
       caniuse-lite: 1.0.30001806
-      electron-to-chromium: 1.5.400
+      electron-to-chromium: 1.5.401
       node-releases: 2.0.52
       update-browserslist-db: 1.2.3(browserslist@4.28.7)
 
@@ -5645,7 +5649,7 @@ snapshots:
       es-errors: 1.3.0
       gopd: 1.2.0
 
-  electron-to-chromium@1.5.400: {}
+  electron-to-chromium@1.5.401: {}
 
   emoji-regex@8.0.0: {}
 
@@ -5858,11 +5862,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-json-compat-utils@0.2.3(eslint@9.39.5(supports-color@10.2.2))(jsonc-eslint-parser@3.1.0):
+  eslint-json-compat-utils@0.2.3(eslint@9.39.5(supports-color@10.2.2))(jsonc-eslint-parser@3.2.0):
     dependencies:
       eslint: 9.39.5(supports-color@10.2.2)
       esquery: 1.7.0
-      jsonc-eslint-parser: 3.1.0
+      jsonc-eslint-parser: 3.2.0
 
   eslint-module-utils@2.14.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint-import-resolver-node@0.3.10(supports-color@10.2.2))(eslint-import-resolver-typescript@4.4.5)(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2):
     dependencies:
@@ -5983,7 +5987,7 @@ snapshots:
       ts-declaration-location: 1.0.7(typescript@6.0.3)
       typescript: 6.0.3
 
-  eslint-plugin-package-json@1.6.2(eslint@9.39.5(supports-color@10.2.2)):
+  eslint-plugin-package-json@1.6.3(eslint@9.39.5(supports-color@10.2.2)):
     dependencies:
       '@altano/repository-tools': 2.0.5
       '@types/estree': 1.0.9
@@ -5992,8 +5996,8 @@ snapshots:
       detect-newline: 4.0.1
       eslint: 9.39.5(supports-color@10.2.2)
       eslint-fix-utils: 0.4.3(@types/estree@1.0.9)(eslint@9.39.5(supports-color@10.2.2))
-      eslint-json-compat-utils: 0.2.3(eslint@9.39.5(supports-color@10.2.2))(jsonc-eslint-parser@3.1.0)
-      jsonc-eslint-parser: 3.1.0
+      eslint-json-compat-utils: 0.2.3(eslint@9.39.5(supports-color@10.2.2))(jsonc-eslint-parser@3.2.0)
+      jsonc-eslint-parser: 3.2.0
       package-json-validator: 1.6.0
       semver: 7.8.5
       sort-object-keys: 2.1.0
@@ -6663,11 +6667,11 @@ snapshots:
 
   json5@2.2.3: {}
 
-  jsonc-eslint-parser@3.1.0:
+  jsonc-eslint-parser@3.2.0:
     dependencies:
       acorn: 8.18.0
       eslint-visitor-keys: 5.0.1
-      semver: 7.8.5
+      verkit: 0.3.2
 
   jsx-ast-utils@3.3.5:
     dependencies:
@@ -7743,6 +7747,8 @@ snapshots:
       spdx-expression-parse: 3.0.1
 
   validate-npm-package-name@7.0.2: {}
+
+  verkit@0.3.2: {}
 
   vite@8.2.0(@types/node@26.1.2)(yaml@2.9.0):
     dependencies:
