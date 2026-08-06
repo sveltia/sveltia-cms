@@ -8,7 +8,7 @@ As the de facto [successor to Netlify/Decap CMS](https://sveltiacms.app/en/docs/
 
 Sveltia CMS is framework-agnostic and can also be used for vanilla JavaScript sites. It’s an excellent option for people moving away from a traditional CMS or website builder and looking for a lightweight headless CMS that works well with a static site generator (SSG) like Astro, Eleventy, or Hugo.
 
-Explore 410 real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 130 sites migrated from Netlify/Decap CMS and 60 sites from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
+Explore 420 real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 135 sites migrated from Netlify/Decap CMS and 60 sites from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
@@ -33,7 +33,7 @@ Our [industry-leading showcase](https://sveltiacms.app/en/showcase) is updated d
 - [Sites migrated from WordPress](https://sveltiacms.app/en/showcase?migrated-from=wordpress)
 - [Sites built with Astro](https://sveltiacms.app/en/showcase?framework=astro)
 - [Sites built with Eleventy](https://sveltiacms.app/en/showcase?framework=eleventy)
-- [Sites built with vanilla JavaScript](https://sveltiacms.app/en/showcase?framework=none): Trending
+- [Sites built with vanilla JavaScript](https://sveltiacms.app/en/showcase?framework=vanilla): Trending
 - [Sites using i18n support](https://sveltiacms.app/en/showcase?feature=i18n): Multilingual sites made easy
 
 ## Community
