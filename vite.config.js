@@ -1,7 +1,8 @@
 import { exec } from 'child_process';
 import { existsSync } from 'fs';
-import { appendFile, cp, mkdir, readFile, writeFile } from 'fs/promises';
+import { appendFile, cp, mkdir, readdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { isObject } from '@sveltia/utils/object';
@@ -26,6 +27,14 @@ const MAIN_TYPE_PATH = 'package/main.d.ts';
  * Path to the generated public type declaration file.
  */
 const PUBLIC_TYPE_PATH = 'package/types/public.d.ts';
+/**
+ * Path to the app’s locale files.
+ */
+const APP_LOCALES_DIR = 'src/lib/locales';
+/**
+ * Path to the generated locale files.
+ */
+const OUTPUT_LOCALES_DIR = 'package/locales';
 
 /**
  * Recursively squash multiline strings in a parsed YAML object into single lines.
@@ -109,7 +118,7 @@ const copyPackageFiles = () => ({
         devDependencies: Object.fromEntries(
           DEV_DEPENDENCIES.map((key) => [key, dependencies[key] ?? devDependencies[key]]),
         ),
-        files: ['dist', 'schema', 'services', 'types', 'main.d.ts'],
+        files: ['dist', 'locales', 'schema', 'services', 'types', 'main.d.ts'],
         main: './dist/sveltia-cms.mjs',
         module: './dist/sveltia-cms.mjs',
         exports: {
@@ -216,7 +225,54 @@ const generateSchema = async () => {
 };
 
 /**
- * Generate extra files such as TypeScript type declaration and JSON schema.
+ * Read a YAML file and parse it, stripping comments and squashing multiline strings, just like the
+ * {@link yamlToJS} plugin does for imported YAML files.
+ * @param {string} filePath Path to the YAML file.
+ * @returns {Promise<Record<string, any>>} Parsed object.
+ */
+const parseYAMLFile = async (filePath) =>
+  /** @type {Record<string, any>} */ (squashStrings(parseYAML(await readFile(filePath, 'utf-8'))));
+
+/**
+ * Generate JSON locale files from the YAML sources. The Sveltia CMS strings are merged with the
+ * Sveltia UI strings, the latter being prefixed with `_sui`, in the same way as `initAppLocale`
+ * does at runtime. These files are published so that developers can look up the string keys, for
+ * example to override some strings with the `i18n` option.
+ * @see https://unpkg.com/@sveltia/cms/locales/en-US.json - Our published locale file
+ */
+const generateLocales = async () => {
+  // Resolve the path to the locale files bundled with the `@sveltia/ui` package
+  const uiLocalesDir = path.resolve(
+    path.dirname(fileURLToPath(import.meta.resolve('@sveltia/ui'))),
+    'locales',
+  );
+
+  const locales = (await readdir(APP_LOCALES_DIR))
+    .filter((name) => name.endsWith('.yaml'))
+    .map((name) => path.basename(name, '.yaml'));
+
+  await mkdir(OUTPUT_LOCALES_DIR, { recursive: true });
+
+  await Promise.all(
+    locales.map(async (locale) => {
+      const uiLocalePath = path.resolve(uiLocalesDir, `${locale}.yaml`);
+
+      const [appStrings, componentStrings] = await Promise.all([
+        parseYAMLFile(path.resolve(APP_LOCALES_DIR, `${locale}.yaml`)),
+        // Sveltia UI may not have the locale yet
+        existsSync(uiLocalePath) ? parseYAMLFile(uiLocalePath) : {},
+      ]);
+
+      await writeFile(
+        path.resolve(OUTPUT_LOCALES_DIR, `${locale}.json`),
+        JSON.stringify({ ...appStrings, _sui: componentStrings }).concat('\n'),
+      );
+    }),
+  );
+};
+
+/**
+ * Generate extra files such as TypeScript type declaration, JSON schema and JSON locales.
  * @returns {import('vite').Plugin} Vite plugin.
  */
 const generateExtraFiles = () => ({
@@ -229,6 +285,7 @@ const generateExtraFiles = () => ({
     handler: async () => {
       await generateTypes();
       await generateSchema();
+      await generateLocales();
     },
   },
 });
