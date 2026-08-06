@@ -10,6 +10,7 @@
   import { replaceTemplateTags } from '$lib/services/common/template';
   import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
   import { getListFormatter } from '$lib/services/contents/i18n';
   import { isNumeric } from '$lib/services/utils/number';
@@ -46,7 +47,7 @@
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
-  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
+  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
   const listFormatter = $derived(getListFormatter(locale));
 
   /**

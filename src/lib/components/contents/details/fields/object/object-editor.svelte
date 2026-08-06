@@ -16,6 +16,7 @@
   import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update/locale';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getInitialExpanderState,
     syncExpanderStates,
@@ -73,7 +74,7 @@
   const collectionFile = $derived($entryDraft?.collectionFile);
   const fileName = $derived($entryDraft?.fileName);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
-  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
+  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
   const getFieldArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
   const hasValues = $derived(
     Object.entries(valueMap).some(

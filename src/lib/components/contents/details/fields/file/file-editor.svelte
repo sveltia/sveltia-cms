@@ -18,6 +18,7 @@
   import FileEditorItem from '$lib/components/contents/details/fields/file/file-editor-item.svelte';
   import UploadButton from '$lib/components/contents/details/fields/file/upload-button.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import {
     getAssetLibraryFolderMap,
@@ -287,7 +288,7 @@
       return;
     }
 
-    const valueMap = $state.snapshot($entryDraft[valueStoreKey][locale]);
+    const valueMap = getValueMapSnapshot($entryDraft, locale, valueStoreKey);
     /** @type {string[]} */
     const updatedValue = [];
 

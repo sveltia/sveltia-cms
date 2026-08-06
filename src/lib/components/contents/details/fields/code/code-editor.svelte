@@ -10,6 +10,7 @@
   import { getContext, untrack } from 'svelte';
 
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -48,7 +49,7 @@
     output_code_only: outputCodeOnly = false,
     keys: outputKeys = { code: 'code', lang: 'lang' },
   } = $derived(fieldConfig);
-  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
+  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
   const codeKeyPath = $derived(`${keyPath}.${outputKeys.code}`);
   const langKeyPath = $derived(`${keyPath}.${outputKeys.lang}`);
 

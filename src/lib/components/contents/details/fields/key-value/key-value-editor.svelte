@@ -12,6 +12,7 @@
 
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getPairs,
     savePairs,
@@ -152,7 +153,7 @@
   };
 
   $effect(() => {
-    void [$state.snapshot($entryDraft?.[valueStoreKey][locale])];
+    void [getValueMapSnapshot($entryDraft, locale, valueStoreKey)];
 
     untrack(() => {
       updatePairs();

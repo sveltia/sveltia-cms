@@ -12,6 +12,7 @@
   import { entryDraft, filterRealValues } from '$lib/services/contents/draft';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
@@ -60,7 +61,7 @@
       !equal(
         originalValues[$thisPane.locale],
         // Exclude internal properties from the comparison
-        filterRealValues($state.snapshot($entryDraft?.currentValues[$thisPane.locale]) ?? {}),
+        filterRealValues(getValueMapSnapshot($entryDraft, $thisPane.locale)),
       ),
   );
   const canPreview = $derived($entryDraft?.canPreview ?? true);
@@ -113,7 +114,7 @@
                 label={_(
                   isLocaleEnabled
                     ? 'disable_x_locale'
-                    : $state.snapshot($entryDraft?.currentValues[$thisPane.locale])
+                    : $entryDraft?.currentValues[$thisPane.locale]
                       ? 'reenable_x_locale'
                       : 'enable_x_locale',
                   { values: { locale: localeLabel } },

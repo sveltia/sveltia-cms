@@ -10,6 +10,7 @@
   import { untrack } from 'svelte';
 
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getPairs } from '$lib/services/contents/fields/key-value/helpers';
 
   /**
@@ -58,7 +59,7 @@
 
   $effect(() => {
     if ($entryDraft) {
-      void [$state.snapshot($entryDraft.currentValues[locale])];
+      void [getValueMapSnapshot($entryDraft, locale)];
 
       untrack(() => {
         updatePairs();

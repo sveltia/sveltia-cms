@@ -12,6 +12,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { validateFields } from '$lib/services/contents/draft/validate/fields';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 
   /**
    * @import {
@@ -121,7 +122,7 @@
 
     return unflatten(
       Object.fromEntries(
-        Object.entries($state.snapshot($entryDraft[valueStoreKey][locale] ?? {}))
+        Object.entries(getValueMapSnapshot($entryDraft, locale, valueStoreKey))
           .filter(([key]) => key.startsWith(keyPathPrefix))
           .map(([key, value]) => [key.replace(keyPathPrefix, ''), value]),
       ),

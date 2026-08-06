@@ -20,6 +20,32 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * @type {Map<string, RegExp>}
  */
 const expanderRegexCache = new Map();
+/**
+ * Expander state changes accumulated by {@link syncExpanderStates}, waiting to be written to
+ * {@link entryDraft}. `undefined` when no flush is scheduled.
+ * @type {Record<FieldKeyPath, boolean> | undefined}
+ */
+let pendingExpanderStates;
+
+/**
+ * Apply the accumulated expander state changes to the entry draft in a single store update.
+ */
+const flushExpanderStates = () => {
+  // Always set, because the flush is only scheduled right after the map is created
+  const stateMap = /** @type {Record<FieldKeyPath, boolean>} */ (pendingExpanderStates);
+
+  pendingExpanderStates = undefined;
+
+  entryDraft.update((_draft) => {
+    if (_draft) {
+      Object.entries(stateMap).forEach(([keyPath, expanded]) => {
+        _draft.expanderStates._[keyPath] = expanded;
+      });
+    }
+
+    return _draft;
+  });
+};
 
 /**
  * Get the initial object/list expander state based on the `collapsed` option. If `collapsed` is set
@@ -35,7 +61,8 @@ const expanderRegexCache = new Map();
  */
 export const getInitialExpanderState = ({ key, locale, collapsed = false }) => {
   const _draft = get(entryDraft);
-  const currentState = _draft?.expanderStates?._[key];
+  // A state that is queued but not written yet is still the authoritative one
+  const currentState = pendingExpanderStates?.[key] ?? _draft?.expanderStates?._[key];
 
   if (currentState !== undefined) {
     return currentState;
@@ -63,17 +90,31 @@ export const getInitialExpanderState = ({ key, locale, collapsed = false }) => {
  * @param {Record<FieldKeyPath, boolean>} stateMap Map of key path and state.
  */
 export const syncExpanderStates = (stateMap) => {
-  entryDraft.update((_draft) => {
-    if (_draft) {
-      Object.entries(stateMap).forEach(([keyPath, expanded]) => {
-        if (_draft.expanderStates._[keyPath] !== expanded) {
-          _draft.expanderStates._[keyPath] = expanded;
-        }
-      });
-    }
+  const currentStates = get(entryDraft)?.expanderStates?._;
 
-    return _draft;
-  });
+  if (!currentStates) {
+    return;
+  }
+
+  const changes = Object.entries(stateMap).filter(
+    ([keyPath, expanded]) =>
+      (pendingExpanderStates?.[keyPath] ?? currentStates[keyPath]) !== expanded,
+  );
+
+  // Writing to the store notifies every subscriber, which re-renders the whole editor. Object/List
+  // editors call this as they mount, so revealing n of them — by expanding a field or merely
+  // scrolling — would otherwise cost O(n²). Drop no-op changes, and coalesce the rest into a single
+  // store write per tick, which is enough to collapse a whole mount storm into one update.
+  if (!changes.length) {
+    return;
+  }
+
+  if (!pendingExpanderStates) {
+    pendingExpanderStates = {};
+    queueMicrotask(flushExpanderStates);
+  }
+
+  Object.assign(pendingExpanderStates, Object.fromEntries(changes));
 };
 
 /**

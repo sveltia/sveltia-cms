@@ -19,6 +19,7 @@
     resolveOriginalKeyPath,
     revertChanges,
   } from '$lib/services/contents/draft/update/revert';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getCurrentValue,
     getFieldKind,
@@ -152,7 +153,7 @@
   const canCopy = $derived(!inEditorComponent && canTranslate && otherLocales.length);
   const canRevert = $derived(!inEditorComponent && !(canDuplicate && locale !== defaultLocale));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
-  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale] ?? {}));
+  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({

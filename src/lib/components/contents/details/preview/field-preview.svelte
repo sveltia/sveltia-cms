@@ -4,6 +4,7 @@
   import { CustomPreview, previews } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
   import { getCurrentValue, isFieldMultiple } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
@@ -39,7 +40,7 @@
   const isList = $derived(fieldType === 'list' || multiple);
   const collection = $derived($entryDraft?.collection);
   const collectionFile = $derived($entryDraft?.collectionFile);
-  const valueMap = $derived($state.snapshot($entryDraft?.currentValues[locale] ?? {}));
+  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale));
   const { i18nEnabled, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );

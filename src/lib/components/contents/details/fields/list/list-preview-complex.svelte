@@ -13,6 +13,7 @@
   import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 
   /**
@@ -50,7 +51,7 @@
   const items = $derived(
     unflatten(
       Object.fromEntries(
-        Object.entries($state.snapshot($entryDraft?.currentValues[locale]) ?? {})
+        Object.entries(getValueMapSnapshot($entryDraft, locale))
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
           .map(([_keyPath, value]) => [`${fieldName}${_keyPath.slice(keyPath.length)}`, value]),
       ),

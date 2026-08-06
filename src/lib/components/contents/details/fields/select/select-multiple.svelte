@@ -43,7 +43,7 @@
   const updateList = (manipulate) => {
     // Avoid an error while navigating pages
     if ($entryDraft) {
-      Object.keys($state.snapshot($entryDraft[valueStoreKey]) ?? {}).forEach((_locale) => {
+      Object.keys($entryDraft[valueStoreKey] ?? {}).forEach((_locale) => {
         if (!(i18n !== 'duplicate' && _locale !== locale)) {
           updateListField({ locale: _locale, valueStoreKey, keyPath, manipulate });
         }

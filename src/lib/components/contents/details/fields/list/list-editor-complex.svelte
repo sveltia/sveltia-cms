@@ -32,6 +32,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { updateListField } from '$lib/services/contents/draft/update/list';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getInitialExpanderState,
     syncExpanderStates,
@@ -103,7 +104,7 @@
   const fileName = $derived($entryDraft?.fileName);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const isDuplicateField = $derived(locale !== defaultLocale && i18n === 'duplicate');
-  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
+  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
   /** @type {Record<string, any>[]} */

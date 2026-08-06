@@ -36,7 +36,7 @@
   const { syncScrolling } = $derived($entryEditorSettings ?? {});
   const locale = $derived($thisPane?.locale);
   const mode = $derived($thisPane?.mode);
-  const hasContent = $derived(!!locale && !!$state.snapshot($entryDraft?.currentValues[locale]));
+  const hasContent = $derived(!!locale && !!$entryDraft?.currentValues[locale]);
   const labelOptions = $derived({
     values: { locale: locale ? (getLocaleLabel(locale) ?? locale) : '' },
   });

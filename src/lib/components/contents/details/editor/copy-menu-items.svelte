@@ -4,6 +4,7 @@
 
   import { entryDraft } from '$lib/services/contents/draft';
   import { copyFromLocale } from '$lib/services/contents/draft/update/copy';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { translator } from '$lib/services/integrations/translators';
 
@@ -38,11 +39,11 @@
   const isMenuDisabled = async ({ sourceLanguage, targetLanguage }) =>
     !$entryDraft?.currentLocales[targetLanguage] ||
     !$entryDraft.currentLocales[sourceLanguage] ||
-    (!!keyPath && !$state.snapshot($entryDraft.currentValues[sourceLanguage])[keyPath]) ||
+    (!!keyPath && !getValueMapSnapshot($entryDraft, sourceLanguage)[keyPath]) ||
     (!translate &&
       !!keyPath &&
-      $state.snapshot($entryDraft.currentValues[sourceLanguage])[keyPath] ===
-        $state.snapshot($entryDraft.currentValues[targetLanguage])[keyPath]) ||
+      getValueMapSnapshot($entryDraft, sourceLanguage)[keyPath] ===
+        getValueMapSnapshot($entryDraft, targetLanguage)[keyPath]) ||
     (translate && !(await $translator?.availability({ sourceLanguage, targetLanguage })));
 </script>
 

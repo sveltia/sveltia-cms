@@ -18,6 +18,7 @@
   import { customComponentRegistry } from '$lib/services/api/registries';
   import { cmsConfig } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getField } from '$lib/services/contents/entry/fields';
   import {
     getAssetLibraryFolderMap,
@@ -107,7 +108,7 @@
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const fileName = $derived($entryDraft?.fileName);
-  const valueMap = $derived($state.snapshot($entryDraft?.[valueStoreKey][locale]) ?? {});
+  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
   const buttons = $derived(
     [
       ..._buttons,
