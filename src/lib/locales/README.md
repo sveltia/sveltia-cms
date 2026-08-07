@@ -16,8 +16,8 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 2. **File an issue**: [Create a new issue](https://github.com/sveltia/sveltia-cms/issues/new?type=feature&labels=l10n) with your language name (e.g., “French localization”) and get assigned by the maintainer.
    - If you want us to provide an AI-generated draft translation for your language, please request it in your issue.
 3. **Translate two files**:
-   - [Sveltia UI strings](https://raw.githubusercontent.com/sveltia/sveltia-ui/e3655496eb2c548d7b965da991b9f3548269ecec/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-ui/upload/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-ui) to submit a PR
-   - [Sveltia CMS strings](https://raw.githubusercontent.com/sveltia/sveltia-cms/1295bf44e4e833dcf6d626d6e20198df12f877a3/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-cms/upload/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-cms) to submit a PR
+   - [Sveltia UI strings](https://raw.githubusercontent.com/sveltia/sveltia-ui/e3655496eb2c548d7b965da991b9f3548269ecec/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-ui/new/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-ui) to submit a PR
+   - [Sveltia CMS strings](https://raw.githubusercontent.com/sveltia/sveltia-cms/1295bf44e4e833dcf6d626d6e20198df12f877a3/src/lib/locales/en-US.yaml) → [upload it](https://github.com/sveltia/sveltia-cms/new/main/src/lib/locales) or clone [the repo](https://github.com/sveltia/sveltia-cms) to submit a PR
    - **PR title**: “Add [language] localization” (e.g., “Add French localization”) or “Update [language] localization” if updating an existing translation.
 4. **Get reviewed**: We’ll review your translations and provide feedback if necessary.
    - We can check your translated files for YAML and MF2 syntax errors, but we can’t review the quality of the translation as we don’t speak your language. If you want, ask other native speakers to review your translation on your pull request, issue or in your own community.
