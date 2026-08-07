@@ -3,10 +3,10 @@
   import { Button, Infobar } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
-  import { version as userVersion } from '$lib/services/app';
+  import { UNPKG_BASE_URL, version as userVersion } from '$lib/services/app';
 
-  const PACKAGE_JSON_URL = 'https://unpkg.com/@sveltia/cms/package.json';
-  const SCRIPT_URL = 'https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js';
+  const PACKAGE_JSON_URL = `${UNPKG_BASE_URL}/package.json`;
+  const SCRIPT_URL = `${UNPKG_BASE_URL}/dist/sveltia-cms.js`;
   const CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour
   const CACHE_TIMEOUT = 10 * 60 * 1000; // 10 min
 

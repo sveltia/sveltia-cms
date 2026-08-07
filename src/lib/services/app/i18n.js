@@ -12,7 +12,7 @@ import { LocalStorage } from '@sveltia/utils/storage';
 import { toStore, writable } from 'svelte/store';
 
 import defaultLocaleStrings from '$lib/locales/en-US.yaml';
-import { version } from '$lib/services/app';
+import { UNPKG_BASE_URL, version } from '$lib/services/app';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
@@ -36,7 +36,7 @@ export const APP_LOCALES = import.meta.env.VITE_APP_LOCALES.split(',');
  * Base URL for the JSON locale files published to the UNPKG CDN. These files are generated at build
  * time by the `generate-extra-files` Vite plugin.
  */
-const REMOTE_LOCALES_BASE_URL = `https://unpkg.com/@sveltia/cms@${version}/locales`;
+const REMOTE_LOCALES_BASE_URL = `${UNPKG_BASE_URL}@${version}/locales`;
 /**
  * How long to wait for a remote locale file, in milliseconds. If the CDN is slow or unreachable, we
  * give up rather than blocking the app, and the strings fall back to {@link DEFAULT_APP_LOCALE}.

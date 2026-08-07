@@ -37,6 +37,7 @@ vi.mock('@sveltia/i18n', () => ({
 
 vi.mock('$lib/services/app', () => ({
   version: '1.2.3',
+  UNPKG_BASE_URL: 'https://unpkg.com/@sveltia/cms',
 }));
 
 vi.mock('@sveltia/ui', () => ({
