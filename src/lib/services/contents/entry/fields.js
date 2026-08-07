@@ -587,13 +587,63 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
 };
 
 /**
+ * Regular expression to split a list item key path into its parent key path and item index, e.g.
+ * `authors.0` into `authors` and `0`. The parent is matched greedily, so `authors.0.tags.2` yields
+ * `authors.0.tags`.
+ */
+const LIST_ITEM_KEY_REGEX = /^(?<parent>.+)\.\d+$/;
+/**
+ * Cache of list item key paths grouped by parent key path, keyed by the value map object. Built
+ * once per value map and shared by every field editor and preview reading from it.
+ * @type {WeakMap<FlattenedEntryContent, Map<FieldKeyPath, FieldKeyPath[]>>}
+ */
+const listItemKeyCacheMap = new WeakMap();
+
+/**
+ * Get the key paths of the direct list items under the given key path, in value map order.
+ *
+ * The editor renders one component per field, and each of them needs its own item list, so
+ * scanning the whole value map per field is O(fields × keys) on every draft update. Indexing the
+ * map once instead makes each lookup proportional to the number of items found.
+ * @param {FlattenedEntryContent} valueMap Flattened entry content.
+ * @param {FieldKeyPath} keyPath Key path of the list field.
+ * @returns {FieldKeyPath[]} Item key paths, e.g. `['authors.0', 'authors.1']`.
+ */
+const getListItemKeys = (valueMap, keyPath) => {
+  let index = listItemKeyCacheMap.get(valueMap);
+
+  if (!index) {
+    index = new Map();
+
+    Object.keys(valueMap).forEach((key) => {
+      const { parent } = key.match(LIST_ITEM_KEY_REGEX)?.groups ?? {};
+
+      if (parent === undefined) {
+        return;
+      }
+
+      const keys = /** @type {Map<FieldKeyPath, FieldKeyPath[]>} */ (index).get(parent);
+
+      if (keys) {
+        keys.push(key);
+      } else {
+        /** @type {Map<FieldKeyPath, FieldKeyPath[]>} */ (index).set(parent, [key]);
+      }
+    });
+
+    listItemKeyCacheMap.set(valueMap, index);
+  }
+
+  return index.get(keyPath) ?? [];
+};
+
+/**
  * Get the current value of a field, taking into account whether it’s a single or multi-value field.
  * Our internal representation of multi-value fields is a flattened object, so we need to gather all
  * the values for a given key path into an array.
  * @param {object} args Arguments.
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
  * @param {FieldKeyPath} args.keyPath Key path of the field.
- * @param {RegExp} args.keyPathRegex Regular expression to match the key path prefix.
  * @param {boolean} args.isList Whether the field is a list field.
  * @param {boolean} args.multiple Whether the field is a multi-value field.
  * @param {boolean} args.isEditor Whether the field is being rendered in the editor.
@@ -605,7 +655,6 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
 export const getCurrentValue = ({
   valueMap,
   keyPath,
-  keyPathRegex,
   isList,
   multiple,
   isEditor,
@@ -619,11 +668,11 @@ export const getCurrentValue = ({
   }
 
   // Multiple values are flattened in the value map object
-  const list = Object.entries(valueMap).filter(([_keyPath]) => keyPathRegex.test(_keyPath));
+  const itemKeys = getListItemKeys(valueMap, keyPath);
 
   // Multi-value field
-  if (list.length) {
-    return list.map(([, val]) => val).filter((val) => val !== undefined);
+  if (itemKeys.length) {
+    return itemKeys.map((key) => valueMap[key]).filter((val) => val !== undefined);
   }
 
   // Single value custom field

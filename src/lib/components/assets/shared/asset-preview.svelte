@@ -3,7 +3,7 @@
   import { Icon } from '@sveltia/ui';
   import { removeVisibilityResolver, waitForVisibility } from '@sveltia/utils/element';
   import { sleep } from '@sveltia/utils/misc';
-  import { flushSync, onMount } from 'svelte';
+  import { onMount } from 'svelte';
 
   import {
     getAssetBlobURL,
@@ -11,6 +11,7 @@
     revokeAssetBlobURLIfNeeded,
   } from '$lib/services/assets/info';
   import { THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
+  import { requestFlushSync } from '$lib/services/utils/render';
 
   /**
    * @import { Asset, AssetKind } from '$lib/types/private';
@@ -105,8 +106,10 @@
     updatingSrc = false;
 
     // For some reason this is required to update the `$effect` calling `checkLoaded()`, otherwise
-    // navigating from `/assets` to `/assets/<collection>` on small screen leaves the preview empty
-    flushSync();
+    // navigating from `/assets` to `/assets/<collection>` on small screen leaves the preview empty.
+    // Queued rather than immediate, so a grid full of previews settling at once costs one flush
+    // instead of one per preview.
+    requestFlushSync();
   };
 
   /**
@@ -153,7 +156,10 @@
   };
 
   $effect(() => {
-    if (asset && !blurImageURL) {
+    // `blurImageURL` is only rendered when `blurBackground` is enabled, so don’t look up — and
+    // create an object URL for — a thumbnail that nothing will display. Every thumbnail in an asset
+    // grid would otherwise pay for a blurred backdrop it never shows.
+    if (blurBackground && asset && !blurImageURL) {
       (async () => {
         blurImageURL = await getAssetThumbnailURL(asset, { cacheOnly: true });
       })();

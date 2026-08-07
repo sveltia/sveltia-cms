@@ -1717,3 +1717,61 @@ describe('Additional comprehensive tests for edge cases', () => {
     expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });
+
+describe('Test getEntrySummary() caching', () => {
+  /** @type {InternalCollection} */
+  const collection = {
+    name: 'posts',
+    folder: 'content/posts',
+    fields: [],
+    _type: 'entry',
+    _file: /** @type {any} */ ({}),
+    _i18n: /** @type {any} */ ({ defaultLocale: 'en', allLocales: ['en'] }),
+    _thumbnailFieldNames: [],
+  };
+
+  /** @type {Entry} */
+  const entry = {
+    id: 'posts/hello',
+    slug: 'hello',
+    subPath: 'hello',
+    locales: {
+      en: { slug: 'hello', path: 'content/posts/hello.md', content: { title: 'Hello' } },
+    },
+  };
+
+  test('returns the memoized result for the same entry, collection and options', () => {
+    const first = getEntrySummary(collection, entry, { locale: 'en' });
+    const second = getEntrySummary(collection, entry, { locale: 'en' });
+
+    expect(second).toBe(first);
+    expect(second).toBe('Hello');
+  });
+
+  test('keys the cache on the options', () => {
+    const plain = getEntrySummary(collection, entry, { locale: 'en' });
+
+    const templated = getEntrySummary({ ...collection, summary: '{{title}} — post' }, entry, {
+      locale: 'en',
+      useTemplate: true,
+    });
+
+    expect(plain).toBe('Hello');
+    expect(templated).toBe('Hello — post');
+  });
+
+  test('does not share cache entries between different entries', () => {
+    /** @type {Entry} */
+    const otherEntry = {
+      ...entry,
+      id: 'posts/world',
+      slug: 'world',
+      locales: {
+        en: { slug: 'world', path: 'content/posts/world.md', content: { title: 'World' } },
+      },
+    };
+
+    expect(getEntrySummary(collection, entry, { locale: 'en' })).toBe('Hello');
+    expect(getEntrySummary(collection, otherEntry, { locale: 'en' })).toBe('World');
+  });
+});

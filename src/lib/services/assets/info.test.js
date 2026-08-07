@@ -463,6 +463,63 @@ describe('assets/info', () => {
 
       expect(result).toBe(undefined);
     });
+
+    it('should return a cached thumbnail in cache-only mode', async () => {
+      // The preceding tests leave the database disabled
+      _resetThumbnailDB();
+      mockBackend.repository = { databaseName: 'test-db' };
+
+      const cachedBlob = new Blob(['cached'], { type: 'image/webp' });
+
+      mockIndexedDB.get.mockResolvedValue(cachedBlob);
+
+      const result = await getAssetThumbnailURL(mockAsset, { cacheOnly: true });
+
+      expect(result).toBe('blob:mock-url');
+    });
+
+    it('should share one resolution between concurrent requests for the same asset', async () => {
+      mockIndexedDB.get.mockResolvedValue(undefined);
+
+      const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+      const assetWithFile = { ...mockAsset, file };
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+      const transformImageMock = vi.mocked(transformImage);
+      const thumbnailBlob = new Blob(['thumbnail'], { type: 'image/webp' });
+
+      transformImageMock.mockClear();
+      transformImageMock.mockResolvedValue(thumbnailBlob);
+
+      // The second caller joins the in-flight resolution started by the first, including a
+      // `cacheOnly` one, which would otherwise have given up
+      const results = await Promise.all([
+        getAssetThumbnailURL(assetWithFile),
+        getAssetThumbnailURL(assetWithFile),
+        getAssetThumbnailURL(assetWithFile, { cacheOnly: true }),
+      ]);
+
+      expect(transformImageMock).toHaveBeenCalledTimes(1);
+      expect(results).toEqual(['blob:mock-url', 'blob:mock-url', 'blob:mock-url']);
+
+      // The in-flight entry is released once settled, so a later request starts a fresh resolution
+      await getAssetThumbnailURL(assetWithFile);
+      expect(transformImageMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('should return undefined when the thumbnail cannot be generated', async () => {
+      mockIndexedDB.get.mockResolvedValue(undefined);
+
+      const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+      const assetWithFile = { ...mockAsset, file };
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+
+      // @ts-expect-error - Intentionally returning no blob
+      vi.mocked(transformImage).mockResolvedValue(undefined);
+
+      const result = await getAssetThumbnailURL(assetWithFile);
+
+      expect(result).toBe(undefined);
+    });
   });
 
   describe('getAssetPublicURL', () => {

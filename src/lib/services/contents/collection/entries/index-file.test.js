@@ -1,5 +1,6 @@
 // @ts-nocheck
 
+import { _, locale as appLocale } from '@sveltia/i18n';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { isEntryCollection } from '$lib/services/contents/collection';
@@ -11,6 +12,7 @@ import {
 // Mock dependencies
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn(() => 'Index File'),
+  locale: { current: 'en-US' },
 }));
 vi.mock('$lib/services/contents/collection', () => ({
   isEntryCollection: vi.fn(),
@@ -165,6 +167,39 @@ describe('getIndexFile()', () => {
       fields: null,
       editor: undefined,
     });
+  });
+
+  test('caches the result per collection', () => {
+    const collection = { name: 'test-collection', folder: 'content/posts', index_file: true };
+    const first = getIndexFile(collection);
+    const second = getIndexFile(collection);
+
+    expect(second).toBe(first);
+    // The localized default label is only looked up on the first call
+    expect(vi.mocked(_)).toHaveBeenCalledTimes(1);
+  });
+
+  test('rebuilds the cached result when the app locale changes', () => {
+    const collection = { name: 'test-collection', folder: 'content/posts', index_file: true };
+    const first = getIndexFile(collection);
+
+    vi.mocked(_).mockReturnValue('Fichier d’index');
+    appLocale.current = 'fr';
+
+    const second = getIndexFile(collection);
+
+    expect(second).not.toBe(first);
+    expect(second?.label).toBe('Fichier d’index');
+
+    appLocale.current = 'en-US';
+    vi.mocked(_).mockReturnValue('Index File');
+  });
+
+  test('caches a disabled index file too', () => {
+    const collection = { name: 'test-collection', folder: 'content/posts' };
+
+    expect(getIndexFile(collection)).toBeUndefined();
+    expect(getIndexFile(collection)).toBeUndefined();
   });
 });
 

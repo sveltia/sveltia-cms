@@ -159,7 +159,6 @@
     getCurrentValue({
       valueMap,
       keyPath,
-      keyPathRegex,
       isList,
       multiple,
       isEditor: true,

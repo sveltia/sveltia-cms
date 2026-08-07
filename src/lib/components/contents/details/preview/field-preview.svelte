@@ -1,6 +1,4 @@
 <script>
-  import { escapeRegExp } from '@sveltia/utils/string';
-
   import { CustomPreview, previews } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -46,13 +44,11 @@
   );
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
   const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
-  const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({
       valueMap,
       keyPath,
-      keyPathRegex,
       isList,
       multiple,
       isEditor: false,

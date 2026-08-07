@@ -1,12 +1,15 @@
+import { locale as appLocale } from '@sveltia/i18n';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { stripSlashes } from '@sveltia/utils/string';
 import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
+import { get } from 'svelte/store';
 
 import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
+import { allEntries } from '$lib/services/contents';
 import {
   getIndexFile,
   isCollectionIndexFile,
@@ -217,8 +220,44 @@ export const replace = (placeholder, context) => {
 };
 
 /**
- * Get the given entry’s summary that can be displayed in the entry list and other places. Format it
- * with the summary template if necessary, or simply use the `title` or similar field in the entry.
+ * Cache of formatted entry summaries, keyed by the `Entry` and `InternalCollection` objects, then
+ * by the remaining inputs. Object identity is used for the two outer keys so the cache is
+ * invalidated for free: the entry store always receives freshly-built objects when entries are
+ * loaded or saved, and {@link getCollection} returns a stable object per collection. The entries
+ * are garbage-collected along with the objects they belong to.
+ * @type {WeakMap<Entry, WeakMap<InternalCollection, Map<string, string>>>}
+ */
+const summaryCacheMap = new WeakMap();
+/**
+ * Last seen `allEntries` array, used to detect changes for {@link getEntriesGeneration}.
+ * @type {Entry[] | undefined}
+ */
+let lastAllEntries;
+/**
+ * Number of times `allEntries` has changed. Folded into the {@link summaryCacheMap} key so that a
+ * summary containing a Relation field label is regenerated when the referenced entries change,
+ * which does not necessarily replace the referencing entry itself.
+ */
+let entriesGeneration = 0;
+
+/**
+ * Get the current `allEntries` generation, incrementing it when the store’s array is replaced.
+ * @returns {number} Generation number.
+ */
+const getEntriesGeneration = () => {
+  const entries = get(allEntries);
+
+  if (entries !== lastAllEntries) {
+    lastAllEntries = entries;
+    entriesGeneration += 1;
+  }
+
+  return entriesGeneration;
+};
+
+/**
+ * Format the given entry’s summary. This is the uncached implementation of
+ * {@link getEntrySummary}.
  * @param {InternalCollection} collection Entry’s collection.
  * @param {Entry} entry Entry.
  * @param {object} [options] Options.
@@ -228,10 +267,8 @@ export const replace = (placeholder, context) => {
  * available.
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @returns {string} Formatted entry summary.
- * @see https://decapcms.org/docs/configuration-options/#summary
- * @see https://sveltiacms.app/en/docs/collections/entries#summaries
  */
-export const getEntrySummary = (
+const formatEntrySummary = (
   collection,
   entry,
   { locale, useTemplate = false, allowMarkdown = false } = {},
@@ -286,4 +323,63 @@ export const getEntrySummary = (
     ),
     { allowMarkdown },
   );
+};
+
+/**
+ * Get the given entry’s summary that can be displayed in the entry list and other places. Format it
+ * with the summary template if necessary, or simply use the `title` or similar field in the entry.
+ *
+ * The result is memoized, because formatting always ends with a Markdown parse and an HTML
+ * sanitization pass, and the entry list, the search results and the `_summary` sort all call this
+ * once per entry — the list cells on every re-render.
+ * @param {InternalCollection} collection Entry’s collection.
+ * @param {Entry} entry Entry.
+ * @param {object} [options] Options.
+ * @param {InternalLocaleCode} [options.locale] Target locale. The default locale is used if
+ * omitted.
+ * @param {boolean} [options.useTemplate] Whether to use the collection’s `summary` template if
+ * available.
+ * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
+ * @returns {string} Formatted entry summary.
+ * @see https://decapcms.org/docs/configuration-options/#summary
+ * @see https://sveltiacms.app/en/docs/collections/entries#summaries
+ */
+export const getEntrySummary = (collection, entry, options = {}) => {
+  const { locale, useTemplate = false, allowMarkdown = false } = options;
+  let collectionCache = summaryCacheMap.get(entry);
+
+  if (!collectionCache) {
+    collectionCache = new WeakMap();
+    summaryCacheMap.set(entry, collectionCache);
+  }
+
+  let optionCache = collectionCache.get(collection);
+
+  if (!optionCache) {
+    optionCache = new Map();
+    collectionCache.set(collection, optionCache);
+  }
+
+  // The app locale is part of the key because a summary can contain a localized index file label
+  // or Relation field label
+  const cacheKey = [
+    locale ?? '',
+    useTemplate ? '1' : '0',
+    allowMarkdown ? '1' : '0',
+    // `Array.join()` turns an unset locale into an empty string
+    appLocale.current,
+    getEntriesGeneration(),
+  ].join('\n');
+
+  const cached = optionCache.get(cacheKey);
+
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const summary = formatEntrySummary(collection, entry, options);
+
+  optionCache.set(cacheKey, summary);
+
+  return summary;
 };

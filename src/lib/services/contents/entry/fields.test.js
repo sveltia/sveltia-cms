@@ -4592,7 +4592,6 @@ describe('Test getCurrentValue()', () => {
     test('should return value directly for simple string value', () => {
       const result = getCurrentValue({
         keyPath: 'title',
-        keyPathRegex: /^title$/,
         valueMap: { title: 'Hello World' },
         isList: false,
         multiple: false,
@@ -4605,7 +4604,6 @@ describe('Test getCurrentValue()', () => {
     test('should return value directly for numeric value', () => {
       const result = getCurrentValue({
         keyPath: 'count',
-        keyPathRegex: /^count$/,
         valueMap: { count: 42 },
         isList: false,
         multiple: false,
@@ -4618,7 +4616,6 @@ describe('Test getCurrentValue()', () => {
     test('should return undefined if value is undefined', () => {
       const result = getCurrentValue({
         keyPath: 'missing',
-        keyPathRegex: /^missing$/,
         valueMap: {},
         isList: false,
         multiple: false,
@@ -4631,7 +4628,6 @@ describe('Test getCurrentValue()', () => {
     test('should return null if value is null', () => {
       const result = getCurrentValue({
         keyPath: 'nullable',
-        keyPathRegex: /^nullable$/,
         valueMap: { nullable: null },
         isList: false,
         multiple: false,
@@ -4644,7 +4640,6 @@ describe('Test getCurrentValue()', () => {
     test('should return boolean value correctly', () => {
       const result = getCurrentValue({
         keyPath: 'active',
-        keyPathRegex: /^active$/,
         valueMap: { active: true },
         isList: false,
         multiple: false,
@@ -4657,7 +4652,6 @@ describe('Test getCurrentValue()', () => {
     test('should return empty string value', () => {
       const result = getCurrentValue({
         keyPath: 'description',
-        keyPathRegex: /^description$/,
         valueMap: { description: '' },
         isList: false,
         multiple: false,
@@ -4670,7 +4664,6 @@ describe('Test getCurrentValue()', () => {
     test('should return zero value', () => {
       const result = getCurrentValue({
         keyPath: 'zero',
-        keyPathRegex: /^zero$/,
         valueMap: { zero: 0 },
         isList: false,
         multiple: false,
@@ -4685,7 +4678,6 @@ describe('Test getCurrentValue()', () => {
     test('should return array of values when multiple items exist', () => {
       const result = getCurrentValue({
         keyPath: 'tags',
-        keyPathRegex: /^tags\.\d+$/,
         valueMap: {
           'tags.0': 'javascript',
           'tags.1': 'svelte',
@@ -4699,10 +4691,9 @@ describe('Test getCurrentValue()', () => {
       expect(result).toEqual(['javascript', 'svelte', 'testing']);
     });
 
-    test('should return empty array when no items match keyPathRegex', () => {
+    test('should return empty array when the key path has no list items', () => {
       const result = getCurrentValue({
         keyPath: 'tags',
-        keyPathRegex: /^tags\.\d+$/,
         valueMap: {
           title: 'Some Title',
         },
@@ -4717,7 +4708,6 @@ describe('Test getCurrentValue()', () => {
     test('should filter out undefined values from array', () => {
       const result = getCurrentValue({
         keyPath: 'items',
-        keyPathRegex: /^items\.\d+$/,
         valueMap: {
           'items.0': 'first',
           'items.1': undefined,
@@ -4735,7 +4725,6 @@ describe('Test getCurrentValue()', () => {
     test('should handle list with mixed types', () => {
       const result = getCurrentValue({
         keyPath: 'mixed',
-        keyPathRegex: /^mixed\.\d+$/,
         valueMap: {
           'mixed.0': 'string',
           'mixed.1': 42,
@@ -4755,7 +4744,6 @@ describe('Test getCurrentValue()', () => {
 
       const result = getCurrentValue({
         keyPath: 'objects',
-        keyPathRegex: /^objects\.\d+$/,
         valueMap: {
           'objects.0': obj,
           'objects.1': { name: 'another' },
@@ -4771,7 +4759,6 @@ describe('Test getCurrentValue()', () => {
     test('should return all items regardless of insertion order', () => {
       const result = getCurrentValue({
         keyPath: 'ordered',
-        keyPathRegex: /^ordered\.\d+$/,
         valueMap: {
           'ordered.2': 'third',
           'ordered.0': 'first',
@@ -4790,7 +4777,6 @@ describe('Test getCurrentValue()', () => {
     test('should handle single item list', () => {
       const result = getCurrentValue({
         keyPath: 'single',
-        keyPathRegex: /^single\.\d+$/,
         valueMap: {
           'single.0': 'only-item',
         },
@@ -4805,7 +4791,6 @@ describe('Test getCurrentValue()', () => {
     test('should ignore base keyPath value when isList is true', () => {
       const result = getCurrentValue({
         keyPath: 'items',
-        keyPathRegex: /^items\.\d+$/,
         valueMap: {
           items: 'should-be-ignored',
           'items.0': 'first',
@@ -4826,7 +4811,6 @@ describe('Test getCurrentValue()', () => {
 
       const result = getCurrentValue({
         keyPath: 'customField',
-        keyPathRegex: /^customField\.\d+$/,
         valueMap: { customField: value },
         isList: false,
         multiple: false,
@@ -4841,7 +4825,6 @@ describe('Test getCurrentValue()', () => {
     test('should return undefined for undefined custom field', () => {
       const result = getCurrentValue({
         keyPath: 'customField',
-        keyPathRegex: /^customField$/,
         valueMap: {},
         isList: false,
         multiple: false,
@@ -4857,7 +4840,6 @@ describe('Test getCurrentValue()', () => {
 
       const result = getCurrentValue({
         keyPath: 'customField',
-        keyPathRegex: /^customField\.\d+$/,
         valueMap: { customField: value, other: 'unrelated' },
         isList: false,
         multiple: false,
@@ -4874,7 +4856,6 @@ describe('Test getCurrentValue()', () => {
     test('should convert string value to array when isEditor=true and multiple=true', () => {
       const result = getCurrentValue({
         keyPath: 'tags',
-        keyPathRegex: /^tags\.\d+$/,
         valueMap: { tags: 'single-tag' },
         isList: true,
         multiple: true,
@@ -4887,7 +4868,6 @@ describe('Test getCurrentValue()', () => {
     test('should convert number value to array when isEditor=true and multiple=true', () => {
       const result = getCurrentValue({
         keyPath: 'scores',
-        keyPathRegex: /^scores\.\d+$/,
         valueMap: { scores: 42 },
         isList: true,
         multiple: true,
@@ -4902,7 +4882,6 @@ describe('Test getCurrentValue()', () => {
 
       const result = getCurrentValue({
         keyPath: 'field',
-        keyPathRegex: /^field\.\d+$/,
         valueMap: { field: obj },
         isList: true,
         multiple: true,
@@ -4918,7 +4897,6 @@ describe('Test getCurrentValue()', () => {
 
       const result = getCurrentValue({
         keyPath: 'items',
-        keyPathRegex: /^items\.\d+$/,
         valueMap: { items: arr },
         isList: true,
         multiple: true,
@@ -4932,7 +4910,6 @@ describe('Test getCurrentValue()', () => {
     test('should not convert when value is undefined', () => {
       const result = getCurrentValue({
         keyPath: 'field',
-        keyPathRegex: /^field\.\d+$/,
         valueMap: {},
         isList: true,
         multiple: true,
@@ -4945,7 +4922,6 @@ describe('Test getCurrentValue()', () => {
     test('should not convert when value is null', () => {
       const result = getCurrentValue({
         keyPath: 'field',
-        keyPathRegex: /^field\.\d+$/,
         valueMap: { field: null },
         isList: true,
         multiple: true,
@@ -4958,7 +4934,6 @@ describe('Test getCurrentValue()', () => {
     test('should not convert when isEditor=false', () => {
       const result = getCurrentValue({
         keyPath: 'tags',
-        keyPathRegex: /^tags\.\d+$/,
         valueMap: { tags: 'single-tag' },
         isList: true,
         multiple: true,
@@ -4971,7 +4946,6 @@ describe('Test getCurrentValue()', () => {
     test('should not convert when multiple=false', () => {
       const result = getCurrentValue({
         keyPath: 'field',
-        keyPathRegex: /^field\.\d+$/,
         valueMap: { field: 'value' },
         isList: true,
         multiple: false,
@@ -4983,27 +4957,48 @@ describe('Test getCurrentValue()', () => {
   });
 
   describe('Complex scenarios with nested paths', () => {
-    test('should handle nested list item regex patterns', () => {
-      const result = getCurrentValue({
-        keyPath: 'sections',
-        keyPathRegex: /^sections\.\d+\.items\.\d+$/,
-        valueMap: {
-          'sections.0.items.0': 'item1',
-          'sections.0.items.1': 'item2',
-          'sections.1.items.0': 'item3',
-        },
-        isList: true,
-        multiple: false,
-        isEditor: false,
-      });
+    test('should only collect the direct list items of a nested key path', () => {
+      const valueMap = {
+        'sections.0.items.0': 'item1',
+        'sections.0.items.1': 'item2',
+        'sections.1.items.0': 'item3',
+      };
 
-      expect(result).toEqual(['item1', 'item2', 'item3']);
+      expect(
+        getCurrentValue({
+          keyPath: 'sections.0.items',
+          valueMap,
+          isList: true,
+          multiple: false,
+          isEditor: false,
+        }),
+      ).toEqual(['item1', 'item2']);
+
+      expect(
+        getCurrentValue({
+          keyPath: 'sections.1.items',
+          valueMap,
+          isList: true,
+          multiple: false,
+          isEditor: false,
+        }),
+      ).toEqual(['item3']);
+
+      // `sections` itself has no direct list items, only nested ones
+      expect(
+        getCurrentValue({
+          keyPath: 'sections',
+          valueMap,
+          isList: true,
+          multiple: false,
+          isEditor: false,
+        }),
+      ).toEqual([]);
     });
 
     test('should handle complex object fields', () => {
       const result = getCurrentValue({
         keyPath: 'authors',
-        keyPathRegex: /^authors\.\d+$/,
         valueMap: {
           'authors.0': { name: 'John', email: 'john@example.com' },
           'authors.1': { name: 'Jane', email: 'jane@example.com' },
@@ -5024,7 +5019,6 @@ describe('Test getCurrentValue()', () => {
     test('should handle empty valueMap', () => {
       const result = getCurrentValue({
         keyPath: 'field',
-        keyPathRegex: /^field$/,
         valueMap: {},
         isList: false,
         multiple: false,
@@ -5037,7 +5031,6 @@ describe('Test getCurrentValue()', () => {
     test('should handle valueMap with many unrelated keys', () => {
       const result = getCurrentValue({
         keyPath: 'target',
-        keyPathRegex: /^target\.\d+$/,
         valueMap: {
           other: 'value1',
           'other.0': 'value2',
@@ -5057,7 +5050,6 @@ describe('Test getCurrentValue()', () => {
     test('should handle false value in list', () => {
       const result = getCurrentValue({
         keyPath: 'booleans',
-        keyPathRegex: /^booleans\.\d+$/,
         valueMap: {
           'booleans.0': true,
           'booleans.1': false,
@@ -5074,7 +5066,6 @@ describe('Test getCurrentValue()', () => {
     test('should handle false boolean as valid value not converting to array', () => {
       const result = getCurrentValue({
         keyPath: 'active',
-        keyPathRegex: /^active$/,
         valueMap: { active: false },
         isList: false,
         multiple: false,
@@ -5087,7 +5078,6 @@ describe('Test getCurrentValue()', () => {
     test('should handle various falsy values correctly', () => {
       const result = getCurrentValue({
         keyPath: 'items',
-        keyPathRegex: /^items\.\d+$/,
         valueMap: {
           'items.0': 0,
           'items.1': false,
@@ -5105,7 +5095,6 @@ describe('Test getCurrentValue()', () => {
     test('should handle special characters in keyPath', () => {
       const result = getCurrentValue({
         keyPath: 'field-with-dash',
-        keyPathRegex: /^field-with-dash$/,
         valueMap: { 'field-with-dash': 'value' },
         isList: false,
         multiple: false,
@@ -5118,7 +5107,6 @@ describe('Test getCurrentValue()', () => {
     test('should handle very large index numbers', () => {
       const result = getCurrentValue({
         keyPath: 'items',
-        keyPathRegex: /^items\.\d+$/,
         valueMap: {
           'items.999': 'item1',
           'items.1000': 'item2',

@@ -101,6 +101,14 @@ export const getAssetBlobURL = async (asset) => {
 
 /** @type {IndexedDB | null | undefined} */
 let thumbnailDB = undefined;
+/**
+ * Thumbnail blob resolutions currently in flight, keyed by asset SHA. Generating a thumbnail means
+ * a database read and, on a miss, decoding and transforming the full-size image, so concurrent
+ * requests for the same asset — several components showing it at once, or one component asking for
+ * both a preview and a blurred backdrop — share a single resolution instead of repeating the work.
+ * @type {Map<string, Promise<Blob | undefined>>}
+ */
+const pendingThumbnailBlobs = new Map();
 
 /* v8 ignore next */
 /**
@@ -110,37 +118,32 @@ let thumbnailDB = undefined;
  */
 export const _resetThumbnailDB = () => {
   thumbnailDB = undefined;
+  pendingThumbnailBlobs.clear();
 };
 
 /**
- * Get a thumbnail image for the given asset.
- * @param {Asset} asset Asset.
- * @param {object} [options] Options.
- * @param {boolean} [options.cacheOnly] Whether to search a thumbnail in the cache database only.
- * @returns {Promise<string | undefined>} Thumbnail blob URL.
+ * Initialize {@link thumbnailDB} if it hasn’t been initialized yet.
  */
-export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) => {
-  const isPDF = asset.name.endsWith('.pdf');
-
-  if (!(['image', 'video'].includes(asset.kind) || isPDF)) {
-    return undefined;
-  }
-
-  // Initialize the thumbnail DB
+const initThumbnailDB = () => {
   if (thumbnailDB === undefined) {
     const { databaseName } = get(backend)?.repository ?? {};
 
     thumbnailDB = databaseName ? new IndexedDB(databaseName, 'asset-thumbnails') : null;
   }
+};
 
+/**
+ * Get a thumbnail blob for the given asset, generating it from the original file if it’s not in the
+ * cache database yet.
+ * @param {Asset} asset Asset.
+ * @param {boolean} isPDF Whether the asset is a PDF file.
+ * @returns {Promise<Blob | undefined>} Thumbnail blob.
+ */
+const resolveThumbnailBlob = async (asset, isPDF) => {
   /** @type {Blob | undefined} */
   let thumbnailBlob = await thumbnailDB?.get(asset.sha);
 
   if (!thumbnailBlob) {
-    if (cacheOnly) {
-      return undefined;
-    }
-
     const blob = await getAssetBlob(asset);
     const transform = isPDF ? renderPDF : transformImage;
 
@@ -149,7 +152,49 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
     await thumbnailDB?.set(asset.sha, thumbnailBlob);
   }
 
-  return URL.createObjectURL(thumbnailBlob);
+  return thumbnailBlob;
+};
+
+/**
+ * Get a thumbnail image for the given asset.
+ * @param {Asset} asset Asset.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.cacheOnly] Whether to search a thumbnail in the cache database only.
+ * @returns {Promise<string | undefined>} Thumbnail blob URL. Each caller gets its own object URL,
+ * so it can be revoked independently.
+ */
+export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) => {
+  const isPDF = asset.name.endsWith('.pdf');
+
+  if (!(['image', 'video'].includes(asset.kind) || isPDF)) {
+    return undefined;
+  }
+
+  initThumbnailDB();
+
+  const { sha } = asset;
+  let pending = pendingThumbnailBlobs.get(sha);
+
+  if (!pending) {
+    if (cacheOnly) {
+      // Nothing is being generated for this asset, so stick to a cache lookup as requested
+      const cachedBlob = await thumbnailDB?.get(sha);
+
+      return cachedBlob ? URL.createObjectURL(cachedBlob) : undefined;
+    }
+
+    pending = resolveThumbnailBlob(asset, isPDF).finally(() => {
+      pendingThumbnailBlobs.delete(sha);
+    });
+
+    pendingThumbnailBlobs.set(sha, pending);
+  }
+
+  // A `cacheOnly` caller joins an in-flight resolution rather than reading the database again: the
+  // work is already happening, so waiting for it costs nothing extra
+  const thumbnailBlob = await pending;
+
+  return thumbnailBlob ? URL.createObjectURL(thumbnailBlob) : undefined;
 };
 
 /**

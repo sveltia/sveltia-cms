@@ -323,6 +323,82 @@ describe('draft/index', () => {
 
       expect(value).toBe(false);
     });
+
+    it('should return true when a locale is added to currentValues', () => {
+      entryDraft.set({
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test' } },
+        currentValues: { en: { title: 'Test' }, ja: { title: 'Test' } },
+      });
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(true);
+    });
+
+    it('should return true when a locale is missing from originalValues', () => {
+      entryDraft.set({
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test' }, ja: undefined },
+        currentValues: { en: { title: 'Test' }, ja: { title: 'Test' } },
+      });
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(true);
+    });
+
+    it('should return true when a field is removed from currentValues', () => {
+      entryDraft.set({
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test', subtitle: 'Sub' } },
+        currentValues: { en: { title: 'Test' } },
+      });
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(true);
+    });
+
+    it('should return true when a field is added to currentValues', () => {
+      entryDraft.set({
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test' } },
+        currentValues: { en: { title: 'Test', subtitle: 'Sub' } },
+      });
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(true);
+    });
   });
 
   describe('devModeEnabled subscription', () => {
