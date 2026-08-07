@@ -94,6 +94,32 @@
   const _sanitize = (str) =>
     sanitize(/** @type {string} */ (parseInline(str.replaceAll('\\n', '<br>'))), SANITIZE_OPTIONS);
 
+  /**
+   * Write a value coming from the widget editor back to the entry draft.
+   *
+   * The write is deferred to a microtask so that it happens outside Svelte’s update cycle. Widget
+   * editors sync their local state to this binding from an `$effect`, and Svelte can only memoize
+   * its dirty-marking traversal for writes made outside a running reaction. Without the deferral,
+   * marking re-walks the derived graph once per path that reaches it, which is exponential in the
+   * depth of the editor tree — tens of seconds per keystroke on a deeply nested entry.
+   * @param {any} value New value.
+   */
+  const writeValue = (value) => {
+    const store = valueStoreKey;
+    const _locale = locale;
+    const _keyPath = keyPath;
+
+    queueMicrotask(() => {
+      entryDraft.update((draft) => {
+        if (draft) {
+          draft[store][_locale][_keyPath] = value;
+        }
+
+        return draft;
+      });
+    });
+  };
+
   /** @type {Writable<Component>} */
   const extraHint = writable();
 
@@ -349,7 +375,12 @@
       {:else}
         {@const Editor = editors[fieldType]}
         {@render beforeInput()}
-        <Editor {...editorProps} bind:currentValue={$entryDraft[valueStoreKey][locale][keyPath]} />
+        <Editor
+          {...editorProps}
+          bind:currentValue={
+            () => $entryDraft[valueStoreKey][locale][keyPath], (value) => writeValue(value)
+          }
+        />
         {@render afterInput()}
       {/if}
     </div>
