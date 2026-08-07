@@ -47,6 +47,13 @@ const REMOTE_LOCALE_FETCH_TIMEOUT = 5000;
  * users rarely switch languages.
  */
 const LOCALE_CACHE_KEY = 'sveltia-cms.locale';
+/**
+ * Strings for the locales loaded during the session, keyed with the locale code. The `dictionary`
+ * of `sveltia-i18n` holds compiled `Intl.MessageFormat` objects rather than the original strings,
+ * so we keep our own copy to be able to update the cache later.
+ * @type {Map<string, Record<string, any>>}
+ */
+const loadedLocaleStrings = new Map();
 
 /**
  * Current application locale as a Svelte store, derived from `locale` of `sveltia-i18n`.
@@ -104,6 +111,17 @@ const cacheLocaleStrings = async (locale, strings) => {
 };
 
 /**
+ * Discard the cached strings, whichever locale they belong to.
+ */
+const deleteCachedLocaleStrings = async () => {
+  try {
+    await LocalStorage.delete(LOCALE_CACHE_KEY);
+  } catch {
+    // The local storage may be unavailable
+  }
+};
+
+/**
  * Fetch the strings for the given locale from the CDN. The remote JSON files already contain the
  * Sveltia UI strings under the `_sui` key, so no merge is needed here.
  * @param {string} locale Locale code.
@@ -133,6 +151,8 @@ const loadLocaleStrings = async (locale) => {
   const cachedStrings = await getCachedLocaleStrings(locale);
 
   if (cachedStrings) {
+    loadedLocaleStrings.set(locale, cachedStrings);
+
     return cachedStrings;
   }
 
@@ -141,6 +161,7 @@ const loadLocaleStrings = async (locale) => {
   try {
     const strings = await fetchLocaleStrings(locale);
 
+    loadedLocaleStrings.set(locale, strings);
     await cacheLocaleStrings(locale, strings);
 
     return strings;
@@ -152,6 +173,39 @@ const loadLocaleStrings = async (locale) => {
   } finally {
     appLocaleLoading.set(undefined);
   }
+};
+
+/**
+ * Update the local storage cache so that it holds the strings for the given locale, or no strings
+ * at all if the locale is bundled with the app. `sveltia-i18n` calls a registered loader only once
+ * per locale, so switching back to a language already used earlier in the session doesn’t go
+ * through {@link loadLocaleStrings} again, leaving the cache pointing at another locale. Without
+ * this, the strings would be fetched from the CDN again on the next visit.
+ * @param {string} locale Locale code.
+ */
+export const updateLocaleCache = async (locale) => {
+  const strings = loadedLocaleStrings.get(locale);
+
+  if (!strings) {
+    // The {@link DEFAULT_APP_LOCALE} strings are bundled with the app, so the cache is useless once
+    // the user switches back to that locale. It’s only discarded after another locale has been
+    // active in this session, because the stored language preference is applied asynchronously,
+    // shortly after the app starts with the browser’s language.
+    if (locale === DEFAULT_APP_LOCALE && loadedLocaleStrings.size) {
+      await deleteCachedLocaleStrings();
+    }
+
+    // Anything else is a locale whose loader is still running; that loader caches the strings once
+    // it’s done
+    return;
+  }
+
+  // Avoid a redundant write when the cache is already up to date, e.g. right after a CDN fetch
+  if (await getCachedLocaleStrings(locale)) {
+    return;
+  }
+
+  await cacheLocaleStrings(locale, strings);
 };
 
 /**
@@ -196,5 +250,11 @@ export const initAppLocale = () => {
   init({
     fallbackLocale: DEFAULT_APP_LOCALE,
     initialLocale: prefs.locale || getLocaleFromNavigator() || DEFAULT_APP_LOCALE,
+  });
+
+  // Keep the cache in sync with the active locale, including when the language is switched with the
+  // app settings. The subscription lives as long as the app, so it’s never cancelled.
+  appLocaleStore.subscribe((locale) => {
+    updateLocaleCache(locale);
   });
 };

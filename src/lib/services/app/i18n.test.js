@@ -50,7 +50,7 @@ vi.mock('@sveltia/utils/file', () => ({
   getPathInfo: mockGetPathInfo,
 }));
 
-const mockLocalStorage = { get: vi.fn(), set: vi.fn() };
+const mockLocalStorage = { get: vi.fn(), set: vi.fn(), delete: vi.fn() };
 
 vi.mock('@sveltia/utils/storage', () => ({
   LocalStorage: mockLocalStorage,
@@ -68,6 +68,7 @@ describe('i18n', () => {
     vi.clearAllMocks();
     mockLocalStorage.get.mockResolvedValue(undefined);
     mockLocalStorage.set.mockResolvedValue(undefined);
+    mockLocalStorage.delete.mockResolvedValue(undefined);
     mockPrefs.locale = 'en-US';
     mockComponentStrings['en-CA'] = { button: 'Button' };
     mockComponentStrings['en-GB'] = { button: 'Button (UK)' };
@@ -463,6 +464,182 @@ describe('i18n', () => {
       // away, without waiting for a remote locale file
       expect(initAppLocale()).toBeUndefined();
       expect(mockInit).toHaveBeenCalled();
+    });
+  });
+
+  describe('updateLocaleCache', () => {
+    /** @type {Record<string, Record<string, string>>} */
+    const remoteStrings = {
+      ja: { hello: 'こんにちは' },
+      ru: { hello: 'Привет' },
+    };
+
+    /**
+     * Get the loader registered for the given locale.
+     * @param {string} locale Locale code.
+     * @returns {() => Promise<any>} Loader.
+     */
+    const getLoader = (locale) =>
+      /** @type {[string, () => Promise<any>]} */ (
+        mockRegister.mock.calls.find(([code]) => code === locale)
+      )[1];
+
+    beforeEach(() => {
+      vi.stubEnv('DEV', false);
+      // Start with a clean module state, so the strings loaded by the other tests don’t leak in
+      vi.resetModules();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (/** @type {string} */ url) => ({
+          ok: true,
+          // eslint-disable-next-line jsdoc/require-jsdoc
+          json: async () => remoteStrings[/** @type {string} */ (url.match(/\/(\w+)\.json$/)?.[1])],
+        })),
+      );
+    });
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.unstubAllGlobals();
+    });
+
+    it('should cache the strings again when switching back to a locale used earlier', async () => {
+      const { initAppLocale, updateLocaleCache } = await import('./i18n.js');
+
+      initAppLocale();
+
+      // The user switches to Japanese, then to Russian; each loader caches the fetched strings
+      await getLoader('ja')();
+      await getLoader('ru')();
+
+      expect(mockLocalStorage.set).toHaveBeenLastCalledWith('sveltia-cms.locale', {
+        _locale: 'ru',
+        _version: '1.2.3',
+        ...remoteStrings.ru,
+      });
+
+      mockLocalStorage.get.mockResolvedValue({
+        _locale: 'ru',
+        _version: '1.2.3',
+        ...remoteStrings.ru,
+      });
+      mockLocalStorage.set.mockClear();
+
+      // Switching back to Japanese doesn’t call the loader again, because `sveltia-i18n` keeps the
+      // strings in memory, but the cache still has to be updated
+      await updateLocaleCache('ja');
+
+      expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.locale', {
+        _locale: 'ja',
+        _version: '1.2.3',
+        ...remoteStrings.ja,
+      });
+      // The strings are reused from memory, so the CDN is not hit again
+      expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should keep the cache intact when the strings are not loaded', async () => {
+      const { initAppLocale, updateLocaleCache } = await import('./i18n.js');
+
+      initAppLocale();
+      mockLocalStorage.get.mockClear();
+      mockLocalStorage.set.mockClear();
+
+      // A locale still being loaded is not cached here; its loader does that once done
+      await updateLocaleCache('ja');
+
+      expect(mockLocalStorage.get).not.toHaveBeenCalled();
+      expect(mockLocalStorage.set).not.toHaveBeenCalled();
+      expect(mockLocalStorage.delete).not.toHaveBeenCalled();
+    });
+
+    it('should discard the cache when switching back to the default locale', async () => {
+      const { initAppLocale, updateLocaleCache } = await import('./i18n.js');
+
+      initAppLocale();
+
+      await getLoader('ja')();
+
+      // The strings for the default locale are bundled with the app, so the cached Japanese strings
+      // are of no use anymore
+      await updateLocaleCache('en-US');
+
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.locale');
+    });
+
+    it('should keep the cache when the app starts with the default locale', async () => {
+      const { initAppLocale, updateLocaleCache } = await import('./i18n.js');
+
+      initAppLocale();
+
+      // The app starts with the browser’s language, and the stored language preference is applied a
+      // moment later, so the cached strings for that language must survive
+      await updateLocaleCache('en-US');
+
+      expect(mockLocalStorage.delete).not.toHaveBeenCalled();
+    });
+
+    it('should keep loading the strings when the cache cannot be discarded', async () => {
+      mockLocalStorage.delete.mockRejectedValue(new Error('Permission denied'));
+
+      const { initAppLocale, updateLocaleCache } = await import('./i18n.js');
+
+      initAppLocale();
+
+      await getLoader('ja')();
+      await expect(updateLocaleCache('en-US')).resolves.toBeUndefined();
+    });
+
+    it('should skip the write when the cache is already up to date', async () => {
+      const { initAppLocale, updateLocaleCache } = await import('./i18n.js');
+
+      initAppLocale();
+
+      await getLoader('ja')();
+
+      mockLocalStorage.get.mockResolvedValue({
+        _locale: 'ja',
+        _version: '1.2.3',
+        ...remoteStrings.ja,
+      });
+      mockLocalStorage.set.mockClear();
+
+      await updateLocaleCache('ja');
+
+      expect(mockLocalStorage.get).toHaveBeenCalledWith('sveltia-cms.locale');
+      expect(mockLocalStorage.set).not.toHaveBeenCalled();
+    });
+
+    it('should reuse the cached strings when switching back to a locale loaded from the cache', async () => {
+      const { initAppLocale, updateLocaleCache } = await import('./i18n.js');
+
+      initAppLocale();
+
+      // Japanese comes from the cache left by a previous session, so the CDN is not hit
+      mockLocalStorage.get.mockResolvedValue({
+        _locale: 'ja',
+        _version: '1.2.3',
+        ...remoteStrings.ja,
+      });
+      await getLoader('ja')();
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+
+      // The user then switches to Russian, which overwrites the cache
+      await getLoader('ru')();
+      mockLocalStorage.get.mockResolvedValue({
+        _locale: 'ru',
+        _version: '1.2.3',
+        ...remoteStrings.ru,
+      });
+      mockLocalStorage.set.mockClear();
+
+      await updateLocaleCache('ja');
+
+      expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.locale', {
+        _locale: 'ja',
+        _version: '1.2.3',
+        ...remoteStrings.ja,
+      });
     });
   });
 });
