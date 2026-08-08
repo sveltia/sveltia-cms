@@ -60,9 +60,12 @@
       const scrollTopMax = scrollHeight - clientHeight;
       const scrollRatio = scrollTop / scrollTopMax;
 
-      // Find a field section at the top left corner of the content area
+      // Find the field section in the top left corner of the content area. Use `findLast` to
+      // capture the topmost element; otherwise the List field sticky headers will interfere with
+      // the positioning.
+      // @see https://github.com/sveltia/sveltia-cms/issues/883
       const thisElement = /** @type {HTMLElement | undefined} */ (
-        ownerDocument.elementsFromPoint(x + 80, y).find((e) => e.matches('[data-key-path]'))
+        ownerDocument.elementsFromPoint(x + 80, y).findLast((e) => e.matches('[data-key-path]'))
       );
 
       if (!thisElement) {
