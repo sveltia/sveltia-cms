@@ -27,10 +27,19 @@
    */
   const locales = $derived(
     appLocales
-      .map((code) => ({
-        value: code,
-        label: getLocaleLabel(code, { displayLocale: code }) ?? code,
-      }))
+      .map((code) => {
+        const localizedLabel = getLocaleLabel(code, { displayLocale: appLocale.current }) ?? code;
+        const nativeLabel = getLocaleLabel(code, { displayLocale: code }) ?? code;
+
+        const label =
+          localizedLabel === nativeLabel ? localizedLabel : `${localizedLabel} — ${nativeLabel}`;
+
+        return {
+          value: code,
+          searchValue: `${label} (${code})`,
+          label,
+        };
+      })
       .sort((a, b) => a.label.localeCompare(b.label)),
   );
 
@@ -58,8 +67,8 @@
           prefs.locale = event.detail.value;
         }}
       >
-        {#each locales as { value, label } (value)}
-          <Option {value} {label} selected={value === appLocale.current} />
+        {#each locales as { value, searchValue, label } (value)}
+          <Option {value} {searchValue} {label} selected={value === appLocale.current} />
         {/each}
       </Select>
     {/key}
