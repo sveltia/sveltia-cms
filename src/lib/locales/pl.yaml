@@ -74,7 +74,7 @@ folder: Folder
 # Miscellaneous Labels
 # ==============================================================================
 # Various labels used across the application for specific UI elements
-# that don't fit into other categories.
+# that don’t fit into other categories.
 
 # Field and input labels
 api_key: Klucz API
@@ -88,7 +88,7 @@ later: Później
 # Entry and collection labels
 # Slug field heading in entry editors
 slug: Przyjazny link
-# Fallback labels for singleton collections when names aren't configured
+# Fallback labels for singleton collections when names aren’t configured
 singleton: Wpis pojedynczy
 singletons: Wpisy pojedyncze
 
@@ -204,7 +204,7 @@ sign_in_with_mobile_instruction: Zeskanuj poniższy kod QR telefonem lub tablete
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
-# {$name} is the signed-in user's login name
+# {$name} is the signed-in user’s login name
 signed_in_as_x: 'Zalogowano jako {$name}'
 working_with_local_repo: Praca z lokalnym repozytorium
 working_with_test_repo: Praca z repozytorium testowym
@@ -319,7 +319,7 @@ files: Pliki
 
 # Asset location selector: option group labels
 asset_location:
-  # Assets stored in the site's Git repository
+  # Assets stored in the site’s Git repository
   repository: Twoja witryna
   external: Lokalizacje zewnętrzne
   stock_photos: Zdjęcia stockowe
@@ -394,11 +394,11 @@ sort_keys:
   none: Brak
   name: Nazwa
   slug: Przyjazny link
-  # Sort by the last commit's author name
+  # Sort by the last commit’s author name
   commit_author: Zaktualizowano przez
   # Sort by the last commit date
   commit_date: Zaktualizowano
-  # Sort by the entry's computed summary text
+  # Sort by the entry’s computed summary text
   _summary: Podsumowanie
   # Manual order defined by the user via drag-and-drop
   _manual: Ręcznie
@@ -448,7 +448,7 @@ entry_not_found: Nie znaleziono wpisu.
 
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Tworzenie nowych wpisów w tej kolekcji zostało wyłączone przez administratora.
-# {$quota} is the collection's maximum entry count
+# {$quota} is the collection’s maximum entry count
 creating_entries_disabled_by_quota: Nie możesz dodać nowych wpisów do tej kolekcji, ponieważ osiągnęła ona limit {$quota} wpisów.
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
@@ -938,7 +938,7 @@ show_content_options_x_locale: Pokaż opcje treści {$locale}
 content_options_x_locale: 'Opcje treści {$locale}'
 
 # Field container labels
-# {$field} is the field's display label
+# {$field} is the field’s display label
 x_field: Pole “{$field}”
 
 # Field options menu
@@ -1387,7 +1387,7 @@ config:
     collection: 'kolekcja {$collection}'
     file: 'plik {$file}'
     component: 'komponent {$component}'
-    # Don't localize `{$field}`
+    # Don’t localize `{$field}`
     field: 'pole `{$field}`'
 
   # Configuration error messages
@@ -1402,7 +1402,7 @@ config:
     fetch_failed: Nie udało się pobrać pliku konfiguracyjnego.
     # {$status} is the HTTP status code returned while fetching the config file
     fetch_failed_not_ok: Odpowiedź HTTP zwrócona ze statusem {$status}.
-    # Don't localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
     fetch_failed_with_manual_init: 'Nie udało się pobrać pliku konfiguracyjnego. Aby zapobiec ładowaniu pliku `config.yml`, dodaj <a>`load_config_file: false`</a> do obiektu konfiguracji przekazanego do `CMS.init()`.'
     parse_failed: Nie udało się przetworzyć pliku konfiguracyjnego.
     parse_failed_invalid_object: Plik konfiguracyjny nie jest prawidłowym obiektem JavaScript.
@@ -1421,48 +1421,48 @@ config:
     oauth_implicit_flow: Skonfigurowana metoda uwierzytelniania (implicit flow) nie jest obsługiwana w Sveltia CMS. Użyj innej <a>metody uwierzytelniania</a>.
     github_pkce_unsupported: Autoryzacja PKCE nie jest jeszcze obsługiwana z powodu ograniczeń GitHub. Użyj innej <a>metody uwierzytelniania</a>.
     oauth_no_app_id: Identyfikator aplikacji OAuth nie jest zdefiniowany.
-    # Don't localize `auth_methods`
+    # Don’t localize `auth_methods`
     no_auth_methods: Opcja `auth_methods` musi zawierać co najmniej jedną metodę.
     missing_media_folder: Folder multimediów nie jest zdefiniowany.
     invalid_media_folder: Skonfigurowany folder multimediów jest nieprawidłowy. Musi być ciągiem znaków.
     invalid_public_folder: Skonfigurowany folder publiczny jest nieprawidłowy. Musi być ciągiem znaków.
     public_folder_relative_path: Skonfigurowany folder publiczny jest nieprawidłowy. Musi być ścieżką bezwzględną zaczynającą się od “/”.
     public_folder_absolute_url: Bezwzględny adres URL dla opcji folderu publicznego nie jest obsługiwany w Sveltia CMS.
-    # Don't localize `asset_collections`
+    # Don’t localize `asset_collections`
     invalid_asset_collections: Opcja `asset_collections` jest nieprawidłowa. Musi być tablicą.
-    # {$count} is the 1-based asset collection index in the configuration array. Don't localize `name`
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Kolekcja zasobów {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Nazwa kolekcji zasobów `{$name}` jest nieprawidłowa. Nie może zawierać znaków specjalnych.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Nazwy kolekcji zasobów muszą być unikalne, ale `{$name}` jest użyta więcej niż raz.
-    # Don't localize `media_folder`
+    # Don’t localize `media_folder`
     asset_collection_invalid_media_folder: Kolekcja zasobów `{$name}` musi mieć opcję `media_folder` zdefiniowaną jako ciąg znaków.
-    # Don't localize `folder`, `files`, and `divider`
+    # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Kolekcja musi mieć zdefiniowaną opcję `folder`, `files` lub `divider`.
-    # Don't localize `folder`, `files`, and `divider`
+    # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_multiple_options: Kolekcja nie może mieć jednocześnie opcji `folder`, `files` i `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: Rozszerzenie `{$extension}` nie odpowiada formatowi `{$format}`.
-    # {$slug} is the invalid slug template from the configuration; Don't localize `path` and `slug`
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Szablon przyjaznego linku `{$slug}` jest nieprawidłowy, ponieważ nie może zawierać ukośników. Aby organizować wpisy w podfolderach, użyj opcji `path` zamiast `slug`.
-    # {$count} is the 1-based collection index in the configuration array; Don't localize `name`
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Kolekcja {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
     # {$name} is the invalid or duplicate collection name
     invalid_collection_name: Nazwa kolekcji `{$name}` jest nieprawidłowa. Nie może zawierać znaków specjalnych.
     duplicate_collection_name: Nazwy kolekcji muszą być unikalne, ale `{$name}` jest użyta więcej niż raz.
-    # {$count} is the 1-based file index inside a file collection; Don't localize `name`
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
     missing_collection_file_name: Plik kolekcji {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
     # {$name} is the invalid or duplicate collection file name
     invalid_collection_file_name: Nazwa pliku kolekcji `{$name}` jest nieprawidłowa. Nie może zawierać znaków specjalnych.
     duplicate_collection_file_name: Nazwy plików kolekcji muszą być unikalne, ale `{$name}` jest użyta więcej niż raz.
-    # Don't localize `fields`
+    # Don’t localize `fields`
     collection_no_fields: Kolekcja musi mieć opcję `fields` zdefiniowaną z co najmniej jednym polem.
-    # Don't localize `fields`
+    # Don’t localize `fields`
     collection_file_no_fields: Plik kolekcji musi mieć opcję `fields` zdefiniowaną z co najmniej jednym polem.
-    # Don't localize `i18n`, `locale` and `file`
+    # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: Plik kolekcji musi mieć opcję `i18n` zdefiniowaną, jeśli w ścieżce `file` jest użyty znacznik `locale`.
-    # {$count} is the 1-based field index in the current fields array; Don't localize `name`
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: Pole {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
     # {$name} is the invalid or duplicate field name
     invalid_field_name: Nazwa pola `{$name}` jest nieprawidłowa. Nie może zawierać znaków specjalnych. Jeśli chcesz zagnieżdżać pola, <a>użyj pól typu Object zamiast notacji kropkowej</a>.
@@ -1477,20 +1477,20 @@ config:
     invalid_timezone: 'Nieprawidłowa strefa czasowa: {$timeZone}. Musi być prawidłowym identyfikatorem strefy czasowej IANA, np. `America/New_York` lub `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
     unsupported_deprecated_option: Przestarzała opcja `{$prop}` nie jest obsługiwana w Sveltia CMS. Użyj opcji `{$newProp}`.
-    # Don't localize `allow_multiple`, `multiple`, and `false`
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
     allow_multiple: Opcja `allow_multiple` nie jest obsługiwana w Sveltia CMS. Użyj opcji `multiple`, która domyślnie ma wartość `false`.
-    # Don't localize `field`, `fields`, and `types`
+    # Don’t localize `field`, `fields`, and `types`
     invalid_list_field: Pole typu List nie może mieć jednocześnie opcji `field`, `fields` i `types`.
-    # {$widget} is the configured widget value of the invalid variable type; Don't localize `widget` and `object`
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
     invalid_list_variable_type: Typ zmiennej pola List jest nieprawidłowy. Opcja `widget` jest ustawiona na `{$widget}`, ale musi być `object`.
-    # Don't localize `fields`, and `types`
+    # Don’t localize `fields`, and `types`
     invalid_object_field: Pole typu Object nie może mieć jednocześnie opcji `fields` i `types`.
-    # Don't localize `fields`, and `types`
+    # Don’t localize `fields`, and `types`
     object_field_missing_fields: Pole typu Object musi mieć zdefiniowaną opcję `fields` lub `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Odwołanie do kolekcji `{$collection}` jest nieprawidłowe lub kolekcja nie jest zdefiniowana.
     relation_field_invalid_collection_file: Odwołanie do pliku `{$file}` jest nieprawidłowe lub plik nie jest zdefiniowany.
-    # Don't localize `file`
+    # Don’t localize `file`
     relation_field_missing_file_name: Opcja `file` musi być zdefiniowana dla relacji do kolekcji plików.
     relation_field_invalid_value_field: Odwołanie do pola wartości `{$field}` jest nieprawidłowe lub pole nie jest zdefiniowane.
     unexpected: Nieoczekiwany błąd
@@ -1503,7 +1503,7 @@ config:
     nested_collections_unsupported: Zagnieżdżone kolekcje nie są jeszcze obsługiwane w Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Opcja `{$prop}` nie jest obsługiwana w Sveltia CMS. Zostanie zignorowana.
-    # Don't localize `picker_utc`, `input_timezone`, and `output_utc`
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Ustawiono zarówno `picker_utc`, jak i nowsze opcje stref czasowych (`input_timezone` lub `output_utc`). Nowe opcje mają pierwszeństwo. Rozważ usunięcie `picker_utc` z konfiguracji.
 
   # Compatibility link appended to unsupported feature messages
