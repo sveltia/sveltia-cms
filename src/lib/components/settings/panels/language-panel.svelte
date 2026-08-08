@@ -59,7 +59,7 @@
         }}
       >
         {#each locales as { value, label } (value)}
-          <Option {value} {label} selected={value === appLocale.current} dir="auto" />
+          <Option {value} {label} selected={value === appLocale.current} />
         {/each}
       </Select>
     {/key}
