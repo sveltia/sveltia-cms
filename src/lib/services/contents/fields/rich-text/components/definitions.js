@@ -136,6 +136,7 @@ export const getComponentDef = (name) => {
       { name: 'alt', label: _('editor_components.alt'), required: false },
       { name: 'title', label: _('editor_components.title'), required: false },
     ],
+    trigger: /** @type {'button'} */ ('button'),
   };
 
   /** @type {Record<string, EditorComponentDefinition>} */

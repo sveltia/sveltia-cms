@@ -1780,6 +1780,8 @@
  * @property {string} label Label of the component to be displayed in the editor UI.
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
+ * @property {'menuitem' | 'button'} [trigger] Trigger UI of the component. Default: `menuitem`. A
+ * menu item is placed under the Insert menu, while a button is placed directly on the toolbar.
  * @property {boolean} [collapsed] Whether to collapse the object by default (`block` mode only).
  * Default: `false`.
  * @property {EditorComponentMode} [mode] Editing mode for the component. `block` (default) renders
