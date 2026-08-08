@@ -93,6 +93,7 @@
     "eslint-plugin-svelte": "^3.22.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.9.0",
+    "messageformat": "^4.0.0",
     "oxlint": "^1.77.0",
     "postcss-html": "^2.0.0",
     "prettier": "^3.9.6",
