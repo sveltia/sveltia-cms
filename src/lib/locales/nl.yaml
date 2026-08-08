@@ -1,0 +1,1759 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Nieuw
+select: Selecteren
+select_all: Alles selecteren
+upload: Uploaden
+copy: Kopiëren
+download: Downloaden
+duplicate: Dupliceren
+delete: Verwijderen
+reorder: Volgorde wijzigen
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Annuleren
+done: Klaar
+save: Opslaan
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Bezig met opslaan…
+
+# Publishing actions: used when committing changes to the repository
+publish: Publiceren
+# Progress indicator shown on the publish button during publishing
+publishing: Bezig met publiceren…
+
+# Modification actions: editing and updating content
+rename: Hernoemen
+update: Bijwerken
+replace: Vervangen
+
+# List and collection actions: adding and removing items
+add: Toevoegen
+remove: Verwijderen
+clear: Wissen
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Uitvouwen
+expand_all: Alles uitvouwen
+collapse: Samenvouwen
+collapse_all: Alles samenvouwen
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Invoegen
+restore: Herstellen
+discard: Verwerpen
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Bezig met zoeken…
+no_results: Geen resultaten gevonden.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Globaal
+primary: Primair
+secondary: Secundair
+collection: Collectie
+folder: Map
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: API key
+details: Details
+back: Terug
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Bezig met laden…
+# Dismiss button for temporary notifications and infobars
+later: Later
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Slug
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Singleton
+singletons: Singletons
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Kopiëren naar het klembord is mislukt.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: 'Welkom bij {$name}'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: 'Mogelijk gemaakt door {$name}'
+
+# Shown during initial configuration and data loading
+loading_cms_config: Bezig met laden van de CMS-configuratie…
+loading_site_data: Bezig met laden van de sitegegevens…
+loading_site_data_error: Er is een fout opgetreden bij het laden van de sitegegevens.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: 'Inloggen met {$service}'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Inloggen met een toegangstoken
+sign_in_using_access_token_description: Voer hieronder je token in. Het moet lees- en schrijftoegang hebben tot de inhoud van de repository.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: Je kunt een token aanmaken op de <a>{$service}-gebruikersinstellingenpagina</a>.
+# Input field label for personal access token
+personal_access_token: Persoonlijk toegangstoken
+
+# Authentication progress indicators
+authorizing: Bezig met autoriseren…
+signing_in: Bezig met inloggen…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Werken met een lokale repository
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: Selecteer, wanneer gevraagd, de hoofdmap van de repository “{$repo}”.
+work_with_local_repo_description_no_repo: Selecteer, wanneer gevraagd, de hoofdmap van je Git-repository.
+# Button label for demo/test repository
+work_with_test_repo: Werken met een testrepository
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: De geselecteerde map is niet de hoofdmap van een repository. Probeer het opnieuw.
+  picker_dismissed: Er kon geen hoofdmap van een repository worden geselecteerd. Probeer het opnieuw.
+  authentication_aborted: Authenticatie afgebroken. Probeer het opnieuw.
+  invalid_token: Het opgegeven token is ongeldig. Controleer het en probeer het opnieuw.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Je Git-backend wordt niet ondersteund door de authenticator.
+  UNSUPPORTED_DOMAIN: Je domein mag de authenticator niet gebruiken.
+  MISCONFIGURED_CLIENT: De client-ID of het secret van de OAuth-app is niet geconfigureerd.
+  AUTH_CODE_REQUEST_FAILED: Er kon geen autorisatiecode worden ontvangen. Probeer het later opnieuw.
+  CSRF_DETECTED: Mogelijke CSRF-aanval gedetecteerd. Authenticatie afgebroken.
+  TOKEN_REQUEST_FAILED: Het aanvragen van een toegangstoken is mislukt. Probeer het later opnieuw.
+  TOKEN_REFRESH_FAILED: Het vernieuwen van het toegangstoken is mislukt. Probeer het later opnieuw.
+  MALFORMED_RESPONSE: De server heeft ongeldige gegevens teruggestuurd. Probeer het later opnieuw.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: 'De {$name}-backend vereist {$name} {$version} of nieuwer.'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: Je hebt geen toegang tot de repository “{$repo}”.
+repository_not_found: De repository “{$repo}” bestaat niet.
+repository_empty: De repository “{$repo}” heeft geen branches.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: De repository “{$repo}” heeft geen branch “{$branch}”.
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Onverwachte fout
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Er is een fout opgetreden bij het verwerken van een itembestand. Bekijk de browserconsole voor details. }}
+    *   {{ Er zijn fouten opgetreden bij het verwerken van itembestanden. Bekijk de browserconsole voor details. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Gebruikersnaam
+password: Wachtwoord
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Inloggen
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Inloggen met je mobiel
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Scan de onderstaande QR-code met je telefoon of tablet om zonder wachtwoord in te loggen. Je instellingen worden automatisch gekopieerd.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'Ingelogd als {$name}'
+working_with_local_repo: Werken met een lokale repository
+working_with_test_repo: Werken met een testrepository
+
+# Account menu: action items for sign-out and app installation
+sign_out: Uitloggen
+install_as_app: Installeren als app
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Inhoud
+assets: Media
+editorial_workflow: Redactionele workflow
+cms_config: CMS-configuratie
+# Mobile menu page title (shown only on small screens)
+menu: Menu
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS is nu beschikbaar op mobiel!
+mobile_promo_button: Probeer het uit
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS is nu beschikbaar in het {$locale}!
+change_language: Taal wijzigen
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Overschakelen naar het {$locale}…
+locale_load_failed: De vertaling voor het {$locale} kon niet worden geladen. Probeer het later opnieuw.
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Live site bezoeken
+# Page switcher button group aria-label for switching between main sections
+switch_page: Pagina wisselen
+
+# Search input placeholders
+search_placeholder_contents: Zoeken naar inhoud…
+search_placeholder_assets: Zoeken naar media…
+search_placeholder_all: Zoeken naar inhoud en media…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Item of media aanmaken
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Wijzigingen publiceren
+publishing_changes: Bezig met publiceren van de wijzigingen…
+# Error notification when publishing fails
+publishing_changes_failed: De wijzigingen konden niet worden gepubliceerd. Probeer het opnieuw.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Meldingen tonen
+notifications: Meldingen
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Accountmenu tonen
+# Account section heading in the account menu and mobile menu page
+account: Account
+
+# Account menu items: links to external resources
+live_site: Live site
+git_repository: Git-repository
+settings: Instellingen
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Helpmenu tonen
+# Help section heading in dropdowns and mobile menu
+help: Help
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Sneltoetsen
+documentation: Documentatie
+release_notes: Release notes
+announcements: Aankondigingen
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: 'Versie {$version}'
+# Additional help menu items
+report_issue: Probleem melden
+share_feedback: Feedback geven
+get_help: Hulp krijgen
+donate: Doneren
+join_discord: Word lid van onze Discord
+bluesky: Volg ons op Bluesky
+
+# Update notification: infobar message and button
+update_available: De nieuwste versie van Sveltia CMS is beschikbaar.
+update_now: Nu bijwerken
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service} heeft een kleine storing. Dit kan gevolgen hebben voor je workflow.'
+  major_incident: '{$service} heeft een grote storing. Je kunt beter wachten tot de situatie verbeterd is.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Inhoudsbibliotheek
+asset_library: Mediabibliotheek
+
+# Primary sidebar section headings and list aria-labels
+collections: Collecties
+entries: Items
+files: Bestanden
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Jouw site
+  external: Externe locaties
+  stock_photos: Stockfoto’s
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Collectiemedia
+# List aria-labels for different list types
+entry_list: Itemlijst
+file_list: Bestandslijst
+asset_list: Medialijst
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: Collectie “{$collection}”
+# {$folder} is the current asset folder label
+x_asset_folder: Mediamap “{$folder}”
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Je bekijkt nu de lijst met collecties.
+viewing_asset_folder_list: Je bekijkt nu de lijst met mediamappen.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Je bekijkt nu de collectie “{$collection}”, die nog geen items bevat. }}
+    one {{ Je bekijkt nu de collectie “{$collection}”, die één item bevat. }}
+    *   {{ Je bekijkt nu de collectie “{$collection}”, die {$count} items bevat. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Je bekijkt nu de mediamap “{$folder}”, die nog geen mediabestanden bevat. }}
+    one {{ Je bekijkt nu de mediamap “{$folder}”, die één mediabestand bevat. }}
+    *   {{ Je bekijkt nu de mediamap “{$folder}”, die {$count} mediabestanden bevat. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: Druk op Enter om het bestand “{$file}” te bewerken.
+
+# Error messages: collection or file not found
+collection_not_found: Collectie niet gevonden.
+file_not_found: Bestand niet gevonden.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} van {$total} geselecteerd'
+
+# View switcher: toggle between list and grid views
+switch_view: Weergave wisselen
+list_view: Lijstweergave
+grid_view: Rasterweergave
+switch_to_list_view: Overschakelen naar lijstweergave
+switch_to_grid_view: Overschakelen naar rasterweergave
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Sorteren
+sorting_options: Sorteeropties
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Geen
+  name: Naam
+  slug: Slug
+  # Sort by the last commit’s author name
+  commit_author: Bijgewerkt door
+  # Sort by the last commit date
+  commit_date: Bijgewerkt op
+  # Sort by the entry’s computed summary text
+  _summary: Samenvatting
+  # Manual order defined by the user via drag-and-drop
+  _manual: Handmatig
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, A tot Z'
+ascending_date: '{$label}, oud naar nieuw'
+descending: '{$label}, Z tot A'
+descending_date: '{$label}, nieuw naar oud'
+
+# Filter menu: button labels and options
+filter: Filteren
+filtering_options: Filteropties
+
+# Group menu: button labels and options
+group: Groeperen
+grouping_options: Groepeeropties
+
+# Asset type filter and group labels
+type: Type
+all: Alle
+# Asset type labels
+image: Afbeelding
+video: Video
+audio: Audio
+document: Document
+other: Overig
+
+# Toolbar toggles: show/hide panels
+show_assets: Media tonen
+hide_assets: Media verbergen
+show_info: Info tonen
+hide_info: Info verbergen
+
+# Folder display labels when no specific path is configured
+all_assets: Alle media
+global_assets: Globale media
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: Item niet gevonden.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Het aanmaken van nieuwe items in deze collectie is uitgeschakeld door de beheerder.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: Je kunt geen nieuwe items toevoegen aan deze collectie, omdat de limiet van {$quota} items is bereikt.
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    one {{ Deze collectie nadert de limiet van {$quota} items. Je kunt nog maar {$remaining} item aanmaken. }}
+    *   {{ Deze collectie nadert de limiet van {$quota} items. Je kunt nog maar {$remaining} items aanmaken. }}
+
+# Navigation: back links and list labels
+back_to_collection: Terug naar de collectie
+collection_list: Lijst met collecties
+back_to_collection_list: Terug naar de lijst met collecties
+asset_folder_list: Lijst met mediamappen
+back_to_asset_folder_list: Terug naar de lijst met mediamappen
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Zoekresultaten
+# {$terms} is the current search query text
+search_results_for_x: Zoekresultaten voor “{$terms}”
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Je bekijkt nu de zoekresultaten voor “{$terms}”. We hebben geen items gevonden. }}
+    one {{ Je bekijkt nu de zoekresultaten voor “{$terms}”. We hebben één item gevonden. }}
+    *   {{ Je bekijkt nu de zoekresultaten voor “{$terms}”. We hebben {$count} items gevonden. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Je bekijkt nu de zoekresultaten voor “{$terms}”. We hebben geen mediabestanden gevonden. }}
+    one {{ Je bekijkt nu de zoekresultaten voor “{$terms}”. We hebben één mediabestand gevonden. }}
+    *   {{ Je bekijkt nu de zoekresultaten voor “{$terms}”. We hebben {$count} mediabestanden gevonden. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Geen items }}
+    one {{ {$count} item }}
+    *   {{ {$count} items }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Geen mediabestanden }}
+    one {{ {$count} mediabestand }}
+    *   {{ {$count} mediabestanden }}
+
+# Empty state messages
+no_files_found: Geen bestanden gevonden.
+no_entries_found: Geen items gevonden.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Nieuwe mediabestanden uploaden
+
+# Edit options menu: button and item labels
+edit_options: Bewerkopties
+show_edit_options: Bewerkopties tonen
+# Edit menu items with specific asset names
+edit_asset: Mediabestand bewerken
+# {$name} is the selected asset name
+edit_x: '{$name} bewerken'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Lange regels afbreken
+
+# Rename asset: dialog and validation
+rename_asset: Mediabestand hernoemen
+# {$name} is the current asset name
+rename_x: '{$name} hernoemen'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Voer hieronder een nieuwe naam in. }}
+    one {{ Voer hieronder een nieuwe naam in. Eén item dat het mediabestand gebruikt, wordt ook bijgewerkt. }}
+    *   {{ Voer hieronder een nieuwe naam in. {$count} items die het mediabestand gebruiken, worden ook bijgewerkt. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: De bestandsnaam mag niet leeg zijn.
+  character: De bestandsnaam mag geen speciale tekens bevatten.
+  duplicate: Deze bestandsnaam is al in gebruik voor een ander mediabestand.
+
+# Replace asset: menu item and dialog title
+replace_asset: Mediabestand vervangen
+# {$name} is the asset being replaced
+replace_x: '{$name} vervangen'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Klik om te bladeren…
+# Browse prompt shown on touch devices
+tap_to_browse: Tik om te bladeren…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Sleep een bestand hierheen of klik om te bladeren… }}
+    *   {{ Sleep bestanden hierheen of klik om te bladeren… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Sleep een bestand hierheen of }}
+    *   {{ Sleep bestanden hierheen of }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Sleep een afbeeldingsbestand hierheen of }}
+    *   {{ Sleep afbeeldingsbestanden hierheen of }}
+
+# File picker and clipboard actions used by upload controls
+browse: Bladeren
+# Generic clipboard paste action used by non-image file fields
+paste: Plakken
+# Clipboard paste action used by image fields
+paste_image: Afbeelding plakken
+
+# Clipboard paste errors
+no_image_in_clipboard: Geen afbeelding gevonden op het klembord.
+clipboard_access_denied: Toegang tot het klembord geweigerd.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Sleep een bestand hierheen }}
+    *   {{ Sleep bestanden hierheen }}
+
+# File type validation errors
+unsupported_file_type: Bestandstype wordt niet ondersteund
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Het gesleepte bestand heeft geen van de volgende typen: {$types}. Probeer het opnieuw.'
+dropped_image_type_mismatch: 'Het gesleepte bestand wordt niet ondersteund. Alleen afbeeldingen van de volgende typen worden geaccepteerd: {$types}. Probeer het opnieuw.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bestand kiezen }}
+    *   {{ Bestanden kiezen }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediabestand verwijderen }}
+    *   {{ Mediabestanden verwijderen }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Geselecteerd mediabestand verwijderen }}
+    *   {{ Geselecteerde mediabestanden verwijderen }}
+confirm_deleting_this_asset: Weet je zeker dat je dit mediabestand wilt verwijderen?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Weet je zeker dat je het geselecteerde mediabestand wilt verwijderen? }}
+    *   {{ Weet je zeker dat je de {$count} geselecteerde mediabestanden wilt verwijderen? }}
+confirm_deleting_all_assets: Weet je zeker dat je alle mediabestanden wilt verwijderen?
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Item verwijderen }}
+    *   {{ Items verwijderen }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Geselecteerd item verwijderen }}
+    *   {{ Geselecteerde items verwijderen }}
+confirm_deleting_this_entry: Weet je zeker dat je dit item wilt verwijderen?
+confirm_deleting_this_entry_with_assets: Weet je zeker dat je dit item en de bijbehorende mediabestanden wilt verwijderen?
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Weet je zeker dat je het geselecteerde item wilt verwijderen? }}
+    *   {{ Weet je zeker dat je de {$count} geselecteerde items wilt verwijderen? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Weet je zeker dat je het geselecteerde item en de bijbehorende mediabestanden wilt verwijderen? }}
+    *   {{ Weet je zeker dat je de {$count} geselecteerde items en de bijbehorende mediabestanden wilt verwijderen? }}
+confirm_deleting_all_entries: Weet je zeker dat je alle items wilt verwijderen?
+confirm_deleting_all_entries_with_assets: Weet je zeker dat je alle items en de bijbehorende mediabestanden wilt verwijderen?
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Volgorde van items wijzigen
+done_reordering_entries: Klaar met het wijzigen van de volgorde
+cancel_reordering_entries: Wijzigen van de volgorde annuleren
+
+# Reorder error message
+saving_reorder_failed: De nieuwe volgorde van de items kon niet worden opgeslagen. Probeer het opnieuw.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bezig met verwerken van een bestand. Dit kan even duren. }}
+    *   {{ Bezig met verwerken van bestanden. Dit kan even duren. }}
+
+# Uploading section aria-label
+uploading_files: Bestanden uploaden
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '“{$name}” wordt vervangen door dit bestand:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dit bestand wordt opgeslagen in de map “{$folder}”: }}
+    *   {{ Deze {$count} bestanden worden opgeslagen in de map “{$folder}”: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Te grote bestanden
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dit bestand kan niet worden geüpload omdat het groter is dan de maximale grootte van {$size}. Verklein het of kies een ander bestand. }}
+    *   {{ Deze bestanden kunnen niet worden geüpload omdat ze groter zijn dan de maximale grootte van {$size}. Verklein ze of kies andere bestanden. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ Er bestaat al een bestand met dezelfde naam in deze map. Wil je het vervangen? }}
+    *   {{ Er bestaan al {$count} bestanden met dezelfde namen in deze map. Wil je ze vervangen? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ Er bestaat al een bestand met de naam “{$name}” in deze map. Wil je het vervangen? }}
+    *   {{ Er bestaan al {$count} bestanden met dezelfde namen in deze map. Wil je ze vervangen? }}
+file_name_conflict_resolution: Bestandsnaamconflicten oplossen
+# Option to keep both files (rename the new one)
+keep_both: Beide behouden
+
+# Upload progress and error messages
+uploading_files_progress: Bezig met uploaden…
+uploading_files_failed: Uploaden mislukt.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (geconverteerd uit {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Deze collectie bevat nog geen items.
+# Button to create first entry
+create_new_entry: Nieuw item aanmaken
+# “Entry” option label in the create button menu
+entry: Item
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Indexbestand
+
+# Empty state for file collections
+no_files_in_collection: Er zijn geen bestanden beschikbaar in deze collectie.
+
+# Entry duplication
+duplicate_entry: Item dupliceren
+entry_duplicated: Item gedupliceerd als nieuw concept.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Eén veld bevat een fout. Corrigeer deze om het item op te slaan. }}
+    *   {{ {$count} velden bevatten fouten. Corrigeer deze om het item op te slaan. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Item opgeslagen. }}
+    *   {{ {$count} items opgeslagen. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Item opgeslagen en gepubliceerd. }}
+    *   {{ {$count} items opgeslagen en gepubliceerd. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Item verwijderd. }}
+    *   {{ {$count} items verwijderd. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediabestand opgeslagen. }}
+    *   {{ {$count} mediabestanden opgeslagen. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediabestand opgeslagen en gepubliceerd. }}
+    *   {{ {$count} mediabestanden opgeslagen en gepubliceerd. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ URL gekopieerd naar het klembord. }}
+    *   {{ {$count} URL’s gekopieerd naar het klembord. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bestandspad gekopieerd naar het klembord. }}
+    *   {{ {$count} bestandspaden gekopieerd naar het klembord. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bestandsgegevens gekopieerd naar het klembord. }}
+    *   {{ Gegevens van {$count} bestanden gekopieerd naar het klembord. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediabestand gedownload. }}
+    *   {{ {$count} mediabestanden gedownload. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediabestand verplaatst. }}
+    *   {{ {$count} mediabestanden verplaatst. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediabestand hernoemd. }}
+    *   {{ {$count} mediabestanden hernoemd. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediabestand verwijderd. }}
+    *   {{ {$count} mediabestanden verwijderd. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Content-editor
+
+# Draft backup: restore dialog
+restore_backup_title: Concept herstellen
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Van dit item is een back-up van {$datetime} beschikbaar. Wil je het bewerkte concept herstellen?
+
+# Draft backup notifications
+draft_backup_saved: Back-up van het concept opgeslagen.
+draft_backup_restored: Back-up van het concept hersteld.
+draft_backup_deleted: Back-up van het concept verwijderd.
+
+# Editor toolbar actions
+cancel_editing: Bewerken annuleren
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: '{$name} aanmaken'
+# {$collection} is the collection label
+create_entry_announcement: Je maakt nu een nieuw item aan in de collectie “{$collection}”.
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: Je bewerkt nu het item “{$entry}” in de collectie “{$collection}”.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: Je bewerkt nu het bestand “{$file}” in de collectie “{$collection}”.
+# {$file} is the singleton file name
+edit_singleton_announcement: Je bewerkt nu het bestand “{$file}”.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Opslaan en publiceren
+save_without_publishing: Opslaan zonder publiceren
+
+# Editor options menu
+show_editor_options: Editoropties tonen
+editor_options: Editoropties
+
+# Preview controls
+show_preview: Voorbeeld tonen
+
+# Editor settings
+sync_scrolling: Scrollen synchroniseren
+
+# Locale controls
+switch_locale: Taal wisselen
+# Short status indicators appended to locale names
+locale_content_disabled_short: (uitgeschakeld)
+locale_content_error_short: (fout)
+
+# Pane labels
+edit: Bewerken
+preview: Voorbeeld
+
+# Pane controls; not to be confused with pages
+swap_panes: Panelen wisselen
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Inhoud in het {$locale} bewerken
+preview_x_locale: Voorbeeld van de inhoud in het {$locale}
+
+# Preview iframe labels
+content_preview: Voorbeeld van de inhoud
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Inhoudsopties voor het {$locale} tonen
+content_options_x_locale: 'Inhoudsopties voor het {$locale}'
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: Veld “{$field}”
+
+# Field options menu
+show_field_options: Veldopties tonen
+field_options: Veldopties
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Niet-ondersteund veldtype: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: '{$locale} inschakelen'
+reenable_x_locale: '{$locale} opnieuw inschakelen'
+disable_x_locale: '{$locale} uitschakelen'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: De inhoud in het {$locale} is uitgeschakeld.
+locale_x_now_disabled: De inhoud in het {$locale} is nu uitgeschakeld. Deze wordt verwijderd zodra je het item opslaat.
+
+# Repository and site links
+view_in_repository: Bekijken in de repository
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: 'Bekijken op {$service}'
+view_on_live_site: Bekijken op de live site
+
+# Content copying from other locales
+copy_from: Kopiëren uit…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: 'Kopiëren uit het {$locale}'
+
+# Translation features
+translation_options: Vertaalopties
+translate: Vertalen
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Veld vertalen }}
+    *   {{ Velden vertalen }}
+translate_from: Vertalen uit…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: 'Vertalen uit het {$locale}'
+
+# Revert changes
+revert_changes: Wijzigingen terugdraaien
+revert_all_changes: Alle wijzigingen terugdraaien
+
+# Slug editing
+edit_slug: Slug bewerken
+edit_slug_warning: Het wijzigen van de slug kan interne en externe links naar het item verbreken. Sveltia CMS werkt op dit moment geen verwijzingen bij die met Relation-velden zijn gemaakt, dus je moet zulke verwijzingen samen met andere links handmatig bijwerken.
+edit_slug_error:
+  empty: De slug mag niet leeg zijn.
+  invalid: De slug mag geen speciale tekens bevatten, waaronder schuine strepen en spaties.
+  duplicate: Deze slug is al in gebruik voor een ander item.
+
+# Required field indicator
+required: Verplicht
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Er is niets om te vertalen.
+    started: Bezig met vertalen…
+    error: Vertalen mislukt.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Geen velden vertaald uit het {$source}. }}
+        one {{ Veld vertaald uit het {$source}. }}
+        *   {{ {$count} velden vertaald uit het {$source}. }}
+  copy:
+    none: Er is niets om te kopiëren.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Geen velden gekopieerd uit het {$source}. }}
+        one {{ Veld gekopieerd uit het {$source}. }}
+        *   {{ {$count} velden gekopieerd uit het {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Dit veld is verplicht.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: De datum/tijd moet op of na {$min} liggen.
+    date: De datum moet op of na {$min} liggen.
+    time: De tijd moet op of na {$min} liggen.
+    number: De waarde moet groter dan of gelijk aan {$min} zijn.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ Je moet minstens {$min} optie selecteren. }}
+        *   {{ Je moet minstens {$min} opties selecteren. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ Je moet minstens {$min} item toevoegen. }}
+        *   {{ Je moet minstens {$min} items toevoegen. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: De datum/tijd moet op of vóór {$max} liggen.
+    date: De datum moet op of vóór {$max} liggen.
+    time: De tijd moet op of vóór {$max} liggen.
+    number: De waarde moet kleiner dan of gelijk aan {$max} zijn.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ Je kunt niet meer dan {$max} optie selecteren. }}
+        *   {{ Je kunt niet meer dan {$max} opties selecteren. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ Je kunt niet meer dan {$max} item toevoegen. }}
+        *   {{ Je kunt niet meer dan {$max} items toevoegen. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ Je moet minstens {$min} teken invoeren. }}
+      *   {{ Je moet minstens {$min} tekens invoeren. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ Je mag niet meer dan {$max} teken invoeren. }}
+      *   {{ Je mag niet meer dan {$max} tekens invoeren. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Voer een getal in.
+    email: Voer een geldig e-mailadres in.
+    url: Voer een geldige URL in.
+
+  # Custom field validation error
+  invalid_value: Ongeldige waarde.
+  unexpected_error: Er is een onverwachte fout opgetreden.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Zijbalkpanelen
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Validatie
+    placeholder: De validatieresultaten verschijnen hier.
+    no_errors_found: Geen fouten gevonden.
+
+  # History panel: shows entry commit history
+  history:
+    title: Geschiedenis
+    fetch_failed: De geschiedenis kon niet worden geladen.
+    no_history: Geen geschiedenis gevonden.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Backlinks
+    no_entries: Er zijn geen items die naar dit item verwijzen.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Fout
+    description: Er is een fout opgetreden bij het opslaan van het item. Probeer het later opnieuw.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: Je bekijkt de details van het mediabestand “{$name}”.
+
+# Asset editor container aria-label
+asset_editor: Media-editor
+
+# Preview unavailable message
+preview_unavailable: Geen voorbeeld beschikbaar.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ Publieke URL }}
+    *   {{ Publieke URL’s }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bestandspad }}
+    *   {{ Bestandspaden }}
+file_data: Bestandsgegevens
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Media-info
+select_asset_show_info: Selecteer een mediabestand om de bijbehorende info te tonen.
+
+kind: Soort
+size: Grootte
+dimensions: Afmetingen
+duration: Duur
+# Short heading for a list of entries using the selected asset
+used_in: Gebruikt in
+created_date: Aanmaakdatum
+location: Locatie
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Kaart met breedtegraad {$latitude}, lengtegraad {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Dit item verwijderen
+move_up: Omhoog verplaatsen
+move_down: Omlaag verplaatsen
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: '{$name} toevoegen'
+
+# List item context menu
+add_item_above: Item hierboven toevoegen
+add_item_below: Item hieronder toevoegen
+
+# Variable-type list selector
+select_list_type: Lijsttype selecteren
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Dekking
+
+# Select field: empty option placeholder
+unselected_option: (Geen)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Bestand selecteren
+    image: Afbeelding selecteren
+
+  # Search input labels
+  search_for_file: Zoeken naar bestanden
+  search_for_image: Zoeken naar afbeeldingen
+
+  # Locations panel aria-label
+  locations: Locaties
+
+  # Asset folder options
+  folder:
+    field: Veldmedia
+    entry: Itemmedia
+    file: Bestandsmedia
+    collection: Collectiemedia
+    global: Globale media
+
+  # Error messages
+  error:
+    invalid_key: Je API key is ongeldig of verlopen. Controleer deze en probeer het opnieuw.
+    search_fetch_failed: Er is een fout opgetreden bij het zoeken naar mediabestanden. Probeer het later opnieuw.
+    image_fetch_failed: Er is een fout opgetreden bij het downloaden van het geselecteerde mediabestand. Probeer het later opnieuw.
+
+  # Stock photo panels
+  available_images: Beschikbare afbeeldingen
+
+  # URL entry option
+  enter_url: URL invoeren
+  enter_file_url: 'Voer de URL van het bestand in:'
+  enter_image_url: 'Voer de URL van de afbeelding in:'
+
+  # Large file warning dialog
+  large_file:
+    title: Groot bestand
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Fotocredits
+    description: 'Gebruik indien mogelijk de volgende creditvermelding:'
+
+  # Unsaved asset badge
+  unsaved: Niet opgeslagen
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Geen teken ingevoerd. Minimum: {$min}. Maximum: {$max}. }}
+      one {{ {$count} teken ingevoerd. Minimum: {$min}. Maximum: {$max}. }}
+      *   {{ {$count} tekens ingevoerd. Minimum: {$min}. Maximum: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Geen teken ingevoerd. Minimum: {$min}. }}
+      one {{ {$count} teken ingevoerd. Minimum: {$min}. }}
+      *   {{ {$count} tekens ingevoerd. Minimum: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Geen teken ingevoerd. Maximum: {$max}. }}
+      one {{ {$count} teken ingevoerd. Maximum: {$max}. }}
+      *   {{ {$count} tekens ingevoerd. Maximum: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: YouTube-player
+
+# Date/time field: quick action buttons
+today: Vandaag
+now: Nu
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Afbeelding
+  src: Bron
+  alt: Alt-tekst
+  title: Titel
+  link: Link
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Sleutel
+  value: Waarde
+  action: Actie
+  empty_key: Sleutel is verplicht.
+  duplicate_key: Sleutel moet uniek zijn.
+
+# Map field: location search and geolocation
+find_place: Een plaats zoeken
+use_your_location: Je locatie gebruiken
+
+# Geolocation error dialog
+geolocation_error_title: Locatiefout
+geolocation_error_body: Er is een fout opgetreden bij het ophalen van je locatie.
+geolocation_unsupported: De Geolocation API wordt niet ondersteund door deze browser.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Ja
+  'false': Nee
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: De dienst is niet correct geconfigureerd.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: API key
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: Voer je {$key} voor {$service} in.
+      requested: Bezig met valideren…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: De opgegeven {$key} is ongeldig. Controleer deze en probeer het opnieuw.
+    password:
+      # {$service} is the cloud service name
+      initial: Voer je wachtwoord voor {$service} in.
+      requested: Bezig met inloggen…
+      error: De gebruikersnaam of het wachtwoord is onjuist. Controleer deze en probeer het opnieuw.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Cloudinary-mediabibliotheek
+    activate:
+      button_label: Cloudinary activeren
+      description: Klik na het inloggen nogmaals op de knop Inloggen om verder te gaan.
+    auth_key_label: API secret
+    open_library: Cloudinary openen
+
+  uploadcare:
+    auth_key_label: API secret key
+
+  aws_s3:
+    auth_key_label: Secret access key
+
+  cloudflare_r2:
+    auth_key_label: Secret access key
+
+  digitalocean_spaces:
+    auth_key_label: Secret access key
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ Er zit een fout in de CMS-configuratie. Los het probleem op en probeer het opnieuw. }}
+      *   {{ Er zitten fouten in de CMS-configuratie. Los de problemen op en probeer het opnieuw. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: 'collectie {$collection}'
+    file: 'bestand {$file}'
+    component: 'component {$component}'
+    # Don’t localize `{$field}`
+    field: 'veld `{$field}`'
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS werkt alleen met HTTPS- of localhost-URL’s.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ De URL van het configuratiebestand moet het HTTPS-protocol of een localhost-adres gebruiken. }}
+        *   {{ De URL’s van de configuratiebestanden moeten het HTTPS-protocol of localhost-adressen gebruiken. }}
+    fetch_failed: Het configuratiebestand kon niet worden opgehaald.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: HTTP-respons ontvangen met status {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Het configuratiebestand kon niet worden opgehaald. Voeg <a>`load_config_file: false`</a> toe aan het configuratieobject dat aan `CMS.init()` wordt doorgegeven om te voorkomen dat het `config.yml`-bestand wordt geladen.'
+    parse_failed: Het configuratiebestand kon niet worden verwerkt.
+    parse_failed_invalid_object: Het configuratiebestand is geen geldig JavaScript-object.
+    parse_failed_unsupported_type: Het configuratiebestand heeft geen geldig bestandstype. Alleen YAML, TOML en JSON worden ondersteund.
+    no_collection: Er zijn geen collecties gedefinieerd.
+    missing_backend: De backend is niet gedefinieerd.
+    missing_backend_name: De naam van de backend is niet gedefinieerd.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: De {$name}-backend wordt <a>niet ondersteund</a> in Sveltia CMS.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: De verouderde {$name}-backend wordt <a>niet ondersteund</a> in Sveltia CMS.
+    unsupported_custom_backend: Eigen backends worden <a>niet ondersteund</a> in Sveltia CMS.
+    unsupported_backend_suggestion: Gebruik in plaats daarvan een van de <a>ondersteunde backends</a>.
+    missing_repository: De repository is niet gedefinieerd.
+    invalid_repository: De geconfigureerde repository is ongeldig. Deze moet de indeling “owner/repo” hebben.
+    oauth_implicit_flow: De geconfigureerde authenticatiemethode (implicit flow) wordt niet ondersteund in Sveltia CMS. Gebruik in plaats daarvan een andere <a>authenticatiemethode</a>.
+    github_pkce_unsupported: PKCE-autorisatie wordt nog niet ondersteund vanwege beperkingen van GitHub. Gebruik in plaats daarvan een andere <a>authenticatiemethode</a>.
+    oauth_no_app_id: De OAuth-applicatie-ID is niet gedefinieerd.
+    # Don’t localize `auth_methods`
+    no_auth_methods: De optie `auth_methods` moet minstens één methode bevatten.
+    missing_media_folder: De mediamap is niet gedefinieerd.
+    invalid_media_folder: De geconfigureerde mediamap is ongeldig. Deze moet een string zijn.
+    invalid_public_folder: De geconfigureerde publieke map is ongeldig. Deze moet een string zijn.
+    public_folder_relative_path: De geconfigureerde publieke map is ongeldig. Deze moet een absoluut pad zijn dat begint met “/”.
+    public_folder_absolute_url: Een absolute URL voor de optie voor de publieke map wordt niet ondersteund in Sveltia CMS.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: De optie `asset_collections` is ongeldig. Deze moet een array zijn.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: Voor mediacollectie {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: De naam `{$name}` van de mediacollectie is ongeldig. Deze mag geen speciale tekens bevatten.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: Namen van mediacollecties moeten uniek zijn, maar `{$name}` wordt meer dan eens gebruikt.
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: Voor de mediacollectie `{$name}` moet de optie `media_folder` als string zijn gedefinieerd.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: Voor de collectie moet de optie `folder`, `files` of `divider` zijn gedefinieerd.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: De collectie kan de opties `folder`, `files` en `divider` niet samen hebben.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: De extensie `{$extension}` komt niet overeen met het formaat `{$format}`.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: De slugsjabloon `{$slug}` is ongeldig, omdat deze geen schuine strepen mag bevatten. Gebruik de optie `path` in plaats van `slug` om items in submappen te ordenen.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: Voor collectie {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: De collectienaam `{$name}` is ongeldig. Deze mag geen speciale tekens bevatten.
+    duplicate_collection_name: Collectienamen moeten uniek zijn, maar `{$name}` wordt meer dan eens gebruikt.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: Voor collectiebestand {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: De naam `{$name}` van het collectiebestand is ongeldig. Deze mag geen speciale tekens bevatten.
+    duplicate_collection_file_name: Namen van collectiebestanden moeten uniek zijn, maar `{$name}` wordt meer dan eens gebruikt.
+    # Don’t localize `fields`
+    collection_no_fields: Voor de collectie moet de optie `fields` met minstens één veld zijn gedefinieerd.
+    # Don’t localize `fields`
+    collection_file_no_fields: Voor het collectiebestand moet de optie `fields` met minstens één veld zijn gedefinieerd.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: Voor het collectiebestand moet de optie `i18n` zijn gedefinieerd als de placeholder `locale` in het pad `file` wordt gebruikt.
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: Voor veld {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: De veldnaam `{$name}` is ongeldig. Deze mag geen speciale tekens bevatten. Als je velden wilt nesten, <a>gebruik dan Object-velden in plaats van puntnotatie</a>.
+    duplicate_field_name: Veldnamen moeten uniek zijn, maar `{$name}` wordt meer dan eens gebruikt.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: Voor variabel type {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: De naam `{$name}` van het variabele type is ongeldig. Deze mag geen speciale tekens bevatten.
+    duplicate_variable_type: Namen van variabele typen moeten uniek zijn, maar `{$name}` wordt meer dan eens gebruikt.
+    date_field_type: 'Het verouderde veldtype Date wordt niet ondersteund in Sveltia CMS. Gebruik in plaats daarvan het veldtype DateTime met de optie `type: date`.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Ongeldige tijdzone: {$timeZone}. Dit moet een geldige IANA-tijdzone-identifier zijn, zoals `Europe/Amsterdam` of `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: De verouderde optie `{$prop}` wordt niet ondersteund in Sveltia CMS. Gebruik in plaats daarvan de optie `{$newProp}`.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: De optie `allow_multiple` wordt niet ondersteund in Sveltia CMS. Gebruik in plaats daarvan de optie `multiple`, die standaard `false` is.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: Het List-veld kan de opties `field`, `fields` en `types` niet samen hebben.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: Het variabele type van het List-veld is ongeldig. De optie `widget` is ingesteld op `{$widget}`, maar moet `object` zijn.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: Het Object-veld kan de opties `fields` en `types` niet samen hebben.
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: Voor het Object-veld moet de optie `fields` of `types` zijn gedefinieerd.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: De collectie `{$collection}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
+    relation_field_invalid_collection_file: Het bestand `{$file}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
+    # Don’t localize `file`
+    relation_field_missing_file_name: De optie `file` moet zijn gedefinieerd voor een relatie naar een bestandscollectie.
+    relation_field_invalid_value_field: Het waardeveld `{$field}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
+    unexpected: Onverwachte fout
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: De OAuth-applicatie-ID is niet gedefinieerd. Gebruikers moeten een toegangstoken opgeven om in te loggen.
+    editorial_workflow_unsupported: De redactionele workflow wordt nog niet ondersteund in Sveltia CMS.
+    open_authoring_unsupported: Open authoring wordt nog niet ondersteund in Sveltia CMS.
+    nested_collections_unsupported: Geneste collecties worden nog niet ondersteund in Sveltia CMS.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: De optie `{$prop}` wordt niet ondersteund in Sveltia CMS. Deze wordt genegeerd.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: Zowel `picker_utc` als de nieuwere tijdzone-opties (`input_timezone` of `output_utc`) zijn ingesteld. De nieuwe opties hebben voorrang. Overweeg om `picker_utc` uit je configuratie te verwijderen.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Zie de compatibiliteitsnotities voor details: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: Voor een betere ontwikkelaarservaring kun je je configuratiebestand valideren tegen het JSON-schema van Sveltia CMS. Zie {$link} voor details.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Lokaal
+  # Browser compatibility warnings
+  unsupported_browser: Local Workflow wordt niet ondersteund in je browser. Gebruik in plaats daarvan Chrome of Edge.
+  disabled: Local Workflow is uitgeschakeld in je browser. <a>Zo schakel je het in</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: Concepten
+  in_review: In review
+  ready: Klaar
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Categorieën
+
+# Site Configuration Editor
+site_configuration_editor: Editor voor de siteconfiguratie
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: API key opgeslagen.
+    api_key_removed: API key verwijderd.
+    api_key_invalid: De opgegeven API key is ongeldig. Controleer deze en probeer het opnieuw.
+
+  # Preferences operation errors
+  error:
+    permission_denied: Toegang tot de cookieopslag is geweigerd. Controleer de rechten in je browser en probeer het opnieuw.
+
+  # Appearance panel
+  appearance:
+    title: Weergave
+    theme: Thema
+    select_theme: Thema selecteren
+
+  # Theme options
+  theme:
+    auto: Automatisch
+    dark: Donker
+    light: Licht
+
+  # Language panel
+  language:
+    title: Taal
+    ui_language:
+      title: Taal van de gebruikersinterface
+      select_language: Taal selecteren
+
+  # Contents panel
+  contents:
+    title: Inhoud
+    editor:
+      title: Editor
+      use_draft_backup:
+        switch_label: Automatisch een back-up maken van conceptitems
+      close_on_save:
+        switch_label: De editor sluiten na het opslaan van een concept
+      close_with_escape:
+        switch_label: De editor sluiten met de Escape-toets
+
+  # Internationalization panel
+  i18n:
+    title: Internationalisatie
+    translators:
+      default:
+        title: Standaardvertaaldienst
+        select_service: Dienst selecteren
+      api_keys:
+        title: API keys voor vertaaldiensten
+        description: Beheer de API keys voor <a>vertaaldiensten</a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: '{$service}-key'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Meld je aan bij <a {$homeHref}>{$service}</a> en voer hier <a {$apiKeyHref}>je API key</a> in om tekstvelden snel te kunnen vertalen.
+
+  # Media panel
+  media:
+    title: Media
+    stock_photos:
+      api_keys:
+        title: API keys voor stockfotodiensten
+        description: Beheer de API keys voor <a>stockfotodiensten</a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: '{$service} API key'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Meld je aan bij de <a {$homeHref}>{$service} API</a> en voer hier <a {$apiKeyHref}>je API key</a> in om gratis stockfoto’s in afbeeldingsvelden in te voegen.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: Foto’s geleverd door {$service}
+      no_services: Er zijn geen <a>stockfotodiensten</a> geconfigureerd.
+    cloud_storage:
+      api_keys:
+        title: API keys voor cloudopslagdiensten
+        description: Beheer de API keys voor <a>cloudopslagdiensten</a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: '{$service} API key'
+      no_services: Er zijn geen <a>cloudopslagdiensten</a> geconfigureerd.
+
+  # Accessibility panel
+  accessibility:
+    title: Toegankelijkheid
+    underline_links:
+      title: Links onderstrepen
+      description: Links onderstrepen in het voorbeeld van het item en in labels van de gebruikersinterface.
+      switch_label: Links altijd onderstrepen
+
+  # Advanced panel
+  advanced:
+    title: Geavanceerd
+    beta:
+      title: Bètafuncties
+      description: Schakel bètafuncties in die mogelijk instabiel of nog niet vertaald zijn.
+      switch_label: Deelnemen aan het bètaprogramma
+    developer_mode:
+      title: Ontwikkelaarsmodus
+      description: Schakel functies voor ontwikkelaars in, waaronder gedetailleerde consolelogs en native contextmenu’s.
+      switch_label: Ontwikkelaarsmodus inschakelen
+    deploy_hook:
+      title: Deploy hook
+      description: Voer een webhook-URL in die wordt aangeroepen wanneer je handmatig een deployment start via Wijzigingen publiceren. Dit kan leeg blijven als je GitHub Actions gebruikt.
+      # Hook URL input
+      url:
+        field_label: Hook-URL
+        saved: Hook-URL opgeslagen.
+        removed: Hook-URL verwijderd.
+      # Authorization header input
+      auth:
+        field_label: Authorization-header (bijv. Bearer <token>) (optioneel)
+        saved: Authorization-header opgeslagen.
+        removed: Authorization-header verwijderd.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: De inhoudsbibliotheek bekijken
+  view_asset_library: De mediabibliotheek bekijken
+  search: Zoeken naar items en media
+  create_entry: Een nieuw item aanmaken
+  save_entry: Een item opslaan
+  cancel_editing: Het bewerken van een item annuleren
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: AVIF-afbeelding
+  bmp: Bitmapafbeelding
+  gif: GIF-afbeelding
+  ico: Pictogram
+  jpeg: JPEG-afbeelding
+  jpg: JPEG-afbeelding
+  png: PNG-afbeelding
+  svg: SVG-afbeelding
+  tif: TIFF-afbeelding
+  tiff: TIFF-afbeelding
+  webp: WebP-afbeelding
+  # Video formats
+  avi: AVI-video
+  m4v: MP4-video
+  mov: QuickTime-video
+  mp4: MP4-video
+  mpeg: MPEG-video
+  mpg: MPEG-video
+  ogg: Ogg-video
+  ogv: Ogg-video
+  ts: MPEG-video
+  webm: WebM-video
+  3gp: 3GPP-video
+  3g2: 3GPP2-video
+  # Audio formats
+  aac: AAC-audio
+  mid: MIDI
+  midi: MIDI
+  m4a: MP4-audio
+  mp3: MP3-audio
+  oga: Ogg-audio
+  opus: OPUS-audio
+  wav: WAV-audio
+  weba: WebM-audio
+  # Document formats
+  csv: CSV-spreadsheet
+  doc: Word-document
+  docx: Word-document
+  odp: OpenDocument-presentatie
+  ods: OpenDocument-spreadsheet
+  odt: OpenDocument-tekst
+  pdf: PDF-document
+  ppt: PowerPoint-presentatie
+  pptx: PowerPoint-presentatie
+  rtf: Rich-text-document
+  xls: Excel-spreadsheet
+  xlsx: Excel-spreadsheet
+  # Text formats
+  html: HTML-tekst
+  js: JavaScript
+  json: JSON-tekst
+  md: Markdown-tekst
+  toml: TOML-tekst
+  yaml: YAML-tekst
+  yml: YAML-tekst
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} bytes'
+  kb: '{$size} KB'
+  mb: '{$size} MB'
+  gb: '{$size} GB'
+  tb: '{$size} TB'
