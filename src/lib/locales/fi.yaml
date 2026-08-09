@@ -356,9 +356,9 @@ viewing_x_collection: |
 viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
-    0   {{ Katselet nyt resurssikansiota ”{$folder}”, jossa ei vielä ole assetteja. }}
-    one {{ Katselet nyt resurssikansiota ”{$folder}”, jossa on yksi assetti. }}
-    *   {{ Katselet nyt resurssikansiota ”{$folder}”, jossa on {$count} assettia. }}
+    0   {{ Katselet nyt assettikansiota ”{$folder}”, jossa ei vielä ole assetteja. }}
+    one {{ Katselet nyt assettikansiota ”{$folder}”, jossa on yksi assetti. }}
+    *   {{ Katselet nyt assettikansiota ”{$folder}”, jossa on {$count} assettia. }}
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -533,7 +533,7 @@ edit_x: 'Muokkaa: {$name}'
 wrap_long_lines: Rivitä pitkät rivit
 
 # Rename asset: dialog and validation
-rename_asset: Nimeä resurssi uudelleen
+rename_asset: Nimeä assetti uudelleen
 # {$name} is the current asset name
 rename_x: 'Nimeä uudelleen: {$name}'
 # Dialog body text indicating how many entries reference this asset
@@ -672,7 +672,7 @@ confirm_deleting_selected_entries_with_assets: |
     one {{ Haluatko varmasti poistaa valitun merkinnän ja siihen liittyvät assetit? }}
     *   {{ Haluatko varmasti poistaa valitut {$count} merkintää ja niihin liittyvät assetit? }}
 confirm_deleting_all_entries: Haluatko varmasti poistaa kaikki merkinnät?
-confirm_deleting_all_entries_with_assets: Haluatko varmasti poistaa kaikki merkinnät ja niihin liittyvät resurssit?
+confirm_deleting_all_entries_with_assets: Haluatko varmasti poistaa kaikki merkinnät ja niihin liittyvät assetit?
 
 # ==============================================================================
 # Entry Reordering
@@ -1207,7 +1207,7 @@ select_list_type: Valitse luettelotyyppi
 # Strings for specific field widget types.
 
 # Color field: opacity slider
-opacity: Peittävyys
+opacity: Opasiteetti
 
 # Select field: empty option placeholder
 unselected_option: (Ei valintaa)
@@ -1228,17 +1228,17 @@ assets_dialog:
 
   # Asset folder options
   folder:
-    field: Kentän resurssit
-    entry: Merkinnän resurssit
-    file: Tiedoston resurssit
-    collection: Kokoelman resurssit
-    global: Yleiset resurssit
+    field: Kentän assetit
+    entry: Merkinnän assetit
+    file: Tiedoston assetit
+    collection: Kokoelman assetit
+    global: Yleiset assetit
 
   # Error messages
   error:
     invalid_key: API-avaimesi on virheellinen tai vanhentunut. Tarkista se ja yritä uudelleen.
-    search_fetch_failed: Resurssien haussa tapahtui virhe. Yritä myöhemmin uudelleen.
-    image_fetch_failed: Valitun resurssin lataamisessa tapahtui virhe. Yritä myöhemmin uudelleen.
+    search_fetch_failed: Assettien haussa tapahtui virhe. Yritä myöhemmin uudelleen.
+    image_fetch_failed: Valitun assetin lataamisessa tapahtui virhe. Yritä myöhemmin uudelleen.
 
   # Stock photo panels
   available_images: Saatavilla olevat kuvat
@@ -1254,8 +1254,8 @@ assets_dialog:
 
   # Photo credit dialog (stock photos)
   photo_credit:
-    title: Kuvan lähdemerkintä
-    description: 'Käytä seuraavaa lähdemerkintää mahdollisuuksien mukaan:'
+    title: Kuvan lähde
+    description: 'Käytä seuraavaa lähdettä mahdollisuuksien mukaan:'
 
   # Unsaved asset badge
   unsaved: Tallentamaton
@@ -1405,8 +1405,8 @@ config:
     # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
     fetch_failed_with_manual_init: 'Asetustiedostoa ei voitu hakea. Jos haluat estää `config.yml`-tiedoston lataamisen, lisää <a>`load_config_file: false`</a> `CMS.init()`-kutsulle välitettävään asetusobjektiin.'
     parse_failed: Asetustiedostoa ei voitu jäsentää.
-    parse_failed_invalid_object: Asetustiedosto ei ole kelvollinen JavaScript-objekti.
-    parse_failed_unsupported_type: Asetustiedosto ei ole kelvollinen tiedostotyyppi. Vain YAML, TOML ja JSON ovat tuettuja.
+    parse_failed_invalid_object: Asetustiedosto ei ole validi JavaScript-objekti.
+    parse_failed_unsupported_type: Asetustiedosto ei ole validi tiedostotyyppi. Vain YAML, TOML ja JSON ovat tuettuja.
     no_collection: Kokoelmia ei ole määritetty.
     missing_backend: Taustajärjestelmää ei ole määritetty.
     missing_backend_name: Taustajärjestelmän nimeä ei ole määritetty.
@@ -1416,13 +1416,13 @@ config:
     unsupported_deprecated_backend: Vanhentunutta taustajärjestelmää {$name} ei <a>tueta</a> Sveltia CMS:ssä.
     unsupported_custom_backend: Mukautettuja taustajärjestelmiä ei <a>tueta</a> Sveltia CMS:ssä.
     unsupported_backend_suggestion: Käytä jotakin <a>tuetuista taustajärjestelmistä</a>.
-    missing_repository: Arkistoa ei ole määritetty.
-    invalid_repository: Määritetty arkisto on virheellinen. Sen on oltava muodossa ”omistaja/arkisto”.
+    missing_repository: Repositoriota ei ole määritetty.
+    invalid_repository: Määritetty repositorio on virheellinen. Sen on oltava muodossa ”omistaja/repositorio”.
     oauth_implicit_flow: Määritettyä todennustapaa (implicit flow) ei tueta Sveltia CMS:ssä. Käytä toista <a>todennustapaa</a>.
     github_pkce_unsupported: PKCE-valtuutusta ei vielä tueta GitHubin rajoitusten vuoksi. Käytä toista <a>todennustapaa</a>.
-    oauth_no_app_id: OAuth-sovelluksen tunnusta ei ole määritetty.
+    oauth_no_app_id: OAuth-sovelluksen application ID:tä ei ole määritetty.
     # Don’t localize `auth_methods`
-    no_auth_methods: Asetuksen `auth_methods` on sisällettävä vähintään yksi menetelmä.
+    no_auth_methods: Asetuksen `auth_methods` on sisällettävä vähintään yksi metodi.
     missing_media_folder: Mediakansiota ei ole määritetty.
     invalid_media_folder: Määritetty mediakansio on virheellinen. Sen on oltava merkkijono.
     invalid_public_folder: Määritetty julkinen kansio on virheellinen. Sen on oltava merkkijono.
@@ -1431,13 +1431,13 @@ config:
     # Don’t localize `asset_collections`
     invalid_asset_collections: Asetus `asset_collections` on virheellinen. Sen on oltava taulukko.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
-    missing_asset_collection_name: Resurssikokoelmalla {$count} on oltava asetus `name` määritettynä ei-tyhjänä merkkijonona.
+    missing_asset_collection_name: Assettikokoelmalla {$count} on oltava asetus `name` määritettynä ei-tyhjänä merkkijonona.
     # {$name} is the invalid or duplicate asset collection name
-    invalid_asset_collection_name: Resurssikokoelman nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä.
+    invalid_asset_collection_name: Assettikokoelman nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä.
     # {$name} is the duplicate asset collection name
-    duplicate_asset_collection_name: Resurssikokoelmien nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
+    duplicate_asset_collection_name: Assettikokoelmien nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
     # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Resurssikokoelmalla `{$name}` on oltava asetus `media_folder` määritettynä merkkijonona.
+    asset_collection_invalid_media_folder: Assettikokoelmalla `{$name}` on oltava asetus `media_folder` määritettynä merkkijonona.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Kokoelmalla on oltava jokin asetuksista `folder`, `files` tai `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1445,9 +1445,9 @@ config:
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: Tiedostopääte `{$extension}` ei vastaa muotoa `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: Slug-malli `{$slug}` on virheellinen, koska se ei voi sisältää kauttaviivoja. Järjestääksesi merkinnät alikansioihin, käytä asetusta `path` asetuksen `slug` sijaan.
+    invalid_slug_slash: Polku-templaatti `{$slug}` on virheellinen, koska se ei voi sisältää kauttaviivoja. Järjestääksesi merkinnät alikansioihin, käytä asetusta `path` asetuksen `slug` sijaan.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
-    missing_collection_name: Kokoelmalla {$count} on oltava asetus `name` määritettynä ei-tyhjänä merkkijonona.
+    missing_collection_name: Kokoelmalla {$count} on oltava asetus `name` ei-tyhjänä merkkijonona.
     # {$name} is the invalid or duplicate collection name
     invalid_collection_name: Kokoelman nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä.
     duplicate_collection_name: Kokoelmien nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
@@ -1498,7 +1498,7 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth-sovelluksen tunnusta ei ole määritetty. Käyttäjien on annettava pääsytunnus kirjautuakseen sisään.
-    editorial_workflow_unsupported: Toimituksellista työnkulkua ei vielä tueta Sveltia CMS:ssä.
+    editorial_workflow_unsupported: Editoinnin työnkulkua ei vielä tueta Sveltia CMS:ssä.
     open_authoring_unsupported: Open Authoringia ei vielä tueta Sveltia CMS:ssä.
     nested_collections_unsupported: Sisäkkäisiä kokoelmia ei vielä tueta Sveltia CMS:ssä.
     # {$prop} is the unsupported option name that will be ignored
@@ -1555,7 +1555,7 @@ prefs:
 
   # Preferences operation errors
   error:
-    permission_denied: Pääsy evästevarastoon on estetty. Tarkista selaimesi käyttöoikeudet ja yritä uudelleen.
+    permission_denied: Pääsy selaimen evästevarastoon on estetty. Tarkista selaimesi käyttöoikeudet ja yritä uudelleen.
 
   # Appearance panel
   appearance:
@@ -1590,7 +1590,7 @@ prefs:
 
   # Internationalization panel
   i18n:
-    title: Kansainvälistäminen
+    title: Kääntäminen
     translators:
       default:
         title: Oletuskäännöspalvelu
@@ -1671,8 +1671,8 @@ prefs:
 
 keyboard_shortcuts_:
   view_content_library: Näytä sisältökirjasto
-  view_asset_library: Näytä resurssikirjasto
-  search: Hae merkintöjä ja resursseja
+  view_asset_library: Näytä assettikirjasto
+  search: Hae merkintöjä ja assetteja
   create_entry: Luo uusi merkintä
   save_entry: Tallenna merkintä
   cancel_editing: Peruuta merkinnän muokkaus
