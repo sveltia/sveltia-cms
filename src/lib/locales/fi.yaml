@@ -1,0 +1,1754 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Luo
+select: Valitse
+select_all: Valitse kaikki
+upload: Lähetä
+copy: Kopioi
+download: Lataa
+duplicate: Monista
+delete: Poista
+reorder: Järjestä uudelleen
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Peruuta
+done: Valmis
+save: Tallenna
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Tallennetaan…
+
+# Publishing actions: used when committing changes to the repository
+publish: Julkaise
+# Progress indicator shown on the publish button during publishing
+publishing: Julkaistaan…
+
+# Modification actions: editing and updating content
+rename: Nimeä uudelleen
+update: Päivitä
+replace: Korvaa
+
+# List and collection actions: adding and removing items
+add: Lisää
+remove: Poista
+clear: Tyhjennä
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Näytä
+expand_all: Näytä kaikki
+collapse: Piilota
+collapse_all: Piilota kaikki
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Lisää
+restore: Palauta
+discard: Hylkää
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Haetaan…
+no_results: Tuloksia ei löytynyt.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Yleinen
+primary: Ensisijainen
+secondary: Toissijainen
+collection: Kokoelma
+folder: Kansio
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: API-avain
+details: Tiedot
+back: Takaisin
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Ladataan…
+# Dismiss button for temporary notifications and infobars
+later: Myöhemmin
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Slug
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Singleton
+singletons: Singletonit
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Leikepöydälle kopiointi epäonnistui.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: 'Tervetuloa käyttämään {$name} -palvelua'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: 'Palvelun tarjoaa {$name}'
+
+# Shown during initial configuration and data loading
+loading_cms_config: Ladataan CMS-asetuksia…
+loading_site_data: Ladataan sivuston tietoja…
+loading_site_data_error: Sivuston tietojen lataamisessa tapahtui virhe.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: 'Kirjaudu sisään palvelulla {$service}'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Kirjaudu sisään access tokenilla
+sign_in_using_access_token_description: Anna access tokenisi. Sillä on oltava luku- ja kirjoitusoikeus repositorion sisältöön.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: Voit luoda tunnuksen <a>{$service}-palvelun käyttäjäasetuksissa</a>.
+# Input field label for personal access token
+personal_access_token: Henkilökohtainen access token
+
+# Authentication progress indicators
+authorizing: Valtuutetaan…
+signing_in: Kirjaudutaan sisään…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Työskentele paikallisen repositorion kanssa
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: Kun sinulta pyydetään, valitse repositorion ”{$repo}” juurikansio.
+work_with_local_repo_description_no_repo: Kun sinulta pyydetään, valitse Git-repositoriosi juurikansio.
+# Button label for demo/test repository
+work_with_test_repo: Työskentele testirepositorion kanssa
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: Valittu kansio ei ole repositorion juurikansio. Yritä uudelleen.
+  picker_dismissed: Repositorion juurikansiota ei voitu valita. Yritä uudelleen.
+  authentication_aborted: Todennus keskeytettiin. Yritä uudelleen.
+  invalid_token: Annettu tunnus on virheellinen. Tarkista se ja yritä uudelleen.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Git-taustajärjestelmääsi ei tueta todentajassa.
+  UNSUPPORTED_DOMAIN: Verkkotunnuksesi ei saa käyttää todentajaa.
+  MISCONFIGURED_CLIENT: OAuth-sovelluksen client ID:tä tai salaisuutta ei ole määritetty.
+  AUTH_CODE_REQUEST_FAILED: Valtuutuskoodin vastaanottaminen epäonnistui. Yritä myöhemmin uudelleen.
+  CSRF_DETECTED: Mahdollinen CSRF-hyökkäys havaittu. Todennus keskeytettiin.
+  TOKEN_REQUEST_FAILED: Access tokenin pyytäminen epäonnistui. Yritä myöhemmin uudelleen.
+  TOKEN_REFRESH_FAILED: Access tokenin päivittäminen epäonnistui. Yritä myöhemmin uudelleen.
+  MALFORMED_RESPONSE: Palvelin vastasi virheellisillä tiedoilla. Yritä myöhemmin uudelleen.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: 'Taustajärjestelmä {$name} vaatii version {$name} {$version} tai uudemman.'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: Sinulla ei ole pääsyä repositorioon ”{$repo}”.
+repository_not_found: Repositoriota ”{$repo}” ei ole olemassa.
+repository_empty: Repositoriolla ”{$repo}” ei ole yhtään haaraa.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: Repositoriossa ”{$repo}” ei ole haaraa ”{$branch}”.
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Odottamaton virhe
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Merkintätiedostoa jäsentäessä tapahtui virhe. Tarkista selaimen konsoli saadaksesi lisätietoja. }}
+    *   {{ Merkintätiedostoja jäsentäessä tapahtui virheitä. Tarkista selaimen konsoli saadaksesi lisätietoja. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Käyttäjätunnus
+password: Salasana
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Kirjaudu sisään
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Kirjaudu sisään mobiililla
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Skannaa alla oleva QR-koodi puhelimellasi tai tabletillasi kirjautuaksesi sisään ilman salasanaa. Asetuksesi kopioidaan automaattisesti.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'Kirjautuneena: {$name}'
+working_with_local_repo: Työskennellään paikallisen repositorion kanssa
+working_with_test_repo: Työskennellään testirepositorion kanssa
+
+# Account menu: action items for sign-out and app installation
+sign_out: Kirjaudu ulos
+install_as_app: Asenna sovelluksena
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Sisältö
+assets: Assetit
+editorial_workflow: Editoinnin työnkulku
+cms_config: CMS-asetukset
+# Mobile menu page title (shown only on small screens)
+menu: Valikko
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS on nyt saatavilla mobiilille!
+mobile_promo_button: Kokeile
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS on nyt saatavilla kielellä {$locale}!
+change_language: Vaihda kieltä
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Käy sivustolla
+# Page switcher button group aria-label for switching between main sections
+switch_page: Vaihda sivua
+
+# Search input placeholders
+search_placeholder_contents: Hae sisältöä…
+search_placeholder_assets: Hae assetteja…
+search_placeholder_all: Hae sisältöä ja assetteja…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Luo merkintä tai assetteja
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Julkaise muutokset
+publishing_changes: Julkaistaan muutoksia…
+# Error notification when publishing fails
+publishing_changes_failed: Muutosten julkaiseminen epäonnistui. Yritä uudelleen.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Näytä ilmoitukset
+notifications: Ilmoitukset
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Näytä tilivalikko
+# Account section heading in the account menu and mobile menu page
+account: Tili
+
+# Account menu items: links to external resources
+live_site: Julkaistu sivusto
+git_repository: Git-repositorio
+settings: Asetukset
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Näytä ohjevalikko
+# Help section heading in dropdowns and mobile menu
+help: Ohje
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Pikanäppäimet
+documentation: Dokumentaatio
+release_notes: Julkaisutiedot
+announcements: Tiedotteet
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: 'Versio {$version}'
+# Additional help menu items
+report_issue: Ilmoita ongelmasta
+share_feedback: Anna palautetta
+get_help: Apua
+donate: Lahjoita
+join_discord: Liity Discordiin
+bluesky: Seuraa meitä Blueskyssä
+
+# Update notification: infobar message and button
+update_available: Uusin Sveltia CMS -versio on saatavilla.
+update_now: Päivitä nyt
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: 'Palvelussa {$service} on häiriö. Tämä saattaa vaikuttaa työskentelyysi.'
+  major_incident: 'Palvelussa {$service} on vakava häiriö. Suosittelemme odottamaan, että tilanne paranee.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Sisältökirjasto
+asset_library: Assettikirjasto
+
+# Primary sidebar section headings and list aria-labels
+collections: Kokoelmat
+entries: Merkinnät
+files: Tiedostot
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Sivustosi
+  external: Ulkoiset sijainnit
+  stock_photos: Kuvapankit
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Kokoelman assetit
+# List aria-labels for different list types
+entry_list: Merkintälistaus
+file_list: Tiedostolistaus
+asset_list: Assettilistaus
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: ”{$collection}”-kokoelma
+# {$folder} is the current asset folder label
+x_asset_folder: ”{$folder}”-assettikansio
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Katselet nyt kokoelmalistausta.
+viewing_asset_folder_list: Katselet nyt assettikansiolistausta.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Katselet nyt kokoelmaa ”{$collection}”, jossa ei ole vielä merkintöjä. }}
+    one {{ Katselet nyt kokoelmaa ”{$collection}”, jossa on yksi merkintä. }}
+    *   {{ Katselet nyt kokoelmaa ”{$collection}”, jossa on {$count} merkintää. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Katselet nyt assettikansiota ”{$folder}”, jossa ei vielä ole assetteja. }}
+    one {{ Katselet nyt assettikansiota ”{$folder}”, jossa on yksi assetti. }}
+    *   {{ Katselet nyt assettikansiota ”{$folder}”, jossa on {$count} assettia. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: Paina Enter muokataksesi tiedostoa ”{$file}”.
+
+# Error messages: collection or file not found
+collection_not_found: Kokoelmaa ei löytynyt.
+file_not_found: Tiedostoa ei löytynyt.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected}/{$total} valittu'
+
+# View switcher: toggle between list and grid views
+switch_view: Vaihda näkymää
+list_view: Listausnäkymä
+grid_view: Ruudukkonäkymä
+switch_to_list_view: Vaihda listausnäkymään
+switch_to_grid_view: Vaihda ruudukkonäkymään
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Järjestä
+sorting_options: Järjestysasetukset
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Ei mitään
+  name: Nimi
+  slug: Polku
+  # Sort by the last commit’s author name
+  commit_author: Päivittäjä
+  # Sort by the last commit date
+  commit_date: Päivitetty
+  # Sort by the entry’s computed summary text
+  _summary: Yhteenveto
+  # Manual order defined by the user via drag-and-drop
+  _manual: Manuaalinen
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, A–Ö'
+ascending_date: '{$label}, vanhimmasta uusimpaan'
+descending: '{$label}, Ö–A'
+descending_date: '{$label}, uusimmasta vanhimpaan'
+
+# Filter menu: button labels and options
+filter: Suodata
+filtering_options: Suodatusasetukset
+
+# Group menu: button labels and options
+group: Ryhmittele
+grouping_options: Ryhmittelyasetukset
+
+# Asset type filter and group labels
+type: Tyyppi
+all: Kaikki
+# Asset type labels
+image: Kuva
+video: Video
+audio: Ääni
+document: Asiakirja
+other: Muu
+
+# Toolbar toggles: show/hide panels
+show_assets: Näytä assetit
+hide_assets: Piilota assetit
+show_info: Näytä tiedot
+hide_info: Piilota tiedot
+
+# Folder display labels when no specific path is configured
+all_assets: Kaikki assetit
+global_assets: Yleiset assetit
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: Merkintää ei löytynyt.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Ylläpitäjä on poistanut käytöstä uusien merkintöjen luomisen tähän kokoelmaan.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: Et voi lisätä uusia merkintöjä tähän kokoelmaan, koska sen enimmäismäärä {$quota} merkintää on saavutettu.
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    one {{ Tämä kokoelma lähestyy enimmäismääräänsä {$quota} merkintää. Voit luoda vielä {$remaining} merkinnän. }}
+    *   {{ Tämä kokoelma lähestyy enimmäismääräänsä {$quota} merkintää. Voit luoda vielä {$remaining} merkintää. }}
+
+# Navigation: back links and list labels
+back_to_collection: Takaisin kokoelmaan
+collection_list: Kokoelmalistaus
+back_to_collection_list: Takaisin kokoelmalistaukseen
+asset_folder_list: Assettikansiolistaus
+back_to_asset_folder_list: Takaisin assettikansiolistaukseen
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Hakutulokset
+# {$terms} is the current search query text
+search_results_for_x: Hakutulokset haulle ”{$terms}”
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Merkintöjä ei löytynyt. }}
+    one {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Löysimme yhden merkinnän. }}
+    *   {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Löysimme {$count} merkintää. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Assetteja ei löytynyt. }}
+    one {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Löysimme yhden assetin. }}
+    *   {{ Katselet nyt hakutuloksia haulle ”{$terms}”. Löysimme {$count} assettia. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Ei merkintöjä }}
+    one {{ {$count} merkintä }}
+    *   {{ {$count} merkintää }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Ei assetteja }}
+    one {{ {$count} assetti }}
+    *   {{ {$count} assettia }}
+
+# Empty state messages
+no_files_found: Tiedostoja ei löytynyt.
+no_entries_found: Merkintöjä ei löytynyt.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Lähetä uusia assetteja
+
+# Edit options menu: button and item labels
+edit_options: Muokkausasetukset
+show_edit_options: Näytä muokkausasetukset
+# Edit menu items with specific asset names
+edit_asset: Muokkaa assettia
+# {$name} is the selected asset name
+edit_x: 'Muokkaa: {$name}'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Rivitä pitkät rivit
+
+# Rename asset: dialog and validation
+rename_asset: Nimeä assetti uudelleen
+# {$name} is the current asset name
+rename_x: 'Nimeä uudelleen: {$name}'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Anna uusi nimi alla. }}
+    one {{ Anna uusi nimi alla. Myös asettia käyttävä merkintä päivitetään. }}
+    *   {{ Anna uusi nimi alla. Myös {$count} assettia käyttävää merkintää päivitetään. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: Tiedostonimi ei voi olla tyhjä.
+  character: Tiedostonimi ei voi sisältää erikoismerkkejä.
+  duplicate: Tämä nimi on käytössä toisella assetilla.
+
+# Replace asset: menu item and dialog title
+replace_asset: Korvaa assetti
+# {$name} is the asset being replaced
+replace_x: 'Korvaa: {$name}'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Napsauta selataksesi…
+# Browse prompt shown on touch devices
+tap_to_browse: Napauta selataksesi…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Pudota tiedosto tähän tai napsauta selataksesi… }}
+    *   {{ Pudota tiedostoja tähän tai napsauta selataksesi… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Pudota tiedosto tähän tai }}
+    *   {{ Pudota tiedostoja tähän tai }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Pudota kuvatiedosto tähän tai }}
+    *   {{ Pudota kuvatiedostoja tähän tai }}
+
+# File picker and clipboard actions used by upload controls
+browse: Selaa
+# Generic clipboard paste action used by non-image file fields
+paste: Liitä
+# Clipboard paste action used by image fields
+paste_image: Liitä kuva
+
+# Clipboard paste errors
+no_image_in_clipboard: Leikepöydältä ei löytynyt kuvaa.
+clipboard_access_denied: Pääsy leikepöytään estetty.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Pudota tiedosto tähän }}
+    *   {{ Pudota tiedostoja tähän }}
+
+# File type validation errors
+unsupported_file_type: Tiedostotyyppiä ei tueta
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Pudotettu tiedosto ei ole yksi seuraavista tyypeistä: {$types}. Yritä uudelleen.'
+dropped_image_type_mismatch: 'Pudotettua tiedostoa ei tueta. Vain seuraavien tyyppien kuvat hyväksytään: {$types}. Yritä uudelleen.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Valitse tiedosto }}
+    *   {{ Valitse tiedostot }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Poista assetti }}
+    *   {{ Poista assetit }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Poista valittu assetti }}
+    *   {{ Poista valitut assetit }}
+confirm_deleting_this_asset: Haluatko varmasti poistaa tämän assetin?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Haluatko varmasti poistaa valitun assetin? }}
+    *   {{ Haluatko varmasti poistaa valitut {$count} assetit? }}
+confirm_deleting_all_assets: Haluatko varmasti poistaa kaikki assetit?
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Poista merkintä }}
+    *   {{ Poista merkinnät }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Poista valittu merkintä }}
+    *   {{ Poista valitut merkinnät }}
+confirm_deleting_this_entry: Haluatko varmasti poistaa tämän merkinnän?
+confirm_deleting_this_entry_with_assets: Haluatko varmasti poistaa tämän merkinnän ja siihen liittyvät assetit?
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Haluatko varmasti poistaa valitun merkinnän? }}
+    *   {{ Haluatko varmasti poistaa valitut {$count} merkintää? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Haluatko varmasti poistaa valitun merkinnän ja siihen liittyvät assetit? }}
+    *   {{ Haluatko varmasti poistaa valitut {$count} merkintää ja niihin liittyvät assetit? }}
+confirm_deleting_all_entries: Haluatko varmasti poistaa kaikki merkinnät?
+confirm_deleting_all_entries_with_assets: Haluatko varmasti poistaa kaikki merkinnät ja niihin liittyvät assetit?
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Järjestä merkinnät uudelleen
+done_reordering_entries: Uudelleenjärjestely valmis
+cancel_reordering_entries: Peruuta uudelleenjärjestely
+
+# Reorder error message
+saving_reorder_failed: Uuden järjestyksen tallentaminen epäonnistui. Yritä uudelleen.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Käsitellään tiedostoa. Tämä voi kestää hetken. }}
+    *   {{ Käsitellään tiedostoja. Tämä voi kestää hetken. }}
+
+# Uploading section aria-label
+uploading_files: Lähetetään tiedostoja
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '”{$name}” korvataan tällä tiedostolla:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tämä tiedosto tallennetaan kansioon ”{$folder}”: }}
+    *   {{ Nämä {$count} tiedostoa tallennetaan kansioon ”{$folder}”: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Ylikokoiset tiedostot
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tätä tiedostoa ei voi lähettää, koska se ylittää enimmäiskoon {$size}. Pienennä tiedoston kokoa tai valitse toinen tiedosto. }}
+    *   {{ Näitä tiedostoja ei voi lähettää, koska ne ylittävät enimmäiskoon {$size}. Pienennä tiedostojen kokoa tai valitse toiset tiedostot. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ Samanniminen tiedosto on jo olemassa tässä kansiossa. Haluatko korvata sen? }}
+    *   {{ {$count} samannimistä tiedostoa on jo olemassa tässä kansiossa. Haluatko korvata ne? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ Tiedosto nimeltä ”{$name}” on jo olemassa tässä kansiossa. Haluatko korvata sen? }}
+    *   {{ {$count} samannimistä tiedostoa on jo olemassa tässä kansiossa. Haluatko korvata ne? }}
+file_name_conflict_resolution: Tiedostonimien ristiriidan ratkaisu
+# Option to keep both files (rename the new one)
+keep_both: Säilytä molemmat
+
+# Upload progress and error messages
+uploading_files_progress: Lähetetään…
+uploading_files_failed: Lähetys epäonnistui.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (muunnettu muodosta {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Tässä kokoelmassa ei ole vielä merkintöjä.
+# Button to create first entry
+create_new_entry: Luo uusi merkintä
+# “Entry” option label in the create button menu
+entry: Merkintä
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Indeksitiedosto
+
+# Empty state for file collections
+no_files_in_collection: Tässä kokoelmassa ei ole tiedostoja saatavilla.
+
+# Entry duplication
+duplicate_entry: Monista merkintä
+entry_duplicated: Merkintä monistettu uudeksi luonnokseksi.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Yhdessä kentässä on virhe. Korjaa se tallentaaksesi merkinnän. }}
+    *   {{ {$count} kentässä on virheitä. Korjaa ne tallentaaksesi merkinnän. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Merkintä tallennettu. }}
+    *   {{ {$count} merkintää tallennettu. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Merkintä tallennettu ja julkaistu. }}
+    *   {{ {$count} merkintää tallennettu ja julkaistu. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Merkintä poistettu. }}
+    *   {{ {$count} merkintää poistettu. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Assetti tallennettu. }}
+    *   {{ {$count} assettia tallennettu. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Assetti tallennettu ja julkaistu. }}
+    *   {{ {$count} assettia tallennettu ja julkaistu. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ URL-osoite kopioitu leikepöydälle. }}
+    *   {{ {$count} URL-osoitetta kopioitu leikepöydälle. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tiedostopolku kopioitu leikepöydälle. }}
+    *   {{ {$count} tiedostopolkua kopioitu leikepöydälle. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tiedoston data kopioitu leikepöydälle. }}
+    *   {{ {$count} tiedoston data kopioitu leikepöydälle. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ Assetti ladattu. }}
+    *   {{ {$count} assettia ladattu. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Assetti siirretty. }}
+    *   {{ {$count} assettia siirretty. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Assetti nimetty uudelleen. }}
+    *   {{ {$count} assettia nimetty uudelleen. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Assetti poistettu. }}
+    *   {{ {$count} assettia poistettu. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Sisällön muokkain
+
+# Draft backup: restore dialog
+restore_backup_title: Palauta luonnos
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Tästä merkinnästä on varmuuskopio ajalta {$datetime}. Haluatko palauttaa muokatun luonnoksen?
+
+# Draft backup notifications
+draft_backup_saved: Luonnoksen varmuuskopio tallennettu.
+draft_backup_restored: Luonnoksen varmuuskopio palautettu.
+draft_backup_deleted: Luonnoksen varmuuskopio poistettu.
+
+# Editor toolbar actions
+cancel_editing: Peruuta muokkaus
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: 'Luodaan: {$name}'
+# {$collection} is the collection label
+create_entry_announcement: Luot nyt uutta merkintää kokoelmaan ”{$collection}”.
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: Muokkaat nyt merkintää ”{$entry}” kokoelmassa ”{$collection}”.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: Muokkaat nyt tiedostoa ”{$file}” kokoelmassa ”{$collection}”.
+# {$file} is the singleton file name
+edit_singleton_announcement: Muokkaat nyt tiedostoa ”{$file}”.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Tallenna ja julkaise
+save_without_publishing: Tallenna julkaisematta
+
+# Editor options menu
+show_editor_options: Näytä muokkainasetukset
+editor_options: Muokkainasetukset
+
+# Preview controls
+show_preview: Näytä esikatselu
+
+# Editor settings
+sync_scrolling: Synkronoi vierittäminen
+
+# Locale controls
+switch_locale: Vaihda kieltä
+# Short status indicators appended to locale names
+locale_content_disabled_short: (pois käytöstä)
+locale_content_error_short: (virhe)
+
+# Pane labels
+edit: Muokkaa
+preview: Esikatselu
+
+# Pane controls; not to be confused with pages
+swap_panes: Vaihda paneelien paikkaa
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Muokkaa kielen {$locale} sisältöä
+preview_x_locale: Esikatsele kielen {$locale} sisältöä
+
+# Preview iframe labels
+content_preview: Sisällön esikatselu
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Näytä kielen {$locale} sisältöasetukset
+content_options_x_locale: 'Kielen {$locale} sisältöasetukset'
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: ”{$field}”-kenttä
+
+# Field options menu
+show_field_options: Näytä kentän asetukset
+field_options: Kentän asetukset
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Kentän tyyppiä ei tueta: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: 'Ota käyttöön: {$locale}'
+reenable_x_locale: 'Ota uudelleen käyttöön: {$locale}'
+disable_x_locale: 'Poista käytöstä: {$locale}'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: Kielen {$locale} sisältö on poistettu käytöstä.
+locale_x_now_disabled: Kielen {$locale} sisältö on nyt pois käytöstä. Se poistetaan, kun tallennat merkinnän.
+
+# Repository and site links
+view_in_repository: Näytä repositoriossa
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: 'Näytä palvelussa {$service}'
+view_on_live_site: Näytä julkaistulla sivustolla
+
+# Content copying from other locales
+copy_from: Kopioi kielestä…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: 'Kopioi kielestä {$locale}'
+
+# Translation features
+translation_options: Käännösasetukset
+translate: Käännä
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Käännä kenttä }}
+    *   {{ Käännä kentät }}
+translate_from: Käännä kielestä…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: 'Käännä kielestä {$locale}'
+
+# Revert changes
+revert_changes: Kumoa muutokset
+revert_all_changes: Kumoa kaikki muutokset
+
+# Slug editing
+edit_slug: Muokkaa polkua
+edit_slug_warning: Polun muuttaminen saattaa rikkoa merkintään osoittavat sisäiset ja ulkoiset linkit. Sveltia CMS ei tällä hetkellä päivitä Relation-kentillä luotuja viittauksia, joten sinun on päivitettävä ne ja muut linkit manuaalisesti.
+edit_slug_error:
+  empty: Slug ei voi olla tyhjä.
+  invalid: Slug ei voi sisältää erikoismerkkejä, mukaan lukien kauttaviivoja ja välilyöntejä.
+  duplicate: Tämä slug on käytössä toisella merkinnällä.
+
+# Required field indicator
+required: Pakollinen
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Ei käännettävää.
+    started: Käännetään…
+    error: Kääntäminen epäonnistui.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Yhtään kenttää ei käännetty kielestä {$source}. }}
+        one {{ Kenttä käännetty kielestä {$source}. }}
+        *   {{ {$count} kenttää käännetty kielestä {$source}. }}
+  copy:
+    none: Ei kopioitavaa.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Yhtään kenttää ei kopioitu kielestä {$source}. }}
+        one {{ Kenttä kopioitu kielestä {$source}. }}
+        *   {{ {$count} kenttää kopioitu kielestä {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Tämä kenttä on pakollinen.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: Päivämäärän ja kellonajan on oltava {$min} tai sen jälkeen.
+    date: Päivämäärän on oltava {$min} tai sen jälkeen.
+    time: Kellonajan on oltava {$min} tai sen jälkeen.
+    number: Arvon on oltava vähintään {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ Sinun on valittava vähintään {$min} vaihtoehto. }}
+        *   {{ Sinun on valittava vähintään {$min} vaihtoehtoa. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ Sinun on lisättävä vähintään {$min} kohde. }}
+        *   {{ Sinun on lisättävä vähintään {$min} kohdetta. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: Päivämäärän ja kellonajan on oltava {$max} tai sitä ennen.
+    date: Päivämäärän on oltava {$max} tai sitä ennen.
+    time: Kellonajan on oltava {$max} tai sitä ennen.
+    number: Arvon on oltava enintään {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ Et voi valita enempää kuin {$max} vaihtoehto. }}
+        *   {{ Et voi valita enempää kuin {$max} vaihtoehtoa. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ Et voi lisätä enempää kuin {$max} kohde. }}
+        *   {{ Et voi lisätä enempää kuin {$max} kohdetta. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ Syötä vähintään {$min} merkki. }}
+      *   {{ Syötä vähintään {$min} merkkiä. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ Et voi syöttää enempää kuin {$max} merkki. }}
+      *   {{ Et voi syöttää enempää kuin {$max} merkkiä. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Anna numero.
+    email: Anna kelvollinen sähköpostiosoite.
+    url: Anna kelvollinen URL-osoite.
+
+  # Custom field validation error
+  invalid_value: Virheellinen arvo.
+  unexpected_error: Odottamaton virhe.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Sivupalkin paneelit
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Validaatio
+    placeholder: Validaation tulokset näytetään tässä.
+    no_errors_found: Virheitä ei löytynyt.
+
+  # History panel: shows entry commit history
+  history:
+    title: Historia
+    fetch_failed: Historian lataaminen epäonnistui.
+    no_history: Historiaa ei löytynyt.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Backlinkit
+    no_entries: Yksikään merkintä ei viittaa tähän merkintään.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Virhe
+    description: Merkinnän tallentamisessa tapahtui virhe. Yritä myöhemmin uudelleen.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: Katselet assetin ”{$name}” tietoja.
+
+# Asset editor container aria-label
+asset_editor: Assetin muokkain
+
+# Preview unavailable message
+preview_unavailable: Esikatselu ei ole käytettävissä.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ Julkinen URL-osoite }}
+    *   {{ Julkiset URL-osoitteet }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tiedostopolku }}
+    *   {{ Tiedostopolut }}
+file_data: Tiedoston data
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Assetin tiedot
+select_asset_show_info: Valitse assetti nähdäksesi sen tiedot.
+
+kind: Tyyppi
+size: Koko
+dimensions: Mitat
+duration: Kesto
+# Short heading for a list of entries using the selected asset
+used_in: Käytössä
+created_date: Luontipäivä
+location: Sijainti
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Kartta, joka näyttää leveysasteen {$latitude}, pituusasteen {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Poista tämä kohde
+move_up: Siirrä ylös
+move_down: Siirrä alas
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: 'Lisää {$name}'
+
+# List item context menu
+add_item_above: Lisää kohde yläpuolelle
+add_item_below: Lisää kohde alapuolelle
+
+# Variable-type list selector
+select_list_type: Valitse luettelotyyppi
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Opasiteetti
+
+# Select field: empty option placeholder
+unselected_option: (Ei valintaa)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Valitse tiedosto
+    image: Valitse kuva
+
+  # Search input labels
+  search_for_file: Hae tiedostoja
+  search_for_image: Hae kuvia
+
+  # Locations panel aria-label
+  locations: Sijainnit
+
+  # Asset folder options
+  folder:
+    field: Kentän assetit
+    entry: Merkinnän assetit
+    file: Tiedoston assetit
+    collection: Kokoelman assetit
+    global: Yleiset assetit
+
+  # Error messages
+  error:
+    invalid_key: API-avaimesi on virheellinen tai vanhentunut. Tarkista se ja yritä uudelleen.
+    search_fetch_failed: Assettien haussa tapahtui virhe. Yritä myöhemmin uudelleen.
+    image_fetch_failed: Valitun assetin lataamisessa tapahtui virhe. Yritä myöhemmin uudelleen.
+
+  # Stock photo panels
+  available_images: Saatavilla olevat kuvat
+
+  # URL entry option
+  enter_url: Anna URL-osoite
+  enter_file_url: 'Anna tiedoston URL-osoite:'
+  enter_image_url: 'Anna kuvan URL-osoite:'
+
+  # Large file warning dialog
+  large_file:
+    title: Suuri tiedosto
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Kuvan lähde
+    description: 'Käytä seuraavaa lähdettä mahdollisuuksien mukaan:'
+
+  # Unsaved asset badge
+  unsaved: Tallentamaton
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Merkkejä ei syötetty. Vähintään: {$min}. Enintään: {$max}. }}
+      one {{ {$count} merkki syötetty. Vähintään: {$min}. Enintään: {$max}. }}
+      *   {{ {$count} merkkiä syötetty. Vähintään: {$min}. Enintään: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Merkkejä ei syötetty. Vähintään: {$min}. }}
+      one {{ {$count} merkki syötetty. Vähintään: {$min}. }}
+      *   {{ {$count} merkkiä syötetty. Vähintään: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Merkkejä ei syötetty. Enintään: {$max}. }}
+      one {{ {$count} merkki syötetty. Enintään: {$max}. }}
+      *   {{ {$count} merkkiä syötetty. Enintään: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: YouTube-videosoitin
+
+# Date/time field: quick action buttons
+today: Tänään
+now: Nyt
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Kuva
+  src: Lähde
+  alt: Vaihtoehtoinen teksti
+  title: Otsikko
+  link: Linkki
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Avain
+  value: Arvo
+  action: Toiminto
+  empty_key: Avain vaaditaan.
+  duplicate_key: Avaimen on oltava yksilöllinen.
+
+# Map field: location search and geolocation
+find_place: Etsi paikka
+use_your_location: Käytä sijaintiasi
+
+# Geolocation error dialog
+geolocation_error_title: Sijaintivirhe
+geolocation_error_body: Sijaintia haettaessa tapahtui virhe.
+geolocation_unsupported: Tämä selain ei tue Geolocation-rajapintaa.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Kyllä
+  'false': Ei
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: Palvelua ei ole määritetty oikein.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: API-avain
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: Anna {$key} palvelulle {$service}.
+      requested: Vahvistetaan…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: Annettu {$key} on virheellinen. Tarkista se ja yritä uudelleen.
+    password:
+      # {$service} is the cloud service name
+      initial: Anna salasanasi palvelulle {$service}.
+      requested: Kirjaudutaan sisään…
+      error: Käyttäjätunnus tai salasana on virheellinen. Tarkista tiedot ja yritä uudelleen.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Cloudinary-mediakirjasto
+    activate:
+      button_label: Aktivoi Cloudinary
+      description: Kirjauduttuasi sisään, napsauta Kirjaudu sisään -painiketta uudelleen jatkaaksesi.
+    auth_key_label: API-salaisuus
+    open_library: Avaa Cloudinary
+
+  uploadcare:
+    auth_key_label: Salainen API-avain
+
+  aws_s3:
+    auth_key_label: Salainen pääsyavain
+
+  cloudflare_r2:
+    auth_key_label: Salainen pääsyavain
+
+  digitalocean_spaces:
+    auth_key_label: Salainen pääsyavain
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ CMS-asetuksissa on virhe. Korjaa ongelma ja yritä uudelleen. }}
+      *   {{ CMS-asetuksissa on virheitä. Korjaa ongelmat ja yritä uudelleen. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: '{$collection}-kokoelma'
+    file: '{$file}-tiedosto'
+    component: '{$component}-komponentti'
+    # Don’t localize `{$field}`
+    field: '`{$field}`-kenttä'
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS toimii vain HTTPS- tai localhost-osoitteilla.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ Asetustiedoston URL-osoitteen on käytettävä HTTPS-protokollaa tai localhost-osoitetta. }}
+        *   {{ Asetustiedostojen URL-osoitteiden on käytettävä HTTPS-protokollaa tai localhost-osoitteita. }}
+    fetch_failed: Asetustiedostoa ei voitu hakea.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: HTTP-vastaus palautti tilakoodin {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Asetustiedostoa ei voitu hakea. Jos haluat estää `config.yml`-tiedoston lataamisen, lisää <a>`load_config_file: false`</a> `CMS.init()`-kutsulle välitettävään asetusobjektiin.'
+    parse_failed: Asetustiedostoa ei voitu jäsentää.
+    parse_failed_invalid_object: Asetustiedosto ei ole validi JavaScript-objekti.
+    parse_failed_unsupported_type: Asetustiedosto ei ole validi tiedostotyyppi. Vain YAML, TOML ja JSON ovat tuettuja.
+    no_collection: Kokoelmia ei ole määritetty.
+    missing_backend: Taustajärjestelmää ei ole määritetty.
+    missing_backend_name: Taustajärjestelmän nimeä ei ole määritetty.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: Taustajärjestelmää {$name} ei <a>tueta</a> Sveltia CMS:ssä.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Vanhentunutta taustajärjestelmää {$name} ei <a>tueta</a> Sveltia CMS:ssä.
+    unsupported_custom_backend: Mukautettuja taustajärjestelmiä ei <a>tueta</a> Sveltia CMS:ssä.
+    unsupported_backend_suggestion: Käytä jotakin <a>tuetuista taustajärjestelmistä</a>.
+    missing_repository: Repositoriota ei ole määritetty.
+    invalid_repository: Määritetty repositorio on virheellinen. Sen on oltava muodossa ”omistaja/repositorio”.
+    oauth_implicit_flow: Määritettyä todennustapaa (implicit flow) ei tueta Sveltia CMS:ssä. Käytä toista <a>todennustapaa</a>.
+    github_pkce_unsupported: PKCE-valtuutusta ei vielä tueta GitHubin rajoitusten vuoksi. Käytä toista <a>todennustapaa</a>.
+    oauth_no_app_id: OAuth-sovelluksen application ID:tä ei ole määritetty.
+    # Don’t localize `auth_methods`
+    no_auth_methods: Asetuksen `auth_methods` on sisällettävä vähintään yksi metodi.
+    missing_media_folder: Mediakansiota ei ole määritetty.
+    invalid_media_folder: Määritetty mediakansio on virheellinen. Sen on oltava merkkijono.
+    invalid_public_folder: Määritetty julkinen kansio on virheellinen. Sen on oltava merkkijono.
+    public_folder_relative_path: Määritetty julkinen kansio on virheellinen. Sen on oltava absoluuttinen polku, joka alkaa merkillä ”/”.
+    public_folder_absolute_url: Julkisen kansion absoluuttista URL-osoitetta ei tueta Sveltia CMS:ssä.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: Asetus `asset_collections` on virheellinen. Sen on oltava taulukko.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: Assettikokoelmalla {$count} on oltava asetus `name` määritettynä ei-tyhjänä merkkijonona.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: Assettikokoelman nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: Assettikokoelmien nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: Assettikokoelmalla `{$name}` on oltava asetus `media_folder` määritettynä merkkijonona.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: Kokoelmalla on oltava jokin asetuksista `folder`, `files` tai `divider`.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: Kokoelmalla ei voi olla asetuksia `folder`, `files` ja `divider` samanaikaisesti.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: Tiedostopääte `{$extension}` ei vastaa muotoa `{$format}`.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: Polku-templaatti `{$slug}` on virheellinen, koska se ei voi sisältää kauttaviivoja. Järjestääksesi merkinnät alikansioihin, käytä asetusta `path` asetuksen `slug` sijaan.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: Kokoelmalla {$count} on oltava asetus `name` ei-tyhjänä merkkijonona.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: Kokoelman nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä.
+    duplicate_collection_name: Kokoelmien nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: Kokoelmatiedostolla {$count} on oltava asetus `name` määritettynä ei-tyhjänä merkkijonona.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: Kokoelmatiedoston nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä.
+    duplicate_collection_file_name: Kokoelmatiedostojen nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
+    # Don’t localize `fields`
+    collection_no_fields: Kokoelmalla on oltava asetus `fields` määritettynä vähintään yhdellä kentällä.
+    # Don’t localize `fields`
+    collection_file_no_fields: Kokoelmatiedostolla on oltava asetus `fields` määritettynä vähintään yhdellä kentällä.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: Kokoelmatiedostolla on oltava asetus `i18n` määritettynä, jos `file`-polussa käytetään `locale`-paikkamerkkiä.
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: Kentällä {$count} on oltava asetus `name` määritettynä ei-tyhjänä merkkijonona.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: Kentän nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä. Jos haluat sisäkkäisiä kenttiä, <a>käytä Object-kenttiä pistemerkinnän sijaan</a>.
+    duplicate_field_name: Kenttien nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: Muuttujatyypillä {$count} on oltava asetus `name` määritettynä ei-tyhjänä merkkijonona.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: Muuttujatyypin nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä.
+    duplicate_variable_type: Muuttujatyyppien nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
+    date_field_type: 'Vanhentunutta Date-kenttätyyppiä ei tueta Sveltia CMS:ssä. Käytä DateTime-kenttätyyppiä asetuksella `type: date`.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Virheellinen aikavyöhyke: {$timeZone}. Sen on oltava kelvollinen IANA-aikavyöhyketunniste, kuten `America/New_York` tai `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: Vanhentunutta asetusta `{$prop}` ei tueta Sveltia CMS:ssä. Käytä asetusta `{$newProp}`.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: Asetusta `allow_multiple` ei tueta Sveltia CMS:ssä. Käytä sen sijaan asetusta `multiple`, jonka oletusarvo on `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: List-kentällä ei voi olla asetuksia `field`, `fields` ja `types` samanaikaisesti.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: List-kentän muuttujatyyppi on virheellinen. Asetus `widget` on `{$widget}`, mutta sen on oltava `object`.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: Object-kentällä ei voi olla asetuksia `fields` ja `types` samanaikaisesti.
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: Object-kentällä on oltava joko asetus `fields` tai `types`.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: Viitattu kokoelma `{$collection}` on virheellinen tai sitä ei ole määritetty.
+    relation_field_invalid_collection_file: Viitattu tiedosto `{$file}` on virheellinen tai sitä ei ole määritetty.
+    # Don’t localize `file`
+    relation_field_missing_file_name: Asetus `file` on määritettävä, kun viitataan tiedostokokoelmaan.
+    relation_field_invalid_value_field: Viitattu arvokenttä `{$field}` on virheellinen tai sitä ei ole määritetty.
+    unexpected: Odottamaton virhe
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: OAuth-sovelluksen tunnusta ei ole määritetty. Käyttäjien on annettava pääsytunnus kirjautuakseen sisään.
+    editorial_workflow_unsupported: Editoinnin työnkulkua ei vielä tueta Sveltia CMS:ssä.
+    open_authoring_unsupported: Open Authoringia ei vielä tueta Sveltia CMS:ssä.
+    nested_collections_unsupported: Sisäkkäisiä kokoelmia ei vielä tueta Sveltia CMS:ssä.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: Asetusta `{$prop}` ei tueta Sveltia CMS:ssä. Se jätetään huomiotta.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: 'Sekä `picker_utc` että uudemmat aikavyöhykeasetukset (`input_timezone` tai `output_utc`) on asetettu. Uudet asetukset ovat ensisijaisia. Harkitse asetuksen `picker_utc` poistamista määrityksistäsi.'
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Katso yhteensopivuustiedot: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: 'Saadaksesi paremman kehittäjäkokemuksen voit tarkistaa asetustiedostosi Sveltia CMS:n JSON-skeemaa vasten. Katso lisätietoja: {$link}'
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Paikallinen
+  # Browser compatibility warnings
+  unsupported_browser: Paikallinen työnkulku ei ole tuettu selaimessasi. Käytä Chromea tai Edgeä.
+  disabled: Paikallinen työnkulku on pois käytöstä selaimessasi. <a>Näin otat sen käyttöön</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: Luonnokset
+  in_review: Tarkistuksessa
+  ready: Valmis
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Kategoriat
+
+# Site Configuration Editor
+site_configuration_editor: Sivuston asetusten muokkain
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: API-avain tallennettu.
+    api_key_removed: API-avain poistettu.
+    api_key_invalid: Annettu API-avain on virheellinen. Tarkista se ja yritä uudelleen.
+
+  # Preferences operation errors
+  error:
+    permission_denied: Pääsy selaimen evästevarastoon on estetty. Tarkista selaimesi käyttöoikeudet ja yritä uudelleen.
+
+  # Appearance panel
+  appearance:
+    title: Ulkoasu
+    theme: Teema
+    select_theme: Valitse teema
+
+  # Theme options
+  theme:
+    auto: Automaattinen
+    dark: Tumma
+    light: Vaalea
+
+  # Language panel
+  language:
+    title: Kieli
+    ui_language:
+      title: Käyttöliittymän kieli
+      select_language: Valitse kieli
+
+  # Contents panel
+  contents:
+    title: Sisällöt
+    editor:
+      title: Muokkain
+      use_draft_backup:
+        switch_label: Varmuuskopioi merkintöjen luonnokset automaattisesti
+      close_on_save:
+        switch_label: Sulje muokkain luonnoksen tallentamisen jälkeen
+      close_with_escape:
+        switch_label: Sulje muokkain Esc-näppäimellä
+
+  # Internationalization panel
+  i18n:
+    title: Kääntäminen
+    translators:
+      default:
+        title: Oletuskäännöspalvelu
+        select_service: Valitse palvelu
+      api_keys:
+        title: Käännöspalvelujen API-avaimet
+        description: Hallitse <a>käännöspalvelujen</a> API-avaimia.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: '{$service}-avain'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Rekisteröidy palveluun <a {$homeHref}>{$service}</a> ja anna <a {$apiKeyHref}>API-avaimesi</a> tähän, jotta voit kääntää tekstikenttiä nopeasti.
+
+  # Media panel
+  media:
+    title: Media
+    stock_photos:
+      api_keys:
+        title: Kuvapankkien API-avaimet
+        description: Hallitse <a>kuvapankkien</a> API-avaimia.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: '{$service}-API-avain'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Rekisteröidy palveluun <a {$homeHref}>{$service} API</a> ja anna <a {$apiKeyHref}>API-avaimesi</a> tähän, jotta voit lisätä ilmaisia kuvapankkikuvia kuvakenttiin.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: 'Kuvien tarjoaja: {$service}'
+      no_services: Yhtään <a>kuvapankkipalvelua</a> ei ole määritetty.
+    cloud_storage:
+      api_keys:
+        title: Pilvitallennuspalvelujen API-avaimet
+        description: Hallitse <a>pilvitallennuspalvelujen</a> API-avaimia.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: '{$service}-API-avain'
+      no_services: Yhtään <a>pilvitallennuspalvelua</a> ei ole määritetty.
+
+  # Accessibility panel
+  accessibility:
+    title: Saavutettavuus
+    underline_links:
+      title: Alleviivaa linkit
+      description: Näytä alleviivaus linkeille sisällön esikatselussa ja käyttöliittymän teksteissä.
+      switch_label: Alleviivaa linkit aina
+
+  # Advanced panel
+  advanced:
+    title: Lisäasetukset
+    beta:
+      title: Beta-ominaisuudet
+      description: Ota käyttöön beta-ominaisuuksia, jotka voivat olla epävakaita tai kääntämättömiä.
+      switch_label: Liity beta-ohjelmaan
+    developer_mode:
+      title: Kehittäjätila
+      description: Ota käyttöön kehittäjille suunnattuja ominaisuuksia, kuten yksityiskohtaiset konsolilokit ja natiivit kontekstivalikot.
+      switch_label: Ota kehittäjätila käyttöön
+    deploy_hook:
+      title: Julkaisu-webhook
+      description: Anna webhook-URL-osoite, jota kutsutaan, kun käynnistät julkaisun manuaalisesti valitsemalla Julkaise muutokset. Voit jättää tämän tyhjäksi, jos käytät GitHub Actionsia.
+      # Hook URL input
+      url:
+        field_label: Hookin URL-osoite
+        saved: Hookin URL-osoite tallennettu.
+        removed: Hookin URL-osoite poistettu.
+      # Authorization header input
+      auth:
+        field_label: Authorization-otsikko (esim. Bearer <token>) (valinnainen)
+        saved: Authorization-otsikko tallennettu.
+        removed: Authorization-otsikko poistettu.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: Näytä sisältökirjasto
+  view_asset_library: Näytä assettikirjasto
+  search: Hae merkintöjä ja assetteja
+  create_entry: Luo uusi merkintä
+  save_entry: Tallenna merkintä
+  cancel_editing: Peruuta merkinnän muokkaus
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: AVIF-kuva
+  bmp: Bitmap-kuva
+  gif: GIF-kuva
+  ico: Kuvake
+  jpeg: JPEG-kuva
+  jpg: JPEG-kuva
+  png: PNG-kuva
+  svg: SVG-kuva
+  tif: TIFF-kuva
+  tiff: TIFF-kuva
+  webp: WebP-kuva
+  # Video formats
+  avi: AVI-video
+  m4v: MP4-video
+  mov: QuickTime-video
+  mp4: MP4-video
+  mpeg: MPEG-video
+  mpg: MPEG-video
+  ogg: Ogg-video
+  ogv: Ogg-video
+  ts: MPEG-video
+  webm: WebM-video
+  3gp: 3GPP-video
+  3g2: 3GPP2-video
+  # Audio formats
+  aac: AAC-ääni
+  mid: MIDI
+  midi: MIDI
+  m4a: MP4-ääni
+  mp3: MP3-ääni
+  oga: Ogg-ääni
+  opus: OPUS-ääni
+  wav: WAV-ääni
+  weba: WebM-ääni
+  # Document formats
+  csv: CSV-laskentataulukko
+  doc: Word-asiakirja
+  docx: Word-asiakirja
+  odp: OpenDocument-esitys
+  ods: OpenDocument-laskentataulukko
+  odt: OpenDocument-teksti
+  pdf: PDF-asiakirja
+  ppt: PowerPoint-esitys
+  pptx: PowerPoint-esitys
+  rtf: RTF-asiakirja
+  xls: Excel-laskentataulukko
+  xlsx: Excel-laskentataulukko
+  # Text formats
+  html: HTML-teksti
+  js: JavaScript
+  json: JSON-teksti
+  md: Markdown-teksti
+  toml: TOML-teksti
+  yaml: YAML-teksti
+  yml: YAML-teksti
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} tavua'
+  kb: '{$size} kt'
+  mb: '{$size} Mt'
+  gb: '{$size} Gt'
+  tb: '{$size} Tt'
