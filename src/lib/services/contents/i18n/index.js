@@ -15,6 +15,7 @@ const LANG_FORMATTER_OPTIONS = {
   type: 'language',
   languageDisplay: 'standard',
   style: 'short',
+  fallback: 'none',
 };
 
 /**
@@ -89,7 +90,16 @@ export const getLocaleLabel = (
   }
 
   try {
-    return formatter.of(canonicalLocale);
+    const label = formatter.of(canonicalLocale);
+
+    if (!label) {
+      return undefined;
+    }
+
+    const [firstLetter, ...rest] = label;
+
+    // Capitalize the label because the native `of()` method returns all lowercase in some languages
+    return [firstLetter.toLocaleUpperCase(displayLocale), ...rest].join('');
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);

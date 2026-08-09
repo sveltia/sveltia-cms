@@ -1,3 +1,6 @@
+/* eslint-disable jsdoc/require-jsdoc */
+/* eslint-disable max-classes-per-file */
+
 import { describe, expect, test, vi } from 'vitest';
 
 import {
@@ -18,6 +21,7 @@ const LANG_FORMATTER_OPTIONS = {
   type: 'language',
   languageDisplay: 'standard',
   style: 'short',
+  fallback: 'none',
 };
 
 // Controllable locale mock so we can set appLocale.current to null/undefined to cover the
@@ -26,7 +30,7 @@ const mockLocale = vi.hoisted(() => ({ current: /** @type {string | null} */ (''
 
 vi.mock('@sveltia/i18n', () => ({
   locale: mockLocale,
-  // eslint-disable-next-line jsdoc/require-jsdoc
+
   isRTL: (/** @type {string} */ locale) =>
     ['ar', 'he', 'fa', 'ur', 'dv', 'ha', 'ps', 'yi'].includes(locale),
 }));
@@ -360,8 +364,8 @@ describe('Test getLocaleLabel()', () => {
 
   test('returns native locale name when displayLocale matches locale', () => {
     expect(getLocaleLabel('en', { displayLocale: 'en' })).toBe('English');
-    expect(getLocaleLabel('fr', { displayLocale: 'fr' })).toBe('français');
-    expect(getLocaleLabel('es', { displayLocale: 'es' })).toBe('español');
+    expect(getLocaleLabel('fr', { displayLocale: 'fr' })).toBe('Français');
+    expect(getLocaleLabel('es', { displayLocale: 'es' })).toBe('Español');
     expect(getLocaleLabel('de', { displayLocale: 'de' })).toBe('Deutsch');
     expect(getLocaleLabel('ja', { displayLocale: 'ja' })).toBe('日本語');
     expect(getLocaleLabel('zh', { displayLocale: 'zh' })).toBe('中文');
@@ -406,19 +410,30 @@ describe('Test getLocaleLabel()', () => {
     // Test that function works with different locale codes when using custom displayLocale
     expect(getLocaleLabel('ko', { displayLocale: 'ko' })).toBe('한국어');
     expect(getLocaleLabel('ar', { displayLocale: 'ar' })).toBe('العربية');
-    expect(getLocaleLabel('ru', { displayLocale: 'ru' })).toBe('русский');
+    expect(getLocaleLabel('ru', { displayLocale: 'ru' })).toBe('Русский');
   });
 
-  test('handles unknown locale codes', () => {
-    // 'xyz-unknown' is a valid format but unknown locale, formatter will return a value
+  test('handles unknown locale codes with fallback: none', () => {
+    // With fallback: 'none', unknown locales should return undefined
     const unknownResult = getLocaleLabel('xyz-unknown');
 
-    // The formatter may return something like 'xyz (UNKNOWN)' for unknown but valid format
-    expect(typeof unknownResult).toBe('string');
-    expect(unknownResult?.length).toBeGreaterThan(0);
+    expect(unknownResult).toBe(undefined);
 
     // Empty string should return undefined (invalid canonical locale)
     expect(getLocaleLabel('')).toBe(undefined);
+  });
+
+  test('capitalizes first letter of locale labels', () => {
+    // Verify that labels are properly capitalized (important for languages like French)
+    const french = getLocaleLabel('fr', { displayLocale: 'fr' });
+
+    expect(french).toBe('Français');
+    expect(french?.charAt(0)).toBe('F');
+
+    const spanish = getLocaleLabel('es', { displayLocale: 'es' });
+
+    expect(spanish).toBe('Español');
+    expect(spanish?.charAt(0)).toBe('E');
   });
 
   test('compares different displayLocale settings', () => {
@@ -426,7 +441,7 @@ describe('Test getLocaleLabel()', () => {
     const frenchInFrench = getLocaleLabel('fr', { displayLocale: 'fr' });
     const frenchInEnglish = getLocaleLabel('fr', { displayLocale: 'en' });
 
-    expect(frenchInFrench).toBe('français');
+    expect(frenchInFrench).toBe('Français');
     expect(frenchInEnglish).toBe('French');
     expect(frenchInFrench).not.toBe(frenchInEnglish);
 
@@ -451,7 +466,30 @@ describe('Test getLocaleLabel()', () => {
     expect(getLocaleLabel('ja', {})).toBe('Japanese');
   });
 
-  test('handles formatter.of() errors gracefully (lines 53-57)', () => {
+  test('handles formatter.of() returning falsy value', () => {
+    const originalDisplayNames = Intl.DisplayNames;
+
+    /** @type {any} */
+    const MockDisplayNames = class {
+      // Returns undefined/null to simulate fallback: 'none' behavior
+      of() {
+        return undefined;
+      }
+    };
+
+    // @ts-ignore
+    Intl.DisplayNames = MockDisplayNames;
+
+    // Use a displayLocale ('it') not yet in displayNamesCache so the mock constructor is invoked.
+    const result = getLocaleLabel('en', { displayLocale: 'it' });
+
+    expect(result).toBe(undefined);
+
+    // @ts-ignore
+    Intl.DisplayNames = originalDisplayNames;
+  });
+
+  test('handles formatter.of() errors gracefully', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const originalDisplayNames = Intl.DisplayNames;
 
@@ -469,8 +507,8 @@ describe('Test getLocaleLabel()', () => {
     // @ts-ignore
     Intl.DisplayNames = MockDisplayNames;
 
-    // Use a displayLocale ('it') not yet in displayNamesCache so the mock constructor is invoked.
-    const result = getLocaleLabel('en', { displayLocale: 'it' });
+    // Use a displayLocale ('rm') not yet in displayNamesCache so the mock constructor is invoked.
+    const result = getLocaleLabel('en', { displayLocale: 'rm' });
 
     expect(result).toBe(undefined);
     expect(errorSpy).toHaveBeenCalled();
