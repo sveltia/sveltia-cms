@@ -123,6 +123,10 @@
       img {
         max-height: 800px !important;
       }
+
+      .sui.alert {
+        margin-block: 16px;
+      }
     }
   }
 

@@ -48,6 +48,7 @@
   const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`));
+  /** @type {Record<string, any>[]} */
   const items = $derived(
     unflatten(
       Object.fromEntries(
@@ -61,28 +62,30 @@
 
 {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
   <VisibilityObserver>
-    {@const itemKeyPath = `${keyPath}.${index}`}
-    {@const subFieldName = Array.isArray(types)
-      ? $entryDraft?.currentValues[locale][`${itemKeyPath}.${typeKey}`]
-      : undefined}
-    {@const typeConfig = types?.find(({ name }) => name === subFieldName)}
-    {@const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
-    {@const subFields = subFieldName
-      ? (typeConfig?.fields ?? [])
-      : (fields ?? (field ? [field] : []))}
-    <Subsection {label}>
-      {#each subFields as subField (subField.name)}
-        <VisibilityObserver>
-          <FieldPreview
-            keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
-            typedKeyPath={hasVariableTypes
-              ? `${typedKeyPath}.*<${subFieldName}>.${subField.name}`
-              : `${typedKeyPath}.*.${subField.name}`}
-            {locale}
-            fieldConfig={subField}
-          />
-        </VisibilityObserver>
-      {/each}
-    </Subsection>
+    {@const type = hasVariableTypes ? item[typeKey] : undefined}
+    {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
+    {#if hasVariableTypes && !typeConfig}
+      <!-- Unknown type: a warning is displayed in the editor -->
+    {:else}
+      {@const itemKeyPath = `${keyPath}.${index}`}
+      {@const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
+      {@const subFields = hasVariableTypes
+        ? (typeConfig?.fields ?? [])
+        : (fields ?? (field ? [field] : []))}
+      <Subsection {label}>
+        {#each subFields as subField (subField.name)}
+          <VisibilityObserver>
+            <FieldPreview
+              keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
+              typedKeyPath={hasVariableTypes
+                ? `${typedKeyPath}.*<${type}>.${subField.name}`
+                : `${typedKeyPath}.*.${subField.name}`}
+              {locale}
+              fieldConfig={subField}
+            />
+          </VisibilityObserver>
+        {/each}
+      </Subsection>
+    {/if}
   </VisibilityObserver>
 {/each}

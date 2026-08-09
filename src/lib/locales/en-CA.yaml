@@ -1206,6 +1206,9 @@ add_item_below: Add Item Below
 # Variable-type list selector
 select_list_type: Select List Type
 
+# Variable-type mismatch
+unknown_variable_type: This item can’t be displayed due to an unknown type. Check the browser console for details.
+
 # ==============================================================================
 # Field Widgets
 # ==============================================================================

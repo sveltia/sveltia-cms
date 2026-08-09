@@ -8,6 +8,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import {
+    Alert,
     Button,
     Icon,
     Menu,
@@ -46,6 +47,7 @@
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import {
    * ComplexListField,
+   * FieldKeyPath,
    * ListFieldWithSubField,
    * ListFieldWithSubFields,
    * ListFieldWithTypes,
@@ -370,6 +372,22 @@
     });
   };
 
+  /**
+   * Warn about unknown variable type.
+   * @param {object} args Arguments.
+   * @param {FieldKeyPath} args.itemKeyPath Item’s key path.
+   * @param {string} args.type Item’s type.
+   */
+  const warnUnknownType = ({ itemKeyPath, type }) => {
+    const message = type
+      ? `The “${type}” type is not defined for the list field.`
+      : `The type key is not found in the list item. The item must include the “${typeKey}” ` +
+        `property with one of the defined types: ${types.map((t) => t.name).join(', ')}`;
+
+    // eslint-disable-next-line no-console
+    console.warn(`List item ${itemKeyPath}: ${message}`);
+  };
+
   $effect(() => {
     void [items];
 
@@ -462,118 +480,122 @@
   {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
     <VisibilityObserver>
       {@const itemKeyPath = `${keyPath}.${index}`}
-      {@const expanded = $entryDraft?.expanderStates?._[itemKeyPath] ?? true}
-      {@const typeConfig = hasVariableTypes
-        ? types?.find(({ name }) => name === item[typeKey])
-        : undefined}
-      {@const subFields = hasVariableTypes
-        ? (typeConfig?.fields ?? [])
-        : (fields ?? (field ? [field] : []))}
-      {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
-      <!-- @todo Support drag sorting. -->
-      <div role="none" class="item">
-        <ObjectHeader
-          label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
-          controlId="list-{fieldId}-item-{index}-body"
-          {expanded}
-          toggleExpanded={subFields.length
-            ? () => syncExpanderStates({ [itemKeyPath]: !expanded })
-            : undefined}
-        >
-          {#snippet centerContent()}
-            {#if allowReorder}
-              <Button
-                size="small"
-                iconic
-                disabled={isDuplicateField || index === 0}
-                aria-label={_('move_up')}
-                onclick={() => moveDownItem(index - 1)}
-              >
-                {#snippet startIcon()}
-                  <Icon name="arrow_upward" />
-                {/snippet}
-              </Button>
-              <Spacer />
-              <Button
-                iconic
-                size="small"
-                disabled={isDuplicateField || index === items.length - 1}
-                aria-label={_('move_down')}
-                onclick={() => moveDownItem(index)}
-              >
-                {#snippet startIcon()}
-                  <Icon name="arrow_downward" />
-                {/snippet}
-              </Button>
-            {/if}
-          {/snippet}
-          {#snippet endContent()}
-            {#if allowAdd}
-              <MenuButton
-                variant="ghost"
-                size="small"
-                iconic
-                popupPosition="bottom-right"
-                aria-label={_('list_item_options')}
-                disabled={isAddDisabled}
-              >
-                {#snippet popup()}
-                  <Menu aria-label={_('list_item_options')}>
-                    {#if allowDuplicate}
-                      <MenuItem
-                        label={_('duplicate')}
-                        disabled={hasMaxItems}
-                        onclick={() => addItem({ index: index + 1, dupIndex: index })}
-                      />
-                    {/if}
-                    {@render addPositionItems(index, 'above')}
-                    {@render addPositionItems(index + 1, 'below')}
-                  </Menu>
-                {/snippet}
-              </MenuButton>
-            {/if}
-            {#if allowRemove}
-              <Button
-                variant="ghost"
-                size="small"
-                iconic
-                aria-label={_('remove')}
-                onclick={() => removeItem(index)}
-              >
-                {#snippet startIcon()}
-                  <Icon name="close" />
-                {/snippet}
-              </Button>
-            {/if}
-          {/snippet}
-        </ObjectHeader>
-        <div role="none" class="item-body" id="list-{fieldId}-item-{index}-body">
-          {#if expanded}
-            {#each subFields as subField (subField.name)}
-              <VisibilityObserver>
-                <FieldEditor
-                  keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
-                  typedKeyPath={hasVariableTypes
-                    ? `${typedKeyPath}.*<${item[typeKey]}>.${subField.name}`
-                    : `${typedKeyPath}.*.${subField.name}`}
-                  {locale}
-                  fieldConfig={subField}
-                  context={hasSingleSubField ? 'single-subfield-list-field' : undefined}
-                />
-              </VisibilityObserver>
-            {/each}
-          {:else}
-            <div role="none" class="summary">
-              {#if thumbnails[index]}
-                <Image src={thumbnails[index]} variant="icon" cover />
+      {@const type = hasVariableTypes ? item[typeKey] : undefined}
+      {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
+      {#if hasVariableTypes && !typeConfig}
+        <Alert status="warning">{_('unknown_variable_type')}</Alert>
+        {warnUnknownType({ itemKeyPath, type })}
+      {:else}
+        {@const expanded = $entryDraft?.expanderStates?._[itemKeyPath] ?? true}
+        {@const subFields = hasVariableTypes
+          ? (typeConfig?.fields ?? [])
+          : (fields ?? (field ? [field] : []))}
+        {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
+        <!-- @todo Support drag sorting. -->
+        <div role="none" class="item">
+          <ObjectHeader
+            label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
+            controlId="list-{fieldId}-item-{index}-body"
+            {expanded}
+            toggleExpanded={subFields.length
+              ? () => syncExpanderStates({ [itemKeyPath]: !expanded })
+              : undefined}
+          >
+            {#snippet centerContent()}
+              {#if allowReorder}
+                <Button
+                  size="small"
+                  iconic
+                  disabled={isDuplicateField || index === 0}
+                  aria-label={_('move_up')}
+                  onclick={() => moveDownItem(index - 1)}
+                >
+                  {#snippet startIcon()}
+                    <Icon name="arrow_upward" />
+                  {/snippet}
+                </Button>
+                <Spacer />
+                <Button
+                  iconic
+                  size="small"
+                  disabled={isDuplicateField || index === items.length - 1}
+                  aria-label={_('move_down')}
+                  onclick={() => moveDownItem(index)}
+                >
+                  {#snippet startIcon()}
+                    <Icon name="arrow_downward" />
+                  {/snippet}
+                </Button>
               {/if}
-              <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
-                {_formatSummary(index, summaryTemplate)}
-              </TruncatedText>
-            </div>
-          {/if}
+            {/snippet}
+            {#snippet endContent()}
+              {#if allowAdd}
+                <MenuButton
+                  variant="ghost"
+                  size="small"
+                  iconic
+                  popupPosition="bottom-right"
+                  aria-label={_('list_item_options')}
+                  disabled={isAddDisabled}
+                >
+                  {#snippet popup()}
+                    <Menu aria-label={_('list_item_options')}>
+                      {#if allowDuplicate}
+                        <MenuItem
+                          label={_('duplicate')}
+                          disabled={hasMaxItems}
+                          onclick={() => addItem({ index: index + 1, dupIndex: index })}
+                        />
+                      {/if}
+                      {@render addPositionItems(index, 'above')}
+                      {@render addPositionItems(index + 1, 'below')}
+                    </Menu>
+                  {/snippet}
+                </MenuButton>
+              {/if}
+              {#if allowRemove}
+                <Button
+                  variant="ghost"
+                  size="small"
+                  iconic
+                  aria-label={_('remove')}
+                  onclick={() => removeItem(index)}
+                >
+                  {#snippet startIcon()}
+                    <Icon name="close" />
+                  {/snippet}
+                </Button>
+              {/if}
+            {/snippet}
+          </ObjectHeader>
+          <div role="none" class="item-body" id="list-{fieldId}-item-{index}-body">
+            {#if expanded}
+              {#each subFields as subField (subField.name)}
+                <VisibilityObserver>
+                  <FieldEditor
+                    keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
+                    typedKeyPath={hasVariableTypes
+                      ? `${typedKeyPath}.*<${type}>.${subField.name}`
+                      : `${typedKeyPath}.*.${subField.name}`}
+                    {locale}
+                    fieldConfig={subField}
+                    context={hasSingleSubField ? 'single-subfield-list-field' : undefined}
+                  />
+                </VisibilityObserver>
+              {/each}
+            {:else}
+              <div role="none" class="summary">
+                {#if thumbnails[index]}
+                  <Image src={thumbnails[index]} variant="icon" cover />
+                {/if}
+                <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
+                  {_formatSummary(index, summaryTemplate)}
+                </TruncatedText>
+              </div>
+            {/if}
+          </div>
         </div>
-      </div>
+      {/if}
     </VisibilityObserver>
   {/each}
 </div>

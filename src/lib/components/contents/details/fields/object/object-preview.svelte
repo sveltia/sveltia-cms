@@ -47,27 +47,30 @@
   );
   const hasVariableTypes = $derived(Array.isArray(types));
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
-  const typeConfig = $derived(
-    hasVariableTypes ? types?.find(({ name }) => name === valueMap[typeKeyPath]) : undefined,
-  );
+  const type = $derived(hasVariableTypes ? valueMap[typeKeyPath] : undefined);
+  const typeConfig = $derived(type ? types?.find(({ name }) => name === type) : undefined);
   const label = $derived(typeConfig ? typeConfig.label || typeConfig.name : undefined);
   const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
 </script>
 
 {#if hasValues}
-  <Subsection {label}>
-    {#each subFields as subField (subField.name)}
-      {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
-      <VisibilityObserver>
-        <FieldPreview
-          keyPath={subFieldKeyPath}
-          typedKeyPath={hasVariableTypes && typeConfig?.name
-            ? `${typedKeyPath}<${typeConfig.name}>.${subField.name}`
-            : subFieldKeyPath}
-          {locale}
-          fieldConfig={subField}
-        />
-      </VisibilityObserver>
-    {/each}
-  </Subsection>
+  {#if hasVariableTypes && !typeConfig}
+    <!-- Unknown type: a warning is displayed in the editor -->
+  {:else}
+    <Subsection {label}>
+      {#each subFields as subField (subField.name)}
+        {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
+        <VisibilityObserver>
+          <FieldPreview
+            keyPath={subFieldKeyPath}
+            typedKeyPath={hasVariableTypes && typeConfig?.name
+              ? `${typedKeyPath}<${typeConfig.name}>.${subField.name}`
+              : subFieldKeyPath}
+            {locale}
+            fieldConfig={subField}
+          />
+        </VisibilityObserver>
+      {/each}
+    </Subsection>
+  {/if}
 {/if}
