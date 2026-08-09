@@ -1,11 +1,13 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
+import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { isLastCommitPublished } from '$lib/services/backends';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
+import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 
@@ -32,19 +34,31 @@ import { prepareEntries } from '$lib/services/contents/file/process';
  * Get the file list from the meta database or fetch it if not cached.
  * @param {object} args Arguments.
  * @param {IndexedDB} args.metaDB The meta database instance.
- * @param {string} args.lastHash The latest commit hash.
+ * @param {string} args.lastCommitHash The latest commit hash.
  * @param {[string, any][]} args.cachedFileEntries Cached file entries.
  * @param {FetchFileListFunction} args.fetchFileList Function to fetch the repository’s complete
  * file list.
  * @returns {Promise<BaseFileList>} The file list.
  */
-export const getFileList = async ({ metaDB, lastHash, cachedFileEntries, fetchFileList }) => {
-  const cachedHash = await metaDB.get('last_commit_hash');
+export const getFileList = async ({ metaDB, lastCommitHash, cachedFileEntries, fetchFileList }) => {
+  const lastConfigHash = get(cmsConfigVersion);
+  const cachedConfigHash = await metaDB.get('last_config_hash');
+  const cachedCommitHash = await metaDB.get('last_commit_hash');
   const gitConfigFetched = await metaDB.get('git_config_fetched');
 
+  // We need to compare the CMS config hash to support cases where multiple CMS instances with
+  // different configurations are connected to the same repository, or where the config has been
+  // substantially updated. @see https://github.com/sveltia/sveltia-cms/issues/886
   // Skip fetching the file list if the cached hash matches the latest. But don’t skip if the file
   // cache is empty; something probably went wrong the last time the files were fetched.
-  if (cachedHash && cachedHash === lastHash && gitConfigFetched && cachedFileEntries.length) {
+  if (
+    cachedConfigHash &&
+    cachedConfigHash === lastConfigHash &&
+    cachedCommitHash &&
+    cachedCommitHash === lastCommitHash &&
+    gitConfigFetched &&
+    cachedFileEntries.length
+  ) {
     return createFileList(
       cachedFileEntries.map(([path, data]) => ({
         path,
@@ -55,9 +69,10 @@ export const getFileList = async ({ metaDB, lastHash, cachedFileEntries, fetchFi
   }
 
   // Get a complete file list first, and filter what’s managed in CMS
-  const fileList = createFileList(await fetchFileList(lastHash));
+  const fileList = createFileList(await fetchFileList(lastCommitHash));
 
-  metaDB.set('last_commit_hash', lastHash);
+  metaDB.set('last_config_hash', lastConfigHash);
+  metaDB.set('last_commit_hash', lastCommitHash);
   metaDB.set('git_config_fetched', true);
 
   return fileList;
@@ -191,8 +206,8 @@ export const fetchAndParseFiles = async ({
   }
 
   // This has to be done after the branch is determined
-  const { hash: lastHash, message } = await fetchLastCommit();
-  const fileList = await getFileList({ metaDB, lastHash, cachedFileEntries, fetchFileList });
+  const { hash: lastCommitHash, message } = await fetchLastCommit();
+  const fileList = await getFileList({ metaDB, lastCommitHash, cachedFileEntries, fetchFileList });
 
   // @todo Check if the commit has a workflow run that trigged deployment
   isLastCommitPublished.set(!message.startsWith('[skip ci]'));

@@ -1,11 +1,13 @@
 // @ts-nocheck
 import { IndexedDB } from '@sveltia/utils/storage';
+import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets';
 import { isLastCommitPublished } from '$lib/services/backends';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
+import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 
@@ -25,14 +27,29 @@ vi.mock('$lib/services/assets');
 vi.mock('$lib/services/backends');
 vi.mock('$lib/services/backends/git/shared/config');
 vi.mock('$lib/services/backends/process');
+vi.mock('$lib/services/config');
 vi.mock('$lib/services/contents');
 vi.mock('$lib/services/contents/file/process');
+vi.mock('svelte/store', async () => {
+  const actual = await vi.importActual('svelte/store');
+
+  return {
+    ...actual,
+    get: vi.fn(),
+  };
+});
+
+const lastConfigHash = 'config-hash-1';
 
 describe('git/shared/fetch', () => {
   let mockMetaDB;
   let mockCacheDB;
 
   beforeEach(() => {
+    vi.mocked(get).mockImplementation((store) =>
+      store === cmsConfigVersion ? lastConfigHash : undefined,
+    );
+
     mockMetaDB = {
       get: vi.fn(),
       set: vi.fn(),
@@ -83,7 +100,7 @@ describe('git/shared/fetch', () => {
 
   describe('getFileList', () => {
     const mockFetchFileList = vi.fn();
-    const lastHash = 'abc123';
+    const lastCommitHash = 'abc123';
 
     global.IndexedDB = vi.fn();
 
@@ -99,10 +116,14 @@ describe('git/shared/fetch', () => {
       ]);
     });
 
-    it('should use cached file list when hash matches and cache exists', async () => {
+    it('should use cached file list when hashes match and cache exists', async () => {
       mockMetaDB.get.mockImplementation((key) => {
+        if (key === 'last_config_hash') {
+          return Promise.resolve(lastConfigHash);
+        }
+
         if (key === 'last_commit_hash') {
-          return Promise.resolve(lastHash);
+          return Promise.resolve(lastCommitHash);
         }
 
         if (key === 'git_config_fetched') {
@@ -114,7 +135,7 @@ describe('git/shared/fetch', () => {
 
       const result = await getFileList({
         metaDB: mockMetaDB,
-        lastHash,
+        lastCommitHash,
         cachedFileEntries,
         fetchFileList: mockFetchFileList,
       });
@@ -127,8 +148,12 @@ describe('git/shared/fetch', () => {
       expect(result).toBeDefined();
     });
 
-    it('should fetch new file list when hash does not match', async () => {
+    it('should fetch new file list when commit hash does not match', async () => {
       mockMetaDB.get.mockImplementation((key) => {
+        if (key === 'last_config_hash') {
+          return Promise.resolve(lastConfigHash);
+        }
+
         if (key === 'last_commit_hash') {
           return Promise.resolve('old-hash');
         }
@@ -142,20 +167,25 @@ describe('git/shared/fetch', () => {
 
       await getFileList({
         metaDB: mockMetaDB,
-        lastHash,
+        lastCommitHash,
         cachedFileEntries,
         fetchFileList: mockFetchFileList,
       });
 
-      expect(mockFetchFileList).toHaveBeenCalledWith(lastHash);
-      expect(mockMetaDB.set).toHaveBeenCalledWith('last_commit_hash', lastHash);
+      expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
+      expect(mockMetaDB.set).toHaveBeenCalledWith('last_config_hash', lastConfigHash);
+      expect(mockMetaDB.set).toHaveBeenCalledWith('last_commit_hash', lastCommitHash);
       expect(mockMetaDB.set).toHaveBeenCalledWith('git_config_fetched', true);
     });
 
-    it('should fetch new file list when cache is empty', async () => {
+    it('should fetch new file list when config hash does not match', async () => {
       mockMetaDB.get.mockImplementation((key) => {
+        if (key === 'last_config_hash') {
+          return Promise.resolve('old-config-hash');
+        }
+
         if (key === 'last_commit_hash') {
-          return Promise.resolve(lastHash);
+          return Promise.resolve(lastCommitHash);
         }
 
         if (key === 'git_config_fetched') {
@@ -167,12 +197,40 @@ describe('git/shared/fetch', () => {
 
       await getFileList({
         metaDB: mockMetaDB,
-        lastHash,
+        lastCommitHash,
+        cachedFileEntries,
+        fetchFileList: mockFetchFileList,
+      });
+
+      expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
+      expect(mockMetaDB.set).toHaveBeenCalledWith('last_config_hash', lastConfigHash);
+    });
+
+    it('should fetch new file list when cache is empty', async () => {
+      mockMetaDB.get.mockImplementation((key) => {
+        if (key === 'last_config_hash') {
+          return Promise.resolve(lastConfigHash);
+        }
+
+        if (key === 'last_commit_hash') {
+          return Promise.resolve(lastCommitHash);
+        }
+
+        if (key === 'git_config_fetched') {
+          return Promise.resolve(true);
+        }
+
+        return Promise.resolve(null);
+      });
+
+      await getFileList({
+        metaDB: mockMetaDB,
+        lastCommitHash,
         cachedFileEntries: [], // Empty cache
         fetchFileList: mockFetchFileList,
       });
 
-      expect(mockFetchFileList).toHaveBeenCalledWith(lastHash);
+      expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
     });
   });
 
@@ -815,6 +873,7 @@ describe('git/shared/fetch', () => {
       });
 
       expect(mockMetaDB.set).toHaveBeenCalledWith('last_commit_hash', lastHash);
+      expect(mockMetaDB.set).toHaveBeenCalledWith('last_config_hash', lastConfigHash);
     });
   });
 });
