@@ -1179,7 +1179,7 @@
  * Shape of the `processedAssets` store.
  * @typedef {object} ProcessedAssets
  * @property {boolean} processing Whether the files are being processed.
- * @property {File[]} undersizedFiles Files that can be uploaded.
+ * @property {File[]} validFiles Files that can be uploaded.
  * @property {File[]} oversizedFiles Files that cannot be uploaded due to the size limit.
  * @property {File[]} invalidFiles Files that cannot be uploaded because they’re corrupt or
  * mislabeled, such as a HEIC image saved with a `.jpg` extension.

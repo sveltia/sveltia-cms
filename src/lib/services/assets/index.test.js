@@ -159,7 +159,7 @@ describe('assets/index', () => {
 
       expect(result).toEqual({
         processing: false,
-        undersizedFiles: [],
+        validFiles: [],
         oversizedFiles: [],
         invalidFiles: [],
         transformedFileMap: expect.any(WeakMap),
@@ -196,7 +196,7 @@ describe('assets/index', () => {
       unsubscribe();
 
       expect(latestState.processing).toBe(false);
-      expect(latestState.undersizedFiles).toEqual([smallFile]);
+      expect(latestState.validFiles).toEqual([smallFile]);
       expect(latestState.oversizedFiles).toEqual([largeFile]);
     });
 
@@ -228,7 +228,7 @@ describe('assets/index', () => {
       vi.mocked(isValidImage).mockResolvedValue(true);
 
       // The invalid file is excluded from the uploadable list, not just flagged
-      expect(latestState.undersizedFiles).toEqual([goodFile]);
+      expect(latestState.validFiles).toEqual([goodFile]);
       expect(latestState.oversizedFiles).toEqual([]);
       expect(latestState.invalidFiles).toEqual([badFile]);
     });
@@ -271,7 +271,7 @@ describe('assets/index', () => {
 
       expect(latestState.processing).toBe(false);
       // original file since no transformations
-      expect(latestState.undersizedFiles).toEqual([originalFile]);
+      expect(latestState.validFiles).toEqual([originalFile]);
       expect(transformFileMock).not.toHaveBeenCalled();
     });
 
@@ -318,7 +318,7 @@ describe('assets/index', () => {
 
       expect(latestState.processing).toBe(false);
       expect(transformFileMock).toHaveBeenCalledWith(originalFile, transformations);
-      expect(latestState.undersizedFiles).toEqual([transformedFile]);
+      expect(latestState.validFiles).toEqual([transformedFile]);
     });
 
     it('should populate transformedFileMap when file is transformed', async () => {
@@ -467,7 +467,7 @@ describe('assets/index', () => {
       const result = get(processedAssets);
 
       expect(result.processing).toBe(false);
-      expect(result.undersizedFiles).toEqual([]);
+      expect(result.validFiles).toEqual([]);
       expect(result.oversizedFiles).toEqual([]);
     });
 
@@ -498,7 +498,7 @@ describe('assets/index', () => {
 
       unsubscribe();
 
-      expect(latestState.undersizedFiles).toEqual([file1, file3]);
+      expect(latestState.validFiles).toEqual([file1, file3]);
       expect(latestState.oversizedFiles).toEqual([file2]);
     });
   });
@@ -3863,9 +3863,9 @@ describe('assets/index', () => {
 
       unsubscribe();
 
-      expect(latestState.undersizedFiles).toEqual([smallFile1, smallFile2]);
+      expect(latestState.validFiles).toEqual([smallFile1, smallFile2]);
       expect(latestState.oversizedFiles).toEqual([largeFile1, largeFile2]);
-      expect(latestState.undersizedFiles.length).toBe(2);
+      expect(latestState.validFiles.length).toBe(2);
       expect(latestState.oversizedFiles.length).toBe(2);
     });
 

@@ -20,7 +20,7 @@
 
   const { files: originalFiles, folder, originalAssets } = $derived($uploadingAssets);
   const originalAsset = $derived(originalAssets?.[0]);
-  const { processing, undersizedFiles, oversizedFiles, invalidFiles, transformedFileMap } =
+  const { processing, validFiles, oversizedFiles, invalidFiles, transformedFileMap } =
     $derived($processedAssets);
   const { max_file_size: maxSize } = $derived(getDefaultMediaLibraryOptions().config);
   const assetsInSameFolder = $derived(
@@ -32,7 +32,7 @@
   const dupFileCount = $derived(dupFiles.length);
 
   $effect(() => {
-    files = [...undersizedFiles];
+    files = [...validFiles];
     replaceFiles = true;
   });
 

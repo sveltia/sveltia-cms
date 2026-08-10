@@ -125,7 +125,7 @@ export const renamingAsset = writable();
 export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], set, update) => {
   set({
     processing: false,
-    undersizedFiles: [],
+    validFiles: [],
     oversizedFiles: [],
     invalidFiles: [],
     transformedFileMap: new WeakMap(),
@@ -143,7 +143,7 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
 
     update(() => ({
       processing: false,
-      undersizedFiles: results
+      validFiles: results
         .filter(({ oversized, invalid }) => !oversized && !invalid)
         .map(({ file }) => file),
       oversizedFiles: results
