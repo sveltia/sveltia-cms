@@ -51,8 +51,8 @@ describe('git/shared/fetch', () => {
     );
 
     mockMetaDB = {
-      get: vi.fn(),
-      set: vi.fn(),
+      entries: vi.fn(),
+      saveEntries: vi.fn(),
     };
 
     mockCacheDB = {
@@ -117,21 +117,11 @@ describe('git/shared/fetch', () => {
     });
 
     it('should use cached file list when hashes match and cache exists', async () => {
-      mockMetaDB.get.mockImplementation((key) => {
-        if (key === 'last_config_hash') {
-          return Promise.resolve(lastConfigHash);
-        }
-
-        if (key === 'last_commit_hash') {
-          return Promise.resolve(lastCommitHash);
-        }
-
-        if (key === 'git_config_fetched') {
-          return Promise.resolve(true);
-        }
-
-        return Promise.resolve(null);
-      });
+      mockMetaDB.entries.mockResolvedValue([
+        ['last_config_hash', lastConfigHash],
+        ['last_commit_hash', lastCommitHash],
+        ['git_config_fetched', true],
+      ]);
 
       const result = await getFileList({
         metaDB: mockMetaDB,
@@ -149,21 +139,11 @@ describe('git/shared/fetch', () => {
     });
 
     it('should fetch new file list when commit hash does not match', async () => {
-      mockMetaDB.get.mockImplementation((key) => {
-        if (key === 'last_config_hash') {
-          return Promise.resolve(lastConfigHash);
-        }
-
-        if (key === 'last_commit_hash') {
-          return Promise.resolve('old-hash');
-        }
-
-        if (key === 'git_config_fetched') {
-          return Promise.resolve(true);
-        }
-
-        return Promise.resolve(null);
-      });
+      mockMetaDB.entries.mockResolvedValue([
+        ['last_config_hash', lastConfigHash],
+        ['last_commit_hash', 'old-hash'],
+        ['git_config_fetched', true],
+      ]);
 
       await getFileList({
         metaDB: mockMetaDB,
@@ -173,27 +153,21 @@ describe('git/shared/fetch', () => {
       });
 
       expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
-      expect(mockMetaDB.set).toHaveBeenCalledWith('last_config_hash', lastConfigHash);
-      expect(mockMetaDB.set).toHaveBeenCalledWith('last_commit_hash', lastCommitHash);
-      expect(mockMetaDB.set).toHaveBeenCalledWith('git_config_fetched', true);
+      expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
+        Object.entries({
+          last_config_hash: lastConfigHash,
+          last_commit_hash: lastCommitHash,
+          git_config_fetched: true,
+        }),
+      );
     });
 
     it('should fetch new file list when config hash does not match', async () => {
-      mockMetaDB.get.mockImplementation((key) => {
-        if (key === 'last_config_hash') {
-          return Promise.resolve('old-config-hash');
-        }
-
-        if (key === 'last_commit_hash') {
-          return Promise.resolve(lastCommitHash);
-        }
-
-        if (key === 'git_config_fetched') {
-          return Promise.resolve(true);
-        }
-
-        return Promise.resolve(null);
-      });
+      mockMetaDB.entries.mockResolvedValue([
+        ['last_config_hash', 'old-config-hash'],
+        ['last_commit_hash', lastCommitHash],
+        ['git_config_fetched', true],
+      ]);
 
       await getFileList({
         metaDB: mockMetaDB,
@@ -203,25 +177,17 @@ describe('git/shared/fetch', () => {
       });
 
       expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
-      expect(mockMetaDB.set).toHaveBeenCalledWith('last_config_hash', lastConfigHash);
+      expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
+        expect.arrayContaining([['last_config_hash', lastConfigHash]]),
+      );
     });
 
     it('should fetch new file list when cache is empty', async () => {
-      mockMetaDB.get.mockImplementation((key) => {
-        if (key === 'last_config_hash') {
-          return Promise.resolve(lastConfigHash);
-        }
-
-        if (key === 'last_commit_hash') {
-          return Promise.resolve(lastCommitHash);
-        }
-
-        if (key === 'git_config_fetched') {
-          return Promise.resolve(true);
-        }
-
-        return Promise.resolve(null);
-      });
+      mockMetaDB.entries.mockResolvedValue([
+        ['last_config_hash', lastConfigHash],
+        ['last_commit_hash', lastCommitHash],
+        ['git_config_fetched', true],
+      ]);
 
       await getFileList({
         metaDB: mockMetaDB,
@@ -572,6 +538,7 @@ describe('git/shared/fetch', () => {
     const mockFetchFileContents = vi.fn().mockResolvedValue({});
 
     beforeEach(() => {
+      mockMetaDB.entries.mockResolvedValue([]);
       mockCacheDB.entries.mockResolvedValue([]);
       vi.mocked(createFileList).mockReturnValue({
         count: 0,
@@ -658,7 +625,7 @@ describe('git/shared/fetch', () => {
       });
 
       mockCacheDB.entries.mockResolvedValue([]);
-      mockMetaDB.get.mockResolvedValue(null);
+      mockMetaDB.entries.mockResolvedValue([]);
 
       await fetchAndParseFiles({
         repository: mockRepository,
@@ -694,7 +661,7 @@ describe('git/shared/fetch', () => {
       });
 
       mockCacheDB.entries.mockResolvedValue([]);
-      mockMetaDB.get.mockResolvedValue(null);
+      mockMetaDB.entries.mockResolvedValue([]);
 
       await fetchAndParseFiles({
         repository: mockRepository,
@@ -728,7 +695,7 @@ describe('git/shared/fetch', () => {
       });
 
       mockCacheDB.entries.mockResolvedValue([]);
-      mockMetaDB.get.mockResolvedValue(null);
+      mockMetaDB.entries.mockResolvedValue([]);
 
       await fetchAndParseFiles({
         repository: mockRepository,
@@ -767,7 +734,7 @@ describe('git/shared/fetch', () => {
 
       mockFetchFileContents.mockResolvedValue(fetchedContent);
       mockCacheDB.entries.mockResolvedValue([]);
-      mockMetaDB.get.mockResolvedValue(null);
+      mockMetaDB.entries.mockResolvedValue([]);
 
       await fetchAndParseFiles({
         repository: mockRepository,
@@ -808,7 +775,7 @@ describe('git/shared/fetch', () => {
         ['posts/post1.md', { sha: 'entry1', text: 'cached content', meta: { cached: true } }],
       ]);
 
-      mockMetaDB.get.mockResolvedValue(null);
+      mockMetaDB.entries.mockResolvedValue([]);
       mockFetchFileContents.mockResolvedValue({
         'posts/post2.md': { sha: 'entry2', text: 'new content' },
       });
@@ -862,7 +829,7 @@ describe('git/shared/fetch', () => {
       });
 
       mockCacheDB.entries.mockResolvedValue([]);
-      mockMetaDB.get.mockResolvedValue(null);
+      mockMetaDB.entries.mockResolvedValue([]);
 
       await fetchAndParseFiles({
         repository: mockRepository,
@@ -872,8 +839,12 @@ describe('git/shared/fetch', () => {
         fetchFileContents: mockFetchFileContents,
       });
 
-      expect(mockMetaDB.set).toHaveBeenCalledWith('last_commit_hash', lastHash);
-      expect(mockMetaDB.set).toHaveBeenCalledWith('last_config_hash', lastConfigHash);
+      expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          ['last_commit_hash', lastHash],
+          ['last_config_hash', lastConfigHash],
+        ]),
+      );
     });
   });
 });

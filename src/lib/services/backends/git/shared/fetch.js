@@ -42,9 +42,12 @@ import { prepareEntries } from '$lib/services/contents/file/process';
  */
 export const getFileList = async ({ metaDB, lastCommitHash, cachedFileEntries, fetchFileList }) => {
   const lastConfigHash = get(cmsConfigVersion);
-  const cachedConfigHash = await metaDB.get('last_config_hash');
-  const cachedCommitHash = await metaDB.get('last_commit_hash');
-  const gitConfigFetched = await metaDB.get('git_config_fetched');
+
+  const {
+    last_config_hash: cachedConfigHash,
+    last_commit_hash: cachedCommitHash,
+    git_config_fetched: gitConfigFetched,
+  } = Object.fromEntries(await metaDB.entries());
 
   // We need to compare the CMS config hash to support cases where multiple CMS instances with
   // different configurations are connected to the same repository, or where the config has been
@@ -71,9 +74,13 @@ export const getFileList = async ({ metaDB, lastCommitHash, cachedFileEntries, f
   // Get a complete file list first, and filter what’s managed in CMS
   const fileList = createFileList(await fetchFileList(lastCommitHash));
 
-  metaDB.set('last_config_hash', lastConfigHash);
-  metaDB.set('last_commit_hash', lastCommitHash);
-  metaDB.set('git_config_fetched', true);
+  metaDB.saveEntries(
+    Object.entries({
+      last_config_hash: lastConfigHash,
+      last_commit_hash: lastCommitHash,
+      git_config_fetched: true,
+    }),
+  );
 
   return fileList;
 };
