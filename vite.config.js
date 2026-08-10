@@ -271,7 +271,7 @@ const generateLocales = async () => {
 
       await writeFile(
         path.resolve(OUTPUT_LOCALES_DIR, `${locale}.json`),
-        JSON.stringify({ ...appStrings, _sui: componentStrings }).concat('\n'),
+        JSON.stringify({ ...appStrings, _sui: componentStrings }),
       );
     }),
   );
