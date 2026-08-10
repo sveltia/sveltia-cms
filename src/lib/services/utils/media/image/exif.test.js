@@ -215,4 +215,42 @@ describe('extractExifData', () => {
       coordinates: undefined,
     });
   });
+
+  test('should handle exifr parse returning nothing', async () => {
+    const mockAsset = /** @type {any} */ ({});
+    const mockBlob = new Blob([''], { type: 'image/jpeg' });
+    const mockParse = vi.fn().mockResolvedValue(undefined);
+    const { loadModule } = await import('$lib/services/app/dependencies');
+    const { getAssetBlob } = await import('$lib/services/assets/info');
+
+    vi.mocked(getAssetBlob).mockResolvedValue(mockBlob);
+    vi.mocked(loadModule).mockResolvedValue({ parse: mockParse });
+
+    const result = await extractExifData(mockAsset, 'image');
+
+    expect(result).toEqual({
+      createdDate: undefined,
+      coordinates: undefined,
+    });
+  });
+
+  test('should handle a failed exifr module load', async () => {
+    const mockAsset = /** @type {any} */ ({});
+    const mockBlob = new Blob([''], { type: 'image/jpeg' });
+    const { loadModule } = await import('$lib/services/app/dependencies');
+    const { getAssetBlob } = await import('$lib/services/assets/info');
+
+    vi.mocked(getAssetBlob).mockResolvedValue(mockBlob);
+    // A network issue or an ad blocker can prevent the UNPKG module from being loaded
+    vi.mocked(loadModule).mockRejectedValue(
+      new Error('Failed to fetch dynamically imported module'),
+    );
+
+    const result = await extractExifData(mockAsset, 'image');
+
+    expect(result).toEqual({
+      createdDate: undefined,
+      coordinates: undefined,
+    });
+  });
 });

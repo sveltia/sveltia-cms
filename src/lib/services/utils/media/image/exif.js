@@ -24,15 +24,20 @@ export const extractExifData = async (asset, kind) => {
     return { createdDate: undefined, coordinates: undefined };
   }
 
-  /** @type {import('exifr')} */
-  const { parse } = await loadModule('exifr', 'dist/lite.esm.mjs');
+  /** @type {Record<string, any>} */
+  let exif = {};
 
-  const {
-    latitude,
-    longitude,
-    DateTimeOriginal,
-    CreateDate: timestamp = DateTimeOriginal,
-  } = (await parse(blob).catch(() => {})) ?? {};
+  try {
+    /** @type {import('exifr')} */
+    const { parse } = await loadModule('exifr', 'dist/lite.esm.mjs');
+
+    exif = (await parse(blob)) ?? {};
+  } catch {
+    // EXIF is optional metadata, so a failed CDN load — due to a network issue or an ad blocker —
+    // or an unparsable file shouldn’t block the caller
+  }
+
+  const { latitude, longitude, DateTimeOriginal, CreateDate: timestamp = DateTimeOriginal } = exif;
 
   return {
     createdDate: timestamp instanceof Date ? timestamp : undefined,
