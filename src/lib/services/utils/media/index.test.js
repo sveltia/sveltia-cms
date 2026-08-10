@@ -11,17 +11,50 @@ vi.mock('$lib/services/utils/media/image/exif', () => ({
  * Mock Image class factory.
  * @param {number} width Image width.
  * @param {number} height Image height.
+ * @param {string} [firedEvent] Event to be simulated.
  * @returns {object} Mock image instance.
  */
-function createMockImage(width = 800, height = 600) {
+function createMockImage(width = 800, height = 600, firedEvent = 'load') {
   return {
     naturalWidth: width,
     naturalHeight: height,
     src: '',
     addEventListener: vi.fn(
       (/** @type {string} */ event, /** @type {(ev: any) => void} */ callback) => {
-        if (event === 'load') {
-          // Simulate image load
+        if (event === firedEvent) {
+          // Simulate image load or failure
+          setTimeout(callback, 0);
+        }
+      },
+    ),
+  };
+}
+
+/**
+ * Replace the global `Image` constructor with a mock.
+ * @param {object} instance Mock image instance to be returned by the constructor.
+ */
+function stubImage(instance) {
+  // @ts-ignore - the mock doesn’t fully implement the `HTMLImageElement` interface
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  global.Image = function Image() {
+    return instance;
+  };
+}
+
+/**
+ * Mock media element factory.
+ * @param {object} props Properties of the element, such as `duration` and `videoWidth`.
+ * @param {string} [firedEvent] Event to be simulated.
+ * @returns {object} Mock media element.
+ */
+function createMockMedia(props, firedEvent = 'loadedmetadata') {
+  return {
+    ...props,
+    src: '',
+    addEventListener: vi.fn(
+      (/** @type {string} */ event, /** @type {(ev: any) => void} */ callback) => {
+        if (event === firedEvent) {
           setTimeout(callback, 0);
         }
       },
@@ -240,6 +273,74 @@ describe('getMediaMetadata', () => {
 
     expect(result).toEqual({
       dimensions: { width: 0, height: 0 },
+      duration: undefined,
+      createdDate: undefined,
+      coordinates: undefined,
+    });
+  });
+
+  test('should resolve without dimensions when the image cannot be decoded', async () => {
+    const mockAsset = /** @type {any} */ ({ kind: 'image' });
+    const { extractExifData } = await import('$lib/services/utils/media/image/exif');
+
+    vi.mocked(extractExifData).mockResolvedValue({
+      createdDate: undefined,
+      coordinates: undefined,
+    });
+
+    // A HEIC image saved with a `.jpg` extension fires `error` instead of `load`
+    stubImage(createMockImage(0, 0, 'error'));
+
+    const result = await getMediaMetadata(mockAsset, 'blob:undecodable', 'image');
+
+    expect(result).toEqual({
+      dimensions: undefined,
+      duration: undefined,
+      createdDate: undefined,
+      coordinates: undefined,
+    });
+  });
+
+  test('should resolve without dimensions when the video cannot be decoded', async () => {
+    const mockAsset = /** @type {any} */ ({ kind: 'video' });
+    const { extractExifData } = await import('$lib/services/utils/media/image/exif');
+
+    vi.mocked(extractExifData).mockResolvedValue({
+      createdDate: undefined,
+      coordinates: undefined,
+    });
+
+    const mockVideo = createMockMedia({ duration: NaN, videoWidth: 0, videoHeight: 0 }, 'error');
+
+    vi.stubGlobal('document', { createElement: vi.fn(() => mockVideo) });
+
+    const result = await getMediaMetadata(mockAsset, 'blob:undecodable', 'video');
+
+    expect(result).toEqual({
+      dimensions: undefined,
+      duration: undefined,
+      createdDate: undefined,
+      coordinates: undefined,
+    });
+  });
+
+  test('should resolve without duration when the audio cannot be decoded', async () => {
+    const mockAsset = /** @type {any} */ ({ kind: 'audio' });
+    const { extractExifData } = await import('$lib/services/utils/media/image/exif');
+
+    vi.mocked(extractExifData).mockResolvedValue({
+      createdDate: undefined,
+      coordinates: undefined,
+    });
+
+    const mockAudio = createMockMedia({ duration: NaN }, 'error');
+
+    vi.stubGlobal('document', { createElement: vi.fn(() => mockAudio) });
+
+    const result = await getMediaMetadata(mockAsset, 'blob:undecodable', 'audio');
+
+    expect(result).toEqual({
+      dimensions: undefined,
       duration: undefined,
       createdDate: undefined,
       coordinates: undefined,
