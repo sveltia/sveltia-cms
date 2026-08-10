@@ -1543,7 +1543,6 @@ prefs:
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: 注册 <a {$homeHref}>{$service}</a> 并在<a {$apiKeyHref}>此处</a>输入您的 API 密钥，即可快速翻译文本字段。
-      # placeholder: no description needed
 
   # Media panel
   media:
