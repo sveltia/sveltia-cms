@@ -474,6 +474,19 @@ describe('integrations/media-libraries/default', () => {
       expect(result.type).toBe('image/webp');
     });
 
+    it('should return original file when the image cannot be decoded', async () => {
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+
+      // A HEIC image saved with a `.jpg` extension can’t be decoded, so the transformation fails
+      vi.mocked(transformImage).mockRejectedValue(new Error('Failed to decode image'));
+
+      const transformations = /** @type {any} */ ({ jpeg: { format: 'webp' } });
+      const result = await transformFile(jpegFile, transformations);
+
+      // The upload proceeds with the original file rather than hanging or failing
+      expect(result).toBe(jpegFile);
+    });
+
     it('should transform raster image with generic raster_image transformation', async () => {
       const { transformImage } = await import('$lib/services/utils/media/image/transform');
       const mockBlob = new Blob(['transformed'], { type: 'image/webp' });

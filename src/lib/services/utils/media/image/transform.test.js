@@ -14,6 +14,34 @@ vi.mock('$lib/services/utils/media/image/resize', () => ({
   resizeCanvas: vi.fn(),
 }));
 
+/**
+ * Create a mock element that fires `error` instead of the success event, simulating a file the
+ * browser cannot decode, such as a HEIC image saved with a `.jpg` extension.
+ * @returns {any} Mock element.
+ */
+function createUndecodableElement() {
+  return {
+    addEventListener: vi.fn((/** @type {string} */ event, /** @type {() => void} */ callback) => {
+      if (event === 'error') {
+        setTimeout(callback, 0);
+      }
+    }),
+    style: {},
+  };
+}
+
+/**
+ * Mock `Image` class that always fails to decode.
+ */
+class UndecodableImage {
+  /**
+   * Create a mock image instance.
+   */
+  constructor() {
+    Object.assign(this, createUndecodableElement());
+  }
+}
+
 describe('Image Transform Functions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -281,6 +309,33 @@ describe('Image Transform Functions', () => {
     expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
   });
 
+  test('createImageSource should reject when the image cannot be decoded', async () => {
+    // A HEIC image saved with a `.jpg` extension fires `error` instead of `load`
+    // @ts-ignore - the mock is compatible enough for this test
+    global.Image = UndecodableImage;
+
+    const mockBlob = new Blob(['not an image'], { type: 'image/jpeg' });
+    const { createImageSource } = await import('./transform.js');
+
+    await expect(createImageSource({ blob: mockBlob })).rejects.toThrow('Failed to decode image');
+    // The object URL is released rather than leaked
+    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+  });
+
+  test('createVideoSource should reject when the video cannot be decoded', async () => {
+    const videoElement = createUndecodableElement();
+
+    global.document.createElement = vi.fn(() => videoElement);
+
+    const mockBlob = new Blob(['not a video'], { type: 'video/mp4' });
+    const { createVideoSource } = await import('./transform.js');
+
+    await expect(createVideoSource({ blob: mockBlob })).rejects.toThrow('Failed to decode video');
+    // The element is detached and the object URL released rather than leaked
+    expect(global.document.body.removeChild).toHaveBeenCalledWith(videoElement);
+    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+  });
+
   test('createSource should delegate to createVideoSource for video blobs', async () => {
     const mockBlob = new Blob(['video data'], { type: 'video/mp4' });
     const { createSource } = await import('./transform.js');
@@ -339,6 +394,19 @@ describe('Image Transform Functions', () => {
     expect(global.createImageBitmap).toHaveBeenCalledWith(mockBlob);
     expect(global.Image).toHaveBeenCalled(); // Fallback to createImageSource
     expect(result).toBe(mockResultBlob);
+  });
+
+  test('transformImage should reject when the fallback source cannot be decoded', async () => {
+    // @ts-ignore - the mock is compatible enough for this test
+    global.Image = UndecodableImage;
+
+    const mockBlob = new Blob(['heic data'], { type: 'image/jpeg' });
+    const { transformImage } = await import('./transform.js');
+
+    vi.mocked(global.createImageBitmap).mockRejectedValue(new Error('Not supported'));
+
+    // Both `createImageBitmap` and the `<img>` fallback fail, so there’s no source to draw
+    await expect(transformImage(mockBlob)).rejects.toThrow('Failed to decode image');
   });
 
   test('transformImage should handle video source and clean up', async () => {

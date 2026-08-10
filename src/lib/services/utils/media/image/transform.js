@@ -26,12 +26,13 @@ export const THUMBNAIL_TRANSFORM_OPTIONS = {
  * @param {File | Blob} args.blob File or blob to be converted to an image source.
  * @returns {Promise<{ source: CanvasImageSource, naturalWidth: number, naturalHeight: number }>}
  * Image element and its natural dimensions.
+ * @throws {Error} If the browser cannot decode the image.
  */
 export const createImageSource = async ({ blob }) => {
   const blobURL = URL.createObjectURL(blob);
   const image = new Image();
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     image.addEventListener(
       'load',
       () => {
@@ -45,6 +46,18 @@ export const createImageSource = async ({ blob }) => {
       },
       { once: true },
     );
+
+    // Files the browser can’t decode, such as a HEIC image saved with a `.jpg` extension, fire
+    // `error` instead of `load`
+    image.addEventListener(
+      'error',
+      () => {
+        URL.revokeObjectURL(blobURL);
+        reject(new Error('Failed to decode image'));
+      },
+      { once: true },
+    );
+
     image.src = blobURL;
   });
 };
@@ -56,12 +69,13 @@ export const createImageSource = async ({ blob }) => {
  * @param {File | Blob} args.blob File or blob to be converted to an video source.
  * @returns {Promise<{ source: CanvasImageSource, naturalWidth: number, naturalHeight: number }>}
  * Video element and its natural dimensions.
+ * @throws {Error} If the browser cannot decode the video.
  */
 export const createVideoSource = async ({ blob }) => {
   const blobURL = URL.createObjectURL(blob);
   const video = document.createElement('video');
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     video.addEventListener(
       'canplay',
       () => {
@@ -78,15 +92,29 @@ export const createVideoSource = async ({ blob }) => {
       { once: true },
     );
 
+    // Files the browser can’t decode fire `error` instead of `canplay`. The element is removed here
+    // because the caller only cleans it up on the success path.
+    video.addEventListener(
+      'error',
+      () => {
+        document.body.removeChild(video);
+        URL.revokeObjectURL(blobURL);
+        reject(new Error('Failed to decode video'));
+      },
+      { once: true },
+    );
+
     video.muted = true;
     video.autoplay = true;
     video.playsInline = true;
-    video.src = blobURL;
 
     // Add `<video>` to DOM or it won’t be rendered on canvas
     video.style.opacity = '0';
     video.style.pointerEvents = 'none';
     document.body.appendChild(video);
+
+    // Assign the source last, so the element is already in the DOM when `error` fires
+    video.src = blobURL;
   });
 };
 
