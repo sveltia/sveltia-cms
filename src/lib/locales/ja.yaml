@@ -685,6 +685,16 @@ warning_oversized_files: |
     one {{ このファイルは最大サイズ {$size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください。 }}
     *   {{ これらのファイルは最大サイズ {$size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください。 }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: 無効なファイル
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ このファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
+    *   {{ これらのファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -1186,6 +1196,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: 大きなファイル
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: 無効なファイル
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: アップロードできないファイル
 
   # Photo credit dialog (stock photos)
   photo_credit:

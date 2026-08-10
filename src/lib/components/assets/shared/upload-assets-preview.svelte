@@ -14,6 +14,8 @@
    * @property {WeakMap<File, File>} [transformedFileMap] Mapping of transformed files and the
    * originals.
    * @property {boolean} [removable] Whether to show the Remove button on each row.
+   * @property {boolean} [showThumbnail] Whether to show a thumbnail of each image file. Disable
+   * this for files the browser cannot decode, which would only ever render as a broken image.
    */
 
   /** @type {Props} */
@@ -22,6 +24,7 @@
     files = $bindable([]),
     transformedFileMap = undefined,
     removable = true,
+    showThumbnail = true,
     /* eslint-enable prefer-const */
   } = $props();
 </script>
@@ -32,7 +35,7 @@
       {@const { name, type, size } = file}
       {@const originalFile = transformedFileMap?.get(file)}
       <div role="listitem" class="file">
-        {#if SUPPORTED_IMAGE_TYPES.includes(type)}
+        {#if showThumbnail && SUPPORTED_IMAGE_TYPES.includes(type)}
           <Image src={URL.createObjectURL(file)} variant="icon" checkerboard={true} />
         {:else}
           <span role="none" class="image">

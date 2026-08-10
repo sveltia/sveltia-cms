@@ -15,6 +15,18 @@ import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
  * @import { DefaultMediaLibraryConfig } from '$lib/types/public';
  */
 
+/**
+ * @typedef {object} ProcessResourceResult
+ * @property {string | undefined} value Field value for the resource: a public asset path, an
+ * external URL, or a temporary blob URL for a file pending upload. `undefined` if the resource
+ * cannot be used.
+ * @property {string} credit Sanitized photo credit, if the resource comes from a stock photo
+ * service.
+ * @property {string | undefined} oversizedFileName File name if the file exceeds the size limit.
+ * @property {string | undefined} invalidFileName File name if the file is corrupt or mislabeled and
+ * therefore cannot be decoded.
+ */
+
 const FOLDER_PATH_REGEX = /(?<path>.+?)(?:\/[^/]+)?$/;
 
 /**
@@ -130,8 +142,7 @@ const getSavedAssetsForEntry = (draft, folder) => {
  * @param {EntryDraft} args.draft Entry draft containing the resource.
  * @param {SelectedResource} args.resource Resource to be processed.
  * @param {DefaultMediaLibraryConfig} args.libraryConfig Configuration for the media library.
- * @returns {Promise<{ value: string | undefined, credit: string, oversizedFileName: string |
- * undefined }>} Processed resource value, credit, and file name if the file is oversized.
+ * @returns {Promise<ProcessResourceResult>} Result of processing the resource.
  */
 export const processResource = async ({ draft, resource, libraryConfig }) => {
   const { url, credit, replace = false } = resource;
@@ -148,9 +159,17 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
     if (existingBlobURL) {
       value = existingBlobURL;
     } else {
-      const { file: processedFile, oversized } = await processFile(file, libraryConfig ?? {});
+      const {
+        file: processedFile,
+        oversized,
+        invalid,
+      } = await processFile(file, libraryConfig ?? {});
 
       file = processedFile;
+
+      if (invalid) {
+        return { value: undefined, credit: '', oversizedFileName, invalidFileName: file.name };
+      }
 
       const sha = await getGitHash(file);
 
@@ -198,5 +217,6 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
     value,
     credit: credit ? sanitize(credit, LINK_SANITIZE_OPTIONS) : '',
     oversizedFileName,
+    invalidFileName: undefined,
   };
 };

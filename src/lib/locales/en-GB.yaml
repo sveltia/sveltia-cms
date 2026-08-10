@@ -731,6 +731,16 @@ warning_oversized_files: |
     one {{ This file cannot be uploaded because it exceeds the maximum size of {$size}. Please reduce the size or select a different file. }}
     *   {{ These files cannot be uploaded because they exceed the maximum size of {$size}. Please reduce the sizes or select different files. }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Invalid Files
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ This file cannot be uploaded because it’s damaged, or its content doesn’t match its file extension. This often happens when a photo is renamed rather than converted, such as a HEIC image saved as a JPEG file. Please convert the file and try again. }}
+    *   {{ These files cannot be uploaded because they’re damaged, or their content doesn’t match their file extensions. This often happens when photos are renamed rather than converted, such as HEIC images saved as JPEG files. Please convert the files and try again. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -1259,6 +1269,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: Large File
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Invalid File
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Files Cannot Be Uploaded
 
   # Photo credit dialog (stock photos)
   photo_credit:

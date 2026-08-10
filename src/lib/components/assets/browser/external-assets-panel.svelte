@@ -23,7 +23,7 @@
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import OversizeAlertDialog from '$lib/components/assets/shared/oversize-alert-dialog.svelte';
+  import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
   import { processFile } from '$lib/services/assets/process';
   import { cmsConfig } from '$lib/services/config';
   import { selectAssetsView } from '$lib/services/contents/editor';
@@ -109,7 +109,9 @@
   let uploadingToast = $state({ show: false, status: 'info', length: 0 });
   /** @type {string[]} */
   let oversizedFileNames = $state([]);
-  let showOversizeAlert = $state(false);
+  /** @type {string[]} */
+  let invalidFileNames = $state([]);
+  let showRejectedFilesAlert = $state(false);
 
   /** @type {MediaLibraryFetchOptions} */
   const listFetchOptions = $derived({ kind, fieldConfig, apiKey, userName, password });
@@ -178,14 +180,18 @@
 
     const processed = await Promise.all(files.map((f) => processFile(f, allMediaLibraryOptions)));
 
-    files = processed.filter(({ oversized }) => !oversized).map(({ file }) => file);
+    files = processed
+      .filter(({ oversized, invalid }) => !oversized && !invalid)
+      .map(({ file }) => file);
 
     oversizedFileNames = processed
-      .filter(({ oversized }) => oversized)
+      .filter(({ oversized, invalid }) => oversized && !invalid)
       .map(({ file }) => file.name);
 
-    if (oversizedFileNames.length) {
-      showOversizeAlert = true;
+    invalidFileNames = processed.filter(({ invalid }) => invalid).map(({ file }) => file.name);
+
+    if (oversizedFileNames.length || invalidFileNames.length) {
+      showRejectedFilesAlert = true;
     }
 
     if (!files.length) {
@@ -437,7 +443,12 @@
   </Alert>
 </Toast>
 
-<OversizeAlertDialog bind:open={showOversizeAlert} {oversizedFileNames} {maxSize} />
+<RejectedFilesAlertDialog
+  bind:open={showRejectedFilesAlert}
+  {oversizedFileNames}
+  {invalidFileNames}
+  {maxSize}
+/>
 
 <style>
   .grid-wrapper {

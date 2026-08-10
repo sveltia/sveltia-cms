@@ -39,6 +39,9 @@ vi.mock('@sveltia/utils/string', async () => {
 });
 vi.mock('flat');
 vi.mock('$lib/services/integrations/media-libraries/default');
+vi.mock('$lib/services/utils/media/image/validate', () => ({
+  isValidImage: vi.fn().mockResolvedValue(true),
+}));
 vi.mock('$lib/services/common/slug');
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/contents/collection');
@@ -158,6 +161,7 @@ describe('assets/index', () => {
         processing: false,
         undersizedFiles: [],
         oversizedFiles: [],
+        invalidFiles: [],
         transformedFileMap: expect.any(WeakMap),
       });
     });
@@ -194,6 +198,39 @@ describe('assets/index', () => {
       expect(latestState.processing).toBe(false);
       expect(latestState.undersizedFiles).toEqual([smallFile]);
       expect(latestState.oversizedFiles).toEqual([largeFile]);
+    });
+
+    it('should separate files the browser cannot decode', async () => {
+      const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+      const goodFile = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
+      // A HEIC photo saved with a `.jpg` extension
+      const badFile = new File(['ftypheic'], 'IMG_0001.jpg', { type: 'image/jpeg' });
+
+      Object.defineProperty(goodFile, 'size', { value: 500 });
+      Object.defineProperty(badFile, 'size', { value: 500 });
+
+      vi.mocked(isValidImage).mockImplementation(async (file) => file !== badFile);
+
+      let latestState = /** @type {any} */ (null);
+
+      const unsubscribe = processedAssets.subscribe((state) => {
+        latestState = state;
+      });
+
+      uploadingAssets.set({ folder: undefined, files: [goodFile, badFile] });
+
+      // Wait for async processing
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      unsubscribe();
+      vi.mocked(isValidImage).mockResolvedValue(true);
+
+      // The invalid file is excluded from the uploadable list, not just flagged
+      expect(latestState.undersizedFiles).toEqual([goodFile]);
+      expect(latestState.oversizedFiles).toEqual([]);
+      expect(latestState.invalidFiles).toEqual([badFile]);
     });
 
     it('should handle file transformations', async () => {

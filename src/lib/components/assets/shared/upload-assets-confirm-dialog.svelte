@@ -20,7 +20,7 @@
 
   const { files: originalFiles, folder, originalAssets } = $derived($uploadingAssets);
   const originalAsset = $derived(originalAssets?.[0]);
-  const { processing, undersizedFiles, oversizedFiles, transformedFileMap } =
+  const { processing, undersizedFiles, oversizedFiles, invalidFiles, transformedFileMap } =
     $derived($processedAssets);
   const { max_file_size: maxSize } = $derived(getDefaultMediaLibraryOptions().config);
   const assetsInSameFolder = $derived(
@@ -93,6 +93,15 @@
       <UploadAssetsPreview files={oversizedFiles} {transformedFileMap} removable={false} />
     </div>
   {/if}
+  {#if invalidFiles.length}
+    <div role="group" class="section invalid" aria-label={_('invalid_files')}>
+      <Alert status="warning">
+        {_('warning_invalid_files', { values: { count: invalidFiles.length } })}
+      </Alert>
+      <!-- An invalid file is never transformed, so there’s no original to map it back to -->
+      <UploadAssetsPreview files={invalidFiles} removable={false} showThumbnail={false} />
+    </div>
+  {/if}
   {#if dupFileCount}
     <div role="group" class="section">
       {_('file_name_conflict_confirmation', { values: { count: dupFileCount } })}
@@ -123,7 +132,8 @@
       flex: none;
     }
 
-    &.oversized :global(.files) {
+    &.oversized :global(.files),
+    &.invalid :global(.files) {
       opacity: 0.5;
     }
   }

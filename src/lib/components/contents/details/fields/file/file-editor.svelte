@@ -14,7 +14,7 @@
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
   import ConflictResolutionDialog from '$lib/components/assets/shared/conflict-resolution-dialog.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import OversizeAlertDialog from '$lib/components/assets/shared/oversize-alert-dialog.svelte';
+  import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
   import FileEditorItem from '$lib/components/contents/details/fields/file/file-editor-item.svelte';
   import UploadButton from '$lib/components/contents/details/fields/file/upload-button.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
@@ -75,7 +75,7 @@
   let showSelectAssetsDialog = $state(false);
   let replaceMode = $state(false);
   let replaceIndex = $state(-1);
-  let showOversizeAlert = $state(false);
+  let showRejectedFilesAlert = $state(false);
   let showPhotoCreditDialog = $state(false);
   let photoCredit = $state('');
   /** @type {DropZone | undefined} */
@@ -83,6 +83,8 @@
   let processing = $state(false);
   /** @type {string[]} */
   let oversizedFileNames = $state([]);
+  /** @type {string[]} */
+  let invalidFileNames = $state([]);
   /** @type {File[]} */
   let pendingFiles = $state([]);
   /** @type {Asset[]} */
@@ -186,6 +188,7 @@
     resetSelection();
     processing = true;
     oversizedFileNames = [];
+    invalidFileNames = [];
 
     const resources = await Promise.all(
       selectedResources.map((resource) => {
@@ -209,7 +212,7 @@
           .pop() ?? -1)
       : -1;
 
-    resources.forEach(({ value, credit, oversizedFileName }, index) => {
+    resources.forEach(({ value, credit, oversizedFileName, invalidFileName }, index) => {
       if (value) {
         hasValidResource = true;
 
@@ -231,6 +234,10 @@
       if (oversizedFileName) {
         oversizedFileNames.push(oversizedFileName);
       }
+
+      if (invalidFileName) {
+        invalidFileNames.push(invalidFileName);
+      }
     });
 
     // Restore the previous value if no valid resources were processed, so that a failed
@@ -246,8 +253,8 @@
       photoCredit = '';
     }
 
-    if (oversizedFileNames.length) {
-      showOversizeAlert = true;
+    if (oversizedFileNames.length || invalidFileNames.length) {
+      showRejectedFilesAlert = true;
     }
 
     processing = false;
@@ -428,7 +435,12 @@
 
 <ConflictResolutionDialog />
 
-<OversizeAlertDialog bind:open={showOversizeAlert} {oversizedFileNames} {maxSize} />
+<RejectedFilesAlertDialog
+  bind:open={showRejectedFilesAlert}
+  {oversizedFileNames}
+  {invalidFileNames}
+  {maxSize}
+/>
 
 <ConfirmationDialog
   bind:open={showPhotoCreditDialog}

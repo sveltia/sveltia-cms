@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { processFile } from './process';
 
 vi.mock('$lib/services/integrations/media-libraries/default');
+vi.mock('$lib/services/utils/media/image/validate', () => ({
+  isValidImage: vi.fn().mockResolvedValue(true),
+}));
 vi.mock('$lib/services/utils/file');
 
 describe('assets/process', () => {
@@ -17,9 +20,35 @@ describe('assets/process', () => {
 
     // Default: return the original file unchanged
     vi.mocked(transformFile).mockImplementation(async (file) => file);
+
+    const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+
+    // Default: the file is decodable. `clearAllMocks()` doesn’t reset implementations, so this is
+    // reset here rather than left to leak from a test that overrides it.
+    vi.mocked(isValidImage).mockResolvedValue(true);
   });
 
   describe('processFile', () => {
+    it('should flag a file the browser cannot decode as invalid', async () => {
+      const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+      const { transformFile } = await import('$lib/services/integrations/media-libraries/default');
+
+      vi.mocked(isValidImage).mockResolvedValue(false);
+
+      const file = new File(['ftypheic'], 'IMG_0001.jpg', { type: 'image/jpeg' });
+
+      const result = await processFile(file, {
+        transformations: /** @type {any} */ ({ raster_image: { format: 'webp' } }),
+      });
+
+      expect(result.invalid).toBe(true);
+      expect(result.file).toBe(file);
+      expect(result.oversized).toBe(false);
+      expect(result.originalFile).toBeUndefined();
+      // There’s nothing to transform, so the work is skipped
+      expect(transformFile).not.toHaveBeenCalled();
+    });
+
     it('should return the original file unchanged with no options', async () => {
       const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
       const result = await processFile(file);

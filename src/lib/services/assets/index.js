@@ -127,6 +127,7 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
     processing: false,
     undersizedFiles: [],
     oversizedFiles: [],
+    invalidFiles: [],
     transformedFileMap: new WeakMap(),
   });
 
@@ -142,8 +143,13 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
 
     update(() => ({
       processing: false,
-      undersizedFiles: results.filter(({ oversized }) => !oversized).map(({ file }) => file),
-      oversizedFiles: results.filter(({ oversized }) => oversized).map(({ file }) => file),
+      undersizedFiles: results
+        .filter(({ oversized, invalid }) => !oversized && !invalid)
+        .map(({ file }) => file),
+      oversizedFiles: results
+        .filter(({ oversized, invalid }) => oversized && !invalid)
+        .map(({ file }) => file),
+      invalidFiles: results.filter(({ invalid }) => invalid).map(({ file }) => file),
       transformedFileMap: new WeakMap(
         results
           .filter(({ originalFile }) => originalFile !== undefined)

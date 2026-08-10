@@ -41,6 +41,10 @@ vi.mock('$lib/services/utils/file', () => ({
   getGitHash: vi.fn(),
 }));
 
+vi.mock('$lib/services/utils/media/image/validate', () => ({
+  isValidImage: vi.fn().mockResolvedValue(true),
+}));
+
 vi.mock('$lib/services/assets/kinds', () => ({
   getAssetKind: vi.fn(),
 }));
@@ -84,9 +88,12 @@ describe('Test processResource()', () => {
     transformFileMock = /** @type {any} */ (vi.mocked(transformFile));
     getGitHashMock = /** @type {any} */ (vi.mocked(getGitHash));
 
+    const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+
     // Default mock implementations
     domPurifyMock.mockImplementation((/** @type {string} */ input) => String(input));
     getMock.mockReturnValue([]);
+    vi.mocked(isValidImage).mockResolvedValue(true);
   });
 
   test('should process resource with URL', async () => {
@@ -228,6 +235,31 @@ describe('Test processResource()', () => {
       folder: { name: 'uploads' },
       replace: false,
     });
+  });
+
+  test('should reject a file the browser cannot decode', async () => {
+    const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+
+    // A HEIC photo saved with a `.jpg` extension
+    vi.mocked(isValidImage).mockResolvedValue(false);
+
+    const mockFile = new File(['ftypheic'], 'IMG_0001.jpg', { type: 'image/jpeg' });
+    // @ts-ignore - Simplified draft for testing
+    const draft = { files: {} };
+    // @ts-ignore - Simplified resource for testing
+    const resource = { file: mockFile, folder: { name: 'uploads' }, credit: '' };
+
+    getHashMock.mockResolvedValue('new-file-hash');
+    getGitHashMock.mockResolvedValue('git-hash');
+    getMock.mockReturnValue([]);
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig: {} });
+
+    expect(result.invalidFileName).toBe('IMG_0001.jpg');
+    expect(result.value).toBeUndefined();
+    // The file isn’t queued for upload
+    expect(draft.files).toEqual({});
   });
 
   test('should handle oversized file', async () => {
