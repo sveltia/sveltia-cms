@@ -74,7 +74,7 @@ folder: 文件夹
 # Miscellaneous Labels
 # ==============================================================================
 # Various labels used across the application for specific UI elements
-# that don't fit into other categories.
+# that don’t fit into other categories.
 
 # Field and input labels
 api_key: API 密钥
@@ -88,7 +88,7 @@ later: 稍后
 # Entry and collection labels
 # Slug field heading in entry editors
 slug: 别名
-# Fallback labels for singleton collections when names aren't configured
+# Fallback labels for singleton collections when names aren’t configured
 singleton: 独立条目
 singletons: 独立条目
 
@@ -203,7 +203,7 @@ sign_in_with_mobile_instruction: 使用手机或平板扫描下方二维码即�
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
-# {$name} is the signed-in user's login name
+# {$name} is the signed-in user’s login name
 signed_in_as_x: '当前以 {$name} 身份登录'
 working_with_local_repo: 正在使用本地仓库
 working_with_test_repo: 正在使用测试仓库
@@ -231,7 +231,7 @@ mobile_promo_title: Sveltia CMS 现已支持移动端！
 mobile_promo_button: 立即体验
 
 # New language infobar: encouraging users to switch to a newly available language
-# {$locale} is the localized language name, e.g., "French"
+# {$locale} is the localized language name, e.g., “French”
 new_language_available: Sveltia CMS 现已支持 {$locale}！
 change_language: 切换语言
 
@@ -318,7 +318,7 @@ files: 文件
 
 # Asset location selector: option group labels
 asset_location:
-  # Assets stored in the site's Git repository
+  # Assets stored in the site’s Git repository
   repository: 您的站点
   external: 外部位置
   stock_photos: 图库照片
@@ -366,7 +366,7 @@ collection_not_found: 未找到集合。
 file_not_found: 未找到文件。
 
 # Selection count indicator
-# Shown in the toolbar when items are selected (e.g., "2 of 10 selected")
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
 # {$selected} is the selected item count and {$total} is the total item count
 x_of_x_selected: '已选 {$selected} / {$total} 个'
 
@@ -391,16 +391,16 @@ sort_keys:
   none: 无
   name: 名称
   slug: 别名
-  # Sort by the last commit's author name
+  # Sort by the last commit’s author name
   commit_author: 更新者
   # Sort by the last commit date
   commit_date: 更新时间
-  # Sort by the entry's computed summary text
+  # Sort by the entry’s computed summary text
   _summary: 摘要
   # Manual order defined by the user via drag-and-drop
   _manual: 手动
 # Sort order labels used with field names
-# Example: "Name, A to Z" or "Updated on, new to old"
+# Example: “Name, A to Z” or “Updated on, new to old”
 # {$label} is the localized sort field label
 ascending: '{$label} (A–Z)'
 ascending_date: '{$label}（旧到新）'
@@ -445,7 +445,7 @@ entry_not_found: 未找到条目。
 
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: 管理员禁止在此集合中创建新条目。
-# {$quota} is the collection's maximum entry count
+# {$quota} is the collection’s maximum entry count
 creating_entries_disabled_by_quota: 您无法向此集合添加新条目，因已达到 {$quota} 个条目的上限。
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
@@ -558,14 +558,14 @@ drop_files_or_click_to_browse: |
     * {{ 将文件拖放到此处或点击浏览…… }}
 # Partial drop zone text (ends with inline button)
 # {$count} is the number of files expected by the current picker mode
-# After the "or" text, the inline buttons are rendered with the localized strings
+# After the “or” text, the inline buttons are rendered with the localized strings
 drop_files_or: |
   .input {$count :integer}
   .match $count
     * {{ 将文件拖放到此处或 }}
 # Image-specific drop zone text
 # {$count} is the number of image files expected by the current picker mode
-# After the "or" text, the inline buttons are rendered with the localized strings
+# After the “or” text, the inline buttons are rendered with the localized strings
 drop_image_files_or: |
   .input {$count :integer}
   .match $count
@@ -738,7 +738,7 @@ file_meta_converted_from_x: (由 {$type} 转换而来)
 no_entries_created: 此集合目前没有条目。
 # Button to create first entry
 create_new_entry: 创建新条目
-# "Entry" option label in the create button menu
+# “Entry” option label in the create button menu
 entry: 条目
 
 # Special entry types
@@ -898,7 +898,7 @@ show_content_options_x_locale: 显示 {$locale} 内容选项
 content_options_x_locale: '{$locale} 内容选项'
 
 # Field container labels
-# {$field} is the field's display label
+# {$field} is the field’s display label
 x_field: '「{$field}」字段'
 
 # Field options menu
@@ -1137,7 +1137,7 @@ move_up: 上移
 move_down: 下移
 
 # Add item button label
-# Example: "Add Image", "Add Author"
+# Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: 添加 {$name}
 
@@ -1327,7 +1327,7 @@ config:
     collection: '{$collection} 集合'
     file: '{$file} 文件'
     component: '{$component} 组件'
-    # Don't localize `{$field}`
+    # Don’t localize `{$field}`
     field: '`{$field}` 字段'
 
   # Configuration error messages
@@ -1341,7 +1341,7 @@ config:
     fetch_failed: 无法获取配置文件。
     # {$status} is the HTTP status code returned while fetching the config file
     fetch_failed_not_ok: HTTP 响应返回状态码 {$status}。
-    # Don't localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
     fetch_failed_with_manual_init: '无法获取配置文件。要阻止加载 `config.yml`，请在传递给 `CMS.init()` 的配置对象中添加 <a>`load_config_file: false`</a>。'
     parse_failed: 无法解析配置文件。
     parse_failed_invalid_object: 配置文件不是有效的 JavaScript 对象。
@@ -1360,48 +1360,48 @@ config:
     oauth_implicit_flow: Sveltia CMS 不支持配置的认证方法（隐式授权）。请改用其他<a>认证方法</a>。
     github_pkce_unsupported: 由于 GitHub 的限制，暂不支持 PKCE 授权。请改用其他<a>认证方法</a>。
     oauth_no_app_id: 未定义 OAuth 应用程序 ID。
-    # Don't localize `auth_methods`
+    # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` 选项必须至少包含一种方法。'
     missing_media_folder: 未定义媒体文件夹。
     invalid_media_folder: 配置的媒体文件夹无效。必须为字符串。
     invalid_public_folder: 配置的公共文件夹无效。必须为字符串。
     public_folder_relative_path: 配置的公共文件夹无效。必须是以「/」开头的绝对路径。
     public_folder_absolute_url: Sveltia CMS 不支持为公共文件夹选项设置绝对 URL。
-    # Don't localize `asset_collections`
+    # Don’t localize `asset_collections`
     invalid_asset_collections: '`asset_collections` 选项无效。必须为数组。'
-    # {$count} is the 1-based asset collection index in the configuration array. Don't localize `name`
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: 资源集合 {$count} 必须将 `name` 选项定义为非空字符串。
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: 资源集合名称「{$name}」无效。不能包含特殊字符。
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: 资源集合名称必须唯一，但「{$name}」使用了多次。
-    # Don't localize `media_folder`
+    # Don’t localize `media_folder`
     asset_collection_invalid_media_folder: '{$name} 资源集合必须将 `media_folder` 选项定义为字符串。'
-    # Don't localize `folder`, `files`, and `divider`
+    # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: 集合必须定义 `folder`、`files` 或 `divider` 选项。
-    # Don't localize `folder`, `files`, and `divider`
+    # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_multiple_options: 集合不能同时设置 `folder`、`files` 和 `divider` 选项。
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: '`{$extension}` 扩展名与 `{$format}` 格式不匹配。'
-    # {$slug} is the invalid slug template from the configuration; Don't localize `path` and `slug`
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: 别名模板「{$slug}」无效，因为它不能包含斜杠。要按子文件夹组织条目，请使用 `path` 选项而非 `slug`。
-    # {$count} is the 1-based collection index in the configuration array; Don't localize `name`
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: 集合 {$count} 必须将 `name` 选项定义为非空字符串。
     # {$name} is the invalid or duplicate collection name
     invalid_collection_name: 集合名称「{$name}」无效。不能包含特殊字符。
     duplicate_collection_name: 集合名称必须唯一，但「{$name}」使用了多次。
-    # {$count} is the 1-based file index inside a file collection; Don't localize `name`
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
     missing_collection_file_name: 集合文件 {$count} 必须将 `name` 选项定义为非空字符串。
     # {$name} is the invalid or duplicate collection file name
     invalid_collection_file_name: 集合文件名「{$name}」无效。不能包含特殊字符。
     duplicate_collection_file_name: 集合文件名必须唯一，但「{$name}」使用了多次。
-    # Don't localize `fields`
+    # Don’t localize `fields`
     collection_no_fields: 集合必须将 `fields` 选项定义为至少包含一个字段。
-    # Don't localize `fields`
+    # Don’t localize `fields`
     collection_file_no_fields: 集合文件必须将 `fields` 选项定义为至少包含一个字段。
-    # Don't localize `i18n`, `locale` and `file`
+    # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: 如果在 `file` 路径中使用了 `locale` 占位符，则集合文件必须定义 `i18n` 选项。
-    # {$count} is the 1-based field index in the current fields array; Don't localize `name`
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: 字段 {$count} 必须将 `name` 选项定义为非空字符串。
     # {$name} is the invalid or duplicate field name
     invalid_field_name: 字段名称「{$name}」无效。不能包含特殊字符。如果要嵌套字段，<a>请使用 Object 字段，而不是点号表示法</a>。
@@ -1416,20 +1416,20 @@ config:
     invalid_timezone: '无效的时区：{$timeZone}。必须是有效的 IANA 时区标识符，如 `America/New_York` 或 `Asia/Tokyo`。'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
     unsupported_deprecated_option: 'Sveltia CMS 不支持已弃用的 `{$prop}` 选项。请改用 `{$newProp}` 选项。'
-    # Don't localize `allow_multiple`, `multiple`, and `false`
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
     allow_multiple: 'Sveltia CMS 不支持 `allow_multiple` 选项。请改用 `multiple` 选项，其默认值为 `false`。'
-    # Don't localize `field`, `fields`, and `types`
+    # Don’t localize `field`, `fields`, and `types`
     invalid_list_field: List 字段不能同时设置 `field`、`fields` 和 `types` 选项。
-    # {$widget} is the configured widget value of the invalid variable type; Don't localize `widget` and `object`
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
     invalid_list_variable_type: List 字段的变量类型无效。`widget` 选项设置为 `{$widget}`，但必须是 `object`。
-    # Don't localize `fields`, and `types`
+    # Don’t localize `fields`, and `types`
     invalid_object_field: Object 字段不能同时设置 `fields` 和 `types` 选项。
-    # Don't localize `fields`, and `types`
+    # Don’t localize `fields`, and `types`
     object_field_missing_fields: Object 字段必须定义 `fields` 或 `types` 选项。
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: 引用的集合「{$collection}」无效或未定义。
     relation_field_invalid_collection_file: 引用的文件「{$file}」无效或未定义。
-    # Don't localize `file`
+    # Don’t localize `file`
     relation_field_missing_file_name: 关联文件集合时必须定义 `file` 选项。
     relation_field_invalid_value_field: 引用的值字段「{$field}」无效或未定义。
     unexpected: 意外错误
@@ -1442,7 +1442,7 @@ config:
     nested_collections_unsupported: Sveltia CMS 暂不支持嵌套集合。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: 'Sveltia CMS 不支持 `{$prop}` 选项。该选项将会被忽略。'
-    # Don't localize `picker_utc`, `input_timezone`, and `output_utc`
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: 同时设置了 `picker_utc` 和较新的时区选项（`input_timezone` 或 `output_utc`）。新选项将优先生效。请考虑从配置中移除 `picker_utc`。
 
   # Compatibility link appended to unsupported feature messages
@@ -1537,7 +1537,7 @@ prefs:
       api_keys:
         title: 翻译服务 API 密钥
         description: 管理<a>翻译服务</a>的 API 密钥。
-      # API key input label, e.g., "DeepL Key"
+      # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: '{$service} 密钥'
       # Description with embedded links
@@ -1552,7 +1552,7 @@ prefs:
       api_keys:
         title: 图库照片服务 API 密钥
         description: 管理<a>图库照片服务</a>的 API 密钥。
-      # API key input label, e.g., "Unsplash API Key"
+      # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
       field_label: '{$service} API 密钥'
       # Description with embedded links
