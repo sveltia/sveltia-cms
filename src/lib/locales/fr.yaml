@@ -1,0 +1,1806 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Nouveau
+select: Sélectionner
+select_all: Tout sélectionner
+upload: Téléverser
+copy: Copier
+download: Télécharger
+duplicate: Dupliquer
+delete: Supprimer
+reorder: Réorganiser
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Annuler
+done: Terminé
+save: Enregistrer
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Enregistrement…
+
+# Publishing actions: used when committing changes to the repository
+publish: Publier
+# Progress indicator shown on the publish button during publishing
+publishing: Publication…
+
+# Modification actions: editing and updating content
+rename: Renommer
+update: Mettre à jour
+replace: Remplacer
+
+# List and collection actions: adding and removing items
+add: Ajouter
+remove: Supprimer
+clear: Effacer
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Développer
+expand_all: Tout développer
+collapse: Réduire
+collapse_all: Tout réduire
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Insérer
+restore: Restaurer
+discard: Abandonner
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Recherche…
+no_results: Aucun résultat trouvé.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Globale
+primary: Principale
+secondary: Secondaire
+collection: Collection
+folder: Dossier
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: Clé API
+details: Détails
+back: Retour
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Chargement…
+# Dismiss button for temporary notifications and infobars
+later: Plus tard
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Slug
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Singleton
+singletons: Singletons
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Impossible de copier dans le presse-papiers.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: 'Bienvenue dans {$name}'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: 'Propulsé par {$name}'
+
+# Shown during initial configuration and data loading
+loading_cms_config: Chargement de la configuration du CMS…
+loading_site_data: Chargement des données du site…
+loading_site_data_error: Une erreur s’est produite lors du chargement des données du site.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: 'Se connecter avec {$service}'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Se connecter avec un jeton d’accès
+sign_in_using_access_token_description: Saisissez votre jeton ci-dessous. Il doit disposer d’un accès en lecture/écriture au contenu du dépôt.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: Vous pouvez générer un jeton sur la <a>page des paramètres utilisateur de {$service}</a>.
+# Input field label for personal access token
+personal_access_token: Jeton d’accès personnel
+
+# Authentication progress indicators
+authorizing: Autorisation…
+signing_in: Connexion…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Travailler avec un dépôt local
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: Lorsque vous y serez invité, sélectionnez le répertoire racine du dépôt « {$repo} ».
+work_with_local_repo_description_no_repo: Lorsque vous y serez invité, sélectionnez le répertoire racine de votre dépôt Git.
+# Button label for demo/test repository
+work_with_test_repo: Travailler avec un dépôt de test
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: Le dossier sélectionné n’est pas un répertoire racine de dépôt. Veuillez réessayer.
+  picker_dismissed: Impossible de sélectionner un répertoire racine de dépôt. Veuillez réessayer.
+  authentication_aborted: Authentification interrompue. Veuillez réessayer.
+  invalid_token: Le jeton fourni n’est pas valide. Veuillez le vérifier et réessayer.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Votre backend Git n’est pas pris en charge par l’authentificateur.
+  UNSUPPORTED_DOMAIN: Votre domaine n’est pas autorisé à utiliser l’authentificateur.
+  MISCONFIGURED_CLIENT: L’identifiant client ou le secret de l’application OAuth n’est pas configuré.
+  AUTH_CODE_REQUEST_FAILED: Impossible de recevoir un code d’autorisation. Veuillez réessayer plus tard.
+  CSRF_DETECTED: Attaque CSRF potentielle détectée. Flux d’authentification interrompu.
+  TOKEN_REQUEST_FAILED: Impossible de demander un jeton d’accès. Veuillez réessayer plus tard.
+  TOKEN_REFRESH_FAILED: Impossible d’actualiser le jeton d’accès. Veuillez réessayer plus tard.
+  MALFORMED_RESPONSE: Le serveur a répondu avec des données incorrectes. Veuillez réessayer plus tard.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: 'Le backend {$name} nécessite {$name} {$version} ou une version ultérieure.'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: Vous n’avez pas accès au dépôt « {$repo} ».
+repository_not_found: Le dépôt « {$repo} » n’existe pas.
+repository_empty: Le dépôt « {$repo} » n’a aucune branche.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: Le dépôt « {$repo} » n’a pas de branche « {$branch} ».
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Erreur inattendue
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Une erreur s’est produite lors de l’analyse d’un fichier d’entrée. Consultez la console du navigateur pour plus de détails. }}
+    *   {{ Des erreurs se sont produites lors de l’analyse des fichiers d’entrée. Consultez la console du navigateur pour plus de détails. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Nom d’utilisateur
+password: Mot de passe
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Se connecter
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Se connecter sur mobile
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Scannez le code QR ci-dessous avec votre téléphone ou votre tablette pour vous connecter sans mot de passe. Vos paramètres seront automatiquement copiés.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'Connecté en tant que {$name}'
+working_with_local_repo: Travail avec un dépôt local
+working_with_test_repo: Travail avec un dépôt de test
+
+# Account menu: action items for sign-out and app installation
+sign_out: Se déconnecter
+install_as_app: Installer en tant qu’application
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Contenus
+assets: Ressources
+editorial_workflow: Flux éditorial
+cms_config: Configuration du CMS
+# Mobile menu page title (shown only on small screens)
+menu: Menu
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS est désormais disponible sur mobile !
+mobile_promo_button: Essayer
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS est désormais disponible en {$locale} !
+change_language: Changer de langue
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Passage en {$locale}…
+locale_load_failed: Impossible de charger la traduction en {$locale}. Veuillez réessayer plus tard.
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Visiter le site en ligne
+# Page switcher button group aria-label for switching between main sections
+switch_page: Changer de page
+
+# Search input placeholders
+search_placeholder_contents: Rechercher des contenus…
+search_placeholder_assets: Rechercher des ressources…
+search_placeholder_all: Rechercher des contenus et des ressources…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Créer une entrée ou des ressources
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Publier les modifications
+publishing_changes: Publication des modifications…
+# Error notification when publishing fails
+publishing_changes_failed: Impossible de publier les modifications. Veuillez réessayer.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Afficher les notifications
+notifications: Notifications
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Afficher le menu du compte
+# Account section heading in the account menu and mobile menu page
+account: Compte
+
+# Account menu items: links to external resources
+live_site: Site en ligne
+git_repository: Dépôt Git
+settings: Paramètres
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Afficher le menu d’aide
+# Help section heading in dropdowns and mobile menu
+help: Aide
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Raccourcis clavier
+documentation: Documentation
+release_notes: Notes de version
+announcements: Annonces
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: 'Version {$version}'
+# Additional help menu items
+report_issue: Signaler un problème
+share_feedback: Donner votre avis
+get_help: Obtenir de l’aide
+donate: Faire un don
+join_discord: Rejoignez-nous sur Discord
+bluesky: Suivez-nous sur Bluesky
+
+# Update notification: infobar message and button
+update_available: La dernière version de Sveltia CMS est disponible.
+update_now: Mettre à jour maintenant
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service} rencontre un incident mineur. Votre flux de travail peut être affecté.'
+  major_incident: '{$service} rencontre un incident majeur. Il est conseillé d’attendre que la situation s’améliore.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Bibliothèque de contenu
+asset_library: Bibliothèque de ressources
+
+# Primary sidebar section headings and list aria-labels
+collections: Collections
+entries: Entrées
+files: Fichiers
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Votre site
+  external: Emplacements externes
+  stock_photos: Banques d’images
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Ressources de la collection
+# List aria-labels for different list types
+entry_list: Liste des entrées
+file_list: Liste des fichiers
+asset_list: Liste des ressources
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: Collection « {$collection} »
+# {$folder} is the current asset folder label
+x_asset_folder: Dossier de ressources « {$folder} »
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Vous consultez maintenant la liste des collections.
+viewing_asset_folder_list: Vous consultez maintenant la liste des dossiers de ressources.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Vous consultez maintenant la collection « {$collection} », qui ne contient encore aucune entrée. }}
+    one {{ Vous consultez maintenant la collection « {$collection} », qui contient une entrée. }}
+    *   {{ Vous consultez maintenant la collection « {$collection} », qui contient {$count} entrées. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Vous consultez maintenant le dossier de ressources « {$folder} », qui ne contient encore aucune ressource. }}
+    one {{ Vous consultez maintenant le dossier de ressources « {$folder} », qui contient une ressource. }}
+    *   {{ Vous consultez maintenant le dossier de ressources « {$folder} », qui contient {$count} ressources. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: Appuyez sur Entrée pour modifier le fichier « {$file} ».
+
+# Error messages: collection or file not found
+collection_not_found: Collection introuvable.
+file_not_found: Fichier introuvable.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} sur {$total} sélectionné(s)'
+
+# View switcher: toggle between list and grid views
+switch_view: Changer de vue
+list_view: Vue liste
+grid_view: Vue grille
+switch_to_list_view: Passer à la vue liste
+switch_to_grid_view: Passer à la vue grille
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Trier
+sorting_options: Options de tri
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Aucun
+  name: Nom
+  slug: Slug
+  # Sort by the last commit’s author name
+  commit_author: Mis à jour par
+  # Sort by the last commit date
+  commit_date: Mis à jour le
+  # Sort by the entry’s computed summary text
+  _summary: Résumé
+  # Manual order defined by the user via drag-and-drop
+  _manual: Manuel
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, de A à Z'
+ascending_date: '{$label}, du plus ancien au plus récent'
+descending: '{$label}, de Z à A'
+descending_date: '{$label}, du plus récent au plus ancien'
+
+# Filter menu: button labels and options
+filter: Filtrer
+filtering_options: Options de filtrage
+
+# Group menu: button labels and options
+group: Grouper
+grouping_options: Options de groupement
+
+# Asset type filter and group labels
+type: Type
+all: Tous
+# Asset type labels
+image: Image
+video: Vidéo
+audio: Audio
+document: Document
+other: Autre
+
+# Toolbar toggles: show/hide panels
+show_assets: Afficher les ressources
+hide_assets: Masquer les ressources
+show_info: Afficher les informations
+hide_info: Masquer les informations
+
+# Folder display labels when no specific path is configured
+all_assets: Toutes les ressources
+global_assets: Ressources globales
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: Entrée introuvable.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: La création d’entrées dans cette collection est désactivée par l’administrateur.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: Vous ne pouvez pas ajouter d’entrées à cette collection, car elle a atteint sa limite de {$quota} entrées.
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    one {{ Cette collection approche de sa limite de {$quota} entrées. Vous ne pouvez plus créer que {$remaining} entrée supplémentaire. }}
+    *   {{ Cette collection approche de sa limite de {$quota} entrées. Vous ne pouvez plus créer que {$remaining} entrées supplémentaires. }}
+
+# Navigation: back links and list labels
+back_to_collection: Retour à la collection
+collection_list: Liste des collections
+back_to_collection_list: Retour à la liste des collections
+asset_folder_list: Liste des dossiers de ressources
+back_to_asset_folder_list: Retour à la liste des dossiers de ressources
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Résultats de recherche
+# {$terms} is the current search query text
+search_results_for_x: Résultats de recherche pour « {$terms} »
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Vous consultez maintenant les résultats de recherche pour « {$terms} ». Nous n’avons trouvé aucune entrée. }}
+    one {{ Vous consultez maintenant les résultats de recherche pour « {$terms} ». Nous avons trouvé une entrée. }}
+    *   {{ Vous consultez maintenant les résultats de recherche pour « {$terms} ». Nous avons trouvé {$count} entrées. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Vous consultez maintenant les résultats de recherche pour « {$terms} ». Nous n’avons trouvé aucune ressource. }}
+    one {{ Vous consultez maintenant les résultats de recherche pour « {$terms} ». Nous avons trouvé une ressource. }}
+    *   {{ Vous consultez maintenant les résultats de recherche pour « {$terms} ». Nous avons trouvé {$count} ressources. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Aucune entrée }}
+    one {{ {$count} entrée }}
+    *   {{ {$count} entrées }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Aucune ressource }}
+    one {{ {$count} ressource }}
+    *   {{ {$count} ressources }}
+
+# Empty state messages
+no_files_found: Aucun fichier trouvé.
+no_entries_found: Aucune entrée trouvée.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Téléverser de nouvelles ressources
+
+# Edit options menu: button and item labels
+edit_options: Options de modification
+show_edit_options: Afficher les options de modification
+# Edit menu items with specific asset names
+edit_asset: Modifier la ressource
+# {$name} is the selected asset name
+edit_x: 'Modifier {$name}'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Retour à la ligne automatique
+
+# Rename asset: dialog and validation
+rename_asset: Renommer la ressource
+# {$name} is the current asset name
+rename_x: 'Renommer {$name}'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Saisissez un nouveau nom ci-dessous. }}
+    one {{ Saisissez un nouveau nom ci-dessous. Une entrée utilisant cette ressource sera également mise à jour. }}
+    *   {{ Saisissez un nouveau nom ci-dessous. {$count} entrées utilisant cette ressource seront également mises à jour. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: Le nom du fichier ne peut pas être vide.
+  character: Le nom du fichier ne peut pas contenir de caractères spéciaux.
+  duplicate: Ce nom de fichier est déjà utilisé par une autre ressource.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Modifier l’extension de fichier
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Voulez-vous vraiment remplacer l’extension « .{$oldExtension} » par « .{$newExtension} » ?
+  add: Voulez-vous vraiment ajouter l’extension « .{$newExtension} » ?
+  remove: Voulez-vous vraiment supprimer l’extension « .{$oldExtension} » ?
+file_extension_change_warning: Le fichier risque de ne pas s’afficher ou d’être traité incorrectement si l’extension ne correspond pas au format réel du fichier.
+
+# Replace asset: menu item and dialog title
+replace_asset: Remplacer la ressource
+# {$name} is the asset being replaced
+replace_x: 'Remplacer {$name}'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Cliquez pour parcourir…
+# Browse prompt shown on touch devices
+tap_to_browse: Appuyez pour parcourir…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Déposez un fichier ici ou cliquez pour parcourir… }}
+    *   {{ Déposez des fichiers ici ou cliquez pour parcourir… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Déposez un fichier ici ou }}
+    *   {{ Déposez des fichiers ici ou }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Déposez un fichier image ici ou }}
+    *   {{ Déposez des fichiers image ici ou }}
+
+# File picker and clipboard actions used by upload controls
+browse: Parcourir
+# Generic clipboard paste action used by non-image file fields
+paste: Coller
+# Clipboard paste action used by image fields
+paste_image: Coller l’image
+
+# Clipboard paste errors
+no_image_in_clipboard: Aucune image trouvée dans le presse-papiers.
+clipboard_access_denied: Accès au presse-papiers refusé.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Déposez un fichier ici }}
+    *   {{ Déposez des fichiers ici }}
+
+# File type validation errors
+unsupported_file_type: Type de fichier non pris en charge
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Le fichier déposé n’est pas d’un des types suivants : {$types}. Veuillez réessayer.'
+dropped_image_type_mismatch: 'Le fichier déposé n’est pas pris en charge. Seule une image des types suivants est acceptée : {$types}. Veuillez réessayer.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Choisir un fichier }}
+    *   {{ Choisir des fichiers }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Supprimer la ressource }}
+    *   {{ Supprimer les ressources }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Supprimer la ressource sélectionnée }}
+    *   {{ Supprimer les ressources sélectionnées }}
+confirm_deleting_this_asset: Voulez-vous vraiment supprimer cette ressource ?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Voulez-vous vraiment supprimer la ressource sélectionnée ? }}
+    *   {{ Voulez-vous vraiment supprimer les {$count} ressources sélectionnées ? }}
+confirm_deleting_all_assets: Voulez-vous vraiment supprimer toutes les ressources ?
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Supprimer l’entrée }}
+    *   {{ Supprimer les entrées }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Supprimer l’entrée sélectionnée }}
+    *   {{ Supprimer les entrées sélectionnées }}
+confirm_deleting_this_entry: Voulez-vous vraiment supprimer cette entrée ?
+confirm_deleting_this_entry_with_assets: Voulez-vous vraiment supprimer cette entrée et les ressources associées ?
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Voulez-vous vraiment supprimer l’entrée sélectionnée ? }}
+    *   {{ Voulez-vous vraiment supprimer les {$count} entrées sélectionnées ? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Voulez-vous vraiment supprimer l’entrée sélectionnée et les ressources associées ? }}
+    *   {{ Voulez-vous vraiment supprimer les {$count} entrées sélectionnées et les ressources associées ? }}
+confirm_deleting_all_entries: Voulez-vous vraiment supprimer toutes les entrées ?
+confirm_deleting_all_entries_with_assets: Voulez-vous vraiment supprimer toutes les entrées et les ressources associées ?
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Réorganiser les entrées
+done_reordering_entries: Terminer la réorganisation des entrées
+cancel_reordering_entries: Annuler la réorganisation des entrées
+
+# Reorder error message
+saving_reorder_failed: Impossible d’enregistrer le nouvel ordre des entrées. Veuillez réessayer.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Traitement d’un fichier en cours. Cela peut prendre un moment. }}
+    *   {{ Traitement des fichiers en cours. Cela peut prendre un moment. }}
+
+# Uploading section aria-label
+uploading_files: Téléversement des fichiers
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '« {$name} » sera remplacé par ce fichier :'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ce fichier sera enregistré dans le dossier « {$folder} » : }}
+    *   {{ Ces {$count} fichiers seront enregistrés dans le dossier « {$folder} » : }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Fichiers trop volumineux
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ce fichier ne peut pas être téléversé, car il dépasse la taille maximale de {$size}. Veuillez réduire sa taille ou sélectionner un autre fichier. }}
+    *   {{ Ces fichiers ne peuvent pas être téléversés, car ils dépassent la taille maximale de {$size}. Veuillez réduire leur taille ou sélectionner d’autres fichiers. }}
+
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Fichiers non valides
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ce fichier ne peut pas être téléversé, car il est endommagé ou son contenu ne correspond pas à son extension. Cela se produit souvent lorsqu’une photo est renommée au lieu d’être convertie, par exemple une image HEIC enregistrée en tant que fichier JPEG. Veuillez convertir le fichier et réessayer. }}
+    *   {{ Ces fichiers ne peuvent pas être téléversés, car ils sont endommagés ou leur contenu ne correspond pas à leur extension. Cela se produit souvent lorsque des photos sont renommées au lieu d’être converties, par exemple des images HEIC enregistrées en tant que fichiers JPEG. Veuillez convertir les fichiers et réessayer. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ Un fichier portant le même nom existe déjà dans ce dossier. Voulez-vous le remplacer ? }}
+    *   {{ {$count} fichiers portant les mêmes noms existent déjà dans ce dossier. Voulez-vous les remplacer ? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ Un fichier nommé « {$name} » existe déjà dans ce dossier. Voulez-vous le remplacer ? }}
+    *   {{ {$count} fichiers portant les mêmes noms existent déjà dans ce dossier. Voulez-vous les remplacer ? }}
+file_name_conflict_resolution: Résolution des conflits de noms de fichiers
+# Option to keep both files (rename the new one)
+keep_both: Conserver les deux
+
+# Upload progress and error messages
+uploading_files_progress: Téléversement…
+uploading_files_failed: Échec du téléversement.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (converti depuis {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Cette collection ne contient encore aucune entrée.
+# Button to create first entry
+create_new_entry: Créer une entrée
+# “Entry” option label in the create button menu
+entry: Entrée
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Fichier d’index
+
+# Empty state for file collections
+no_files_in_collection: Aucun fichier disponible dans cette collection.
+
+# Entry duplication
+duplicate_entry: Dupliquer l’entrée
+entry_duplicated: Entrée dupliquée en tant que nouveau brouillon.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Un champ comporte une erreur. Veuillez la corriger pour enregistrer l’entrée. }}
+    *   {{ {$count} champs comportent des erreurs. Veuillez les corriger pour enregistrer l’entrée. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Entrée enregistrée. }}
+    *   {{ {$count} entrées enregistrées. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Entrée enregistrée et publiée. }}
+    *   {{ {$count} entrées enregistrées et publiées. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Entrée supprimée. }}
+    *   {{ {$count} entrées supprimées. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ressource enregistrée. }}
+    *   {{ {$count} ressources enregistrées. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ressource enregistrée et publiée. }}
+    *   {{ {$count} ressources enregistrées et publiées. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ URL copiée dans le presse-papiers. }}
+    *   {{ {$count} URL copiées dans le presse-papiers. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Chemin du fichier copié dans le presse-papiers. }}
+    *   {{ {$count} chemins de fichiers copiés dans le presse-papiers. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Données du fichier copiées dans le presse-papiers. }}
+    *   {{ Données de {$count} fichiers copiées dans le presse-papiers. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ressource téléchargée. }}
+    *   {{ {$count} ressources téléchargées. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ressource déplacée. }}
+    *   {{ {$count} ressources déplacées. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ressource renommée. }}
+    *   {{ {$count} ressources renommées. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ressource supprimée. }}
+    *   {{ {$count} ressources supprimées. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Éditeur de contenu
+
+# Draft backup: restore dialog
+restore_backup_title: Restaurer le brouillon
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Cette entrée dispose d’une sauvegarde du {$datetime}. Voulez-vous restaurer le brouillon modifié ?
+
+# Draft backup notifications
+draft_backup_saved: Sauvegarde du brouillon effectuée.
+draft_backup_restored: Sauvegarde du brouillon restaurée.
+draft_backup_deleted: Sauvegarde du brouillon supprimée.
+
+# Editor toolbar actions
+cancel_editing: Annuler la modification
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: 'Création : {$name}'
+# {$collection} is the collection label
+create_entry_announcement: Vous créez maintenant une entrée dans la collection « {$collection} ».
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: Vous modifiez maintenant l’entrée « {$entry} » dans la collection « {$collection} ».
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: Vous modifiez maintenant le fichier « {$file} » dans la collection « {$collection} ».
+# {$file} is the singleton file name
+edit_singleton_announcement: Vous modifiez maintenant le fichier « {$file} ».
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Enregistrer et publier
+save_without_publishing: Enregistrer sans publier
+
+# Editor options menu
+show_editor_options: Afficher les options de l’éditeur
+editor_options: Options de l’éditeur
+
+# Preview controls
+show_preview: Afficher l’aperçu
+
+# Editor settings
+sync_scrolling: Synchroniser le défilement
+
+# Locale controls
+switch_locale: Changer de langue du contenu
+# Short status indicators appended to locale names
+locale_content_disabled_short: (désactivé)
+locale_content_error_short: (erreur)
+
+# Pane labels
+edit: Modifier
+preview: Aperçu
+
+# Pane controls; not to be confused with pages
+swap_panes: Permuter les volets
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Modifier le contenu en {$locale}
+preview_x_locale: Aperçu du contenu en {$locale}
+
+# Preview iframe labels
+content_preview: Aperçu du contenu
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Afficher les options de contenu en {$locale}
+content_options_x_locale: 'Options de contenu en {$locale}'
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: Champ « {$field} »
+
+# Field options menu
+show_field_options: Afficher les options du champ
+field_options: Options du champ
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Type de champ non pris en charge : {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: 'Activer {$locale}'
+reenable_x_locale: 'Réactiver {$locale}'
+disable_x_locale: 'Désactiver {$locale}'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: Le contenu en {$locale} a été désactivé.
+locale_x_now_disabled: Le contenu en {$locale} est maintenant désactivé. Il sera supprimé lorsque vous enregistrerez l’entrée.
+
+# Repository and site links
+view_in_repository: Afficher dans le dépôt
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: 'Afficher sur {$service}'
+view_on_live_site: Afficher sur le site en ligne
+
+# Content copying from other locales
+copy_from: Copier depuis…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: 'Copier depuis {$locale}'
+
+# Translation features
+translation_options: Options de traduction
+translate: Traduire
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Traduire le champ }}
+    *   {{ Traduire les champs }}
+translate_from: Traduire depuis…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: 'Traduire depuis {$locale}'
+
+# Revert changes
+revert_changes: Annuler les modifications
+revert_all_changes: Annuler toutes les modifications
+
+# Slug editing
+edit_slug: Modifier le slug
+edit_slug_warning: La modification du slug peut rompre les liens internes et externes vers l’entrée. Actuellement, Sveltia CMS ne met pas à jour les références créées avec des champs Relation ; vous devrez donc mettre à jour manuellement ces références ainsi que les autres liens.
+edit_slug_error:
+  empty: Le slug ne peut pas être vide.
+  invalid: Le slug ne peut pas contenir de caractères spéciaux, y compris les barres obliques et les espaces.
+  duplicate: Ce slug est déjà utilisé par une autre entrée.
+
+# Required field indicator
+required: Obligatoire
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Rien à traduire.
+    started: Traduction…
+    error: Échec de la traduction.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Aucun champ traduit depuis {$source}. }}
+        one {{ Champ traduit depuis {$source}. }}
+        *   {{ {$count} champs traduits depuis {$source}. }}
+  copy:
+    none: Rien à copier.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Aucun champ copié depuis {$source}. }}
+        one {{ Champ copié depuis {$source}. }}
+        *   {{ {$count} champs copiés depuis {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Ce champ est obligatoire.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: La date/heure doit être égale ou postérieure à {$min}.
+    date: La date doit être égale ou postérieure à {$min}.
+    time: L’heure doit être égale ou postérieure à {$min}.
+    number: La valeur doit être supérieure ou égale à {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ Vous devez sélectionner au moins {$min} option. }}
+        *   {{ Vous devez sélectionner au moins {$min} options. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ Vous devez ajouter au moins {$min} élément. }}
+        *   {{ Vous devez ajouter au moins {$min} éléments. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: La date/heure doit être égale ou antérieure à {$max}.
+    date: La date doit être égale ou antérieure à {$max}.
+    time: L’heure doit être égale ou antérieure à {$max}.
+    number: La valeur doit être inférieure ou égale à {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ Vous ne pouvez pas sélectionner plus de {$max} option. }}
+        *   {{ Vous ne pouvez pas sélectionner plus de {$max} options. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ Vous ne pouvez pas ajouter plus de {$max} élément. }}
+        *   {{ Vous ne pouvez pas ajouter plus de {$max} éléments. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ Vous devez saisir au moins {$min} caractère. }}
+      *   {{ Vous devez saisir au moins {$min} caractères. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ Vous ne pouvez pas saisir plus de {$max} caractère. }}
+      *   {{ Vous ne pouvez pas saisir plus de {$max} caractères. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Veuillez saisir un nombre.
+    email: Veuillez saisir une adresse e-mail valide.
+    url: Veuillez saisir une URL valide.
+
+  # Custom field validation error
+  invalid_value: Valeur non valide.
+  unexpected_error: Une erreur inattendue s’est produite.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Volets de la barre latérale
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Validation
+    placeholder: Les résultats de la validation s’afficheront ici.
+    no_errors_found: Aucune erreur trouvée.
+
+  # History panel: shows entry commit history
+  history:
+    title: Historique
+    fetch_failed: Impossible de charger l’historique.
+    no_history: Aucun historique trouvé.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Liens entrants
+    no_entries: Aucune entrée ne fait référence à cette entrée.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Erreur
+    description: Une erreur s’est produite lors de l’enregistrement de l’entrée. Veuillez réessayer plus tard.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: Vous consultez les détails de la ressource « {$name} ».
+
+# Asset editor container aria-label
+asset_editor: Éditeur de ressources
+
+# Preview unavailable message
+preview_unavailable: Aperçu indisponible.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ URL publique }}
+    *   {{ URL publiques }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Chemin du fichier }}
+    *   {{ Chemins des fichiers }}
+file_data: Données du fichier
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Informations sur la ressource
+select_asset_show_info: Sélectionnez une ressource pour afficher ses informations.
+
+kind: Type
+size: Taille
+dimensions: Dimensions
+duration: Durée
+# Short heading for a list of entries using the selected asset
+used_in: Utilisée dans
+created_date: Date de création
+location: Localisation
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Carte indiquant la latitude {$latitude}, longitude {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Supprimer cet élément
+move_up: Déplacer vers le haut
+move_down: Déplacer vers le bas
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: Ajouter {$name}
+
+# List item context menu
+add_item_above: Ajouter un élément au-dessus
+add_item_below: Ajouter un élément en dessous
+
+# Variable-type list selector
+select_list_type: Sélectionner le type de liste
+
+# Variable-type mismatch
+unknown_variable_type: Cet élément ne peut pas être affiché en raison d’un type inconnu. Consultez la console du navigateur pour plus de détails.
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Opacité
+
+# Select field: empty option placeholder
+unselected_option: (Aucun)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Sélectionner un fichier
+    image: Sélectionner une image
+
+  # Search input labels
+  search_for_file: Rechercher des fichiers
+  search_for_image: Rechercher des images
+
+  # Locations panel aria-label
+  locations: Emplacements
+
+  # Asset folder options
+  folder:
+    field: Ressources du champ
+    entry: Ressources de l’entrée
+    file: Ressources du fichier
+    collection: Ressources de la collection
+    global: Ressources globales
+
+  # Error messages
+  error:
+    invalid_key: Votre clé API n’est pas valide ou a expiré. Veuillez la vérifier et réessayer.
+    search_fetch_failed: Une erreur s’est produite lors de la recherche de ressources. Veuillez réessayer plus tard.
+    image_fetch_failed: Une erreur s’est produite lors du téléchargement de la ressource sélectionnée. Veuillez réessayer plus tard.
+
+  # Stock photo panels
+  available_images: Images disponibles
+
+  # URL entry option
+  enter_url: Saisir une URL
+  enter_file_url: 'Saisissez l’URL du fichier :'
+  enter_image_url: 'Saisissez l’URL de l’image :'
+
+  # Large file warning dialog
+  large_file:
+    title: Fichier volumineux
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Fichier non valide
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Impossible de téléverser les fichiers
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Crédit photo
+    description: 'Utilisez le crédit suivant si possible :'
+
+  # Unsaved asset badge
+  unsaved: Non enregistré
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Aucun caractère saisi. Minimum : {$min}. Maximum : {$max}. }}
+      one {{ {$count} caractère saisi. Minimum : {$min}. Maximum : {$max}. }}
+      *   {{ {$count} caractères saisis. Minimum : {$min}. Maximum : {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Aucun caractère saisi. Minimum : {$min}. }}
+      one {{ {$count} caractère saisi. Minimum : {$min}. }}
+      *   {{ {$count} caractères saisis. Minimum : {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Aucun caractère saisi. Maximum : {$max}. }}
+      one {{ {$count} caractère saisi. Maximum : {$max}. }}
+      *   {{ {$count} caractères saisis. Maximum : {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: Lecteur vidéo YouTube
+
+# Date/time field: quick action buttons
+today: Aujourd’hui
+now: Maintenant
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Image
+  src: Source
+  alt: Texte alternatif
+  title: Titre
+  link: Lien
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Clé
+  value: Valeur
+  action: Action
+  empty_key: La clé est obligatoire.
+  duplicate_key: La clé doit être unique.
+
+# Map field: location search and geolocation
+find_place: Rechercher un lieu
+use_your_location: Utiliser votre position
+
+# Geolocation error dialog
+geolocation_error_title: Erreur de géolocalisation
+geolocation_error_body: Une erreur s’est produite lors de la récupération de votre position.
+geolocation_unsupported: L’API de géolocalisation n’est pas prise en charge par ce navigateur.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Oui
+  'false': Non
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: Le service n’est pas configuré correctement.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: Clé API
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: Saisissez votre {$key} pour {$service}.
+      requested: Validation…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: La {$key} fournie n’est pas valide. Veuillez la vérifier et réessayer.
+    password:
+      # {$service} is the cloud service name
+      initial: Saisissez votre mot de passe pour {$service}.
+      requested: Connexion…
+      error: Le nom d’utilisateur ou le mot de passe est incorrect. Veuillez le vérifier et réessayer.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Médiathèque Cloudinary
+    activate:
+      button_label: Activer Cloudinary
+      description: Une fois connecté, cliquez de nouveau sur le bouton Se connecter pour continuer.
+    auth_key_label: Clé secrète API
+    open_library: Ouvrir Cloudinary
+
+  uploadcare:
+    auth_key_label: Clé secrète API
+
+  aws_s3:
+    auth_key_label: Clé d’accès secrète
+
+  cloudflare_r2:
+    auth_key_label: Clé d’accès secrète
+
+  digitalocean_spaces:
+    auth_key_label: Clé d’accès secrète
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ La configuration du CMS comporte une erreur. Veuillez résoudre le problème et réessayer. }}
+      *   {{ La configuration du CMS comporte des erreurs. Veuillez résoudre les problèmes et réessayer. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: 'collection {$collection}'
+    file: 'fichier {$file}'
+    component: 'composant {$component}'
+    # Don’t localize `{$field}`
+    field: 'champ `{$field}`'
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS ne fonctionne qu’avec des URL HTTPS ou localhost.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ L’URL du fichier de configuration doit utiliser le protocole HTTPS ou une adresse localhost. }}
+        *   {{ Les URL des fichiers de configuration doivent utiliser le protocole HTTPS ou des adresses localhost. }}
+    fetch_failed: Impossible de récupérer le fichier de configuration.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: La réponse HTTP a renvoyé le statut {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Impossible de récupérer le fichier de configuration. Pour empêcher le chargement du fichier `config.yml`, ajoutez <a>`load_config_file: false`</a> à l’objet de configuration transmis à `CMS.init()`.'
+    parse_failed: Impossible d’analyser le fichier de configuration.
+    parse_failed_invalid_object: Le fichier de configuration n’est pas un objet JavaScript valide.
+    parse_failed_unsupported_type: Le fichier de configuration n’est pas d’un type valide. Seuls les formats YAML, TOML et JSON sont pris en charge.
+    no_collection: Aucune collection n’est définie.
+    missing_backend: Le backend n’est pas défini.
+    missing_backend_name: Le nom du backend n’est pas défini.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: Le backend {$name} n’est <a>pas pris en charge</a> dans Sveltia CMS.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Le backend {$name}, obsolète, n’est <a>pas pris en charge</a> dans Sveltia CMS.
+    unsupported_custom_backend: Les backends personnalisés ne sont <a>pas pris en charge</a> dans Sveltia CMS.
+    unsupported_backend_suggestion: Utilisez plutôt l’un des <a>backends pris en charge</a>.
+    missing_repository: Le dépôt n’est pas défini.
+    invalid_repository: Le dépôt configuré n’est pas valide. Il doit être au format « owner/repo ».
+    oauth_implicit_flow: La méthode d’authentification configurée (flux implicite) n’est pas prise en charge dans Sveltia CMS. Utilisez plutôt une autre <a>méthode d’authentification</a>.
+    github_pkce_unsupported: L’autorisation PKCE n’est pas encore prise en charge en raison des limitations de GitHub. Utilisez plutôt une autre <a>méthode d’authentification</a>.
+    oauth_no_app_id: L’identifiant de l’application OAuth n’est pas défini.
+    # Don’t localize `auth_methods`
+    no_auth_methods: L’option `auth_methods` doit contenir au moins une méthode.
+    missing_media_folder: Le dossier des médias n’est pas défini.
+    invalid_media_folder: Le dossier des médias configuré n’est pas valide. Il doit s’agir d’une chaîne.
+    invalid_public_folder: Le dossier public configuré n’est pas valide. Il doit s’agir d’une chaîne.
+    public_folder_relative_path: Le dossier public configuré n’est pas valide. Il doit s’agir d’un chemin absolu commençant par « / ».
+    public_folder_absolute_url: Une URL absolue pour l’option de dossier public n’est pas prise en charge dans Sveltia CMS.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: L’option `asset_collections` n’est pas valide. Il doit s’agir d’un tableau.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: La collection de ressources {$count} doit avoir l’option `name` définie comme une chaîne non vide.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: Le nom de collection de ressources `{$name}` n’est pas valide. Il ne doit pas contenir de caractères spéciaux.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: Les noms de collections de ressources doivent être uniques, or `{$name}` est utilisé plusieurs fois.
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: La collection de ressources `{$name}` doit avoir l’option `media_folder` définie comme une chaîne.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: La collection doit avoir l’option `folder`, `files` ou `divider` définie.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: La collection ne peut pas avoir les options `folder`, `files` et `divider` en même temps.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: L’extension `{$extension}` ne correspond pas au format `{$format}`.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: Le modèle de slug `{$slug}` n’est pas valide, car il ne peut pas contenir de barres obliques. Pour organiser les entrées dans des sous-dossiers, utilisez l’option `path` au lieu de `slug`.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: L’option `reorder` fait référence à un groupe de vue nommé `{$name}`, mais aucun groupe de ce nom n’est défini dans l’option `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: L’option `sortable_fields` fait référence à un champ nommé `{$name}`, mais aucun champ de ce nom n’est défini dans la collection.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: L’option `view_groups` fait référence à un champ nommé `{$name}`, mais aucun champ de ce nom n’est défini dans la collection.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: L’option `view_filters` fait référence à un champ nommé `{$name}`, mais aucun champ de ce nom n’est défini dans la collection.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Le groupe de vue {$count} doit avoir l’option `name` définie comme une chaîne non vide.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: Le nom de groupe de vue `{$name}` n’est pas valide. Il ne doit pas contenir de caractères spéciaux.
+    duplicate_view_group_name: Les noms de groupes de vue doivent être uniques, or `{$name}` est utilisé plusieurs fois.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Le filtre de vue {$count} doit avoir l’option `name` définie comme une chaîne non vide.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: Le nom de filtre de vue `{$name}` n’est pas valide. Il ne doit pas contenir de caractères spéciaux.
+    duplicate_view_filter_name: Les noms de filtres de vue doivent être uniques, or `{$name}` est utilisé plusieurs fois.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: La collection {$count} doit avoir l’option `name` définie comme une chaîne non vide.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: Le nom de collection `{$name}` n’est pas valide. Il ne doit pas contenir de caractères spéciaux.
+    duplicate_collection_name: Les noms de collections doivent être uniques, or `{$name}` est utilisé plusieurs fois.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: Le fichier de collection {$count} doit avoir l’option `name` définie comme une chaîne non vide.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: Le nom de fichier de collection `{$name}` n’est pas valide. Il ne doit pas contenir de caractères spéciaux.
+    duplicate_collection_file_name: Les noms de fichiers de collection doivent être uniques, or `{$name}` est utilisé plusieurs fois.
+    # Don’t localize `fields`
+    collection_no_fields: La collection doit avoir l’option `fields` définie avec au moins un champ.
+    # Don’t localize `fields`
+    collection_file_no_fields: Le fichier de collection doit avoir l’option `fields` définie avec au moins un champ.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: Le fichier de collection doit avoir l’option `i18n` définie si l’espace réservé `locale` est utilisé dans le chemin `file`.
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: Le champ {$count} doit avoir l’option `name` définie comme une chaîne non vide.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: Le nom de champ `{$name}` n’est pas valide. Il ne doit pas contenir de caractères spéciaux. Si vous souhaitez imbriquer des champs, <a>utilisez des champs Object plutôt que la notation par points</a>.
+    duplicate_field_name: Les noms de champs doivent être uniques, or `{$name}` est utilisé plusieurs fois.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: Le type variable {$count} doit avoir l’option `name` définie comme une chaîne non vide.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: Le nom de type variable `{$name}` n’est pas valide. Il ne doit pas contenir de caractères spéciaux.
+    duplicate_variable_type: Les noms de types variables doivent être uniques, or `{$name}` est utilisé plusieurs fois.
+    date_field_type: 'Le type de champ Date, obsolète, n’est pas pris en charge dans Sveltia CMS. Utilisez plutôt le type de champ DateTime avec l’option `type: date`.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Fuseau horaire non valide : {$timeZone}. Il doit s’agir d’un identifiant de fuseau horaire IANA valide, comme `America/New_York` ou `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: L’option `{$prop}`, obsolète, n’est pas prise en charge dans Sveltia CMS. Utilisez plutôt l’option `{$newProp}`.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: L’option `allow_multiple` n’est pas prise en charge dans Sveltia CMS. Utilisez plutôt l’option `multiple`, dont la valeur par défaut est `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: Le champ List ne peut pas avoir les options `field`, `fields` et `types` en même temps.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: Le type variable du champ List n’est pas valide. L’option `widget` est définie sur `{$widget}` alors qu’elle doit être `object`.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: Le champ Object ne peut pas avoir les options `fields` et `types` en même temps.
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: Le champ Object doit avoir l’option `fields` ou `types` définie.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: La collection `{$collection}` référencée n’est pas valide ou n’est pas définie.
+    relation_field_invalid_collection_file: Le fichier `{$file}` référencé n’est pas valide ou n’est pas défini.
+    # Don’t localize `file`
+    relation_field_missing_file_name: L’option `file` doit être définie pour une relation vers une collection de fichiers.
+    relation_field_invalid_value_field: Le champ de valeur référencé `{$field}` n’est pas valide ou n’est pas défini.
+    unexpected: Erreur inattendue
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: L’identifiant de l’application OAuth n’est pas défini. Les utilisateurs doivent fournir un jeton d’accès pour se connecter.
+    editorial_workflow_unsupported: Le flux éditorial n’est pas encore pris en charge dans Sveltia CMS.
+    open_authoring_unsupported: L’Open Authoring n’est pas encore pris en charge dans Sveltia CMS.
+    nested_collections_unsupported: Les collections imbriquées ne sont pas encore prises en charge dans Sveltia CMS.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: L’option `{$prop}` n’est pas prise en charge dans Sveltia CMS. Elle sera ignorée.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: Les options `picker_utc` et les nouvelles options de fuseau horaire (`input_timezone` ou `output_utc`) sont toutes définies. Les nouvelles options sont prioritaires. Envisagez de supprimer `picker_utc` de votre configuration.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Consultez les notes de compatibilité pour plus de détails : {$link}'
+
+  # Console tip shown after config load
+  schema_tip: Pour une meilleure expérience de développement, vous pouvez valider votre fichier de configuration avec le schéma JSON de Sveltia CMS. Consultez {$link} pour plus de détails.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Local
+  # Browser compatibility warnings
+  unsupported_browser: Le flux de travail local n’est pas pris en charge par votre navigateur. Veuillez utiliser Chrome ou Edge.
+  disabled: Le flux de travail local est désactivé dans votre navigateur. <a>Voici comment l’activer</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: Brouillons
+  in_review: En révision
+  ready: Prêt
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Catégories
+
+# Site Configuration Editor
+site_configuration_editor: Éditeur de configuration du site
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: Clé API enregistrée.
+    api_key_removed: Clé API supprimée.
+    api_key_invalid: La clé API fournie n’est pas valide. Veuillez la vérifier et réessayer.
+
+  # Preferences operation errors
+  error:
+    permission_denied: L’accès au stockage des cookies a été refusé. Veuillez vérifier les autorisations de votre navigateur et réessayer.
+
+  # Appearance panel
+  appearance:
+    title: Apparence
+    theme: Thème
+    select_theme: Sélectionner un thème
+
+  # Theme options
+  theme:
+    auto: Auto
+    dark: Sombre
+    light: Clair
+
+  # Language panel
+  language:
+    title: Langue
+    ui_language:
+      title: Langue de l’interface utilisateur
+      select_language: Sélectionner une langue
+
+  # Contents panel
+  contents:
+    title: Contenus
+    editor:
+      title: Éditeur
+      use_draft_backup:
+        switch_label: Sauvegarde automatique des brouillons d’entrée
+      close_on_save:
+        switch_label: Fermer l’éditeur après l’enregistrement d’un brouillon
+      close_with_escape:
+        switch_label: Fermer l’éditeur avec la touche Échap
+
+  # Internationalization panel
+  i18n:
+    title: Internationalisation
+    translators:
+      default:
+        title: Service de traduction par défaut
+        select_service: Sélectionner un service
+      api_keys:
+        title: Clés API des services de traduction
+        description: Gérez les clés API des <a>services de traduction</a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: 'Clé {$service}'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Inscrivez-vous à <a {$homeHref}>{$service}</a> et saisissez ici <a {$apiKeyHref}>votre clé API</a> pour activer la traduction rapide des champs de texte.
+
+  # Media panel
+  media:
+    title: Médias
+    stock_photos:
+      api_keys:
+        title: Clés API des services de banques d’images
+        description: Gérez les clés API des <a>services de banques d’images</a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: 'Clé API {$service}'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Inscrivez-vous à <a {$homeHref}>l’API {$service}</a> et saisissez ici <a {$apiKeyHref}>votre clé API</a> pour insérer des photos libres de droits dans les champs image.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: Photos fournies par {$service}
+      no_services: Aucun <a>service de banques d’images</a> n’est configuré.
+    cloud_storage:
+      api_keys:
+        title: Clés API des services de stockage cloud
+        description: Gérez les clés API des <a>services de stockage cloud</a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: 'Clé API {$service}'
+      no_services: Aucun <a>service de stockage cloud</a> n’est configuré.
+
+  # Accessibility panel
+  accessibility:
+    title: Accessibilité
+    underline_links:
+      title: Souligner les liens
+      description: Afficher un soulignement pour les liens dans l’aperçu de l’entrée et les libellés de l’interface utilisateur.
+      switch_label: Toujours souligner les liens
+
+  # Advanced panel
+  advanced:
+    title: Avancé
+    beta:
+      title: Fonctionnalités bêta
+      description: Activer certaines fonctionnalités bêta susceptibles d’être instables ou non localisées.
+      switch_label: Rejoindre le programme bêta
+    developer_mode:
+      title: Mode développeur
+      description: Activer certaines fonctionnalités destinées aux développeurs, notamment des journaux de console détaillés et des menus contextuels natifs.
+      switch_label: Activer le mode développeur
+    deploy_hook:
+      title: Hook de déploiement
+      description: Saisissez l’URL du webhook à appeler lorsque vous déclenchez manuellement un déploiement en sélectionnant Publier les modifications. Ce champ peut rester vide si vous utilisez GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: URL du hook
+        saved: URL du hook enregistrée.
+        removed: URL du hook supprimée.
+      # Authorization header input
+      auth:
+        field_label: En-tête d’autorisation (par exemple, Bearer <token>) (facultatif)
+        saved: En-tête d’autorisation enregistré.
+        removed: En-tête d’autorisation supprimé.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: Afficher la bibliothèque de contenu
+  view_asset_library: Afficher la bibliothèque de ressources
+  search: Rechercher des entrées et des ressources
+  create_entry: Créer une entrée
+  save_entry: Enregistrer une entrée
+  cancel_editing: Annuler la modification de l’entrée
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: Image AVIF
+  bmp: Image bitmap
+  gif: Image GIF
+  ico: Icône
+  jpeg: Image JPEG
+  jpg: Image JPEG
+  png: Image PNG
+  svg: Image SVG
+  tif: Image TIFF
+  tiff: Image TIFF
+  webp: Image WebP
+  # Video formats
+  avi: Vidéo AVI
+  m4v: Vidéo MP4
+  mov: Vidéo QuickTime
+  mp4: Vidéo MP4
+  mpeg: Vidéo MPEG
+  mpg: Vidéo MPEG
+  ogg: Vidéo Ogg
+  ogv: Vidéo Ogg
+  ts: Vidéo MPEG
+  webm: Vidéo WebM
+  3gp: Vidéo 3GPP
+  3g2: Vidéo 3GPP2
+  # Audio formats
+  aac: Audio AAC
+  mid: MIDI
+  midi: MIDI
+  m4a: Audio MP4
+  mp3: Audio MP3
+  oga: Audio Ogg
+  opus: Audio OPUS
+  wav: Audio WAV
+  weba: Audio WebM
+  # Document formats
+  csv: Feuille de calcul CSV
+  doc: Document Word
+  docx: Document Word
+  odp: Présentation OpenDocument
+  ods: Feuille de calcul OpenDocument
+  odt: Texte OpenDocument
+  pdf: Document PDF
+  ppt: Présentation PowerPoint
+  pptx: Présentation PowerPoint
+  rtf: Document texte enrichi
+  xls: Feuille de calcul Excel
+  xlsx: Feuille de calcul Excel
+  # Text formats
+  html: Texte HTML
+  js: JavaScript
+  json: Texte JSON
+  md: Texte Markdown
+  toml: Texte TOML
+  yaml: Texte YAML
+  yml: Texte YAML
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} octets'
+  kb: '{$size} Ko'
+  mb: '{$size} Mo'
+  gb: '{$size} Go'
+  tb: '{$size} To'
