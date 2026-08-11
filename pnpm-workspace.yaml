@@ -7,7 +7,3 @@ minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
   - '@sveltia/*'
-
-overrides:
-  # https://github.com/advisories/GHSA-rgw5-rvv9-x895
-  brace-expansion@>=4.0.0 <5.0.9: ^5.0.9
