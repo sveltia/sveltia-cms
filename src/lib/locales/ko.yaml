@@ -588,8 +588,8 @@ drop_files_here: |
 # File type validation errors
 unsupported_file_type: 지원되지 않는 파일 형식
 # {$type} is the expected asset type label, such as image or document
-dropped_file_type_mismatch: '놓으신 파일이 다음 형식 중 하나가 아닙니다: {$types}. 다시 시도하십시오.'
-dropped_image_type_mismatch: '놓으신 파일은 지원되지 않습니다. 다음 형식의 이미지만 사용할 수 있습니다: {$types}. 다시 시도하십시오.'
+dropped_file_type_mismatch: '드롭한 파일이 다음 형식 중 하나가 아닙니다: {$types}. 다시 시도하십시오.'
+dropped_image_type_mismatch: '드롭한 파일은 지원되지 않습니다. 다음 형식의 이미지만 사용할 수 있습니다: {$types}. 다시 시도하십시오.'
 
 # File chooser button label
 # {$count} is the number of files the picker allows the user to choose
