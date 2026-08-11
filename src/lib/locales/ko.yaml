@@ -1269,7 +1269,7 @@ boolean:
 
 cloud_storage:
   # Configuration error
-  invalid: 서비스가 올바르게 설정되지 않았습니다.
+  invalid: 서비스가 올바르게 구성되지 않았습니다.
 
   # Authentication states
   auth:
