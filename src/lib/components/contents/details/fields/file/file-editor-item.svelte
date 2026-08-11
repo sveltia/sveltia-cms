@@ -1,15 +1,18 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Icon } from '@sveltia/ui';
+  import { Button, Icon, TextInput } from '@sveltia/ui';
+  import { getPathInfo } from '@sveltia/utils/file';
   import { isURL } from '@sveltia/utils/string';
-  import { untrack } from 'svelte';
+  import { tick, untrack } from 'svelte';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
   import { getAssetByPath } from '$lib/services/assets';
   import { getMediaFieldURL } from '$lib/services/assets/info';
   import { getMediaKind } from '$lib/services/assets/kinds';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { createPath } from '$lib/services/utils/file';
+  import { activeInlineEditors } from '$lib/services/contents/editor';
+  import { createPath, formatFileName, isEquivalentFileExtension } from '$lib/services/utils/file';
 
   /**
    * @import { Asset, AssetKind, Entry } from '$lib/types/private';
@@ -62,9 +65,26 @@
   let kind = $state();
   /** @type {string | undefined} */
   let src = $state();
+  /** Whether the file name is being edited. */
+  let editing = $state(false);
+  /** File name being edited. */
+  let newName = $state('');
+  /** @type {HTMLInputElement | undefined} */
+  let inputElement = $state();
+  let showExtensionChangeDialog = $state(false);
 
   const { widget: fieldType } = $derived(fieldConfig);
   const isImageField = $derived(fieldType === 'image');
+  /**
+   * Whether the file is not yet saved to the repository. An unsaved file is a pending upload cached
+   * in the draft and referenced with a temporary blob URL, so it can still be renamed.
+   */
+  const unsaved = $derived(!!file && !!value?.startsWith('blob:'));
+  const canRename = $derived(unsaved && !readonly);
+  const oldExtension = $derived(file ? getPathInfo(file.name).extension : undefined);
+  /** Sanitized file name to be saved, which may be different from the entered name. */
+  const finalName = $derived(formatFileName(newName.trim()));
+  const newExtension = $derived(getPathInfo(finalName).extension);
 
   const getURLArgs = $derived({
     value,
@@ -120,6 +140,58 @@
   });
 
   /**
+   * Start editing the file name. The input field is focused, and the file name is selected,
+   * excluding the extension, just like the macOS Finder and Windows File Explorer do.
+   */
+  const startEditing = async () => {
+    if (!file) {
+      return;
+    }
+
+    newName = file.name;
+    editing = true;
+    await tick();
+    inputElement?.focus();
+    inputElement?.setSelectionRange(0, getPathInfo(newName).filename.length);
+  };
+
+  /**
+   * Rename the unsaved file by replacing the cached `File` object with a new one. The blob URL,
+   * which is the current field value, remains the same, so no other references have to be updated.
+   */
+  const renameFile = () => {
+    if (!file || !$entryDraft?.files[value]) {
+      return;
+    }
+
+    const newFile = new File([file], finalName, {
+      type: file.type,
+      lastModified: file.lastModified,
+    });
+
+    $entryDraft.files[value].file = newFile;
+    file = newFile;
+    editing = false;
+  };
+
+  /**
+   * Apply the entered file name. If the file extension is being changed, ask for confirmation
+   * first, because a mismatched extension could make the file unusable.
+   */
+  const applyNewName = () => {
+    if (!file || !finalName || finalName === file.name) {
+      editing = false;
+      return;
+    }
+
+    if (isEquivalentFileExtension(oldExtension, newExtension)) {
+      renameFile();
+    } else {
+      showExtensionChangeDialog = true;
+    }
+  };
+
+  /**
    * Update properties when value changes.
    */
   const updateProps = async () => {
@@ -159,6 +231,19 @@
     untrack(() => {
       updateProps();
     });
+  });
+
+  $effect(() => {
+    if (!editing) {
+      return undefined;
+    }
+
+    // Let the Escape key cancel the editing instead of closing the entry editor
+    activeInlineEditors.update((count) => count + 1);
+
+    return () => {
+      activeInlineEditors.update((count) => count - 1);
+    };
   });
 </script>
 
@@ -205,18 +290,93 @@
   {/if}
   <div role="none">
     {#if typeof value === 'string'}
-      <div
-        role="textbox"
-        id="{fieldId}-value"
-        tabindex="0"
-        class="filename"
-        aria-readonly={readonly}
-        aria-invalid={invalid}
-        aria-required={required}
-        aria-labelledby="{fieldId}-label"
-        aria-errormessage="{fieldId}-error"
-      >
-        {fileDisplayPath}
+      <div role="none" class="path">
+        {#if editing}
+          <TextInput
+            id="{fieldId}-value"
+            dir="auto"
+            flex
+            bind:value={newName}
+            bind:element={inputElement}
+            {invalid}
+            {required}
+            aria-labelledby="{fieldId}-label"
+            aria-errormessage="{fieldId}-error"
+            onkeydown={(/** @type {KeyboardEvent} */ event) => {
+              const { key, isComposing } = event;
+
+              // Ignore the Enter key while the user is typing with an IME
+              if (isComposing || !(key === 'Enter' || key === 'Escape')) {
+                return;
+              }
+
+              event.preventDefault();
+              event.stopPropagation();
+
+              if (key === 'Enter') {
+                applyNewName();
+              } else {
+                editing = false;
+              }
+            }}
+          />
+          <Button
+            size="small"
+            iconic
+            disabled={!finalName}
+            aria-label={_('done')}
+            aria-controls="{fieldId}-value"
+            onclick={() => {
+              applyNewName();
+            }}
+          >
+            {#snippet startIcon()}
+              <Icon name="check" />
+            {/snippet}
+          </Button>
+          <Button
+            size="small"
+            iconic
+            aria-label={_('cancel')}
+            aria-controls="{fieldId}-value"
+            onclick={() => {
+              editing = false;
+            }}
+          >
+            {#snippet startIcon()}
+              <Icon name="close" />
+            {/snippet}
+          </Button>
+        {:else}
+          <div
+            role="textbox"
+            id="{fieldId}-value"
+            tabindex="0"
+            class="filename"
+            aria-readonly={readonly}
+            aria-invalid={invalid}
+            aria-required={required}
+            aria-labelledby="{fieldId}-label"
+            aria-errormessage="{fieldId}-error"
+          >
+            {fileDisplayPath}
+          </div>
+          {#if canRename}
+            <Button
+              size="small"
+              iconic
+              aria-label={_('rename')}
+              aria-controls="{fieldId}-value"
+              onclick={() => {
+                startEditing();
+              }}
+            >
+              {#snippet startIcon()}
+                <Icon name="edit" />
+              {/snippet}
+            </Button>
+          {/if}
+        {/if}
       </div>
     {/if}
     <div role="none">
@@ -249,6 +409,20 @@
     </div>
   </div>
 </div>
+
+<FileExtensionChangeDialog
+  bind:open={showExtensionChangeDialog}
+  {oldExtension}
+  {newExtension}
+  okLabel={_('rename')}
+  onOk={() => {
+    renameFile();
+  }}
+  onCancel={() => {
+    // Go back to the input field, keeping the entered name
+    inputElement?.focus();
+  }}
+/>
 
 <style>
   .filled {
@@ -286,6 +460,16 @@
     & > div {
       flex: auto;
       overflow: hidden;
+
+      .path {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        .filename {
+          flex: auto;
+        }
+      }
 
       .filename {
         margin: var(--sui-focus-ring-width);

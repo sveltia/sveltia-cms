@@ -8,6 +8,7 @@ import {
 } from '$lib/services/api/registries';
 
 import {
+  activeInlineEditors,
   copyFromLocaleToast,
   editorFirstPane,
   editorSecondPane,
@@ -22,6 +23,7 @@ describe('editor/index', () => {
     // Reset all stores to their initial values
     showContentOverlay.set(false);
     showDuplicateToast.set(false);
+    activeInlineEditors.set(0);
     translatorApiKeyDialogState.set({ show: false, multiple: false });
     copyFromLocaleToast.set({
       id: undefined,
@@ -69,6 +71,22 @@ describe('editor/index', () => {
       showDuplicateToast.set(true);
       showDuplicateToast.set(false);
       expect(get(showDuplicateToast)).toBe(false);
+    });
+  });
+
+  describe('activeInlineEditors', () => {
+    it('should initialize as zero', () => {
+      expect(get(activeInlineEditors)).toBe(0);
+    });
+
+    it('should count multiple active editors', () => {
+      activeInlineEditors.update((count) => count + 1);
+      activeInlineEditors.update((count) => count + 1);
+      expect(get(activeInlineEditors)).toBe(2);
+      activeInlineEditors.update((count) => count - 1);
+      expect(get(activeInlineEditors)).toBe(1);
+      activeInlineEditors.update((count) => count - 1);
+      expect(get(activeInlineEditors)).toBe(0);
     });
   });
 

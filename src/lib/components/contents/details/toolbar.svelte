@@ -30,7 +30,7 @@
   import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
   import { saveEntry } from '$lib/services/contents/draft/save';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
-  import { copyFromLocaleToast } from '$lib/services/contents/editor';
+  import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getEntryPreviewURL } from '$lib/services/contents/entry';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
@@ -202,7 +202,7 @@
 <Toolbar variant="primary" aria-label={_('primary')}>
   <BackButton
     aria-label={_('cancel_editing')}
-    useShortcut={prefs.closeWithEscape}
+    useShortcut={prefs.closeWithEscape && !$activeInlineEditors}
     onclick={() => {
       _goBack();
     }}

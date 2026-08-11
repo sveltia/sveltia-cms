@@ -33,6 +33,14 @@ export const showContentOverlay = writable(false);
 export const showDuplicateToast = writable(false);
 
 /**
+ * Number of inline editors that are currently active in the entry editor, such as the file name
+ * editor in a File/Image field. While any of them is active, the Escape key shortcut to close the
+ * entry editor is disabled, so the key can be used to cancel the inline editing instead.
+ * @type {Writable<number>}
+ */
+export const activeInlineEditors = writable(0);
+
+/**
  * @type {Writable<{ show: boolean, multiple: boolean, resolve?: (value?: string) => void }>}
  */
 export const translatorApiKeyDialogState = writable({ show: false, multiple: false });
