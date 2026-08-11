@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { groupEntries, parseGroupConfig } from './group';
+import { getReorderGroupingConditions, groupEntries, parseGroupConfig } from './group';
 
 // Mock all dependencies
 vi.mock('@sveltia/i18n', () => ({
@@ -39,8 +39,93 @@ vi.mock('$lib/services/utils/regex', () => ({
   getRegex: vi.fn(),
 }));
 
+vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
+  getReorderGroupName: vi.fn(),
+}));
+
 const { get } = await import('svelte/store');
 const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+const { getReorderGroupName } = await import('$lib/services/contents/collection/entries/reorder');
+
+describe('getReorderGroupingConditions', () => {
+  const collection = {
+    name: 'articles',
+    _type: 'entry',
+    folder: 'content/articles',
+    view_groups: {
+      groups: [
+        { name: 'categories', label: 'Categories', field: 'category' },
+        { name: 'years', label: 'Years', field: 'date', pattern: '^\\d{4}' },
+      ],
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('should return undefined without a collection', () => {
+    expect(getReorderGroupingConditions(undefined)).toBeUndefined();
+  });
+
+  test('should return undefined for a file/singleton collection', () => {
+    vi.mocked(getReorderGroupName).mockReturnValue('categories');
+
+    expect(getReorderGroupingConditions({ name: 'pages', _type: 'file' })).toBeUndefined();
+    // The collection is rejected before its `reorder` option is even read
+    expect(getReorderGroupName).not.toHaveBeenCalled();
+  });
+
+  test('should return undefined when no reorder group is configured', () => {
+    vi.mocked(getReorderGroupName).mockReturnValue(undefined);
+
+    expect(getReorderGroupingConditions(collection)).toBeUndefined();
+  });
+
+  test('should return undefined when the named group is not defined in view_groups', () => {
+    vi.mocked(getReorderGroupName).mockReturnValue('authors');
+
+    expect(getReorderGroupingConditions(collection)).toBeUndefined();
+  });
+
+  test('should return undefined when the collection has no view_groups', () => {
+    vi.mocked(getReorderGroupName).mockReturnValue('categories');
+
+    expect(
+      getReorderGroupingConditions({ name: 'articles', folder: 'content/articles' }),
+    ).toBeUndefined();
+  });
+
+  test('should resolve the named group from the object format', () => {
+    vi.mocked(getReorderGroupName).mockReturnValue('categories');
+
+    expect(getReorderGroupingConditions(collection)).toEqual({
+      field: 'category',
+      pattern: undefined,
+    });
+  });
+
+  test('should include the group pattern when defined', () => {
+    vi.mocked(getReorderGroupName).mockReturnValue('years');
+
+    expect(getReorderGroupingConditions(collection)).toEqual({
+      field: 'date',
+      pattern: '^\\d{4}',
+    });
+  });
+
+  test('should resolve the named group from the array format', () => {
+    vi.mocked(getReorderGroupName).mockReturnValue('categories');
+
+    expect(
+      getReorderGroupingConditions({
+        name: 'articles',
+        folder: 'content/articles',
+        view_groups: [{ name: 'categories', label: 'Categories', field: 'category' }],
+      }),
+    ).toEqual({ field: 'category', pattern: undefined });
+  });
+});
 
 describe('groupEntries', () => {
   beforeEach(() => {

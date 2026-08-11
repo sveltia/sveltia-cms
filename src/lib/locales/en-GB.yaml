@@ -1472,6 +1472,8 @@ config:
     file_format_mismatch: The `{$extension}` extension doesn’t match the `{$format}` format.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: The slug template `{$slug}` is invalid as it cannot contain slashes. To organise entries in subfolders, use the `path` option instead of `slug`.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: The `reorder` option refers to a view group named `{$name}`, but no such group is defined in the `view_groups` option.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: The collection {$count} must have the `name` option defined as a non-empty string.
     # {$name} is the invalid or duplicate collection name

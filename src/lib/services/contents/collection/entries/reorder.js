@@ -46,6 +46,26 @@ export const getOrderFieldKey = (collection) => {
 };
 
 /**
+ * Get the name of the view group that entries should be grouped by while the given collection is in
+ * reorder mode, as configured with `reorder: { group: '…' }`. The group is named explicitly rather
+ * than reusing whatever grouping the user has active, because the order field is renumbered group
+ * by group: an arbitrary grouping would produce a different numbering every time and the values
+ * would conflict.
+ * @param {any} collection Collection (typically an entry collection). Anything else returns
+ * `undefined`.
+ * @returns {string | undefined} Group name, or `undefined` if reorder grouping is not configured.
+ */
+export const getReorderGroupName = (collection) => {
+  const reorder = collection?.reorder;
+
+  if (isObject(reorder) && typeof reorder.group === 'string' && reorder.group) {
+    return reorder.group;
+  }
+
+  return undefined;
+};
+
+/**
  * Sort entries by the collection’s `order` field. Entries lacking a valid numeric value are placed
  * at the end while preserving their relative input order.
  * @param {Entry[]} entries Entries to sort.

@@ -7,7 +7,10 @@ import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { filterEntries } from '$lib/services/contents/collection/view/filter';
-import { groupEntries } from '$lib/services/contents/collection/view/group';
+import {
+  getReorderGroupingConditions,
+  groupEntries,
+} from '$lib/services/contents/collection/view/group';
 import { entryListSettings, initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -199,7 +202,13 @@ reordering.subscribe((value) => {
   // sequence. Filters would cause hidden entries to retain their old order values and collide with
   // the new 1..N numbering, while grouping splits the list into buckets that can’t be reordered
   // across, producing global numbers that don’t match user intent.
+  //
+  // A collection whose order field is only consumed within a group can opt into grouped reordering
+  // with `reorder: { group: '…' }`. That group replaces whatever grouping the user has active, so
+  // the buckets — and therefore the numbering, which runs group by group — are always the same.
+  // Nothing is hidden either way, so what the user sees is still exactly what gets persisted.
   const view = get(currentView);
+  const reorderGroup = getReorderGroupingConditions(get(selectedCollection));
 
   // Snapshot so we can restore on exit.
   viewBeforeReorder = view;
@@ -215,7 +224,11 @@ reordering.subscribe((value) => {
     overrides.filters = [];
   }
 
-  if (view.group) {
+  if (reorderGroup) {
+    if (view.group?.field !== reorderGroup.field || view.group?.pattern !== reorderGroup.pattern) {
+      overrides.group = reorderGroup;
+    }
+  } else if (view.group) {
     overrides.group = null;
   }
 

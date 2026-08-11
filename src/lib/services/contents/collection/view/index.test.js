@@ -4,7 +4,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { filterEntries } from '$lib/services/contents/collection/view/filter';
-import { groupEntries } from '$lib/services/contents/collection/view/group';
+import {
+  getReorderGroupingConditions,
+  groupEntries,
+} from '$lib/services/contents/collection/view/group';
 import { initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 
@@ -120,6 +123,7 @@ vi.mock('$lib/services/contents/collection/view/filter', () => ({
 
 vi.mock('$lib/services/contents/collection/view/group', () => ({
   groupEntries: vi.fn((entries) => [{ name: 'default', entries }]),
+  getReorderGroupingConditions: vi.fn(() => undefined),
 }));
 
 vi.mock('$lib/services/contents/collection/view/sort', () => ({
@@ -149,6 +153,8 @@ describe('collection/view/index', () => {
     _backend.set(null);
     _entryListSettings.set(undefined);
     currentView.set({ type: 'list' });
+    // `clearAllMocks()` only clears recorded calls, so reset the return value set by reorder tests
+    vi.mocked(getReorderGroupingConditions).mockReturnValue(undefined);
   });
 
   test('exports currentView store', () => {
@@ -1320,6 +1326,119 @@ describe('collection/view/index', () => {
     expect(view.sort).toEqual({ key: '_manual', order: 'ascending' });
 
     reordering.set(false);
+  });
+
+  test('entering reorder mode applies the configured reorder grouping over the active one', () => {
+    const reorderGroup = { field: 'category', pattern: undefined };
+
+    vi.mocked(getReorderGroupingConditions).mockReturnValue(reorderGroup);
+
+    currentView.set({
+      type: 'list',
+      sort: { key: '_manual', order: 'ascending' },
+      group: { field: 'year' },
+    });
+
+    reordering.set(true);
+
+    expect(get(currentView).group).toBe(reorderGroup);
+
+    reordering.set(false);
+  });
+
+  test('entering reorder mode applies the configured reorder grouping when none is active', () => {
+    const reorderGroup = { field: 'category', pattern: undefined };
+
+    vi.mocked(getReorderGroupingConditions).mockReturnValue(reorderGroup);
+
+    currentView.set({ type: 'list', sort: { key: '_manual', order: 'ascending' } });
+
+    reordering.set(true);
+
+    expect(get(currentView).group).toBe(reorderGroup);
+
+    reordering.set(false);
+  });
+
+  test('entering reorder mode does not re-set currentView when the reorder grouping already applies', () => {
+    const group = { field: 'category', pattern: undefined };
+
+    vi.mocked(getReorderGroupingConditions).mockReturnValue({ ...group });
+
+    const view = {
+      type: /** @type {const} */ ('list'),
+      sort: { key: '_manual', order: /** @type {const} */ ('ascending') },
+      group,
+    };
+
+    currentView.set(view);
+
+    reordering.set(true);
+
+    // Reference is preserved because we skip the redundant set.
+    expect(get(currentView)).toBe(view);
+
+    reordering.set(false);
+  });
+
+  test('entering reorder mode re-applies the reorder grouping when only the pattern differs', () => {
+    const reorderGroup = { field: 'category', pattern: '^a' };
+
+    vi.mocked(getReorderGroupingConditions).mockReturnValue(reorderGroup);
+
+    currentView.set({
+      type: 'list',
+      sort: { key: '_manual', order: 'ascending' },
+      group: { field: 'category', pattern: '^b' },
+    });
+
+    reordering.set(true);
+
+    expect(get(currentView).group).toBe(reorderGroup);
+
+    reordering.set(false);
+  });
+
+  test('entering reorder mode still forces manual sort and clears filters with reorder grouping', () => {
+    const reorderGroup = { field: 'category', pattern: undefined };
+
+    vi.mocked(getReorderGroupingConditions).mockReturnValue(reorderGroup);
+
+    currentView.set({
+      type: 'list',
+      sort: { key: 'title', order: 'descending' },
+      filters: [{ field: 'status', pattern: 'published' }],
+    });
+
+    reordering.set(true);
+
+    const view = get(currentView);
+
+    expect(view.sort).toEqual({ key: '_manual', order: 'ascending' });
+    expect(view.filters).toEqual([]);
+    expect(view.group).toBe(reorderGroup);
+
+    reordering.set(false);
+  });
+
+  test('exiting reorder mode restores the grouping replaced by the reorder grouping', () => {
+    vi.mocked(getReorderGroupingConditions).mockReturnValue({
+      field: 'category',
+      pattern: undefined,
+    });
+
+    const view = {
+      type: /** @type {const} */ ('list'),
+      sort: { key: 'title', order: /** @type {const} */ ('descending') },
+      group: { field: 'year' },
+    };
+
+    currentView.set(view);
+
+    reordering.set(true);
+    reordering.set(false);
+
+    expect(get(currentView)).toBe(view);
   });
 
   test('entering reorder mode applies sort, filter, and group overrides together', () => {

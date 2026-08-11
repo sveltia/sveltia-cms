@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   buildRenumberChanges,
   getOrderFieldKey,
+  getReorderGroupName,
   renumberCollectionEntries,
   reorderEntries,
   sortEntriesByOrderField,
@@ -63,6 +64,34 @@ describe('getOrderFieldKey()', () => {
 
   test('falls back to the default key when reorder.key is empty', () => {
     expect(getOrderFieldKey({ reorder: { key: '' } })).toBe('order');
+  });
+});
+
+describe('getReorderGroupName()', () => {
+  test('returns undefined when reorder is not configured', () => {
+    expect(getReorderGroupName(undefined)).toBeUndefined();
+    expect(getReorderGroupName({})).toBeUndefined();
+    expect(getReorderGroupName({ reorder: false })).toBeUndefined();
+  });
+
+  test('returns undefined when reorder is enabled with the shorthand syntax', () => {
+    expect(getReorderGroupName({ reorder: true })).toBeUndefined();
+  });
+
+  test('returns undefined when group is omitted', () => {
+    expect(getReorderGroupName({ reorder: { key: 'weight' } })).toBeUndefined();
+  });
+
+  test('returns undefined for an empty or non-string group', () => {
+    expect(getReorderGroupName({ reorder: { group: '' } })).toBeUndefined();
+    expect(getReorderGroupName({ reorder: { group: true } })).toBeUndefined();
+  });
+
+  test('returns the configured group name', () => {
+    expect(getReorderGroupName({ reorder: { group: 'categories' } })).toBe('categories');
+    expect(getReorderGroupName({ reorder: { key: 'weight', group: 'categories' } })).toBe(
+      'categories',
+    );
   });
 });
 

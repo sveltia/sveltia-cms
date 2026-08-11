@@ -3,6 +3,7 @@ import { derived, get } from 'svelte/store';
 
 import { buildGroupMap } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
+import { getReorderGroupName } from '$lib/services/contents/collection/entries/reorder';
 import { currentView } from '$lib/services/contents/collection/view';
 import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
 import { getPropertyValue } from '$lib/services/contents/entry/fields';
@@ -24,6 +25,33 @@ import { getPropertyValue } from '$lib/services/contents/entry/fields';
 export const parseGroupConfig = (filters) =>
   /** @type {{ options: ViewGroup[], default?: GroupingConditions }} */
   (parseViewOptions(filters, 'groups'));
+
+/**
+ * Get the grouping conditions to be applied while the given collection is in reorder mode, by
+ * resolving the group named with the collection’s `reorder.group` option against its `view_groups`
+ * definitions. Entries are then reordered within their own group, which is useful when the order
+ * field is only consumed per group.
+ * @param {InternalCollection | undefined} collection Collection.
+ * @returns {GroupingConditions | undefined} Conditions, or `undefined` if reorder grouping is not
+ * configured or the named group is not defined in `view_groups`.
+ * @see https://sveltiacms.app/en/docs/collections/entries#grouping
+ */
+export const getReorderGroupingConditions = (collection) => {
+  // Grouping is only available for entry collections
+  if (!collection || !('folder' in collection)) {
+    return undefined;
+  }
+
+  const name = getReorderGroupName(collection);
+
+  if (!name) {
+    return undefined;
+  }
+
+  const group = parseGroupConfig(collection.view_groups).options.find((g) => g.name === name);
+
+  return group ? { field: group.field, pattern: group.pattern } : undefined;
+};
 
 /**
  * Group the given entries.

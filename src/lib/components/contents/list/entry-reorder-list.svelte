@@ -3,6 +3,11 @@
   Render the entry list in reorder mode. Each group is shown as its own `GridBody` with
   drag-and-drop reordering. The flattened ordered entries are published to the `reorderedEntries`
   store so the toolbar Save button can read it.
+
+  There is normally a single, unnamed group because entering reorder mode clears the active
+  grouping. A collection using `reorder: { group: '…' }` is grouped by the named view group instead,
+  in which case dragging is locked within a group: entries are renumbered group by group, and moving
+  an entry across groups wouldn’t update the field that determines which group it belongs to.
 -->
 <script>
   import { GridBody } from '@sveltia/ui';
@@ -38,7 +43,8 @@
   let reorderGroups = $state({});
 
   /**
-   * Name of the group that contains the currently dragged entry.
+   * Name of the group the current drag started in. Empty while no drag is in progress. Used to
+   * reject drops in any other group.
    * @type {string}
    */
   let dragGroupName = $state('');
@@ -134,11 +140,22 @@
               dragIndex = index;
             }}
             onDragOver={(/** @type {number} */ clientY, /** @type {DOMRect} */ rect) => {
-              dragGroupName = name;
+              // Reject the drop when it targets another group, so the browser shows a “no drop”
+              // cursor and never fires the `drop` event. This also rejects anything dragged in from
+              // outside the list, where `dragGroupName` is still empty.
+              if (name !== dragGroupName) {
+                dropIndex = undefined;
+
+                return false;
+              }
+
               dropIndex = clientY < rect.top + rect.height / 2 ? index : index + 1;
+
+              return true;
             }}
             onDrop={() => {
               if (
+                name === dragGroupName &&
                 dragIndex !== undefined &&
                 dropIndex !== undefined &&
                 dropIndex !== dragIndex &&
@@ -151,6 +168,7 @@
               dropIndex = undefined;
             }}
             onDragEnd={() => {
+              dragGroupName = '';
               dragIndex = undefined;
               dropIndex = undefined;
             }}
@@ -179,12 +197,18 @@
         cursor: grab;
       }
 
+      /* Draw the drop indicators with an inset shadow rather than a border: the list view zeroes
+        out the top border of the first row and the bottom border of the last row of a labelled
+        group with a more specific `!important` rule (see `listing-grid.svelte`), which would hide a
+        border indicator at the top and bottom edge of every group. A shadow also keeps the row
+        heights stable, so the list no longer shifts by 3px as the indicator moves. */
+
       .grid-row.drop-before .grid-cell {
-        border-top: 3px solid var(--sui-primary-accent-color) !important;
+        box-shadow: inset 0 3px 0 0 var(--sui-primary-accent-color);
       }
 
       .grid-row.drop-after .grid-cell {
-        border-bottom: 3px solid var(--sui-primary-accent-color) !important;
+        box-shadow: inset 0 -3px 0 0 var(--sui-primary-accent-color);
       }
     }
   }

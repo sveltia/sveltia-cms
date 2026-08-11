@@ -1393,6 +1393,8 @@ config:
     file_format_mismatch: 拡張子 `{$extension}` は `{$format}` 形式と一致しません。
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: スラッグテンプレート `{$slug}` は無効です。スラッシュを含めることはできません。エントリーをサブフォルダーに整理するには、`slug` の代わりに `path` オプションを使用してください。
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: '`reorder` オプションで指定された `{$name}` グループは、`view_groups` オプションに定義されていません。'
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: コレクション {$count} には `name` オプションを空でない文字列として定義する必要があります。
     # {$name} is the invalid or duplicate collection name

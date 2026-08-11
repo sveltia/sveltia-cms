@@ -24,7 +24,8 @@
    * @property {boolean} [canMoveUp] Whether the Move Up action is available.
    * @property {boolean} [canMoveDown] Whether the Move Down action is available.
    * @property {() => void} [onDragStart] Drag start handler.
-   * @property {(clientY: number, rect: DOMRect) => void} [onDragOver] Drag over handler.
+   * @property {(clientY: number, rect: DOMRect) => boolean} [onDragOver] Drag over handler. Returns
+   * whether the dragged entry can be dropped here; a falsy result rejects the drop.
    * @property {() => void} [onDrop] Drop handler.
    * @property {() => void} [onDragEnd] Drag end handler.
    * @property {() => void} [onMoveUp] Move up handler.
@@ -66,13 +67,17 @@
     }
   }}
   ondragover={(/** @type {DragEvent & { currentTarget: HTMLElement }} */ event) => {
-    event.preventDefault();
+    const accepted = !!onDragOver?.(event.clientY, event.currentTarget.getBoundingClientRect());
 
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
+    // Only calling `preventDefault()` for an accepted target lets the browser reject the drop for
+    // us: no `drop` event is fired elsewhere.
+    if (accepted) {
+      event.preventDefault();
     }
 
-    onDragOver?.(event.clientY, event.currentTarget.getBoundingClientRect());
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = accepted ? 'move' : 'none';
+    }
   }}
   ondrop={(/** @type {DragEvent} */ event) => {
     event.preventDefault();

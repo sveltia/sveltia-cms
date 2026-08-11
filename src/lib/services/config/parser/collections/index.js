@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 
 import { _ } from '@sveltia/i18n';
+import { isObject } from '@sveltia/utils/object';
 
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
@@ -11,6 +12,7 @@ import {
   checkName,
   checkUnsupportedOptions,
 } from '$lib/services/config/parser/utils/validator';
+import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
 
 /**
  * @import { CmsConfig, Collection, CollectionDivider, EntryCollection } from '$lib/types/public';
@@ -42,7 +44,17 @@ const UNSUPPORTED_OPTIONS = [
  */
 export const parseEntryCollection = (context, collectors) => {
   const { cmsConfig, collection } = context;
-  const { extension, format, fields, index_file, slug, slug_length: legacySlugLength } = collection;
+
+  const {
+    extension,
+    format,
+    fields,
+    index_file,
+    reorder,
+    slug,
+    slug_length: legacySlugLength,
+    view_groups,
+  } = collection;
 
   if (isFormatMismatch(extension, format)) {
     addMessage({
@@ -72,6 +84,26 @@ export const parseEntryCollection = (context, collectors) => {
       { cmsConfig, collection, isIndexFile: true },
       collectors,
     );
+  }
+
+  // Validate the group named with the `reorder` option: an unknown name would silently fall back to
+  // an ungrouped list in reorder mode, which is hard to tell from a working configuration. The raw
+  // option is read here rather than through `getReorderGroupName()`, which lives in the runtime
+  // module graph (stores, backends) this parser runs before. `parseViewOptions()` is what
+  // `parseGroupConfig()` calls, so group lookup can’t diverge from the runtime.
+  const reorderGroupName = isObject(reorder) ? reorder.group : undefined;
+
+  if (typeof reorderGroupName === 'string' && reorderGroupName) {
+    const { options } = parseViewOptions(view_groups, 'groups');
+
+    if (!options.some(({ name }) => name === reorderGroupName)) {
+      addMessage({
+        strKey: 'invalid_reorder_group',
+        values: { name: reorderGroupName },
+        context,
+        collectors,
+      });
+    }
   }
 
   // Validate slug template: should not contain slashes to avoid confusion with `path` option.

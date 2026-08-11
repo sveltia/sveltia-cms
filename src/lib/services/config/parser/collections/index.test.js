@@ -288,6 +288,161 @@ describe('Collections Parser', () => {
       );
     });
 
+    it('should accept a reorder group defined in the object format view_groups', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'articles',
+          folder: 'content/articles',
+          fields: [],
+          view_groups: { groups: [{ name: 'categories', label: 'Categories', field: 'category' }] },
+          reorder: { group: 'categories' },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'invalid_reorder_group' }),
+      );
+    });
+
+    it('should accept a reorder group defined in the array format view_groups', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'articles',
+          folder: 'content/articles',
+          fields: [],
+          view_groups: [{ name: 'categories', label: 'Categories', field: 'category' }],
+          reorder: { group: 'categories' },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'invalid_reorder_group' }),
+      );
+    });
+
+    it('should add error when the reorder group is not defined in view_groups', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'articles',
+          folder: 'content/articles',
+          fields: [],
+          view_groups: { groups: [{ name: 'years', label: 'Years', field: 'date' }] },
+          reorder: { group: 'categories' },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'invalid_reorder_group',
+          values: { name: 'categories' },
+        }),
+      );
+    });
+
+    it('should add error when the reorder group is set without view_groups', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'articles',
+          folder: 'content/articles',
+          fields: [],
+          reorder: { group: 'categories' },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'invalid_reorder_group',
+          values: { name: 'categories' },
+        }),
+      );
+    });
+
+    it('should skip reorder group validation when no group is configured', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'articles',
+          folder: 'content/articles',
+          fields: [],
+          reorder: true,
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'invalid_reorder_group' }),
+      );
+    });
+
+    it('should skip reorder group validation for a non-string or empty group', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const baseCollection = {
+        name: 'articles',
+        folder: 'content/articles',
+        fields: [],
+        view_groups: { groups: [{ name: 'categories', label: 'Categories', field: 'category' }] },
+      };
+
+      parseEntryCollection(
+        /** @type {any} */ ({ cmsConfig: {}, collection: { ...baseCollection, reorder: {} } }),
+        collectors,
+      );
+      parseEntryCollection(
+        /** @type {any} */ ({
+          cmsConfig: {},
+          collection: { ...baseCollection, reorder: { group: '' } },
+        }),
+        collectors,
+      );
+      parseEntryCollection(
+        /** @type {any} */ ({
+          cmsConfig: {},
+          collection: { ...baseCollection, reorder: { group: 123 } },
+        }),
+        collectors,
+      );
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'invalid_reorder_group' }),
+      );
+    });
+
     it('should handle index_file when true', async () => {
       const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
