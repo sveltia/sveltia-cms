@@ -23,6 +23,7 @@ We provide comprehensive documentation to help you get started and make the most
 - [Introduction](https://sveltiacms.app/en/docs/intro): Product highlights, use cases, project goals
 - [Getting Started](https://sveltiacms.app/en/docs/start): Step-by-step setup instructions
 - [Migration Guides](https://sveltiacms.app/en/docs/migration): Instructions for migrating from other CMSs
+- [Working with AI](https://sveltiacms.app/en/docs/working-with-ai): Official Agent Skill and `llms.txt`
 - [Roadmap](https://sveltiacms.app/en/docs/roadmap): Upcoming features and improvements
 
 ## Showcase
