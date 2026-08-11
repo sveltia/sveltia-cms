@@ -554,6 +554,14 @@ enter_new_name_for_asset_error:
   empty: File name cannot be empty.
   character: File name cannot contain special characters.
   duplicate: This file name is used for another asset.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Change File Extension
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Are you sure you want to change the extension from “.{$oldExtension}” to “.{$newExtension}”?
+  add: Are you sure you want to add the extension “.{$newExtension}”?
+  remove: Are you sure you want to remove the extension “.{$oldExtension}”?
+file_extension_change_warning: The file may not be displayed or handled correctly if the extension doesn’t match the actual file format.
 
 # Replace asset: menu item and dialog title
 replace_asset: Replace Asset

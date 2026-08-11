@@ -538,6 +538,14 @@ enter_new_name_for_asset_error:
   empty: ファイル名を空白にすることはできません。
   character: ファイル名に特別な文字を含めることはできません。
   duplicate: このファイル名は他のアセットに使われています。
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: 拡張子の変更
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: 拡張子を「.{$oldExtension}」から「.{$newExtension}」に変更してもよろしいですか？
+  add: 拡張子「.{$newExtension}」を追加してもよろしいですか？
+  remove: 拡張子「.{$oldExtension}」を削除してもよろしいですか？
+file_extension_change_warning: 拡張子が実際のファイル形式と一致しない場合、ファイルが正しく表示または処理されない可能性があります。
 
 # Replace asset: menu item and dialog title
 replace_asset: アセットを差し替え

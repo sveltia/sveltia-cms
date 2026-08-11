@@ -10,6 +10,7 @@ import {
   formatSize,
   getBlob,
   getGitHash,
+  isEquivalentFileExtension,
   resolvePath,
   sanitizePath,
 } from '$lib/services/utils/file';
@@ -610,6 +611,46 @@ describe('Test createPath()', () => {
 
   test('should handle array with only falsy values', () => {
     expect(createPath([null, undefined, ''])).toBe('');
+  });
+});
+
+describe('Test isEquivalentFileExtension()', () => {
+  test('should return true for identical extensions', () => {
+    expect(isEquivalentFileExtension('png', 'png')).toBe(true);
+    expect(isEquivalentFileExtension('webp', 'webp')).toBe(true);
+  });
+
+  test('should ignore letter case', () => {
+    expect(isEquivalentFileExtension('PNG', 'png')).toBe(true);
+    expect(isEquivalentFileExtension('png', 'PNG')).toBe(true);
+    expect(isEquivalentFileExtension('JPEG', 'jpg')).toBe(true);
+  });
+
+  test('should return true for well-known aliases', () => {
+    expect(isEquivalentFileExtension('jpeg', 'jpg')).toBe(true);
+    expect(isEquivalentFileExtension('jpg', 'jfif')).toBe(true);
+    expect(isEquivalentFileExtension('tiff', 'tif')).toBe(true);
+    expect(isEquivalentFileExtension('html', 'htm')).toBe(true);
+    expect(isEquivalentFileExtension('yaml', 'yml')).toBe(true);
+    expect(isEquivalentFileExtension('markdown', 'md')).toBe(true);
+    expect(isEquivalentFileExtension('mpeg', 'mpg')).toBe(true);
+    expect(isEquivalentFileExtension('midi', 'mid')).toBe(true);
+    expect(isEquivalentFileExtension('aiff', 'aif')).toBe(true);
+  });
+
+  test('should return false for different formats', () => {
+    expect(isEquivalentFileExtension('png', 'jpg')).toBe(false);
+    expect(isEquivalentFileExtension('heic', 'jpg')).toBe(false);
+    expect(isEquivalentFileExtension('yml', 'json')).toBe(false);
+    expect(isEquivalentFileExtension('md', 'mdx')).toBe(false);
+  });
+
+  test('should handle omitted extensions', () => {
+    expect(isEquivalentFileExtension(undefined, undefined)).toBe(true);
+    expect(isEquivalentFileExtension('', '')).toBe(true);
+    expect(isEquivalentFileExtension(undefined, '')).toBe(true);
+    expect(isEquivalentFileExtension('png', undefined)).toBe(false);
+    expect(isEquivalentFileExtension(undefined, 'png')).toBe(false);
   });
 });
 

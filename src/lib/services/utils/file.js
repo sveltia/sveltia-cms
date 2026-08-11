@@ -160,6 +160,41 @@ export const formatFileName = (
 };
 
 /**
+ * Groups of file extensions that refer to the same file format, meaning that replacing one with
+ * another doesn’t change how the file is handled.
+ * @type {string[][]}
+ */
+export const EQUIVALENT_FILE_EXTENSIONS = [
+  ['jpg', 'jpeg', 'jpe', 'jfif'],
+  ['tif', 'tiff'],
+  ['htm', 'html'],
+  ['yml', 'yaml'],
+  ['md', 'markdown'],
+  ['mpg', 'mpeg'],
+  ['mid', 'midi'],
+  ['aif', 'aiff'],
+];
+
+/**
+ * Check if the given two file extensions refer to the same file format. The comparison is
+ * case-insensitive, so `PNG` and `png` are equivalent. Well-known aliases, such as `jpeg` and
+ * `jpg`, are also considered equivalent.
+ * @param {string} [a] File extension without a leading dot.
+ * @param {string} [b] File extension without a leading dot.
+ * @returns {boolean} Result. `true` if both extensions are omitted.
+ */
+export const isEquivalentFileExtension = (a, b) => {
+  const _a = a?.toLowerCase() ?? '';
+  const _b = b?.toLowerCase() ?? '';
+
+  if (_a === _b) {
+    return true;
+  }
+
+  return EQUIVALENT_FILE_EXTENSIONS.some((group) => group.includes(_a) && group.includes(_b));
+};
+
+/**
  * Join the given path segments while ignoring any falsy value.
  * @param {(string | null | undefined)[]} segments List of path segments.
  * @returns {string} Path.
