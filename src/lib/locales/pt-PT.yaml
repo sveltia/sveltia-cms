@@ -236,6 +236,11 @@ mobile_promo_button: Experimente
 new_language_available: O Sveltia CMS já está disponível em {$locale}!
 change_language: Mudar idioma
 
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: A mudar para {$locale}…
+locale_load_failed: Não foi possível carregar a tradução em {$locale}. Tente novamente mais tarde.
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: Visitar o site publicado
@@ -549,6 +554,14 @@ enter_new_name_for_asset_error:
   empty: O nome do ficheiro não pode estar vazio.
   character: O nome do ficheiro não pode conter caracteres especiais.
   duplicate: Este nome de ficheiro já é utilizado por outro recurso.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Mudar a extensão do ficheiro
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Tem a certeza de que pretende mudar a extensão de «.{$oldExtension}» para «.{$newExtension}»?
+  add: Tem a certeza de que pretende adicionar a extensão «.{$newExtension}»?
+  remove: Tem a certeza de que pretende remover a extensão «.{$oldExtension}»?
+file_extension_change_warning: O ficheiro poderá não ser apresentado ou processado corretamente se a extensão não corresponder ao formato real do ficheiro.
 
 # Replace asset: menu item and dialog title
 replace_asset: Substituir recurso
@@ -725,6 +738,16 @@ warning_oversized_files: |
   .match $count
     one {{ Este ficheiro não pode ser carregado porque excede o tamanho máximo de {$size}. Reduza o tamanho ou selecione um ficheiro diferente. }}
     *   {{ Estes ficheiros não podem ser carregados porque excedem o tamanho máximo de {$size}. Reduza os tamanhos ou selecione ficheiros diferentes. }}
+
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Ficheiros inválidos
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Este ficheiro não pode ser carregado porque está danificado ou o seu conteúdo não corresponde à extensão do ficheiro. Isto acontece frequentemente quando uma fotografia é renomeada em vez de ser convertida, por exemplo uma imagem HEIC guardada como ficheiro JPEG. Converta o ficheiro e tente novamente. }}
+    *   {{ Estes ficheiros não podem ser carregados porque estão danificados ou o seu conteúdo não corresponde à extensão dos ficheiros. Isto acontece frequentemente quando as fotografias são renomeadas em vez de serem convertidas, por exemplo imagens HEIC guardadas como ficheiros JPEG. Converta os ficheiros e tente novamente. }}
 
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
@@ -1091,6 +1114,10 @@ validation:
     email: Introduza um endereço de e-mail válido.
     url: Introduza um URL válido.
 
+  # Custom field validation error
+  invalid_value: Valor inválido.
+  unexpected_error: Ocorreu um erro inesperado.
+
 # ==============================================================================
 # Entry Sidebar
 # ==============================================================================
@@ -1197,6 +1224,9 @@ add_item_below: Adicionar item abaixo
 # Variable-type list selector
 select_list_type: Selecionar tipo de lista
 
+# Variable-type mismatch
+unknown_variable_type: Este item não pode ser apresentado devido a um tipo desconhecido. Consulte a consola do navegador para mais detalhes.
+
 # ==============================================================================
 # Field Widgets
 # ==============================================================================
@@ -1247,6 +1277,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: Ficheiro grande
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Ficheiro inválido
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Não é possível carregar os ficheiros
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -1442,6 +1480,24 @@ config:
     file_format_mismatch: A extensão `{$extension}` não corresponde ao formato `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: O modelo de slug `{$slug}` é inválido porque não pode conter barras. Para organizar as entradas em subpastas, utilize a opção `path` em vez de `slug`.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: A opção `reorder` refere-se a um grupo de vista com o nome `{$name}`, mas esse grupo não está definido na opção `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: A opção `sortable_fields` refere-se a um campo com o nome `{$name}`, mas esse campo não está definido na coleção.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: A opção `view_groups` refere-se a um campo com o nome `{$name}`, mas esse campo não está definido na coleção.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: A opção `view_filters` refere-se a um campo com o nome `{$name}`, mas esse campo não está definido na coleção.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: O grupo de vista {$count} tem de ter a opção `name` definida como uma cadeia de caracteres não vazia.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: O nome do grupo de vista `{$name}` é inválido. Não pode conter caracteres especiais.
+    duplicate_view_group_name: Os nomes dos grupos de vista têm de ser únicos, mas `{$name}` é utilizado mais do que uma vez.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: O filtro de vista {$count} tem de ter a opção `name` definida como uma cadeia de caracteres não vazia.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: O nome do filtro de vista `{$name}` é inválido. Não pode conter caracteres especiais.
+    duplicate_view_filter_name: Os nomes dos filtros de vista têm de ser únicos, mas `{$name}` é utilizado mais do que uma vez.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: A coleção {$count} tem de ter a opção `name` definida como uma cadeia de caracteres não vazia.
     # {$name} is the invalid or duplicate collection name
