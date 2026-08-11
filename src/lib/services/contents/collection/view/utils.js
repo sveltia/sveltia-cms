@@ -1,7 +1,8 @@
 import { isObject } from '@sveltia/utils/object';
 
 /**
- * @import { FilteringConditions, GroupingConditions } from '$lib/types/private';
+ * @import { FilteringConditions, GroupingConditions, SortOrder } from '$lib/types/private';
+ * @import { SortableFields } from '$lib/types/public';
  */
 
 /**
@@ -37,4 +38,53 @@ export const parseViewOptions = (config, optionsKey) => {
   }
 
   return { options: [] };
+};
+
+/**
+ * Check if the given value is a valid array of strings.
+ * @param {unknown} arr Value to check.
+ * @returns {arr is string[]} Whether the value is a valid array of strings.
+ */
+export const isValidArray = (arr) =>
+  Array.isArray(arr) && arr.every((item) => typeof item === 'string');
+
+/**
+ * Parse custom sortable fields configuration.
+ * @param {string[] | SortableFields} customSortableFields Custom sortable fields configuration.
+ * @returns {{ keys: string[], defaultKey?: string, defaultOrder?: SortOrder }} Parsed sortable
+ * fields configuration.
+ */
+export const parseCustomSortableFields = (customSortableFields) => {
+  // Netlify/Decap CMS compatibility: if `sortable_fields` is an array, it should be treated as a
+  // list of field keys
+  if (isValidArray(customSortableFields)) {
+    return { keys: customSortableFields };
+  }
+
+  // Static CMS compatibility: if `sortable_fields` is an object, it should be treated as a
+  // definition object with `fields` and `default` properties
+  if (isObject(customSortableFields)) {
+    const { fields: keys, default: settings } = customSortableFields;
+
+    if (!isValidArray(keys)) {
+      return { keys: [] };
+    }
+
+    if (!isObject(settings)) {
+      return { keys };
+    }
+
+    return {
+      keys,
+      defaultKey: settings.field,
+      defaultOrder:
+        // Allow title case for Static CMS compatibility
+        ['descending', 'Descending'].includes(settings.direction ?? '')
+          ? 'descending'
+          : 'ascending',
+    };
+  }
+
+  // Invalid configuration
+  return { keys: [] };
 };

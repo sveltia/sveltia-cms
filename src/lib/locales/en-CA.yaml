@@ -1474,6 +1474,22 @@ config:
     invalid_slug_slash: The slug template `{$slug}` is invalid as it cannot contain slashes. To organize entries in subfolders, use the `path` option instead of `slug`.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: The `reorder` option refers to a view group named `{$name}`, but no such group is defined in the `view_groups` option.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: The `sortable_fields` option refers to a field named `{$name}`, but no such field is defined in the collection.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: The `view_groups` option refers to a field named `{$name}`, but no such field is defined in the collection.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: The `view_filters` option refers to a field named `{$name}`, but no such field is defined in the collection.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: The view group {$count} must have the `name` option defined as a non-empty string.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: The view group name `{$name}` is invalid. It must not contain special characters.
+    duplicate_view_group_name: View group names must be unique, but `{$name}` is used more than once.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: The view filter {$count} must have the `name` option defined as a non-empty string.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: The view filter name `{$name}` is invalid. It must not contain special characters.
+    duplicate_view_filter_name: View filter names must be unique, but `{$name}` is used more than once.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: The collection {$count} must have the `name` option defined as a non-empty string.
     # {$name} is the invalid or duplicate collection name

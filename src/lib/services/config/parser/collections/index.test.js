@@ -443,6 +443,42 @@ describe('Collections Parser', () => {
       );
     });
 
+    it('should validate the fields referenced from the view options', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          fields: [{ name: 'title', widget: 'string' }],
+          sortable_fields: ['title', 'category'],
+          view_groups: [{ label: 'Year', field: 'date' }],
+          view_filters: { filters: [{ name: 'titled', field: 'title', pattern: '.' }] },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'invalid_sortable_field',
+          values: { name: 'category' },
+        }),
+      );
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'invalid_view_group_field',
+          values: { name: 'date' },
+        }),
+      );
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'invalid_view_filter_field' }),
+      );
+    });
+
     it('should handle index_file when true', async () => {
       const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();

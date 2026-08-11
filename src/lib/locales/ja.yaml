@@ -1395,6 +1395,22 @@ config:
     invalid_slug_slash: スラッグテンプレート `{$slug}` は無効です。スラッシュを含めることはできません。エントリーをサブフォルダーに整理するには、`slug` の代わりに `path` オプションを使用してください。
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: '`reorder` オプションで指定された `{$name}` グループは、`view_groups` オプションに定義されていません。'
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: '`sortable_fields` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: '`view_groups` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: '`view_filters` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: ビューグループ {$count} には `name` オプションを空でない文字列として定義する必要があります。
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: ビューグループ名 `{$name}` は無効です。特殊文字を含めることはできません。
+    duplicate_view_group_name: ビューグループ名は一意である必要がありますが、`{$name}` が複数回使用されています。
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: ビューフィルター {$count} には `name` オプションを空でない文字列として定義する必要があります。
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: ビューフィルター名 `{$name}` は無効です。特殊文字を含めることはできません。
+    duplicate_view_filter_name: ビューフィルター名は一意である必要がありますが、`{$name}` が複数回使用されています。
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: コレクション {$count} には `name` オプションを空でない文字列として定義する必要があります。
     # {$name} is the invalid or duplicate collection name

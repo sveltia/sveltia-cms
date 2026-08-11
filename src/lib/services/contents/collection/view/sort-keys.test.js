@@ -9,8 +9,6 @@ import {
   getSortConfig,
   getSortKeyLabel,
   getSortKeyType,
-  isValidArray,
-  parseCustomSortableFields,
   SPECIAL_SORT_KEY_TYPES,
   SPECIAL_SORT_KEYS,
 } from './sort-keys';
@@ -925,111 +923,6 @@ describe('Test exported constants and utilities', () => {
       '_manual',
     ]);
     expect(SPECIAL_SORT_KEYS).toEqual(Object.keys(SPECIAL_SORT_KEY_TYPES));
-  });
-});
-
-describe('Test isValidArray()', () => {
-  test('returns true for valid array of strings', () => {
-    expect(isValidArray(['title', 'date', 'author'])).toBe(true);
-    expect(isValidArray(['single'])).toBe(true);
-    expect(isValidArray([])).toBe(true);
-  });
-
-  test('returns false for array with non-string elements', () => {
-    expect(isValidArray(['title', 123, 'author'])).toBe(false);
-    expect(isValidArray([123, 456])).toBe(false);
-    expect(isValidArray(['title', null])).toBe(false);
-    expect(isValidArray(['title', undefined])).toBe(false);
-    expect(isValidArray(['title', {}])).toBe(false);
-  });
-
-  test('returns false for non-arrays', () => {
-    expect(isValidArray('not-array')).toBe(false);
-    expect(isValidArray(123)).toBe(false);
-    expect(isValidArray({})).toBe(false);
-    expect(isValidArray(null)).toBe(false);
-    expect(isValidArray(undefined)).toBe(false);
-  });
-});
-
-describe('Test parseCustomSortableFields()', () => {
-  test('parses simple array of strings', () => {
-    const result = parseCustomSortableFields(['title', 'date', 'author']);
-
-    expect(result).toEqual({
-      keys: ['title', 'date', 'author'],
-      defaultKey: undefined,
-      defaultOrder: undefined,
-    });
-  });
-
-  test('parses advanced object with fields array', () => {
-    const config = {
-      fields: ['title', 'date'],
-      default: { field: 'title', direction: /** @type {'descending'} */ ('descending') },
-    };
-
-    const result = parseCustomSortableFields(config);
-
-    expect(result).toEqual({
-      keys: ['title', 'date'],
-      defaultKey: 'title',
-      defaultOrder: 'descending',
-    });
-  });
-
-  test('handles advanced object with invalid fields', () => {
-    const config = /** @type {any} */ ({
-      fields: 'not-array',
-      default: { field: 'title' },
-    });
-
-    const result = parseCustomSortableFields(config);
-
-    expect(result).toEqual({ keys: [] });
-  });
-
-  test('handles descending direction variations', () => {
-    const configs = [
-      {
-        fields: ['title'],
-        default: { field: 'title', direction: /** @type {'descending'} */ ('descending') },
-      },
-      {
-        fields: ['title'],
-        default: { field: 'title', direction: /** @type {'Descending'} */ ('Descending') },
-      },
-    ];
-
-    configs.forEach((config) => {
-      const result = parseCustomSortableFields(config);
-
-      expect(result.defaultOrder).toBe('descending');
-    });
-  });
-
-  test('defaults to ascending for other directions', () => {
-    const configs = [
-      {
-        fields: ['title'],
-        default: { field: 'title', direction: /** @type {'ascending'} */ ('ascending') },
-      },
-      { fields: ['title'], default: { field: 'title', direction: /** @type {any} */ ('invalid') } },
-      { fields: ['title'], default: { field: 'title' } },
-    ];
-
-    configs.forEach((config) => {
-      const result = parseCustomSortableFields(config);
-
-      expect(result.defaultOrder).toBe('ascending');
-    });
-  });
-
-  test('handles invalid input types', () => {
-    expect(parseCustomSortableFields(/** @type {any} */ (null))).toEqual({ keys: [] });
-    expect(parseCustomSortableFields(/** @type {any} */ (undefined))).toEqual({ keys: [] });
-    expect(parseCustomSortableFields(/** @type {any} */ ('string'))).toEqual({ keys: [] });
-    expect(parseCustomSortableFields(/** @type {any} */ (123))).toEqual({ keys: [] });
   });
 });
 

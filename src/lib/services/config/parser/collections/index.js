@@ -6,6 +6,7 @@ import { isObject } from '@sveltia/utils/object';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
+import { checkViewOptions } from '$lib/services/config/parser/collections/views';
 import { parseFields } from '$lib/services/config/parser/fields';
 import {
   addMessage,
@@ -105,6 +106,10 @@ export const parseEntryCollection = (context, collectors) => {
       });
     }
   }
+
+  // Validate the `sortable_fields`, `view_groups` and `view_filters` options, including the fields
+  // they refer to and the view group and filter names
+  checkViewOptions(context, collectors);
 
   // Validate slug template: should not contain slashes to avoid confusion with `path` option.
   // @see https://github.com/decaporg/decap-cms/issues/513
