@@ -219,7 +219,7 @@ install_as_app: 앱으로 설치
 # Main page titles in the global navigation and page switcher button group
 contents: 콘텐츠
 assets: 에셋
-editorial_workflow: 편집 워크플로
+editorial_workflow: 에디토리얼 워크플로우
 cms_config: CMS 설정
 # Mobile menu page title (shown only on small screens)
 menu: 메뉴
@@ -454,7 +454,7 @@ creating_entries_disabled_by_quota: 이 컬렉션은 엔트리 {$quota}개 한�
 creating_entries_nearing_quota: |
   .input {$remaining :integer}
   .match $remaining
-    *   {{ 이 컬렉션이 엔트리 {$quota}개 한도에 근접했습니다. 엔트리를 {$remaining}개만 더 만들 수 있습니다. }}
+    *   {{ 이 컬렉션이 엔트리 {$quota}개 한도에 근접했습니다. 만들 수 있는 엔트리가 {$remaining}개 남았습니다. }}
 
 # Navigation: back links and list labels
 back_to_collection: 컬렉션으로 돌아가기
@@ -1432,7 +1432,7 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth 애플리케이션 ID가 정의되지 않았습니다. 사용자는 로그인하려면 액세스 토큰을 제공해야 합니다.
-    editorial_workflow_unsupported: 편집 워크플로는 Sveltia CMS에서 아직 지원되지 않습니다.
+    editorial_workflow_unsupported: 에디토리얼 워크플로우는 Sveltia CMS에서 아직 지원되지 않습니다.
     open_authoring_unsupported: 오픈 오소링은 Sveltia CMS에서 아직 지원되지 않습니다.
     nested_collections_unsupported: 중첩 컬렉션은 Sveltia CMS에서 아직 지원되지 않습니다.
     # {$prop} is the unsupported option name that will be ignored
