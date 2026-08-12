@@ -7,6 +7,7 @@ import {
 } from '$lib/services/contents/collection/entries/index-file';
 import { entryDraft } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
+import { normalizeContentMap } from '$lib/services/contents/draft/create/normalize';
 import { createProxy } from '$lib/services/contents/draft/create/proxy';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { resetCustomFieldValidation } from '$lib/services/contents/draft/validate/custom-fields';
@@ -150,6 +151,13 @@ export const createDraft = ({
         : [locale, structuredClone(locales?.[locale]?.content)],
     ),
   );
+
+  if (!isNew) {
+    // Existing entries can predate the current field configuration: a field added since, or an
+    // optional field left empty and later made required, is simply absent from the file. Fill those
+    // in so the editor shows their default values and the validator sees them
+    normalizeContentMap({ fields, contentMap: originalValues, defaultLocale });
+  }
 
   // Custom field validation state is keyed by locale and key path only, so discard it to prevent
   // verdicts from a previous draft leaking into this one

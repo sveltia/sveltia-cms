@@ -23,7 +23,10 @@ vi.mock('$lib/services/contents/draft/create/proxy', () => ({
   createProxy: vi.fn((args) => args.target),
 }));
 
-vi.mock('$lib/services/contents/draft/defaults', () => ({
+// `populateDefaultValue` is kept intact because `normalizeContentMap()` relies on it to fill in the
+// values missing from an existing entry
+vi.mock('$lib/services/contents/draft/defaults', async (importOriginal) => ({
+  ...(await importOriginal()),
   getDefaultValues: vi.fn(),
 }));
 
@@ -261,6 +264,43 @@ describe('contents/draft/create/index', () => {
           currentLocales: { en: true, ja: true },
           originalSlugs: { en: 'test-post', ja: 'test-post' },
           currentSlugs: { en: 'test-post', ja: 'test-post' },
+        }),
+      );
+    });
+
+    it('should fill in the values missing from an existing entry', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/395
+      // https://github.com/sveltia/sveltia-cms/issues/650
+      const collection = {
+        name: 'posts',
+        _type: 'entry',
+        fields: [
+          { name: 'title', widget: 'string' },
+          { name: 'chargeSpeed', widget: 'select', options: ['slow', 'fast'] },
+          { name: 'aBoolean', widget: 'boolean', required: false, default: true },
+        ],
+        _i18n: {
+          allLocales: ['en'],
+          initialLocales: ['en'],
+          defaultLocale: 'en',
+          canonicalSlug: { key: 'translationKey' },
+        },
+      };
+
+      const originalEntry = {
+        id: 'entry-123',
+        slug: 'test-post',
+        locales: { en: { content: { title: 'Test Post' }, slug: 'test-post' } },
+      };
+
+      createDraft({ collection, originalEntry });
+
+      const expectedValues = { title: 'Test Post', chargeSpeed: '', aBoolean: true };
+
+      expect(entryDraft.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          originalValues: { en: expectedValues },
+          currentValues: { en: expectedValues },
         }),
       );
     });

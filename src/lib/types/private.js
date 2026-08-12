@@ -1113,6 +1113,16 @@
  */
 
 /**
+ * @typedef {object} NormalizeContentArgs
+ * @property {Field[]} fields Field list of a collection, collection file or index file.
+ * @property {FlattenedEntryContent} content Flattened entry content, modified in place.
+ * @property {InternalLocaleCode} locale Locale of the content.
+ * @property {InternalLocaleCode} defaultLocale Default locale of the entry draft.
+ * @property {FlattenedEntryContent} [defaultLocaleContent] Already normalized content for the
+ * default locale, used as the source for fields with the `duplicate` i18n strategy.
+ */
+
+/**
  * @typedef {object} GetDefaultValueMapFuncArgs
  * @property {Field} fieldConfig Field configuration.
  * @property {FieldKeyPath} keyPath Field key path, e.g. `author.name`.
