@@ -9,6 +9,7 @@ import * as cloudinaryModule from '$lib/services/integrations/media-libraries/cl
 
 import { defaultAssetDetails, getAssetDetails, getAssetUsedEntries } from './details';
 import {
+  _resetRevocationQueue,
   _resetThumbnailDB,
   getAssetBaseURL,
   getAssetBlob,
@@ -2443,9 +2444,17 @@ describe('assets/info', () => {
   describe('revokeAssetBlobURLIfNeeded', () => {
     /** @type {any} */
     let mockAssets;
+    /**
+     * Build a stand-in for the `NodeList` returned by `querySelectorAll`.
+     * @param {string[]} srcs Blob URLs the elements are displaying.
+     * @returns {any} Element list.
+     */
+    const mockElements = (srcs) => srcs.map((src) => ({ getAttribute: () => src }));
 
     beforeEach(() => {
       vi.clearAllMocks();
+      // The mocked animation frame doesn’t reliably drain the queue, so start each case clean
+      _resetRevocationQueue();
 
       // Create mock assets for store
       mockAssets = [
@@ -2463,11 +2472,11 @@ describe('assets/info', () => {
         }),
       };
 
-      // Mock document.querySelector
-      // @ts-ignore
-      global.document = {
-        querySelector: vi.fn(),
-      };
+      // Mock document.querySelectorAll, which the batched flush uses to find the blob URLs that
+      // are still on screen
+      global.document = /** @type {any} */ ({
+        querySelectorAll: vi.fn(() => /** @type {any} */ ([])),
+      });
 
       // Setup get mock to handle the allAssets store
       const getMock = vi.mocked(get);
@@ -2522,14 +2531,14 @@ describe('assets/info', () => {
         name: '1.jpg',
       });
 
-      // Mock querySelector to return an element (found)
+      // The URL is still displayed by an element
       // @ts-ignore
-      vi.mocked(global.document.querySelector).mockReturnValue({});
+      vi.mocked(global.document.querySelectorAll).mockReturnValue(mockElements(['blob:url-1']));
 
       // @ts-ignore
       revokeAssetBlobURLIfNeeded(asset);
 
-      expect(global.document.querySelector).toHaveBeenCalledWith('[src="blob:url-1"]');
+      expect(global.document.querySelectorAll).toHaveBeenCalledWith('[src^="blob:"]');
       expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
     });
 
@@ -2540,13 +2549,10 @@ describe('assets/info', () => {
         name: '2.jpg',
       });
 
-      // Mock querySelector to return null (not found)
-      vi.mocked(global.document.querySelector).mockReturnValue(null);
-
       // @ts-ignore
       revokeAssetBlobURLIfNeeded(asset);
 
-      expect(global.document.querySelector).toHaveBeenCalledWith('[src="blob:url-2"]');
+      expect(global.document.querySelectorAll).toHaveBeenCalledWith('[src^="blob:"]');
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-2');
       // Check that the asset was removed from store
       expect(
@@ -2567,19 +2573,19 @@ describe('assets/info', () => {
       expect(global.window.requestAnimationFrame).toHaveBeenCalled();
     });
 
-    it('should handle escaped quotes in blobURL selector', () => {
+    it('should handle quotes in the blobURL without building a selector from it', () => {
       const assetWithQuote = /** @type {any} */ ({
         blobURL: 'blob:url-with"quote',
         path: 'assets/test.jpg',
         name: 'test.jpg',
       });
 
-      vi.mocked(global.document.querySelector).mockReturnValue(null);
-
       // @ts-ignore
       revokeAssetBlobURLIfNeeded(assetWithQuote);
 
-      expect(global.document.querySelector).toHaveBeenCalledWith('[src="blob:url-with"quote"]');
+      // The URL is compared as a string, so it never has to be escaped into a selector
+      expect(global.document.querySelectorAll).toHaveBeenCalledWith('[src^="blob:"]');
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-with"quote');
     });
 
     it('should work with proxy objects', () => {
@@ -2589,8 +2595,6 @@ describe('assets/info', () => {
       const proxyAsset = new Proxy(realAsset, {
         get: (target, prop) => target[/** @type {any} */ (prop)],
       });
-
-      vi.mocked(global.document.querySelector).mockReturnValue(null);
 
       // @ts-ignore
       revokeAssetBlobURLIfNeeded(proxyAsset);
@@ -2609,8 +2613,6 @@ describe('assets/info', () => {
         get: (target, prop) => target[/** @type {any} */ (prop)],
       });
 
-      vi.mocked(global.document.querySelector).mockReturnValue(null);
-
       // @ts-ignore
       revokeAssetBlobURLIfNeeded(proxyAsset);
 
@@ -2627,13 +2629,61 @@ describe('assets/info', () => {
         name: 'test.jpg',
       });
 
-      vi.mocked(global.document.querySelector).mockReturnValue(null);
-
       // @ts-ignore
       revokeAssetBlobURLIfNeeded(assetWithSpecialChars);
 
-      expect(global.document.querySelector).toHaveBeenCalledWith('[src="blob:special!@#$%^&*()"]');
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:special!@#$%^&*()');
+    });
+
+    it('should batch concurrent requests into one frame and one document query', () => {
+      mockAssets = [
+        { blobURL: 'blob:url-1', path: 'assets/1.jpg' },
+        { blobURL: 'blob:url-2', path: 'assets/2.jpg' },
+        { blobURL: 'blob:url-3', path: 'assets/3.jpg' },
+      ];
+
+      // Hold the frame so all three requests land in the same batch, as they do in a real browser
+      /** @type {(() => void) | undefined} */
+      let frame;
+
+      // @ts-ignore
+      vi.mocked(global.window.requestAnimationFrame).mockImplementation((callback) => {
+        frame = /** @type {() => void} */ (callback);
+
+        return 1;
+      });
+
+      // The second asset is still on screen, so only the other two get revoked
+      // @ts-ignore
+      vi.mocked(global.document.querySelectorAll).mockReturnValue(mockElements(['blob:url-2']));
+
+      // Every preview in a grid asks as it unmounts
+      revokeAssetBlobURLIfNeeded(mockAssets[0]);
+      revokeAssetBlobURLIfNeeded(mockAssets[1]);
+      revokeAssetBlobURLIfNeeded(mockAssets[2]);
+
+      expect(global.window.requestAnimationFrame).toHaveBeenCalledTimes(1);
+      expect(global.document.querySelectorAll).not.toHaveBeenCalled();
+
+      frame?.();
+
+      expect(global.document.querySelectorAll).toHaveBeenCalledTimes(1);
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledTimes(2);
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-1');
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-3');
+      expect(mockAssets[0].blobURL).toBeUndefined();
+      expect(mockAssets[1].blobURL).toBe('blob:url-2');
+      expect(mockAssets[2].blobURL).toBeUndefined();
+    });
+
+    it('should start a new frame for requests made after a flush', () => {
+      // The mocked frame runs synchronously, so each request is drained before the next arrives
+      revokeAssetBlobURLIfNeeded(/** @type {any} */ ({ blobURL: 'blob:url-1' }));
+      revokeAssetBlobURLIfNeeded(/** @type {any} */ ({ blobURL: 'blob:url-2' }));
+
+      expect(global.window.requestAnimationFrame).toHaveBeenCalledTimes(2);
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-1');
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-2');
     });
 
     it('should remove only the matching asset from store by blobURL', () => {
@@ -2642,8 +2692,6 @@ describe('assets/info', () => {
       const otherAsset2 = /** @type {any} */ ({ blobURL: 'blob:url-3', path: 'assets/3.jpg' });
 
       mockAssets = [assetToRevoke, otherAsset1, otherAsset2];
-
-      vi.mocked(global.document.querySelector).mockReturnValue(null);
 
       revokeAssetBlobURLIfNeeded(assetToRevoke);
 

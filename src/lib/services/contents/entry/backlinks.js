@@ -5,6 +5,7 @@ import { collectors } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getOptions } from '$lib/services/contents/fields/relation/helpers';
 
@@ -27,9 +28,7 @@ import { getOptions } from '$lib/services/contents/fields/relation/helpers';
  */
 const getRelationValues = (content, keyPath, multiple) => {
   if (multiple) {
-    return Object.entries(content)
-      .filter(([key]) => new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`).test(key))
-      .map(([, value]) => value);
+    return getListItemKeys(content, keyPath).map((key) => content[key]);
   }
 
   const value = content[keyPath];

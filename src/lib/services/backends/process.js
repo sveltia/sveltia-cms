@@ -26,6 +26,12 @@ export const createFileList = (files) => {
   const assetFiles = [];
   /** @type {BaseConfigListItem[]} */
   const configFiles = [];
+  /**
+   * Paths already listed as entries. This runs over every file in the repository, so membership
+   * needs to be O(1); scanning `entryFiles` per file would make the initial load O(files²).
+   * @type {Set<string>}
+   */
+  const entryPaths = new Set();
 
   files.forEach((fileInfo) => {
     const { path, name } = fileInfo;
@@ -43,12 +49,13 @@ export const createFileList = (files) => {
       // Correct entry files
       if (entryFolder) {
         entryFiles.push({ ...fileInfo, type: 'entry', folder: entryFolder });
+        entryPaths.add(path);
       }
 
       // Correct asset files while excluding files already listed as entries. These files can appear
       // in the file list when a relative media path is configured for a collection. Also exclude
       // Hugo’s special index files.
-      if (assetFolder && !entryFiles.find((e) => e.path === path) && !isIndexFile(path)) {
+      if (assetFolder && !entryPaths.has(path) && !isIndexFile(path)) {
         assetFiles.push({ ...fileInfo, type: 'asset', folder: assetFolder });
       }
     }

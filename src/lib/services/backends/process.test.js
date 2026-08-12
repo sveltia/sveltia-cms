@@ -296,5 +296,48 @@ describe('Backend Process', () => {
         folder: mockEntryFolder,
       });
     });
+
+    test('should not list a file as an asset when it is already an entry', () => {
+      // An entry-relative media folder makes the same path match both folder types
+      const files = [
+        { path: 'posts/hello.md', name: 'hello.md', size: 500, sha: 'abc123' },
+        { path: 'posts/hello.jpg', name: 'hello.jpg', size: 200, sha: 'def456' },
+      ];
+
+      /** @type {any} */
+      const mockEntryFolder = { collectionName: 'posts', folderPath: 'posts' };
+      /** @type {any} */
+      const mockAssetFolder = { collectionName: 'posts', internalPath: 'posts' };
+
+      vi.mocked(getEntryFoldersByPath).mockImplementation((path) =>
+        path.endsWith('.md') ? [mockEntryFolder] : [],
+      );
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockAssetFolder]);
+
+      const result = createFileList(files);
+
+      expect(result.entryFiles.map(({ path }) => path)).toEqual(['posts/hello.md']);
+      expect(result.assetFiles.map(({ path }) => path)).toEqual(['posts/hello.jpg']);
+    });
+
+    test('should exclude a duplicated path that was already listed as an entry', () => {
+      // The same path appearing twice must not be added as an asset on the second pass
+      const files = [
+        { path: 'posts/hello.md', name: 'hello.md', size: 500, sha: 'abc123' },
+        { path: 'posts/hello.md', name: 'hello.md', size: 500, sha: 'abc123' },
+      ];
+
+      /** @type {any} */
+      const mockEntryFolder = { collectionName: 'posts', folderPath: 'posts' };
+      /** @type {any} */
+      const mockAssetFolder = { collectionName: 'posts', internalPath: 'posts' };
+
+      vi.mocked(getEntryFoldersByPath).mockReturnValue([mockEntryFolder]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockAssetFolder]);
+
+      const result = createFileList(files);
+
+      expect(result.assetFiles).toEqual([]);
+    });
   });
 });

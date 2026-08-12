@@ -198,17 +198,69 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
 };
 
 /**
+ * Blob URLs awaiting revocation, collected until the next animation frame.
+ * @type {Set<string>}
+ */
+const pendingRevocations = new Set();
+
+/* v8 ignore next */
+/**
+ * Discard the queued blob URL revocations. This is used in tests, where the animation frame that
+ * would drain the queue is mocked out.
+ * @internal
+ */
+export const _resetRevocationQueue = () => {
+  pendingRevocations.clear();
+};
+
+/**
+ * Revoke every queued blob URL that no element is displaying any more.
+ */
+const flushRevocations = () => {
+  const urls = new Set(pendingRevocations);
+
+  pendingRevocations.clear();
+
+  // One query for every blob URL on the page, rather than one per asset
+  document.querySelectorAll('[src^="blob:"]').forEach((element) => {
+    urls.delete(/** @type {string} */ (element.getAttribute('src')));
+  });
+
+  if (!urls.size) {
+    return;
+  }
+
+  urls.forEach((url) => URL.revokeObjectURL(url));
+
+  // Update the store directly because the passed `asset` can be a proxy
+  get(allAssets).forEach((asset) => {
+    if (asset.blobURL !== undefined && urls.has(asset.blobURL)) {
+      delete asset.blobURL;
+    }
+  });
+};
+
+/**
  * Revoke the blob URL for the given asset if it’s not being used in any elements.
+ *
+ * The revocations are batched, because every asset preview asks for one as it unmounts: leaving an
+ * asset grid would otherwise run a document-wide query and a scan of every asset once per preview,
+ * which is O(assets²) in the frame the page navigates away.
  * @param {Asset} asset Asset.
  */
 export const revokeAssetBlobURLIfNeeded = ({ blobURL }) => {
-  window.requestAnimationFrame(() => {
-    if (blobURL && !document.querySelector(`[src="${blobURL}"]`)) {
-      URL.revokeObjectURL(blobURL);
-      // Update the database directly because the passed `asset` can be a proxy
-      delete get(allAssets).find((a) => a.blobURL === blobURL)?.blobURL;
-    }
-  });
+  if (!blobURL) {
+    return;
+  }
+
+  const isFirst = !pendingRevocations.size;
+
+  // Queue before scheduling, so the flush can never observe an empty queue
+  pendingRevocations.add(blobURL);
+
+  if (isFirst) {
+    window.requestAnimationFrame(flushRevocations);
+  }
 };
 
 /**
