@@ -27,7 +27,7 @@ describe('validateListField()', () => {
     const result = validateListField({
       keyPath: 'tags',
       value: undefined,
-      valueEntries: [],
+      valueMap: {},
       validity,
       validities: { _default: { tags: validity } },
       locale: '_default',
@@ -46,7 +46,7 @@ describe('validateListField()', () => {
     const result = validateListField({
       keyPath: 'tags',
       value: [],
-      valueEntries: [],
+      valueMap: {},
       validity,
       validities: { _default: {} },
       locale: '_default',
@@ -65,7 +65,7 @@ describe('validateListField()', () => {
     validateListField({
       keyPath: 'tags',
       value: [],
-      valueEntries: [],
+      valueMap: {},
       validity,
       validities: { _default: {} },
       locale: '_default',
@@ -83,7 +83,7 @@ describe('validateListField()', () => {
     validateListField({
       keyPath: 'tags',
       value: ['a', 'b', 'c'],
-      valueEntries: [],
+      valueMap: {},
       validity,
       validities: { _default: {} },
       locale: '_default',
@@ -96,19 +96,14 @@ describe('validateListField()', () => {
     expect(validity.rangeUnderflow).toBe(false);
   });
 
-  test('counts items from flattened valueEntries when value is not an array', () => {
+  test('counts items from flattened key paths when value is not an array', () => {
     const validity = freshValidity();
-
-    const valueEntries = /** @type {[string, any][]} */ ([
-      ['tags.0', 'a'],
-      ['tags.1', 'b'],
-      ['title', 'Hello'],
-    ]);
+    const valueMap = { 'tags.0': 'a', 'tags.1': 'b', title: 'Hello' };
 
     validateListField({
       keyPath: 'tags',
       value: undefined,
-      valueEntries,
+      valueMap,
       validity,
       validities: { _default: {} },
       locale: '_default',
@@ -126,7 +121,7 @@ describe('validateListField()', () => {
     validateListField({
       keyPath: 'items',
       value: ['a'],
-      valueEntries: [],
+      valueMap: {},
       validity,
       validities: { _default: {} },
       locale: '_default',
@@ -144,7 +139,7 @@ describe('validateListField()', () => {
     validateListField({
       keyPath: 'items',
       value: ['a', 'b', 'c'],
-      valueEntries: [],
+      valueMap: {},
       validity,
       validities: { _default: {} },
       locale: '_default',
@@ -162,7 +157,7 @@ describe('validateListField()', () => {
     validateListField({
       keyPath: 'items',
       value: ['a', 'b'],
-      valueEntries: [],
+      valueMap: {},
       validity,
       validities: { _default: {} },
       locale: '_default',
@@ -180,7 +175,7 @@ describe('validateListField()', () => {
     validateListField({
       keyPath: 'items',
       value: ['a', 'b'],
-      valueEntries: [],
+      valueMap: {},
       validity,
       validities: { _default: {} },
       locale: '_default',
@@ -198,7 +193,7 @@ describe('validateListField()', () => {
     validateListField({
       keyPath: 'items',
       value: ['a'],
-      valueEntries: [],
+      valueMap: {},
       validity,
       validities: { _default: {} },
       locale: '_default',
@@ -214,18 +209,13 @@ describe('validateListField()', () => {
 
   test('deduplicates flattened keys when counting', () => {
     const validity = freshValidity();
-
-    // Each unique `tags.N` prefix should count as one item
-    const valueEntries = /** @type {[string, any][]} */ ([
-      ['tags.0', 'a'],
-      ['tags.0', 'a'], // duplicate — should be deduped by Set
-      ['tags.1', 'b'],
-    ]);
+    // Each unique `tags.N` prefix should count as one item, however many sub-keys it has
+    const valueMap = { 'tags.0.name': 'a', 'tags.0.url': 'a', 'tags.1.name': 'b' };
 
     validateListField({
       keyPath: 'tags',
       value: undefined,
-      valueEntries,
+      valueMap,
       validity,
       validities: { _default: {} },
       locale: '_default',

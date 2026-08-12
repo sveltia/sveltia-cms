@@ -1,5 +1,3 @@
-import { escapeRegExp } from '@sveltia/utils/string';
-
 import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { parseTransformations } from '$lib/services/common/transformations';
@@ -7,18 +5,11 @@ import {
   getFieldDisplayValue,
   getVisibleFieldDisplayValue,
 } from '$lib/services/contents/entry/fields';
-import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { FlattenedEntryContent, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
-
-/**
- * Cache of pre-compiled regexes keyed by field key path.
- * @type {Map<FieldKeyPath, RegExp>}
- */
-const objectSummaryRegexCache = new Map();
 
 /**
  * Format the summary template of an Object field.
@@ -46,13 +37,13 @@ export const formatSummary = ({
   const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap, isIndexFile };
 
   if (!summaryTemplate) {
-    const keyPathRegex = getOrCreate(
-      objectSummaryRegexCache,
+    return getVisibleFieldDisplayValue({
+      valueMap,
+      locale,
       keyPath,
-      () => new RegExp(`^${escapeRegExp(keyPath)}\\.`),
-    );
-
-    return getVisibleFieldDisplayValue({ valueMap, locale, keyPath, keyPathRegex, getFieldArgs });
+      keyPathPrefix: `${keyPath}.`,
+      getFieldArgs,
+    });
   }
 
   /**

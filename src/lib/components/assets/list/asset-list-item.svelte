@@ -5,7 +5,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { focusedAsset, selectedAssetPathSet, selectedAssets } from '$lib/services/assets';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
-  import { listedAssets } from '$lib/services/assets/view';
+  import { listedAssetIndexMap } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -52,7 +52,7 @@
 <!-- @todo Add support for drag to move. -->
 
 <GridRow
-  aria-rowindex={$listedAssets.indexOf(asset)}
+  aria-rowindex={$listedAssetIndexMap.get(asset.path) ?? -1}
   onChange={(event) => {
     updateSelection(event.detail.selected);
   }}

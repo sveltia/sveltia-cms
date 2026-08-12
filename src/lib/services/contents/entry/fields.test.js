@@ -2918,7 +2918,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
     });
 
@@ -2935,7 +2935,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
     });
 
@@ -2952,7 +2952,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
     });
 
@@ -2969,7 +2969,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
     });
 
@@ -2987,7 +2987,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
     });
 
@@ -3003,7 +3003,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
     });
 
@@ -3020,7 +3020,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
     });
 
@@ -3038,7 +3038,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
     });
 
@@ -3054,7 +3054,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
     });
 
@@ -3073,7 +3073,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'posts', keyPath: '', valueMap },
     });
 
@@ -3092,7 +3092,7 @@ describe('Test getVisibleFieldDisplayValue()', () => {
       valueMap,
       locale: 'en',
       keyPath: 'item.0',
-      keyPathRegex: /^item\.0\./,
+      keyPathPrefix: 'item.0.',
       getFieldArgs: { collectionName: 'unknown_collection', keyPath: '', valueMap },
     });
 

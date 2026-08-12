@@ -3,7 +3,9 @@
 import { derived, get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { allEntries, allEntryFolders } from '$lib/services/contents';
 import {
+  _resetEntriesByCollectionCache,
   canCreateIndexFile,
   getEntriesByAssetURL,
   getEntriesByCollection,
@@ -112,6 +114,8 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
 describe('getEntriesByCollection()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // The mocked stores never change identity, so drop the memoized entry lists between cases
+    _resetEntriesByCollectionCache();
   });
 
   test('returns empty array when collection not found', async () => {
@@ -363,9 +367,9 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get)
-      .mockReturnValueOnce(folders) // get(allEntryFolders)
-      .mockReturnValueOnce(entries); // get(allEntries)
+    // Dispatch on the store rather than call order: `getEntriesByCollection()` reads both stores
+    // up front to validate its cache.
+    vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? folders : entries));
 
     const result = getEntriesByCollection('singleton');
 
@@ -394,7 +398,7 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValueOnce(folders).mockReturnValueOnce(entries);
+    vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? folders : entries));
 
     const result = getEntriesByCollection('pages');
 
@@ -422,7 +426,7 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValueOnce(folders).mockReturnValueOnce(entries);
+    vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? folders : entries));
 
     const result = getEntriesByCollection('pages');
 
@@ -463,6 +467,92 @@ describe('getEntriesByCollection()', () => {
     // value = undefined ?? null = null, filterValues.includes(null) = true
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('1');
+  });
+
+  test('reuses the same array for repeated calls', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const collection = { name: 'posts', _type: 'entry', _i18n: { defaultLocale: 'en' } };
+    const entries = [{ id: '1', locales: { en: { content: {} } } }];
+
+    vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(get).mockReturnValue(entries);
+    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
+
+    const first = getEntriesByCollection('posts');
+    const second = getEntriesByCollection('posts');
+
+    // Reference equality is what lets the Relation option cache hit
+    expect(second).toBe(first);
+    // The entry list was scanned only once
+    expect(vi.mocked(getAssociatedCollections)).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps separate results per collection', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+    const entries = [
+      { id: '1', locales: { en: { content: {} } } },
+      { id: '2', locales: { en: { content: {} } } },
+    ];
+
+    vi.mocked(getCollection).mockImplementation((name) => ({
+      name,
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+    }));
+    vi.mocked(get).mockReturnValue(entries);
+    vi.mocked(getAssociatedCollections).mockImplementation((entry) => [
+      { name: entry.id === '1' ? 'posts' : 'pages' },
+    ]);
+
+    expect(getEntriesByCollection('posts').map(({ id }) => id)).toEqual(['1']);
+    expect(getEntriesByCollection('pages').map(({ id }) => id)).toEqual(['2']);
+  });
+
+  test('rescans when the entry store is replaced', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const collection = { name: 'posts', _type: 'entry', _i18n: { defaultLocale: 'en' } };
+    const before = [{ id: '1', locales: { en: { content: {} } } }];
+    const after = [...before, { id: '2', locales: { en: { content: {} } } }];
+
+    vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
+
+    vi.mocked(get).mockImplementation((store) => (store === allEntries ? before : []));
+    expect(getEntriesByCollection('posts')).toHaveLength(1);
+
+    vi.mocked(get).mockImplementation((store) => (store === allEntries ? after : []));
+    expect(getEntriesByCollection('posts')).toHaveLength(2);
+  });
+
+  test('rescans when the entry folder store is replaced', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const collection = { name: 'pages', _type: 'file', _i18n: { defaultLocale: 'en' } };
+
+    const entries = [
+      { id: '1', locales: { en: { path: 'content/home.md', content: {} } } },
+      { id: '2', locales: { en: { path: 'content/about.md', content: {} } } },
+    ];
+
+    const before = [
+      { collectionName: 'pages', fileName: 'home', filePathMap: { en: 'content/home.md' } },
+    ];
+
+    const after = [
+      ...before,
+      { collectionName: 'pages', fileName: 'about', filePathMap: { en: 'content/about.md' } },
+    ];
+
+    vi.mocked(getCollection).mockReturnValue(collection);
+
+    vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? before : entries));
+    expect(getEntriesByCollection('pages')).toHaveLength(1);
+
+    vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? after : entries));
+    expect(getEntriesByCollection('pages')).toHaveLength(2);
   });
 });
 
@@ -1616,6 +1706,8 @@ describe('selectedEntries', () => {
 describe('canCreateIndexFile()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // The mocked stores never change identity, so drop the memoized entry lists between cases
+    _resetEntriesByCollectionCache();
   });
 
   test('returns false when collection has no index file configured', async () => {

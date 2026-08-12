@@ -96,11 +96,30 @@ export const listedAssets = derived(
   [allAssets, selectedAssetFolder],
   ([_allAssets, _selectedAssetFolder], set) => {
     if (_allAssets && _selectedAssetFolder && _selectedAssetFolder.internalPath !== undefined) {
-      set(_allAssets.filter(({ folder }) => equal(folder, _selectedAssetFolder)));
+      // An asset’s folder is usually the very object the selection was made from, so identity
+      // settles it without walking the folder; the deep comparison is the fallback for a folder
+      // restored from `window.history.state`, which is an equal but separate object.
+      set(
+        _allAssets.filter(
+          ({ folder }) => folder === _selectedAssetFolder || equal(folder, _selectedAssetFolder),
+        ),
+      );
     } else {
       set(_allAssets ? [..._allAssets] : []);
     }
   },
+);
+
+/**
+ * Map from asset path to the asset’s index in {@link listedAssets}, used by list rows to resolve
+ * their `aria-rowindex` in O(1). Rows are appended by an infinite scroller and never unmounted, so
+ * once a large folder has been scrolled through, an `indexOf()` per row would make every subsequent
+ * list update O(n²).
+ * @type {Readable<Map<string, number>>}
+ */
+export const listedAssetIndexMap = derived(
+  [listedAssets],
+  ([_listedAssets]) => new Map(_listedAssets.map((asset, index) => [asset.path, index])),
 );
 
 /**

@@ -1,5 +1,3 @@
-import { escapeRegExp } from '@sveltia/utils/string';
-
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { applyTransformations } from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
@@ -8,6 +6,7 @@ import {
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { getKeysByPrefix, getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import {
   BUILTIN_FIELD_TYPES,
   MEDIA_FIELD_TYPES,
@@ -19,7 +18,6 @@ import { getComponentDef } from '$lib/services/contents/fields/rich-text/compone
 import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
-import { getOrCreate } from '$lib/services/utils/cache';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -361,12 +359,6 @@ export const isFieldRequired = ({ fieldConfig: { required = true }, locale }) =>
   Array.isArray(required) ? required.includes(locale) : !!required;
 
 /**
- * Cache of pre-compiled list-item regexes for {@link getFieldDisplayValue}, keyed by field key
- * path.
- * @type {Map<FieldKeyPath, RegExp>}
- */
-const listItemDisplayRegexCache = new Map();
-/**
  * Cache of {@link Intl.NumberFormat} instances for {@link getFieldDisplayValue}, keyed by canonical
  * locale.
  * @type {Map<LocaleCode | undefined, Intl.NumberFormat>}
@@ -440,17 +432,10 @@ export const getFieldDisplayValue = ({
       // Ignore
     } else {
       // Concat values of single field list or simple list
-      // Pre-compile and cache the regex — same key path is hit on every field render.
-      const listItemRegex = getOrCreate(
-        listItemDisplayRegexCache,
-        keyPath,
-        () => new RegExp(`^${escapeRegExp(keyPath)}${String.raw`\.\d+$`}`),
-      );
-
       value = getListFormatter(locale).format(
-        Object.entries(valueMap)
-          .filter(([key, val]) => listItemRegex.test(key) && typeof val === 'string' && !!val)
-          .map(([, val]) => val),
+        getListItemKeys(valueMap, keyPath)
+          .map((key) => valueMap[key])
+          .filter((val) => typeof val === 'string' && !!val),
       );
     }
   }
@@ -490,7 +475,8 @@ export const getFieldDisplayValue = ({
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @param {GetFieldArgs} args.getFieldArgs Arguments for `getField`.
- * @param {RegExp} args.keyPathRegex Regular expression to match the key path prefix.
+ * @param {string} args.keyPathPrefix Key path prefix that a candidate must start with, e.g.
+ * `authors.0.`.
  * @returns {string} Display value of the first visible field that has a non-empty value. If no such
  * field is found, returns an empty string.
  */
@@ -498,29 +484,32 @@ export const getVisibleFieldDisplayValue = ({
   valueMap,
   locale,
   keyPath,
-  keyPathRegex,
+  keyPathPrefix,
   getFieldArgs,
 }) => {
-  // Find the first visible item key path that has a non-empty value
-  const visibleItemKeyPath = [`${keyPath}.title`, `${keyPath}.name`, ...Object.keys(valueMap)].find(
-    (_keyPath) => {
-      const value = valueMap[_keyPath];
+  // Find the first visible item key path that has a non-empty value. `title` and `name` are
+  // preferred, so they’re tried ahead of the map’s own order.
+  const visibleItemKeyPath = [
+    `${keyPath}.title`,
+    `${keyPath}.name`,
+    ...getKeysByPrefix(valueMap, keyPathPrefix),
+  ].find((_keyPath) => {
+    const value = valueMap[_keyPath];
 
-      if (
-        !keyPathRegex.test(_keyPath) ||
-        !(
-          (typeof value === 'string' && value.trim()) ||
-          (typeof value === 'number' && !Number.isNaN(value))
-        )
-      ) {
-        return false;
-      }
+    if (
+      !_keyPath.startsWith(keyPathPrefix) ||
+      !(
+        (typeof value === 'string' && value.trim()) ||
+        (typeof value === 'number' && !Number.isNaN(value))
+      )
+    ) {
+      return false;
+    }
 
-      const fieldConfig = getField({ ...getFieldArgs, keyPath: _keyPath });
+    const fieldConfig = getField({ ...getFieldArgs, keyPath: _keyPath });
 
-      return !!fieldConfig && fieldConfig.widget !== 'hidden';
-    },
-  );
+    return !!fieldConfig && fieldConfig.widget !== 'hidden';
+  });
 
   if (visibleItemKeyPath) {
     return getFieldDisplayValue({ ...getFieldArgs, keyPath: visibleItemKeyPath, locale });
@@ -584,57 +573,6 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
   }
 
   return content[key];
-};
-
-/**
- * Regular expression to split a list item key path into its parent key path and item index, e.g.
- * `authors.0` into `authors` and `0`. The parent is matched greedily, so `authors.0.tags.2` yields
- * `authors.0.tags`.
- */
-const LIST_ITEM_KEY_REGEX = /^(?<parent>.+)\.\d+$/;
-/**
- * Cache of list item key paths grouped by parent key path, keyed by the value map object. Built
- * once per value map and shared by every field editor and preview reading from it.
- * @type {WeakMap<FlattenedEntryContent, Map<FieldKeyPath, FieldKeyPath[]>>}
- */
-const listItemKeyCacheMap = new WeakMap();
-
-/**
- * Get the key paths of the direct list items under the given key path, in value map order.
- *
- * The editor renders one component per field, and each of them needs its own item list, so
- * scanning the whole value map per field is O(fields × keys) on every draft update. Indexing the
- * map once instead makes each lookup proportional to the number of items found.
- * @param {FlattenedEntryContent} valueMap Flattened entry content.
- * @param {FieldKeyPath} keyPath Key path of the list field.
- * @returns {FieldKeyPath[]} Item key paths, e.g. `['authors.0', 'authors.1']`.
- */
-const getListItemKeys = (valueMap, keyPath) => {
-  let index = listItemKeyCacheMap.get(valueMap);
-
-  if (!index) {
-    index = new Map();
-
-    Object.keys(valueMap).forEach((key) => {
-      const { parent } = key.match(LIST_ITEM_KEY_REGEX)?.groups ?? {};
-
-      if (parent === undefined) {
-        return;
-      }
-
-      const keys = /** @type {Map<FieldKeyPath, FieldKeyPath[]>} */ (index).get(parent);
-
-      if (keys) {
-        keys.push(key);
-      } else {
-        /** @type {Map<FieldKeyPath, FieldKeyPath[]>} */ (index).set(parent, [key]);
-      }
-    });
-
-    listItemKeyCacheMap.set(valueMap, index);
-  }
-
-  return index.get(keyPath) ?? [];
 };
 
 /**

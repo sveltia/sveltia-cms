@@ -88,6 +88,18 @@ export const listedEntries = derived(
 );
 
 /**
+ * Map from entry ID to the entry’s index in {@link listedEntries}, used by list rows to resolve
+ * their `aria-rowindex` in O(1). Rows are appended by an infinite scroller and never unmounted, so
+ * once a large collection has been scrolled through, an `indexOf()` per row would make every
+ * subsequent list update O(n²).
+ * @type {Readable<Map<string, number>>}
+ */
+export const listedEntryIndexMap = derived(
+  [listedEntries],
+  ([_listedEntries]) => new Map(_listedEntries.map((entry, index) => [entry.id, index])),
+);
+
+/**
  * Threshold for when to show a warning about nearing the quota of entries in an entry collection.
  * This is used in the UI to provide feedback to users when they are close to reaching the maximum
  * number of entries allowed in a collection, based on the collection’s quota settings.

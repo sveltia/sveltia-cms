@@ -1,5 +1,3 @@
-import { escapeRegExp } from '@sveltia/utils/string';
-
 import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { parseTransformations } from '$lib/services/common/transformations';
@@ -8,7 +6,6 @@ import {
   getFieldDisplayValue,
   getVisibleFieldDisplayValue,
 } from '$lib/services/contents/entry/fields';
-import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { FlattenedEntryContent, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
@@ -40,12 +37,6 @@ export const getListFieldInfo = (field) => {
     hasSubFields: hasSingleSubField || hasMultiSubFields || hasVariableTypes,
   };
 };
-
-/**
- * Cache of pre-compiled regexes keyed by `keyPath:index`.
- * @type {Map<string, RegExp>}
- */
-const listSummaryRegexCache = new Map();
 
 /**
  * Format the summary template of a List field.
@@ -83,19 +74,11 @@ export const formatSummary = ({
       return valueMap[keyPathWithIndex];
     }
 
-    const cacheKey = `${keyPath}:${index}`;
-
-    const keyPathRegex = getOrCreate(
-      listSummaryRegexCache,
-      cacheKey,
-      () => new RegExp(`^${escapeRegExp(keyPath)}\\.${index}[\\b\\.]`),
-    );
-
     return getVisibleFieldDisplayValue({
       valueMap,
       locale,
       keyPath: keyPathWithIndex,
-      keyPathRegex,
+      keyPathPrefix: `${keyPathWithIndex}.`,
       getFieldArgs,
     });
   }

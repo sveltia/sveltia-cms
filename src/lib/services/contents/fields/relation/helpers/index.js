@@ -1,7 +1,8 @@
-import { compare, escapeRegExp } from '@sveltia/utils/string';
+import { compare } from '@sveltia/utils/string';
 
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import {
   getObjectId,
   getOptionLabelMap,
@@ -136,11 +137,7 @@ export const getReferencedOptionLabel = ({ fieldConfig, valueMap, keyPath, local
   const getLabel = (_value) => optionLabelMap.get(_value) || _value;
 
   if (multiple) {
-    const values = Object.entries(valueMap)
-      .filter(([key]) => key.match(`^${escapeRegExp(keyPath)}\\.\\d+$`))
-      .map(([, _value]) => _value);
-
-    return values.map(getLabel);
+    return getListItemKeys(valueMap, keyPath).map((key) => getLabel(valueMap[key]));
   }
 
   return getLabel(valueMap[keyPath]);

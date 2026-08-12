@@ -16,6 +16,7 @@ import {
   currentView,
   entryGroups,
   listedEntries,
+  listedEntryIndexMap,
   reorderedEntries,
   reordering,
 } from '.';
@@ -487,6 +488,37 @@ describe('collection/view/index', () => {
 
     // If getEntriesByCollection was called, that means the derived store callback executed
     expect(listedEntries).toBeDefined();
+
+    unsubscribe();
+  });
+
+  test('listedEntryIndexMap maps each entry ID to its position in listedEntries', () => {
+    /** @type {any} */
+    const mockEntries = [
+      { id: 'a', slug: 'post-a', locales: {}, sha: 'a' },
+      { id: 'b', slug: 'post-b', locales: {}, sha: 'b' },
+      { id: 'c', slug: 'post-c', locales: {}, sha: 'c' },
+    ];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+
+    /** @type {Map<string, number> | undefined} */
+    let indexMap;
+
+    const unsubscribe = listedEntryIndexMap.subscribe((value) => {
+      indexMap = value;
+    });
+
+    _allEntries.set(mockEntries);
+    _selectedCollection.set(/** @type {any} */ ({ name: 'posts', folder: '_posts' }));
+
+    expect([.../** @type {Map<string, number>} */ (indexMap)]).toEqual([
+      ['a', 0],
+      ['b', 1],
+      ['c', 2],
+    ]);
+    // Unknown entries are absent, so callers fall back to -1
+    expect(/** @type {Map<string, number>} */ (indexMap).get('missing')).toBeUndefined();
 
     unsubscribe();
   });

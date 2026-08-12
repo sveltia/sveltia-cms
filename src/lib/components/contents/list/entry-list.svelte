@@ -24,12 +24,13 @@
     /** @type {InternalEntryCollection | undefined} */ ($selectedCollection),
   );
   const viewType = $derived($reordering ? 'list' : $currentView.type);
-  const allEntries = $derived($entryGroups.flatMap(({ entries }) => entries));
+  // Only whether any group has entries is needed, so don’t flatten the groups into one array
+  const hasEntries = $derived($entryGroups.some(({ entries }) => !!entries.length));
 </script>
 
 <ListContainer aria-label={_('entry_list')}>
   {#if collection}
-    {#if allEntries.length}
+    {#if hasEntries}
       {@const { defaultLocale } = collection._i18n}
       <ListingGrid
         {viewType}

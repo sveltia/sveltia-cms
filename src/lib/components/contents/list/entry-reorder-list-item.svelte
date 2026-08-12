@@ -7,7 +7,7 @@
   import { Button, GridCell, GridRow, Icon } from '@sveltia/ui';
 
   import EntryListItemCells from '$lib/components/contents/list/entry-list-item-cells.svelte';
-  import { listedEntries } from '$lib/services/contents/collection/view';
+  import { listedEntryIndexMap } from '$lib/services/contents/collection/view';
 
   /**
    * @import { Entry, InternalEntryCollection, ViewType } from '$lib/types/private';
@@ -54,7 +54,7 @@
 </script>
 
 <GridRow
-  aria-rowindex={$listedEntries.indexOf(entry)}
+  aria-rowindex={$listedEntryIndexMap.get(entry.id) ?? -1}
   class={[dragging && 'drag-source', dropBefore && 'drop-before', dropAfter && 'drop-after']
     .filter(Boolean)
     .join(' ')}

@@ -22,6 +22,7 @@ import { getRegex } from '$lib/services/utils/regex';
  * @import { Writable } from 'svelte/store';
  * @import {
  * Entry,
+ * EntryFolderInfo,
  * FlattenedEntryContent,
  * InternalCollection,
  * InternalCollectionFile,
@@ -49,13 +50,12 @@ export const selectedEntryIdSet = derived(
 );
 
 /**
- * Get entries by the given collection name, while applying a filer if needed.
+ * Scan `allEntries` for the entries belonging to the given collection. This is the uncached
+ * implementation of {@link getEntriesByCollection}.
  * @param {string} collectionName Collection name.
  * @returns {Entry[]} Entries.
- * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
  */
-export const getEntriesByCollection = (collectionName) => {
+const queryEntriesByCollection = (collectionName) => {
   const collection = getCollection(collectionName);
 
   if (!collection) {
@@ -118,6 +118,73 @@ export const getEntriesByCollection = (collectionName) => {
 
     return filterValues.includes(value);
   });
+};
+
+/**
+ * Cache for {@link getEntriesByCollection}, keyed by collection name and invalidated whenever
+ * `allEntries` or `allEntryFolders` is replaced.
+ * @type {{
+ * entrySource: Entry[] | undefined,
+ * folderSource: EntryFolderInfo[] | undefined,
+ * map: Map<string, Entry[]>,
+ * }}
+ */
+const entriesByCollectionCache = {
+  entrySource: undefined,
+  folderSource: undefined,
+  map: new Map(),
+};
+
+/**
+ * Reset {@link entriesByCollectionCache}. Used in tests, where the stores are mocked and therefore
+ * don’t change identity between cases.
+ * @internal
+ */
+export const _resetEntriesByCollectionCache = () => {
+  entriesByCollectionCache.entrySource = undefined;
+  entriesByCollectionCache.folderSource = undefined;
+  entriesByCollectionCache.map = new Map();
+};
+
+/**
+ * Get entries by the given collection name, while applying a filer if needed.
+ *
+ * The result is memoized until the entry stores are replaced. Scanning every entry once per call
+ * adds up quickly — the sidebar asks for a count per collection, and a Relation field resolves its
+ * referenced collection once per entry being sorted, filtered or listed. Just as importantly, the
+ * returned array keeps a stable reference, which is what lets the Relation field’s option cache hit
+ * at all; it keys on the identity of the entry list the options were built from.
+ *
+ * The returned array is shared between callers, so treat it as read-only.
+ * @param {string} collectionName Collection name.
+ * @returns {Entry[]} Entries.
+ * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
+ */
+export const getEntriesByCollection = (collectionName) => {
+  const entrySource = get(allEntries);
+  const folderSource = get(allEntryFolders);
+
+  if (
+    entrySource !== entriesByCollectionCache.entrySource ||
+    folderSource !== entriesByCollectionCache.folderSource
+  ) {
+    entriesByCollectionCache.entrySource = entrySource;
+    entriesByCollectionCache.folderSource = folderSource;
+    entriesByCollectionCache.map = new Map();
+  }
+
+  const cache = entriesByCollectionCache.map.get(collectionName);
+
+  if (cache) {
+    return cache;
+  }
+
+  const entries = queryEntriesByCollection(collectionName);
+
+  entriesByCollectionCache.map.set(collectionName, entries);
+
+  return entries;
 };
 
 /**

@@ -178,7 +178,6 @@ export const validateAnyField = (args) => {
     return undefined;
   }
 
-  const valueEntries = Object.entries(valueMap);
   const required = isFieldRequired({ fieldConfig, locale });
   /** @type {EntryValidityState} */
   const validity = { ...DEFAULT_VALIDITY };
@@ -187,7 +186,7 @@ export const validateAnyField = (args) => {
     const { skip } = validateListField({
       keyPath,
       value,
-      valueEntries,
+      valueMap,
       validity,
       validities,
       locale,

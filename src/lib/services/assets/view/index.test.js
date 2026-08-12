@@ -511,6 +511,70 @@ describe('assets/view/index', () => {
       expect(mockAssetCallback).toHaveBeenCalled();
     });
 
+    it('should match the selected folder by identity as well as by value', async () => {
+      vi.resetModules();
+
+      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
+
+      const folder = /** @type {any} */ ({
+        collectionName: undefined,
+        internalPath: '/images',
+        publicPath: '/images',
+        entryRelative: false,
+        hasTemplateTags: false,
+        label: 'Images',
+      });
+
+      const mockAssetList = /** @type {any[]} */ ([
+        // Shares the folder object, as assets loaded from the backend do
+        { path: '/images/a.jpg', name: 'a.jpg', sha: 'a', size: 1, kind: 'image', folder },
+        // An equal but separate object, as a folder restored from history state produces
+        {
+          path: '/images/b.jpg',
+          name: 'b.jpg',
+          sha: 'b',
+          size: 2,
+          kind: 'image',
+          folder: { ...folder },
+        },
+        // Same paths but a different folder — must not be included
+        {
+          path: '/other/c.jpg',
+          name: 'c.jpg',
+          sha: 'c',
+          size: 3,
+          kind: 'image',
+          folder: { ...folder, internalPath: '/other' },
+        },
+      ]);
+
+      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
+        callback(mockAssetList);
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
+        callback(folder);
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
+
+      const { listedAssets } = await import('.');
+      /** @type {any[] | undefined} */
+      let listed;
+
+      listedAssets.subscribe((value) => {
+        listed = value;
+      });
+
+      expect(listed?.map((/** @type {any} */ a) => a.path)).toEqual([
+        '/images/a.jpg',
+        '/images/b.jpg',
+      ]);
+    });
+
     it('should filter assets when folder with internalPath is selected', async () => {
       vi.resetModules();
 
@@ -562,6 +626,46 @@ describe('assets/view/index', () => {
       listedAssets.subscribe(mockAssetCallback);
 
       expect(mockAssetCallback).toHaveBeenCalled();
+    });
+
+    it('should map each asset path to its position via listedAssetIndexMap', async () => {
+      vi.resetModules();
+
+      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
+
+      const mockAssetList = /** @type {any[]} */ ([
+        { path: '/images/a.jpg', name: 'a.jpg', sha: 'a', size: 1, kind: 'image' },
+        { path: '/images/b.jpg', name: 'b.jpg', sha: 'b', size: 2, kind: 'image' },
+      ]);
+
+      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
+        callback(mockAssetList);
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
+        callback(/** @type {any} */ (undefined));
+        return vi.fn();
+      });
+
+      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
+
+      const { listedAssetIndexMap } = await import('.');
+      /** @type {Map<string, number> | undefined} */
+      let indexMap;
+
+      listedAssetIndexMap.subscribe((value) => {
+        indexMap = value;
+      });
+
+      expect([.../** @type {Map<string, number>} */ (indexMap)]).toEqual([
+        ['/images/a.jpg', 0],
+        ['/images/b.jpg', 1],
+      ]);
+      expect(
+        /** @type {Map<string, number>} */ (indexMap).get('/images/missing.jpg'),
+      ).toBeUndefined();
     });
   });
 

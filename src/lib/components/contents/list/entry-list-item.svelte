@@ -8,7 +8,7 @@
   import EntryListItemCells from '$lib/components/contents/list/entry-list-item-cells.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
-  import { listedEntries } from '$lib/services/contents/collection/view';
+  import { listedEntryIndexMap } from '$lib/services/contents/collection/view';
 
   /**
    * @import { Entry, InternalEntryCollection, ViewType } from '$lib/types/private';
@@ -52,7 +52,7 @@
 </script>
 
 <GridRow
-  aria-rowindex={$listedEntries.indexOf(entry)}
+  aria-rowindex={$listedEntryIndexMap.get(entry.id) ?? -1}
   onChange={(event) => {
     updateSelection(event.detail.selected);
   }}

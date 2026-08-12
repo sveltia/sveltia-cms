@@ -1,6 +1,6 @@
 import { isObjectArray } from '@sveltia/utils/array';
 
-import { isNumeric } from '$lib/services/utils/number';
+import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
@@ -50,11 +50,7 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
   let rawValues;
 
   if (multiple) {
-    const prefix = `${keyPath}.`;
-
-    rawValues = Object.entries(valueMap)
-      .filter(([key]) => key.startsWith(prefix) && isNumeric(key.slice(prefix.length)))
-      .map(([, _value]) => _value);
+    rawValues = getListItemKeys(valueMap, keyPath).map((key) => valueMap[key]);
   }
 
   const optionsKey = getOptionsKey(options);
