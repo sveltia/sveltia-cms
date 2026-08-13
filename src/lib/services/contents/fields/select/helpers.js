@@ -1,6 +1,7 @@
 import { isObjectArray } from '@sveltia/utils/array';
 
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
+import { getOrCreateBounded } from '$lib/services/utils/cache';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
@@ -11,6 +12,13 @@ import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
  * @type {Map<string, any | any[]>}
  */
 const labelCacheMap = new Map();
+/**
+ * Maximum number of labels to retain in {@link labelCacheMap}. The cache key includes the field’s
+ * current value, so every edit adds an entry that is never read again — a limit is what stops the
+ * map from growing for the whole session. Labels are small, and the live working set is one entry
+ * per rendered select field, so this leaves plenty of headroom.
+ */
+const MAX_LABEL_CACHE_SIZE = 1000;
 /**
  * Cache of stringified `options` arrays, keyed on the array reference itself so the expensive
  * serialization only runs once per field configuration.
@@ -47,6 +55,7 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
   const hasLabels = isObjectArray(options);
   // Extract only the values relevant to this field from `valueMap`, avoiding serialization of the
   // entire entry content (which would cause cache misses on any unrelated field change).
+  /** @type {any[] | undefined} */
   let rawValues;
 
   if (multiple) {
@@ -59,12 +68,6 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
     ? `${keyPath}|${optionsKey}|${JSON.stringify(rawValues)}`
     : `${keyPath}|${optionsKey}|${String(valueMap[keyPath])}`;
 
-  const cache = labelCacheMap.get(cacheKey);
-
-  if (cache) {
-    return cache;
-  }
-
   /**
    * Get the label by value.
    * @param {any} _value Stored value.
@@ -74,18 +77,18 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
     /** @type {{ label: string, value: string }[]} */ (options).find((o) => o.value === _value)
       ?.label || _value;
 
-  if (multiple) {
-    const labels = hasLabels ? /** @type {any[]} */ (rawValues).map(getLabel) : rawValues;
+  return getOrCreateBounded(
+    labelCacheMap,
+    cacheKey,
+    () => {
+      if (multiple) {
+        return hasLabels ? /** @type {any[]} */ (rawValues).map(getLabel) : rawValues;
+      }
 
-    labelCacheMap.set(cacheKey, labels);
+      const value = valueMap[keyPath];
 
-    return labels;
-  }
-
-  const value = valueMap[keyPath];
-  const label = hasLabels ? getLabel(value) : value;
-
-  labelCacheMap.set(cacheKey, label);
-
-  return label;
+      return hasLabels ? getLabel(value) : value;
+    },
+    MAX_LABEL_CACHE_SIZE,
+  );
 };

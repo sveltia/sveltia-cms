@@ -1,5 +1,5 @@
 import equal from 'fast-deep-equal';
-import { derived, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 
 import { prefs } from '$lib/services/user/prefs.svelte';
 
@@ -29,6 +29,29 @@ export const i18nAutoDupEnabled = writable(true);
  * triggering when only programmatic changes (e.g. Lexical markdown reformatting) have occurred.
  */
 export const entryDraftInteracted = writable(false);
+
+/**
+ * Revoke the blob URLs of the current draft’s unsaved files, except those the incoming draft still
+ * refers to.
+ *
+ * Each of these URLs keeps its entire file in memory until it’s revoked, and nothing else releases
+ * them: the URL is the field value for the duration of the editing session, and is swapped for the
+ * real file path when the entry is saved. Once the draft is replaced, the URLs are unreachable but
+ * still registered with the browser, so every image attached in the editor would stay in memory
+ * until the page is reloaded. A restored backup regenerates its URLs from the stored files, so
+ * discarding them here doesn’t break that.
+ * @param {Record<string, any>} [nextFiles] The incoming draft’s file map. Duplicating an entry
+ * carries the same map over, and those URLs are still displayed, so they must be kept.
+ */
+export const revokeDraftFileURLs = (nextFiles = {}) => {
+  const { files } = get(entryDraft) ?? {};
+
+  Object.keys(files ?? {}).forEach((blobURL) => {
+    if (!(blobURL in nextFiles)) {
+      URL.revokeObjectURL(blobURL);
+    }
+  });
+};
 
 /**
  * Filter out internal properties from a value map.

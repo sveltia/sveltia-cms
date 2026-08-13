@@ -5,7 +5,7 @@ import {
   getIndexFile,
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
-import { entryDraft } from '$lib/services/contents/draft';
+import { entryDraft, revokeDraftFileURLs } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { normalizeContentMap } from '$lib/services/contents/draft/create/normalize';
 import { createProxy } from '$lib/services/contents/draft/create/proxy';
@@ -162,6 +162,8 @@ export const createDraft = ({
   // Custom field validation state is keyed by locale and key path only, so discard it to prevent
   // verdicts from a previous draft leaking into this one
   resetCustomFieldValidation();
+  // The outgoing draft’s unsaved files are about to become unreachable; release what they hold
+  revokeDraftFileURLs();
 
   entryDraft.set({
     id: isNew ? crypto.randomUUID() : id,

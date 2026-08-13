@@ -13,6 +13,7 @@ import {
   resolveFilterValues,
 } from '$lib/services/contents/fields/relation/helpers/filters';
 import { prepareFieldTemplates } from '$lib/services/contents/fields/relation/helpers/templates';
+import { getOrCreateBounded } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -28,6 +29,20 @@ import { prepareFieldTemplates } from '$lib/services/contents/fields/relation/he
  * @type {Map<string, RelationOption[]>}
  */
 export const optionCacheMap = new Map();
+
+/**
+ * Maximum number of option sets to retain in {@link optionCacheMap}.
+ *
+ * Two parts of the cache key keep changing while the app is running: the identity of the referenced
+ * entry list, which is replaced every time the entries are loaded again or an entry is saved, and
+ * the resolved `{{fields.*}}` filter values, which change on every keystroke in the field they
+ * point at. Without a limit, each of those would add an options array — one entry per referenced
+ * entry, potentially thousands — that is never read again and never released.
+ *
+ * The live working set is only a few option sets (one per visible relation field per locale), so
+ * this is generous headroom; eviction is least-recently-used, keeping the hot ones cached.
+ */
+const MAX_OPTION_CACHE_SIZE = 100;
 
 /**
  * Get options for a Relation field.
@@ -62,57 +77,54 @@ export const getOptions = ({
   const resolvedKey = resolvedFilters.flatMap(({ values }) => values).join('\x00');
   const ids = `${getObjectId(fieldConfig)}|${getObjectId(refEntries)}`;
   const cacheKey = `${locale}|${ids}|${resolvedKey}`;
-  const cache = optionCacheMap.get(cacheKey);
 
-  if (cache) {
-    return cache;
-  }
+  return getOrCreateBounded(
+    optionCacheMap,
+    cacheKey,
+    () => {
+      const collection = getCollection(collectionName);
 
-  const collection = getCollection(collectionName);
+      if (!collection) {
+        return [];
+      }
 
-  if (!collection) {
-    optionCacheMap.set(cacheKey, []);
-    return [];
-  }
+      const {
+        _type,
+        _i18n: { defaultLocale },
+      } = collection;
 
-  const {
-    _type,
-    _i18n: { defaultLocale },
-  } = collection;
+      const { identifier_field: identifierField = 'title' } = _type === 'entry' ? collection : {};
+      const templates = prepareFieldTemplates(fieldConfig, identifierField);
+      const { allFieldNames, hasListFields } = templates;
 
-  const { identifier_field: identifierField = 'title' } = _type === 'entry' ? collection : {};
-  const templates = prepareFieldTemplates(fieldConfig, identifierField);
-  const { allFieldNames, hasListFields } = templates;
-
-  const filteredEntries = filterAndPrepareEntries({
-    refEntries,
-    locale,
-    fileName,
-    entryFilters: resolvedFilters,
-    defaultLocale,
-  });
-
-  const options = filteredEntries
-    .flatMap(({ refEntry, content }) =>
-      processEntry({
-        refEntry,
-        content,
-        collection,
-        templates,
-        allFieldNames,
-        hasListFields,
-        collectionName,
-        fileName,
+      const filteredEntries = filterAndPrepareEntries({
+        refEntries,
         locale,
-        identifierField,
+        fileName,
+        entryFilters: resolvedFilters,
         defaultLocale,
-      }),
-    )
-    .sort((a, b) => compare(a.label, b.label));
+      });
 
-  optionCacheMap.set(cacheKey, options);
-
-  return options;
+      return filteredEntries
+        .flatMap(({ refEntry, content }) =>
+          processEntry({
+            refEntry,
+            content,
+            collection,
+            templates,
+            allFieldNames,
+            hasListFields,
+            collectionName,
+            fileName,
+            locale,
+            identifierField,
+            defaultLocale,
+          }),
+        )
+        .sort((a, b) => compare(a.label, b.label));
+    },
+    MAX_OPTION_CACHE_SIZE,
+  );
 };
 
 /**

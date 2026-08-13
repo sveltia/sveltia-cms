@@ -3,6 +3,7 @@
   import { Button, Icon, TruncatedText } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { sleep } from '@sveltia/utils/misc';
+  import { onDestroy } from 'svelte';
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import { formatSize } from '$lib/services/utils/file';
@@ -27,6 +28,51 @@
     showThumbnail = true,
     /* eslint-enable prefer-const */
   } = $props();
+
+  /**
+   * Thumbnail blob URLs, keyed by the file they were created from. A blob URL keeps the whole file
+   * alive until it’s revoked, so each file gets exactly one URL, reused across renders and released
+   * as soon as the file leaves the list or the component is destroyed. Creating the URL inline in
+   * the markup instead would strand a copy of every previewed upload for the rest of the session.
+   * @type {Map<File, string>}
+   */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  const thumbnailURLs = new Map();
+
+  /**
+   * Get the thumbnail blob URL for the given file, creating it on first use.
+   * @param {File} file File.
+   * @returns {string} Blob URL.
+   */
+  const getThumbnailURL = (file) => {
+    let url = thumbnailURLs.get(file);
+
+    if (url === undefined) {
+      url = URL.createObjectURL(file);
+      thumbnailURLs.set(file, url);
+    }
+
+    return url;
+  };
+
+  // Release the URLs of files the user has removed from the list. This runs after the render that
+  // added any new files, so a file that is merely reordered keeps its URL — and its `<img>` doesn’t
+  // reload.
+  $effect(() => {
+    const listedFiles = new Set(files);
+
+    thumbnailURLs.forEach((url, file) => {
+      if (!listedFiles.has(file)) {
+        URL.revokeObjectURL(url);
+        thumbnailURLs.delete(file);
+      }
+    });
+  });
+
+  onDestroy(() => {
+    thumbnailURLs.forEach((url) => URL.revokeObjectURL(url));
+    thumbnailURLs.clear();
+  });
 </script>
 
 <div role="list" class="files">
@@ -36,7 +82,7 @@
       {@const originalFile = transformedFileMap?.get(file)}
       <div role="listitem" class="file">
         {#if showThumbnail && SUPPORTED_IMAGE_TYPES.includes(type)}
-          <Image src={URL.createObjectURL(file)} variant="icon" checkerboard={true} />
+          <Image src={getThumbnailURL(file)} variant="icon" checkerboard={true} />
         {:else}
           <span role="none" class="image">
             <Icon name="draft" />

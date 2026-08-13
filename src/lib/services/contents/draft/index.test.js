@@ -1,7 +1,13 @@
 // @ts-nocheck
 import { describe, expect, it, vi } from 'vitest';
 
-import { entryDraft, entryDraftModified, filterRealValues, i18nAutoDupEnabled } from '.';
+import {
+  entryDraft,
+  entryDraftModified,
+  filterRealValues,
+  i18nAutoDupEnabled,
+  revokeDraftFileURLs,
+} from '.';
 
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { devModeEnabled: false },
@@ -398,6 +404,67 @@ describe('draft/index', () => {
       });
 
       expect(value).toBe(true);
+    });
+  });
+
+  describe('revokeDraftFileURLs', () => {
+    /**
+     * Set the draft store to a minimal draft holding the given unsaved files. The value maps are
+     * included because `entryDraftModified` reads them whenever the store changes.
+     * @param {Record<string, any> | undefined} files File map keyed by blob URL.
+     */
+    const setDraftFiles = (files) => {
+      entryDraft.set(
+        files === undefined
+          ? null
+          : {
+              originalLocales: {},
+              currentLocales: {},
+              originalSlugs: {},
+              currentSlugs: {},
+              originalValues: {},
+              currentValues: {},
+              files,
+            },
+      );
+    };
+
+    it('should revoke every blob URL held by the current draft', () => {
+      const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+      setDraftFiles({ 'blob:one': { file: {} }, 'blob:two': { file: {} } });
+      revokeDraftFileURLs();
+
+      expect(revoke).toHaveBeenCalledTimes(2);
+      expect(revoke).toHaveBeenCalledWith('blob:one');
+      expect(revoke).toHaveBeenCalledWith('blob:two');
+
+      revoke.mockRestore();
+    });
+
+    it('should keep the URLs the incoming draft still refers to', () => {
+      const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+      setDraftFiles({ 'blob:kept': { file: {} }, 'blob:dropped': { file: {} } });
+      revokeDraftFileURLs({ 'blob:kept': { file: {} } });
+
+      expect(revoke).toHaveBeenCalledTimes(1);
+      expect(revoke).toHaveBeenCalledWith('blob:dropped');
+
+      revoke.mockRestore();
+    });
+
+    it('should do nothing when there is no draft or no files', () => {
+      const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+      setDraftFiles(undefined);
+      revokeDraftFileURLs();
+      setDraftFiles({});
+      revokeDraftFileURLs();
+
+      expect(revoke).not.toHaveBeenCalled();
+
+      revoke.mockRestore();
     });
   });
 

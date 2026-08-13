@@ -53,6 +53,11 @@ export const authorize = async ({ backendName, authURL, popup }) => {
   popup ??= openPopup({ authURL });
 
   return new Promise((resolve, reject) => {
+    // Detaches the `message` listener below. Every exit path aborts it, including the one where the
+    // user closes the popup: otherwise each cancelled sign-in would leave a listener — and the
+    // popup and promise callbacks it captures — attached to the window for the rest of the session.
+    const controller = new AbortController();
+
     /**
      * Timer to check if the popup is closed. This doesn’t work with GitLab; `window.closed` will
      * always be `true`.
@@ -61,6 +66,7 @@ export const authorize = async ({ backendName, authURL, popup }) => {
       backendName === 'github'
         ? setInterval(() => {
             if (popup?.closed) {
+              controller.abort();
               clearInterval(timer);
               reject(Object.assign(new Error('Authentication aborted'), { name: 'AbortError' }));
             }
@@ -120,12 +126,12 @@ export const authorize = async ({ backendName, authURL, popup }) => {
         );
       }
 
-      window.removeEventListener('message', handler);
+      controller.abort();
       clearInterval(timer);
       popup?.close();
     };
 
-    window.addEventListener('message', handler);
+    window.addEventListener('message', handler, { signal: controller.signal });
   });
 };
 

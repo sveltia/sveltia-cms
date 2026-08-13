@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { getOrCreate } from './cache';
+import { getOrCreate, getOrCreateBounded } from './cache';
 
 describe('Test getOrCreate()', () => {
   test('calls create and stores value when key is absent', () => {
@@ -81,5 +81,93 @@ describe('Test getOrCreate()', () => {
     const second = getOrCreate(cache, 'k', () => ({ x: 2 }));
 
     expect(first).toBe(second);
+  });
+});
+
+describe('Test getOrCreateBounded()', () => {
+  test('calls create and stores value when key is absent', () => {
+    const cache = new Map();
+    const result = getOrCreateBounded(cache, 'key', () => 'value', 10);
+
+    expect(result).toBe('value');
+    expect(cache.get('key')).toBe('value');
+  });
+
+  test('returns cached value without calling create a second time', () => {
+    const cache = new Map();
+    let calls = 0;
+
+    getOrCreateBounded(
+      cache,
+      'key',
+      () => {
+        calls += 1;
+        return 'value';
+      },
+      10,
+    );
+
+    const result = getOrCreateBounded(
+      cache,
+      'key',
+      () => {
+        calls += 1;
+        return 'other';
+      },
+      10,
+    );
+
+    expect(result).toBe('value');
+    expect(calls).toBe(1);
+  });
+
+  test('caches falsy values instead of recomputing them', () => {
+    const cache = new Map();
+    let calls = 0;
+
+    /**
+     * Count the calls and always return `undefined`.
+     * @returns {any} Nothing.
+     */
+    const create = () => {
+      calls += 1;
+
+      return undefined;
+    };
+
+    expect(getOrCreateBounded(cache, 'key', create, 10)).toBe(undefined);
+    expect(getOrCreateBounded(cache, 'key', create, 10)).toBe(undefined);
+    expect(calls).toBe(1);
+  });
+
+  test('evicts the oldest entry once the limit is exceeded', () => {
+    const cache = new Map();
+
+    ['a', 'b', 'c'].forEach((key) => getOrCreateBounded(cache, key, () => key, 2));
+
+    expect(cache.size).toBe(2);
+    expect([...cache.keys()]).toEqual(['b', 'c']);
+  });
+
+  test('keeps recently read entries and evicts the least recently used one', () => {
+    const cache = new Map();
+
+    ['a', 'b'].forEach((key) => getOrCreateBounded(cache, key, () => key, 2));
+    // Reading `a` makes `b` the least recently used entry
+    getOrCreateBounded(cache, 'a', () => 'unused', 2);
+    getOrCreateBounded(cache, 'c', () => 'c', 2);
+
+    expect([...cache.keys()]).toEqual(['a', 'c']);
+  });
+
+  test('never grows beyond the limit', () => {
+    const cache = new Map();
+
+    Array.from({ length: 500 }, (_, i) => i).forEach((i) =>
+      getOrCreateBounded(cache, `key-${i}`, () => i, 5),
+    );
+
+    expect(cache.size).toBe(5);
+    expect([...cache.keys()]).toEqual(['key-495', 'key-496', 'key-497', 'key-498', 'key-499']);
   });
 });

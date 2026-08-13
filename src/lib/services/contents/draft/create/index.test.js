@@ -13,6 +13,7 @@ vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
 
 vi.mock('$lib/services/contents/draft', () => ({
   entryDraft: { set: vi.fn(), subscribe: vi.fn() },
+  revokeDraftFileURLs: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/draft/backup', () => ({
