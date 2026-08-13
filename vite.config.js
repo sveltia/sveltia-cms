@@ -321,9 +321,6 @@ export default defineConfig({
           comments: {
             legal: true,
           },
-          // Work around the “Prism is not defined” error
-          // @see https://github.com/vitejs/vite/issues/21948
-          strictExecutionOrder: true,
         },
         {
           entryFileNames: 'sveltia-cms.mjs',

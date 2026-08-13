@@ -5,6 +5,7 @@
   @see https://sveltiacms.app/en/docs/fields/richtext
 -->
 <script>
+  import { highlightCodeToHTML, loadCodeHighlighter } from '@sveltia/ui';
   import { parse, use } from 'marked';
   import markedBidi from 'marked-bidi';
   import { isValidElement } from 'react';
@@ -42,20 +43,13 @@
 
   use({
     renderer: {
-      // Add syntax highlighting for code blocks using Prism.js if available. This is done in the
-      // renderer to ensure it runs before sanitization, allowing the highlighted HTML to be
-      // preserved in the preview.
+      // Add syntax highlighting for code blocks using Shiki. This is done in the renderer to ensure
+      // it runs before sanitization, allowing the highlighted HTML to be preserved in the preview.
+      // Shiki loads its engine and grammars on demand, so this returns nothing until the language
+      // is ready; `preloadHighlighter()` below fetches it and triggers a re-render.
       // eslint-disable-next-line jsdoc/require-jsdoc
       code({ text, lang }) {
-        const { Prism } = /** @type {any} */ (window);
-
-        if (Prism && lang && Prism.languages[lang]) {
-          const highlighted = Prism.highlight(text, Prism.languages[lang], lang);
-
-          return `<pre><code class="language-${lang}">${highlighted}</code></pre>\n`;
-        }
-
-        return false;
+        return (lang ? highlightCodeToHTML(text, lang) : undefined) ?? false;
       },
     },
   });
@@ -79,6 +73,16 @@
   /** @type {HTMLElement | undefined} */
   let container = $state();
   let observerReady = $state(false);
+  /**
+   * Bumped whenever a syntax highlighting grammar finishes loading. `parseMarkdown()` reads it so
+   * the preview is rendered again with the code blocks highlighted.
+   */
+  let highlighterVersion = $state(0);
+  /**
+   * Sorted, comma-separated languages already handed to the highlighter, so a repeated edit doesn’t
+   * request them again. Deliberately not reactive: it is written while rendering is in progress.
+   */
+  let requestedLanguages = '';
 
   const entry = $derived($entryDraft?.originalEntry);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
@@ -112,6 +116,34 @@
 
     return string;
   });
+
+  /**
+   * Fetch the syntax highlighter for any language used in the given Markdown, then trigger a
+   * re-render so the code blocks pick up the highlighting.
+   *
+   * Shiki fetches its engine and grammars on demand, while the Marked renderer is synchronous, so
+   * the first render of a code block has no highlighting and this brings it up to date.
+   * @param {string} value Markdown to scan for fenced code blocks.
+   */
+  const preloadHighlighter = async (value) => {
+    const languages = [...value.matchAll(/^ {0,3}```(\S+)/gm)]
+      .map(([, lang]) => lang)
+      .filter((lang, index, list) => list.indexOf(lang) === index)
+      .sort()
+      .join(',');
+
+    // Once requested, a set of languages is never requested again, whether or not each turned out
+    // to be supported
+    if (!languages || languages === requestedLanguages) {
+      return;
+    }
+
+    requestedLanguages = languages;
+
+    await Promise.all(languages.split(',').map((lang) => loadCodeHighlighter(lang)));
+
+    highlighterVersion += 1;
+  };
 
   /**
    * Render a React component preview into the specified element based on its `data-component-key`
@@ -211,10 +243,19 @@
    * @returns {string} The parsed (and possibly sanitized) HTML string.
    */
   const parseMarkdown = (block) => {
+    // Re-parse once a grammar has loaded, so the renderer can highlight what it previously couldn’t
+    void highlighterVersion;
+
     const rawHTML = /** @type {string} */ (parse(block, { breaks: true }));
 
     return doSanitize ? sanitizeRichTextHTML(rawHTML) : rawHTML;
   };
+
+  $effect(() => {
+    if (markdown) {
+      preloadHighlighter(markdown);
+    }
+  });
 
   onMount(() => {
     const observer = new MutationObserver(mutationCallback);
@@ -259,6 +300,10 @@
         img {
           pointer-events: none;
         }
+      }
+
+      pre.shiki {
+        background-color: var(--sui-code-background-color) !important;
       }
     }
   }

@@ -417,9 +417,9 @@
  * @property {'code'} widget Field type.
  * @property {string | Record<string, string>} [default] Default value. It must be a string if
  * `output_code_only` is `false`. Otherwise it must be an object that match the `keys` option.
- * @property {string} [default_language] Default language to be selected, like `js`. See the [Prism
- * documentation](https://prismjs.com/#supported-languages) for a list of supported languages.
- * Default: empty string, which is plaintext.
+ * @property {string} [default_language] Default language to be selected, like `js`. See the [Shiki
+ * documentation](https://shiki.style/languages) for a list of supported languages. Default: empty
+ * string, which is plaintext.
  * @property {boolean} [allow_language_selection] Whether to show a language switcher so that users
  * can change the language mode. Default: `true` (the Decap CMS document is wrong).
  * @property {boolean} [output_code_only] Whether to output code snippet only. Default: `false`.
