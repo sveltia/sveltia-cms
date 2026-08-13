@@ -176,6 +176,13 @@
   };
 
   /**
+   * Get the list item element at the specified index.
+   * @param {number} index Target index.
+   * @returns {HTMLElement | undefined} List item element.
+   */
+  const getItem = (index) => /** @type {HTMLElement} */ (itemList?.children[index]);
+
+  /**
    * Add a new subfield to the list.
    * @param {object} [args] Arguments.
    * @param {number} [args.index] List index where a new item will be inserted.
@@ -226,15 +233,13 @@
     if (itemList) {
       await sleep(50);
       // Move the placeholder into view
-      (addToTop ? itemList.firstElementChild : itemList.lastElementChild)?.scrollIntoView();
+      getItem(index)?.scrollIntoView();
       // Wait until the placeholder is replaced with the actual content
       await sleep(100);
       // Scroll again for the sticky toolbar
       itemList.closest('.content')?.scrollBy({ top: -50, behavior: 'instant' });
       // Move focus to the expander button
-      (addToTop ? itemList.firstElementChild : itemList.lastElementChild)
-        ?.querySelector('button')
-        ?.focus();
+      getItem(index)?.querySelector('button')?.focus();
     }
   };
 
@@ -255,14 +260,17 @@
 
       valueList.splice(index, 1);
       expanderStateList.splice(index, 1);
+
+      (getItem(index) ?? itemList?.closest('[role="group"]')?.querySelector('button'))?.focus();
     });
   };
 
   /**
    * Swap a subfield with the next one.
    * @param {number} index Target index.
+   * @param {'move-up' | 'move-down'} action Move action.
    */
-  const moveDownItem = (index) => {
+  const moveDownItem = async (index, action) => {
     updateComplexList(({ valueList, expanderStateList }) => {
       if (!hasSingleSubField) {
         // Ensure the IDs are unique before swapping
@@ -279,6 +287,16 @@
         expanderStateList[index],
       ];
     });
+
+    if (itemList) {
+      await sleep(50);
+      // Move the focus to the Move Up/Down button on the same item
+      /** @type {HTMLElement} */ (
+        getItem(action === 'move-up' ? index : index + 1)?.querySelector(
+          `button[data-action="${action}"]`,
+        )
+      )?.focus();
+    }
   };
 
   /**
@@ -492,7 +510,7 @@
           : (fields ?? (field ? [field] : []))}
         {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
         <!-- @todo Support drag sorting. -->
-        <div role="none" class="item">
+        <div role="group" class="item">
           <ObjectHeader
             label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
             controlId="list-{fieldId}-item-{index}-body"
@@ -508,7 +526,8 @@
                   iconic
                   disabled={isDuplicateField || index === 0}
                   aria-label={_('move_up')}
-                  onclick={() => moveDownItem(index - 1)}
+                  data-action="move-up"
+                  onclick={() => moveDownItem(index - 1, 'move-up')}
                 >
                   {#snippet startIcon()}
                     <Icon name="arrow_upward" />
@@ -520,7 +539,8 @@
                   size="small"
                   disabled={isDuplicateField || index === items.length - 1}
                   aria-label={_('move_down')}
-                  onclick={() => moveDownItem(index)}
+                  data-action="move-down"
+                  onclick={() => moveDownItem(index, 'move-down')}
                 >
                   {#snippet startIcon()}
                     <Icon name="arrow_downward" />
