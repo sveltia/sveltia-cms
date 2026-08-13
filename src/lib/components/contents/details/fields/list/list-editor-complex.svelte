@@ -230,24 +230,22 @@
     // Expand the parent if it is collapsed to show the newly added item
     syncExpanderStates({ [parentExpandedKeyPath]: true });
 
-    if (itemList) {
-      await sleep(50);
-      // Move the placeholder into view
-      getItem(index)?.scrollIntoView();
-      // Wait until the placeholder is replaced with the actual content
-      await sleep(100);
-      // Scroll again for the sticky toolbar
-      itemList.closest('.content')?.scrollBy({ top: -50, behavior: 'instant' });
-      // Move focus to the expander button
-      getItem(index)?.querySelector('button')?.focus();
-    }
+    await sleep(50);
+    // Move the placeholder into view
+    getItem(index)?.scrollIntoView();
+    // Wait until the placeholder is replaced with the actual content
+    await sleep(100);
+    // Scroll again for the sticky toolbar
+    itemList?.closest('.content')?.scrollBy({ top: -50, behavior: 'instant' });
+    // Move focus to the expander button
+    getItem(index)?.querySelector('button')?.focus();
   };
 
   /**
    * Remove a subfield.
    * @param {number} index Target index.
    */
-  const removeItem = (index) => {
+  const removeItem = async (index) => {
     updateComplexList(({ valueList, expanderStateList }) => {
       if (!hasSingleSubField) {
         // Track original key paths for existing items before they shift due to the removal
@@ -260,9 +258,10 @@
 
       valueList.splice(index, 1);
       expanderStateList.splice(index, 1);
-
-      (getItem(index) ?? itemList?.closest('[role="group"]')?.querySelector('button'))?.focus();
     });
+
+    await sleep(50);
+    (getItem(index) ?? itemList?.closest('[role="group"]')?.querySelector('button'))?.focus();
   };
 
   /**
@@ -288,15 +287,13 @@
       ];
     });
 
-    if (itemList) {
-      await sleep(50);
-      // Move the focus to the Move Up/Down button on the same item
-      /** @type {HTMLElement} */ (
-        getItem(action === 'move-up' ? index : index + 1)?.querySelector(
-          `button[data-action="${action}"]`,
-        )
-      )?.focus();
-    }
+    await sleep(50);
+    // Move the focus to the Move Up/Down button on the same item
+    /** @type {HTMLElement} */ (
+      getItem(action === 'move-up' ? index : index + 1)?.querySelector(
+        `button[data-action="${action}"]`,
+      )
+    )?.focus();
   };
 
   /**
