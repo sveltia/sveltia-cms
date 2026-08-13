@@ -21,8 +21,8 @@ importers:
         specifier: ^1.2.2
         version: 1.2.2(svelte@5.56.8(@typescript-eslint/types@8.67.0))
       '@sveltia/ui':
-        specifier: ^0.62.1
-        version: 0.62.1(svelte@5.56.8(@typescript-eslint/types@8.67.0))(typescript@6.0.3)
+        specifier: ^0.63.0
+        version: 0.63.0(svelte@5.56.8(@typescript-eslint/types@8.67.0))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.1
         version: 0.12.1
@@ -711,22 +711,6 @@ packages:
       typescript:
         optional: true
 
-  '@lexical/code-prism@0.49.0':
-    resolution: {integrity: sha512-Lg3q9bk/jt8CzMzAhvNCQvBZayICSx6hi6coVj353j3uokK4ABxTBItGOgumGgQibj3gIuYljJxRkn5XvoXWMQ==}
-    peerDependencies:
-      typescript: '>=5.2'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  '@lexical/code@0.49.0':
-    resolution: {integrity: sha512-beNU4j/95nqjIW91HLvV63mIjXMf3qEKe6qppU9bDEfp2L8ovBZeAjicDbIaCVZoOJSmOMd55ijl5h1jdFty1w==}
-    peerDependencies:
-      typescript: '>=5.2'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   '@lexical/dragon@0.49.0':
     resolution: {integrity: sha512-62/4DP5qyX/l4Yf5qRyyQrs9BV725eRU3OmLUW6g7T5xrcHXxAo7tia/NvqjqvXdpvQzyHjWgsy7dMitGITUsw==}
     peerDependencies:
@@ -909,12 +893,12 @@ packages:
     resolution: {integrity: sha512-GaPlicMtnvgPr5SowFRprkEJicDSrV3qCq17U4jiF5u0kNORZo3IbdN2Bk4SfcZJAMYFHbMVJ81O3w21CYxazg==}
     engines: {node: '>= 10'}
 
-  '@napi-rs/wasm-runtime@1.2.2':
-    resolution: {integrity: sha512-JfB4kuJQjaoHuCTseIINHtHWeJnvgEcxjwA5t/Y00ZgaOO1Crz3fjT/p8kT28zA/Caz7oiUMn3d6H2yOVCVwuw==}
+  '@napi-rs/wasm-runtime@1.2.3':
+    resolution: {integrity: sha512-UMduMbqO5s5zF2NkNacMT/yK5Y5QiKvWr2+50bzIIxFDwVJ2h49b+oyjaCGPhJxd2/gC2x39EHv/gHVuu36x2Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=23.5.0}
     peerDependencies:
-      '@emnapi/core': ^1.7.1 || ^2.0.0-alpha.3
-      '@emnapi/runtime': ^1.7.1 || ^2.0.0-alpha.3
+      '@emnapi/core': ^1.7.1 || ^2.0.0-alpha.4
+      '@emnapi/runtime': ^1.7.1 || ^2.0.0-alpha.4
 
   '@next/eslint-plugin-next@16.3.0':
     resolution: {integrity: sha512-OqgJ8PN0d04KcPhDX/PTY5tJUJZxlbrt7O7FBsm4XE0XW2JDrKnDXsc9uo9WUimJGPoo2j+JRGhyXApC//mvbw==}
@@ -1197,8 +1181,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.62.1':
-    resolution: {integrity: sha512-P+TzDopyc8GH05dDYKilni47WMgmezovaKG4skwpv45kS82KDFwvFdgk/SCFr+G8LtRQK7Zqv4TKqaGriCGGXw==}
+  '@sveltia/ui@0.63.0':
+    resolution: {integrity: sha512-f5zR6JMNmxBw0RTTfMr3ZwQSqLDILnfCEDYazct98LxKI53fUySTKlu/IcwLxNiQNOq06hZoNT2CaDTQY6qWSw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -3231,10 +3215,6 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
-  prismjs@1.30.0:
-    resolution: {integrity: sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw==}
-    engines: {node: '>=6'}
-
   proc-log@6.1.0:
     resolution: {integrity: sha512-iG+GYldRf2BQ0UDUAd6JQ/RwzaQy6mXmsk/IzlYyal4A4SNFw54MeH4/tLkF4I5WoWG9SQwuqWzS99jaFQHBuQ==}
     engines: {node: ^20.17.0 || >=22.9.0}
@@ -4511,24 +4491,6 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  '@lexical/code-prism@0.49.0(typescript@6.0.3)':
-    dependencies:
-      '@lexical/code-core': 0.49.0(typescript@6.0.3)
-      '@lexical/extension': 0.49.0(typescript@6.0.3)
-      lexical: 0.49.0(typescript@6.0.3)
-      prismjs: 1.30.0
-    optionalDependencies:
-      typescript: 6.0.3
-
-  '@lexical/code@0.49.0(typescript@6.0.3)':
-    dependencies:
-      '@lexical/code-core': 0.49.0(typescript@6.0.3)
-      '@lexical/code-prism': 0.49.0(typescript@6.0.3)
-      '@lexical/extension': 0.49.0(typescript@6.0.3)
-      lexical: 0.49.0(typescript@6.0.3)
-    optionalDependencies:
-      typescript: 6.0.3
-
   '@lexical/dragon@0.49.0(typescript@6.0.3)':
     dependencies:
       '@lexical/extension': 0.49.0(typescript@6.0.3)
@@ -4696,7 +4658,7 @@ snapshots:
       '@napi-rs/canvas-win32-x64-msvc': 1.0.5
     optional: true
 
-  '@napi-rs/wasm-runtime@1.2.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
+  '@napi-rs/wasm-runtime@1.2.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
     dependencies:
       '@emnapi/core': 1.10.0
       '@emnapi/runtime': 1.10.0
@@ -4867,10 +4829,9 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.56.8(@typescript-eslint/types@8.67.0)
 
-  '@sveltia/ui@0.62.1(svelte@5.56.8(@typescript-eslint/types@8.67.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.63.0(svelte@5.56.8(@typescript-eslint/types@8.67.0))(typescript@6.0.3)':
     dependencies:
-      '@lexical/code': 0.49.0(typescript@6.0.3)
-      '@lexical/code-prism': 0.49.0(typescript@6.0.3)
+      '@lexical/code-core': 0.49.0(typescript@6.0.3)
       '@lexical/dragon': 0.49.0(typescript@6.0.3)
       '@lexical/extension': 0.49.0(typescript@6.0.3)
       '@lexical/history': 0.49.0(typescript@6.0.3)
@@ -4884,7 +4845,6 @@ snapshots:
       '@sveltia/i18n': 1.2.2(svelte@5.56.8(@typescript-eslint/types@8.67.0))
       '@sveltia/utils': 0.12.1
       lexical: 0.49.0(typescript@6.0.3)
-      prismjs: 1.30.0
       svelte: 5.56.8(@typescript-eslint/types@8.67.0)
     transitivePeerDependencies:
       - typescript
@@ -5086,7 +5046,7 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.10.0
       '@emnapi/runtime': 1.10.0
-      '@napi-rs/wasm-runtime': 1.2.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
+      '@napi-rs/wasm-runtime': 1.2.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
     optional: true
 
   '@unrs/resolver-binding-win32-arm64-msvc@1.12.2':
@@ -7095,8 +7055,6 @@ snapshots:
       svelte: 5.56.8(@typescript-eslint/types@8.67.0)
 
   prettier@3.9.6: {}
-
-  prismjs@1.30.0: {}
 
   proc-log@6.1.0: {}
 
