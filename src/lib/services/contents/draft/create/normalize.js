@@ -1,4 +1,9 @@
+import { isObject } from '@sveltia/utils/object';
+
 import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
+import { getFieldKind, isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 
 /**
  * @import {
@@ -11,17 +16,17 @@ import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
  * FieldKeyPath,
  * FieldWithSubFields,
  * FieldWithTypes,
+ * ListField,
  * ListFieldWithSubField,
+ * NumberField,
  * } from '$lib/types/public';
  */
 
 /**
  * @typedef {object} ContentIndex
- * @property {Set<FieldKeyPath>} occupiedKeyPaths Every key path present in the content, including
- * the intermediate ones. For example, content holding only `colors.0.name` yields `colors`,
- * `colors.0` and `colors.0.name`.
- * @property {Map<FieldKeyPath, number[]>} itemIndexMap Indexes of the list items found under each
- * key path, in ascending order.
+ * @property {Map<FieldKeyPath, Set<string>>} childSegmentMap Direct child key segments found under
+ * each key path. For example, content holding only `colors.0.name` yields `colors` → `0` and
+ * `colors.0` → `name`.
  */
 
 /**
@@ -34,8 +39,23 @@ import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
  * @property {InternalLocaleCode} defaultLocale Default locale of the entry draft.
  * @property {FlattenedEntryContent} [defaultLocaleContent] Already normalized content for the
  * default locale, used as the source for fields with the `duplicate` i18n strategy.
+ * @property {boolean} [fillDefaults] Whether to fill in the values missing from the content.
  */
 
+/**
+ * @typedef {NormalizeFieldArgs & { fieldType: string }} ReconcileScalarValueArgs
+ */
+
+/**
+ * @typedef {NormalizeFieldArgs & { hasSubFields: boolean }} ReconcileListValueArgs
+ */
+
+/**
+ * Field types holding a value whose shape we can’t predict, so it’s taken as-is: the Hidden field
+ * accepts anything, the KeyValue and Code fields have their own nested shape, and custom field
+ * types are up to the developer.
+ */
+const OPAQUE_FIELD_TYPES = ['code', 'hidden', 'keyvalue'];
 const NUMERIC_KEY_REGEX = /^\d+$/;
 
 /**
@@ -46,39 +66,278 @@ const NUMERIC_KEY_REGEX = /^\d+$/;
  * @returns {ContentIndex} Index of the content.
  */
 const indexContent = (content) => {
-  /** @type {Set<FieldKeyPath>} */
-  const occupiedKeyPaths = new Set();
-  /** @type {Map<FieldKeyPath, Set<number>>} */
-  const itemIndexSetMap = new Map();
+  /** @type {Map<FieldKeyPath, Set<string>>} */
+  const childSegmentMap = new Map();
 
   Object.keys(content).forEach((key) => {
     const segments = key.split('.');
     let path = '';
 
     segments.forEach((segment, index) => {
-      const parentPath = path;
+      if (index > 0) {
+        const siblings = childSegmentMap.get(path);
 
-      path = index === 0 ? segment : `${path}.${segment}`;
-      occupiedKeyPaths.add(path);
-
-      if (index > 0 && NUMERIC_KEY_REGEX.test(segment)) {
-        const indexes = itemIndexSetMap.get(parentPath);
-
-        if (indexes) {
-          indexes.add(Number(segment));
+        if (siblings) {
+          siblings.add(segment);
         } else {
-          itemIndexSetMap.set(parentPath, new Set([Number(segment)]));
+          childSegmentMap.set(path, new Set([segment]));
         }
       }
+
+      path = index === 0 ? segment : `${path}.${segment}`;
     });
   });
 
-  return {
-    occupiedKeyPaths,
-    itemIndexMap: new Map(
-      [...itemIndexSetMap].map(([key, indexes]) => [key, [...indexes].sort((a, b) => a - b)]),
-    ),
-  };
+  return { childSegmentMap };
+};
+
+/**
+ * Check whether the given key path has any child key paths in the indexed content.
+ * @param {ContentIndex} index Index of the content.
+ * @param {FieldKeyPath} keyPath Key path.
+ * @returns {boolean} Result.
+ */
+const hasChildKeys = (index, keyPath) => index.childSegmentMap.has(keyPath);
+
+/**
+ * Get the indexes of the list items stored under the given key path, in ascending order.
+ * @param {ContentIndex} index Index of the content.
+ * @param {FieldKeyPath} keyPath Key path of the list field.
+ * @returns {number[]} Item indexes.
+ */
+const getItemIndexes = (index, keyPath) =>
+  [...(index.childSegmentMap.get(keyPath) ?? [])]
+    .filter((segment) => NUMERIC_KEY_REGEX.test(segment))
+    .map(Number)
+    .sort((a, b) => a - b);
+
+/**
+ * Check whether the value is an empty object or array. The `flat` library uses these as
+ * placeholders that its `unflatten()` fills in from the child key paths, so unlike any other value
+ * stored alongside children, they are harmless.
+ * @param {any} value Value to check.
+ * @returns {boolean} Result.
+ */
+const isPlaceholder = (value) =>
+  (Array.isArray(value) && !value.length) || (isObject(value) && !Object.keys(value).length);
+
+/**
+ * Delete a value stored at the given key path along with everything below it.
+ * @param {FlattenedEntryContent} content Flattened entry content, modified in place.
+ * @param {FieldKeyPath} keyPath Key path.
+ */
+const discardValue = (content, keyPath) => {
+  const prefix = `${keyPath}.`;
+
+  Object.keys(content).forEach((key) => {
+    if (key === keyPath || key.startsWith(prefix)) {
+      delete content[key];
+    }
+  });
+};
+
+/**
+ * Drop a value stored at a key path that also has children. `unflatten()` lets such a value win and
+ * silently throws the children away, so an Object field whose file value is a plain string would
+ * lose everything the user typed into its sub-fields on the next save.
+ * @param {FlattenedEntryContent} content Flattened entry content, modified in place.
+ * @param {FieldKeyPath} keyPath Key path.
+ */
+const discardConflictingValue = (content, keyPath) => {
+  if (keyPath in content && !isPlaceholder(content[keyPath])) {
+    delete content[keyPath];
+  }
+};
+
+/**
+ * Reconcile the value of a scalar field with its configuration.
+ * @param {ReconcileScalarValueArgs} args Arguments.
+ * @returns {boolean} Whether the stored value can be kept, after coercion if needed. `false` means
+ * it has been discarded and the caller should fill in the default value instead.
+ */
+const reconcileScalarValue = ({ field, fieldType, keyPath, content, index }) => {
+  if (hasChildKeys(index, keyPath)) {
+    const [firstItemIndex] = getItemIndexes(index, keyPath);
+
+    // The file holds a list where a single value is expected, which happens when a field is changed
+    // from multiple to single. Keep the first item and drop the rest
+    if (firstItemIndex !== undefined) {
+      const firstItem = content[`${keyPath}.${firstItemIndex}`];
+
+      discardValue(content, keyPath);
+      content[keyPath] = firstItem;
+    } else {
+      // The file holds an object where a single value is expected; there is nothing to salvage
+      discardValue(content, keyPath);
+
+      return false;
+    }
+  }
+
+  const value = content[keyPath];
+
+  // An empty object or array is as good as no value at all
+  if (isObject(value) || Array.isArray(value)) {
+    discardValue(content, keyPath);
+
+    return false;
+  }
+
+  if (STRING_VALUE_FIELD_TYPES.includes(fieldType)) {
+    if (typeof value !== 'string') {
+      // A number, boolean or null read from the file: stringify it rather than dropping it, which
+      // is also what the field editor would end up writing back
+      content[keyPath] = String(value ?? '');
+    }
+
+    return true;
+  }
+
+  if (fieldType === 'boolean') {
+    if (typeof value !== 'boolean') {
+      const normalized = typeof value === 'string' ? value.trim().toLowerCase() : value;
+
+      if (normalized !== 'true' && normalized !== 'false') {
+        return false;
+      }
+
+      content[keyPath] = normalized === 'true';
+    }
+
+    return true;
+  }
+
+  if (fieldType === 'number') {
+    const { value_type: valueType = 'int' } = /** @type {NumberField} */ (field);
+
+    // The `int` and `float` value types are stored as a number or `null`; the string variants keep
+    // whatever the user typed, so any primitive will do
+    if (valueType !== 'int' && valueType !== 'float') {
+      return true;
+    }
+
+    if (typeof value === 'number' || value === null) {
+      return true;
+    }
+
+    const parsedValue = typeof value === 'string' ? Number(value.trim()) : Number.NaN;
+
+    if (value === '' || Number.isNaN(parsedValue)) {
+      return false;
+    }
+
+    content[keyPath] = parsedValue;
+  }
+
+  return true;
+};
+
+/**
+ * Reconcile the value of a List or other multi-value field with its configuration.
+ * @param {ReconcileListValueArgs} args Arguments.
+ * @returns {boolean} Whether the stored value can be kept, after coercion if needed.
+ */
+const reconcileListValue = ({ keyPath, content, index, hasSubFields }) => {
+  if (getItemIndexes(index, keyPath).length) {
+    discardConflictingValue(content, keyPath);
+
+    return true;
+  }
+
+  // Non-numeric children: the file holds an object where a list is expected
+  if (hasChildKeys(index, keyPath)) {
+    discardValue(content, keyPath);
+
+    return false;
+  }
+
+  const value = content[keyPath];
+
+  if (Array.isArray(value)) {
+    return true;
+  }
+
+  // The file holds a single value where a list is expected, which happens when a field is changed
+  // from single to multiple. Keep it as the sole item, unless the items are objects, in which case
+  // a scalar can’t be turned into one
+  if (!hasSubFields && value !== null && value !== undefined && !isObject(value)) {
+    delete content[keyPath];
+    content[`${keyPath}.0`] = value;
+
+    return true;
+  }
+
+  discardValue(content, keyPath);
+
+  return false;
+};
+
+/**
+ * Reconcile the value of an Object field with its configuration.
+ * @param {NormalizeFieldArgs} args Arguments.
+ * @returns {boolean} Whether the stored value can be kept, after coercion if needed.
+ */
+const reconcileObjectValue = ({ keyPath, content, index }) => {
+  if (hasChildKeys(index, keyPath)) {
+    discardConflictingValue(content, keyPath);
+
+    return true;
+  }
+
+  // A `null` value means the optional Object field is collapsed
+  if (content[keyPath] === null) {
+    return true;
+  }
+
+  // A scalar or an empty object where sub-values are expected
+  discardValue(content, keyPath);
+
+  return false;
+};
+
+/**
+ * Reconcile the stored value with the field configuration, coercing what can be coerced and
+ * discarding what can’t.
+ *
+ * Entries aren’t necessarily written by the CMS, and a field’s type can change after the fact, so
+ * the value map may hold a shape no editor for that field type can render. Left alone, the mismatch
+ * either shows up as an empty editor or, worse, silently destroys data on the next save, because
+ * `unflatten()` lets a value stored at a key path win over everything below it.
+ * @param {NormalizeFieldArgs} args Arguments.
+ * @returns {boolean} Whether the stored value can be kept, after coercion if needed. `false` means
+ * it has been discarded and the caller should fill in the default value instead.
+ * @see https://github.com/decaporg/decap-cms/issues/836
+ * @see https://github.com/decaporg/decap-cms/issues/3524
+ */
+const reconcileValue = (args) => {
+  const { field, keyPath, content, index } = args;
+  const { widget: fieldType = 'string' } = field;
+
+  // Custom field types may hold anything, so leave them alone apart from a value that would destroy
+  // its own children
+  if (OPAQUE_FIELD_TYPES.includes(fieldType) || getFieldKind(field) !== 'builtin') {
+    if (hasChildKeys(index, keyPath)) {
+      discardConflictingValue(content, keyPath);
+    }
+
+    return true;
+  }
+
+  if (fieldType === 'object') {
+    return reconcileObjectValue(args);
+  }
+
+  if (fieldType === 'list') {
+    const { hasSubFields } = getListFieldInfo(/** @type {ListField} */ (field));
+
+    return reconcileListValue({ ...args, hasSubFields });
+  }
+
+  if (isFieldMultiple(field)) {
+    return reconcileListValue({ ...args, hasSubFields: false });
+  }
+
+  return reconcileScalarValue({ ...args, fieldType });
 };
 
 /**
@@ -118,18 +377,25 @@ const getVariableTypeFields = ({ field, content, keyPath }) => {
 };
 
 /**
- * Fill in the values missing from the given field, recursing into sub-fields.
+ * Fill in the values missing from the given field and reconcile the ones that are there, recursing
+ * into sub-fields.
  *
  * A field that holds nothing at all — the common case for a field added to the configuration after
  * the entry was written — gets the same default value a new entry would get. A field that does hold
- * something is left alone, but its sub-fields are visited so that a newly added sub-field shows up
- * in every existing object and list item.
+ * something keeps it, as long as its shape matches the field type, but its sub-fields are visited
+ * so that a newly added sub-field shows up in every existing object and list item.
  * @param {NormalizeFieldArgs} args Arguments.
  */
 const normalizeField = (args) => {
   const { field, keyPath, content, index, locale, defaultLocale, defaultLocaleContent } = args;
+  const { fillDefaults = true } = args;
+  const occupied = keyPath in content || hasChildKeys(index, keyPath);
 
-  if (!index.occupiedKeyPaths.has(keyPath)) {
+  if (!occupied || !reconcileValue(args)) {
+    if (!fillDefaults) {
+      return;
+    }
+
     // A `duplicate` field mirrors the default locale, so take the value from there rather than
     // filling in the configured default, which may not be what the default locale actually holds
     if (
@@ -184,7 +450,7 @@ const normalizeField = (args) => {
     return;
   }
 
-  (index.itemIndexMap.get(keyPath) ?? []).forEach((itemIndex) => {
+  getItemIndexes(index, keyPath).forEach((itemIndex) => {
     const itemKeyPath = `${keyPath}.${itemIndex}`;
 
     // A single-subfield List field stores the item itself at the item key path, so hand the item
@@ -195,6 +461,10 @@ const normalizeField = (args) => {
       return;
     }
 
+    // The file holds a scalar where an object is expected. It can’t be salvaged, and leaving it in
+    // place would make `unflatten()` drop every sub-field value on save
+    discardConflictingValue(content, itemKeyPath);
+
     const fields = subFields ?? getVariableTypeFields({ field, content, keyPath: itemKeyPath });
 
     fields?.forEach((itemField) => {
@@ -204,13 +474,15 @@ const normalizeField = (args) => {
 };
 
 /**
- * Fill in the values missing from an existing entry’s content, so that the draft holds one key path
- * per configured field just like a new entry does.
+ * Fill in the values missing from an existing entry’s content and reconcile the ones that don’t
+ * match the field configuration, so that the draft holds one well-shaped key path per configured
+ * field just like a new entry does.
  *
  * Entries written before a field was added to the collection configuration — or before an optional
  * field was made required — lack that field entirely, and anything keyed by the content’s own key
- * paths then skips it: the editor renders no value for it, and the validator never checks it. Both
- * are fixed by normalizing the content up front.
+ * paths then skips it: the editor renders no value for it, and the validator never checks it.
+ * Entries not written by the CMS at all may hold a value of the wrong type for the field editing
+ * it. Both are fixed by normalizing the content up front.
  * @param {NormalizeContentArgs} args Arguments.
  * @returns {FlattenedEntryContent} The same `content` object, modified in place.
  * @see https://github.com/sveltia/sveltia-cms/issues/395
@@ -222,6 +494,7 @@ export const normalizeContent = ({
   locale,
   defaultLocale,
   defaultLocaleContent,
+  fillDefaults = true,
 }) => {
   const index = indexContent(content);
 
@@ -229,6 +502,7 @@ export const normalizeContent = ({
     normalizeField({
       field,
       keyPath: field.name,
+      fillDefaults,
       content,
       index,
       locale,

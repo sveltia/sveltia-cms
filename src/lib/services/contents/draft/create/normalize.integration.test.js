@@ -22,6 +22,7 @@ const collection = {
     canonicalSlug: { key: 'translationKey' },
   },
   editor: { preview: false },
+  _file: { format: 'yaml' },
 };
 
 const originalEntry = {
@@ -43,9 +44,12 @@ vi.mock('$lib/services/contents/draft/backup', () => ({
   restoreBackupIfNeeded: vi.fn(),
 }));
 
+const { getCollection } = await import('$lib/services/contents/collection');
+const { fieldConfigCacheMap } = await import('$lib/services/contents/entry/fields');
 const { createDraft } = await import('$lib/services/contents/draft/create');
 const { entryDraft } = await import('$lib/services/contents/draft');
 const { validateEntry } = await import('$lib/services/contents/draft/validate');
+const { serializeContent } = await import('$lib/services/contents/draft/save/serialize');
 
 describe('contents/draft/create/normalize (integration)', () => {
   beforeEach(() => {
@@ -73,5 +77,57 @@ describe('contents/draft/create/normalize (integration)', () => {
     get(entryDraft).currentValues._default.chargeSpeed = '240kW';
 
     expect(validateEntry()).toBe(true);
+  });
+
+  it('should keep a hand-written entry’s mistyped values from destroying the output', () => {
+    // https://github.com/decaporg/decap-cms/issues/836
+    // https://github.com/decaporg/decap-cms/issues/3524
+    const shapeCollection = {
+      ...collection,
+      fields: [
+        { name: 'name', widget: 'string' },
+        {
+          name: 'author',
+          widget: 'object',
+          fields: [
+            { name: 'name', widget: 'string' },
+            { name: 'email', widget: 'string', required: false },
+          ],
+        },
+        { name: 'tags', widget: 'list', fields: [{ name: 'label', widget: 'string' }] },
+      ],
+    };
+
+    getCollection.mockReturnValue(shapeCollection);
+    fieldConfigCacheMap.clear();
+
+    createDraft({
+      collection: shapeCollection,
+      originalEntry: {
+        id: 'entry-2',
+        slug: 'hand-written',
+        locales: {
+          _default: {
+            slug: 'hand-written',
+            // An Object field holding a plain string and a List field holding bare strings, both of
+            // which `unflatten()` would let win over anything the editor writes below them
+            content: { name: 42, author: 'Me', 'tags.0': 'news' },
+          },
+        },
+      },
+    });
+
+    const draft = get(entryDraft);
+
+    draft.currentValues._default['author.name'] = 'Me';
+    draft.currentValues._default['tags.0.label'] = 'News';
+
+    expect(
+      serializeContent({ draft, locale: '_default', valueMap: draft.currentValues._default }),
+    ).toEqual({
+      name: '42',
+      author: { name: 'Me', email: '' },
+      tags: [{ label: 'News' }],
+    });
   });
 });

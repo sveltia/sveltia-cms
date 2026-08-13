@@ -4594,8 +4594,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'title',
         valueMap: { title: 'Hello World' },
         isList: false,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toBe('Hello World');
@@ -4606,8 +4604,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'count',
         valueMap: { count: 42 },
         isList: false,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toBe(42);
@@ -4618,8 +4614,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'missing',
         valueMap: {},
         isList: false,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toBeUndefined();
@@ -4630,8 +4624,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'nullable',
         valueMap: { nullable: null },
         isList: false,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toBeNull();
@@ -4642,8 +4634,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'active',
         valueMap: { active: true },
         isList: false,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toBe(true);
@@ -4654,8 +4644,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'description',
         valueMap: { description: '' },
         isList: false,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toBe('');
@@ -4666,8 +4654,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'zero',
         valueMap: { zero: 0 },
         isList: false,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toBe(0);
@@ -4684,8 +4670,6 @@ describe('Test getCurrentValue()', () => {
           'tags.2': 'testing',
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual(['javascript', 'svelte', 'testing']);
@@ -4698,8 +4682,6 @@ describe('Test getCurrentValue()', () => {
           title: 'Some Title',
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual([]);
@@ -4715,8 +4697,6 @@ describe('Test getCurrentValue()', () => {
           'items.3': 'fourth',
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual(['first', 'third', 'fourth']);
@@ -4732,8 +4712,6 @@ describe('Test getCurrentValue()', () => {
           'mixed.3': null,
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual(['string', 42, true, null]);
@@ -4749,8 +4727,6 @@ describe('Test getCurrentValue()', () => {
           'objects.1': { name: 'another' },
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual([obj, { name: 'another' }]);
@@ -4765,8 +4741,6 @@ describe('Test getCurrentValue()', () => {
           'ordered.1': 'second',
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       // Object.entries doesn't guarantee numeric key order, just verify all items are present
@@ -4781,8 +4755,6 @@ describe('Test getCurrentValue()', () => {
           'single.0': 'only-item',
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual(['only-item']);
@@ -4797,8 +4769,6 @@ describe('Test getCurrentValue()', () => {
           'items.1': 'second',
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual(['first', 'second']);
@@ -4813,8 +4783,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'customField',
         valueMap: { customField: value },
         isList: false,
-        multiple: false,
-        isEditor: false,
         isCustomFieldType: true,
       });
 
@@ -4827,8 +4795,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'customField',
         valueMap: {},
         isList: false,
-        multiple: false,
-        isEditor: false,
         isCustomFieldType: true,
       });
 
@@ -4842,8 +4808,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'customField',
         valueMap: { customField: value, other: 'unrelated' },
         isList: false,
-        multiple: false,
-        isEditor: false,
         isCustomFieldType: true,
       });
 
@@ -4852,104 +4816,15 @@ describe('Test getCurrentValue()', () => {
     });
   });
 
-  describe('Converting invalid single value to list (isEditor && multiple)', () => {
-    test('should convert string value to array when isEditor=true and multiple=true', () => {
+  describe('Invalid value shapes', () => {
+    // A single value stored where a list is expected — and vice versa — is reconciled up front by
+    // the entry normalization module, so this function no longer papers over the mismatch
+    // @see $lib/services/contents/draft/create/normalize
+    test('should return an empty array for a single value stored in a list field', () => {
       const result = getCurrentValue({
         keyPath: 'tags',
         valueMap: { tags: 'single-tag' },
         isList: true,
-        multiple: true,
-        isEditor: true,
-      });
-
-      expect(result).toEqual(['single-tag']);
-    });
-
-    test('should convert number value to array when isEditor=true and multiple=true', () => {
-      const result = getCurrentValue({
-        keyPath: 'scores',
-        valueMap: { scores: 42 },
-        isList: true,
-        multiple: true,
-        isEditor: true,
-      });
-
-      expect(result).toEqual([42]);
-    });
-
-    test('should not convert object value when there are no list items', () => {
-      const obj = { data: 'test' };
-
-      const result = getCurrentValue({
-        keyPath: 'field',
-        valueMap: { field: obj },
-        isList: true,
-        multiple: true,
-        isEditor: true,
-      });
-
-      // Object values don't get converted, returns empty array since no list items
-      expect(result).toEqual([]);
-    });
-
-    test('should not convert array value when there are no list items', () => {
-      const arr = ['item1', 'item2'];
-
-      const result = getCurrentValue({
-        keyPath: 'items',
-        valueMap: { items: arr },
-        isList: true,
-        multiple: true,
-        isEditor: true,
-      });
-
-      // Array values don't get converted, returns empty array since no list items
-      expect(result).toEqual([]);
-    });
-
-    test('should not convert when value is undefined', () => {
-      const result = getCurrentValue({
-        keyPath: 'field',
-        valueMap: {},
-        isList: true,
-        multiple: true,
-        isEditor: true,
-      });
-
-      expect(result).toEqual([]);
-    });
-
-    test('should not convert when value is null', () => {
-      const result = getCurrentValue({
-        keyPath: 'field',
-        valueMap: { field: null },
-        isList: true,
-        multiple: true,
-        isEditor: true,
-      });
-
-      expect(result).toEqual([]);
-    });
-
-    test('should not convert when isEditor=false', () => {
-      const result = getCurrentValue({
-        keyPath: 'tags',
-        valueMap: { tags: 'single-tag' },
-        isList: true,
-        multiple: true,
-        isEditor: false,
-      });
-
-      expect(result).toEqual([]);
-    });
-
-    test('should not convert when multiple=false', () => {
-      const result = getCurrentValue({
-        keyPath: 'field',
-        valueMap: { field: 'value' },
-        isList: true,
-        multiple: false,
-        isEditor: true,
       });
 
       expect(result).toEqual([]);
@@ -4969,8 +4844,6 @@ describe('Test getCurrentValue()', () => {
           keyPath: 'sections.0.items',
           valueMap,
           isList: true,
-          multiple: false,
-          isEditor: false,
         }),
       ).toEqual(['item1', 'item2']);
 
@@ -4979,8 +4852,6 @@ describe('Test getCurrentValue()', () => {
           keyPath: 'sections.1.items',
           valueMap,
           isList: true,
-          multiple: false,
-          isEditor: false,
         }),
       ).toEqual(['item3']);
 
@@ -4990,8 +4861,6 @@ describe('Test getCurrentValue()', () => {
           keyPath: 'sections',
           valueMap,
           isList: true,
-          multiple: false,
-          isEditor: false,
         }),
       ).toEqual([]);
     });
@@ -5004,8 +4873,6 @@ describe('Test getCurrentValue()', () => {
           'authors.1': { name: 'Jane', email: 'jane@example.com' },
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual([
@@ -5021,8 +4888,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'field',
         valueMap: {},
         isList: false,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toBeUndefined();
@@ -5040,8 +4905,6 @@ describe('Test getCurrentValue()', () => {
           'unrelated.0': 'value4',
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual(['correct1', 'correct2']);
@@ -5056,8 +4919,6 @@ describe('Test getCurrentValue()', () => {
           'booleans.2': true,
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual([true, false, true]);
@@ -5068,8 +4929,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'active',
         valueMap: { active: false },
         isList: false,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toBe(false);
@@ -5085,8 +4944,6 @@ describe('Test getCurrentValue()', () => {
           'items.3': null,
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual([0, false, '', null]);
@@ -5097,8 +4954,6 @@ describe('Test getCurrentValue()', () => {
         keyPath: 'field-with-dash',
         valueMap: { 'field-with-dash': 'value' },
         isList: false,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toBe('value');
@@ -5113,8 +4968,6 @@ describe('Test getCurrentValue()', () => {
           'items.9999': 'item3',
         },
         isList: true,
-        multiple: false,
-        isEditor: false,
       });
 
       expect(result).toEqual(['item1', 'item2', 'item3']);

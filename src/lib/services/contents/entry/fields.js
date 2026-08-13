@@ -583,21 +583,12 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
  * @param {FieldKeyPath} args.keyPath Key path of the field.
  * @param {boolean} args.isList Whether the field is a list field.
- * @param {boolean} args.multiple Whether the field is a multi-value field.
- * @param {boolean} args.isEditor Whether the field is being rendered in the editor.
  * @param {boolean} [args.isCustomFieldType] Whether the field is a custom field type. It may have
  * arbitrary data structures, so we can’t assume they are multi-value fields.
  * @returns {any} Current value of the field. For multi-value fields, returns an array of values;
  * for single-value fields, returns the value directly.
  */
-export const getCurrentValue = ({
-  valueMap,
-  keyPath,
-  isList,
-  multiple,
-  isEditor,
-  isCustomFieldType = false,
-}) => {
+export const getCurrentValue = ({ valueMap, keyPath, isList, isCustomFieldType = false }) => {
   const value = valueMap[keyPath];
 
   // Single value field: custom field requires the list check below as we don’t know the shape
@@ -616,13 +607,6 @@ export const getCurrentValue = ({
   // Single value custom field
   if (isCustomFieldType) {
     return value;
-  }
-
-  // Convert invalid single value to list. This is in place to handle the case when a field is
-  // changed from single to multiple. (Continue to the `$effect` block below.)
-  // @todo Move this logic to entry normalization module
-  if (isEditor && multiple && value !== undefined && typeof value !== 'object') {
-    return [value];
   }
 
   return [];

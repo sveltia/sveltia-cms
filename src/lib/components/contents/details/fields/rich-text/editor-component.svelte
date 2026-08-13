@@ -10,6 +10,7 @@
   import { replaceTemplateTags } from '$lib/services/common/template';
   import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { normalizeContent } from '$lib/services/contents/draft/create/normalize';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { validateFields } from '$lib/services/contents/draft/validate/fields';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
@@ -349,6 +350,26 @@
 
         values ??= unflatten(getDefaultValues({ fields, locale, defaultLocale })) ?? {};
         values.__sc_component_name = componentName;
+
+        // Reconcile the values parsed from the document with the component’s field definitions,
+        // which may have changed since the document was written. Unlike an entry draft, missing
+        // values are not filled in, because these values live in the document text and doing so
+        // would rewrite it just by opening the entry
+        const normalizedValues = unflatten(
+          normalizeContent({
+            fields,
+            content: flatten(values),
+            locale,
+            defaultLocale,
+            fillDefaults: false,
+          }),
+        );
+
+        // Only reassign when something actually changed; `normalizeContent()` is idempotent, but a
+        // fresh object on every run would retrigger this effect forever
+        if (!equal(normalizedValues, values)) {
+          values = normalizedValues;
+        }
 
         if (!equal(values, currentValues)) {
           const newEntries = Object.fromEntries(

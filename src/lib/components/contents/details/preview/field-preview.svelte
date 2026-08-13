@@ -46,14 +46,7 @@
   const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
-    getCurrentValue({
-      valueMap,
-      keyPath,
-      isList,
-      multiple,
-      isEditor: false,
-      isCustomFieldType: !!customFieldType,
-    }),
+    getCurrentValue({ valueMap, keyPath, isList, isCustomFieldType: !!customFieldType }),
   );
   const previewProps = $derived({ locale, keyPath, typedKeyPath, fieldConfig, currentValue });
 </script>

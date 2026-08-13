@@ -1120,6 +1120,10 @@
  * @property {InternalLocaleCode} defaultLocale Default locale of the entry draft.
  * @property {FlattenedEntryContent} [defaultLocaleContent] Already normalized content for the
  * default locale, used as the source for fields with the `duplicate` i18n strategy.
+ * @property {boolean} [fillDefaults] Whether to fill in the values missing from the content.
+ * Default: `true`. Set to `false` to only reconcile the values that are already there, which is
+ * what rich text editor components need: their values live in the document text, so filling in
+ * defaults would rewrite the document just by opening the entry.
  */
 
 /**

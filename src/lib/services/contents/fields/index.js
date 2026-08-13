@@ -48,6 +48,15 @@ export const SIMPLE_VALUE_FIELD_TYPES = [
 ];
 
 /**
+ * List of field types whose value is always a string. Unlike the Number, Select and Relation field
+ * types, which accept numeric values, anything stored in these fields can be safely stringified.
+ * @type {string[]}
+ */
+export const STRING_VALUE_FIELD_TYPES = SIMPLE_VALUE_FIELD_TYPES.filter(
+  (type) => !['boolean', 'number'].includes(type),
+);
+
+/**
  * List of field types that support media files.
  * @type {string[]}
  */
