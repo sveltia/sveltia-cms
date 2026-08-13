@@ -281,7 +281,7 @@ help: 도움말
 keyboard_shortcuts: 키보드 단축키
 documentation: 문서
 release_notes: 릴리스 노트
-announcements: 공지 사항
+announcements: 공지사항
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
 version_x: '버전 {$version}'
@@ -290,7 +290,7 @@ report_issue: 문제 신고
 share_feedback: 피드백 보내기
 get_help: 도움 받기
 donate: 후원하기
-join_discord: Discord에서 만나기
+join_discord: Discord 채널 방문
 bluesky: Bluesky에서 팔로우하기
 
 # Update notification: infobar message and button
@@ -1493,15 +1493,15 @@ prefs:
 
   # Appearance panel
   appearance:
-    title: 모양
+    title: 화면
     theme: 테마
     select_theme: 테마 선택
 
   # Theme options
   theme:
     auto: 자동
-    dark: 어둡게
-    light: 밝게
+    dark: 다크
+    light: 라이트
 
   # Language panel
   language:
