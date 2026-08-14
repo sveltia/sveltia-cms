@@ -4,10 +4,11 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
+import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
 
 /**
  * @import { EntryDraft, FlattenedEntryContent, GetFieldArgs } from '$lib/types/private';
- * @import { Field, FieldKeyPath, LocaleCode, RelationField } from '$lib/types/public';
+ * @import { Field, FieldKeyPath, LocaleCode } from '$lib/types/public';
  */
 
 const PATH_MATCH_REGEX = /(?<path>.+?)\.[^.]*$/;
@@ -39,18 +40,13 @@ export const copyDefaultLocaleValue = ({ getFieldArgs, fieldConfig, sourceLangua
         }
       }
 
-      // Support special case for the Relation field: if the `value_field` option is something
-      // like `{{locale}}/{{slug}}`, replace the source locale in the value with target locale.
       // Keep the source `value` intact, as it’s used for the remaining target locales
-      let localizedValue = value;
-
-      if (fieldConfig.widget === 'relation' && typeof value === 'string') {
-        const { value_field: valueField = '{{slug}}' } = /** @type {RelationField} */ (fieldConfig);
-
-        if (valueField.startsWith('{{locale}}/') && value.startsWith(`${sourceLanguage}/`)) {
-          localizedValue = `${targetLanguage}/${value.slice(sourceLanguage.length + 1)}`;
-        }
-      }
+      const localizedValue = getLocalizedRelationValue({
+        fieldConfig,
+        value,
+        sourceLocale: sourceLanguage,
+        targetLocale: targetLanguage,
+      });
 
       if (targetLanguage !== sourceLanguage && content[keyPath] !== localizedValue) {
         content[keyPath] = localizedValue;

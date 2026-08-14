@@ -4,6 +4,7 @@ import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
 import { getFieldKind, isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
 
 /**
  * @import {
@@ -345,10 +346,20 @@ const reconcileValue = (args) => {
  * @param {object} args Arguments.
  * @param {FlattenedEntryContent} args.content Flattened entry content, modified in place.
  * @param {FlattenedEntryContent} args.defaultLocaleContent Content for the default locale.
+ * @param {Field} args.field Field configuration.
  * @param {FieldKeyPath} args.keyPath Key path of the field.
+ * @param {InternalLocaleCode} args.locale Locale of the content.
+ * @param {InternalLocaleCode} args.defaultLocale Default locale of the entry draft.
  * @returns {boolean} Whether anything was copied.
  */
-const copyFromDefaultLocale = ({ content, defaultLocaleContent, keyPath }) => {
+const copyFromDefaultLocale = ({
+  content,
+  defaultLocaleContent,
+  field,
+  keyPath,
+  locale,
+  defaultLocale,
+}) => {
   const prefix = `${keyPath}.`;
 
   const keys = Object.keys(defaultLocaleContent).filter(
@@ -356,7 +367,15 @@ const copyFromDefaultLocale = ({ content, defaultLocaleContent, keyPath }) => {
   );
 
   keys.forEach((key) => {
-    content[key] = defaultLocaleContent[key];
+    // The copied value may be a Relation field value holding the source locale as a prefix, which
+    // has to be replaced with the target locale. A `multiple` Relation field stores each value
+    // under a numbered key path, so every copied key is localized the same way
+    content[key] = getLocalizedRelationValue({
+      fieldConfig: field,
+      value: defaultLocaleContent[key],
+      sourceLocale: defaultLocale,
+      targetLocale: locale,
+    });
   });
 
   return !!keys.length;
@@ -402,7 +421,14 @@ const normalizeField = (args) => {
       locale !== defaultLocale &&
       field.i18n === 'duplicate' &&
       defaultLocaleContent &&
-      copyFromDefaultLocale({ content, defaultLocaleContent, keyPath })
+      copyFromDefaultLocale({
+        content,
+        defaultLocaleContent,
+        field,
+        keyPath,
+        locale,
+        defaultLocale,
+      })
     ) {
       return;
     }

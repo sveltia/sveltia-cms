@@ -654,6 +654,55 @@ describe('contents/draft/create/normalize', () => {
       expect(content).toEqual({ 'author.name': 'Me' });
     });
 
+    it('should localize a copied Relation value with a {{locale}} prefix', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/900
+      const fields = [
+        {
+          name: 'category',
+          widget: 'relation',
+          i18n: 'duplicate',
+          collection: 'categories',
+          value_field: '{{locale}}/{{slug}}',
+        },
+        {
+          name: 'categories',
+          widget: 'relation',
+          i18n: 'duplicate',
+          collection: 'categories',
+          multiple: true,
+          value_field: '{{locale}}/{{slug}}',
+        },
+        {
+          name: 'author',
+          widget: 'relation',
+          i18n: 'duplicate',
+          collection: 'authors',
+          value_field: '{{slug}}',
+        },
+      ];
+
+      const content = normalizeContent({
+        fields,
+        content: {},
+        locale: 'pl',
+        defaultLocale: 'fr',
+        defaultLocaleContent: {
+          category: 'fr/category-a',
+          'categories.0': 'fr/category-a',
+          'categories.1': 'fr/category-b',
+          author: 'me',
+        },
+      });
+
+      expect(content).toEqual({
+        category: 'pl/category-a',
+        'categories.0': 'pl/category-a',
+        'categories.1': 'pl/category-b',
+        // A `value_field` without the `{{locale}}` tag is copied as is
+        author: 'me',
+      });
+    });
+
     it('should fall back to the default value when the default locale has nothing to copy', () => {
       const fields = [{ name: 'draft', widget: 'boolean', i18n: 'duplicate', default: true }];
 
