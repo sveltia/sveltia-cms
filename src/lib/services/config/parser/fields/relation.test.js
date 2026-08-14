@@ -13,6 +13,7 @@ const mockI18nStrings = {
   'config.error.relation_field_missing_file_name':
     'File name is required for collection: {collection}',
   'config.error.relation_field_invalid_collection_file': 'File not found: {file}',
+  'config.error.relation_field_invalid_value_field': 'Value field not found: {field}',
   'config.error_locator.field': 'Field: {field}',
 };
 
@@ -294,6 +295,192 @@ describe('Relation Field Config Parser', () => {
           strKey: 'relation_field_missing_file_name',
         }),
       );
+    });
+  });
+
+  describe('relation field value field validation', () => {
+    /** @type {any} */
+    const authorFields = [
+      { name: 'userId', widget: 'string' },
+      { name: 'name', widget: 'object', fields: [{ name: 'first', widget: 'string' }] },
+      { name: 'cities', widget: 'list', fields: [{ name: 'id', widget: 'string' }] },
+    ];
+
+    /**
+     * Parse a relation field with the given `value_field` against an `authors` folder collection.
+     * @param {any} valueField The `value_field` option.
+     * @param {any} [options] Extra options for the referenced collection, e.g. its `fields`.
+     */
+    const checkValueField = async (valueField, options = { fields: authorFields }) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'author',
+          widget: 'relation',
+          collection: 'authors',
+          value_field: valueField,
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: {
+            collections: [{ name: 'authors', folder: 'content/authors', ...options }],
+          },
+          collection: { name: 'posts' },
+          typedKeyPath: 'author',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    /**
+     * Assert whether an invalid value field message was added.
+     * @param {string} [field] Expected field name in the message, if any.
+     */
+    const expectMessage = (field) => {
+      const matcher = expect.objectContaining({
+        strKey: 'relation_field_invalid_value_field',
+        ...(field ? { values: { field } } : {}),
+      });
+
+      if (field) {
+        expect(mockAddMessage).toHaveBeenCalledWith(matcher);
+      } else {
+        expect(mockAddMessage).not.toHaveBeenCalledWith(matcher);
+      }
+    };
+
+    it('should error when the value field is not defined in the collection', async () => {
+      await checkValueField('email');
+      expectMessage('email');
+    });
+
+    it('should accept a value field defined in the collection', async () => {
+      await checkValueField('userId');
+      expectMessage();
+    });
+
+    it('should accept a nested or wildcard key path', async () => {
+      await checkValueField('name.first');
+      await checkValueField('cities.*.id');
+      expectMessage();
+    });
+
+    it('should accept the `fields.` prefix', async () => {
+      await checkValueField('{{fields.userId}}');
+      expectMessage();
+    });
+
+    it('should error on an unknown key path with the `fields.` prefix', async () => {
+      await checkValueField('{{fields.email}}');
+      expectMessage('fields.email');
+    });
+
+    it('should ignore the `{{slug}}` and `{{locale}}` template tags', async () => {
+      await checkValueField('{{locale}}/{{slug}}');
+      expectMessage();
+    });
+
+    it('should validate other tags in a template', async () => {
+      await checkValueField('{{locale}}/{{email}}');
+      expectMessage('email');
+    });
+
+    it('should treat a bare `slug` as a field name', async () => {
+      await checkValueField('slug');
+      expectMessage('slug');
+
+      vi.clearAllMocks();
+
+      await checkValueField('slug', {
+        fields: [...authorFields, { name: 'slug', widget: 'string' }],
+      });
+
+      expectMessage();
+    });
+
+    it('should skip the check when the value field is empty or not a string', async () => {
+      await checkValueField('');
+      await checkValueField(123);
+      expectMessage();
+    });
+
+    it('should skip the check when the collection has no fields', async () => {
+      await checkValueField('email', {});
+      await checkValueField('email', { fields: [] });
+      expectMessage();
+    });
+
+    it('should validate against the fields of the referenced file', async () => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {
+          collections: [
+            {
+              name: 'settings',
+              files: [
+                {
+                  name: 'general',
+                  file: 'content/settings/general.yaml',
+                  fields: [{ name: 'siteId', widget: 'string' }],
+                },
+              ],
+            },
+          ],
+        },
+        collection: { name: 'posts' },
+        typedKeyPath: 'config',
+      };
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'config',
+          widget: 'relation',
+          collection: 'settings',
+          file: 'general',
+          value_field: 'siteId',
+        }),
+        context,
+        collectors: createCollectors(),
+      });
+
+      expectMessage();
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'config',
+          widget: 'relation',
+          collection: 'settings',
+          file: 'general',
+          value_field: 'siteName',
+        }),
+        context,
+        collectors: createCollectors(),
+      });
+
+      expectMessage('siteName');
+    });
+
+    it('should skip the check when the collection is not found', async () => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'author',
+          widget: 'relation',
+          collection: 'authors',
+          value_field: 'email',
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: { collections: [] },
+          collection: { name: 'posts' },
+          typedKeyPath: 'author',
+        }),
+        collectors: createCollectors(),
+      });
+
+      expectMessage();
     });
   });
 

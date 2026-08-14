@@ -1,13 +1,30 @@
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**
- * @import { CollectionFile, RelationField } from '$lib/types/public';
  * @import {
+ * ConfigParserCollectors,
+ * ConfigParserContext,
  * FieldParserArgs,
  * InternalSingletonCollection,
  * UnsupportedOption,
  * } from '$lib/types/private';
+ * @import {
+ * CollectionFile,
+ * EntryCollection,
+ * Field,
+ * RelationField,
+ * } from '$lib/types/public';
  */
+
+/**
+ * Template tags that can be used in the `value_field` option but don’t refer to a field in the
+ * referenced collection or file: `{{slug}}` is the entry slug and `{{locale}}` is the locale of the
+ * entry. Note that the `slug` field of an entry is referenced as `{{fields.slug}}` or `slug`.
+ * @type {string[]}
+ */
+const SPECIAL_TEMPLATE_TAGS = ['slug', 'locale'];
 
 /**
  * Unsupported options for Relation fields.
@@ -22,6 +39,40 @@ const UNSUPPORTED_OPTIONS = [
   // applicable.
   { type: 'warning', prop: 'options_length', strKey: 'unsupported_ignored_option' },
 ];
+
+/**
+ * Validate the `value_field` option of a Relation field, which refers to one or more fields defined
+ * in the referenced collection or file. An unknown key path is not reported at runtime — the widget
+ * silently falls back to the entry summary or slug — so the stored values end up being something
+ * other than what the configuration asks for.
+ * @param {object} args Arguments.
+ * @param {string} args.valueField The `value_field` option, e.g. `userId`, `name.first`,
+ * `cities.*.id` or `{{locale}}/{{slug}}`.
+ * @param {Field[]} args.fields Fields defined in the referenced collection or file.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+const checkValueField = ({ valueField, fields, context, collectors }) => {
+  const tags = [...valueField.matchAll(TEMPLATE_TAG_REPLACE_REGEX)].map(([, tag]) => tag);
+
+  // A plain field name like `userId` is equivalent to `{{userId}}`, meaning that `slug` refers to
+  // the `slug` field while `{{slug}}` refers to the entry slug
+  const keyPaths = tags.length
+    ? tags.filter((tag) => !SPECIAL_TEMPLATE_TAGS.includes(tag))
+    : [valueField];
+
+  keyPaths.forEach((keyPath) => {
+    // The `fields.` prefix is supported for compatibility with other config options
+    if (!hasField(fields, keyPath.replace(/^fields\./, ''))) {
+      addMessage({
+        strKey: 'relation_field_invalid_value_field',
+        context,
+        collectors,
+        values: { field: keyPath },
+      });
+    }
+  });
+};
 
 /**
  * Parse and validate a Relation field configuration.
@@ -78,8 +129,15 @@ export const parseRelationFieldConfig = (args) => {
     });
   }
 
-  // @todo Check if the `value_field` exists in the target collection/file
-  void valueField;
+  // Check if the `value_field` exists in the target collection/file. A collection or file without
+  // fields is reported separately, so skip the check in that case to avoid a duplicate error
+  const targetFields = fileName
+    ? file?.fields
+    : /** @type {EntryCollection | undefined} */ (collection)?.fields;
+
+  if (typeof valueField === 'string' && valueField && targetFields?.length) {
+    checkValueField({ valueField, fields: targetFields, context, collectors });
+  }
 
   checkUnsupportedOptions({ ...args, UNSUPPORTED_OPTIONS });
 
