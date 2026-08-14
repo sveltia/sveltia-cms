@@ -46,6 +46,7 @@ words:
   - dompurify
   - embeddable
   - esbuild
+  - esrap
   - exif
   - exifr
   - FedRAMP

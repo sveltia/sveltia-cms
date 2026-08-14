@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  esrap: 2.3.2
+
 importers:
 
   .:
@@ -2199,8 +2202,8 @@ packages:
     resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
     engines: {node: '>=0.10'}
 
-  esrap@2.3.3:
-    resolution: {integrity: sha512-OETBYYsX6L8btUkOyi8AcdtlfpsyNO9nCmP92U/Cxm07epHeLo5we1ck6z0HsbB/jxWlfmEBF9oobZKqSBWD4Q==}
+  esrap@2.3.2:
+    resolution: {integrity: sha512-40GyiEJevYKXzYTHtZkFqAgTjLOuFcaXMao8TPyOlnWTlkHDlvZ6mPMJaJyOqVwrVCgomEG1WhJd81w0X+IcCw==}
     peerDependencies:
       '@typescript-eslint/types': ^8.2.0
     peerDependenciesMeta:
@@ -6096,7 +6099,7 @@ snapshots:
     dependencies:
       estraverse: 5.3.0
 
-  esrap@2.3.3(@typescript-eslint/types@8.67.0):
+  esrap@2.3.2(@typescript-eslint/types@8.67.0):
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
     optionalDependencies:
@@ -7490,7 +7493,7 @@ snapshots:
       clsx: 2.1.1
       devalue: 5.9.0
       esm-env: 1.2.2
-      esrap: 2.3.3(@typescript-eslint/types@8.67.0)
+      esrap: 2.3.2(@typescript-eslint/types@8.67.0)
       is-reference: 3.0.3
       locate-character: 3.0.0
       magic-string: 0.30.21

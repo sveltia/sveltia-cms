@@ -7,3 +7,11 @@ minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
   - '@sveltia/*'
+
+overrides:
+  # esrap 2.3.3 wraps any node carrying a leading `/** @type {...} */` comment in parentheses,
+  # including binding positions (`catch` params, function params, `let` declarators) where
+  # parentheses are syntactically invalid. Svelte uses esrap to print compiled output, so this
+  # breaks the build and tests. Pin to the last good release until the upstream fix lands.
+  # https://github.com/sveltejs/svelte/issues/18643
+  esrap: 2.3.2
