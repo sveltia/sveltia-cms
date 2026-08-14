@@ -283,6 +283,52 @@ export const validateField = (args) => {
 };
 
 /**
+ * Re-validate a single field right after its value has been updated, so the error state and message
+ * shown for the field reflect what the user has just typed. This is a no-op until the entry has
+ * been validated once, which normally happens on a save attempt, because no error is displayed
+ * before that.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft, modified in place.
+ * @param {LocaleCode} args.locale Locale of the updated field.
+ * @param {FieldKeyPath} args.keyPath Key path of the updated field.
+ * @param {any} args.value Updated field value.
+ * @param {FlattenedEntryContent} args.valueMap Entry values for the locale.
+ */
+export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => {
+  const { collectionName, fileName, isIndexFile, validities, validationMessages } = draft;
+
+  // Nothing is shown for the field yet, so there is nothing to update
+  if (!validities?.[locale]?.[keyPath]) {
+    return;
+  }
+
+  const validity = validateAnyField({
+    draft,
+    locale,
+    keyPath,
+    value,
+    valueMap,
+    // The List, KeyValue and Code field validators skip a field that already has a validity state,
+    // which is how {@link validateFields} validates such a field only once instead of once per
+    // flattened key path. Here a single field is validated on its own, so hide the state from them
+    validities: { [locale]: {} },
+  });
+
+  if (!validity) {
+    return;
+  }
+
+  validities[locale][keyPath] = validity;
+
+  // The field is known to be configured, as `validateAnyField` bails out otherwise
+  const fieldConfig = /** @type {Field} */ (
+    getField({ collectionName, fileName, isIndexFile, keyPath, valueMap })
+  );
+
+  validationMessages[locale][keyPath] = getFieldValidationMessages({ validity, fieldConfig });
+};
+
+/**
  * Validate an array-type field.
  * @internal
  * @param {object} args Arguments.

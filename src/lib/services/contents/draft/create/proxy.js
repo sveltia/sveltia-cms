@@ -3,7 +3,8 @@ import { get } from 'svelte/store';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
-import { getField, isFieldRequired } from '$lib/services/contents/entry/fields';
+import { revalidateField } from '$lib/services/contents/draft/validate/fields';
+import { getField } from '$lib/services/contents/entry/fields';
 import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
 
 /**
@@ -123,20 +124,18 @@ export const createProxy = ({
         return true;
       }
 
-      const { fieldConfig, getFieldArgs } = getFieldInfo(obj, keyPath);
+      const { fieldConfig, getFieldArgs, valueMap } = getFieldInfo(obj, keyPath);
 
       if (!fieldConfig) {
         return true;
       }
 
-      const validity = get(entryDraft)?.validities?.[sourceLanguage]?.[keyPath];
+      const draft = get(entryDraft);
 
-      // Update validity in real time if validation has already been performed
-      if (validity) {
-        // @todo Perform all the field validations, not just `valueMissing` for string fields
-        if (typeof value === 'string' && isFieldRequired({ fieldConfig, locale: sourceLanguage })) {
-          validity.valueMissing = !value;
-        }
+      // Update the validity and validation message in real time if validation has already been
+      // performed
+      if (draft) {
+        revalidateField({ draft, locale: sourceLanguage, keyPath, value, valueMap });
       }
 
       // Copy value to other locales

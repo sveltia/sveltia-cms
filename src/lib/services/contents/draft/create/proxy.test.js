@@ -25,7 +25,10 @@ vi.mock('$lib/services/contents/draft', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
-  isFieldRequired: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/draft/validate/fields', () => ({
+  revalidateField: vi.fn(),
 }));
 
 describe('contents/draft/create/proxy', () => {
@@ -33,7 +36,7 @@ describe('contents/draft/create/proxy', () => {
   let mockGetCollection;
   let mockGetCollectionFile;
   let mockGetField;
-  let mockIsFieldRequired;
+  let mockRevalidateField;
   let mockEntryDraft;
   let mockI18nAutoDupEnabled;
 
@@ -44,14 +47,15 @@ describe('contents/draft/create/proxy', () => {
     const { get: getMock } = await import('svelte/store');
     const { getCollection } = await import('$lib/services/contents/collection');
     const { getCollectionFile } = await import('$lib/services/contents/collection/files');
-    const { getField, isFieldRequired } = await import('$lib/services/contents/entry/fields');
+    const { getField } = await import('$lib/services/contents/entry/fields');
     const { entryDraft, i18nAutoDupEnabled } = await import('$lib/services/contents/draft');
+    const { revalidateField } = await import('$lib/services/contents/draft/validate/fields');
 
     mockGet = getMock;
     mockGetCollection = getCollection;
     mockGetCollectionFile = getCollectionFile;
     mockGetField = getField;
-    mockIsFieldRequired = isFieldRequired;
+    mockRevalidateField = revalidateField;
     mockEntryDraft = entryDraft;
     mockI18nAutoDupEnabled = i18nAutoDupEnabled;
 
@@ -66,7 +70,6 @@ describe('contents/draft/create/proxy', () => {
 
     mockGetCollectionFile.mockReturnValue(undefined);
     mockGetField.mockReturnValue(undefined);
-    mockIsFieldRequired.mockReturnValue(false);
 
     mockGet.mockImplementation((store) => {
       if (store === mockI18nAutoDupEnabled) {
@@ -779,10 +782,10 @@ describe('contents/draft/create/proxy', () => {
       expect(mockCurrentValues.ja.title).toBeUndefined();
     });
 
-    it('should update validity in real time for required string fields', async () => {
-      const mockValidities = {
-        en: { title: { valueMissing: false } },
-        ja: {},
+    it('should revalidate the updated field in real time', async () => {
+      const mockDraft = {
+        currentValues: { en: {}, ja: {} },
+        validities: { en: { title: { valueMissing: false } }, ja: {} },
       };
 
       mockGet.mockImplementation((store) => {
@@ -791,21 +794,13 @@ describe('contents/draft/create/proxy', () => {
         }
 
         if (store === mockEntryDraft) {
-          return {
-            currentValues: { en: {}, ja: {} },
-            validities: mockValidities,
-          };
+          return mockDraft;
         }
 
         return undefined;
       });
 
-      mockGetField.mockReturnValue({
-        widget: 'string',
-        required: true,
-      });
-
-      mockIsFieldRequired.mockReturnValue(true);
+      mockGetField.mockReturnValue({ widget: 'string', required: true });
 
       const { createProxy } = await import('./proxy.js');
 
@@ -814,13 +809,46 @@ describe('contents/draft/create/proxy', () => {
         locale: 'en',
       });
 
-      proxy.title = '';
-
-      expect(mockValidities.en.title.valueMissing).toBe(true);
-
       proxy.title = 'Valid Title';
 
-      expect(mockValidities.en.title.valueMissing).toBe(false);
+      expect(mockRevalidateField).toHaveBeenCalledWith({
+        draft: mockDraft,
+        locale: 'en',
+        keyPath: 'title',
+        value: 'Valid Title',
+        valueMap: { title: 'Valid Title' },
+      });
+    });
+
+    it('should not revalidate when the field is unknown', async () => {
+      mockGetField.mockReturnValue(undefined);
+
+      const { createProxy } = await import('./proxy.js');
+
+      const proxy = createProxy({
+        draft: { collectionName: 'posts', fileName: undefined, isIndexFile: false },
+        locale: 'en',
+      });
+
+      proxy.unknown = 'Value';
+
+      expect(mockRevalidateField).not.toHaveBeenCalled();
+    });
+
+    it('should not revalidate when there is no draft', async () => {
+      mockGet.mockImplementation(() => undefined);
+      mockGetField.mockReturnValue({ widget: 'string' });
+
+      const { createProxy } = await import('./proxy.js');
+
+      const proxy = createProxy({
+        draft: { collectionName: 'posts', fileName: undefined, isIndexFile: false },
+        locale: 'en',
+      });
+
+      proxy.title = 'Title';
+
+      expect(mockRevalidateField).not.toHaveBeenCalled();
     });
 
     it('should use getValueMap function when provided', async () => {
@@ -937,10 +965,10 @@ describe('contents/draft/create/proxy', () => {
       expect(target.title).toBe('Same Value');
     });
 
-    it('should skip valueMissing update when value is not a string (line 135 false branch)', async () => {
-      const mockValidities = {
-        en: { count: { valueMissing: false } },
-        ja: {},
+    it('should revalidate the updated field with a non-string value', async () => {
+      const mockDraft = {
+        currentValues: { en: {}, ja: {} },
+        validities: { en: { count: { valueMissing: false } }, ja: {} },
       };
 
       mockGet.mockImplementation((store) => {
@@ -949,17 +977,13 @@ describe('contents/draft/create/proxy', () => {
         }
 
         if (store === mockEntryDraft) {
-          return {
-            currentValues: { en: {}, ja: {} },
-            validities: mockValidities,
-          };
+          return mockDraft;
         }
 
         return undefined;
       });
 
       mockGetField.mockReturnValue({ widget: 'number', required: true });
-      mockIsFieldRequired.mockReturnValue(true);
 
       const { createProxy } = await import('./proxy.js');
 
@@ -968,11 +992,11 @@ describe('contents/draft/create/proxy', () => {
         locale: 'en',
       });
 
-      // Set a non-string value — validity should NOT be updated (typeof 42 !== 'string')
       proxy.count = 42;
 
-      // valueMissing stays unchanged because value is not a string
-      expect(mockValidities.en.count.valueMissing).toBe(false);
+      expect(mockRevalidateField).toHaveBeenCalledWith(
+        expect.objectContaining({ keyPath: 'count', value: 42 }),
+      );
     });
 
     it('should not delete from other locales when shouldAutoDuplicate is false (line 158 false branch)', async () => {
