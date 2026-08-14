@@ -9,16 +9,22 @@ import { getField } from '$lib/services/contents/entry/fields';
 /**
  * @import { Writable } from 'svelte/store';
  * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
- * @import { HiddenField } from '$lib/types/public';
+ * @import { FieldKeyPath, HiddenField } from '$lib/types/public';
  */
 
 /**
  * Populate the given localized content with values from the default locale.
  * @param {FlattenedEntryContent} content Original content for the current locale.
  * @param {InternalLocaleCode} targetLanguage Target locale.
+ * @param {object} [options] Options.
+ * @param {FieldKeyPath} [options.keyPathPrefix] Key path of the parent Object field being
+ * populated, e.g. `blocks.0.image`. When specified, only the keys under that key path are returned,
+ * so unrelated default locale fields — including list items that don’t exist in the target locale
+ * — are not copied over. The whole default locale content is still used to look up field
+ * configurations, which requires sibling keys such as a variable type key.
  * @returns {FlattenedEntryContent} Updated content.
  */
-export const copyDefaultLocaleValues = (content, targetLanguage) => {
+export const copyDefaultLocaleValues = (content, targetLanguage, { keyPathPrefix } = {}) => {
   const { collectionName, fileName, collection, collectionFile, currentValues, isIndexFile } =
     /** @type {EntryDraft} */ (get(entryDraft));
 
@@ -79,6 +85,12 @@ export const copyDefaultLocaleValues = (content, targetLanguage) => {
       noI18nFieldKeys.push(keyPath);
     }
   });
+
+  if (keyPathPrefix !== undefined) {
+    return Object.fromEntries(
+      Object.entries(newContent).filter(([keyPath]) => keyPath.startsWith(`${keyPathPrefix}.`)),
+    );
+  }
 
   return newContent;
 };

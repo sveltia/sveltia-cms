@@ -134,7 +134,9 @@
     );
 
     const newValueMap =
-      locale === defaultLocale ? newContent : copyDefaultLocaleValues(newContent, locale);
+      locale === defaultLocale
+        ? newContent
+        : copyDefaultLocaleValues(newContent, locale, { keyPathPrefix: keyPath });
 
     Object.entries($entryDraft?.[valueStoreKey] ?? {}).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {

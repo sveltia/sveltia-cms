@@ -40,17 +40,20 @@ export const copyDefaultLocaleValue = ({ getFieldArgs, fieldConfig, sourceLangua
       }
 
       // Support special case for the Relation field: if the `value_field` option is something
-      // like `{{locale}}/{{slug}}`, replace the source locale in the value with target locale
-      if (fieldConfig.widget === 'relation') {
+      // like `{{locale}}/{{slug}}`, replace the source locale in the value with target locale.
+      // Keep the source `value` intact, as it’s used for the remaining target locales
+      let localizedValue = value;
+
+      if (fieldConfig.widget === 'relation' && typeof value === 'string') {
         const { value_field: valueField = '{{slug}}' } = /** @type {RelationField} */ (fieldConfig);
 
         if (valueField.startsWith('{{locale}}/') && value.startsWith(`${sourceLanguage}/`)) {
-          value = `${targetLanguage}/${value.slice(sourceLanguage.length + 1)}`;
+          localizedValue = `${targetLanguage}/${value.slice(sourceLanguage.length + 1)}`;
         }
       }
 
-      if (targetLanguage !== sourceLanguage && content[keyPath] !== value) {
-        content[keyPath] = value;
+      if (targetLanguage !== sourceLanguage && content[keyPath] !== localizedValue) {
+        content[keyPath] = localizedValue;
       }
     },
   );

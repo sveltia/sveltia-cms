@@ -259,11 +259,38 @@ describe('contents/draft/create/proxy', () => {
         value: 'en/my-post',
       });
 
-      // Note: The implementation mutates the value variable in the loop,
-      // so each subsequent locale gets the value from the previous iteration
+      // Every locale gets its own prefix; the source value must not be mutated in the loop
       expect(mockCurrentValues.fr.related).toBe('fr/my-post');
-      // This is the actual behavior - es gets the fr value because value was mutated
-      expect(mockCurrentValues.es.related).toBe('fr/my-post');
+      expect(mockCurrentValues.es.related).toBe('es/my-post');
+    });
+
+    it('should handle relation field with {{locale}} template and non-string value', async () => {
+      const mockCurrentValues = {
+        en: {},
+        fr: {},
+      };
+
+      mockGet.mockImplementation((store) => {
+        if (store === mockEntryDraft) {
+          return { currentValues: mockCurrentValues };
+        }
+
+        return undefined;
+      });
+
+      const { copyDefaultLocaleValue } = await import('./proxy.js');
+
+      copyDefaultLocaleValue({
+        getFieldArgs: { keyPath: 'related' },
+        fieldConfig: {
+          widget: 'relation',
+          value_field: '{{locale}}/{{slug}}',
+        },
+        sourceLanguage: 'en',
+        value: undefined,
+      });
+
+      expect(mockCurrentValues.fr.related).toBeUndefined();
     });
 
     it('should handle relation field without {{locale}} template', async () => {

@@ -550,6 +550,74 @@ describe('draft/update/locale', () => {
       // The existing value from merge should be overwritten with the target locale
       expect(result.locale_code).toBe('fr');
     });
+
+    describe('keyPathPrefix option', () => {
+      beforeEach(() => {
+        vi.mocked(getField).mockImplementation(({ keyPath }) => {
+          if (keyPath === 'title') {
+            return { name: 'title', widget: 'string', i18n: true };
+          }
+
+          if (/^blocks\.\d+\.markdown$/.test(keyPath)) {
+            return { name: 'markdown', widget: 'richtext', i18n: true };
+          }
+
+          if (/^blocks\.\d+\.image$/.test(keyPath)) {
+            return { name: 'image', widget: 'object', i18n: true };
+          }
+
+          if (/^blocks\.\d+\.image\.alt$/.test(keyPath)) {
+            return { name: 'alt', widget: 'string', i18n: true };
+          }
+
+          if (/^blocks\.\d+\.limit$/.test(keyPath)) {
+            return { name: 'limit', widget: 'number', i18n: true };
+          }
+
+          return undefined;
+        });
+
+        mockEntryDraft.currentValues.en = {
+          title: 'English Title',
+          'blocks.0.type': 'richtext',
+          'blocks.0.image': null,
+          'blocks.0.markdown': 'English Body',
+          'blocks.1.type': 'artworkGrid',
+          'blocks.1.limit': 10,
+        };
+      });
+
+      it('should only return the values under the given key path', () => {
+        const content = { 'blocks.0.image.alt': '' };
+        const result = copyDefaultLocaleValues(content, 'fr', { keyPathPrefix: 'blocks.0.image' });
+
+        // Unrelated fields, including a list item that doesn’t exist in the target locale, should
+        // not be copied over
+        expect(result).toEqual({ 'blocks.0.image.alt': '' });
+      });
+
+      it('should still copy the values under the given key path from the default locale', () => {
+        mockEntryDraft.currentValues.en['blocks.0.image'] = {};
+        mockEntryDraft.currentValues.en['blocks.0.image.src'] = '/media/image.png';
+
+        const content = { 'blocks.0.image.alt': '' };
+        const result = copyDefaultLocaleValues(content, 'fr', { keyPathPrefix: 'blocks.0.image' });
+
+        expect(result).toEqual({
+          'blocks.0.image.alt': '',
+          'blocks.0.image.src': '/media/image.png',
+        });
+      });
+
+      it('should return the whole content when the option is omitted', () => {
+        const content = { 'blocks.0.image.alt': '' };
+        const result = copyDefaultLocaleValues(content, 'fr');
+
+        expect(Object.keys(result)).toEqual(
+          expect.arrayContaining(['title', 'blocks.1.type', 'blocks.1.limit']),
+        );
+      });
+    });
   });
 
   describe('toggleLocale', () => {
