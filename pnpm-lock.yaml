@@ -24,8 +24,8 @@ importers:
         specifier: ^1.2.3
         version: 1.2.3(svelte@5.56.9(@typescript-eslint/types@8.67.0))
       '@sveltia/ui':
-        specifier: ^0.65.2
-        version: 0.65.2(svelte@5.56.9(@typescript-eslint/types@8.67.0))(typescript@6.0.3)
+        specifier: ^0.65.4
+        version: 0.65.4(svelte@5.56.9(@typescript-eslint/types@8.67.0))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.1
         version: 0.12.1
@@ -1184,8 +1184,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.65.2':
-    resolution: {integrity: sha512-Cvg28GCnrk5Gg4euLZPZND081/v229o1UxH/yU3dH0Cuxz5FrXbYMxqiAmpxRpRe+bpW9BC1UC/JCuqeC/83Nw==}
+  '@sveltia/ui@0.65.4':
+    resolution: {integrity: sha512-hpHHbtj0GvB1nN/IaBuFpBnh6nnA9SzLTGt7pGqR6h6wNEX0IqZbuKr2T4idr19OI6E8GA8zXpLgldY9tfCcYQ==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -1901,9 +1901,6 @@ packages:
 
   emoji-regex@9.2.2:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
-
-  emojilib@4.0.3:
-    resolution: {integrity: sha512-KbWiYre9aRSaPbHrHZIz9zmoM+21LAsK1VFJtnTh1VCtWE/rNMDviGhQTmselFl95dhqtGlY22iH0leG5BuW0g==}
 
   enhanced-resolve@5.24.5:
     resolution: {integrity: sha512-L1l8TNvomm6UVW5B253AGxQagSQr+vGwhMlrrfRS2qmhx46AMpMVJKQYLvWYbysTMY8VoicOvzHzoHMbyzB+4A==}
@@ -4835,7 +4832,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.56.9(@typescript-eslint/types@8.67.0)
 
-  '@sveltia/ui@0.65.2(svelte@5.56.9(@typescript-eslint/types@8.67.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.65.4(svelte@5.56.9(@typescript-eslint/types@8.67.0))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.49.0(typescript@6.0.3)
       '@lexical/dragon': 0.49.0(typescript@6.0.3)
@@ -4850,7 +4847,6 @@ snapshots:
       '@lexical/utils': 0.49.0(typescript@6.0.3)
       '@sveltia/i18n': 1.2.3(svelte@5.56.9(@typescript-eslint/types@8.67.0))
       '@sveltia/utils': 0.12.1
-      emojilib: 4.0.3
       lexical: 0.49.0(typescript@6.0.3)
       svelte: 5.56.9(@typescript-eslint/types@8.67.0)
     transitivePeerDependencies:
@@ -5625,8 +5621,6 @@ snapshots:
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
-
-  emojilib@4.0.3: {}
 
   enhanced-resolve@5.24.5:
     dependencies:
