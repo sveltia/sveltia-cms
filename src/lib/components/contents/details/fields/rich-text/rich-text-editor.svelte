@@ -101,6 +101,7 @@
       [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
     allow_nested_components: _allowNestedComponents,
     linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
+    use_emoji_autocomplete: useEmojiAutocomplete = defaultConfig.use_emoji_autocomplete ?? true,
     use_markdown_shortcuts: useMarkdownShortcuts = defaultConfig.use_markdown_shortcuts ?? true,
     minimal = defaultConfig.minimal ?? false,
   } = $derived(fieldConfig);
@@ -442,6 +443,7 @@
         {modes}
         {buttons}
         {components}
+        {useEmojiAutocomplete}
         {useMarkdownShortcuts}
         bind:value={inputValue}
         flex

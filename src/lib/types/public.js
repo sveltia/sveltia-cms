@@ -769,6 +769,9 @@
  * field for specifying a URL to wrap the image as a link. The resulting Markdown output will be in
  * the format `[![alt](src)](link)`, where clicking the image navigates to the provided link. This
  * feature can be disabled if it causes conflicts with certain frameworks.
+ * @property {boolean} [use_emoji_autocomplete] Whether to enable emoji autocomplete in the rich
+ * text editor. Default: `true`. When enabled, typing `:` followed by a few letters will show a list
+ * of matching emojis that can be selected to insert into the text.
  * @property {boolean} [use_markdown_shortcuts] Whether to enable Markdown shortcuts in the rich
  * text editor. Default: `true`. When enabled, typing `-` or `*` at the start of a line creates a
  * bulleted list, `1.` creates a numbered list, `>` creates a blockquote, and `#`, `##`, `###`
@@ -937,6 +940,9 @@
  * validation. Default: `text`.
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {string} [suffix] A string to be appended to the value. Default: empty string.
+ * @property {boolean} [use_emoji_autocomplete] Whether to enable emoji autocomplete in the text
+ * input. Default: `true` if the type is `text`. When enabled, typing `:` followed by a few letters
+ * will show a list of matching emojis that can be selected to insert into the text.
  * @see https://decapcms.org/docs/widgets/#String
  * @see https://sveltiacms.app/en/docs/fields/string
  */
@@ -952,6 +958,9 @@
  * @typedef {object} TextFieldProps
  * @property {'text'} widget Field type.
  * @property {string} [default] Default value.
+ * @property {boolean} [use_emoji_autocomplete] Whether to enable emoji autocomplete in the text
+ * area. Default: `true`. When enabled, typing `:` followed by a few letters will show a list of
+ * matching emojis that can be selected to insert into the text.
  * @see https://decapcms.org/docs/widgets/#Text
  * @see https://sveltiacms.app/en/docs/fields/text
  */

@@ -30,6 +30,7 @@
     /* eslint-disable prefer-const */
     locale,
     fieldId,
+    fieldConfig,
     currentValue = $bindable(),
     required = true,
     readonly = false,
@@ -38,6 +39,8 @@
   } = $props();
 
   let inputValue = $state('');
+
+  const { use_emoji_autocomplete: useEmojiAutocomplete = true } = $derived(fieldConfig);
 
   /**
    * Update {@link inputValue} based on {@link currentValue} while avoiding a cycle dependency.
@@ -95,4 +98,5 @@
   aria-labelledby="{fieldId}-label"
   aria-errormessage="{fieldId}-error"
   autoResize={true}
+  {useEmojiAutocomplete}
 />

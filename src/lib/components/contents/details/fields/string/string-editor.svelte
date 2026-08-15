@@ -40,7 +40,13 @@
 
   let inputValue = $state('');
 
-  const { type = 'text', prefix = '', suffix = '' } = $derived(fieldConfig);
+  const {
+    type = 'text',
+    prefix = '',
+    suffix = '',
+    // svelte-ignore state_referenced_locally
+    use_emoji_autocomplete: useEmojiAutocomplete = type === 'text',
+  } = $derived(fieldConfig);
 
   /**
    * Update {@link inputValue} based on {@link currentValue}. Remove the suffix/prefix if needed.
@@ -115,4 +121,5 @@
   {invalid}
   aria-labelledby="{fieldId}-label"
   aria-errormessage="{fieldId}-error"
+  {useEmojiAutocomplete}
 />
