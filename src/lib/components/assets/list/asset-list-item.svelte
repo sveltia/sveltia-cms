@@ -53,6 +53,7 @@
 
 <GridRow
   aria-rowindex={$listedAssetIndexMap.get(asset.path) ?? -1}
+  aria-label={name}
   onChange={(event) => {
     updateSelection(event.detail.selected);
   }}
