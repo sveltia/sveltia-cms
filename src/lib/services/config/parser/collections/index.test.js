@@ -850,5 +850,94 @@ describe('Collections Parser', () => {
       expect(mockCheckName).toHaveBeenCalled();
       expect(mockParseCollectionFiles).toHaveBeenCalled();
     });
+
+    it('should not error when at least one collection is visible', async () => {
+      const { parseCollections } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        collections: [
+          { name: 'pages', label: 'Pages', folder: 'content/pages', fields: [], hide: true },
+          { name: 'posts', label: 'Posts', folder: 'content/posts', fields: [] },
+        ],
+      };
+
+      parseCollections(config, collectors);
+
+      expect(collectors.errors).not.toContain('config.error.no_visible_collection');
+    });
+
+    it('should error when the only collection is hidden', async () => {
+      const { parseCollections } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        collections: [
+          { name: 'posts', label: 'Posts', folder: 'content/posts', fields: [], hide: true },
+        ],
+      };
+
+      parseCollections(config, collectors);
+
+      expect(collectors.errors).toContain('config.error.no_visible_collection');
+    });
+
+    it('should error when all the collections are hidden', async () => {
+      const { parseCollections } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        collections: [
+          { name: 'pages', label: 'Pages', folder: 'content/pages', fields: [], hide: true },
+          { name: 'posts', label: 'Posts', folder: 'content/posts', fields: [], hide: true },
+        ],
+      };
+
+      parseCollections(config, collectors);
+
+      expect(collectors.errors).toContain('config.error.no_visible_collection');
+    });
+
+    it('should error when the collections list contains dividers only', async () => {
+      const { parseCollections } = await import('.');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { collections: [{ divider: true }] };
+
+      parseCollections(config, collectors);
+
+      expect(collectors.errors).toContain('config.error.no_visible_collection');
+    });
+
+    it('should error when the collections list is empty', async () => {
+      const { parseCollections } = await import('.');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { collections: [], singletons: [] };
+
+      parseCollections(config, collectors);
+
+      expect(collectors.errors).toContain('config.error.no_visible_collection');
+    });
+
+    it('should not error when hidden collections are accompanied by singletons', async () => {
+      const { parseCollections } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        collections: [
+          { name: 'posts', label: 'Posts', folder: 'content/posts', fields: [], hide: true },
+        ],
+        singletons: [{ name: 'general', file: 'content/settings/general.yaml', fields: [] }],
+      };
+
+      parseCollections(config, collectors);
+
+      expect(collectors.errors).not.toContain('config.error.no_visible_collection');
+    });
   });
 });

@@ -182,6 +182,18 @@ export const parseCollections = (cmsConfig, collectors) => {
     return;
   }
 
+  // Validate that at least one collection is visible in the sidebar. A config where every
+  // collection is hidden with the `hide` option — or where the list contains nothing but dividers —
+  // leaves the user with an empty UI, which looks like a broken CMS rather than a configuration
+  // mistake. Singletons are always visible, so they satisfy the requirement on their own.
+  const hasVisibleCollection =
+    !!collections?.some((collection) => !('divider' in collection) && !collection.hide) ||
+    !!singletons?.length;
+
+  if (!hasVisibleCollection) {
+    errors.add(_('config.error.no_visible_collection'));
+  }
+
   const checkNameArgs = { nameCounts: {}, strKeyBase: 'collection_name', collectors };
 
   collections?.forEach((collection, index) => {
