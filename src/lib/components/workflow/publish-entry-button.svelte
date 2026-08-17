@@ -37,14 +37,14 @@
   let showPublishDialog = $state(false);
   let showErrorToast = $state(false);
 
-  // The collection’s `publish` option can hide the publishing control, so an editor can move an
-  // entry through the review stages but leave the actual publishing to someone else
+  // Publishing a removal is what deletes the entry, so the control is presented as Delete
+  const deletion = $derived(entry.workflow.status === 'pending_deletion');
+  // The collection’s `publish` option can hide the control, so an editor can move an entry through
+  // the review stages but leave the actual publishing to someone else
   const visible = $derived(
-    entry.workflow.status === 'pending_publish' &&
+    (entry.workflow.status === 'pending_publish' || deletion) &&
       getCollection(entry.workflow.collectionName)?.publish !== false,
   );
-  // Publishing a removal is what deletes the entry, so the control is presented as Delete
-  const deletion = $derived(!!entry.workflow.deletion);
 
   /**
    * Publish the entry by merging the pull request, then go back to the entry list.

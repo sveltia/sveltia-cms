@@ -284,7 +284,7 @@ describe('GitHub Editorial Workflow service', () => {
 
       // The cap has to apply to the CMS’s own pull requests, not to the whole repository
       expect(query).toContain('labels: ["sveltia-cms/draft"');
-      expect(query).toContain('"decap-cms/pending_publish"]');
+      expect(query).toContain('"decap-cms/pending_deletion"]');
       expect(query).toContain('first: 100');
     });
 
@@ -484,6 +484,7 @@ describe('GitHub Editorial Workflow service', () => {
       const result = await createPullRequest({
         branch: 'cms/posts/hello',
         title: 'Create Post “hello”',
+        status: 'draft',
       });
 
       expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls', {

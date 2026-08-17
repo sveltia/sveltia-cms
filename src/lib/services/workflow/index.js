@@ -86,7 +86,7 @@ export const getUnpublishedEntry = ({ collectionName, subPath }) =>
  * @returns {boolean} `true` if a pull request is pending that deletes the entry.
  */
 export const isPendingDeletion = (entry) =>
-  !!(/** @type {UnpublishedEntry | undefined} */ (entry)?.workflow?.deletion);
+  /** @type {UnpublishedEntry | undefined} */ (entry)?.workflow?.status === 'pending_deletion';
 
 /**
  * Replace each published entry that has an open pull request with its unpublished version, so a

@@ -150,6 +150,7 @@ export const saveWorkflowChanges = async ({
     options,
     branch,
     title: createCommitMessage(changes, options),
+    status: 'draft',
     pullRequest: existingEntry?.workflow.pullRequest,
   });
 
@@ -249,7 +250,8 @@ export const updateWorkflowStatus = async (entry, status) => {
  */
 export const publishWorkflowEntry = async (entry) => {
   const workflow = getWorkflowService();
-  const { pullRequest, deletion } = entry.workflow;
+  const { pullRequest, status } = entry.workflow;
+  const deletion = status === 'pending_deletion';
   const hookArgs = getEventHookArgs(entry);
 
   // Merging a removal is what takes the entry off the configured branch, so that’s when the
@@ -278,8 +280,9 @@ export const publishWorkflowEntry = async (entry) => {
       (e) => !Object.values(e.locales).some(({ path }) => paths.has(path)),
     );
 
-    // Publishing a removal takes the entry off the site rather than putting a new version on it
-    return _workflow.deletion ? remaining : [...remaining, publishedEntry];
+    // Publishing a removal takes the entry off the configured branch rather than putting a new
+    // version on it
+    return deletion ? remaining : [...remaining, publishedEntry];
   });
 
   removeUnpublishedEntry(pullRequest.branch);
@@ -345,12 +348,17 @@ export const deleteWorkflowEntry = async (entry, collection, collectionFile, ass
       commitType: 'delete',
       collection,
     }),
+    // The removal is complete as committed, so it skips the review stages entirely. Opening it at
+    // this status avoids the churn of creating a draft and relabelling it a moment later
+    status: 'pending_deletion',
     pullRequest: existingEntry?.workflow.pullRequest,
   });
 
-  // The removal is complete as committed, so it goes straight to the last stage rather than
-  // starting as a draft like an edit does
-  const readyPullRequest = await workflow.updateStatus(pullRequest, 'pending_publish');
+  // A reused pull request keeps the status it already had, so it still needs the switch
+  const readyPullRequest =
+    pullRequest.status === 'pending_deletion'
+      ? pullRequest
+      : await workflow.updateStatus(pullRequest, 'pending_deletion');
 
   /** @type {UnpublishedEntry} */
   const unpublishedEntry = {
@@ -364,7 +372,6 @@ export const deleteWorkflowEntry = async (entry, collection, collectionFile, ass
       previousPaths: existingEntry?.workflow.previousPaths?.length
         ? existingEntry.workflow.previousPaths
         : paths,
-      deletion: true,
     },
   };
 

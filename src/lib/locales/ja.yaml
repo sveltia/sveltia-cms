@@ -1523,12 +1523,11 @@ status:
   drafts: 下書き
   in_review: レビュー中
   ready: 公開可
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: 削除待ち
 
 workflow:
-  # Entry list badge and Editorial Workflow board column for an entry whose pull request removes it
-  # from the configured branch. Its status is `pending_publish` like a ready-to-publish change, so it needs a
-  # label of its own to avoid reading as though the content were going live
-  pending_deletion: 削除待ち
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
   # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
   # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already

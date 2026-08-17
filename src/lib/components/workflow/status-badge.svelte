@@ -15,22 +15,18 @@
   /**
    * @typedef {object} Props
    * @property {WorkflowStatus} status Workflow status to be shown.
-   * @property {boolean} [deletion] Whether the pull request removes the entry from the site rather
-   * than updating it. Its status is always `pending_publish`, which on its own reads as though the
-   * entry’s content were ready to go live.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     status,
-    deletion = false,
     /* eslint-enable prefer-const */
   } = $props();
 </script>
 
-<span role="none" class="status-badge {deletion ? 'deletion' : status}">
-  {_(deletion ? 'workflow.pending_deletion' : WORKFLOW_STATUS_LABELS[status])}
+<span role="none" class="status-badge {status}">
+  {_(WORKFLOW_STATUS_LABELS[status])}
 </span>
 
 <style>
@@ -68,7 +64,7 @@
       color: var(--sui-success-foreground-color);
     }
 
-    &.deletion {
+    &.pending_deletion {
       border-color: var(--sui-error-border-color);
       background-color: var(--sui-error-background-color);
       color: var(--sui-error-foreground-color);

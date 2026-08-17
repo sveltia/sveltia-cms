@@ -48,7 +48,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { collectionName, fileName, status, pullRequest, deletion } = $derived(entry.workflow);
+  const { collectionName, fileName, status, pullRequest } = $derived(entry.workflow);
+  const deletion = $derived(status === 'pending_deletion');
   const collection = $derived(getCollection(collectionName));
   const collectionFile = $derived(
     collection && fileName ? getCollectionFile(collection, fileName) : undefined,
@@ -68,7 +69,9 @@
   );
   // The entry can only be published from the last column, and the collection’s `publish` option can
   // hide the control altogether
-  const canPublish = $derived(status === 'pending_publish' && collection?.publish !== false);
+  const canPublish = $derived(
+    (status === 'pending_publish' || deletion) && collection?.publish !== false,
+  );
   // Deleting an entry that has a published version only throws away the pending changes.
   // `$allEntries` is a dependency, because the entry can be published from another view
   const publishedVersionExists = $derived(!!$allEntries && hasPublishedVersion(entry));

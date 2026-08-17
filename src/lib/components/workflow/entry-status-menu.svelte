@@ -7,7 +7,7 @@
   import { Alert, Menu, MenuButton, MenuItemRadio, Toast } from '@sveltia/ui';
 
   import { env } from '$lib/services/user/env.svelte';
-  import { WORKFLOW_STATUS_LABELS, WORKFLOW_STATUSES } from '$lib/services/workflow/constants';
+  import { WORKFLOW_STAGES, WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
   import { updateWorkflowStatus } from '$lib/services/workflow/save';
 
   /**
@@ -75,7 +75,7 @@
 >
   {#snippet popup()}
     <Menu aria-label={_('workflow.change_entry_status')}>
-      {#each WORKFLOW_STATUSES as _status (_status)}
+      {#each WORKFLOW_STAGES as _status (_status)}
         <MenuItemRadio
           label={_(WORKFLOW_STATUS_LABELS[_status])}
           checked={_status === status}

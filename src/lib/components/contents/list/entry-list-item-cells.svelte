@@ -87,7 +87,7 @@
 </GridCell>
 <GridCell class="status">
   {#if workflow}
-    <StatusBadge status={workflow.status} deletion={workflow.deletion} />
+    <StatusBadge status={workflow.status} />
   {/if}
 </GridCell>
 

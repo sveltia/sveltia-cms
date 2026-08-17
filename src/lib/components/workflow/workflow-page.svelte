@@ -11,7 +11,7 @@
     unpublishedEntries,
     workflowDataReady,
   } from '$lib/services/workflow';
-  import { WORKFLOW_STATUS_LABELS, WORKFLOW_STATUSES } from '$lib/services/workflow/constants';
+  import { WORKFLOW_STAGES, WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
   import {
     discardWorkflowEntry,
     publishWorkflowEntry,
@@ -96,21 +96,18 @@
   );
   // For an entry awaiting deletion the two actions are reversed: the first one calls the removal
   // off, and the second one carries it out
-  const targetIsDeletion = $derived(!!targetEntry?.workflow.deletion);
+  const targetIsDeletion = $derived(targetEntry?.workflow.status === 'pending_deletion');
 
-  // A pending deletion sits at the `pending_publish` status, but it removes the entry rather than
-  // releasing new content, so it’s kept out of the Ready column and listed on its own below the
-  // board. There are no stages to move it through, so its cards don’t drag
+  // A pending deletion has a status of its own, so it never lands in a stage column. It’s listed
+  // below the board instead, and its cards don’t drag: there are no stages to move it through
   const columns = $derived(
-    WORKFLOW_STATUSES.map((status) => ({
+    WORKFLOW_STAGES.map((status) => ({
       status,
-      entries: $unpublishedEntries.filter(
-        (entry) => entry.workflow.status === status && !entry.workflow.deletion,
-      ),
+      entries: $unpublishedEntries.filter((entry) => entry.workflow.status === status),
     })),
   );
   const pendingDeletions = $derived(
-    $unpublishedEntries.filter(({ workflow }) => workflow.deletion),
+    $unpublishedEntries.filter(({ workflow }) => workflow.status === 'pending_deletion'),
   );
 
   /** Whether the page has already been announced, so a later status change doesn’t repeat it. */
@@ -264,9 +261,9 @@
           <div role="none" class="deletions">
             <Group class="group" aria-labelledby="deletions-title">
               <header role="none">
-                <h3 role="none" id="deletions-title">{_('workflow.pending_deletion')}</h3>
+                <h3 role="none" id="deletions-title">{_('status.pending_deletion')}</h3>
               </header>
-              <div role="list" class="entries" aria-label={_('workflow.pending_deletion')}>
+              <div role="list" class="entries" aria-label={_('status.pending_deletion')}>
                 {#each pendingDeletions as entry (entry.id)}
                   <WorkflowEntryCard
                     {entry}

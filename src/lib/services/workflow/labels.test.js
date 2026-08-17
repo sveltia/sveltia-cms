@@ -74,12 +74,17 @@ describe('workflow/labels', () => {
         'sveltia-cms/draft',
         'sveltia-cms/pending_review',
         'sveltia-cms/pending_publish',
+        'sveltia-cms/pending_deletion',
         'netlify-cms/draft',
         'netlify-cms/pending_review',
         'netlify-cms/pending_publish',
+        // Netlify/Decap CMS never creates a deletion pull request, but the label is stripped along
+        // with the others when a status changes, so it belongs in every prefix
+        'netlify-cms/pending_deletion',
         'decap-cms/draft',
         'decap-cms/pending_review',
         'decap-cms/pending_publish',
+        'decap-cms/pending_deletion',
       ]);
     });
 

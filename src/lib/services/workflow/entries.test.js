@@ -244,8 +244,9 @@ describe('workflow/entries', () => {
       expect(entries).toHaveLength(1);
       expect(entries[0].id).toBe('published');
 
+      // The pull request predates the dedicated status, so it’s taken from the contents instead
       expect(entries[0].workflow).toMatchObject({
-        deletion: true,
+        status: 'pending_deletion',
         collectionName: 'posts',
         previousPaths: ['content/posts/hello.md'],
       });

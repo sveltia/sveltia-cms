@@ -349,6 +349,7 @@ describe('GitLab Editorial Workflow service', () => {
       const result = await createPullRequest({
         branch: 'cms/posts/hello',
         title: 'Create Post “hello”',
+        status: 'draft',
       });
 
       expect(fetchAPI).toHaveBeenCalledWith(`/projects/${PROJECT_ID}/merge_requests`, {

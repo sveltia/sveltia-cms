@@ -12,6 +12,7 @@ import { parseBranchName } from '$lib/services/workflow/branch';
  * Asset,
  * BaseFileListItemProps,
  * Entry,
+ * WorkflowStatus,
  * UnpublishedEntry,
  * WorkflowPullRequest,
  * } from '$lib/types/private';
@@ -152,11 +153,12 @@ export const convertPullRequest = async (pullRequest) => {
         ...entry,
         workflow: {
           pullRequest,
-          status: pullRequest.status,
+          // A removal opened before the dedicated status existed carries `pending_publish`, so the
+          // status is taken from the contents rather than the label
+          status: /** @type {WorkflowStatus} */ ('pending_deletion'),
           collectionName,
           fileName: undefined,
           previousPaths,
-          deletion: true,
         },
       })),
       assets,

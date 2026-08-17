@@ -731,7 +731,7 @@ describe('contents/draft/create/index', () => {
         slug: 'test-slug',
         locales: { _default: { content: {}, slug: 'test-slug' } },
         // The entry is read-only, so a cached draft could neither be restored nor saved
-        workflow: { deletion: true },
+        workflow: { status: 'pending_deletion' },
       });
 
       createDraft({ collection, originalEntry });

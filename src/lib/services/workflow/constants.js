@@ -17,10 +17,19 @@ export const DEFAULT_CMS_LABEL_PREFIX = 'sveltia-cms/';
 export const LEGACY_CMS_LABEL_PREFIXES = ['netlify-cms/', 'decap-cms/'];
 
 /**
- * All the possible Editorial Workflow statuses, ordered from the earliest to the latest stage.
+ * The review stages an unpublished entry moves through, ordered from the earliest to the latest.
+ * These are the board columns and the options in the editor’s status menu.
  * @type {WorkflowStatus[]}
  */
-export const WORKFLOW_STATUSES = ['draft', 'pending_review', 'pending_publish'];
+export const WORKFLOW_STAGES = ['draft', 'pending_review', 'pending_publish'];
+
+/**
+ * All the Editorial Workflow statuses, including the one for a pending removal. A removal has no
+ * stages to move through — it’s either carried out or called off — so it’s absent from
+ * {@link WORKFLOW_STAGES}, which drives the board columns and the editor’s status menu.
+ * @type {WorkflowStatus[]}
+ */
+export const WORKFLOW_STATUSES = [...WORKFLOW_STAGES, 'pending_deletion'];
 
 /**
  * Map of Editorial Workflow statuses to i18n string keys used for UI labels.
@@ -30,4 +39,5 @@ export const WORKFLOW_STATUS_LABELS = {
   draft: 'status.draft',
   pending_review: 'status.in_review',
   pending_publish: 'status.ready',
+  pending_deletion: 'status.pending_deletion',
 };

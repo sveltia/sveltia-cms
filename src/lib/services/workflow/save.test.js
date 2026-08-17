@@ -479,15 +479,18 @@ describe('workflow/save', () => {
     beforeEach(() => {
       vi.mocked(createCommitMessage).mockReturnValue('Delete Post “hello”');
 
-      workflowService.savePullRequest.mockResolvedValue({
-        pullRequest: { branch: 'cms/posts/hello', number: 7, status: 'draft' },
-        commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
-      });
+      // The backend opens the pull request at the status it was asked for
+      // A new pull request opens at the status it was asked for; an existing one is returned as is
+      workflowService.savePullRequest.mockImplementation(
+        async (/** @type {any} */ { status, pullRequest }) => ({
+          pullRequest: pullRequest ?? { branch: 'cms/posts/hello', number: 7, status },
+          commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
+        }),
+      );
 
-      workflowService.updateStatus.mockImplementation(async (/** @type {any} */ pr) => ({
-        ...pr,
-        status: 'pending_publish',
-      }));
+      workflowService.updateStatus.mockImplementation(
+        async (/** @type {any} */ pr, /** @type {any} */ status) => ({ ...pr, status }),
+      );
     });
 
     test('opens a pull request that deletes every locale file', async () => {
@@ -502,19 +505,16 @@ describe('workflow/save', () => {
         options: { commitType: 'delete', collection },
         branch: 'cms/posts/hello',
         title: 'Delete Post “hello”',
+        status: 'pending_deletion',
         pullRequest: undefined,
       });
 
-      // The removal is ready to publish as soon as it’s committed
-      expect(workflowService.updateStatus).toHaveBeenCalledWith(
-        { branch: 'cms/posts/hello', number: 7, status: 'draft' },
-        'pending_publish',
-      );
+      // Opening it at the right status avoids creating a draft and relabelling it a moment later
+      expect(workflowService.updateStatus).not.toHaveBeenCalled();
 
       expect(unpublishedEntry.workflow).toMatchObject({
-        status: 'pending_publish',
+        status: 'pending_deletion',
         collectionName: 'posts',
-        deletion: true,
         previousPaths: ['content/posts/hello.md', 'content/posts/ja/hello.md'],
       });
 
@@ -606,6 +606,12 @@ describe('workflow/save', () => {
             { action: 'delete', slug: 'hello-renamed', path: 'content/posts/hello-renamed.md' },
           ],
         }),
+      );
+
+      // A reused pull request keeps the status it had, so it has to be switched over
+      expect(workflowService.updateStatus).toHaveBeenCalledWith(
+        pending.workflow.pullRequest,
+        'pending_deletion',
       );
 
       // The entry list matches the removal against where the entry sits on the configured branch

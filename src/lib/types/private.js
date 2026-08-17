@@ -247,7 +247,7 @@
 /**
  * Editorial Workflow status of an unpublished entry. The status is stored as a label on the
  * corresponding pull request, prefixed with the `cms_label_prefix` backend option value.
- * @typedef {'draft' | 'pending_review' | 'pending_publish'} WorkflowStatus
+ * @typedef {'draft' | 'pending_review' | 'pending_publish' | 'pending_deletion'} WorkflowStatus
  * @see https://decapcms.org/docs/editorial-workflows/
  */
 
@@ -292,9 +292,6 @@
  * @property {string[]} [previousPaths] File paths the entry occupied before the pull request
  * renamed it, which happens when the slug is edited. They’re used to match the draft with its
  * published counterpart, which would otherwise be listed as a separate entry.
- * @property {boolean} [deletion] Whether the pull request removes the entry from the production
- * branch rather than updating it, which is what the Unpublish action creates. The entry content is
- * kept so the entry can still be listed and previewed while the removal awaits publication.
  */
 
 /**
@@ -311,6 +308,9 @@
  * @property {CommitOptions} options Commit options.
  * @property {string} branch Workflow branch name.
  * @property {string} title Pull request title.
+ * @property {WorkflowStatus} status Status to open the pull request with. An edit starts as a
+ * draft, while a removal goes straight to `pending_deletion`, so it isn’t opened as a draft and
+ * relabelled a moment later.
  * @property {WorkflowPullRequest} [pullRequest] Existing pull request, if the entry has already
  * been saved once.
  */
