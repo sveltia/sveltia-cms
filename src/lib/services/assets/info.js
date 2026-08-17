@@ -1,5 +1,4 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { sleep } from '@sveltia/utils/misc';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp } from '@sveltia/utils/string';
 import mime from 'mime';
@@ -29,61 +28,138 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
 
 const URL_REGEX = /^(?:https?|data|blob):/;
 /**
- * Set of asset paths that are currently being requested. This is used to prevent multiple requests
- * for the same asset when the same asset is used in multiple places.
+ * Blobs behind the object URLs cached on assets, keyed by blob URL. An object URL already keeps its
+ * blob alive in memory until it’s revoked, so remembering the blob here costs nothing extra, and it
+ * spares every caller after the first from reading the same URL back over the network.
+ *
+ * Only blobs that have to be downloaded belong here, and only under a URL that {@link
+ * flushRevocations} is responsible for revoking, because that’s where the entry is discarded. A
+ * blob whose URL is revoked elsewhere — an unsaved file’s URL, released by `revokeDraftFileURLs`
+ * once the draft is replaced — would otherwise stay in memory for the lifetime of the page.
+ * @type {Map<string, Blob>}
  */
-const requestedAssetPaths = new Set();
+const cachedBlobs = new Map();
+/**
+ * Asset blob downloads currently in flight, keyed by the blob URL or asset path being read. Several
+ * components can ask for the same asset at once — the info panel and the toolbar both request an
+ * asset’s details as soon as it’s selected — so they share a single download instead of each
+ * starting their own.
+ * @type {Map<string, Promise<Blob>>}
+ */
+const pendingAssetBlobs = new Map();
+
+/* v8 ignore next */
+/**
+ * Reset the asset blob caches. This is used in tests to reset the state between tests.
+ * @internal
+ */
+export const _resetAssetBlobCache = () => {
+  cachedBlobs.clear();
+  pendingAssetBlobs.clear();
+};
 
 /**
- * Get the blob for the given asset.
+ * Give the asset an object URL for the given blob if it doesn’t have one yet.
  * @param {Asset} asset Asset.
- * @param {number} [retryCount] Retry count.
- * @returns {Promise<Blob>} Blob.
+ * @param {Blob} blob Blob.
+ * @returns {Blob} The same blob.
  */
-export const getAssetBlob = async (asset, retryCount = 0) => {
-  const { file, handle, blobURL, name, path } = asset;
+const cacheAssetBlobURL = (asset, blob) => {
+  asset.blobURL ??= URL.createObjectURL(blob);
 
-  if (blobURL) {
-    return fetch(blobURL).then((r) => r.blob());
+  return blob;
+};
+
+/**
+ * Give the asset an object URL for the given downloaded blob, and remember the blob so that later
+ * callers can have it without reading the URL back.
+ * @param {Asset} asset Asset.
+ * @param {Blob} blob Blob.
+ * @returns {Blob} The same blob.
+ */
+const cacheAssetBlob = (asset, blob) => {
+  cacheAssetBlobURL(asset, blob);
+
+  if (asset.blobURL) {
+    cachedBlobs.set(asset.blobURL, blob);
   }
 
-  /** @type {Blob} */
-  let blob;
+  return blob;
+};
 
+/**
+ * Download a blob, letting concurrent callers waiting on the same source share one request. A
+ * failed download is not remembered, so a later caller can try again.
+ * @param {string} key Blob URL or asset path being read.
+ * @param {() => Promise<Blob>} download Function that performs the download.
+ * @returns {Promise<Blob>} Blob.
+ */
+const downloadOnce = (key, download) => {
+  let pending = pendingAssetBlobs.get(key);
+
+  if (!pending) {
+    pending = download().finally(() => {
+      pendingAssetBlobs.delete(key);
+    });
+
+    pendingAssetBlobs.set(key, pending);
+  }
+
+  return pending;
+};
+
+/**
+ * Download the given asset from the backend.
+ * @param {Asset} asset Asset.
+ * @returns {Promise<Blob>} Blob.
+ * @throws {Error} When the blob cannot be retrieved.
+ */
+const fetchAssetBlob = async (asset) => {
+  const { name } = asset;
+  const blob = await get(backend)?.fetchBlob?.(asset);
+
+  if (!blob) {
+    throw new Error('Failed to retrieve blob');
+  }
+
+  // Override the MIME type as it can be `application/octet-stream`
+  return cacheAssetBlob(asset, new Blob([blob], { type: mime.getType(name) ?? blob.type }));
+};
+
+/**
+ * Get the blob for the given asset, from wherever it’s available: the file it was created from, the
+ * object URL already cached on it, a file system handle, or the backend.
+ * @param {Asset} asset Asset.
+ * @returns {Promise<Blob>} Blob.
+ * @throws {Error} When the blob cannot be retrieved.
+ */
+export const getAssetBlob = async (asset) => {
+  const { file, handle, blobURL, path } = asset;
+
+  // An unsaved asset holds the original file, which is the same data the object URL points at, so
+  // use it directly rather than reading the URL back. Nothing is cached for it: the file is already
+  // here, and its URL may be revoked by the draft rather than by `flushRevocations`
   if (file) {
-    blob = file;
-  } else if (handle) {
+    return cacheAssetBlobURL(asset, file);
+  }
+
+  if (blobURL) {
+    // The URL can be created elsewhere in the app, in which case the blob has to be read back. The
+    // result isn’t cached, because whoever created the URL also decides when to revoke it
+    return (
+      cachedBlobs.get(blobURL) ?? downloadOnce(blobURL, () => fetch(blobURL).then((r) => r.blob()))
+    );
+  }
+
+  if (handle) {
     try {
-      blob = await handle.getFile();
+      return cacheAssetBlob(asset, await handle.getFile());
     } catch {
       throw new Error('Failed to retrieve blob from file handle');
     }
-  } else {
-    // If the blob is already being requested, wait for it to prevent multiple requests. If the
-    // `blobURL` is still not available after 25 retries, or 5 seconds, fetch the file directly.
-    if (requestedAssetPaths.has(path) && retryCount <= 25) {
-      await sleep(200);
-      return getAssetBlob(asset, retryCount + 1);
-    }
-
-    requestedAssetPaths.add(path);
-
-    const _blob = await get(backend)?.fetchBlob?.(asset);
-
-    if (!_blob) {
-      throw new Error('Failed to retrieve blob');
-    }
-
-    // Override the MIME type as it can be `application/octet-stream`
-    blob = new Blob([_blob], { type: mime.getType(name) ?? _blob.type });
   }
 
-  // Cache the URL
-  asset.blobURL = URL.createObjectURL(blob);
-
-  requestedAssetPaths.delete(path);
-
-  return blob;
+  return downloadOnce(path, () => fetchAssetBlob(asset));
 };
 
 /**
@@ -230,7 +306,10 @@ const flushRevocations = () => {
     return;
   }
 
-  urls.forEach((url) => URL.revokeObjectURL(url));
+  urls.forEach((url) => {
+    URL.revokeObjectURL(url);
+    cachedBlobs.delete(url);
+  });
 
   // Update the store directly because the passed `asset` can be a proxy
   get(allAssets).forEach((asset) => {

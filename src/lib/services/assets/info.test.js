@@ -7,8 +7,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as cloudStorageModule from '$lib/services/integrations/media-libraries/cloud';
 import * as cloudinaryModule from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 
-import { defaultAssetDetails, getAssetDetails, getAssetUsedEntries } from './details';
 import {
+  _resetAssetMetadataCache,
+  defaultAssetDetails,
+  getAssetDetails,
+  getAssetUsedEntries,
+} from './details';
+import {
+  _resetAssetBlobCache,
   _resetRevocationQueue,
   _resetThumbnailDB,
   getAssetBaseURL,
@@ -108,6 +114,8 @@ describe('assets/info', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    _resetAssetBlobCache();
+    _resetAssetMetadataCache();
 
     // Create mock asset
     mockAsset = {
@@ -242,12 +250,85 @@ describe('assets/info', () => {
       await expect(getAssetBlob(mockAsset)).rejects.toThrow('Failed to retrieve blob');
     });
 
-    it('should retry when blob is already being requested', async () => {
-      const { sleep } = await import('@sveltia/utils/misc');
-      const sleepMock = vi.mocked(sleep);
+    it('should return the file instead of fetching the cached blob URL', async () => {
+      const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 
-      sleepMock.mockResolvedValue(undefined);
+      const assetWithFile = {
+        ...mockAsset,
+        file,
+        blobURL: 'blob:existing-url',
+      };
 
+      const result = await getAssetBlob(assetWithFile);
+
+      expect(result).toBe(file);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('should not read a downloaded blob back from its blob URL', async () => {
+      const assetWithoutHandle = {
+        ...mockAsset,
+        handle: undefined,
+        blobURL: undefined,
+      };
+
+      mockBackend.fetchBlob.mockResolvedValue(new Blob(['test data'], { type: 'image/jpeg' }));
+
+      const blob1 = await getAssetBlob(assetWithoutHandle);
+
+      expect(assetWithoutHandle.blobURL).toBe('blob:mock-url');
+
+      const blob2 = await getAssetBlob(assetWithoutHandle);
+
+      expect(blob2).toBe(blob1);
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockBackend.fetchBlob).toHaveBeenCalledTimes(1);
+    });
+
+    it('should share a single read between concurrent blob URL callers', async () => {
+      const assetWithBlobURL = {
+        ...mockAsset,
+        blobURL: 'blob:existing-url',
+      };
+
+      const [blob1, blob2] = await Promise.all([
+        getAssetBlob(assetWithBlobURL),
+        getAssetBlob(assetWithBlobURL),
+      ]);
+
+      expect(blob1).toBe(mockBlob);
+      expect(blob2).toBe(mockBlob);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not cache the blob of a URL created elsewhere', async () => {
+      // An unsaved file’s URL is revoked by the draft, so its blob must not be held on to here
+      const assetWithBlobURL = {
+        ...mockAsset,
+        blobURL: 'blob:existing-url',
+      };
+
+      await getAssetBlob(assetWithBlobURL);
+      await getAssetBlob(assetWithBlobURL);
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not cache the blob of an unsaved asset holding its file', async () => {
+      const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+      // An asset created from a dropped file gets its URL from the draft, which revokes it later
+      const assetWithFile = { ...mockAsset, file, blobURL: 'blob:draft-url' };
+
+      expect(await getAssetBlob(assetWithFile)).toBe(file);
+
+      // The blob URL is left untouched, and nothing is kept under it
+      const assetWithSameURL = { ...mockAsset, file: undefined, blobURL: 'blob:draft-url' };
+
+      expect(await getAssetBlob(assetWithSameURL)).toBe(mockBlob);
+      expect(global.fetch).toHaveBeenCalledWith('blob:draft-url');
+    });
+
+    it('should share a single request between concurrent callers', async () => {
       // Create asset without handle or blobURL to force backend fetch
       const assetWithoutHandle = {
         ...mockAsset,
@@ -262,18 +343,30 @@ describe('assets/info', () => {
 
       mimeMock.getType.mockReturnValue('image/jpeg');
 
-      // First call - should add path to requestedAssetPaths
-      const promise1 = getAssetBlob(assetWithoutHandle, 0);
-      // Simulate a concurrent call that finds the path already in requestedAssetPaths
-      // and retryCount is within limit (0 <= 25)
-      const promise2 = getAssetBlob(assetWithoutHandle, 0);
-      // Both should eventually resolve
-      const [blob1, blob2] = await Promise.all([promise1, promise2]);
+      const [blob1, blob2] = await Promise.all([
+        getAssetBlob(assetWithoutHandle),
+        getAssetBlob(assetWithoutHandle),
+      ]);
 
       expect(blob1).toBeInstanceOf(Blob);
-      expect(blob2).toBeInstanceOf(Blob);
-      // sleep should have been called due to retry logic
-      expect(sleepMock).toHaveBeenCalled();
+      expect(blob2).toBe(blob1);
+      expect(mockBackend.fetchBlob).toHaveBeenCalledTimes(1);
+    });
+
+    it('should retry the backend request after a failure', async () => {
+      const assetWithoutHandle = {
+        ...mockAsset,
+        handle: undefined,
+        blobURL: undefined,
+      };
+
+      mockBackend.fetchBlob.mockResolvedValueOnce(null);
+      mockBackend.fetchBlob.mockResolvedValueOnce(new Blob(['test data'], { type: 'image/jpeg' }));
+
+      await expect(getAssetBlob(assetWithoutHandle)).rejects.toThrow('Failed to retrieve blob');
+
+      expect(await getAssetBlob(assetWithoutHandle)).toBeInstanceOf(Blob);
+      expect(mockBackend.fetchBlob).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -1380,6 +1473,89 @@ describe('assets/info', () => {
 
       expect(result.repoBlobURL).toBe(undefined);
     });
+
+    it('should skip the metadata when no blob URL can be created', async () => {
+      const { getMediaMetadata } = await import('$lib/services/utils/media');
+
+      // @ts-ignore
+      vi.mocked(URL.createObjectURL).mockReturnValue(undefined);
+
+      const mockHandle = {
+        getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),
+      };
+
+      const result = await getAssetDetails({ ...mockAsset, handle: mockHandle });
+
+      expect(vi.mocked(getMediaMetadata)).not.toHaveBeenCalled();
+      expect(result.publicURL).toBe('https://example.com/assets/images/test.jpg');
+    });
+
+    it('should collect the metadata only once per file', async () => {
+      const { getMediaMetadata } = await import('$lib/services/utils/media');
+
+      const mockHandle = {
+        getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),
+      };
+
+      const assetWithHandle = { ...mockAsset, handle: mockHandle };
+
+      const [details1, details2] = await Promise.all([
+        getAssetDetails(assetWithHandle),
+        getAssetDetails(assetWithHandle),
+      ]);
+
+      await getAssetDetails(assetWithHandle);
+
+      expect(details2).toEqual(details1);
+      expect(vi.mocked(getMediaMetadata)).toHaveBeenCalledTimes(1);
+    });
+
+    it('should resolve the URLs per call rather than caching them with the metadata', async () => {
+      const mockHandle = {
+        getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),
+      };
+
+      const original = { ...mockAsset, handle: mockHandle };
+      // A copy of the same file elsewhere in the repository shares its SHA but not its URLs
+      const copy = { ...original, path: 'assets/images/copy.jpg', name: 'copy.jpg' };
+      const details1 = await getAssetDetails(original);
+      const details2 = await getAssetDetails(copy);
+
+      expect(details1.dimensions).toEqual(details2.dimensions);
+      expect(details1.publicURL).toBe('https://example.com/assets/images/test.jpg');
+      expect(details2.publicURL).toBe('https://example.com/assets/images/copy.jpg');
+      expect(details2.repoBlobURL).toBe('https://example.com/blobs/assets/images/copy.jpg');
+    });
+
+    it('should collect the metadata of an asset without a SHA every time', async () => {
+      const { getMediaMetadata } = await import('$lib/services/utils/media');
+
+      const mockHandle = {
+        getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),
+      };
+
+      const assetWithoutSHA = { ...mockAsset, sha: undefined, handle: mockHandle };
+
+      await getAssetDetails(assetWithoutSHA);
+      await getAssetDetails(assetWithoutSHA);
+
+      expect(vi.mocked(getMediaMetadata)).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not cache a failed metadata collection', async () => {
+      const { getMediaMetadata } = await import('$lib/services/utils/media');
+      const assetWithoutHandle = { ...mockAsset, handle: undefined, blobURL: undefined };
+
+      mockBackend.fetchBlob.mockResolvedValueOnce(null);
+      mockBackend.fetchBlob.mockResolvedValueOnce(new Blob(['test'], { type: 'image/jpeg' }));
+
+      await expect(getAssetDetails(assetWithoutHandle)).rejects.toThrow('Failed to retrieve blob');
+
+      const result = await getAssetDetails(assetWithoutHandle);
+
+      expect(result.dimensions).toEqual({ width: 800, height: 600 });
+      expect(vi.mocked(getMediaMetadata)).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('defaultAssetDetails', () => {
@@ -2034,53 +2210,6 @@ describe('assets/info', () => {
       await getAssetDetails(documentAsset);
 
       expect(vi.mocked(getMediaMetadata)).not.toHaveBeenCalled();
-    });
-
-    it('should retry blob fetch on concurrent request', async () => {
-      const { sleep } = await import('@sveltia/utils/misc');
-      const sleepMock = vi.mocked(sleep);
-
-      sleepMock.mockResolvedValue(undefined);
-
-      mockBackend.fetchBlob.mockResolvedValue(new Blob(['test'], { type: 'image/jpeg' }));
-
-      const { default: mime } = await import('mime');
-
-      vi.mocked(mime).getType.mockReturnValue('image/jpeg');
-
-      const assetNoHandle = {
-        ...mockAsset,
-        handle: undefined,
-        blobURL: undefined,
-      };
-
-      // Call with retryCount within limit to trigger sleep
-      const result = await getAssetBlob(assetNoHandle, 5);
-
-      expect(result).toBeInstanceOf(Blob);
-    });
-
-    it('should reach max retry count and fetch blob', async () => {
-      const { sleep } = await import('@sveltia/utils/misc');
-
-      vi.mocked(sleep).mockResolvedValue(undefined);
-
-      mockBackend.fetchBlob.mockResolvedValue(new Blob(['test'], { type: 'image/jpeg' }));
-
-      const { default: mime } = await import('mime');
-
-      vi.mocked(mime).getType.mockReturnValue('image/jpeg');
-
-      const assetNoHandle = {
-        ...mockAsset,
-        handle: undefined,
-        blobURL: undefined,
-      };
-
-      // Call with retryCount at limit (25) to test conditional
-      const result = await getAssetBlob(assetNoHandle, 25);
-
-      expect(result).toBeInstanceOf(Blob);
     });
 
     it('should handle replaceAll in template tag replacement', async () => {
