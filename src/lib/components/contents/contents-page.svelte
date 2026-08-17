@@ -38,6 +38,7 @@
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { isSearchRoute } from '$lib/services/search/navigation';
   import { env } from '$lib/services/user/env.svelte';
+  import { getUnpublishedEntry, workflowDataReady } from '$lib/services/workflow';
 
   /**
    * @import { InternalCollection } from '$lib/types/private';
@@ -48,6 +49,7 @@
 
   let isIndexPage = $state(false);
   let isSearchPage = $state(false);
+  let loadingEntry = $state(false);
   let editorLocale = $state();
 
   const MainContent = $derived('files' in ($selectedCollection ?? {}) ? FileList : EntryList);
@@ -62,6 +64,7 @@
 
     isIndexPage = false;
     isSearchPage = false;
+    loadingEntry = false;
 
     // Set the editor locale if specified in the URL params, e.g., `?_locale=fr`
     editorLocale = params._locale;
@@ -133,10 +136,25 @@
 
     $showContentOverlay = true;
 
+    // An entry opened with a deep link can’t be resolved until the Editorial Workflow drafts have
+    // been fetched, which happens after the initial data load. Show a loading state and try again
+    // once they’re in; the effect below re-runs this function.
+    if (routeType === 'entries' && subPath && !$workflowDataReady) {
+      loadingEntry = true;
+      $announcedPageStatus = _('loading_entries', { values: { count: 1 } });
+
+      return;
+    }
+
     if (_fileMap) {
       // File/singleton collection
       if (routeType === 'entries' && subPath) {
-        const originalEntry = getCollectionFileEntry(collectionName, subPath);
+        // An unpublished entry takes precedence over the published version, so the user can keep
+        // editing the draft stored in the pull request
+        const originalEntry =
+          getUnpublishedEntry({ collectionName, subPath }) ??
+          getCollectionFileEntry(collectionName, subPath);
+
         const collectionFile = _fileMap[subPath];
 
         if (originalEntry) {
@@ -179,7 +197,9 @@
       }
 
       if (routeType === 'entries' && subPath) {
-        const originalEntry = $listedEntries.find((entry) => entry.subPath === subPath);
+        const originalEntry =
+          getUnpublishedEntry({ collectionName, subPath }) ??
+          $listedEntries.find((entry) => entry.subPath === subPath);
 
         if (originalEntry && appLocale.current) {
           createDraft({ collection, originalEntry });
@@ -201,6 +221,12 @@
     return () => {
       $showContentOverlay = false;
     };
+  });
+
+  $effect(() => {
+    if (loadingEntry && $workflowDataReady) {
+      navigate();
+    }
   });
 </script>
 
@@ -253,7 +279,7 @@
 </PageContainer>
 
 {#if $showContentOverlay}
-  <ContentDetailsOverlay {editorLocale} />
+  <ContentDetailsOverlay {editorLocale} loading={loadingEntry} />
 {/if}
 
 <Toast bind:show={$contentUpdatesToast.saved}>
@@ -264,8 +290,20 @@
   </Alert>
 </Toast>
 
+<Toast bind:show={$contentUpdatesToast.deletionCancelled}>
+  <Alert status="success">{_('workflow.deletion_cancelled')}</Alert>
+</Toast>
+
+<Toast bind:show={$contentUpdatesToast.discarded}>
+  <Alert status="success">
+    {_('workflow.changes_discarded', { values: { count: $contentUpdatesToast.count } })}
+  </Alert>
+</Toast>
+
 <Toast bind:show={$contentUpdatesToast.deleted}>
   <Alert status="success">
-    {_('entries_deleted', { values: { count: $contentUpdatesToast.count } })}
+    {_($contentUpdatesToast.deletionPending ? 'workflow.deletion_pending' : 'entries_deleted', {
+      values: { count: $contentUpdatesToast.count },
+    })}
   </Alert>
 </Toast>

@@ -7,6 +7,7 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { searchTerms } from '$lib/services/search';
 import { hasMatch, normalize } from '$lib/services/search/util';
+import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
 /**
  * @import { Readable } from 'svelte/store';
@@ -108,6 +109,7 @@ export const searchEntries = ({ entries, terms }) => {
 export const entrySearchResults = derived(
   // Include `appLocale.current` as a dependency because `getEntrySummary()` may return a localized
   // label
-  [allEntries, searchTerms, appLocaleStore],
-  ([entries, terms]) => searchEntries({ entries, terms }),
+  [allEntries, unpublishedEntries, searchTerms, appLocaleStore],
+  ([entries, drafts, terms]) =>
+    searchEntries({ entries: mergeUnpublishedEntries(entries, drafts), terms }),
 );

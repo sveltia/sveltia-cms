@@ -384,7 +384,10 @@ export const processI18nMultiFileEntry = (
   if (existingEntry) {
     existingEntry.locales[locale] = localizedEntry;
 
-    if (locale === defaultLocale) {
+    // The default locale defines the entry’s identity, but any other locale stands in when its file
+    // is absent. Otherwise the entry would have no slug and `prepareEntries()` would drop it, which
+    // happens with Editorial Workflow whenever a pull request touches only a non-default locale
+    if (locale === defaultLocale || !existingEntry.slug) {
       existingEntry.slug = slug;
       existingEntry.subPath = subPath;
     }
@@ -394,10 +397,8 @@ export const processI18nMultiFileEntry = (
 
   entry.id = tempId;
   entry.locales[locale] = localizedEntry;
-
-  if (locale === defaultLocale) {
-    entry.slug = slug;
-  }
+  // The default locale file overrides this when it’s processed, in the branch above
+  entry.slug = slug;
 
   return false; // New entry should be added
 };

@@ -27,6 +27,7 @@
     isFieldRequired,
   } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { isPendingDeletion } from '$lib/services/workflow';
 
   /**
    * @import { Component } from 'svelte';
@@ -225,8 +226,12 @@
   });
   const validity = $derived($entryDraft?.validities[locale][keyPath]);
   const fieldLabel = $derived(label || fieldName);
+  // An entry awaiting deletion is shown for reference only. Unlike `readonly`, which is also set
+  // for a duplicated locale, this hides the options that would change the content
+  const pendingDeletion = $derived(isPendingDeletion($entryDraft?.originalEntry));
   const readonly = $derived(
     readonlyOption ||
+      pendingDeletion ||
       (i18n === 'duplicate' && locale !== defaultLocale) ||
       fieldType === 'compute' ||
       fieldType === 'uuid',
@@ -285,6 +290,7 @@
           variant="ghost"
           size="small"
           iconic
+          disabled={pendingDeletion}
           popupPosition="bottom-right"
           aria-label={_('show_field_options')}
         >

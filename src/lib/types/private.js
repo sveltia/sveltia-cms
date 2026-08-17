@@ -165,6 +165,14 @@
  * @property {InternalCollection} [collection] Collection of the corresponding entry or asset.
  * @property {boolean} [skipCI] Whether to disable automatic deployments for the commit. Used only
  * for Git backends.
+ * @property {string} [branch] Branch to commit to. Default: the branch configured in the site
+ * configuration. Used only for Git backends with Editorial Workflow enabled.
+ * @property {string} [headOid] Git object ID the branch is known to point at. It saves the backend
+ * a round trip to look the head up itself, which the caller can provide when it has just created
+ * the branch. Used only for Git backends with Editorial Workflow enabled.
+ * @property {string} [startBranch] Branch to create the `branch` from as part of the commit, which
+ * saves the round trip of creating it beforehand. Ignored if the branch already exists. Used only
+ * for Git backends with Editorial Workflow enabled.
  */
 
 /**
@@ -232,6 +240,96 @@
  * deployment on any connected CI/CD provider. GitHub only.
  * @property {(paths: string[]) => Promise<FileCommit[]>} [fetchFileCommits] Function to fetch
  * commit history for given file paths. Git backends only.
+ * @property {WorkflowBackendService} [workflow] Editorial Workflow implementation. Git backends
+ * only, and only when the backend supports the feature.
+ */
+
+/**
+ * Editorial Workflow status of an unpublished entry. The status is stored as a label on the
+ * corresponding pull request, prefixed with the `cms_label_prefix` backend option value.
+ * @typedef {'draft' | 'pending_review' | 'pending_publish'} WorkflowStatus
+ * @see https://decapcms.org/docs/editorial-workflows/
+ */
+
+/**
+ * A file included in an Editorial Workflow pull request.
+ * @typedef {object} WorkflowFile
+ * @property {string} path File path relative to the project’s root directory.
+ * @property {string} sha Git object ID (SHA-1 hash) of the file blob.
+ * @property {number} size File size in bytes.
+ * @property {string} [text] Raw text content. `undefined` for binary files.
+ * @property {boolean} deleted Whether the file has been deleted in the pull request.
+ * @property {boolean} [renamed] Whether the pull request renamed the file, which happens when the
+ * entry’s slug is edited. GitHub’s GraphQL API reports this without the previous path, so it marks
+ * the pull requests that need a follow-up REST request.
+ * @property {string} [previousPath] Path the file had before the pull request renamed it.
+ */
+
+/**
+ * A pull request that holds an unpublished entry created with Editorial Workflow.
+ * @typedef {object} WorkflowPullRequest
+ * @property {number} number Pull request number.
+ * @property {string} nodeId Global node ID used with the backend’s GraphQL API.
+ * @property {string} url Pull request URL on the backend service.
+ * @property {string} title Pull request title.
+ * @property {string} branch Head branch name, e.g. `cms/posts/hello-world`.
+ * @property {WorkflowStatus} status Current status determined by the pull request’s labels.
+ * @property {Date} createdDate Date when the pull request was created.
+ * @property {Date} updatedDate Date when the pull request was last updated.
+ * @property {CommitAuthor} [author] Author of the pull request.
+ * @property {string} [previewURL] Deploy preview URL, if any.
+ * @property {WorkflowFile[]} files Files changed in the pull request.
+ */
+
+/**
+ * Editorial Workflow properties attached to an unpublished entry.
+ * @typedef {object} UnpublishedEntryProps
+ * @property {WorkflowPullRequest} pullRequest Pull request holding the entry.
+ * @property {WorkflowStatus} status Current status. Same as `pullRequest.status`, duplicated here
+ * for convenience and reactivity.
+ * @property {string} collectionName Collection name the entry belongs to.
+ * @property {string} [fileName] Collection file name. File/singleton collection only.
+ * @property {string[]} [previousPaths] File paths the entry occupied before the pull request
+ * renamed it, which happens when the slug is edited. They’re used to match the draft with its
+ * published counterpart, which would otherwise be listed as a separate entry.
+ * @property {boolean} [deletion] Whether the pull request removes the entry from the production
+ * branch rather than updating it, which is what the Unpublish action creates. The entry content is
+ * kept so the entry can still be listed and previewed while the removal awaits publication.
+ */
+
+/**
+ * An entry that has not been published yet, backed by an open pull request. It’s a regular
+ * {@link Entry} with extra Editorial Workflow information, so it can be passed to the existing
+ * entry editor and list components as is.
+ * @typedef {Entry & { workflow: UnpublishedEntryProps }} UnpublishedEntry
+ */
+
+/**
+ * Arguments for the `saveEntry` function on {@link WorkflowBackendService}.
+ * @typedef {object} WorkflowSaveOptions
+ * @property {FileChange[]} changes Changes to be committed on the workflow branch.
+ * @property {CommitOptions} options Commit options.
+ * @property {string} branch Workflow branch name.
+ * @property {string} title Pull request title.
+ * @property {WorkflowPullRequest} [pullRequest] Existing pull request, if the entry has already
+ * been saved once.
+ */
+
+/**
+ * Editorial Workflow implementation provided by a backend service.
+ * @typedef {object} WorkflowBackendService
+ * @property {() => Promise<WorkflowPullRequest[]>} fetchPullRequests Function to fetch all the open
+ * pull requests managed by the CMS, along with the changed files.
+ * @property {(args: WorkflowSaveOptions) =>
+ * Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} savePullRequest Function to
+ * commit changes on the workflow branch, creating the branch and the pull request if needed.
+ * @property {(pullRequest: WorkflowPullRequest, status: WorkflowStatus) =>
+ * Promise<WorkflowPullRequest>} updateStatus Function to update the pull request’s status label and
+ * draft state.
+ * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} publish Function to merge the
+ * pull request and delete the workflow branch.
+ * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} discard Function to close the
+ * pull request and delete the workflow branch.
  */
 
 /**
@@ -804,6 +902,12 @@
  * @property {boolean} moved Whether the items have been moved.
  * @property {boolean} renamed Whether the items have been renamed.
  * @property {boolean} deleted Whether the items have been deleted.
+ * @property {boolean} [deletionPending] Whether the removal awaits publication rather than having
+ * taken effect, which is how Editorial Workflow deletes a published entry.
+ * @property {boolean} [discarded] Whether the items’ unpublished changes have been thrown away,
+ * leaving the published version on the site.
+ * @property {boolean} [deletionCancelled] Whether a pending removal has been called off, leaving
+ * the items on the site.
  * @property {boolean} published Whether the items have been published. This is `true` only when
  * automatic deployments are enabled and triggered.
  */
@@ -838,6 +942,17 @@
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
  * @property {AssetFolderInfo} folder Asset folder info.
  * @property {boolean} [unsaved] Whether the asset is unsaved.
+ * @property {UnpublishedAssetProps} [workflow] Editorial Workflow information. It’s only set while
+ * the asset lives on a workflow branch, and removed once the entry has been published.
+ */
+
+/**
+ * Editorial Workflow properties attached to an asset committed to a workflow branch. Such an asset
+ * is added to the regular asset list so it can be previewed before the entry is published.
+ * @typedef {object} UnpublishedAssetProps
+ * @property {string} branch Workflow branch the asset was committed to.
+ * @property {Asset} [replacedAsset] Published asset at the same path that this asset temporarily
+ * shadows in the asset list. It’s restored when the draft is discarded.
  */
 
 /**

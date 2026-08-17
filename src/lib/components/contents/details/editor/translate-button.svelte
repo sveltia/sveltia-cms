@@ -7,6 +7,7 @@
   import { copyFromLocale } from '$lib/services/contents/draft/update/copy';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { translator } from '$lib/services/integrations/translators';
+  import { isPendingDeletion } from '$lib/services/workflow';
 
   /**
    * @import { InternalLocaleCode, LanguagePair } from '$lib/types/private';
@@ -31,7 +32,11 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const sourceDisabled = $derived(!$entryDraft?.currentLocales[locale]);
+  const sourceDisabled = $derived(
+    !$entryDraft?.currentLocales[locale] ||
+      // An entry awaiting deletion is read-only, so there’s nothing to translate into
+      isPendingDeletion($entryDraft?.originalEntry),
+  );
 
   /**
    * Check if the translate button should be disabled.

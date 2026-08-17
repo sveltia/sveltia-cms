@@ -1361,9 +1361,10 @@ describe('Test processI18nMultiFileEntry()', () => {
     expect(entry.locales.en).toBeDefined();
   });
 
-  test('creates new entry for non-default locale first (line 368 false branch)', () => {
-    // When a non-default locale file is processed first (no existing entry yet),
-    // `locale !== defaultLocale` → entry.slug is NOT set (line 368 false branch).
+  test('creates new entry for non-default locale first, which provides the slug', () => {
+    // A non-default locale file processed first supplies a provisional slug, so the entry isn’t
+    // dropped by `prepareEntries()` when the default locale file is absent. The default locale
+    // overrides it if its file turns up.
     const entry = /** @type {Entry} */ ({
       id: '',
       slug: '',
@@ -1389,8 +1390,47 @@ describe('Test processI18nMultiFileEntry()', () => {
     );
 
     expect(wasMerged).toBe(false);
-    expect(entry.slug).toBe(''); // Not set because locale !== defaultLocale
+    expect(entry.slug).toBe('mon-article');
     expect(entry.locales.fr).toBeDefined();
+  });
+
+  test('lets the default locale override a slug set by another locale', () => {
+    const entry = /** @type {Entry} */ ({ id: '', slug: '', subPath: '', locales: {} });
+    const entries = /** @type {Entry[]} */ ([]);
+
+    processI18nMultiFileEntry(
+      entry,
+      { title: 'Mon Article' },
+      '/posts/mon-article.fr.md',
+      undefined,
+      'mon-article',
+      undefined,
+      'fr',
+      'en',
+      'posts',
+      'translation_key',
+      entries,
+    );
+
+    entries.push(entry);
+
+    const wasMerged = processI18nMultiFileEntry(
+      /** @type {Entry} */ ({ id: '', slug: '', subPath: '', locales: {} }),
+      { title: 'My Article' },
+      '/posts/my-article.en.md',
+      undefined,
+      'my-article',
+      undefined,
+      'en',
+      'en',
+      'posts',
+      undefined,
+      entries,
+    );
+
+    expect(wasMerged).toBe(false);
+    // Without a canonical slug the two files aren’t linked, so this is a separate entry
+    expect(entry.slug).toBe('mon-article');
   });
 });
 

@@ -18,9 +18,11 @@ import { validateEntry } from '$lib/services/contents/draft/validate';
 import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
+import { workflowEnabled } from '$lib/services/workflow';
+import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
 /**
- * @import { ChangeResults, Entry, EntryDraft } from '$lib/types/private';
+ * @import { ChangeResults, CommitOptions, Entry, EntryDraft } from '$lib/types/private';
  */
 
 /**
@@ -29,7 +31,9 @@ import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
  * @param {boolean | undefined} args.skipCI Whether to disable automatic deployments for the change.
  */
 const updateStores = ({ skipCI }) => {
-  const published = get(skipCIConfigured) && !(skipCI ?? get(skipCIEnabled));
+  // With Editorial Workflow, changes go to a pull request, so nothing is published yet
+  const published =
+    !get(workflowEnabled) && get(skipCIConfigured) && !(skipCI ?? get(skipCIEnabled));
 
   contentUpdatesToast.set({
     ...UPDATE_TOAST_DEFAULT_STATE,
@@ -102,18 +106,27 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
   /** @type {ChangeResults} */
   let results;
+  /** @type {CommitOptions} */
+  const options = { commitType: isNew ? 'create' : 'update', collection, skipCI };
 
   try {
-    results = await saveChanges({
-      changes,
-      savingEntries: [savingEntry],
-      savingAssets,
-      options: {
-        commitType: isNew ? 'create' : 'update',
-        collection,
-        skipCI,
-      },
-    });
+    results = get(workflowEnabled)
+      ? await saveWorkflowChanges({
+          changes,
+          savingEntry,
+          savingAssets,
+          options,
+          collectionName,
+          fileName,
+          slug: defaultLocaleSlug,
+          originalEntry,
+        })
+      : await saveChanges({
+          changes,
+          savingEntries: [savingEntry],
+          savingAssets,
+          options,
+        });
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex.cause ?? ex);
@@ -121,7 +134,13 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     throw new Error('saving_failed', { cause: ex.cause ?? ex });
   }
 
-  await callEventHooks({ type: 'postSave', draft, savingEntry });
+  await callEventHooks({
+    type: 'postSave',
+    entry: savingEntry,
+    collection,
+    collectionFile: draft.collectionFile,
+    isNew,
+  });
 
   updateStores({ skipCI });
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);

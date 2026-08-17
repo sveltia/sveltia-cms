@@ -10,7 +10,7 @@ import { hasMatch, normalize } from './util';
 
 // Mock only the stores, not the util functions
 vi.mock('$lib/services/assets', () => ({
-  allAssets: writable([]),
+  publishedAssets: writable([]),
 }));
 
 vi.mock('$lib/services/search', () => ({
@@ -118,7 +118,8 @@ describe('assetSearchResults derived store', () => {
   it('should execute the derived store callback', async () => {
     // Import after mocks are set up
     const { assetSearchResults } = await import('./assets');
-    const { allAssets } = await import('$lib/services/assets');
+    // The mock replaces the real read-only store with a writable one
+    const allAssets = /** @type {any} */ ((await import('$lib/services/assets')).publishedAssets);
     const { searchTerms } = await import('$lib/services/search');
     let callbackExecuted = false;
 

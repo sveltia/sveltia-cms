@@ -5,9 +5,9 @@
   import { goto, selectedPageName } from '$lib/services/app/navigation';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import { backendName } from '$lib/services/backends';
-  import { cmsConfig } from '$lib/services/config';
   import { searchMode } from '$lib/services/search';
   import { env } from '$lib/services/user/env.svelte';
+  import { workflowEnabled } from '$lib/services/workflow';
 
   const pages = $derived.by(() => {
     const _pages = [
@@ -35,13 +35,14 @@
       });
     }
 
-    if ($cmsConfig?.publish_mode === 'editorial_workflow') {
-      // _pages.push({
-      //   key: 'workflow',
-      //   label: _('editorial_workflow'),
-      //   icon: 'rebase_edit',
-      //   link: '/workflow',
-      // });
+    if ($workflowEnabled) {
+      _pages.push({
+        key: 'workflow',
+        label: _('editorial_workflow'),
+        icon: 'rebase_edit',
+        link: '/workflow',
+        searchMode: undefined,
+      });
     }
 
     if ($backendName === 'local') {

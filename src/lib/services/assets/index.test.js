@@ -21,6 +21,7 @@ import {
   isRelativePath,
   overlaidAsset,
   processedAssets,
+  publishedAssets,
   renamingAsset,
   selectedAssetPathSet,
   selectedAssets,
@@ -4447,5 +4448,29 @@ describe('assets/index', () => {
 
       expect(result).toEqual([file]);
     });
+  });
+});
+
+describe('publishedAssets', () => {
+  beforeEach(() => {
+    allAssets.set([]);
+  });
+
+  it('should keep the same array when nothing is unpublished', () => {
+    const assets = /** @type {any} */ ([{ path: 'a.png' }, { path: 'b.png' }]);
+
+    allAssets.set(assets);
+    expect(get(publishedAssets)).toBe(assets);
+  });
+
+  it('should exclude the assets committed to a workflow branch', () => {
+    allAssets.set(
+      /** @type {any} */ ([
+        { path: 'a.png' },
+        { path: 'b.png', workflow: { branch: 'cms/posts/hello' } },
+      ]),
+    );
+
+    expect(get(publishedAssets).map(({ path }) => path)).toEqual(['a.png']);
   });
 });

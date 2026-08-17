@@ -13,6 +13,9 @@ export const UPDATE_TOAST_DEFAULT_STATE = {
   moved: false,
   renamed: false,
   deleted: false,
+  deletionPending: false,
+  discarded: false,
+  deletionCancelled: false,
   published: false,
   count: 1,
 };

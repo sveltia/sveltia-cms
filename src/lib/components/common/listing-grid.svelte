@@ -105,6 +105,11 @@
           }
         }
 
+        /* Editorial Workflow status, shown below the title on a tile */
+        .status {
+          margin: -4px 12px 12px;
+        }
+
         &[tabindex] {
           border-radius: var(--sui-control-large-border-radius);
           background-color: var(--sui-secondary-background-color);
@@ -186,6 +191,15 @@
           &.title {
             width: 100%; /* flex: auto */
             color: var(--sui-primary-foreground-color);
+          }
+
+          /*
+           * The column is as wide as the widest Editorial Workflow status badge, so align the
+           * badges to the end of the row rather than letting the narrower ones float mid-column
+           */
+
+          &.status {
+            text-align: end;
           }
 
           &:first-child {

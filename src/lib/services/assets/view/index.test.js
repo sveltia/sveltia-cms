@@ -69,7 +69,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
 }));
 
 vi.mock('$lib/services/assets', () => ({
-  allAssets: { subscribe: vi.fn(() => vi.fn()) },
+  publishedAssets: { subscribe: vi.fn(() => vi.fn()) },
   selectedAssets: {
     subscribe: vi.fn(() => vi.fn()),
     set: vi.fn(),
@@ -400,7 +400,7 @@ describe('assets/view/index', () => {
     it('should return all assets when selectedAssetFolder is undefined', async () => {
       vi.resetModules();
 
-      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
       const { selectedAssetFolder } = await import('$lib/services/assets/folders');
 
       const mockAssetList = /** @type {any[]} */ ([
@@ -442,10 +442,10 @@ describe('assets/view/index', () => {
       expect(mockAssetCallback).toHaveBeenCalled();
     });
 
-    it('should return empty array when allAssets is null', async () => {
+    it('should return empty array when publishedAssets is null', async () => {
       vi.resetModules();
 
-      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
       const { selectedAssetFolder } = await import('$lib/services/assets/folders');
 
       vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
@@ -479,7 +479,7 @@ describe('assets/view/index', () => {
     it('should handle empty asset list from filter', async () => {
       vi.resetModules();
 
-      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
       const { selectedAssetFolder } = await import('$lib/services/assets/folders');
       const emptyAssetList = /** @type {any[]} */ ([]);
 
@@ -514,7 +514,7 @@ describe('assets/view/index', () => {
     it('should match the selected folder by identity as well as by value', async () => {
       vi.resetModules();
 
-      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
       const { selectedAssetFolder } = await import('$lib/services/assets/folders');
 
       const folder = /** @type {any} */ ({
@@ -578,7 +578,7 @@ describe('assets/view/index', () => {
     it('should filter assets when folder with internalPath is selected', async () => {
       vi.resetModules();
 
-      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
       const { selectedAssetFolder } = await import('$lib/services/assets/folders');
 
       const mockAssetList = /** @type {any[]} */ ([
@@ -631,7 +631,7 @@ describe('assets/view/index', () => {
     it('should map each asset path to its position via listedAssetIndexMap', async () => {
       vi.resetModules();
 
-      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
       const { selectedAssetFolder } = await import('$lib/services/assets/folders');
 
       const mockAssetList = /** @type {any[]} */ ([
@@ -741,7 +741,7 @@ describe('assets/view/index', () => {
       //   get(assetGroups)=mockGroups → equal → skip → L117 false covered.
       vi.resetModules();
 
-      const { allAssets, selectedAssets } = await import('$lib/services/assets');
+      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
       const { selectedAssetFolder } = await import('$lib/services/assets/folders');
       const { filterAssets } = await import('$lib/services/assets/view/filter');
       const { sortAssets } = await import('$lib/services/assets/view/sort');

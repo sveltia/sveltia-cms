@@ -62,7 +62,8 @@ export const sendRequest = async (
     init.headers.set('Accept', 'application/json');
   }
 
-  if (init.method === 'POST' && isObject(init.body)) {
+  // Serialize a plain object body for any method that accepts one, e.g. `POST`, `PUT` and `PATCH`
+  if (isObject(init.body)) {
     init.headers.set('Content-Type', 'application/json');
     init.body = JSON.stringify(init.body);
   }

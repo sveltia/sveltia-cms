@@ -14,6 +14,7 @@
     currentView,
     entryGroups,
     listedEntries,
+    listedUnpublishedEntries,
     reordering,
   } from '$lib/services/contents/collection/view';
   import { viewFilters } from '$lib/services/contents/collection/view/filter';
@@ -32,15 +33,18 @@
   );
   const collectionName = $derived(entryCollection?.name);
   const thumbnailFieldNames = $derived(entryCollection?._thumbnailFieldNames ?? []);
-  const hasListedEntries = $derived(!!$listedEntries.length);
-  const hasMultipleEntries = $derived($listedEntries.length > 1);
+  // The unpublished entries are listed in their own group above the published ones, so they count
+  // towards the list total as well
+  const listedEntryCount = $derived($listedEntries.length + $listedUnpublishedEntries.length);
+  const hasListedEntries = $derived(!!listedEntryCount);
+  const hasMultipleEntries = $derived(listedEntryCount > 1);
 </script>
 
 {#if entryCollection && !$reordering}
   <Toolbar variant="secondary" aria-label={_('entry_list')}>
     {#if !(env.isSmallScreen || env.isMediumScreen)}
       <ItemSelector
-        allItems={$entryGroups.flatMap(({ entries }) => entries)}
+        allItems={[...$listedUnpublishedEntries, ...$entryGroups.flatMap(({ entries }) => entries)]}
         selectedItems={selectedEntries}
       />
     {/if}

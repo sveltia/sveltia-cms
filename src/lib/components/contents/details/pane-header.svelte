@@ -19,6 +19,7 @@
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
+  import { isPendingDeletion } from '$lib/services/workflow';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -56,6 +57,8 @@
     i18nEnabled ? allLocales.filter((l) => l !== $thisPane?.locale) : [],
   );
   const canCopy = $derived(!!otherLocales.length);
+  // Every option in the menu edits the content, which an entry awaiting deletion doesn’t allow
+  const pendingDeletion = $derived(isPendingDeletion($entryDraft?.originalEntry));
   const canRevert = $derived(
     $thisPane?.locale &&
       !equal(
@@ -93,6 +96,7 @@
       <MenuButton
         variant="ghost"
         iconic
+        disabled={pendingDeletion}
         popupPosition="bottom-right"
         aria-label={_('show_content_options_x_locale', { values: { locale: localeLabel } })}
       >

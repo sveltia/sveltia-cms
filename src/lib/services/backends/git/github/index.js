@@ -20,6 +20,7 @@ import { triggerDeployment } from '$lib/services/backends/git/github/deployment'
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/github/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/github/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/github/status';
+import workflow from '$lib/services/backends/git/github/workflow';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 import { getRepoURL } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
@@ -119,4 +120,5 @@ export default {
   commitChanges,
   fetchFileCommits,
   triggerDeployment,
+  workflow,
 };

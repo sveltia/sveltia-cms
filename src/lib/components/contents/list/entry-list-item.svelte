@@ -30,6 +30,10 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  // `undefined` for an entry that has never been published, as those are listed in a separate group
+  // above `listedEntries`. The attribute is then omitted rather than set to an invalid index.
+  const rowIndex = $derived($listedEntryIndexMap.get(entry.id));
+
   /**
    * Update the entry selection.
    * @param {boolean} selected Whether the current entry item is selected.
@@ -52,7 +56,7 @@
 </script>
 
 <GridRow
-  aria-rowindex={$listedEntryIndexMap.get(entry.id) ?? -1}
+  aria-rowindex={rowIndex}
   onChange={(event) => {
     updateSelection(event.detail.selected);
   }}

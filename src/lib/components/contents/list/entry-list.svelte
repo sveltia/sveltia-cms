@@ -13,6 +13,7 @@
     currentView,
     entryGroups,
     listedEntries,
+    listedUnpublishedEntries,
     reordering,
   } from '$lib/services/contents/collection/view';
 
@@ -24,27 +25,39 @@
     /** @type {InternalEntryCollection | undefined} */ ($selectedCollection),
   );
   const viewType = $derived($reordering ? 'list' : $currentView.type);
-  // Only whether any group has entries is needed, so don’t flatten the groups into one array
-  const hasEntries = $derived($entryGroups.some(({ entries }) => !!entries.length));
+  const allEntries = $derived($entryGroups.flatMap(({ entries }) => entries));
 </script>
 
 <ListContainer aria-label={_('entry_list')}>
   {#if collection}
-    {#if hasEntries}
+    {#if allEntries.length || $listedUnpublishedEntries.length}
       {@const { defaultLocale } = collection._i18n}
       <ListingGrid
         {viewType}
         id="entry-list"
         aria-label={_('entries')}
-        aria-rowcount={$listedEntries.length}
+        aria-rowcount={$listedEntries.length + $listedUnpublishedEntries.length}
       >
         <!-- @todo Implement custom table column option that can replace summary template -->
         {#if $reordering}
           <EntryReorderList {collection} {viewType} />
         {:else}
+          {#if $listedUnpublishedEntries.length}
+            <GridBody label={_('workflow.unpublished_entries')}>
+              {#each $listedUnpublishedEntries as entry (entry.id)}
+                <EntryListItem {collection} {entry} {viewType} />
+              {/each}
+            </GridBody>
+          {/if}
           {#each $entryGroups as { name, entries } (name)}
             {#await sleep() then}
-              <GridBody label={name !== '*' ? name : undefined}>
+              <GridBody
+                label={name !== '*'
+                  ? name
+                  : $listedUnpublishedEntries.length
+                    ? _('workflow.published_entries')
+                    : undefined}
+              >
                 <InfiniteScroll
                   items={entries.filter(
                     ({ locales }) =>

@@ -69,7 +69,30 @@ describe('GitHub commits service', () => {
 
       const result = await fetchLastCommit();
 
-      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'));
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'), {});
+      expect(result).toEqual({
+        hash: 'abc123def456',
+        message: 'Test commit message',
+      });
+    });
+
+    test('fetches last commit on an Editorial Workflow branch', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          ref: {
+            target: {
+              history: { nodes: [{ oid: 'abc123def456', message: 'Test commit message' }] },
+            },
+          },
+        },
+      });
+
+      const result = await fetchLastCommit('cms/posts/hello');
+
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'), {
+        branch: 'cms/posts/hello',
+      });
+
       expect(result).toEqual({
         hash: 'abc123def456',
         message: 'Test commit message',
@@ -181,6 +204,31 @@ describe('GitHub commits service', () => {
           'content/test-entry.md': { sha: 'file-sha-1' },
           'content/updated-entry.md': { sha: 'file-sha-2' },
         },
+      });
+    });
+
+    test('skips the head lookup when the caller already knows it', async () => {
+      const changes = /** @type {any[]} */ ([]);
+
+      const options = /** @type {any} */ ({
+        commitType: 'create',
+        branch: 'cms/posts/hello',
+        headOid: 'known-head-sha',
+      });
+
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        createCommitOnBranch: {
+          commit: { oid: 'new-commit-sha', committedDate: '2023-01-01T00:00:00Z' },
+        },
+      });
+
+      await commitChanges(changes, options);
+
+      // Only the commit mutation, with no request to look the branch head up first
+      expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('createCommitOnBranch'), {
+        input: expect.objectContaining({ expectedHeadOid: 'known-head-sha' }),
       });
     });
 

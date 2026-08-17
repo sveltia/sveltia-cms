@@ -25,6 +25,9 @@ const mockGet = vi.fn();
 const mockGetLocaleText = vi.fn();
 const mockBackendName = { set: vi.fn() };
 const mockCmsConfig = { backend: { name: 'github' } };
+const mockLoadUnpublishedEntries = vi.fn();
+const mockUnpublishedEntries = { set: vi.fn() };
+const mockUnpublishedEntriesLoaded = { set: vi.fn() };
 
 vi.mock('@sveltia/utils/storage', () => ({
   LocalStorage: mockLocalStorage,
@@ -72,6 +75,15 @@ vi.mock('$lib/services/user/account.svelte', () => ({
 
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: mockPrefs,
+}));
+
+vi.mock('$lib/services/workflow', () => ({
+  unpublishedEntries: mockUnpublishedEntries,
+  unpublishedEntriesLoaded: mockUnpublishedEntriesLoaded,
+}));
+
+vi.mock('$lib/services/workflow/load', () => ({
+  loadUnpublishedEntries: mockLoadUnpublishedEntries,
 }));
 
 describe('auth service', () => {

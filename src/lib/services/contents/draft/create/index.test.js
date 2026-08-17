@@ -712,6 +712,33 @@ describe('contents/draft/create/index', () => {
       });
     });
 
+    it('should not restore a backup for an entry awaiting deletion', () => {
+      const collection = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        fields: [],
+        _i18n: {
+          i18nEnabled: false,
+          allLocales: ['_default'],
+          initialLocales: ['_default'],
+          defaultLocale: '_default',
+          canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+        },
+      });
+
+      const originalEntry = /** @type {any} */ ({
+        id: 'entry-123',
+        slug: 'test-slug',
+        locales: { _default: { content: {}, slug: 'test-slug' } },
+        // The entry is read-only, so a cached draft could neither be restored nor saved
+        workflow: { deletion: true },
+      });
+
+      createDraft({ collection, originalEntry });
+
+      expect(restoreBackupIfNeeded).not.toHaveBeenCalled();
+    });
+
     it('should handle extra values', () => {
       const collection = {
         name: 'posts',

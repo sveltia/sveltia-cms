@@ -40,12 +40,18 @@ const FETCH_LAST_COMMIT_QUERY = `
 
 /**
  * Fetch the last commit on the repository.
+ * @param {string} [branchName] Branch to look at. Default: the branch configured in the site
+ * configuration. An Editorial Workflow branch can be passed here.
  * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
  * @throws {Error} When the branch could not be found.
  */
-export const fetchLastCommit = async () => {
-  const { repo, branch } = repository;
-  const result = /** @type {LastCommitResponse} */ (await fetchGraphQL(FETCH_LAST_COMMIT_QUERY));
+export const fetchLastCommit = async (branchName) => {
+  const { repo } = repository;
+  const branch = branchName ?? repository.branch;
+
+  const result = /** @type {LastCommitResponse} */ (
+    await fetchGraphQL(FETCH_LAST_COMMIT_QUERY, branchName ? { branch: branchName } : {})
+  );
 
   if (!result.repository) {
     throw new Error('Failed to retrieve the last commit hash.', {
@@ -79,7 +85,8 @@ const MAX_GRAPHQL_BLOB_SIZE = 10 * 1024 * 1024;
  * @see https://docs.github.com/en/graphql/reference/mutations#createcommitonbranch
  */
 export const commitChanges = async (changes, options) => {
-  const { owner, repo, branch } = repository;
+  const { owner, repo } = repository;
+  const branch = options.branch ?? repository.branch;
 
   const additionChanges = changes.filter(({ action }) =>
     ['create', 'update', 'move'].includes(action),
@@ -128,7 +135,8 @@ export const commitChanges = async (changes, options) => {
       repositoryNameWithOwner: `${owner}/${repo}`,
       branchName: branch,
     },
-    expectedHeadOid: (await fetchLastCommit()).hash,
+    // The caller knows the head when it has just created the branch, so skip the extra request
+    expectedHeadOid: options.headOid ?? (await fetchLastCommit(options.branch)).hash,
     fileChanges: { additions, deletions },
     message: { headline: createCommitMessage(changes, options) },
   };

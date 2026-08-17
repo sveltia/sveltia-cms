@@ -257,7 +257,7 @@ describe('draft/save/changes', () => {
       expect(callEventHooks).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'preSave',
-          draft,
+          collection: draft.collection,
         }),
       );
       expect(callEventHooks).toHaveBeenCalledTimes(1);
@@ -307,8 +307,7 @@ describe('draft/save/changes', () => {
       expect(callEventHooks).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'preSave',
-          draft,
-          savingEntry: expect.objectContaining({
+          entry: expect.objectContaining({
             id: 'test-uuid-2',
             slug: 'article-post',
             locales: expect.objectContaining({
@@ -369,7 +368,7 @@ describe('draft/save/changes', () => {
       expect(callEventHooks).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'preSave',
-          savingEntry: expect.objectContaining({
+          entry: expect.objectContaining({
             locales: expect.objectContaining({
               en: expect.any(Object),
               ja: expect.any(Object),

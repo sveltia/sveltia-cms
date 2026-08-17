@@ -7,9 +7,10 @@
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
+  import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
   /**
-   * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
+   * @import { EntryDraft, InternalLocaleCode, UnpublishedEntry } from '$lib/types/private';
    */
 
   /**
@@ -26,6 +27,9 @@
 
   const collectionName = $derived($entryDraft?.collectionName ?? '');
   const currentSlugs = $derived($entryDraft?.currentSlugs ?? {});
+  const originalEntry = $derived(
+    /** @type {UnpublishedEntry | undefined} */ ($entryDraft?.originalEntry),
+  );
 
   /** @type {string[]} */
   let otherSlugs = $state([]);
@@ -42,7 +46,22 @@
   const init = () => {
     const currentSlugSet = new Set(Object.values(currentSlugs));
 
-    otherSlugs = getEntriesByCollection(collectionName)
+    // Every file path this entry occupies. With Editorial Workflow, a draft that has already
+    // renamed the entry leaves the published version behind under the old slug, so that version
+    // has to be recognized as the same entry — otherwise reverting the slug looks like a conflict.
+    const ownPaths = new Set([
+      ...Object.values(originalEntry?.locales ?? {}).map(({ path }) => path),
+      ...(originalEntry?.workflow?.previousPaths ?? []),
+    ]);
+
+    // Check the unpublished entries too, or the slug of a draft could be taken twice. They’re
+    // concatenated rather than swapped over their published versions, because a draft that renamed
+    // an entry leaves the published file behind, so both slugs are still in use
+    otherSlugs = [
+      ...getEntriesByCollection(collectionName),
+      ...getUnpublishedEntriesByCollection(collectionName),
+    ]
+      .filter((entry) => !Object.values(entry.locales).some(({ path }) => ownPaths.has(path)))
       .flatMap((entry) => Object.values(entry.locales).map(({ slug }) => slug))
       .filter((slug) => !currentSlugSet.has(slug));
     Object.assign(updatedSlugs, currentSlugs);

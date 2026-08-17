@@ -11,6 +11,7 @@ import { normalizeContentMap } from '$lib/services/contents/draft/create/normali
 import { createProxy } from '$lib/services/contents/draft/create/proxy';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { resetCustomFieldValidation } from '$lib/services/contents/draft/validate/custom-fields';
+import { isPendingDeletion } from '$lib/services/workflow';
 
 /**
  * @import {
@@ -202,5 +203,9 @@ export const createDraft = ({
     slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs }),
   });
 
-  restoreBackupIfNeeded({ collectionName, fileName, slug });
+  // An entry awaiting deletion is read-only, so a cached draft would be neither restorable nor
+  // useful
+  if (!isPendingDeletion(originalEntry)) {
+    restoreBackupIfNeeded({ collectionName, fileName, slug });
+  }
 };

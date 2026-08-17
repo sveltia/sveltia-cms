@@ -448,6 +448,14 @@ global_assets: Global Assets
 # ==============================================================================
 # Strings related to creating, editing, and managing entries and collections.
 
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Loading entry… }}
+    *   {{ Loading entries… }}
 # Error message when entry cannot be found
 entry_not_found: Entry not found.
 
@@ -672,6 +680,8 @@ delete_selected_entries: |
     *   {{ Delete Selected Entries }}
 confirm_deleting_this_entry: Are you sure you want to delete this entry?
 confirm_deleting_this_entry_with_assets: Are you sure you want to delete this entry and associated assets?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Couldn’t delete the entry. Please try again.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -1552,7 +1562,7 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth application ID is not defined. Users are required to provide an access token to sign in.
-    editorial_workflow_unsupported: Editorial workflow is not yet supported in Sveltia CMS.
+    editorial_workflow_unsupported: Editorial Workflow is currently supported only with the GitHub and GitLab backends.
     open_authoring_unsupported: Open authoring is not yet supported in Sveltia CMS.
     nested_collections_unsupported: Nested collections are not yet supported in Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
@@ -1581,12 +1591,116 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
 
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'You’re now viewing the Editorial Workflow board. Drafts: {$draft}. In Review: {$review}. Ready: {$ready}. Pending Deletion: {$deletion}.'
+
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
+  draft: Draft
   drafts: Drafts
   in_review: In Review
   ready: Ready
+
+workflow:
+  # Entry list badge and Editorial Workflow board column for an entry whose pull request removes it
+  # from the configured branch. Its status is `pending_publish` like a ready-to-publish change, so it needs a
+  # label of its own to avoid reading as though the content were going live
+  pending_deletion: Pending Deletion
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Cancel Deletion
+  confirm_cancelling_deletion: Are you sure you want to cancel this deletion? The entry will remain published.
+  confirm_completing_deletion: Are you sure you want to delete this entry? It will be removed right away.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Entry marked for deletion. }}
+      *   {{ {$count} entries marked for deletion. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Changes discarded. }}
+      *   {{ Changes to {$count} entries discarded. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Cancelling Deletion…
+  deletion_cancelled: Deletion cancelled.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Couldn’t cancel the deletion. Please try again.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Unpublished Entries
+  published_entries: Published Entries
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Status: {$status}'
+  change_entry_status: Change Entry Status
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Changing Status…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Updating Status…
+  status_updated: Status updated.
+  # Error notification when the status could not be changed
+  status_change_failed: Couldn’t change the status. Please try again.
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Publish Entry
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Discard Changes
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Are you sure you want to delete this entry? It won’t be removed until the deletion is published. Until then you’ll still find it in the entry list, marked Pending Deletion.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: This entry hasn’t been published yet, so deleting it will discard it completely.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: This entry has unpublished changes. Discarding them will restore the published version. The entry itself won’t be deleted.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ It hasn’t been published yet, so your unpublished changes will be discarded. Any published version will remain published. }}
+      *   {{ They haven’t been published yet, so your unpublished changes will be discarded. Any published versions will remain published. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ One of them hasn’t been published yet, so your unpublished changes will be discarded. Any published version will remain published. }}
+      *   {{ {$count} of them haven’t been published yet, so your unpublished changes will be discarded. Any published versions will remain published. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Are you sure you want to publish this entry? Your changes will take effect right away.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Publishing Entry…
+  entry_published: Entry published.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Deleting Entry…
+  discarding_changes: Discarding Changes…
+  entry_deleted: Entry deleted.
+  # Error notification when publishing fails
+  publishing_entry_failed: Couldn’t publish the entry. Please try again.
+  # Workflow page: empty column message
+  no_entries: No entries.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Drag to change the status
 
 # ==============================================================================
 # Settings Dialog

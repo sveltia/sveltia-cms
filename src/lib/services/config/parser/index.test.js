@@ -211,13 +211,13 @@ describe('Config Parser', () => {
       expect(collectors.errors.size).toBeGreaterThan(0);
     });
 
-    it('should collect warnings for editorial_workflow', async () => {
+    it('should collect warnings for editorial_workflow on unsupported backends', async () => {
       const { parseCmsConfig } = await import('.');
       const collectors = createCollectors();
 
       /** @type {any} */
       const config = {
-        backend: { name: 'github', repo: 'owner/repo' },
+        backend: { name: 'gitea', repo: 'owner/repo' },
         media_folder: '/media',
         publish_mode: 'editorial_workflow',
         collections: [

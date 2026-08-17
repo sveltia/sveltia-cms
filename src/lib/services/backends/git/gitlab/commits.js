@@ -85,7 +85,8 @@ export const fetchLastCommit = async () => {
  * @see https://forum.gitlab.com/t/how-to-commit-a-image-via-gitlab-commit-api/26632/4
  */
 export const commitChanges = async (changes, options) => {
-  const { owner, repo, branch } = repository;
+  const { owner, repo } = repository;
+  const branch = options.branch ?? repository.branch;
 
   const actions = await Promise.all(
     changes.map(async ({ action, path, previousPath, data = '' }) => ({
@@ -97,16 +98,38 @@ export const commitChanges = async (changes, options) => {
     })),
   );
 
-  const { id: sha, committed_date: committedDate } = /** @type {CommitResponse} */ (
-    await fetchAPI(`/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`, {
-      method: 'POST',
-      body: {
-        branch,
-        commit_message: createCommitMessage(changes, options),
-        actions,
-      },
-    })
-  );
+  const endpoint = `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`;
+  const body = { branch, commit_message: createCommitMessage(changes, options), actions };
+
+  /**
+   * Commit the changes, optionally creating the branch on the way.
+   * @param {string} [startBranch] Branch to create the target branch from.
+   * @returns {Promise<CommitResponse>} Commit response.
+   */
+  const commit = async (startBranch) =>
+    /** @type {CommitResponse} */ (
+      await fetchAPI(endpoint, {
+        method: 'POST',
+        body: startBranch ? { ...body, start_branch: startBranch } : body,
+      })
+    );
+
+  /** @type {CommitResponse} */
+  let response;
+
+  try {
+    response = await commit(options.startBranch);
+  } catch (/** @type {any} */ ex) {
+    // GitLab rejects `start_branch` outright once the branch exists, which happens when an earlier
+    // save was interrupted after creating it. Commit onto the existing branch instead
+    if (!options.startBranch || ex.cause?.status !== 400) {
+      throw ex;
+    }
+
+    response = await commit(undefined);
+  }
+
+  const { id: sha, committed_date: committedDate } = response;
 
   // Calculate the SHA-1 hash for each file because the GitLab REST API does not return file SHAs
   const entries = await Promise.all(

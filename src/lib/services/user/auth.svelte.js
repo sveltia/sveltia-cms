@@ -9,6 +9,8 @@ import { cmsConfig } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
 import { user } from '$lib/services/user/account.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { unpublishedEntries, unpublishedEntriesLoaded } from '$lib/services/workflow';
+import { loadUnpublishedEntries } from '$lib/services/workflow/load';
 
 /**
  * @import { BackendService, InternalCmsConfig, User } from '$lib/types/private';
@@ -221,6 +223,7 @@ export const signInAutomatically = async () => {
 
   try {
     await _backend.fetchFiles();
+    await loadUnpublishedEntries();
   } catch (/** @type {any} */ ex) {
     // The API request may fail if the cached token has been expired or revoked. Then let the user
     // sign in again. 404 Not Found is also considered an authentication error.
@@ -284,6 +287,7 @@ export const signInManually = async (_backendName, token) => {
 
   try {
     await _backend.fetchFiles();
+    await loadUnpublishedEntries();
   } catch (/** @type {any} */ ex) {
     logError(ex, 'dataFetch');
     await clearUserCacheIfNeeded(ex);
@@ -299,6 +303,8 @@ export const signOut = async () => {
 
   backendName.set(undefined);
   dataLoaded.set(false);
+  unpublishedEntries.set([]);
+  unpublishedEntriesLoaded.set(false);
 
   const redirectURL = get(cmsConfig)?.logout_redirect_url;
 

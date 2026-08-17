@@ -90,6 +90,7 @@ describe('GitHub backend service', () => {
       commitChanges: expect.any(Function),
       fetchFileCommits: expect.any(Function),
       triggerDeployment: expect.any(Function),
+      workflow: expect.any(Object),
     });
   });
 

@@ -18,10 +18,17 @@
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
+  import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
+  import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
   import { getAssetFolder } from '$lib/services/assets/folders';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
+  import { allEntries } from '$lib/services/contents';
   import { getCollectionLabel } from '$lib/services/contents/collection';
+  import {
+    contentUpdatesToast,
+    UPDATE_TOAST_DEFAULT_STATE,
+  } from '$lib/services/contents/collection/data';
   import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { getCollectionFileLabel } from '$lib/services/contents/collection/files';
   import { collectionState } from '$lib/services/contents/collection/view';
@@ -40,6 +47,18 @@
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
+  import {
+    hasPublishedVersion,
+    isPendingDeletion,
+    unpublishedEntries,
+    workflowEnabled,
+  } from '$lib/services/workflow';
+  import { getBranchName } from '$lib/services/workflow/branch';
+  import { deleteWorkflowEntry, discardWorkflowEntry } from '$lib/services/workflow/save';
+
+  /**
+   * @import { UpdateToastState } from '$lib/types/private';
+   */
 
   /**
    * @typedef {object} Props
@@ -56,9 +75,14 @@
   let showValidationToast = $state(false);
   let showEditSlugDialog = $state(false);
   let showDeleteDialog = $state(false);
+  let showDiscardDialog = $state(false);
+  let showDeleteErrorToast = $state(false);
   let showErrorDialog = $state(false);
   let errorMessage = $state('');
   let saving = $state(false);
+  let deleting = $state(false);
+  /** I18n key of the message shown while a deletion is in flight. */
+  let progressMessage = $state('');
   /** @type {MenuButton | undefined} */
   let menuButton = $state();
 
@@ -81,6 +105,10 @@
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );
   const canPreview = $derived($entryDraft?.canPreview ?? true);
+  // Saving or deleting takes a moment and navigates away when it’s done, so the whole control group
+  // is locked meanwhile rather than just the button that started it
+  const busy = $derived(saving || deleting);
+  const controlsDisabled = $derived(disabled || busy);
   const modified = $derived(isNew || $entryDraftModified);
   const errorCount = $derived(
     Object.values($entryDraft?.validities ?? {})
@@ -97,6 +125,28 @@
       ? getEntryPreviewURL(originalEntry, defaultLocale, collection, collectionFile)
       : undefined,
   );
+  const workflowBranch = $derived(
+    $workflowEnabled && collectionName && originalEntry
+      ? getBranchName({ collectionName, slug: fileName ?? originalEntry.slug })
+      : undefined,
+  );
+  // Look the entry up in the store rather than using `originalEntry` directly, so the status button
+  // stays in sync when the status is changed elsewhere, e.g. on the Editorial Workflow page
+  const unpublishedEntry = $derived(
+    workflowBranch
+      ? $unpublishedEntries.find(({ workflow }) => workflow.pullRequest.branch === workflowBranch)
+      : undefined,
+  );
+  // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
+  // the published version untouched, so it stays available even when deletion is disabled
+  const canDelete = $derived(entryCollection?.delete !== false);
+  // `$allEntries` is a dependency, because the entry can be published from another view
+  const publishedVersionExists = $derived(
+    !!unpublishedEntry && !!$allEntries && hasPublishedVersion(unpublishedEntry),
+  );
+  // An entry awaiting deletion is read-only: there’s nothing to save or move through the stages,
+  // only the deletion itself to carry out or call off
+  const pendingDeletion = $derived(isPendingDeletion(unpublishedEntry));
 
   /**
    * Go back to the previous page. If the entry is a singleton file, go to the collections list.
@@ -104,6 +154,87 @@
    */
   const _goBack = () => {
     goBack(collectionName === '_singletons' ? '/collections' : `/collections/${collectionName}`);
+  };
+
+  /**
+   * Run the given deletion action, then go back to the entry list. The action reports what happened
+   * by returning a toast state, which is shown by the content library page: the editor is closed by
+   * then, so a toast rendered here would go with it. Errors are reported with a toast and leave the
+   * editor open.
+   * @param {() => Promise<Partial<UpdateToastState> | undefined>} action Action to be performed.
+   * @param {string} progressKey I18n key of the message shown while the action is in flight.
+   */
+  const runDeletion = async (action, progressKey) => {
+    /** @type {Partial<UpdateToastState> | undefined} */
+    let toastState;
+
+    progressMessage = progressKey;
+    deleting = true;
+
+    try {
+      toastState = await action();
+    } catch (/** @type {any} */ ex) {
+      showDeleteErrorToast = true;
+      // eslint-disable-next-line no-console
+      console.error(ex);
+
+      return;
+    } finally {
+      deleting = false;
+    }
+
+    if (toastState) {
+      contentUpdatesToast.set({ ...UPDATE_TOAST_DEFAULT_STATE, count: 1, ...toastState });
+    }
+
+    _goBack();
+  };
+
+  /**
+   * Delete the entry. With Editorial Workflow the removal goes through a pull request like any
+   * other change, so the entry stays on the site until that is published. An unpublished entry that
+   * has never been published is discarded instead, because there’s nothing on the configured branch
+   * to remove.
+   */
+  const deleteEntry = async () => {
+    await runDeletion(async () => {
+      if (unpublishedEntry && !publishedVersionExists) {
+        await discardWorkflowEntry(unpublishedEntry);
+
+        // Nothing was published, so the entry really is gone
+        return { deleted: true };
+      }
+
+      if (originalEntry && $workflowEnabled && collection) {
+        await deleteWorkflowEntry(originalEntry, collection, collectionFile, associatedAssets);
+
+        return { deleted: true, deletionPending: true };
+      }
+
+      if (originalEntry) {
+        // `deleteEntries()` reports the outcome itself
+        await deleteEntries([originalEntry], associatedAssets);
+      }
+
+      return undefined;
+    }, 'workflow.deleting_entry');
+  };
+
+  /**
+   * Discard the unpublished changes by closing the pull request, leaving the published version of
+   * the entry untouched.
+   */
+  const discardChanges = async () => {
+    await runDeletion(
+      async () => {
+        if (unpublishedEntry) {
+          await discardWorkflowEntry(unpublishedEntry);
+        }
+
+        return pendingDeletion ? { deletionCancelled: true } : { discarded: true };
+      },
+      pendingDeletion ? 'workflow.cancelling_deletion' : 'workflow.discarding_changes',
+    );
   };
 
   /**
@@ -126,8 +257,9 @@
         $entryDraft = null;
       } else {
         if (isNew) {
-          // Update the URL
-          goto(`/collections/${collectionName}/entries/${savedEntry.subPath}`, {
+          // Update the URL. A collection file is addressed by its name, while its `subPath` is
+          // the whole file path
+          goto(`/collections/${collectionName}/entries/${fileName ?? savedEntry.subPath}`, {
             replaceState: true,
             notifyChange: false,
             transitionType: 'backwards',
@@ -164,6 +296,7 @@
 {#snippet overflowButtons()}
   {@const Component = env.isSmallScreen ? MenuItem : Button}
   {@const canDuplicate =
+    !collectionFile &&
     !isIndexFile &&
     entryCollection?.duplicate !== false &&
     !$collectionState.creationDisabled &&
@@ -171,10 +304,10 @@
     // duplicate assets along with the entry.
     // @see https://github.com/sveltia/sveltia-cms/issues/526
     !entryCollection?.path}
-  {@const canDelete = entryCollection?.delete !== false}
   {#if canDuplicate}
     <Component
       variant="ghost"
+      disabled={controlsDisabled}
       label={_('duplicate')}
       aria-label={_('duplicate_entry')}
       onclick={() => {
@@ -187,149 +320,192 @@
       }}
     />
   {/if}
-  {#if canDelete}
+  <!-- A collection file is part of the collection definition, so it can only be discarded -->
+  {#if publishedVersionExists || (canDelete && !collectionFile)}
     <Component
       variant="ghost"
-      label={_('delete')}
-      aria-label={_('delete_entries', { values: { count: 1 } })}
+      disabled={controlsDisabled}
+      label={_(
+        pendingDeletion
+          ? 'workflow.cancel_deletion'
+          : publishedVersionExists
+            ? 'discard'
+            : 'delete',
+      )}
+      aria-label={pendingDeletion
+        ? _('workflow.cancel_deletion')
+        : publishedVersionExists
+          ? _('workflow.discard_changes')
+          : _('delete_entries', { values: { count: 1 } })}
       onclick={() => {
-        showDeleteDialog = true;
+        if (publishedVersionExists) {
+          showDiscardDialog = true;
+        } else {
+          showDeleteDialog = true;
+        }
       }}
     />
   {/if}
 {/snippet}
 
-<Toolbar variant="primary" aria-label={_('primary')}>
-  <BackButton
-    aria-label={_('cancel_editing')}
-    useShortcut={prefs.closeWithEscape && !$activeInlineEditors}
-    onclick={() => {
-      _goBack();
-    }}
-  />
-  <h2 role="none">
-    {#if !notFound}
-      <TruncatedText>
-        {#if isNew}
-          {_('create_entry_title', { values: { name: collectionLabelSingular } })}
-        {:else}
-          {@const entrySummary = collectionFile
-            ? getCollectionFileLabel(collectionFile)
-            : collection && originalEntry && appLocale.current
-              ? getEntrySummary(collection, originalEntry)
-              : ''}
-          {#if env.isSmallScreen}
-            {entrySummary}
-          {:else}
-            {_('edit_entry_title', {
-              values: { collection: collectionLabel, entry: entrySummary },
-            })}
-          {/if}
-        {/if}
-      </TruncatedText>
-    {/if}
-  </h2>
-  {#if !disabled && previewURL}
-    <Button
-      variant="tertiary"
-      label={_('view_on_live_site')}
+<div role="none" class="toolbar-wrapper" class:workflow={!!unpublishedEntry}>
+  <Toolbar variant="primary" aria-label={_('primary')}>
+    <BackButton
+      aria-label={_('cancel_editing')}
+      useShortcut={prefs.closeWithEscape && !$activeInlineEditors}
       onclick={() => {
-        openNewTab(previewURL);
+        _goBack();
       }}
     />
-  {/if}
-  {#if !env.isSmallScreen && !disabled && !collectionFile && !isNew}
-    {@render overflowButtons()}
-  {/if}
-  <MenuButton
-    {disabled}
-    variant="ghost"
-    iconic
-    popupPosition="bottom-right"
-    aria-label={_('show_editor_options')}
-    bind:this={menuButton}
-  >
-    {#snippet popup()}
-      <Menu aria-label={_('editor_options')}>
-        {#if env.isSmallScreen && !disabled && !collectionFile && !isNew}
-          {@render overflowButtons()}
-        {/if}
-        <MenuItem
-          label={_('edit_slug')}
-          disabled={!!collectionFile || isNew || isIndexFile || entryCollection?.delete === false}
-          onclick={() => {
-            showEditSlugDialog = true;
-          }}
-        />
-        <MenuItem
-          label={_('revert_all_changes')}
-          disabled={!modified}
-          onclick={() => {
-            revertChanges();
-          }}
-        />
-        {#if !(env.isSmallScreen || env.isMediumScreen)}
-          <Divider />
-          <MenuItemCheckbox
-            label={_('show_preview')}
-            checked={$entryEditorSettings?.showPreview}
-            disabled={!canPreview}
-            onChange={() => {
-              entryEditorSettings.update((view = {}) => ({
-                ...view,
-                showPreview: !view.showPreview,
-              }));
-            }}
-          />
-          <MenuItemCheckbox
-            label={_('sync_scrolling')}
-            checked={$entryEditorSettings?.syncScrolling}
-            disabled={!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1}
-            onChange={() => {
-              entryEditorSettings.update((view = {}) => ({
-                ...view,
-                syncScrolling: !view.syncScrolling,
-              }));
-            }}
-          />
-        {/if}
-      </Menu>
-    {/snippet}
-  </MenuButton>
-  {#if $skipCIConfigured}
-    <SplitButton
-      variant="primary"
-      label={_($skipCIEnabled ? (saving ? 'saving' : 'save') : saving ? 'publishing' : 'publish')}
-      disabled={disabled || !modified || saving}
-      keyShortcuts="Accel+S"
-      onclick={() => {
-        save();
-      }}
+    <h2 role="none">
+      {#if !notFound}
+        <TruncatedText>
+          {#if isNew}
+            {_('create_entry_title', { values: { name: collectionLabelSingular } })}
+          {:else}
+            {@const entrySummary = collectionFile
+              ? getCollectionFileLabel(collectionFile)
+              : collection && originalEntry && appLocale.current
+                ? getEntrySummary(collection, originalEntry)
+                : ''}
+            {#if env.isSmallScreen}
+              {entrySummary}
+            {:else}
+              {_('edit_entry_title', {
+                values: { collection: collectionLabel, entry: entrySummary },
+              })}
+            {/if}
+          {/if}
+        </TruncatedText>
+      {/if}
+    </h2>
+    {#if !disabled && previewURL}
+      <Button
+        variant="tertiary"
+        label={_('view_on_live_site')}
+        onclick={() => {
+          openNewTab(previewURL);
+        }}
+      />
+    {/if}
+    {#if !env.isSmallScreen && !disabled && !isNew}
+      {@render overflowButtons()}
+    {/if}
+    <MenuButton
+      disabled={controlsDisabled}
+      variant="ghost"
+      iconic
+      popupPosition="bottom-right"
+      aria-label={_('show_editor_options')}
+      bind:this={menuButton}
     >
       {#snippet popup()}
-        <!-- Show the opposite option: if automatic deployments are enabled, allow to disable it -->
-        <Menu>
+        <Menu aria-label={_('editor_options')}>
+          {#if env.isSmallScreen && !disabled && !isNew}
+            {@render overflowButtons()}
+          {/if}
+          {#if publishedVersionExists && canDelete && !collectionFile && !pendingDeletion}
+            <MenuItem
+              label={_('delete')}
+              onclick={() => {
+                showDeleteDialog = true;
+              }}
+            />
+          {/if}
           <MenuItem
-            label={_($skipCIEnabled ? 'save_and_publish' : 'save_without_publishing')}
+            label={_('edit_slug')}
+            disabled={!!collectionFile ||
+              isNew ||
+              isIndexFile ||
+              pendingDeletion ||
+              entryCollection?.delete === false}
             onclick={() => {
-              save({ skipCI: !$skipCIEnabled });
+              showEditSlugDialog = true;
             }}
           />
+          <MenuItem
+            label={_('revert_all_changes')}
+            disabled={!modified || pendingDeletion}
+            onclick={() => {
+              revertChanges();
+            }}
+          />
+          {#if !(env.isSmallScreen || env.isMediumScreen)}
+            <Divider />
+            <MenuItemCheckbox
+              label={_('show_preview')}
+              checked={$entryEditorSettings?.showPreview}
+              disabled={!canPreview}
+              onChange={() => {
+                entryEditorSettings.update((view = {}) => ({
+                  ...view,
+                  showPreview: !view.showPreview,
+                }));
+              }}
+            />
+            <MenuItemCheckbox
+              label={_('sync_scrolling')}
+              checked={$entryEditorSettings?.syncScrolling}
+              disabled={!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1}
+              onChange={() => {
+                entryEditorSettings.update((view = {}) => ({
+                  ...view,
+                  syncScrolling: !view.syncScrolling,
+                }));
+              }}
+            />
+          {/if}
         </Menu>
       {/snippet}
-    </SplitButton>
-  {:else}
-    <Button
-      variant="primary"
-      label={_(saving ? 'saving' : 'save')}
-      disabled={disabled || !modified || saving}
-      keyShortcuts="Accel+S"
-      onclick={() => {
-        save();
-      }}
-    />
-  {/if}
-</Toolbar>
+    </MenuButton>
+    <div role="none" class="actions">
+      {#if unpublishedEntry && !pendingDeletion}
+        <EntryStatusMenu entry={unpublishedEntry} disabled={controlsDisabled} />
+      {/if}
+      {#if pendingDeletion}
+        <!-- Nothing to save: the entry is shown for reference until the deletion is carried out -->
+      {:else if $skipCIConfigured && !$workflowEnabled}
+        <SplitButton
+          variant="primary"
+          label={_(
+            $skipCIEnabled ? (saving ? 'saving' : 'save') : saving ? 'publishing' : 'publish',
+          )}
+          disabled={controlsDisabled || !modified}
+          keyShortcuts="Accel+S"
+          onclick={() => {
+            save();
+          }}
+        >
+          {#snippet popup()}
+            <!-- Show the opposite option: if automatic deployments are enabled, allow to
+            disable it -->
+            <Menu>
+              <MenuItem
+                label={_($skipCIEnabled ? 'save_and_publish' : 'save_without_publishing')}
+                onclick={() => {
+                  save({ skipCI: !$skipCIEnabled });
+                }}
+              />
+            </Menu>
+          {/snippet}
+        </SplitButton>
+      {:else}
+        <Button
+          variant="primary"
+          label={_(saving ? 'saving' : 'save')}
+          disabled={controlsDisabled || !modified}
+          keyShortcuts="Accel+S"
+          onclick={() => {
+            save();
+          }}
+        />
+      {/if}
+      {#if unpublishedEntry}
+        <PublishEntryButton entry={unpublishedEntry} disabled={controlsDisabled} {modified} />
+      {/if}
+    </div>
+  </Toolbar>
+</div>
 
 <Toast bind:show={showValidationToast}>
   <Alert status="error">
@@ -356,22 +532,55 @@
   title={_('delete_entries', { values: { count: 1 } })}
   okLabel={_('delete')}
   onOk={async () => {
-    if (originalEntry) {
-      await deleteEntries([originalEntry], associatedAssets);
-    }
+    await deleteEntry();
+  }}
+  onClose={() => {
+    menuButton?.focus();
+  }}
+>
+  {#if unpublishedEntry && !publishedVersionExists}
+    {_('workflow.confirm_deleting_unpublished_entry')}
+  {:else if $workflowEnabled}
+    <!-- The removal is committed to a pull request rather than to the configured branch -->
+    {_('workflow.confirm_deleting_published_entry')}
+  {:else}
+    {_(
+      associatedAssets.length
+        ? 'confirm_deleting_this_entry_with_assets'
+        : 'confirm_deleting_this_entry',
+    )}
+  {/if}
+</ConfirmationDialog>
 
-    _goBack();
+<ConfirmationDialog
+  bind:open={showDiscardDialog}
+  title={_(pendingDeletion ? 'workflow.cancel_deletion' : 'workflow.discard_changes')}
+  okLabel={_(pendingDeletion ? 'workflow.cancel_deletion' : 'discard')}
+  onOk={async () => {
+    await discardChanges();
   }}
   onClose={() => {
     menuButton?.focus();
   }}
 >
   {_(
-    associatedAssets.length
-      ? 'confirm_deleting_this_entry_with_assets'
-      : 'confirm_deleting_this_entry',
+    pendingDeletion
+      ? 'workflow.confirm_cancelling_deletion'
+      : 'workflow.confirm_discarding_entry_changes',
   )}
 </ConfirmationDialog>
+
+<!-- Shown while the request is in flight. The result is reported by the content library page,
+because this toast goes away with the editor once the deletion has completed -->
+{#if progressMessage}
+  <Toast id={progressMessage} bind:show={deleting} duration={0}>
+    <Alert status="info">{_(progressMessage)}</Alert>
+  </Toast>
+{/if}
+
+<Toast bind:show={showDeleteErrorToast}>
+  <Alert status="error">{_('deleting_entry_failed')}</Alert>
+</Toast>
 
 <!-- @todo make the error message more informative -->
 <AlertDialog
@@ -390,6 +599,38 @@
 </AlertDialog>
 
 <style>
+  .toolbar-wrapper {
+    display: contents;
+
+    /*
+     * Editorial Workflow adds a status button and a Publish button next to Save, which crowd the
+     * primary toolbar on a narrow screen. Move that group to a second row instead.
+     */
+
+    &.workflow {
+      @media (width < 768px) {
+        :global(.sui.toolbar.primary) {
+          flex-wrap: wrap;
+          padding-block: 4px;
+          height: auto;
+          row-gap: 4px;
+        }
+
+        .actions {
+          display: flex;
+          align-items: center;
+          flex-basis: 100%;
+          justify-content: flex-end;
+        }
+      }
+    }
+  }
+
+  /* The buttons space themselves with their focus ring margin, so don’t add a flex gap here */
+  .actions {
+    display: contents;
+  }
+
   .error {
     margin-top: 8px;
     border-radius: var(--sui-control-medium-border-radius);

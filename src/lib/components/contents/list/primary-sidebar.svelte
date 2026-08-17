@@ -12,6 +12,7 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { env } from '$lib/services/user/env.svelte';
+  import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
   /**
    * @typedef {object} Props
@@ -64,9 +65,18 @@
                   <Icon name={icon || 'bookmark_manager'} />
                 {/snippet}
                 {#snippet endIcon()}
+                  <!-- `$allEntries` is a key, because `getEntriesByCollection()` reads it
+                  indirectly, while `$unpublishedEntries` is tracked as a normal dependency -->
                   {#key $allEntries}
                     {@const count = (
-                      'files' in collection ? collection.files : getEntriesByCollection(name)
+                      'files' in collection
+                        ? collection.files
+                        : mergeUnpublishedEntries(
+                            getEntriesByCollection(name),
+                            $unpublishedEntries.filter(
+                              ({ workflow }) => workflow.collectionName === name,
+                            ),
+                          )
                     ).length}
                     <span class="count" aria-label="({_('x_entries', { values: { count } })})">
                       {numberFormatter.format(count)}

@@ -48,12 +48,15 @@
   /**
    * @typedef {object} Props
    * @property {string | undefined} [editorLocale] The locale to open the editor in.
+   * @property {boolean} [loading] Whether the entry is still being resolved. That happens when it
+   * was opened with a deep link before the Editorial Workflow drafts have been fetched.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     editorLocale = undefined,
+    loading = false,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -443,8 +446,12 @@
   bind:this={wrapper}
 >
   {#key $entryDraft?.id}
-    <Toolbar disabled={isNew && creationDisabled} />
-    {#if $entryDraft === null}
+    <Toolbar disabled={loading || (isNew && creationDisabled)} />
+    {#if loading}
+      <EmptyState>
+        <div role="none">{_('loading_entries', { values: { count: 1 } })}</div>
+      </EmptyState>
+    {:else if $entryDraft === null}
       <!-- Hide the content after saving a draft -->
     {:else if notFound || (isNew && creationDisabled)}
       <EmptyState>

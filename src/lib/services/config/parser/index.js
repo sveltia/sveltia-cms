@@ -3,7 +3,7 @@ import { parseBackendConfig } from '$lib/services/config/parser/backend';
 import { parseCollections } from '$lib/services/config/parser/collections';
 import { parseFields } from '$lib/services/config/parser/fields';
 import { parseMediaConfig } from '$lib/services/config/parser/media';
-import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { CmsConfig } from '$lib/types/public';
@@ -15,13 +15,6 @@ import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/valid
  * @type {UnsupportedOption[]}
  */
 const UNSUPPORTED_OPTIONS = [
-  // @todo Remove this warning when Sveltia CMS adds support for editorial workflow.
-  {
-    type: 'warning',
-    prop: 'publish_mode',
-    value: 'editorial_workflow',
-    strKey: 'editorial_workflow_unsupported',
-  },
   // Sveltia CMS doesn’t use a proxy server for local workflow, so this option is not applicable.
   { type: 'warning', prop: 'local_backend', strKey: 'unsupported_ignored_option' },
   // Sveltia CMS detects user’s locale from the browser, so this option is not applicable.
@@ -30,6 +23,12 @@ const UNSUPPORTED_OPTIONS = [
   // applicable.
   { type: 'warning', prop: 'search', strKey: 'unsupported_ignored_option' },
 ];
+
+/**
+ * Backend services that support Editorial Workflow.
+ * @type {(string | undefined)[]}
+ */
+const WORKFLOW_BACKENDS = ['github', 'gitlab'];
 
 /**
  * Parse and validate the CMS configuration.
@@ -41,6 +40,20 @@ const UNSUPPORTED_OPTIONS = [
  */
 export const parseCmsConfig = (cmsConfig, collectors) => {
   parseBackendConfig(cmsConfig, collectors);
+
+  // Editorial Workflow is not implemented for every backend yet
+  if (
+    cmsConfig.publish_mode === 'editorial_workflow' &&
+    !WORKFLOW_BACKENDS.includes(cmsConfig.backend?.name)
+  ) {
+    addMessage({
+      type: 'warning',
+      strKey: 'editorial_workflow_unsupported',
+      context: { cmsConfig },
+      collectors,
+    });
+  }
+
   parseMediaConfig(cmsConfig, collectors);
   parseCollections(cmsConfig, collectors);
 

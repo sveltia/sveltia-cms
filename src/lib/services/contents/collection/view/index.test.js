@@ -17,6 +17,7 @@ import {
   entryGroups,
   listedEntries,
   listedEntryIndexMap,
+  listedUnpublishedEntries,
   reorderedEntries,
   reordering,
 } from '.';
@@ -33,6 +34,7 @@ const {
   _prefs,
   _backend,
   _entryListSettings,
+  _unpublishedEntries,
 } = vi.hoisted(() => {
   /**
    * Minimal writable store factory (no imports available inside vi.hoisted).
@@ -93,6 +95,8 @@ const {
     _backend: w(/** @type {any} */ (null)),
     /** @type {import('svelte/store').Writable<any>} */
     _entryListSettings: w(/** @type {any} */ (undefined)),
+    /** @type {import('svelte/store').Writable<any[]>} */
+    _unpublishedEntries: w(/** @type {any[]} */ ([])),
   };
 });
 
@@ -144,6 +148,12 @@ vi.mock('$lib/services/contents/collection/view/settings', () => ({
   initSettings: vi.fn(),
 }));
 
+// Only the store is mocked; `swapUnpublishedEntries` is a pure helper and is used as is
+vi.mock('$lib/services/workflow', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  unpublishedEntries: _unpublishedEntries,
+}));
+
 describe('collection/view/index', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -153,6 +163,8 @@ describe('collection/view/index', () => {
     _prefs.devModeEnabled = false;
     _backend.set(null);
     _entryListSettings.set(undefined);
+    _unpublishedEntries.set([]);
+    reordering.set(false);
     currentView.set({ type: 'list' });
     // `clearAllMocks()` only clears recorded calls, so reset the return value set by reorder tests
     vi.mocked(getReorderGroupingConditions).mockReturnValue(undefined);
@@ -521,6 +533,153 @@ describe('collection/view/index', () => {
     expect(/** @type {Map<string, number>} */ (indexMap).get('missing')).toBeUndefined();
 
     unsubscribe();
+  });
+
+  describe('Editorial Workflow entries', () => {
+    /** @type {any} */
+    const publishedEntries = [
+      {
+        id: 'p1',
+        slug: 'needed',
+        subPath: 'needed',
+        locales: { _default: { path: 'content/posts/needed.md' } },
+      },
+      {
+        id: 'p2',
+        slug: 'other',
+        subPath: 'other',
+        locales: { _default: { path: 'content/posts/other.md' } },
+      },
+    ];
+
+    /**
+     * Create an unpublished entry for the `posts` collection.
+     * @param {string} subPath Entry sub path.
+     * @param {string} [collectionName] Collection name.
+     * @returns {any} Unpublished entry.
+     */
+    const createDraft = (subPath, collectionName = 'posts') => ({
+      id: `draft-${subPath}`,
+      slug: subPath,
+      subPath,
+      locales: { _default: { path: `content/${collectionName}/${subPath}.md` } },
+      workflow: {
+        collectionName,
+        status: 'draft',
+        pullRequest: { branch: `cms/posts/${subPath}` },
+      },
+    });
+
+    /**
+     * Read the current value of the given store.
+     * @param {any} store Store.
+     * @returns {any} Value.
+     */
+    const read = (store) => {
+      let value;
+
+      store.subscribe((/** @type {any} */ v) => {
+        value = v;
+      })();
+
+      return value;
+    };
+
+    beforeEach(() => {
+      vi.mocked(getEntriesByCollection).mockReturnValue(publishedEntries);
+      // Restore the pass-through implementations, which earlier tests replace with fixed lists
+      vi.mocked(sortEntries).mockImplementation((entries) => entries);
+      vi.mocked(filterEntries).mockImplementation((entries) => entries);
+      _allEntries.set(publishedEntries);
+      _selectedCollection.set(/** @type {any} */ ({ name: 'posts', _type: 'entry' }));
+    });
+
+    test('listedEntries replaces a published entry with its unpublished version', () => {
+      const draft = createDraft('needed');
+
+      _unpublishedEntries.set([draft]);
+
+      expect(read(listedEntries).map((/** @type {any} */ e) => e.id)).toEqual([
+        'draft-needed',
+        'p2',
+      ]);
+    });
+
+    test('listedEntries leaves the published entries alone without any draft', () => {
+      expect(read(listedEntries)).toBe(publishedEntries);
+    });
+
+    test('listedEntries ignores drafts from another collection', () => {
+      _unpublishedEntries.set([createDraft('needed', 'pages')]);
+
+      expect(read(listedEntries).map((/** @type {any} */ e) => e.id)).toEqual(['p1', 'p2']);
+    });
+
+    test('listedEntries doesn’t swap while reordering', () => {
+      _unpublishedEntries.set([createDraft('needed')]);
+      reordering.set(true);
+
+      expect(read(listedEntries)).toBe(publishedEntries);
+    });
+
+    test('listedEntries matches a draft that renamed the entry', () => {
+      const draft = createDraft('renamed');
+
+      draft.workflow.previousPaths = ['content/posts/needed.md'];
+      _unpublishedEntries.set([draft]);
+
+      // The draft replaces the published entry it renamed, rather than being listed separately
+      expect(read(listedEntries).map((/** @type {any} */ e) => e.id)).toEqual([
+        'draft-renamed',
+        'p2',
+      ]);
+
+      expect(read(listedUnpublishedEntries)).toEqual([]);
+    });
+
+    test('listedUnpublishedEntries only contains the never-published drafts', () => {
+      _unpublishedEntries.set([createDraft('needed'), createDraft('brand-new')]);
+
+      // The draft for `needed` replaces the published entry instead
+      expect(read(listedUnpublishedEntries).map((/** @type {any} */ e) => e.id)).toEqual([
+        'draft-brand-new',
+      ]);
+    });
+
+    test('listedUnpublishedEntries is empty while reordering', () => {
+      _unpublishedEntries.set([createDraft('brand-new')]);
+      reordering.set(true);
+
+      expect(read(listedUnpublishedEntries)).toEqual([]);
+    });
+
+    test('listedUnpublishedEntries is empty for a file collection', () => {
+      _unpublishedEntries.set([createDraft('brand-new')]);
+      _selectedCollection.set(/** @type {any} */ ({ name: 'posts', _type: 'file' }));
+
+      expect(read(listedUnpublishedEntries)).toEqual([]);
+    });
+
+    test('listedUnpublishedEntries applies the current sort and filters', () => {
+      _unpublishedEntries.set([createDraft('brand-new')]);
+      currentView.set({ type: 'list', sort: { key: 'title' }, filters: [] });
+
+      expect(read(listedUnpublishedEntries).map((/** @type {any} */ e) => e.id)).toEqual([
+        'draft-brand-new',
+      ]);
+
+      expect(sortEntries).toHaveBeenCalled();
+      expect(filterEntries).toHaveBeenCalled();
+    });
+
+    test('listedUnpublishedEntries skips sorting when there is nothing to list', () => {
+      currentView.set({ type: 'list', sort: { key: 'title' } });
+      vi.clearAllMocks();
+      _unpublishedEntries.set([createDraft('needed')]);
+
+      expect(read(listedUnpublishedEntries)).toEqual([]);
+      expect(sortEntries).not.toHaveBeenCalled();
+    });
   });
 
   test('entryGroups filters and groups entries with sort, filter, and group options', () => {

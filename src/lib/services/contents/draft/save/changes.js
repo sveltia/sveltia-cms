@@ -325,7 +325,13 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     locales: Object.fromEntries(Object.entries(localizedEntryMap)),
   };
 
-  await callEventHooks({ type: 'preSave', draft, savingEntry });
+  await callEventHooks({
+    type: 'preSave',
+    entry: savingEntry,
+    collection,
+    collectionFile,
+    isNew: draft.isNew,
+  });
 
   const databaseName = get(backend)?.repository?.databaseName;
   const cacheDB = databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;

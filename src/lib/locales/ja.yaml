@@ -445,6 +445,10 @@ global_assets: グローバルアセット
 # ==============================================================================
 # Strings related to creating, editing, and managing entries and collections.
 
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: エントリーを読み込んでいます…
 # Error message when entry cannot be found
 entry_not_found: エントリーが見つかりませんでした。
 
@@ -629,6 +633,8 @@ delete_selected_entries: |
   選択されたエントリーを削除
 confirm_deleting_this_entry: このエントリーを削除してもよろしいですか？
 confirm_deleting_this_entry_with_assets: このエントリーと関連アセットを削除してもよろしいですか？
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: エントリーを削除できませんでした。再度お試しください。
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -1473,7 +1479,7 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth アプリケーション ID が定義されていません。ユーザーがログインするにはアクセストークンを入力する必要があります。
-    editorial_workflow_unsupported: Sveltia CMS ではまだエディトリアルワークフローはサポートされていません。
+    editorial_workflow_unsupported: エディトリアルワークフローは現在 GitHub と GitLab バックエンドでのみサポートされています。
     open_authoring_unsupported: Sveltia CMS ではまだオープンオーサリングはサポートされていません。
     nested_collections_unsupported: Sveltia CMS ではネストされたコレクションはまだサポートされていません。
     # {$prop} is the unsupported option name that will be ignored
@@ -1502,12 +1508,112 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
 
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'エディトリアルワークフローボードを表示しています。下書き: {$draft} 件。レビュー中: {$review} 件。公開可: {$ready} 件。削除待ち: {$deletion} 件。'
+
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
+  draft: 下書き
   drafts: 下書き
   in_review: レビュー中
   ready: 公開可
+
+workflow:
+  # Entry list badge and Editorial Workflow board column for an entry whose pull request removes it
+  # from the configured branch. Its status is `pending_publish` like a ready-to-publish change, so it needs a
+  # label of its own to avoid reading as though the content were going live
+  pending_deletion: 削除待ち
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: 削除を取り消す
+  confirm_cancelling_deletion: この削除を取り消してもよろしいですか？ エントリーは公開されたままになります。
+  confirm_completing_deletion: このエントリーを削除してもよろしいですか？ 変更は即座に反映されます。
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ エントリーを削除予定にしました。 }}
+      *   {{ {$count} 件のエントリーを削除予定にしました。 }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ 変更を破棄しました。 }}
+      *   {{ {$count} 件のエントリーの変更を破棄しました。 }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: 削除を取り消しています…
+  deletion_cancelled: 削除を取り消しました。
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: 削除を取り消せませんでした。再度お試しください。
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: 未公開のエントリー
+  published_entries: 公開済みのエントリー
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'ステータス: {$status}'
+  change_entry_status: エントリーのステータスを変更
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: ステータスを変更しています…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: ステータスを更新しています…
+  status_updated: ステータスを更新しました。
+  # Error notification when the status could not be changed
+  status_change_failed: ステータスを変更できませんでした。再度お試しください。
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: エントリーを公開
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: 変更を破棄
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: このエントリーを削除してもよろしいですか？ 削除が公開されるまでは削除されません。それまではエントリー一覧に「削除待ち」として表示されます。
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: このエントリーはまだ公開されていないため、削除すると完全に破棄されます。
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: このエントリーには未公開の変更があります。変更を破棄すると公開版に戻ります。エントリー自体は削除されません。
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: まだ公開されていないため、未公開の変更は破棄されます。公開版があればそのまま公開されたままになります。
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ そのうち 1 件はまだ公開されていないため、未公開の変更は破棄されます。公開版があればそのまま公開されたままになります。 }}
+      *   {{ そのうち {$count} 件はまだ公開されていないため、未公開の変更は破棄されます。公開版があればそのまま公開されたままになります。 }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: このエントリーを公開してもよろしいですか？ 変更は即座に反映されます。
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: エントリーを公開しています…
+  entry_published: エントリーを公開しました。
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: エントリーを削除しています…
+  discarding_changes: 変更を破棄しています…
+  entry_deleted: エントリーを削除しました。
+  # Error notification when publishing fails
+  publishing_entry_failed: エントリーを公開できませんでした。再度お試しください。
+  # Workflow page: empty column message
+  no_entries: エントリーはありません。
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: ドラッグするとステータスを変更できます
 
 # ==============================================================================
 # Settings Dialog

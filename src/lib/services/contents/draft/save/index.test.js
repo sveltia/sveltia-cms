@@ -18,6 +18,8 @@ import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
+import { workflowEnabled } from '$lib/services/workflow';
+import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
 import { saveEntry } from '.';
 
@@ -41,6 +43,8 @@ vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/fields');
 vi.mock('$lib/services/contents/entry/history');
+vi.mock('$lib/services/workflow', () => ({ workflowEnabled: { subscribe: vi.fn() } }));
+vi.mock('$lib/services/workflow/save');
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { subscribe: vi.fn(() => vi.fn()) },
 }));
@@ -135,6 +139,44 @@ describe('draft/save/index', () => {
       expect(createSavingEntryData).toHaveBeenCalled();
       expect(saveChanges).toHaveBeenCalled();
       expect(result.slug).toBe('test-post');
+    });
+
+    it('should save through Editorial Workflow when enabled', async () => {
+      mockGet.mockImplementation((store) => {
+        if (store === entryDraft) {
+          return mockDraft;
+        }
+
+        if (store === workflowEnabled) {
+          return true;
+        }
+
+        return undefined;
+      });
+
+      vi.mocked(saveWorkflowChanges).mockResolvedValue({
+        commit: { sha: 'abc', files: {} },
+        savedEntries: [
+          {
+            id: 'test-id',
+            slug: 'test-post',
+            locales: { en: { slug: 'test-post', path: 'posts/test-post.md' } },
+          },
+        ],
+        savedAssets: [],
+      });
+
+      const result = await saveEntry();
+
+      expect(saveChanges).not.toHaveBeenCalled();
+      expect(saveWorkflowChanges).toHaveBeenCalledWith(
+        expect.objectContaining({ collectionName: 'posts', slug: 'test-post' }),
+      );
+
+      expect(result.slug).toBe('test-post');
+
+      // Nothing is published yet, because the changes only exist in a pull request
+      expect(vi.mocked(isLastCommitPublished).set).toHaveBeenCalledWith(false);
     });
 
     it('should throw validation error when entry is invalid', async () => {
@@ -250,7 +292,7 @@ describe('draft/save/index', () => {
       expect(callEventHooks).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'postSave',
-          draft: mockDraft,
+          collection: mockDraft.collection,
         }),
       );
     });
@@ -261,7 +303,7 @@ describe('draft/save/index', () => {
       expect(callEventHooks).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'postSave',
-          savingEntry: expect.objectContaining({
+          entry: expect.objectContaining({
             id: 'test-id',
             slug: 'test-post',
             locales: expect.objectContaining({

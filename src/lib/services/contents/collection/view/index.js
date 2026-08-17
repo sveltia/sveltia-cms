@@ -14,6 +14,7 @@ import {
 import { entryListSettings, initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { swapUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -77,13 +78,72 @@ let viewBeforeReorder;
  * @type {Readable<Entry[]>}
  */
 export const listedEntries = derived(
-  [allEntries, selectedCollection],
-  ([_allEntries, _collection], set) => {
-    if (_allEntries && _collection) {
-      set(getEntriesByCollection(_collection.name));
-    } else {
+  [allEntries, selectedCollection, unpublishedEntries, reordering],
+  ([_allEntries, _collection, _unpublishedEntries, _reordering], set) => {
+    if (!_allEntries || !_collection) {
       set([]);
+
+      return;
     }
+
+    const entries = getEntriesByCollection(_collection.name);
+
+    // Don’t swap while reordering, because the reorder UI persists an order field on the published
+    // entries, and the draft version must not leak into that commit
+    if (_reordering) {
+      set(entries);
+
+      return;
+    }
+
+    // Show the pending changes rather than what’s live, so the list sorts, filters and groups by
+    // them
+    set(
+      swapUnpublishedEntries(
+        entries,
+        _unpublishedEntries.filter(({ workflow }) => workflow.collectionName === _collection.name),
+      ),
+    );
+  },
+);
+
+/**
+ * List of unpublished entries for the selected entry collection that have never been published,
+ * sorted and filtered with the same view settings as {@link entryGroups}. Unlike an update to an
+ * existing entry, which replaces the published version in {@link listedEntries}, these are listed
+ * in a separate group above the published entries.
+ * @type {Readable<Entry[]>}
+ */
+export const listedUnpublishedEntries = derived(
+  // Include `appLocale.current` as a dependency because `sortEntries()` may return localized labels
+  [unpublishedEntries, listedEntries, selectedCollection, currentView, reordering, appLocaleStore],
+  ([_unpublishedEntries, _listedEntries, _collection, _currentView, _reordering]) => {
+    if (_collection?._type !== 'entry' || _reordering) {
+      return [];
+    }
+
+    // A draft that replaced a published entry is already in `listedEntries`, so match by identity
+    // rather than by path, which a rename would break
+    const swappedIn = new Set(_listedEntries);
+
+    /** @type {Entry[]} */
+    let entries = _unpublishedEntries.filter(
+      (entry) => entry.workflow.collectionName === _collection.name && !swappedIn.has(entry),
+    );
+
+    if (!entries.length) {
+      return [];
+    }
+
+    if (_currentView.sort) {
+      entries = sortEntries(entries, _collection, _currentView.sort);
+    }
+
+    if (_currentView.filters) {
+      entries = filterEntries(entries, _collection, _currentView.filters);
+    }
+
+    return entries;
   },
 );
 

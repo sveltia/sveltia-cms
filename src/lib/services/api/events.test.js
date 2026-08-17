@@ -41,14 +41,14 @@ describe('events module', () => {
   });
 
   describe('UPDATABLE_EVENT_TYPES', () => {
-    it('should contain only preSave and prePublish', async () => {
-      expect(UPDATABLE_EVENT_TYPES).toEqual(['preSave', 'prePublish']);
+    it('should contain only preSave', async () => {
+      expect(UPDATABLE_EVENT_TYPES).toEqual(['preSave']);
     });
 
-    it('should only include preSave and prePublish', async () => {
-      expect(UPDATABLE_EVENT_TYPES).toHaveLength(2);
+    it('should not include prePublish, whose update cannot be persisted', async () => {
+      expect(UPDATABLE_EVENT_TYPES).toHaveLength(1);
       expect(UPDATABLE_EVENT_TYPES).toContain('preSave');
-      expect(UPDATABLE_EVENT_TYPES).toContain('prePublish');
+      expect(UPDATABLE_EVENT_TYPES).not.toContain('prePublish');
     });
   });
 
@@ -88,6 +88,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -106,8 +107,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error - test object simplified for mocking
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
           author: {
@@ -119,6 +127,43 @@ describe('events module', () => {
       );
     });
 
+    it('should fall back to another locale when the default one has no file', async () => {
+      const handler = vi.fn();
+
+      eventHookRegistry.add(/** @type {any} */ ({ name: 'preUnpublish', handler }));
+
+      // A multi-file i18n entry is listed even when its default locale file is missing, so the
+      // entry reaching a hook can lack that locale
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preUnpublish',
+          entry: {
+            slug: 'test-post',
+            locales: { ja: { content: { title: '日本語' }, path: 'posts/test-post.ja.md' } },
+          },
+          collection: { name: 'posts', _i18n: { defaultLocale: 'en' } },
+        }),
+      );
+
+      expect(handler).toHaveBeenCalledWith(expect.objectContaining({ entry: expect.any(Object) }));
+    });
+
+    it('should handle an entry with no locale at all', async () => {
+      const handler = vi.fn();
+
+      eventHookRegistry.add(/** @type {any} */ ({ name: 'preUnpublish', handler }));
+
+      await expect(
+        callEventHooks(
+          /** @type {any} */ ({
+            type: 'preUnpublish',
+            entry: { slug: 'test-post', locales: {} },
+            collection: { name: 'posts', _i18n: { defaultLocale: 'en' } },
+          }),
+        ),
+      ).resolves.toBeUndefined();
+    });
+
     it('should not call hooks with non-matching event type', async () => {
       const handler = vi.fn();
       const listener = /** @type {any} */ ({ name: 'postSave', handler });
@@ -127,6 +172,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -145,8 +191,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       expect(handler).not.toHaveBeenCalled();
     });
@@ -162,6 +215,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -180,8 +234,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       expect(handler1).toHaveBeenCalledOnce();
       expect(handler2).toHaveBeenCalledOnce();
@@ -195,6 +256,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: {
@@ -215,8 +277,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       expect(handler).toHaveBeenCalledOnce();
 
@@ -237,6 +306,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -263,8 +333,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       expect(handler).toHaveBeenCalledOnce();
 
@@ -287,6 +364,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -305,8 +383,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error - test object simplified for mocking
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       const callArgs = handler.mock.calls[0][0];
 
@@ -326,6 +411,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -344,8 +430,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       const callArgs = handler.mock.calls[0][0];
 
@@ -384,6 +477,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -402,8 +496,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       const callArgs = handler.mock.calls[0][0];
       const entryMap = callArgs.entry;
@@ -430,6 +531,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -448,8 +550,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       const callArgs = handler.mock.calls[0][0];
 
@@ -468,6 +577,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -486,8 +596,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       // The content should be updated with flattened modified data
       expect(savingEntry.locales.en.content).toEqual({
@@ -511,6 +628,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -537,8 +655,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       expect(savingEntry.locales.en.content).toEqual({ title: 'Modified Title' });
       expect(savingEntry.locales.ja.content).toEqual({ title: 'モディファイド・タイトル' });
@@ -555,6 +680,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -573,8 +699,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       // When a simple object (not containing data/i18n) is returned as Map,
       // it should flatten and update the content
@@ -596,6 +729,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -616,14 +750,21 @@ describe('events module', () => {
 
       const originalContent = { ...savingEntry.locales.en.content };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'postSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'postSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       // Content should remain unchanged for postSave events (not in UPDATABLE_EVENT_TYPES)
       expect(savingEntry.locales.en.content).toEqual(originalContent);
     });
 
-    it('should modify entry content for prePublish event', async () => {
+    it('should not modify entry content for prePublish event', async () => {
       const modifiedEntry = fromJS({
         data: { title: 'Modified Title' },
         i18n: {},
@@ -635,6 +776,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -653,11 +795,19 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'prePublish', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'prePublish',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
-      // Content should be modified for prePublish events (in UPDATABLE_EVENT_TYPES)
-      expect(savingEntry.locales.en.content).toEqual({ title: 'Modified Title' });
+      // The content is already committed to the workflow branch by publish time, so an update
+      // returned here would leave the entry and the file out of sync
+      expect(savingEntry.locales.en.content).toEqual({ title: 'Original Title' });
     });
 
     it('should not modify entry content for unmodifiable events like postPublish', async () => {
@@ -672,6 +822,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -692,8 +843,15 @@ describe('events module', () => {
 
       const originalContent = { ...savingEntry.locales.en.content };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'postPublish', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'postPublish',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       // Content should remain unchanged for postPublish events (not in UPDATABLE_EVENT_TYPES)
       expect(savingEntry.locales.en.content).toEqual(originalContent);
@@ -706,6 +864,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -724,8 +883,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       const callArgs = handler.mock.calls[0][0];
       const entryMap = callArgs.entry;
@@ -748,6 +914,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -772,8 +939,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       const callArgs = handler.mock.calls[0][0];
       const entryMap = callArgs.entry;
@@ -800,11 +974,11 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'blog-posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
         isNew: true,
-        collectionName: 'blog-posts',
         fileName: null,
       };
 
@@ -818,13 +992,20 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       expect(getAssociatedAssets).toHaveBeenCalledWith({
         entry: savingEntry,
         collectionName: 'blog-posts',
-        fileName: null,
+        fileName: undefined,
       });
     });
 
@@ -848,6 +1029,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -870,8 +1052,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       // Verify the entry data was updated from the hook
       expect(savingEntry.locales.en.content).toEqual(expect.objectContaining(updatedData));
@@ -891,6 +1080,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -909,8 +1099,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       // Verify the entry data was updated
       expect(savingEntry.locales.en.content).toEqual(expect.objectContaining(updatedData));
@@ -931,6 +1128,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -949,8 +1147,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'postSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'postSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       // Entry should not be modified for non-updatable event types
       expect(savingEntry.locales.en.content).toEqual(originalContent);
@@ -968,6 +1173,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -988,14 +1194,21 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       // Entry should not be modified if hook returns non-Map
       expect(savingEntry.locales.en.content).toEqual(originalContent);
     });
 
-    it('should handle prePublish hook returning updated entry', async () => {
+    it('should ignore an updated entry returned by a prePublish hook', async () => {
       const updatedData = { title: 'Published Title' };
 
       const handler = vi.fn(async () =>
@@ -1010,6 +1223,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -1028,8 +1242,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'prePublish', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'prePublish',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       expect(handler).toHaveBeenCalledOnce();
     });
@@ -1051,6 +1272,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -1077,8 +1299,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       expect(savingEntry.locales.en.content).toEqual({ title: 'Updated Title' });
       expect(savingEntry.locales.ja.content).toEqual({ title: '更新されたタイトル' });
@@ -1097,6 +1326,7 @@ describe('events module', () => {
 
       const draft = {
         collection: {
+          name: 'posts',
           _i18n: { defaultLocale: 'en' },
         },
         collectionFile: null,
@@ -1115,8 +1345,15 @@ describe('events module', () => {
         },
       };
 
-      // @ts-expect-error
-      await callEventHooks({ type: 'preSave', draft, savingEntry });
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: draft.collection,
+          collectionFile: draft.collectionFile,
+          isNew: draft.isNew,
+        }),
+      );
 
       // The else-if branch runs: locales[defaultLocale].content = flatten(map)
       // map = { data: { title: 'Modified Title' } }, flattened = { 'data.title': 'Modified Title' }

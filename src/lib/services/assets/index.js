@@ -45,6 +45,22 @@ const ENTRY_FOLDER_REGEX = /^(?<entryFolder>.+?)(?:\/[^/]+)?$/;
 export const allAssets = writable([]);
 
 /**
+ * List of the assets that exist on the configured branch, which is {@link allAssets} minus the ones
+ * committed to an Editorial Workflow branch. The Asset Library and the asset search use this,
+ * because most asset actions — renaming, moving, deleting — can’t operate on a file that only lives
+ * on a pull request branch. Entry previews still resolve against {@link allAssets}, so an image
+ * attached to an unpublished entry is displayed where it’s used.
+ * @type {Readable<Asset[]>}
+ */
+export const publishedAssets = derived([allAssets], ([_allAssets]) =>
+  // Keep the same array reference when there’s nothing to filter out, to avoid needless downstream
+  // recomputation
+  _allAssets.some(({ workflow }) => workflow)
+    ? _allAssets.filter(({ workflow }) => !workflow)
+    : _allAssets,
+);
+
+/**
  * Lazily-rebuilt Map from asset path to Asset, used for O(1) path lookups. Rebuilt only when
  * `allAssets` changes reference.
  * @type {{ source: Asset[] | undefined, map: Map<string, Asset> }}

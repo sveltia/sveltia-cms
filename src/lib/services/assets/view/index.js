@@ -2,7 +2,7 @@ import { _ } from '@sveltia/i18n';
 import equal from 'fast-deep-equal';
 import { derived, get, writable } from 'svelte/store';
 
-import { allAssets, selectedAssets, uploadingAssets } from '$lib/services/assets';
+import { publishedAssets, selectedAssets, uploadingAssets } from '$lib/services/assets';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { filterAssets } from '$lib/services/assets/view/filter';
 import { groupAssets } from '$lib/services/assets/view/group';
@@ -93,7 +93,7 @@ export const currentView = writable({ type: 'grid', showInfo: true });
  * @type {Readable<Asset[]>}
  */
 export const listedAssets = derived(
-  [allAssets, selectedAssetFolder],
+  [publishedAssets, selectedAssetFolder],
   ([_allAssets, _selectedAssetFolder], set) => {
     if (_allAssets && _selectedAssetFolder && _selectedAssetFolder.internalPath !== undefined) {
       // An asset’s folder is usually the very object the selection was made from, so identity

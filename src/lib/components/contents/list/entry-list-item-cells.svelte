@@ -8,6 +8,7 @@
   import { Checkbox, GridCell, Icon, TruncatedText } from '@sveltia/ui';
 
   import Image from '$lib/components/assets/shared/image.svelte';
+  import StatusBadge from '$lib/components/workflow/status-badge.svelte';
   import { selectedEntryIdSet } from '$lib/services/contents/collection/entries';
   import {
     getIndexFile,
@@ -18,7 +19,12 @@
   import { env } from '$lib/services/user/env.svelte';
 
   /**
-   * @import { Entry, InternalEntryCollection, ViewType } from '$lib/types/private';
+   * @import {
+   * Entry,
+   * InternalEntryCollection,
+   * UnpublishedEntry,
+   * ViewType,
+   * } from '$lib/types/private';
    */
 
   /**
@@ -41,6 +47,9 @@
     onSelect = undefined,
     /* eslint-enable prefer-const */
   } = $props();
+
+  // Editorial Workflow information, only present on an unpublished entry
+  const workflow = $derived(/** @type {UnpublishedEntry} */ (entry).workflow);
 </script>
 
 {#if showCheckbox && !(env.isSmallScreen || env.isMediumScreen)}
@@ -75,6 +84,11 @@
       {/if}
     </TruncatedText>
   </div>
+</GridCell>
+<GridCell class="status">
+  {#if workflow}
+    <StatusBadge status={workflow.status} deletion={workflow.deletion} />
+  {/if}
 </GridCell>
 
 <style>

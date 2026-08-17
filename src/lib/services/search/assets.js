@@ -1,6 +1,6 @@
 import { derived } from 'svelte/store';
 
-import { allAssets } from '$lib/services/assets';
+import { publishedAssets } from '$lib/services/assets';
 import { searchTerms } from '$lib/services/search';
 import { hasMatch, normalize } from '$lib/services/search/util';
 
@@ -34,6 +34,6 @@ export const searchAssets = ({ assets, terms }) => {
  * Hold asset search results for the current search terms.
  * @type {Readable<Asset[]>}
  */
-export const assetSearchResults = derived([allAssets, searchTerms], ([assets, terms]) =>
+export const assetSearchResults = derived([publishedAssets, searchTerms], ([assets, terms]) =>
   searchAssets({ assets, terms }),
 );

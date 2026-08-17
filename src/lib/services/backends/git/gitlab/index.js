@@ -13,6 +13,7 @@ import {
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
+import workflow from '$lib/services/backends/git/gitlab/workflow';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
 import { getRepoURL } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
@@ -121,4 +122,5 @@ export default {
   fetchBlob,
   commitChanges,
   fetchFileCommits,
+  workflow,
 };
