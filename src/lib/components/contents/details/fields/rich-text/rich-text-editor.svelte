@@ -428,6 +428,13 @@
       setCurrentValue();
     });
   });
+
+  // Cancel the pending cleanup when the component is destroyed, e.g. when the content details
+  // overlay is closed. Otherwise, the callback would read reactive state belonging to a destroyed
+  // effect, causing a `derived_inert` warning.
+  $effect(() => () => {
+    window.clearTimeout(cleanupTimeout);
+  });
 </script>
 
 <div role="none" class="wrapper" class:minimal bind:this={wrapper}>
