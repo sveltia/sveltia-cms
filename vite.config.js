@@ -9,6 +9,7 @@ import { isObject } from '@sveltia/utils/object';
 import Sonda from 'sonda/vite';
 import { createGenerator } from 'ts-json-schema-generator';
 import { defineConfig } from 'vite';
+import { defaultExclude } from 'vitest/config';
 import { parse as parseYAML } from 'yaml';
 
 // eslint-disable-next-line import-x/no-useless-path-segments
@@ -365,6 +366,7 @@ export default defineConfig({
     }),
   ],
   test: {
+    exclude: [...defaultExclude, '.claude/**'],
     coverage: {
       include: ['src/lib/{components,services}/**/*.js'],
       reporter: ['text', 'json-summary', 'json'],

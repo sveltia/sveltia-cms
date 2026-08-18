@@ -20,6 +20,7 @@ ignorePaths:
   - src/**/*.test.js
   - src/lib/locales/*.yaml
   - '!src/lib/locales/en-*.yaml'
+  - .claude/**
 words:
   - analyzing
   - appinstalled

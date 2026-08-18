@@ -9,7 +9,7 @@ import globals from 'globals';
 
 export default [
   // Ignore files (migrated from .eslintrc.yaml ignorePatterns + .eslintignore)
-  { ignores: ['**/*.cjs', '**/*.d.ts', 'package/', '.vite/'] },
+  { ignores: ['**/*.cjs', '**/*.d.ts', 'package/', '.vite/', '.claude/'] },
 
   // Register @stylistic and import-x plugins for all files (including .svelte)
   (({ files: _f, ...c }) => c)(airbnbPlugins.stylistic),
