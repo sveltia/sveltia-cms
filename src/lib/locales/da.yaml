@@ -1,0 +1,1808 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Opret
+select: Vælg
+select_all: Vælg alle
+upload: Upload
+copy: Kopiér
+download: Download
+duplicate: Duplikér
+delete: Slet
+reorder: Ændr rækkefølge
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Annuller
+done: Færdig
+save: Gem
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Gemmer…
+
+# Publishing actions: used when committing changes to the repository
+publish: Udgiv
+# Progress indicator shown on the publish button during publishing
+publishing: Udgiver…
+
+# Modification actions: editing and updating content
+rename: Omdøb
+update: Opdater
+replace: Erstat
+
+# List and collection actions: adding and removing items
+add: Tilføj
+remove: Fjern
+clear: Ryd
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Fold ud
+expand_all: Fold alle ud
+collapse: Fold sammen
+collapse_all: Fold alle sammen
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Indsæt
+restore: Gendan
+discard: Kassér
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Søger…
+no_results: Ingen resultater fundet.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Global
+primary: Primær
+secondary: Sekundær
+collection: Samling
+folder: Mappe
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: API-nøgle
+details: Detaljer
+back: Tilbage
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Indlæser…
+# Dismiss button for temporary notifications and infobars
+later: Senere
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Slug
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Singleton
+singletons: Singletoner
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Kunne ikke kopiere til udklipsholderen.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: 'Velkommen til {$name}'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: 'Leveret af {$name}'
+
+# Shown during initial configuration and data loading
+loading_cms_config: Indlæser CMS-konfiguration…
+loading_site_data: Indlæser webstedsdata…
+loading_site_data_error: Der opstod en fejl under indlæsning af webstedsdata.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: 'Log ind med {$service}'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Log ind med adgangstoken
+sign_in_using_access_token_description: Indtast dit token herunder. Det skal have læse- og skriveadgang til repositoriets indhold.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: Du kan generere et token under <a>dine brugerindstillinger på {$service}</a>.
+# Input field label for personal access token
+personal_access_token: Personligt adgangstoken
+
+# Authentication progress indicators
+authorizing: Autoriserer…
+signing_in: Logger ind…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Arbejd med lokalt repository
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: Når du bliver bedt om det, skal du vælge rodmappen for repositoriet ”{$repo}”.
+work_with_local_repo_description_no_repo: Når du bliver bedt om det, skal du vælge rodmappen for dit Git-repository.
+# Button label for demo/test repository
+work_with_test_repo: Arbejd med testrepository
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: Den valgte mappe er ikke rodmappen i et repository. Prøv igen.
+  picker_dismissed: Der blev ikke valgt en rodmappe for et repository. Prøv igen.
+  authentication_aborted: Autentificeringen blev afbrudt. Prøv igen.
+  invalid_token: Det angivne token er ugyldigt. Kontrollér det, og prøv igen.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Din Git-backend understøttes ikke af autentificeringstjenesten.
+  UNSUPPORTED_DOMAIN: Dit domæne har ikke tilladelse til at bruge autentificeringstjenesten.
+  MISCONFIGURED_CLIENT: OAuth-appens klient-id eller klienthemmelighed er ikke konfigureret.
+  AUTH_CODE_REQUEST_FAILED: Der kunne ikke modtages en autorisationskode. Prøv igen senere.
+  CSRF_DETECTED: Muligt CSRF-angreb registreret. Autentificeringsforløbet blev afbrudt.
+  TOKEN_REQUEST_FAILED: Der kunne ikke anmodes om et adgangstoken. Prøv igen senere.
+  TOKEN_REFRESH_FAILED: Adgangstokenet kunne ikke fornys. Prøv igen senere.
+  MALFORMED_RESPONSE: Serveren svarede med ugyldige data. Prøv igen senere.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: 'Backenden {$name} kræver {$name} {$version} eller nyere.'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: Du har ikke adgang til repositoriet ”{$repo}”.
+repository_not_found: Repositoriet ”{$repo}” findes ikke.
+repository_empty: Repositoriet ”{$repo}” har ingen branches.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: Repositoriet ”{$repo}” har ikke branchen ”{$branch}”.
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Uventet fejl
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Der opstod en fejl under fortolkning af en dokumentfil. Se browserkonsollen for detaljer. }}
+    *   {{ Der opstod fejl under fortolkning af dokumentfiler. Se browserkonsollen for detaljer. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Brugernavn
+password: Adgangskode
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Log ind
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Log ind med din mobil
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Scan QR-koden herunder med din telefon eller tablet for at logge ind uden adgangskode. Dine indstillinger kopieres automatisk.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'Logget ind som {$name}'
+working_with_local_repo: Arbejder med lokalt repository
+working_with_test_repo: Arbejder med testrepository
+
+# Account menu: action items for sign-out and app installation
+sign_out: Log ud
+install_as_app: Installer som app
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Indhold
+assets: Medier
+editorial_workflow: Redaktionel arbejdsgang
+cms_config: CMS-konfiguration
+# Mobile menu page title (shown only on small screens)
+menu: Menu
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS findes nu på mobilen!
+mobile_promo_button: Prøv det
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS findes nu på {$locale}!
+change_language: Skift sprog
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Skifter til {$locale}…
+locale_load_failed: Oversættelsen til {$locale} kunne ikke indlæses. Prøv igen senere.
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Besøg webstedet
+# Page switcher button group aria-label for switching between main sections
+switch_page: Skift side
+
+# Search input placeholders
+search_placeholder_contents: Søg efter indhold…
+search_placeholder_assets: Søg efter medier…
+search_placeholder_all: Søg efter indhold og medier…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Opret dokument eller mediefiler
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Udgiv ændringer
+publishing_changes: Udgiver ændringer…
+# Error notification when publishing fails
+publishing_changes_failed: Ændringerne kunne ikke udgives. Prøv igen.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Vis notifikationer
+notifications: Notifikationer
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Vis kontomenu
+# Account section heading in the account menu and mobile menu page
+account: Konto
+
+# Account menu items: links to external resources
+live_site: Webstedet
+git_repository: Git-repository
+settings: Indstillinger
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Vis hjælpemenu
+# Help section heading in dropdowns and mobile menu
+help: Hjælp
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Tastaturgenveje
+documentation: Dokumentation
+release_notes: Release notes
+announcements: Meddelelser
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: 'Version {$version}'
+# Additional help menu items
+report_issue: Rapportér et problem
+share_feedback: Giv feedback
+get_help: Få hjælp
+donate: Donér
+join_discord: Mød os på Discord
+bluesky: Følg os på Bluesky
+
+# Update notification: infobar message and button
+update_available: Den nyeste version af Sveltia CMS er tilgængelig.
+update_now: Opdater nu
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service} oplever i øjeblikket et mindre driftsproblem. Det kan påvirke din arbejdsgang.'
+  major_incident: '{$service} oplever i øjeblikket et større driftsproblem. Det kan være en god idé at vente til situationen er forbedret.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Indholdsbibliotek
+asset_library: Mediebibliotek
+
+# Primary sidebar section headings and list aria-labels
+collections: Samlinger
+entries: Dokumenter
+files: Filer
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Dit websted
+  external: Eksterne placeringer
+  stock_photos: Stockfotos
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Samlingens medier
+# List aria-labels for different list types
+entry_list: Dokumentliste
+file_list: Filliste
+asset_list: Medieliste
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: Samlingen ”{$collection}”
+# {$folder} is the current asset folder label
+x_asset_folder: Mediemappen ”{$folder}”
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Du ser nu listen over samlinger.
+viewing_asset_folder_list: Du ser nu listen over mediemapper.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Du ser nu samlingen ”{$collection}” som endnu ikke har nogen dokumenter. }}
+    one {{ Du ser nu samlingen ”{$collection}” som har ét dokument. }}
+    *   {{ Du ser nu samlingen ”{$collection}” som har {$count} dokumenter. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Du ser nu mediemappen ”{$folder}” som endnu ikke har nogen mediefiler. }}
+    one {{ Du ser nu mediemappen ”{$folder}” som har én mediefil. }}
+    *   {{ Du ser nu mediemappen ”{$folder}” som har {$count} mediefiler. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: Tryk på Enter for at redigere filen ”{$file}”.
+
+# Error messages: collection or file not found
+collection_not_found: Samlingen blev ikke fundet.
+file_not_found: Filen blev ikke fundet.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} af {$total} valgt'
+
+# View switcher: toggle between list and grid views
+switch_view: Skift visning
+list_view: Listevisning
+grid_view: Miniaturevisning
+switch_to_list_view: Skift til listevisning
+switch_to_grid_view: Skift til miniaturevisning
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Sortér
+sorting_options: Sorteringsmuligheder
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Ingen
+  name: Navn
+  slug: Slug
+  # Sort by the last commit’s author name
+  commit_author: Opdateret af
+  # Sort by the last commit date
+  commit_date: Opdateret
+  # Sort by the entry’s computed summary text
+  _summary: Resumé
+  # Manual order defined by the user via drag-and-drop
+  _manual: Manuel
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, A til Å'
+ascending_date: '{$label}, ældste til nyeste'
+descending: '{$label}, Å til A'
+descending_date: '{$label}, nyeste til ældste'
+
+# Filter menu: button labels and options
+filter: Filtrér
+filtering_options: Filtreringsmuligheder
+
+# Group menu: button labels and options
+group: Gruppér
+grouping_options: Grupperingsmuligheder
+
+# Asset type filter and group labels
+type: Type
+all: Alle
+# Asset type labels
+image: Billede
+video: Video
+audio: Lyd
+document: Dokument
+other: Andet
+
+# Toolbar toggles: show/hide panels
+show_assets: Vis medier
+hide_assets: Skjul medier
+show_info: Vis info
+hide_info: Skjul info
+
+# Folder display labels when no specific path is configured
+all_assets: Alle medier
+global_assets: Globale medier
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: Dokumentet blev ikke fundet.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Oprettelse af nye dokumenter i denne samling er deaktiveret af administratoren.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: Du kan ikke tilføje nye dokumenter til denne samling da den har nået sin grænse på {$quota} dokumenter.
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    one {{ Denne samling nærmer sig sin grænse på {$quota} dokumenter. Du kan kun oprette {$remaining} dokument mere. }}
+    *   {{ Denne samling nærmer sig sin grænse på {$quota} dokumenter. Du kan kun oprette {$remaining} dokumenter mere. }}
+
+# Navigation: back links and list labels
+back_to_collection: Tilbage til samlingen
+collection_list: Samlingsliste
+back_to_collection_list: Tilbage til samlingslisten
+asset_folder_list: Mediemappeliste
+back_to_asset_folder_list: Tilbage til mediemappelisten
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Søgeresultater
+# {$terms} is the current search query text
+search_results_for_x: Søgeresultater for ”{$terms}”
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Du ser nu søgeresultater for ”{$terms}”. Vi fandt ingen dokumenter. }}
+    one {{ Du ser nu søgeresultater for ”{$terms}”. Vi fandt ét dokument. }}
+    *   {{ Du ser nu søgeresultater for ”{$terms}”. Vi fandt {$count} dokumenter. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Du ser nu søgeresultater for ”{$terms}”. Vi fandt ingen mediefiler. }}
+    one {{ Du ser nu søgeresultater for ”{$terms}”. Vi fandt én mediefil. }}
+    *   {{ Du ser nu søgeresultater for ”{$terms}”. Vi fandt {$count} mediefiler. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Ingen dokumenter }}
+    one {{ {$count} dokument }}
+    *   {{ {$count} dokumenter }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Ingen mediefiler }}
+    one {{ {$count} mediefil }}
+    *   {{ {$count} mediefiler }}
+
+# Empty state messages
+no_files_found: Ingen filer fundet.
+no_entries_found: Ingen dokumenter fundet.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Upload nye mediefiler
+
+# Edit options menu: button and item labels
+edit_options: Redigeringsmuligheder
+show_edit_options: Vis redigeringsmuligheder
+# Edit menu items with specific asset names
+edit_asset: Rediger mediefil
+# {$name} is the selected asset name
+edit_x: 'Rediger {$name}'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Ombryd lange linjer
+
+# Rename asset: dialog and validation
+rename_asset: Omdøb mediefil
+# {$name} is the current asset name
+rename_x: 'Omdøb {$name}'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Indtast et nyt navn herunder. }}
+    one {{ Indtast et nyt navn herunder. Et dokument der bruger mediefilen, bliver også opdateret. }}
+    *   {{ Indtast et nyt navn herunder. {$count} dokumenter der bruger mediefilen, bliver også opdateret. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: Filnavnet må ikke være tomt.
+  character: Filnavnet må ikke indeholde specialtegn.
+  duplicate: Dette filnavn bruges allerede til en anden mediefil.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Skift filendelse
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Er du sikker på at du vil ændre filendelsen fra ”.{$oldExtension}” til ”.{$newExtension}”?
+  add: Er du sikker på at du vil tilføje filendelsen ”.{$newExtension}”?
+  remove: Er du sikker på at du vil fjerne filendelsen ”.{$oldExtension}”?
+file_extension_change_warning: Filen vises eller håndteres muligvis ikke korrekt hvis filendelsen ikke passer til det faktiske filformat.
+
+# Replace asset: menu item and dialog title
+replace_asset: Erstat mediefil
+# {$name} is the asset being replaced
+replace_x: 'Erstat {$name}'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Klik for at gennemse…
+# Browse prompt shown on touch devices
+tap_to_browse: Tryk for at gennemse…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Træk en fil hertil, eller klik for at gennemse… }}
+    *   {{ Træk filer hertil, eller klik for at gennemse… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Træk en fil hertil, eller }}
+    *   {{ Træk filer hertil, eller }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Træk en billedfil hertil, eller }}
+    *   {{ Træk billedfiler hertil, eller }}
+
+# File picker and clipboard actions used by upload controls
+browse: Gennemse
+# Generic clipboard paste action used by non-image file fields
+paste: Indsæt
+# Clipboard paste action used by image fields
+paste_image: Indsæt billede
+
+# Clipboard paste errors
+no_image_in_clipboard: Der blev ikke fundet noget billede i udklipsholderen.
+clipboard_access_denied: Adgang til udklipsholderen blev nægtet.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Slip filen her }}
+    *   {{ Slip filerne her }}
+
+# File type validation errors
+unsupported_file_type: Filtypen understøttes ikke
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Filen du har trukket ind, er ikke en af følgende typer: {$types}. Prøv igen.'
+dropped_image_type_mismatch: 'Filen du har trukket ind, understøttes ikke. Kun billeder af følgende typer accepteres: {$types}. Prøv igen.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Vælg fil }}
+    *   {{ Vælg filer }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Slet mediefil }}
+    *   {{ Slet mediefiler }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Slet valgt mediefil }}
+    *   {{ Slet valgte mediefiler }}
+confirm_deleting_this_asset: Er du sikker på at du vil slette denne mediefil?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Er du sikker på at du vil slette den valgte mediefil? }}
+    *   {{ Er du sikker på at du vil slette de {$count} valgte mediefiler? }}
+confirm_deleting_all_assets: Er du sikker på at du vil slette alle mediefilerne?
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Slet dokument }}
+    *   {{ Slet dokumenter }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Slet valgt dokument }}
+    *   {{ Slet valgte dokumenter }}
+confirm_deleting_this_entry: Er du sikker på at du vil slette dette dokument?
+confirm_deleting_this_entry_with_assets: Er du sikker på at du vil slette dette dokument og de tilknyttede mediefiler?
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Er du sikker på at du vil slette det valgte dokument? }}
+    *   {{ Er du sikker på at du vil slette de {$count} valgte dokumenter? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Er du sikker på at du vil slette det valgte dokument og de tilknyttede mediefiler? }}
+    *   {{ Er du sikker på at du vil slette de {$count} valgte dokumenter og de tilknyttede mediefiler? }}
+confirm_deleting_all_entries: Er du sikker på at du vil slette alle dokumenterne?
+confirm_deleting_all_entries_with_assets: Er du sikker på at du vil slette alle dokumenterne og de tilknyttede mediefiler?
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Ændr rækkefølge på dokumenter
+done_reordering_entries: Færdig med at ændre rækkefølgen
+cancel_reordering_entries: Annuller ændring af rækkefølgen
+
+# Reorder error message
+saving_reorder_failed: Den nye rækkefølge af dokumenter kunne ikke gemmes. Prøv igen.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Behandler en fil. Det kan tage et stykke tid. }}
+    *   {{ Behandler filer. Det kan tage et stykke tid. }}
+
+# Uploading section aria-label
+uploading_files: Uploader filer
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '”{$name}” bliver erstattet med denne fil:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denne fil bliver gemt i mappen ”{$folder}”: }}
+    *   {{ Disse {$count} filer bliver gemt i mappen ”{$folder}”: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: For store filer
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denne fil kan ikke uploades fordi den overskrider den maksimale størrelse på {$size}. Reducer størrelsen, eller vælg en anden fil. }}
+    *   {{ Disse filer kan ikke uploades fordi de overskrider den maksimale størrelse på {$size}. Reducer størrelserne, eller vælg nogle andre filer. }}
+
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Ugyldige filer
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denne fil kan ikke uploades fordi den er beskadiget eller fordi indholdet ikke svarer til filendelsen. Det sker ofte når et foto er blevet omdøbt i stedet for konverteret, fx et HEIC-billede gemt som en JPEG-fil. Konvertér filen, og prøv igen. }}
+    *   {{ Disse filer kan ikke uploades fordi de er beskadigede eller fordi indholdet ikke svarer til filendelserne. Det sker ofte når fotos er blevet omdøbt i stedet for konverteret, fx HEIC-billeder gemt som JPEG-filer. Konvertér filerne, og prøv igen. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ Der findes allerede en fil med samme navn i denne mappe. Vil du erstatte den? }}
+    *   {{ Der findes allerede {$count} filer med de samme navne i denne mappe. Vil du erstatte dem? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ Der findes allerede en fil med navnet ”{$name}” i denne mappe. Vil du erstatte den? }}
+    *   {{ Der findes allerede {$count} filer med de samme navne i denne mappe. Vil du erstatte dem? }}
+file_name_conflict_resolution: Håndtering af filnavnekonflikter
+# Option to keep both files (rename the new one)
+keep_both: Behold begge
+
+# Upload progress and error messages
+uploading_files_progress: Uploader…
+uploading_files_failed: Upload mislykkedes.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (konverteret fra {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Denne samling har endnu ingen dokumenter.
+# Button to create first entry
+create_new_entry: Opret nyt dokument
+# “Entry” option label in the create button menu
+entry: Dokument
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Indeksfil
+
+# Empty state for file collections
+no_files_in_collection: Der er ingen tilgængelige filer i denne samling.
+
+# Entry duplication
+duplicate_entry: Duplikér dokument
+entry_duplicated: Dokumentet er duplikeret som en ny kladde.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ét felt har en fejl. Ret den for at gemme dokumentet. }}
+    *   {{ {$count} felter har fejl. Ret dem for at gemme dokumentet. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dokumentet er gemt. }}
+    *   {{ {$count} dokumenter er gemt. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dokumentet er gemt og udgivet. }}
+    *   {{ {$count} dokumenter er gemt og udgivet. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dokumentet er slettet. }}
+    *   {{ {$count} dokumenter er slettet. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediefilen er gemt. }}
+    *   {{ {$count} mediefiler er gemt. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediefilen er gemt og udgivet. }}
+    *   {{ {$count} mediefiler er gemt og udgivet. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ URL’en er kopieret til udklipsholderen. }}
+    *   {{ {$count} URL’er er kopieret til udklipsholderen. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Filstien er kopieret til udklipsholderen. }}
+    *   {{ {$count} filstier er kopieret til udklipsholderen. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fildataene er kopieret til udklipsholderen. }}
+    *   {{ Dataene fra {$count} filer er kopieret til udklipsholderen. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediefilen er downloadet. }}
+    *   {{ {$count} mediefiler er downloadet. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediefilen er flyttet. }}
+    *   {{ {$count} mediefiler er flyttet. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediefilen er omdøbt. }}
+    *   {{ {$count} mediefiler er omdøbt. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediefilen er slettet. }}
+    *   {{ {$count} mediefiler er slettet. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Indholdseditor
+
+# Draft backup: restore dialog
+restore_backup_title: Gendan kladde
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Dette dokument har en sikkerhedskopi fra {$datetime}. Vil du gendanne den redigerede kladde?
+
+# Draft backup notifications
+draft_backup_saved: Sikkerhedskopi af kladden er gemt.
+draft_backup_restored: Sikkerhedskopi af kladden er gendannet.
+draft_backup_deleted: Sikkerhedskopi af kladden er slettet.
+
+# Editor toolbar actions
+cancel_editing: Annuller redigering
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: Opretter {$name}
+# {$collection} is the collection label
+create_entry_announcement: Du er nu ved at oprette et nyt dokument i samlingen ”{$collection}”.
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: Du redigerer nu dokumentet ”{$entry}” i samlingen ”{$collection}”.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: Du redigerer nu filen ”{$file}” i samlingen ”{$collection}”.
+# {$file} is the singleton file name
+edit_singleton_announcement: Du redigerer nu filen ”{$file}”.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Gem og udgiv
+save_without_publishing: Gem uden at udgive
+
+# Editor options menu
+show_editor_options: Vis editorindstillinger
+editor_options: Editorindstillinger
+
+# Preview controls
+show_preview: Vis forhåndsvisning
+
+# Editor settings
+sync_scrolling: Synkroniser rulning
+
+# Locale controls
+switch_locale: Skift sprog
+# Short status indicators appended to locale names
+locale_content_disabled_short: (deaktiveret)
+locale_content_error_short: (fejl)
+
+# Pane labels
+edit: Rediger
+preview: Forhåndsvisning
+
+# Pane controls; not to be confused with pages
+swap_panes: Byt paneler
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Rediger indhold på {$locale}
+preview_x_locale: Forhåndsvis indhold på {$locale}
+
+# Preview iframe labels
+content_preview: Forhåndsvisning af indhold
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Vis indholdsmuligheder for {$locale}
+content_options_x_locale: 'Indholdsmuligheder for {$locale}'
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: Feltet ”{$field}”
+
+# Field options menu
+show_field_options: Vis feltmuligheder
+field_options: Feltmuligheder
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Ikke-understøttet felttype: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: 'Aktivér {$locale}'
+reenable_x_locale: 'Genaktivér {$locale}'
+disable_x_locale: 'Deaktivér {$locale}'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: Indholdet på {$locale} er blevet deaktiveret.
+locale_x_now_disabled: Indholdet på {$locale} er nu deaktiveret. Det bliver slettet når du gemmer dokumentet.
+
+# Repository and site links
+view_in_repository: Vis i repositoriet
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: 'Vis på {$service}'
+view_on_live_site: Vis på webstedet
+
+# Content copying from other locales
+copy_from: Kopiér fra…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: 'Kopiér fra {$locale}'
+
+# Translation features
+translation_options: Oversættelsesmuligheder
+translate: Oversæt
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Oversæt felt }}
+    *   {{ Oversæt felter }}
+translate_from: Oversæt fra…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: 'Oversæt fra {$locale}'
+
+# Revert changes
+revert_changes: Fortryd ændringer
+revert_all_changes: Fortryd alle ændringer
+
+# Slug editing
+edit_slug: Rediger slug
+edit_slug_warning: Hvis du ændrer dokumentets slug, kan interne og eksterne links til dokumentet holde op med at virke. Sveltia CMS opdaterer i øjeblikket ikke referencer der er oprettet med relationsfelter, så du skal selv opdatere den slags referencer sammen med andre links.
+edit_slug_error:
+  empty: Slug må ikke være tomt.
+  invalid: Slug må ikke indeholde specialtegn, herunder skråstreger og mellemrum.
+  duplicate: Dette slug bruges allerede til et andet dokument.
+
+# Required field indicator
+required: Obligatorisk
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Der er intet at oversætte.
+    started: Oversætter…
+    error: Oversættelsen mislykkedes.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Ingen felter er oversat fra {$source}. }}
+        one {{ Feltet er oversat fra {$source}. }}
+        *   {{ {$count} felter er oversat fra {$source}. }}
+  copy:
+    none: Der er intet at kopiere.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Ingen felter er kopieret fra {$source}. }}
+        one {{ Feltet er kopieret fra {$source}. }}
+        *   {{ {$count} felter er kopieret fra {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Dette felt skal udfyldes.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: Datoen/tidspunktet skal være {$min} eller senere.
+    date: Datoen skal være {$min} eller senere.
+    time: Tidspunktet skal være {$min} eller senere.
+    number: Værdien skal være større end eller lig med {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ Du skal vælge mindst {$min} mulighed. }}
+        *   {{ Du skal vælge mindst {$min} muligheder. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ Du skal tilføje mindst {$min} element. }}
+        *   {{ Du skal tilføje mindst {$min} elementer. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: Datoen/tidspunktet skal være {$max} eller tidligere.
+    date: Datoen skal være {$max} eller tidligere.
+    time: Tidspunktet skal være {$max} eller tidligere.
+    number: Værdien skal være mindre end eller lig med {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ Du kan højst vælge {$max} mulighed. }}
+        *   {{ Du kan højst vælge {$max} muligheder. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ Du kan højst tilføje {$max} element. }}
+        *   {{ Du kan højst tilføje {$max} elementer. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ Du skal indtaste mindst {$min} tegn. }}
+      *   {{ Du skal indtaste mindst {$min} tegn. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ Du kan højst indtaste {$max} tegn. }}
+      *   {{ Du kan højst indtaste {$max} tegn. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Indtast et tal.
+    email: Indtast en gyldig e-mailadresse.
+    url: Indtast en gyldig URL.
+
+  # Custom field validation error
+  invalid_value: Ugyldig værdi.
+  unexpected_error: Der opstod en uventet fejl.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Sidepaneler
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Validering
+    placeholder: Valideringsresultater vises her.
+    no_errors_found: Ingen fejl fundet.
+
+  # History panel: shows entry commit history
+  history:
+    title: Historik
+    fetch_failed: Historikken kunne ikke indlæses.
+    no_history: Ingen historik fundet.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Backlinks
+    no_entries: Ingen dokumenter henviser til dette dokument.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Fejl
+    description: Der opstod en fejl da dokumentet skulle gemmes. Prøv igen senere.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: Du ser detaljerne for mediefilen ”{$name}”.
+
+# Asset editor container aria-label
+asset_editor: Mediefileditor
+
+# Preview unavailable message
+preview_unavailable: Forhåndsvisning er ikke tilgængelig.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ Offentlig URL }}
+    *   {{ Offentlige URL’er }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Filsti }}
+    *   {{ Filstier }}
+file_data: Fildata
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Mediefilinfo
+select_asset_show_info: Vælg en mediefil for at se dens info.
+
+kind: Filtype
+size: Størrelse
+dimensions: Mål
+duration: Varighed
+# Short heading for a list of entries using the selected asset
+used_in: Bruges i
+created_date: Oprettelsesdato
+location: Placering
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Kort der viser breddegrad {$latitude}, længdegrad {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Fjern dette element
+move_up: Flyt op
+move_down: Flyt ned
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: Tilføj {$name}
+
+# List item context menu
+add_item_above: Tilføj element ovenfor
+add_item_below: Tilføj element nedenfor
+
+# Variable-type list selector
+select_list_type: Vælg listetype
+
+# Variable-type mismatch
+unknown_variable_type: Dette element kan ikke vises på grund af en ukendt type. Se browserkonsollen for detaljer.
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Opacitet
+
+# Select field: empty option placeholder
+unselected_option: (Ingen)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Vælg fil
+    image: Vælg billede
+
+  # Search input labels
+  search_for_file: Søg efter filer
+  search_for_image: Søg efter billeder
+
+  # Locations panel aria-label
+  locations: Placeringer
+
+  # Asset folder options
+  folder:
+    field: Feltets medier
+    entry: Dokumentets medier
+    file: Filens medier
+    collection: Samlingens medier
+    global: Globale medier
+
+  # Error messages
+  error:
+    invalid_key: Din API-nøgle er ugyldig eller udløbet. Kontrollér den, og prøv igen.
+    search_fetch_failed: Der opstod en fejl under søgningen efter mediefiler. Prøv igen senere.
+    image_fetch_failed: Der opstod en fejl under download af den valgte mediefil. Prøv igen senere.
+
+  # Stock photo panels
+  available_images: Tilgængelige billeder
+
+  # URL entry option
+  enter_url: Indtast URL
+  enter_file_url: 'Indtast URL til filen:'
+  enter_image_url: 'Indtast URL til billedet:'
+
+  # Large file warning dialog
+  large_file:
+    title: Stor fil
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Ugyldig fil
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Filerne kan ikke uploades
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Fotokreditering
+    description: 'Brug om muligt følgende kreditering:'
+
+  # Unsaved asset badge
+  unsaved: Ikke gemt
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Ingen tegn indtastet. Minimum: {$min}. Maksimum: {$max}. }}
+      one {{ {$count} tegn indtastet. Minimum: {$min}. Maksimum: {$max}. }}
+      *   {{ {$count} tegn indtastet. Minimum: {$min}. Maksimum: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Ingen tegn indtastet. Minimum: {$min}. }}
+      one {{ {$count} tegn indtastet. Minimum: {$min}. }}
+      *   {{ {$count} tegn indtastet. Minimum: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Ingen tegn indtastet. Maksimum: {$max}. }}
+      one {{ {$count} tegn indtastet. Maksimum: {$max}. }}
+      *   {{ {$count} tegn indtastet. Maksimum: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: YouTube-videoafspiller
+
+# Date/time field: quick action buttons
+today: I dag
+now: Nu
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Billede
+  src: Kilde
+  alt: Alternativ tekst
+  title: Titel
+  link: Link
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Nøgle
+  value: Værdi
+  action: Handling
+  empty_key: Nøglen skal udfyldes.
+  duplicate_key: Nøglen skal være unik.
+
+# Map field: location search and geolocation
+find_place: Find et sted
+use_your_location: Brug din placering
+
+# Geolocation error dialog
+geolocation_error_title: Geolokationsfejl
+geolocation_error_body: Der opstod en fejl da din placering skulle hentes.
+geolocation_unsupported: Geolocation-API’et understøttes ikke af denne browser.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Ja
+  'false': Nej
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: Tjenesten er ikke konfigureret korrekt.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: API-nøgle
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: Indtast din {$key} til {$service}.
+      requested: Validerer…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: Den angivne {$key} er ugyldig. Kontrollér den, og prøv igen.
+    password:
+      # {$service} is the cloud service name
+      initial: Indtast din adgangskode til {$service}.
+      requested: Logger ind…
+      error: Brugernavnet eller adgangskoden er forkert. Kontrollér dem, og prøv igen.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Cloudinary-mediebibliotek
+    activate:
+      button_label: Aktivér Cloudinary
+      description: Når du er logget ind, skal du klikke på knappen Log ind igen for at fortsætte.
+    auth_key_label: API Secret
+    open_library: Åbn Cloudinary
+
+  uploadcare:
+    auth_key_label: API Secret Key
+
+  aws_s3:
+    auth_key_label: Secret Access Key
+
+  cloudflare_r2:
+    auth_key_label: Secret Access Key
+
+  digitalocean_spaces:
+    auth_key_label: Secret Access Key
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ Der er en fejl i CMS-konfigurationen. Løs problemet, og prøv igen. }}
+      *   {{ Der er fejl i CMS-konfigurationen. Løs problemerne, og prøv igen. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: 'samlingen {$collection}'
+    file: 'filen {$file}'
+    component: 'komponenten {$component}'
+    # Don’t localize `{$field}`
+    field: 'feltet `{$field}`'
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS virker kun med HTTPS- eller localhost-URL’er.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ Konfigurationsfilens URL skal bruge HTTPS-protokollen eller en localhost-adresse. }}
+        *   {{ Konfigurationsfilernes URL’er skal bruge HTTPS-protokollen eller localhost-adresser. }}
+    fetch_failed: Konfigurationsfilen kunne ikke hentes.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: HTTP-respons returneret med status {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Konfigurationsfilen kunne ikke hentes. For at forhindre at filen `config.yml` indlæses, kan du tilføje <a>`load_config_file: false`</a> til det konfigurationsobjekt der gives til `CMS.init()`.'
+    parse_failed: Konfigurationsfilen kunne ikke fortolkes.
+    parse_failed_invalid_object: Konfigurationsfilen er ikke et gyldigt JavaScript-objekt.
+    parse_failed_unsupported_type: Konfigurationsfilen har ikke en gyldig filtype. Kun YAML, TOML og JSON understøttes.
+    no_collection: Der er ikke defineret nogen samlinger.
+    # Don’t localize `hide`
+    no_visible_collection: Mindst én samling skal være synlig. Kontrollér indstillingen `hide`.
+    missing_backend: Backenden er ikke defineret.
+    missing_backend_name: Backendens navn er ikke defineret.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: Backenden {$name} <a>understøttes ikke</a> i Sveltia CMS.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Den forældede backend {$name} <a>understøttes ikke</a> i Sveltia CMS.
+    unsupported_custom_backend: Brugerdefinerede backends <a>understøttes ikke</a> i Sveltia CMS.
+    unsupported_backend_suggestion: Brug i stedet en af de <a>understøttede backends</a>.
+    missing_repository: Repositoriet er ikke defineret.
+    invalid_repository: Det konfigurerede repository er ugyldigt. Det skal have formatet ”owner/repo”.
+    oauth_implicit_flow: Den konfigurerede autentificeringsmetode (implicit flow) understøttes ikke i Sveltia CMS. Brug en anden <a>autentificeringsmetode</a> i stedet.
+    github_pkce_unsupported: PKCE-autorisation understøttes endnu ikke på grund af begrænsninger hos GitHub. Brug en anden <a>autentificeringsmetode</a> i stedet.
+    oauth_no_app_id: OAuth-applikationens id er ikke defineret.
+    # Don’t localize `auth_methods`
+    no_auth_methods: Indstillingen `auth_methods` skal indeholde mindst én metode.
+    missing_media_folder: Mediemappen er ikke defineret.
+    invalid_media_folder: Den konfigurerede mediemappe er ugyldig. Den skal være en streng.
+    invalid_public_folder: Den konfigurerede offentlige mappe er ugyldig. Den skal være en streng.
+    public_folder_relative_path: Den konfigurerede offentlige mappe er ugyldig. Den skal være en absolut sti der begynder med ”/”.
+    public_folder_absolute_url: En absolut URL i indstillingen for den offentlige mappe understøttes ikke i Sveltia CMS.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: Indstillingen `asset_collections` er ugyldig. Den skal være et array.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: Mediesamling {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: Mediesamlingsnavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: Navne på mediesamlinger skal være unikke, men `{$name}` bruges mere end én gang.
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: Mediesamlingen `{$name}` skal have indstillingen `media_folder` defineret som en streng.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: Samlingen skal have enten indstillingen `folder`, `files` eller `divider` defineret.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: Samlingen kan ikke have indstillingerne `folder`, `files` og `divider` på samme tid.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: Filendelsen `{$extension}` passer ikke til formatet `{$format}`.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: Slug-skabelonen `{$slug}` er ugyldig da den ikke må indeholde skråstreger. Brug indstillingen `path` i stedet for `slug` for at organisere dokumenter i undermapper.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: Indstillingen `reorder` henviser til en visningsgruppe med navnet `{$name}`, men der er ikke defineret nogen sådan gruppe i indstillingen `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: Indstillingen `sortable_fields` henviser til et felt med navnet `{$name}`, men der er ikke defineret noget sådant felt i samlingen.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: Indstillingen `view_groups` henviser til et felt med navnet `{$name}`, men der er ikke defineret noget sådant felt i samlingen.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: Indstillingen `view_filters` henviser til et felt med navnet `{$name}`, men der er ikke defineret noget sådant felt i samlingen.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Visningsgruppe {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: Visningsgruppenavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn.
+    duplicate_view_group_name: Navne på visningsgrupper skal være unikke, men `{$name}` bruges mere end én gang.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Visningsfilter {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: Visningsfilternavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn.
+    duplicate_view_filter_name: Navne på visningsfiltre skal være unikke, men `{$name}` bruges mere end én gang.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: Samling {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: Samlingsnavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn.
+    duplicate_collection_name: Samlingsnavne skal være unikke, men `{$name}` bruges mere end én gang.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: Samlingsfil {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: Samlingsfilnavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn.
+    duplicate_collection_file_name: Navne på samlingsfiler skal være unikke, men `{$name}` bruges mere end én gang.
+    # Don’t localize `fields`
+    collection_no_fields: Samlingen skal have indstillingen `fields` defineret med mindst ét felt.
+    # Don’t localize `fields`
+    collection_file_no_fields: Samlingsfilen skal have indstillingen `fields` defineret med mindst ét felt.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: Samlingsfilen skal have indstillingen `i18n` defineret hvis pladsholderen `locale` bruges i stien i `file`.
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: Felt {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: Feltnavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn. Hvis du vil indlejre felter, skal du <a>bruge objektfelter i stedet for punktnotation</a>.
+    duplicate_field_name: Feltnavne skal være unikke, men `{$name}` bruges mere end én gang.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: Variabeltype {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: Variabeltypenavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn.
+    duplicate_variable_type: Navne på variabeltyper skal være unikke, men `{$name}` bruges mere end én gang.
+    date_field_type: 'Den forældede felttype Date understøttes ikke i Sveltia CMS. Brug felttypen DateTime med indstillingen `type: date` i stedet.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Ugyldig tidszone: {$timeZone}. Den skal være et gyldigt IANA-tidszone-id som `America/New_York` eller `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: Den forældede indstilling `{$prop}` understøttes ikke i Sveltia CMS. Brug indstillingen `{$newProp}` i stedet.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: Indstillingen `allow_multiple` understøttes ikke i Sveltia CMS. Brug indstillingen `multiple` i stedet; den er som standard `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: Listefeltet kan ikke have indstillingerne `field`, `fields` og `types` på samme tid.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: Listefeltets variabeltype er ugyldig. Indstillingen `widget` er sat til `{$widget}`, men den skal være `object`.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: Objektfeltet kan ikke have indstillingerne `fields` og `types` på samme tid.
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: Objektfeltet skal have enten indstillingen `fields` eller `types` defineret.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: Den refererede samling `{$collection}` er ugyldig eller ikke defineret.
+    relation_field_invalid_collection_file: Den refererede fil `{$file}` er ugyldig eller ikke defineret.
+    # Don’t localize `file`
+    relation_field_missing_file_name: Indstillingen `file` skal være defineret for en relation til en filsamling.
+    relation_field_invalid_value_field: Det refererede værdifelt `{$field}` er ugyldigt eller ikke defineret.
+    unexpected: Uventet fejl
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: OAuth-applikationens id er ikke defineret. Brugere skal angive et adgangstoken for at logge ind.
+    editorial_workflow_unsupported: Redaktionel arbejdsgang understøttes endnu ikke i Sveltia CMS.
+    open_authoring_unsupported: Open authoring understøttes endnu ikke i Sveltia CMS.
+    nested_collections_unsupported: Indlejrede samlinger understøttes endnu ikke i Sveltia CMS.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: Indstillingen `{$prop}` understøttes ikke i Sveltia CMS. Den bliver ignoreret.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: Både `picker_utc` og de nyere tidszoneindstillinger (`input_timezone` eller `output_utc`) er sat. De nye indstillinger har forrang. Overvej at fjerne `picker_utc` fra din konfiguration.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Se kompatibilitetsnoterne for detaljer: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: Du kan validere din konfigurationsfil mod JSON-skemaet for Sveltia CMS og få en bedre udvikleroplevelse. Se {$link} for detaljer.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Lokal
+  # Browser compatibility warnings
+  unsupported_browser: Lokal arbejdsgang understøttes ikke i din browser. Brug Chrome eller Edge i stedet.
+  disabled: Lokal arbejdsgang er deaktiveret i din browser. <a>Sådan slår du den til</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: Kladder
+  in_review: Til gennemsyn
+  ready: Klar
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Kategorier
+
+# Site Configuration Editor
+site_configuration_editor: Editor til webstedskonfiguration
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: API-nøglen er gemt.
+    api_key_removed: API-nøglen er fjernet.
+    api_key_invalid: Den angivne API-nøgle er ugyldig. Kontrollér den, og prøv igen.
+
+  # Preferences operation errors
+  error:
+    permission_denied: Adgang til cookielagring er blevet nægtet. Kontrollér dine browsertilladelser, og prøv igen.
+
+  # Appearance panel
+  appearance:
+    title: Udseende
+    theme: Tema
+    select_theme: Vælg tema
+
+  # Theme options
+  theme:
+    auto: Automatisk
+    dark: Mørk
+    light: Lys
+
+  # Language panel
+  language:
+    title: Sprog
+    ui_language:
+      title: Sprog i brugerfladen
+      select_language: Vælg sprog
+
+  # Contents panel
+  contents:
+    title: Indhold
+    editor:
+      title: Editor
+      use_draft_backup:
+        switch_label: Sikkerhedskopiér automatisk dokumentkladder
+      close_on_save:
+        switch_label: Luk editoren når en kladde er gemt
+      close_with_escape:
+        switch_label: Luk editoren med Escape-tasten
+
+  # Internationalization panel
+  i18n:
+    title: Internationalisering
+    translators:
+      default:
+        title: Standardoversættelsestjeneste
+        select_service: Vælg tjeneste
+      api_keys:
+        title: API-nøgler til oversættelsestjenester
+        description: Administrer API-nøgler til <a>oversættelsestjenester</a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: '{$service}-nøgle'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Opret en konto hos <a {$homeHref}>{$service}</a>, og indtast <a {$apiKeyHref}>din API-nøgle</a> her for hurtigt at kunne oversætte tekstfelter.
+
+  # Media panel
+  media:
+    title: Medier
+    stock_photos:
+      api_keys:
+        title: API-nøgler til stockfototjenester
+        description: Administrer API-nøgler til <a>stockfototjenester</a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: '{$service}-API-nøgle'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Opret en konto hos <a {$homeHref}>{$service} API</a>, og indtast <a {$apiKeyHref}>din API-nøgle</a> her for at kunne indsætte gratis stockfotos i billedfelter.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: Fotos leveret af {$service}
+      no_services: Der er ikke konfigureret nogen <a>stockfototjenester</a>.
+    cloud_storage:
+      api_keys:
+        title: API-nøgler til cloudlagringstjenester
+        description: Administrer API-nøgler til <a>cloudlagringstjenester</a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: '{$service}-API-nøgle'
+      no_services: Der er ikke konfigureret nogen <a>cloudlagringstjenester</a>.
+
+  # Accessibility panel
+  accessibility:
+    title: Tilgængelighed
+    underline_links:
+      title: Understreg links
+      description: Vis understregning af links i forhåndsvisningen af dokumenter og i brugerfladens tekster.
+      switch_label: Understreg altid links
+
+  # Advanced panel
+  advanced:
+    title: Avanceret
+    beta:
+      title: Betafunktioner
+      description: Slå betafunktioner til. De kan være ustabile eller mangle oversættelse.
+      switch_label: Deltag i betaprogrammet
+    developer_mode:
+      title: Udviklertilstand
+      description: Slå udviklerorienterede funktioner til, herunder detaljerede konsollogs og systemets egne kontekstmenuer.
+      switch_label: Slå udviklertilstand til
+    deploy_hook:
+      title: Deploy-hook
+      description: Indtast en webhook-URL der skal kaldes når du manuelt udløser en udrulning ved at vælge Udgiv ændringer. Feltet kan stå tomt hvis du bruger GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: Hook-URL
+        saved: Hook-URL’en er gemt.
+        removed: Hook-URL’en er fjernet.
+      # Authorization header input
+      auth:
+        field_label: Authorization-header (fx Bearer <token>) (valgfri)
+        saved: Authorization-headeren er gemt.
+        removed: Authorization-headeren er fjernet.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: Vis indholdsbiblioteket
+  view_asset_library: Vis mediebiblioteket
+  search: Søg efter dokumenter og medier
+  create_entry: Opret et nyt dokument
+  save_entry: Gem et dokument
+  cancel_editing: Annuller redigering af et dokument
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: AVIF-billede
+  bmp: Bitmap-billede
+  gif: GIF-billede
+  ico: Ikon
+  jpeg: JPEG-billede
+  jpg: JPEG-billede
+  png: PNG-billede
+  svg: SVG-billede
+  tif: TIFF-billede
+  tiff: TIFF-billede
+  webp: WebP-billede
+  # Video formats
+  avi: AVI-video
+  m4v: MP4-video
+  mov: QuickTime-video
+  mp4: MP4-video
+  mpeg: MPEG-video
+  mpg: MPEG-video
+  ogg: Ogg-video
+  ogv: Ogg-video
+  ts: MPEG-video
+  webm: WebM-video
+  3gp: 3GPP-video
+  3g2: 3GPP2-video
+  # Audio formats
+  aac: AAC-lyd
+  mid: MIDI
+  midi: MIDI
+  m4a: MP4-lyd
+  mp3: MP3-lyd
+  oga: Ogg-lyd
+  opus: OPUS-lyd
+  wav: WAV-lyd
+  weba: WebM-lyd
+  # Document formats
+  csv: CSV-regneark
+  doc: Word-dokument
+  docx: Word-dokument
+  odp: OpenDocument-præsentation
+  ods: OpenDocument-regneark
+  odt: OpenDocument-tekst
+  pdf: PDF-dokument
+  ppt: PowerPoint-præsentation
+  pptx: PowerPoint-præsentation
+  rtf: RTF-dokument
+  xls: Excel-regneark
+  xlsx: Excel-regneark
+  # Text formats
+  html: HTML-tekst
+  js: JavaScript
+  json: JSON-tekst
+  md: Markdown-tekst
+  toml: TOML-tekst
+  yaml: YAML-tekst
+  yml: YAML-tekst
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} bytes'
+  kb: '{$size} KB'
+  mb: '{$size} MB'
+  gb: '{$size} GB'
+  tb: '{$size} TB'
