@@ -3,17 +3,13 @@ import { describe, expect, test, vi } from 'vitest';
 
 import {
   createStructureMap,
-  DEFAULT_CANONICAL_SLUG,
   DEFAULT_I18N_CONFIG,
-  DEFAULT_LOCALE_KEY,
   determineDefaultLocale,
   determineInitialLocales,
   determineOmitDefaultLocale,
   determineStructure,
-  I18N_STRUCTURES,
-  mergeI18nConfigs,
   normalizeI18nConfig,
-} from './config';
+} from '.';
 
 /**
  * @import { Collection, CollectionFile } from '$lib/types/public';
@@ -1040,175 +1036,6 @@ describe('Test normalizeI18nConfig()', () => {
 });
 
 describe('Test internal helper functions', () => {
-  describe('I18N_STRUCTURES constant', () => {
-    test('should have all expected structure types', () => {
-      expect(I18N_STRUCTURES).toEqual({
-        SINGLE_FILE: 'single_file',
-        SINGLE_FILE_DEFAULT_ROOT: 'single_file_default_root',
-        MULTIPLE_FILES: 'multiple_files',
-        MULTIPLE_FOLDERS: 'multiple_folders',
-        MULTIPLE_FOLDERS_I18N_ROOT: 'multiple_folders_i18n_root',
-        MULTIPLE_ROOT_FOLDERS: 'multiple_root_folders',
-      });
-    });
-  });
-
-  describe('DEFAULT_LOCALE_KEY constant', () => {
-    test('should be _default', () => {
-      expect(DEFAULT_LOCALE_KEY).toBe('_default');
-    });
-  });
-
-  describe('DEFAULT_CANONICAL_SLUG constant', () => {
-    test('should have correct default values', () => {
-      expect(DEFAULT_CANONICAL_SLUG).toEqual({
-        key: 'translationKey',
-        value: '{{slug}}',
-      });
-    });
-  });
-
-  describe('mergeI18nConfigs', () => {
-    const cmsConfigBase = {
-      backend: { name: 'github' },
-      media_folder: 'static/images/uploads',
-      _siteURL: '',
-      _baseURL: '',
-    };
-
-    test('should return undefined when site config has no i18n', async () => {
-      // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        ...cmsConfigBase,
-      });
-
-      const collection = { name: 'posts', folder: 'content/posts', fields: [] };
-
-      expect(mergeI18nConfigs(collection)).toBeUndefined();
-    });
-
-    test('should return undefined when collection has no i18n', async () => {
-      // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        ...cmsConfigBase,
-        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
-      });
-
-      const collection = { name: 'posts', folder: 'content/posts', fields: [] };
-
-      expect(mergeI18nConfigs(collection)).toBeUndefined();
-    });
-
-    test('should return site i18n config for collection with i18n=true', async () => {
-      // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        ...cmsConfigBase,
-        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
-      });
-
-      const collection = { name: 'posts', folder: 'content/posts', fields: [], i18n: true };
-      const result = mergeI18nConfigs(collection);
-
-      expect(result).toEqual({ structure: 'single_file', locales: ['en', 'fr'] });
-    });
-
-    test('should merge collection i18n config over site config', async () => {
-      // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        ...cmsConfigBase,
-        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
-      });
-
-      /** @type {Collection} */
-      const collection = {
-        name: 'posts',
-        folder: 'content/posts',
-        fields: [],
-        // @ts-ignore
-        i18n: { structure: 'multiple_folders', locales: ['de', 'es'] },
-      };
-
-      const result = mergeI18nConfigs(collection);
-
-      expect(result).toEqual({ structure: 'multiple_folders', locales: ['de', 'es'] });
-    });
-
-    test('should merge file i18n config over collection config', async () => {
-      // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        ...cmsConfigBase,
-        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
-      });
-
-      /** @type {Collection} */
-      const collection = {
-        name: 'pages',
-        folder: 'content/pages',
-        fields: [],
-        // @ts-ignore
-        i18n: { structure: 'multiple_folders', locales: ['de', 'es'] },
-      };
-
-      /** @type {CollectionFile} */
-      const file = {
-        name: 'about',
-        file: 'data/about.json',
-        fields: [],
-        // @ts-ignore
-        i18n: { structure: 'single_file', locales: ['ja'] },
-      };
-
-      const result = mergeI18nConfigs(collection, file);
-
-      expect(result).toEqual({ structure: 'single_file', locales: ['ja'] });
-    });
-
-    test('should return undefined if file has i18n=false', async () => {
-      // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        ...cmsConfigBase,
-        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
-      });
-
-      const collection = {
-        name: 'pages',
-        folder: 'content/pages',
-        fields: [],
-        i18n: true,
-      };
-
-      const file = {
-        name: 'about',
-        file: 'data/about.json',
-        fields: [],
-        i18n: false,
-      };
-
-      const result = mergeI18nConfigs(collection, file);
-
-      expect(result).toBeUndefined();
-    });
-
-    test('should handle singleton collection', async () => {
-      // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        ...cmsConfigBase,
-        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
-      });
-
-      /** @type {Collection} */
-      const collection = {
-        name: '_singletons',
-        // @ts-ignore
-        files: [{ name: 'settings', file: 'data/settings.json', fields: [] }],
-      };
-
-      const result = mergeI18nConfigs(collection);
-
-      expect(result).toEqual({ structure: 'single_file', locales: ['en', 'fr'] });
-    });
-  });
-
   describe('determineStructure', () => {
     test('should return default structure when no file provided', () => {
       expect(determineStructure('single_file')).toBe('single_file');

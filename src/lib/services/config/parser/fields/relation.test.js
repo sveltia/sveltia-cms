@@ -484,6 +484,163 @@ describe('Relation Field Config Parser', () => {
     });
   });
 
+  describe('canonical slug key as value field', () => {
+    /** @type {any} */
+    const authorFields = [{ name: 'name', widget: 'string' }];
+
+    /**
+     * Parse a relation field pointing at an `authors` collection with the given i18n options.
+     * @param {object} args Arguments.
+     * @param {any} args.valueField The `value_field` option.
+     * @param {any} [args.i18n] Global i18n options.
+     * @param {any} [args.collectionI18n] Collection-level i18n options.
+     * @param {any} [args.fileI18n] File-level i18n options, which makes the collection a file
+     * collection.
+     * @param {boolean} [args.singleton] Whether to reference the singleton collection.
+     */
+    const checkCanonicalSlugKey = async ({
+      valueField,
+      i18n = { locales: ['en', 'fr'] },
+      collectionI18n = true,
+      fileI18n = undefined,
+      singleton = false,
+    }) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      /** @type {any} */
+      const file = {
+        name: 'general',
+        file: 'content/settings/general.yaml',
+        fields: authorFields,
+        i18n: fileI18n,
+      };
+
+      /** @type {any} */
+      const cmsConfigValue = { i18n };
+
+      if (singleton) {
+        cmsConfigValue.singletons = [file];
+      } else if (fileI18n !== undefined) {
+        cmsConfigValue.collections = [{ name: 'authors', files: [file], i18n: collectionI18n }];
+      } else {
+        cmsConfigValue.collections = [
+          {
+            name: 'authors',
+            folder: 'content/authors',
+            fields: authorFields,
+            i18n: collectionI18n,
+          },
+        ];
+      }
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'author',
+          widget: 'relation',
+          collection: singleton ? '_singletons' : 'authors',
+          ...(singleton || fileI18n !== undefined ? { file: 'general' } : {}),
+          value_field: valueField,
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: cmsConfigValue,
+          collection: { name: 'posts' },
+          typedKeyPath: 'author',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    /**
+     * Assert whether an invalid value field message was added.
+     * @param {string} [field] Expected field name in the message, if any.
+     */
+    const expectMessage = (field) => {
+      const matcher = expect.objectContaining({
+        strKey: 'relation_field_invalid_value_field',
+        ...(field ? { values: { field } } : {}),
+      });
+
+      if (field) {
+        expect(mockAddMessage).toHaveBeenCalledWith(matcher);
+      } else {
+        expect(mockAddMessage).not.toHaveBeenCalledWith(matcher);
+      }
+    };
+
+    it('should accept the default `translationKey` key when i18n is enabled', async () => {
+      await checkCanonicalSlugKey({ valueField: 'translationKey' });
+      await checkCanonicalSlugKey({ valueField: '{{translationKey}}' });
+      await checkCanonicalSlugKey({ valueField: '{{fields.translationKey}}' });
+      await checkCanonicalSlugKey({ valueField: '{{locale}}/{{translationKey}}' });
+      expectMessage();
+    });
+
+    it('should accept a custom key defined at the site level', async () => {
+      await checkCanonicalSlugKey({
+        valueField: 'translation_id',
+        i18n: { locales: ['en', 'fr'], canonical_slug: { key: 'translation_id' } },
+      });
+
+      expectMessage();
+    });
+
+    it('should accept a custom key defined at the collection level', async () => {
+      await checkCanonicalSlugKey({
+        valueField: 'translation_id',
+        collectionI18n: { canonical_slug: { key: 'translation_id' } },
+      });
+
+      expectMessage();
+    });
+
+    it('should accept a custom key defined at the file level', async () => {
+      await checkCanonicalSlugKey({
+        valueField: 'translation_id',
+        fileI18n: { canonical_slug: { key: 'translation_id' } },
+      });
+
+      expectMessage();
+    });
+
+    it('should accept the key for the singleton collection', async () => {
+      await checkCanonicalSlugKey({
+        valueField: 'translationKey',
+        singleton: true,
+        fileI18n: true,
+      });
+      expectMessage();
+    });
+
+    it('should error when i18n is not enabled at the site level', async () => {
+      await checkCanonicalSlugKey({ valueField: 'translationKey', i18n: null });
+      expectMessage('translationKey');
+    });
+
+    it('should error when no locales are defined', async () => {
+      await checkCanonicalSlugKey({ valueField: 'translationKey', i18n: { locales: [] } });
+      expectMessage('translationKey');
+    });
+
+    it('should error when i18n is not enabled for the collection', async () => {
+      await checkCanonicalSlugKey({ valueField: 'translationKey', collectionI18n: null });
+      expectMessage('translationKey');
+    });
+
+    it('should error when i18n is not enabled for the file', async () => {
+      await checkCanonicalSlugKey({ valueField: 'translationKey', fileI18n: false });
+      expectMessage('translationKey');
+    });
+
+    it('should error when the custom key doesn’t match', async () => {
+      await checkCanonicalSlugKey({
+        valueField: 'translationKey',
+        i18n: { locales: ['en', 'fr'], canonical_slug: { key: 'translation_id' } },
+      });
+
+      expectMessage('translationKey');
+    });
+  });
+
   describe('singleton collection support', () => {
     it('should support _singletons collection', async () => {
       const { parseRelationFieldConfig } = await import('./relation.js');

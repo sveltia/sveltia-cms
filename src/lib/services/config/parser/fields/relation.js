@@ -1,6 +1,8 @@
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { DEFAULT_CANONICAL_SLUG } from '$lib/services/contents/i18n/config/constants';
+import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 
 /**
  * @import {
@@ -11,6 +13,9 @@ import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser
  * UnsupportedOption,
  * } from '$lib/types/private';
  * @import {
+ * CmsConfig,
+ * Collection,
+ * CollectionDivider,
  * CollectionFile,
  * EntryCollection,
  * Field,
@@ -41,6 +46,31 @@ const UNSUPPORTED_OPTIONS = [
 ];
 
 /**
+ * Get the canonical slug key for the referenced collection or file. When i18n is enabled, the key —
+ * `translationKey` by default — is added to the content of each localized entry, allowing entries
+ * to be matched across locales. It can therefore be used as the `value_field` of a Relation field
+ * even though it’s not defined as a field.
+ * @param {object} args Arguments.
+ * @param {CmsConfig | undefined} args.cmsConfig The site configuration.
+ * @param {Collection | CollectionDivider | InternalSingletonCollection} args.collection Referenced
+ * collection.
+ * @param {CollectionFile} [args.file] Referenced collection file, if the collection is a file
+ * collection.
+ * @returns {string | undefined} The key, or `undefined` if i18n is not enabled for the collection
+ * or file.
+ * @see https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs
+ */
+const getCanonicalSlugKey = ({ cmsConfig, collection, file }) => {
+  const config = mergeI18nConfigs({ cmsConfig, collection, file });
+
+  if (!config?.locales?.length) {
+    return undefined;
+  }
+
+  return config.canonical_slug?.key ?? DEFAULT_CANONICAL_SLUG.key;
+};
+
+/**
  * Validate the `value_field` option of a Relation field, which refers to one or more fields defined
  * in the referenced collection or file. An unknown key path is not reported at runtime — the widget
  * silently falls back to the entry summary or slug — so the stored values end up being something
@@ -49,10 +79,12 @@ const UNSUPPORTED_OPTIONS = [
  * @param {string} args.valueField The `value_field` option, e.g. `userId`, `name.first`,
  * `cities.*.id` or `{{locale}}/{{slug}}`.
  * @param {Field[]} args.fields Fields defined in the referenced collection or file.
+ * @param {string | undefined} args.canonicalSlugKey The canonical slug key of the referenced
+ * collection or file, if i18n is enabled. It’s not a field but a valid `value_field`.
  * @param {ConfigParserContext} args.context Context.
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
-const checkValueField = ({ valueField, fields, context, collectors }) => {
+const checkValueField = ({ valueField, fields, canonicalSlugKey, context, collectors }) => {
   const tags = [...valueField.matchAll(TEMPLATE_TAG_REPLACE_REGEX)].map(([, tag]) => tag);
 
   // A plain field name like `userId` is equivalent to `{{userId}}`, meaning that `slug` refers to
@@ -63,7 +95,9 @@ const checkValueField = ({ valueField, fields, context, collectors }) => {
 
   keyPaths.forEach((keyPath) => {
     // The `fields.` prefix is supported for compatibility with other config options
-    if (!hasField(fields, keyPath.replace(/^fields\./, ''))) {
+    const key = keyPath.replace(/^fields\./, '');
+
+    if (key !== canonicalSlugKey && !hasField(fields, key)) {
       addMessage({
         strKey: 'relation_field_invalid_value_field',
         context,
@@ -86,11 +120,16 @@ export const parseRelationFieldConfig = (args) => {
 
   const collection =
     collectionName === '_singletons'
-      ? /** @type {InternalSingletonCollection} */ ({ files: cmsConfig?.singletons })
+      ? /** @type {InternalSingletonCollection} */ ({
+          name: collectionName,
+          files: cmsConfig?.singletons,
+        })
       : cmsConfig?.collections?.find((col) => col.name === collectionName);
 
   /** @type {CollectionFile | undefined} */
   let file = undefined;
+  /** @type {string | undefined} */
+  let canonicalSlugKey = undefined;
 
   // Check if the collection exists
   if (collection) {
@@ -120,6 +159,8 @@ export const parseRelationFieldConfig = (args) => {
         values: { collection: collectionName },
       });
     }
+
+    canonicalSlugKey = getCanonicalSlugKey({ cmsConfig, collection, file });
   } else {
     addMessage({
       strKey: 'relation_field_invalid_collection',
@@ -136,7 +177,7 @@ export const parseRelationFieldConfig = (args) => {
     : /** @type {EntryCollection | undefined} */ (collection)?.fields;
 
   if (typeof valueField === 'string' && valueField && targetFields?.length) {
-    checkValueField({ valueField, fields: targetFields, context, collectors });
+    checkValueField({ valueField, fields: targetFields, canonicalSlugKey, context, collectors });
   }
 
   checkUnsupportedOptions({ ...args, UNSUPPORTED_OPTIONS });

@@ -1,9 +1,13 @@
-import { isObject } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
 import { warnDeprecation } from '$lib/services/config/deprecations';
-import { isSingletonCollection } from '$lib/services/contents/collection';
+import {
+  DEFAULT_CANONICAL_SLUG,
+  DEFAULT_LOCALE_KEY,
+  I18N_STRUCTURES,
+} from '$lib/services/contents/i18n/config/constants';
+import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 
 /**
  * @import {
@@ -11,38 +15,8 @@ import { isSingletonCollection } from '$lib/services/contents/collection';
  * InternalCmsConfig,
  * InternalI18nOptions,
  * } from '$lib/types/private';
- * @import { Collection, CollectionFile, I18nFileStructure, I18nOptions } from '$lib/types/public';
+ * @import { Collection, CollectionFile, I18nFileStructure } from '$lib/types/public';
  */
-
-/**
- * I18n structure types.
- * @type {Record<string, I18nFileStructure>}
- * @internal
- * @todo Remove the legacy `MULTIPLE_FOLDERS_I18N_ROOT` structure prior to the 1.0 release.
- */
-export const I18N_STRUCTURES = {
-  SINGLE_FILE: 'single_file',
-  SINGLE_FILE_DEFAULT_ROOT: 'single_file_default_root',
-  MULTIPLE_FILES: 'multiple_files',
-  MULTIPLE_FOLDERS: 'multiple_folders',
-  MULTIPLE_FOLDERS_I18N_ROOT: 'multiple_folders_i18n_root', // deprecated
-  MULTIPLE_ROOT_FOLDERS: 'multiple_root_folders', // new name
-};
-
-/**
- * Default locale identifier.
- * @internal
- */
-export const DEFAULT_LOCALE_KEY = '_default';
-
-/**
- * Default canonical slug configuration.
- * @internal
- */
-export const DEFAULT_CANONICAL_SLUG = {
-  key: 'translationKey',
-  value: '{{slug}}',
-};
 
 /**
  * The default, normalized i18n configuration with no locales defined.
@@ -65,46 +39,6 @@ export const DEFAULT_I18N_CONFIG = {
   canonicalSlug: { ...DEFAULT_CANONICAL_SLUG },
   omitDefaultLocaleFromFilePath: false,
   omitDefaultLocaleFromPreviewPath: false,
-};
-
-/**
- * Merges i18n configuration from site, collection, and file levels.
- * @internal
- * @param {Collection} collection The collection configuration.
- * @param {CollectionFile} [file] The collection file configuration.
- * @returns {I18nOptions | undefined} Merged configuration or undefined if i18n is not enabled.
- */
-export const mergeI18nConfigs = (collection, file) => {
-  const cmsConfigValue = /** @type {InternalCmsConfig} */ (get(cmsConfig));
-
-  if (!isObject(cmsConfigValue.i18n)) {
-    return undefined;
-  }
-
-  const config = structuredClone(cmsConfigValue.i18n);
-  const hasCollectionI18n = collection.i18n || isSingletonCollection(collection);
-
-  // Check if the collection has its own i18n configuration. The singleton collection doesn’t have
-  // its own i18n configuration, so it will inherit the global one if defined.
-  if (hasCollectionI18n) {
-    if (isObject(collection.i18n)) {
-      Object.assign(config, collection.i18n);
-    }
-
-    if (file) {
-      if (file.i18n) {
-        if (isObject(file.i18n)) {
-          Object.assign(config, file.i18n);
-        }
-      } else {
-        return undefined;
-      }
-    }
-  } else {
-    return undefined;
-  }
-
-  return config;
 };
 
 /**
@@ -224,7 +158,11 @@ export const determineOmitDefaultLocale = (omitDefaultLocale, structureMap, file
  * @see https://sveltiacms.app/en/docs/i18n
  */
 export const normalizeI18nConfig = (collection, file) => {
-  const config = mergeI18nConfigs(collection, file);
+  const config = mergeI18nConfigs({
+    cmsConfig: /** @type {InternalCmsConfig} */ (get(cmsConfig)),
+    collection,
+    file,
+  });
 
   const {
     structure: defaultStructure = I18N_STRUCTURES.SINGLE_FILE,
