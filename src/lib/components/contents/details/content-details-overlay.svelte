@@ -62,6 +62,7 @@
 
   let restoring = false;
   let switching = false;
+  let swapButtonPressed = false;
   let swapDragStartX = 0;
   let swapDragStartY = 0;
 
@@ -202,6 +203,49 @@
         [paneStateKey]: [$editorFirstPane, $editorSecondPane],
       },
     }));
+  };
+
+  /**
+   * Called when the user presses the pointer on the pane swap button. Remember the button and
+   * position, which are used to determine whether the following {@link onSwapHandleClick} call is a
+   * click or a drag to resize the panes.
+   * @param {PointerEvent} event `pointerdown` event.
+   */
+  const onSwapButtonPointerDown = (event) => {
+    swapButtonPressed = true;
+    swapDragStartX = event.clientX;
+    swapDragStartY = event.clientY;
+  };
+
+  /**
+   * Called when the user clicks on the resizable handle that holds the pane swap button. The handle
+   * captures the pointer to support dragging, so a `click` event triggered with a pointer is
+   * dispatched on the handle instead of the button, meaning a `click` event handler on the button
+   * itself is never called. Swap the panes only if the pointer was pressed on the button and not
+   * dragged. A `click` event triggered with the keyboard is dispatched on the button as usual, and
+   * has no associated pointer position.
+   * @param {MouseEvent} event `click` event.
+   */
+  const onSwapHandleClick = (event) => {
+    const { detail, target, clientX, clientY } = event;
+    const pressed = swapButtonPressed;
+
+    swapButtonPressed = false;
+
+    if (detail === 0) {
+      // Keyboard activation
+      if (!/** @type {HTMLElement} */ (target).closest('.swap-button')) {
+        return;
+      }
+    } else if (
+      !pressed ||
+      Math.abs(clientX - swapDragStartX) > 5 ||
+      Math.abs(clientY - swapDragStartY) > 5
+    ) {
+      return;
+    }
+
+    [$editorFirstPane, $editorSecondPane] = [$editorSecondPane, $editorFirstPane];
   };
 
   /**
@@ -494,30 +538,14 @@
                   <ResizablePane defaultSize={firstPaneSize} minSize={minPaneSize}>
                     {@render firstPane()}
                   </ResizablePane>
-                  <ResizableHandle>
+                  <ResizableHandle onclick={onSwapHandleClick}>
                     <Button
                       class="swap-button"
                       iconic
                       size="small"
                       variant="tertiary"
                       aria-label={_('swap_panes')}
-                      onpointerdown={(e) => {
-                        swapDragStartX = e.clientX;
-                        swapDragStartY = e.clientY;
-                      }}
-                      onclick={(e) => {
-                        if (
-                          Math.abs(e.clientX - swapDragStartX) > 5 ||
-                          Math.abs(e.clientY - swapDragStartY) > 5
-                        ) {
-                          return;
-                        }
-
-                        [$editorFirstPane, $editorSecondPane] = [
-                          $editorSecondPane,
-                          $editorFirstPane,
-                        ];
-                      }}
+                      onpointerdown={onSwapButtonPointerDown}
                     >
                       <Icon name="swap_horiz" />
                     </Button>
