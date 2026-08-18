@@ -234,7 +234,7 @@
 
     if (detail === 0) {
       // Keyboard activation
-      if (!/** @type {HTMLElement} */ (target).closest('.swap-button')) {
+      if (!(/** @type {HTMLElement} */ (target).closest('.swap-button'))) {
         return;
       }
     } else if (
