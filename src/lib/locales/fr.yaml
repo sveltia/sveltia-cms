@@ -448,6 +448,15 @@ global_assets: Ressources globales
 # ==============================================================================
 # Strings related to creating, editing, and managing entries and collections.
 
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Chargement de l’entrée… }}
+    *   {{ Chargement des entrées… }}
+
 # Error message when entry cannot be found
 entry_not_found: Entrée introuvable.
 
@@ -672,6 +681,8 @@ delete_selected_entries: |
     *   {{ Supprimer les entrées sélectionnées }}
 confirm_deleting_this_entry: Voulez-vous vraiment supprimer cette entrée ?
 confirm_deleting_this_entry_with_assets: Voulez-vous vraiment supprimer cette entrée et les ressources associées ?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Impossible de supprimer l’entrée. Veuillez réessayer.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -1442,6 +1453,8 @@ config:
     parse_failed_invalid_object: Le fichier de configuration n’est pas un objet JavaScript valide.
     parse_failed_unsupported_type: Le fichier de configuration n’est pas d’un type valide. Seuls les formats YAML, TOML et JSON sont pris en charge.
     no_collection: Aucune collection n’est définie.
+    # Don’t localize `hide`
+    no_visible_collection: Au moins une collection doit être visible. Vérifiez l’option `hide`.
     missing_backend: Le backend n’est pas défini.
     missing_backend_name: Le nom du backend n’est pas défini.
     # {$name} is the backend name from the CMS configuration
@@ -1550,7 +1563,7 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: L’identifiant de l’application OAuth n’est pas défini. Les utilisateurs doivent fournir un jeton d’accès pour se connecter.
-    editorial_workflow_unsupported: Le flux éditorial n’est pas encore pris en charge dans Sveltia CMS.
+    editorial_workflow_unsupported: Le flux éditorial n’est actuellement pris en charge qu’avec les backends GitHub et GitLab.
     open_authoring_unsupported: L’Open Authoring n’est pas encore pris en charge dans Sveltia CMS.
     nested_collections_unsupported: Les collections imbriquées ne sont pas encore prises en charge dans Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
@@ -1579,12 +1592,115 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
 
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Vous consultez maintenant le tableau du flux éditorial. Brouillons : {$draft}. En révision : {$review}. Prêt : {$ready}. Suppression en attente : {$deletion}.'
+
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
+  draft: Brouillon
   drafts: Brouillons
   in_review: En révision
   ready: Prêt
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Suppression en attente
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Annuler la suppression
+  confirm_cancelling_deletion: Voulez-vous vraiment annuler cette suppression ? L’entrée restera publiée.
+  confirm_completing_deletion: Voulez-vous vraiment supprimer cette entrée ? Elle sera retirée immédiatement.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Entrée marquée pour suppression. }}
+      *   {{ {$count} entrées marquées pour suppression. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Modifications abandonnées. }}
+      *   {{ Modifications de {$count} entrées abandonnées. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Annulation de la suppression…
+  deletion_cancelled: Suppression annulée.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Impossible d’annuler la suppression. Veuillez réessayer.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Entrées non publiées
+  published_entries: Entrées publiées
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Statut : {$status}'
+  change_entry_status: Modifier le statut de l’entrée
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Modification du statut…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Mise à jour du statut…
+  status_updated: Statut mis à jour.
+  # Error notification when the status could not be changed
+  status_change_failed: Impossible de modifier le statut. Veuillez réessayer.
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Publier l’entrée
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Abandonner les modifications
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Voulez-vous vraiment supprimer cette entrée ? Elle ne sera retirée qu’une fois la suppression publiée. D’ici là, vous la retrouverez dans la liste des entrées, marquée « Suppression en attente ».
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Cette entrée n’a pas encore été publiée. La supprimer l’abandonnera complètement.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Cette entrée comporte des modifications non publiées. Les abandonner restaurera la version publiée. L’entrée elle-même ne sera pas supprimée.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Elle n’a pas encore été publiée, vos modifications non publiées seront donc abandonnées. Toute version publiée le restera. }}
+      *   {{ Elles n’ont pas encore été publiées, vos modifications non publiées seront donc abandonnées. Toute version publiée le restera. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ L’une d’elles n’a pas encore été publiée, vos modifications non publiées seront donc abandonnées. Toute version publiée le restera. }}
+      *   {{ {$count} d’entre elles n’ont pas encore été publiées, vos modifications non publiées seront donc abandonnées. Toute version publiée le restera. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Voulez-vous vraiment publier cette entrée ? Vos modifications prendront effet immédiatement.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Publication de l’entrée…
+  entry_published: Entrée publiée.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Suppression de l’entrée…
+  discarding_changes: Abandon des modifications…
+  entry_deleted: Entrée supprimée.
+  # Error notification when publishing fails
+  publishing_entry_failed: Impossible de publier l’entrée. Veuillez réessayer.
+  # Workflow page: empty column message
+  no_entries: Aucune entrée.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Faire glisser pour changer le statut
 
 # ==============================================================================
 # Settings Dialog
