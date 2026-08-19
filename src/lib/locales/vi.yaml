@@ -1,0 +1,1921 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Tạo mới
+select: Chọn
+select_all: Chọn tất cả
+upload: Tải lên
+copy: Sao chép
+download: Tải xuống
+duplicate: Nhân bản
+delete: Xóa
+reorder: Sắp xếp lại
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Hủy
+done: Xong
+save: Lưu
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Đang lưu…
+
+# Publishing actions: used when committing changes to the repository
+publish: Xuất bản
+# Progress indicator shown on the publish button during publishing
+publishing: Đang xuất bản…
+
+# Modification actions: editing and updating content
+rename: Đổi tên
+update: Cập nhật
+replace: Thay thế
+
+# List and collection actions: adding and removing items
+add: Thêm
+remove: Xóa
+clear: Xóa
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Mở rộng
+expand_all: Mở rộng tất cả
+collapse: Thu gọn
+collapse_all: Thu gọn tất cả
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Chèn
+restore: Khôi phục
+discard: Loại bỏ
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Đang tìm kiếm…
+no_results: Không tìm thấy kết quả nào.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Toàn cầu #TODO: sai sai
+primary: Chính
+secondary: Phụ
+collection: Bộ sưu tập
+folder: Thư mục
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: Khóa API
+details: Chi tiết
+back: Quay lại
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Đang tải…
+# Dismiss button for temporary notifications and infobars
+later: Sau đó  #TODO: sai sai
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Slug
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Singleton
+singletons: Singletons
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Không thể sao chép vào bảng nhớ tạm.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: 'Chào mừng đến với {$name}'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: 'Được cung cấp bởi {$name}'
+
+# Shown during initial configuration and data loading
+loading_cms_config: Đang tải cấu hình CMS…
+loading_site_data: Đang tải dữ liệu trang web…
+loading_site_data_error: Đã xảy ra lỗi khi tải dữ liệu trang web.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: 'Đăng nhập bằng {$service}'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Đăng nhập bằng mã thông báo truy cập
+sign_in_using_access_token_description: Nhập mã thông báo của bạn dưới đây. Nó phải có quyền truy cập đọc/ghi vào nội dung kho lưu trữ.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: Bạn có thể tạo mã thông báo trên trang cài đặt người dùng <a>{$service}</a>.
+# Input field label for personal access token
+personal_access_token: Mã thông báo truy cập cá nhân
+
+# Authentication progress indicators
+authorizing: Đang ủy quyền…
+signing_in: Đang đăng nhập…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Làm việc với kho lưu trữ cục bộ
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: Sau khi được nhắc, hãy chọn thư mục gốc của kho lưu trữ “{$repo}”.
+work_with_local_repo_description_no_repo: Sau khi được nhắc, hãy chọn thư mục gốc của kho lưu trữ Git của bạn.
+# Button label for demo/test repository
+work_with_test_repo: Làm việc với Kho lưu trữ thử nghiệm
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: Thư mục đã chọn không phải là thư mục gốc của kho lưu trữ. Vui lòng thử lại.
+  picker_dismissed: Không thể chọn thư mục gốc của kho lưu trữ. Vui lòng thử lại.
+  authentication_aborted: Xác thực bị hủy bỏ. Vui lòng thử lại.
+  invalid_token: Mã thông báo được cung cấp không hợp lệ. Vui lòng kiểm tra và thử lại.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Chương trình phụ trợ Git của bạn không được trình xác thực hỗ trợ.  #TODO: phụ trợ sai sai
+  UNSUPPORTED_DOMAIN: Tên miền của bạn không được phép sử dụng trình xác thực.
+  MISCONFIGURED_CLIENT: ID ứng dụng khách hoặc bí mật của ứng dụng OAuth chưa được định cấu hình.
+  AUTH_CODE_REQUEST_FAILED: Không nhận được mã ủy quyền. Vui lòng thử lại sau.
+  CSRF_DETECTED: Đã phát hiện thấy cuộc tấn công CSRF tiềm ẩn. Luồng xác thực bị hủy bỏ.
+  TOKEN_REQUEST_FAILED: Không thể yêu cầu mã thông báo truy cập. Vui lòng thử lại sau.
+  TOKEN_REFRESH_FAILED: Không làm mới được mã thông báo truy cập. Vui lòng thử lại sau.
+  MALFORMED_RESPONSE: Máy chủ phản hồi với dữ liệu không đúng định dạng. Vui lòng thử lại sau.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: 'Phần phụ trợ {$name} yêu cầu {$name} {$version} trở lên.'  #TODO: phụ trợ sai sai
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: Bạn không có quyền truy cập vào kho lưu trữ “{$repo}”.  #TODO: Kho lưu trữ  sai sai
+repository_not_found: Kho lưu trữ “{$repo}” không tồn tại.  #TODO: Kho lưu trữ  sai sai
+repository_empty: Kho lưu trữ “{$repo}” không có nhánh.  #TODO: Kho lưu trữ  sai sai
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: Kho lưu trữ “{$repo}” không có nhánh “{$branch}”.   #TODO: Kho lưu trữ  sai sai
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Lỗi không mong muốn   #TODO: sai sai
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã xảy ra lỗi khi phân tích cú pháp tệp mục nhập. Kiểm tra bảng điều khiển trình duyệt để biết chi tiết. }}
+    *   {{ Đã xảy ra lỗi khi phân tích cú pháp các tệp mục nhập. Kiểm tra bảng điều khiển trình duyệt để biết chi tiết. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Tên người dùng
+password: Mật khẩu
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Đăng nhập
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Đăng nhập bằng di động
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Quét mã QR bên dưới bằng điện thoại hoặc máy tính bảng của bạn để đăng nhập không cần mật khẩu. Cài đặt của bạn sẽ được tự động sao chép. #TODO: tại sao bằng máy tính
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'Đăng nhập bằng {$name}'
+working_with_local_repo: Làm việc với kho lưu trữ cục bộ #TODO: kho lưu trữ
+working_with_test_repo: Làm việc với Kho lưu trữ thử nghiệm #TODO: kho lưu trữ
+
+# Account menu: action items for sign-out and app installation
+sign_out: Đăng xuất
+install_as_app: Cài đặt dưới dạng ứng dụng
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Nội dung
+assets: Tài sản
+editorial_workflow: Quy trình biên tập #TODO: Quy trình
+cms_config: Cấu hình CMS
+# Mobile menu page title (shown only on small screens)
+menu: Thực đơn #TODO: không phải thực đơn nha
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS hiện đã có trên thiết bị di động!
+mobile_promo_button: Hãy thử xem
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS hiện có sẵn trong {$locale}!
+change_language: Thay đổi ngôn ngữ
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Đang chuyển sang {$locale}…
+locale_load_failed: Không thể tải bản dịch {$locale}. Vui lòng thử lại sau.
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Truy cập trang web trực tiếp
+# Page switcher button group aria-label for switching between main sections
+switch_page: Chuyển trang
+
+# Search input placeholders
+search_placeholder_contents: Tìm kiếm nội dung…
+search_placeholder_assets: Tìm kiếm tài sản…
+search_placeholder_all: Tìm kiếm nội dung và tài sản…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Tạo mục nhập hoặc tài sản #TODO: tài sản
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Xuất bản các thay đổi
+publishing_changes: Đang xuất bản các thay đổi…
+# Error notification when publishing fails
+publishing_changes_failed: Không thể xuất bản các thay đổi. Vui lòng thử lại.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Hiển thị thông báo
+notifications: Thông báo
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Hiển thị menu tài khoản #TODO: menu= danh sách
+# Account section heading in the account menu and mobile menu page
+account: Tài khoản
+
+# Account menu items: links to external resources
+live_site: Trang web trực tiếp #TODO: trực tiếp ?
+git_repository: Kho lưu trữ Git #TODO: Kho lưu trữ
+settings: Cài đặt
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Hiển thị menu trợ giúp #TODO: menu = danh sách
+# Help section heading in dropdowns and mobile menu
+help: Giúp đỡ
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Phím tắt
+documentation: Tài liệu
+release_notes: Ghi chú phát hành
+announcements: Thông báo
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: 'Phiên bản {$version}'
+# Additional help menu items
+report_issue: Báo cáo vấn đề
+share_feedback: Chia sẻ phản hồi
+get_help: Nhận trợ giúp
+donate: Quyên tặng
+join_discord: Tham gia với chúng tôi trên Discord
+bluesky: Theo dõi chúng tôi trên Bluesky
+
+# Update notification: infobar message and button
+update_available: Đã có phiên bản mới nhất của Sveltia CMS.
+update_now: Cập nhật ngay
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service} đang gặp một sự cố nhỏ. Quy trình làm việc của bạn có thể bị ảnh hưởng.'
+  major_incident: '{$service} đang gặp sự cố lớn. Bạn có thể muốn đợi cho đến khi tình hình được cải thiện.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Thư viện nội dung
+asset_library: Thư viện nội dung
+
+# Primary sidebar section headings and list aria-labels
+collections: Bộ sưu tập
+entries: Bài dự thi
+files: Tập tin
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Trang web của bạn
+  external: Địa điểm bên ngoài
+  stock_photos: Hình ảnh chứng khoán
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Bộ sưu tập tài sản
+# List aria-labels for different list types
+entry_list: Danh sách dự thi
+file_list: Danh sách tập tin
+asset_list: Danh sách tài sản
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: Bộ sưu tập “{$collection}”
+# {$folder} is the current asset folder label
+x_asset_folder: Thư mục nội dung “{$folder}”
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Bây giờ bạn đang xem danh sách bộ sưu tập.
+viewing_asset_folder_list: Bây giờ bạn đang xem danh sách thư mục nội dung.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Bạn hiện đang xem bộ sưu tập “{$collection}”, chưa có mục nào. }}
+    one {{ Bạn hiện đang xem bộ sưu tập “{$collection}”, có một mục. }}
+    *   {{ Bạn hiện đang xem bộ sưu tập “{$collection}”, có các mục {$count}. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Hiện bạn đang xem thư mục nội dung “{$folder}”, thư mục này chưa có nội dung nào. }}
+    one {{ Hiện bạn đang xem thư mục nội dung “{$folder}”, thư mục này có một nội dung. }}
+    *   {{ Bây giờ bạn đang xem thư mục nội dung “{$folder}”, trong đó có nội dung {$count}. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: Nhấn Enter để chỉnh sửa tệp “{$file}”.
+
+# Error messages: collection or file not found
+collection_not_found: Không tìm thấy bộ sưu tập.
+file_not_found: Không tìm thấy tập tin.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} của {$total} đã chọn'
+
+# View switcher: toggle between list and grid views
+switch_view: Chuyển đổi chế độ xem
+list_view: Xem danh sách
+grid_view: Chế độ xem lưới
+switch_to_list_view: Chuyển sang Chế độ xem danh sách
+switch_to_grid_view: Chuyển sang Chế độ xem lưới
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Loại #TODO: Loại ?
+sorting_options: Tùy chọn sắp xếp
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Không có
+  name: Tên
+  slug: sên #TODO: slug
+  # Sort by the last commit’s author name
+  commit_author: Cập nhật bởi
+  # Sort by the last commit date
+  commit_date: Đã cập nhật vào
+  # Sort by the entry’s computed summary text
+  _summary: Bản tóm tắt
+  # Manual order defined by the user via drag-and-drop
+  _manual: Thủ công
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, từ A đến Z'
+ascending_date: '{$label}, cũ đến mới'
+descending: '{$label}, Z đến A'
+descending_date: '{$label}, mới đến cũ'
+
+# Filter menu: button labels and options
+filter: Lọc
+filtering_options: Tùy chọn lọc
+
+# Group menu: button labels and options
+group: Nhóm
+grouping_options: Tùy chọn nhóm
+
+# Asset type filter and group labels
+type: Kiểu
+all: Tất cả
+# Asset type labels
+image: Hình ảnh
+video: Băng hình #TODO: Băng hình?
+audio: Âm thanh
+document: Tài liệu
+other: Khác
+
+# Toolbar toggles: show/hide panels
+show_assets: Hiển thị nội dung
+hide_assets: Ẩn tài sản #TODO: tài sản?
+show_info: Hiển thị thông tin
+hide_info: Ẩn thông tin
+
+# Folder display labels when no specific path is configured
+all_assets: Tất cả tài sản #TODO: tài sản?
+global_assets: Tài sản toàn cầu #TODO: toàn cầu?
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đang tải mục nhập… }} #TODO: sao giống nhau
+    *   {{ Đang tải mục nhập… }} #TODO: sao giống nhau
+# Error message when entry cannot be found
+entry_not_found: Không tìm thấy mục nhập.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Việc tạo các mục mới trong bộ sưu tập này bị quản trị viên vô hiệu hóa.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: Bạn không thể thêm các mục mới vào bộ sưu tập này vì nó đã đạt đến giới hạn mục {$quota}. #TODO: nghi ngờ
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    one {{ Bộ sưu tập này sắp đạt đến giới hạn số mục {$quota}. Bạn chỉ có thể tạo thêm mục nhập {$remaining}. }} #TODO: nghi ngờ
+    *   {{ Bộ sưu tập này sắp đạt đến giới hạn số mục {$quota}. Bạn chỉ có thể tạo thêm mục {$remaining}. }}#TODO: nghi ngờ
+
+# Navigation: back links and list labels
+back_to_collection: Quay lại Bộ sưu tập #TODO: sao chữ B viết Hoa
+collection_list: Danh sách bộ sưu tập
+back_to_collection_list: Quay lại Danh sách Bộ sưu tập  #TODO: sao chữ B viết Hoa
+asset_folder_list: Danh sách thư mục tài sản  #TODO: sao tài sản
+back_to_asset_folder_list: Quay lại danh sách thư mục tài sản  #TODO: sao tài sản
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Kết quả tìm kiếm
+# {$terms} is the current search query text
+search_results_for_x: Kết quả tìm kiếm cho “{$terms}”
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Bạn hiện đang xem kết quả tìm kiếm cho “{$terms}”. Chúng tôi không thể tìm thấy bất kỳ mục nào. }}  #TODO: sao tài sản
+    one {{ Bạn hiện đang xem kết quả tìm kiếm cho “{$terms}”. Chúng tôi đã tìm thấy một mục. }}
+    *   {{ Bạn hiện đang xem kết quả tìm kiếm cho “{$terms}”. Chúng tôi đã tìm thấy các mục {$count}. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Bạn hiện đang xem kết quả tìm kiếm cho “{$terms}”. Chúng tôi không thể tìm thấy bất kỳ tài sản nào. }}  #TODO: sao tài sản
+    one {{ Bạn hiện đang xem kết quả tìm kiếm cho “{$terms}”. Chúng tôi đã tìm thấy một tài sản. }}  #TODO: sao tài sản
+    *   {{ Bạn hiện đang xem kết quả tìm kiếm cho “{$terms}”. Chúng tôi đã tìm thấy tài sản {$count}. }}  #TODO: sao tài sản
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Không có mục nào }}
+    one {{ Mục nhập {$count} }}
+    *   {{ Các mục {$count} }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Không có tài sản }}  #TODO: sao tài sản
+    one {{ Tài sản {$count} }}
+    *   {{ Tài sản {$count} }}
+
+# Empty state messages
+no_files_found: Không tìm thấy tập tin nào.
+no_entries_found: Không tìm thấy mục nào.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Tải lên nội dung mới
+
+# Edit options menu: button and item labels
+edit_options: Chỉnh sửa tùy chọn
+show_edit_options: Hiển thị tùy chọn chỉnh sửa
+# Edit menu items with specific asset names
+edit_asset: Chỉnh sửa nội dung
+# {$name} is the selected asset name
+edit_x: 'Chỉnh sửa {$name}'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Quấn dây dài  #TODO: Quấn dây dài?
+
+# Rename asset: dialog and validation
+rename_asset: Đổi tên nội dung
+# {$name} is the current asset name
+rename_x: 'Đổi tên {$name}'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nhập tên mới bên dưới. }}
+    one {{ Nhập tên mới bên dưới. Một mục sử dụng nội dung cũng sẽ được cập nhật. }}
+    *   {{ Nhập tên mới bên dưới. Các mục {$count} sử dụng nội dung cũng sẽ được cập nhật. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: Tên tệp không được để trống.
+  character: Tên file không được chứa ký tự đặc biệt.
+  duplicate: Tên tệp này được sử dụng cho một nội dung khác.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Thay đổi phần mở rộng tệp
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Bạn có chắc chắn muốn thay đổi tiện ích mở rộng từ “.{$oldExtension}” thành “.{$newExtension}” không?
+  add: Bạn có chắc chắn muốn thêm tiện ích mở rộng “.{$newExtension}” không?
+  remove: Bạn có chắc chắn muốn xóa tiện ích mở rộng “.{$oldExtension}” không?
+file_extension_change_warning: Tệp có thể không được hiển thị hoặc xử lý chính xác nếu phần mở rộng không khớp với định dạng tệp thực tế.
+
+# Replace asset: menu item and dialog title
+replace_asset: Thay thế tài sản #TODO: tài sản
+# {$name} is the asset being replaced
+replace_x: 'Thay thế {$name}'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Bấm để duyệt…
+# Browse prompt shown on touch devices
+tap_to_browse: Nhấn để duyệt…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Thả một tập tin ở đây hoặc nhấp để duyệt… }}
+    *   {{ Thả tập tin vào đây hoặc nhấp để duyệt… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Thả một tập tin ở đây hoặc }}
+    *   {{ Thả tập tin ở đây hoặc }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Thả một tập tin hình ảnh ở đây hoặc }}
+    *   {{ Thả tập tin hình ảnh vào đây hoặc }}
+
+# File picker and clipboard actions used by upload controls
+browse: Duyệt qua
+# Generic clipboard paste action used by non-image file fields
+paste: Dán
+# Clipboard paste action used by image fields
+paste_image: Dán hình ảnh
+
+# Clipboard paste errors
+no_image_in_clipboard: Không tìm thấy hình ảnh nào trong clipboard.
+clipboard_access_denied: Truy cập vào bảng nhớ tạm bị từ chối.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Thả một tập tin ở đây }}
+    *   {{ Thả tập tin vào đây }}
+
+# File type validation errors
+unsupported_file_type: Loại tệp không được hỗ trợ
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Tệp bị rơi không thuộc một trong các loại sau: {$types}. Vui lòng thử lại.' #TODO: bị rơi ?
+dropped_image_type_mismatch: 'Tệp bị rơi không được hỗ trợ. Chỉ chấp nhận hình ảnh thuộc các loại sau: {$types}. Vui lòng thử lại.'#TODO: bị rơi ?
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Chọn tệp }}
+    *   {{ Chọn tập tin }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Xóa nội dung }}
+    *   {{ Xóa tài sản }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Xóa nội dung đã chọn }}
+    *   {{ Xóa nội dung đã chọn }}
+confirm_deleting_this_asset: Bạn có chắc chắn muốn xóa nội dung này không?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bạn có chắc chắn muốn xóa nội dung đã chọn không? }}
+    *   {{ Bạn có chắc chắn muốn xóa nội dung {$count} đã chọn không? }} #TODO: nghi ngờ
+confirm_deleting_all_assets: Bạn có chắc chắn muốn xóa tất cả nội dung không?
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Xóa mục nhập }}
+    *   {{ Xóa mục nhập }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Xóa mục đã chọn }}
+    *   {{ Xóa các mục đã chọn }}
+confirm_deleting_this_entry: Bạn có chắc chắn muốn xóa mục này?
+confirm_deleting_this_entry_with_assets: Bạn có chắc chắn muốn xóa mục này và các nội dung liên quan không?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Không thể xóa mục nhập. Vui lòng thử lại.
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bạn có chắc chắn muốn xóa mục đã chọn không? }}
+    *   {{ Bạn có chắc chắn muốn xóa các mục {$count} đã chọn không? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bạn có chắc chắn muốn xóa mục đã chọn và nội dung liên quan không? }}
+    *   {{ Bạn có chắc chắn muốn xóa các mục nhập {$count} đã chọn và các nội dung liên quan không? }}
+confirm_deleting_all_entries: Bạn có chắc chắn muốn xóa tất cả các mục?
+confirm_deleting_all_entries_with_assets: Bạn có chắc chắn muốn xóa tất cả các mục nhập và nội dung liên quan không?
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Sắp xếp lại các mục
+done_reordering_entries: Đã hoàn tất việc sắp xếp lại các mục nhập
+cancel_reordering_entries: Hủy sắp xếp lại các mục nhập
+
+# Reorder error message
+saving_reorder_failed: Không thể lưu đơn đặt hàng mới. Vui lòng thử lại. #TODO: k phải đơn hàng đâu
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đang xử lý một tập tin. Điều này có thể mất một thời gian. }} #TODO: một thời gian là gì
+    *   {{ Đang xử lý tập tin. Điều này có thể mất một thời gian. }} #TODO: Tại sao lại giống câu trên
+
+# Uploading section aria-label
+uploading_files: Tải tập tin lên
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '“{$name}” sẽ được thay thế bằng tệp này:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tập tin này sẽ được lưu vào thư mục “{$folder}”: }}
+    *   {{ Các tệp {$count} này sẽ được lưu vào thư mục “{$folder}”: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Tệp quá khổ #TODO: quả khổ??
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Không thể tải lên tệp này vì nó vượt quá kích thước tối đa của {$size}. Vui lòng giảm kích thước hoặc chọn một tệp khác. }}
+    *   {{ Không thể tải lên những tệp này vì chúng vượt quá kích thước tối đa của {$size}. Vui lòng giảm kích thước hoặc chọn các tập tin khác nhau. }}
+
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Tệp không hợp lệ
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Không thể tải lên tệp này vì nó bị hỏng hoặc nội dung của nó không khớp với phần mở rộng tệp. Điều này thường xảy ra khi ảnh được đổi tên thay vì chuyển đổi, chẳng hạn như ảnh HEIC được lưu dưới dạng tệp JPEG. Vui lòng chuyển đổi tập tin và thử lại. }}
+    *   {{ Không thể tải lên những tệp này vì chúng bị hỏng hoặc nội dung của chúng không khớp với phần mở rộng tệp. Điều này thường xảy ra khi ảnh được đổi tên thay vì chuyển đổi, chẳng hạn như ảnh HEIC được lưu dưới dạng tệp JPEG. Vui lòng chuyển đổi các tập tin và thử lại. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ Một tập tin có cùng tên đã tồn tại trong thư mục này. Bạn có muốn thay thế nó? }}
+    *   {{ Các tệp {$count} có cùng tên đã tồn tại trong thư mục này. Bạn có muốn thay thế chúng? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ Tệp có tên “{$name}” đã tồn tại trong thư mục này. Bạn có muốn thay thế nó? }}
+    *   {{ Các tệp {$count} có cùng tên đã tồn tại trong thư mục này. Bạn có muốn thay thế chúng? }}
+file_name_conflict_resolution: Giải quyết xung đột tên tệp
+# Option to keep both files (rename the new one)
+keep_both: Giữ cả hai
+
+# Upload progress and error messages
+uploading_files_progress: Đang tải lên…
+uploading_files_failed: Tải lên không thành công.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (được chuyển đổi từ {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Bộ sưu tập này chưa có mục nào. #TODO: Bộ sưu tập?
+# Button to create first entry
+create_new_entry: Tạo mục mới
+# “Entry” option label in the create button menu
+entry: Lối vào #TODO: Lối vào?
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Tệp chỉ mục
+
+# Empty state for file collections
+no_files_in_collection: Không có tập tin có sẵn trong bộ sưu tập này.
+
+# Entry duplication
+duplicate_entry: Mục nhập trùng lặp
+entry_duplicated: Mục nhập được sao chép dưới dạng bản nháp mới.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Một trường có lỗi. Vui lòng sửa nó để lưu mục nhập. }}
+    *   {{ Các trường {$count} có lỗi. Vui lòng sửa chúng để lưu mục nhập. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã lưu mục nhập. }}
+    *   {{ Đã lưu các mục {$count}. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã lưu và xuất bản mục nhập. }}
+    *   {{ Các mục {$count} đã được lưu và xuất bản. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã xóa mục nhập. }}
+    *   {{ Các mục {$count} đã bị xóa. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã lưu tài sản. }}
+    *   {{ Đã lưu nội dung {$count}. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã lưu và xuất bản nội dung. }}
+    *   {{ Nội dung {$count} đã được lưu và xuất bản. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã sao chép URL vào bảng nhớ tạm. }}
+    *   {{ URL {$count} được sao chép vào khay nhớ tạm. }} #TODO: khay nhớ tạm
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã sao chép đường dẫn tệp vào bảng nhớ tạm. }}
+    *   {{ Đường dẫn tệp {$count} được sao chép vào khay nhớ tạm. }}  #TODO: khay nhớ tạm
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dữ liệu tập tin được sao chép vào clipboard. }}
+    *   {{ Dữ liệu của tệp {$count} được sao chép vào khay nhớ tạm. }} #TODO: khay nhớ tạm
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã tải xuống nội dung. }}
+    *   {{ Đã tải xuống nội dung {$count}. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã di chuyển nội dung. }}
+    *   {{ Nội dung {$count} đã được di chuyển. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã đổi tên nội dung. }}
+    *   {{ Nội dung {$count} được đổi tên. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đã xóa nội dung. }}
+    *   {{ Nội dung {$count} đã bị xóa. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Biên tập nội dung
+
+# Draft backup: restore dialog
+restore_backup_title: Khôi phục bản nháp
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Mục này có bản sao lưu từ {$datetime}. Bạn có muốn khôi phục bản nháp đã chỉnh sửa không?
+
+# Draft backup notifications
+draft_backup_saved: Đã lưu bản sao lưu dự thảo.
+draft_backup_restored: Đã khôi phục bản sao lưu dự thảo.
+draft_backup_deleted: Đã xóa bản sao lưu dự thảo.
+
+# Editor toolbar actions
+cancel_editing: Hủy chỉnh sửa
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: Tạo {$name}
+# {$collection} is the collection label
+create_entry_announcement: Bạn hiện đang tạo một mục mới trong bộ sưu tập “{$collection}”.
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} > {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: Hiện bạn đang chỉnh sửa mục nhập “{$entry}” trong bộ sưu tập “{$collection}”.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: Hiện bạn đang chỉnh sửa tệp “{$file}” trong bộ sưu tập “{$collection}”.
+# {$file} is the singleton file name
+edit_singleton_announcement: Bây giờ bạn đang chỉnh sửa tệp “{$file}”.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Lưu và xuất bản
+save_without_publishing: Lưu mà không xuất bản
+
+# Editor options menu
+show_editor_options: Hiển thị tùy chọn trình chỉnh sửa
+editor_options: Tùy chọn trình chỉnh sửa
+
+# Preview controls
+show_preview: Hiển thị bản xem trước
+
+# Editor settings
+sync_scrolling: Đồng bộ hóa cuộn
+
+# Locale controls
+switch_locale: Chuyển ngôn ngữ
+# Short status indicators appended to locale names
+locale_content_disabled_short: (tàn tật) #TODO: tàn tật ?
+locale_content_error_short: (lỗi)
+
+# Pane labels
+edit: Biên tập #TODO: Nghi ngờ?
+preview: Xem trước
+
+# Pane controls; not to be confused with pages
+swap_panes: Hoán đổi bảng
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Chỉnh sửa nội dung {$locale}
+preview_x_locale: Xem trước nội dung {$locale}
+
+# Preview iframe labels
+content_preview: Xem trước nội dung
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Hiển thị tùy chọn nội dung {$locale}
+content_options_x_locale: 'Tùy chọn nội dung {$locale}'
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: Trường “{$field}”
+
+# Field options menu
+show_field_options: Hiển thị tùy chọn trường
+field_options: Tùy chọn trường
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Loại trường không được hỗ trợ: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: 'Kích hoạt {$locale}'
+reenable_x_locale: 'Có thể kích hoạt lại {$locale}'
+disable_x_locale: 'Tắt {$locale}'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: Nội dung {$locale} đã bị tắt.
+locale_x_now_disabled: Nội dung {$locale} hiện đã bị tắt. Nó sẽ bị xóa khi bạn lưu mục nhập.
+
+# Repository and site links
+view_in_repository: Xem trong kho lưu trữ
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: 'Xem trên {$service}'
+view_on_live_site: Xem trên trang web trực tiếp
+
+# Content copying from other locales
+copy_from: Sao chép từ…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: 'Sao chép từ {$locale}'
+
+# Translation features
+translation_options: Tùy chọn dịch
+translate: Dịch
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Trường dịch }}
+    *   {{ Dịch trường }}
+translate_from: Dịch từ…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: 'Dịch từ {$locale}'
+
+# Revert changes
+revert_changes: Hoàn nguyên các thay đổi   #TODO: Hoàn nguyên?
+revert_all_changes: Hoàn nguyên tất cả thay đổi #TODO: Hoàn nguyên?
+
+# Slug editing
+edit_slug: Chỉnh sửa sên #TODO: sên?
+edit_slug_warning: Việc thay đổi sên có thể phá vỡ các liên kết bên trong và bên ngoài của mục nhập. Hiện tại, Sveltia CMS không cập nhật các tham chiếu được tạo bằng các trường Quan hệ, vì vậy bạn sẽ cần cập nhật thủ công các tham chiếu đó cùng với các liên kết khác. #TODO: sên?
+edit_slug_error:
+  empty: Sên không thể trống. #TODO: sên?
+  invalid: Slug không được chứa các ký tự đặc biệt, kể cả dấu gạch chéo và dấu cách.
+  duplicate: Sên này được sử dụng cho một mục khác. #TODO: sên?
+
+# Required field indicator
+required: Yêu cầu
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Không có gì để dịch.
+    started: Đang dịch…
+    error: Bản dịch không thành công.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Không có trường nào được dịch từ {$source}. }}
+        one {{ Trường được dịch từ {$source}. }}
+        *   {{ Các trường {$count} được dịch từ {$source}. }}
+  copy:
+    none: Không có gì để sao chép.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Không có trường nào được sao chép từ {$source}. }}
+        one {{ Trường được sao chép từ {$source}. }}
+        *   {{ Các trường {$count} được sao chép từ {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Trường này là bắt buộc.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: Ngày/giờ phải ở hoặc sau {$min}.
+    date: Ngày phải vào hoặc sau {$min}.
+    time: Thời gian phải ở hoặc sau {$min}.
+    number: Giá trị phải lớn hơn hoặc bằng {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ Bạn phải chọn ít nhất tùy chọn {$min}. }}
+        *   {{ Bạn phải chọn ít nhất các tùy chọn {$min}. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ Bạn phải thêm ít nhất mục {$min}. }}
+        *   {{ Bạn phải thêm ít nhất các mục {$min}. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: Ngày/giờ phải ở hoặc trước {$max}.
+    date: Ngày phải vào hoặc trước {$max}.
+    time: Thời gian phải bằng hoặc trước {$max}.
+    number: Giá trị phải nhỏ hơn hoặc bằng {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ Bạn không thể chọn nhiều hơn tùy chọn {$max}. }}
+        *   {{ Bạn không thể chọn nhiều hơn các tùy chọn {$max}. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ Bạn không thể thêm nhiều hơn mục {$max}. }}
+        *   {{ Bạn không thể thêm nhiều hơn các mục {$max}. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ Bạn phải nhập ít nhất ký tự {$min}. }}
+      *   {{ Bạn phải nhập ít nhất các ký tự {$min}. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ Bạn không thể nhập nhiều hơn ký tự {$max}. }}
+      *   {{ Bạn không thể nhập nhiều hơn {$max} ký tự. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Vui lòng nhập một số.
+    email: Vui lòng nhập một email hợp lệ.
+    url: Vui lòng nhập một URL hợp lệ.
+
+  # Custom field validation error
+  invalid_value: Giá trị không hợp lệ.
+  unexpected_error: Đã xảy ra lỗi không mong muốn.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Bảng thanh bên
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Xác thực
+    placeholder: Kết quả xác nhận sẽ được hiển thị ở đây.
+    no_errors_found: Không tìm thấy lỗi.
+
+  # History panel: shows entry commit history
+  history:
+    title: Lịch sử
+    fetch_failed: Không tải được lịch sử.
+    no_history: Không tìm thấy lịch sử.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Liên kết ngược
+    no_entries: Không có mục nào tham chiếu mục này.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Lỗi
+    description: Đã xảy ra lỗi khi lưu mục nhập. Vui lòng thử lại sau.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: Bạn đang xem thông tin chi tiết về nội dung “{$name}”.
+
+# Asset editor container aria-label
+asset_editor: Trình chỉnh sửa nội dung
+
+# Preview unavailable message
+preview_unavailable: Xem trước không có sẵn.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ URL công khai }}
+    *   {{ URL công khai }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Đường dẫn tệp }}
+    *   {{ Đường dẫn tệp }}
+file_data: Dữ liệu tệp
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Thông tin tài sản #TODO: tài sản?
+select_asset_show_info: Chọn một nội dung để hiển thị thông tin của nó.
+
+kind: Loại
+size: Kích cỡ
+dimensions: Kích thước
+duration: Khoảng thời gian
+# Short heading for a list of entries using the selected asset
+used_in: Được sử dụng trong
+created_date: Ngày tạo
+location: Vị trí
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Bản đồ hiển thị vĩ độ {$latitude}, kinh độ {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Xóa mục này
+move_up: Di chuyển lên
+move_down: Di chuyển xuống
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: Thêm {$name}
+
+# List item context menu
+add_item_above: Thêm mục ở trên
+add_item_below: Thêm mục bên dưới
+
+# Variable-type list selector
+select_list_type: Chọn loại danh sách
+
+# Variable-type mismatch
+unknown_variable_type: Không thể hiển thị mục này do loại không xác định. Kiểm tra bảng điều khiển trình duyệt để biết chi tiết.
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Độ mờ
+
+# Select field: empty option placeholder
+unselected_option: (Không có)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Chọn tệp
+    image: Chọn hình ảnh
+
+  # Search input labels
+  search_for_file: Tìm kiếm tập tin
+  search_for_image: Tìm kiếm hình ảnh
+
+  # Locations panel aria-label
+  locations: Địa điểm
+
+  # Asset folder options
+  folder:
+    field: Tài sản hiện trường #T ODO: tài sản?
+    entry: Tài sản đầu vào #TODO: tài sản?
+    file: Nội dung tệp
+    collection: Bộ sưu tập tài sản #TODO: tài sản?
+    global: Tài sản toàn cầu #TODO: tài sản?
+
+  # Error messages
+  error:
+    invalid_key: Khóa API của bạn không hợp lệ hoặc đã hết hạn. Vui lòng kiểm tra lại và thử lại.
+    search_fetch_failed: Đã xảy ra lỗi khi tìm kiếm nội dung. Vui lòng thử lại sau.
+    image_fetch_failed: Đã xảy ra lỗi khi tải xuống nội dung đã chọn. Vui lòng thử lại sau.
+
+  # Stock photo panels
+  available_images: Hình ảnh có sẵn
+
+  # URL entry option
+  enter_url: Nhập URL
+  enter_file_url: 'Nhập URL của tập tin:'
+  enter_image_url: 'Nhập URL của hình ảnh:'
+
+  # Large file warning dialog
+  large_file:
+    title: Tệp lớn
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Tệp không hợp lệ
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Không thể tải lên tệp
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Tín dụng hình ảnh #TODO: Tín dụng?
+    description: 'Sử dụng khoản tín dụng sau nếu có thể:' #TODO: tín dụng?
+
+  # Unsaved asset badge
+  unsaved: Chưa lưu
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Không có ký tự nào được nhập. Tối thiểu: {$min}. Tối đa: {$max}. }}
+      one {{ Đã nhập ký tự {$count}. Tối thiểu: {$min}. Tối đa: {$max}. }}
+      *   {{ Đã nhập ký tự {$count}. Tối thiểu: {$min}. Tối đa: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Không có ký tự nào được nhập. Tối thiểu: {$min}. }}
+      one {{ Đã nhập ký tự {$count}. Tối thiểu: {$min}. }}
+      *   {{ Đã nhập ký tự {$count}. Tối thiểu: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Không có ký tự nào được nhập. Tối đa: {$max}. }}
+      one {{ Đã nhập ký tự {$count}. Tối đa: {$max}. }}
+      *   {{ Đã nhập ký tự {$count}. Tối đa: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: Trình phát video YouTube
+
+# Date/time field: quick action buttons
+today: Hôm nay
+now: Hiện nay
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Hình ảnh
+  src: Nguồn
+  alt: Văn bản thay thế
+  title: Tiêu đề
+  link: liên kết
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Chìa khóa #TODO: Chìa khóa?
+  value: Giá trị
+  action: Hoạt động
+  empty_key: Cần có chìa khóa. #TODO: Chìa khóa?
+  duplicate_key: Khóa phải là duy nhất.
+
+# Map field: location search and geolocation
+find_place: Tìm một địa điểm
+use_your_location: Sử dụng vị trí của bạn
+
+# Geolocation error dialog
+geolocation_error_title: Lỗi định vị địa lý
+geolocation_error_body: Đã xảy ra lỗi khi truy xuất vị trí của bạn.
+geolocation_unsupported: API định vị địa lý không được trình duyệt này hỗ trợ.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Đúng
+  'false': Sai
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: Dịch vụ này không được cấu hình đúng cách.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: Khóa API
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: Nhập {$key} của bạn cho {$service}.
+      requested: Đang xác thực…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: '{$key} được cung cấp không hợp lệ. Vui lòng kiểm tra lại và thử lại.'
+    password:
+      # {$service} is the cloud service name
+      initial: Nhập mật khẩu của bạn cho {$service}.
+      requested: Đang đăng nhập…
+      error: Tên người dùng hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại và thử lại.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Thư viện phương tiện đám mây
+    activate:
+      button_label: Kích hoạt Cloudinary
+      description: Sau khi đăng nhập, nhấp vào nút Đăng nhập lần nữa để tiếp tục.
+    auth_key_label: Bí mật API
+    open_library: Mở đám mây
+
+  uploadcare:
+    auth_key_label: Khóa bí mật API
+
+  aws_s3:
+    auth_key_label: Khóa truy cập bí mật
+
+  cloudflare_r2:
+    auth_key_label: Khóa truy cập bí mật
+
+  digitalocean_spaces:
+    auth_key_label: Khóa truy cập bí mật
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ Có lỗi trong cấu hình CMS. Vui lòng giải quyết vấn đề và thử lại. }}
+      *   {{ Có lỗi trong cấu hình CMS. Vui lòng giải quyết vấn đề và thử lại. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: 'Bộ sưu tập {$collection}'
+    file: 'Tệp {$file}'
+    component: 'Thành phần {$component}'
+    # Don’t localize `{$field}`
+    field: 'Trường `{$field}`'
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS chỉ hoạt động với URL HTTPS hoặc localhost.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ URL tệp cấu hình phải sử dụng giao thức HTTPS hoặc địa chỉ localhost. }}
+        *   {{ URL của tệp cấu hình phải sử dụng giao thức HTTPS hoặc địa chỉ localhost. }}
+    fetch_failed: Không thể truy xuất tập tin cấu hình.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: Phản hồi HTTP được trả về với trạng thái {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Không thể truy xuất tập tin cấu hình. Để ngăn tải tệp `config.yml`, hãy thêm <a>`load_config_file: false`</a> vào đối tượng cấu hình được chuyển tới `CMS.init()`.'
+    parse_failed: Không thể phân tích cú pháp tệp cấu hình.
+    parse_failed_invalid_object: Tệp cấu hình không phải là đối tượng JavaScript hợp lệ.
+    parse_failed_unsupported_type: Tệp cấu hình không phải là loại tệp hợp lệ. Chỉ hỗ trợ YAML, TOML và JSON.
+    no_collection: Bộ sưu tập không được xác định.
+    # Don’t localize `hide`
+    no_visible_collection: Ít nhất một bộ sưu tập phải được hiển thị. Kiểm tra tùy chọn `hide`.
+    missing_backend: Phần phụ trợ không được xác định.  #TODO: Phần phụ trợ?
+    missing_backend_name: Tên phụ trợ không được xác định. #TODO: Phần phụ trợ?
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: Phần phụ trợ {$name} là <a>không được hỗ trợ</a> trong Sveltia CMS. #TODO: Phần phụ trợ?
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Phần phụ trợ {$name} không được dùng nữa là <a>không được hỗ trợ</a> trong Sveltia CMS. #TODO: Phần phụ trợ?
+    unsupported_custom_backend: Các chương trình phụ trợ tùy chỉnh là <a>không được hỗ trợ</a> trong Sveltia CMS. #TODO: Phần phụ trợ?
+    unsupported_backend_suggestion: Thay vào đó, hãy sử dụng một trong các <a>backend được hỗ trợ</a>. #TODO: backend
+    missing_repository: Kho lưu trữ không được xác định.
+    invalid_repository: Kho lưu trữ được cấu hình không hợp lệ. Nó phải ở định dạng “chủ sở hữu/repo”.
+    oauth_implicit_flow: Phương thức xác thực đã cấu hình (luồng ngầm) không được Sveltia CMS hỗ trợ. Thay vào đó, hãy sử dụng <a>phương thức xác thực khác</a>. #TODO luồng ngầm
+    github_pkce_unsupported: Xác thực PKCE chưa được hỗ trợ do các hạn chế của GitHub. Thay vào đó, hãy sử dụng <a>phương thức xác thực khác</a>.
+    oauth_no_app_id: ID ứng dụng OAuth không được xác định.
+    # Don’t localize `auth_methods`
+    no_auth_methods: Tùy chọn `auth_methods` phải chứa ít nhất một phương thức.
+    missing_media_folder: Thư mục phương tiện không được xác định.
+    invalid_media_folder: Thư mục phương tiện được định cấu hình không hợp lệ. Nó phải là một chuỗi.
+    invalid_public_folder: Thư mục chung được định cấu hình không hợp lệ. Nó phải là một chuỗi.
+    public_folder_relative_path: Thư mục chung được định cấu hình không hợp lệ. Nó phải là một đường dẫn tuyệt đối bắt đầu bằng “/”.
+    public_folder_absolute_url: URL tuyệt đối cho tùy chọn thư mục chung không được hỗ trợ trong Sveltia CMS.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: Tùy chọn `asset_collections` không hợp lệ. Nó phải là một mảng.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: Bộ sưu tập nội dung {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: Tên bộ sưu tập nội dung `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: Tên bộ sưu tập nội dung phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: Bộ sưu tập nội dung `{$name}` phải có tùy chọn `media_folder` được xác định dưới dạng chuỗi.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: Bộ sưu tập phải được xác định tùy chọn `folder`, `files` hoặc `divider`.
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: Bộ sưu tập không thể có các tùy chọn `folder`, `files` và `divider` cùng nhau.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: Tiện ích mở rộng `{$extension}` không khớp với định dạng `{$format}`.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: Mẫu sên `{$slug}` không hợp lệ vì nó không thể chứa dấu gạch chéo. Để sắp xếp các mục trong thư mục con, hãy sử dụng tùy chọn `path` thay vì `slug`. #TODO: sên
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: Tùy chọn `reorder` đề cập đến nhóm chế độ xem có tên `{$name}`, nhưng không có nhóm nào như vậy được xác định trong tùy chọn `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: Tùy chọn `sortable_fields` đề cập đến trường có tên `{$name}`, nhưng không có trường nào như vậy được xác định trong bộ sưu tập.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: Tùy chọn `view_groups` đề cập đến trường có tên `{$name}`, nhưng không có trường nào như vậy được xác định trong bộ sưu tập.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: Tùy chọn `view_filters` đề cập đến trường có tên `{$name}`, nhưng không có trường nào như vậy được xác định trong bộ sưu tập.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Nhóm chế độ xem {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: Tên nhóm chế độ xem `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
+    duplicate_view_group_name: Tên nhóm xem phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Bộ lọc chế độ xem {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: Tên bộ lọc chế độ xem `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
+    duplicate_view_filter_name: Tên bộ lọc chế độ xem phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: Bộ sưu tập {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: Tên bộ sưu tập `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
+    duplicate_collection_name: Tên bộ sưu tập phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: Tệp bộ sưu tập {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: Tên tệp bộ sưu tập `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
+    duplicate_collection_file_name: Tên tệp bộ sưu tập phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    # Don’t localize `fields`
+    collection_no_fields: Bộ sưu tập phải có tùy chọn `fields` được xác định bằng ít nhất một trường.
+    # Don’t localize `fields`
+    collection_file_no_fields: Tệp bộ sưu tập phải có tùy chọn `fields` được xác định bằng ít nhất một trường.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: Tệp bộ sưu tập phải có tùy chọn `i18n` được xác định nếu trình giữ chỗ `locale` được sử dụng trong đường dẫn `file`.
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: Trường {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: Tên trường `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt. Nếu bạn muốn lồng các trường, <a>hãy sử dụng các trường Đối tượng thay vì ký hiệu dấu chấm</a>.   #TODO: lồng
+    duplicate_field_name: Tên trường phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: Loại biến {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: Tên loại biến `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
+    duplicate_variable_type: Tên loại biến phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    date_field_type: 'Loại trường Ngày không được dùng nữa không được hỗ trợ trong Sveltia CMS. Thay vào đó, hãy sử dụng loại trường DateTime với tùy chọn `type: date`.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Múi giờ không hợp lệ: {$timeZone}. Phải là mã định danh múi giờ IANA hợp lệ như `America/New_York` hoặc `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: Tùy chọn `{$prop}` không được dùng nữa không được hỗ trợ trong Sveltia CMS. Thay vào đó hãy sử dụng tùy chọn `{$newProp}`.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: Tùy chọn `allow_multiple` không được hỗ trợ trong Sveltia CMS. Thay vào đó, hãy sử dụng tùy chọn `multiple`, mặc định là `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: Trường Danh sách không thể có các tùy chọn `field`, `fields` và `types` cùng nhau.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: Loại biến của trường Danh sách không hợp lệ. Tùy chọn `widget` được đặt thành `{$widget}` nhưng phải là `object`.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: Trường Đối tượng không thể có các tùy chọn `fields` và `types` cùng nhau.
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: Trường Đối tượng phải được xác định tùy chọn `fields` hoặc `types`.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: Bộ sưu tập `{$collection}` được tham chiếu không hợp lệ hoặc không được xác định.
+    relation_field_invalid_collection_file: Tệp `{$file}` được tham chiếu không hợp lệ hoặc không được xác định.
+    # Don’t localize `file`
+    relation_field_missing_file_name: Tùy chọn `file` phải được xác định cho mối quan hệ với bộ sưu tập tệp.
+    relation_field_invalid_value_field: Trường giá trị tham chiếu `{$field}` không hợp lệ hoặc không được xác định.
+    unexpected: Lỗi không mong muốn  #TODO: không mong muốn
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: ID ứng dụng OAuth không được xác định. Người dùng được yêu cầu cung cấp mã thông báo truy cập để đăng nhập.
+    editorial_workflow_unsupported: Quy trình biên tập hiện chỉ được hỗ trợ với phần phụ trợ GitHub và GitLab. #TODO:phụ trợ ?
+    open_authoring_unsupported: Tác giả mở chưa được hỗ trợ trong Sveltia CMS.
+    nested_collections_unsupported: Các bộ sưu tập lồng nhau chưa được hỗ trợ trong Sveltia CMS.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: Tùy chọn `{$prop}` không được hỗ trợ trong Sveltia CMS. Nó sẽ bị bỏ qua.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: Cả hai tùy chọn `picker_utc` và múi giờ mới hơn (`input_timezone` hoặc `output_utc`) đều được đặt. Các tùy chọn mới được ưu tiên. Hãy cân nhắc xóa `picker_utc` khỏi cấu hình của bạn.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Xem ghi chú tương thích để biết chi tiết: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: Để có trải nghiệm tốt hơn cho nhà phát triển, bạn có thể xác thực tệp cấu hình của mình dựa trên lược đồ JSON của Sveltia CMS. Xem {$link} để biết chi tiết.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Địa phương #TODO:Địa phương ?
+  # Browser compatibility warnings
+  unsupported_browser: Quy trình làm việc cục bộ không được hỗ trợ trong trình duyệt của bạn. Vui lòng sử dụng Chrome hoặc Edge để thay thế.
+  disabled: Quy trình làm việc cục bộ bị tắt trong trình duyệt của bạn. <a>Đây là cách kích hoạt nó</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Bạn hiện đang xem bảng Quy trình biên tập. Bản nháp: {$draft}. Đang đánh giá: {$review}. Sẵn sàng: {$ready}. Đang chờ xóa: {$deletion}.'
+
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
+status:
+  draft: Bản nháp
+  drafts: Bản nháp
+  in_review: Đang xem xét
+  ready: Sẵn sàng
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Đang chờ xóa
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Hủy xóa
+  confirm_cancelling_deletion: Bạn có chắc chắn muốn hủy việc xóa này không? Bài viết sẽ vẫn được xuất bản.
+  confirm_completing_deletion: Bạn có chắc chắn muốn xóa mục này? Nó sẽ được gỡ bỏ ngay lập tức.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Mục được đánh dấu để xóa. }}
+      *   {{ Các mục {$count} được đánh dấu để xóa. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Những thay đổi bị loại bỏ. }}
+      *   {{ Các thay đổi đối với mục nhập {$count} bị loại bỏ. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Đang hủy xóa…
+  deletion_cancelled: Việc xóa đã bị hủy.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Không thể hủy thao tác xóa. Vui lòng thử lại.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Bài viết chưa được xuất bản
+  published_entries: Bài viết đã xuất bản
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Trạng thái: {$status}'
+  change_entry_status: Thay đổi trạng thái mục nhập  #TODO: not nature
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Đang thay đổi trạng thái…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Đang cập nhật trạng thái…
+  status_updated: Đã cập nhật trạng thái.
+  # Error notification when the status could not be changed
+  status_change_failed: Không thể thay đổi trạng thái. Vui lòng thử lại.
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Xuất bản mục
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Hủy thay đổi
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Bạn có chắc chắn muốn xóa mục này? Nó sẽ không bị xóa cho đến khi việc xóa được xuất bản. Cho đến lúc đó bạn vẫn sẽ tìm thấy nó trong danh sách mục nhập, được đánh dấu Đang chờ xóa.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Mục này chưa được xuất bản nên việc xóa nó sẽ loại bỏ nó hoàn toàn.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Mục này có những thay đổi chưa được công bố. Việc loại bỏ chúng sẽ khôi phục phiên bản đã xuất bản. Bản thân mục này sẽ không bị xóa. #TODO:  công bố
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Nó chưa được xuất bản nên những thay đổi chưa được xuất bản của bạn sẽ bị loại bỏ. Mọi phiên bản đã xuất bản sẽ vẫn được xuất bản. }}
+      *   {{ Chúng chưa được xuất bản nên những thay đổi chưa được xuất bản của bạn sẽ bị hủy. Mọi phiên bản đã xuất bản sẽ vẫn được xuất bản. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Một trong số chúng chưa được xuất bản nên những thay đổi chưa được xuất bản của bạn sẽ bị hủy. Mọi phiên bản đã xuất bản sẽ vẫn được xuất bản. }}
+      *   {{ {$count} trong số chúng chưa được xuất bản, vì vậy những thay đổi chưa được xuất bản của bạn sẽ bị hủy. Mọi phiên bản đã xuất bản sẽ vẫn được xuất bản. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Bạn có chắc chắn muốn xuất bản mục này? Những thay đổi của bạn sẽ có hiệu lực ngay lập tức.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Đang xuất bản mục nhập…
+  entry_published: Mục được xuất bản.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Đang xóa mục nhập…
+  discarding_changes: Đang hủy các thay đổi…
+  entry_deleted: Đã xóa mục nhập.
+  # Error notification when publishing fails
+  publishing_entry_failed: Không thể xuất bản mục này. Vui lòng thử lại.
+  # Workflow page: empty column message
+  no_entries: Không có mục nào.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Kéo để thay đổi trạng thái
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Thể loại
+
+# Site Configuration Editor
+site_configuration_editor: Trình chỉnh sửa cấu hình trang web
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: Đã lưu khóa API.
+    api_key_removed: Đã xóa khóa API.
+    api_key_invalid: Khóa API được cung cấp không hợp lệ. Vui lòng kiểm tra lại và thử lại.
+
+  # Preferences operation errors
+  error:
+    permission_denied: Quyền truy cập bộ nhớ cookie đã bị từ chối. Vui lòng kiểm tra quyền của trình duyệt của bạn và thử lại.
+
+  # Appearance panel
+  appearance:
+    title: Vẻ bề ngoài #TODO: Vẻ bề ngoài
+    theme: chủ đề
+    select_theme: Chọn chủ đề
+
+  # Theme options
+  theme:
+    auto: Tự động
+    dark: Tối tăm #TODO: Tối tăm?
+    light: Ánh sáng #TODO: Ánh sáng?
+
+  # Language panel
+  language:
+    title: Ngôn ngữ
+    ui_language:
+      title: Ngôn ngữ giao diện người dùng
+      select_language: Chọn ngôn ngữ
+
+  # Contents panel
+  contents:
+    title: Nội dung
+    editor:
+      title: Biên tập viên
+      use_draft_backup:
+        switch_label: Tự động sao lưu bản nháp đầu vào
+      close_on_save:
+        switch_label: Đóng trình chỉnh sửa sau khi lưu bản nháp
+      close_with_escape:
+        switch_label: Đóng trình chỉnh sửa bằng phím Escape
+
+  # Internationalization panel
+  i18n:
+    title: Quốc tế hóa #TODO: Quốc tế hóa
+    translators:
+      default:
+        title: Dịch vụ dịch mặc định
+        select_service: Chọn dịch vụ
+      api_keys:
+        title: Khóa API dịch vụ dịch thuật
+        description: Quản lý khóa API cho dịch vụ dịch <a></a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: 'Khóa {$service}'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Đăng ký <a {$homeHref}>{$service}</a> và nhập <a {$apiKeyHref}>your API Key</a> tại đây để cho phép dịch nhanh các trường nhập văn bản.
+
+  # Media panel
+  media:
+    title: Phương tiện truyền thông
+    stock_photos:
+      api_keys:
+        title: Khóa API dịch vụ ảnh chứng khoán
+        description: Quản lý khóa API cho dịch vụ ảnh chứng khoán <a></a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: 'Khóa API {$service}'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Đăng ký <a {$homeHref}>{$service} API</a> và nhập <a {$apiKeyHref}>your API Key</a> tại đây để chèn ảnh có sẵn miễn phí vào các trường nhập hình ảnh.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: Ảnh do {$service} cung cấp
+      no_services: Không có dịch vụ ảnh chứng khoán <a></a> nào được định cấu hình. #TODO: chứng khoán
+    cloud_storage:
+      api_keys:
+        title: Khóa API dịch vụ lưu trữ đám mây
+        description: Quản lý khóa API cho dịch vụ lưu trữ đám mây <a></a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: 'Khóa API {$service}'
+      no_services: Không có dịch vụ lưu trữ đám mây <a></a> nào được định cấu hình.
+
+  # Accessibility panel
+  accessibility:
+    title: Khả năng tiếp cận
+    underline_links:
+      title: Gạch chân các liên kết
+      description: Hiển thị gạch chân cho các liên kết trong bản xem trước mục nhập và nhãn giao diện người dùng.
+      switch_label: Luôn gạch chân các liên kết
+
+  # Advanced panel
+  advanced:
+    title: Trình độ cao
+    beta:
+      title: Tính năng thử nghiệm
+      description: Kích hoạt một số tính năng beta có thể không ổn định hoặc chưa được bản địa hóa.
+      switch_label: Tham gia chương trình Beta
+    developer_mode:
+      title: Chế độ nhà phát triển
+      description: Kích hoạt một số tính năng dành cho nhà phát triển, bao gồm nhật ký bảng điều khiển chi tiết và menu ngữ cảnh gốc.
+      switch_label: Bật Chế độ nhà phát triển
+    deploy_hook:
+      title: Triển khai móc
+      description: Nhập URL webhook sẽ được gọi khi bạn kích hoạt triển khai theo cách thủ công bằng cách chọn Xuất bản thay đổi. Phần này có thể để trống nếu bạn đang sử dụng Tác vụ GitHub.
+      # Hook URL input
+      url:
+        field_label: URL móc  #TODO: not natural
+        saved: Đã lưu URL móc.#TODO: not natural
+        removed: Đã xóa URL móc.#TODO: not natural
+      # Authorization header input
+      auth:
+        field_label: 'Tiêu đề ủy quyền (ví dụ: Bearer <token>) (tùy chọn)' #TODO: trường??
+        saved: Đã lưu tiêu đề ủy quyền.  #TODO: trường??
+        removed: Tiêu đề ủy quyền đã bị xóa.  #TODO: trường??
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: Xem thư viện nội dung
+  view_asset_library: Xem thư viện nội dung
+  search: Tìm kiếm các mục và nội dung
+  create_entry: Tạo một mục mới
+  save_entry: Lưu một mục
+  cancel_editing: Hủy chỉnh sửa mục nhập
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: hình ảnh AVIF
+  bmp: Hình ảnh bitmap
+  gif: Ảnh GIF
+  ico: Biểu tượng  #TODO:  Biểu tượng
+  jpeg: hình ảnh JPEG
+  jpg: hình ảnh JPEG
+  png: Hình ảnh PNG
+  svg: hình ảnh SVG
+  tif: hình ảnh TIFF
+  tiff: hình ảnh TIFF
+  webp: Hình ảnh WebP
+  # Video formats
+  avi: Video AVI
+  m4v: Video MP4
+  mov: Video thời gian nhanh #TODO: thời gian nhan
+  mp4: Video MP4
+  mpeg: Video MPEG
+  mpg: Video MPEG
+  ogg: Video Ogg
+  ogv: Video Ogg
+  ts: Video MPEG
+  webm: video WebM
+  3gp: video 3GPP
+  3g2: video 3GPP2
+  # Audio formats
+  aac: âm thanh AAC
+  mid: MIDI
+  midi: MIDI
+  m4a: âm thanh MP4
+  mp3: âm thanh MP3
+  oga: Âm thanh Ogg
+  opus: âm thanh OPUS
+  wav: âm thanh WAV
+  weba: âm thanh WebM
+  # Document formats
+  csv: bảng tính CSV
+  doc: tài liệu Word
+  docx: tài liệu Word
+  odp: Bản trình bày OpenDocument #TODO: viêt hoa đầu câu ?
+  ods: bảng tính OpenDocument
+  odt: văn bản tài liệu mở
+  pdf: tài liệu PDF
+  ppt: thuyết trình PowerPoint
+  pptx: thuyết trình PowerPoint
+  rtf: Tài liệu văn bản phong phú  #TODO: viêt hoa đầu câu ?
+  xls: bảng tính excel
+  xlsx: bảng tính excel
+  # Text formats
+  html: văn bản HTML
+  js: JavaScript #TODO: viêt hoa đầu câu ?
+  json: văn bản JSON
+  md: Văn bản đánh dấu #TODO: viêt hoa đầu câu ?
+  toml: văn bản TOML
+  yaml: văn bản YAML
+  yml: văn bản YAML
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: 'byte {$size}'
+  kb: '{$size} KB'
+  mb: '{$size} MB'
+  gb: '{$size} GB'
+  tb: '{$size} TB'
