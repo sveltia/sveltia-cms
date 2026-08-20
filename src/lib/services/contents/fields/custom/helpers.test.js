@@ -1,8 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getFieldConfigMap } from './helpers';
+import { buildPreviewData } from '$lib/services/api/helpers';
+
+import { getFieldConfigMap, getPreviewData } from './helpers';
 
 /** @import { CustomField } from '$lib/types/public'; */
+
+vi.mock('$lib/services/api/helpers', () => ({
+  buildPreviewData: vi.fn(({ draft, locale }) => ({ entryMap: { draft, locale } })),
+}));
 
 describe('contents/fields/custom/helpers', () => {
   describe('getFieldConfigMap', () => {
@@ -41,6 +47,42 @@ describe('contents/fields/custom/helpers', () => {
       const map = getFieldConfigMap(fieldConfig);
 
       expect(map.get('options').toJS()).toEqual(['a', 'b']);
+    });
+  });
+
+  describe('getPreviewData', () => {
+    /** @type {any} */
+    const draft = { collectionName: 'posts', currentValues: { en: { title: 'Hello' } } };
+
+    beforeEach(() => {
+      vi.mocked(buildPreviewData).mockClear();
+    });
+
+    it('computes the data once for several fields in the same microtask', () => {
+      // Two custom controls and/or previews rendering in response to the same change
+      const first = getPreviewData({ draft, locale: 'en' });
+      const second = getPreviewData({ draft, locale: 'en' });
+
+      expect(buildPreviewData).toHaveBeenCalledOnce();
+      expect(second).toBe(first);
+    });
+
+    it('recomputes the data after the microtask, so values never go stale', async () => {
+      getPreviewData({ draft, locale: 'en' });
+
+      // The draft is mutated in place, so the cache must not survive the current microtask
+      await Promise.resolve();
+
+      getPreviewData({ draft, locale: 'en' });
+
+      expect(buildPreviewData).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not share the data between locales', () => {
+      getPreviewData({ draft, locale: 'en' });
+      getPreviewData({ draft, locale: 'fr' });
+
+      expect(buildPreviewData).toHaveBeenCalledTimes(2);
     });
   });
 });

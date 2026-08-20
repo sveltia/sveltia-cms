@@ -1,8 +1,9 @@
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
-import { getFieldConfigMap } from '$lib/services/contents/fields/custom/helpers';
+import { getFieldConfigMap, getPreviewData } from '$lib/services/contents/fields/custom/helpers';
 
 /**
+ * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
  * @import { CustomField, CustomFieldControl, CustomFieldControlProps } from '$lib/types/public';
  */
 
@@ -43,12 +44,17 @@ export const resolveControl = (ctrl) => {
 };
 
 /**
- * Build the props for a custom field control component.
+ * Build the props for a custom field control component. The `entry` prop lets a control read any
+ * value in the entry being edited, including the values of sibling fields, so that it can render
+ * options derived from them. It’s rebuilt whenever the draft is updated, so the control is always
+ * given the latest content.
  * @param {object} args Arguments.
  * @param {string | null | undefined} args.fieldId Field ID.
  * @param {string | null | undefined} args.fieldClassName Class name for the wrapper element.
  * @param {CustomField} args.fieldConfig Field configuration.
  * @param {any} args.currentValue Current field value.
+ * @param {EntryDraft | null | undefined} args.draft Draft entry state.
+ * @param {InternalLocaleCode} args.locale Current locale.
  * @param {(value: any) => void} args.onChange Change handler.
  * @param {(instance: any) => void} args.handleRef Ref callback.
  * @returns {CustomFieldControlProps & { ref?: (instance: any) => void }} Props for React rendering.
@@ -58,6 +64,8 @@ export const buildControlProps = ({
   fieldClassName,
   fieldConfig,
   currentValue,
+  draft,
+  locale,
   onChange,
   handleRef,
 }) => ({
@@ -65,6 +73,7 @@ export const buildControlProps = ({
   field: getFieldConfigMap(fieldConfig),
   forID: fieldId ?? '',
   classNameWrapper: fieldClassName ?? '',
+  entry: draft ? getPreviewData({ draft, locale }).entryMap : undefined,
   onChange,
   ref: handleRef,
 });

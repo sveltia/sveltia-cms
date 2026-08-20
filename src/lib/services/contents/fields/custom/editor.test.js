@@ -12,6 +12,12 @@ vi.doMock('$lib/services/api/registries', () => {
   };
 });
 
+vi.doMock('$lib/services/api/helpers', () => ({
+  buildPreviewData: vi.fn(({ draft, locale }) => ({
+    entryMap: { __entry: true, content: draft.currentValues[locale] },
+  })),
+}));
+
 const { buildControlProps, resolveControl } = await import('./editor');
 
 describe('contents/fields/custom/helpers', () => {
@@ -80,6 +86,8 @@ describe('contents/fields/custom/helpers', () => {
       fieldConfig: { name: 'custom', widget: 'text' },
       fieldId: 'field-id',
       fieldClassName: 'custom-class',
+      draft: undefined,
+      locale: 'en',
       onChange,
       handleRef,
     });
@@ -100,6 +108,8 @@ describe('contents/fields/custom/helpers', () => {
       fieldConfig: { widget: 'custom', name: 'custom' },
       fieldId: '',
       fieldClassName: '',
+      draft: undefined,
+      locale: 'en',
       onChange: vi.fn(),
       handleRef: vi.fn(),
     });
@@ -114,6 +124,8 @@ describe('contents/fields/custom/helpers', () => {
       fieldConfig: { widget: 'custom', name: 'field' },
       fieldId: null,
       fieldClassName: null,
+      draft: undefined,
+      locale: 'en',
       onChange: vi.fn(),
       handleRef: vi.fn(),
     });
@@ -128,11 +140,46 @@ describe('contents/fields/custom/helpers', () => {
       fieldConfig: { widget: 'custom', name: 'field' },
       fieldId: undefined,
       fieldClassName: undefined,
+      draft: undefined,
+      locale: 'en',
       onChange: vi.fn(),
       handleRef: vi.fn(),
     });
 
     expect(props.forID).toBe('');
     expect(props.classNameWrapper).toBe('');
+  });
+
+  it('includes the entry data, so a control can read sibling field values', () => {
+    /** @type {any} */
+    const draft = { collectionName: 'posts', currentValues: { en: { 'groups.0.name': 'foo' } } };
+
+    const props = buildControlProps({
+      currentValue: 'foo',
+      fieldConfig: { widget: 'custom', name: 'refgroup' },
+      fieldId: 'field-1',
+      fieldClassName: '',
+      draft,
+      locale: 'en',
+      onChange: vi.fn(),
+      handleRef: vi.fn(),
+    });
+
+    expect(props.entry).toEqual({ __entry: true, content: { 'groups.0.name': 'foo' } });
+  });
+
+  it('omits the entry data when there is no draft', () => {
+    const props = buildControlProps({
+      currentValue: 'foo',
+      fieldConfig: { widget: 'custom', name: 'refgroup' },
+      fieldId: 'field-1',
+      fieldClassName: '',
+      draft: undefined,
+      locale: 'en',
+      onChange: vi.fn(),
+      handleRef: vi.fn(),
+    });
+
+    expect(props.entry).toBeUndefined();
   });
 });

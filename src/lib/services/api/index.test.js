@@ -50,6 +50,9 @@ vi.mock('$lib/services/utils/string', () => ({
   // @ts-ignore
   isNonEmptyString: (val) => typeof val === 'string' && val.trim().length > 0,
 }));
+vi.mock('$lib/services/api/field-types', () => ({
+  getFieldTypeDefinition: vi.fn(),
+}));
 vi.mock('$lib/services/api/registries', () => ({
   customComponentRegistry: new Map(),
   customFieldTypeRegistry: new Map(),
@@ -77,6 +80,7 @@ vi.mock('$lib/components/app.svelte', () => ({
 // Now import after all setup
 const CMS = (await import('.')).default;
 const { customPreviewStyleRegistry } = await import('$lib/services/api/registries');
+const { getFieldTypeDefinition } = await import('$lib/services/api/field-types');
 
 describe('CMS.init()', () => {
   beforeEach(() => {
@@ -967,6 +971,52 @@ describe('CMS.registerFieldType()', () => {
   });
 });
 
+describe('CMS.getFieldType()', () => {
+  beforeEach(() => {
+    vi.mocked(getFieldTypeDefinition).mockReset();
+  });
+
+  test('returns the field type definition for the given name', () => {
+    const definition = { control: () => null, preview: () => null };
+
+    // @ts-ignore
+    vi.mocked(getFieldTypeDefinition).mockReturnValue(definition);
+
+    expect(CMS.getFieldType('select')).toBe(definition);
+    expect(getFieldTypeDefinition).toHaveBeenCalledExactlyOnceWith('select');
+  });
+
+  test('returns undefined for an unavailable field type', () => {
+    vi.mocked(getFieldTypeDefinition).mockReturnValue(undefined);
+
+    expect(CMS.getFieldType('list')).toBeUndefined();
+  });
+
+  test('throws TypeError for an invalid name', () => {
+    // @ts-ignore
+    expect(() => CMS.getFieldType()).toThrow(TypeError);
+    expect(() => CMS.getFieldType('')).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => CMS.getFieldType(123)).toThrow(TypeError);
+    expect(getFieldTypeDefinition).not.toHaveBeenCalled();
+  });
+
+  test('getWidget is an alias of getFieldType', () => {
+    // @ts-ignore
+    expect(CMS.getWidget).toBe(CMS.getFieldType);
+  });
+
+  test('does not log a compatibility warning for getWidget', () => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    vi.mocked(getFieldTypeDefinition).mockReturnValue(undefined);
+    // @ts-ignore
+    CMS.getWidget('select');
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+});
+
 describe('CMS Proxy - unsupported functions', () => {
   test('returns undefined for unsupported functions', () => {
     // @ts-ignore
@@ -1047,5 +1097,14 @@ describe('CMS - supported methods', () => {
 
   test('registerWidget method is accessible', () => {
     expect(typeof CMS.registerWidget).toBe('function');
+  });
+
+  test('getFieldType method is accessible', () => {
+    expect(typeof CMS.getFieldType).toBe('function');
+  });
+
+  test('getWidget method is accessible', () => {
+    // @ts-ignore
+    expect(typeof CMS.getWidget).toBe('function');
   });
 });
