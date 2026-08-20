@@ -94,7 +94,7 @@ singletons: Singletons
 
 # Error messages
 # Toast notification when clipboard operations fail
-clipboard_error: Không thể sao chép vào bảng nhớ tạm.
+clipboard_error: Không thể sao chép vào bộ nhớ tạm.
 
 # ==============================================================================
 # Sign-In Page
@@ -140,7 +140,7 @@ work_with_local_repo: Làm việc với kho lưu trữ cục bộ
 work_with_local_repo_description: Sau khi được nhắc, hãy chọn thư mục gốc của kho lưu trữ “{$repo}”.
 work_with_local_repo_description_no_repo: Sau khi được nhắc, hãy chọn thư mục gốc của kho lưu trữ Git của bạn.
 # Button label for demo/test repository
-work_with_test_repo: Làm việc với Kho lưu trữ thử nghiệm
+work_with_test_repo: Làm việc với kho lưu trữ thử nghiệm
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -180,7 +180,7 @@ unexpected_error: Đã xảy ra lỗi
 entry_parse_errors: |
   .input {$count :integer}
   .match $count
-    *   {{ Đã xảy ra lỗi khi phân tích cú pháp {$count} tệp mục nhập. Kiểm tra Console của trình duyệt để biết chi tiết. }}
+    *   {{ Đã xảy ra lỗi khi đọc {$count} tệp nội dung. Kiểm tra bảng điều khiển của trình duyệt để biết chi tiết. }}
 
 # ==============================================================================
 # Authentication and Account
@@ -277,7 +277,7 @@ settings: Cài đặt
 # Help menu: button aria-labels and section headings
 show_help_menu: Hiển thị trình đơn trợ giúp
 # Help section heading in dropdowns and mobile menu
-help: Giúp đỡ
+help: Trợ giúp
 
 # Help menu items: documentation and support resources
 keyboard_shortcuts: Phím tắt
@@ -318,21 +318,21 @@ asset_library: Thư viện tệp
 
 # Primary sidebar section headings and list aria-labels
 collections: Bộ sưu tập
-entries: Bài dự thi
+entries: Mục
 files: Tệp
 
 # Asset location selector: option group labels
 asset_location:
   # Assets stored in the site’s Git repository
   repository: Trang web của bạn
-  external: Địa điểm bên ngoài
-  stock_photos: Hình ảnh chứng khoán
+  external: Nguồn bên ngoài
+  stock_photos: Ảnh miễn phí
 
 # Sidebar and list labels
 # Collection assets panel aria-label
 collection_assets: Tệp của bộ sưu tập
 # List aria-labels for different list types
-entry_list: Danh sách dự thi
+entry_list: Danh sách mục
 file_list: Danh sách tệp
 asset_list: Danh sách tệp
 
@@ -453,7 +453,7 @@ loading_entries: |
   .match $count
     *   {{ Đang tải {$count} mục… }}
 # Error message when entry cannot be found
-entry_not_found: Không tìm thấy mục nhập.
+entry_not_found: Không tìm thấy mục.
 
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Việc tạo các mục mới trong bộ sưu tập này bị quản trị viên vô hiệu hóa.
@@ -601,7 +601,7 @@ paste_image: Dán hình ảnh
 
 # Clipboard paste errors
 no_image_in_clipboard: Không tìm thấy hình ảnh nào trong clipboard.
-clipboard_access_denied: Truy cập vào bảng nhớ tạm bị từ chối.
+clipboard_access_denied: Quyền truy cập bộ nhớ tạm bị từ chối.
 
 # Drag-and-drop overlay text (shown while dragging)
 # {$count} is the number of files expected by the current picker mode
@@ -661,7 +661,7 @@ delete_selected_entries: |
 confirm_deleting_this_entry: Bạn có chắc chắn muốn xóa mục này?
 confirm_deleting_this_entry_with_assets: Bạn có chắc chắn muốn xóa mục này và các tệp liên quan không?
 # Error notification shown when an entry could not be deleted
-deleting_entry_failed: Không thể xóa mục nhập. Vui lòng thử lại.
+deleting_entry_failed: Không thể xóa mục. Vui lòng thử lại.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -682,8 +682,8 @@ confirm_deleting_all_entries_with_assets: Bạn có chắc chắn muốn xóa t�
 
 # Reorder mode: toggle buttons
 reorder_entries: Sắp xếp lại các mục
-done_reordering_entries: Đã hoàn tất việc sắp xếp lại các mục nhập
-cancel_reordering_entries: Hủy sắp xếp lại các mục nhập
+done_reordering_entries: Hoàn tất sắp xếp lại các mục
+cancel_reordering_entries: Hủy sắp xếp lại các mục
 
 # Reorder error message
 saving_reorder_failed: Không thể lưu thứ tự mới. Vui lòng thử lại.
@@ -782,8 +782,8 @@ index_file: Tệp chỉ mục
 no_files_in_collection: Không có tệp nào trong bộ sưu tập này.
 
 # Entry duplication
-duplicate_entry: Mục nhập trùng lặp
-entry_duplicated: Mục nhập được sao chép dưới dạng bản nháp mới.
+duplicate_entry: Nhân bản mục
+entry_duplicated: Đã nhân bản mục thành bản nháp mới.
 
 # Validation errors
 # Toast shown when entry has validation errors preventing save
@@ -866,9 +866,9 @@ restore_backup_title: Khôi phục bản nháp
 restore_backup_description: Mục này có bản sao lưu từ {$datetime}. Bạn có muốn khôi phục bản nháp đã chỉnh sửa không?
 
 # Draft backup notifications
-draft_backup_saved: Đã lưu bản sao lưu dự thảo.
-draft_backup_restored: Đã khôi phục bản sao lưu dự thảo.
-draft_backup_deleted: Đã xóa bản sao lưu dự thảo.
+draft_backup_saved: Đã lưu bản sao lưu của bản nháp.
+draft_backup_restored: Đã khôi phục bản sao lưu của bản nháp.
+draft_backup_deleted: Đã xóa bản sao lưu của bản nháp.
 
 # Editor toolbar actions
 cancel_editing: Hủy chỉnh sửa
@@ -883,7 +883,7 @@ create_entry_announcement: Bạn hiện đang tạo một mục mới trong bộ
 # {$collection} is the collection label and {$entry} is the entry label or slug
 edit_entry_title: '{$collection} > {$entry}'
 # {$entry} is the current entry label and {$collection} is the collection label
-edit_entry_announcement: Hiện bạn đang chỉnh sửa mục nhập “{$entry}” trong bộ sưu tập “{$collection}”.
+edit_entry_announcement: Hiện bạn đang chỉnh sửa mục “{$entry}” trong bộ sưu tập “{$collection}”.
 # {$file} is the file name and {$collection} is the collection label
 edit_file_announcement: Hiện bạn đang chỉnh sửa tệp “{$file}” trong bộ sưu tập “{$collection}”.
 # {$file} is the singleton file name
@@ -945,13 +945,13 @@ unsupported_field_type_x: 'Loại trường không được hỗ trợ: {$name}'
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
 enable_x_locale: 'Kích hoạt {$locale}'
-reenable_x_locale: 'Có thể kích hoạt lại {$locale}'
+reenable_x_locale: 'Bật lại {$locale}'
 disable_x_locale: 'Tắt {$locale}'
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
 locale_x_has_been_disabled: Nội dung {$locale} đã bị tắt.
-locale_x_now_disabled: Nội dung {$locale} hiện đã bị tắt. Nó sẽ bị xóa khi bạn lưu mục nhập.
+locale_x_now_disabled: Nội dung {$locale} hiện đã bị tắt. Nội dung này sẽ bị xóa khi bạn lưu mục.
 
 # Repository and site links
 view_in_repository: Xem trong kho lưu trữ
@@ -989,7 +989,7 @@ edit_slug_error:
   duplicate: Slug này đang được một mục khác sử dụng.
 
 # Required field indicator
-required: Yêu cầu
+required: Bắt buộc
 
 # Editor operation feedback
 # Translation and copy operation status messages
@@ -1109,7 +1109,7 @@ entry_sidebar:
 saving_entry:
   error:
     title: Lỗi
-    description: Đã xảy ra lỗi khi lưu mục nhập. Vui lòng thử lại sau.
+    description: Đã xảy ra lỗi khi lưu mục. Vui lòng thử lại sau.
 
 # ==============================================================================
 # Asset Editor
@@ -1151,7 +1151,7 @@ select_asset_show_info: Chọn một tệp để xem thông tin.
 kind: Loại
 size: Kích cỡ
 dimensions: Kích thước
-duration: Khoảng thời gian
+duration: Thời lượng
 # Short heading for a list of entries using the selected asset
 used_in: Được sử dụng trong
 created_date: Ngày tạo
@@ -1260,19 +1260,19 @@ character_counter:
     .input {$count :integer}
     .match $count
       0   {{ Không có ký tự nào được nhập. Tối thiểu: {$min}. Tối đa: {$max}. }}
-      *   {{ Đã nhập ký tự {$count}. Tối thiểu: {$min}. Tối đa: {$max}. }}
+      *   {{ Đã nhập {$count} ký tự. Tối thiểu: {$min}. Tối đa: {$max}. }}
   # {$count} is the current character count and {$min} is the minimum allowed count
   min: |
     .input {$count :integer}
     .match $count
       0   {{ Không có ký tự nào được nhập. Tối thiểu: {$min}. }}
-      *   {{ Đã nhập ký tự {$count}. Tối thiểu: {$min}. }}
+      *   {{ Đã nhập {$count} ký tự. Tối thiểu: {$min}. }}
   # {$count} is the current character count and {$max} is the maximum allowed count
   max: |
     .input {$count :integer}
     .match $count
       0   {{ Không có ký tự nào được nhập. Tối đa: {$max}. }}
-      *   {{ Đã nhập ký tự {$count}. Tối đa: {$max}. }}
+      *   {{ Đã nhập {$count} ký tự. Tối đa: {$max}. }}
 
 # YouTube video player iframe title
 youtube_video_player: Trình phát video YouTube
@@ -1293,7 +1293,7 @@ editor_components:
 key_value:
   key: Khóa
   value: Giá trị
-  action: Hoạt động
+  action: Thao tác
   empty_key: Cần nhập khóa.
   duplicate_key: Khóa phải là duy nhất.
 
@@ -1433,7 +1433,7 @@ config:
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_multiple_options: Bộ sưu tập không thể có các tùy chọn `folder`, `files` và `divider` cùng nhau.
     # {$extension} is the file extension and {$format} is the configured content format
-    file_format_mismatch: Tiện ích mở rộng `{$extension}` không khớp với định dạng `{$format}`.
+    file_format_mismatch: Phần mở rộng `{$extension}` không khớp với định dạng `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Mẫu slug `{$slug}` không hợp lệ vì không được chứa dấu gạch chéo. Để sắp xếp các mục trong thư mục con, hãy sử dụng tùy chọn `path` thay cho `slug`.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
@@ -1602,7 +1602,7 @@ workflow:
   # Confirmation message shown before deleting a published entry, replacing the direct
   # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
   # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
-  confirm_deleting_published_entry: Bạn có chắc chắn muốn xóa mục này? Nó sẽ không bị xóa cho đến khi việc xóa được xuất bản. Cho đến lúc đó bạn vẫn sẽ tìm thấy nó trong danh sách mục nhập, được đánh dấu Đang chờ xóa.
+  confirm_deleting_published_entry: Bạn có chắc chắn muốn xóa mục này? Mục sẽ chỉ bị xóa sau khi thay đổi được xuất bản. Trước lúc đó, mục vẫn xuất hiện trong danh sách với trạng thái Đang chờ xóa.
   # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
   # request instead of committing a deletion to the configured branch. Keep the wording free of
   # Git jargon, as editors are often non-technical.
@@ -1627,13 +1627,13 @@ workflow:
   confirm_publishing_entry: Bạn có chắc chắn muốn xuất bản mục này? Những thay đổi của bạn sẽ có hiệu lực ngay lập tức.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
-  publishing_entry: Đang xuất bản mục nhập…
+  publishing_entry: Đang xuất bản mục…
   entry_published: Mục được xuất bản.
   # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
   # the deletion has completed
-  deleting_entry: Đang xóa mục nhập…
+  deleting_entry: Đang xóa mục…
   discarding_changes: Đang hủy các thay đổi…
-  entry_deleted: Đã xóa mục nhập.
+  entry_deleted: Đã xóa mục.
   # Error notification when publishing fails
   publishing_entry_failed: Không thể xuất bản mục này. Vui lòng thử lại.
   # Workflow page: empty column message
@@ -1647,7 +1647,7 @@ workflow:
 # Strings for the settings/preferences dialog and its panels.
 
 # Settings page aria-label
-categories: Thể loại
+categories: Danh mục
 
 # Site Configuration Editor
 site_configuration_editor: Trình chỉnh sửa cấu hình trang web
@@ -1710,7 +1710,7 @@ prefs:
       field_label: 'Khóa {$service}'
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: Đăng ký <a {$homeHref}>{$service}</a> và nhập <a {$apiKeyHref}>your API Key</a> tại đây để cho phép dịch nhanh các trường nhập văn bản.
+      description: Đăng ký <a {$homeHref}>{$service}</a> và nhập <a {$apiKeyHref}>khóa API</a> tại đây để dịch nhanh các trường văn bản.
 
   # Media panel
   media:
@@ -1755,7 +1755,7 @@ prefs:
       switch_label: Bật tính năng thử nghiệm
     developer_mode:
       title: Chế độ nhà phát triển
-      description: Bật các tính năng dành cho nhà phát triển, bao gồm chi tiết có trong console log và menu chuột phải mặc định.
+      description: Bật các tính năng dành cho nhà phát triển, bao gồm thông tin chi tiết trong nhật ký bảng điều khiển và trình đơn chuột phải mặc định.
       switch_label: Bật chế độ nhà phát triển
     deploy_hook:
       title: Webhook triển khai
