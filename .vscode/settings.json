@@ -1,4 +1,5 @@
 {
+  "npm.exclude": "**/.claude/**",
   "editor.codeActionsOnSave": {
     // We cannot use `source.organizeImports` because it conflicts with ESLint’s import sorting
     "source.formatDocument": "explicit",
