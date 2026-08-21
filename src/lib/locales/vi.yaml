@@ -162,7 +162,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'Ứng dụng {$name} yêu cầu {$name} phiên bản {$version} trở lên.'
+backend_unsupported_version: 'Dịch vụ {$name} yêu cầu {$name} phiên bản {$version} trở lên.'
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Bạn không có quyền truy cập vào kho mã nguồn “{$repo}”.
 repository_not_found: Kho mã nguồn “{$repo}” không tồn tại.
@@ -222,7 +222,7 @@ install_as_app: Cài đặt dưới dạng ứng dụng
 # Main page titles in the global navigation and page switcher button group
 contents: Nội dung
 assets: Thư viện
-editorial_workflow: Luồng biên tập # TODO: not nature
+editorial_workflow: Quy trình biên tập
 cms_config: Cấu hình CMS
 # Mobile menu page title (shown only on small screens)
 menu: Trình đơn
@@ -292,7 +292,7 @@ version_x: 'Phiên bản {$version}'
 report_issue: Báo cáo vấn đề
 share_feedback: Chia sẻ phản hồi
 get_help: Nhận trợ giúp
-donate: Quyên tặng # TODO: not nature
+donate: Ủng hộ
 join_discord: Tham gia với chúng tôi trên Discord
 bluesky: Theo dõi chúng tôi trên Bluesky
 
@@ -305,7 +305,7 @@ update_now: Cập nhật ngay
 # {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
 backend_status:
   minor_incident: '{$service} đang gặp một sự cố nhỏ. Quy trình làm việc của bạn có thể bị ảnh hưởng.'
-  major_incident: '{$service} đang gặp sự cố lớn. Bạn có thể muốn đợi cho đến khi tình hình được cải thiện.' #TODO: sự cố nghiêm trọng?
+  major_incident: '{$service} đang gặp sự cố nghiêm trọng. Bạn nên đợi cho đến khi sự cố được khắc phục.'
 
 # ==============================================================================
 # Content and Asset Libraries
@@ -467,7 +467,7 @@ creating_entries_disabled_by_quota: Bạn không thể thêm bài viết mới v
 creating_entries_nearing_quota: |
   .input {$remaining :integer}
   .match $remaining
-    1   {{ Chuyên mục này sắp đạt giới hạn {$quota} bài viết. Bạn chỉ có thể tạo thêm một bài viết. }} #TODO: một để {$remaining} đi giống nhau
+    1   {{ Chuyên mục này sắp đạt giới hạn {$quota} bài viết. Bạn chỉ có thể tạo thêm {$remaining} bài viết. }}
     *   {{ Chuyên mục này sắp đạt giới hạn {$quota} bài viết. Bạn chỉ có thể tạo thêm {$remaining} bài viết. }}
 
 # Navigation: back links and list labels
@@ -494,7 +494,7 @@ viewing_entry_search_results: |
   .input {$count :integer}
   .match $count
     0   {{ Không tìm thấy bài viết nào cho “{$terms}”. }}
-    1   {{ Đã tìm thấy một bài viết cho “{$terms}”. }} #TODO: thay một bằng {$count}
+    1   {{ Đã tìm thấy {$count} bài viết cho “{$terms}”. }}
     *   {{ Đã tìm thấy {$count} bài viết cho “{$terms}”. }}
 # Asset search results with counts
 # {$terms} is the search query and {$count} is the number of matching assets
@@ -502,7 +502,7 @@ viewing_asset_search_results: |
   .input {$count :integer}
   .match $count
     0   {{ Không tìm thấy tệp nào cho “{$terms}”. }}
-    1   {{ Đã tìm thấy một tệp cho “{$terms}”. }} #TODO: thay một bằng {$count}
+    1   {{ Đã tìm thấy {$count} tệp cho “{$terms}”. }}
     *   {{ Đã tìm thấy {$count} tệp cho “{$terms}”. }}
 
 # Result count labels
@@ -561,13 +561,13 @@ enter_new_name_for_asset_error:
   character: Tên tệp không được chứa ký tự đặc biệt.
   duplicate: Tên tệp này đang được một tệp khác sử dụng.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
-change_file_extension: Thay đổi phần mở rộng tệp #TODO: định dạng tệp
+change_file_extension: Thay đổi phần mở rộng
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
 confirm_file_extension_change:
-  change: Bạn có chắc chắn muốn thay đổi phần mở rộng từ “.{$oldExtension}” thành “.{$newExtension}” không?
+  change: Bạn có chắc chắn muốn đổi phần mở rộng từ “.{$oldExtension}” thành “.{$newExtension}” không?
   add: Bạn có chắc chắn muốn thêm phần mở rộng “.{$newExtension}” không?
   remove: Bạn có chắc chắn muốn xóa phần mở rộng “.{$oldExtension}” không?
-file_extension_change_warning: Tệp có thể không được hiển thị hoặc xử lý chính xác nếu phần mở rộng không khớp với định dạng tệp thực tế.
+file_extension_change_warning: Tệp có thể không được hiển thị hoặc xử lý chính xác nếu phần mở rộng không khớp với định dạng thực tế.
 
 # Replace asset: menu item and dialog title
 replace_asset: Thay thế tệp
@@ -601,7 +601,7 @@ drop_image_files_or: |
     *   {{ Thả tệp ảnh vào đây hoặc }}
 
 # File picker and clipboard actions used by upload controls
-browse: Tải lên
+browse: Duyệt tệp
 # Generic clipboard paste action used by non-image file fields
 paste: Dán
 # Clipboard paste action used by image fields
@@ -622,7 +622,7 @@ drop_files_here: |
 unsupported_file_type: Loại tệp không được hỗ trợ
 # {$type} is the expected asset type label, such as image or document
 dropped_file_type_mismatch: 'Tệp vừa thả không đúng định dạng. Các định dạng được chấp nhận: {$types}. Vui lòng thử lại.'
-dropped_image_type_mismatch: 'Tệp vừa thả không phải hình ảnh được hỗ trợ. Các định dạng hình ảnh được chấp nhận: {$types}. Vui lòng thử lại.' #TODO:  hình ảnh được hỗ trợ. not nature
+dropped_image_type_mismatch: 'Tệp vừa thả không có định dạng ảnh được hỗ trợ. Các định dạng được chấp nhận: {$types}. Vui lòng thử lại.'
 
 # File chooser button label
 # {$count} is the number of files the picker allows the user to choose
@@ -749,8 +749,8 @@ invalid_files: Tệp không hợp lệ
 warning_invalid_files: |
   .input {$count :integer}
   .match $count
-    1   {{ Không thể tải tệp lên vì tệp bị hỏng hoặc nội dung không khớp với phần mở rộng. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }} #TODO : phần mở rộng -> định dạng
-    *   {{ Không thể tải lên {$count} tệp vì tệp bị hỏng hoặc nội dung không khớp với phần mở rộng. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }}
+    1   {{ Không thể tải tệp lên vì tệp bị hỏng hoặc nội dung không khớp với định dạng tệp. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }}
+    *   {{ Không thể tải lên {$count} tệp vì tệp bị hỏng hoặc nội dung không khớp với định dạng tệp. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }}
 
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
@@ -766,7 +766,7 @@ file_name_conflict_confirmation_with_name: |
   .match $count
     1   {{ Tệp “{$name}” đã tồn tại trong thư mục này. Bạn có muốn thay thế tệp đó không? }}
     *   {{ {$count} tệp trùng tên đã tồn tại trong thư mục này. Bạn có muốn thay thế các tệp hiện có không? }}
-file_name_conflict_resolution: Giải quyết xung đột tên tệp #TODO: not nature
+file_name_conflict_resolution: Xử lý tệp trùng tên
 # Option to keep both files (rename the new one)
 keep_both: Giữ cả hai
 
@@ -811,8 +811,8 @@ entry_duplicated: Đã nhân bản bài viết thành bản nháp mới.
 entry_validation_errors: |
   .input {$count :integer}
   .match $count
-    1   {{ Một trường có lỗi. Vui lòng sửa lỗi để lưu bài viết. }} #TODO: Có 1 trường lỗi
-    *   {{ {$count} trường có lỗi. Vui lòng sửa lỗi để lưu bài viết. }} #TODO: Có 2 trường lỗi
+    1   {{ Có {$count} trường bị lỗi. Vui lòng sửa lỗi để lưu bài viết. }}
+    *   {{ Có {$count} trường bị lỗi. Vui lòng sửa lỗi để lưu bài viết. }}
 
 # ==============================================================================
 # Success Notifications
@@ -1017,9 +1017,9 @@ revert_all_changes: Hoàn tác tất cả thay đổi
 edit_slug: Chỉnh sửa tên đường dẫn
 edit_slug_warning: Đổi tên đường dẫn có thể làm hỏng các liên kết đến bài viết. Sveltia CMS không tự động cập nhật liên kết trong những bài viết khác. Bạn cần kiểm tra và cập nhật thủ công.
 edit_slug_error:
-  empty: Slug không được để trống. #TODO: tên đường dẫn
-  invalid: Slug không được chứa các ký tự đặc biệt, kể cả dấu gạch chéo và dấu cách.
-  duplicate: Slug này đang được một bài viết khác sử dụng.
+  empty: Tên đường dẫn không được để trống.
+  invalid: Tên đường dẫn không được chứa ký tự đặc biệt, kể cả dấu gạch chéo và dấu cách.
+  duplicate: Tên đường dẫn này đang được một bài viết khác sử dụng.
 
 # Required field indicator
 required: Bắt buộc
@@ -1035,18 +1035,18 @@ editor:
     complete: |
       .input {$count :integer}
       .match $count
-      0   {{ Không có trường nào được dịch từ {$source}. }}
-      1   {{ Đã dịch một trường từ {$source}. }} #TODO: một=> {$count}
-      *   {{ Đã dịch {$count} trường từ {$source}. }}
+        0   {{ Không có trường nào được dịch từ {$source}. }}
+        1   {{ Đã dịch {$count} trường từ {$source}. }}
+        *   {{ Đã dịch {$count} trường từ {$source}. }}
   copy:
     none: Không có gì để sao chép.
     # {$source} is the source language name and {$count} is the number of copied fields
     complete: |
       .input {$count :integer}
       .match $count
-      0   {{ Không có trường nào được sao chép từ {$source}. }}
-      1   {{ Đã sao chép một trường từ {$source}. }} #TODO: một=> {$count}
-      *   {{ Đã sao chép {$count} trường từ {$source}. }}
+        0   {{ Không có trường nào được sao chép từ {$source}. }}
+        1   {{ Đã sao chép {$count} trường từ {$source}. }}
+        *   {{ Đã sao chép {$count} trường từ {$source}. }}
 
 # ==============================================================================
 # Field Validation
@@ -1058,11 +1058,11 @@ validation:
   value_missing: Trường bắt buộc.
 
   # Minimum value/count not met
-  range_underflow: #TODO: check lại
+  range_underflow:
     # {$min} is the minimum allowed value, already formatted for the input type
-    datetime-local: Ngày/giờ phải ở hoặc sau {$min}.
-    date: Ngày phải vào hoặc sau {$min}.
-    time: Thời gian phải ở hoặc sau {$min}.
+    datetime-local: Ngày và giờ phải từ {$min} trở đi.
+    date: Ngày phải từ {$min} trở đi.
+    time: Giờ phải từ {$min} trở đi.
     number: Giá trị phải lớn hơn hoặc bằng {$min}.
     # {$min} is the minimum number of selected options
     select: |
@@ -1076,11 +1076,11 @@ validation:
         *   {{ Bạn phải thêm ít nhất {$min} mục. }}
 
   # Maximum value/count exceeded
-  range_overflow: #TODO: check lại
+  range_overflow:
     # {$max} is the maximum allowed value, already formatted for the input type
-    datetime-local: Ngày/giờ phải ở hoặc trước {$max}.
-    date: Ngày phải vào hoặc trước {$max}.
-    time: Thời gian phải bằng hoặc trước {$max}.
+    datetime-local: Ngày và giờ không được sau {$max}.
+    date: Ngày không được sau {$max}.
+    time: Giờ không được sau {$max}.
     number: Giá trị phải nhỏ hơn hoặc bằng {$max}.
     # {$max} is the maximum number of selected options
     select: |
@@ -1137,7 +1137,7 @@ entry_sidebar:
 
   # Backlinks panel: shows entries referencing this entry
   backlinks:
-    title: Liên kết ngược #TODO: còn từ khác k
+    title: Được liên kết từ
     no_entries: Không có bài viết nào tham chiếu bài viết này.
 
 # Entry save error dialog
@@ -1377,11 +1377,11 @@ cloud_storage:
     activate:
       button_label: Kích hoạt Cloudinary
       description: Sau khi đăng nhập, nhấp vào nút Đăng nhập lần nữa để tiếp tục.
-    auth_key_label: Bí mật API #TODO:not nature
+    auth_key_label: Khóa truy cập bí mật
     open_library: Mở Cloudinary
 
   uploadcare:
-    auth_key_label: Khóa bí mật API
+    auth_key_label: Khóa truy cập bí mật
 
   aws_s3:
     auth_key_label: Khóa truy cập bí mật
@@ -1439,7 +1439,7 @@ config:
     # {$name} is the backend name from the CMS configuration
     unsupported_known_backend: Dịch vụ {$name} <a>không được Sveltia CMS hỗ trợ</a>.
     # {$name} is the backend name from the CMS configuration
-    unsupported_deprecated_backend: Dịch vụ {$name} đã lỗi thời và <a>không được Sveltia CMS hỗ trợ</a>. #TODO: lỗi thời?
+    unsupported_deprecated_backend: Dịch vụ {$name} không còn được khuyến nghị và <a>không được Sveltia CMS hỗ trợ</a>.
     unsupported_custom_backend: Sveltia CMS <a>không hỗ trợ các dịch vụ tùy chỉnh</a>.
     unsupported_backend_suggestion: Thay vào đó, hãy sử dụng một trong các <a>dịch vụ được hỗ trợ</a>.
     missing_repository: Chưa xác định kho mã nguồn.
@@ -1461,7 +1461,7 @@ config:
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Tên nhóm tệp `{$name}` không hợp lệ. Tên không được chứa ký tự đặc biệt.
     # {$name} is the duplicate asset collection name
-    duplicate_asset_collection_name: Tên nhóm tệp phải là duy nhất nhưng `{$name}` đang được sử dụng nhiều lần. #TODO: not nature
+    duplicate_asset_collection_name: Tên `{$name}` đã được dùng cho một nhóm tệp khác. Hãy chọn tên khác.
     # Don’t localize `media_folder`
     asset_collection_invalid_media_folder: Nhóm tệp `{$name}` phải có tùy chọn `media_folder` là một chuỗi.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1484,7 +1484,7 @@ config:
     missing_view_group_name: Nhóm chế độ xem {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
     # {$name} is the invalid or duplicate view group name
     invalid_view_group_name: Tên nhóm chế độ xem `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
-    duplicate_view_group_name: Tên nhóm xem phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần. #TODO: đã tồn tại đi
+    duplicate_view_group_name: Tên nhóm chế độ xem `{$name}` đã tồn tại. Hãy chọn tên khác.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: Bộ lọc chế độ xem {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
     # {$name} is the invalid or duplicate view filter name
