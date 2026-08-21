@@ -1965,6 +1965,11 @@
  * enable proper label association and accessibility.
  * @property {string} classNameWrapper CSS class name that can be applied to the input element for
  * consistent styling with built-in widgets.
+ * @property {MapOf<ApiEntry> | undefined} entry Data of the entry being edited, wrapped in an
+ * Immutable Map. Read the entry content from `entry.getIn(['data', 'fieldName'])`. This is useful
+ * for a control that shows values derived from other fields in the same entry, such as dynamically
+ * generated select options. The prop is updated whenever any field in the entry is updated. It’s
+ * `undefined` if the control is rendered outside an entry draft.
  * @property {(value: any) => void} onChange Callback function that must be called with the new
  * value whenever the user changes the field. This updates the entry draft.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
@@ -2010,6 +2015,23 @@
  * @property {Record<string, any>} properties JSON Schema object describing the field’s
  * configuration options and validation rules.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
+ * @see https://sveltiacms.app/en/docs/api/field-types
+ */
+
+/**
+ * Field type definition returned by the `CMS.getFieldType()` API. A custom field type can reuse
+ * these components to build a new field type on top of an existing one, such as a Select field with
+ * dynamically generated options.
+ * @typedef {object} FieldTypeDefinition
+ * @property {CustomFieldControl | undefined} control React component for the edit pane. It’s
+ * `undefined` if the field type has been registered without a valid control. For a built-in field
+ * type, it accepts the same props as a custom field control, where `field` can be either an
+ * Immutable Map or a plain object, plus the optional `locale`, `keyPath`, `required`, `readonly`
+ * and `invalid` props.
+ * @property {CustomFieldPreview | undefined} preview React component for the preview pane. It’s
+ * `undefined` if the field type has been registered without a preview.
+ * @property {CustomFieldSchema} [schema] Field schema, if the field type has been registered with
+ * one. Built-in field types don’t provide a schema.
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
 

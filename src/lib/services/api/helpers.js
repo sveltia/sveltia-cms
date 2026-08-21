@@ -247,6 +247,12 @@ export const getAssociatedPreviewAssets = ({ collectionName, fileName }) => {
 
 /**
  * Build shared preview data used by both preview templates and custom field types.
+ *
+ * {@link PreviewData.fieldsMetaData} is computed only when it’s read, and the result is kept for
+ * subsequent reads. Building it walks every value in the entry and scans the referenced collection
+ * for each Relation field value, while a custom field control only needs
+ * {@link PreviewData.entryMap}. Given that the data is rebuilt whenever the draft is updated, doing
+ * that work upfront would cost a collection scan on every keystroke.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft being previewed.
  * @param {InternalLocaleCode} args.locale Current locale.
@@ -259,6 +265,8 @@ export const buildPreviewData = ({ draft, locale }) => {
   const valueMap = entry.locales[locale].content ?? {};
   /** @type {Omit<GetFieldArgs, 'keyPath'>} */
   const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
+  /** @type {MapOf<any> | undefined} */
+  let fieldsMetaData;
 
   return {
     entryMap: convertEntryToMap({
@@ -270,7 +278,12 @@ export const buildPreviewData = ({ draft, locale }) => {
     }),
     valueMap,
     getFieldArgs,
-    fieldsMetaData: getMetaData({ locale, getFieldArgs }),
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    get fieldsMetaData() {
+      fieldsMetaData ??= getMetaData({ locale, getFieldArgs });
+
+      return fieldsMetaData;
+    },
     getAsset: createGetAsset({ entry, collectionName, fileName }),
   };
 };

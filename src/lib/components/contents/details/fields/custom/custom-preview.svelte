@@ -9,6 +9,7 @@
   import { createRoot } from 'react-dom/client';
   import { onMount } from 'svelte';
 
+  import { fieldStateContext } from '$lib/services/api/field-state';
   import { entryDraft } from '$lib/services/contents/draft';
   import { buildPreviewProps } from '$lib/services/contents/fields/custom/preview';
 
@@ -29,6 +30,7 @@
   let {
     /* eslint-disable prefer-const */
     locale,
+    keyPath,
     fieldConfig,
     currentValue,
     preview,
@@ -58,7 +60,16 @@
 
     if (props) {
       reactRoot ??= createRoot(container);
-      reactRoot.render(createElement(preview, props));
+
+      // Provide the state of this field to any built-in field preview reused within the custom
+      // preview, which is typically given an ad hoc field configuration that doesn’t describe it
+      reactRoot.render(
+        createElement(
+          fieldStateContext.Provider,
+          { value: { locale, keyPath } },
+          createElement(preview, props),
+        ),
+      );
     }
   };
 

@@ -37,6 +37,7 @@
   import { createRoot } from 'react-dom/client';
   import { getContext, onMount } from 'svelte';
 
+  import { fieldStateContext } from '$lib/services/api/field-state';
   import { entryDraft } from '$lib/services/contents/draft';
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
   import {
@@ -70,6 +71,8 @@
     keyPath,
     fieldConfig,
     currentValue,
+    required = true,
+    readonly = false,
     invalid = false,
     control,
     /* eslint-enable prefer-const */
@@ -128,11 +131,24 @@
       fieldClassName: getInputClassName(),
       fieldConfig,
       currentValue,
+      // Reading the draft here makes the `$effect` below rerender the component whenever any field
+      // in the entry is updated, so that a control showing values derived from other fields, such
+      // as dynamically generated select options, stays up to date
+      draft: $entryDraft,
+      locale,
       onChange: handleChange,
       handleRef,
     });
 
-    reactRoot.render(createElement(resolvedControl, props));
+    // Provide the state of this field to any built-in field control reused within the custom
+    // control, which is typically given an ad hoc field configuration that doesn’t describe it
+    reactRoot.render(
+      createElement(
+        fieldStateContext.Provider,
+        { value: { locale, keyPath, required, readonly, invalid } },
+        createElement(resolvedControl, props),
+      ),
+    );
     container?.querySelector('input')?.setAttribute('aria-invalid', String(invalid));
   };
 

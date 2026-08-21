@@ -4,6 +4,7 @@ import { mount } from 'svelte';
 import App from '$lib/components/app.svelte';
 import { COMPATIBILITY_URL, UNSUPPORTED_FUNC_NAMES } from '$lib/services/api/compatibility';
 import { SUPPORTED_EVENT_TYPES } from '$lib/services/api/events';
+import { getFieldTypeDefinition } from '$lib/services/api/field-types';
 import {
   customComponentRegistry,
   customFieldTypeRegistry,
@@ -24,6 +25,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * CustomFieldSchema,
  * CustomPreviewTemplate,
  * EditorComponentDefinition,
+ * FieldTypeDefinition,
  * FileFormatter,
  * FileParser,
  * } from '../../types/public';
@@ -66,6 +68,25 @@ const init = async ({ config } = {}) => {
     target: document.querySelector('#nc-root') ?? document.body,
     props: { config },
   });
+};
+
+/**
+ * Get the definition of a field type (widget), so that a custom field type can reuse the control
+ * and/or preview component of another field type. The components are React components; for a
+ * built-in field type, they render the built-in Svelte components internally. Only the built-in
+ * field types that work outside the entry editor can be reused.
+ * @param {string} name Field type name.
+ * @returns {FieldTypeDefinition | undefined} Field type definition, or `undefined` if the field
+ * type is not registered or cannot be reused.
+ * @throws {TypeError} If `name` is not a string.
+ * @see https://sveltiacms.app/en/docs/api/field-types
+ */
+const getFieldType = (name) => {
+  if (!isNonEmptyString(name)) {
+    throw new TypeError('The `name` option for `CMS.getFieldType()` must be a non-empty string');
+  }
+
+  return getFieldTypeDefinition(name);
 };
 
 /**
@@ -298,6 +319,8 @@ const registerFieldType = (name, control, preview, schema) => {
  */
 const CMS = new Proxy(
   {
+    getFieldType,
+    getWidget: getFieldType, // alias for backward compatibility with Netlify/Decap CMS
     init,
     registerCustomFormat,
     registerEditorComponent,
@@ -341,6 +364,8 @@ export default CMS;
 // Export all the functions at once instead of `export const init`, etc. to prevent annotations from
 // being stripped in the generated `index.d.ts` file
 export {
+  getFieldType,
+  getFieldType as getWidget, // alias for backward compatibility with Netlify/Decap CMS
   init,
   registerCustomFormat,
   registerEditorComponent,

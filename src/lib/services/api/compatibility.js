@@ -24,7 +24,6 @@ export const UNSUPPORTED_FUNC_NAMES = [
   'getPreviewStyles',
   'getPreviewTemplate',
   'getRemarkPlugins',
-  'getWidget',
   'getWidgetValueSerializer',
   'getWidgets',
   'invokeEvent',
@@ -37,4 +36,6 @@ export const UNSUPPORTED_FUNC_NAMES = [
   // Documented but not planned for implementation
   'registerLocale', // https://decapcms.org/docs/configuration-options/#locale
   'registerRemarkPlugin', // https://decapcms.org/docs/widgets/#Markdown
+  // Note: `getWidget` is also undocumented, but we’ve added support for it as requested
+  // https://github.com/sveltia/sveltia-cms/issues/915
 ];

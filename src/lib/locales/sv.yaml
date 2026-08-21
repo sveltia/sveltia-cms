@@ -1,0 +1,1750 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Ny
+select: Välj
+select_all: Välj alla
+upload: Ladda upp
+copy: Kopiera
+download: Ladda ner
+duplicate: Duplicera
+delete: Radera
+reorder: Ändra ordning
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Avbryt
+done: Klar
+save: Spara
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Sparar…
+
+# Publishing actions: used when committing changes to the repository
+publish: Publicera
+# Progress indicator shown on the publish button during publishing
+publishing: Publicerar…
+
+# Modification actions: editing and updating content
+rename: Byt namn
+update: Uppdatera
+replace: Ersätt
+
+# List and collection actions: adding and removing items
+add: Lägg till
+remove: Ta bort
+clear: Rensa
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Expandera
+expand_all: Expandera alla
+collapse: Fäll ihop
+collapse_all: Fäll ihop alla
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Infoga
+restore: Återställ
+discard: Kassera
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Söker…
+no_results: Inga resultat hittades.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Global
+primary: Primär
+secondary: Sekundär
+collection: Samling
+folder: Mapp
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: API-nyckel
+details: Detaljer
+back: Tillbaka
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Laddar…
+# Dismiss button for temporary notifications and infobars
+later: Senare
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Slug
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Singel
+singletons: Singlar
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Kunde inte kopiera till urklipp.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: 'Välkommen till {$name}'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: 'Drivs av {$name}'
+
+# Shown during initial configuration and data loading
+loading_cms_config: Laddar CMS-konfiguration…
+loading_site_data: Laddar siddata…
+loading_site_data_error: Det uppstod ett fel när siddata lästes in.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: 'Logga in med {$service}'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Logga in med en Access Token
+sign_in_using_access_token_description: Ange din token nedan. Den måste ha läs-/skrivåtkomst till repots innehåll.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: Du kan generera en token på <a>{$service} användarinställningssidan</a>.
+# Input field label for personal access token
+personal_access_token: Personal Access Token
+
+# Authentication progress indicators
+authorizing: Auktoriserar…
+signing_in: Loggar in…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Arbeta med lokalt repository
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: När du uppmanas att göra det, välj rotkatalogen för repot "{$repo}".
+work_with_local_repo_description_no_repo: När du uppmanas att göra det, välj rotkatalogen för ditt Git-repo.
+# Button label for demo/test repository
+work_with_test_repo: Arbeta med test-repo
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: Den valda mappen är inte en rotkatalog för Git-repot. Försök igen.
+  picker_dismissed: En rotkatalog för Git-repot kunde inte väljas. Försök igen.
+  authentication_aborted: Autentiseringen avbröts. Försök igen.
+  invalid_token: Den angivna token är ogiltig. Kontrollera och försök igen.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Din Git-backend stöds inte av autentiseraren.
+  UNSUPPORTED_DOMAIN: Din domän har inte tillåtelse att använda autentiseraren.
+  MISCONFIGURED_CLIENT: OAuth-appens klient-ID eller hemlighet är inte konfigurerad.
+  AUTH_CODE_REQUEST_FAILED: Det gick inte att ta emot en auktoriseringskod. Försök igen senare.
+  CSRF_DETECTED: Potentiell CSRF-attack upptäckt. Autentiseringsflödet avbröts.
+  TOKEN_REQUEST_FAILED: Misslyckades med att begära en åtkomsttoken. Försök igen senare.
+  TOKEN_REFRESH_FAILED: Misslyckades med att uppdatera åtkomsttoken. Försök igen senare.
+  MALFORMED_RESPONSE: Servern svarade med felaktigt formaterad data. Försök igen senare.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: '{$name}-backend kräver {$name} {$version} eller senare.'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: Du har inte åtkomst till Git-repot “{$repo}”.
+repository_not_found: Git-repot “{$repo}” existerar inte.
+repository_empty: Git-repot “{$repo}” har inga branches.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: Git-repot “{$repo}” har inte “{$branch}” branchen.
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Oväntat fel
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Det uppstod ett fel när en postfil analyserades. Kontrollera webbläsarkonsolen för mer information. }}
+    * {{ Det uppstod fel när postfiler analyserades. Kontrollera webbläsarkonsolen för mer information. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Användarnamn
+password: Lösenord
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Logga in
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Logga in med mobiltelefon
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Scanna QR-koden nedan med din telefon eller surfplatta för att logga in utan lösenord. Dina inställningar kommer överföras automatiskt.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'Inloggad som {$name}'
+working_with_local_repo: Arbetar med lokalt Git-repo
+working_with_test_repo: Arbetar med test-repo
+
+# Account menu: action items for sign-out and app installation
+sign_out: Logga ut
+install_as_app: Installera som app
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Innehåll
+assets: Resurser
+editorial_workflow: Redaktionellt arbetsflöde
+cms_config: CMS-konfiguration
+# Mobile menu page title (shown only on small screens)
+menu: Meny
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS är nu tillgängligt på mobilen!
+mobile_promo_button: Pröva
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS är nu tillgängligt på {$locale}!
+change_language: Ändra språk
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Besök webbplatsen
+# Page switcher button group aria-label for switching between main sections
+switch_page: Byt sida
+
+# Search input placeholders
+search_placeholder_contents: Sök efter innehåll…
+search_placeholder_assets: Sök efter resurser…
+search_placeholder_all: Sök efter innehåll och resurser…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Skapa post eller resurser
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Publicera ändringar
+publishing_changes: Publicerar ändringar…
+# Error notification when publishing fails
+publishing_changes_failed: Det gick inte att publicera ändringarna. Försök igen.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Visa aviseringar
+notifications: Aviseringar
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Visa användarkontomeny
+# Account section heading in the account menu and mobile menu page
+account: Användarkonto
+
+# Account menu items: links to external resources
+live_site: Webbplats
+git_repository: Git-repo
+settings: Inställningar
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Visa hjälpmeny
+# Help section heading in dropdowns and mobile menu
+help: Hjälp
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Tangentbordsgenvägar
+documentation: Dokumentation
+release_notes: Versionsinformation
+announcements: Meddelanden
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: 'Version {$version}'
+# Additional help menu items
+report_issue: Rapportera problem
+share_feedback: Dela feedback
+get_help: Få hjälp
+donate: Donera
+join_discord: Gå med oss på Discord
+bluesky: Följ oss på Bluesky
+
+# Update notification: infobar message and button
+update_available: Den senaste versionen av Sveltia CMS är tillgänglig.
+update_now: Uppdatera nu
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service} upplever en mindre incident. Ditt arbetsflöde kan påverkas.'
+  major_incident: '{$service} upplever en större incident. Du kanske vill vänta tills situationen har förbättrats.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Innehållsbibliotek
+asset_library: Resursbibliotek
+
+# Primary sidebar section headings and list aria-labels
+collections: Samlingar
+entries: Poster
+files: Filer
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Din webbplats
+  external: Externa platser
+  stock_photos: Stockfoton
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Samlingsresurser
+# List aria-labels for different list types
+entry_list: Lista över poster
+file_list: Fillista
+asset_list: Lista över resurser
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: “{$collection}” samling
+# {$folder} is the current asset folder label
+x_asset_folder: “{$folder}” resursmapp
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Du visar nu samlingslistan.
+viewing_asset_folder_list: Du visar nu listan över resursmappar.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0 {{ Du visar nu samlingen “{$collection}”, som ännu inte har några poster. }}
+    one {{ Du visar nu samlingen “{$collection}”, som har en post. }}
+    * {{ Du visar nu samlingen “{$collection}”, som har {$count} poster. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0 {{ Du visar nu resursmappen “{$folder}”, som ännu inte har några resurser. }}
+    one {{ Du visar nu resursmappen “{$folder}”, som har en resurs. }}
+    * {{ Du visar nu resursmappen “{$folder}”, som har {$count} resurser. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: Tryck Enter för att redigera filen “{$file}”.
+
+# Error messages: collection or file not found
+collection_not_found: Samlingen hittades inte.
+file_not_found: Filen hittades inte.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} av {$total} valda'
+
+# View switcher: toggle between list and grid views
+switch_view: Växla vy
+list_view: Listvy
+grid_view: Rutnätsvy
+switch_to_list_view: Växla till listvy
+switch_to_grid_view: Växla till rutnätsvy
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Sortera
+sorting_options: Sorteringsalternativ
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Ingen
+  name: Namn
+  slug: Slug
+  # Sort by the last commit’s author name
+  commit_author: Uppdaterad av
+  # Sort by the last commit date
+  commit_date: Uppdaterad den
+  # Sort by the entry’s computed summary text
+  _summary: Sammanfattning
+  # Manual order defined by the user via drag-and-drop
+  _manual: Manuellt
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, A till Ö'
+ascending_date: '{$label}, gammalt till nytt'
+descending: '{$label}, Ö till A'
+descending_date: '{$label}, nytt till gammalt'
+
+# Filter menu: button labels and options
+filter: Filter
+filtering_options: Filtreringsalternativ
+
+# Group menu: button labels and options
+group: Grupp
+grouping_options: Grupperingsalternativ
+
+# Asset type filter and group labels
+type: Typ
+all: Alla
+# Asset type labels
+image: Bild
+video: Video
+audio: Ljud
+document: Dokument
+other: Annat
+
+# Toolbar toggles: show/hide panels
+show_assets: Visa resurser
+hide_assets: Dölj resurser
+show_info: Visa information
+hide_info: Dölj information
+
+# Folder display labels when no specific path is configured
+all_assets: Alla resurser
+global_assets: Globala resurser
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Error message when entry cannot be found
+entry_not_found: Posten hittades inte.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Skapande av nya poster är inaktiverat av administratören.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: Du kan inte lägga till nya poster i denna samling eftersom den har nått sin gräns på {$quota} poster.
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    one {{ Denna samling närmar sig sin gräns på {$quota} poster. Du kan bara skapa {$remaining} fler post. }}
+    *   {{ Denna samling närmar sig sin gräns på {$quota} poster. Du kan bara skapa {$remaining} fler poster. }}
+
+# Navigation: back links and list labels
+back_to_collection: Tillbaka till samling
+collection_list: Samlingslista
+back_to_collection_list: Tillbaka till samlingslista
+asset_folder_list: Resursmapplista
+back_to_asset_folder_list: Tillbaka till resursmapplista
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Sökresultat
+# {$terms} is the current search query text
+search_results_for_x: Sökresultat för “{$terms}”
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Du tittar nu på sökresultat för “{$terms}”. Vi kunde inte hitta några poster. }}
+    one {{ Du tittar nu på sökresultat för “{$terms}”. Vi har hittat en post. }}
+    *   {{ Du tittar nu på sökresultat för “{$terms}”. Vi har hittat {$count} poster. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Du tittar nu på sökresultat för “{$terms}”. Vi kunde inte hitta några resurser. }}
+    one {{ Du tittar nu på sökresultat för “{$terms}”. Vi har hittat en resurs. }}
+    *   {{ Du tittar nu på sökresultat för “{$terms}”. Vi har hittat {$count} resurser. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Inga poster }}
+    one {{ {$count} post }}
+    *   {{ {$count} poster }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Inga resurser }}
+    one {{ {$count} resurs }}
+    *   {{ {$count} resurser }}
+
+# Empty state messages
+no_files_found: Inga filer hittades.
+no_entries_found: Inga poster hittades.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Ladda upp resurser
+
+# Edit options menu: button and item labels
+edit_options: Redigera alternativ
+show_edit_options: Visa redigeringsalternativ
+# Edit menu items with specific asset names
+edit_asset: Redigera resurs
+# {$name} is the selected asset name
+edit_x: 'Redigera {$name}'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Radbryt långa rader
+
+# Rename asset: dialog and validation
+rename_asset: Byt namn på resurs
+# {$name} is the current asset name
+rename_x: 'Byt namn på {$name}'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Ange ett nytt namn nedan. }}
+    one {{ Ange ett nytt namn nedan. En post som använder resursen kommer också att uppdateras. }}
+    *   {{ Ange ett nytt namn nedan. {$count} poster som använder resursen kommer också att uppdateras. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: Filnamnet får inte vara tomt.
+  character: Filnamnet får inte innehålla specialtecken.
+  duplicate: Detta filnamn används för en annan resurs.
+
+# Replace asset: menu item and dialog title
+replace_asset: Byt ut resurs
+# {$name} is the asset being replaced
+replace_x: 'Byt ut {$name}'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Klicka för att bläddra…
+# Browse prompt shown on touch devices
+tap_to_browse: Tryck för att bläddra…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Släpp en fil här eller klicka för att bläddra… }}
+    *   {{ Släpp filer här eller klicka för att bläddra… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Släpp en fil här eller }}
+    *   {{ Släpp filer här eller }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Släpp en bild här eller }}
+    *   {{ Släpp bilder här eller }}
+
+# File picker and clipboard actions used by upload controls
+browse: Bläddra
+# Generic clipboard paste action used by non-image file fields
+paste: Klistra in
+# Clipboard paste action used by image fields
+paste_image: Klistra in bild
+
+# Clipboard paste errors
+no_image_in_clipboard: Ingen bild hittades i urklipp.
+clipboard_access_denied: Åtkomst till urklipp nekad.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Släpp en fil här }}
+    *   {{ Släpp filer här }}
+
+# File type validation errors
+unsupported_file_type: Filtyp stöds inte
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Den släppta filen är inte en av följande typer: {$types}. Försök igen.'
+dropped_image_type_mismatch: 'Den släppta filen stöds inte. Endast en bild av följande typer accepteras: {$types}. Försök igen.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Välj fil }}
+    *   {{ Välj filer }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Radera resurs }}
+    *   {{ Radera resurser }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Radera markerad resurs }}
+    *   {{ Radera markerade resurser }}
+confirm_deleting_this_asset: Är du säker på att du vill radera denna resurs?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Är du säker på att du vill radera den markerade resursen? }}
+    *   {{ Är du säker på att du vill radera de markerade {$count} resurserna? }}
+confirm_deleting_all_assets: Är du säker på att du vill radera alla resurser?
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Radera post }}
+    *   {{ Radera poster }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Radera markerad post }}
+    *   {{ Radera markerade poster }}
+confirm_deleting_this_entry: Är du säker på att du vill radera denna post?
+confirm_deleting_this_entry_with_assets: Är du säker på att du vill radera denna post och tillhörande resurser?
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Är du säker på att du vill radera den markerade posten? }}
+    *   {{ Är du säker på att du vill radera de {$count} markerade posterna? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Är du säker på att du vill radera den markerade posten och tillhörande resurser? }}
+    *   {{ Är du säker på att du vill radera de {$count} markerade posterna och tillhörande resurser? }}
+confirm_deleting_all_entries: Är du säker på att du vill radera alla poster?
+confirm_deleting_all_entries_with_assets: Är du säker på att du vill radera alla poster och tillhörande resurser?
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Sortera poster
+done_reordering_entries: Klar med att sortera poster
+cancel_reordering_entries: Avbryt sortering av poster
+
+# Reorder error message
+saving_reorder_failed: Misslyckades med att spara den nya sorteringsordningen. Försök igen.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bearbetar en fil. Detta kan ta en stund. }}
+    *   {{ Bearbetar filer. Detta kan ta en stund. }}
+
+# Uploading section aria-label
+uploading_files: Laddar upp filer
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '“{$name}” kommer att ersättas med denna fil:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denna fil kommer att sparas i mappen “{$folder}”: }}
+    *   {{ Dessa {$count} filer kommer att sparas i mappen “{$folder}”: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Stora filer
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denna fil kan inte laddas upp eftersom den överskrider den maximala storleken på {$size}. Minska storleken eller välj en annan fil. }}
+    *   {{ Dessa filer kan inte laddas upp eftersom de överskrider den maximala storleken på {$size}. Minska storlekarna eller välj andra filer. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ En fil med samma namn finns redan i denna mapp. Vill du ersätta den? }}
+    *   {{ {$count} filer med samma namn finns redan i denna mapp. Vill du ersätta dem? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ En fil med namnet “{$name}” finns redan i denna mapp. Vill du ersätta den? }}
+    *   {{ {$count} filer med samma namn finns redan i denna mapp. Vill du ersätta dem? }}
+file_name_conflict_resolution: Filnamnskonfliktlösning
+# Option to keep both files (rename the new one)
+keep_both: Behåll båda
+
+# Upload progress and error messages
+uploading_files_progress: Laddar upp…
+uploading_files_failed: Uppladdning misslyckades.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (konverterad från {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Den här samlingen har inga poster ännu.
+# Button to create first entry
+create_new_entry: Skapa ny post
+# “Entry” option label in the create button menu
+entry: Post
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Indexfil
+
+# Empty state for file collections
+no_files_in_collection: Inga filer tillgängliga i denna samling.
+
+# Entry duplication
+duplicate_entry: Duplicera post
+entry_duplicated: Post duplicerad som ett nytt utkast.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ett fält har ett fel. Rätta det för att spara posten. }}
+    *   {{ {$count} fält har fel. Rätta dem för att spara posten. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Post sparad. }}
+    *   {{ {$count} poster sparade. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Post sparad och publicerad. }}
+    *   {{ {$count} poster sparade och publicerade. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Post raderad. }}
+    *   {{ {$count} poster raderade. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Resurs sparad. }}
+    *   {{ {$count} resurser sparade. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Resurs sparad och publicerad. }}
+    *   {{ {$count} resurser sparade och publicerade. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ URL kopierad till urklipp. }}
+    *   {{ {$count} URL:er kopierade till urklipp. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Filväg kopierad till urklipp. }}
+    *   {{ {$count} filvägar kopierade till urklipp. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Filinnehåll kopierad till urklipp. }}
+    *   {{ {$count} filers innehåll kopierat till urklipp. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ Resurs nedladdad. }}
+    *   {{ {$count} resurser nedladdade. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Resurs flyttad. }}
+    *   {{ {$count} resurser flyttade. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Resurs namnändrad. }}
+    *   {{ {$count} resurser namnändrade. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Resurs raderad. }}
+    *   {{ {$count} resurser raderade. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Innehållsredigerare
+
+# Draft backup: restore dialog
+restore_backup_title: Återställ utkast
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Denna post har en säkerhetskopia från {$datetime}. Vill du återställa det redigerade utkastet?
+
+# Draft backup notifications
+draft_backup_saved: Utkast säkerhetskopierat.
+draft_backup_restored: Utkast återställt.
+draft_backup_deleted: Utkast raderat.
+
+# Editor toolbar actions
+cancel_editing: Avbryt redigering
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: Skapar {$name}
+# {$collection} is the collection label
+create_entry_announcement: Du skapar nu en ny post i “{$collection}”-samlingen.
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: Du redigerar nu posten “{$entry}” i “{$collection}”-samlingen.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: Du redigerar nu filen “{$file}” i “{$collection}”-samlingen.
+# {$file} is the singleton file name
+edit_singleton_announcement: Du redigerar nu filen “{$file}”.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Spara och publicera
+save_without_publishing: Spara utan att publicera
+
+# Editor options menu
+show_editor_options: Visa redigeringsalternativ
+editor_options: Redigeringsalternativ
+
+# Preview controls
+show_preview: Visa förhandsgranskning
+
+# Editor settings
+sync_scrolling: Synkronisera scrollning
+
+# Locale controls
+switch_locale: Byt språk
+# Short status indicators appended to locale names
+locale_content_disabled_short: (inaktiverad)
+locale_content_error_short: (fel)
+
+# Pane labels
+edit: Redigera
+preview: Förhandsgranska
+
+# Pane controls; not to be confused with pages
+swap_panes: Byt paneler
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Redigera {$locale}-innehåll
+preview_x_locale: Förhandsgranska {$locale}-innehåll
+
+# Preview iframe labels
+content_preview: Förhandsgranskning av innehåll
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Visa {$locale}-innehållsalternativ
+content_options_x_locale: '{$locale}-innehållsalternativ'
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: Fält “{$field}”
+
+# Field options menu
+show_field_options: Visa fältalternativ
+field_options: Fältalternativ
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Ej stöd för fälttyp: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: 'Aktivera {$locale}'
+reenable_x_locale: 'Återaktivera {$locale}'
+disable_x_locale: 'Inaktivera {$locale}'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: '{$locale}-innehållet har inaktiverats.'
+locale_x_now_disabled: '{$locale}-innehållet är nu inaktiverat. Det kommer att raderas när du sparar posten.'
+
+# Repository and site links
+view_in_repository: Visa i arkivet
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: 'Visa på {$service}'
+view_on_live_site: Visa på live-sidan
+
+# Content copying from other locales
+copy_from: Kopiera från…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: 'Kopiera från {$locale}'
+
+# Translation features
+translation_options: Översättningsalternativ
+translate: Översätt
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Översätt fält }}
+    *   {{ Översätt fält }}
+translate_from: Översätt från…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: 'Översätt från {$locale}'
+
+# Revert changes
+revert_changes: Återställ ändringar
+revert_all_changes: Återställ alla ändringar
+
+# Slug editing
+edit_slug: Redigera slug
+edit_slug_warning: 'Att ändra sluggen kan bryta interna och externa länkar till posten. För närvarande uppdaterar Sveltia CMS inte referenser skapade med Relationsfält, så du måste manuellt uppdatera sådana referenser tillsammans med andra länkar.'
+edit_slug_error:
+  empty: Sluggen får inte vara tom.
+  invalid: Sluggen får inte innehålla specialtecken, inklusive snedstreck och mellanslag.
+  duplicate: Denna slug används för en annan post.
+
+# Required field indicator
+required: Obligatoriskt
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Ingenting att översätta.
+    started: Översätter…
+    error: Översättning misslyckades.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Inga fält översatta från {$source}. }}
+        one {{ Fält översatt från {$source}. }}
+        *   {{ {$count} fält översatta från {$source}. }}
+  copy:
+    none: Ingenting att kopiera.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Inga fält kopierade från {$source}. }}
+        one {{ Fält kopierat från {$source}. }}
+        *   {{ {$count} fält kopierade från {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Detta fält är obligatoriskt.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: Datum/tid måste vara {$min} eller senare.
+    date: Datumet måste vara {$min} eller senare.
+    time: Tiden måste vara {$min} eller senare.
+    number: Värdet måste vara större än eller lika med {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ Du måste välja minst {$min} alternativ. }}
+        *   {{ Du måste välja minst {$min} alternativ. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ Du måste lägga till minst {$min} objekt. }}
+        *   {{ Du måste lägga till minst {$min} objekt. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: Datum/tid måste vara {$max} eller tidigare.
+    date: Datumet måste vara {$max} eller tidigare.
+    time: Tiden måste vara {$max} eller tidigare.
+    number: Värdet måste vara mindre än eller lika med {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ Du kan inte välja fler än {$max} alternativ. }}
+        *   {{ Du kan inte välja fler än {$max} alternativ. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ Du kan inte lägga till fler än {$max} objekt. }}
+        *   {{ Du kan inte lägga till fler än {$max} objekt. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ Du måste ange minst {$min} tecken. }}
+      *   {{ Du måste ange minst {$min} tecken. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ Du kan inte ange fler än {$max} tecken. }}
+      *   {{ Du kan inte ange fler än {$max} tecken. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Ange ett tal.
+    email: Ange en giltig e-postadress.
+    url: Ange en giltig URL.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Sidopaneler
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Validering
+    placeholder: Valideringsresultat kommer att visas här.
+    no_errors_found: Inga fel hittades.
+
+  # History panel: shows entry commit history
+  history:
+    title: Historik
+    fetch_failed: Kunde inte ladda historik.
+    no_history: Ingen historik hittades.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Bakåtlänkar
+    no_entries: Inga poster refererar till denna post.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Fel
+    description: Ett fel uppstod vid sparande av posten. Försök igen senare.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: Du tittar nu på detaljerna för resursen “{$name}”.
+
+# Asset editor container aria-label
+asset_editor: Resursredigerare
+
+# Preview unavailable message
+preview_unavailable: Förhandsvisning ej tillgänglig.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ Publik URL }}
+    *   {{ Publika URL:er }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Filväg }}
+    *   {{ Filvägar }}
+file_data: Filinformation
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Resursinformation
+select_asset_show_info: Välj en resurs för att visa dess information.
+
+kind: Typ
+size: Storlek
+dimensions: Dimensioner
+duration: Varaktighet
+# Short heading for a list of entries using the selected asset
+used_in: Används i
+created_date: Skapad
+location: Plats
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Karta som visar latitud {$latitude}, longitud {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Ta bort detta objekt
+move_up: Flytta upp
+move_down: Flytta ner
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: Lägg till {$name}
+
+# List item context menu
+add_item_above: Lägg till objekt ovanför
+add_item_below: Lägg till objekt nedanför
+
+# Variable-type list selector
+select_list_type: Välj listtyp
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Opacitet
+
+# Select field: empty option placeholder
+unselected_option: (Ingen)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Välj fil
+    image: Välj bild
+
+  # Search input labels
+  search_for_file: Sök efter filer
+  search_for_image: Sök efter bilder
+
+  # Locations panel aria-label
+  locations: Platser
+
+  # Asset folder options
+  folder:
+    field: Fältresurser
+    entry: Postresurser
+    file: Filresurser
+    collection: Samlingsresurser
+    global: Globala resurser
+
+  # Error messages
+  error:
+    invalid_key: Din API-nyckel är ogiltig eller har gått ut. Kontrollera och försök igen.
+    search_fetch_failed: Ett fel uppstod vid sökning efter resurser. Försök igen senare.
+    image_fetch_failed: Ett fel uppstod vid nedladdning av den valda resursen. Försök igen senare.
+
+  # Stock photo panels
+  available_images: Tillgängliga bilder
+
+  # URL entry option
+  enter_url: Ange URL
+  enter_file_url: 'Ange URL för filen:'
+  enter_image_url: 'Ange URL för bilden:'
+
+  # Large file warning dialog
+  large_file:
+    title: Stor fil
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Fotokälla
+    description: 'Använd följande källa om möjligt:'
+
+  # Unsaved asset badge
+  unsaved: Ej sparad
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Inga tecken angivna. Min: {$min}. Max: {$max}. }}
+      one {{ {$count} tecken angivna. Min: {$min}. Max: {$max}. }}
+      *   {{ {$count} tecken angivna. Min: {$min}. Max: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Inga tecken angivna. Min: {$min}. }}
+      one {{ {$count} tecken angivna. Min: {$min}. }}
+      *   {{ {$count} tecken angivna. Min: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Inga tecken angivna. Max: {$max}. }}
+      one {{ {$count} tecken angivna. Max: {$max}. }}
+      *   {{ {$count} tecken angivna. Max: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: YouTube video player
+
+# Date/time field: quick action buttons
+today: Idag
+now: Nu
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Bild
+  src: Källa
+  alt: Alt-text
+  title: Titel
+  link: Länk
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Nyckel
+  value: Värde
+  action: Åtgärd
+  empty_key: Nyckel krävs.
+  duplicate_key: Nyckeln måste vara unik.
+
+# Map field: location search and geolocation
+find_place: Hitta en plats
+use_your_location: Använd din plats
+
+# Geolocation error dialog
+geolocation_error_title: Geolokaliseringsfel
+geolocation_error_body: Det uppstod ett fel vid hämtning av din plats.
+geolocation_unsupported: Geolokaliserings-API stöds inte av denna webbläsare.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Ja
+  'false': Nej
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: Tjänsten är inte korrekt konfigurerad.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: API-nyckel
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: Ange din {$key} för {$service}.
+      requested: Validerar…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: Den angivna {$key} är ogiltig. Kontrollera och försök igen.
+    password:
+      # {$service} is the cloud service name
+      initial: Ange ditt lösenord för {$service}.
+      requested: Loggar in…
+      error: Användarnamn eller lösenord är felaktigt. Kontrollera och försök igen.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Cloudinary mediabibliotek
+    activate:
+      button_label: Aktivera Cloudinary
+      description: Efter inloggning, klicka på knappen "Logga in" igen för att fortsätta.
+    auth_key_label: Hemlig åtkomstnyckel
+    open_library: Öppna Cloudinary
+
+  uploadcare:
+    auth_key_label: Hemlig åtkomstnyckel
+
+  aws_s3:
+    auth_key_label: Hemlig åtkomstnyckel
+
+  cloudflare_r2:
+    auth_key_label: Hemlig åtkomstnyckel
+
+  digitalocean_spaces:
+    auth_key_label: Hemlig åtkomstnyckel
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ Det finns ett fel i CMS-konfigurationen. Lös problemet och försök igen. }}
+      *   {{ Det finns fel i CMS-konfigurationen. Lös problemen och försök igen. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: '{$collection}-samlingen'
+    file: '{$file}-filen'
+    component: '{$component}-komponenten'
+    # Don’t localize `{$field}`
+    field: '`{$field}` fältet'
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS måste köras i en säker kontext (HTTPS eller localhost) för att fungera korrekt.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ Konfigurationsfilens URL måste använda HTTPS-protokollet eller en localhost-adress. }}
+        *   {{ Konfigurationsfilens URL:er måste använda HTTPS-protokollet eller localhost-adresser. }}
+    fetch_failed: Konfigurationsfilen kunde inte hämtas.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: HTTP-svaret returnerade status {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Konfigurationsfilen kunde inte hämtas. För att förhindra att `config.yml`-filen laddas, lägg till <a>`load_config_file: false`</a> i konfigurationsobjektet som skickas till `CMS.init()`.'
+    parse_failed: Konfigurationsfilen kunde inte tolkas.
+    parse_failed_invalid_object: Konfigurationsfilen är inte ett giltigt JavaScript-objekt.
+    parse_failed_unsupported_type: Konfigurationsfilen är inte en giltig filtyp. Endast YAML, TOML och JSON stöds.
+    no_collection: Samlingar är inte definierade.
+    missing_backend: Backend är inte definierad.
+    missing_backend_name: Backend-namnet är inte definierat.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: Backenden {$name} stöds <a>inte</a> i Sveltia CMS.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Backenden {$name} är föråldrad och stöds <a>inte</a> i Sveltia CMS.
+    unsupported_custom_backend: Egna backends stöds <a>inte</a> i Sveltia CMS.
+    unsupported_backend_suggestion: Använd istället en av de <a>stödda backends</a>.
+    missing_repository: Git-repot är inte definierat.
+    invalid_repository: Det konfigurerade Git-repot är ogiltigt. Det måste vara i formatet “ägare/repo”.
+    oauth_implicit_flow: Den konfigurerade autentiseringsmetoden (implicit flow) stöds inte i Sveltia CMS. Använd en annan <a>autentiseringsmetod</a> istället.
+    github_pkce_unsupported: PKCE-auktorisering stöds ännu inte på grund av GitHubs begränsningar. Använd en annan <a>autentiseringsmetod</a> istället.
+    oauth_no_app_id: OAuth-applikations-ID är inte definierat.
+    # Don’t localize `auth_methods`
+    no_auth_methods: '`auth_methods`-alternativet måste innehålla minst en metod.'
+    missing_media_folder: Mediamappen är inte definierad.
+    invalid_media_folder: Den konfigurerade mediamappen är ogiltig. Den måste vara en sträng.
+    invalid_public_folder: Den konfigurerade publika mappen är ogiltig. Den måste vara en sträng.
+    public_folder_relative_path: Den konfigurerade publika mappen är ogiltig. Den måste vara en absolut sökväg som börjar med “/”.
+    public_folder_absolute_url: En absolut URL för det publika mapp-alternativet stöds inte i Sveltia CMS.
+    # Don’t localize `asset_collections`
+    invalid_asset_collections: '`asset_collections`-alternativet är ogiltigt. Det måste vara en array.'
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: 'Asset-samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: 'Namnet på asset-samlingen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.'
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: 'Namnen på asset-samlingar måste vara unika, men `{$name}` används mer än en gång.'
+    # Don’t localize `media_folder`
+    asset_collection_invalid_media_folder: 'Asset-samlingen `{$name}` måste ha `media_folder`-alternativet definierat som en sträng.'
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: 'Samlingen måste ha antingen `folder`-, `files`- eller `divider`-alternativet definierat.'
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: 'Samlingen kan inte ha `folder`-, `files`- och `divider`-alternativen tillsammans.'
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: 'Filändelsen `{$extension}` matchar inte formatet `{$format}`.'
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: 'Slug-mallen `{$slug}` är ogiltig eftersom den inte kan innehålla snedstreck. För att organisera poster i undermappar, använd `path`-alternativet istället för `slug`.'
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: 'Samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: 'Namnet på samlingen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.'
+    duplicate_collection_name: 'Namnen på samlingar måste vara unika, men `{$name}` används mer än en gång.'
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: 'Fil {$count} i samlingen måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: 'Filnamnet `{$name}` i samlingen är ogiltigt. Det får inte innehålla specialtecken.'
+    duplicate_collection_file_name: 'Filnamn i samlingen måste vara unika, men `{$name}` används mer än en gång.'
+    # Don’t localize `fields`
+    collection_no_fields: 'Samlingen måste ha `fields`-alternativet definierat med minst ett fält.'
+    # Don’t localize `fields`
+    collection_file_no_fields: 'Fil i samlingen måste ha `fields`-alternativet definierat med minst ett fält.'
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: 'Fil i samlingen måste ha `i18n`-alternativet definierat om `locale`-platshållaren används i `file`-sökvägen.'
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: 'Fältet {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: 'Fältnamnet `{$name}` är ogiltigt. Det får inte innehålla specialtecken. Om du vill nästla fält, <a>använd Objekt-fält istället för punktnotation</a>.'
+    duplicate_field_name: 'Fältnamn måste vara unika, men `{$name}` används mer än en gång.'
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: 'Variabeltypen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: 'Namnet på variabeltypen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.'
+    duplicate_variable_type: 'Namnen på variabeltyper måste vara unika, men `{$name}` används mer än en gång.'
+    date_field_type: 'Det föråldrade Datum-fälttypen stöds inte i Sveltia CMS. Använd DatumTid-fälttypen med `type: date`-alternativet istället.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Ogiltig tidszon: {$timeZone}. Det måste vara en giltig IANA-tidszonsidentifierare som `America/New_York` eller `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: 'Det föråldrade `{$prop}`-alternativet stöds inte i Sveltia CMS. Använd `{$newProp}`-alternativet istället.'
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: '`allow_multiple`-alternativet stöds inte i Sveltia CMS. Använd `multiple`-alternativet istället, som som standard är `false`.'
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: 'List-fältet kan inte ha `field`-, `fields`- och `types`-alternativen tillsammans.'
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: 'List-fältets variabeltyp är ogiltig. `widget`-alternativet är inställt på `{$widget}` men det måste vara `object`.'
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: 'Objekt-fältet kan inte ha `fields`- och `types`-alternativen tillsammans.'
+    # Don’t localize `fields`, and `types`
+    object_field_missing_fields: 'Objekt-fältet måste ha antingen `fields`- eller `types`-alternativet definierat.'
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: 'Den refererade `{$collection}`-samlingen är ogiltig eller inte definierad.'
+    relation_field_invalid_collection_file: 'Den refererade `{$file}`-filen är ogiltig eller inte definierad.'
+    # Don’t localize `file`
+    relation_field_missing_file_name: '`file`-alternativet måste definieras för en relation till en filsamlings.'
+    relation_field_invalid_value_field: 'Den refererade värdefältet `{$field}` är ogiltig eller inte definierad.'
+    unexpected: 'Oväntat fel'
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: 'OAuth-applikations-ID är inte definierad. Användare måste tillhandahålla en åtkomsttoken för att logga in.'
+    editorial_workflow_unsupported: 'Redaktionellt arbetsflöde stöds ännu inte i Sveltia CMS.'
+    open_authoring_unsupported: 'Öppet författarskap stöds ännu inte i Sveltia CMS.'
+    nested_collections_unsupported: 'Inbäddade samlingar stöds ännu inte i Sveltia CMS.'
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: '`{$prop}`-alternativet stöds inte i Sveltia CMS. Det kommer att ignoreras.'
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: 'Både `picker_utc` och nyare tidszonsalternativ (`input_timezone` eller `output_utc`) är inställda. De nya alternativen har företräde. Överväg att ta bort `picker_utc` från din konfiguration.'
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Se kompatibilitetsanteckningarna för detaljer: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: 'För en bättre utvecklarupplevelse kan du validera din konfigurationsfil mot JSON-schemat för Sveltia CMS. Se {$link} för detaljer.'
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Lokal
+  # Browser compatibility warnings
+  unsupported_browser: 'Lokalt arbetsflöde stöds inte i din webbläsare. Använd Chrome eller Edge istället.'
+  disabled: 'Lokalt arbetsflöde är inaktiverat i din webbläsare. <a>Så här aktiverar du det</a>.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Column headings for the Editorial Workflow feature (content review process).
+
+status:
+  drafts: Utkast
+  in_review: Granskas
+  ready: Klar
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Kategorier
+
+# Site Configuration Editor
+site_configuration_editor: Hemsideskonfigurationsredigerare
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: 'API-nyckel sparad.'
+    api_key_removed: 'API-nyckel borttagen.'
+    api_key_invalid: 'Den angivna API-nyckeln är ogiltig. Kontrollera och försök igen.'
+
+  # Preferences operation errors
+  error:
+    permission_denied: 'Åtkomst till cookie-lagring har nekats. Kontrollera dina webbläsarbehörigheter och försök igen.'
+
+  # Appearance panel
+  appearance:
+    title: Utseende
+    theme: Tema
+    select_theme: Välj tema
+
+  # Theme options
+  theme:
+    auto: Auto
+    dark: Mörkt
+    light: Ljust
+
+  # Language panel
+  language:
+    title: Språk
+    ui_language:
+      title: Användargränssnittets språk
+      select_language: Välj språk
+
+  # Contents panel
+  contents:
+    title: Innehåll
+    editor:
+      title: Redigerare
+      use_draft_backup:
+        switch_label: Säkerhetskopiera automatiskt utkast
+      close_on_save:
+        switch_label: Stäng redigeraren efter att ha sparat ett utkast
+      close_with_escape:
+        switch_label: Stäng redigeraren med Escape-tangenten
+
+  # Internationalization panel
+  i18n:
+    title: Internationalisering
+    translators:
+      default:
+        title: Standardöversättningstjänst
+        select_service: Välj tjänst
+      api_keys:
+        title: API-nycklar för översättningstjänster
+        description: Hantera API-nycklar för <a>översättningstjänster</a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: '{$service}-nyckel'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Registrera dig för <a {$homeHref}>{$service}</a> och ange <a {$apiKeyHref}>din API-nyckel</a> här för att möjliggöra snabb översättning av textinmatningsfält.
+
+  # Media panel
+  media:
+    title: Media
+    stock_photos:
+      api_keys:
+        title: API-nycklar för stockfototjänster
+        description: Hantera API-nycklar för <a>stockfototjänster</a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: '{$service}-nyckel'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Registrera dig för <a {$homeHref}>{$service} API</a> och ange <a {$apiKeyHref}>din API-nyckel</a> här för att infoga gratis stockfoton i bildinmatningsfält.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: 'Fotokälla: Bilder från <a {$homeHref}>{$service}</a>'
+      no_services: Inga <a>stockfototjänster</a> är konfigurerade.
+    cloud_storage:
+      api_keys:
+        title: API-nycklar för molnlagringstjänster
+        description: Hantera API-nycklar för <a>molnlagringstjänster</a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: '{$service}-nyckel'
+      no_services: Inga <a>molnlagringstjänster</a> är konfigurerade.
+
+  # Accessibility panel
+  accessibility:
+    title: Tillgänglighet
+    underline_links:
+      title: Understryk länkar
+      description: Visa understrykning för länkar i förhandsgranskningen av inlägg och användargränssnittets etiketter.
+      switch_label: Understryk alltid länkar
+
+  # Advanced panel
+  advanced:
+    title: Avancerat
+    beta:
+      title: Beta-funktioner
+      description: Aktivera vissa beta-funktioner som kan vara instabila eller oöversatta.
+      switch_label: Gå med i beta-programmet
+    developer_mode:
+      title: Utvecklarläge
+      description: Aktivera vissa utvecklarinriktade funktioner, inklusive detaljerade konsolloggar och inbyggda kontextmenyer.
+      switch_label: Aktivera utvecklarläge
+    deploy_hook:
+      title: Deploy Hook
+      description: Ange en webhook-URL som ska anropas när du manuellt utlöser en distribution genom att välja Publicera ändringar. Detta kan lämnas tomt om du använder GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: Hook-URL
+        saved: Hook-URL sparad.
+        removed: Hook-URL borttagen.
+      # Authorization header input
+      auth:
+        field_label: Auktoriseringshuvud (t.ex. Bearer <token>) (valfritt)
+        saved: Auktoriseringshuvud sparat.
+        removed: Auktoriseringshuvud borttaget.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: Visa innehållsbibliotek
+  view_asset_library: Visa resursbibliotek
+  search: Sök efter inlägg och resurser
+  create_entry: Skapa ett nytt inlägg
+  save_entry: Spara ett inlägg
+  cancel_editing: Avbryt redigering av inlägg
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: AVIF-bild
+  bmp: Bitmap-bild
+  gif: GIF-bild
+  ico: Ikon
+  jpeg: JPEG-bild
+  jpg: JPEG-bild
+  png: PNG-bild
+  svg: SVG-bild
+  tif: TIFF-bild
+  tiff: TIFF-bild
+  webp: WebP-bild
+  # Video formats
+  avi: AVI-video
+  m4v: MP4-video
+  mov: QuickTime-video
+  mp4: MP4-video
+  mpeg: MPEG-video
+  mpg: MPEG-video
+  ogg: Ogg-video
+  ogv: Ogg-video
+  ts: MPEG-video
+  webm: WebM-video
+  3gp: 3GPP-video
+  3g2: 3GPP2-video
+  # Audio formats
+  aac: AAC-ljud
+  mid: MIDI
+  midi: MIDI
+  m4a: MP4-ljud
+  mp3: MP3-ljud
+  oga: Ogg-ljud
+  opus: OPUS-ljud
+  wav: WAV-ljud
+  weba: WebM-ljud
+  # Document formats
+  csv: CSV-kalkylblad
+  doc: Word-dokument
+  docx: Word-dokument
+  odp: OpenDocument-presentation
+  ods: OpenDocument-kalkylblad
+  odt: OpenDocument-text
+  pdf: PDF-dokument
+  ppt: PowerPoint-presentation
+  pptx: PowerPoint-presentation
+  rtf: Rich text-dokument
+  xls: Excel-kalkylblad
+  xlsx: Excel-kalkylblad
+  # Text formats
+  html: HTML-text
+  js: JavaScript
+  json: JSON-text
+  md: Markdown-text
+  toml: TOML-text
+  yaml: YAML-text
+  yml: YAML-text
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} byte'
+  kb: '{$size} KB'
+  mb: '{$size} MB'
+  gb: '{$size} GB'
+  tb: '{$size} TB'
