@@ -104,7 +104,7 @@
     "svelte-check": "^4.7.6",
     "ts-json-schema-generator": "^2.9.0",
     "typescript": "^6.0.3",
-    "vite": "^8.2.1",
+    "vite": "^8.2.2",
     "vitest": "^4.1.11"
   },
   "publishConfig": {
