@@ -37,8 +37,8 @@ replace: Thay thế
 
 # List and collection actions: adding and removing items
 add: Thêm
-remove: Xóa
-clear: Xóa
+remove: Gỡ bỏ
+clear: Xóa hết
 
 # Expansion and collapse actions: used for accordions, trees, and expandable sections
 expand: Mở rộng
@@ -122,10 +122,10 @@ sign_in_with_x: 'Đăng nhập bằng {$service}'
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Đăng nhập bằng mã thông báo truy cập
-sign_in_using_access_token_description: Nhập mã thông báo của bạn dưới đây. Nó phải có quyền truy cập đọc/ghi vào nội dung kho lưu trữ.
+sign_in_using_access_token_description: Nhập mã thông báo của bạn dưới đây. Mã này phải có quyền đọc/ghi nội dung trong kho mã nguồn.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
-sign_in_using_access_token_link: Bạn có thể tạo mã thông báo trên trang cài đặt người dùng <a>{$service}</a>.
+sign_in_using_access_token_link: Bạn có thể tạo mã thông báo trên trang cài đặt người dùng của <a>{$service}</a>.
 # Input field label for personal access token
 personal_access_token: Mã thông báo truy cập cá nhân
 
@@ -135,18 +135,18 @@ signing_in: Đang đăng nhập…
 
 # Local and test repository options
 # Button label and description for working with a local Git repository
-work_with_local_repo: Làm việc với kho lưu trữ cục bộ
+work_with_local_repo: Làm việc với kho mã nguồn cục bộ
 # {$repo} is the configured repository name shown when it is available
-work_with_local_repo_description: Sau khi được nhắc, hãy chọn thư mục gốc của kho lưu trữ “{$repo}”.
-work_with_local_repo_description_no_repo: Sau khi được nhắc, hãy chọn thư mục gốc của kho lưu trữ Git của bạn.
+work_with_local_repo_description: Khi được yêu cầu, hãy chọn thư mục gốc của kho mã nguồn “{$repo}”.
+work_with_local_repo_description_no_repo: Khi được yêu cầu, hãy chọn thư mục gốc của kho mã nguồn Git.
 # Button label for demo/test repository
-work_with_test_repo: Làm việc với kho lưu trữ thử nghiệm
+work_with_test_repo: Làm việc với kho mã nguồn thử nghiệm
 
 # Authentication errors
 # Error messages shown during sign-in failures
 sign_in_error:
-  not_project_root: Thư mục đã chọn không phải là thư mục gốc của kho lưu trữ. Vui lòng thử lại.
-  picker_dismissed: Không thể chọn thư mục gốc của kho lưu trữ. Vui lòng thử lại.
+  not_project_root: Thư mục đã chọn không phải là thư mục gốc của kho mã nguồn. Vui lòng thử lại.
+  picker_dismissed: Không thể chọn thư mục gốc của kho mã nguồn. Vui lòng thử lại.
   authentication_aborted: Xác thực bị hủy bỏ. Vui lòng thử lại.
   invalid_token: Mã thông báo được cung cấp không hợp lệ. Vui lòng kiểm tra và thử lại.
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
@@ -204,7 +204,7 @@ sign_in_with_mobile_instruction: Quét mã QR bên dưới bằng thiết bị d
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Đăng nhập bằng {$name}'
+signed_in_as_x: 'Đã đăng nhập với tư cách {$name}'
 working_with_local_repo: Đang làm việc với kho mã nguồn trên máy
 working_with_test_repo: Đang làm việc với kho mã nguồn thử nghiệm
 
@@ -252,7 +252,7 @@ search_placeholder_assets: Tìm kiếm tệp…
 search_placeholder_all: Tìm kiếm nội dung và tệp…
 
 # Create button: aria-label for the create menu in the toolbar
-create_entry_or_assets: Tạo mục hoặc tải tệp lên
+create_entry_or_assets: Tạo bài viết hoặc tải tệp lên
 
 # Publishing actions: button labels and progress indicators
 publish_changes: Xuất bản các thay đổi
@@ -296,7 +296,7 @@ join_discord: Tham gia với chúng tôi trên Discord
 bluesky: Theo dõi chúng tôi trên Bluesky
 
 # Update notification: infobar message and button
-update_available: Đã có phiên bản mới nhất của Sveltia CMS.
+update_available: Đã có phiên bản mới của Sveltia CMS.
 update_now: Cập nhật ngay
 
 # Backend status notifications
@@ -318,7 +318,7 @@ asset_library: Thư viện tệp
 
 # Primary sidebar section headings and list aria-labels
 collections: Bộ sưu tập
-entries: Mục
+entries: Bài viết
 files: Tệp
 
 # Asset location selector: option group labels
@@ -332,7 +332,7 @@ asset_location:
 # Collection assets panel aria-label
 collection_assets: Tệp của bộ sưu tập
 # List aria-labels for different list types
-entry_list: Danh sách mục
+entry_list: Danh sách bài viết
 file_list: Danh sách tệp
 asset_list: Danh sách tệp
 
@@ -352,15 +352,15 @@ viewing_asset_folder_list: Bạn đang xem danh sách thư mục tệp.
 viewing_x_collection: |
   .input {$count :integer}
   .match $count
-    0   {{ Bạn hiện đang xem bộ sưu tập “{$collection}”, chưa có mục nào. }}
-    *   {{ Bạn hiện đang xem bộ sưu tập “{$collection}”, có {$count} mục. }}
+    0   {{ Bạn hiện đang xem bộ sưu tập “{$collection}”, chưa có bài viết nào. }}
+    *   {{ Bạn hiện đang xem bộ sưu tập “{$collection}”, có {$count} bài viết. }}
 # Asset folder view announcements with asset counts
 # {$folder} is the folder label and {$count} is the number of assets in it
 viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
-    0   {{ Hiện bạn đang xem thư mục nội dung “{$folder}”, thư mục này chưa có nội dung nào. }}
-    *   {{ Bạn hiện đang xem thư mục nội dung “{$folder}”, có {$count} mục. }}
+    0   {{ Bạn hiện đang xem thư mục tệp “{$folder}”; thư mục này chưa có tệp nào. }}
+    *   {{ Bạn hiện đang xem thư mục tệp “{$folder}”, có {$count} tệp. }}
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -373,14 +373,14 @@ file_not_found: Không tìm thấy tệp.
 # Selection count indicator
 # Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
 # {$selected} is the selected item count and {$total} is the total item count
-x_of_x_selected: '{$selected} của {$total} đã chọn'
+x_of_x_selected: 'Đã chọn {$selected} trên {$total} mục'
 
 # View switcher: toggle between list and grid views
 switch_view: Chuyển đổi chế độ xem
-list_view: Xem danh sách
+list_view: Chế độ xem danh sách
 grid_view: Chế độ xem lưới
-switch_to_list_view: Chuyển sang Chế độ xem danh sách
-switch_to_grid_view: Chuyển sang Chế độ xem lưới
+switch_to_list_view: Chuyển sang chế độ xem danh sách
+switch_to_grid_view: Chuyển sang chế độ xem lưới
 
 # ==============================================================================
 # List Controls: Sort, Filter, and Group
@@ -451,19 +451,19 @@ global_assets: Tệp dùng chung
 loading_entries: |
   .input {$count :integer}
   .match $count
-    *   {{ Đang tải {$count} mục… }}
+    *   {{ Đang tải {$count} bài viết… }}
 # Error message when entry cannot be found
-entry_not_found: Không tìm thấy mục.
+entry_not_found: Không tìm thấy bài viết.
 
 # Entry creation restrictions: tooltip and advisory messages
-creating_entries_disabled_by_admin: Việc tạo các mục mới trong bộ sưu tập này bị quản trị viên vô hiệu hóa.
+creating_entries_disabled_by_admin: Quản trị viên đã tắt tính năng tạo bài viết mới trong bộ sưu tập này.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Bạn không thể thêm mục mới vì bộ sưu tập này đã đạt giới hạn {$quota} mục.
+creating_entries_disabled_by_quota: Bạn không thể thêm bài viết mới vì bộ sưu tập này đã đạt giới hạn {$quota} bài viết.
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
   .input {$remaining :integer}
   .match $remaining
-    *   {{ Bộ sưu tập này sắp đạt giới hạn {$quota} mục. Bạn chỉ có thể tạo thêm {$remaining} mục. }}
+    *   {{ Bộ sưu tập này sắp đạt giới hạn {$quota} bài viết. Bạn chỉ có thể tạo thêm {$remaining} bài viết. }}
 
 # Navigation: back links and list labels
 back_to_collection: Quay lại bộ sưu tập
@@ -488,8 +488,8 @@ search_results_for_x: Kết quả tìm kiếm cho “{$terms}”
 viewing_entry_search_results: |
   .input {$count :integer}
   .match $count
-    0   {{ Không tìm thấy mục nào cho “{$terms}”. }}
-    *   {{ Đã tìm thấy {$count} mục cho “{$terms}”. }}
+    0   {{ Không tìm thấy bài viết nào cho “{$terms}”. }}
+    *   {{ Đã tìm thấy {$count} bài viết cho “{$terms}”. }}
 # Asset search results with counts
 # {$terms} is the search query and {$count} is the number of matching assets
 viewing_asset_search_results: |
@@ -504,8 +504,8 @@ viewing_asset_search_results: |
 x_entries: |
   .input {$count :integer}
   .match $count
-    0   {{ Không có mục nào }}
-    *   {{ {$count} mục }}
+    0   {{ Không có bài viết nào }}
+    *   {{ {$count} bài viết }}
 # {$count} is the number of matching assets
 x_assets: |
   .input {$count :integer}
@@ -515,7 +515,7 @@ x_assets: |
 
 # Empty state messages
 no_files_found: Không tìm thấy tệp nào.
-no_entries_found: Không tìm thấy mục nào.
+no_entries_found: Không tìm thấy bài viết nào.
 
 # ==============================================================================
 # Asset Management
@@ -534,7 +534,7 @@ edit_asset: Chỉnh sửa tệp
 edit_x: 'Chỉnh sửa {$name}'
 
 # Asset text editor: switch for line wrapping
-wrap_long_lines: Ngắt dòng dài
+wrap_long_lines: Ngắt dòng
 
 # Rename asset: dialog and validation
 rename_asset: Đổi tên tệp
@@ -546,19 +546,19 @@ enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
     0   {{ Nhập tên mới bên dưới. }}
-    *   {{ Nhập tên mới bên dưới. {$count} mục đang sử dụng tệp này cũng sẽ được cập nhật. }}
+    *   {{ Nhập tên mới bên dưới. {$count} bài viết đang sử dụng tệp này cũng sẽ được cập nhật. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: Tên tệp không được để trống.
-  character: Tên file không được chứa ký tự đặc biệt.
-  duplicate: Tên tệp này được sử dụng cho một nội dung khác.
+  character: Tên tệp không được chứa ký tự đặc biệt.
+  duplicate: Tên tệp này đang được một tệp khác sử dụng.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: Thay đổi phần mở rộng tệp
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
 confirm_file_extension_change:
-  change: Bạn có chắc chắn muốn thay đổi tiện ích mở rộng từ “.{$oldExtension}” thành “.{$newExtension}” không?
-  add: Bạn có chắc chắn muốn thêm tiện ích mở rộng “.{$newExtension}” không?
-  remove: Bạn có chắc chắn muốn xóa tiện ích mở rộng “.{$oldExtension}” không?
+  change: Bạn có chắc chắn muốn thay đổi phần mở rộng từ “.{$oldExtension}” thành “.{$newExtension}” không?
+  add: Bạn có chắc chắn muốn thêm phần mở rộng “.{$newExtension}” không?
+  remove: Bạn có chắc chắn muốn xóa phần mở rộng “.{$oldExtension}” không?
 file_extension_change_warning: Tệp có thể không được hiển thị hoặc xử lý chính xác nếu phần mở rộng không khớp với định dạng tệp thực tế.
 
 # Replace asset: menu item and dialog title
@@ -652,28 +652,28 @@ confirm_deleting_all_assets: Bạn có chắc chắn muốn xóa tất cả tệ
 delete_entries: |
   .input {$count :integer}
   .match $count
-    *   {{ Xóa {$count} mục }}
+    *   {{ Xóa {$count} bài viết }}
 # {$count} is the number of selected entries
 delete_selected_entries: |
   .input {$count :integer}
   .match $count
-    *   {{ Xóa {$count} mục đã chọn }}
-confirm_deleting_this_entry: Bạn có chắc chắn muốn xóa mục này?
-confirm_deleting_this_entry_with_assets: Bạn có chắc chắn muốn xóa mục này và các tệp liên quan không?
+    *   {{ Xóa {$count} bài viết đã chọn }}
+confirm_deleting_this_entry: Bạn có chắc chắn muốn xóa bài viết này?
+confirm_deleting_this_entry_with_assets: Bạn có chắc chắn muốn xóa bài viết này và các tệp liên quan không?
 # Error notification shown when an entry could not be deleted
-deleting_entry_failed: Không thể xóa mục. Vui lòng thử lại.
+deleting_entry_failed: Không thể xóa bài viết. Vui lòng thử lại.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
   .match $count
-    *   {{ Bạn có chắc chắn muốn xóa {$count} mục đã chọn không? }}
+    *   {{ Bạn có chắc chắn muốn xóa {$count} bài viết đã chọn không? }}
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
-    *   {{ Bạn có chắc chắn muốn xóa {$count} mục đã chọn và các tệp liên quan không? }}
-confirm_deleting_all_entries: Bạn có chắc chắn muốn xóa tất cả các mục?
-confirm_deleting_all_entries_with_assets: Bạn có chắc chắn muốn xóa tất cả mục và các tệp liên quan không?
+    *   {{ Bạn có chắc chắn muốn xóa {$count} bài viết đã chọn và các tệp liên quan không? }}
+confirm_deleting_all_entries: Bạn có chắc chắn muốn xóa tất cả bài viết?
+confirm_deleting_all_entries_with_assets: Bạn có chắc chắn muốn xóa tất cả bài viết và các tệp liên quan không?
 
 # ==============================================================================
 # Entry Reordering
@@ -681,9 +681,9 @@ confirm_deleting_all_entries_with_assets: Bạn có chắc chắn muốn xóa t�
 # Strings for manually reordering entries via drag-and-drop.
 
 # Reorder mode: toggle buttons
-reorder_entries: Sắp xếp lại các mục
-done_reordering_entries: Hoàn tất sắp xếp lại các mục
-cancel_reordering_entries: Hủy sắp xếp lại các mục
+reorder_entries: Sắp xếp lại bài viết
+done_reordering_entries: Hoàn tất sắp xếp lại bài viết
+cancel_reordering_entries: Hủy sắp xếp lại bài viết
 
 # Reorder error message
 saving_reorder_failed: Không thể lưu thứ tự mới. Vui lòng thử lại.
@@ -745,6 +745,7 @@ file_name_conflict_confirmation_with_name: |
   .input {$count :integer}
   .input {$name :string}
   .match $count
+    1   {{ Tệp “{$name}” đã tồn tại trong thư mục này. Bạn có muốn thay thế tệp đó không? }}
     *   {{ {$count} tệp trùng tên đã tồn tại trong thư mục này. Bạn có muốn thay thế các tệp hiện có không? }}
 file_name_conflict_resolution: Giải quyết xung đột tên tệp
 # Option to keep both files (rename the new one)
@@ -768,11 +769,11 @@ file_meta_converted_from_x: (được chuyển đổi từ {$type})
 # Strings for creating and managing entries in collections
 
 # Empty state messages
-no_entries_created: Chưa có mục nào trong bộ sưu tập này.
+no_entries_created: Chưa có bài viết nào trong bộ sưu tập này.
 # Button to create first entry
-create_new_entry: Tạo mục mới
+create_new_entry: Tạo bài viết mới
 # “Entry” option label in the create button menu
-entry: Mục
+entry: Bài viết
 
 # Special entry types
 # Fallback label for collection index files when no custom label is configured
@@ -782,8 +783,8 @@ index_file: Tệp chỉ mục
 no_files_in_collection: Không có tệp nào trong bộ sưu tập này.
 
 # Entry duplication
-duplicate_entry: Nhân bản mục
-entry_duplicated: Đã nhân bản mục thành bản nháp mới.
+duplicate_entry: Nhân bản bài viết
+entry_duplicated: Đã nhân bản bài viết thành bản nháp mới.
 
 # Validation errors
 # Toast shown when entry has validation errors preventing save
@@ -791,7 +792,7 @@ entry_duplicated: Đã nhân bản mục thành bản nháp mới.
 entry_validation_errors: |
   .input {$count :integer}
   .match $count
-    *   {{ {$count} trường có lỗi. Vui lòng sửa lỗi để lưu mục. }}
+    *   {{ {$count} trường có lỗi. Vui lòng sửa lỗi để lưu bài viết. }}
 
 # ==============================================================================
 # Success Notifications
@@ -803,15 +804,15 @@ entry_validation_errors: |
 entry_saved: |
   .input {$count :integer}
   .match $count
-    *   {{ Đã lưu {$count} mục. }}
+    *   {{ Đã lưu {$count} bài viết. }}
 entry_saved_and_published: |
   .input {$count :integer}
   .match $count
-    *   {{ Đã lưu và xuất bản {$count} mục. }}
+    *   {{ Đã lưu và xuất bản {$count} bài viết. }}
 entries_deleted: |
   .input {$count :integer}
   .match $count
-    *   {{ Đã xóa {$count} mục. }}
+    *   {{ Đã xóa {$count} bài viết. }}
 
 # Asset operations
 # {$count} is the number of assets or asset-derived values affected by the operation
@@ -863,7 +864,7 @@ content_editor: Biên tập nội dung
 # Draft backup: restore dialog
 restore_backup_title: Khôi phục bản nháp
 # {$datetime} is the localized timestamp of the saved draft backup
-restore_backup_description: Mục này có bản sao lưu từ {$datetime}. Bạn có muốn khôi phục bản nháp đã chỉnh sửa không?
+restore_backup_description: Bài viết này có bản sao lưu từ {$datetime}. Bạn có muốn khôi phục bản nháp đã chỉnh sửa không?
 
 # Draft backup notifications
 draft_backup_saved: Đã lưu bản sao lưu của bản nháp.
@@ -878,12 +879,12 @@ cancel_editing: Hủy chỉnh sửa
 # {$name} is the singular label of the collection being created in
 create_entry_title: Tạo {$name}
 # {$collection} is the collection label
-create_entry_announcement: Bạn hiện đang tạo một mục mới trong bộ sưu tập “{$collection}”.
+create_entry_announcement: Bạn hiện đang tạo một bài viết mới trong bộ sưu tập “{$collection}”.
 # Editing an existing entry
 # {$collection} is the collection label and {$entry} is the entry label or slug
 edit_entry_title: '{$collection} > {$entry}'
 # {$entry} is the current entry label and {$collection} is the collection label
-edit_entry_announcement: Hiện bạn đang chỉnh sửa mục “{$entry}” trong bộ sưu tập “{$collection}”.
+edit_entry_announcement: Hiện bạn đang chỉnh sửa bài viết “{$entry}” trong bộ sưu tập “{$collection}”.
 # {$file} is the file name and {$collection} is the collection label
 edit_file_announcement: Hiện bạn đang chỉnh sửa tệp “{$file}” trong bộ sưu tập “{$collection}”.
 # {$file} is the singleton file name
@@ -951,10 +952,10 @@ disable_x_locale: 'Tắt {$locale}'
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
 locale_x_has_been_disabled: Nội dung {$locale} đã bị tắt.
-locale_x_now_disabled: Nội dung {$locale} hiện đã bị tắt. Nội dung này sẽ bị xóa khi bạn lưu mục.
+locale_x_now_disabled: Nội dung {$locale} hiện đã bị tắt. Nội dung này sẽ bị xóa khi bạn lưu bài viết.
 
 # Repository and site links
-view_in_repository: Xem trong kho lưu trữ
+view_in_repository: Xem trong kho mã nguồn
 # {$service} is the external service label, such as GitHub or GitLab
 view_on_x: 'Xem trên {$service}'
 view_on_live_site: Xem trực tiếp
@@ -982,11 +983,11 @@ revert_all_changes: Hủy tất cả thay đổi
 
 # Slug editing
 edit_slug: Chỉnh sửa tên đường dẫn
-edit_slug_warning: Việc thay đổi slug có thể làm hỏng các liên kết nội bộ và bên ngoài của mục. Hiện tại, Sveltia CMS không cập nhật các tham chiếu được tạo bằng trường quan hệ, vì vậy bạn cần cập nhật thủ công các tham chiếu và liên kết đó.
+edit_slug_warning: Việc thay đổi slug có thể làm hỏng các liên kết nội bộ và bên ngoài của bài viết. Hiện tại, Sveltia CMS không cập nhật các tham chiếu được tạo bằng trường quan hệ, vì vậy bạn cần cập nhật thủ công các tham chiếu và liên kết đó.
 edit_slug_error:
   empty: Slug không được để trống.
   invalid: Slug không được chứa các ký tự đặc biệt, kể cả dấu gạch chéo và dấu cách.
-  duplicate: Slug này đang được một mục khác sử dụng.
+  duplicate: Slug này đang được một bài viết khác sử dụng.
 
 # Required field indicator
 required: Bắt buộc
@@ -1091,7 +1092,7 @@ entry_sidebar:
   # Validation panel: shows field validation errors
   validation:
     title: Xác thực
-    placeholder: Kết quả xác nhận sẽ được hiển thị ở đây.
+    placeholder: Kết quả xác thực sẽ được hiển thị tại đây.
     no_errors_found: Không tìm thấy lỗi.
 
   # History panel: shows entry commit history
@@ -1103,13 +1104,13 @@ entry_sidebar:
   # Backlinks panel: shows entries referencing this entry
   backlinks:
     title: Liên kết ngược
-    no_entries: Không có mục nào tham chiếu mục này.
+    no_entries: Không có bài viết nào tham chiếu bài viết này.
 
 # Entry save error dialog
 saving_entry:
   error:
     title: Lỗi
-    description: Đã xảy ra lỗi khi lưu mục. Vui lòng thử lại sau.
+    description: Đã xảy ra lỗi khi lưu bài viết. Vui lòng thử lại sau.
 
 # ==============================================================================
 # Asset Editor
@@ -1209,12 +1210,12 @@ assets_dialog:
   search_for_image: Tìm kiếm hình ảnh
 
   # Locations panel aria-label
-  locations: Địa điểm
+  locations: Vị trí
 
   # Asset folder options
   folder:
     field: Tệp thuộc trường
-    entry: Tệp thuộc mục
+    entry: Tệp thuộc bài viết
     file: Tệp thuộc trang
     collection: Tệp thuộc bộ sưu tập
     global: Tệp dùng chung
@@ -1222,8 +1223,8 @@ assets_dialog:
   # Error messages
   error:
     invalid_key: Khóa API của bạn không hợp lệ hoặc đã hết hạn. Vui lòng kiểm tra lại và thử lại.
-    search_fetch_failed: Đã xảy ra lỗi khi tìm kiếm nội dung. Vui lòng thử lại sau.
-    image_fetch_failed: Đã xảy ra lỗi khi tải xuống nội dung đã chọn. Vui lòng thử lại sau.
+    search_fetch_failed: Đã xảy ra lỗi khi tìm kiếm tệp. Vui lòng thử lại sau.
+    image_fetch_failed: Đã xảy ra lỗi khi tải xuống tệp đã chọn. Vui lòng thử lại sau.
 
   # Stock photo panels
   available_images: Hình ảnh có sẵn
@@ -1279,7 +1280,7 @@ youtube_video_player: Trình phát video YouTube
 
 # Date/time field: quick action buttons
 today: Hôm nay
-now: Hôm nay
+now: Hiện tại
 
 # Rich-text editor: component field labels
 editor_components:
@@ -1287,7 +1288,7 @@ editor_components:
   src: Nguồn
   alt: Văn bản thay thế
   title: Tiêu đề
-  link: liên kết
+  link: Liên kết
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1338,12 +1339,12 @@ cloud_storage:
 
   # Service-specific configurations
   cloudinary:
-    iframe_title: Thư viện phương tiện đám mây
+    iframe_title: Thư viện phương tiện Cloudinary
     activate:
       button_label: Kích hoạt Cloudinary
       description: Sau khi đăng nhập, nhấp vào nút Đăng nhập lần nữa để tiếp tục.
     auth_key_label: Bí mật API
-    open_library: Mở đám mây
+    open_library: Mở Cloudinary
 
   uploadcare:
     auth_key_label: Khóa bí mật API
@@ -1368,7 +1369,7 @@ config:
   errors: |
     .input {$count :integer}
     .match $count
-      *   {{ Có lỗi trong cấu hình CMS. Vui lòng giải quyết vấn đề và thử lại. }}
+      *   {{ Có {$count} lỗi trong cấu hình CMS. Vui lòng khắc phục và thử lại. }}
 
   # Error location prefixes
   error_locator:
@@ -1406,8 +1407,8 @@ config:
     unsupported_deprecated_backend: Dịch vụ {$name} đã lỗi thời và <a>không được Sveltia CMS hỗ trợ</a>.
     unsupported_custom_backend: Sveltia CMS <a>không hỗ trợ các dịch vụ tùy chỉnh</a>.
     unsupported_backend_suggestion: Thay vào đó, hãy sử dụng một trong các <a>dịch vụ được hỗ trợ</a>.
-    missing_repository: Kho lưu trữ không được xác định.
-    invalid_repository: Kho lưu trữ được cấu hình không hợp lệ. Nó phải ở định dạng “chủ sở hữu/repo”.
+    missing_repository: Chưa xác định kho mã nguồn.
+    invalid_repository: Kho mã nguồn được cấu hình không hợp lệ. Giá trị phải có định dạng “chủ sở hữu/repo”.
     oauth_implicit_flow: Sveltia CMS không hỗ trợ phương thức xác thực đã cấu hình (Implicit Flow). Hãy sử dụng <a>phương thức xác thực khác</a>.
     github_pkce_unsupported: Xác thực PKCE chưa được hỗ trợ do các hạn chế của GitHub. Thay vào đó, hãy sử dụng <a>phương thức xác thực khác</a>.
     oauth_no_app_id: ID ứng dụng OAuth không được xác định.
@@ -1435,7 +1436,7 @@ config:
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: Phần mở rộng `{$extension}` không khớp với định dạng `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: Mẫu slug `{$slug}` không hợp lệ vì không được chứa dấu gạch chéo. Để sắp xếp các mục trong thư mục con, hãy sử dụng tùy chọn `path` thay cho `slug`.
+    invalid_slug_slash: Mẫu slug `{$slug}` không hợp lệ vì không được chứa dấu gạch chéo. Để sắp xếp các bài viết trong thư mục con, hãy sử dụng tùy chọn `path` thay cho `slug`.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: Tùy chọn `reorder` đề cập đến nhóm chế độ xem có tên `{$name}`, nhưng không có nhóm nào như vậy được xác định trong tùy chọn `view_groups`.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
@@ -1480,7 +1481,7 @@ config:
     # {$name} is the invalid or duplicate variable type name
     invalid_variable_type: Tên loại biến `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
     duplicate_variable_type: Tên loại biến phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
-    date_field_type: 'Loại trường Ngày không được dùng nữa không được hỗ trợ trong Sveltia CMS. Thay vào đó, hãy sử dụng loại trường DateTime với tùy chọn `type: date`.'
+    date_field_type: 'Loại trường Date đã lỗi thời và không được Sveltia CMS hỗ trợ. Hãy dùng trường DateTime với tùy chọn `type: date`.'
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Múi giờ không hợp lệ: {$timeZone}. Phải là mã định danh múi giờ IANA hợp lệ như `America/New_York` hoặc `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1507,7 +1508,7 @@ config:
   warning:
     oauth_no_app_id: ID ứng dụng OAuth không được xác định. Người dùng được yêu cầu cung cấp mã thông báo truy cập để đăng nhập.
     editorial_workflow_unsupported: Luồng biên tập hiện chỉ hỗ trợ dịch vụ GitHub và GitLab.
-    open_authoring_unsupported: Tác giả mở chưa được hỗ trợ trong Sveltia CMS.
+    open_authoring_unsupported: Open Authoring chưa được Sveltia CMS hỗ trợ.
     nested_collections_unsupported: Các bộ sưu tập lồng nhau chưa được hỗ trợ trong Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Tùy chọn `{$prop}` không được hỗ trợ trong Sveltia CMS. Nó sẽ bị bỏ qua.
@@ -1529,8 +1530,8 @@ local_workflow:
   # Badge text in account button
   indicator: Cục bộ
   # Browser compatibility warnings
-  unsupported_browser: Quy trình làm việc cục bộ không được hỗ trợ trong trình duyệt của bạn. Vui lòng sử dụng Chrome hoặc Edge để thay thế.
-  disabled: Quy trình làm việc cục bộ bị tắt trong trình duyệt của bạn. <a>Đây là cách kích hoạt nó</a>.
+  unsupported_browser: Trình duyệt của bạn không hỗ trợ Quy trình cục bộ. Vui lòng sử dụng Chrome hoặc Edge.
+  disabled: Quy trình cục bộ đang bị tắt trong trình duyệt của bạn. <a>Xem cách bật tính năng này</a>.
 
 # ==============================================================================
 # Editorial Workflow
@@ -1561,31 +1562,31 @@ workflow:
   # has a Cancel button of its own
   cancel_deletion: Hủy xóa
   confirm_cancelling_deletion: Bạn có chắc chắn muốn hủy việc xóa này không? Bài viết sẽ vẫn được xuất bản.
-  confirm_completing_deletion: Bạn có chắc chắn muốn xóa mục này? Nó sẽ được gỡ bỏ ngay lập tức.
+  confirm_completing_deletion: Bạn có chắc chắn muốn xóa bài viết này? Bài viết sẽ được gỡ bỏ ngay lập tức.
   # Toast notification shown after an entry has been marked for deletion in the entry editor. The
   # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
   # explained that it stays until the deletion is published, so this doesn’t repeat it
   deletion_pending: |
     .input {$count :integer}
     .match $count
-      *   {{ {$count} mục đã được đánh dấu để xóa. }}
+      *   {{ {$count} bài viết đã được đánh dấu để xóa. }}
   # Toast notification shown after the unpublished changes to an entry have been thrown away
   changes_discarded: |
     .input {$count :integer}
     .match $count
-      *   {{ Đã hủy thay đổi của {$count} mục. }}
+      *   {{ Đã hủy thay đổi của {$count} bài viết. }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: Đang hủy xóa…
   deletion_cancelled: Việc xóa đã bị hủy.
   # Error notification when the deletion could not be cancelled
   cancelling_deletion_failed: Không thể hủy thao tác xóa. Vui lòng thử lại.
   # Group heading shown above the unpublished entries in the entry list
-  unpublished_entries: Bài viết chưa được xuất bản
+  unpublished_entries: Bài viết chưa xuất bản
   published_entries: Bài viết đã xuất bản
   # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
   # aria-label. `status` is one of the `status` strings above.
   entry_status_value: 'Trạng thái: {$status}'
-  change_entry_status: Đổi trạng thái mục
+  change_entry_status: Đổi trạng thái bài viết
   # Editor toolbar: progress label while the status is being changed
   changing_status: Đang thay đổi trạng thái…
   # Workflow page: toast notification shown while the status is being updated after a card is
@@ -1595,49 +1596,49 @@ workflow:
   # Error notification when the status could not be changed
   status_change_failed: Không thể thay đổi trạng thái. Vui lòng thử lại.
   # Editor toolbar: button shown when the entry is ready to be published
-  publish_entry: Xuất bản mục
+  publish_entry: Xuất bản bài viết
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
   # entry has a published version, because only the pending changes are thrown away
   discard_changes: Hủy thay đổi
   # Confirmation message shown before deleting a published entry, replacing the direct
   # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
   # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
-  confirm_deleting_published_entry: Bạn có chắc chắn muốn xóa mục này? Mục sẽ chỉ bị xóa sau khi thay đổi được xuất bản. Trước lúc đó, mục vẫn xuất hiện trong danh sách với trạng thái Đang chờ xóa.
+  confirm_deleting_published_entry: Bạn có chắc chắn muốn xóa bài viết này? Bài viết chỉ bị xóa sau khi thay đổi được xuất bản. Trước lúc đó, bài viết vẫn xuất hiện trong danh sách với trạng thái Đang chờ xóa.
   # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
   # request instead of committing a deletion to the configured branch. Keep the wording free of
   # Git jargon, as editors are often non-technical.
   # Used when the entry has never been published, so nothing of it is left afterwards
-  confirm_deleting_unpublished_entry: Mục này chưa được xuất bản nên việc xóa nó sẽ loại bỏ nó hoàn toàn.
+  confirm_deleting_unpublished_entry: Bài viết này chưa được xuất bản nên việc xóa sẽ loại bỏ hoàn toàn bài viết.
   # Used when the entry updates one that is already live, which stays untouched. The dialog is
   # titled “Discard Changes”, so the wording is about discarding, not deleting
-  confirm_discarding_entry_changes: Mục này có các thay đổi chưa xuất bản. Nếu hủy, nội dung sẽ trở về phiên bản đã xuất bản. Mục này sẽ không bị xóa.
+  confirm_discarding_entry_changes: Bài viết này có các thay đổi chưa xuất bản. Nếu hủy, nội dung sẽ trở về phiên bản đã xuất bản. Bài viết sẽ không bị xóa.
   # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
   # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
   deleting_unpublished_note_all: |
     .input {$count :integer}
     .match $count
-      *   {{ {$count} mục chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Các phiên bản đã xuất bản vẫn được giữ nguyên. }}
+      *   {{ {$count} bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Các phiên bản đã xuất bản vẫn được giữ nguyên. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
     .input {$count :integer}
     .match $count
-      *   {{ {$count} mục chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Các phiên bản đã xuất bản vẫn được giữ nguyên. }}
+      *   {{ {$count} bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Các phiên bản đã xuất bản vẫn được giữ nguyên. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Bạn có chắc chắn muốn xuất bản mục này? Những thay đổi của bạn sẽ có hiệu lực ngay lập tức.
+  confirm_publishing_entry: Bạn có chắc chắn muốn xuất bản bài viết này? Những thay đổi của bạn sẽ có hiệu lực ngay lập tức.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
-  publishing_entry: Đang xuất bản mục…
-  entry_published: Mục được xuất bản.
+  publishing_entry: Đang xuất bản bài viết…
+  entry_published: Đã xuất bản bài viết.
   # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
   # the deletion has completed
-  deleting_entry: Đang xóa mục…
+  deleting_entry: Đang xóa bài viết…
   discarding_changes: Đang hủy các thay đổi…
-  entry_deleted: Đã xóa mục.
+  entry_deleted: Đã xóa bài viết.
   # Error notification when publishing fails
-  publishing_entry_failed: Không thể xuất bản mục này. Vui lòng thử lại.
+  publishing_entry_failed: Không thể xuất bản bài viết này. Vui lòng thử lại.
   # Workflow page: empty column message
-  no_entries: Không có mục nào.
+  no_entries: Không có bài viết nào.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: Kéo để thay đổi trạng thái
 
@@ -1704,7 +1705,7 @@ prefs:
         select_service: Chọn dịch vụ
       api_keys:
         title: Khóa API dịch vụ dịch thuật
-        description: Quản lý khóa API cho dịch vụ dịch <a></a>.
+        description: Quản lý khóa API cho các <a>dịch vụ dịch thuật</a>.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: 'Khóa {$service}'
@@ -1717,8 +1718,8 @@ prefs:
     title: Tệp phương tiện
     stock_photos:
       api_keys:
-        title: Khóa API kho ảnh trực tuyến
-        description: Quản lý khóa API cho các <a>kho ảnh trực tuyến</a>.
+        title: Khóa API dịch vụ ảnh stock
+        description: Quản lý khóa API cho các <a>dịch vụ ảnh stock</a>.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
       field_label: 'Khóa API {$service}'
@@ -1728,11 +1729,11 @@ prefs:
       # Photo credit attribution
       # {$service} is the stock photo service name
       credit: Ảnh do {$service} cung cấp
-      no_services: Chưa cấu hình <a>kho ảnh trực tuyến</a>.
+      no_services: Chưa cấu hình <a>dịch vụ ảnh stock</a>.
     cloud_storage:
       api_keys:
         title: Khóa API dịch vụ lưu trữ đám mây
-        description: Quản lý khóa API cho dịch vụ lưu trữ đám mây <a></a>.
+        description: Quản lý khóa API cho các <a>dịch vụ lưu trữ đám mây</a>.
       # API key input label
       # {$service} is the cloud storage service name
       field_label: 'Khóa API {$service}'
@@ -1779,9 +1780,9 @@ prefs:
 keyboard_shortcuts_:
   view_content_library: Xem thư viện nội dung
   view_asset_library: Xem thư viện tệp
-  search: Tìm mục và tệp
-  create_entry: Tạo mục mới
-  save_entry: Lưu mục
+  search: Tìm bài viết và tệp
+  create_entry: Tạo bài viết mới
+  save_entry: Lưu bài viết
   cancel_editing: Hủy chỉnh sửa
 
 # ==============================================================================
