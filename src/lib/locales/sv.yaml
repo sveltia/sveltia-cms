@@ -87,7 +87,7 @@ later: Senare
 
 # Entry and collection labels
 # Slug field heading in entry editors
-slug: Slug
+slug: Slugg
 # Fallback labels for singleton collections when names aren’t configured
 singleton: Singel
 singletons: Singlar
@@ -148,7 +148,7 @@ sign_in_error:
   not_project_root: Den valda mappen är inte en rotkatalog för Git-repot. Försök igen.
   picker_dismissed: En rotkatalog för Git-repot kunde inte väljas. Försök igen.
   authentication_aborted: Autentiseringen avbröts. Försök igen.
-  invalid_token: Den angivna token är ogiltig. Kontrollera och försök igen.
+  invalid_token: Angivet token är ogiltigt. Kontrollera och försök igen.
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
   UNSUPPORTED_BACKEND: Din Git-backend stöds inte av autentiseraren.
   UNSUPPORTED_DOMAIN: Din domän har inte tillåtelse att använda autentiseraren.
@@ -229,7 +229,7 @@ menu: Meny
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS är nu tillgängligt på mobilen!
-mobile_promo_button: Pröva
+mobile_promo_button: Prova
 
 # New language infobar: encouraging users to switch to a newly available language
 # {$locale} is the localized language name, e.g., “French”
@@ -279,7 +279,7 @@ help: Hjälp
 keyboard_shortcuts: Tangentbordsgenvägar
 documentation: Dokumentation
 release_notes: Versionsinformation
-announcements: Meddelanden
+announcements: Nyheter
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
 version_x: 'Version {$version}'
@@ -393,7 +393,7 @@ sort_keys:
   # No sorting; entries appear in their natural repository order
   none: Ingen
   name: Namn
-  slug: Slug
+  slug: Slugg
   # Sort by the last commit’s author name
   commit_author: Uppdaterad av
   # Sort by the last commit date
@@ -831,8 +831,8 @@ asset_urls_copied: |
 asset_paths_copied: |
   .input {$count :integer}
   .match $count
-    one {{ Filväg kopierad till urklipp. }}
-    *   {{ {$count} filvägar kopierade till urklipp. }}
+    one {{ Filsökväg kopierad till urklipp. }}
+    *   {{ {$count} filsökvägar kopierade till urklipp. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -989,12 +989,12 @@ revert_changes: Återställ ändringar
 revert_all_changes: Återställ alla ändringar
 
 # Slug editing
-edit_slug: Redigera slug
+edit_slug: Redigera slugg
 edit_slug_warning: 'Att ändra sluggen kan bryta interna och externa länkar till posten. För närvarande uppdaterar Sveltia CMS inte referenser skapade med Relationsfält, så du måste manuellt uppdatera sådana referenser tillsammans med andra länkar.'
 edit_slug_error:
   empty: Sluggen får inte vara tom.
   invalid: Sluggen får inte innehålla specialtecken, inklusive snedstreck och mellanslag.
-  duplicate: Denna slug används för en annan post.
+  duplicate: Denna slugg används för en annan post.
 
 # Required field indicator
 required: Obligatoriskt
@@ -1115,7 +1115,7 @@ entry_sidebar:
   # Backlinks panel: shows entries referencing this entry
   backlinks:
     title: Bakåtlänkar
-    no_entries: Inga poster refererar till denna post.
+    no_entries: Inga andra poster refererar till denna post.
 
 # Entry save error dialog
 saving_entry:
@@ -1149,8 +1149,8 @@ public_urls: |
 file_paths: |
   .input {$count :integer}
   .match $count
-    one {{ Filväg }}
-    *   {{ Filvägar }}
+    one {{ Filsökväg }}
+    *   {{ Filsökvägar }}
 file_data: Filinformation
 
 # ==============================================================================
@@ -1281,7 +1281,7 @@ character_counter:
       *   {{ {$count} tecken angivna. Max: {$max}. }}
 
 # YouTube video player iframe title
-youtube_video_player: YouTube video player
+youtube_video_player: YouTube-videospelare
 
 # Date/time field: quick action buttons
 today: Idag
@@ -1411,7 +1411,7 @@ config:
     # {$name} is the backend name from the CMS configuration
     unsupported_deprecated_backend: Backenden {$name} är föråldrad och stöds <a>inte</a> i Sveltia CMS.
     unsupported_custom_backend: Egna backends stöds <a>inte</a> i Sveltia CMS.
-    unsupported_backend_suggestion: Använd istället en av de <a>stödda backends</a>.
+    unsupported_backend_suggestion: Använd istället en av de <a>backends som stöds</a>.
     missing_repository: Git-repot är inte definierat.
     invalid_repository: Det konfigurerade Git-repot är ogiltigt. Det måste vara i formatet “ägare/repo”.
     oauth_implicit_flow: Den konfigurerade autentiseringsmetoden (implicit flow) stöds inte i Sveltia CMS. Använd en annan <a>autentiseringsmetod</a> istället.
@@ -1427,13 +1427,13 @@ config:
     # Don’t localize `asset_collections`
     invalid_asset_collections: '`asset_collections`-alternativet är ogiltigt. Det måste vara en array.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
-    missing_asset_collection_name: 'Asset-samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    missing_asset_collection_name: 'Resurs-samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
     # {$name} is the invalid or duplicate asset collection name
-    invalid_asset_collection_name: 'Namnet på asset-samlingen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.'
+    invalid_asset_collection_name: 'Namnet på resurs-samlingen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.'
     # {$name} is the duplicate asset collection name
-    duplicate_asset_collection_name: 'Namnen på asset-samlingar måste vara unika, men `{$name}` används mer än en gång.'
+    duplicate_asset_collection_name: 'Namnen på resurs-samlingar måste vara unika, men `{$name}` används mer än en gång.'
     # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: 'Asset-samlingen `{$name}` måste ha `media_folder`-alternativet definierat som en sträng.'
+    asset_collection_invalid_media_folder: 'Resurs-samlingen `{$name}` måste ha `media_folder`-alternativet definierat som en sträng.'
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: 'Samlingen måste ha antingen `folder`-, `files`- eller `divider`-alternativet definierat.'
     # Don’t localize `folder`, `files`, and `divider`
@@ -1441,7 +1441,7 @@ config:
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: 'Filändelsen `{$extension}` matchar inte formatet `{$format}`.'
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: 'Slug-mallen `{$slug}` är ogiltig eftersom den inte kan innehålla snedstreck. För att organisera poster i undermappar, använd `path`-alternativet istället för `slug`.'
+    invalid_slug_slash: 'Slugg-mallen `{$slug}` är ogiltig eftersom den inte kan innehålla snedstreck. För att organisera poster i undermappar, använd `path`-alternativet istället för `slug`.'
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: 'Samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
     # {$name} is the invalid or duplicate collection name
@@ -1474,7 +1474,7 @@ config:
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
     unsupported_deprecated_option: 'Det föråldrade `{$prop}`-alternativet stöds inte i Sveltia CMS. Använd `{$newProp}`-alternativet istället.'
     # Don’t localize `allow_multiple`, `multiple`, and `false`
-    allow_multiple: '`allow_multiple`-alternativet stöds inte i Sveltia CMS. Använd `multiple`-alternativet istället, som som standard är `false`.'
+    allow_multiple: '`allow_multiple`-alternativet stöds inte i Sveltia CMS. Använd `multiple`-alternativet istället, som har standard-värdet `false`.'
     # Don’t localize `field`, `fields`, and `types`
     invalid_list_field: 'List-fältet kan inte ha `field`-, `fields`- och `types`-alternativen tillsammans.'
     # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
@@ -1496,7 +1496,7 @@ config:
     oauth_no_app_id: 'OAuth-applikations-ID är inte definierad. Användare måste tillhandahålla en åtkomsttoken för att logga in.'
     editorial_workflow_unsupported: 'Redaktionellt arbetsflöde stöds ännu inte i Sveltia CMS.'
     open_authoring_unsupported: 'Öppet författarskap stöds ännu inte i Sveltia CMS.'
-    nested_collections_unsupported: 'Inbäddade samlingar stöds ännu inte i Sveltia CMS.'
+    nested_collections_unsupported: 'Nästlade samlingar stöds ännu inte i Sveltia CMS.'
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}`-alternativet stöds inte i Sveltia CMS. Det kommer att ignoreras.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
@@ -1578,7 +1578,7 @@ prefs:
     editor:
       title: Redigerare
       use_draft_backup:
-        switch_label: Säkerhetskopiera automatiskt utkast
+        switch_label: Säkerhetskopiera utkast automatiskt
       close_on_save:
         switch_label: Stäng redigeraren efter att ha sparat ett utkast
       close_with_escape:
