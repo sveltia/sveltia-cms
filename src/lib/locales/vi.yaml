@@ -325,7 +325,7 @@ files: Tệp
 # Asset location selector: option group labels
 asset_location:
   # Assets stored in the site’s Git repository
-  repository: Tệp trên trang web
+  repository: Kho lưu trữ nội bộ
   external: Nguồn bên ngoài
   stock_photos: Ảnh stock
 
@@ -441,7 +441,7 @@ hide_info: Ẩn thông tin
 
 # Folder display labels when no specific path is configured
 all_assets: Tất cả các tệp
-global_assets: Các tệp dùng chung
+global_assets: Tệp dùng chung
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -1182,7 +1182,7 @@ size: Kích cỡ
 dimensions: Kích thước
 duration: Thời lượng
 # Short heading for a list of entries using the selected asset
-used_in: Được sử dụng trong
+used_in: Nơi sử dụng
 created_date: Ngày tạo
 location: Vị trí
 
@@ -1446,7 +1446,7 @@ config:
     missing_media_folder: Thư mục phương tiện không được xác định.
     invalid_media_folder: Thư mục phương tiện được cấu hình không hợp lệ. Giá trị phải là một chuỗi.
     invalid_public_folder: Thư mục chung được cấu hình không hợp lệ. Giá trị phải là một chuỗi.
-    public_folder_relative_path: Thư mục chung được định cấu hình không hợp lệ. Nó phải là một đường dẫn tuyệt đối bắt đầu bằng “/”.
+    public_folder_relative_path: Thư mục chung được cấu hình không hợp lệ. Giá trị phải là đường dẫn tuyệt đối bắt đầu bằng “/”.
     public_folder_absolute_url: URL tuyệt đối cho tùy chọn thư mục chung không được hỗ trợ trong Sveltia CMS.
     # Don’t localize `asset_collections`
     invalid_asset_collections: Tùy chọn `asset_collections` không hợp lệ. Giá trị phải là một mảng.
