@@ -42,6 +42,15 @@ export const REUSABLE_BUILTIN_FIELD_TYPES = [
  * @type {Map<string, FieldTypeDefinition>}
  */
 const builtInFieldTypeCache = new Map();
+/**
+ * Cache of the field configurations converted with {@link normalizeFieldConfig}. The conversion is
+ * done whenever a built-in Svelte component reads the `fieldConfig` prop, which happens several
+ * times per render as the prop is passed down the component tree, and deep-converting an Immutable
+ * Map that often is wasteful. Both an Immutable Map and a plain field configuration are immutable
+ * objects, so the result stays valid as long as the source object is alive.
+ * @type {WeakMap<object, CustomField>}
+ */
+const normalizedFieldConfigCache = new WeakMap();
 
 /**
  * Convert the `field` prop passed to a React component to a field configuration object that a
@@ -54,12 +63,12 @@ const builtInFieldTypeCache = new Map();
  * @param {any} field Field configuration.
  * @returns {CustomField} Field configuration.
  */
-const normalizeFieldConfig = (field) => {
-  if (typeof field?.toJS === 'function') {
+const convertFieldConfig = (field) => {
+  if (typeof field.toJS === 'function') {
     return field.toJS();
   }
 
-  if (typeof field?.get === 'function') {
+  if (typeof field.get === 'function') {
     return /** @type {CustomField} */ (
       new Proxy(/** @type {any} */ ({}), {
         // eslint-disable-next-line jsdoc/require-jsdoc
@@ -71,6 +80,30 @@ const normalizeFieldConfig = (field) => {
   }
 
   return /** @type {CustomField} */ (isObject(field) ? field : {});
+};
+
+/**
+ * Convert the `field` prop with {@link convertFieldConfig}, reusing the result of a previous
+ * conversion of the same object.
+ * @param {any} field Field configuration.
+ * @returns {CustomField} Field configuration.
+ */
+const normalizeFieldConfig = (field) => {
+  if (field === null || (typeof field !== 'object' && typeof field !== 'function')) {
+    return /** @type {CustomField} */ ({});
+  }
+
+  const cache = normalizedFieldConfigCache.get(field);
+
+  if (cache) {
+    return cache;
+  }
+
+  const fieldConfig = convertFieldConfig(field);
+
+  normalizedFieldConfigCache.set(field, fieldConfig);
+
+  return fieldConfig;
 };
 
 /**

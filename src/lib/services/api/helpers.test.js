@@ -899,6 +899,35 @@ describe('React Helpers', () => {
       mockGet.mockReturnValue([]);
     });
 
+    it('should not build the field metadata until it’s read', () => {
+      const mockDraft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        originalEntry: {
+          slug: 'test-post',
+          locales: { en: { slug: 'test-post', path: '/posts/test-post', content: {} } },
+        },
+        currentValues: { en: { title: 'Updated Title' } },
+      };
+
+      const result = buildPreviewData({ draft: mockDraft, locale: 'en' });
+
+      // Building the metadata looks up a field config for every value in the entry, which a custom
+      // field control, the only consumer of `entryMap` alone, shouldn’t have to pay for
+      expect(result.entryMap).toBeDefined();
+      expect(mockGetField).not.toHaveBeenCalled();
+
+      const { fieldsMetaData } = result;
+
+      expect(isMap(fieldsMetaData)).toBe(true);
+      expect(mockGetField).toHaveBeenCalledOnce();
+
+      // The result is kept, so several previews reading it in the same tick share the computation
+      expect(result.fieldsMetaData).toBe(fieldsMetaData);
+      expect(mockGetField).toHaveBeenCalledOnce();
+    });
+
     it('should build preview data with all required properties', () => {
       const mockDraft = {
         collectionName: 'posts',

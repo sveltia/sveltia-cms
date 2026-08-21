@@ -261,10 +261,35 @@ describe('built-in field control component', () => {
     expect(svelteProps.fieldLabel).toBe('refgroup');
   });
 
+  test('converts a field configuration only once', async () => {
+    const { control } = /** @type {any} */ (getFieldTypeDefinition('select'));
+    const toJS = vi.fn(() => ({ name: 'refgroup', options: ['foo'] }));
+
+    // A class instance, like an Immutable Map, so that it’s not deep-proxied by Svelte
+    class ImmutableLike {
+      toJS = toJS;
+    }
+
+    const field = new ImmutableLike();
+    const context = await render(control, { value: 'foo', field, forID: 'field-1' });
+
+    // A built-in component reads the `fieldConfig` prop several times as it’s passed down the
+    // component tree, and deep-converting an Immutable Map that often would be wasteful
+    expect(context.svelteProps.fieldConfig).toBe(context.svelteProps.fieldConfig);
+
+    await context.rerender({ value: 'bar', field, forID: 'field-1' });
+
+    expect(context.svelteProps.fieldConfig.options).toEqual(['foo']);
+    expect(toJS).toHaveBeenCalledOnce();
+  });
+
   test('falls back to empty values when no field configuration is given', async () => {
     const { control } = /** @type {any} */ (getFieldTypeDefinition('string'));
     const { svelteProps } = await render(control, {});
+    // An array is not a valid configuration either
+    const { svelteProps: arrayProps } = await render(control, { field: [] });
 
+    expect(arrayProps.fieldConfig).toEqual({});
     expect(svelteProps.fieldConfig).toEqual({});
     expect(svelteProps.keyPath).toBe('');
     expect(svelteProps.fieldId).toBe('');
