@@ -87,10 +87,10 @@ later: Để sau
 
 # Entry and collection labels
 # Slug field heading in entry editors
-slug: Slug
+slug: Đường dẫn tĩnh
 # Fallback labels for singleton collections when names aren’t configured
-singleton: Singleton
-singletons: Singletons
+singleton: Trang đơn
+singletons: Các trang đơn
 
 # Error messages
 # Toast notification when clipboard operations fail
@@ -121,13 +121,13 @@ loading_site_data_error: Đã xảy ra lỗi khi tải dữ liệu trang web.
 sign_in_with_x: 'Đăng nhập bằng {$service}'
 
 # Access token dialog: alternative authentication method
-sign_in_using_access_token: Đăng nhập bằng mã thông báo truy cập
-sign_in_using_access_token_description: Nhập mã thông báo của bạn dưới đây. Mã này phải có quyền đọc/ghi nội dung trong kho mã nguồn.
+sign_in_using_access_token: Đăng nhập bằng mã truy cập
+sign_in_using_access_token_description: Nhập mã truy cập của bạn dưới đây. Mã này phải có quyền đọc/ghi nội dung trong kho mã nguồn.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
-sign_in_using_access_token_link: Bạn có thể tạo mã thông báo trên trang cài đặt người dùng của <a>{$service}</a>.
+sign_in_using_access_token_link: Bạn có thể tạo mã truy cập trên trang cài đặt người dùng của <a>{$service}</a>.
 # Input field label for personal access token
-personal_access_token: Mã thông báo truy cập cá nhân
+personal_access_token: Mã truy cập cá nhân
 
 # Authentication progress indicators
 authorizing: Đang ủy quyền…
@@ -148,15 +148,15 @@ sign_in_error:
   not_project_root: Thư mục đã chọn không phải là thư mục gốc của kho mã nguồn. Vui lòng thử lại.
   picker_dismissed: Không thể chọn thư mục gốc của kho mã nguồn. Vui lòng thử lại.
   authentication_aborted: Xác thực bị hủy bỏ. Vui lòng thử lại.
-  invalid_token: Mã thông báo được cung cấp không hợp lệ. Vui lòng kiểm tra và thử lại.
+  invalid_token: Mã truy cập được cung cấp không hợp lệ. Vui lòng kiểm tra và thử lại.
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
   UNSUPPORTED_BACKEND: Dịch vụ Git của bạn không được trình xác thực hỗ trợ.
   UNSUPPORTED_DOMAIN: Tên miền của bạn không được phép sử dụng trình xác thực.
   MISCONFIGURED_CLIENT: ID ứng dụng khách hoặc bí mật của ứng dụng OAuth chưa được định cấu hình.
   AUTH_CODE_REQUEST_FAILED: Không nhận được mã ủy quyền. Vui lòng thử lại sau.
   CSRF_DETECTED: Đã phát hiện thấy cuộc tấn công CSRF tiềm ẩn. Luồng xác thực bị hủy bỏ.
-  TOKEN_REQUEST_FAILED: Không thể yêu cầu mã thông báo truy cập. Vui lòng thử lại sau.
-  TOKEN_REFRESH_FAILED: Không làm mới được mã thông báo truy cập. Vui lòng thử lại sau.
+  TOKEN_REQUEST_FAILED: Không thể yêu cầu mã truy cập. Vui lòng thử lại sau.
+  TOKEN_REFRESH_FAILED: Không làm mới được mã truy cập. Vui lòng thử lại sau.
   MALFORMED_RESPONSE: Máy chủ phản hồi với dữ liệu không đúng định dạng. Vui lòng thử lại sau.
 
 # Backend and repository validation errors
@@ -271,7 +271,7 @@ show_account_menu: Hiển thị trình đơn tài khoản
 account: Tài khoản
 
 # Account menu items: links to external resources
-live_site: Trang web chính thức
+live_site: Trang web
 git_repository: Kho mã nguồn Git
 settings: Cài đặt
 
@@ -325,9 +325,9 @@ files: Tệp
 # Asset location selector: option group labels
 asset_location:
   # Assets stored in the site’s Git repository
-  repository: Thư viện
+  repository: Tệp trên trang web
   external: Nguồn bên ngoài
-  stock_photos: Ảnh miễn phí
+  stock_photos: Ảnh stock
 
 # Sidebar and list labels
 # Collection assets panel aria-label
@@ -361,13 +361,13 @@ viewing_x_collection: |
 viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
-    0   {{ Bạn hiện đang xem thư mục tệp “{$folder}”; thư mục này chưa có tệp nào. }}
+    0   {{ Bạn hiện đang xem thư mục tệp “{$folder}”, thư mục này chưa có tệp nào. }}
     1   {{ Bạn hiện đang xem thư mục tệp “{$folder}”, có một tệp. }}
     *   {{ Bạn hiện đang xem thư mục tệp “{$folder}”, có {$count} tệp. }}
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
-singleton_selected_announcement: Nhấn Enter để chỉnh sửa tệp “{$file}”.
+singleton_selected_announcement: Nhấn Enter để chỉnh sửa trang đơn “{$file}”.
 
 # Error messages: collection or file not found
 collection_not_found: Không tìm thấy chuyên mục.
@@ -398,7 +398,7 @@ sort_keys:
   # No sorting; entries appear in their natural repository order
   none: Không có
   name: Tên
-  slug: Slug
+  slug: Đường dẫn tĩnh
   # Sort by the last commit’s author name
   commit_author: Người cập nhật
   # Sort by the last commit date
@@ -412,7 +412,7 @@ sort_keys:
 # {$label} is the localized sort field label
 ascending: '{$label}, từ A đến Z'
 ascending_date: '{$label}, cũ đến mới'
-descending: '{$label}, Z đến A'
+descending: '{$label}, từ Z đến A'
 descending_date: '{$label}, mới đến cũ'
 
 # Filter menu: button labels and options
@@ -427,7 +427,7 @@ grouping_options: Tùy chọn nhóm
 type: Loại
 all: Tất cả
 # Asset type labels
-image: Hình ảnh
+image: Ảnh
 video: Video
 audio: Âm thanh
 document: Tài liệu
@@ -467,7 +467,6 @@ creating_entries_disabled_by_quota: Bạn không thể thêm bài viết mới v
 creating_entries_nearing_quota: |
   .input {$remaining :integer}
   .match $remaining
-    1   {{ Chuyên mục này sắp đạt giới hạn {$quota} bài viết. Bạn chỉ có thể tạo thêm {$remaining} bài viết. }}
     *   {{ Chuyên mục này sắp đạt giới hạn {$quota} bài viết. Bạn chỉ có thể tạo thêm {$remaining} bài viết. }}
 
 # Navigation: back links and list labels
@@ -494,7 +493,6 @@ viewing_entry_search_results: |
   .input {$count :integer}
   .match $count
     0   {{ Không tìm thấy bài viết nào cho “{$terms}”. }}
-    1   {{ Đã tìm thấy {$count} bài viết cho “{$terms}”. }}
     *   {{ Đã tìm thấy {$count} bài viết cho “{$terms}”. }}
 # Asset search results with counts
 # {$terms} is the search query and {$count} is the number of matching assets
@@ -502,7 +500,6 @@ viewing_asset_search_results: |
   .input {$count :integer}
   .match $count
     0   {{ Không tìm thấy tệp nào cho “{$terms}”. }}
-    1   {{ Đã tìm thấy {$count} tệp cho “{$terms}”. }}
     *   {{ Đã tìm thấy {$count} tệp cho “{$terms}”. }}
 
 # Result count labels
@@ -576,15 +573,15 @@ replace_x: 'Thay thế {$name}'
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
-click_to_browse: Bấm để duyệt…
+click_to_browse: Nhấp để duyệt tệp…
 # Browse prompt shown on touch devices
-tap_to_browse: Nhấn để duyệt…
+tap_to_browse: Chạm để duyệt tệp…
 # Drop zone text with browse button
 # {$count} is the number of files expected by the current picker mode
 drop_files_or_click_to_browse: |
   .input {$count :integer}
   .match $count
-    *   {{ Thả tệp vào đây hoặc nhấp để duyệt… }}
+    *   {{ Thả tệp vào đây hoặc nhấp để duyệt }}
 # Partial drop zone text (ends with inline button)
 # {$count} is the number of files expected by the current picker mode
 # After the “or” text, the inline buttons are rendered with the localized strings
@@ -605,10 +602,10 @@ browse: Duyệt tệp
 # Generic clipboard paste action used by non-image file fields
 paste: Dán
 # Clipboard paste action used by image fields
-paste_image: Dán hình ảnh
+paste_image: Dán ảnh
 
 # Clipboard paste errors
-no_image_in_clipboard: Không tìm thấy hình ảnh nào trong clipboard.
+no_image_in_clipboard: Không tìm thấy ảnh nào trong bộ nhớ tạm.
 clipboard_access_denied: Quyền truy cập bộ nhớ tạm bị từ chối.
 
 # Drag-and-drop overlay text (shown while dragging)
@@ -811,7 +808,6 @@ entry_duplicated: Đã nhân bản bài viết thành bản nháp mới.
 entry_validation_errors: |
   .input {$count :integer}
   .match $count
-    1   {{ Có {$count} trường bị lỗi. Vui lòng sửa lỗi để lưu bài viết. }}
     *   {{ Có {$count} trường bị lỗi. Vui lòng sửa lỗi để lưu bài viết. }}
 
 # ==============================================================================
@@ -920,7 +916,7 @@ edit_entry_announcement: Hiện bạn đang chỉnh sửa bài viết “{$entry
 # {$file} is the file name and {$collection} is the collection label
 edit_file_announcement: Hiện bạn đang chỉnh sửa tệp “{$file}” trong chuyên mục “{$collection}”.
 # {$file} is the singleton file name
-edit_singleton_announcement: Bây giờ bạn đang chỉnh sửa tệp “{$file}”.
+edit_singleton_announcement: Bây giờ bạn đang chỉnh sửa trang đơn “{$file}”.
 
 # Save button variants
 # Shown when CI skip is enabled/disabled
@@ -977,7 +973,7 @@ unsupported_field_type_x: 'Loại trường không được hỗ trợ: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'Kích hoạt {$locale}'
+enable_x_locale: 'Bật {$locale}'
 reenable_x_locale: 'Bật lại {$locale}'
 disable_x_locale: 'Tắt {$locale}'
 
@@ -1014,12 +1010,12 @@ revert_changes: Hoàn tác thay đổi
 revert_all_changes: Hoàn tác tất cả thay đổi
 
 # Slug editing
-edit_slug: Chỉnh sửa tên đường dẫn
-edit_slug_warning: Đổi tên đường dẫn có thể làm hỏng các liên kết đến bài viết. Sveltia CMS không tự động cập nhật liên kết trong những bài viết khác. Bạn cần kiểm tra và cập nhật thủ công.
+edit_slug: Chỉnh sửa đường dẫn tĩnh
+edit_slug_warning: Đổi đường dẫn tĩnh có thể làm hỏng các liên kết đến bài viết. Sveltia CMS không tự động cập nhật liên kết trong những bài viết khác. Bạn cần kiểm tra và cập nhật thủ công.
 edit_slug_error:
-  empty: Tên đường dẫn không được để trống.
-  invalid: Tên đường dẫn không được chứa ký tự đặc biệt, kể cả dấu gạch chéo và dấu cách.
-  duplicate: Tên đường dẫn này đang được một bài viết khác sử dụng.
+  empty: Đường dẫn tĩnh không được để trống.
+  invalid: Đường dẫn tĩnh không được chứa ký tự đặc biệt, kể cả dấu gạch chéo và dấu cách.
+  duplicate: Đường dẫn tĩnh này đang được một bài viết khác sử dụng.
 
 # Required field indicator
 required: Bắt buộc
@@ -1036,7 +1032,6 @@ editor:
       .input {$count :integer}
       .match $count
         0   {{ Không có trường nào được dịch từ {$source}. }}
-        1   {{ Đã dịch {$count} trường từ {$source}. }}
         *   {{ Đã dịch {$count} trường từ {$source}. }}
   copy:
     none: Không có gì để sao chép.
@@ -1045,7 +1040,6 @@ editor:
       .input {$count :integer}
       .match $count
         0   {{ Không có trường nào được sao chép từ {$source}. }}
-        1   {{ Đã sao chép {$count} trường từ {$source}. }}
         *   {{ Đã sao chép {$count} trường từ {$source}. }}
 
 # ==============================================================================
@@ -1125,8 +1119,8 @@ entry_sidebar:
 
   # Validation panel: shows field validation errors
   validation:
-    title: Xác thực
-    placeholder: Kết quả xác thực sẽ được hiển thị tại đây.
+    title: Kiểm tra lỗi
+    placeholder: Kết quả kiểm tra sẽ được hiển thị tại đây.
     no_errors_found: Không tìm thấy lỗi.
 
   # History panel: shows entry commit history
@@ -1138,7 +1132,7 @@ entry_sidebar:
   # Backlinks panel: shows entries referencing this entry
   backlinks:
     title: Được liên kết từ
-    no_entries: Không có bài viết nào tham chiếu bài viết này.
+    no_entries: Không có bài viết nào liên kết đến bài viết này.
 
 # Entry save error dialog
 saving_entry:
@@ -1237,11 +1231,11 @@ assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: Chọn tệp
-    image: Chọn hình ảnh
+    image: Chọn ảnh
 
   # Search input labels
   search_for_file: Tìm kiếm tệp
-  search_for_image: Tìm kiếm hình ảnh
+  search_for_image: Tìm kiếm ảnh
 
   # Locations panel aria-label
   locations: Vị trí
@@ -1261,12 +1255,12 @@ assets_dialog:
     image_fetch_failed: Đã xảy ra lỗi khi tải xuống tệp đã chọn. Vui lòng thử lại sau.
 
   # Stock photo panels
-  available_images: Hình ảnh có sẵn
+  available_images: Ảnh có sẵn
 
   # URL entry option
   enter_url: Nhập URL
   enter_file_url: 'Nhập URL của tệp:'
-  enter_image_url: 'Nhập URL của hình ảnh:'
+  enter_image_url: 'Nhập URL của ảnh:'
 
   # Large file warning dialog
   large_file:
@@ -1282,7 +1276,7 @@ assets_dialog:
 
   # Photo credit dialog (stock photos)
   photo_credit:
-    title: Ghi nguồn hình ảnh
+    title: Ghi nguồn ảnh
     description: 'Hãy ghi nguồn như sau nếu có thể:'
 
   # Unsaved asset badge
@@ -1318,7 +1312,7 @@ now: Hiện tại
 
 # Rich-text editor: component field labels
 editor_components:
-  image: Hình ảnh
+  image: Ảnh
   src: Nguồn
   alt: Văn bản thay thế
   title: Tiêu đề
@@ -1377,11 +1371,11 @@ cloud_storage:
     activate:
       button_label: Kích hoạt Cloudinary
       description: Sau khi đăng nhập, nhấp vào nút Đăng nhập lần nữa để tiếp tục.
-    auth_key_label: Khóa truy cập bí mật
+    auth_key_label: Khóa API bí mật
     open_library: Mở Cloudinary
 
   uploadcare:
-    auth_key_label: Khóa truy cập bí mật
+    auth_key_label: Khóa API bí mật
 
   aws_s3:
     auth_key_label: Khóa truy cập bí mật
@@ -1439,7 +1433,7 @@ config:
     # {$name} is the backend name from the CMS configuration
     unsupported_known_backend: Dịch vụ {$name} <a>không được Sveltia CMS hỗ trợ</a>.
     # {$name} is the backend name from the CMS configuration
-    unsupported_deprecated_backend: Dịch vụ {$name} không còn được khuyến nghị và <a>không được Sveltia CMS hỗ trợ</a>.
+    unsupported_deprecated_backend: Dịch vụ {$name} đã lỗi thời và <a>không được Sveltia CMS hỗ trợ</a>.
     unsupported_custom_backend: Sveltia CMS <a>không hỗ trợ các dịch vụ tùy chỉnh</a>.
     unsupported_backend_suggestion: Thay vào đó, hãy sử dụng một trong các <a>dịch vụ được hỗ trợ</a>.
     missing_repository: Chưa xác định kho mã nguồn.
@@ -1450,12 +1444,12 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Tùy chọn `auth_methods` phải chứa ít nhất một phương thức.
     missing_media_folder: Thư mục phương tiện không được xác định.
-    invalid_media_folder: Thư mục phương tiện được định cấu hình không hợp lệ. Nó phải là một chuỗi.
-    invalid_public_folder: Thư mục chung được định cấu hình không hợp lệ. Nó phải là một chuỗi.
+    invalid_media_folder: Thư mục phương tiện được cấu hình không hợp lệ. Giá trị phải là một chuỗi.
+    invalid_public_folder: Thư mục chung được cấu hình không hợp lệ. Giá trị phải là một chuỗi.
     public_folder_relative_path: Thư mục chung được định cấu hình không hợp lệ. Nó phải là một đường dẫn tuyệt đối bắt đầu bằng “/”.
     public_folder_absolute_url: URL tuyệt đối cho tùy chọn thư mục chung không được hỗ trợ trong Sveltia CMS.
     # Don’t localize `asset_collections`
-    invalid_asset_collections: Tùy chọn `asset_collections` không hợp lệ. Nó phải là một mảng.
+    invalid_asset_collections: Tùy chọn `asset_collections` không hợp lệ. Giá trị phải là một mảng.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Nhóm tệp {$count} phải có tùy chọn `name` là một chuỗi không trống.
     # {$name} is the invalid or duplicate asset collection name
@@ -1467,7 +1461,7 @@ config:
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Chuyên mục phải có tùy chọn `folder`, `files` hoặc `divider`.
     # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: Chuyên mục không thể có đồng thời các tùy chọn `folder`, `files` và `divider`.
+    invalid_collection_multiple_options: Chuyên mục không thể có các tùy chọn `folder`, `files` và `divider` cùng nhau.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: Phần mở rộng `{$extension}` không khớp với định dạng `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
@@ -1489,17 +1483,17 @@ config:
     missing_view_filter_name: Bộ lọc chế độ xem {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: Tên bộ lọc chế độ xem `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
-    duplicate_view_filter_name: Tên bộ lọc chế độ xem phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    duplicate_view_filter_name: Tên bộ lọc chế độ xem `{$name}` đã tồn tại. Hãy chọn tên khác.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Chuyên mục {$count} phải có tùy chọn `name` là một chuỗi không trống.
     # {$name} is the invalid or duplicate collection name
     invalid_collection_name: Tên chuyên mục `{$name}` không hợp lệ. Tên không được chứa ký tự đặc biệt.
-    duplicate_collection_name: Tên chuyên mục phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    duplicate_collection_name: Tên chuyên mục `{$name}` đã tồn tại. Hãy chọn tên khác.
     # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
     missing_collection_file_name: Tệp {$count} trong chuyên mục phải có tùy chọn `name` là một chuỗi không trống.
     # {$name} is the invalid or duplicate collection file name
     invalid_collection_file_name: Tên tệp `{$name}` trong chuyên mục không hợp lệ. Tên không được chứa ký tự đặc biệt.
-    duplicate_collection_file_name: Tên tệp trong chuyên mục phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    duplicate_collection_file_name: Tên tệp `{$name}` trong chuyên mục đã tồn tại. Hãy chọn tên khác.
     # Don’t localize `fields`
     collection_no_fields: Chuyên mục phải có tùy chọn `fields` chứa ít nhất một trường.
     # Don’t localize `fields`
@@ -1510,17 +1504,17 @@ config:
     missing_field_name: Trường {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
     # {$name} is the invalid or duplicate field name
     invalid_field_name: Tên trường `{$name}` không hợp lệ vì chứa ký tự đặc biệt. Nếu muốn tạo trường lồng nhau, <a>hãy sử dụng trường đối tượng thay cho ký hiệu dấu chấm</a>.
-    duplicate_field_name: Tên trường phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    duplicate_field_name: Tên trường `{$name}` đã tồn tại. Hãy chọn tên khác.
     # {$count} is the 1-based variable type index in the current types array
     missing_variable_type: Loại biến {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
     # {$name} is the invalid or duplicate variable type name
     invalid_variable_type: Tên loại biến `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
-    duplicate_variable_type: Tên loại biến phải là duy nhất nhưng `{$name}` được sử dụng nhiều lần.
+    duplicate_variable_type: Tên loại biến `{$name}` đã tồn tại. Hãy chọn tên khác.
     date_field_type: 'Loại trường Date đã lỗi thời và không được Sveltia CMS hỗ trợ. Hãy dùng trường DateTime với tùy chọn `type: date`.'
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Múi giờ không hợp lệ: {$timeZone}. Phải là mã định danh múi giờ IANA hợp lệ như `America/New_York` hoặc `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
-    unsupported_deprecated_option: Tùy chọn `{$prop}` không được dùng nữa không được hỗ trợ trong Sveltia CMS. Thay vào đó hãy sử dụng tùy chọn `{$newProp}`.
+    unsupported_deprecated_option: Tùy chọn `{$prop}` đã lỗi thời và không được Sveltia CMS hỗ trợ. Hãy dùng tùy chọn `{$newProp}` thay thế.
     # Don’t localize `allow_multiple`, `multiple`, and `false`
     allow_multiple: Tùy chọn `allow_multiple` không được hỗ trợ trong Sveltia CMS. Thay vào đó, hãy sử dụng tùy chọn `multiple`, mặc định là `false`.
     # Don’t localize `field`, `fields`, and `types`
@@ -1532,7 +1526,7 @@ config:
     # Don’t localize `fields`, and `types`
     object_field_missing_fields: Trường Đối tượng phải được xác định tùy chọn `fields` hoặc `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
-    relation_field_invalid_collection: Chuyên mục `{$collection}` được tham chiếu không hợp lệ hoặc chưa được xác định.
+    relation_field_invalid_collection: Chuyên mục `{$collection}` được tham chiếu không hợp lệ hoặc không được xác định.
     relation_field_invalid_collection_file: Tệp `{$file}` được tham chiếu không hợp lệ hoặc không được xác định.
     # Don’t localize `file`
     relation_field_missing_file_name: Phải xác định tùy chọn `file` cho quan hệ với chuyên mục dạng tệp.
@@ -1541,8 +1535,8 @@ config:
 
   # Warning messages (logged to console)
   warning:
-    oauth_no_app_id: ID ứng dụng OAuth không được xác định. Người dùng được yêu cầu cung cấp mã thông báo truy cập để đăng nhập.
-    editorial_workflow_unsupported: Luồng biên tập hiện chỉ hỗ trợ dịch vụ GitHub và GitLab.
+    oauth_no_app_id: ID ứng dụng OAuth không được xác định. Người dùng được yêu cầu cung cấp mã truy cập để đăng nhập.
+    editorial_workflow_unsupported: Quy trình biên tập hiện chỉ hỗ trợ dịch vụ GitHub và GitLab.
     open_authoring_unsupported: Open Authoring chưa được Sveltia CMS hỗ trợ.
     nested_collections_unsupported: Sveltia CMS chưa hỗ trợ các chuyên mục lồng nhau.
     # {$prop} is the unsupported option name that will be ignored
@@ -1577,14 +1571,14 @@ local_workflow:
 # Editorial Workflow board announcement with the number of entries in each column. {$draft},
 # {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
 # because selecting a plural form on three numbers at once would need a variant per combination
-viewing_editorial_workflow: 'Bạn hiện đang xem bảng Quy trình biên tập. Bản nháp: {$draft}. Đang đánh giá: {$review}. Sẵn sàng: {$ready}. Đang chờ xóa: {$deletion}.'
+viewing_editorial_workflow: 'Bạn hiện đang xem bảng Quy trình biên tập. Bản nháp: {$draft}. Đang duyệt: {$review}. Sẵn sàng: {$ready}. Đang chờ xóa: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
 status:
   draft: Bản nháp
   drafts: Bản nháp
-  in_review: Đang xem xét
+  in_review: Đang duyệt
   ready: Sẵn sàng
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
@@ -1597,7 +1591,7 @@ workflow:
   # has a Cancel button of its own
   cancel_deletion: Hủy xóa
   confirm_cancelling_deletion: Bạn có chắc chắn muốn hủy việc xóa này không? Bài viết sẽ vẫn được xuất bản.
-  confirm_completing_deletion: Bạn có chắc chắn muốn xóa bài viết này? Bài viết sẽ được gỡ bỏ ngay lập tức.
+  confirm_completing_deletion: Bạn có chắc chắn muốn xóa bài viết này? Bài viết sẽ bị xóa ngay lập tức.
   # Toast notification shown after an entry has been marked for deletion in the entry editor. The
   # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
   # explained that it stays until the deletion is published, so this doesn’t repeat it
@@ -1645,7 +1639,7 @@ workflow:
   # request instead of committing a deletion to the configured branch. Keep the wording free of
   # Git jargon, as editors are often non-technical.
   # Used when the entry has never been published, so nothing of it is left afterwards
-  confirm_deleting_unpublished_entry: Bài viết này chưa được xuất bản nên việc xóa sẽ loại bỏ hoàn toàn bài viết.
+  confirm_deleting_unpublished_entry: Bài viết này chưa được xuất bản nên sẽ bị xóa vĩnh viễn.
   # Used when the entry updates one that is already live, which stays untouched. The dialog is
   # titled “Discard Changes”, so the wording is about discarding, not deleting
   confirm_discarding_entry_changes: Bài viết này có các thay đổi chưa xuất bản. Nếu hủy, nội dung sẽ trở về phiên bản đã xuất bản. Bài viết sẽ không bị xóa.
@@ -1831,17 +1825,17 @@ keyboard_shortcuts_:
 
 file_type_labels:
   # Image formats
-  avif: Hình ảnh AVIF
-  bmp: Hình ảnh bitmap
+  avif: Ảnh AVIF
+  bmp: Ảnh bitmap
   gif: Ảnh GIF
   ico: Tệp biểu tượng
-  jpeg: Hình ảnh JPEG
-  jpg: Hình ảnh JPEG
-  png: Hình ảnh PNG
-  svg: Hình ảnh SVG
-  tif: Hình ảnh TIFF
-  tiff: Hình ảnh TIFF
-  webp: Hình ảnh WebP
+  jpeg: Ảnh JPEG
+  jpg: Ảnh JPEG
+  png: Ảnh PNG
+  svg: Ảnh SVG
+  tif: Ảnh TIFF
+  tiff: Ảnh TIFF
+  webp: Ảnh WebP
   # Video formats
   avi: Video AVI
   m4v: Video MP4
@@ -1871,7 +1865,7 @@ file_type_labels:
   docx: Tài liệu Word
   odp: Bản trình chiếu OpenDocument
   ods: Bảng tính OpenDocument
-  odt: Văn bản tài liệu mở
+  odt: Văn bản OpenDocument
   pdf: Tài liệu PDF
   ppt: Thuyết trình PowerPoint
   pptx: Thuyết trình PowerPoint
