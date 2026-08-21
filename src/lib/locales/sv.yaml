@@ -148,7 +148,7 @@ sign_in_error:
   not_project_root: Den valda mappen är inte en rotkatalog för Git-repot. Försök igen.
   picker_dismissed: En rotkatalog för Git-repot kunde inte väljas. Försök igen.
   authentication_aborted: Autentiseringen avbröts. Försök igen.
-  invalid_token: Angivet token är ogiltigt. Kontrollera och försök igen.
+  invalid_token: Den angivna nyckeln är ogiltig. Kontrollera och försök igen.
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
   UNSUPPORTED_BACKEND: Din Git-backend stöds inte av autentiseraren.
   UNSUPPORTED_DOMAIN: Din domän har inte tillåtelse att använda autentiseraren.
