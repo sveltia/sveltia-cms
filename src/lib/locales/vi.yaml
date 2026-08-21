@@ -180,7 +180,7 @@ unexpected_error: Đã xảy ra lỗi
 entry_parse_errors: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã xảy ra lỗi khi đọc tệp nội dung. Kiểm tra bảng điều khiển của trình duyệt để biết chi tiết. }}
+    one {{ Đã xảy ra lỗi khi đọc tệp nội dung. Kiểm tra bảng điều khiển của trình duyệt để biết chi tiết. }}
     *   {{ Đã xảy ra lỗi khi đọc {$count} tệp nội dung. Kiểm tra bảng điều khiển của trình duyệt để biết chi tiết. }}
 
 # ==============================================================================
@@ -354,7 +354,7 @@ viewing_x_collection: |
   .input {$count :integer}
   .match $count
     0   {{ Bạn hiện đang xem chuyên mục “{$collection}”, chưa có bài viết nào. }}
-    1   {{ Bạn hiện đang xem chuyên mục “{$collection}”, có một bài viết. }}
+    one {{ Bạn hiện đang xem chuyên mục “{$collection}”, có một bài viết. }}
     *   {{ Bạn hiện đang xem chuyên mục “{$collection}”, có {$count} bài viết. }}
 # Asset folder view announcements with asset counts
 # {$folder} is the folder label and {$count} is the number of assets in it
@@ -362,7 +362,7 @@ viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
     0   {{ Bạn hiện đang xem thư mục tệp “{$folder}”, thư mục này chưa có tệp nào. }}
-    1   {{ Bạn hiện đang xem thư mục tệp “{$folder}”, có một tệp. }}
+    one {{ Bạn hiện đang xem thư mục tệp “{$folder}”, có một tệp. }}
     *   {{ Bạn hiện đang xem thư mục tệp “{$folder}”, có {$count} tệp. }}
 
 # Singleton file selection announcement
@@ -454,7 +454,7 @@ global_assets: Tệp dùng chung
 loading_entries: |
   .input {$count :integer}
   .match $count
-    1   {{ Đang tải bài viết… }}
+    one {{ Đang tải bài viết… }}
     *   {{ Đang tải {$count} bài viết… }}
 # Error message when entry cannot be found
 entry_not_found: Không tìm thấy bài viết.
@@ -550,7 +550,7 @@ enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
     0   {{ Nhập tên mới bên dưới. }}
-    1   {{ Nhập tên mới bên dưới. Bài viết đang sử dụng tệp này cũng sẽ được cập nhật. }}
+    one {{ Nhập tên mới bên dưới. Bài viết đang sử dụng tệp này cũng sẽ được cập nhật. }}
     *   {{ Nhập tên mới bên dưới. {$count} bài viết đang sử dụng tệp này cũng sẽ được cập nhật. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
@@ -638,20 +638,20 @@ choose_files: |
 delete_assets: |
   .input {$count :integer}
   .match $count
-    1   {{ Xóa tệp }}
+    one {{ Xóa tệp }}
     *   {{ Xóa {$count} tệp }}
 # {$count} is the number of selected assets
 delete_selected_assets: |
   .input {$count :integer}
   .match $count
-    1   {{ Xóa tệp đã chọn }}
+    one {{ Xóa tệp đã chọn }}
     *   {{ Xóa {$count} tệp đã chọn }}
 confirm_deleting_this_asset: Bạn có chắc chắn muốn xóa tệp này không?
 # {$count} is the number of selected assets
 confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
-    1   {{ Bạn có chắc chắn muốn xóa tệp đã chọn không? }}
+    one {{ Bạn có chắc chắn muốn xóa tệp đã chọn không? }}
     *   {{ Bạn có chắc chắn muốn xóa {$count} tệp đã chọn không? }}
 confirm_deleting_all_assets: Bạn có chắc chắn muốn xóa tất cả tệp không?
 
@@ -660,13 +660,13 @@ confirm_deleting_all_assets: Bạn có chắc chắn muốn xóa tất cả tệ
 delete_entries: |
   .input {$count :integer}
   .match $count
-    1   {{ Xóa bài viết }}
+    one {{ Xóa bài viết }}
     *   {{ Xóa {$count} bài viết }}
 # {$count} is the number of selected entries
 delete_selected_entries: |
   .input {$count :integer}
   .match $count
-    1   {{ Xóa bài viết đã chọn }}
+    one {{ Xóa bài viết đã chọn }}
     *   {{ Xóa {$count} bài viết đã chọn }}
 confirm_deleting_this_entry: Bạn có chắc chắn muốn xóa bài viết này?
 confirm_deleting_this_entry_with_assets: Bạn có chắc chắn muốn xóa bài viết này và các tệp liên quan không?
@@ -676,13 +676,13 @@ deleting_entry_failed: Không thể xóa bài viết. Vui lòng thử lại.
 confirm_deleting_selected_entries: |
   .input {$count :integer}
   .match $count
-    1   {{ Bạn có chắc chắn muốn xóa bài viết đã chọn không? }}
+    one {{ Bạn có chắc chắn muốn xóa bài viết đã chọn không? }}
     *   {{ Bạn có chắc chắn muốn xóa {$count} bài viết đã chọn không? }}
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
-    1   {{ Bạn có chắc chắn muốn xóa bài viết đã chọn và các tệp liên quan không? }}
+    one {{ Bạn có chắc chắn muốn xóa bài viết đã chọn và các tệp liên quan không? }}
     *   {{ Bạn có chắc chắn muốn xóa {$count} bài viết đã chọn và các tệp liên quan không? }}
 confirm_deleting_all_entries: Bạn có chắc chắn muốn xóa tất cả bài viết?
 confirm_deleting_all_entries_with_assets: Bạn có chắc chắn muốn xóa tất cả bài viết và các tệp liên quan không?
@@ -710,7 +710,7 @@ saving_reorder_failed: Không thể lưu thứ tự mới. Vui lòng thử lại
 processing_files: |
   .input {$count :integer}
   .match $count
-    1   {{ Đang xử lý tệp. Quá trình này có thể mất vài phút. }}
+    one {{ Đang xử lý tệp. Quá trình này có thể mất vài phút. }}
     *   {{ Đang xử lý {$count} tệp. Quá trình này có thể mất vài phút. }}
 
 # Uploading section aria-label
@@ -726,7 +726,7 @@ confirm_replacing_file: '“{$name}” sẽ được thay thế bằng tệp nà
 confirm_uploading_files: |
   .input {$count :integer}
   .match $count
-    1   {{ Tệp sau sẽ được tải lên thư mục “{$folder}”: }}
+    one {{ Tệp sau sẽ được tải lên thư mục “{$folder}”: }}
     *   {{ {$count} tệp sau sẽ được tải lên thư mục “{$folder}”: }}
 
 # File size validation
@@ -736,7 +736,7 @@ oversized_files: Tệp vượt quá dung lượng cho phép
 warning_oversized_files: |
   .input {$count :integer}
   .match $count
-    1   {{ Không thể tải tệp lên vì vượt quá dung lượng tối đa {$size}. Vui lòng giảm dung lượng hoặc chọn tệp khác. }}
+    one {{ Không thể tải tệp lên vì vượt quá dung lượng tối đa {$size}. Vui lòng giảm dung lượng hoặc chọn tệp khác. }}
     *   {{ Không thể tải lên {$count} tệp vì vượt quá dung lượng tối đa {$size}. Vui lòng giảm dung lượng hoặc chọn tệp khác. }}
 
 # File integrity validation
@@ -746,7 +746,7 @@ invalid_files: Tệp không hợp lệ
 warning_invalid_files: |
   .input {$count :integer}
   .match $count
-    1   {{ Không thể tải tệp lên vì tệp bị hỏng hoặc nội dung không khớp với định dạng tệp. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }}
+    one {{ Không thể tải tệp lên vì tệp bị hỏng hoặc nội dung không khớp với định dạng tệp. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }}
     *   {{ Không thể tải lên {$count} tệp vì tệp bị hỏng hoặc nội dung không khớp với định dạng tệp. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }}
 
 # File name conflict resolution
@@ -754,14 +754,14 @@ warning_invalid_files: |
 file_name_conflict_confirmation: |
   .input {$count :integer}
   .match $count
-    1   {{ Một tệp trùng tên đã tồn tại trong thư mục này. Bạn có muốn thay thế tệp hiện có không? }}
+    one {{ Một tệp trùng tên đã tồn tại trong thư mục này. Bạn có muốn thay thế tệp hiện có không? }}
     *   {{ {$count} tệp trùng tên đã tồn tại trong thư mục này. Bạn có muốn thay thế các tệp hiện có không? }}
 # {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
 file_name_conflict_confirmation_with_name: |
   .input {$count :integer}
   .input {$name :string}
   .match $count
-    1   {{ Tệp “{$name}” đã tồn tại trong thư mục này. Bạn có muốn thay thế tệp đó không? }}
+    one {{ Tệp “{$name}” đã tồn tại trong thư mục này. Bạn có muốn thay thế tệp đó không? }}
     *   {{ {$count} tệp trùng tên đã tồn tại trong thư mục này. Bạn có muốn thay thế các tệp hiện có không? }}
 file_name_conflict_resolution: Xử lý tệp trùng tên
 # Option to keep both files (rename the new one)
@@ -820,17 +820,17 @@ entry_validation_errors: |
 entry_saved: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã lưu bài viết. }}
+    one {{ Đã lưu bài viết. }}
     *   {{ Đã lưu {$count} bài viết. }}
 entry_saved_and_published: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã lưu và xuất bản bài viết. }}
+    one {{ Đã lưu và xuất bản bài viết. }}
     *   {{ Đã lưu và xuất bản {$count} bài viết. }}
 entries_deleted: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã xóa bài viết. }}
+    one {{ Đã xóa bài viết. }}
     *   {{ Đã xóa {$count} bài viết. }}
 
 # Asset operations
@@ -838,47 +838,47 @@ entries_deleted: |
 assets_saved: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã lưu tệp. }}
+    one {{ Đã lưu tệp. }}
     *   {{ Đã lưu {$count} tệp. }}
 assets_saved_and_published: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã lưu và xuất bản tệp. }}
+    one {{ Đã lưu và xuất bản tệp. }}
     *   {{ Đã lưu và xuất bản {$count} tệp. }}
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã sao chép URL. }}
+    one {{ Đã sao chép URL. }}
     *   {{ Đã sao chép {$count} URL. }}
 asset_paths_copied: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã sao chép đường dẫn tệp. }}
+    one {{ Đã sao chép đường dẫn tệp. }}
     *   {{ Đã sao chép đường dẫn của {$count} tệp. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã sao chép nội dung tệp. }}
+    one {{ Đã sao chép nội dung tệp. }}
     *   {{ Đã sao chép nội dung của {$count} tệp. }}
 assets_downloaded: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã tải tệp xuống. }}
+    one {{ Đã tải tệp xuống. }}
     *   {{ Đã tải xuống {$count} tệp. }}
 assets_moved: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã di chuyển tệp. }}
+    one {{ Đã di chuyển tệp. }}
     *   {{ Đã di chuyển {$count} tệp. }}
 assets_renamed: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã đổi tên tệp. }}
+    one {{ Đã đổi tên tệp. }}
     *   {{ Đã đổi tên {$count} tệp. }}
 assets_deleted: |
   .input {$count :integer}
   .match $count
-    1   {{ Đã xóa tệp. }}
+    one {{ Đã xóa tệp. }}
     *   {{ Đã xóa {$count} tệp. }}
 
 # ==============================================================================
@@ -1397,7 +1397,7 @@ config:
   errors: |
     .input {$count :integer}
     .match $count
-      1   {{ Có một lỗi trong cấu hình CMS. Vui lòng khắc phục và thử lại. }}
+      one {{ Có một lỗi trong cấu hình CMS. Vui lòng khắc phục và thử lại. }}
       *   {{ Có {$count} lỗi trong cấu hình CMS. Vui lòng khắc phục và thử lại. }}
 
   # Error location prefixes
@@ -1598,13 +1598,13 @@ workflow:
   deletion_pending: |
     .input {$count :integer}
     .match $count
-      1   {{ Bài viết đã được đánh dấu để xóa. }}
+      one {{ Bài viết đã được đánh dấu để xóa. }}
       *   {{ {$count} bài viết đã được đánh dấu để xóa. }}
   # Toast notification shown after the unpublished changes to an entry have been thrown away
   changes_discarded: |
     .input {$count :integer}
     .match $count
-      1   {{ Đã hủy thay đổi của bài viết. }}
+      one {{ Đã hủy thay đổi của bài viết. }}
       *   {{ Đã hủy thay đổi của {$count} bài viết. }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: Đang hủy xóa…
@@ -1648,14 +1648,14 @@ workflow:
   deleting_unpublished_note_all: |
     .input {$count :integer}
     .match $count
-      1   {{ Bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Phiên bản đã xuất bản vẫn được giữ nguyên. }}
+      one {{ Bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Phiên bản đã xuất bản vẫn được giữ nguyên. }}
       *   {{ {$count} bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Các phiên bản đã xuất bản vẫn được giữ nguyên. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
     .input {$count :integer}
     .match $count
-      1   {{ Một bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Phiên bản đã xuất bản vẫn được giữ nguyên. }}
+      one {{ Một bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Phiên bản đã xuất bản vẫn được giữ nguyên. }}
       *   {{ {$count} bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Các phiên bản đã xuất bản vẫn được giữ nguyên. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
   confirm_publishing_entry: Bạn có chắc chắn muốn xuất bản bài viết này? Những thay đổi của bạn sẽ có hiệu lực ngay lập tức.
