@@ -370,7 +370,8 @@ describe('GitHub Editorial Workflow service', () => {
      */
     const mockBase = () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({
-        repository: { id: 'R_1', ref: { target: { oid: 'abc' } } },
+        fork: { id: 'R_1' },
+        base: { ref: { target: { oid: 'abc' } } },
       });
     };
 
@@ -433,10 +434,15 @@ describe('GitHub Editorial Workflow service', () => {
     });
 
     test('reports a missing repository or configured branch', async () => {
-      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: null });
+      // The fork the branch goes in
+      vi.mocked(fetchGraphQL).mockResolvedValue({ fork: null, base: {} });
       await expect(createBranch('cms/posts/hello')).rejects.toThrow('Failed to create the branch.');
 
-      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { id: 'R_1', ref: null } });
+      // The configured repository the branch starts from
+      vi.mocked(fetchGraphQL).mockResolvedValue({ fork: { id: 'R_1' }, base: null });
+      await expect(createBranch('cms/posts/hello')).rejects.toThrow('Failed to create the branch.');
+
+      vi.mocked(fetchGraphQL).mockResolvedValue({ fork: { id: 'R_1' }, base: { ref: null } });
       await expect(createBranch('cms/posts/hello')).rejects.toThrow('Failed to create the branch.');
 
       expect(fetchAPI).not.toHaveBeenCalled();
@@ -570,7 +576,8 @@ describe('GitHub Editorial Workflow service', () => {
 
     test('creates the branch and the pull request on the first save', async () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({
-        repository: { id: 'R_1', ref: { target: { oid: 'abc' } } },
+        fork: { id: 'R_1' },
+        base: { ref: { target: { oid: 'abc' } } },
       });
       vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
       vi.mocked(fetchAPI)
@@ -599,7 +606,8 @@ describe('GitHub Editorial Workflow service', () => {
 
     test('looks the head up when the branch was left over by an interrupted save', async () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({
-        repository: { id: 'R_1', ref: { target: { oid: 'abc' } } },
+        fork: { id: 'R_1' },
+        base: { ref: { target: { oid: 'abc' } } },
       });
       vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
       vi.mocked(fetchAPI).mockRejectedValueOnce(
@@ -1238,18 +1246,36 @@ describe('GitHub Editorial Workflow service', () => {
     });
 
     describe('createBranch', () => {
-      test('creates the branch in the fork', async () => {
+      test('creates the branch in the fork, from the configured repository’s head', async () => {
         vi.mocked(fetchGraphQL).mockResolvedValue({
-          repository: { id: 'R_fork', ref: { target: { oid: 'abc' } } },
+          fork: { id: 'R_fork' },
+          base: { ref: { target: { oid: 'upstream-head' } } },
         });
         vi.mocked(fetchAPI).mockResolvedValue({ data: { createRef: { ref: { name: 'x' } } } });
 
-        await createBranch('cms/contributor/repo/posts/hello');
+        await expect(createBranch('cms/contributor/repo/posts/hello')).resolves.toBe(
+          'upstream-head',
+        );
 
+        // Only the fork is named explicitly; the configured repository comes from the shared
+        // GraphQL variables
         expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'), {
-          owner: 'contributor',
-          repo: 'repo',
+          forkOwner: 'contributor',
+          forkRepo: 'repo',
         });
+
+        // The branch goes in the fork but starts from the head upstream, so a fork that has
+        // drifted doesn’t pass its own commits on
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '',
+          expect.objectContaining({
+            body: expect.objectContaining({
+              variables: {
+                input: expect.objectContaining({ repositoryId: 'R_fork', oid: 'upstream-head' }),
+              },
+            }),
+          }),
+        );
       });
     });
 
@@ -1305,7 +1331,8 @@ describe('GitHub Editorial Workflow service', () => {
 
       test('leaves a draft as a branch, with no pull request', async () => {
         vi.mocked(fetchGraphQL).mockResolvedValue({
-          repository: { id: 'R_fork', ref: { target: { oid: 'abc' } } },
+          fork: { id: 'R_fork' },
+          base: { ref: { target: { oid: 'abc' } } },
         });
         vi.mocked(commitChanges).mockResolvedValue({
           sha: 'def',
@@ -1331,7 +1358,8 @@ describe('GitHub Editorial Workflow service', () => {
 
       test('opens the pull request right away for a removal', async () => {
         vi.mocked(fetchGraphQL).mockResolvedValue({
-          repository: { id: 'R_fork', ref: { target: { oid: 'abc' } } },
+          fork: { id: 'R_fork' },
+          base: { ref: { target: { oid: 'abc' } } },
         });
         vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
         vi.mocked(fetchAPI)

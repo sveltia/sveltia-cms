@@ -583,13 +583,25 @@ export const fetchPullRequests = async () =>
   get(openAuthoring) ? fetchForkPullRequests() : fetchLabelledPullRequests();
 
 /**
- * Query to fetch what the `createRef` mutation needs: the repository’s node ID and the head of the
- * configured branch.
+ * Query to fetch what the `createRef` mutation needs: the node ID of the repository the branch is
+ * created in, and the head of the configured branch to start it from. With Open Authoring those are
+ * two different repositories — the contributor’s fork and the configured one — because a fork that
+ * has drifted would otherwise pass its own commits on to everything branched from it. A fork shares
+ * an object store with its parent, so a commit that only exists upstream can still be branched from
+ * in the fork.
  */
 const FETCH_BRANCH_BASE_QUERY = `
-  query($owner: String!, $repo: String!, $branch: String!) {
-    repository(owner: $owner, name: $repo) {
+  query(
+    $forkOwner: String!
+    $forkRepo: String!
+    $owner: String!
+    $repo: String!
+    $branch: String!
+  ) {
+    fork: repository(owner: $forkOwner, name: $forkRepo) {
       id
+    }
+    base: repository(owner: $owner, name: $repo) {
       ref(qualifiedName: $branch) {
         target {
           oid
@@ -621,13 +633,21 @@ const CREATE_REF_MUTATION = `
  * @see https://docs.github.com/en/graphql/reference/mutations#createref
  */
 export const createBranch = async (branch) => {
-  // With Open Authoring the branch is created in the contributor’s fork, which the sign-in has
-  // already synced with the configured repository, so its head is the same commit
-  const { owner, repo } = getWorkflowRepository();
+  const { repo } = repository;
+  // With Open Authoring the branch is created in the contributor’s fork, but starts from the head
+  // of the configured repository rather than the fork’s own copy of it, so a fork that has fallen
+  // behind or gained commits of its own doesn’t pass them on to the pull request
+  const { owner: forkOwner, repo: forkRepo } = getWorkflowRepository();
 
-  const { repository: base } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(FETCH_BRANCH_BASE_QUERY, { owner, repo })
+  const { fork, base } = /** @type {Record<string, any>} */ (
+    await fetchGraphQL(FETCH_BRANCH_BASE_QUERY, { forkOwner, forkRepo })
   );
+
+  if (!fork) {
+    throw new Error('Failed to create the branch.', {
+      cause: new Error(_('repository_not_found', { values: { repo: forkRepo } })),
+    });
+  }
 
   if (!base) {
     throw new Error('Failed to create the branch.', {
@@ -650,7 +670,7 @@ export const createBranch = async (branch) => {
       body: {
         query: CREATE_REF_MUTATION.replace(/\n\s*/g, ' '),
         variables: {
-          input: { repositoryId: base.id, name: `refs/heads/${branch}`, oid: sha },
+          input: { repositoryId: fork.id, name: `refs/heads/${branch}`, oid: sha },
         },
       },
     });
