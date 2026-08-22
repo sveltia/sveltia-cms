@@ -751,6 +751,7 @@ describe('GitHub Editorial Workflow service', () => {
     const createRefNode = (overrides = {}) => ({
       name: 'posts/hello',
       target: {
+        oid: 'branch-head',
         message: 'Create Post “hello”',
         committedDate: '2026-01-03T00:00:00Z',
         author: {
@@ -776,6 +777,7 @@ describe('GitHub Editorial Workflow service', () => {
       isDraft: false,
       createdAt: '2026-01-01T00:00:00Z',
       updatedAt: '2026-01-02T00:00:00Z',
+      headRefOid: 'branch-head',
       headRepositoryOwner: { login: 'contributor' },
       files: { nodes: [{ path: 'content/posts/hello.md', changeType: 'ADDED' }] },
       ...overrides,
@@ -963,6 +965,48 @@ describe('GitHub Editorial Workflow service', () => {
 
         expect(result).toHaveLength(1);
         expect(result[0].branch).toBe('cms/contributor/repo/posts/hello');
+      });
+
+      test('deletes a branch left behind by a merged pull request', async () => {
+        vi.mocked(fetchGraphQL).mockImplementation(async (query) =>
+          query.includes('refs(')
+            ? { repository: { refs: { nodes: [createRefNode()] } } }
+            : {
+                repository: {
+                  // Merged, and the branch still points at the head it was merged at
+                  pr_0: { nodes: [createBranchPullRequest({ state: 'MERGED' })] },
+                },
+              },
+        );
+
+        const result = await fetchForkBranches();
+
+        expect(result).toEqual([]);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/contributor/repo/git/refs/heads/cms/contributor/repo/posts/hello',
+          expect.objectContaining({ method: 'DELETE' }),
+        );
+      });
+
+      test('keeps a branch committed to since its pull request was merged', async () => {
+        vi.mocked(fetchGraphQL).mockImplementation(async (query) =>
+          query.includes('refs(')
+            ? { repository: { refs: { nodes: [createRefNode()] } } }
+            : {
+                repository: {
+                  // The branch has moved on since the merge, so the entry is being edited again
+                  pr_0: {
+                    nodes: [createBranchPullRequest({ state: 'MERGED', headRefOid: 'older-head' })],
+                  },
+                },
+              },
+        );
+
+        const result = await fetchForkBranches();
+
+        expect(result).toHaveLength(1);
+        expect(result[0].status).toBe('draft');
+        expect(fetchAPI).not.toHaveBeenCalled();
       });
 
       test('says something when the branch list comes back full', async () => {

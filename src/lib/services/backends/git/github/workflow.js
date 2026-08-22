@@ -263,6 +263,28 @@ export const fetchLabelledPullRequests = async () => {
 };
 
 /**
+ * Delete the given branch. Failures are ignored, as the branch may already have been deleted by the
+ * repository’s automatic head branch deletion setting.
+ * @param {string} branch Branch name.
+ * @see https://docs.github.com/en/rest/git/refs#delete-a-reference
+ */
+export const deleteBranch = async (branch) => {
+  const { owner, repo } = getWorkflowRepository();
+
+  try {
+    await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodeURI(branch)}`, {
+      method: 'DELETE',
+      responseType: 'raw',
+    });
+  } catch (/** @type {any} */ ex) {
+    // Leaving the branch behind is harmless, but it makes the next pull request for the same entry
+    // start from an existing branch, so make the failure visible rather than swallowing it
+    // eslint-disable-next-line no-console
+    console.warn(`Failed to delete the ${branch} branch.`, ex);
+  }
+};
+
+/**
  * Build the query to fetch the Editorial Workflow branches in the contributor’s fork, along with
  * the head commit of each one. With Open Authoring the branches are the source of truth: a draft
  * has no pull request yet, so listing pull requests alone would miss it.
@@ -277,6 +299,7 @@ const getFetchForkBranchesQuery = () => `
           name
           target {
             ... on Commit {
+              oid
               message
               committedDate
               author {
@@ -325,6 +348,7 @@ const getFetchForkPullRequestsQuery = (branches) => `
                 isDraft
                 createdAt
                 updatedAt
+                headRefOid
                 headRepositoryOwner {
                   login
                 }
@@ -464,10 +488,32 @@ export const fetchForkBranches = async () => {
 
   const branches = nodes.map(({ name }) => `${prefix}${name}`);
   const pullRequests = await fetchForkBranchPullRequests(branches);
+  /** @type {string[]} */
+  const leftover = [];
+  /** @type {WorkflowPullRequest[]} */
+  const pending = [];
 
-  return nodes.map((node, index) =>
-    parseForkBranch(node, branches[index], pullRequests.get(branches[index])),
-  );
+  nodes.forEach((node, index) => {
+    const branch = branches[index];
+    const pullRequest = pullRequests.get(branch);
+
+    // A merged pull request whose head the branch still points at has nothing left on it. Tidying
+    // it up keeps the fork from collecting a branch per published entry, and saves comparing each
+    // one with the configured branch on every load just to find out it holds nothing. A branch the
+    // contributor has committed to since the merge has a different head, so it survives and shows
+    // up as a fresh draft
+    if (pullRequest?.state === 'MERGED' && pullRequest.headRefOid === node.target?.oid) {
+      leftover.push(branch);
+    } else {
+      pending.push(parseForkBranch(node, branch, pullRequest));
+    }
+  });
+
+  // Deleting a branch is best effort: `deleteBranch` logs a failure rather than raising it, and a
+  // branch that outlives this is picked up on the next load
+  await runConcurrently(leftover, deleteBranch);
+
+  return pending;
 };
 
 /**
@@ -623,28 +669,6 @@ export const createBranch = async (branch) => {
   }
 
   return sha;
-};
-
-/**
- * Delete the given branch. Failures are ignored, as the branch may already have been deleted by the
- * repository’s automatic head branch deletion setting.
- * @param {string} branch Branch name.
- * @see https://docs.github.com/en/rest/git/refs#delete-a-reference
- */
-export const deleteBranch = async (branch) => {
-  const { owner, repo } = getWorkflowRepository();
-
-  try {
-    await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodeURI(branch)}`, {
-      method: 'DELETE',
-      responseType: 'raw',
-    });
-  } catch (/** @type {any} */ ex) {
-    // Leaving the branch behind is harmless, but it makes the next pull request for the same entry
-    // start from an existing branch, so make the failure visible rather than swallowing it
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to delete the ${branch} branch.`, ex);
-  }
 };
 
 /**
