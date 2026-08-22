@@ -234,7 +234,7 @@ const FETCH_USER_FORK_QUERY = `
 
 /**
  * Ask the configured repository for the fork the signed-in user owns, wherever it’s named. This
- * only runs when {@link fetchForkByName} came up empty, so its worst case is the behaviour without
+ * only runs when {@link fetchForkByName} came up empty, so its worst case is the behavior without
  * it: no fork found, and the contributor asked whether to make one.
  * @returns {Promise<RepositoryPath | undefined>} The fork, or `undefined` if there is none.
  * @see https://docs.github.com/en/graphql/reference/objects#repository

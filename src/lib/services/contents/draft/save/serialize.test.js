@@ -1703,7 +1703,7 @@ describe('Test serializeContent()', () => {
       'list.*.optionalObject.foo',
     ]);
 
-    // Simulate real getField behaviour: wildcard paths into typed lists return undefined because
+    // Simulate real getField behavior: wildcard paths into typed lists return undefined because
     // the type cannot be resolved from valueMap when the index is `*`.
     const optionalObjectField = {
       name: 'optionalObject',
@@ -1719,7 +1719,7 @@ describe('Test serializeContent()', () => {
           return { name: 'list', widget: 'list' };
         }
 
-        // Wildcard paths cannot resolve the type → return undefined (matches real behaviour)
+        // Wildcard paths cannot resolve the type → return undefined (matches real behavior)
         if (keyPath.includes('*')) {
           return undefined;
         }
