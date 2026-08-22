@@ -6,6 +6,7 @@ import {
   goto,
   openProductionSite,
   parseLocation,
+  redirectLegacyEntryLink,
   startViewTransition,
   updateContentFromHashChange,
 } from './navigation';
@@ -428,6 +429,81 @@ describe('navigation', () => {
         '',
         'https://example.com/#/collections',
       );
+    });
+  });
+
+  describe('redirectLegacyEntryLink', () => {
+    it('should redirect a Netlify/Decap CMS shorthand link to the entry route', () => {
+      window.location.href = 'https://example.com/#/edit/posts/hello';
+      window.location.hash = '#/edit/posts/hello';
+
+      expect(redirectLegacyEntryLink()).toBe(true);
+
+      // The shorthand is replaced rather than pushed, so it doesn’t sit in the history
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        { from: 'https://example.com/#/edit/posts/hello' },
+        '',
+        'https://example.com/#/collections/posts/entries/hello',
+      );
+    });
+
+    it('should redirect a link to a file collection entry', () => {
+      window.location.href = 'https://example.com/#/edit/settings/general';
+      window.location.hash = '#/edit/settings/general';
+
+      expect(redirectLegacyEntryLink()).toBe(true);
+
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        expect.any(Object),
+        '',
+        'https://example.com/#/collections/settings/entries/general',
+      );
+    });
+
+    it('should keep a sub path containing slashes', () => {
+      window.location.href = 'https://example.com/#/edit/posts/2026/hello';
+      window.location.hash = '#/edit/posts/2026/hello';
+
+      expect(redirectLegacyEntryLink()).toBe(true);
+
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        expect.any(Object),
+        '',
+        'https://example.com/#/collections/posts/entries/2026/hello',
+      );
+    });
+
+    it('should carry the query string over', () => {
+      window.location.href = 'https://example.com/#/edit/posts/hello?_locale=fr';
+      window.location.hash = '#/edit/posts/hello?_locale=fr';
+
+      expect(redirectLegacyEntryLink()).toBe(true);
+
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        expect.any(Object),
+        '',
+        'https://example.com/#/collections/posts/entries/hello?_locale=fr',
+      );
+    });
+
+    it('should leave any other route alone', () => {
+      [
+        'https://example.com/#/collections/posts/entries/hello',
+        'https://example.com/#/collections',
+        'https://example.com/#/edit',
+        // A collection name with nothing after it doesn’t address an entry
+        'https://example.com/#/edit/posts',
+        'https://example.com/#/edit/posts/',
+      ].forEach((href) => {
+        const [, hash] = href.split('#');
+
+        window.location.href = href;
+        window.location.hash = hash;
+
+        expect(redirectLegacyEntryLink()).toBe(false);
+      });
+
+      expect(window.history.replaceState).not.toHaveBeenCalled();
     });
   });
 

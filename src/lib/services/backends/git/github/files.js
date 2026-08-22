@@ -4,6 +4,11 @@ import mime from 'mime';
 
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import {
+  getWorkflowRepository,
+  initOpenAuthoring,
+  isOpenAuthoringConfigured,
+} from '$lib/services/backends/git/github/fork';
+import {
   checkRepositoryAccess,
   fetchDefaultBranchName,
   repository,
@@ -177,7 +182,13 @@ export const fetchFileContents = async (fetchingFiles) => {
  * the {@link allEntries} and {@link allAssets} stores.
  */
 export const fetchFiles = async () => {
-  await checkRepositoryAccess();
+  // With Open Authoring, a user without write access is a contributor rather than a stranger, so
+  // they’re given a fork to work in instead of being turned away
+  if (isOpenAuthoringConfigured()) {
+    await initOpenAuthoring();
+  } else {
+    await checkRepositoryAccess();
+  }
 
   await fetchAndParseFiles({
     repository,
@@ -195,7 +206,9 @@ export const fetchFiles = async () => {
  * @see https://docs.github.com/en/rest/git/blobs#get-a-blob
  */
 export const fetchBlob = async (asset) => {
-  const { owner, repo } = repository;
+  // An asset attached to an unpublished entry is committed to a workflow branch, which lives in the
+  // contributor’s fork with Open Authoring, so the blob has to be read from there
+  const { owner, repo } = asset.workflow ? getWorkflowRepository() : repository;
   const { sha, path } = asset;
 
   const response = /** @type {Response} */ (

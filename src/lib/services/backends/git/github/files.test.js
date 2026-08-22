@@ -10,6 +10,11 @@ import {
   parseFileContents,
 } from '$lib/services/backends/git/github/files';
 import {
+  getWorkflowRepository,
+  initOpenAuthoring,
+  isOpenAuthoringConfigured,
+} from '$lib/services/backends/git/github/fork';
+import {
   checkRepositoryAccess,
   fetchDefaultBranchName,
   repository,
@@ -20,6 +25,7 @@ import { dataLoadedProgress } from '$lib/services/contents';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/commits');
+vi.mock('$lib/services/backends/git/github/fork');
 vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/fetch');
@@ -43,6 +49,8 @@ describe('GitHub files service', () => {
       repo: 'test-repo',
       branch: 'main',
     });
+    vi.mocked(isOpenAuthoringConfigured).mockReturnValue(false);
+    vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
   });
 
   describe('fetchFileList', () => {
@@ -690,6 +698,7 @@ describe('GitHub files service', () => {
       await fetchFiles();
 
       expect(checkRepositoryAccess).toHaveBeenCalled();
+      expect(initOpenAuthoring).not.toHaveBeenCalled();
       expect(fetchAndParseFiles).toHaveBeenCalledWith({
         repository,
         fetchDefaultBranchName,
@@ -697,6 +706,18 @@ describe('GitHub files service', () => {
         fetchFileList,
         fetchFileContents,
       });
+    });
+
+    test('sets up the contributor’s fork when Open Authoring is configured', async () => {
+      vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+      vi.mocked(initOpenAuthoring).mockResolvedValue();
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+
+      await fetchFiles();
+
+      expect(initOpenAuthoring).toHaveBeenCalled();
+      // A contributor without write access is expected here, so the plain access check is skipped
+      expect(checkRepositoryAccess).not.toHaveBeenCalled();
     });
   });
 
@@ -722,6 +743,28 @@ describe('GitHub files service', () => {
       });
       expect(mockResponse.blob).toHaveBeenCalled();
       expect(result).toBeInstanceOf(Blob);
+    });
+
+    test('reads an unpublished asset from the workflow repository', async () => {
+      vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'contributor', repo: 'test-repo' });
+
+      const asset = /** @type {any} */ ({
+        sha: 'test-sha',
+        path: 'image.jpg',
+        workflow: { branch: 'cms/contributor/test-repo/posts/hello' },
+      });
+
+      vi.mocked(fetchAPI).mockResolvedValue({
+        headers: new Map([['Content-Type', 'application/octet-stream']]),
+        blob: vi.fn().mockResolvedValue(new Blob(['binary data'])),
+      });
+
+      await fetchBlob(asset);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/contributor/test-repo/git/blobs/test-sha',
+        expect.any(Object),
+      );
     });
 
     test('handles text content with correct MIME type', async () => {

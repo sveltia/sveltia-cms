@@ -130,6 +130,24 @@
  */
 
 /**
+ * The owner and name of a repository, which is all that’s needed to address it in an API request.
+ * Used for the fork an Open Authoring contributor writes to, which is a different repository from
+ * the configured one described by {@link RepositoryInfo}.
+ * @typedef {object} RepositoryPath
+ * @property {string} owner Owner name, which could be either an organization or individual user.
+ * @property {string} repo Repository name.
+ */
+
+/**
+ * An outstanding request for the user’s permission to fork the configured repository, which the UI
+ * turns into a confirmation dialog.
+ * @typedef {object} ForkPermissionRequest
+ * @property {string} repo Repository path to be forked, e.g. `owner/repo`.
+ * @property {(granted: boolean) => void} respond Function to answer the request, which resolves the
+ * promise the sign-in flow is waiting on.
+ */
+
+/**
  * API endpoint configuration.
  * @typedef {object} ApiEndpointConfig
  * @property {string} clientId OAuth client ID.
@@ -268,9 +286,12 @@
 /**
  * A pull request that holds an unpublished entry created with Editorial Workflow.
  * @typedef {object} WorkflowPullRequest
- * @property {number} number Pull request number.
- * @property {string} nodeId Global node ID used with the backend’s GraphQL API.
- * @property {string} url Pull request URL on the backend service.
+ * @property {number} [number] Pull request number. It’s `undefined` for an Open Authoring draft,
+ * which is a branch in the contributor’s fork that no pull request has been opened for yet.
+ * @property {string} [nodeId] Global node ID used with the backend’s GraphQL API. `undefined` in
+ * the same case as `number`.
+ * @property {string} [url] Pull request URL on the backend service. `undefined` in the same case as
+ * `number`.
  * @property {string} title Pull request title.
  * @property {string} branch Head branch name, e.g. `cms/posts/hello-world`.
  * @property {WorkflowStatus} status Current status determined by the pull request’s labels.
@@ -453,8 +474,7 @@
 
 /**
  * Git commit type.
- * @typedef {'create' | 'update' | 'delete' | 'uploadMedia' | 'deleteMedia' |
- * 'openAuthoring'} CommitType
+ * @typedef {'create' | 'update' | 'delete' | 'uploadMedia' | 'deleteMedia'} CommitType
  */
 
 /**

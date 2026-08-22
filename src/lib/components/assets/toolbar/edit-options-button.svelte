@@ -9,6 +9,7 @@
   import { backend } from '$lib/services/backends';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -33,6 +34,10 @@
   let details = $state({ ...defaultAssetDetails });
 
   const { publicURL, repoBlobURL } = $derived(details);
+  // Editing, renaming or replacing a file in the media library commits straight to the configured
+  // branch rather than going through review, so none of it is available to an Open Authoring
+  // contributor
+  const readOnly = $derived($openAuthoring);
 
   /**
    * Update the properties above.
@@ -55,7 +60,7 @@
         variant="ghost"
         label={_('edit')}
         aria-label={_('edit_asset')}
-        disabled={!asset || !canEditAsset(asset)}
+        disabled={readOnly || !asset || !canEditAsset(asset)}
         onclick={() => {
           $editingAsset = asset;
         }}
@@ -64,7 +69,7 @@
         variant="ghost"
         label={_('rename')}
         aria-label={_('rename_asset')}
-        disabled={!asset}
+        disabled={readOnly || !asset}
         onclick={() => {
           $renamingAsset = asset;
         }}
@@ -73,7 +78,7 @@
         variant="ghost"
         label={_('replace')}
         aria-label={_('replace_asset')}
-        disabled={!asset}
+        disabled={readOnly || !asset}
         onclick={() => {
           $uploadingAssets = {
             folder: undefined,

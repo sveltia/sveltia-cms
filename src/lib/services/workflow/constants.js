@@ -24,6 +24,15 @@ export const LEGACY_CMS_LABEL_PREFIXES = ['netlify-cms/', 'decap-cms/'];
 export const WORKFLOW_STAGES = ['draft', 'pending_review', 'pending_publish'];
 
 /**
+ * The review stages available to an Open Authoring contributor. They can’t merge a pull request on
+ * the configured repository, so there’s no point in marking an entry ready to be published: the
+ * last thing they can do is hand it over for review.
+ * @type {WorkflowStatus[]}
+ * @see https://sveltiacms.app/en/docs/workflows/open
+ */
+export const OPEN_AUTHORING_STAGES = ['draft', 'pending_review'];
+
+/**
  * All the Editorial Workflow statuses, including the one for a pending removal. A removal has no
  * stages to move through — it’s either carried out or called off — so it’s absent from
  * {@link WORKFLOW_STAGES}, which drives the board columns and the editor’s status menu.

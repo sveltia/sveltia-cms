@@ -11,6 +11,7 @@
   import { uploadingAssets } from '$lib/services/assets';
   import { canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
   import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { Asset } from '$lib/types/private';
@@ -18,7 +19,10 @@
 
   const viewType = $derived($currentView.type);
   const folder = $derived($targetAssetFolder);
-  const uploadDisabled = $derived(!canCreateAsset(folder));
+  // Uploading to the media library commits straight to the configured branch rather than going
+  // through review, so it’s not something an Open Authoring contributor can do. An asset attached
+  // to an entry is committed with that entry, so it’s unaffected
+  const uploadDisabled = $derived($openAuthoring || !canCreateAsset(folder));
 </script>
 
 <ListContainer aria-label={_('asset_list')}>

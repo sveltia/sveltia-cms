@@ -1555,9 +1555,13 @@
  * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Default:
  * `false`.
  * @property {string} [preview_context] Deploy preview link context.
- * @property {boolean} [open_authoring] Whether to use Open Authoring. Default: `false`. Note that
- * Open Authoring is not yet supported in Sveltia CMS.
- * @property {'repo' | 'public_repo'} [auth_scope] Authentication scope for Open Authoring.
+ * @property {boolean} [open_authoring] Whether to enable Open Authoring, which lets a contributor
+ * without write access to the repository propose changes from a fork. It requires the
+ * `editorial_workflow` publish mode. Default: `false`. See the
+ * [documentation](https://sveltiacms.app/en/docs/workflows/open) for details.
+ * @property {'repo' | 'public_repo'} [auth_scope] OAuth scope to request when signing in. Default:
+ * `repo`. With Open Authoring on a public repository, `public_repo` is enough and asks the
+ * contributor for a narrower grant. A private repository always needs `repo`.
  * @see https://decapcms.org/docs/github-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
  * @see https://decapcms.org/docs/open-authoring/

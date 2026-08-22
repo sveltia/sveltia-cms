@@ -20,6 +20,10 @@ const mockI18nStrings = {
   'config.error.oauth_no_app_id': 'OAuth app ID is required',
   'config.warning.oauth_no_app_id':
     'OAuth application ID is not defined. Users are required to provide an access token to sign in.',
+  'config.error.open_authoring_no_workflow':
+    'The `open_authoring` option requires the `editorial_workflow` publish mode.',
+  'config.warning.open_authoring_unsupported_backend':
+    'Open Authoring is currently supported only with the GitHub backend.',
 };
 
 /**
@@ -740,6 +744,117 @@ describe('parseBackendConfig', () => {
       parseBackendConfig(config, collectors);
 
       expect(mockCheckUnsupportedOptions).not.toHaveBeenCalled();
+    });
+  });
+  describe('open authoring', () => {
+    it('should accept the option with the editorial workflow publish mode', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        publish_mode: 'editorial_workflow',
+        backend: {
+          name: 'github',
+          repo: 'owner/repo',
+          open_authoring: true,
+          auth_scope: 'public_repo',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(0);
+      expect(collectors.warnings.size).toBe(0);
+    });
+
+    it('should warn when the authentication scope is left at the broad default', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        publish_mode: 'editorial_workflow',
+        backend: { name: 'github', repo: 'owner/repo', open_authoring: true },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(0);
+      // A console warning is hardcoded English with a plain URL, not a localized string
+      expect([...collectors.warnings]).toEqual([
+        expect.stringContaining('`auth_scope: public_repo` if your repository is public'),
+      ]);
+    });
+
+    it('should stay quiet when the broader scope is chosen deliberately', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        publish_mode: 'editorial_workflow',
+        backend: { name: 'github', repo: 'owner/repo', open_authoring: true, auth_scope: 'repo' },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.warnings.size).toBe(0);
+    });
+
+    it('should error without the editorial workflow publish mode', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'github',
+          repo: 'owner/repo',
+          open_authoring: true,
+          auth_scope: 'public_repo',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect([...collectors.errors]).toEqual([
+        'The `open_authoring` option requires the `editorial_workflow` publish mode.',
+      ]);
+    });
+
+    it('should warn when the backend is not GitHub', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        publish_mode: 'editorial_workflow',
+        backend: {
+          name: 'gitlab',
+          repo: 'owner/repo',
+          open_authoring: true,
+          auth_scope: 'public_repo',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect([...collectors.warnings]).toEqual([
+        'Open Authoring is currently supported only with the GitHub backend.',
+      ]);
+    });
+
+    it('should stay quiet when the option is off', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { backend: { name: 'github', repo: 'owner/repo' } };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(0);
+      expect(collectors.warnings.size).toBe(0);
     });
   });
 });

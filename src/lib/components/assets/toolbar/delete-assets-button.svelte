@@ -3,6 +3,7 @@
   import { Button, ConfirmationDialog, MenuItem } from '@sveltia/ui';
 
   import { deleteAssets } from '$lib/services/assets/data/delete';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { Asset } from '$lib/types/private';
@@ -31,11 +32,14 @@
   let showDialog = $state(false);
 
   const Component = $derived(useButton ? Button : MenuItem);
+  // Deleting a file from the media library commits straight to the configured branch rather than
+  // going through review, so it’s not something an Open Authoring contributor can do
+  const disabled = $derived(!assets.length || $openAuthoring);
 </script>
 
 <Component
   variant="ghost"
-  disabled={!assets.length}
+  {disabled}
   label={_('delete')}
   aria-label={buttonDescription}
   onclick={() => {

@@ -3,6 +3,7 @@ import { get } from 'svelte/store';
 import { cmsConfig } from '$lib/services/config';
 import { getCollectionLabel } from '$lib/services/contents/collection';
 import { user } from '$lib/services/user/account.svelte';
+import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { CommitOptions, FileChange, User } from '$lib/types/private';
@@ -64,16 +65,18 @@ export const createCommitMessage = (
       .replaceAll('{{author-name}}', name);
   }
 
-  if (['openAuthoring'].includes(commitType)) {
-    message = message
-      .replaceAll('{{message}}', commitType)
+  if (remainingPaths.length) {
+    message += ` +${remainingPaths.length}`;
+  }
+
+  // With Open Authoring the commit is made by an outside contributor, so the message can be wrapped
+  // to record who wrote it. The default template is the message on its own, which changes nothing
+  if (get(openAuthoring)) {
+    message = (customCommitMessages.openAuthoring || DEFAULT_COMMIT_MESSAGES.openAuthoring)
+      .replaceAll('{{message}}', message)
       .replaceAll('{{author-email}}', email)
       .replaceAll('{{author-login}}', login)
       .replaceAll('{{author-name}}', name);
-  }
-
-  if (remainingPaths.length) {
-    message += ` +${remainingPaths.length}`;
   }
 
   // If requested, disable automatic deployments by using the standard `[skip ci]` prefix supported

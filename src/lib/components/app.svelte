@@ -7,6 +7,8 @@
   import UpdateNotification from '$lib/components/global/infobars/update-notification.svelte';
   import LocaleLoadErrorToast from '$lib/components/global/locale-load-error-toast.svelte';
   import MainRouter from '$lib/components/global/main-router.svelte';
+  import ForkPermissionDialog from '$lib/components/workflow/fork-permission-dialog.svelte';
+  import OpenAuthoringIndicator from '$lib/components/workflow/open-authoring-indicator.svelte';
   import {
     appIconURLs,
     appLogoType,
@@ -137,8 +139,12 @@
     <div role="none" class="outer">
       <LocaleLoadErrorToast />
       <UpdateNotification />
+      <ForkPermissionDialog />
       {#if $backend}
         <BackendStatusIndicator />
+      {/if}
+      {#if user.account && $dataLoaded}
+        <OpenAuthoringIndicator />
       {/if}
       <div role="none" class="main">
         {#if user.account && $dataLoaded && transitioned}

@@ -18,6 +18,7 @@
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { hasPublishedVersion } from '$lib/services/workflow';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { UnpublishedEntry } from '$lib/types/private';
@@ -68,9 +69,10 @@
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );
   // The entry can only be published from the last column, and the collection’s `publish` option can
-  // hide the control altogether
+  // hide the control altogether. An Open Authoring contributor can’t merge a pull request on the
+  // configured repository, so they never get the control
   const canPublish = $derived(
-    (status === 'pending_publish' || deletion) && collection?.publish !== false,
+    !$openAuthoring && (status === 'pending_publish' || deletion) && collection?.publish !== false,
   );
   // Deleting an entry that has a published version only throws away the pending changes.
   // `$allEntries` is a dependency, because the entry can be published from another view

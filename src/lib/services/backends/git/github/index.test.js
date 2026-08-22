@@ -103,6 +103,25 @@ describe('GitHub backend service', () => {
       expect(result).toBeUndefined();
     });
 
+    test('narrows the OAuth scope when configured', () => {
+      vi.mocked(get).mockReturnValueOnce({
+        backend: {
+          name: BACKEND_NAME,
+          repo: 'owner/repo',
+          branch: 'main',
+          open_authoring: true,
+          auth_scope: 'public_repo',
+        },
+      });
+
+      init();
+
+      expect(Object.assign).toHaveBeenCalledWith(
+        apiConfig,
+        expect.objectContaining({ authScope: 'public_repo,user' }),
+      );
+    });
+
     test('returns undefined when backend is not GitHub', () => {
       vi.mocked(get).mockReturnValue({ backend: { name: 'other' } });
 
@@ -145,6 +164,7 @@ describe('GitHub backend service', () => {
         apiConfig,
         expect.objectContaining({
           clientId: '',
+          authScope: 'repo,user',
           authURL: `${DEFAULT_AUTH_ROOT}/${DEFAULT_AUTH_PATH}`,
           tokenURL: `${DEFAULT_AUTH_ROOT}/${DEFAULT_AUTH_PATH}`,
           restBaseURL: DEFAULT_API_ROOT,

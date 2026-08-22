@@ -56,6 +56,9 @@ export const init = () => {
     // GitHub Enterprise Server: https://HOSTNAME/api/graphql
     graphql_api_root: graphqlApiRoot = restApiRoot,
     include_credentials: includeCredentials = false,
+    // Open Authoring on a public repository only needs `public_repo`, which is a narrower grant to
+    // ask a contributor for than full `repo` access
+    auth_scope: authScope = 'repo',
   } = backend;
 
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
@@ -83,7 +86,7 @@ export const init = () => {
     apiConfig,
     /** @type {ApiEndpointConfig} */ ({
       clientId,
-      authScope: 'repo,user',
+      authScope: `${authScope},user`,
       authURL,
       tokenURL: authURL.replace('/authorize', '/access_token'),
       restBaseURL: normalizeRestBaseURL(restApiRoot),

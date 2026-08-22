@@ -1384,6 +1384,8 @@ config:
     oauth_implicit_flow: 設定されている認証方式 (暗黙的フロー) は Sveltia CMS では非対応です。代わりに他の <a>認証方法</a> を使用してください。
     github_pkce_unsupported: GitHub の制約により PKCE 認証はまだサポートされていません。代わりに他の <a>認証方法</a> を使用してください。
     oauth_no_app_id: ' OAuth アプリケーション ID が定義されていません。'
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: '`open_authoring` オプションには `editorial_workflow` 公開モードが必要です。詳しくは <a>ドキュメント</a> を参照してください。'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` オプションには少なくとも 1 つの認証方法を含める必要があります。'
     missing_media_folder: メディアフォルダーが定義されていません。
@@ -1480,7 +1482,7 @@ config:
   warning:
     oauth_no_app_id: OAuth アプリケーション ID が定義されていません。ユーザーがログインするにはアクセストークンを入力する必要があります。
     editorial_workflow_unsupported: エディトリアルワークフローは現在 GitHub と GitLab バックエンドでのみサポートされています。
-    open_authoring_unsupported: Sveltia CMS ではまだオープンオーサリングはサポートされていません。
+    open_authoring_unsupported_backend: オープンオーサリングは現在 GitHub バックエンドでのみサポートされています。
     nested_collections_unsupported: Sveltia CMS ではネストされたコレクションはまだサポートされていません。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。'
@@ -1515,6 +1517,9 @@ local_workflow:
 # {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
 # because selecting a plural form on three numbers at once would need a variant per combination
 viewing_editorial_workflow: 'エディトリアルワークフローボードを表示しています。下書き: {$draft} 件。レビュー中: {$review} 件。公開可: {$ready} 件。削除待ち: {$deletion} 件。'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'エディトリアルワークフローボードを表示しています。下書き: {$draft} 件。レビュー中: {$review} 件。削除待ち: {$deletion} 件。'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1613,6 +1618,39 @@ workflow:
   no_entries: エントリーはありません。
   # Workflow page: aria-label for a draggable entry card
   drag_entry: ドラッグするとステータスを変更できます
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: リポジトリをフォーク
+  fork: フォーク
+  confirm_forking_repository: 「{$repo}」への変更を提案するには、あなたのアカウントにリポジトリのフォークを作成する必要があります。変更内容はそのフォークに保存され、公開前にメンテナーがレビューします。
+  # Error shown when the user declined the dialog above
+  fork_declined: 変更を提案するには、あなたのアカウントにリポジトリのフォークが必要です。
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: 「{$repo}」リポジトリのフォークをあなたのアカウントに作成できませんでした。
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: 「{$repo}」リポジトリへのアクセス権を確認できませんでした。しばらくしてから再度お試しください。
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: 「{$repo}」リポジトリはフォークを許可していません。フォークを有効にするようメンテナーに依頼してください。
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: 「{$repo}」リポジトリへの招待が保留中です。GitHub で承認してから、再度ログインしてください。
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: ログインにプライベートリポジトリへのアクセスが含まれていないため、「{$repo}」リポジトリを読み取れません。CMS の認証設定を確認するようメンテナーに依頼してください。
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: このサイトへの変更を公開できるのはメンテナーだけです。代わりにエントリーをレビュー中にしてください。誰かが確認します。
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: この変更は直接行えません。レビューを依頼できるのはエントリーの編集のみです。
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: 変更は「{$repo}」にあるこのリポジトリのフォークに保存され、公開前にレビューされます。
+  view_fork: フォークを表示
 
 # ==============================================================================
 # Settings Dialog

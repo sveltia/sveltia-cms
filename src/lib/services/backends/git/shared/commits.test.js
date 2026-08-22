@@ -17,11 +17,18 @@ const mockUser = vi.hoisted(() => ({
   email: '',
 }));
 
+// Whether the commit is being made by an Open Authoring contributor
+const mockState = vi.hoisted(() => ({ openAuthoring: false }));
+
 vi.mock('svelte/store', () => ({
   get: vi.fn((store) => {
     // Mock different returns based on what store is being accessed
     if (store?.name === 'cmsConfig') {
       return mockCmsConfig;
+    }
+
+    if (store?.name === 'openAuthoring') {
+      return mockState.openAuthoring;
     }
 
     return null;
@@ -30,6 +37,10 @@ vi.mock('svelte/store', () => ({
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { name: 'cmsConfig' },
+}));
+
+vi.mock('$lib/services/workflow/open-authoring', () => ({
+  openAuthoring: { name: 'openAuthoring' },
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -42,6 +53,7 @@ vi.mock('$lib/services/user/account.svelte', () => ({
 
 describe('git/shared/commits', () => {
   afterEach(() => {
+    mockState.openAuthoring = false;
     vi.clearAllMocks();
     // Reset mock data
     mockCmsConfig.backend = {
@@ -155,22 +167,58 @@ describe('git/shared/commits', () => {
       expect(message).toBe('Create Blog Post “my-post”');
     });
 
-    it('should handle openAuthoring commit type', () => {
+    it('should leave the message alone for open authoring by default', () => {
+      mockState.openAuthoring = true;
+
       const message = createCommitMessage(mockChanges, {
-        commitType: 'openAuthoring',
+        commitType: 'create',
+        collection: mockCollection,
       });
 
-      expect(message).toBe('openAuthoring');
+      expect(message).toBe('Create Blog Post “my-post”');
     });
 
-    it('should add [skip ci] prefix for openAuthoring when enabled', () => {
-      mockCmsConfig.backend.skip_ci = true;
+    it('should wrap the message with the custom openAuthoring template', () => {
+      mockState.openAuthoring = true;
+      mockCmsConfig.backend.commit_messages = {
+        openAuthoring: '{{message}} (by {{author-login}})',
+      };
 
       const message = createCommitMessage(mockChanges, {
-        commitType: 'openAuthoring',
+        commitType: 'create',
+        collection: mockCollection,
       });
 
-      expect(message).toBe('[skip ci] openAuthoring');
+      expect(message).toBe('Create Blog Post “my-post” (by test-user)');
+    });
+
+    it('should not wrap the message when open authoring is off', () => {
+      mockCmsConfig.backend.commit_messages = {
+        openAuthoring: '{{message}} (by {{author-login}})',
+      };
+
+      const message = createCommitMessage(mockChanges, {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe('Create Blog Post “my-post”');
+    });
+
+    it('should add [skip ci] prefix outside the openAuthoring wrapper', () => {
+      mockState.openAuthoring = true;
+      mockCmsConfig.backend.skip_ci = true;
+      mockCmsConfig.backend.commit_messages = {
+        openAuthoring: '{{message}} (by {{author-name}} <{{author-email}}>)',
+      };
+      mockUser.email = 'me@example.com';
+
+      const message = createCommitMessage(mockChanges, {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe('[skip ci] Create Blog Post “my-post” (by Test User <me@example.com>)');
     });
 
     it('should not add [skip ci] prefix for deleteMedia operations', () => {
@@ -325,28 +373,12 @@ describe('git/shared/commits', () => {
       expect(message).toBe('Delete “static/images/photo1.jpg” +2');
     });
 
-    it('should handle openAuthoring without collection', () => {
-      const message = createCommitMessage(mockChanges, {
-        commitType: 'openAuthoring',
-      });
-
-      expect(message).toBe('openAuthoring');
-    });
-
-    it('should apply [skip ci] prefix to openAuthoring', () => {
-      mockCmsConfig.backend = {
-        commit_messages: {},
-        skip_ci: true,
+    it('should wrap the message after the +N suffix for open authoring', () => {
+      mockState.openAuthoring = true;
+      mockCmsConfig.backend.commit_messages = {
+        openAuthoring: '{{message}} (by {{author-login}})',
       };
 
-      const message = createCommitMessage(mockChanges, {
-        commitType: 'openAuthoring',
-      });
-
-      expect(message).toBe('[skip ci] openAuthoring');
-    });
-
-    it('should append +N for openAuthoring with multiple changes', () => {
       const multiChanges = [
         { path: 'content/posts/a.md', slug: 'a' },
         { path: 'content/posts/b.md', slug: 'b' },
@@ -354,10 +386,11 @@ describe('git/shared/commits', () => {
       ];
 
       const message = createCommitMessage(multiChanges, {
-        commitType: 'openAuthoring',
+        commitType: 'create',
+        collection: mockCollection,
       });
 
-      expect(message).toBe('openAuthoring +2');
+      expect(message).toBe('Create Blog Post “a” +2 (by test-user)');
     });
 
     it('should not apply [skip ci] when skipCI is explicitly false', () => {

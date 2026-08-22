@@ -15,6 +15,7 @@ import { entryListSettings, initSettings } from '$lib/services/contents/collecti
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { swapUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
+import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -173,12 +174,14 @@ const QUOTA_WARNING_THRESHOLD = 5;
  * @type {Readable<CollectionState>}
  */
 export const collectionState = derived(
-  [listedEntries, selectedCollection],
-  ([_listedEntries, _selectedCollection]) => {
+  [listedEntries, selectedCollection, openAuthoring],
+  ([_listedEntries, _selectedCollection, _openAuthoring]) => {
     if (_selectedCollection?._type === 'entry') {
       const canCreate = _selectedCollection.create ?? true;
       const canDelete = _selectedCollection.delete ?? true;
-      const canReorder = !!_selectedCollection.reorder;
+      // Reordering writes the new order straight to the configured branch rather than going through
+      // review, so it’s not something an Open Authoring contributor can do
+      const canReorder = !!_selectedCollection.reorder && !_openAuthoring;
       const quota = _selectedCollection?.limit ?? Infinity;
       const remaining = quota < Infinity ? quota - _listedEntries.length : Infinity;
 

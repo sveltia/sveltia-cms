@@ -10,6 +10,7 @@ import {
 } from '$lib/services/contents/collection/view/group';
 import { initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
+import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 import {
   collectionState,
@@ -1097,6 +1098,32 @@ describe('collection/view/index', () => {
       expect(state.isEntryCollection).toBe(true);
       expect(state.canCreate).toBe(true);
       expect(state.canDelete).toBe(true);
+    });
+
+    test('allows reordering when the collection is configured for it', () => {
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', reorder: true }),
+      );
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.set([]);
+
+      expect(get(collectionState).canReorder).toBe(true);
+    });
+
+    test('blocks reordering for an Open Authoring contributor', () => {
+      _selectedCollection.set(
+        /** @type {any} */ ({ name: 'posts', _type: 'entry', reorder: true }),
+      );
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.set([]);
+      forkedRepository.set({ owner: 'contributor', repo: 'repo' });
+
+      // Reordering commits straight to the configured branch, which a contributor can’t do
+      expect(get(collectionState).canReorder).toBe(false);
+
+      forkedRepository.set(undefined);
     });
 
     test('defaults canCreate and canDelete to true when not set', () => {

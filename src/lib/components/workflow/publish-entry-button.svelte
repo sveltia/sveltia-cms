@@ -9,6 +9,7 @@
   import { goBack } from '$lib/services/app/navigation';
   import { getCollection } from '$lib/services/contents/collection';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import { publishWorkflowEntry } from '$lib/services/workflow/save';
 
   /**
@@ -40,9 +41,11 @@
   // Publishing a removal is what deletes the entry, so the control is presented as Delete
   const deletion = $derived(entry.workflow.status === 'pending_deletion');
   // The collection’s `publish` option can hide the control, so an editor can move an entry through
-  // the review stages but leave the actual publishing to someone else
+  // the review stages but leave the actual publishing to someone else. An Open Authoring
+  // contributor can’t merge a pull request on the configured repository, so they never see it
   const visible = $derived(
-    (entry.workflow.status === 'pending_publish' || deletion) &&
+    !$openAuthoring &&
+      (entry.workflow.status === 'pending_publish' || deletion) &&
       getCollection(entry.workflow.collectionName)?.publish !== false,
   );
 

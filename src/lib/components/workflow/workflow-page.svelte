@@ -11,7 +11,8 @@
     unpublishedEntries,
     workflowDataReady,
   } from '$lib/services/workflow';
-  import { WORKFLOW_STAGES, WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
+  import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
+  import { openAuthoring, workflowStages } from '$lib/services/workflow/open-authoring';
   import {
     discardWorkflowEntry,
     publishWorkflowEntry,
@@ -101,7 +102,7 @@
   // A pending deletion has a status of its own, so it never lands in a stage column. It’s listed
   // below the board instead, and its cards don’t drag: there are no stages to move it through
   const columns = $derived(
-    WORKFLOW_STAGES.map((status) => ({
+    $workflowStages.map((status) => ({
       status,
       entries: $unpublishedEntries.filter((entry) => entry.workflow.status === status),
     })),
@@ -174,11 +175,14 @@
 
     announced = true;
 
-    const [draft, review, ready] = columns.map(({ entries }) => entries.length);
+    const [draft, review, ready = 0] = columns.map(({ entries }) => entries.length);
+    const deletion = pendingDeletions.length;
 
-    $announcedPageStatus = _('viewing_editorial_workflow', {
-      values: { draft, review, ready, deletion: pendingDeletions.length },
-    });
+    // The board has no Ready column for an Open Authoring contributor, so its count is left out of
+    // the announcement rather than reported as zero
+    $announcedPageStatus = $openAuthoring
+      ? _('viewing_open_authoring_workflow', { values: { draft, review, deletion } })
+      : _('viewing_editorial_workflow', { values: { draft, review, ready, deletion } });
   });
 </script>
 
@@ -191,7 +195,9 @@
     {:else}
       <!-- The page container lays its children out in a row, so the board and the list below it
       need a column wrapper of their own -->
-      <div role="none" class="board">
+      <!-- The column count varies: an Open Authoring contributor can’t publish, so the board
+      leaves out the stage that says an entry is ready to go live -->
+      <div role="none" class="board" style:--column-count={columns.length}>
         <div role="none" class="columns">
           {#each columns as { status, entries } (status)}
             <Group class="column" aria-labelledby="{status}-column-title">
@@ -392,7 +398,7 @@
     /* Mirror the board’s track count, so a card here is the same size as one in a column */
     .entries {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(var(--column-count), 1fr);
       gap: 8px;
       padding: 8px;
       overflow-y: auto;
@@ -419,12 +425,12 @@
         flex: auto;
         display: flex;
         flex-direction: column;
-        width: calc(100% / 3);
+        width: calc(100% / var(--column-count));
         background-color: var(--sui-primary-background-color);
 
         @media (width < 768px) {
           width: 100%;
-          height: calc(100% / 3);
+          height: calc(100% / var(--column-count));
         }
       }
     }

@@ -207,7 +207,7 @@ export const fetchPullRequests = async () => {
       // A merge request can carry status labels with more than one prefix, so it can show up in
       // several of these requests
       if (mergeRequest) {
-        found.set(mergeRequest.number, mergeRequest);
+        found.set(item.iid, mergeRequest);
       }
     });
   });

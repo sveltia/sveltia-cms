@@ -1467,6 +1467,8 @@ config:
     oauth_implicit_flow: The configured authentication method (implicit flow) is not supported in Sveltia CMS. Use a different <a>authentication method</a> instead.
     github_pkce_unsupported: PKCE authorisation is not yet supported due to GitHub’s limitations. Use a different <a>authentication method</a> instead.
     oauth_no_app_id: OAuth application ID is not defined.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: The `open_authoring` option requires the `editorial_workflow` publish mode. See the <a>documentation</a> for details.
     # Don’t localize `auth_methods`
     no_auth_methods: The `auth_methods` option must contain at least one method.
     missing_media_folder: The media folder is not defined.
@@ -1563,7 +1565,7 @@ config:
   warning:
     oauth_no_app_id: OAuth application ID is not defined. Users are required to provide an access token to sign in.
     editorial_workflow_unsupported: Editorial Workflow is currently supported only with the GitHub and GitLab backends.
-    open_authoring_unsupported: Open authoring is not yet supported in Sveltia CMS.
+    open_authoring_unsupported_backend: Open Authoring is currently supported only with the GitHub backend.
     nested_collections_unsupported: Nested collections are not yet supported in Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: The `{$prop}` option is not supported in Sveltia CMS. It will be ignored.
@@ -1598,6 +1600,9 @@ local_workflow:
 # {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
 # because selecting a plural form on three numbers at once would need a variant per combination
 viewing_editorial_workflow: 'You’re now viewing the Editorial Workflow board. Drafts: {$draft}. In Review: {$review}. Ready: {$ready}. Pending Deletion: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'You’re now viewing the Editorial Workflow board. Drafts: {$draft}. In Review: {$review}. Pending Deletion: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1700,6 +1705,39 @@ workflow:
   no_entries: No entries.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: Drag to change the status
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Fork Repository
+  fork: Fork
+  confirm_forking_repository: To suggest changes to “{$repo}”, a fork of the repository has to be created on your account. Your changes are saved to that fork, and a maintainer reviews them before they go live.
+  # Error shown when the user declined the dialog above
+  fork_declined: You need a fork of the repository on your account to suggest changes.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Couldn’t create a fork of the “{$repo}” repository on your account.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Couldn’t check your access to the “{$repo}” repository. Please try again in a moment.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: The “{$repo}” repository doesn’t allow forks. Ask a maintainer to enable forking for it.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: You have a pending invitation to the “{$repo}” repository. Accept it on GitHub, then sign in again.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Your sign-in doesn’t include access to private repositories, so the “{$repo}” repository can’t be read. Ask a maintainer to check the CMS authentication settings.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Only a maintainer can publish changes to this site. Mark your entry as In Review instead, and someone will take a look.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: This change can’t be made directly. Only edits to entries can be suggested for review.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Your changes are saved to your fork of this repository at “{$repo}” and reviewed before they go live.
+  view_fork: View Fork
 
 # ==============================================================================
 # Settings Dialog

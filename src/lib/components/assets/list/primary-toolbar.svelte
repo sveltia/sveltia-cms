@@ -18,6 +18,7 @@
   } from '$lib/services/assets/folders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   const assets = $derived.by(() => {
     if ($selectedAssets.length) return [...$selectedAssets];
@@ -25,7 +26,10 @@
     return [];
   });
 
-  const uploadDisabled = $derived(!canCreateAsset($targetAssetFolder));
+  // Uploading to the media library commits straight to the configured branch rather than going
+  // through review, so it’s not something an Open Authoring contributor can do. An asset attached
+  // to an entry is committed with that entry, so it’s unaffected
+  const uploadDisabled = $derived($openAuthoring || !canCreateAsset($targetAssetFolder));
 </script>
 
 <Toolbar variant="primary" aria-label={_('folder')}>

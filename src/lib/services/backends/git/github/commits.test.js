@@ -6,10 +6,13 @@ import {
   fetchFileCommits,
   fetchLastCommit,
 } from '$lib/services/backends/git/github/commits';
+import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
+vi.mock('$lib/services/backends/git/github/fork');
 vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', () => ({
@@ -17,10 +20,6 @@ vi.mock('$lib/services/backends/git/shared/commits', () => ({
 }));
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn(() => 'Translation message'),
-}));
-vi.mock('svelte/store', () => ({
-  get: vi.fn().mockReturnValue({}),
-  writable: vi.fn(() => ({ subscribe: vi.fn(), set: vi.fn(), update: vi.fn() })),
 }));
 vi.mock('@sveltia/utils/file', () => ({
   encodeBase64: vi.fn().mockResolvedValue('base64content'),
@@ -44,6 +43,8 @@ describe('GitHub commits service', () => {
       repo: 'test-repo',
       branch: 'main',
     });
+    forkedRepository.set(undefined);
+    vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
   });
 
   describe('fetchLastCommit', () => {
@@ -69,7 +70,11 @@ describe('GitHub commits service', () => {
 
       const result = await fetchLastCommit();
 
-      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'), {});
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'), {
+        owner: 'test-owner',
+        repo: 'test-repo',
+      });
+
       expect(result).toEqual({
         hash: 'abc123def456',
         message: 'Test commit message',
@@ -90,6 +95,8 @@ describe('GitHub commits service', () => {
       const result = await fetchLastCommit('cms/posts/hello');
 
       expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'), {
+        owner: 'test-owner',
+        repo: 'test-repo',
         branch: 'cms/posts/hello',
       });
 
@@ -724,6 +731,65 @@ describe('GitHub commits service', () => {
       const result = await fetchFileCommits(['file.md']);
 
       expect(result).toEqual([]);
+    });
+  });
+  describe('Open Authoring', () => {
+    beforeEach(() => {
+      forkedRepository.set({ owner: 'contributor', repo: 'test-repo' });
+      vi.mocked(getWorkflowRepository).mockReturnValue({
+        owner: 'contributor',
+        repo: 'test-repo',
+      });
+    });
+
+    test('looks up the last commit on a workflow branch in the fork', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          ref: { target: { history: { nodes: [{ oid: 'abc', message: 'm' }] } } },
+        },
+      });
+
+      await fetchLastCommit('cms/contributor/test-repo/posts/hello');
+
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'), {
+        owner: 'contributor',
+        repo: 'test-repo',
+        branch: 'cms/contributor/test-repo/posts/hello',
+      });
+    });
+
+    test('commits to the fork on a workflow branch', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        createCommitOnBranch: { commit: { oid: 'sha', committedDate: '2026-01-01T00:00:00Z' } },
+      });
+
+      await commitChanges([{ action: 'create', path: 'content/posts/hello.md', data: 'x' }], {
+        commitType: 'create',
+        branch: 'cms/contributor/test-repo/posts/hello',
+        headOid: 'abc',
+      });
+
+      expect(fetchGraphQL).toHaveBeenCalledWith(
+        expect.stringContaining('createCommitOnBranch'),
+        expect.objectContaining({
+          input: expect.objectContaining({
+            branch: {
+              repositoryNameWithOwner: 'contributor/test-repo',
+              branchName: 'cms/contributor/test-repo/posts/hello',
+            },
+          }),
+        }),
+      );
+    });
+
+    test('refuses a change that would bypass review', async () => {
+      await expect(
+        commitChanges([{ action: 'create', path: 'static/image.png', data: 'x' }], {
+          commitType: 'uploadMedia',
+        }),
+      ).rejects.toThrow('Cannot commit directly to the configured repository');
+
+      expect(fetchGraphQL).not.toHaveBeenCalled();
     });
   });
 });

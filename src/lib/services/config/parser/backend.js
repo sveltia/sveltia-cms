@@ -18,8 +18,6 @@ import { makeLink } from '$lib/services/utils/string';
 const UNSUPPORTED_OPTIONS = [
   // Sveltia CMS always uses GraphQL for Git backends, so this option is not applicable.
   { type: 'warning', prop: 'use_graphql', strKey: 'unsupported_ignored_option' },
-  // @todo Remove this warning when Sveltia CMS adds support for open authoring.
-  { type: 'warning', prop: 'open_authoring', strKey: 'open_authoring_unsupported' },
 ];
 
 const UNSUPPORTED_BACKEND_DOC_URL =
@@ -29,6 +27,7 @@ const UNSUPPORTED_BACKEND_SUGGESTION_URL =
   'https://sveltiacms.app/en/docs/backends#supported-backends';
 
 const AUTH_DOC_URL = 'https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authentication';
+const OPEN_AUTHORING_DOC_URL = 'https://sveltiacms.app/en/docs/workflows/open';
 
 /**
  * Parse and validate the backend configuration from the site config.
@@ -83,6 +82,10 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       auth_type: authType,
       // @ts-ignore GitLab/Gitea only
       app_id: appId,
+      // @ts-ignore GitHub only
+      open_authoring: openAuthoring,
+      // @ts-ignore GitHub only
+      auth_scope: authScope,
     } = /** @type {GitBackend} */ (backend);
 
     if (Array.isArray(authMethods) && !authMethods.length) {
@@ -110,6 +113,33 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
 
     if (name === 'gitlab' && authType === 'pkce' && !appId) {
       errors.add(_('config.error.oauth_no_app_id'));
+    }
+
+    if (openAuthoring) {
+      // Open Authoring turns each change into a pull request from the contributor’s fork, so it
+      // only makes sense on top of Editorial Workflow
+      if (cmsConfig.publish_mode !== 'editorial_workflow') {
+        errors.add(makeLink(_('config.error.open_authoring_no_workflow'), OPEN_AUTHORING_DOC_URL));
+      }
+
+      if (name !== 'github') {
+        warnings.add(_('config.warning.open_authoring_unsupported_backend'));
+      }
+
+      // The default scope grants access to every repository the contributor owns, including their
+      // private ones. That’s a lot to ask of someone who just wants to fix a typo, and a public
+      // repository doesn’t need it. The visibility of the repository isn’t known until someone
+      // signs in, so this can’t be decided automatically
+      if (authScope === undefined) {
+        // Warnings are logged to the console for whoever set the CMS up, so this is plain English
+        // with a plain URL rather than a localized string with a link in it
+        warnings.add(
+          'The `open_authoring` option is enabled without `auth_scope`, so contributors are ' +
+            'asked for access to all their repositories, including private ones. Set ' +
+            '`auth_scope: public_repo` if your repository is public, or `auth_scope: repo` to ' +
+            `confirm the broader scope is needed. ${OPEN_AUTHORING_DOC_URL}`,
+        );
+      }
     }
 
     // Gitea requires an app ID for OAuth authentication, but also supports token-based sign-in,

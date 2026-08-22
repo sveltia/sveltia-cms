@@ -8,17 +8,25 @@ import githubWorkflow, {
   createPullRequest,
   deleteBranch,
   discard,
+  fetchForkBranches,
+  fetchForkBranchFileList,
+  fetchForkBranchPullRequests,
+  fetchForkPullRequests,
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   fetchPullRequests,
+  parseForkBranch,
   parsePullRequest,
   publish,
+  reopenPullRequest,
   savePullRequest,
   updateDraftState,
+  updateForkStatus,
   updateLabels,
   updateStatus,
 } from '$lib/services/backends/git/github/workflow';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends/git/github/commits');
 vi.mock('$lib/services/backends/git/github/repository', () => ({
@@ -57,10 +65,33 @@ const createNode = (overrides = {}) => ({
   ...overrides,
 });
 
+/**
+ * Stub the store reader used across the workflow service: the site configuration, and the Open
+ * Authoring state that decides which of the two flows a call takes.
+ * @param {object} [args] Arguments.
+ * @param {object | null} [args.backend] Backend configuration, or `null` for no configuration at
+ * all. It can’t be `undefined`, which the parameter default would replace.
+ * @param {{ owner: string, repo: string }} [args.fork] Fork the contributor writes to, which turns
+ * the Open Authoring flow on.
+ */
+const mockStores = ({ backend = { name: 'github' }, fork = undefined } = {}) => {
+  vi.mocked(get).mockImplementation((/** @type {any} */ store) => {
+    if (store === forkedRepository) {
+      return fork;
+    }
+
+    if (store === openAuthoring) {
+      return !!fork;
+    }
+
+    return backend ? { backend } : undefined;
+  });
+};
+
 describe('GitHub Editorial Workflow service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(get).mockReturnValue({ backend: { name: 'github' } });
+    mockStores();
     vi.mocked(fetchAPI).mockResolvedValue({});
     vi.mocked(fetchGraphQL).mockResolvedValue({});
   });
@@ -76,6 +107,12 @@ describe('GitHub Editorial Workflow service', () => {
   });
 
   describe('parsePullRequest', () => {
+    test('ignores a pull request from a fork', () => {
+      // An Open Authoring contribution that a maintainer labelled by hand: the branch isn’t on the
+      // configured repository, so the card would report every file as deleted
+      expect(parsePullRequest(createNode({ isCrossRepository: true }))).toBeUndefined();
+    });
+
     test('parses a CMS-managed pull request', () => {
       const result = parsePullRequest(createNode());
 
@@ -361,23 +398,36 @@ describe('GitHub Editorial Workflow service', () => {
 
     test('ignores an existing reference', async () => {
       mockBase();
-      // An earlier pull request for the same entry can leave the branch behind
-      vi.mocked(fetchAPI).mockResolvedValue({
-        data: { createRef: null },
-        errors: [
-          { message: 'A ref named "refs/heads/cms/posts/hello" already exists in the repository.' },
-        ],
-      });
+
+      // A GraphQL error comes back as a rejection carrying the message, not as a resolved response
+      // with an `errors` key. The branch is left behind by an earlier pull request for the same
+      // entry — one merged without deleting the branch, or discarded — and is fine to commit onto
+      vi.mocked(fetchAPI).mockRejectedValue(
+        new Error('Server responded with an error', {
+          cause: {
+            status: 200,
+            message: 'A ref named "refs/heads/cms/posts/hello" already exists in the repository.',
+          },
+        }),
+      );
 
       await expect(createBranch('cms/posts/hello')).resolves.toBeUndefined();
     });
 
     test('rethrows any other mutation error', async () => {
       mockBase();
-      vi.mocked(fetchAPI).mockResolvedValue({
-        data: { createRef: null },
-        errors: [{ message: 'Resource not accessible by integration' }],
-      });
+      vi.mocked(fetchAPI).mockRejectedValue(
+        new Error('Server responded with an error', {
+          cause: { status: 200, message: 'Resource not accessible by integration' },
+        }),
+      );
+
+      await expect(createBranch('cms/posts/hello')).rejects.toThrow('Failed to create the branch.');
+    });
+
+    test('rethrows an error that carries no cause', async () => {
+      mockBase();
+      vi.mocked(fetchAPI).mockRejectedValue(new Error('Failed to send the request'));
 
       await expect(createBranch('cms/posts/hello')).rejects.toThrow('Failed to create the branch.');
     });
@@ -552,10 +602,11 @@ describe('GitHub Editorial Workflow service', () => {
         repository: { id: 'R_1', ref: { target: { oid: 'abc' } } },
       });
       vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
-      vi.mocked(fetchAPI).mockResolvedValueOnce({
-        data: { createRef: null },
-        errors: [{ message: 'already exists' }],
-      });
+      vi.mocked(fetchAPI).mockRejectedValueOnce(
+        new Error('Server responded with an error', {
+          cause: { status: 200, message: 'already exists' },
+        }),
+      );
 
       await savePullRequest(args).catch(() => undefined);
 
@@ -645,7 +696,7 @@ describe('GitHub Editorial Workflow service', () => {
     });
 
     test('uses a squash merge when configured', async () => {
-      vi.mocked(get).mockReturnValue({ backend: { name: 'github', squash_merges: true } });
+      mockStores({ backend: { name: 'github', squash_merges: true } });
 
       await publish(/** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', title: 't' }));
 
@@ -657,7 +708,7 @@ describe('GitHub Editorial Workflow service', () => {
     });
 
     test('falls back to a regular merge without the config', async () => {
-      vi.mocked(get).mockReturnValue(undefined);
+      mockStores({ backend: null });
 
       await publish(/** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', title: 't' }));
 
@@ -683,6 +734,729 @@ describe('GitHub Editorial Workflow service', () => {
         '/repos/owner/repo/git/refs/heads/cms/posts/hello',
         expect.objectContaining({ method: 'DELETE' }),
       );
+    });
+  });
+
+  describe('Open Authoring', () => {
+    /** The fork every test in this block writes to. */
+    const fork = { owner: 'contributor', repo: 'repo' };
+    /** The workflow branch the fixtures below describe. */
+    const BRANCH = 'cms/contributor/repo/posts/hello';
+
+    /**
+     * Create a raw ref node as returned by the branch listing query.
+     * @param {object} [overrides] Properties to override.
+     * @returns {any} Node.
+     */
+    const createRefNode = (overrides = {}) => ({
+      name: 'posts/hello',
+      target: {
+        message: 'Create Post “hello”',
+        committedDate: '2026-01-03T00:00:00Z',
+        author: {
+          name: 'Me',
+          email: 'me@example.com',
+          user: { login: 'contributor', databaseId: 123 },
+        },
+      },
+      ...overrides,
+    });
+
+    /**
+     * Create a raw pull request node as returned by the branch listing query.
+     * @param {object} [overrides] Properties to override.
+     * @returns {any} Node.
+     */
+    const createBranchPullRequest = (overrides = {}) => ({
+      id: 'PR_1',
+      number: 1,
+      title: 'Create Post “hello”',
+      url: 'https://github.com/owner/repo/pull/1',
+      state: 'OPEN',
+      isDraft: false,
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-02T00:00:00Z',
+      headRepositoryOwner: { login: 'contributor' },
+      files: { nodes: [{ path: 'content/posts/hello.md', changeType: 'ADDED' }] },
+      ...overrides,
+    });
+
+    beforeEach(() => {
+      mockStores({ fork });
+    });
+
+    describe('parseForkBranch', () => {
+      test('a branch without a pull request is a draft', () => {
+        const result = parseForkBranch(createRefNode(), BRANCH);
+
+        expect(result).toEqual({
+          number: undefined,
+          nodeId: undefined,
+          // The head commit’s message stands in for the title a pull request would carry
+          title: 'Create Post “hello”',
+          url: undefined,
+          branch: BRANCH,
+          status: 'draft',
+          createdDate: new Date('2026-01-03T00:00:00Z'),
+          updatedDate: new Date('2026-01-03T00:00:00Z'),
+          author: { name: 'Me', email: 'me@example.com', id: 123, login: 'contributor' },
+          files: [],
+        });
+      });
+
+      test('takes the file list off an open pull request', () => {
+        // Reading them here saves comparing the branch with the configured branch, which answers
+        // with a diff of every file
+        expect(parseForkBranch(createRefNode(), BRANCH, createBranchPullRequest())?.files).toEqual([
+          {
+            path: 'content/posts/hello.md',
+            sha: '',
+            size: 0,
+            deleted: false,
+            renamed: false,
+          },
+        ]);
+      });
+
+      test('copes with an open pull request that reports no file list', () => {
+        const pullRequest = createBranchPullRequest({ files: undefined });
+
+        expect(parseForkBranch(createRefNode(), BRANCH, pullRequest)?.files).toEqual([]);
+      });
+
+      test('leaves the file list empty without an open pull request', () => {
+        // A branch with no pull request has nothing to read them from, and a closed one’s diff is
+        // no longer a reliable account of a branch that has moved on since
+        expect(parseForkBranch(createRefNode(), BRANCH)?.files).toEqual([]);
+
+        const closed = createBranchPullRequest({ state: 'CLOSED' });
+
+        expect(parseForkBranch(createRefNode(), BRANCH, closed)?.files).toEqual([]);
+      });
+
+      test('an open pull request means the entry is in review', () => {
+        expect(parseForkBranch(createRefNode(), BRANCH, createBranchPullRequest())).toEqual(
+          expect.objectContaining({
+            number: 1,
+            nodeId: 'PR_1',
+            url: 'https://github.com/owner/repo/pull/1',
+            status: 'pending_review',
+            createdDate: new Date('2026-01-01T00:00:00Z'),
+            updatedDate: new Date('2026-01-02T00:00:00Z'),
+          }),
+        );
+      });
+
+      test('a draft or closed pull request keeps the entry in the drafting stage', () => {
+        const asDraft = createBranchPullRequest({ isDraft: true });
+
+        expect(parseForkBranch(createRefNode(), BRANCH, asDraft)?.status).toBe('draft');
+
+        const closed = createBranchPullRequest({ state: 'CLOSED' });
+
+        expect(parseForkBranch(createRefNode(), BRANCH, closed)?.status).toBe('draft');
+      });
+
+      test('a merged pull request is treated as none at all', () => {
+        // The branch may simply be left over, in which case comparing it turns up nothing and it
+        // drops off the board. But the contributor may also have edited the entry again since the
+        // merge, which makes it a fresh draft rather than something to reopen
+        const merged = createBranchPullRequest({ state: 'MERGED' });
+        const result = parseForkBranch(createRefNode(), BRANCH, merged);
+
+        expect(result).toEqual(
+          expect.objectContaining({
+            number: undefined,
+            nodeId: undefined,
+            status: 'draft',
+            files: [],
+          }),
+        );
+      });
+
+      test('copes with a commit author who has no public email address', () => {
+        const node = createRefNode({
+          target: {
+            message: 'Create Post “hello”',
+            committedDate: '2026-01-03T00:00:00Z',
+            author: { name: 'Me', user: { login: 'contributor', databaseId: 123 } },
+          },
+        });
+
+        expect(parseForkBranch(node, BRANCH)?.author).toEqual({
+          name: 'Me',
+          email: '',
+          id: 123,
+          login: 'contributor',
+        });
+      });
+
+      test('copes with a branch whose head commit couldn’t be read', () => {
+        const node = createRefNode({ target: undefined });
+
+        expect(parseForkBranch(node, BRANCH)).toEqual(
+          expect.objectContaining({ title: '', author: undefined }),
+        );
+      });
+    });
+
+    describe('fetchForkBranchPullRequests', () => {
+      test('looks the pull requests up on the configured repository, not the fork', async () => {
+        // A ref in the fork doesn’t report the pull requests opened from it against the configured
+        // repository, so asking the fork would find nothing
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          repository: { pr_0: { nodes: [createBranchPullRequest()] } },
+        });
+
+        const result = await fetchForkBranchPullRequests([BRANCH]);
+
+        expect(fetchGraphQL).toHaveBeenCalledWith(
+          expect.stringContaining(`headRefName: "${BRANCH}"`),
+        );
+
+        expect(result.get(BRANCH)).toEqual(expect.objectContaining({ number: 1 }));
+      });
+
+      test('ignores a pull request from a branch of the same name elsewhere', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          repository: {
+            pr_0: {
+              nodes: [createBranchPullRequest({ headRepositoryOwner: { login: 'someone-else' } })],
+            },
+          },
+        });
+
+        const result = await fetchForkBranchPullRequests([BRANCH]);
+
+        expect(result.size).toBe(0);
+      });
+
+      test('sends no request without branches to look up', async () => {
+        const result = await fetchForkBranchPullRequests([]);
+
+        expect(result.size).toBe(0);
+        expect(fetchGraphQL).not.toHaveBeenCalled();
+      });
+
+      test('copes with a repository that reports nothing', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({});
+
+        const result = await fetchForkBranchPullRequests([BRANCH]);
+
+        expect(result.size).toBe(0);
+      });
+    });
+
+    describe('fetchForkBranches', () => {
+      test('queries the fork with the branch prefix', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          repository: { refs: { nodes: [createRefNode()] } },
+        });
+
+        const result = await fetchForkBranches();
+
+        expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('refs('), {
+          owner: 'contributor',
+          repo: 'repo',
+          prefix: 'refs/heads/cms/contributor/repo/',
+        });
+
+        expect(result).toHaveLength(1);
+        expect(result[0].branch).toBe('cms/contributor/repo/posts/hello');
+      });
+
+      test('says something when the branch list comes back full', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        vi.mocked(fetchGraphQL).mockImplementation(async (query) =>
+          query.includes('refs(')
+            ? {
+                repository: {
+                  refs: {
+                    // A full page means an arbitrary set of branches was left off the board
+                    nodes: Array.from({ length: 100 }, (_item, index) =>
+                      createRefNode({ name: `posts/entry-${index}` }),
+                    ),
+                  },
+                },
+              }
+            : { repository: {} },
+        );
+
+        await fetchForkBranches();
+
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('Only the first 100'));
+        warn.mockRestore();
+      });
+
+      test('stays quiet when the branch list fits', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        vi.mocked(fetchGraphQL).mockImplementation(async (query) =>
+          query.includes('refs(')
+            ? { repository: { refs: { nodes: [createRefNode()] } } }
+            : { repository: {} },
+        );
+
+        await fetchForkBranches();
+
+        expect(warn).not.toHaveBeenCalled();
+        warn.mockRestore();
+      });
+
+      test('returns nothing when the fork can’t be read', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({});
+        await expect(fetchForkBranches()).resolves.toEqual([]);
+      });
+    });
+
+    describe('fetchForkBranchFileList', () => {
+      test('compares the fork branch with the configured branch', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({
+          files: [
+            { filename: 'content/posts/hello.md', status: 'modified' },
+            { filename: 'content/posts/old.md', status: 'removed' },
+            {
+              filename: 'content/posts/new.md',
+              status: 'renamed',
+              previous_filename: 'content/posts/older.md',
+            },
+          ],
+        });
+
+        const pullRequest = /** @type {any} */ ({ branch: 'cms/contributor/repo/posts/hello' });
+
+        await fetchForkBranchFileList(pullRequest);
+
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/compare/main...contributor:cms/contributor/repo/posts/hello' +
+            '?per_page=100',
+        );
+
+        expect(pullRequest.files).toEqual([
+          {
+            path: 'content/posts/hello.md',
+            sha: '',
+            size: 0,
+            deleted: false,
+            previousPath: undefined,
+          },
+          {
+            path: 'content/posts/old.md',
+            sha: '',
+            size: 0,
+            deleted: true,
+            previousPath: undefined,
+          },
+          {
+            path: 'content/posts/new.md',
+            sha: '',
+            size: 0,
+            deleted: false,
+            previousPath: 'content/posts/older.md',
+          },
+        ]);
+      });
+
+      test('copes with a comparison that reports no files', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({});
+
+        const pullRequest = /** @type {any} */ ({ branch: 'cms/contributor/repo/posts/hello' });
+
+        await fetchForkBranchFileList(pullRequest);
+        expect(pullRequest.files).toEqual([]);
+      });
+    });
+
+    describe('fetchForkPullRequests', () => {
+      test('compares only the branches an open pull request didn’t account for', async () => {
+        vi.mocked(fetchGraphQL).mockImplementation(async (query) => {
+          if (query.includes('refs(')) {
+            return {
+              repository: {
+                refs: {
+                  nodes: [createRefNode(), createRefNode({ name: 'posts/draft' })],
+                },
+              },
+            };
+          }
+
+          if (query.includes('headRefName')) {
+            // The first branch is in review; the second is a draft with no pull request
+            return { repository: { pr_0: { nodes: [createBranchPullRequest()] }, pr_1: {} } };
+          }
+
+          return {
+            repository: {
+              file_0: { oid: 'sha', byteSize: 7, text: '# Hello' },
+              file_1: { oid: 'sha2', byteSize: 7, text: '# Draft' },
+            },
+          };
+        });
+
+        vi.mocked(fetchAPI).mockResolvedValue({
+          files: [{ filename: 'content/posts/draft.md', status: 'added' }],
+        });
+
+        const result = await fetchForkPullRequests();
+
+        // Only the draft is compared; the entry in review is spared the request and its diff
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          expect.stringContaining('/compare/main...contributor:cms/contributor/repo/posts/draft'),
+        );
+
+        expect(result).toHaveLength(2);
+      });
+
+      test('looks up the previous path of a file a pull request renamed', async () => {
+        vi.mocked(fetchGraphQL).mockImplementation(async (query) => {
+          if (query.includes('refs(')) {
+            return { repository: { refs: { nodes: [createRefNode()] } } };
+          }
+
+          if (query.includes('headRefName')) {
+            return {
+              repository: {
+                pr_0: {
+                  nodes: [
+                    createBranchPullRequest({
+                      files: { nodes: [{ path: 'content/posts/new.md', changeType: 'RENAMED' }] },
+                    }),
+                  ],
+                },
+              },
+            };
+          }
+
+          return { repository: { file_0: { oid: 'sha', byteSize: 7, text: '# Hello' } } };
+        });
+
+        // The pull request’s own file list has no previous path, so the REST request fills it in
+        vi.mocked(fetchAPI).mockResolvedValue([
+          {
+            filename: 'content/posts/new.md',
+            status: 'renamed',
+            previous_filename: 'content/posts/old.md',
+          },
+        ]);
+
+        const result = await fetchForkPullRequests();
+
+        expect(fetchAPI).toHaveBeenCalledWith(
+          expect.stringContaining('/repos/owner/repo/pulls/1/files'),
+        );
+
+        expect(result[0].files[0].previousPath).toBe('content/posts/old.md');
+      });
+
+      test('drops a branch that no longer differs from the configured branch', async () => {
+        vi.mocked(fetchGraphQL).mockImplementation(async (query) => {
+          if (query.includes('refs(')) {
+            return {
+              repository: {
+                refs: { nodes: [createRefNode(), createRefNode({ name: 'posts/stale' })] },
+              },
+            };
+          }
+
+          if (query.includes('headRefName')) {
+            return { repository: {} };
+          }
+
+          return { repository: { file_0: { oid: 'sha', byteSize: 7, text: '# Hello' } } };
+        });
+
+        vi.mocked(fetchAPI).mockImplementation(async (path) =>
+          path.includes('posts/stale')
+            ? { files: [] }
+            : { files: [{ filename: 'content/posts/hello.md', status: 'added' }] },
+        );
+
+        const result = await fetchForkPullRequests();
+
+        expect(result).toHaveLength(1);
+        expect(result[0].files[0].text).toBe('# Hello');
+      });
+    });
+
+    describe('fetchPullRequests', () => {
+      test('lists the fork’s branches rather than the labelled pull requests', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { refs: { nodes: [] } } });
+
+        await fetchPullRequests();
+
+        expect(fetchGraphQL).toHaveBeenCalledWith(
+          expect.stringContaining('refs('),
+          expect.any(Object),
+        );
+      });
+    });
+
+    describe('createBranch', () => {
+      test('creates the branch in the fork', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          repository: { id: 'R_fork', ref: { target: { oid: 'abc' } } },
+        });
+        vi.mocked(fetchAPI).mockResolvedValue({ data: { createRef: { ref: { name: 'x' } } } });
+
+        await createBranch('cms/contributor/repo/posts/hello');
+
+        expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'), {
+          owner: 'contributor',
+          repo: 'repo',
+        });
+      });
+    });
+
+    describe('deleteBranch', () => {
+      test('deletes the branch from the fork', async () => {
+        await deleteBranch('cms/contributor/repo/posts/hello');
+
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/contributor/repo/git/refs/heads/cms/contributor/repo/posts/hello',
+          expect.objectContaining({ method: 'DELETE' }),
+        );
+      });
+    });
+
+    describe('createPullRequest', () => {
+      test('opens a cross-repository pull request without labelling it', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({
+          number: 5,
+          node_id: 'PR_5',
+          title: 'Create Post “hello”',
+          html_url: 'https://github.com/owner/repo/pull/5',
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+        });
+
+        await createPullRequest({
+          branch: 'cms/contributor/repo/posts/hello',
+          title: 'Create Post “hello”',
+          status: 'pending_review',
+        });
+
+        expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls', {
+          method: 'POST',
+          body: expect.objectContaining({
+            head: 'contributor:cms/contributor/repo/posts/hello',
+            base: 'main',
+            draft: false,
+          }),
+        });
+
+        // Labelling needs write access to the configured repository, which a contributor lacks
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('savePullRequest', () => {
+      const args = /** @type {any} */ ({
+        changes: [],
+        options: { commitType: 'create' },
+        branch: 'cms/contributor/repo/posts/hello',
+        title: 'Create Post “hello”',
+      });
+
+      test('leaves a draft as a branch, with no pull request', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          repository: { id: 'R_fork', ref: { target: { oid: 'abc' } } },
+        });
+        vi.mocked(commitChanges).mockResolvedValue({
+          sha: 'def',
+          date: new Date('2026-01-03T00:00:00Z'),
+          files: {},
+        });
+        vi.mocked(fetchAPI).mockResolvedValue({ data: { createRef: { ref: { name: 'x' } } } });
+
+        const { pullRequest } = await savePullRequest({ ...args, status: 'draft' });
+
+        expect(pullRequest).toEqual({
+          title: 'Create Post “hello”',
+          branch: 'cms/contributor/repo/posts/hello',
+          status: 'draft',
+          createdDate: new Date('2026-01-03T00:00:00Z'),
+          updatedDate: new Date('2026-01-03T00:00:00Z'),
+          files: [],
+        });
+
+        // Only the `createRef` mutation; no pull request was opened
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+      });
+
+      test('opens the pull request right away for a removal', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          repository: { id: 'R_fork', ref: { target: { oid: 'abc' } } },
+        });
+        vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
+        vi.mocked(fetchAPI)
+          .mockResolvedValueOnce({ data: { createRef: { ref: { name: 'x' } } } })
+          .mockResolvedValueOnce({
+            number: 5,
+            node_id: 'PR_5',
+            title: 'x',
+            html_url: 'u',
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-01T00:00:00Z',
+          });
+
+        const { pullRequest } = await savePullRequest({ ...args, status: 'pending_deletion' });
+
+        expect(pullRequest).toEqual(
+          expect.objectContaining({ number: 5, status: 'pending_deletion' }),
+        );
+      });
+    });
+
+    describe('updateForkStatus', () => {
+      test('refuses to mark an entry ready to publish', async () => {
+        await expect(
+          updateForkStatus(/** @type {any} */ ({ branch: 'b' }), 'pending_publish'),
+        ).rejects.toThrow('Cannot mark an entry ready to publish');
+      });
+
+      test('opens the pull request when the draft is handed over for review', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({
+          number: 5,
+          node_id: 'PR_5',
+          title: 'x',
+          html_url: 'u',
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+        });
+
+        const result = await updateForkStatus(
+          /** @type {any} */ ({ branch: 'cms/contributor/repo/posts/hello', title: 'x' }),
+          'pending_review',
+        );
+
+        expect(result).toEqual(expect.objectContaining({ number: 5, status: 'pending_review' }));
+      });
+
+      test('leaves a branch-only draft alone', async () => {
+        const pullRequest = /** @type {any} */ ({
+          branch: 'cms/contributor/repo/posts/hello',
+          title: 'x',
+          status: 'draft',
+        });
+
+        const result = await updateForkStatus(pullRequest, 'draft');
+
+        expect(result.status).toBe('draft');
+        expect(fetchAPI).not.toHaveBeenCalled();
+      });
+
+      test('converts an open pull request to a draft', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({ node: { state: 'OPEN', isDraft: false } });
+
+        await updateForkStatus(
+          /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
+          'draft',
+        );
+
+        expect(fetchGraphQL).toHaveBeenLastCalledWith(
+          expect.stringContaining('convertPullRequestToDraft'),
+          { input: { pullRequestId: 'PR_1' } },
+        );
+      });
+
+      test('leaves a pull request that is already a draft alone', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({ node: { state: 'OPEN', isDraft: true } });
+
+        await updateForkStatus(
+          /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
+          'draft',
+        );
+
+        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+      });
+
+      test('reopens a closed pull request and marks it ready for review', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({ node: { state: 'CLOSED', isDraft: true } });
+
+        await updateForkStatus(
+          /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
+          'pending_review',
+        );
+
+        expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/1', {
+          method: 'PATCH',
+          body: { state: 'open' },
+        });
+
+        expect(fetchGraphQL).toHaveBeenLastCalledWith(
+          expect.stringContaining('markPullRequestReadyForReview'),
+          { input: { pullRequestId: 'PR_1' } },
+        );
+      });
+
+      test('copes with a pull request that can no longer be read', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({});
+
+        const result = await updateForkStatus(
+          /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
+          'pending_review',
+        );
+
+        expect(result.status).toBe('pending_review');
+      });
+    });
+
+    describe('updateStatus', () => {
+      test('takes the fork path rather than updating labels', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({ node: { state: 'OPEN', isDraft: false } });
+
+        await updateStatus(
+          /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
+          'draft',
+        );
+
+        // The labels endpoint is never touched
+        expect(fetchAPI).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('reopenPullRequest', () => {
+      test('reopens the pull request on the configured repository', async () => {
+        await reopenPullRequest(/** @type {any} */ ({ number: 7 }));
+
+        expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/7', {
+          method: 'PATCH',
+          body: { state: 'open' },
+        });
+      });
+    });
+
+    describe('publish', () => {
+      test('refuses to merge', async () => {
+        await expect(
+          publish(/** @type {any} */ ({ number: 1, branch: 'b', title: 'x' })),
+        ).rejects.toThrow('Cannot publish as an Open Authoring contributor');
+      });
+    });
+
+    describe('discard', () => {
+      test('deletes a branch-only draft without closing anything', async () => {
+        await discard(/** @type {any} */ ({ branch: 'cms/contributor/repo/posts/hello' }));
+
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/contributor/repo/git/refs/heads/cms/contributor/repo/posts/hello',
+          expect.objectContaining({ method: 'DELETE' }),
+        );
+      });
+
+      test('closes the pull request when there is one', async () => {
+        await discard(
+          /** @type {any} */ ({ number: 1, branch: 'cms/contributor/repo/posts/hello' }),
+        );
+
+        expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls/1', {
+          method: 'PATCH',
+          body: { state: 'closed' },
+        });
+      });
     });
   });
 

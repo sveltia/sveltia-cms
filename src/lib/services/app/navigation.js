@@ -191,6 +191,40 @@ export const goto = async (
 };
 
 /**
+ * Route pattern for the shorthand link to an entry that Netlify/Decap CMS accepts, which is
+ * documented alongside their Open Authoring feature as a way to hand contributors a direct link.
+ * They redirect it to their own entry route, which is the same one Sveltia CMS uses, so a site
+ * migrating over keeps any such link it has already published working.
+ * @see https://decapcms.org/docs/open-authoring/
+ */
+const LEGACY_ENTRY_ROUTE_REGEX = /^\/edit\/(?<collectionName>[^/]+)\/(?<subPath>.+)$/;
+
+/**
+ * Redirect a Netlify/Decap CMS entry shorthand link, e.g. `#/edit/posts/hello`, to the equivalent
+ * Sveltia CMS route, e.g. `#/collections/posts/entries/hello`. The current URL is replaced rather
+ * than pushed, so the shorthand doesn’t sit in the history and send the user back to it.
+ * @returns {boolean} `true` if the current URL was a shorthand link and a redirect has been
+ * started, in which case the caller has nothing left to do for this navigation.
+ */
+export const redirectLegacyEntryLink = () => {
+  const { path, params } = parseLocation();
+  const { collectionName, subPath } = path.match(LEGACY_ENTRY_ROUTE_REGEX)?.groups ?? {};
+
+  if (!collectionName || !subPath) {
+    return false;
+  }
+
+  // Carry any query string over, so the editor locale and dynamic default values survive
+  const query = new URLSearchParams(params).toString();
+
+  goto(`/collections/${collectionName}/entries/${subPath}${query ? `?${query}` : ''}`, {
+    replaceState: true,
+  });
+
+  return true;
+};
+
+/**
  * Go back to the previous page if possible, or navigate to the given fallback URL.
  * @param {string} path Fallback URL path.
  * @param {GoToMethodOptions} [options] Options to be passed to {@link goto}.

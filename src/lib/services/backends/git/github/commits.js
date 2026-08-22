@@ -1,9 +1,12 @@
 import { _ } from '@sveltia/i18n';
 import { encodeBase64 } from '@sveltia/utils/file';
+import { get } from 'svelte/store';
 
+import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
+import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { CommitOptions, CommitResults, FileChange, FileCommit } from '$lib/types/private';
@@ -41,16 +44,18 @@ const FETCH_LAST_COMMIT_QUERY = `
 /**
  * Fetch the last commit on the repository.
  * @param {string} [branchName] Branch to look at. Default: the branch configured in the site
- * configuration. An Editorial Workflow branch can be passed here.
+ * configuration. An Editorial Workflow branch can be passed here, in which case the commit is
+ * looked up in the repository that holds the workflow branches — the contributor’s fork with Open
+ * Authoring, and the configured repository otherwise.
  * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
  * @throws {Error} When the branch could not be found.
  */
 export const fetchLastCommit = async (branchName) => {
-  const { repo } = repository;
+  const { owner, repo } = branchName ? getWorkflowRepository() : repository;
   const branch = branchName ?? repository.branch;
 
   const result = /** @type {LastCommitResponse} */ (
-    await fetchGraphQL(FETCH_LAST_COMMIT_QUERY, branchName ? { branch: branchName } : {})
+    await fetchGraphQL(FETCH_LAST_COMMIT_QUERY, { owner, repo, ...(branchName ? { branch } : {}) })
   );
 
   if (!result.repository) {
@@ -85,7 +90,18 @@ const MAX_GRAPHQL_BLOB_SIZE = 10 * 1024 * 1024;
  * @see https://docs.github.com/en/graphql/reference/mutations#createcommitonbranch
  */
 export const commitChanges = async (changes, options) => {
-  const { owner, repo } = repository;
+  // An Open Authoring contributor can’t write to the configured repository at all, so a change that
+  // doesn’t go through Editorial Workflow has nowhere to land. Fail here with an explanation rather
+  // than letting the API reject the commit with a bare permission error
+  if (get(openAuthoring) && !options.branch) {
+    throw new Error('Cannot commit directly to the configured repository', {
+      cause: new Error(_('open_authoring.direct_commit_unsupported')),
+    });
+  }
+
+  // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
+  // branch is only ever committed to by someone who can write to the configured repository
+  const { owner, repo } = options.branch ? getWorkflowRepository() : repository;
   const branch = options.branch ?? repository.branch;
 
   const additionChanges = changes.filter(({ action }) =>

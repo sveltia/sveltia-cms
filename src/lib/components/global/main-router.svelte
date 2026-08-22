@@ -18,7 +18,11 @@
   import SearchPage from '$lib/components/search/search-page.svelte';
   import SettingsPage from '$lib/components/settings/settings-page.svelte';
   import WorkflowPage from '$lib/components/workflow/workflow-page.svelte';
-  import { parseLocation, selectedPageName } from '$lib/services/app/navigation';
+  import {
+    parseLocation,
+    redirectLegacyEntryLink,
+    selectedPageName,
+  } from '$lib/services/app/navigation';
   import { canShowMobileSignInDialog } from '$lib/services/app/onboarding';
   import { searchMode } from '$lib/services/search';
   import { env } from '$lib/services/user/env.svelte';
@@ -46,6 +50,13 @@
    * @todo Show Not Found page.
    */
   export const selectPage = () => {
+    // A Netlify/Decap CMS shorthand link to an entry has to be caught before the fallback below,
+    // which would otherwise drop the user on the collection list with no sign of where they meant
+    // to go. The redirect triggers another `hashchange`, so this runs again with the real route
+    if (redirectLegacyEntryLink()) {
+      return;
+    }
+
     const { path } = parseLocation();
 
     const { pageName } =
