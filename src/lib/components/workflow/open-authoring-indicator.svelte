@@ -53,7 +53,13 @@
 </script>
 
 {#if fork}
-  <Infobar show={showInfobar} dismissible={false} --sui-infobar-message-justify-content="center">
+  <Infobar
+    show={showInfobar}
+    onDismiss={() => {
+      hideInfobar();
+    }}
+    --sui-infobar-message-justify-content="center"
+  >
     {_('open_authoring.contributing_via_fork', { values: { repo: repoPath } })}
     {#if forkURL}
       <Button
@@ -61,15 +67,9 @@
         label={_('open_authoring.view_fork')}
         onclick={() => {
           openNewTab(forkURL);
+          hideInfobar();
         }}
       />
     {/if}
-    <Button
-      variant="link"
-      label={_('later')}
-      onclick={() => {
-        hideInfobar();
-      }}
-    />
   </Infobar>
 {/if}
