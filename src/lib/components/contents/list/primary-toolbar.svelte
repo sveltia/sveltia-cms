@@ -24,6 +24,7 @@
     reordering,
   } from '$lib/services/contents/collection/view';
   import { env } from '$lib/services/user/env.svelte';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * Options for {@link sanitize}.
@@ -59,6 +60,7 @@
     nearingQuota,
     creationDisabled,
   } = $derived($collectionState);
+  const deleteDisabled = $derived(!$selectedEntries.length || !canDelete);
 </script>
 
 {#if $selectedCollection}
@@ -84,12 +86,14 @@
     {#if isEntryCollection && $reordering}
       <ReorderControls />
     {:else if isEntryCollection}
-      {#if !env.isSmallScreen}
+      <!-- Taking a published entry off the site is a maintainer’s call, and the entry list has no
+      other bulk action, so a contributor has nothing to select entries for -->
+      {#if !env.isSmallScreen && !$openAuthoring}
         <Button
           variant="ghost"
           label={_('delete')}
           aria-label={_('delete_selected_entries', { values: { count: $selectedEntries.length } })}
-          disabled={!$selectedEntries.length || !canDelete}
+          disabled={deleteDisabled}
           onclick={() => {
             showDeleteDialog = true;
           }}

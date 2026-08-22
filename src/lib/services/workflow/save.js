@@ -1,3 +1,4 @@
+import { _ } from '@sveltia/i18n';
 import { unique } from '@sveltia/utils/array';
 import { get } from 'svelte/store';
 
@@ -16,6 +17,7 @@ import {
   removeWorkflowAssets,
 } from '$lib/services/workflow/assets';
 import { getBranchName } from '$lib/services/workflow/branch';
+import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
@@ -321,6 +323,14 @@ export const discardWorkflowEntry = async (entry) => {
  * @see https://github.com/sveltia/sveltia-cms/issues/770
  */
 export const deleteWorkflowEntry = async (entry, collection, collectionFile, assets = []) => {
+  // Taking a published entry off the site is a maintainer’s call. A contributor can discard their
+  // own draft, which leaves the published version alone, but not propose a removal
+  if (get(openAuthoring)) {
+    throw new Error('Cannot delete a published entry as an Open Authoring contributor', {
+      cause: new Error(_('open_authoring.direct_commit_unsupported')),
+    });
+  }
+
   const workflow = getWorkflowService();
   const collectionName = collection.name;
   const { slug } = entry;

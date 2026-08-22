@@ -9,6 +9,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntryIndexMap } from '$lib/services/contents/collection/view';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { Entry, InternalEntryCollection, ViewType } from '$lib/types/private';
@@ -66,5 +67,13 @@
     });
   }}
 >
-  <EntryListItemCells {collection} {entry} {viewType} showCheckbox onSelect={updateSelection} />
+  <!-- Deleting entries is the only bulk action, and it’s not available to an Open Authoring
+  contributor, so the selection checkboxes would do nothing for them -->
+  <EntryListItemCells
+    {collection}
+    {entry}
+    {viewType}
+    showCheckbox={!$openAuthoring}
+    onSelect={updateSelection}
+  />
 </GridRow>

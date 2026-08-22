@@ -9,6 +9,7 @@ import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { unpublishedEntries } from '$lib/services/workflow';
+import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import {
   deleteWorkflowEntries,
   deleteWorkflowEntry,
@@ -82,6 +83,7 @@ describe('workflow/save', () => {
     vi.clearAllMocks();
     unpublishedEntries.set([]);
     allEntries.set([]);
+    forkedRepository.set(undefined);
 
     vi.mocked(get).mockImplementation((store) =>
       store === backend ? { workflow: workflowService } : getStoreValue(store),
@@ -461,6 +463,20 @@ describe('workflow/save', () => {
 
   describe('deleteWorkflowEntry', () => {
     const collection = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+
+    test('refuses to take a published entry off the site for a contributor', async () => {
+      // Discarding their own draft leaves the published version alone and stays available; removing
+      // something already live is a maintainer’s call
+      forkedRepository.set({ owner: 'contributor', repo: 'repo' });
+
+      await expect(
+        deleteWorkflowEntry(
+          /** @type {any} */ ({ slug: 'hello', locales: { _default: { path: 'p.md' } } }),
+          collection,
+          undefined,
+        ),
+      ).rejects.toThrow('Cannot delete a published entry as an Open Authoring contributor');
+    });
 
     /**
      * Create a published entry for testing.

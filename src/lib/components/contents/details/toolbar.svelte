@@ -54,6 +54,7 @@
     workflowEnabled,
   } from '$lib/services/workflow';
   import { getBranchName } from '$lib/services/workflow/branch';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import {
     deleteWorkflowEntry,
     discardWorkflowEntry,
@@ -154,6 +155,12 @@
   const publishedVersionExists = $derived(
     !!unpublishedEntry && !!$allEntries && hasPublishedVersion(unpublishedEntry),
   );
+  // Deleting an entry that was never published just throws the draft away; anything else takes an
+  // entry off the site
+  const discardsDraft = $derived(!!unpublishedEntry && !publishedVersionExists);
+  // Taking a published entry off the site is a maintainer’s call. An Open Authoring contributor can
+  // discard their own draft, but not propose the removal of something already live
+  const canDeleteEntry = $derived(canDelete && (discardsDraft || !$openAuthoring));
   // An entry awaiting deletion is read-only: there’s nothing to save or move through the stages,
   // only the deletion itself to carry out or call off
   const pendingDeletion = $derived(isPendingDeletion(unpublishedEntry));
@@ -365,7 +372,7 @@
     />
   {/if}
   <!-- A collection file is part of the collection definition, so it can only be discarded -->
-  {#if publishedVersionExists || (canDelete && !collectionFile)}
+  {#if publishedVersionExists || (canDeleteEntry && !collectionFile)}
     <Component
       variant="ghost"
       disabled={controlsDisabled}
@@ -448,7 +455,7 @@
           {#if env.isSmallScreen && !disabled && !isNew}
             {@render overflowButtons()}
           {/if}
-          {#if publishedVersionExists && canDelete && !collectionFile && !pendingDeletion}
+          {#if publishedVersionExists && canDeleteEntry && !collectionFile && !pendingDeletion}
             <MenuItem
               label={_('delete')}
               onclick={() => {

@@ -21,6 +21,7 @@
   import { viewGroups } from '$lib/services/contents/collection/view/group';
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
   import { env } from '$lib/services/user/env.svelte';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { InternalEntryCollection } from '$lib/types/private';
@@ -42,7 +43,7 @@
 
 {#if entryCollection && !$reordering}
   <Toolbar variant="secondary" aria-label={_('entry_list')}>
-    {#if !(env.isSmallScreen || env.isMediumScreen)}
+    {#if !(env.isSmallScreen || env.isMediumScreen) && !$openAuthoring}
       <ItemSelector
         allItems={[...$listedUnpublishedEntries, ...$entryGroups.flatMap(({ entries }) => entries)]}
         selectedItems={selectedEntries}
