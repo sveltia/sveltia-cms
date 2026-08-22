@@ -7,6 +7,7 @@
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { getValidCollections } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { EntryCollection } from '$lib/types/public';
@@ -49,6 +50,7 @@
       {/if}
       <MenuItem
         label={_('assets')}
+        disabled={$openAuthoring}
         onclick={async () => {
           goto('/assets', { transitionType: 'forwards' });
           await sleep(100);
