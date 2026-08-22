@@ -122,7 +122,7 @@ sign_in_with_x: '{$service} にログイン'
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: アクセストークンを使用してログイン
-sign_in_using_access_token_description: 以下にトークンを入力してください。レポジトリコンテンツへの読み取り・書き込みアクセスが必要です。
+sign_in_using_access_token_description: 以下にトークンを入力してください。リポジトリコンテンツへの読み取り・書き込みアクセスが必要です。
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: <a>{$service} ユーザー設定ページ</a> でトークンを生成できます。
@@ -135,18 +135,18 @@ signing_in: ログイン中…
 
 # Local and test repository options
 # Button label and description for working with a local Git repository
-work_with_local_repo: ローカルレポジトリで作業
+work_with_local_repo: ローカルリポジトリで作業
 # {$repo} is the configured repository name shown when it is available
-work_with_local_repo_description: ダイアログが表示されたら、「{$repo}」レポジトリのルートディレクトリを選択してください。
-work_with_local_repo_description_no_repo: ダイアログが表示されたら、Git レポジトリのルートディレクトリを選択してください。
+work_with_local_repo_description: ダイアログが表示されたら、「{$repo}」リポジトリのルートディレクトリを選択してください。
+work_with_local_repo_description_no_repo: ダイアログが表示されたら、Git リポジトリのルートディレクトリを選択してください。
 # Button label for demo/test repository
-work_with_test_repo: テストレポジトリで作業
+work_with_test_repo: テストリポジトリで作業
 
 # Authentication errors
 # Error messages shown during sign-in failures
 sign_in_error:
-  not_project_root: 選択されたフォルダーはレポジトリのルートディレクトリではありません。再度お試しください。
-  picker_dismissed: レポジトリのルートディレクトリを選択できませんでした。再度お試しください。
+  not_project_root: 選択されたフォルダーはリポジトリのルートディレクトリではありません。再度お試しください。
+  picker_dismissed: リポジトリのルートディレクトリを選択できませんでした。再度お試しください。
   authentication_aborted: 認証が中断されました。再度お試しください。
   invalid_token: 入力されたトークンが無効です。確認して再度お試しください。
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
@@ -164,11 +164,11 @@ sign_in_error:
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
 backend_unsupported_version: '{$name} バックエンドには {$name} {$version} 以降のバージョンが必要です。'
 # {$repo} is the repository identifier, typically in owner/repo format
-repository_no_access: あなたには「{$repo}」レポジトリへのアクセス権がありません。
-repository_not_found: 「{$repo}」レポジトリは存在しません。
-repository_empty: 「{$repo}」レポジトリにはブランチがありません。
+repository_no_access: あなたには「{$repo}」リポジトリへのアクセス権がありません。
+repository_not_found: 「{$repo}」リポジトリは存在しません。
+repository_empty: 「{$repo}」リポジトリにはブランチがありません。
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
-branch_not_found: 「{$repo}」レポジトリに「{$branch}」ブランチは存在しません。
+branch_not_found: 「{$repo}」リポジトリに「{$branch}」ブランチは存在しません。
 
 # General errors
 # Fallback error dialog title for unexpected errors
@@ -203,8 +203,8 @@ sign_in_with_mobile_instruction: 以下の QR コードを携帯電話かタブ�
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
 signed_in_as_x: '{$name} としてログイン中'
-working_with_local_repo: ローカルレポジトリで作業中
-working_with_test_repo: テストレポジトリで作業中
+working_with_local_repo: ローカルリポジトリで作業中
+working_with_test_repo: テストリポジトリで作業中
 
 # Account menu: action items for sign-out and app installation
 sign_out: ログアウト
@@ -269,7 +269,7 @@ account: アカウント
 
 # Account menu items: links to external resources
 live_site: 管理対象サイト
-git_repository: Git レポジトリ
+git_repository: Git リポジトリ
 settings: 設定
 
 # Help menu: button aria-labels and section headings
@@ -944,7 +944,7 @@ locale_x_has_been_disabled: '{$locale} コンテンツは無効化されてい�
 locale_x_now_disabled: '{$locale} コンテンツは無効化されました。エントリーを保存する際に削除されます。'
 
 # Repository and site links
-view_in_repository: レポジトリ内で見る
+view_in_repository: リポジトリ内で見る
 # {$service} is the external service label, such as GitHub or GitLab
 view_on_x: '{$service} で見る'
 view_on_live_site: 管理対象サイトで見る
@@ -1379,8 +1379,8 @@ config:
     unsupported_deprecated_backend: 廃止予定の {$name} バックエンドは Sveltia CMS では <a>非対応です</a>。
     unsupported_custom_backend: カスタムバックエンドは Sveltia CMS では <a>非対応です</a>。
     unsupported_backend_suggestion: <a>サポートされているバックエンド</a> のいずれかを使用してください。
-    missing_repository: レポジトリが定義されていません。
-    invalid_repository: 設定されているレポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。
+    missing_repository: リポジトリが定義されていません。
+    invalid_repository: 設定されているリポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。
     oauth_implicit_flow: 設定されている認証方式 (暗黙的フロー) は Sveltia CMS では非対応です。代わりに他の <a>認証方法</a> を使用してください。
     github_pkce_unsupported: GitHub の制約により PKCE 認証はまだサポートされていません。代わりに他の <a>認証方法</a> を使用してください。
     oauth_no_app_id: ' OAuth アプリケーション ID が定義されていません。'
