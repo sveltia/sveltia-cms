@@ -54,10 +54,14 @@
     workflowEnabled,
   } from '$lib/services/workflow';
   import { getBranchName } from '$lib/services/workflow/branch';
-  import { deleteWorkflowEntry, discardWorkflowEntry } from '$lib/services/workflow/save';
+  import {
+    deleteWorkflowEntry,
+    discardWorkflowEntry,
+    updateWorkflowStatus,
+  } from '$lib/services/workflow/save';
 
   /**
-   * @import { UpdateToastState } from '$lib/types/private';
+   * @import { UnpublishedEntry, UpdateToastState } from '$lib/types/private';
    */
 
   /**
@@ -75,6 +79,12 @@
   let showValidationToast = $state(false);
   let showEditSlugDialog = $state(false);
   let showDeleteDialog = $state(false);
+  let showReviewDialog = $state(false);
+  /**
+   * Resolver for the review prompt, so the save can wait for the answer.
+   * @type {((sendForReview: boolean) => void) | undefined}
+   */
+  let resolveReviewPrompt = $state();
   let showDiscardDialog = $state(false);
   let showDeleteErrorToast = $state(false);
   let showErrorDialog = $state(false);
@@ -242,6 +252,21 @@
    * @param {object} [options] Options.
    * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
    */
+  /**
+   * Ask whether the entry just saved should be handed over for review, and wait for the answer.
+   * @returns {Promise<boolean>} `true` if the user wants to send it.
+   */
+  const askForReview = () =>
+    new Promise((resolve) => {
+      resolveReviewPrompt = resolve;
+      showReviewDialog = true;
+    });
+
+  /**
+   * Save the entry draft.
+   * @param {object} [options] Options.
+   * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
+   */
   const save = async ({ skipCI = undefined } = {}) => {
     saving = true;
 
@@ -251,6 +276,25 @@
 
     try {
       const savedEntry = await saveEntry({ skipCI });
+      const savedDraft = /** @type {UnpublishedEntry} */ (savedEntry);
+
+      // Saving with Editorial Workflow leaves the entry as a draft, which nothing on screen says:
+      // it hasn’t been handed to anyone yet, and the status menu that would do it is easy to miss.
+      // Offer it as the next step instead, once, while the entry is still in the drafting stage
+      if ($workflowEnabled && savedDraft.workflow?.status === 'draft' && (await askForReview())) {
+        try {
+          await updateWorkflowStatus(savedDraft, 'pending_review');
+        } catch (/** @type {any} */ ex) {
+          showErrorDialog = true;
+          errorMessage = _('workflow.status_change_failed');
+          // eslint-disable-next-line no-console
+          console.error(ex);
+
+          // The entry itself is saved, so leave the editor open rather than navigating away from a
+          // failure the user may want to retry from the status menu
+          return;
+        }
+      }
 
       if (prefs.closeOnSave ?? true) {
         _goBack();
@@ -526,6 +570,23 @@
 </Toast>
 
 <EditSlugDialog bind:open={showEditSlugDialog} />
+
+<ConfirmationDialog
+  bind:open={showReviewDialog}
+  title={_('workflow.send_for_review')}
+  okLabel={_('workflow.send_for_review')}
+  cancelLabel={_('later')}
+  onOk={() => {
+    resolveReviewPrompt?.(true);
+  }}
+  onClose={() => {
+    // Covers the Later button, the Escape key and any other way out. Sending has already settled
+    // the prompt, so this leaves it alone
+    resolveReviewPrompt?.(false);
+  }}
+>
+  {_('workflow.confirm_sending_for_review')}
+</ConfirmationDialog>
 
 <ConfirmationDialog
   bind:open={showDeleteDialog}

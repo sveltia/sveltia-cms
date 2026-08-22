@@ -1657,6 +1657,10 @@ workflow:
   status_updated: Status updated.
   # Error notification when the status could not be changed
   status_change_failed: Couldn’t change the status. Please try again.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Send for Review
+  confirm_sending_for_review: Your changes have been saved as a draft. Send the entry for review so someone can look at it and publish it?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Publish Entry
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the

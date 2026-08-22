@@ -1574,6 +1574,10 @@ workflow:
   status_updated: ステータスを更新しました。
   # Error notification when the status could not be changed
   status_change_failed: ステータスを変更できませんでした。再度お試しください。
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: レビューを依頼
+  confirm_sending_for_review: 変更を下書きとして保存しました。誰かが確認して公開できるよう、このエントリーのレビューを依頼しますか？
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: エントリーを公開
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
