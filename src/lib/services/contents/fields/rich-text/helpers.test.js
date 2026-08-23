@@ -337,6 +337,110 @@ describe('buildMarkdownWithPreviews', () => {
     expect(markdown).toBe('<div>A</div> <div>B</div>');
   });
 
+  it('should replace an HTML element preview with a placeholder span', () => {
+    // Simulate an element with a Svelte component mounted on it
+    const element = /** @type {HTMLElement} */ (
+      /** @type {unknown} */ ({ nodeType: 1, localName: 'aside' })
+    );
+
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'warning',
+        label: 'Warning',
+        fields: [],
+        pattern: /\[warning\](?<content>.*?)\[\/warning\]/gs,
+        toBlock: ({ content }) => `[warning]${content}[/warning]`,
+        toPreview: () => element,
+      },
+    ];
+
+    const { markdown, previewMap } = buildMarkdownWithPreviews(
+      '[warning]Hello[/warning]',
+      componentDefs,
+    );
+
+    expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+
+    const [key] = previewMap.keys();
+
+    expect(previewMap.get(key)).toBe(element);
+  });
+
+  it('should reuse a preview from the previous map when the component is unchanged', () => {
+    // Simulate an element with a Svelte component mounted on it
+    const toPreview = vi.fn(
+      ({ content }) =>
+        /** @type {HTMLElement} */ (
+          /** @type {unknown} */ ({ nodeType: 1, localName: 'aside', content })
+        ),
+    );
+
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'warning',
+        label: 'Warning',
+        fields: [],
+        pattern: /\[warning\](?<content>.*?)\[\/warning\]/gs,
+        toBlock: ({ content }) => `[warning]${content}[/warning]`,
+        toPreview,
+      },
+    ];
+
+    const { previewMap: firstMap } = buildMarkdownWithPreviews(
+      '[warning]Hello[/warning]',
+      componentDefs,
+    );
+
+    expect(toPreview).toHaveBeenCalledTimes(1);
+
+    // The component is unchanged, so the same preview object must be kept
+    const { previewMap: secondMap } = buildMarkdownWithPreviews(
+      '[warning]Hello[/warning]\n\nMore text',
+      componentDefs,
+      firstMap,
+    );
+
+    const [key] = secondMap.keys();
+
+    expect(toPreview).toHaveBeenCalledTimes(1);
+    expect(secondMap.get(key)).toBe(firstMap.get(key));
+
+    // The component has changed, so a new preview must be computed
+    const { previewMap: thirdMap } = buildMarkdownWithPreviews(
+      '[warning]Bye[/warning]',
+      componentDefs,
+      secondMap,
+    );
+
+    const [newKey] = thirdMap.keys();
+
+    expect(toPreview).toHaveBeenCalledTimes(2);
+    expect(thirdMap.get(newKey)).not.toBe(firstMap.get(key));
+  });
+
+  it('should compute a preview again when the previous map has no value for the key', () => {
+    const toPreview = vi.fn(() => '<hr>');
+
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'hr',
+        label: 'HR',
+        fields: [],
+        pattern: /\[hr\]/g,
+        toBlock: () => '[hr]',
+        toPreview,
+      },
+    ];
+
+    const { markdown } = buildMarkdownWithPreviews('[hr]', componentDefs, new Map());
+
+    expect(toPreview).toHaveBeenCalledTimes(1);
+    expect(markdown).toBe('<hr>');
+  });
+
   it('should encode image src spaces in the markdown', () => {
     const { markdown } = buildMarkdownWithPreviews('![alt](my image.png)', []);
 

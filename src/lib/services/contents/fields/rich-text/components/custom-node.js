@@ -17,10 +17,39 @@ import {
  * NodeKey,
  * SerializedLexicalNode,
  * } from 'lexical';
+ * @import { ReactElement } from 'react';
  * @import { EditorComponentDefinition } from '$lib/types/public';
  */
 
 const TAG_NAME_REGEX = /^<(?<tagName>[a-z]+)/i;
+
+/**
+ * Get the name of the HTML tag that a component renders, so that the equivalent tag in a pasted
+ * HTML document can be converted back to the component.
+ * @param {string | HTMLElement | ReactElement | undefined} preview Return value of the component’s
+ * `toPreview()` method, if any.
+ * @param {string} block Return value of the component’s `toBlock()` method.
+ * @returns {string | undefined} Tag name, e.g. `img`, or `undefined` if it cannot be determined,
+ * including when the preview is a React element.
+ */
+const getTagName = (preview, block) => {
+  // An element preview, e.g. an element with a Svelte or Vue component mounted on it. Duck typing
+  // is used here because the DOM globals are unavailable outside a browser context
+  if (preview && typeof preview === 'object' && 'localName' in preview) {
+    return /** @type {HTMLElement} */ (preview).localName;
+  }
+
+  if (typeof preview === 'string') {
+    return (
+      preview.trim().match(TAG_NAME_REGEX)?.groups?.tagName ??
+      (typeof block === 'string'
+        ? block.trim().match(TAG_NAME_REGEX)?.groups?.tagName
+        : /* v8 ignore next */ undefined)
+    );
+  }
+
+  return undefined;
+};
 
 /**
  * Dynamically create a custom {@link DecoratorNode} class.
@@ -44,14 +73,7 @@ export const createCustomNodeClass = (componentDef) => {
   const inline = !isMultiLinePattern(pattern);
   const preview = toPreview?.({});
   const block = toBlock({});
-
-  const tagName =
-    typeof preview === 'string'
-      ? (preview.trim().match(TAG_NAME_REGEX)?.groups?.tagName ??
-        (typeof block === 'string'
-          ? block.trim().match(TAG_NAME_REGEX)?.groups?.tagName
-          : /* v8 ignore next */ undefined))
-      : undefined;
+  const tagName = getTagName(preview, block);
 
   /**
    * Genetic custom node.

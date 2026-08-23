@@ -515,6 +515,28 @@ describe('createCustomNodeClass', () => {
       expect(Object.keys(importDOM).length).toBe(0);
     });
 
+    it('should extract tag name from an element preview', () => {
+      const componentWithElementPreview = {
+        ...mockComponentDef,
+        /**
+         * Convert properties to preview format.
+         * @returns {HTMLElement} Preview element.
+         */
+        toPreview: () => ({ nodeType: 1, localName: 'aside' }),
+        /**
+         * Convert properties to block format.
+         * @returns {string} Block string.
+         */
+        toBlock: () => '<div>Block</div>',
+      };
+
+      const CustomNode = createCustomNodeClass(componentWithElementPreview);
+      const importDOM = CustomNode.importDOM();
+
+      expect(importDOM.aside).toBeDefined();
+      expect(importDOM.div).toBeUndefined();
+    });
+
     it('should handle when toPreview returns a non-string value', () => {
       const componentWithObjectPreview = {
         ...mockComponentDef,

@@ -9,7 +9,7 @@ import { getOrCreate } from '$lib/services/utils/cache';
  */
 
 /**
- * @typedef {string | ReactElement | undefined} ComponentPreview
+ * @typedef {string | HTMLElement | ReactElement | undefined} ComponentPreview
  */
 
 /**
@@ -281,10 +281,15 @@ const globalPatternCache = new Map();
  * replacing each match with a placeholder `<span>` keyed to the preview map.
  * @param {string | undefined} currentValue The raw Markdown field value.
  * @param {EditorComponentDefinition[]} componentDefs The resolved component definitions.
+ * @param {Map<string, ComponentPreview>} [previousPreviewMap] Preview map from the previous run, if
+ * any. Keys are content hashes, so an entry can be reused as long as the matched block is
+ * unchanged. This avoids calling `toPreview()` again for every unmodified component on each
+ * keystroke, which would orphan the DOM element and any component mounted on it in the case of an
+ * element preview.
  * @returns {{ markdown: string, previewMap: Map<string, ComponentPreview> }} The processed Markdown
  * string and a map of component keys to their precomputed preview values.
  */
-export const buildMarkdownWithPreviews = (currentValue, componentDefs) => {
+export const buildMarkdownWithPreviews = (currentValue, componentDefs, previousPreviewMap) => {
   /** @type {Map<string, ComponentPreview>} */
   const previewMap = new Map();
   let string = (currentValue ?? '').replace(GLOBAL_IMAGE_REGEX, encodeImageSrc);
@@ -312,7 +317,7 @@ export const buildMarkdownWithPreviews = (currentValue, componentDefs) => {
 
       keys.push(key);
       seenHashes.set(baseHash, count + 1);
-      previewMap.set(key, toPreview?.(fieldProps));
+      previewMap.set(key, previousPreviewMap?.get(key) ?? toPreview?.(fieldProps));
     });
 
     // Replace the component syntax with a direct preview string or placeholder, depending on the

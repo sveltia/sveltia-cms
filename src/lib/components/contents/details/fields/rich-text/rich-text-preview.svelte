@@ -11,7 +11,7 @@
   import { isValidElement } from 'react';
   import { createRoot } from 'react-dom/client';
   import { onMount } from 'svelte';
-  import { SvelteMap } from 'svelte/reactivity';
+  import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
   import { customComponentRegistry } from '$lib/services/api/registries';
   import { getMediaFieldURL } from '$lib/services/assets/info';
@@ -57,9 +57,15 @@
   const defaultConfig = $cmsConfig?.field_defaults?.richtext ?? {};
   /** @type {SvelteMap<HTMLElement, import('react-dom/client').Root>} */
   const reactRoots = new SvelteMap();
+  /**
+   * DOM element previews currently inserted in the preview pane. Used to notify each element with
+   * an `Unmount` event once it’s removed, so the developer can destroy the component mounted on it.
+   * @type {SvelteSet<Element>}
+   */
+  const previewNodes = new SvelteSet();
 
-  /** @type {SvelteMap<string, ComponentPreview>} */
-  let previewMap = new SvelteMap();
+  /** @type {Map<string, ComponentPreview>} */
+  let previewMap = new Map();
 
   /** @type {FieldPreviewProps & Props} */
   let {
@@ -107,12 +113,15 @@
       return '';
     }
 
+    // Pass the current map so unchanged components keep their existing preview instead of being
+    // computed again, which would orphan an element preview along with any component mounted on it
     const { markdown: string, previewMap: newMap } = buildMarkdownWithPreviews(
       currentValue,
       componentDefs,
+      previewMap,
     );
 
-    previewMap = /** @type {SvelteMap<string, ComponentPreview>} */ (newMap);
+    previewMap = newMap;
 
     return string;
   });
@@ -146,15 +155,21 @@
   };
 
   /**
-   * Render a React component preview into the specified element based on its `data-component-key`
-   * attribute.
-   * @param {HTMLElement} element The element to render the component preview into.
+   * Render a component preview into the specified placeholder element based on its
+   * `data-component-key` attribute.
+   * @param {HTMLElement} element The placeholder element to render the component preview into.
    */
   const renderComponent = (element) => {
     const key = element.dataset.componentKey;
     const preview = key ? previewMap.get(key) : undefined;
 
-    if (isValidElement(preview)) {
+    if (preview instanceof Element) {
+      // Insert the DOM element as is, e.g. an element with a Svelte or Vue component mounted on it.
+      // The element is not sanitized, just like a React element preview, so escaping any content
+      // written by other users is up to the component developer
+      element.replaceChildren(preview);
+      previewNodes.add(preview);
+    } else if (isValidElement(preview)) {
       // Mount the React component
       const root = createRoot(element);
 
@@ -177,6 +192,21 @@
       if (root) {
         root.unmount();
         reactRoots.delete(/** @type {HTMLElement} */ (el));
+      }
+    });
+  };
+
+  /**
+   * Dispatch an `Unmount` event on any DOM element preview that’s no longer connected to the
+   * document, so the developer can destroy the component mounted on the element.
+   * @param {boolean} [all] Whether to notify every element preview regardless of its connection
+   * state. Used when the field preview itself is being destroyed.
+   */
+  const notifyRemovedPreviews = (all = false) => {
+    previewNodes.forEach((node) => {
+      if (all || !node.isConnected) {
+        previewNodes.delete(node);
+        node.dispatchEvent(new CustomEvent('Unmount'));
       }
     });
   };
@@ -205,10 +235,13 @@
    * @param {MutationRecord[]} mutations The list of mutations observed.
    */
   const mutationCallback = (mutations) => {
+    /** @type {HTMLElement[]} */
+    const removedElements = [];
+
     mutations.forEach(({ removedNodes, addedNodes }) => {
       removedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
-          unmountRemovedRoots(/** @type {HTMLElement} */ (node));
+          removedElements.push(/** @type {HTMLElement} */ (node));
         }
       });
 
@@ -234,6 +267,14 @@
         }
       });
     });
+
+    // Handle removals after additions, so that an element preview moved to a new placeholder within
+    // the same batch of mutations is not reported as unmounted
+    removedElements.forEach((element) => {
+      unmountRemovedRoots(element);
+    });
+
+    notifyRemovedPreviews();
   };
 
   /**
@@ -270,6 +311,7 @@
       observer.disconnect();
       reactRoots.forEach((root) => root.unmount());
       reactRoots.clear();
+      notifyRemovedPreviews(true);
     };
   });
 </script>

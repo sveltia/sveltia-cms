@@ -1827,8 +1827,13 @@
  * capturing group(s) that will be passed directly to the internal `createNode` method.
  * @property {(props: Record<string, any>) => string} toBlock Function to convert field properties
  * to Markdown content.
- * @property {(props: Record<string, any>) => string | ReactElement} [toPreview] Function to convert
- * field properties to field preview.
+ * @property {(props: Record<string, any>) => string | HTMLElement | ReactElement} [toPreview]
+ * Function to convert field properties to field preview. A string is parsed as Markdown/HTML and
+ * sanitized unless the `sanitize_preview` field option is disabled, while an `HTMLElement` (e.g. an
+ * element with a Svelte or Vue component mounted on it) or a React element is inserted as is
+ * without sanitization, so the developer is responsible for escaping any user-provided content. An
+ * `HTMLElement` preview receives an `Unmount` event once it’s removed from the preview pane, which
+ * can be used to destroy the mounted component.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
