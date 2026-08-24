@@ -13,7 +13,7 @@ import { toStore, writable } from 'svelte/store';
 
 import defaultLocaleStrings from '$lib/locales/en-US.yaml';
 import { UNPKG_BASE_URL, version } from '$lib/services/app';
-import { prefs } from '$lib/services/user/prefs.svelte';
+import { PREFS_STORAGE_KEY } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -189,8 +189,8 @@ export const updateLocaleCache = async (locale) => {
   if (!strings) {
     // The {@link DEFAULT_APP_LOCALE} strings are bundled with the app, so the cache is useless once
     // the user switches back to that locale. It’s only discarded after another locale has been
-    // active in this session, because the stored language preference is applied asynchronously,
-    // shortly after the app starts with the browser’s language.
+    // active in this session, so that a cache left by a previous session survives a startup where
+    // the requested locale couldn’t be loaded and the app fell back to the default one.
     if (locale === DEFAULT_APP_LOCALE && loadedLocaleStrings.size) {
       await deleteCachedLocaleStrings();
     }
@@ -206,6 +206,31 @@ export const updateLocaleCache = async (locale) => {
   }
 
   await cacheLocaleStrings(locale, strings);
+};
+
+/**
+ * Get the language preference stored in the local storage, if it points at an available locale.
+ *
+ * The preference is read here rather than taken from `prefs`, because the preferences are loaded
+ * asynchronously and are therefore still empty when the app starts. Falling back to the browser’s
+ * language in the meantime would activate a locale the user never asked for, fetch its strings from
+ * the CDN, cache them, and then have {@link updateLocaleCache} overwrite or discard that cache once
+ * the preference is finally applied — repeating on every visit. The `LocalStorage` wrapper is
+ * `async`, but the underlying Web Storage API is synchronous, so the value is available right away.
+ * @returns {string | undefined} Locale code, or `undefined` if there’s no usable preference.
+ */
+const getStoredLocale = () => {
+  try {
+    const { locale } = JSON.parse(globalThis.localStorage.getItem(PREFS_STORAGE_KEY) || '{}') ?? {};
+
+    // Ignore a locale that’s no longer available, as well as the legacy `en` value, which is
+    // migrated to a proper code once the preferences are loaded
+    return APP_LOCALES.includes(locale) ? locale : undefined;
+  } catch {
+    // The local storage may be unavailable, e.g. when cookies are blocked, or the stored data may
+    // be corrupt
+    return undefined;
+  }
 };
 
 /**
@@ -249,7 +274,7 @@ export const initAppLocale = () => {
   // requested locale as soon as its strings are loaded
   init({
     fallbackLocale: DEFAULT_APP_LOCALE,
-    initialLocale: prefs.locale || getLocaleFromNavigator() || DEFAULT_APP_LOCALE,
+    initialLocale: getStoredLocale() || getLocaleFromNavigator() || DEFAULT_APP_LOCALE,
   });
 
   // Keep the cache in sync with the active locale, including when the language is switched with the

@@ -56,12 +56,23 @@ vi.mock('@sveltia/utils/storage', () => ({
   LocalStorage: mockLocalStorage,
 }));
 
-/** @type {{ locale: string | null }} */
-const mockPrefs = { locale: 'en-US' };
-
 vi.mock('$lib/services/user/prefs.svelte', () => ({
-  prefs: mockPrefs,
+  PREFS_STORAGE_KEY: 'sveltia-cms.prefs',
 }));
+
+// The stored language preference is read straight from the Web Storage API, because the `prefs`
+// state is not populated yet when the app starts
+const mockWebStorage = { getItem: vi.fn() };
+
+mockWebStorage.getItem.mockReturnValue(null);
+
+/**
+ * Store a language preference to be picked up as the initial locale.
+ * @param {string | null} locale Locale code, or `null` to store no preference at all.
+ */
+const setStoredLocale = (locale) => {
+  mockWebStorage.getItem.mockReturnValue(locale === null ? null : JSON.stringify({ locale }));
+};
 
 describe('i18n', () => {
   beforeEach(() => {
@@ -69,7 +80,8 @@ describe('i18n', () => {
     mockLocalStorage.get.mockResolvedValue(undefined);
     mockLocalStorage.set.mockResolvedValue(undefined);
     mockLocalStorage.delete.mockResolvedValue(undefined);
-    mockPrefs.locale = 'en-US';
+    vi.stubGlobal('localStorage', mockWebStorage);
+    setStoredLocale('en-US');
     mockComponentStrings['en-CA'] = { button: 'Button' };
     mockComponentStrings['en-GB'] = { button: 'Button (UK)' };
     mockComponentStrings['en-US'] = { button: 'Button (US)' };
@@ -119,8 +131,84 @@ describe('i18n', () => {
       });
     });
 
-    it('should fall back to navigator locale when no prefs locale', async () => {
-      mockPrefs.locale = null;
+    it('should start with the stored language preference, not the browser language', async () => {
+      // The preferences are loaded asynchronously, so reading `prefs.locale` here would always come
+      // up empty and the app would start with the browser’s language, load and cache the strings
+      // for it, and then throw that cache away once the preference is applied — on every visit
+      setStoredLocale('ja');
+      mockGetLocaleFromNavigator.mockReturnValue('en-CA');
+
+      const { initAppLocale } = await import('./i18n.js');
+
+      initAppLocale();
+
+      expect(mockInit).toHaveBeenCalledWith({
+        fallbackLocale: 'en-US',
+        initialLocale: 'ja',
+      });
+    });
+
+    it('should ignore a stored locale that is not available', async () => {
+      // `en` is the legacy value, which is migrated once the preferences are loaded
+      setStoredLocale('en');
+      mockGetLocaleFromNavigator.mockReturnValue('en-CA');
+
+      const { initAppLocale } = await import('./i18n.js');
+
+      initAppLocale();
+
+      expect(mockInit).toHaveBeenCalledWith({
+        fallbackLocale: 'en-US',
+        initialLocale: 'en-CA',
+      });
+    });
+
+    it('should ignore unreadable stored preferences', async () => {
+      mockWebStorage.getItem.mockReturnValue('{ not json');
+      mockGetLocaleFromNavigator.mockReturnValue('en-CA');
+
+      const { initAppLocale } = await import('./i18n.js');
+
+      initAppLocale();
+
+      expect(mockInit).toHaveBeenCalledWith({
+        fallbackLocale: 'en-US',
+        initialLocale: 'en-CA',
+      });
+    });
+
+    it('should ignore an unavailable local storage', async () => {
+      mockWebStorage.getItem.mockImplementation(() => {
+        throw new DOMException('Access denied', 'SecurityError');
+      });
+      mockGetLocaleFromNavigator.mockReturnValue('en-CA');
+
+      const { initAppLocale } = await import('./i18n.js');
+
+      initAppLocale();
+
+      expect(mockInit).toHaveBeenCalledWith({
+        fallbackLocale: 'en-US',
+        initialLocale: 'en-CA',
+      });
+    });
+
+    it('should ignore a stored preference that parses to a non-object value', async () => {
+      mockWebStorage.getItem.mockReturnValue('null');
+      mockGetLocaleFromNavigator.mockReturnValue('en-CA');
+
+      const { initAppLocale } = await import('./i18n.js');
+
+      initAppLocale();
+
+      expect(mockInit).toHaveBeenCalledWith({
+        fallbackLocale: 'en-US',
+        initialLocale: 'en-CA',
+      });
+    });
+
+    it('should fall back to navigator locale when no stored locale', async () => {
+      setStoredLocale(null);
       mockGetLocaleFromNavigator.mockReturnValue('ja-JP');
 
       const { initAppLocale } = await import('./i18n.js');
@@ -165,8 +253,8 @@ describe('i18n', () => {
       });
     });
 
-    it('should fall back to en when no prefs and no navigator locale', async () => {
-      mockPrefs.locale = null;
+    it('should fall back to en when no stored preference and no navigator locale', async () => {
+      setStoredLocale(null);
       mockGetLocaleFromNavigator.mockReturnValue(null);
 
       const { initAppLocale } = await import('./i18n.js');
@@ -180,7 +268,7 @@ describe('i18n', () => {
     });
 
     it('should handle empty navigator locale string', async () => {
-      mockPrefs.locale = null;
+      setStoredLocale(null);
       mockGetLocaleFromNavigator.mockReturnValue('');
 
       const { initAppLocale } = await import('./i18n.js');

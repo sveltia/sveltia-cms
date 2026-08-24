@@ -7,7 +7,11 @@ import { untrack } from 'svelte';
  * @import { Preferences } from '$lib/types/private';
  */
 
-const STORAGE_KEY = 'sveltia-cms.prefs';
+/**
+ * Local storage key for the user preferences. Also used by the i18n service, which reads the
+ * language preference synchronously before the preferences below are loaded.
+ */
+export const PREFS_STORAGE_KEY = 'sveltia-cms.prefs';
 
 /**
  * @type {{ current: { type: string } | undefined }}
@@ -30,7 +34,7 @@ $effect.root(() => {
     prefsError.current = undefined;
 
     try {
-      const _prefs = (await LocalStorage.get(STORAGE_KEY)) ?? {};
+      const _prefs = (await LocalStorage.get(PREFS_STORAGE_KEY)) ?? {};
 
       _prefs.apiKeys ??= {};
       _prefs.useDraftBackup ??= true;
@@ -61,8 +65,8 @@ $effect.root(() => {
 
     (async () => {
       try {
-        if (!equal(snapshot, await LocalStorage.get(STORAGE_KEY))) {
-          await LocalStorage.set(STORAGE_KEY, snapshot);
+        if (!equal(snapshot, await LocalStorage.get(PREFS_STORAGE_KEY))) {
+          await LocalStorage.set(PREFS_STORAGE_KEY, snapshot);
         }
       } catch {
         //
