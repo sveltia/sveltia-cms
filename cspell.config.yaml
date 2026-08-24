@@ -13,7 +13,12 @@ files:
   - '**/.*'
   - '**/*.{css,js,json,jsonc,html,md,scss,svelte,svg,yaml,yml,xml}'
 useGitignore: true
+# Stop the .gitignore search at the repo root. Git worktrees live under `.claude/worktrees/`, which
+# the parent repo’s `.gitignore` excludes, so without this every file in a worktree looks ignored
+gitignoreRoot: .
 ignorePaths:
+  # A worktree’s `.git` is a file rather than a directory, so the `**/.*` glob above picks it up
+  - .git
   - pnpm-lock.yaml
   - data/**/*.json
   - package/**
@@ -154,6 +159,7 @@ words:
   - webformat
   - whitespaces
   - worktree
+  - worktrees
   - xhigh
   - xslx
   - yacosta
