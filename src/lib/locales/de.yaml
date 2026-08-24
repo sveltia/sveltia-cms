@@ -154,7 +154,7 @@ sign_in_error:
   UNSUPPORTED_DOMAIN: Ihre Domain darf den Authenticator nicht verwenden.
   MISCONFIGURED_CLIENT: Client-ID oder Secret der OAuth-App sind nicht konfiguriert.
   AUTH_CODE_REQUEST_FAILED: Es konnte kein Autorisierungscode empfangen werden. Bitte später erneut versuchen.
-  CSRF_DETECTED: Möglicher CSRF-Angriff erkannt. Die Authentifizierung wurde abgebrochen.
+  CSRF_DETECTED: Möglicher CSRF-Angriff erkannt. Der Authentifizierungsvorgang wurde abgebrochen.
   TOKEN_REQUEST_FAILED: Es konnte kein Zugriffstoken angefordert werden. Bitte später erneut versuchen.
   TOKEN_REFRESH_FAILED: Das Zugriffstoken konnte nicht erneuert werden. Bitte später erneut versuchen.
   MALFORMED_RESPONSE: Der Server hat fehlerhafte Daten zurückgegeben. Bitte später erneut versuchen.
@@ -234,7 +234,12 @@ mobile_promo_button: Ausprobieren
 # New language infobar: encouraging users to switch to a newly available language
 # {$locale} is the localized language name, e.g., “French”
 new_language_available: Sveltia CMS ist jetzt auf {$locale} verfügbar!
-change_language: Sprache wechseln
+change_language: Sprache umstellen
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Wechsel zu {$locale}…
+locale_load_failed: Die Übersetzung {$locale} konnte nicht geladen werden. Bitte später erneut versuchen.
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -248,7 +253,7 @@ search_placeholder_assets: Medien suchen…
 search_placeholder_all: Inhalte und Medien suchen…
 
 # Create button: aria-label for the create menu in the toolbar
-create_entry_or_assets: Eintrag oder Medien erstellen
+create_entry_or_assets: Eintrag oder Medien anlegen
 
 # Publishing actions: button labels and progress indicators
 publish_changes: Änderungen veröffentlichen
@@ -357,8 +362,8 @@ viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
     0   {{ Der Medienordner „{$folder}“ wird angezeigt. Er enthält noch keine Medien. }}
-    one {{ Der Medienordner „{$folder}“ wird angezeigt. Er enthält eine Datei. }}
-    *   {{ Der Medienordner „{$folder}“ wird angezeigt. Er enthält {$count} Dateien. }}
+    one {{ Der Medienordner „{$folder}“ wird angezeigt. Er enthält ein Medium. }}
+    *   {{ Der Medienordner „{$folder}“ wird angezeigt. Er enthält {$count} Medien. }}
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -443,6 +448,14 @@ global_assets: Globale Medien
 # ==============================================================================
 # Strings related to creating, editing, and managing entries and collections.
 
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Eintrag wird geladen… }}
+    *   {{ Einträge werden geladen… }}
 # Error message when entry cannot be found
 entry_not_found: Eintrag nicht gefunden.
 
@@ -489,8 +502,8 @@ viewing_asset_search_results: |
   .input {$count :integer}
   .match $count
     0   {{ Suchergebnisse für „{$terms}“ werden angezeigt. Es wurden keine Medien gefunden. }}
-    one {{ Suchergebnisse für „{$terms}“ werden angezeigt. Es wurde eine Datei gefunden. }}
-    *   {{ Suchergebnisse für „{$terms}“ werden angezeigt. Es wurden {$count} Dateien gefunden. }}
+    one {{ Suchergebnisse für „{$terms}“ werden angezeigt. Es wurde ein Medium gefunden. }}
+    *   {{ Suchergebnisse für „{$terms}“ werden angezeigt. Es wurden {$count} Medien gefunden. }}
 
 # Result count labels
 # Used in search result headings to show counts
@@ -506,8 +519,8 @@ x_assets: |
   .input {$count :integer}
   .match $count
     0   {{ Keine Medien }}
-    one {{ {$count} Datei }}
-    *   {{ {$count} Dateien }}
+    one {{ {$count} Medium }}
+    *   {{ {$count} Medien }}
 
 # Empty state messages
 no_files_found: Keine Dateien gefunden.
@@ -542,13 +555,21 @@ enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
     0   {{ Geben Sie unten einen neuen Namen ein. }}
-    one {{ Geben Sie unten einen neuen Namen ein. Ein Eintrag, der diese Datei verwendet, wird ebenfalls aktualisiert. }}
-    *   {{ Geben Sie unten einen neuen Namen ein. {$count} Einträge, die diese Datei verwenden, werden ebenfalls aktualisiert. }}
+    one {{ Geben Sie unten einen neuen Namen ein. Ein Eintrag, der dieses Medium verwendet, wird ebenfalls aktualisiert. }}
+    *   {{ Geben Sie unten einen neuen Namen ein. {$count} Einträge, die dieses Medium verwenden, werden ebenfalls aktualisiert. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: Der Dateiname darf nicht leer sein.
   character: Der Dateiname darf keine Sonderzeichen enthalten.
-  duplicate: Dieser Dateiname wird bereits von einer anderen Datei verwendet.
+  duplicate: Dieser Dateiname wird bereits von einem anderen Medium verwendet.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Dateiendung ändern
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Soll die Endung wirklich von „.{$oldExtension}“ zu „.{$newExtension}“ geändert werden?
+  add: Soll die Endung „.{$newExtension}“ wirklich hinzugefügt werden?
+  remove: Soll die Endung „.{$oldExtension}“ wirklich entfernt werden?
+file_extension_change_warning: Die Datei wird möglicherweise nicht korrekt angezeigt oder verarbeitet, wenn die Endung nicht zum tatsächlichen Dateiformat passt.
 
 # Replace asset: menu item and dialog title
 replace_asset: Medium ersetzen
@@ -635,14 +656,14 @@ delete_selected_assets: |
   .match $count
     one {{ Ausgewähltes Medium löschen }}
     *   {{ Ausgewählte Medien löschen }}
-confirm_deleting_this_asset: Soll diese Datei wirklich gelöscht werden?
+confirm_deleting_this_asset: Soll dieses Medium wirklich gelöscht werden?
 # {$count} is the number of selected assets
 confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Soll die ausgewählte Datei wirklich gelöscht werden? }}
-    *   {{ Sollen die ausgewählten {$count} Dateien wirklich gelöscht werden? }}
-confirm_deleting_all_assets: Sollen wirklich alle Dateien gelöscht werden?
+    one {{ Soll das ausgewählte Medium wirklich gelöscht werden? }}
+    *   {{ Sollen die ausgewählten {$count} Medien wirklich gelöscht werden? }}
+confirm_deleting_all_assets: Sollen wirklich alle Medien gelöscht werden?
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -659,6 +680,8 @@ delete_selected_entries: |
     *   {{ Ausgewählte Einträge löschen }}
 confirm_deleting_this_entry: Soll dieser Eintrag wirklich gelöscht werden?
 confirm_deleting_this_entry_with_assets: Sollen dieser Eintrag und die zugehörigen Medien wirklich gelöscht werden?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Der Eintrag konnte nicht gelöscht werden. Bitte erneut versuchen.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -725,6 +748,16 @@ warning_oversized_files: |
   .match $count
     one {{ Diese Datei kann nicht hochgeladen werden, da sie die Maximalgröße von {$size} überschreitet. Bitte verkleinern Sie sie oder wählen Sie eine andere Datei. }}
     *   {{ Diese Dateien können nicht hochgeladen werden, da sie die Maximalgröße von {$size} überschreiten. Bitte verkleinern Sie sie oder wählen Sie andere Dateien. }}
+
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Ungültige Dateien
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Diese Datei kann nicht hochgeladen werden, weil sie beschädigt ist oder ihr Inhalt nicht zur Dateiendung passt. Das passiert häufig, wenn ein Foto nur umbenannt statt umgewandelt wurde, etwa ein HEIC-Bild als JPEG-Datei gespeichert. Bitte wandeln Sie die Datei um und versuchen Sie es erneut. }}
+    *   {{ Diese Dateien können nicht hochgeladen werden, weil sie beschädigt sind oder ihr Inhalt nicht zu ihren Dateiendungen passt. Das passiert häufig, wenn Fotos nur umbenannt statt umgewandelt wurden, etwa HEIC-Bilder als JPEG-Dateien gespeichert. Bitte wandeln Sie die Dateien um und versuchen Sie es erneut. }}
 
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
@@ -816,13 +849,13 @@ entries_deleted: |
 assets_saved: |
   .input {$count :integer}
   .match $count
-    one {{ Datei gespeichert. }}
-    *   {{ {$count} Dateien gespeichert. }}
+    one {{ Medium gespeichert. }}
+    *   {{ {$count} Medien gespeichert. }}
 assets_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ Datei gespeichert und veröffentlicht. }}
-    *   {{ {$count} Dateien gespeichert und veröffentlicht. }}
+    one {{ Medium gespeichert und veröffentlicht. }}
+    *   {{ {$count} Medien gespeichert und veröffentlicht. }}
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
@@ -841,23 +874,23 @@ asset_data_copied: |
 assets_downloaded: |
   .input {$count :integer}
   .match $count
-    one {{ Datei heruntergeladen. }}
-    *   {{ {$count} Dateien heruntergeladen. }}
+    one {{ Medium heruntergeladen. }}
+    *   {{ {$count} Medien heruntergeladen. }}
 assets_moved: |
   .input {$count :integer}
   .match $count
-    one {{ Datei verschoben. }}
-    *   {{ {$count} Dateien verschoben. }}
+    one {{ Medium verschoben. }}
+    *   {{ {$count} Medien verschoben. }}
 assets_renamed: |
   .input {$count :integer}
   .match $count
-    one {{ Datei umbenannt. }}
-    *   {{ {$count} Dateien umbenannt. }}
+    one {{ Medium umbenannt. }}
+    *   {{ {$count} Medien umbenannt. }}
 assets_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ Datei gelöscht. }}
-    *   {{ {$count} Dateien gelöscht. }}
+    one {{ Medium gelöscht. }}
+    *   {{ {$count} Medien gelöscht. }}
 
 # ==============================================================================
 # Content Editor
@@ -906,13 +939,14 @@ show_editor_options: Editor-Optionen anzeigen
 editor_options: Editor-Optionen
 
 # Preview controls
+show_second_pane: Zweiten Bereich anzeigen
 show_preview: Vorschau anzeigen
 
 # Editor settings
 sync_scrolling: Synchron scrollen
 
 # Locale controls
-switch_locale: Sprache wechseln
+switch_locale: Inhaltssprache wechseln
 # Short status indicators appended to locale names
 locale_content_disabled_short: (deaktiviert)
 locale_content_error_short: (Fehler)
@@ -1091,6 +1125,10 @@ validation:
     email: Bitte geben Sie eine gültige E-Mail-Adresse ein.
     url: Bitte geben Sie eine gültige URL ein.
 
+  # Custom field validation error
+  invalid_value: Ungültiger Wert.
+  unexpected_error: Es ist ein unerwarteter Fehler aufgetreten.
+
 # ==============================================================================
 # Entry Sidebar
 # ==============================================================================
@@ -1130,7 +1168,7 @@ saving_entry:
 
 # Asset details announcement
 # {$name} is the selected asset name
-viewing_x_asset_details: Die Details der Datei „{$name}“ werden angezeigt.
+viewing_x_asset_details: Die Details des Mediums „{$name}“ werden angezeigt.
 
 # Asset editor container aria-label
 asset_editor: Medien-Editor
@@ -1160,7 +1198,7 @@ file_data: Dateiinhalt
 
 # Panel title and empty state shown in the asset sidebar
 asset_info: Medien-Infos
-select_asset_show_info: Wählen Sie eine Datei aus, um ihre Infos anzuzeigen.
+select_asset_show_info: Wählen Sie ein Medium aus, um dessen Infos anzuzeigen.
 
 kind: Art
 size: Größe
@@ -1196,6 +1234,9 @@ add_item_below: Element darunter einfügen
 
 # Variable-type list selector
 select_list_type: Listentyp auswählen
+
+# Variable-type mismatch
+unknown_variable_type: Dieses Element kann wegen eines unbekannten Typs nicht angezeigt werden. Details stehen in der Browser-Konsole.
 
 # ==============================================================================
 # Field Widgets
@@ -1234,7 +1275,7 @@ assets_dialog:
   error:
     invalid_key: Ihr API-Schlüssel ist ungültig oder abgelaufen. Bitte prüfen und erneut versuchen.
     search_fetch_failed: Bei der Suche nach Medien ist ein Fehler aufgetreten. Bitte später erneut versuchen.
-    image_fetch_failed: Beim Herunterladen der ausgewählten Datei ist ein Fehler aufgetreten. Bitte später erneut versuchen.
+    image_fetch_failed: Beim Herunterladen des ausgewählten Mediums ist ein Fehler aufgetreten. Bitte später erneut versuchen.
 
   # Stock photo panels
   available_images: Verfügbare Bilder
@@ -1247,6 +1288,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: Große Datei
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Ungültige Datei
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Dateien können nicht hochgeladen werden
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -1332,10 +1381,10 @@ cloud_storage:
     api_key:
       key_label: API-Schlüssel
       # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
-      initial: Geben Sie Ihren {$key} für {$service} ein.
+      initial: Geben Sie „{$key}“ für {$service} ein.
       requested: Wird geprüft…
       # {$key} is the credential label the user entered, e.g., API Key
-      error: Der angegebene {$key} ist ungültig. Bitte prüfen und erneut versuchen.
+      error: Die Angabe für „{$key}“ ist ungültig. Bitte prüfen und erneut versuchen.
     password:
       # {$service} is the cloud service name
       initial: Geben Sie Ihr Passwort für {$service} ein.
@@ -1404,6 +1453,8 @@ config:
     parse_failed_invalid_object: Die Konfigurationsdatei ist kein gültiges JavaScript-Objekt.
     parse_failed_unsupported_type: Die Konfigurationsdatei hat keinen gültigen Dateityp. Unterstützt werden nur YAML, TOML und JSON.
     no_collection: Es sind keine Sammlungen definiert.
+    # Don’t localize `hide`
+    no_visible_collection: Mindestens eine Sammlung muss sichtbar sein. Prüfen Sie die Option `hide`.
     missing_backend: Das Backend ist nicht definiert.
     missing_backend_name: Der Name des Backends ist nicht definiert.
     # {$name} is the backend name from the CMS configuration
@@ -1417,6 +1468,8 @@ config:
     oauth_implicit_flow: Die konfigurierte Authentifizierungsmethode (Implicit Flow) wird in Sveltia CMS nicht unterstützt. Verwenden Sie stattdessen eine andere <a>Authentifizierungsmethode</a>.
     github_pkce_unsupported: PKCE-Autorisierung wird aufgrund von Einschränkungen bei GitHub noch nicht unterstützt. Verwenden Sie stattdessen eine andere <a>Authentifizierungsmethode</a>.
     oauth_no_app_id: Die ID der OAuth-Anwendung ist nicht definiert.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: Die Option `open_authoring` erfordert den Veröffentlichungsmodus `editorial_workflow`. Details stehen in der <a>Dokumentation</a>.
     # Don’t localize `auth_methods`
     no_auth_methods: Die Option `auth_methods` muss mindestens eine Methode enthalten.
     missing_media_folder: Der Medienordner ist nicht definiert.
@@ -1442,6 +1495,24 @@ config:
     file_format_mismatch: Die Endung `{$extension}` passt nicht zum Format `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Die Slug-Vorlage `{$slug}` ist ungültig, da sie keine Schrägstriche enthalten darf. Um Einträge in Unterordnern zu organisieren, verwenden Sie die Option `path` statt `slug`.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: Die Option `reorder` verweist auf eine Ansichts-Gruppe namens `{$name}`, in `view_groups` ist aber keine solche Gruppe definiert.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: Die Option `sortable_fields` verweist auf ein Feld namens `{$name}`, in der Sammlung ist aber kein solches Feld definiert.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: Die Option `view_groups` verweist auf ein Feld namens `{$name}`, in der Sammlung ist aber kein solches Feld definiert.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: Die Option `view_filters` verweist auf ein Feld namens `{$name}`, in der Sammlung ist aber kein solches Feld definiert.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Für die Ansichts-Gruppe {$count} muss die Option `name` als nicht leere Zeichenkette definiert sein.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: Der Ansichts-Gruppen-Name `{$name}` ist ungültig. Er darf keine Sonderzeichen enthalten.
+    duplicate_view_group_name: Namen von Ansichts-Gruppen müssen eindeutig sein, aber `{$name}` wird mehrfach verwendet.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Für den Ansichts-Filter {$count} muss die Option `name` als nicht leere Zeichenkette definiert sein.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: Der Ansichts-Filter-Name `{$name}` ist ungültig. Er darf keine Sonderzeichen enthalten.
+    duplicate_view_filter_name: Namen von Ansichts-Filtern müssen eindeutig sein, aber `{$name}` wird mehrfach verwendet.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Für die Sammlung {$count} muss die Option `name` als nicht leere Zeichenkette definiert sein.
     # {$name} is the invalid or duplicate collection name
@@ -1494,8 +1565,8 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: Die ID der OAuth-Anwendung ist nicht definiert. Benutzer müssen zum Anmelden ein Zugriffstoken angeben.
-    editorial_workflow_unsupported: Der Redaktions-Workflow wird in Sveltia CMS noch nicht unterstützt.
-    open_authoring_unsupported: Open Authoring wird in Sveltia CMS noch nicht unterstützt.
+    editorial_workflow_unsupported: Der Redaktions-Workflow wird derzeit nur mit den GitHub- und GitLab-Backends unterstützt.
+    open_authoring_unsupported_backend: Open Authoring wird derzeit nur mit dem GitHub-Backend unterstützt.
     nested_collections_unsupported: Verschachtelte Sammlungen werden in Sveltia CMS noch nicht unterstützt.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Die Option `{$prop}` wird in Sveltia CMS nicht unterstützt. Sie wird ignoriert.
@@ -1523,12 +1594,155 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
 
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Das Redaktions-Workflow-Board wird angezeigt. Entwürfe: {$draft}. In Prüfung: {$review}. Bereit: {$ready}. Löschung ausstehend: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Das Redaktions-Workflow-Board wird angezeigt. Entwürfe: {$draft}. In Prüfung: {$review}. Löschung ausstehend: {$deletion}.'
+
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
+  draft: Entwurf
   drafts: Entwürfe
   in_review: In Prüfung
   ready: Bereit
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Löschung ausstehend
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Löschung abbrechen
+  confirm_cancelling_deletion: Soll diese Löschung wirklich abgebrochen werden? Der Eintrag bleibt veröffentlicht.
+  confirm_completing_deletion: Soll dieser Eintrag wirklich gelöscht werden? Er wird sofort entfernt.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Eintrag zur Löschung vorgemerkt. }}
+      *   {{ {$count} Einträge zur Löschung vorgemerkt. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Änderungen verworfen. }}
+      *   {{ Änderungen an {$count} Einträgen verworfen. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Löschung wird abgebrochen…
+  deletion_cancelled: Löschung abgebrochen.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Die Löschung konnte nicht abgebrochen werden. Bitte erneut versuchen.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Unveröffentlichte Einträge
+  published_entries: Veröffentlichte Einträge
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Status: {$status}'
+  change_entry_status: Eintragsstatus ändern
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Status wird geändert…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Status wird aktualisiert…
+  status_updated: Status aktualisiert.
+  # Error notification when the status could not be changed
+  status_change_failed: Der Status konnte nicht geändert werden. Bitte erneut versuchen.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Zur Prüfung einreichen
+  confirm_sending_for_review: Die Änderungen wurden als Entwurf gespeichert. Soll der Eintrag zur Prüfung eingereicht werden, damit ihn jemand ansehen und veröffentlichen kann?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Eintrag veröffentlichen
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Änderungen verwerfen
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Soll dieser Eintrag wirklich gelöscht werden? Er wird erst entfernt, wenn die Löschung veröffentlicht ist. Bis dahin steht er weiterhin in der Eintragsliste, markiert als „Löschung ausstehend“.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Dieser Eintrag wurde noch nicht veröffentlicht. Beim Löschen wird er vollständig verworfen.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Dieser Eintrag hat unveröffentlichte Änderungen. Beim Verwerfen wird die veröffentlichte Version wiederhergestellt. Der Eintrag selbst wird nicht gelöscht.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Er wurde noch nicht veröffentlicht, daher werden die unveröffentlichten Änderungen verworfen. Eine bereits veröffentlichte Version bleibt veröffentlicht. }}
+      *   {{ Sie wurden noch nicht veröffentlicht, daher werden die unveröffentlichten Änderungen verworfen. Bereits veröffentlichte Versionen bleiben veröffentlicht. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Einer davon wurde noch nicht veröffentlicht, daher werden die unveröffentlichten Änderungen verworfen. Eine bereits veröffentlichte Version bleibt veröffentlicht. }}
+      *   {{ {$count} davon wurden noch nicht veröffentlicht, daher werden die unveröffentlichten Änderungen verworfen. Bereits veröffentlichte Versionen bleiben veröffentlicht. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Soll dieser Eintrag wirklich veröffentlicht werden? Die Änderungen werden sofort wirksam.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Eintrag wird veröffentlicht…
+  entry_published: Eintrag veröffentlicht.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Eintrag wird gelöscht…
+  discarding_changes: Änderungen werden verworfen…
+  entry_deleted: Eintrag gelöscht.
+  # Error notification when publishing fails
+  publishing_entry_failed: Der Eintrag konnte nicht veröffentlicht werden. Bitte erneut versuchen.
+  # Workflow page: empty column message
+  no_entries: Keine Einträge.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Ziehen, um den Status zu ändern
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Repository forken
+  fork: Forken
+  confirm_forking_repository: Um Änderungen an „{$repo}“ vorzuschlagen, muss in Ihrem Konto ein Fork des Repositorys angelegt werden. Ihre Änderungen werden in diesem Fork gespeichert und von einem Betreuer geprüft, bevor sie veröffentlicht werden.
+  # Error shown when the user declined the dialog above
+  fork_declined: Um Änderungen vorzuschlagen, wird ein Fork des Repositorys in Ihrem Konto benötigt.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Es konnte kein Fork des Repositorys „{$repo}“ in Ihrem Konto angelegt werden.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Ihr Zugriff auf das Repository „{$repo}“ konnte nicht geprüft werden. Bitte gleich erneut versuchen.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: Das Repository „{$repo}“ erlaubt keine Forks. Bitten Sie einen Betreuer, Forks dafür zu aktivieren.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Für das Repository „{$repo}“ liegt eine ausstehende Einladung vor. Nehmen Sie sie auf GitHub an und melden Sie sich danach erneut an.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Ihre Anmeldung umfasst keinen Zugriff auf private Repositorys, daher kann das Repository „{$repo}“ nicht gelesen werden. Bitten Sie einen Betreuer, die Authentifizierungseinstellungen des CMS zu prüfen.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Nur ein Betreuer kann Änderungen an dieser Website veröffentlichen. Setzen Sie Ihren Eintrag stattdessen auf „In Prüfung“, dann sieht ihn sich jemand an.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Diese Änderung kann nicht direkt vorgenommen werden. Nur Bearbeitungen von Einträgen können zur Prüfung vorgeschlagen werden.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Ihre Änderungen werden in Ihrem Fork dieses Repositorys unter „{$repo}“ gespeichert und vor der Veröffentlichung geprüft.
+  view_fork: Fork ansehen
 
 # ==============================================================================
 # Settings Dialog
