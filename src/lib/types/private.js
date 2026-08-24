@@ -1124,6 +1124,9 @@
 /**
  * Entry editor view settings.
  * @typedef {object} EntryEditorView
+ * @property {boolean} [showSecondPane] Whether to show the second pane, which holds either the
+ * preview or another locale’s editor. Called the “second” rather than the “right” pane because the
+ * panes are laid out in the writing direction, which is reversed for RTL locales.
  * @property {boolean} [showPreview] Whether to show the preview pane.
  * @property {boolean} [syncScrolling] Whether to sync the scrolling position between the editor and
  * preview panes.

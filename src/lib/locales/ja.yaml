@@ -889,6 +889,7 @@ show_editor_options: エディターオプションを表示
 editor_options: エディターオプション
 
 # Preview controls
+show_second_pane: 2 番目のペインを表示
 show_preview: プレビューを表示
 
 # Editor settings

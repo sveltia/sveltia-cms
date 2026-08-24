@@ -939,6 +939,7 @@ show_editor_options: Show Editor Options
 editor_options: Editor Options
 
 # Preview controls
+show_second_pane: Show Second Pane
 show_preview: Show Preview
 
 # Editor settings

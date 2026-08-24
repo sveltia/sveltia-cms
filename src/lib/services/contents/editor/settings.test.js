@@ -96,6 +96,7 @@ describe('editor/settings', () => {
 
       // The store may be undefined initially until initialized
       if (currentValue) {
+        expect(currentValue).toHaveProperty('showSecondPane');
         expect(currentValue).toHaveProperty('showPreview');
         expect(currentValue).toHaveProperty('syncScrolling');
         expect(currentValue).toHaveProperty('selectAssetsView');
@@ -209,6 +210,7 @@ describe('editor/settings', () => {
 
       // Should be called immediately with current value
       expect(mockSubscriber).toHaveBeenCalledWith({
+        showSecondPane: true,
         showPreview: true,
         syncScrolling: true,
         selectAssetsView: { type: 'grid' },
@@ -345,6 +347,7 @@ describe('editor/settings', () => {
 
       const settings = get(entryEditorSettings);
 
+      expect(settings?.showSecondPane).toBe(true);
       expect(settings?.showPreview).toBe(true);
       expect(settings?.syncScrolling).toBe(true);
       expect(settings?.selectAssetsView?.type).toBe('grid');
@@ -455,6 +458,7 @@ describe('editor/settings', () => {
       const settings = get(entryEditorSettings);
 
       // Verify default settings are set (lines 28-31)
+      expect(settings?.showSecondPane).toBe(true);
       expect(settings?.showPreview).toBe(true);
       expect(settings?.syncScrolling).toBe(true);
       expect(settings?.selectAssetsView?.type).toBe('grid');

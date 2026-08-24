@@ -104,7 +104,9 @@
   const entryCollection = $derived(collection?._type === 'entry' ? collection : undefined);
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
-  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
+  const { i18nEnabled, allLocales, defaultLocale } = $derived(
+    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
+  );
   const collectionName = $derived(collection?.name);
   const fileName = $derived(collectionFile?.name);
   const collectionLabel = $derived(
@@ -116,6 +118,10 @@
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );
   const canPreview = $derived($entryDraft?.canPreview ?? true);
+  const showSecondPane = $derived($entryEditorSettings?.showSecondPane ?? true);
+  // There’s only something to put in the second pane when another locale can be edited alongside
+  // the first one, or when the entry has a preview
+  const canShowSecondPane = $derived((i18nEnabled && allLocales.length > 1) || canPreview);
   // Saving or deleting takes a moment and navigates away when it’s done, so the whole control group
   // is locked meanwhile rather than just the button that started it
   const busy = $derived(saving || deleting);
@@ -483,10 +489,24 @@
           />
           {#if !(env.isSmallScreen || env.isMediumScreen)}
             <Divider />
+            <!-- The panes follow the writing direction, so they can’t be called left and right -->
+            <MenuItemCheckbox
+              label={_('show_second_pane')}
+              checked={showSecondPane}
+              disabled={!canShowSecondPane}
+              onChange={() => {
+                entryEditorSettings.update((view = {}) => ({
+                  ...view,
+                  showSecondPane: !(view.showSecondPane ?? true),
+                }));
+              }}
+            />
+            <!-- The preview is rendered in the second pane, so it’s unavailable while that’s
+            hidden -->
             <MenuItemCheckbox
               label={_('show_preview')}
               checked={$entryEditorSettings?.showPreview}
-              disabled={!canPreview}
+              disabled={!showSecondPane || !canPreview}
               onChange={() => {
                 entryEditorSettings.update((view = {}) => ({
                   ...view,
@@ -497,7 +517,8 @@
             <MenuItemCheckbox
               label={_('sync_scrolling')}
               checked={$entryEditorSettings?.syncScrolling}
-              disabled={!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1}
+              disabled={!showSecondPane ||
+                (!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1)}
               onChange={() => {
                 entryEditorSettings.update((view = {}) => ({
                   ...view,

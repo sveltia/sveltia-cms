@@ -85,7 +85,7 @@
     isIndexFile,
     currentValues,
   } = $derived(/** @type {EntryDraft} */ ($entryDraft ?? {}));
-  const { showPreview } = $derived($entryEditorSettings ?? {});
+  const { showPreview, showSecondPane = true } = $derived($entryEditorSettings ?? {});
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
@@ -136,6 +136,7 @@
       !_editorSecondPane ||
       (!!_editorFirstPane.locale && !allLocales.includes(_editorFirstPane.locale)) ||
       (!!_editorSecondPane.locale && !allLocales.includes(_editorSecondPane.locale)) ||
+      !showSecondPane ||
       ((!showPreview || !canPreview) &&
         (_editorFirstPane.mode === 'preview' || _editorSecondPane.mode === 'preview')) ||
       // If there are only 2 locales and the first pane is not in the default locale, don’t restore
@@ -173,7 +174,7 @@
 
     $editorFirstPane = { mode: 'edit', locale: $editorFirstPane?.locale ?? defaultLocale };
 
-    if (env.isSmallScreen || env.isMediumScreen) {
+    if (env.isSmallScreen || env.isMediumScreen || !showSecondPane) {
       $editorSecondPane = null;
     } else if (!showPreview || !canPreview) {
       const otherLocales = i18nEnabled
@@ -402,7 +403,14 @@
   });
 
   $effect(() => {
-    void [collection, showPreview, canPreview, env.isSmallScreen, env.isMediumScreen];
+    void [
+      collection,
+      showSecondPane,
+      showPreview,
+      canPreview,
+      env.isSmallScreen,
+      env.isMediumScreen,
+    ];
 
     untrack(() => {
       switchPanes();

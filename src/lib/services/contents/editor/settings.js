@@ -31,6 +31,7 @@ export const initSettings = async ({ repository }) => {
   const storageKey = 'entry-view';
 
   const settings = {
+    showSecondPane: true,
     showPreview: true,
     syncScrolling: true,
     selectAssetsView: { type: 'grid' },
