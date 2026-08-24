@@ -288,6 +288,11 @@
 
   /**
    * Remove an item from the list.
+   *
+   * The new list is deliberately not assigned to {@link currentValue}: a multi-value field gets the
+   * prop one way from the parent, so a local write turns it into an override that keeps its value
+   * even after the parent recomputes. The list would then stop following the draft, and images
+   * added after a removal wouldn’t show up until the next removal reset it.
    * @param {number} index Index of the item to remove.
    */
   const removeItem = (index) => {
@@ -295,7 +300,7 @@
       return;
     }
 
-    currentValue = removeMultiValueItem({ locale, valueStoreKey, keyPath, index });
+    removeMultiValueItem({ locale, valueStoreKey, keyPath, index });
   };
 
   /**

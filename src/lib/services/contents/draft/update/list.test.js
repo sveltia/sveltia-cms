@@ -362,13 +362,7 @@ describe('draft/update/list', () => {
     });
 
     it('should remove the first item and shift the rest', () => {
-      const updatedValue = removeMultiValueItem({
-        locale: 'en',
-        keyPath: 'blocks.0.photos',
-        index: 0,
-      });
-
-      expect(updatedValue).toEqual(['b.png', 'c.png', 'd.png']);
+      removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 });
 
       expect(mockEntryDraft.currentValues.en).toEqual({
         title: 'Hello',
@@ -379,13 +373,7 @@ describe('draft/update/list', () => {
     });
 
     it('should remove an item in the middle', () => {
-      const updatedValue = removeMultiValueItem({
-        locale: 'en',
-        keyPath: 'blocks.0.photos',
-        index: 1,
-      });
-
-      expect(updatedValue).toEqual(['a.png', 'c.png', 'd.png']);
+      removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 1 });
 
       expect(mockEntryDraft.currentValues.en).toEqual({
         title: 'Hello',
@@ -396,13 +384,7 @@ describe('draft/update/list', () => {
     });
 
     it('should remove the last item', () => {
-      const updatedValue = removeMultiValueItem({
-        locale: 'en',
-        keyPath: 'blocks.0.photos',
-        index: 3,
-      });
-
-      expect(updatedValue).toEqual(['a.png', 'b.png', 'c.png']);
+      removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 3 });
 
       expect(mockEntryDraft.currentValues.en).toEqual({
         title: 'Hello',
@@ -415,13 +397,8 @@ describe('draft/update/list', () => {
     it('should remove the only item', () => {
       mockEntryDraft.currentValues.en = { title: 'Hello', 'blocks.0.photos.0': 'a.png' };
 
-      const updatedValue = removeMultiValueItem({
-        locale: 'en',
-        keyPath: 'blocks.0.photos',
-        index: 0,
-      });
+      removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 });
 
-      expect(updatedValue).toEqual([]);
       expect(mockEntryDraft.currentValues.en).toEqual({ title: 'Hello' });
     });
 
@@ -430,17 +407,25 @@ describe('draft/update/list', () => {
         en: { 'photos.0': 'a.png', 'photos.1': 'b.png' },
       };
 
-      const updatedValue = removeMultiValueItem({
+      removeMultiValueItem({
         locale: 'en',
         valueStoreKey: 'extraValues',
         keyPath: 'photos',
         index: 0,
       });
 
-      expect(updatedValue).toEqual(['b.png']);
       expect(mockEntryDraft.extraValues.en).toEqual({ 'photos.0': 'b.png' });
       // The other value store must be left alone
       expect(mockEntryDraft.currentValues.en['blocks.0.photos.0']).toBe('a.png');
+    });
+
+    it('should not return the updated list', () => {
+      // The draft is the single source of truth for the field editor. Returning the list invites
+      // the caller to assign it to the one-way `currentValue` prop, which would override the prop
+      // locally and stop it from following the draft.
+      expect(
+        removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 }),
+      ).toBeUndefined();
     });
 
     it('should drop the unused key within a single store update', () => {
@@ -457,24 +442,26 @@ describe('draft/update/list', () => {
     });
 
     it('should keep removing one item at a time on successive calls', () => {
-      expect(removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 })).toEqual([
-        'b.png',
-        'c.png',
-        'd.png',
-      ]);
+      const remove = () =>
+        removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 });
 
-      expect(removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 })).toEqual([
-        'c.png',
-        'd.png',
-      ]);
+      /**
+       * Get the remaining item values.
+       * @returns {any[]} Values.
+       */
+      const items = () =>
+        Object.entries(mockEntryDraft.currentValues.en)
+          .filter(([key]) => key.startsWith('blocks.0.photos.'))
+          .map(([, value]) => value);
 
-      expect(removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 })).toEqual([
-        'd.png',
-      ]);
-
-      expect(removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 })).toEqual(
-        [],
-      );
+      remove();
+      expect(items()).toEqual(['b.png', 'c.png', 'd.png']);
+      remove();
+      expect(items()).toEqual(['c.png', 'd.png']);
+      remove();
+      expect(items()).toEqual(['d.png']);
+      remove();
+      expect(items()).toEqual([]);
 
       expect(mockEntryDraft.currentValues.en).toEqual({ title: 'Hello' });
     });

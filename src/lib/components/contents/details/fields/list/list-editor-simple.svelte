@@ -63,14 +63,19 @@
 
   /**
    * Trim spaces on each line and remove any empty lines from the list.
+   *
+   * The cleaned list is written to the draft only. Assigning it to {@link currentValue} would turn
+   * that one-way prop into a local override that keeps its value even after the parent recomputes,
+   * and the field would stop following the draft. The `$effect` below re-syncs {@link inputValue}
+   * once the update comes back through the prop.
    */
   const cleanUpValue = () => {
-    currentValue = inputValue
-      .split(/\n/g)
-      .map((val) => val.trim())
-      .filter((val) => !!val);
-
-    updateList(currentValue);
+    updateList(
+      inputValue
+        .split(/\n/g)
+        .map((val) => val.trim())
+        .filter((val) => !!val),
+    );
   };
 
   onMount(() => {
