@@ -1038,6 +1038,107 @@ describe('Test serializeContent()', () => {
     expect(result.order).toBe(3);
   });
 
+  test('places the aliases between the canonical slug and the order field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _type: 'entry',
+        reorder: true,
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: 'translationKey' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'body', widget: 'markdown' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      title: 'Test',
+      body: 'Body',
+      translationKey: 'abc',
+      order: 3,
+      'aliases.1': '/posts/older',
+      'aliases.0': '/posts/old',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(Object.keys(result)).toEqual(['translationKey', 'aliases', 'order', 'title', 'body']);
+    expect(result.aliases).toEqual(['/posts/old', '/posts/older']);
+  });
+
+  test('places the aliases stored under the `aliases_field` property name', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _type: 'entry',
+        aliases_field: 'redirect_from',
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [{ name: 'title', widget: 'string' }],
+      isIndexFile: false,
+    };
+
+    const valueMap = { title: 'Test', 'redirect_from.0': '/posts/old' };
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(Object.keys(result)).toEqual(['redirect_from', 'title']);
+  });
+
+  test('places a non-list alias value as is', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _type: 'entry',
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [{ name: 'title', widget: 'string' }],
+      isIndexFile: false,
+    };
+
+    const valueMap = { title: 'Test', aliases: '/posts/old' };
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(Object.keys(result)).toEqual(['aliases', 'title']);
+    expect(result.aliases).toBe('/posts/old');
+  });
+
+  test('leaves the aliases in place when the `aliases_field` option is `false`', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _type: 'entry',
+        aliases_field: false,
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [{ name: 'title', widget: 'string' }],
+      isIndexFile: false,
+    };
+
+    const valueMap = { title: 'Test', 'aliases.0': '/posts/old' };
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    // Unconfigured properties are moved to the end of the output
+    expect(Object.keys(result)).toEqual(['title', 'aliases']);
+  });
+
   test('omits the order field when the value is missing', () => {
     /** @type {any} */
     const draft = {

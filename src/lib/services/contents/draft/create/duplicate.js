@@ -4,6 +4,7 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { entryDraft } from '$lib/services/contents/draft';
 import { getSlugEditorProp } from '$lib/services/contents/draft/create';
 import { showDuplicateToast } from '$lib/services/contents/editor';
+import { getAliasesKey, removeAliases } from '$lib/services/contents/entry/aliases';
 import { getField, LIST_KEY_PATH_REGEX } from '$lib/services/contents/entry/fields';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
@@ -39,6 +40,10 @@ export const duplicateDraft = () => {
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
     // Remove the canonical slug
     delete valueMap[canonicalSlugKey];
+
+    // Remove any redirects from the original entry’s previous paths, which must not be claimed by
+    // more than one entry
+    removeAliases(valueMap, getAliasesKey(collection));
 
     // Drop the manual sort order; a fresh value will be assigned at save time so the duplicate gets
     // a unique order even after backup/restore round trips

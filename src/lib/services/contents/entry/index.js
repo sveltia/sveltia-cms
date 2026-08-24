@@ -82,18 +82,31 @@ export const extractDateTime = ({ dateFieldName, fields, content }) => {
 };
 
 /**
- * Get the given entry file’s web-accessible URL on the live site.
- * @param {Entry} entry Entry.
- * @param {InternalLocaleCode} locale Locale.
- * @param {InternalCollection} collection Collection.
- * @param {InternalCollectionFile} [collectionFile] Collection file. File/singleton collection only.
- * @returns {string | undefined} URL on the live site.
- * @see https://decapcms.org/docs/deploy-preview-links/
+ * Get the given entry’s path on the live site, based on the `preview_path` option defined on the
+ * collection or collection file. The result is not normalized, so it may or may not have a leading
+ * slash, depending on the template.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
+ * only.
+ * @param {InternalLocaleCode} args.locale Locale.
+ * @param {string} [args.slug] Entry slug for the locale.
+ * @param {string} [args.path] Entry file path for the locale.
+ * @param {FlattenedEntryContent} [args.content] Entry content for the locale.
+ * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
+ * @returns {string | undefined} Path on the live site, or `undefined` if it cannot be determined,
+ * typically because the `preview_path` option is not defined.
  */
-export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
-  const { show_preview_links: showLinks = true, _baseURL: baseURL } = get(cmsConfig) ?? {};
-  const { slug, path: entryFilePath, content } = entry.locales[locale] ?? {};
-
+export const getPreviewPath = ({
+  collection,
+  collectionFile,
+  locale,
+  slug,
+  path: entryFilePath,
+  content,
+  isIndexFile = false,
+}) => {
   const {
     preview_path: pathTemplate,
     preview_path_date_field: dateFieldName,
@@ -101,11 +114,10 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
     _i18n: { defaultLocale, omitDefaultLocaleFromPreviewPath },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
-  if (!showLinks || !baseURL || !entryFilePath || !content || !pathTemplate) {
+  if (!entryFilePath || !content || !pathTemplate) {
     return undefined;
   }
 
-  const isIndexFile = isCollectionIndexFile(collection, entry);
   const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
   const fields = indexFile?.fields ?? regularFields;
   /** @type {Record<string, string> | undefined} */
@@ -129,7 +141,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
   }
 
   try {
-    const path = fillTemplate(template, {
+    return fillTemplate(template, {
       type: 'preview_path',
       collection,
       content,
@@ -139,11 +151,43 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile) =>
       dateTimeParts,
       isIndexFile,
     });
-
-    return `${baseURL.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
   } catch {
     return undefined;
   }
+};
+
+/**
+ * Get the given entry file’s web-accessible URL on the live site.
+ * @param {Entry} entry Entry.
+ * @param {InternalLocaleCode} locale Locale.
+ * @param {InternalCollection} collection Collection.
+ * @param {InternalCollectionFile} [collectionFile] Collection file. File/singleton collection only.
+ * @returns {string | undefined} URL on the live site.
+ * @see https://decapcms.org/docs/deploy-preview-links/
+ */
+export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
+  const { show_preview_links: showLinks = true, _baseURL: baseURL } = get(cmsConfig) ?? {};
+  const { slug, path, content } = entry.locales[locale] ?? {};
+
+  if (!showLinks || !baseURL) {
+    return undefined;
+  }
+
+  const previewPath = getPreviewPath({
+    collection,
+    collectionFile,
+    locale,
+    slug,
+    path,
+    content,
+    isIndexFile: isCollectionIndexFile(collection, entry),
+  });
+
+  if (previewPath === undefined) {
+    return undefined;
+  }
+
+  return `${baseURL.replace(/\/$/, '')}/${previewPath.replace(/^\//, '')}`;
 };
 
 /**

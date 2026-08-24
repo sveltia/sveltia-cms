@@ -886,6 +886,75 @@ describe('draft/save/changes', () => {
     });
   });
 
+  describe('createBaseSavingEntryData with aliases (internal)', () => {
+    /**
+     * Create a mock entry draft for a renamed entry.
+     * @param {string} [previewPath] The `preview_path` option for the collection.
+     * @returns {object} Mock draft.
+     */
+    const createRenamedDraft = (previewPath = '/posts/{{slug}}') => ({
+      isNew: false,
+      isIndexFile: false,
+      collection: {
+        name: 'posts',
+        _type: 'entry',
+        preview_path: previewPath,
+        _i18n: {
+          canonicalSlug: { key: 'translationKey' },
+          defaultLocale: 'en',
+          omitDefaultLocaleFromPreviewPath: false,
+        },
+      },
+      collectionName: 'posts',
+      collectionFile: undefined,
+      fileName: undefined,
+      currentLocales: { en: true },
+      currentValues: { en: { title: 'New Title' } },
+      originalEntry: {
+        id: 'posts/old-post',
+        slug: 'old-post',
+        subPath: 'old-post',
+        locales: {
+          en: { slug: 'old-post', path: 'posts/old-post.md', content: { title: 'Old Title' } },
+        },
+      },
+      files: {},
+    });
+
+    const slugs = {
+      defaultLocaleSlug: 'new-post',
+      canonicalSlug: undefined,
+      localizedSlugs: undefined,
+    };
+
+    it('should add the previous path to the content when the slug is edited', async () => {
+      const { createEntryPath } = await import('./entry-path');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/new-post.md');
+
+      const result = await createBaseSavingEntryData({ draft: createRenamedDraft(), slugs });
+
+      expect(result.localizedEntryMap.en.content).toEqual({
+        title: 'New Title',
+        'aliases.0': '/posts/old-post',
+      });
+    });
+
+    it('should not add the previous path when `preview_path` is not defined', async () => {
+      const { createEntryPath } = await import('./entry-path');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/new-post.md');
+
+      const draft = createRenamedDraft();
+
+      delete draft.collection.preview_path;
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      expect(result.localizedEntryMap.en.content).toEqual({ title: 'New Title' });
+    });
+  });
+
   describe('createBaseSavingEntryData with various config scenarios', () => {
     it('should handle missing cmsConfig gracefully', async () => {
       const { createEntryPath } = await import('./entry-path');

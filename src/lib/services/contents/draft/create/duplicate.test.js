@@ -78,6 +78,7 @@ describe('contents/draft/create/duplicate', () => {
       collectionName: 'posts',
       fileName: undefined,
       collection: {
+        _type: 'entry',
         _i18n: {
           defaultLocale: 'en',
           canonicalSlug: { key: 'translationKey' },
@@ -121,6 +122,35 @@ describe('contents/draft/create/duplicate', () => {
 
       expect(setCallArg.currentValues.en.translationKey).toBeUndefined();
       expect(setCallArg.currentValues.ja.translationKey).toBeUndefined();
+    });
+
+    it('should remove aliases from all locales', async () => {
+      mockEntryDraft.currentValues.en['aliases.0'] = '/posts/old-post';
+      mockEntryDraft.currentValues.ja.aliases = '/posts/old-post';
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.currentValues.en['aliases.0']).toBeUndefined();
+      expect(setCallArg.currentValues.ja.aliases).toBeUndefined();
+    });
+
+    it('should remove aliases stored under the `aliases_field` property name', async () => {
+      mockEntryDraft.collection.aliases_field = 'redirect_from';
+      mockEntryDraft.currentValues.en['redirect_from.0'] = '/posts/old-post';
+      mockEntryDraft.currentValues.ja['redirect_from.0'] = '/posts/old-post';
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.currentValues.en['redirect_from.0']).toBeUndefined();
+      expect(setCallArg.currentValues.ja['redirect_from.0']).toBeUndefined();
     });
 
     it('should drop the manual sort order field from all locales when reorder is enabled', async () => {

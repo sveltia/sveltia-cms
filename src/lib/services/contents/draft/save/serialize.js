@@ -8,6 +8,7 @@ import { cmsConfig } from '$lib/services/config';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
 import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
+import { getAliasesKey, getAliasKeyPaths } from '$lib/services/contents/entry/aliases';
 import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { TOML_FORMATS } from '$lib/services/contents/file';
@@ -126,12 +127,15 @@ export const copyProperty = ({
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
  * @param {string} [args.canonicalSlugKey] Property name of a canonical slug.
+ * @param {string} [args.aliasesKey] Property name of the entry’s URL aliases. Placed right after
+ * the canonical slug, ahead of all configured fields, when present in the value map.
  * @param {string} [args.orderKey] Property name of the entry order field. Placed right after the
- * canonical slug, ahead of all configured fields, when present in the value map.
+ * aliases, ahead of all configured fields, when present in the value map.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @param {boolean} [args.isTomlOutput] Whether the output it TOML format.
- * @returns {RawEntryContent} Unflattened entry content sorted by fields.
+ * @returns {RawEntryContent} Unflattened entry content sorted by fields. Output order is: canonical
+ * slug → aliases → order → configured fields → remainder.
  */
 const finalizeContent = ({
   collectionName,
@@ -140,6 +144,7 @@ const finalizeContent = ({
   locale,
   valueMap,
   canonicalSlugKey,
+  aliasesKey,
   orderKey,
   isIndexFile = false,
   isTomlOutput = false,
@@ -158,6 +163,19 @@ const finalizeContent = ({
   // Add the slug first
   if (canonicalSlugKey && canonicalSlugKey in unsortedMap) {
     copyProperty({ ...copyArgs, key: canonicalSlugKey });
+  }
+
+  // Add the URL aliases next so they appear at the top of the output, close to the slug they relate
+  // to. The property normally holds a list, which is flattened into indexed key paths, but copy the
+  // property itself too in case the user stores something else in it
+  if (aliasesKey) {
+    if (aliasesKey in unsortedMap) {
+      copyProperty({ ...copyArgs, key: aliasesKey });
+    }
+
+    getAliasKeyPaths(unsortedMap, aliasesKey).forEach((keyPath) => {
+      copyProperty({ ...copyArgs, key: keyPath });
+    });
   }
 
   // Add the order field next so it appears at the top of the output
@@ -243,6 +261,7 @@ export const serializeContent = ({ draft, locale, valueMap }) => {
     locale,
     valueMap,
     canonicalSlugKey,
+    aliasesKey: getAliasesKey(collection),
     orderKey: getOrderFieldKey(collection),
     isIndexFile,
     isTomlOutput,
