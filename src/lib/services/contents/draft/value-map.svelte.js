@@ -18,9 +18,12 @@ import { entryDraft } from '$lib/services/contents/draft';
 // eslint-disable-next-line svelte/prefer-svelte-reactivity
 const snapshotCache = new Map();
 
-// Any mutation of the draft ends up calling `entryDraft.set()` — including a nested one made
+// Any assignment to the draft ends up calling `entryDraft.set()` — including a nested one made
 // through the `$entryDraft` store in a component, which Svelte compiles to a store mutation — so
 // clearing the cache here keeps the snapshots exactly as fresh as a per-component `$derived`.
+// A `delete` is the exception: Svelte doesn’t compile it to a store mutation, so a caller dropping
+// a key has to do it within an `entryDraft.update()` block, or the snapshot taken by whoever reads
+// the store next would still list the deleted key.
 entryDraft.subscribe(() => {
   snapshotCache.clear();
 });

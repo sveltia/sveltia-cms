@@ -18,7 +18,7 @@
   import FileEditorItem from '$lib/components/contents/details/fields/file/file-editor-item.svelte';
   import UploadButton from '$lib/components/contents/details/fields/file/upload-button.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { removeMultiValueItem } from '$lib/services/contents/draft/update/list';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import {
     getAssetLibraryFolderMap,
@@ -295,27 +295,7 @@
       return;
     }
 
-    const valueMap = getValueMapSnapshot($entryDraft, locale, valueStoreKey);
-    /** @type {string[]} */
-    const updatedValue = [];
-
-    for (let i = 0; ; i += 1) {
-      const currentKey = `${keyPath}.${i}`;
-      const nextKey = `${keyPath}.${i + 1}`;
-
-      if (i < index) {
-        updatedValue.push(valueMap[currentKey]);
-      } else if (nextKey in valueMap) {
-        updatedValue.push(valueMap[nextKey]);
-        $entryDraft[valueStoreKey][locale][currentKey] = valueMap[nextKey];
-      } else {
-        $entryDraft[valueStoreKey][locale][currentKey] = null;
-        delete $entryDraft[valueStoreKey][locale][currentKey];
-        break;
-      }
-    }
-
-    currentValue = Object.values(updatedValue);
+    currentValue = removeMultiValueItem({ locale, valueStoreKey, keyPath, index });
   };
 
   /**

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
-import { getItemList, updateListField, updateObject } from './list';
+import { getItemList, removeMultiValueItem, updateListField, updateObject } from './list';
 
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/user/prefs.svelte', () => ({
@@ -325,6 +325,158 @@ describe('draft/update/list', () => {
 
       expect(list1).toEqual(['a', 'b']);
       expect(list2).toEqual(['a', 'b']);
+    });
+  });
+
+  describe('removeMultiValueItem', () => {
+    /**
+     * Record the state of the value map as seen by the store subscribers, which is the state left
+     * when the `entryDraft.update()` callback returns.
+     * @param {string} locale Locale code.
+     * @param {string} [valueStoreKey] Value store key.
+     * @returns {Record<string, any>[]} Snapshots, one per update call.
+     */
+    const trackUpdates = (locale, valueStoreKey = 'currentValues') => {
+      /** @type {Record<string, any>[]} */
+      const snapshots = [];
+
+      mockUpdate.mockImplementation((fn) => {
+        const draft = fn(mockEntryDraft);
+
+        snapshots.push({ ...draft[valueStoreKey][locale] });
+
+        return draft;
+      });
+
+      return snapshots;
+    };
+
+    beforeEach(() => {
+      mockEntryDraft.currentValues.en = {
+        title: 'Hello',
+        'blocks.0.photos.0': 'a.png',
+        'blocks.0.photos.1': 'b.png',
+        'blocks.0.photos.2': 'c.png',
+        'blocks.0.photos.3': 'd.png',
+      };
+    });
+
+    it('should remove the first item and shift the rest', () => {
+      const updatedValue = removeMultiValueItem({
+        locale: 'en',
+        keyPath: 'blocks.0.photos',
+        index: 0,
+      });
+
+      expect(updatedValue).toEqual(['b.png', 'c.png', 'd.png']);
+
+      expect(mockEntryDraft.currentValues.en).toEqual({
+        title: 'Hello',
+        'blocks.0.photos.0': 'b.png',
+        'blocks.0.photos.1': 'c.png',
+        'blocks.0.photos.2': 'd.png',
+      });
+    });
+
+    it('should remove an item in the middle', () => {
+      const updatedValue = removeMultiValueItem({
+        locale: 'en',
+        keyPath: 'blocks.0.photos',
+        index: 1,
+      });
+
+      expect(updatedValue).toEqual(['a.png', 'c.png', 'd.png']);
+
+      expect(mockEntryDraft.currentValues.en).toEqual({
+        title: 'Hello',
+        'blocks.0.photos.0': 'a.png',
+        'blocks.0.photos.1': 'c.png',
+        'blocks.0.photos.2': 'd.png',
+      });
+    });
+
+    it('should remove the last item', () => {
+      const updatedValue = removeMultiValueItem({
+        locale: 'en',
+        keyPath: 'blocks.0.photos',
+        index: 3,
+      });
+
+      expect(updatedValue).toEqual(['a.png', 'b.png', 'c.png']);
+
+      expect(mockEntryDraft.currentValues.en).toEqual({
+        title: 'Hello',
+        'blocks.0.photos.0': 'a.png',
+        'blocks.0.photos.1': 'b.png',
+        'blocks.0.photos.2': 'c.png',
+      });
+    });
+
+    it('should remove the only item', () => {
+      mockEntryDraft.currentValues.en = { title: 'Hello', 'blocks.0.photos.0': 'a.png' };
+
+      const updatedValue = removeMultiValueItem({
+        locale: 'en',
+        keyPath: 'blocks.0.photos',
+        index: 0,
+      });
+
+      expect(updatedValue).toEqual([]);
+      expect(mockEntryDraft.currentValues.en).toEqual({ title: 'Hello' });
+    });
+
+    it('should support a custom value store key', () => {
+      mockEntryDraft.extraValues = {
+        en: { 'photos.0': 'a.png', 'photos.1': 'b.png' },
+      };
+
+      const updatedValue = removeMultiValueItem({
+        locale: 'en',
+        valueStoreKey: 'extraValues',
+        keyPath: 'photos',
+        index: 0,
+      });
+
+      expect(updatedValue).toEqual(['b.png']);
+      expect(mockEntryDraft.extraValues.en).toEqual({ 'photos.0': 'b.png' });
+      // The other value store must be left alone
+      expect(mockEntryDraft.currentValues.en['blocks.0.photos.0']).toBe('a.png');
+    });
+
+    it('should drop the unused key within a single store update', () => {
+      // Deleting a property doesn’t notify the store, so the deletion has to be done before the
+      // update completes. Otherwise subscribers — including the shared value map snapshot — would
+      // still see the removed key, and the next removal would read its stale value back.
+      const snapshots = trackUpdates('en');
+
+      removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 });
+
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
+      expect(snapshots).toHaveLength(1);
+      expect(snapshots[0]).not.toHaveProperty('blocks.0.photos.3');
+    });
+
+    it('should keep removing one item at a time on successive calls', () => {
+      expect(removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 })).toEqual([
+        'b.png',
+        'c.png',
+        'd.png',
+      ]);
+
+      expect(removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 })).toEqual([
+        'c.png',
+        'd.png',
+      ]);
+
+      expect(removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 })).toEqual([
+        'd.png',
+      ]);
+
+      expect(removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 })).toEqual(
+        [],
+      );
+
+      expect(mockEntryDraft.currentValues.en).toEqual({ title: 'Hello' });
     });
   });
 });

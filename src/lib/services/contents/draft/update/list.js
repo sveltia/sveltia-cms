@@ -109,3 +109,55 @@ export const updateListField = ({
 
   i18nAutoDupEnabled.set(true);
 };
+
+/**
+ * Remove an item from a multi-value field, such as a File or Image field with the `multiple` option
+ * enabled. Our internal representation of such a field is a flattened object, so the item is
+ * removed by shifting the subsequent values down by one and dropping the now-unused last key.
+ *
+ * The whole manipulation is done within a single {@link entryDraft} update. Deleting a property
+ * doesn’t notify the store on its own — only an assignment does — so shifting the values with
+ * separate assignments would leave subscribers, including the shared value map snapshot, holding a
+ * map that still contains the removed key. The next removal would then read that key back and write
+ * its stale value into the list.
+ * @param {object} args Arguments.
+ * @param {InternalLocaleCode} args.locale Target locale.
+ * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
+ * @param {FieldKeyPath} args.keyPath Dot-notated field name.
+ * @param {number} args.index Index of the item to remove.
+ * @returns {any[]} Updated value list.
+ */
+export const removeMultiValueItem = ({
+  locale,
+  valueStoreKey = 'currentValues',
+  keyPath,
+  index,
+}) => {
+  /** @type {any[]} */
+  const updatedValue = [];
+
+  /** @type {Writable<EntryDraft>} */ (entryDraft).update((draft) => {
+    const values = draft[valueStoreKey][locale];
+
+    for (let i = 0; ; i += 1) {
+      const currentKey = `${keyPath}.${i}`;
+      const nextKey = `${keyPath}.${i + 1}`;
+
+      if (i < index) {
+        updatedValue.push(values[currentKey]);
+      } else if (nextKey in values) {
+        values[currentKey] = values[nextKey];
+        updatedValue.push(values[currentKey]);
+      } else {
+        // Assign `null` before deleting the property, so the draft proxy can revalidate the field
+        values[currentKey] = null;
+        delete values[currentKey];
+        break;
+      }
+    }
+
+    return draft;
+  });
+
+  return updatedValue;
+};
