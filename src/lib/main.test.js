@@ -756,3 +756,28 @@ describe('Module-time execution paths', () => {
     expect(shouldAutoInit).toBe(false);
   });
 });
+
+describe('Global Markdown parser and HTML sanitizer', () => {
+  test('exposes Marked and DOMPurify on `window`', async () => {
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => null);
+
+    await import('./main.js');
+
+    expect(typeof window.marked).toBe('function');
+    expect(typeof window.marked.parse).toBe('function');
+    expect(typeof window.DOMPurify.sanitize).toBe('function');
+  });
+
+  test('parses Markdown and sanitizes the result', async () => {
+    // @ts-ignore
+    global.document.querySelector = vi.fn(() => null);
+
+    await import('./main.js');
+
+    const html = window.marked.parse('**foo**');
+
+    expect(html.trim()).toBe('<p><strong>foo</strong></p>');
+    expect(window.DOMPurify.sanitize('<b>foo</b><script>alert(1)</script>')).toBe('<b>foo</b>');
+  });
+});

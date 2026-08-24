@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 
 import createClass from 'create-react-class';
+import DOMPurify from 'isomorphic-dompurify';
+import { marked } from 'marked';
 import { createElement, Fragment } from 'react';
 
 import CMS, { init } from './services/api';
@@ -21,6 +23,16 @@ window.createClass = createClass;
 window.createElement = createElement;
 window.h = createElement;
 window.rf = Fragment;
+
+// Expose the Markdown parser and HTML sanitizer used by the CMS, so custom editor component
+// previews can render the value of a nested RichText or Markdown field, which is passed as is.
+// These are the same instances the CMS uses internally, meaning any Marked extension added with
+// `marked.use()` also affects the built-in preview.
+// @see https://marked.js.org/
+// @see https://github.com/cure53/DOMPurify
+// @see https://sveltiacms.app/en/docs/api/editor-components
+window.marked = marked;
+window.DOMPurify = DOMPurify;
 
 const cssLinkElement = document.querySelector('link[rel="stylesheet"][href$="/sveltia-cms.css"]');
 
