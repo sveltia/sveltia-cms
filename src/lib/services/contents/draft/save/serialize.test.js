@@ -1116,6 +1116,31 @@ describe('Test serializeContent()', () => {
     expect(result.aliases).toBe('/posts/old');
   });
 
+  test('leaves the aliases in place when a field with the same name is configured', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _type: 'entry',
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'aliases', widget: 'list' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = { title: 'Test', 'aliases.0': '/posts/old' };
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    // The field keeps its configured position instead of being hoisted to the top
+    expect(Object.keys(result)).toEqual(['title', 'aliases']);
+  });
+
   test('leaves the aliases in place when the `aliases_field` option is `false`', () => {
     /** @type {any} */
     const draft = {

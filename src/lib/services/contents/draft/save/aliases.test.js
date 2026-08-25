@@ -181,6 +181,16 @@ describe('Test addAlias()', () => {
     });
   });
 
+  test('should do nothing when a field with the same name is configured', () => {
+    const draft = createDraft({ fields: [{ name: 'aliases', widget: 'list' }] });
+    const content = { title: 'New Title' };
+
+    addAlias({ ...baseArgs, draft, content });
+
+    expect(content).toEqual({ title: 'New Title' });
+    expect(getPreviewPath).not.toHaveBeenCalled();
+  });
+
   test('should do nothing when the `aliases_field` option is `false`', () => {
     const draft = createDraft({
       collection: {

@@ -261,7 +261,7 @@ export const serializeContent = ({ draft, locale, valueMap }) => {
     locale,
     valueMap,
     canonicalSlugKey,
-    aliasesKey: getAliasesKey(collection),
+    aliasesKey: getAliasesKey({ collection, fields }),
     orderKey: getOrderFieldKey(collection),
     isIndexFile,
     isTomlOutput,

@@ -25,6 +25,7 @@ export const duplicateDraft = () => {
     fileName,
     collection,
     collectionFile,
+    fields,
     currentValues,
     validities,
     isIndexFile,
@@ -36,6 +37,7 @@ export const duplicateDraft = () => {
   } = (collectionFile ?? collection)._i18n;
 
   const orderFieldKey = getOrderFieldKey(collection);
+  const aliasesKey = getAliasesKey({ collection, fields });
 
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
     // Remove the canonical slug
@@ -43,7 +45,7 @@ export const duplicateDraft = () => {
 
     // Remove any redirects from the original entry’s previous paths, which must not be claimed by
     // more than one entry
-    removeAliases(valueMap, getAliasesKey(collection));
+    removeAliases(valueMap, aliasesKey);
 
     // Drop the manual sort order; a fresh value will be assigned at save time so the duplicate gets
     // a unique order even after backup/restore round trips

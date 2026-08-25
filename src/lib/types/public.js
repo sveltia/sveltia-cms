@@ -1434,7 +1434,8 @@
  * Hugo and Zola support out of the box. When an editor changes an entry’s slug, the entry’s
  * previous path is appended to this property. Set this to `false` to skip the processing. It has no
  * effect unless the `preview_path` option is also defined, because that option is what tells the
- * CMS an entry’s path on the live site.
+ * CMS an entry’s path on the live site. It also has no effect if a field with the same name is
+ * defined in the `fields` option, in which case the property is left to the editor to manage.
  * @see https://decapcms.org/docs/collection-folder/
  * @see https://sveltiacms.app/en/docs/collections/entries
  */

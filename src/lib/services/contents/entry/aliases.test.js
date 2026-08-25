@@ -9,30 +9,59 @@ import {
 } from '$lib/services/contents/entry/aliases';
 
 describe('Test getAliasesKey()', () => {
+  /**
+   * Create a mock entry collection.
+   * @param {any} [aliasesField] The `aliases_field` option value.
+   * @returns {any} Mock collection.
+   */
+  const createCollection = (aliasesField) => ({
+    name: 'posts',
+    _type: 'entry',
+    ...(aliasesField === undefined ? {} : { aliases_field: aliasesField }),
+  });
+
   test('should return the default property name when the option is not defined', () => {
-    expect(getAliasesKey({ name: 'posts', _type: 'entry' })).toBe(DEFAULT_ALIASES_KEY);
+    expect(getAliasesKey({ collection: createCollection() })).toBe(DEFAULT_ALIASES_KEY);
   });
 
   test('should return the `aliases_field` option value', () => {
-    expect(getAliasesKey({ name: 'posts', _type: 'entry', aliases_field: 'redirect_from' })).toBe(
-      'redirect_from',
-    );
-  });
-
-  test('should return `undefined` for a non-entry collection', () => {
-    expect(getAliasesKey({ name: 'pages', _type: 'file' })).toBeUndefined();
-    expect(getAliasesKey(undefined)).toBeUndefined();
+    expect(getAliasesKey({ collection: createCollection('redirect_from') })).toBe('redirect_from');
   });
 
   test('should return the default property name when the option is `true`', () => {
-    expect(getAliasesKey({ name: 'posts', _type: 'entry', aliases_field: true })).toBe(
-      DEFAULT_ALIASES_KEY,
-    );
+    expect(getAliasesKey({ collection: createCollection(true) })).toBe(DEFAULT_ALIASES_KEY);
   });
 
   test('should return `undefined` when the option is `false` or an empty string', () => {
-    expect(getAliasesKey({ name: 'posts', _type: 'entry', aliases_field: false })).toBeUndefined();
-    expect(getAliasesKey({ name: 'posts', _type: 'entry', aliases_field: '' })).toBeUndefined();
+    expect(getAliasesKey({ collection: createCollection(false) })).toBeUndefined();
+    expect(getAliasesKey({ collection: createCollection('') })).toBeUndefined();
+  });
+
+  test('should return `undefined` for a non-entry collection', () => {
+    expect(getAliasesKey({ collection: { name: 'pages', _type: 'file' } })).toBeUndefined();
+    expect(getAliasesKey({ collection: undefined })).toBeUndefined();
+  });
+
+  test('should return `undefined` when a field with the same name is configured', () => {
+    const fields = [
+      { name: 'title', widget: 'string' },
+      { name: 'aliases', widget: 'list' },
+    ];
+
+    expect(getAliasesKey({ collection: createCollection(), fields })).toBeUndefined();
+    expect(getAliasesKey({ collection: createCollection(true), fields })).toBeUndefined();
+    expect(getAliasesKey({ collection: createCollection('aliases'), fields })).toBeUndefined();
+  });
+
+  test('should return the property name when no field shares it', () => {
+    const fields = [
+      { name: 'title', widget: 'string' },
+      { name: 'aliases', widget: 'list' },
+    ];
+
+    expect(getAliasesKey({ collection: createCollection('redirect_from'), fields })).toBe(
+      'redirect_from',
+    );
   });
 });
 

@@ -40,7 +40,7 @@ const normalizePath = (path) => (path === undefined ? undefined : `/${path.repla
  * @see https://github.com/sveltia/sveltia-cms/discussions/731
  */
 export const addAlias = ({ draft, locale, content, slug, path }) => {
-  const { isNew, isIndexFile, collection, originalEntry } = draft;
+  const { isNew, isIndexFile, collection, fields, originalEntry } = draft;
 
   // The index file’s slug is fixed, so it can never be renamed
   if (isNew || isIndexFile || !originalEntry) {
@@ -50,7 +50,7 @@ export const addAlias = ({ draft, locale, content, slug, path }) => {
   const { preview_path: pathTemplate } = /** @type {InternalEntryCollection} */ (collection);
   // This is `undefined` for anything but an entry collection, whose slugs are the only editable
   // ones, so no further collection type check is needed below
-  const aliasesKey = getAliasesKey(collection);
+  const aliasesKey = getAliasesKey({ collection, fields });
 
   if (!pathTemplate || !aliasesKey) {
     return;

@@ -1,6 +1,6 @@
 /**
  * @import { FlattenedEntryContent, InternalCollection } from '$lib/types/private';
- * @import { FieldKeyPath } from '$lib/types/public';
+ * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -13,26 +13,31 @@ export const DEFAULT_ALIASES_KEY = 'aliases';
 
 /**
  * Get the property name used to store URL aliases for entries in the given collection.
- * @param {InternalCollection} collection Collection.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection.
+ * @param {Field[]} [args.fields] Field list of the collection or the collection’s index file.
  * @returns {FieldKeyPath | undefined} Property name, which is the `aliases_field` option value if
- * defined, or `undefined` if aliases are not managed by the CMS, either because the option is
- * `false` or because the collection is not an entry collection. Entries in a file or singleton
- * collection are identified by a file name that can never be changed, so they can’t be renamed or
- * duplicated in the first place.
+ * defined, or `undefined` if aliases are not managed by the CMS. That’s the case when the option is
+ * `false`, when a field with the same name is configured, or when the collection is not an entry
+ * collection. Entries in a file or singleton collection are identified by a file name that can
+ * never be changed, so they can’t be renamed or duplicated in the first place.
  */
-export const getAliasesKey = (collection) => {
+export const getAliasesKey = ({ collection, fields = [] }) => {
   if (collection?._type !== 'entry') {
     return undefined;
   }
 
   const { aliases_field: aliasesField = DEFAULT_ALIASES_KEY } = collection;
+  // `false` and an empty string both disable the feature
+  const aliasesKey = aliasesField === true ? DEFAULT_ALIASES_KEY : aliasesField || undefined;
 
-  if (aliasesField === true) {
-    return DEFAULT_ALIASES_KEY;
+  // A field with the same name is the user’s to manage in the entry editor, so leave the property
+  // alone rather than writing to it behind their back
+  if (!aliasesKey || fields.some(({ name }) => name === aliasesKey)) {
+    return undefined;
   }
 
-  // `false` and an empty string both disable the feature
-  return aliasesField || undefined;
+  return aliasesKey;
 };
 
 /**
