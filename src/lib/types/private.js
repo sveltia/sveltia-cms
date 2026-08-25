@@ -79,7 +79,8 @@
  * @property {Record<string, string>} [logins] Log-in credentials (user name and password) for
  * integrations.
  * @property {string} [theme] Selected UI theme, either `dark` or `light`.
- * @property {InternalLocaleCode} [locale] Selected UI locale, e.g. `en`.
+ * @property {InternalLocaleCode | 'auto'} [locale] Selected UI locale, e.g. `en-US`, or `auto` to
+ * follow the browser’s language settings.
  * @property {boolean} [useDraftBackup] Whether to use the entry draft backup mechanism.
  * @property {boolean} [closeOnSave] Whether to close the entry editor after saving a draft.
  * @property {boolean} [closeWithEscape] Whether to close the entry editor by pressing the Escape

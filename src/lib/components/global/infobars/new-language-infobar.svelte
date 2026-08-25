@@ -5,14 +5,17 @@
 
   import { getState, setState } from '$lib/services/app/onboarding';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { prefs } from '$lib/services/user/prefs.svelte';
+  import { AUTO_APP_LOCALE, prefs } from '$lib/services/user/prefs.svelte';
 
   let newLocale = $state('');
   let showInfobar = $state(false);
+  /** Whether the check below has already been made, so it’s not repeated on a preference change. */
+  let checked = false;
 
   /**
    * Show the infobar if the user has not seen it yet, the user’s browser language is different from
-   * the current app locale, and the user’s browser language is available in the app.
+   * the current app locale, and the user’s browser language is available in the app. Only relevant
+   * when the user has explicitly picked a language; see the effect below.
    */
   const showInfobarIfNeeded = async () => {
     if (await getState('newLanguageCta')) {
@@ -45,8 +48,17 @@
     setState('newLanguageCta', true);
   };
 
-  $effect.pre(() => {
+  $effect(() => {
+    const { locale } = prefs;
+
     untrack(() => {
+      // Wait for the preferences to be loaded. The infobar is pointless while the language
+      // preference is `auto`, because the UI already follows the browser’s language settings
+      if (checked || !locale || locale === AUTO_APP_LOCALE) {
+        return;
+      }
+
+      checked = true;
       showInfobarIfNeeded();
     });
   });

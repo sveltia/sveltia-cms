@@ -80,6 +80,8 @@ folder: Folder
 api_key: API Key
 details: Details
 back: Back
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Automatic
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Loading…
 # Dismiss button for temporary notifications and infobars

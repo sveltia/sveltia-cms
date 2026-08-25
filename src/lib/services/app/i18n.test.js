@@ -19,7 +19,6 @@ const mockComponentStrings = {
 const mockAddMessages = vi.fn();
 const mockInit = vi.fn();
 const mockRegister = vi.fn();
-const mockGetLocaleFromNavigator = vi.fn();
 const mockGetPathInfo = vi.fn();
 
 vi.mock('$lib/locales/en-CA.yaml', () => ({ default: mockEnData }));
@@ -29,7 +28,6 @@ vi.mock('$lib/locales/ja.yaml', () => ({ default: mockJaData }));
 
 vi.mock('@sveltia/i18n', () => ({
   addMessages: mockAddMessages,
-  getLocaleFromNavigator: mockGetLocaleFromNavigator,
   init: mockInit,
   locale: { current: 'en' },
   register: mockRegister,
@@ -56,7 +54,12 @@ vi.mock('@sveltia/utils/storage', () => ({
   LocalStorage: mockLocalStorage,
 }));
 
+// Locale matching the browser’s language settings, which lives in the preferences service so that
+// the language preference can be applied there
+const mockNavigatorLocale = { current: /** @type {string | undefined} */ (undefined) };
+
 vi.mock('$lib/services/user/prefs.svelte', () => ({
+  navigatorLocale: mockNavigatorLocale,
   PREFS_STORAGE_KEY: 'sveltia-cms.prefs',
 }));
 
@@ -74,6 +77,29 @@ const setStoredLocale = (locale) => {
   mockWebStorage.getItem.mockReturnValue(locale === null ? null : JSON.stringify({ locale }));
 };
 
+/**
+ * Set the browser’s preferred languages, which the initial locale is negotiated against when there
+ * is no usable language preference.
+ * @param {string[]} languages Language tags, in order of preference.
+ */
+const setNavigatorLanguages = (languages) => {
+  vi.stubGlobal('navigator', { languages });
+};
+
+// The app listens for `languagechange` on `window`, which doesn’t exist in the Node environment
+const mockWindow = { addEventListener: vi.fn() };
+
+/**
+ * Simulate a change to the browser’s language settings.
+ * @param {string[]} languages New language tags, in order of preference.
+ */
+const changeNavigatorLanguages = (languages) => {
+  setNavigatorLanguages(languages);
+  mockWindow.addEventListener.mock.calls
+    .filter(([type]) => type === 'languagechange')
+    .forEach(([, listener]) => listener());
+};
+
 describe('i18n', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -82,6 +108,9 @@ describe('i18n', () => {
     mockLocalStorage.delete.mockResolvedValue(undefined);
     vi.stubGlobal('localStorage', mockWebStorage);
     setStoredLocale('en-US');
+    setNavigatorLanguages(['en-US']);
+    mockNavigatorLocale.current = undefined;
+    vi.stubGlobal('window', mockWindow);
     mockComponentStrings['en-CA'] = { button: 'Button' };
     mockComponentStrings['en-GB'] = { button: 'Button (UK)' };
     mockComponentStrings['en-US'] = { button: 'Button (US)' };
@@ -136,7 +165,7 @@ describe('i18n', () => {
       // up empty and the app would start with the browser’s language, load and cache the strings
       // for it, and then throw that cache away once the preference is applied — on every visit
       setStoredLocale('ja');
-      mockGetLocaleFromNavigator.mockReturnValue('en-CA');
+      setNavigatorLanguages(['en-CA']);
 
       const { initAppLocale } = await import('./i18n.js');
 
@@ -151,7 +180,7 @@ describe('i18n', () => {
     it('should ignore a stored locale that is not available', async () => {
       // `en` is the legacy value, which is migrated once the preferences are loaded
       setStoredLocale('en');
-      mockGetLocaleFromNavigator.mockReturnValue('en-CA');
+      setNavigatorLanguages(['en-CA']);
 
       const { initAppLocale } = await import('./i18n.js');
 
@@ -165,7 +194,7 @@ describe('i18n', () => {
 
     it('should ignore unreadable stored preferences', async () => {
       mockWebStorage.getItem.mockReturnValue('{ not json');
-      mockGetLocaleFromNavigator.mockReturnValue('en-CA');
+      setNavigatorLanguages(['en-CA']);
 
       const { initAppLocale } = await import('./i18n.js');
 
@@ -181,7 +210,7 @@ describe('i18n', () => {
       mockWebStorage.getItem.mockImplementation(() => {
         throw new DOMException('Access denied', 'SecurityError');
       });
-      mockGetLocaleFromNavigator.mockReturnValue('en-CA');
+      setNavigatorLanguages(['en-CA']);
 
       const { initAppLocale } = await import('./i18n.js');
 
@@ -195,7 +224,7 @@ describe('i18n', () => {
 
     it('should ignore a stored preference that parses to a non-object value', async () => {
       mockWebStorage.getItem.mockReturnValue('null');
-      mockGetLocaleFromNavigator.mockReturnValue('en-CA');
+      setNavigatorLanguages(['en-CA']);
 
       const { initAppLocale } = await import('./i18n.js');
 
@@ -207,9 +236,11 @@ describe('i18n', () => {
       });
     });
 
-    it('should fall back to navigator locale when no stored locale', async () => {
-      setStoredLocale(null);
-      mockGetLocaleFromNavigator.mockReturnValue('ja-JP');
+    it('should resolve the automatic language preference against the browser languages', async () => {
+      // The same locale is resolved once the preferences are loaded, so the strings fetched and
+      // cached here are not thrown away
+      setStoredLocale('auto');
+      setNavigatorLanguages(['ja-JP']);
 
       const { initAppLocale } = await import('./i18n.js');
 
@@ -217,7 +248,36 @@ describe('i18n', () => {
 
       expect(mockInit).toHaveBeenCalledWith({
         fallbackLocale: 'en-US',
-        initialLocale: 'ja-JP',
+        initialLocale: 'ja',
+      });
+    });
+
+    it('should keep the browser language up to date for the automatic preference', async () => {
+      setStoredLocale('auto');
+      setNavigatorLanguages(['ja-JP']);
+
+      const { initAppLocale } = await import('./i18n.js');
+
+      initAppLocale();
+
+      expect(mockNavigatorLocale.current).toBe('ja');
+
+      changeNavigatorLanguages(['fr-CA']);
+
+      expect(mockNavigatorLocale.current).toBe('fr');
+    });
+
+    it('should fall back to navigator locale when no stored locale', async () => {
+      setStoredLocale(null);
+      setNavigatorLanguages(['ja-JP']);
+
+      const { initAppLocale } = await import('./i18n.js');
+
+      initAppLocale();
+
+      expect(mockInit).toHaveBeenCalledWith({
+        fallbackLocale: 'en-US',
+        initialLocale: 'ja',
       });
     });
 
@@ -255,7 +315,7 @@ describe('i18n', () => {
 
     it('should fall back to en when no stored preference and no navigator locale', async () => {
       setStoredLocale(null);
-      mockGetLocaleFromNavigator.mockReturnValue(null);
+      setNavigatorLanguages([]);
 
       const { initAppLocale } = await import('./i18n.js');
 
@@ -269,7 +329,7 @@ describe('i18n', () => {
 
     it('should handle empty navigator locale string', async () => {
       setStoredLocale(null);
-      mockGetLocaleFromNavigator.mockReturnValue('');
+      setNavigatorLanguages(['']);
 
       const { initAppLocale } = await import('./i18n.js');
 
@@ -552,6 +612,43 @@ describe('i18n', () => {
       // away, without waiting for a remote locale file
       expect(initAppLocale()).toBeUndefined();
       expect(mockInit).toHaveBeenCalled();
+    });
+  });
+
+  describe('getNavigatorLocale', () => {
+    /**
+     * Resolve the given browser languages against the available application locales.
+     * @param {string[]} languages Language tags, in order of preference.
+     * @returns {Promise<string>} Locale code.
+     */
+    const resolve = async (languages) => {
+      setNavigatorLanguages(languages);
+
+      const { getNavigatorLocale } = await import('./i18n.js');
+
+      return getNavigatorLocale();
+    };
+
+    it('should pick an exact match', async () => {
+      expect(await resolve(['pt-BR'])).toBe('pt-BR');
+    });
+
+    it('should pick a locale with the same language', async () => {
+      expect(await resolve(['ja-JP'])).toBe('ja');
+      expect(await resolve(['zh-Hans-CN'])).toBe('zh-CN');
+    });
+
+    it('should prefer the default locale over another variant of the same language', async () => {
+      expect(await resolve(['en'])).toBe('en-US');
+      expect(await resolve(['en-AU'])).toBe('en-US');
+    });
+
+    it('should honour the order of the browser languages', async () => {
+      expect(await resolve(['sw', 'fi-FI', 'ja'])).toBe('fi');
+    });
+
+    it('should fall back to the default locale when nothing matches', async () => {
+      expect(await resolve(['sw', 'yo'])).toBe('en-US');
     });
   });
 

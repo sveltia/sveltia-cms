@@ -1,10 +1,4 @@
-import {
-  addMessages,
-  locale as appLocale,
-  getLocaleFromNavigator,
-  init,
-  register,
-} from '@sveltia/i18n';
+import { addMessages, locale as appLocale, init, register } from '@sveltia/i18n';
 import { strings as componentStrings } from '@sveltia/ui';
 import defaultComponentStrings from '@sveltia/ui/locales/en-US.yaml';
 import { getPathInfo } from '@sveltia/utils/file';
@@ -13,7 +7,7 @@ import { toStore, writable } from 'svelte/store';
 
 import defaultLocaleStrings from '$lib/locales/en-US.yaml';
 import { UNPKG_BASE_URL, version } from '$lib/services/app';
-import { PREFS_STORAGE_KEY } from '$lib/services/user/prefs.svelte';
+import { navigatorLocale, PREFS_STORAGE_KEY } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -31,6 +25,29 @@ export const DEFAULT_APP_LOCALE = 'en-US';
  * @type {string[]}
  */
 export const APP_LOCALES = import.meta.env.VITE_APP_LOCALES.split(',');
+
+/**
+ * Application locales in the order they’re matched against the browser’s languages. The
+ * {@link DEFAULT_APP_LOCALE} comes first, so that a language without a region, e.g. `en`, resolves
+ * to it rather than to another variant of the same language, e.g. `en-CA`.
+ */
+const NEGOTIABLE_LOCALES = [DEFAULT_APP_LOCALE, ...APP_LOCALES];
+
+/**
+ * Get the application locale that best matches the browser’s language settings. The user’s
+ * preferred languages are tried in order, each first as an exact match, then by the language part
+ * of the tag alone, e.g. `ja-JP` → `ja`.
+ * @returns {string} Locale code, falling back to {@link DEFAULT_APP_LOCALE} when none of the
+ * preferred languages is available.
+ */
+export const getNavigatorLocale = () =>
+  navigator.languages
+    .map(
+      (lang) =>
+        NEGOTIABLE_LOCALES.find((locale) => locale === lang) ??
+        NEGOTIABLE_LOCALES.find((locale) => locale.split('-')[0] === lang.split('-')[0]),
+    )
+    .find(Boolean) ?? DEFAULT_APP_LOCALE;
 
 /**
  * Base URL for the JSON locale files published to the UNPKG CDN. These files are generated at build
@@ -223,8 +240,9 @@ const getStoredLocale = () => {
   try {
     const { locale } = JSON.parse(globalThis.localStorage.getItem(PREFS_STORAGE_KEY) || '{}') ?? {};
 
-    // Ignore a locale that’s no longer available, as well as the legacy `en` value, which is
-    // migrated to a proper code once the preferences are loaded
+    // Ignore anything that’s not an available locale: the default `auto` value, which is resolved
+    // from the browser’s language settings below, a locale that’s no longer available, as well as
+    // the legacy `en` value, which is migrated once the preferences are loaded
     return APP_LOCALES.includes(locale) ? locale : undefined;
   } catch {
     // The local storage may be unavailable, e.g. when cookies are blocked, or the stored data may
@@ -269,12 +287,20 @@ export const initAppLocale = () => {
     });
   }
 
+  navigatorLocale.current = getNavigatorLocale();
+
+  // Follow the browser’s language settings, which the user can change without reloading the page.
+  // The listener lives as long as the app, so it’s never removed.
+  window.addEventListener('languagechange', () => {
+    navigatorLocale.current = getNavigatorLocale();
+  });
+
   // `init()` triggers the loader for the initial locale, but we don’t wait for it: the app is
   // rendered with the default locale strings, which are always bundled, then switches to the
   // requested locale as soon as its strings are loaded
   init({
     fallbackLocale: DEFAULT_APP_LOCALE,
-    initialLocale: getStoredLocale() || getLocaleFromNavigator() || DEFAULT_APP_LOCALE,
+    initialLocale: getStoredLocale() ?? navigatorLocale.current,
   });
 
   // Keep the cache in sync with the active locale, including when the language is switched with the

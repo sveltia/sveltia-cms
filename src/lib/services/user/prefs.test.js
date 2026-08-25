@@ -106,6 +106,7 @@ describe('prefs service', () => {
     expect(prefs.devModeEnabled).toBe(false);
     expect(prefs.defaultTranslationService).toBe('google');
     expect(prefs.apiKeys).toEqual({});
+    expect(prefs.locale).toBe('auto');
   });
 
   it('should set app locale when valid locale is loaded', async () => {
@@ -198,32 +199,83 @@ describe('prefs service', () => {
     expect(mockAppLocale.set).not.toHaveBeenCalled();
   });
 
-  it('should migrate legacy locale "en" to the first supported navigator locale', async () => {
+  it('should migrate legacy locale "en" to the automatic preference', async () => {
     mockLocalStorage.get.mockResolvedValue({ locale: 'en' });
-    global.navigator = /** @type {any} */ ({
-      languages: ['en-GB', 'ja'],
-    });
 
-    const { prefs } = await import('./prefs.svelte.js');
+    const { prefs, navigatorLocale } = await import('./prefs.svelte.js');
+
+    navigatorLocale.current = 'en-GB';
 
     await wait();
 
-    expect(prefs.locale).toBe('en-GB');
+    expect(prefs.locale).toBe('auto');
     expect(mockAppLocale.set).toHaveBeenCalledWith('en-GB');
   });
 
-  it('should fall back to en-US when legacy locale "en" has no supported navigator match', async () => {
-    mockLocalStorage.get.mockResolvedValue({ locale: 'en' });
-    global.navigator = /** @type {any} */ ({
-      languages: ['de-DE', 'fr-FR'],
-    });
+  it('should follow the browser language when the preference is automatic', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'auto' });
 
-    const { prefs } = await import('./prefs.svelte.js');
+    const { navigatorLocale } = await import('./prefs.svelte.js');
+
+    navigatorLocale.current = 'ja';
 
     await wait();
 
-    expect(prefs.locale).toBe('en-US');
-    expect(mockAppLocale.set).toHaveBeenCalledWith('en-US');
+    expect(mockWaitLocale).toHaveBeenCalledWith('ja');
+    expect(mockAppLocale.set).toHaveBeenCalledWith('ja');
+  });
+
+  it('should wait for the browser language to be resolved', async () => {
+    // `initAppLocale()` populates `navigatorLocale`, which may not have happened yet
+    mockLocalStorage.get.mockResolvedValue({ locale: 'auto' });
+
+    await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(mockWaitLocale).not.toHaveBeenCalled();
+    expect(mockAppLocale.set).not.toHaveBeenCalled();
+  });
+
+  it('should switch the app locale when the browser language settings change', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'auto' });
+
+    const { prefs, navigatorLocale } = await import('./prefs.svelte.js');
+
+    navigatorLocale.current = 'ja';
+
+    await wait();
+
+    expect(mockAppLocale.set).toHaveBeenCalledWith('ja');
+
+    navigatorLocale.current = 'fr';
+
+    await wait();
+
+    expect(mockAppLocale.set).toHaveBeenCalledWith('fr');
+    // The preference itself is untouched, so the UI keeps following the browser
+    expect(prefs.locale).toBe('auto');
+  });
+
+  it('should keep the automatic preference when a switch fails', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'auto' });
+
+    const { prefs, navigatorLocale } = await import('./prefs.svelte.js');
+
+    navigatorLocale.current = 'ja';
+
+    await wait();
+
+    // The strings for the newly detected locale can’t be loaded
+    delete mockDictionary.fr;
+    navigatorLocale.current = 'fr';
+
+    await wait();
+
+    expect(mockAppLocale.set).not.toHaveBeenCalledWith('fr');
+    // Reverting to the previously active locale would silently turn the automatic mode off
+    expect(prefs.locale).toBe('auto');
+    expect(mockAppLocale.current).toBe('ja');
   });
 
   it('should set app locale when prefs.locale is mutated directly', async () => {
