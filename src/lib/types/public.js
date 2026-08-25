@@ -608,6 +608,8 @@
  * @property {string[] | Record<string, any>[] | Record<string, any>} [default] Default value. The
  * format depends on how the field is configured, with or without `field`, `fields` or `types`. See
  * the document for details.
+ * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
+ * field value.
  * @see https://decapcms.org/docs/widgets/#List
  * @see https://sveltiacms.app/en/docs/fields/list
  */
@@ -636,8 +638,6 @@
  * `true`.
  * @property {boolean} [add_to_top] Whether to add new items to the top of the list instead of the
  * bottom. Default: `false`.
- * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
- * field value.
  * @property {string} [summary] Template of a label to be displayed on a collapsed list item.
  * @property {string} [thumbnail] Subfield name to be used as a thumbnail image for a list item. It
  * will be displayed along with the summary label when the item is collapsed. The subfield must be

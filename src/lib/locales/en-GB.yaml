@@ -1224,6 +1224,9 @@ move_down: Move Down
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: Reorder Item
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Item Value
 
 # Add item button label
 # Example: “Add Image”, “Add Author”

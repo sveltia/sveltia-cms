@@ -1147,6 +1147,9 @@ move_down: 下へ移動
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: アイテムを並び替え
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: アイテムの値
 
 # Add item button label
 # Example: “Add Image”, “Add Author”

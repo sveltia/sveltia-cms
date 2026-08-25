@@ -3,14 +3,14 @@
   import { Button, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
 
   /**
-   * @import { ComplexListField, FieldWithTypes, ObjectField } from '$lib/types/public';
+   * @import { FieldWithTypes, ListField, ObjectField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
    * @property {boolean} [disabled] Whether to disable the button.
-   * @property {ComplexListField | ObjectField} fieldConfig Field configuration.
-   * @property {object[]} [items] List items. `<ListEditor>` only.
+   * @property {ListField | ObjectField} fieldConfig Field configuration.
+   * @property {unknown[]} [items] List items. `<ListEditor>` only.
    * @property {(args?: { type?: string }) => void} [addItem] Function to add a new item.
    */
 
