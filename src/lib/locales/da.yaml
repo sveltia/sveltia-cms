@@ -80,6 +80,8 @@ folder: Mappe
 api_key: API-nøgle
 details: Detaljer
 back: Tilbage
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Automatisk
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Indlæser…
 # Dismiss button for temporary notifications and infobars
@@ -1618,7 +1620,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Automatisk
     dark: Mørk
     light: Lys
 

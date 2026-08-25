@@ -80,6 +80,8 @@ folder: 폴더
 api_key: API 키
 details: 세부 정보
 back: 뒤로
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: 자동
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: 불러오는 중…
 # Dismiss button for temporary notifications and infobars
@@ -1498,7 +1500,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: 자동
     dark: 다크
     light: 라이트
 

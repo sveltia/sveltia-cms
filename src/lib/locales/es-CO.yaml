@@ -80,6 +80,8 @@ folder: Carpeta
 api_key: Clave de API
 details: Detalles
 back: Atrás
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Automático
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Cargando…
 # Dismiss button for temporary notifications and infobars
@@ -1616,7 +1618,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Automático
     dark: Oscuro
     light: Claro
 

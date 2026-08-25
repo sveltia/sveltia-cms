@@ -1782,7 +1782,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Auto
     dark: Dark
     light: Light
 

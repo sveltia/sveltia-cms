@@ -80,6 +80,8 @@ folder: Klasör
 api_key: API Key
 details: Detaylar
 back: Geri
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Otomatik
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Yükleniyor…
 # Dismiss button for temporary notifications and infobars
@@ -1532,7 +1534,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Otomatik
     dark: Koyu
     light: Açık
 

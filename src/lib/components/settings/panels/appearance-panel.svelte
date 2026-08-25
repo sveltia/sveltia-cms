@@ -33,7 +33,7 @@
       {#each [AUTO_PREF_VALUE, 'dark', 'light'] as value (value)}
         <SelectButton
           variant="tertiary"
-          label={_(`prefs.theme.${value}`)}
+          label={value === AUTO_PREF_VALUE ? _('automatic') : _(`prefs.theme.${value}`)}
           {value}
           selected={(!prefs.theme && value === AUTO_PREF_VALUE) || prefs.theme === value}
         />

@@ -80,6 +80,8 @@ folder: Mapa
 api_key: API ključ
 details: Pojedinosti
 back: Natrag
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Automatski
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Učitavanje…
 # Dismiss button for temporary notifications and infobars
@@ -1598,7 +1600,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Automatski
     dark: Tamna
     light: Svijetla
 

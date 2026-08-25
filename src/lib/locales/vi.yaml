@@ -80,6 +80,8 @@ folder: Thư mục
 api_key: Khóa API
 details: Chi tiết
 back: Quay lại
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Tự động
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Đang tải…
 # Dismiss button for temporary notifications and infobars
@@ -1705,7 +1707,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Tự động
     dark: Tối
     light: Sáng
 

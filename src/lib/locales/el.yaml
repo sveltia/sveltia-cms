@@ -80,6 +80,8 @@ folder: Φάκελος
 api_key: Κλειδί API
 details: Λεπτομέρειες
 back: Πίσω
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Αυτόματο
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Φόρτωση…
 # Dismiss button for temporary notifications and infobars
@@ -1555,7 +1557,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Αυτόματο
     dark: Σκούρο
     light: Ανοιχτό
 

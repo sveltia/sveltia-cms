@@ -80,6 +80,8 @@ folder: Pasta
 api_key: Chave de API
 details: Detalhes
 back: Voltar
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Automático
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Carregando…
 # Dismiss button for temporary notifications and infobars
@@ -1560,7 +1562,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Automático
     dark: Escuro
     light: Claro
 

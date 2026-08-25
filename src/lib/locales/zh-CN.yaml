@@ -80,6 +80,8 @@ folder: 文件夹
 api_key: API 密钥
 details: 详情
 back: 返回
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: 自动
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: 加载中……
 # Dismiss button for temporary notifications and infobars
@@ -1503,7 +1505,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: 自动
     dark: 深色
     light: 浅色
 

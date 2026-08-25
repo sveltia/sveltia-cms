@@ -80,6 +80,8 @@ folder: Carpeta
 api_key: Clau API
 details: Detalls
 back: Enrere
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Automàtic
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Carregant…
 # Dismiss button for temporary notifications and infobars
@@ -1564,7 +1566,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Automàtic
     dark: Fosc
     light: Clar
 

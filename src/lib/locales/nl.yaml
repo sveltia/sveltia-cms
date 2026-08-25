@@ -80,6 +80,8 @@ folder: Map
 api_key: API key
 details: Details
 back: Terug
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Automatisch
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Bezig met laden…
 # Dismiss button for temporary notifications and infobars
@@ -1569,7 +1571,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Automatisch
     dark: Donker
     light: Licht
 

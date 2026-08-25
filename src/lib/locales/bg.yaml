@@ -80,6 +80,8 @@ folder: Папка
 api_key: API ключ
 details: Подробности
 back: Назад
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Автоматична
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Зареждане…
 # Dismiss button for temporary notifications and infobars
@@ -1564,7 +1566,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Автоматична
     dark: Тъмна
     light: Светла
 

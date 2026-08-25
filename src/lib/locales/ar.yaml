@@ -80,6 +80,8 @@ folder: المجلد
 api_key: مفتاح API
 details: التفاصيل
 back: رجوع
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: تلقائي
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: جاري التحميل…
 # Dismiss button for temporary notifications and infobars
@@ -1767,7 +1769,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: تلقائي
     dark: داكن
     light: فاتح
 

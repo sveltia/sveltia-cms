@@ -80,6 +80,8 @@ folder: Složka
 api_key: Klíč API
 details: Podrobnosti
 back: Zpět
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Automaticky
 # Loading indicator shown during async operations (asset preview, panels, etc.)
 loading: Načítání…
 # Dismiss button for temporary notifications and infobars
@@ -1653,7 +1655,6 @@ prefs:
 
   # Theme options
   theme:
-    auto: Automaticky
     dark: Tmavý
     light: Světlý
 
