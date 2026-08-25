@@ -70,7 +70,6 @@ Build output: `package/dist/sveltia-cms.js` (IIFE), `package/dist/sveltia-cms.mj
 - Svelte 5: runes syntax only — no legacy Svelte patterns. Use the Svelte MCP server / `svelte-file-editor` agent for any `.svelte` or `.svelte.js`/`.svelte.ts` work.
 - Prose: Canadian English in Markdown, American English in code/comments. Curly quotes in prose, straight quotes in source, backticks for inline code.
 - Tests: Vitest, co-located `*.test.js` files. Coverage tracked for `src/lib/{components,services}/**/*.js`; keep it at 100%. Use `sed` to spot uncovered lines in coverage reports.
-- Bundle size: stay under 2 MB. Current build is ~1.96 MB — close to the ceiling, so watch new dependencies carefully.
 - Target: modern browsers (ES2025).
 
 ```javascript
