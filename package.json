@@ -25,7 +25,7 @@
   "scripts": {
     "build": "vite build",
     "build:watch": "vite build --watch",
-    "check": "pnpm run '/^check:.*/'",
+    "check": "pnpm run --no-bail '/^check:.*/'",
     "check:audit": "pnpm audit --ignore-registry-errors",
     "check:cspell": "cspell --no-progress",
     "check:eslint": "eslint .",
