@@ -5,7 +5,7 @@
 
   import { getState, setState } from '$lib/services/app/onboarding';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { AUTO_APP_LOCALE, prefs } from '$lib/services/user/prefs.svelte';
+  import { AUTO_PREF_VALUE, prefs } from '$lib/services/user/prefs.svelte';
 
   let newLocale = $state('');
   let showInfobar = $state(false);
@@ -54,7 +54,7 @@
     untrack(() => {
       // Wait for the preferences to be loaded. The infobar is pointless while the language
       // preference is `auto`, because the UI already follows the browser’s language settings
-      if (checked || !locale || locale === AUTO_APP_LOCALE) {
+      if (checked || !locale || locale === AUTO_PREF_VALUE) {
         return;
       }
 

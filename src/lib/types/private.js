@@ -78,7 +78,8 @@
  * @property {Record<string, string>} [apiKeys] API keys for integrations.
  * @property {Record<string, string>} [logins] Log-in credentials (user name and password) for
  * integrations.
- * @property {string} [theme] Selected UI theme, either `dark` or `light`.
+ * @property {'auto' | 'dark' | 'light'} [theme] Selected UI theme, or `auto` to follow the
+ * system’s color scheme.
  * @property {InternalLocaleCode | 'auto'} [locale] Selected UI locale, e.g. `en-US`, or `auto` to
  * follow the browser’s language settings.
  * @property {boolean} [useDraftBackup] Whether to use the entry draft backup mechanism.

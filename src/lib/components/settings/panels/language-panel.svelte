@@ -4,7 +4,7 @@
 
   import { appLocaleLoading } from '$lib/services/app/i18n';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { AUTO_APP_LOCALE, prefs } from '$lib/services/user/prefs.svelte';
+  import { AUTO_PREF_VALUE, prefs } from '$lib/services/user/prefs.svelte';
 
   /**
    * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
@@ -44,10 +44,10 @@
   );
 
   /**
-   * Selected language preference, which is {@link AUTO_APP_LOCALE} rather than a locale code while
+   * Selected language preference, which is {@link AUTO_PREF_VALUE} rather than a locale code while
    * the UI follows the browser’s language settings.
    */
-  const selectedLocale = $derived(prefs.locale ?? AUTO_APP_LOCALE);
+  const selectedLocale = $derived(prefs.locale ?? AUTO_PREF_VALUE);
 
   /**
    * Locale being switched to. Unlike `$appLocaleLoading`, this keeps the last value, so the message
@@ -74,9 +74,9 @@
         }}
       >
         <Option
-          value={AUTO_APP_LOCALE}
+          value={AUTO_PREF_VALUE}
           label={_('automatic')}
-          selected={selectedLocale === AUTO_APP_LOCALE}
+          selected={selectedLocale === AUTO_PREF_VALUE}
         />
         <Divider />
         {#each locales as { value, searchValue, label } (value)}

@@ -14,11 +14,11 @@ import { untrack } from 'svelte';
 export const PREFS_STORAGE_KEY = 'sveltia-cms.prefs';
 
 /**
- * Language preference value that makes the UI follow the browser’s language settings instead of a
- * locale picked by the user. It’s the default, and it’s also what the legacy `en` value is migrated
- * to.
+ * Preference value that makes the UI follow a browser or system setting instead of an explicit
+ * choice. It’s the default for both the theme and the language, the latter also being what the
+ * legacy `en` locale value is migrated to.
  */
-export const AUTO_APP_LOCALE = 'auto';
+export const AUTO_PREF_VALUE = 'auto';
 
 /**
  * @type {{ current: { type: string } | undefined }}
@@ -38,7 +38,7 @@ let storedLocaleApplied = false;
 
 /**
  * Locale that best matches the browser’s language settings, used while the language preference is
- * {@link AUTO_APP_LOCALE}. It’s populated by `initAppLocale()` and kept up to date there, so that
+ * {@link AUTO_PREF_VALUE}. It’s populated by `initAppLocale()` and kept up to date there, so that
  * the UI follows a change to those settings without a page reload.
  * @type {{ current: string | undefined }}
  */
@@ -59,12 +59,12 @@ $effect.root(() => {
       _prefs.beta ??= false;
       _prefs.devModeEnabled ??= false;
       _prefs.defaultTranslationService ??= 'google';
-      _prefs.locale ??= AUTO_APP_LOCALE;
+      _prefs.locale ??= AUTO_PREF_VALUE;
 
       // Migrate the legacy `en` value, which predates the regional English variants and used to be
       // resolved from the browser’s language settings anyway
       if (_prefs.locale === 'en') {
-        _prefs.locale = AUTO_APP_LOCALE;
+        _prefs.locale = AUTO_PREF_VALUE;
       }
 
       Object.assign(prefs, _prefs);
@@ -91,7 +91,7 @@ $effect.root(() => {
     })();
 
     const { theme, underlineLinks = true, beta = false, devModeEnabled: devMode = false } = prefs;
-    const autoTheming = !theme || theme === 'auto';
+    const autoTheming = !theme || theme === AUTO_PREF_VALUE;
     const autoTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
     Object.assign(document.documentElement.dataset, {
@@ -108,7 +108,7 @@ $effect.root(() => {
   // locale that failed to load are fetched from the CDN again.
   $effect(() => {
     const { locale: localePref } = prefs;
-    const locale = localePref === AUTO_APP_LOCALE ? navigatorLocale.current : localePref;
+    const locale = localePref === AUTO_PREF_VALUE ? navigatorLocale.current : localePref;
 
     if (!locale || !appLocales.includes(locale)) {
       return;
@@ -120,7 +120,7 @@ $effect.root(() => {
     // startup or the browser’s language settings changing. A failed switch is reverted, while a
     // stored preference or an automatic switch is kept, the former so that it can be retried on the
     // next visit, the latter so that the language keeps following the browser
-    const switchedByUser = storedLocaleApplied && localePref !== AUTO_APP_LOCALE;
+    const switchedByUser = storedLocaleApplied && localePref !== AUTO_PREF_VALUE;
 
     storedLocaleApplied = true;
 
